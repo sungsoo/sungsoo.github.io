@@ -1,3 +1,11 @@
+---
+layout: post
+title: "Adding a post to github page"
+date: 2013-12-08
+categories: Markedown Usage
+
+---
+
 ###Adding a post to github page
 
 ####Front-matter  
