@@ -681,7 +681,7 @@ Macworld San Francisco 2000-Steve Jobs Becomes iCEO of Apple
 
 
 
-신념을 읽지 마십시오. 
+신념을 잃지 마십시오. 
  
 
 
