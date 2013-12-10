@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Stream Design Patterns - Filter pattern: Data reduction
+title: Filter pattern
 
 ---
 
