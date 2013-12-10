@@ -11,3 +11,5 @@ Let us assume that you have been tasked with producing a business requirement us
  
 At run time, the *Streams Scheduler* determines how to efficiently segment the application across the hardware hosts. The application should be segmented to produce suitably sized deployable *Processing Elements* for the Streams Scheduler to deploy. 
 ![http://sungsoo.github.io/images/application-design.png](http://sungsoo.github.io/images/application-design.png)
+###References
+[1] Chuck Ballard et. al, IBM InfoSphere Streams: Harnessing Data in Motion, IBM Redbooks, September 2010.
