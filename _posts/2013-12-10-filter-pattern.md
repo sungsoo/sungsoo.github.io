@@ -6,6 +6,7 @@ title: Filter pattern
 
 When you are processing *large volumes* of data, a large proportion of the data may be considered to be irrelevant to your analysis. For example, you may only be interested in *infrequent*, *unusual* occurrences within the data streams.
 In this case, a **Streams Application** can be used to filter the data, reducing it to the items of significance. The application might analyze the data stream, identify the elements of interest, and create a new stream of data from the significant items. With this new stream, a reduced number of these valuable parts will be processed by the remainder of the Streams Application.Figure 3-3 shows the principle of the **Filter pattern**. The application reduces the volume of data so that the output is more manageable.
+
 ![http://sungsoo.github.io/images/filter-pattern.png](http://sungsoo.github.io/images/filter-pattern.png)
 ###ExampleIn *financial services*, you might be interested in price changes for stocks in your stock portfolio. You can consume a feed of data from the stock market and use a filter to reduce this feed down to only the stocks of interest to you.
 In a *health care* situation, a large volume of readings will be generated from medical sensors. These will usually stay within an expected range, but when they fall outside this range, an alert needs to be raised. A filter can be used to detect the dangerous sensor readings.
