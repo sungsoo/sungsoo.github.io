@@ -6,15 +6,21 @@ title: Publications
 
 ### International Journals
 
-[1] Y. B. Kang, S. S. Kim, A New Route Determination Approach Using Future Traffic Prediction, WSEAS Transactions On Systems, Issue 6, Volume 4, pp. 804-811, June 2005. 
+[1]	Y.M. Kang, H.G. Cho, **S.S Kim**, Plausible and Realtime Rendering of Scratched Metal by Deforming MDF of Normal Mapped Anisotropic Surface, Journal of WSCG, Vol 19, Number 1-3, pp.101-109, 2011.
+[2]	**S. S Kim**, S. W. Nam, I. H. Lee, Fast Ray-Triangle Intersection Computation Using Reconfigurable Hardware, Lecture Notes in Computer Science (MIRAGE 2007).
+[3]	**S. S. Kim**, S. W. Nam, D. H. Kim and I. H. Lee, Hardware-Accelerated Ray-Triangle Intersection Testing for High-Performance Collision Detection, Journal of WSCG, Vol 15, Number 3, ISSN 1213-6972, ISBN 978-80-86943-00-8.
+[4]	M. G. Cho, Y. J. Yu, **S. S. Kim**, Traffic Prediction System using Real-time Traffic Information, Lecture Notes in Computer Science (LNCS: ICCSA 2006)
+[5]	Y. B. Kang, **S. S. Kim**, A New Route Determination Approach using Future Traffic Prediction, Journal of WSEAS Transactions on Systems,Vol. 4(6), pp. 804-811, 2005. ISSN 1109-2777.
+[6]	**S. S. Kim**, S. K. Choe, Stylized Silhouette Rendering using Progressive Meshes, Journal of WSCG, Vol 10, Number 3, pp. 51-58, Feb. 2002.
 
-[2] S. S. Kim, S. K. Choe, Stylized Silhouette Rendering using Progressive Meshes, Journal of WSCG, Vol 10, Number 3, pp. 51-58, Feb. 2002. 
 
 ###Domestic Journals
  
-[1] S. S. Kim, K. H. Kim, K. O. Kim, Web-Based Media GIS Architecture using the Virtual World Mapping Technique, Korean Journal of Remote Sensing, Vol. 19, No. 1, pp. 71-80, 2003.
+[1] J. H. Lee, **S. S. Kim**, H. J. Park, Comparing BRDF Models: Representation of Measured BRDF, Transactions on SCCE, Vol. 14, No. 5, 2009.
 
-[2] S. S. Kim, S. H. Lee, K. O. Kim, J. H. Lee, Video GIS using Virtual World Mapping Technique, Journal of the Korean Geo-spatial Information Society, Sep. 2002. (in Korean)
+[2] **S. S. Kim**, K. H. Kim, K. O. Kim, Web-Based Media GIS Architecture using the Virtual World Mapping Technique, Korean Journal of Remote Sensing, Vol. 19, No. 1, pp. 71-80, 2003.
+
+[3] **S. S. Kim**, S. H. Lee, K. O. Kim, J. H. Lee, Video GIS using Virtual World Mapping Technique, Journal of the Korean Geo-spatial Information Society, Sep. 2002. (in Korean)
 
 ###International Conferences
 
