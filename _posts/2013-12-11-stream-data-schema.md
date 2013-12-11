@@ -51,4 +51,4 @@ title: Stream Data Schema Design
 
 
 ### References
-[1] W3C, Use cases - RDF Stream Processing Community Group, http://www.w3.org/community/rsp/wiki/Use_cases
+[1] W3C, Use cases - RDF Stream Processing Community Group, [link](http://www.w3.org/community/rsp/wiki/Use_cases)
