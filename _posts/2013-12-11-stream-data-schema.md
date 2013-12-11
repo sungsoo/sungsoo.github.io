@@ -15,7 +15,7 @@ title: Stream Data Schema Design
       * Text stream: no
 
 
-   * **Origin:** Data is produced by sensors in oil wells and on oil and gas platforms equipments. Each oil platform has an average of 400.000.
+   * **Origin:** Data is produced by sensors in oil wells and on oil and gas platforms equipments. Each oil platform has an average of 400,000.
 
 
    * **Frequency of update:**
