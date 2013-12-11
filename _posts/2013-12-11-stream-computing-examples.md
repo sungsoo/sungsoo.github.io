@@ -32,6 +32,19 @@ Insights in microseconds
 Dynamically responsive  
 Rapid application development
 
+###Traditional Computing
+
+* Historical fact finding
+* Find and analyse information stored on disk
+* Batch paradigm, pull model
+* Query-driven: submit queries to static data
+
+###Stream Computing
+
+* Current fact finding
+* Analyze data in motion - before it is stored
+* Low latency paradigm, push model
+* Data-driven: bring data to the analytics
 
 ### References
 [1] Brian Williams, IBM InfoSphere Streams Developer Education Section 1, October 2013.
