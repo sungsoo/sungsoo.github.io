@@ -32,7 +32,7 @@ Insights in microseconds
 Dynamically responsive  
 Rapid application development
 
-![http://sungsoo.github.io/images/big-data.png](http://sungsoo.github.io/images/big-data.png)
+![http://sungsoo.github.com/images/big-data.png](http://sungsoo.github.com/images/big-data.png)
 
 ###Traditional Computing
 
