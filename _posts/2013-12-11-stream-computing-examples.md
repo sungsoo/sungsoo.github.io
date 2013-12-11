@@ -32,6 +32,8 @@ Insights in microseconds
 Dynamically responsive  
 Rapid application development
 
+![http://sungsoo.github.io/images/big-data.png](http://sungsoo.github.io/images/big-data.png)
+
 ###Traditional Computing
 
 * Historical fact finding
@@ -45,6 +47,16 @@ Rapid application development
 * Analyze data in motion - before it is stored
 * Low latency paradigm, push model
 * Data-driven: bring data to the analytics
+
+### What is Stream Processing?
+* Relational databases and warehouses find information stored on disk
+* Streams analyses data before you store it
+* Databases find the needle in the haystack
+* Streams finds the needle as it's blowing by 
+
+
+
+
 
 ### References
 [1] Brian Williams, IBM InfoSphere Streams Developer Education Section 1, October 2013.
