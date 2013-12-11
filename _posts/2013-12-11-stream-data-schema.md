@@ -3,7 +3,7 @@ layout: post
 title: Stream Data Schema Design
 
 ---
-## Use case : Equipments in Offshore Plant
+###Stream Data Schema for Real-time Data Stream Manager
 
 ###Streaming Information
 
