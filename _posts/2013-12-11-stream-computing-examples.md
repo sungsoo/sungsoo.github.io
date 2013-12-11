@@ -14,5 +14,24 @@ title: Introduction to Stream Computing
 * Traffic control system which takes in GPS information from public vehicles and caculates deviations from normal to recommend alternative routes
 * Real-time correlation of information from multiple neonatal ICU monitors to detect potential life threatening conditions up to 24 hours earlier than an experienced ICU nurse
 
+### The Need for Stream Computing
+A need for real-time analytics on **BIG data**
+
+* **Volume**  
+Millions/Billions of events per second  
+Terabytes/Petabytes per day
+
+* **Variety**  
+All kinds of data  
+All kinds of analytics
+
+* **Velocity**  
+Insights in microseconds
+
+* **Agility**  
+Dynamically responsive  
+Rapid application development
+
+
 ### References
 [1] Brian Williams, IBM InfoSphere Streams Developer Education Section 1, October 2013.
