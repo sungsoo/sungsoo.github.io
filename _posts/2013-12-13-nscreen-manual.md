@@ -34,12 +34,15 @@ package nscreen.searchinfo.test2;import kr.re.etri.rdcm.nsal.NSALApplication;
 
 - 구현할 Activity나 Service 클래스는 각각 NSALActivity와 NSALService를 상속 받아서 개발해야 한다.- MapActivity를 상속 받아야 할 경우에는 NSALMapActivity를 상속 받아서 개발해야 한다.
 ###동일 협업세션에 참여하는 N-스크린 앱간 데이터 송수신* 같은 세션에 참여중인 다른 Device로 메시지를 보내고 싶으면 다음과 같이 메시지를 전송하면 된다.
+
 ```
 NApps nApps=(NApps)getApplicationContext();nApps. sendMessageToAppsInSession(“message”);
-```* 같은 세션에 참여 중인 다른 앱으로부터 메시지를 받고자 할 때 메시지를 수신할 Activity Class에 다음과 같이 리스너를 등록한다. 아래 예에서는 NApps 클래스가 리스너인 경우이다. 
+```* 같은 세션에 참여 중인 다른 앱으로부터 메시지를 받고자 할 때 메시지를 수신할 Activity Class에 다음과 같이 리스
+너를 등록한다. 아래 예에서는 NApps 클래스가 리스너인 경우이다. 
+
 ```
 NApps nApps=(NApps)getApplicationContext();nApps.setOnReceiveListener(this);
-```* NApps 클래스가 receiveHandler interface를 implement 하게 되면 ReceiveMessage 함수를 구현하여야 한다. 메세지 수신 핸들러가 생성되고 메시지메 수신 받을수 있게된다.* 같은 세션에 참여 중인 다른 앱으로부터 메시지가 올 경우 ReceiveMessage 함수가 호출된다. 참여중인 세션에 다른 App이 참여했을 때 다음 함수가 호출된다. 여기서, message는 메시지를 보낸 앱이 담은 스트링 값을 그대로 포함한다.```
+```* NApps 클래스가 receiveHandler interface를 implement 하게 되면 ReceiveMessage 함수를 구현하여야 한다. 메세지 수신 핸들러가 생성되고 메시지메 수신 받을수 있게된다.* 같은 세션에 참여 중인 다른 앱으로부터 메시지가 올 경우 ReceiveMessage 함수가 호출된다. 참여중인 세션에 다른 App이 참여했을 때 다음 함수가 호출된다. 여기서, message는 메시지를 보낸 앱이 담은 스트링 값을 그대로 포함한다.```
 public void ReceiveMessage(String message) {		}```
 
 ###자원인지 디바이스 협업 미들웨어를 이용한 주요 기능
