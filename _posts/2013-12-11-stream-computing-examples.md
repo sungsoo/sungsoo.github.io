@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Introduction to Stream Computing
+tags: [stream computing]
 
 ---
 ### Stream Computing - Examples

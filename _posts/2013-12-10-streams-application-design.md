@@ -1,6 +1,8 @@
 ---
 layout: post
 title: Streams Application Design
+tags: [stream computing, desing patterns]
+
 ---
 
 Let us assume that you have been tasked with producing a business requirement using the **IBM InfoSphere Streams** platform. The first thing you need to do is develop a high level system design that identifies the main components of the system.As shown in Figure 3-1, there are two main components to this design: 

@@ -1,6 +1,7 @@
 ---
 layout: post
 title: The evolution of analytics
+tags: [big data, analytics]
 
 ---
 Just as the business landscape and information environments are evolving, the approaches to effective analysis are at the dawn of a major evolution. While we might be thinking that the wealth of information swarming around us sometimes seems more like a pestilence than prosperity, the fact is that we now have the capability to glean value from the chaos. Advanced software analytic tools and sophisticated mathematical models can help us identify patterns, correlations of events, and outliers. With these new tools, we can begin to anticipate, forecast, predict, and make changes in our systems with more clarity and confidence than ever before. We stand on the brink of the next generation of intelligence: analysis of insightful and relevant information in real time. This is the real value of a Smarter Planet.

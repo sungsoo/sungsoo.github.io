@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Wisdom from Steve Jobs
+tags: [wisdom]
 
 ---
 

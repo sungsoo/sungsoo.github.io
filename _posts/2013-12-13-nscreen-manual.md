@@ -1,7 +1,7 @@
 ---
 layout: post
 title: N-Screen Application Development Manual
-tags: Multiscreen, Development
+tags: [multiscreen, developments]
 
 ---
 

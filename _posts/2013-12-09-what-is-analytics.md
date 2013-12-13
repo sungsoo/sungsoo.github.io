@@ -1,6 +1,8 @@
 ---
 layout: post
 title: Analytics vs. Predictive Analytics
+tags: [big data, analytics]
+
 ---
 ###What is Analytics?
 **Wikipedia**  

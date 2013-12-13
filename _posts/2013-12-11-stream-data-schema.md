@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Stream Data Schema Design
+tags: [stream computing, schema]
 
 ---
 ###Stream Data Schema for Real-time Data Stream Manager
