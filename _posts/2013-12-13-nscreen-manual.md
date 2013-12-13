@@ -33,10 +33,10 @@ package nscreen.searchinfo.test2;import kr.re.etri.rdcm.nsal.NSALApplication;
 ```
 
 - 구현할 Activity나 Service 클래스는 각각 NSALActivity와 NSALService를 상속 받아서 개발해야 한다.- MapActivity를 상속 받아야 할 경우에는 NSALMapActivity를 상속 받아서 개발해야 한다.
-###동일 협업세션에 참여하는 N-스크린 앱간 데이터 송수신* 같은 세션에 참여중인 다른 Device로 메시지를 보내고 싶으면 다음과 같이 메시지를 전송하면 된다.
+###동일 협업세션에 참여하는 N-스크린 앱간 데이터 송수신* 같은 세션에 참여중인 다른 Device로 메시지를 보내고 싶으면 다음과 같이 `sendMessageToAppsInSession()` method를 이용하여 메시지를 전송하면 된다.
 
 ```
-NApps nApps=(NApps)getApplicationContext();nApps. sendMessageToAppsInSession(“message”);
+NApps nApps=(NApps)getApplicationContext();nApps.sendMessageToAppsInSession(“message”);
 ```* 같은 세션에 참여 중인 다른 앱으로부터 메시지를 받고자 할 때 메시지를 수신할 Activity Class에 다음과 같이 리스
 너를 등록한다. 아래 예에서는 NApps 클래스가 리스너인 경우이다. 
 
