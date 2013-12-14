@@ -2,7 +2,8 @@
 layout: post
 title: "Adding a post to github page"
 date: 2013-03-08
-categories: Markedown Usage
+categories: [Computer]
+tags: [markdown, github page]
 
 ---
 

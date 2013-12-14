@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Publications
+categories: [My profile]
 tags: [publications]
 
 ---

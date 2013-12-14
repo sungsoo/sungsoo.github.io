@@ -1,7 +1,8 @@
 ---
 layout: post
 title: Thermodynamics Basic Concepts
-tags: [science]
+categories: [Science]
+tags: [thermodynamics]
 
 ---
 

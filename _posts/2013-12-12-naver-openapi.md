@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Android WebView Application using Naver Open API
+categories: [Computer]
 tags: [android, developments]
 
 ---

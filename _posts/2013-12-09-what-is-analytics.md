@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Analytics vs. Predictive Analytics
+categories: [Computer]
 tags: [big data, analytics]
 
 ---

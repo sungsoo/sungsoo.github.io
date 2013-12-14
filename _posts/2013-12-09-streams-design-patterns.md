@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Streams design patterns
+categories: [Computer]
 tags: [big data, stream computing]
 
 ---

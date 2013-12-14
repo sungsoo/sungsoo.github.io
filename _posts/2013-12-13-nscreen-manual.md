@@ -1,6 +1,7 @@
 ---
 layout: post
 title: N-Screen Application Development Manual
+categories: [Computer]
 tags: [multiscreen, developments]
 
 ---

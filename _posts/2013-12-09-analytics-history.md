@@ -1,6 +1,7 @@
 ---
 layout: post
 title: The evolution of analytics
+categories: [Computer]
 tags: [big data, analytics]
 
 ---

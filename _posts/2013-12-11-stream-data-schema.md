@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Stream Data Schema Design
+categories: [Computer]
 tags: [stream computing, schema]
 
 ---

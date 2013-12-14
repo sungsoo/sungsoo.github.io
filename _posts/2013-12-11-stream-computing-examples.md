@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Introduction to Stream Computing
+categories: [Computer]
 tags: [stream computing]
 
 ---
