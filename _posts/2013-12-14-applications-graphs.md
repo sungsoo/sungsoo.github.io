@@ -28,16 +28,6 @@ There are several reasons to study patterns and laws in real graphs:
 • **Graph compression**: Graph patterns represent regularities in the data. Such regularities can be used to better compress the data. For Internet-size graphs, like web-crawls with billions of pages, or Facebook with “more than 950 million active users”1 at the time of writing, keeping (and compressing) historical data is important.
 Thus, we need to detect patterns in graphs, and then generate synthetic graphs matching such patterns automatically. 
 
-### Tables of sysmbols used in notation
-
-
-Symbol  |   Description
---------|------
-\\(G\\) |   A graph with \\((V , E )\\) set of nodes and edges
-\\(V\\) | Set of nodes for graph \\(G\\)
-\\(E\\) | Set of edges for graph \\(G\\)
-
-
 ### References
 [1] Deepayan Chakrabarti, Christos Faloutsos, Graph Mining: Laws, Tools, and Case Studies, Sythesis Lectures on Data Mining and Knowlege Discovery, 2012.
 
