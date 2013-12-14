@@ -8,7 +8,8 @@ tags: [multiscreen, developments]
 
 N-스크린 어플리케이션 라이브러리(NSAL)를 사용하여 N-스크린 앱을 개발하기 위한 절차를 기술한다.
 
-###개발 전에 준비해야 할 것들-	각 디바이스에는 협업 에이전트 서비스 (CA.apk)가 설치되어 있어야 한다.-	NScreen Application Library 파일(NSAL.jar)이 준비되어야 한다.-	Java JDK 버전 1.6을 사용할 것을 권장한다.-	안드로이드 버전 4.0 이상을 사용하여야 한다.-	각 NScreen App에 대한 InterAppRelation 정보를 담은 XML 파일을 각 디바이스의 지정된 폴더(/sdcard/CAInterAppRelation)에 저장해야 한다. -	InterAppRelation 정보를 담은 파일 이름은 InterAppRelation_[App Package ID].xml 이다.
+###개발 전에 준비해야 할 것들
+-	각 디바이스에는 협업 에이전트 서비스 (CA.apk)가 설치되어 있어야 한다.-	NScreen Application Library 파일(NSAL.jar)이 준비되어야 한다.-	Java JDK 버전 1.6을 사용할 것을 권장한다.-	안드로이드 버전 4.0 이상을 사용하여야 한다.-	각 NScreen App에 대한 InterAppRelation 정보를 담은 XML 파일을 각 디바이스의 지정된 폴더(/sdcard/CAInterAppRelation)에 저장해야 한다. -	InterAppRelation 정보를 담은 파일 이름은 InterAppRelation_[App Package ID].xml 이다.
 ###개발 절차- 프로젝트 생성후 libs 폴더에 NSAL.jar 파일을 복사해서 넣는다. (단 Build SDK는 4.0이상으로 맟춘다.)- 생성한 프로젝트의 Properties에 Java Build Path->Libraries->Add JARs를 눌러서 해당 프로젝트의 libs폴더안의 NSAL.jar파일을 선택한다.  
 ![http://sungsoo.github.com/images/nscreen-setting.png](http://sungsoo.github.com/images/nscreen-setting.png)
 
@@ -46,12 +47,14 @@ NApps nApps=(NApps)getApplicationContext();nApps.setOnReceiveListener(this);
 ```* NApps 클래스가 receiveHandler interface를 implement 하게 되면 ReceiveMessage 함수를 구현하여야 한다. 메세지 수신 핸들러가 생성되고 메시지메 수신 받을수 있게된다.* 같은 세션에 참여 중인 다른 앱으로부터 메시지가 올 경우 ReceiveMessage 함수가 호출된다. 참여중인 세션에 다른 App이 참여했을 때 다음 함수가 호출된다. 여기서, message는 메시지를 보낸 앱이 담은 스트링 값을 그대로 포함한다.```
 public void ReceiveMessage(String message) {		}```
 
-###자원인지 디바이스 협업 미들웨어를 이용한 주요 기능
+### 자원인지 디바이스 협업 미들웨어를 이용한 주요 기능
+
 자원인지 디바이스 협업 미들웨어(이하; 협업 에이전트)를 이용하여 N-스크린 어플리케이션이 수행할 수 있는 주요 기능들은 다음과 같다.
 
 * 원격 실행 (Remote Execution)
 * 협업세션 참여 (Collaboration Session Join)
 * 협업세션 초대 (Collaboration Session Invitation)
 * 앱 푸쉬 이동 (Application Push Migration)
-* 앱 풀 이동 (Application Pull Migration)###References
+* 앱 풀 이동 (Application Pull Migration)### References
+
 [1] NScreen App 개발 매뉴얼, ETRI, 2012.
