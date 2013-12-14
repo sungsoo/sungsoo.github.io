@@ -31,7 +31,7 @@ There are several reasons to study patterns and laws in real graphs:
 ### Tables of sysmbols used in notation
 
 
-Symbol    |   Description
+Symbol  |   Description
 --------|------
 \\(G\\) |   A graph with \\((V , E )\\) set of nodes and edges
 \\(V\\) | Set of nodes for graph \\(G\\)
