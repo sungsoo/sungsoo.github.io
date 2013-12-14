@@ -53,5 +53,5 @@ public void ReceiveMessage(String message) {		}```
 * 협업세션 참여 (Collaboration Session Join)
 * 협업세션 초대 (Collaboration Session Invitation)
 * 앱 푸쉬 이동 (Application Push Migration)
-* 앱 풀 이동 (Application Pull Migration)###References
-[1] NScreen App 개발 매뉴얼, ETRI, 2012.
+* 앱 풀 이동 (Application Pull Migration)###References
+[1] NScreen App 개발 매뉴얼, ETRI, 2012.
