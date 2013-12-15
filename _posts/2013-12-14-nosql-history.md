@@ -20,7 +20,22 @@ tags: [big data, data management, NoSQL]
 	* Requires up front data modeling, does not scale well
 * **Examples**
 	* Oracle, MySQL, PostgreSQL, Microsoft SQL Server, IBM DB/2
+
+Relational databases are designed to run on a single machine, so to scale, you need buy a bigger machine. But it’s cheaper and more effective to scale horizontally by buying lots of machines.
+
+![http://sungsoo.github.com/images/sql-scale.png](http://sungsoo.github.com/images/sql-scale.png)
+
+The machines in these large clusters are individually unreliable, but the overall cluster keeps working even as machines die - so the overall cluster is reliable.
+
+
+The “cloud” is exactly this kind of cluster, which means relational databases don’t play well with the cloud.
+
+The rise of web services provides an effective alternative to shared databases for application integration, making it easier for different applications to choose their own data storage.
 	
+Google and Amazon were both early adopters of large clusters, and both eschewed relational databases.
+![http://sungsoo.github.com/images/bigtable-dynamo.png](http://sungsoo.github.com/images/bigtable-dynamo.png)
+
+Their efforts have been a large inspiration to the NoSQL community.
 ### Analytical (OLAP)	
 ![http://sungsoo.github.com/images/analytical.png](http://sungsoo.github.com/images/analytical.png)
 
