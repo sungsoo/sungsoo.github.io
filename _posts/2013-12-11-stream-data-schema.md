@@ -2,7 +2,7 @@
 layout: post
 title: Stream Data Schema Design
 date: 2013-12-11
-categories: [Computer]
+categories: [computer science]
 tags: [stream computing, schema]
 
 ---

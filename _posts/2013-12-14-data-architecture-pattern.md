@@ -2,7 +2,7 @@
 layout: post
 title: Foundational data architecture patterns
 date: 2013-12-14
-categories: [Computer sceience]
+categories: [computer sceience]
 tags: [graph mining]
 
 ---

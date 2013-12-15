@@ -2,7 +2,7 @@
 layout: post
 title: Introduction to Stream Computing
 date: 2013-12-11
-categories: [Computer]
+categories: [computer science]
 tags: [stream computing]
 
 ---
