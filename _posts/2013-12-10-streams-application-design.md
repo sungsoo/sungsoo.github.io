@@ -3,7 +3,7 @@ layout: post
 title: Streams Application Design
 date: 2013-12-10
 categories: [computer science]
-tags: [stream computing, desing patterns]
+tags: [stream computing, design patterns]
 
 ---
 
