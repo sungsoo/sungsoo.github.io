@@ -17,7 +17,7 @@ tags: [big data, data management, NoSQL]
 * **Pros**
 	* mature ACID transactions with fine-grain security controls
 * **Cons**
-	* Requires up front data modeling, does not scale well
+	* Requires up front data modeling, does not scale well 
 * **Examples**
 	* Oracle, MySQL, PostgreSQL, Microsoft SQL Server, IBM DB/2
 
@@ -36,6 +36,7 @@ Google and Amazon were both early adopters of large clusters, and both eschewed 
 ![http://sungsoo.github.com/images/bigtable-dynamo.png](http://sungsoo.github.com/images/bigtable-dynamo.png)
 
 Their efforts have been a large inspiration to the NoSQL community.
+
 ### Analytical (OLAP)	
 ![http://sungsoo.github.com/images/analytical.png](http://sungsoo.github.com/images/analytical.png)
 
