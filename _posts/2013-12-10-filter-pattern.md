@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Filter pattern
+date: 2013-12-10
 categories: [Computer]
 tags: [design patterns, streaming computing]
 

@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Applications using graph representation
+date: 2013-12-14
 categories: [Computer sceience]
 tags: [graph mining]
 

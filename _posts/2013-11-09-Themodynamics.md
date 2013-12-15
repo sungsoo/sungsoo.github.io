@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Thermodynamics Basic Concepts
+date: 2013-11-09
 categories: [Science]
 tags: [thermodynamics]
 

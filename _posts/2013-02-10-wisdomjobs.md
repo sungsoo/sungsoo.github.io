@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Wisdom from Steve Jobs
+date: 2013-02-10 
 tags: [wisdom]
 
 ---

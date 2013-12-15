@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Streams Application Design
+date: 2013-12-10
 categories: [Computer]
 tags: [stream computing, desing patterns]
 
