@@ -37,6 +37,7 @@ Google and Amazon were both early adopters of large clusters, and both eschewed 
 
 Their efforts have been a large inspiration to the NoSQL community.
 
+
 ### Analytical (OLAP)	
 ![http://sungsoo.github.com/images/analytical.png](http://sungsoo.github.com/images/analytical.png)
 
