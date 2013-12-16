@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Analyzing Data in Motion; A Real-World View
+title: Analyzing Data in Motion A Real-World View
 date: 2013-12-16 
 categories: [computer science]
 tags: [big data, stream computing]
