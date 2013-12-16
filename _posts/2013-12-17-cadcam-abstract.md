@@ -12,7 +12,7 @@ tags: [papers, research]
 
 #### Keywords: Device collaboration, Logical communications, Multiscreen services, Smart apps
 
-![http://sungsoo.github.io/images/cadcam-abstract.png](http://sungsoo.github.io/images/cadcam-abstract.png)
+![http://sungsoo.github.io/images/cadcam-figure.png](http://sungsoo.github.io/images/cadcam-figure.png)
 
 ### References
 [1] 김성수, 조충래, 손지연, P2P 환경에서 스마트 앱간 협업을 위한 논리적 통신기반 미들웨어, 2014 한국CAD/CAM학회 학술발표회 초록집, Feb. 2014. 
