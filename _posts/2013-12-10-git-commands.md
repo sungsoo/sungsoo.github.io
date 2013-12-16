@@ -16,10 +16,10 @@ tags: [developments, source code control]
 
 ### Git 명령어
 
-```> git init				: 현재 디렉토리에 git repository 초기화 및 생성> git clone name		: name이라는 repository를 가져온다.> git status			: 현재 repository의 상태> git add test			: 파일 test 를 git이 추적하도록 추가> git add -A			: 모든 변경파일을 repository에 추가> git commit -m "msg"	: 변경을 repository에 저장하며 msg를 남김
-> git log				: commit 로그 확인
-> git remote -v			: 외부 저장소 확인
-> git branch name		: name 이라는 branch 생성
+```> git init						: 현재 디렉토리에 git repository 초기화 및 생성> git clone name			: name이라는 repository를 가져온다.> git status					: 현재 repository의 상태> git add test				: 파일 test 를 git이 추적하도록 추가> git add -A					: 모든 변경파일을 repository에 추가> git commit -m "msg"	: 변경을 repository에 저장하며 msg를 남김
+> git log						: commit 로그 확인
+> git remote -v				: 외부 저장소 확인
+> git branch name			: name 이라는 branch 생성
 > git checkout name		: branch 변경
-> git push				: 현재 repository내용을 외부 repository로 전송
-> git pull				: 외부 repository fetch & merge```
+> git push						: 현재 repository내용을 외부 repository로 전송
+> git pull						: 외부 repository fetch & merge```
