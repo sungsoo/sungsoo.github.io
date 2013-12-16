@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Git Concepts and Architecture
-date: 2013-12-10
+date: 2013-04-10
 categories: [information technology]
 tags: [developments, source code control]
 
