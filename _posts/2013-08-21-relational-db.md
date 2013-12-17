@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Git Commands
+title: The Value of Relational Databases
 date: 2013-08-21
 categories: [computer science]
 tags: [big data, NoSQL]
