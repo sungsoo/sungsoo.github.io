@@ -15,5 +15,40 @@ tags: [big data, data management, NoSQL]
 
 ![http://sungsoo.github.io/images/rdb-tables.png](http://sungsoo.github.io/images/rdb-tables.png)
 
+객체-관계 불일치는 애플리케이션 개발자에게 가장 큰 불만이었고, 1990년대에는 많은 사람이 관계형 데이터베이스가 메모리 내 데이터 구조를 그대로 디스크에 저장하는 새로운 데이터베이스로 대체되리라 믿었다. 이때는 객체 지향 프로그래밍 언어가 성장하던 시기였고, 이와 함께 객체 지향 데이터베이스가 등장 했는데, 둘 다 새 천년의 소프트웨어 개발에 지배적 환경이 될 것으로 보였다.
+
+그러나 객체 지향 언어는 성공해 프로그래밍 주류가 된 반면, 객체 지향 데이터베이스는 세상에서 잊혀졌다. 관계형 데이터베이스는 통합 방법으로서의 역할 강조, 데이터 조작을 위한 표준 언어(SQL) 지원, 애플리케이션 개발자와 데이터베이스 관리자 직종 분리 심화 등의 요인에 힘입어 이 도전을 이겨냈다.
+
+잘 알려진 매핑 패턴을 구현한 하이버네이트(Hibernate)나 아이바티스(iBATIS)은 같은 객체-관계 매핑 프레임워크가 널리 사용되면서 객체-관계 불일치는 완화되었지만, 매핑 문제는 여전히 논쟁거리다. 객체-관계 매핑 프레임워크로 지겨운 작업은 많이 줄었지만, 데이터베이스나 쿼리 성능 같은 것을 지나치게 무시하면 다른 문제가 생길 수 있다.
+
+관계형 데이터베이스는 2000년대에도 엔터프라이즈 컴퓨팅 분야를 계속 지배했지만, 바로 이 시기 지배에 틈새가 생기기 시작했다. 
+
+### References
+[1] Pramod J. Sadalage, Martin Fowler, NoSQL Distilled, A Brief Guide to the Emerging World of Polyglot Persistence, Pearson Education, Inc, 2012.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ### References
 [1] Pramod J. Sadalage, Martin Fowler, NoSQL Distilled, A Brief Guide to the Emerging World of Polyglot Persistence, Pearson Education, Inc, 2012.
