@@ -20,9 +20,17 @@ Concurrency is notoriously difficult to get right, with all sorts of errors that
 
 Transactions also play a role in error handling. With transactions, you can make a change, and if an error occurs during the processing of the change you can roll back the transaction to clean things up.
 
+
 ### Integration
 Enterprise applications live in a rich ecosystem that requires multiple applications, written by different teams, to collaborate in order to get things done. This kind of inter-application collaboration is awkward because it means pushing the human organizational boundaries. Applications often need to use the same data and updates made through one application have to be visible to others.
-A common way to do this is shared database integration [Hohpe and Woolf] where multiple applications store their data in a single database. Using a single database allows all the applications to use.
+
+A common way to do this is **shared database integration** where multiple applications store their data in a single database. 
+Using a single database allows all the applications to use “each others’ data easily, while the database’s concurrency control handles multiple applications in the same way as it handles multiple users in a single application.
+
+
+### (Mostly) Standard Model
+Relational databases have succeeded because they provide the core benefits we outlined earlier in a (mostly) standard way. As a result, developers and database professionals can learn the basic relational model and apply it in many projects. Although there are differences between different relational databases, the core mechanisms remain the same: Different vendors’ SQL dialects are similar, transactions operate in mostly the same way.
+
 
 ### References
 [1] Pramod J. Sadalage, Martin Fowler, NoSQL Distilled, A Brief Guide to the Emerging World of Polyglot Persistence, Pearson Education, Inc, 2012.
