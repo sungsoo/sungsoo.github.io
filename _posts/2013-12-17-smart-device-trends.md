@@ -47,7 +47,7 @@ P2P 기반 스마트 디바이스들간 바인딩 뿐만 아니라, 사용자는
 	* 시간+장소+위치+방향 등을 결합하여 행동패턴 통계에 따른 추론 정보 제공
 	* 언제 어디서나 접속되어 있는 네트워크로 많은 트래픽 발생
 
-
+![http://sungsoo.github.io/images/smartdevices.png](http://sungsoo.github.io/images/smartdevices.png)
 
 ### Outlook
 * 모든영역에서 게임은 불멸의 Killing Time 서비스이고 Cash Cow임
