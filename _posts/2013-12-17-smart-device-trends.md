@@ -69,7 +69,7 @@ N-스크린 앱간 논리적 통신 (logical communication)이란 두개 이상�
 N-스크린 앱간 논리적 통신을 위한 아키텍쳐 구성은 네트워크 주소 변환 (network address translation; NAT) 관리자, 협업에이전트 논리적 통신 관리자, N-스크린 앱 라이프사이클 관리자로 구성하였다.
 네트워크 주소 변환 관리자의 세부 구성요소로는 N-스크린 앱에 대한 인스턴스 객체와 논리적 네트워크상 노드 (node) 정보를 매핑하여 관리하는 객체-노드간 주소 매핑 (object-node address mapping) 모듈과 노드와 실제 네트워크상의 물리적 주소를 매핑하여 관리하는 노드-물리주소간 매핑 (node-physical address mapping) 모듈이 있다. 네트워크 주소 변환 관리자에서 사용하는 데이터에 대한 테이블 스키마는 아래 그림과 같다.
 
-![http://sungsoo.github.io/images/tableschema.png](http://sungsoo.github.io/images/tableschema.png)
+![http://sungsoo.github.io/images/table-schema.png](http://sungsoo.github.io/images/table-schema.png)
 
 
 본 연구의 시스템 설계는 객체지향기반 디자인 패턴인 facade pattern, singleton pattern, command pattern, factory pattern을 적용하여 설계를 수행하였다. 
@@ -95,7 +95,7 @@ N-스크린 앱간 논리적 통신을 위한 아키텍쳐 구성은 네트워�
 
 아래 그림은 신뢰성 보장 정보버스 인터페이스 *IRIB interface*에 대한 클래스다이어그램을 보여주고 있다. 여기서, CA_RIBUPnP 클래스는 UPnP를 이용하여 신뢰성 보장 정보버스 인터페이스를 구현한 예이며, CA_RIBDMAP은 스마트가전의 통신 규격으로 추진되고 있는 DMAP(Device Management Architecture Protocol)를 이용하여 구현한 클래스다.
 
-![http://sungsoo.github.io/images/rib-interface.png](http://sungsoo.github.io/images/rib-interface.png)
+![http://sungsoo.github.io/images/rib-interface.jpg](http://sungsoo.github.io/images/rib-interface.jpg)
 
  
 ### N-스크린 협업에이전트 관리대상 자원
