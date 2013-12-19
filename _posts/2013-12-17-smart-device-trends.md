@@ -122,7 +122,7 @@ N-스크린 협업 서비스에서 N-스크린 협업 에이전트 관리대상 
 
 N-스크린 앱 자원분석을 위해 위 각 측정 디바이스들에 서로 다른 N-스크린 기반 앱을 5개씩 설치하여 성능 측정을 수행하였다. 각 N-스크린 자원분석 시간에 대한 결과는 아래 그림과 같다.
 
-![http://sungsoo.github.io/images/rib-interface.jpg](http://sungsoo.github.io/images/rib-interface.jpg)
+![http://sungsoo.github.io/images/performance-result.png](http://sungsoo.github.io/images/performance-result.png)
 
 ### Conclusion
 
