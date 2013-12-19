@@ -56,7 +56,7 @@ N-스크린 협업세션은 실행시간에 하나 이상의 N-스크린 앱들�
 ```
 아래 그림은 N-스크린 협업세션 제어에서 협업세션 참여 및 탈퇴에 대한  시퀀스 다이어그램을 보여주고 있다. 협업세션 B에 속한 사용자 N-스크린 앱이 협업세션 A에 참여하고자 할 때의 처리절차를 기술하고 있다. 
 
-![http://sungsoo.github.io/images/smartdevices.png](http://sungsoo.github.io/images/smartdevices.png)
+![http://sungsoo.github.io/images/session-join-leave.png](http://sungsoo.github.io/images/session-join-leave.png)
 
 먼저, 협업세션 참여 API인 `getNScreenSessionList`를 이용하여, 현재 동일 네트워크에서 실행되고 있는 N-스크린 협업세션 리스트를 요청한다. 그러면, 해당 N-스크린 협업에이전트는 네트워크 상의 다른 협업에이전트에게 협업세션 정보들을 수집하여 요청한 N-스크린 협업에이전트에게 리턴한다. 요청으로 돌려받은 N-스크린 협업세션들 중에서 참여를 원하는 협업세션 (CS_A)을 이용하여 `invokeSessionJoin` API를 통해 협업세션 참여 요청한다. 다음으로 협업에이전트 내부에서 협업세션 참여요청에 대한 실행(`exectueSessionJoin`)을 수행하고, 협업에이전트는 N-스크린 앱에게 협업세션 참여 처리결과를 통보(
 `notifyAppJoinSession`)한다. 이후, N-스크린 앱은 통보에 대한 이벤트 핸들러(`onAppJoinSession`)를 수행한다. 
@@ -69,17 +69,21 @@ N-스크린 앱간 논리적 통신 (logical communication)이란 두개 이상�
 N-스크린 앱간 논리적 통신을 위한 아키텍쳐 구성은 네트워크 주소 변환 (network address translation; NAT) 관리자, 협업에이전트 논리적 통신 관리자, N-스크린 앱 라이프사이클 관리자로 구성하였다.
 네트워크 주소 변환 관리자의 세부 구성요소로는 N-스크린 앱에 대한 인스턴스 객체와 논리적 네트워크상 노드 (node) 정보를 매핑하여 관리하는 객체-노드간 주소 매핑 (object-node address mapping) 모듈과 노드와 실제 네트워크상의 물리적 주소를 매핑하여 관리하는 노드-물리주소간 매핑 (node-physical address mapping) 모듈이 있다. 네트워크 주소 변환 관리자에서 사용하는 데이터에 대한 테이블 스키마는 아래 그림과 같다.
 
-// 그림 추가: Table schema
+![http://sungsoo.github.io/images/tableschema.png](http://sungsoo.github.io/images/tableschema.png)
+
 
 본 연구의 시스템 설계는 객체지향기반 디자인 패턴인 facade pattern, singleton pattern, command pattern, factory pattern을 적용하여 설계를 수행하였다. 
 협업에이전트 논리적 통신 관리자의 역할은 네트워크 주소 변환 관리자를 이용하여 N-스크린 앱에서 요청하는 객체 정보를 전달받아 논리적 통신을 수행할 수 있도록 기능을 제공하는 퍼사드 패턴 (facade pattern)을 적용한 클래스다. N-스크린 앱 라이프사이클 관리자 (N-Screen app lifecycle manager)는 협업세션을 통해 실행되는 앱에 대한 라이프사이클 관리하는 클래스로써 네트워크 주소 변환 관리자에서 실행되고 있는 앱에 대한 논리적 앱 식별자를 통해 앱의 라이프사이클 조회를 수행하는 데 필요한 클래스로 N-스크린 디바이스에 유일하게 존재하는 싱글턴 객체 (singleton object)다.
 
 제안한 논리적 통신을 이용하여 활용될 수 있는 예는 두개 앱이 협업 도중에 하나의 앱이 앱 이동을 통해 다른 N-스크린 디바이스로 이동되는 경우에 적용할 수 있다. 예를 들어, 동일 네트워크내에 TV와 연결된 스마트셋톱, 스마트태블릿, 스마트폰이 있는 환경에서 사용자가 스마트셋톱에서 실행되고 여행동영상 가이드 앱과 스마트태블릿에서 실행되고 있는 여행부가정보 앱을 초기 협업세션 CS(t0)으로 구성하여 두개의 앱간 동기화되며 실행하고 있다고 가정하자. 제안한 미들웨어에서는 앱 이동 (App migration)을 지원한다. 앱 이동이란 하나의 N-스크린 디바이스에서 구동되는 N-스크린 앱을 다른 N-스크린 디바이스로 옮겨서 실행 할 수 있게 해 주는 것을 말한다. 이때, 사용자가 스마트태블릿에서 실행되고 있는 여행부가정보 앱을 협업에이전트를 통해 앱 이동을 실행한 경우, N-스크린 앱 라이프사이클 관리자는 여행부가정보 앱이 단순 종료된 것이 아니라, 앱 이동에 의해 이동되어 실행하고 있는 상태라고 관리하고, 네트워크 주소 변환 관리자를 통해 물리적 디바이스 및 물리적 네트워크 주소 변경과 무관하게 협업 세션 CS(t1)을 유지하여 사용자에게 끊김없는 지속적이고 일관된 협업 서비스를 제공할 수 있다.
 
+![http://sungsoo.github.io/images/nscreen-session-synch.png](http://sungsoo.github.io/images/nscreen-session-synch.png)
+
 ### 신뢰성 보장 메세징 프로토콜
 앞에서 기술한 N-스크린 앱간 논리적 통신을 지원하기 위해 신뢰성 보장 메세징 프로토콜이 필요하다. 본 논문에서는 아래 그림과 같은 메세징 아키텍쳐를 가지는 신뢰성 보장 메세징 프로토콜을 설계/구현하였다. 프로토콜 스택의 구성은 아래 그림과 같이 상위 계층부터 객체 계층, 노드 계층, 신뢰성 보장 정보버스 계층, TCP 계층으로 이루어진다. 객체는 신뢰성 보장 정보버스의 노드를 이용한 통신 객체 단위를 의미하며 하나의 객체에 대한 노드는 신뢰성 보장 정보버스 계층 위에 1:n 관계로 하나의 객체에 대해 복수개의 노드들이 존재한다. 하지만, 노드는 신뢰성 보장 정보버스를 통해 직접 메세지 전달하는 통신 객체로 하나의 노드와 하나의 네트워크 물리주소와 연관되는 1:1 관계를 가진다.
 
-// 그림 추가 : Protocol Stack
+![http://sungsoo.github.io/images/protocol-stack.png](http://sungsoo.github.io/images/protocol-stack.png)
+
 
 신뢰성 보장 정보버스에서 제공하는 주요한 인터페이스는 다음과 같으며, 스트레티지 패턴 (strategy pattern)을 적용하였기 때문에 추후 하부 물리적 네트워크 구현을 변경에 적응적인 구조이다. 
 
@@ -91,7 +95,7 @@ N-스크린 앱간 논리적 통신을 위한 아키텍쳐 구성은 네트워�
 
 아래 그림은 신뢰성 보장 정보버스 인터페이스 *IRIB interface*에 대한 클래스다이어그램을 보여주고 있다. 여기서, CA_RIBUPnP 클래스는 UPnP를 이용하여 신뢰성 보장 정보버스 인터페이스를 구현한 예이며, CA_RIBDMAP은 스마트가전의 통신 규격으로 추진되고 있는 DMAP(Device Management Architecture Protocol)를 이용하여 구현한 클래스다.
 
-// 그림 추가 : 
+![http://sungsoo.github.io/images/rib-interface.png](http://sungsoo.github.io/images/rib-interface.png)
 
  
 ### N-스크린 협업에이전트 관리대상 자원
