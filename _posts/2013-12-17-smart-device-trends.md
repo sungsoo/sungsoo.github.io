@@ -54,7 +54,11 @@ N-스크린 협업세션은 실행시간에 하나 이상의 N-스크린 앱들�
 	SmartDevice getSmartDevice(String deviceID);                       // N-스크린 디바이스 객체 요청
 	boolean invokeSessionJoin(String inSessionID, String myPkgID);     // 협업세션 참여 요청
 ```
-아래 그림은 N-스크린 협업세션 제어에서 협업세션 참여 및 탈퇴에 대한  시퀀스 다이어그램을 보여주고 있다. 협업세션 B에 속한 사용자 N-스크린 앱이 협업세션 A에 참여하고자 할 때의 처리절차를 기술하고 있다. 먼저, 협업세션 참여 API인 `getNScreenSessionList`를 이용하여, 현재 동일 네트워크에서 실행되고 있는 N-스크린 협업세션 리스트를 요청한다. 그러면, 해당 N-스크린 협업에이전트는 네트워크 상의 다른 협업에이전트에게 협업세션 정보들을 수집하여 요청한 N-스크린 협업에이전트에게 리턴한다. 요청으로 돌려받은 N-스크린 협업세션들 중에서 참여를 원하는 협업세션 (CS_A)을 이용하여 `invokeSessionJoin` API를 통해 협업세션 참여 요청한다. 다음으로 협업에이전트 내부에서 협업세션 참여요청에 대한 실행(`exectueSessionJoin`)을 수행하고, 협업에이전트는 N-스크린 앱에게 협업세션 참여 처리결과를 통보(
+아래 그림은 N-스크린 협업세션 제어에서 협업세션 참여 및 탈퇴에 대한  시퀀스 다이어그램을 보여주고 있다. 협업세션 B에 속한 사용자 N-스크린 앱이 협업세션 A에 참여하고자 할 때의 처리절차를 기술하고 있다. 
+
+![http://sungsoo.github.io/images/smartdevices.png](http://sungsoo.github.io/images/smartdevices.png)
+
+먼저, 협업세션 참여 API인 `getNScreenSessionList`를 이용하여, 현재 동일 네트워크에서 실행되고 있는 N-스크린 협업세션 리스트를 요청한다. 그러면, 해당 N-스크린 협업에이전트는 네트워크 상의 다른 협업에이전트에게 협업세션 정보들을 수집하여 요청한 N-스크린 협업에이전트에게 리턴한다. 요청으로 돌려받은 N-스크린 협업세션들 중에서 참여를 원하는 협업세션 (CS_A)을 이용하여 `invokeSessionJoin` API를 통해 협업세션 참여 요청한다. 다음으로 협업에이전트 내부에서 협업세션 참여요청에 대한 실행(`exectueSessionJoin`)을 수행하고, 협업에이전트는 N-스크린 앱에게 협업세션 참여 처리결과를 통보(
 `notifyAppJoinSession`)한다. 이후, N-스크린 앱은 통보에 대한 이벤트 핸들러(`onAppJoinSession`)를 수행한다. 
 
 협업세션 탈퇴의 경우, 유사한 방식으로 탈퇴 요청 (`leaveCollaborationSession`), 탈퇴 통보 (`notifyAppLeaveSession`), 탈퇴 이벤트 핸들러 (`onAppLeaveSession`) 순서로 진행된다.
