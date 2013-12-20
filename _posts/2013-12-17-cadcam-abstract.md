@@ -14,6 +14,9 @@ tags: [papers, research]
 
 ![http://sungsoo.github.io/images/cadcam-figure.png](http://sungsoo.github.io/images/cadcam-figure.png)
 
+#### 시연 동영상 
+아래 이미지를 클릭하면 youtube 영상을 볼 수 있습니다.
+
 [![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](http://www.youtube.com/watch?v=MIy_EMMUXvg&feature=youtu.be)
 
 ### References
