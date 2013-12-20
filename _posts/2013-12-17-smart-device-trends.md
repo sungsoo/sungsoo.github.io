@@ -124,6 +124,8 @@ N-스크린 앱 자원분석을 위해 위 각 측정 디바이스들에 서로 
 
 ![http://sungsoo.github.io/images/performance-result.png](http://sungsoo.github.io/images/performance-result.png)
 
+각 N-스크린 관리 자원별 관계분석에 소요된 평균 처리시간은 N-스크린 디바이스의 경우 0.34초, N-스크린 앱은 0.61초, N-스크린 협업세션은 0.34초의 결과를 보였다.
+
 ### Conclusion
 
 본 논문에서는 N-스크린 기반 앱간 협업 서비스 개발을 위한 P2P기반 N-스크린 협업 미들웨어 설계기법을 제안하였다. 
