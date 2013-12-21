@@ -9,7 +9,9 @@ tags: [big data, data management]
 
 ### Use Cases
 
+#### Insurance Example - Vehicle Telematics
 
+![http://sungsoo.github.io/images/telematics.png](http://sungsoo.github.io/images/telematics.png)
 
 
 ### Relevant Model Types
