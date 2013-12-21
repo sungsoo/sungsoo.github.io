@@ -13,6 +13,10 @@ tags: [big data, data management]
 
 ![http://sungsoo.github.io/images/telematics.png](http://sungsoo.github.io/images/telematics.png)
 
+#### Healthcare Example - Unstructured Data
+
+
+![http://sungsoo.github.io/images/healthcare.png](http://sungsoo.github.io/images/healthcare.png)
 
 ### Relevant Model Types
 
@@ -27,3 +31,4 @@ tags: [big data, data management]
 
 
 ### Considerations
+ 
