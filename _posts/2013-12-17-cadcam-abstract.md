@@ -16,7 +16,7 @@ tags: [papers, research]
 
 #### Demo Movie 
 
-<iframe width="620" height="460" src="//www.youtube.com/embed/MIy_EMMUXvg" frameborder="0" allowfullscreen></iframe>
+<iframe width="600" height="420" src="//www.youtube.com/embed/MIy_EMMUXvg" frameborder="0" allowfullscreen></iframe>
 
 
 ### References
