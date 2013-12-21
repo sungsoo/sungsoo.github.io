@@ -14,14 +14,10 @@ tags: [papers, research]
 
 ![http://sungsoo.github.io/images/cadcam-figure.png](http://sungsoo.github.io/images/cadcam-figure.png)
 
-#### 시연 동영상 
+#### Demo Movie 
 
-<iframe width="560" height="315" src="//www.youtube.com/embed/MIy_EMMUXvg" frameborder="0" allowfullscreen></iframe>
+<iframe src="//www.youtube.com/embed/MIy_EMMUXvg" frameborder="0" allowfullscreen></iframe>
 
-
-아래 이미지를 클릭하면 youtube 영상을 볼 수 있습니다.
-
-[![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/YOUTUBE_VIDEO_ID_HERE/0.jpg)](http://www.youtube.com/watch?v=MIy_EMMUXvg&feature=youtu.be)
 
 ### References
 [1] 김성수, 조충래, 손지연, P2P 환경에서 스마트 앱간 협업을 위한 논리적 통신기반 미들웨어, 2014 한국CAD/CAM학회 학술발표회 초록집, Feb. 2014. 
