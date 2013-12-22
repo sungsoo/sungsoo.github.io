@@ -73,7 +73,7 @@ Agile 개발 프로세스란 어느 특정 개발 방법론을 가리키는 말�
 
 ### References
 
-[1] James Shore and Shane Warden, The Art of Agile Development, O’Reilly Media, Inc., 2008.
+[1] James Shore and Shane Warden, *The Art of Agile Development*, O’Reilly Media, Inc., 2008.
 
 
 
