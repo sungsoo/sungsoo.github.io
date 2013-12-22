@@ -30,12 +30,7 @@ Agile 개발 프로세스란 어느 특정 개발 방법론을 가리키는 말�
 
 이들의 앞선 가치들을 인정하면서도 뒤에 오는 가치들에 보다 큰 무게를 둔다.
 
-### Understanding Agile Project Management01. What is agile project management?1) Some notable characteristics of agile projects are:* You produce deliverables via _____________ chunks of work
-* Value is presented to the client via _____________, or small deliveries* Management of scope is _____________ based2) Traditionally, the waterfall methodology consists of these 5 phases: 
-* Requirements, Design, Development, Testing and Implementation.
-3) The small chunks of work created in sprints benefit the business when needs are _____________. The agile process also provides _____________ benefits early.4) Examples of non-IT projects where agile techniques are viable include:* _____________ moves* Company _____________* Changing business _____________5) Agile could be considered for any project with short _____________ and _____________ times. 
-6) Agile projects are typically structured with:* _____________- _____________ week sprints* _____________-_______-_____________collaboration* Co-_____________
-### Suitable Agile Projects
+### Suitable Agile Projects
 * IT and non-IT  
 * Facility moves
 * Company reorganizations
@@ -68,7 +63,9 @@ Agile 개발 프로세스란 어느 특정 개발 방법론을 가리키는 말�
 * Close
 
 
+### References
 
+[1] James Shore and Shane Warden, The Art of Agile Development, O’Reilly Media, Inc., 2008.
 
 
 
