@@ -35,12 +35,11 @@ tags: [presentation]
 ### Sell an Experience
 
 * Make numbers and statistics meaningful
-
-### Analogies help connect the dots for your audience
+* Analogies help connect the dots for your audience
 
 ### Make it Visual
 
-### Paint a simple picture that doesn't overwhelm
+* Paint a simple picture that doesn't overwhelm
 
 ### Give them a Show
 
