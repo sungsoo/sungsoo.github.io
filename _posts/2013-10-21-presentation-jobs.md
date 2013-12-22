@@ -49,7 +49,9 @@ tags: [presentation]
 ### Rehearse, Rehearse, Rehearse...
 
 * Spend the time to rehearse
-* To say lately... "One more thing..."
+
+### Last slide
+To say lastly... "One more thing..."
 
 
 ### References
