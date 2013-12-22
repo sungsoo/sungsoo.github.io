@@ -16,6 +16,14 @@ Agile 방법론은 소프트웨어 개발 방법에 있어서 아무런 계획�
 
 Agile 개발 프로세스란 어느 특정 개발 방법론을 가리키는 말은 아니고 "Agile(Agile=기민한, 좋은것을 빠르고 낭비없게 만드는 것) 개발을 가능하게 해 주는 다양한 방법론 전체를 일컫는 말이다. 예전에는 Agile 개발 프로세스는 "경량(Lightweight)" 프로세스로 불렸다. 익스트림 프로그래밍 (XP:eXtreme Programming)이 Agile 개발 프로세스의 대표적인 방법이라 볼 수 있다.
 
+### Traditional Model
+
+![http://sungsoo.github.com/images/waterfall.png](http://sungsoo.github.com/images/waterfall.png)
+
+### Agile Model
+
+![http://sungsoo.github.com/images/agile-features.png](http://sungsoo.github.com/images/agile-features.png)
+
 ### Agile Statements
 
 애자일 연합에서 추구하는 사상은 그들이 선언한 아래와 같은 글에서 잘 나타난다.

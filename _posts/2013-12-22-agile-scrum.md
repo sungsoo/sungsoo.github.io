@@ -23,6 +23,8 @@ tags: [software engineering]
 
 * **Daily Scrum**:  A short (less than 30 minutes) daily Scrum Meeting allows the team to monitor status and communicate problems.
 
+![http://sungsoo.github.com/images/agile-features.png](http://sungsoo.github.com/images/agile-features.png)
+
 ![http://sungsoo.github.com/images/agile-scrum.png](http://sungsoo.github.com/images/agile-scrum.png)
  
 ### Product Backlog for Planning
