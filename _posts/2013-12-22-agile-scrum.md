@@ -71,6 +71,8 @@ tags: [software engineering]
 
 ![http://sungsoo.github.com/images/agile-scrum.png](http://sungsoo.github.com/images/pmo-discussion.png)
 
+
+
 ### References
 [1] Agile Processes: Scrum, Web Presentation Material, 2012.
 
