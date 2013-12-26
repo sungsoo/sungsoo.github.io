@@ -12,7 +12,7 @@ For this issue on research in developing countries, we decided to take a closer 
 
 To answer this question, a literature review was carried out in [Scopus](http://www.scopus.com) using a number of keywords, including: scholarly communication, Africa, language issue, publication language, multilingual scholars, third world, developing country/countries, and scholarly publication. After de-duplication of the output of multiple searches this resulted in a list of 139 articles and reviews. The abstracts of all articles in this list were then carefully reviewed, and those that were not deemed relevant for this piece were removed. The final list included 73 articles and reviews, published between 1996 and 2013.
 
-![http://sungsoo.github.com/images/word-map.jpg](http://sungsoo.github.com/images/word-map.jpg)
+![http://sungsoo.github.com/images/word_map.jpg](http://sungsoo.github.com/images/word_map.jpg)
 ##### Figure 1 – A Word map based on the titles and abstracts of 73 selected articles and reviews. Source: [Wordle](http://www.wordle.com)
 
 Figure 1 shows a Wordle *(1)* word map generated based on the titles and abstracts of all the articles and reviews in the list. The larger the font size of the word, the more frequently it occurs in the articles included in this literature review. Words that stand out include: research, English, publication, journal(s), publishing and language. In other words, it’s clear, and not surprising, that publishing is a strong theme in these articles. But what are the actual obstacles that researchers from developing countries and/or non-English speaking countries face when trying to get their work published?
