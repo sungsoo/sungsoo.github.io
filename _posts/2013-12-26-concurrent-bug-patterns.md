@@ -26,13 +26,13 @@ A *concurrent event* is an accessing to an interesting shared variable or synchr
 ### Concurrent Bug Patterns
 The following high level categories of concurrent bug patterns can be identified (by cause).
 
-* **Code assumed to be protected bug patterns**
+* **Code assumed to be protected bug patterns**
 	* A run in *I(**P**)* – *C(**P**)* is created when *a code segment is mistakenly assumed to be undisturbed by other threads*.
 
-* **Interleaving assumed never occur bug patterns**
+* **Interleaving assumed never occur bug patterns**
 	* A run in *I(**P**)* – *C(**P**)* is created as a result of the *mistaken assumption that a certain execution order of concurrent events is impossible*.
 
-* **Blocking or dead thread bug patterns**
+* **Blocking or dead thread bug patterns**
 	* A run in *I(**P**)* – *C(**P**)* is created *when a code segment is mistakenly assumed to be non-blocking*.
 	
 #### Code assumed to be protected bug patterns
@@ -164,4 +164,4 @@ This timing heuristic increases the chance that the lost notify bug manifest.
 At run time,  the `sleep()` duration is randomly changed to manifest the bug.
 
 ### Conclusion
-This paper categorizes a taxonomy of concurrent bug patterns. And shows testing techniques can be enhanced and developed using the bug taxonomy.
+This article categorizes a taxonomy of concurrent bug patterns. And shows testing techniques can be enhanced and developed using the bug taxonomy.
