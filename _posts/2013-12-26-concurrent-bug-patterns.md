@@ -52,7 +52,7 @@ An operation that looks like one operation in the source code level of the progr
 
 For example, in Java version 1.3.1, x++ operation for a class instance field is translated to three bytecode instructions:
 
-		  1) move the current value of x from the heap to the 	      		     thread’s local area copy of x
+		  1) move the current value of x from the heap to the thread’s local area copy of x
 		  2) increment the thread’s local area value by one
 		  3) update the heap value of x
 		  
