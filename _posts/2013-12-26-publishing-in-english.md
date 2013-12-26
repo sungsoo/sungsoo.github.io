@@ -47,24 +47,14 @@ Recommendations for researchers to increase their chances for publication succes
 
 ### References
 
-(1) [Wordle.net](http://www.wordle.net)
-
-(2) Uzuner, S. (2008) “Multilingual scholars’ participation in core/global academic communities: A literature review”, Journal of English for Academic Purposes, Vol. 7, No. 4, pp. 250 – 263.
-
-(3) Curry, M.J., & Lillis, T. (2004) “Multilingual scholars and the imperative to publish in English: Negotiating interests, demands, and rewards”, TESOL Quarterly, Vol. 38, No. 4, pp. 663 – 688.
-
-(4) Shi, L. (2012) “Rewriting and paraphrasing source texts in second language writing”, Journal of Second Language Writing, Vol. 21, No. 2, pp. 134 – 148.
-
-(5) Kliewer, M.A., DeLong, D.M., Freed, K., Jenkins, C.B., Paulson, E.K., Provenzale, J.M. (2004) “Peer review at the American Journal of Roentgenology: How reviewer and manuscript characteristics affected editorial decisions on 196 major papers”, American Journal of Roentgenology, Vol. 183, No. 6, pp. 1545 – 1550.
-
-(6) Ondari-Okemwa, E. (2007) “Scholarly publishing in sub-Saharan Africa in the twenty-first century: Challenges and opportunities”, First Monday, Vol. 12, No. 10.
-
-(7) Liu, J. (2004) “Co-constructing academic discourse from the periphery: Chinese applied linguists’ centripetal participation in scholarly publication”, Asian Journal of English Language Teaching, Vol. 14, pp. 1 - 22.
-
-(8) Thrower, P. (2012) “'Eight reasons I rejected your article', A journal editor reveals the top reasons so many manuscripts don’t make it to the peer review process”, Available at: [http://www.elsevier.com/connect/8-reasons-i-rejected-your-article](http://www.elsevier.com/connect/8-reasons-i-rejected-your-article)
-
-(9) Babor, T.F., Stenius, K., Savva, S., O'Reilly, J. (eds) (2011), Publishing Addiction Science: a Guide for the Perplexed. (2nd edition) (Co-sponsored by the International Society of Addiction Journal Editors and the Society for the Study of Addiction), pp. 236. Brentwood, Essex: Multi-Science Publishing Co. Ltd.
-
-(10) Curry, M.J. & Lillis, T. (2010) “Academic research networks: Accessing resources for English-medium publishing”, English for Specific Purposes, Vol. 29, No. 4, pp. 281–295.
-
+(1) [Wordle.net](http://www.wordle.net)  
+(2) Uzuner, S. (2008) “Multilingual scholars’ participation in core/global academic communities: A literature review”, Journal of English for Academic Purposes, Vol. 7, No. 4, pp. 250 – 263.  
+(3) Curry, M.J., & Lillis, T. (2004) “Multilingual scholars and the imperative to publish in English: Negotiating interests, demands, and rewards”, TESOL Quarterly, Vol. 38, No. 4, pp. 663 – 688.  
+(4) Shi, L. (2012) “Rewriting and paraphrasing source texts in second language writing”, Journal of Second Language Writing, Vol. 21, No. 2, pp. 134 – 148.  
+(5) Kliewer, M.A., DeLong, D.M., Freed, K., Jenkins, C.B., Paulson, E.K., Provenzale, J.M. (2004) “Peer review at the American Journal of Roentgenology: How reviewer and manuscript characteristics affected editorial decisions on 196 major papers”, American Journal of Roentgenology, Vol. 183, No. 6, pp. 1545 – 1550.  
+(6) Ondari-Okemwa, E. (2007) “Scholarly publishing in sub-Saharan Africa in the twenty-first century: Challenges and opportunities”, First Monday, Vol. 12, No. 10.  
+(7) Liu, J. (2004) “Co-constructing academic discourse from the periphery: Chinese applied linguists’ centripetal participation in scholarly publication”, Asian Journal of English Language Teaching, Vol. 14, pp. 1 - 22.  
+(8) Thrower, P. (2012) “'Eight reasons I rejected your article', A journal editor reveals the top reasons so many manuscripts don’t make it to the peer review process”, Available at: [http://www.elsevier.com/connect/8-reasons-i-rejected-your-article](http://www.elsevier.com/connect/8-reasons-i-rejected-your-article)  
+(9) Babor, T.F., Stenius, K., Savva, S., O'Reilly, J. (eds) (2011), Publishing Addiction Science: a Guide for the Perplexed. (2nd edition) (Co-sponsored by the International Society of Addiction Journal Editors and the Society for the Study of Addiction), pp. 236. Brentwood, Essex: Multi-Science Publishing Co. Ltd.  
+(10) Curry, M.J. & Lillis, T. (2010) “Academic research networks: Accessing resources for English-medium publishing”, English for Specific Purposes, Vol. 29, No. 4, pp. 281–295.  
 (11) Burrough-Boenisch, J. (2003) “Shapers of published NNS research articles”, Journal of Second Language Writing, Vol. 12, No. 3, pp. 223–243.
