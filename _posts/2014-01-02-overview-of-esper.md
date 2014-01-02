@@ -247,6 +247,7 @@ public class SampleEngine {
 #### SampleEngine.java 프로그램 실행 결과
 
 3초간 발생한 이벤트의 갯수와 평균을 출력 합니다.
+
 ```
     [java] aaa_0 : 갯수 = 1, 평균 = 0.0
     [java] aaa_1 : 갯수 = 2, 평균 = 5.0
