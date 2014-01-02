@@ -140,4 +140,162 @@ The event objects can be declared by
 * Example of patterns
 
 ```
-	select a.custId, sum(a.price + b.price)	from pattern [every a=ServiceOrder ->	b=ProductOrder(custId = a.custId) where timer:within(1 min)].win:time(2 hour) where a.name in ('Repair', b.name)	group by a.custId	having sum(a.price + b.price) > 100```
+	select a.custId, sum(a.price + b.price)	from pattern [every a=ServiceOrder ->	b=ProductOrder(custId = a.custId) where timer:within(1 min)].win:time(2 hour) where a.name in ('Repair', b.name)	group by a.custId	having sum(a.price + b.price) > 100```### Esper Sample Program
+![](http://sungsoo.github.com/images/esper-sample.png)
+#### Event Class: SampleEvent.java
+Event를 저장하는 POJO class를 생성
+
+```
+package com.jopenbusiness.hadoop.esper.event;
+
+public class SampleEvent {
+	private String item = null;
+	private Double price = null;
+	
+	public SampleEvent(String item, Double price) {
+		super();
+		this.item = item; 
+		this.price = price;
+	}
+
+	public String getItem() {
+		return item;
+	}
+
+	public void setItem(String item) {
+		this.item = item;
+	}
+
+	public Double getPrice() {
+		return price;
+	}
+
+	public void setPrice(Double price) {
+		this.price = price;
+	}
+}
+```
+
+#### Event Listener Class: SampleListener.java
+EPL (Event Processing Engine)에서 정의된 조건을 만족할 때, 처리하는 프로그램
+
+```
+package com.jopenbusiness.hadoop.esper.listener;
+
+import com.espertech.esper.client.EventBean;
+import com.espertech.esper.client.UpdateListener;
+
+public class SampleListener implements UpdateListener {
+	public void update(EventBean[] newEvents, EventBean[] oldEvents) {
+		EventBean event = null;
+		
+		event = newEvents[0];
+		System.out.println(event.get("item") + " : 갯수 = " + event.get("count(*)") + ", 평균 = " + event.get("avg(price)"));
+	}
+}
+```
+
+#### Engine/Main Class: SampleEngine.java
+
+```
+package com.jopenbusiness.hadoop.esper.cli;
+
+import com.espertech.esper.client.Configuration;
+import com.espertech.esper.client.EPRuntime;
+import com.espertech.esper.client.EPServiceProvider;
+import com.espertech.esper.client.EPServiceProviderManager;
+import com.espertech.esper.client.EPStatement;
+import com.jopenbusiness.hadoop.esper.event.SampleEvent;
+import com.jopenbusiness.hadoop.esper.listener.SampleListener;
+
+public class SampleEngine {
+	public static void main(String[] args) {
+		Configuration config = null;
+		EPServiceProvider service = null;
+		EPStatement stat = null;
+		String epl = null;
+		SampleListener listener = null;
+		EPRuntime runtime = null;
+		
+		//---	처리할 Event를 등록하여 Esper용 서비스를 생성 합니다.
+		config = new Configuration();
+		config.addEventType("SampleEvent", SampleEvent.class.getName());
+		service = EPServiceProviderManager.getDefaultProvider(config);
+		
+		//---	EPL(Event Processing Language)을 사용하여 Statement를 생성 합니다.
+		//---	지난 3초 동안 발생한 이벤트로 전체 갯수와 가격 평균을 구합니다. 
+		epl = "select item, count(*), avg(price) from SampleEvent.win:time(3 sec)";
+		stat = service.getEPAdministrator().createEPL(epl);
+				
+		listener = new SampleListener();
+		stat.addListener(listener);
+		
+		//---	Event를 발생시켜 봅니다.
+		runtime = service.getEPRuntime();
+		for (int i = 0;i < 20; i++) {
+			runtime.sendEvent(new SampleEvent("aaa_" + i, 10.0 * i));
+			try {
+				Thread.sleep(300);
+			} catch (InterruptedException ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
+}
+```
+
+#### SampleEngine.java 프로그램 실행 결과
+
+3초간 발생한 이벤트의 갯수와 평균을 출력 합니다.
+```
+    [java] aaa_0 : 갯수 = 1, 평균 = 0.0
+    [java] aaa_1 : 갯수 = 2, 평균 = 5.0
+    [java] aaa_2 : 갯수 = 3, 평균 = 10.0
+    [java] aaa_3 : 갯수 = 4, 평균 = 15.0
+    [java] aaa_4 : 갯수 = 5, 평균 = 20.0
+    [java] aaa_5 : 갯수 = 6, 평균 = 25.0
+    [java] aaa_6 : 갯수 = 7, 평균 = 30.0
+    [java] aaa_7 : 갯수 = 8, 평균 = 35.0
+    [java] aaa_8 : 갯수 = 9, 평균 = 40.0
+    [java] aaa_9 : 갯수 = 10, 평균 = 45.0
+    [java] aaa_10 : 갯수 = 11, 평균 = 50.0
+    [java] aaa_11 : 갯수 = 10, 평균 = 65.0
+    [java] aaa_12 : 갯수 = 10, 평균 = 75.0
+    [java] aaa_13 : 갯수 = 10, 평균 = 85.0
+    [java] aaa_14 : 갯수 = 10, 평균 = 95.0
+    [java] aaa_15 : 갯수 = 10, 평균 = 105.0
+    [java] aaa_16 : 갯수 = 10, 평균 = 115.0
+    [java] aaa_17 : 갯수 = 10, 평균 = 125.0
+    [java] aaa_18 : 갯수 = 10, 평균 = 135.0
+    [java] aaa_19 : 갯수 = 10, 평균 = 145.0
+Total time: 8 seconds
+```
+
+### Development Tips
+
+#### Configuration Files
+**설정 파일**
+
+* vi config/esper.default.cfg.xml
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<esper-configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://www.espertech.com/schema/esper"
+    xsi:noNamespaceSchemaLocation="esper-configuration-4-0.xsd"> 
+	<event-type-auto-name package-name="com.jopenbusiness.hadoop.esper.event"/>
+	<event-type name="ServiceEvent" class="com.jopenbusiness.hadoop.esper.event.ServiceEvent"/>
+</esper-configuration>
+```
+
+* 프로그램에서 설정 적용
+
+```
+Configuration config = null;
+EPServiceProvider service = null;
+
+config = new Configuration();
+config.configure(new File("~/config/esper.default.cfg.xml"));
+service = EPServiceProviderManager.getProvider(ENGINE_URI, config);
+```
+
