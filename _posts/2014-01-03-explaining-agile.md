@@ -16,4 +16,4 @@ They provide advice and stress the importance of communication, feedback as a cr
 
 #### Movie
 
-<iframe width="640" height="360" src="//www.youtube.com/embed/GE6lbPLEAzc" frameborder="0" allowfullscreen></iframe> 
+<iframe width="600" height="4000" src="//www.youtube.com/embed/GE6lbPLEAzc" frameborder="0" allowfullscreen></iframe> 
