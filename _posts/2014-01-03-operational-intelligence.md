@@ -6,6 +6,7 @@ categories: [computer science]
 tags: [stream computing, analytics]
 
 ---
+### Real-time Operational Intelligence
 
 Are your operators and technicians responding quickly enough to prevent problems?   
 Are you *filtering* noise and providing the right information to operators to drive action? 
@@ -24,3 +25,32 @@ In this one-hour webinar, GE shared proven strategies and apps to:
 
 
 <iframe width="600" height="400" src="//www.youtube.com/embed/FkaiUQxwEUI" frameborder="0" allowfullscreen></iframe>
+
+### The Essential Remote Monitoring And Diagnostic Center
+
+**Big data** is good. If you can harness it.
+
+For decades, technology has connected people and businesses globally. But, that was just the beginning. The Internet now can transform global businesses, joining human insight with *remote operations and equipment*. It does this with DATA.
+
+Every minute, throughout your entire operation, you generate massive amounts of data.   
+You do your best to *collect*, *store*, *analyze*, and *act* on it. You can turn it into *insight*—and even develop foresight from it—to empower your business strategy and execution.
+
+#### The problem
+
+Without a data-management structure, all your data can become *inaccessible*, *unmanageable*, and *uncorrelated*—and it even can sit idle.
+
+Now is the time to prepare your enterprise for the "**Industrial Internet**" by building a proper data-management structure—so you can leverage the power of **Industrial Big Data**.
+
+#### How GE Power & Water did it.
+
+In this first webinar in a series, we'll focus on GE Power & Water, which has 60,000+ customers and thousands of assets in the field. This company will discuss why it needed to take control of its data—and how it built its data-management structure via a **Remote Monitoring & Diagnostics Center** (RM&D). 
+
+This webinar will answer:
+
+* How can an RM&D Center improve customer responsiveness?
+* How can it move from "reactive" to "proactive?"
+* How does an RM&D Center drive competitive advantage?
+* How does it expand sales-revenue?
+* Can an RM&D Center track performance and accuracy?
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/bTHGQrrgswc" frameborder="0" allowfullscreen></iframe>
