@@ -15,7 +15,7 @@ The following specifications are the latest versions and are recommended for new
  
 #### NEW COMPLETION DATA-OBJECT
 This new data-object is compatible with WITSML v1.4.1.1 and PRODML v1.2.2.
-Details found <a href="http://www.energistics.org/drilling-completions-interventions/witsml-standards/completions-data-object">here</a>.</p>.
+Details found <a href="http://www.energistics.org/drilling-completions-interventions/witsml-standards/completions-data-object">here</a>.</p>
  
 <table border="0" cellpadding="0" cellspacing="0" style="color: rgb(0, 0, 0); border: medium none; border-collapse: collapse; ">
 	<thead>
