@@ -3,7 +3,7 @@ layout: post
 title: JAXB Class Generation From XML Schema File using JAXB Tool
 date: 2014-01-03
 categories: [computer science]
-tags: [stream computing, analytics, data management]
+tags: [developments, schema]
 
 ---
 ### JAXB Concept
