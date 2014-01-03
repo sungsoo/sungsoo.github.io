@@ -3,7 +3,7 @@ layout: post
 title: Real-time Operational Intelligence
 date: 2014-01-03
 categories: [computer science]
-tags: [stream computing, analytics]
+tags: [stream computing, analytics, data management]
 
 ---
 ### Real-time Operational Intelligence
@@ -54,3 +54,16 @@ This webinar will answer:
 * Can an RM&D Center track performance and accuracy?
 
 <iframe width="600" height="400" src="//www.youtube.com/embed/bTHGQrrgswc" frameborder="0" allowfullscreen></iframe>
+
+### GE Mission Critical Solutions
+
+Ensure system reliability at all times
+
+As the costs of *system disruption* continue to soar, you cannot afford system downtime. GE's at the forefront of emerging **high-availability technology** solutions that deliver the highest level of system *reliability* and *availability*. For you, this means protection against lost *productivity* and *profitability* from an unplanned system outage.
+
+This webinar provides insight into mission critical and cooling systems.
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/pQ2xnX-c4n4" frameborder="0" allowfullscreen></iframe>
+
+
+
