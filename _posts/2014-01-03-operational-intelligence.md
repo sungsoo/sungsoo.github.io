@@ -26,6 +26,7 @@ In this one-hour webinar, GE shared proven strategies and apps to:
 
 <iframe width="600" height="400" src="//www.youtube.com/embed/FkaiUQxwEUI" frameborder="0" allowfullscreen></iframe>
 
+
 ### The Essential Remote Monitoring And Diagnostic Center
 
 **Big data** is good. If you can harness it.
