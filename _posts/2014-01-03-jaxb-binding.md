@@ -102,7 +102,7 @@ generated\CatalogdData.java
 generated\ObjectFactory.java
 ```
 
-4. 생성된 JAXB 오브젝트를 Java 응용프로그램 내에서 사용하여, 생성된 JAXB 클래스를 통해 XML 컨텐츠를 처리하십시오.
+* 생성된 JAXB 오브젝트를 Java 응용프로그램 내에서 사용하여, 생성된 JAXB 클래스를 통해 XML 컨텐츠를 처리하십시오.
 
 
 xjc 명령에 관한 자세한 정보는 JAXB 2.0 참조 구현 문서를 참조하십시오.
