@@ -8,7 +8,7 @@ tags: [developments, schema]
 ---
 ### JAXB Concept
 
-JAXB(Java Architecture for XML Binding)는 웹 서비스의 단순화된 개발을 위해 Java 클래스 및 XML 스키마를 맵핑하기 쉽고 편리한 방법을 제공하는 Java 기술입니다. JAXB는 Java 응용프로그램에 XML 스키마를 바인드하는 데 Java 응용프로그램에서 플랫폼 중립적인 XML 데이터의 유연성을 활용하므로 XML 프로그래밍에 대한 폭넓은 지식은 필요하지 않습니다.
+**JAXB(Java Architecture for XML Binding)**는 웹 서비스의 단순화된 개발을 위해 Java 클래스 및 XML 스키마를 맵핑하기 쉽고 편리한 방법을 제공하는 Java 기술입니다. JAXB는 Java 응용프로그램에 XML 스키마를 바인드하는 데 Java 응용프로그램에서 플랫폼 중립적인 XML 데이터의 유연성을 활용하므로 XML 프로그래밍에 대한 폭넓은 지식은 필요하지 않습니다.
 
 웹 서비스용 WebSphere Application Server 버전 6.1 기능팩은 JAXB 2.0 표준을 제공합니다.
 
