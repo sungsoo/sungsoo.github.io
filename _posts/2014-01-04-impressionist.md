@@ -46,3 +46,7 @@ Impressionist is licensed under a Creative Commons Attribution 3.0 Unported (CC 
 ### A Visual Editor for Impress.js
 
 <iframe width="600" height="400" src="//www.youtube.com/embed/RIOgPPbHNjk" frameborder="0" allowfullscreen></iframe>
+
+### Strut Impress.js Presentation Editor
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/zA5s8wwme44" frameborder="0" allowfullscreen></iframe>
