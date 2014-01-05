@@ -82,7 +82,9 @@ Second, even though transactions are not much *more difficult* to use than *coar
 ```#pragma omp transfor schedule (static, chunk=50)for (int i=0; i<N; i++) {    bin[A[i]]++;}
 
 ```
- 
+
+### Atomic { } ≠ lock() + unlock() + **The difference**	- Atomic: high-level declaration of atomicity		- Does not specify implementation/blocking behavior	- Lock: low-level blocking primitive		- Does not provide atomicity or isolation on its own
++ **Keep in mind**	- Locks can be used to implement `atomic` block but...	- Locks can be used for purposes beyond atomicity		- Cannot replace all lock regions with atomic regions	- `atomic` eliminates many data races, but..		- Programming with atomic blocks can still suffer from atomicity violations. e.g., programmer erroneous splits sequence that *should be atomic* into two atomic blocks 
 ### References
 
 [1] Rachid Guerraoui and Michał Kapałka, *Principles of Transactional Memory*, Morgan & Claypool, 2010.
