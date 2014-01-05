@@ -3,7 +3,7 @@ layout: post
 title: Introduction to Transactional Memory
 date: 2014-01-05
 categories: [computer science]
-tags: [parallel computing]
+tags: [parallel programming]
 
 ---
 
