@@ -41,6 +41,8 @@ void transfer(A, B, amount){    synchronized(A) {      synchronized(B) {    
 
 ```
 	transfer(y,x);```
+
+![](http://sungsoo.github.com/images/deadlock.png)
 Using locks *explicitly* to handle concurrency becomes even harder when threads operate on *different priority levels*, e.g., in a real-time system. If a high-priority thread wants to acquire a lock that is held by a low-priority thread, it has to wait until the lock is released. That is, *the high-priority thread has to wait for the low-priority thread*—a problem known as **priority inversion**. Synchronizing those threads using *nonblocking* mechanisms, i.e., without using any form of mutual exclusion, would solve the problem. However, designing those mechanisms is sometimes even harder than using fine- grained locking.
 
 ### Composability: transactions
