@@ -20,7 +20,7 @@ tags: [research]
 
 There is no consensus on how *Monte Carlo* should be defined. For example, Ripley[8] defines most probabilistic modeling as *stochastic simulation*, with Monte Carlo being reserved for Monte Carlo integration and Monte Carlo statistical tests. Sawilowsky[9] distinguishes between a simulation, a Monte Carlo method, and a Monte Carlo simulation: a simulation is a fictitious representation of reality, a Monte Carlo method is a technique that can be used to solve a mathematical or statistical problem, and a Monte Carlo simulation uses repeated sampling to determine the properties of some phenomenon (or behavior). 
 
-Examples:
+**Examples:**
 
 + **Simulation**: Drawing one pseudo-random uniform variable from the interval (0,1] can be used to simulate the tossing of a coin: If the value is less than or equal to 0.50 designate the outcome as heads, but if the value is greater than 0.50 designate the outcome as tails. This is a simulation, but not a Monte Carlo simulation.  
 
