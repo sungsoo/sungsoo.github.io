@@ -1,11 +1,12 @@
 ---
 layout: post
-title: Monte-Carlo Method
+title: Monte-Carlo Methods An Introduction
 date: 2014-01-04
 categories: [mathematical science]
-tags: [research]
+tags: [research, mathematics]
 
 ---
+<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
 ### Overview
 
@@ -16,9 +17,23 @@ tags: [research]
 
 알고리즘의 반복과 큰 수의 계산이 관련되기 때문에 몬테카를로는 다양한 컴퓨터 모의 실험 기술을 사용하여 컴퓨터로 계산하는 것이 적합하다.
 
+
 ### Definitions
 
-There is no consensus on how *Monte Carlo* should be defined. For example, Ripley[8] defines most probabilistic modeling as *stochastic simulation*, with Monte Carlo being reserved for Monte Carlo integration and Monte Carlo statistical tests. Sawilowsky[9] distinguishes between a simulation, a Monte Carlo method, and a Monte Carlo simulation: a simulation is a fictitious representation of reality, a Monte Carlo method is a technique that can be used to solve a mathematical or statistical problem, and a Monte Carlo simulation uses repeated sampling to determine the properties of some phenomenon (or behavior). 
+#### What are Monte Carlo Method?
+
++ Incoporate probability into analysis
+	- Used whe we know that a set of scenarios *can* happen but are unsure of whether they *will* happen
++ Examine the world as a system
++ Formulate the world as many little steps
++ Each step or iteration involves a realization of the world
++ System (or some aspect of it) will eventually converge to a desirable measure
+
+#### What is a Measure?
+
+![](http://sungsoo.github.com/images/measure.png)
+
+There is no consensus on how *Monte Carlo* should be defined. For example, Ripley defines most probabilistic modeling as *stochastic simulation*, with Monte Carlo being reserved for Monte Carlo integration and Monte Carlo statistical tests. Sawilowsky distinguishes between a simulation, a Monte Carlo method, and a Monte Carlo simulation: a simulation is a fictitious representation of reality, a Monte Carlo method is a technique that can be used to solve a mathematical or statistical problem, and a Monte Carlo simulation uses repeated sampling to determine the properties of some phenomenon (or behavior). 
 
 **Examples:**
 
@@ -28,7 +43,10 @@ There is no consensus on how *Monte Carlo* should be defined. For example, Riple
 
 + **Monte Carlo simulation**: Drawing a large number of pseudo-random uniform variables from the interval (0,1], and assigning values less than or equal to 0.50 as heads and greater than 0.50 as tails, is a Monte Carlo simulation of the behavior of repeatedly tossing a coin.
 
+![](http://sungsoo.github.com/images/overview-monte-carlo.png)
+
 Kalos and Whitlock point out that such distinctions are not always easy to maintain. For example, the emission of radiation from atoms is a natural stochastic process. It can be simulated directly, or its average behavior can be described by stochastic equations that can themselves be solved using Monte Carlo methods. "Indeed, the same computer code can be viewed simultaneously as a 'natural simulation' or as a solution of the equations by natural sampling."
+
 
 ### Monte Carlo and random numbers
 
