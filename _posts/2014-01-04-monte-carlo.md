@@ -47,6 +47,7 @@ There is no consensus on how *Monte Carlo* should be defined. For example, Riple
 
 Kalos and Whitlock point out that such distinctions are not always easy to maintain. For example, the emission of radiation from atoms is a natural stochastic process. It can be simulated directly, or its average behavior can be described by stochastic equations that can themselves be solved using Monte Carlo methods. "Indeed, the same computer code can be viewed simultaneously as a 'natural simulation' or as a solution of the equations by natural sampling."
 
+![](http://sungsoo.github.com/images/monte-carlo-types.png)
 
 ### Monte Carlo and random numbers
 
