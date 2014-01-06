@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Introduction to Transactional Memory
-date: 2014-01-05
+date: 2014-01-04
 categories: [computer science]
 tags: [parallel programming]
 
