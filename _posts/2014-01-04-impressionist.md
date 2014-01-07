@@ -18,7 +18,7 @@ Impressionist is licensed under a Creative Commons Attribution 3.0 Unported (CC 
 ## Links
 
 + Demo - (http://harish.io/impressionist/landing.html)
-
++ [sungsoo's impressionist tool](http://sungsoo.github.io/presentations/Impressionist/landing.html)
 
 ## Changelog
 
