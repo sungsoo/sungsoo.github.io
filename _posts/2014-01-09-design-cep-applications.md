@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: post
 title: Pattern Matching Techniques
 date: 2014-01-09
 categories: [computer science]
