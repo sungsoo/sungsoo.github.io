@@ -1,7 +1,7 @@
 ---
 layout: post
 title: The Presentation Secrets of Steve Jobs
-date: 2013-10-21
+date: 2013-05-21
 categories: [computer science]
 tags: [presentation]
 
