@@ -31,6 +31,6 @@ In conclusion, I would say that project planning is of great importance in extre
 [1] Beck, K 2000, *Extreme Programming Explained : Embrace Change* / Kent Beck, n.p.: Boston, MA ; Addison-Wesley, 2000.  
 [2] Beck, K, & Fowler, M 2001, *Planning Extreme Programming* / Kent Beck, Martin Fowler ; Illustrated By Jennifer Kohnke ; [Foreword By Tom Demarco], n.p.: Boston : Addison-Wesley, 2001.  
 [3] Baird, S. (2003), *Extreme programming*, Sams Publishing
-Maljkovic M, Peric N. (2008) *XP (eXtreme Programming)* Matematički fakultet, Univerzitet u Beogradu, skripta.
+Maljkovic M, Peric N. (2008) *XP (eXtreme Programming)* Matematički fakultet, Univerzitet u Beogradu, skripta.  
 [4] Wohlin, C 2012, *Agile Processes In Software Engineering And Extreme Programming* [Electronic Book] : 13Th International Conference, XP 2012, Malmö, Sweden, May 21-25, 2012. Proceedings / Claes Wohlin (Ed.), n.p.: Berlin : Springer, 2012.
 
