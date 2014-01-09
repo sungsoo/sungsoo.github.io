@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Designing and Developing Complex Event Processing Applications
+title: Pattern Matching Techniques
 date: 2014-01-09
 categories: [computer science]
 tags: [stream computing, data management]
@@ -8,7 +8,7 @@ tags: [stream computing, data management]
 ---
 <script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
-Related Architecture
+CEP Architecture
 ---
 
 CEP is used for event processing within an *event-driven architecture*. Unlike a simple event processing or event stream processing mechanism, CEP uses *event-correlation* and *pattern-matching* techniques to “**infer**” complex events. It augments business *activity monitoring with inferences* from source events treated as business events and sent for further action or analysis via dashboards. In business process management, CEP is used as an enrichment system that reports business events as they occur. Threats and opportunities are reported to further workflows. In a service-oriented architecture, CEP systems can be used to determine the business trigger to launch further services in the processing pipeline.
@@ -53,5 +53,7 @@ Temporal windows and dimension windows could be started and stopped based on set
 [12] [StreamBase: Administration Guide](http://docs.streambase.com/sb72/index.jsp?topic=/com.streambase.sb.ide.help/data/html/admin/index.html)  
 [13] [StreamInsight: Planning and Architecture](http://msdn.microsoft.com/en-us/library/ee391397(v=sql.111).aspx)  
 [14] [StreamInsight: Resiliency](http://msdn.microsoft.com/en-in/library/hh290501.aspx)  
-[15] Oracle Complex Event Processing High Availability[16] StreamBase tuning tips[17] [Fincos – Benchmarking tool for CEP systems](https://code.google.com/p/fincos/)  
+[15] Oracle Complex Event Processing High Availability  
+[16] StreamBase tuning tips  
+[17] [Fincos – Benchmarking tool for CEP systems](https://code.google.com/p/fincos/)  
 [18] Mohd. Saboor, Rajesh Rengasamy, *Designing and Developing Complex Event Processing Applications*, Sapient Global Markets, August 2013.
