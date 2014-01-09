@@ -34,9 +34,11 @@ The *event sources* are responsible for producing or sending the events. The sou
 *Example*: Three consecutive high stock prices in the stock ticker
 3. *Direct filters* can be applied on the attributes of the event or on aggregated events.  
 *Example*: Event.CurrencyPair == EURUSD 
-Temporal windows and dimension windows could be started and stopped based on set conditions. Events within windows, known as “**tuples**,” are evicted based on an eviction policy. When all the tuples are evicted from the existing window before a new window is created,the window is called a tumbling window. Sometimes only the oldest tuple or tuples get evicted so that the window condition is met; this type of window is called a sliding window.
+*Temporal* windows and *dimension* windows could be started and stopped based on set conditions. Events within windows, known as “**tuples**,” are evicted based on an eviction policy. When all the tuples are evicted from the existing window before a new window is created,the window is called a *tumbling window*. Sometimes only the oldest tuple or tuples get evicted so that the window condition is met; this type of window is called a *sliding window*.
 
+To illustrate the **tumbling window** and **sliding window**, consider the following input stream:
 
+![]()
 
 ### References
 [1] [Complex Event Processing – 10 Design Patterns – Sybase](http://m.sybase.com/files/White_Papers/CEP-10-Design-Patterns-WP.pdf)  
