@@ -3,7 +3,7 @@ layout: post
 title: The Emergence of NoSQL 
 date: 2014-01-02
 categories: [computer science]
-tags: [NoSQL, big data]
+tags: [nosql, big data]
 
 ---
 

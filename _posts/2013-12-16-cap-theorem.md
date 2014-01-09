@@ -3,7 +3,7 @@ layout: post
 title: Understanding trade-offs with Brewer’s CAP theorem
 date: 2012-12-16 
 categories: [computer science]
-tags: [big data, data management, NoSQL]
+tags: [big data, data management, nosql]
 
 ---
 

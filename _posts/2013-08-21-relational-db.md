@@ -3,7 +3,7 @@ layout: post
 title: The Value of Relational Databases
 date: 2013-08-21
 categories: [computer science]
-tags: [big data, NoSQL]
+tags: [big data, nosql]
 
 ---
 ## The Value of Relational Databases
