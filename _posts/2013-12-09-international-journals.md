@@ -26,7 +26,8 @@ tags: [publications]
 
 ###International Conferences
 
-[1] **S. S. Kim**, C.L. Cho, Multiscreen-based Gaming Services using Multi-view Rendering with Different Resolutions, *MOBILITY 2012, The Second International Conference on Mobile Services, Resources, and Users*, 2012.[2] **S. S. Kim**, K. I. Kim, J.H. Won, Multi-view Rendering Approach for Cloud-based Gaming Services, *The Third International Conference on Advances in Future Internet 2011*, Aug. 2011. [**Best Paper Award**]  
+[1] **S. S. Kim**, C.L. Cho, Multiscreen-based Gaming Services using Multi-view Rendering with Different Resolutions, *MOBILITY 2012, The Second International Conference on Mobile Services, Resources, and Users*, 2012.  
+[2] **S. S. Kim**, K. I. Kim, J.H. Won, Multi-view Rendering Approach for Cloud-based Gaming Services, *The Third International Conference on Advances in Future Internet 2011*, Aug. 2011. [**Best Paper Award**]  
 [3] **S. S. Kim**, Y. M. Kang, J. H. Won, Realistic Woven Fabric Rendering using Deformed Microfacet Distribution Function, *ICCIT 2010*.  
 [4] **S. S. Kim**, Y.M. Kang, S.W. Nam, Procedural Approach for Realistic Woven Fabric Rendering, *EUROGRAPHICS 2010*. (Poster Paper)  
 [5] **S. S. Kim**, K. H. Kim, S. K. Jang, J. M. Lim, K. Y. Wohn, Geo-spatial Hypermedia based on Augmented Reality, *WSCG 2010 (18th International Conference on Computer Graphics, Visualization and Computer Vision 2010)*, Feb. 2010.  
