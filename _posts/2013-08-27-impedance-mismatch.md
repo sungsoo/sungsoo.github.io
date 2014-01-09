@@ -3,7 +3,7 @@ layout: post
 title: Impedance Mismatch
 date: 2013-08-21
 categories: [computer science]
-tags: [big data, data management, NoSQL]
+tags: [big data, data management, nosql]
 
 ---
 ##  Impedance Mismatch: 객체-관계 불일치
