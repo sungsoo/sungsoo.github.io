@@ -38,7 +38,36 @@ The *event sources* are responsible for producing or sending the events. The sou
 
 To illustrate the **tumbling window** and **sliding window**, consider the following input stream:
 
-![]()
+![](http://sungsoo.github.com/images/input-stream.png)
+
+In this stream, each box represents a new event. The order of the events is strictly increasing by time. Applying a *dimension* of 3 and specifying a *tumbling window* will result in the events being grouped as follows:
+
+![](http://sungsoo.github.com/images/stream-group.png)
+
+Each alternate color indicates a **new window**. No events are repeated in the next window. Applying the same dimension of 3, if the window is specified as a *sliding window*, the events will be grouped as follows:
+
+![](http://sungsoo.github.com/images/sliding-window.png)
+
+Here, too, the alternate color indicates a **new window**. However, as the new event comes in, the old event is *evicted* to retain the number of events to the specified dimension of 3.
+
+
+*Direct filters* based on **predicate expressions** over event attributes are another important way of *partitioning* events. Typically, high-volume, no-value or low-value events should be filtered out so that the residues of low-volume, high-value events are subjected to further processing. 
+
+For example, if the interest is only onhow the Euro fares against the USD, the filter would eliminate all other currency pairs. The remaining stream would contain only events with EURUSD as the currency pair.
+Note that all of the above could happen on one stream or on multiple streams from multiple event sources.
+#### Computing AggregatesAs events are *correlated*, *aggregates* should be calculated for further computation or filtering.To calculate an **aggregate**, events should be grouped into a *set*. Grouping events can be achieved through *window partitioning techniques* as discussed above.
+Aggregates can be calculated on any type of window—including *temporal*, *dimension*, *tumbling* or *sliding* windows.
+For example, consider the following stream of events:
+![](http://sungsoo.github.com/images/input-stream.png)
+Assuming the number in the box indicates the *event weight*, to calculate an average weight for 3 events, the first step would be to partition the window based on the dimension (count = 3).
+If the window is a *tumbling window*, the average for each window would be calculated as follows:![](http://sungsoo.github.com/images/tumbling-window.png)If the window is specified as a *sliding window*, the aggregate value and the window would be as follows:
+
+![](http://sungsoo.github.com/images/window-average.png)Most CEP platforms have simple, built-in aggregate functions, such as sum(), avg(), min(), max(), count().
+Some platforms allow running *statistical* calculations— such as stddev(), median(), variance()—and support retrieving values from the window—such as first(), last(), firstn(), lastn()—for writing aggregate expressions on the window.
+These platforms also offer extension points so that *user-defined aggregate functions* can be written in an external language, such as Java, C++ or C#, and called for *calculating the aggregate*.
+Care should be exercised when writing a custom or a user-defined aggregate function; performance of the function could be a key factor. Proper impact analysis and testing should be carried out to check if this would constrain the event-processing pipeline.
+As each event arrives, it participates in the *aggregate expression*. The state of the event stream is remembered in further computations—that is, the events within a window that participated in the previous computation will not be used on the next computations.
+Thus, the aggregate values computed can be emitted when the window is closed or when the tuples are emitted. The emission of the aggregate value is periodic and calculated within the *working set*.
 
 ### References
 [1] [Complex Event Processing – 10 Design Patterns – Sybase](http://m.sybase.com/files/White_Papers/CEP-10-Design-Patterns-WP.pdf)  
