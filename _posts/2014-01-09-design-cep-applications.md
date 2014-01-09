@@ -73,7 +73,7 @@ For example, if the interest is only onhow the Euro fares against the USD, the 
 [1] [Complex Event Processing – 10 Design Patterns – Sybase](http://m.sybase.com/files/White_Papers/CEP-10-Design-Patterns-WP.pdf)  
 [2] [Big Data vs Event Processing – The TIBCO Blog](http://www.tibco.com/blog/2012/01/26/big-data-vs-event-processing/)  
 [3] [Understanding Scalability – Oracle CEP Guide](http://docs.oracle.com/cd/E14571_01/doc.1111/e14301/scalunder.htm)  
-[4] [The Forrester WaveTM: Complex Event Processing (CEP) Platforms](http://www.reinsa.co.cr/2009wave_complex_event_processing_cep_platforms_q3.pdf), Q3 2009.
+[4] [The Forrester WaveTM: Complex Event Processing (CEP) Platforms](http://www.reinsa.co.cr/2009wave_complex_event_processing_cep_platforms_q3.pdf), Q3 2009.  
 [5] [Storm & Esper](http://tomdzk.wordpress.com/2011/09/28/storm-esper/)  
 [6] [The Esper CEP Ecosystem](http://blog.octo.com/en/the-esper-cep-ecosystem/)  
 [7] *Enterprise Integration Patterns*: Designing, Building, and Deploying Messaging Solutions- Gregor Hohpe,Bobby Wool; Addison-Wesley Professional.    
