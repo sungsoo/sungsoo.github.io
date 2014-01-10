@@ -16,12 +16,12 @@ As addressed in [Part 1](http://sungsoo.github.io/2014/01/10/compressor-efficien
 
 As noted in this table, enthalpy and entropy are a function of the gas pressure and temperature. Based on the information provided in the property tables for specific temperatures and pressures, the enthalpy and entropy at any pressure or temperature within the table range may be calculate. 
 
-![](http://sungsoo.github.com/images/r134a.jpg)
+![](http://sungsoo.github.com/images/entropy-table.jpg)
 
 
 For example, in one recent application, the values from the thermodynamic table that span a **temperature range** of **-10 degF to 200 degF** and a **pressure range** of **10psia to 200psia** were entered as array parameters in a DeltaV module. Calculation blocks were then created that utilize the thermodynamic property arrays to calculate enthalpy and entropy using bilinear interpolation based on the pressure and temperature provided as block inputs as illustrated below.
 
-![](http://sungsoo.github.com/images/iso_entropy.jpg)
+![](http://sungsoo.github.com/images/enthalpy-entropy-calculation.jpg)
 
 The calculation of isentropic enthalpy used in the efficiency calculation will be addressed in part 3 of this series.
 
