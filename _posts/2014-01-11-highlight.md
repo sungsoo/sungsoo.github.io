@@ -7,7 +7,7 @@ tags: [markdown, github page]
 
 ---
 
-# Highlight.js
+## Highlight.js
 
 Highlight.js highlights syntax in code examples on blogs, forums and,
 in fact, on any web page. It's very easy to use because it works
