@@ -28,6 +28,7 @@ The dynamic compression efficiency is calculated based these pressure and temper
 * \\(h(p_1\cdot t_1)\\) denotes enthalpy at suction pressure \\( p_1\\) and temperature \\( t_1\\), 
 * \\( s_1\\) means the entropy a suction pressure \\( p_1\\) and temperature \\( t_1\\).
 
+![](http://sungsoo.github.com/images/efficiency-equation.jpg)
 
 It is estimated that there are over **80,000 centrifugal chillers** in operation in North America. Thus, in the upcoming series of blogs on Centrifugal Compressor Efficiency will focus on the dynamic compression efficiency of a centrifugal compressor used in a plant for refrigeration. This efficiency calculation may be implement using common tools in a DCS and put on-line within the control system. By making on-line compressor efficiency available to the plant operator as a continuously calculated value, the operator can better assess the impact of operation changes on the compressor efficiency and use this knowledge to improve plant operations.
 
