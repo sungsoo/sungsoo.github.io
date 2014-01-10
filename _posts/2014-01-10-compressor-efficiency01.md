@@ -19,7 +19,13 @@ Centrifugal Compressor Efficiency
 
 The dynamic compression efficiency is calculated based these pressure and temperature measurements as shown below:
 
-\\( Efficiency = 100 * \frac{h(p_2\cdot s_1) - h(p_1\cdot t_1)}{h(p_2\cdot t_2) - h(p_1\cdot t_1)} \\)
+
+Here are my formulas
+<div lang="latex">
+Efficiency = 100 * \frac{h(p_2\cdot s_1) - h(p_1\cdot t_1)}{h(p_2\cdot t_2) - h(p_1\cdot t_1)} 
+</div>
+
+\\(Efficiency = 100 * \frac{h(p_2\cdot s_1) - h(p_1\cdot t_1)}{h(p_2\cdot t_2) - h(p_1\cdot t_1)}  \\)
 
 , where:
 
