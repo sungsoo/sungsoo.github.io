@@ -19,20 +19,15 @@ Centrifugal Compressor Efficiency
 
 The dynamic compression efficiency is calculated based these pressure and temperature measurements as shown below:
 
-
-Here are my formulas
-<div lang="latex">
-Efficiency = 100 * \frac{h(p_2\cdot s_1) - h(p_1\cdot t_1)}{h(p_2\cdot t_2) - h(p_1\cdot t_1)} 
-</div>
-
-\\(Efficiency = 100 * \frac{h(p_2\cdot s_1) - h(p_1\cdot t_1)}{h(p_2\cdot t_2) - h(p_1\cdot t_1)}  \\)
+<img src="http://www.sciweavers.org/tex2img.php?eq=Efficiency%20%3D%20100%20%2A%20%5Cfrac%7Bh%28p_2%5Ccdot%20s_1%29%20-%20h%28p_1%5Ccdot%20t_1%29%7D%7Bh%28p_2%5Ccdot%20t_2%29%20-%20h%28p_1%5Ccdot%20t_1%29%7D&bc=White&fc=Black&im=png&fs=12&ff=fourier&edit=0" align="center" border="0" alt="Efficiency = 100 * \frac{h(p_2\cdot s_1) - h(p_1\cdot t_1)}{h(p_2\cdot t_2) - h(p_1\cdot t_1)}" width="281" height="40" />
 
 , where:
 
-* \\(h(p_2\cdot s_1)\\) denotes isentropic enthalpy for suction entropy \\( s_1\\), 
-* \\(h(p_2\cdot t_2)\\) denotes enthalpy at discharge pressure \\( p_2\\) and temperature \\( t_2\\), 
-* \\(h(p_1\cdot t_1)\\) denotes enthalpy at suction pressure \\( p_1\\) and temperature \\( t_1\\), 
-* \\( s_1\\) means the entropy a suction pressure \\( p_1\\) and temperature \\( t_1\\).
+* <img src="http://www.sciweavers.org/tex2img.php?eq=h%28p_2%5Ccdot%20s_1%29&bc=White&fc=Black&im=png&fs=12&ff=fourier&edit=0" align="center" border="0" alt="h(p_2\cdot s_1)" width="63" height="18" /> denotes isentropic enthalpy for suction entropy <img src="http://www.sciweavers.org/tex2img.php?eq=s_1&bc=White&fc=Black&im=png&fs=12&ff=fourier&edit=0" align="center" border="0" alt="s_1" width="17" height="13" />,
+
+* <img src="http://www.sciweavers.org/tex2img.php?eq=h%28p_2%5Ccdot%20t_2%29&bc=White&fc=Black&im=png&fs=12&ff=fourier&edit=0" align="center" border="0" alt="h(p_2\cdot t_2)" width="61" height="18" /> denotes enthalpy at discharge pressure <img src="http://www.sciweavers.org/tex2img.php?eq=p_2&bc=White&fc=Black&im=png&fs=12&ff=fourier&edit=0" align="center" border="0" alt="p_2" width="21" height="14" /> and temperature <img src="http://www.sciweavers.org/tex2img.php?eq=t_2&bc=White&fc=Black&im=png&fs=12&ff=fourier&edit=0" align="center" border="0" alt="t_2" width="14" height="15" />, 
+* <img src="http://www.sciweavers.org/tex2img.php?eq=h%28p_1%5Ccdot%20t_1%29&bc=White&fc=Black&im=png&fs=12&ff=fourier&edit=0" align="center" border="0" alt="h(p_1\cdot t_1)" width="61" height="18" /> denotes enthalpy at suction pressure <img src="http://www.sciweavers.org/tex2img.php?eq=p_1&bc=White&fc=Black&im=png&fs=12&ff=fourier&edit=0" align="center" border="0" alt="p_1" width="21" height="14" /> and temperature <img src="http://www.sciweavers.org/tex2img.php?eq=t_1&bc=White&fc=Black&im=png&fs=12&ff=fourier&edit=0" align="center" border="0" alt="t_1" width="14" height="15" />, 
+* <img src="http://www.sciweavers.org/tex2img.php?eq=s_1&bc=White&fc=Black&im=png&fs=12&ff=fourier&edit=0" align="center" border="0" alt="s_1" width="17" height="13" /> means the entropy a suction pressure <img src="http://www.sciweavers.org/tex2img.php?eq=p_1&bc=White&fc=Black&im=png&fs=12&ff=fourier&edit=0" align="center" border="0" alt="p_1" width="21" height="14" /> and temperature <img src="http://www.sciweavers.org/tex2img.php?eq=t_1&bc=White&fc=Black&im=png&fs=12&ff=fourier&edit=0" align="center" border="0" alt="t_1" width="14" height="15" />.
 
 ![](http://sungsoo.github.com/images/efficiency-equation.jpg)
 
