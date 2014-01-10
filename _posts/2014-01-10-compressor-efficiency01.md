@@ -35,4 +35,4 @@ It is estimated that there are over **80,000 centrifugal chillers** in operation
 References
 --
 
-[1] [Centrifugal Compressor Efficiency - Part 1](http://modelingandcontrol.com/2012/01/centrifugal-compressor-efficiency-–-part-1/), Modeling and Control Dynamic World of Process Control, 2012.
+[1] [Centrifugal Compressor Efficiency - Part 1](http://modelingandcontrol.com/2012/01/centrifugal-compressor-efficiency-–-part-1/), *Modeling and Control Dynamic World of Process Control*, 2012.
