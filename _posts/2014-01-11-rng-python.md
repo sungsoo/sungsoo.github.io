@@ -17,6 +17,8 @@ Histogram of some random variates
 ---
 We can produce the histogram above, showing 50 real-number random variates between 0 and 1.
 
+![](http://sungsoo.github.com/images/real-random.png)
+
 ```python
 import pylab
 
@@ -60,6 +62,11 @@ We can now try building a very simple simulation. We'll first simulate throwing 
 
 Here's the histogram for the single-die case:
 
+![](http://sungsoo.github.com/images/single-die.png)
+
+And now for the two-dice case:
+
+![](http://sungsoo.github.com/images/two-dice.png)
 
 ```python
 import pylab
