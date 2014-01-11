@@ -137,10 +137,16 @@ Conclusion
 
 현재 국내에서 사용되고 있는 공정모사기는 Simulation Science사의 PRO/II with PROVISION, Aspen Technology 사의 ASPENPLUS, Hyprotech사의 HYSYS와Chemstations사의 CHEMCAD등을 들수 있다. 이들 모사기에 따라서 각각 강점을 보이는 분야가 있을 수 있으나 공정모사기의 구조상 순수성분의 물성치 데이터베이스와 열역학 모델식 및 각 열역학 모델식의 이성분계 상호작용 매개변수를 얼마나 많이 내장하고 있는가와 또는 얼마나 많은 단위조작 모 델들을 보유하고 있는가가 모사기의 성능을 좌우할 것이다. 필자는 여기에서 각각의 공정모사기의 성능을 비교할 의도 는 전혀 없다. 다만 열역학을 전공하고 공부하고 있는 입장에서 공정모사기를 바라본다면 이러한 결론을 내릴 수 있 다. 동일한 공정을 두사람의 각기 다른 엔지니어에게 모사를 의뢰했을때 만일 두사람의 설계엔지니어가 동일한 공정모사기를 사용했다 하더라도 서로 다른 열역학 모델식을 사용했다면 두 사람의 모사 결과는 달라질 것이다. 이 경우 두 사람중 한사람은 잘못된 결과를냈거나 아니면 두 사람 모두가 틀린 결과를 낼 가능성이있다. 각 엔지니어의 모사 결과에 대한 검증은 주어진 공정에 포함되어 있는 성분들이 무엇인가와 공정의 운전 온도와 압력 조건에 어떻게 되는가에 따라서 선정되는 열역학 모델식의 부류가 달라질 것이고, 올바른 모델식을 선정한 이후에는 주요한 Key binary 성분들 간에 이성분계 상호작용 매개변수가 모사기의 데이터베이스에 내장되어 있는지를 확인해야 할 것 이다. 따라서 열역학적 지식이 충분한 엔지니어라면 중요한 것은 어떠한 공정모사기를 사용해서 주어진 공정을 모사했나 보다는 **어떠한 열역학 모델식을 선정했는가**가 더 중요한 인자가 될 것이다. 왜냐하면 올바른 열역학 모델식과 모델식의 이성분계 상호작용 매개변수를 사용했다면 다른 종류의 모사기를 사용했다 하더라도 거의 동일한 모사결과를 낼 것이기 때문이다.
 
-Tutorial ASPEN Plus
+Tutorial of ASPEN Plus
 ---
 
 <iframe width="600" height="400" src="//www.youtube.com/embed/IdXbR_5KaY4" frameborder="0" allowfullscreen></iframe>
+
+Tutorial of PRO/II with PROVISION
+---
+
+<iframe width="560" height="315" src="//www.youtube.com/embed/Ow57iochOPQ" frameborder="0" allowfullscreen></iframe>
+
 
 References
 --
