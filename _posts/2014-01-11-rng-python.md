@@ -116,6 +116,11 @@ pylab.savefig('twoDice.png')
 pylab.show()
 ```
 
+Pydev Eclipse Plugin Installation
+--
+* URL: http://pydev.org/updates
+
+
 References
 ---
 [1] Python Programming, 
