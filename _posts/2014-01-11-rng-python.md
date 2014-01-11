@@ -17,7 +17,7 @@ Histogram of some random variates
 ---
 We can produce the histogram above, showing 50 real-number random variates between 0 and 1.
 
-```
+```python
 import pylab
 
 import random
