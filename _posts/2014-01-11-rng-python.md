@@ -21,7 +21,6 @@ We can produce the histogram above, showing 50 real-number random variates betwe
 
 ```python
 import pylab
-
 import random
 
 sampleSize = 50  ## Try making this value bigger
