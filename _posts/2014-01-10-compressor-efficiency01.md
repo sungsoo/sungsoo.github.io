@@ -19,7 +19,7 @@ Centrifugal Compressor Efficiency
 
 The dynamic compression efficiency is calculated based these pressure and temperature measurements as shown below:
 
-![](http://sungsoo.github.com/images/eqn.jpg)
+![](http://sungsoo.github.com/images/eqn.png)
 
 , where:
 
