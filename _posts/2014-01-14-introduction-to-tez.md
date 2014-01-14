@@ -48,6 +48,25 @@ When will it be available?
 We plan to donate the code from our internal repository to the ASF as part of the Incubator proposal.  Also, Hortonworks will ship Tez in the next alpha release of **Hortonworks Data Platform 2** (HDP2), based on Apache Hadoop 2.0, very soon to showcase some of the very exciting advances we have made for Apache Hive via Project Stinger.
 
 
+Apache Tez
+--
+
+**Apache Tez** is a *generic data-processing pipeline engine* envisioned as a low-level engine for higher abstractions
+such as Apache Hadoop Map-Reduce, Apache Pig, Apache Hive etc.
+
+At it's heart, tez is very simple and has just two components:
+
+*   The **data-processing pipeline engine** where-in one can plug-in input, processing and output implementations to 
+    perform arbitrary data-processing. Every 'task' in tez has the following:
+	- Input to consume key/value pairs from.
+	- Processor to process them.
+	- Output to collect the processed key/value pairs.
+
+
+
+*  A master for the **data-processing application**, where-by one can put together arbitrary data-processing 'tasks'described above into a task-DAG to process data as desired. 
+   The generic master is implemented as a Apache Hadoop YARN ApplicationMaster.
+
 
 References
 --
