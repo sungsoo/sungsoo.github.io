@@ -73,4 +73,4 @@ In the next posts in this series, we’ll dive further into the **DAG execution*
 
 References
 --
-[1] [Apache Tez: A New Chapter in Hadoop Data Processing](http://hortonworks.com/blog/apache-tez-a-new-chapter-in-hadoop-data-processing/)
+[1] Bikas Saha,[*Apache Tez: A New Chapter in Hadoop Data Processing*](http://hortonworks.com/blog/apache-tez-a-new-chapter-in-hadoop-data-processing/), Hortonworks, September 10th, 2013.
