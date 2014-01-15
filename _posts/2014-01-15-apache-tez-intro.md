@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Apache Tez: A New Chapter in Hadoop Data Processing
+title: Apache Tez A New Chapter in Hadoop Data Processing
 date: 2014-01-15 
 categories: [computer science]
 tags: [hadoop, mapreduce, tez]
