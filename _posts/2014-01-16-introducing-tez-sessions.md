@@ -54,7 +54,7 @@ Performance Benefits of using Tez Sessions
 Example Usage of a Tez Session
 --
 
-The Tez source code has a simple **OrderedWordCount** example. This DAG is similar to the **WordCount** example in **MapReduce** except that it also orders the words based on their frequency of occurrence in the dataset. The DAG is an **MRR chain** i.e. a *3-vertex linear chain* of **Map-Reduce-Reduce**.
+The Tez source code has a [simple **OrderedWordCount** example](https://git-wip-us.apache.org/repos/asf?p=incubator-tez.git;a=blob_plain;f=tez-mapreduce-examples/src/main/java/org/apache/tez/mapreduce/examples/OrderedWordCount.java;hb=master). This DAG is similar to the **WordCount** example in **MapReduce** except that it also orders the words based on their frequency of occurrence in the dataset. The DAG is an **MRR chain** i.e. a *3-vertex linear chain* of **Map-Reduce-Reduce**.
 
 To run the **OrderedWordCount** example to process different data-sets via a single Tez Session, use:
 
