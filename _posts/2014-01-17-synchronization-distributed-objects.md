@@ -6,6 +6,12 @@ categories: [computer science]
 tags: [papers, research]
 
 ---
+
+What is a Distributed System?
+--
+
+A distributed system is a collection of *autonomous hosts* that that are connected through a computer network. Each host executes components and operates a distribution middleware, which enables the components to coordinate their activities in such a way that users perceive the system as a single, integrated computing facility.
+
 Principles of Object-Oriented Middleware
 --
 
