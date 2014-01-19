@@ -7,7 +7,8 @@ tags: [algorithms, data structures]
 
 ---
 
-#### Version diagrams. 
+Version Diagrams 
+---
 Gray means version is *read only* and blue means version is *read-write*.
 
 ![](http://sungsoo.github.com/images/partial.png)
@@ -33,9 +34,9 @@ When we have modified a node enough, we create a new node to take all
 further updates until it also fills.
 
 For every node in our old data structure, the new data structure will
-have a collection of nodes: one current with the latest versions and
-potentially many old ones used only for reading the old versions. Every
-time we ‘archive’ a node we will also update all (versioned) pointers to
+have a collection of nodes: one current with the *latest versions* and
+potentially many old ones used *only for reading* the old versions. Every
+time we ‘*archive*’ a node we will also update all (versioned) pointers to
 to instead refer to the latest node.
 
 Proof:
@@ -46,12 +47,12 @@ We extend our data nodes to contain the following information:
 1.  a read only area for data and pointers (corresponding to those in
     the original structure)
 
-2.  (new) a writeable area for back pointers. Node *x* has one
+2.  (**new**) a writeable area for back pointers. Node *x* has one
     backpointer to a node *y* if *y* has a pointer to *x*. This area has
     limited size, since we know ahead of time there are at most *p*
     pointers to our node.
 
-3.  (new) a writable modifications (‘mods’) area for entries of the form
+3.  (**new**) a writable modifications (‘*mods*’) area for entries of the form
     `(field, version, value)`. The size of this area also needs to be
     fixed, and it also has important consequences for write performance.
 
