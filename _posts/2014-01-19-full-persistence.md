@@ -85,8 +85,7 @@ version back-pointers.
 
 2.  **write(n.field, value, version)**: If there
     is space in node, just add mod entry. else:
-
-    -   **m = new Node()**. Split the contents of node *n*’s mod
+	- **m = new Node()**. Split the contents of node *n*’s mod
         log into *two* parts following the diagram
         figure [version-split]. Partitioning into subtrees rather than
         arbitrarily is required.
@@ -95,14 +94,14 @@ version back-pointers.
         Figure [version-split], and node *n* retains the ‘older’ half of
         the updates.
 
-    -   from the ‘old’ mod entries in node *n*, compute the latest
+	- from the ‘old’ mod entries in node *n*, compute the latest
         values of each field and write them into the data and back
         pointer section of node *m*.
 
-    -   recursively update all (up to) *d + p + (d + p + 1)* forward and
+	- recursively update all (up to) *d + p + (d + p + 1)* forward and
         backward pointers of neighbors.
 
-    -   insert new version to our version tree representation.
+	- insert new version to our version tree representation.
 
 ![](http://sungsoo.github.com/images/VersionSplitting.png)
 
