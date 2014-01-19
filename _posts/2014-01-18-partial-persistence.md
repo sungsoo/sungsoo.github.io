@@ -23,23 +23,23 @@ Three methods on *balanced binary search tree*.
 
 Fat Node
 ---
-Fat node method is to record all changes made to node fields in the nodes themselves, without erasing old values of the fields. This requires that we allow nodes to become arbitrarily “fat”. In other words, each fat node contains the same information and pointer fields as an ephemeral node, along with space for an arbitrary number of extra field values. Each extra field value has an associated field name and a version stamp which indicates the version in which the named field was changed to have the specified value. Besides, each fat node has its own version stamp, indicating the version in which the node was created. The only purpose of nodes having version stamps is to make sure that each node only contains one value per field name per version. In order to navigate through the structure, each original field value in a node has a version stamp of zero.
+Fat node method is to record all changes made to node fields in the nodes themselves, without erasing old values of the fields. This requires that we allow nodes to become arbitrarily “*fat*”. In other words, each fat node contains the same information and pointer fields as an ephemeral node, along with space for an arbitrary number of extra field values. Each extra field value has an associated field name and a version stamp which indicates the version in which the named field was changed to have the specified value. Besides, each fat node has its own version stamp, indicating the version in which the node was created. The only purpose of nodes having version stamps is to make sure that each node only contains one value per field name per version. In order to navigate through the structure, each original field value in a node has a version stamp of zero.
 
 #### Complexity of Fat Node 
-With using fat node method, it requires O(1) space for every modification: just store the new data. Each modification takes O(1) additional time to store the modification at the end of the modification history. This is an amortized time bound, assuming we store the modification history in a growable array. For access time, we must find the right version at each node as we traverse the structure. If we made m modifications, then each access operation has O(log m) slowdown resulting from the cost of finding the nearest modification in the array.
+With using fat node method, it requires **O(1)** space for every modification: just store the new data. Each modification takes **O(1)** additional time to store the modification at the end of the modification history. This is an amortized time bound, assuming we store the modification history in a growable array. For access time, we must find the right version at each node as we traverse the structure. If we made m modifications, then each access operation has **O(log m)** slowdown resulting from the cost of finding the nearest modification in the array.
 
 Path Coying
 ---
 Path copy is to make a copy of all nodes on the path which contains the node we are about to insert or delete. Then we must cascade the change back through the data structure: all nodes that pointed to the old node must be modified to point to the new node instead. These modifications cause more cascading changes, and so on, until we reach to the root. We maintain an array of roots indexed by timestamp. The data structure pointed to by time t’s root is exactly time t’s date structure.
 
 #### Complexity of Path Coying
-With m modifications, this costs O(log m) additive lookup time. Modification time and space are bounded by the size of the structure, since a single modification may cause the entire structure to be copied. That is O(m) for one update, and thus O(n²) preprocessing time.
+With m modifications, this costs **O(log m)** additive lookup time. Modification time and space are bounded by the size of the structure, since a single modification may cause the entire structure to be copied. That is O(m) for one update, and thus **O(n²)** preprocessing time.
 
 
  
 A Combination
 ---
-Sleator, Tarjan et al. came up with a way to combine the advantages of fat nodes and path copying, getting O(1) access slowdown and O(1) modification space and time.
+Sleator, Tarjan et al. came up with a way to combine the advantages of fat nodes and path copying, getting **O(1)** access slowdown and **O(1)** modification space and time.
 
 In each node, we store one modification box. This box can hold one modification to the node—either a modification to one of the pointers, or to the node’s key, or to some other piece of node-specific data—and a timestamp for when that modification was applied. Initially, every node’s modification box is empty.
 
