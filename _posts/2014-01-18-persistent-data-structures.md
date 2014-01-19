@@ -480,7 +480,8 @@ machine?
 
 <span>**OPEN:**</span> Array with cut and paste? Special DAGs?
 
-<span>77</span>
+References
+--
 
 Gerth Stølting Brodal: *Partially Persistent Data Structures of Bounded
 Degree with Constant Update Time*. Nord. J. Comput. 3(3): 238-255 (1996)
