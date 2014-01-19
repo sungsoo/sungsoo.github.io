@@ -14,8 +14,7 @@ Gray means version is *read only* and blue means version is *read-write*.
 ![](http://sungsoo.github.com/images/fullpersistence.png)
 
 Full persistence
-================
-
+---
 The construction for partial persistence can be expanded to implement
 full persistence. This result is also due to @dsst. We again assume a
 pointer machine with ***p <  O(1)*** incoming pointers per node.
