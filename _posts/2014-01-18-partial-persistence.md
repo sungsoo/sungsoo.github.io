@@ -184,7 +184,7 @@ Analysis:
     *-2cp* cancels out the extra cost from the recursion leaving only
     the *2c* cost. Hence cost is *O(1)* amortized. The recursion process
     is guaranteed to finish despite potential cycles in the graph,
-    because splits decrease ![](http://sungsoo.github.com/images/eqn_phi.png) and ![](http://sungsoo.github.com/images/eqn_phi.png) is non-negative.
+    because splits decrease ϕ and ϕ is non-negative.
 
     Further study by Brodal @brodal has shown actual cost to also be
     *O(1)* in the worst case.
