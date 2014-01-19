@@ -11,6 +11,7 @@ Version Diagrams
 ---
 Gray means version is *read only* and blue means version is *read-write*.
 
+#### Figure 1. Full Persistence 
 ![](http://sungsoo.github.com/images/fullpersistence.png)
 
 Full persistence
@@ -43,7 +44,8 @@ the tree, and we can directly answer queries about the tree using that
 encoded representation. For example we know *c* is nested within *b*,
 since *bb < bc* and *ec < eb*.
 
-![](http://sungsoo.github.com/images/TreeTraversal.png)
+#### Figure 2. in-order tree traversal 
+![version-split](http://sungsoo.github.com/images/TreeTraversal.png)
 
 
 This linearized representation can be implemented using an ‘order
@@ -87,22 +89,19 @@ version back-pointers.
     is space in node, just add mod entry. else:
 	- **m = new Node()**. Split the contents of node *n*’s mod
         log into *two* parts following the diagram
-        figure [version-split]. Partitioning into subtrees rather than
+        figure 3. Partitioning into subtrees rather than
         arbitrarily is required.
-
-        Now node *m* has some of the mods of the internal tree in
-        Figure [version-split], and node *n* retains the ‘older’ half of
+	- Now node *m* has some of the mods of the internal tree in
+        Figure 3, and node *n* retains the ‘older’ half of
         the updates.
-
 	- from the ‘old’ mod entries in node *n*, compute the latest
         values of each field and write them into the data and back
         pointer section of node *m*.
-
 	- recursively update all (up to) *d + p + (d + p + 1)* forward and
         backward pointers of neighbors.
-
 	- insert new version to our version tree representation.
 
+#### Figure 3. Splitting a tree-shaped version genealogy into two subtrees 
 ![](http://sungsoo.github.com/images/VersionSplitting.png)
 
 
@@ -121,9 +120,7 @@ Analysis:
     Like with the partial case, writes are cheap when a node has space
     in its mods log and more expensive when nodes are full.
 
-    Consider ![](http://sungsoo.github.com/images/eqn-fp01.png), then when we split
-    ![](http://sungsoo.github.com/images/eqn-fp02.png) and when we do not
-    ![](http://sungsoo.github.com/images/eqn-fp03.png). Hence,
+    Consider *ϕ =-c*(# empty slots), then when we split *Δϕ=-2c(d+p+1)* and when we do not *Δϕ=c*. Hence,
     ![](http://sungsoo.github.com/images/eqn-fp04.png)
     for the worst possible choice of *x* from the neighbors. When we
     unfold the recursion once, we find the constants cancel out:

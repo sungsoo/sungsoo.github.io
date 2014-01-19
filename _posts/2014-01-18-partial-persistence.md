@@ -186,7 +186,7 @@ Analysis:
     is guaranteed to finish despite potential cycles in the graph,
     because splits decrease ϕ and ϕ is non-negative.
 
-    Further study by Brodal @brodal has shown actual cost to also be
+    Further study by Brodal [1] has shown actual cost to also be
     *O(1)* in the worst case.
 
 
