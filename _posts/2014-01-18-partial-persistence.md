@@ -98,14 +98,14 @@ structures like in the following figure.
 Analysis:
 ---------
 
--   Space:
+-   **Space**:
 
     If we choose the mod log to be bounded at size *2p* then node has
     size *d + p + 2p* which is also *O(1)* because we assumed there were
     only ![](http://sungsoo.github.com/images/eqnf1.png) pointers into any node. The reasons for choosing
     such a mod log size are clarified in the following cost analysis.
 
--   Time: A read is cheap, it requires constant time to check through a
+-   **Time**: A read is cheap, it requires constant time to check through a
     single node’s mod log and pick the required version. A write is also
     cheap if we have space in the mod log. If not, a write can be
     expensive. Let ![](http://sungsoo.github.com/images/eqn00.png) denote the cost of writing to node
@@ -152,48 +152,35 @@ References
 ---
 
 [1] Gerth Stolting Brodal: *Partially Persistent Data Structures of Bounded
-Degree with Constant Update Time*. Nord. J. Comput. 3(3): 238-255 (1996)
-
+Degree with Constant Update Time*. Nord. J. Comput. 3(3): 238-255 (1996)  
 [2] Erik D. Demaine, John Iacono, Stefan Langerman: *Retroactive data
-structures*. SODA 2004: 281-290
-
+structures*. SODA 2004: 281-290  
 [3] Erik D. Demaine, Stefan Langerman, and Eric Price: *Confluently
-Persistent Tries for Efficient Version Control*. Algorithmica (2008).
-
+Persistent Tries for Efficient Version Control*. Algorithmica (2008).  
 [4] Paul F. Dietz, Daniel Dominic Sleator: *Two Algorithms for Maintaining
-Order in a List* STOC 1987: 365-372
-
+Order in a List* STOC 1987: 365-372  
 [5] Paul F. Dietz: *Fully Persistent Arrays (Extended Array)*. WADS 1989:
-67-74
-
+67-74  
 [6] James R. Driscoll, Neil Sarnak, Daniel Dominic Sleator, Robert Endre
 Tarjan: *Making Data Structures Persistent*. J. Comput. Syst. Sci.
-38(1): 86-124 (1989)
-
+38(1): 86-124 (1989)  
 [7] Yoav Giora, Haim Kaplan: *Optimal dynamic vertical ray shooting in
 rectilinear planar subdivisions* ACM Transactions on Algorithms 5(3)
-(2009)
-
+(2009)  
 [8] Haim Kaplan, Chris Okasaki, Robert Endre Tarjan: *Simple Confluently
-Persistent Catenable Lists*. SIAM J. Comput. 30(3): 965-977 (2000)
-
+Persistent Catenable Lists*. SIAM J. Comput. 30(3): 965-977 (2000)  
 [9] Amos Fiat, Haim Kaplan: *Making data structures confluently persistent*.
-J. Algorithms 48(1): 16-58 (2003)
-
+J. Algorithms 48(1): 16-58 (2003)  
 [10] Chris Okasaki: *Purely Functional Data Structures*. New York: Cambridge
-University Press, 2003.
-
+University Press, 2003.  
 [11] Sebastien Collette, John Iacono, and Stefan Langerman. *Confluent
 Persistence Revisited.* In Symposium on Discrete Algorithms (SODA),
-pages 593-601, 2012.
-
+pages 593-601, 2012.  
 [12] T. H. Cormen and C. E. Leiserson and R. L. Rivest and C. Stein,
-*Introduction to Algorithms*. 3rd. Edition. The MIT Press, 2009.
-
+*Introduction to Algorithms*. 3rd. Edition. The MIT Press, 2009.  
 [13] Nicholas Pippenger. *Pure Versus Impure Lisp*. ACM Transactions on
 Programming Languages and Systems, Vol. 19, No. 2. (March 1997), pp.
-223-238.
-
+223-238.  
 [14] Gerth Stolting Brodal, Christos Makris, Kostas Tsichlas: *Purely
 Functional Worst Case Constant Time Catenable Sorted Lists.* ESA 2006:
 172-183
