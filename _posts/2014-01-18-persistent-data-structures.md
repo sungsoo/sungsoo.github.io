@@ -485,51 +485,51 @@ machine?
 <span>**OPEN:**</span> Array with cut and paste? Special DAGs?
 
 References
---
+---
 
-Gerth Stølting Brodal: *Partially Persistent Data Structures of Bounded
+[1] Gerth Stolting Brodal: *Partially Persistent Data Structures of Bounded
 Degree with Constant Update Time*. Nord. J. Comput. 3(3): 238-255 (1996)
 
-Erik D. Demaine, John Iacono, Stefan Langerman: *Retroactive data
+[2] Erik D. Demaine, John Iacono, Stefan Langerman: *Retroactive data
 structures*. SODA 2004: 281-290
 
-Erik D. Demaine, Stefan Langerman, and Eric Price: *Confluently
+[3] Erik D. Demaine, Stefan Langerman, and Eric Price: *Confluently
 Persistent Tries for Efficient Version Control*. Algorithmica (2008).
 
-Paul F. Dietz, Daniel Dominic Sleator: *Two Algorithms for Maintaining
+[4] Paul F. Dietz, Daniel Dominic Sleator: *Two Algorithms for Maintaining
 Order in a List* STOC 1987: 365-372
 
-Paul F. Dietz: *Fully Persistent Arrays (Extended Array)*. WADS 1989:
+[5] Paul F. Dietz: *Fully Persistent Arrays (Extended Array)*. WADS 1989:
 67-74
 
-James R. Driscoll, Neil Sarnak, Daniel Dominic Sleator, Robert Endre
+[6] James R. Driscoll, Neil Sarnak, Daniel Dominic Sleator, Robert Endre
 Tarjan: *Making Data Structures Persistent*. J. Comput. Syst. Sci.
 38(1): 86-124 (1989)
 
-Yoav Giora, Haim Kaplan: *Optimal dynamic vertical ray shooting in
+[7] Yoav Giora, Haim Kaplan: *Optimal dynamic vertical ray shooting in
 rectilinear planar subdivisions* ACM Transactions on Algorithms 5(3)
 (2009)
 
-Haim Kaplan, Chris Okasaki, Robert Endre Tarjan: *Simple Confluently
+[8] Haim Kaplan, Chris Okasaki, Robert Endre Tarjan: *Simple Confluently
 Persistent Catenable Lists*. SIAM J. Comput. 30(3): 965-977 (2000)
 
-Amos Fiat, Haim Kaplan: *Making data structures confluently persistent*.
+[9] Amos Fiat, Haim Kaplan: *Making data structures confluently persistent*.
 J. Algorithms 48(1): 16-58 (2003)
 
-Chris Okasaki: *Purely Functional Data Structures*. New York: Cambridge
+[10] Chris Okasaki: *Purely Functional Data Structures*. New York: Cambridge
 University Press, 2003.
 
-Sebastien Collette, John Iacono, and Stefan Langerman. *Confluent
+[11] Sebastien Collette, John Iacono, and Stefan Langerman. *Confluent
 Persistence Revisited.* In Symposium on Discrete Algorithms (SODA),
 pages 593-601, 2012.
 
-T. H. Cormen and C. E. Leiserson and R. L. Rivest and C. Stein,
+[12] T. H. Cormen and C. E. Leiserson and R. L. Rivest and C. Stein,
 *Introduction to Algorithms*. 3rd. Edition. The MIT Press, 2009.
 
-Nicholas Pippenger. *Pure Versus Impure Lisp*. ACM Transactions on
+[13] Nicholas Pippenger. *Pure Versus Impure Lisp*. ACM Transactions on
 Programming Languages and Systems, Vol. 19, No. 2. (March 1997), pp.
 223-238.
 
-Gerth Stølting Brodal, Christos Makris, Kostas Tsichlas: *Purely
+[14] Gerth Stolting Brodal, Christos Makris, Kostas Tsichlas: *Purely
 Functional Worst Case Constant Time Catenable Sorted Lists.* ESA 2006:
 172-183
