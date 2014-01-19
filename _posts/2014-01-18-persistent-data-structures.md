@@ -200,9 +200,18 @@ We implement read and write operations as follows:
         <span>write(x.p, n’)</span> recursively (at most p recursive
         calls).
 
-\
-\
- [fig:partial-persistent]
+### Constructing a partially persistent structure from an ephemeral one
+
+(a) Ephemeral linked structure. It has one data field and one pointer field  
+![](http://sungsoo.github.com/images/3NodesDiagram1.png)
+
+(b) The structure in 2a partially persistent. Showing one update: write(root.ptr.val = 20)  
+![](http://sungsoo.github.com/images/3NodesDiagram2.png)
+
+(c) The structure in 2b after a second update: write(root.ptr.val = 200). Gray indicates the data node is read only  
+![](http://sungsoo.github.com/images/3NodesDiagram3.png)
+ 
+
 
 For some data structures such as lists or trees we often know what $p$
 is ahead of time, so we can implement the algorithm for these specific
