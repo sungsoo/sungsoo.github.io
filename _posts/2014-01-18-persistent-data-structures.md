@@ -119,13 +119,14 @@ persistence if we restrict ourselves to not use combinators. And full
 persistence becomes partial when we restrict ourselves to only write to
 the latest version.
 
-The diagrams in [fig:version-diagrams] show what the version
-‘genealogies’ can look like for each definition.
+The diagrams in the following figures show what the version
+‘*genealogies*’ can look like for each definition.
 
-#### 
-\
+#### Version diagrams. 
+Gray means version is read only and blue means version is read-write.
 
-[fig:version-diagrams]
+##### Patial Persistence ![](http://sungsoo.github.com/images/partial.png)
+##### Full Persistence ![](http://sungsoo.github.com/images/fullpersistence.png)##### Confluent/Functional Persistence ![](http://sungsoo.github.com/images/confluent.png) 
 
 Partial persistence
 ===================
