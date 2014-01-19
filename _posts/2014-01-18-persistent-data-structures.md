@@ -10,21 +10,21 @@ tags: [algorithms, data structures]
 Overview
 ========
 
-In this article, we cover results on persistent data structures,
+In this article, we cover results on *persistent data structures*,
 which are data structures where we keep all information about past
 states. Persistent data structures are part of the larger class of
-temporal data structures. The other kind of temporal data structures,
+*temporal* data structures. The other kind of temporal data structures,
 retroactive data structures, are the topic of [lecture
 2](http://courses.csail.mit.edu/6.851/spring12/lectures/L08.html).
 
 Usually we deal with data structure updates by mutating something in the
 existing data structure: either its data or the pointers that organize
 it. In the process we lose information previous data structures states.
-Persistent data structures do not lose any information.
+*Persistent data structures do not lose any information*.
 
 For several cases of data structures and definitions of persistence it
 is possible to transform a plain data structure into a persistent one
-with asymptotically minimal extra work or space overhead.
+with asymptotically minimal *extra work* or *space overhead*.
 
 A recurring theme in this area is that the model is crucial to the
 results.
@@ -122,6 +122,7 @@ the latest version.
 The diagrams in [fig:version-diagrams] show what the version
 ‘genealogies’ can look like for each definition.
 
+#### 
 \
 
 [fig:version-diagrams]
