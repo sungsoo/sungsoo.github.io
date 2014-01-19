@@ -7,6 +7,11 @@ tags: [algorithms, data structures]
 
 ---
 
+Version Diagrams 
+---
+Gray means version is *read only* and blue means version is *read-write*.
+
+![](http://sungsoo.github.com/images/confluent.png)
 
 Confluent Persistence
 ---
