@@ -61,29 +61,20 @@ and [fig:persistent1]
 
 We implement read and write operations as follows:
 
-1.  read(var, v) search the mod log for the
-    largest version *w* such that * w \leq v *. What if the value is in
-    an ‘old’ node? then we would have gotten to it via an old version of
-    a pointer (c.f. Figure [fig:persistent2] and Figure [binary-tree]).
+1.  **read(var, v)** search the mod log for the largest version *w* such that * w \leq v *. What if the value is in an ‘old’ node? then we would have gotten to it via an old version of a pointer (c.f. Figure [fig:persistent2] and Figure [binary-tree]).
 
-2.  write(var, val)
-
-    if *n* is not full, simply add to mod log. if *n* has no space for
-    more mod logs,
-
-    -   *n' = \mbox{new Node()}*
-
+2.  **write(var, val)**   
+if *n* is not full, simply add to mod log. if *n* has no space for
+    more mod logs,  
+    -   *n' = new Node()*
     -   copy *latest* version of each field (data and
         forward pointers) to the static field section.
-
     -   also copy back pointers to *n'*
-
     -   for every node *x* such that *n* points to *x*, redirect its
         back pointers to *n'* (using our pointers to get to them) (at
         most d of them).
-
     -   for every node *x* such that *x* points to *n*, call
-        write(x.p, n’) recursively (at most p recursive
+        **write(x.p, n’)** recursively (at most p recursive
         calls).
 
 ### Constructing a partially persistent structure from an ephemeral one
@@ -99,9 +90,10 @@ We implement read and write operations as follows:
 
 For some data structures such as lists or trees we often know what *p*
 is ahead of time, so we can implement the algorithm for these specific
-structures like in figure [binary-tree].
+structures like in the following figure.
 
-[binary-tree]
+![](http://sungsoo.github.com/images/image.G80L9V)
+
 
 Analysis:
 ---------
