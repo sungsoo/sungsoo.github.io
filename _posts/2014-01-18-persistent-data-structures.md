@@ -13,9 +13,9 @@ Overview
 In this article, we cover results on *persistent data structures*,
 which are data structures where we keep all information about past
 states. Persistent data structures are part of the larger class of
-*temporal* data structures. The other kind of temporal data structures,
-retroactive data structures, are the topic of [lecture
-2](http://courses.csail.mit.edu/6.851/spring12/lectures/L08.html).
+*temporal* data structures. The other kind of *temporal data structures*,
+*retroactive data structures*, are the topic of [MIT lecture
+8](http://courses.csail.mit.edu/6.851/spring12/lectures/L08.html).
 
 Usually we deal with data structure updates by mutating something in the
 existing data structure: either its data or the pointers that organize
@@ -78,13 +78,13 @@ of what we might mean by persistence.
     only update the latest version. We have operations <span>read(var,
     version)</span> and <span>newversion = write(var, val)</span>. This
     definition implies a linear ordering on the versions like
-    in [fig:partial].
+    patial persistence in version diagrams.
 
 2.  <span>*Full Persistence*</span> – In this model, both updates and
     queries are allowed on any version of the data structure. We have
     operations <span>read(var, version)</span> and <span>newversion =
     write(var, version, val)</span>. The versions form a branching tree
-    as in [fig:full].
+    as in full persistence in version diagrams.
 
 3.  <span>*Confluent Persistence*</span> – In this model, in addition to
     the previous operation, we allow combination operations to combine
@@ -94,7 +94,7 @@ of what we might mean by persistence.
     <span>newversion = combine(var, val, version1, version2)</span>.
     Rather than a branching tree, combinations of versions induce a DAG
     (direct acyclic graph) structure on the version graph, shown
-    in [fig:confluent]
+    in confluent persistence in version diagrams.
 
 4.  <span>*Functional Persistence*</span> – This model takes its name
     from functional programming where objects are immutable. The nodes
@@ -161,9 +161,9 @@ We extend our data nodes to contain the following information:
 1.  a read only area for data and pointers (corresponding to those in
     the original structure)
 
-2.  (new) a writeable area for back pointers. Node $x$ has one
-    backpointer to a node $y$ if $y$ has a pointer to $x$. This area has
-    limited size, since we know ahead of time there are at most $p$
+2.  (new) a writeable area for back pointers. Node *x* has one
+    backpointer to a node *y* if *y* has a pointer to *x*. This area has
+    limited size, since we know ahead of time there are at most *p*
     pointers to our node.
 
 3.  (new) a writable modifications (‘mods’) area for entries of the form
@@ -176,27 +176,27 @@ and [fig:persistent1]
 We implement read and write operations as follows:
 
 1.  <span><span>read(var, v)</span></span> search the mod log for the
-    largest version $w$ such that $ w \leq v $. What if the value is in
+    largest version *w* such that * w \leq v *. What if the value is in
     an ‘old’ node? then we would have gotten to it via an old version of
     a pointer (c.f. Figure [fig:persistent2] and Figure [binary-tree]).
 
 2.  <span><span>write(var, val)</span></span>
 
-    if $n$ is not full, simply add to mod log. if $n$ has no space for
+    if *n* is not full, simply add to mod log. if *n* has no space for
     more mod logs,
 
-    -   $n' = \mbox{new Node()}$
+    -   *n' = \mbox{new Node()}*
 
     -   copy <span>*latest*</span> version of each field (data and
         forward pointers) to the static field section.
 
-    -   also copy back pointers to $n'$
+    -   also copy back pointers to *n'*
 
-    -   for every node $x$ such that $n$ points to $x$, redirect its
-        back pointers to $n'$ (using our pointers to get to them) (at
+    -   for every node *x* such that *n* points to *x*, redirect its
+        back pointers to *n'* (using our pointers to get to them) (at
         most d of them).
 
-    -   for every node $x$ such that $x$ points to $n$, call
+    -   for every node *x* such that *x* points to *n*, call
         <span>write(x.p, n’)</span> recursively (at most p recursive
         calls).
 
@@ -210,10 +210,8 @@ We implement read and write operations as follows:
 
 (c) The structure in 2b after a second update: write(root.ptr.val = 200). Gray indicates the data node is read only  
 ![](http://sungsoo.github.com/images/3NodesDiagram3.png)
- 
 
-
-For some data structures such as lists or trees we often know what $p$
+For some data structures such as lists or trees we often know what *p*
 is ahead of time, so we can implement the algorithm for these specific
 structures like in figure [binary-tree].
 
@@ -225,7 +223,7 @@ Analysis:
 -   Space:
 
     If we choose the mod log to be bounded at size *2p* then node has
-    size *d + p + 2p* which is also $O(1)$ because we assumed there were
+    size *d + p + 2p* which is also *O(1)* because we assumed there were
     only ![](http://sungsoo.github.com/images/eqnf1.png) pointers into any node. The reasons for choosing
     such a mod log size are clarified in the following cost analysis.
 
@@ -238,7 +236,7 @@ Analysis:
 ![](http://sungsoo.github.com/images/eqn01.png)  
 
     Where *c* represents the *O(1)* cost of determining latest versions
-    to copy into the new node, copying backpointers, etc. ![](http://sungsoo.github.com/images/eqn02.png) stands for $x$ points to $n$.
+    to copy into the new node, copying backpointers, etc. ![](http://sungsoo.github.com/images/eqn02.png) stands for *x* points to *n*.
 
     Clearly the cost can be large because we could split many data nodes
     in the recursive steps. However, we know when a node becomes full
@@ -247,42 +245,42 @@ Analysis:
     worst case analysis.
 
     Recall the potential method technique explained in @clrs: if we know
-    a potential function $\phi$, then
-    $\mbox{amortized\_cost}(n) = \mbox{cost}(n) + \Delta \phi $.
+    a potential function ![](http://sungsoo.github.com/images/eqn_phi.png), then
+ ![](http://sungsoo.github.com/images/eqn11.png).
 
     Consider the following potential function:  
  ![](http://sungsoo.github.com/images/eqn03.png)
 
     Since the node was full and now it is empty, the change in potential
-    associated with our new node is $-2cp$. So now we can write a
+    associated with our new node is *-2cp*. So now we can write a
     recursive expression for our amortized cost:  
 ![](http://sungsoo.github.com/images/eqn04.png)
 
-    For some worst case node $x$. The second $c$ covers the case where
+    For some worst case node *x*. The second *c* covers the case where
     we find space in our mod log, and simply add an entry to it thus
-    increasing potential by $c$.
+    increasing potential by *c*.
 
     By unfolding the recursion once we can see at each unfolding the
-    $-2cp$ cancels out the extra cost from the recursion leaving only
-    the $2c$ cost. Hence cost is $O(1)$ amortized. The recursion process
+    *-2cp* cancels out the extra cost from the recursion leaving only
+    the *2c* cost. Hence cost is *O(1)* amortized. The recursion process
     is guaranteed to finish despite potential cycles in the graph,
-    because splits decrease $\phi$ and $\phi$ is non-negative.
+    because splits decrease *\phi* and *\phi* is non-negative.
 
     Further study by Brodal @brodal has shown actual cost to also be
-    $O(1)$ in the worst case.
+    *O(1)* in the worst case.
 
 Full persistence
 ================
 
 The construction for partial persistence can be expanded to implement
 full persistence. This result is also due to @dsst. We again assume a
-pointer machine with $p <  O(1)$ incoming pointers per node.
+pointer machine with *p <  O(1)* incoming pointers per node.
 
 We need to take care of a two new problems:
 
 ​1) Now we need to represent versions in a way that lets us efficiently
 check which precedes which. Versions form a tree, but traversing it is
-$O(\mbox{\#~of~versions})$.
+*O(\mbox{\#~of~versions})*.
 
 ​2) Now we have to support writes to any version. This affects how we
 handle writes: we no longer have the concept of ‘current’ vs. ‘old’
@@ -296,35 +294,35 @@ representing the version structure, as well as an efficient
 representation of this tree in a linearized way.
 
 The linearized representation of the tree in the figure [tree-traversal]
-is $ba, bb, bc, ec, eb, bd, ed, ea$. You can read $ba$ as ‘begin node
-$a$’ and $ea$ as ‘end node $a$’. This representation losslessly encodes
+is *ba, bb, bc, ec, eb, bd, ed, ea*. You can read *ba* as ‘begin node
+*a*’ and *ea* as ‘end node *a*’. This representation losslessly encodes
 the tree, and we can directly answer queries about the tree using that
-encoded representation. For example we know $c$ is nested within $b$,
-since $bb < bc$ and $ec < eb$.
+encoded representation. For example we know *c* is nested within *b*,
+since *bb < bc* and *ec < eb*.
 
 [tree-traversal]
 
 This linearized representation can be implemented using an ‘order
 maintenance’ data structure. For now, it suffices to say an order
 maintenance data structure supports the following two operations, both
-in $O(1)$ time.
+in *O(1)* time.
 
 -   insert an item before or after a specified element.
 
--   check if item $s$ precedes item $t$.
+-   check if item *s* precedes item *t*.
 
-For example, a linked list supports insertions in $O(1)$, but tests for
-precedence take $O(n)$. Similarly, a balanced BST supports both
-operations but in $O(\log{n})$ time. Deitz and Sleator show an $O(1)$
+For example, a linked list supports insertions in *O(1)*, but tests for
+precedence take *O(n)*. Similarly, a balanced BST supports both
+operations but in *O(\log{n})* time. Deitz and Sleator show an *O(1)*
 implementation for both operations in @dietz, which will be covered in
 [lecture
 8](http://courses.csail.mit.edu/6.851/spring12/lectures/L08.html).
 
-To implement version tree queries such as ‘is version $v$ an ancestor of
-version $w$’ we can use two comparison queries $bv < bw$ and $ew < ev$
-in $O(1)$. To implement updates like ‘add version $v$ as a child of
-version $w$’ we can insert the two elements $bv$ and $ev$ after $bw$ and
-before $ew$ respectively, also in $O(1)$.
+To implement version tree queries such as ‘is version *v* an ancestor of
+version *w*’ we can use two comparison queries *bv < bw* and *ew < ev*
+in *O(1)*. To implement updates like ‘add version *v* as a child of
+version *w*’ we can insert the two elements *bv* and *ev* after *bw* and
+before *ew* respectively, also in *O(1)*.
 
 Construction and algorithm:
 ---------------------------
@@ -332,8 +330,8 @@ Construction and algorithm:
 The nodes in our data structure will keep the same kinds of additional
 data per node as they did in the partially persistent case.
 
-For each node we store $d$ data entries and $p$ back pointers, but now
-allow up to $2(d+p+1)$ modifications. The amount of data $d$ is also a
+For each node we store *d* data entries and *p* back pointers, but now
+allow up to *2(d+p+1)* modifications. The amount of data *d* is also a
 bound on <span>*out-pointers*</span> per node. Additionally we now also
 version back-pointers.
 
@@ -345,20 +343,20 @@ version back-pointers.
 2.  <span><span>write(n.field, value, version)</span></span>: If there
     is space in node, just add mod entry. else:
 
-    -   $m = \mbox{new Node()}$. Split the contents of node $n$’s mod
+    -   *m = \mbox{new Node()}*. Split the contents of node *n*’s mod
         log into <span>*two*</span> parts following the diagram
         figure [version-split]. Partitioning into subtrees rather than
         arbitrarily is required.
 
-        Now node $m$ has some of the mods of the internal tree in
-        Figure [version-split], and node $n$ retains the ‘older’ half of
+        Now node *m* has some of the mods of the internal tree in
+        Figure [version-split], and node *n* retains the ‘older’ half of
         the updates.
 
-    -   from the ‘old’ mod entries in node $n$, compute the latest
+    -   from the ‘old’ mod entries in node *n*, compute the latest
         values of each field and write them into the data and back
-        pointer section of node $m$.
+        pointer section of node *m*.
 
-    -   recursively update all (up to) $d + p + (d + p + 1)$ forward and
+    -   recursively update all (up to) *d + p + (d + p + 1)* forward and
         backward pointers of neighbors.
 
     -   insert new version to our version tree representation.
@@ -369,24 +367,24 @@ Analysis:
 ---------
 
 -   space – 1 if we do not split or
-    $d + p + 2(d  + p + 1) = 3d + 3p + 2$ when we split a node, both
-    $ O(1) $
+    *d + p + 2(d  + p + 1) = 3d + 3p + 2* when we split a node, both
+    * O(1) *
 
 -   time – `read(var, version)` is implemented in a similar way to the
     partial case. We use our auxiliary version tree data structure to
-    find the largest ancestor of `version` from among a list of $O(1)$
-    elements in $O(1)$.
+    find the largest ancestor of `version` from among a list of *O(1)*
+    elements in *O(1)*.
 
     Like with the partial case, writes are cheap when a node has space
     in its mods log and more expensive when nodes are full.
 
-    Consider $ \phi =  -c(\mbox{\# empty slots}) $, then when we split
-    $ \Delta \phi = -2c(d + p + 1) $ and when we do not
-    $\Delta \phi = c$. Hence,
-    $\mbox{amortized\_cost}(n) \leq c + c - 2c(d + p + 1) + (d + p + (d + p + 1))*\mbox{amortized\_cost(x)})$
-    for the worst possible choice of $x$ from the neighbors. When we
+    Consider * \phi =  -c(\mbox{\# empty slots}) *, then when we split
+    * \Delta \phi = -2c(d + p + 1) * and when we do not
+    *\Delta \phi = c*. Hence,
+    *\mbox{amortized\_cost}(n) \leq c + c - 2c(d + p + 1) + (d + p + (d + p + 1))*\mbox{amortized\_cost(x)})*
+    for the worst possible choice of *x* from the neighbors. When we
     unfold the recursion once, we find the constants cancel out:
-    $ c - 2c(d+p+1) + (2p + 2p + 1)c = 0$.
+    * c - 2c(d+p+1) + (2p + 2p + 1)c = 0*.
 
 <span>**OPEN:**</span> De-amortization of full persistence.\
 <span>**OPEN:**</span> Is there a matching lower bound for both full and
@@ -397,8 +395,8 @@ Confluent Persistence
 
 Confluent persistence presents new challenges. Firstly, we again need to
 find a new representation of versions. Our tree traversal technique is
-does not extend to DAGs. Also, it is possible to have $2^u$ paths in
-version history after after $u$ confluent updates. For example by
+does not extend to DAGs. Also, it is possible to have *2^u* paths in
+version history after after *u* confluent updates. For example by
 concatenating a string with itself repeatedly we get a version diagram
 like that in figure [exponential-paths].
 
@@ -410,31 +408,31 @@ deque with itself.
 
 The general transformation due to Fiat and Kaplan @fiat is as follows:
 
--   $e(v) = 1 + \log(\mbox{\# of paths from root to $v$})$. This measure
+-   *e(v) = 1 + \log(\mbox{\# of paths from root to *v*})*. This measure
     is called the ‘effective depth’ of the version DAG: if we unravel
     the tree via a DFS (by making a copy of each path as if they didn’t
     overlap) and rebalanced that tree this is the best we could hope to
     achieve.
 
--   $d(v)$ = depth of node $v$ in version DAG
+-   *d(v)* = depth of node *v* in version DAG
 
--   overhead: $ \log(\mbox{\# of updates}) + \max_v(e(v))$
+-   overhead: * \log(\mbox{\# of updates}) + \max_v(e(v))*
 
-This results reflects poor performance when $e(v) = 2^{u}$ where $u$ is
+This results reflects poor performance when *e(v) = 2^{u}* where *u* is
 the number of updates. This is still exponentially better than the
 complete copy.
 
 [exponential-paths]
 
-A lower bound also by Fiat and Kaplan is $\Omega(e(v))$ for update if
-queries are free. Their construction makes $e(v)$ queries per update.
+A lower bound also by Fiat and Kaplan is *\Omega(e(v))* for update if
+queries are free. Their construction makes *e(v)* queries per update.
 
-<span>**OPEN:**</span> $ O(1) $ or even $ O(\log{(n)}) $ space overhead
+<span>**OPEN:**</span> * O(1) * or even * O(\log{(n)}) * space overhead
 per operation.
 
 Collette, Iacono and Langerman consider the special case of ‘disjoint
 operations’: confluent operations performed only between versions with
-no shared data nodes. From there they show $ O(\log{(n)})$ overhead is
+no shared data nodes. From there they show * O(\log{(n)})* overhead is
 possible for that case.
 
 If we only allow disjoint operations, then each data node’s version
@@ -460,7 +458,7 @@ Simple examples of existing techniques include the following.
     functionally, the main idea (a.k.a. ‘Path copying’) is to duplicate
     the modified node and propagate pointer changes by duplicating all
     ancestors. If there are no parent pointers, work top down. This
-    technique has an overhead of $O(\log{(n)})$ per operation, assuming
+    technique has an overhead of *O(\log{(n)})* per operation, assuming
     the tree is balanced. Demaine, Langerman, Price show this for
     link-cut trees as well @dlp.
 
@@ -469,13 +467,13 @@ Simple examples of existing techniques include the following.
     per operation (Kaplan, Okasaki, and Tarjan @kot). Furthermore,
     Brodal, Makris and Tsichlas show in @bmt it can be done with
     concatenation in constant time and update and search in
-    $O(\log{(n)})$
+    *O(\log{(n)})*
 
 -   <span>*Tries*</span> – with local navigation and subtree copy and
     delete. Demaine, Langerman, Price show how to persist this structure
     optimally in @dlp.
 
-Pippenger shows at most $\log{()}$ cost separation of the functional
+Pippenger shows at most *\log{()}* cost separation of the functional
 version from the regular data structure in @pippenger.
 
 <span>**OPEN:**</span> (for both functional and confluent) bigger
