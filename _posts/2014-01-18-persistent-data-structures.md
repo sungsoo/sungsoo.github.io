@@ -125,15 +125,15 @@ The diagrams in the following figures show what the version
 #### Version diagrams. 
 Gray means version is read only and blue means version is read-write.
 
-##### Patial Persistence ![](http://sungsoo.github.com/images/partial.png)
-##### Full Persistence ![](http://sungsoo.github.com/images/fullpersistence.png)##### Confluent/Functional Persistence ![](http://sungsoo.github.com/images/confluent.png) 
+**Patial Persistence** ![](http://sungsoo.github.com/images/partial.png)
+**Full Persistence** ![](http://sungsoo.github.com/images/fullpersistence.png)**Confluent/Functional Persistence** ![](http://sungsoo.github.com/images/confluent.png) 
 
 Partial persistence
 ===================
 
 #### Question:
 
-Is it possible to implement partial persistence efficiently?
+*Is it possible to implement partial persistence efficiently?*
 
 #### Answer:
 
@@ -215,23 +215,21 @@ Analysis:
 
 -   Space:
 
-    If we choose the mod log to be bounded at size $2p$ then node has
-    size $d + p + 2p$ which is also $O(1)$ because we assumed there were
-    only $p \leq O(1)$ pointers into any node. The reasons for choosing
+    If we choose the mod log to be bounded at size *2p* then node has
+    size *d + p + 2p* which is also $O(1)$ because we assumed there were
+    only ![](http://sungsoo.github.com/images/eqnf1.png) pointers into any node. The reasons for choosing
     such a mod log size are clarified in the following cost analysis.
 
 -   Time: A read is cheap, it requires constant time to check through a
     single node’s mod log and pick the required version. A write is also
     cheap if we have space in the mod log. If not, a write can be
-    expensive. Let $\mbox{cost}(n)$ denote the cost of writing to node
-    $n$. In the worst case the algorithm makes recursive calls so we
-    get:
+    expensive. Let ![](http://sungsoo.github.com/images/eqn00.png) denote the cost of writing to node
+    *n*. In the worst case the algorithm makes recursive calls so we
+    get  
+![](http://sungsoo.github.com/images/eqn01.png)  
 
-    $$\mbox{cost}(n) = c  +  \sum_{\mbox{$x \to n$}}(\mbox{cost}(x))$$
-
-    Where $c$ represents the $O(1)$ cost of determining latest versions
-    to copy into the new node, copying backpointers, etc. $x \to n$
-    stands for $x$ points to $n$.
+    Where *c* represents the *O(1)* cost of determining latest versions
+    to copy into the new node, copying backpointers, etc. ![](http://sungsoo.github.com/images/eqn02.png) stands for $x$ points to $n$.
 
     Clearly the cost can be large because we could split many data nodes
     in the recursive steps. However, we know when a node becomes full
@@ -243,15 +241,13 @@ Analysis:
     a potential function $\phi$, then
     $\mbox{amortized\_cost}(n) = \mbox{cost}(n) + \Delta \phi $.
 
-    Consider the following potential function:
-
-    $$\phi = c * \mbox{\# mod log entries in \emph{current} data nodes}$$
+    Consider the following potential function:  
+ ![](http://sungsoo.github.com/images/eqn03.png)
 
     Since the node was full and now it is empty, the change in potential
     associated with our new node is $-2cp$. So now we can write a
-    recursive expression for our amortized cost:
-
-    $$\mbox{amortized\_cost}(n) \leq c + c - 2cp + p*\mbox{amortized\_cost}(x)$$
+    recursive expression for our amortized cost:  
+![](http://sungsoo.github.com/images/eqn04.png)
 
     For some worst case node $x$. The second $c$ covers the case where
     we find space in our mod log, and simply add an entry to it thus
