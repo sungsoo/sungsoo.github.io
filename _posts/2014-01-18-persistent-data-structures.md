@@ -1,4 +1,3 @@
-
 ---
 layout: post
 title: Persistent Data Structures
