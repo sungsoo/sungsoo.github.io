@@ -16,19 +16,14 @@ Gray means version is *read only* and blue means version is *read-write*.
 
 Full persistence
 ---
-In fully persistent model, both *updates and queries are allowed on any version* of the data structure.
+In fully persistent model, both *updates and queries are allowed on any version* of the data structure.The construction for partial persistence can be expanded to implement full persistence. This result is also due to [5]. We again assume a pointer machine with ***p <  O(1)*** incoming pointers per node.
 
-The construction for partial persistence can be expanded to implement
-full persistence. This result is also due to @dsst. We again assume a
-pointer machine with ***p <  O(1)*** incoming pointers per node.
-
-We need to take care of a two new problems:
-
-​1) Now we need to represent versions in a way that lets us efficiently
+We need to take care of a two new problems:  
+  
+1. Now we need to represent versions in a way that lets us efficiently
 check which precedes which. Versions form a tree, but traversing it is
-***O(# of versions)***.
-
-​2) Now we have to support writes to any version. This affects how we
+***O(# of versions)***.    
+2. Now we have to support writes to any version. This affects how we
 handle writes: we no longer have the concept of ‘current’ vs. ‘old’
 nodes: *every node needs to support writes*.
 
@@ -37,9 +32,8 @@ Version representation
 
 The version representation problem is solved by keeping a tree
 representing the version structure, as well as an efficient
-representation of this tree in a linearized way.
-
-The linearized representation of the tree in the following figure
+representation of this tree in a *linearized* way.  
+The *linearized representation* of the tree in the following figure
 is *ba, bb, bc, ec, eb, bd, ed, ea*. You can read *ba* as ‘begin node
 *a*’ and *ea* as ‘end node *a*’. This representation losslessly encodes
 the tree, and we can directly answer queries about the tree using that
@@ -49,22 +43,20 @@ since *bb < bc* and *ec < eb*.
 #### Figure 2. in-order tree traversal 
 ![version-split](http://sungsoo.github.com/images/TreeTraversal.png)
 
-
-This linearized representation can be implemented using an ‘order
-maintenance’ data structure. For now, it suffices to say an order
+This linearized representation can be implemented using an ‘*order
+maintenance*’ data structure. For now, it suffices to say an order
 maintenance data structure supports the following two operations, both
 in ***O(1)*** time.
 
--   insert an item before or after a specified element.
+-   *insert* an item before or after a specified element.
 
--   check if item *s* precedes item *t*.
+-   *check* if item *s* precedes item *t*.
 
 For example, a linked list supports insertions in ***O(1)***, but tests for
 precedence take ***O(n)***. Similarly, a balanced BST supports both
 operations but in *O(log* n*)* time. Deitz and Sleator show an *O(1)*
 implementation for both operations in @dietz, which will be covered in
-[lecture 8](http://courses.csail.mit.edu/6.851/spring12/lectures/L08.html).
-
+[lecture 8](http://courses.csail.mit.edu/6.851/spring12/lectures/L08.html).  
 To implement version tree queries such as ‘is version *v* an ancestor of
 version *w*’ we can use two comparison queries *bv < bw* and *ew < ev*
 in *O(1)*. To implement updates like ‘add version *v* as a child of
@@ -75,8 +67,7 @@ Construction and algorithm:
 ---------------------------
 
 The nodes in our data structure will keep the same kinds of additional
-data per node as they did in the partially persistent case.
-
+data per node as they did in the partially persistent case.  
 For each node we store *d* data entries and *p* back pointers, but now
 allow up to *2(d+p+1)* modifications. The amount of data *d* is also a
 bound on *out-pointers* per node. Additionally we now also
@@ -111,17 +102,14 @@ Analysis:
 ---------
 
 -   **Space** – 1 if we do not split or
-    *d + p + 2(d  + p + 1) = 3d + 3p + 2* when we split a node, both
-    * O(1) *
+    *d + p + 2(d  + p + 1) = 3d + 3p + 2* when we split a node, both *O(1)*
 
 -   **Time** – **read(var, version)** is implemented in a similar way to the
     partial case. We use our auxiliary version tree data structure to
     find the largest ancestor of **version** from among a list of *O(1)*
-    elements in *O(1)*.
-
+    elements in *O(1)*.  
     Like with the partial case, writes are cheap when a node has space
-    in its mods log and more expensive when nodes are full.
-
+    in its mods log and more expensive when nodes are full.  
     Consider *ϕ =-c*(# empty slots), then when we split *Δϕ=-2c(d+p+1)* and when we do not *Δϕ=c*. Hence,
     ![](http://sungsoo.github.com/images/eqn-fp04.png)
     for the worst possible choice of *x* from the neighbors. When we
