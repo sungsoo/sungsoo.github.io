@@ -10,6 +10,8 @@ tags: [presentation]
 Smile Again - 임창정
 ---
 
+![](http://sungsoo.github.com/images/smile-again.jpg)
+
 또 울고 있었군요 이젠 그만 나를 놓아요  
 커다란 그대 사랑 안고선 맘 편히 쉴수 있게
 
@@ -31,5 +33,6 @@ Smile Again - 임창정
 야위어 가는 그댈 위해 날 닮은 사람 보내줄께요  
 그에게서 날 봐요
 
-![](http://sungsoo.github.com/images/smile-again.jpg)
+<iframe width="600" height="400" src="//www.youtube.com/embed/erGN98S4yGk" frameborder="0" allowfullscreen></iframe>
+
 
