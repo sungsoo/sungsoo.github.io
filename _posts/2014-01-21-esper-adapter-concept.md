@@ -15,7 +15,7 @@ Input and output adapters to Esper provide the means of accepting *events* from 
 
 The following input and output adapters exist. 
 
-<div class="table"><a name="adapter-available"></a><p class="title"><b>Table&nbsp;1.1.&nbsp;Input and Output Adapters</b></p><table summary="Input and Output Adapters" border="1"><colgroup><col><col></colgroup><thead><tr><th>Adapter</th><th>Description</th></tr></thead><tbody><tr><td>CSV Input Adapter</td><td><p>
+<div class="table"><a name="adapter-available"></a><p class="title"><b>Table&nbsp;1.1.&nbsp;Input and Output Adapters</b></p><table summary="Input and Output Adapters"><colgroup><col><col></colgroup><thead><tr><th>Adapter</th><th>Description</th></tr></thead><tbody><tr><td>CSV Input Adapter</td><td><p>
 							The CSV input adapter can read one or more CSV-formatted input sources, transform the textual values into events, and play the events into the engine. The adapter also makes it possible to run complete simulations of events arriving in time-order from different input streams.
 						</p></td></tr><tr><td>Spring JMS Input and Output Adapter</td><td><p>
 							JMS adapters based on the JmsTemplate offered by Spring 2. Provides unmarshalling of JMS <tt class="literal">javax.jms.Message</tt> messages for sending into an engine instance, and marshaling of <tt class="literal">com.espertech.esper.client.EventBean</tt> events into JMS messages.
