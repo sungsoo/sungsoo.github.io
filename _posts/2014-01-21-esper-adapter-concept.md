@@ -27,7 +27,7 @@ The following input and output adapters exist.
 Adapter Library Classes
 ---
 
-#### The Adapter Interface
+### The Adapter Interface
 The Adapter interface allows client applications to control the *state* of an input and output adapter. It provides *state transition methods* that each input and output adapter implements.
 
 An input or output adapter is always in one of the following states:
@@ -41,7 +41,7 @@ The state transition table below outlines adapter states and, for each state, th
 
 <div class="table"><a name="adapter-states"></a><p class="title"><b>Table&nbsp;1.2.&nbsp;Adapter State Transitions</b></p><table summary="Adapter State Transitions" border="1"><colgroup><col><col><col></colgroup><thead><tr><th>Start State</th><th>Method</th><th>Next State</th></tr></thead><tbody><tr><td>Opened</td><td>start()</td><td>Started</td></tr><tr><td>Opened</td><td>destroy()</td><td>Destroyed</td></tr><tr><td>Started</td><td>stop()</td><td>Opened</td></tr><tr><td>Started</td><td>pause()</td><td>Paused</td></tr><tr><td>Started</td><td>destroy()</td><td>Destroyed</td></tr><tr><td>Paused</td><td>resume()</td><td>Started</td></tr><tr><td>Paused</td><td>stop()</td><td>Opened</td></tr><tr><td>Paused</td><td>destroy()</td><td>Destroyed</td></tr></tbody></table>
     
-#### Using AdapterInputSource
+### Using AdapterInputSource
 
 The `com.espertech.esperio.AdapterInputSource` encapsulates information about an input source. *Input adapters* use the `AdapterInputSource` to determine how to read input. The class provides constructors for use with different input sources.
 
