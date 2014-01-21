@@ -7,7 +7,7 @@ tags: [presentation]
 
 ---
 
-Smile Again - 임창정
+Smile Again (하늘에서) - 임창정
 ---
 
 ![](http://sungsoo.github.com/images/smile-again.jpg)
