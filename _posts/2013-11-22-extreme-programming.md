@@ -3,7 +3,7 @@ layout: post
 title: Extreme Programming
 date: 2013-11-22
 categories: [computer science]
-tags: [agile, extreme programming]
+tags: [agile, developments, software engineering]
 
 ---
 
