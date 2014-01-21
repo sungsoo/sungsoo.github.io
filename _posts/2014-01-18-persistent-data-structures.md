@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Persistent Data Structures
-date: 2014-01-18
+date: 2014-01-17
 categories: [computer science]
 tags: [algorithms, data structures]
 
