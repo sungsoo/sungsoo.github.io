@@ -31,4 +31,5 @@ Smile Again - 임창정
 야위어 가는 그댈 위해 날 닮은 사람 보내줄께요  
 그에게서 날 봐요
 
-![](http://sungsoo.github.com/images/smile-agin.jpg)
+![](http://sungsoo.github.com/images/smile-again.jpg)
+
