@@ -33,7 +33,8 @@ The adapter class itself is <tt class="literal">EsperIODBAdapter</tt>.  The cod
 
 
 ```xml
-<esperio-db-configuration>  <jdbc-connection name="db1">                <drivermanager-connection    class-name="com.mysql.jdbc.Driver" url="jdbc:mysql://localhost/test"        user="root" password="password">    <connection-settings auto-commit="true" catalog="TEST"/>  </jdbc-connection>  <!-- Add DML and Upsert configurations here, as below. --></esperio-db-configuration>￼```
+<esperio-db-configuration>  <jdbc-connection name="db1">                <drivermanager-connection    class-name="com.mysql.jdbc.Driver" url="jdbc:mysql://localhost/test"        user="root" password="password">    <connection-settings auto-commit="true" catalog="TEST"/>  </jdbc-connection>  <!-- Add DML and Upsert configurations here, as below. --></esperio-db-configuration>  ￼```
+
 
 Triggered DML Statement Execution---This facility allows running a **SQL DML** (*Data Manipulation*) query, i.e. an Update, Insert, Delete query or a stored procedure when an event in a triggering stream occurs.    Define a <tt class="literal">dml</tt> element in the adapter configuration file (or use the <tt class="literal">DMLQuery</tt> class) for every query to execute.  The synopsis is as follows:
 ```xml￼￼￼￼<dml connection="[connection]" stream="[stream]"[name="name"] [executor-name="executor"] [retry="count"] [retry-interval-sec="sec"]>  <sql>[sql]</sql>  <bindings>    <parameter pos="[position]" property="[property_name]"/>    [...parameters]  </bindings></dml>  
