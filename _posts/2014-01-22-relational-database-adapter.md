@@ -33,6 +33,7 @@ The adapter class itself is <tt class="literal">EsperIODBAdapter</tt>.  The cod
 
 ```xml
 <esperio-db-configuration>  <jdbc-connection name="db1">                <drivermanager-connection    class-name="com.mysql.jdbc.Driver" url="jdbc:mysql://localhost/test"        user="root" password="password">    <connection-settings auto-commit="true" catalog="TEST"/>  </jdbc-connection>  <!-- Add DML and Upsert configurations here, as below. --></esperio-db-configuration>￼```
+
 Triggered DML Statement Execution---This facility allows running a **SQL DML** (*Data Manipulation*) query, i.e. an Update, Insert, Delete query or a stored procedure when an event in a triggering stream occurs.    Define a <tt class="literal">dml</tt> element in the adapter configuration file (or use the <tt class="literal">DMLQuery</tt> class) for every query to execute.  The synopsis is as follows:
 ```xml￼￼￼￼<dml connection="[connection]" stream="[stream]"[name="name"] [executor-name="executor"] [retry="count"] [retry-interval-sec="sec"]>  <sql>[sql]</sql>  <bindings>    <parameter pos="[position]" property="[property_name]"/>    [...parameters]  </bindings></dml>  
 ```￼The *connection* attribute value is required and provides the name of the configured JDBC connection.  A value for the *stream* attribute is required and provides the name of the stream that triggers the DML. The adapter expects a stream by this name to exist at adapter start time.￼￼The *name* attribute is optional and is only used for logging errors.  
@@ -83,6 +84,7 @@ ExecutorServices execs = (ExecutorServices)    provider.getContext().lookup("Es
 ￼A sample statement to read a table at startup time is below:
 
 ```￼￼￼￼select * from pattern[timer:interval(0)], sql:db1 ['select * from MyTable']￼￼￼￼```
+
 ￼￼￼
 References
 ---
