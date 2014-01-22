@@ -84,9 +84,8 @@ ExecutorServices execs = (ExecutorServices)    provider.getContext().lookup("Es
 ```
 ￼A sample statement to read a table at startup time is below:
 
-```￼￼￼￼select * from pattern[timer:interval(0)], sql:db1 ['select * from MyTable']￼￼￼￼```
-
-￼￼￼
+```￼￼￼￼select * from pattern[timer:interval(0)], sql:db1 ['select * from MyTable']```
+
 References
 ---
 [1] EsperIO Reference Version 4.6.0, *Esper Team and EsperTech Inc.*, 2012.
