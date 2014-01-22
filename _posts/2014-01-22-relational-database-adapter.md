@@ -31,6 +31,7 @@ The adapter class itself is <tt class="literal">EsperIODBAdapter</tt>.  The cod
 The configuration for the *source* of JDBC connections follows the Esper configuration. Please consult the Esper documentation or *sample adapter configuration file* for details.
 ￼Your configuration should set <tt class="literal">auto-commit</tt> to true thereby each change to database tables is automatically *committed*.    The adapter obtains a new connection for each operation and closes the connection after each operation. For optimum performance consider configuring a connection pool.  A sample JDBC connection configuration is shown in below XML. The API class is <tt class="literal">ConfigurationDBRef</tt> (an Esper core engine class). You may also configure a <tt class="literal">DataSource</tt> or <tt class="literal">DataSource factory</tt> as outlined in the Esper docs.  
 
+
 ```xml
 <esperio-db-configuration>  <jdbc-connection name="db1">                <drivermanager-connection    class-name="com.mysql.jdbc.Driver" url="jdbc:mysql://localhost/test"        user="root" password="password">    <connection-settings auto-commit="true" catalog="TEST"/>  </jdbc-connection>  <!-- Add DML and Upsert configurations here, as below. --></esperio-db-configuration>￼```
 
