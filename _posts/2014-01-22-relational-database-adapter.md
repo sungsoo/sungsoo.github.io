@@ -25,7 +25,9 @@ This article discusses the EsperIO adapter for relational databases.Adapter Ov
 ```xml￼￼￼￼<esper-configuration>  <plugin-loader name="EsperIODBAdapter"      class-name="com.espertech.esperio.db.EsperIODBAdapterPlugin">      <init-arg name="esperio.db.configuration.file"          value="file:/path/esperio-db-sample-config.xml" />  </plugin-loader></esper-configuration>
 ```### ￼Configuration and Starting via APIIf using Spring or if your application requires API access, the following code snippet configures and starts the adapter via API.  The class for configuring an EsperIO DB adapter is <tt class="literal">com.espertech.esperio.db.config.ConfigurationDBAdapter</tt>.   
 The adapter class itself is <tt class="literal">EsperIODBAdapter</tt>.  The code snippet below is a sample that configures using driver manager and starts the adapter via API:
-```java￼￼￼￼ConfigurationDBAdapter adapterConfig = new ConfigurationDBAdapter();ConfigurationDBRef configDB = new ConfigurationDBRef();configDB.setDriverManagerConnection("DRIVER", "URL", new Properties());adapterConfig.getJdbcConnections().put("db1", configDB);// add additional configuration such as DML and Upsert// start adapterEsperIODBAdapter dbAdapter = new EsperIODBAdapter(adapterConfig, "engineURI");dbAdapter.start();
+
+```java
+￼￼￼￼ConfigurationDBAdapter adapterConfig = new ConfigurationDBAdapter();ConfigurationDBRef configDB = new ConfigurationDBRef();configDB.setDriverManagerConnection("DRIVER", "URL", new Properties());adapterConfig.getJdbcConnections().put("db1", configDB);// add additional configuration such as DML and Upsert// start adapterEsperIODBAdapter dbAdapter = new EsperIODBAdapter(adapterConfig, "engineURI");dbAdapter.start();
 ```
 JDBC Connections---
 The configuration for the *source* of JDBC connections follows the Esper configuration. Please consult the Esper documentation or *sample adapter configuration file* for details.
