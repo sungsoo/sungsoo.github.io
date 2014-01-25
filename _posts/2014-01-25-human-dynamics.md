@@ -16,10 +16,12 @@ This paper spurred a burst of activity in this new area leading to not only furt
 
 In recent years there has been a growing appetite for access to new data sources[12] that might prove useful in quantifying and understanding human behavior on a collective scale.
 
-### Sandy Pentland of Human Dynamics Lab, MIT
+Human Dynamics Lab, MIT
+---
 <iframe width="600" height="400" src="//www.youtube.com/embed/m-Dc3c2MQhQ" frameborder="0" allowfullscreen></iframe>
 
-### Modeling human dynamics of face-to-face interaction networks
+Modeling human dynamics of face-to-face interaction networks
+---
 <iframe width="600" height="400" src="//www.youtube.com/embed/BIK5Xyt5J7Q" frameborder="0" allowfullscreen></iframe>
 
 References
