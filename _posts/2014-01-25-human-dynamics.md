@@ -20,7 +20,7 @@ In recent years there has been a growing appetite for access to new data sources
 References
 ---
 
-[1] A.-L. Barabási, (2005). "The origin of bursts and heavy tails in human dynamics.". Nature 435 (7039): 207–211. arXiv:cond-mat/0505371. Bibcode:2005Natur.435..207B. doi:10.1038/nature03459. PMID 15889093.  
+[1] A.-L. Barabási, (2005). "[The origin of bursts and heavy tails in human dynamics.](http://sungsoo.github.com/images/human-dynamics-nature207.pdf)". Nature 435 (7039): 207–211. arXiv:cond-mat/0505371. Bibcode:2005Natur.435..207B. doi:10.1038/nature03459. PMID 15889093.  
 [2]   A. Vázquez, (2005). "Exact results for the Barabasi model of human dynamics.". Physical Review Letters 95 (24): 248701. arXiv:physics/0506126. Bibcode:2005PhRvL..95x8701V. doi:10.1103/PhysRevLett.95.248701. PMID 16384430.  
 [3]   A. Vázquez, J. G. Oliveira, Z. Dezsö, K.-I. Goh, I. Kondor & A.-L. Barabási, (2006). "Modeling bursts and heavy tails in human dynamics". Physical Review E 73: 036127. arXiv:physics/0510117. Bibcode:2006PhRvE..73c6127V. doi:10.1103/PhysRevE.73.036127.  
 [4]   Cesar A. Hidalgo, (2006). "Conditions for the emergence of scaling in the inter-event time of uncorrelated and seasonal systems". Physica A 369: 877–883. arXiv:cond-mat/0512278. Bibcode:2006PhyA..369..877H. doi:10.1016/j.physa.2005.12.035.  
