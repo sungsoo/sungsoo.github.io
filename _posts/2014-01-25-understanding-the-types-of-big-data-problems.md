@@ -3,7 +3,7 @@ layout: post
 title: Understanding the Types of Big Data Problems
 date: 2014-01-25
 categories: [computer science]
-tags: [stream computing, developments]
+tags: [big data]
 
 ---
 
