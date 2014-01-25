@@ -19,6 +19,8 @@ In recent years there has been a growing appetite for access to new data sources
 ### Sandy Pentland of Human Dynamics Lab, MIT
 <iframe width="600" height="400" src="//www.youtube.com/embed/m-Dc3c2MQhQ" frameborder="0" allowfullscreen></iframe>
 
+### Modeling human dynamics of face-to-face interaction networks
+<iframe width="600" height="400" src="//www.youtube.com/embed/BIK5Xyt5J7Q" frameborder="0" allowfullscreen></iframe>
 
 References
 ---
