@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Smile Again
-date: 2013-10-05
+date: 2014-01-25
 categories: [arts and music]
 tags: [presentation]
 
