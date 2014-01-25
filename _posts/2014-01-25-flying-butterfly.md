@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Smile Again
+title: A Flying Butterfly
 date: 2014-01-25
 categories: [arts and music]
 tags: [presentation]
