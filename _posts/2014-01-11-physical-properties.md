@@ -2,7 +2,7 @@
 layout: post
 title: Physical Properties and selection of thermodynamic models
 date: 2014-01-11
-categories: [mathmatical science]
+categories: [mathematical science]
 tags: [thermodynamics]
 
 ---

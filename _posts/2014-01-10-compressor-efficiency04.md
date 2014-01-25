@@ -2,7 +2,7 @@
 layout: post
 title: Centrifugal Compressor Efficiency - Part 4
 date: 2014-01-10
-categories: [mathmatical science]
+categories: [mathematical science]
 tags: [thermodynamics]
 
 ---
