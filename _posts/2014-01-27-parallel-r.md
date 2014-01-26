@@ -20,7 +20,7 @@ Why R?
 This surge in data analysis has brought two of R’s limitations to the forefront: it’s *single- threaded* and *memory-bound*. Allow us to explain:
 * *It’s single-threaded*  
 	The R language has no explicit constructs for parallelism, such as threads or mu- texes. An out-of-the-box R install cannot take advantage of multiple CPUs.* *It’s memory-bound*  
-	R requires that your entire dataset* fit in memory (RAM).† Four gigabytes of RAM will not hold eight gigabytes of data, no matter how much you smile when you ask.
+	R requires that your entire dataset* fit in memory (RAM). Four gigabytes of RAM will not hold eight gigabytes of data, no matter how much you smile when you ask.
 	While these are certainly inconvenient, they’re hardly insurmountable.
 The Solution: Parallel Execution
 ---People have created a series of workarounds over the years. Doing a lot of matrix math? You can build R against a multithreaded **basic linear algebra subprogram (BLAS)**. Churning through large datasets? Use a relational database or another manual method to retrieve your data in smaller, more manageable pieces. And so on, and so forth.
