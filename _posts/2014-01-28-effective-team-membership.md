@@ -25,6 +25,9 @@ Motivation
 * **Intrinsic Motivation**: comes from within a person
 * **Extrinsic Motivation**: motivation from external factors 
 
+![](http://sungsoo.github.com/images/motivation-types.png)
+
+
 ### Motivation Process
 1. Goal setting
 2. Rewards & Recognition
