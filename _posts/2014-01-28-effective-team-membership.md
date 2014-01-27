@@ -19,3 +19,13 @@ Key Points for the Effective Team Membership
 * Track Time
 
  
+Motivation
+---
+### Motivation Types
+* **Intrinsic Motivation**: comes from within a person
+* **Extrinsic Motivation**: motivation from external factors 
+
+### Motivation Process
+1. Goal setting
+2. Rewards & Recognition
+3. Relationship & Environment
