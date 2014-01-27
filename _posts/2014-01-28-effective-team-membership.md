@@ -31,4 +31,13 @@ Motivation
 ### Motivation Approaches
 1. Goal setting
 2. Rewards & Recognition
-3. Relationship & Environment
+3. Relationship & Environment  
+	Relationship an employee has with his or her direct supervisor.
+	* Positive
+	* Inclusion
+	* Sense of opportunity
+	* Sense of purpose
+	
+	
+	
+	
