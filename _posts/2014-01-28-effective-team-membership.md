@@ -39,7 +39,12 @@ Motivation
 	* Sense of purpose
 	
 ![](http://sungsoo.github.com/images/desired-outcome.png)
+
+### Goal Achievement Process
+1. Create draft goals
+2. 
 	
+![](http://sungsoo.github.com/images/personal-goal.png)	
 ### Never Use Fear as a Motivator
 1. Causes resentment
 2. Prevents long-term commitment
