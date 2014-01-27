@@ -25,7 +25,7 @@ For the purpose of this lecture, data streams have the following properties:
 Some models require a stream to be *totally ordered*, whereas others do not distinguish among items having the same value of the ordering attribute. Recently, a *unified model* was proposed that allows both alternatives.  
 In practice, *base streams* are almost always *append-only* in the sense that previously arrived items (i.e., those with previously seen keys) are never modified; in the remainder of this lecture, we assume that every base stream is append-only. However, derived streams may or may not be append- only. For instance, consider the following query, *Q1*, over an Internet traffic stream **S** (assume that <tt class="literal">timestamp</tt> is the packet generation time measured in seconds, similar to a Unix timestamp):  
 
-```
+```sql
 Q1: SELECT minute, source_IP_address, SUM(size) AS total_traffic   
 	 FROM S  
 	 GROUP BY timestamp/60 AS minute, source_IP_address  
