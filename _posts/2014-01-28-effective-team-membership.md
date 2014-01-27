@@ -28,7 +28,7 @@ Motivation
 ![](http://sungsoo.github.com/images/motivation-types.png)
 
 
-### Motivation Process
+### Motivation Approaches
 1. Goal setting
 2. Rewards & Recognition
 3. Relationship & Environment
