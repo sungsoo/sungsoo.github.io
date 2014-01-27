@@ -41,10 +41,12 @@ Motivation
 ![](http://sungsoo.github.com/images/desired-outcome.png)
 
 ### Goal Achievement Process
-1. Create draft goals
-2. 
+1. Create draft goals  
+![](http://sungsoo.github.com/images/personal-goal.png)
+2. Collaboration
+3. 
 	
-![](http://sungsoo.github.com/images/personal-goal.png)	
+	
 ### Never Use Fear as a Motivator
 1. Causes resentment
 2. Prevents long-term commitment
