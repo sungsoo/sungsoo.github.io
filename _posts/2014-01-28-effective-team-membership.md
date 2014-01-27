@@ -38,6 +38,11 @@ Motivation
 	* Sense of opportunity
 	* Sense of purpose
 	
+### Never Use Fear as a Motivator
+1. Causes resentment
+2. Prevents long-term commitment
+
 	
+
 	
 	
