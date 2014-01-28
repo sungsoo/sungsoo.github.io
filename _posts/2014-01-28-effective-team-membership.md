@@ -41,11 +41,53 @@ Motivation
 ![](http://sungsoo.github.com/images/desired-outcome.png)
 
 ### Goal Achievement Process
-1. Create draft goals  
+1. *Create draft goals*  
 ![](http://sungsoo.github.com/images/personal-goal.png)
-2. Collaboration
-3. 
+2. *Collaboration*
+![](http://sungsoo.github.com/images/collaboration.png)
+3. *Indentify measures*
+	* Small amount
+	* High-quality
+	* Easy-to-use
+4. *Define milestones*
+5. *Track performance*
+6. *Hold them accountable*
 	
+SMART Goals
+---
+### Specific
+**Specific Goals**
+ 
+Concrete, clear, and definite
+
+### Mesurable
+**Measureable Goals**  
+
+Track progress with realistic measures
+ 
+### Aligned
+**Aligned Goals**  
+
+Supportive objectives
+
+### Reachable
+**Reachable Goals**  
+
+Challenging and resonable
+
+### Time-bound
+**Time-bound Goals**  
+
+Expected time to complete
+
+Set SMART Goals and provide resources
+---
+### Resources
+* Tools
+* Hardware
+* Software
+* Personnel
+* Support 
 	
 ### Never Use Fear as a Motivator
 1. Causes resentment
