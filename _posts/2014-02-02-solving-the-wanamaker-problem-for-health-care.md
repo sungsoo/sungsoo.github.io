@@ -39,6 +39,11 @@ There are two big issues here. First, a surprising number of medical records are
 
 Building the Health Care System We Want
 ---We’re on the verge of that new system now. We don’t have it yet, but we can see it around the corner. Ultra-cheap DNA sequencing in the doctor’s office, massive inexpensive computing power, the availability of EHRs to study whether treatments are effective even after the FDA trials are over, and improved techniques for analyzing data are the tools that will bring this new system about. The tools are here now; it’s up to us to put them into use.
-References
+
+Steve Jobs on Design
+---
+
+> In most people’s vocabularies, design means veneer. It’s interior decorating. It’s the fabric of the curtains and the sofa. But to me...design is the fundamental soul of a man-made creation that ends up expressing itself in successive outer layers of the product or service.  
+- Steve JobsReferences
 ---
 [1] *Big Data Now*: 2012 Edition, O’Reilly Media, Inc, 2012.
