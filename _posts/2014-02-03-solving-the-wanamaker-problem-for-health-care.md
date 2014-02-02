@@ -18,17 +18,26 @@ The consumer *Internet revolution* was fueled by a search for the answer to **Wa
 
 Making Health Care More Effective
 ---
+Foundation Medicine is at the forefront of this new era in cancer treatment. They use next-generation *DNA sequencing* to discover DNA sequence mutations and deletions that are currently used in standard of care treatments, as well as many other actionable mutations that are tied to drugs for other types of cancer. They are creating a patient-outcomes repository that will be the fuel for discovering the relation between mutations and drugs. Foundation has identified DNA mutations in 50% of cancer cases for which drugs exist (information via a private communication), but are not currently used in the standard of care for the patient’s particular cancer.
+
+The ability to do large-scale computing on genetic data gives us the ability to understand the origins of disease. If we can understand why an anti-cancer drug is effective (what specific proteins it affects), and if we can understand what genetic factors are causing the cancer to spread, then we’re able to use the tools at our disposal much more effectively. Rather than using imprecise treatments organized around symptoms, we’ll be able to target the actual causes of disease, and design treatments tuned to the biology of the specific patient. Eventually, we’ll be able to treat 100% of the patients 100% of the time, precisely because we realize that each patient presents a unique problem.
+
+*Personalized treatment* is just one area in which we can solve the Wa‐ namaker problem with data. Hospital admissions are extremely ex‐ pensive. Data can make hospital systems more efficient, and to avoid preventable complications such as blood clots and hospital re-admissions. 
 
 More Data, More Sources
 ---
+*Continuous monitoring* of critical patients in hospitals has been normal for years; but we now have the tools to monitor patients constantly, in their home, at work, wherever they happen to be. And if this sounds like big brother, at this point most of the patients are willing. We don’t want to transform our lives into hospital experiences; far from it! But we can collect and use the data we constantly emit, our “*data exhaust*,” to maintain our health, to become conscious of our behavior, and to detect oncoming conditions before they become serious. The most effective medical care is the medical care you avoid because you don’t need it.
 
 Paying for Results
 ---
+Once we’re on the road toward more effective health care, we can look at other ways in which Wanamaker’s problem shows up in the medical industry. It’s clear that we don’t want to pay for treatments that are ineffective. Wanamaker wanted to know which part of his advertising was effective, not just to make better ads, but also so that he wouldn’t have to buy the advertisements that wouldn’t work. He wanted to pay for results, not for ad placements. Now that we’re starting to under‐ stand how to make treatment effective, now that we understand that it’s more than rolling the dice and hoping that a treatment that works for a typical patient will be effective for you, we can take the next step: Can we change the underlying incentives in the medical system? Can we make the system better by paying for results, rather than paying for procedures?
 
 Enabling Data
 ---
+There are two big issues here. First, a surprising number of medical records are still either hand-written, or in digital formats that are scarcely better than hand-written (for example, scanned images of hand-written records). Getting medical records into a format that’s computable is a prerequisite for almost any kind of progress. Second, we need to break down those silos.
 
 Building the Health Care System We Want
----References
+---We’re on the verge of that new system now. We don’t have it yet, but we can see it around the corner. Ultra-cheap DNA sequencing in the doctor’s office, massive inexpensive computing power, the availability of EHRs to study whether treatments are effective even after the FDA trials are over, and improved techniques for analyzing data are the tools that will bring this new system about. The tools are here now; it’s up to us to put them into use.
+References
 ---
 [1] *Big Data Now*: 2012 Edition, O’Reilly Media, Inc, 2012.
