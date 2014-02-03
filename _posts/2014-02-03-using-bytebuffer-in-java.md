@@ -23,6 +23,60 @@ This suggests that provided you have a simple strategy for reusing objects, it m
 byte 배열을 사용하는 경우 잦은 GC(garbage collection) 가 성능에 영향을 줄 수 있다.
 
 
+Opening a SocketChannel
+---
+
+Here is how you open a SocketChannel:
+
+```java
+SocketChannel socketChannel = SocketChannel.open();
+socketChannel.connect(new InetSocketAddress("http://jenkov.com", 80));
+```
+
+Closing a SocketChannel
+---
+
+You close a SocketChannel after use by calling the SocketChannel.close() method. Here is how that is done:
+
+```java
+socketChannel.close();    
+```
+
+Reading from a SocketChannel
+---
+
+To read data from a SocketChannel you call one of the read() methods. Here is an example:
+
+```java
+ByteBuffer buf = ByteBuffer.allocate(48);
+
+int bytesRead = socketChannel.read(buf);
+```
+
+First a Buffer is allocated. The data read from the SocketChannel is read into the Buffer.
+
+Second the **SocketChannel.read()** method is called. This method reads data from the **SocketChannel** into the **Buffer**. The int returned by the **read()** method tells how many bytes were witten into the **Buffer**. If -1 is returned, the end-of-stream is reached (the connection is closed).
+
+Writing to a SocketChannel
+---
+
+Writing data to a SocketChannel is done using the SocketChannel.write() method, which takes a Buffer as parameter. Here is an example:
+
+```java
+String newData = "New String to write to file..." + System.currentTimeMillis();
+
+ByteBuffer buf = ByteBuffer.allocate(48);
+buf.clear();
+buf.put(newData.getBytes());
+
+buf.flip();
+
+while(buf.hasRemaining()) {
+    channel.write(buf);
+}
+```
+
+Notice how the **SocketChannel.write()** method is called inside a while-loop. There is no guarantee of how many bytes the **write()** method writes to the **SocketChannel**. Therefore we repeat the **write()** call until the Buffer has no further bytes to write.
 
 
 Creating a ByteBuffer Instance 
