@@ -27,6 +27,16 @@ byte 배열을 사용하는 경우 잦은 GC(garbage collection) 가 성능에 �
 * Direct ByteBuffer  
 * Non-Direct ByteBuffer
 
+**Direct ByteBuffer**: JVM tries to use Native IO operations on buffers which are created as direct i.e it doesnt load the buffer contents into another buffer and instead tries to use the buffer directly.
+
+There are a few essential properties of ByteBuffer:
+
+* *Limit*: While writing to a buffer, limit indicates how many more bytes can be written, whereas while reading from a buffer limit indicates how many more bytes can be read.    
+* *Position*: Position tracks how much data is written or can be read from a buffer.  
+* *Capacity*: Capacity specifies the number of bytes a buffer can store.
+
+ByteBuffer provides plethora of methods to fetch data from the buffer and to add data to the buffer. The below code shows the use of those APIs:
+
     
 ```java
 import java.nio.ByteBuffer;
