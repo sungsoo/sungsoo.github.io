@@ -7,8 +7,22 @@ tags: [developments]
 
 ---
 
+Overview
+---
+
+I have always been of the view that using recycled objects is faster for serialization.
+So I wrote a test based on **Thrift Protobuf Compare** to see where it does well or poorly.
+The benchmark suggest that serialization/deserialization is fast with ByteBuffer and recycled objects, but creating new objects is relatively expensive.
+This suggests that provided you have a simple strategy for reusing objects, it may be worth using this approach. However, if you can't recycle objects I suspect it won't be worth the extra effort.
+
+### Total Serailization time
+
+![](http://sungsoo.github.com/images/chart.png)
+
 네트워크 통신 등의 버퍼를 사용하는 작업에는 ByteBuffer 클래스를 많이 사용한다.
 byte 배열을 사용하는 경우 잦은 GC(garbage collection) 가 성능에 영향을 줄 수 있다.
+
+
 
 
 Creating a ByteBuffer Instance 
