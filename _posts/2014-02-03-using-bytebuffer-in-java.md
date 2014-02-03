@@ -22,6 +22,56 @@ This suggests that provided you have a simple strategy for reusing objects, it m
 네트워크 통신 등의 버퍼를 사용하는 작업에는 ByteBuffer 클래스를 많이 사용한다.
 byte 배열을 사용하는 경우 잦은 GC(garbage collection) 가 성능에 영향을 줄 수 있다.
 
+**ByteBuffer API** has been in Java since 1.4. The name itself suggests that these contain bytes of data. The data to be stored in the buffer can be Integer (int, long), Characters (char), Floating value (double), all these are converted into bytes before being stored in the buffer array. ByteBuffer can be of two types.
+
+* Direct ByteBuffer  
+* Non-Direct ByteBuffer
+
+    
+```java
+import java.nio.ByteBuffer;
+
+public class ByteBufferTest {
+  
+  public static void main(String[] args) {
+
+    //Create a directBuffer of size 200 bytes
+    ByteBuffer directBuffer = ByteBuffer.allocateDirect(200);
+    
+    //Create a nonDirectBuffer of size 200 bytes
+    ByteBuffer nonDirectBuffer = ByteBuffer.allocate(200);
+    
+    //Get the capacity of the buffer
+    System.out.println("Capacity "+nonDirectBuffer.capacity());
+    
+    //Get the position of the buffer
+    System.out.println("Position "+nonDirectBuffer.position() );
+    
+    //Add data of different types to the buffer
+    nonDirectBuffer.putChar('A');
+    nonDirectBuffer.putInt(10);
+    nonDirectBuffer.putDouble(0.98);
+    
+    //Get the position of the buffer, would print 14 as its has 14 bytes of data
+    System.out.println("Position "+nonDirectBuffer.position() );
+    nonDirectBuffer.putFloat(8.9f);
+    
+    //Fetch the data from buffer
+    System.out.println(nonDirectBuffer.getChar(0));
+    
+    //A char is of 2 bytes, so fetch the integer at index 0+2=2bytes
+    System.out.println(nonDirectBuffer.getInt(2));
+    
+    //A int is of 4 bytes so fetch the double value at index 2+4=6bytes
+    System.out.println(nonDirectBuffer.getDouble(6));
+    
+    //A double is of 8 bytes so fetch the float value at index 6+8=14bytes
+    System.out.println(nonDirectBuffer.getFloat(14));
+   
+  }
+}
+```
+
 
 Opening a SocketChannel
 ---
