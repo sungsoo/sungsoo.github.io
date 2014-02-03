@@ -82,7 +82,31 @@ public class ByteBufferTest {
 }
 ```
 
+Convert String To Java ByteBuffer
+---
+java.nio 는 java.io에서 메모리상에서 변경하는 것을 지원하지 못해서 nio가 나왔다. 
+그래서 nio 는 생성자가 없는데, 이는 메모리에서 주소값이 변경되는 것을 방지하기 위해서이다.
+wrap 메서드는  버퍼에서 byte[] 를 담는다고 이해하면 된다.
 
+```java
+	String str = "안녕하세요 xxx입니다.";   
+	byte[] bytes = str.getBytes();
+	ByteBuffer buf = ByteBuffer.wrap(bytes);   
+	System.out.println(buf.toString()); 
+	// java.nio.HeapByteBuffer[pos=0 lim=21 cap=21]으로 출력된다. 
+	// 시작위치, 끝, 용량 등을 출력한다.
+	for(int i = 0; i < buf.limit(); i++)
+		System.out.println(buf.get(i)); // 이런식으로 하면 바이트 배열을 출력한다.
+```
+
+다시 스트링으로 변환하려면 아래와 같이 구현하면 된다.
+
+```java
+	byte[] rtnBytes = buf.array();
+	String rtnStr = new String(rtnBytes);
+	System.out.println(rtnStr);
+```	
+      
 Opening a SocketChannel
 ---
 
