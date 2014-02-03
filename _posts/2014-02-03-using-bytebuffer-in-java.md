@@ -106,6 +106,40 @@ wrap 메서드는  버퍼에서 byte[] 를 담는다고 이해하면 된다.
 	String rtnStr = new String(rtnBytes);
 	System.out.println(rtnStr);
 ```	
+
+Serialization
+---
+
+Note that "Only objects that support the **java.io.Serializable** interface can be written to streams" (see **java.io.ObjectOutputStream**).
+
+Since you might run into it, the continuous allocation and resizing of the **java.io.ByteArrayOutputStream** might turn out to be quite the bottle neck. Depending on your threading model you might want to consider reusing some of the objects.
+
+For serialization of objects that do not implement the **Serializable** interface you either need to write your own serializer, for example using the read* / write* methods of java.io.DataOutputStream and the get* / put* methods of **java.nio.ByteBuffer** perhaps together with reflection, or pull in a third party dependency.
+
+```java
+package com.example;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+public class Serializer {
+    public static byte[] serialize(Object obj) throws IOException {
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        ObjectOutputStream o = new ObjectOutputStream(b);
+        o.writeObject(obj);
+        return b.toByteArray();
+    }
+
+	public static Object deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
+        ByteArrayInputStream b = new ByteArrayInputStream(bytes);
+        ObjectInputStream o = new ObjectInputStream(b);
+        return o.readObject();
+    }
+}
+```
       
 Opening a SocketChannel
 ---
