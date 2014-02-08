@@ -28,6 +28,9 @@ windows that convert streams to time-varying relations, and three *relation-to-s
 So far, we have given examples of queries with windows whose default behaviour is to slide whenever new tuples arrive. However, jumping windows are often used with aggregation for per- formance reasons; additionally, users may find it easier to deal with periodic output rather than a continuous output stream. CQL as well as the ESL language used in Stream Mill support aggregates over jumping windows via the <tt class="literal">SLIDE</tt> construct. For example, Q7 computes the total traffic originating from each source over the last five minutes, with new results returned every minute:
 ```sqlQ7:	SELECT Rstream(source_IP_address, SUM(size)) 
 	FROM S [RANGE 5 min SLIDE 1 min]	GROUP BY source_IP_address
-```Note that in the CQL version of this query, as shown above, we need to use <tt class="literal">Rstream</tt> to ensure that the complete result is produced every minute.￼￼References
+```
+
+Note that in the CQL version of this query, as shown above, we need to use <tt class="literal">Rstream</tt> to ensure that the complete result is produced every minute.
+￼References
 ---
 [1] Lukasz Golab and M. Tamer Özsu, *Data Stream Management*, Synthesis Lectures on Data Management, 2010.
