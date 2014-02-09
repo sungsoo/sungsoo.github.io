@@ -61,5 +61,4 @@ Tez provides pre-made primitives for use with the **DAG API** (org.apache.tez.en
 [1] [http://hortonworks.com/blog/introducing-tez-faster-hadoop-processing/](http://hortonworks.com/blog/introducing-tez-faster-hadoop-processing/)  
 [2] [http://hortonworks.com/blog/45x-performance-increase-for-hive/](http://hortonworks.com/blog/45x-performance-increase-for-hive/)   
 [3] [http://hortonworks.com/blog/moving-hadoop-beyond-batch-with-apache-yarn/](http://hortonworks.com/blog/moving-hadoop-beyond-batch-with-apache-yarn/)  
-[4] [http://hortonworks.com/blog/moving-hadoop-beyond-batch-with-apache- yarn/?mkt_tok=3RkMMJWWfF9wsRolsqTPZKXonjHpfsX57uUkXKO2lMI%2F0ER3fOvrPUfGjI4DRcRjI%2BSLDwEYGJlv 6SgFT7TMMbFh1rgNUxc%3D](http://hortonworks.com/blog/moving-hadoop-beyond-batch-with-apache- yarn/?mkt_tok=3RkMMJWWfF9wsRolsqTPZKXonjHpfsX57uUkXKO2lMI%2F0ER3fOvrPUfGjI4DRcRjI%2BSLDwEYGJlv 6SgFT7TMMbFh1rgNUxc%3D)  
-[5] [*Clustera: An Integrated ComputationAnd Data Management System*](http://www.vldb.org/pvldb/1/1453865.pdf), PVLDB '08, August 23-28, 2008, Auckland, New ZealandCopyright 2008 VLDB Endowment.
+[4] [*Clustera: An Integrated ComputationAnd Data Management System*](http://www.vldb.org/pvldb/1/1453865.pdf), PVLDB '08, August 23-28, 2008, Auckland, New ZealandCopyright 2008 VLDB Endowment.
