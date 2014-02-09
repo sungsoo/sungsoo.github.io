@@ -57,6 +57,22 @@ pom.xml
 * Build information
 * Resources and dependencies
 
+Maven Build
+---
+* Build lifecycle
+* Consists of phases
+* Default behavior of phases
+* Specify the build phase you need. Previous phases automatically run
+
+Some Phases
+---
+* validate
+* compile
+* test
+* package
+* install
+* deploy
+
 
 Maven Functionalities
 ---
@@ -80,7 +96,7 @@ Advantages
 - Maven Profile 기능을 사용하면 배포환경에 따른 설정 파일을 관리하고 배포 파일을 생성할 수 있다. 
 - 의존 라이브러리를 pom.xml 파일을 통해서 관리하므로 버전(형상)관리 시스템으로 공유할 파일의 크기가 줄어든다. 
   
-Disadvantages
+ Disadvantages
 ---
 - maven은 현재 3.x.x 버전까지 왔지만 일부의 기능에서 예상외로 동작하는 경우가 있다. (버그인건지 내가 몰라서 그러는건지?? 누가좀 알려줬으면 한다. ㅠ.ㅠ)
      + Oracle JDBC Driver 때문에 Local 저장소가 깨진 경우 가 있었는데... 수작업으로 Local저장소를 정리해줘야만 했다. (완전 삽질함...)
@@ -154,8 +170,32 @@ Maven Phases and Plugin
   + http://maven.apache.org/plugins/index.html
   + http://mojo.codehause.org/plugins.html 
 
-	
-
+Dependency Management using the Maven
+---
+- 메이븐의 핵심 기능중에 하나이며, 개발자들이 제일 좋아하는 기능이지만 문제가 발생한 가능성이 가장 높은 기능이기도 하다. 
+- 메이븐 저장소 구성
+	+ 중앙 저장소 : 오픈소스 라이브러리, 메이븐 플러그인, 메이븐 아키타입을 관리하는 저장소이다. 중앙 저장소는 개발자가 임의로 라이브러리를 뱁포할 수 없다. 
+	+ 원격 저장소 : 메이븐 중앙 저장소이 외에 각각의 회사 혹은 오픈소스 재단에서 운영 관리하는 저장소 
+   ex) http://maven.springframework.org (sprintsource), http://mesir.googlecode.com/svn/trunk/mavenrepo (ojdbc), http://192.168.1.46:5050/nexus (사내 maven 저장소)
+  + 로컬 저장소 : 메이븐을 빌드할 때 다운로드하는 라이브러리, 플러그인을 관리하는 개발자 PC의 저장소 (USER_HOME/.m2)
+- 메이븐 저장소 설정 (xml 파일예제..)
+- 메이븐 의존성 관리
+	+ *dependencies* 엘리먼트를 사용하여 의존성을 관리하며, 의존 라이브러리의 groupId, artifactId, version, scope 정보들을 갖는다.
+- 메이븐 의존성 정보에서 scope 설명
+  + compile : 기본 scope, 컴파일 및 배포할 때 같이 제공해야 하는 라이브러리
+  + provided : servlet.jar 와 같이 컴파일 시점에는 필요하지만 배포할 때에는 포함되지 말아야 하는 라이브러리
+  + runtime: 컴파일 시에는 사용되지 않지만 실행환경에서 사용되어지는 라이브러리
+  + test : JUnit과 같이 테스트 시점에만 사용되는 라이브러리
+  + system : provided와 비슷하다. 단지 우리가 직접 jar 파일을 제공해야 한다. 따라서 이 scope의 jar 파일은 저장소에서 관리되지 않을 수도 있다.
+  + import : 다른 POM설정 파일에 저의되어 있는 의존 관계 설정을 현재 프로젝트로 가져온다.
+- 의존성 전이
+  + 오픈소스 프레임워크를 의존성에 추가하며, 해당 프레임워크가 의존하고 있는 오픈소스 라이브러리 또한 의존 관계에 자동으로 포함된다. 
+  + 의존성 전이 기능은 프로젝트의 의존성을 편리하게 관리할 수 있도록 도와주기도 하지만 불필요한 라이브러리가 추가되거나 의존성이 꼬이게 만드는 원인이 되기도 한다. 
+- 의존성 전이에 대한 설정 변경기능
+  + 의존성 중개 : 버전이 다른 두개의 라이브러리가 의존 관계에 있다면 메이븐은 더 가까운 의존 관계에 있는 pom 설정의 버전과 의존관계를 갖는다. 예를 들어 A 프로젝트가 A -> B -> C -> D2.0 버전, A -> E -> D1.0 버전의 의존 관계가 발생한다면, A 프로젝트는 D1.0 버전과 의존 관계를 갖는다. 만약 D2.0 버전을 사용하고 싶다면 A 프로젝트의 메이븐 설정 파일에 명확하게 의존 관계를 명시해야 한다. (A -> D.20)
+  + 의존성 관리 : <dependencyManagement> 엘리먼트를 사용하여 의존 관계에 있는 라이브러리와 버전을 명시적으로 정의한다. 
+  + 의존성 예외 : <exclusion> 엘리먼트를 활용하여 의존성 전이를 예외처리한다.
+  + 기타 : 의존성 스코프, 선택적 의존성 등의 기능이 있음
 
 
  
