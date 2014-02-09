@@ -50,6 +50,14 @@ archetype:generate
 * Version
 * Pacakage
 
+pom.xml
+---
+* Maven co-ordinates
+* Metadata
+* Build information
+* Resources and dependencies
+
+
 Maven Functionalities
 ---
   - 빌드
