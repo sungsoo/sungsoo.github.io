@@ -24,32 +24,31 @@ The support for 3rd party AppMasters is the crucial aspect to flexibility in YAR
 
 1. Client-side determination of input pieces2. Job startup3. Map phase, with optional in-process combinerEach mapper reads input from durable storage4. Hash partition with local per-bucket sort.5. Data movement via framework initiated by reduce-side pullmechanism6. Ordered merge7. Reduce phase8. Write to durable storage
 
-The map-reduce primitive has proved to be very useful as the basis of a reliable cluster computation runtime and it is well suited to data processing tasks that involve a small number of jobs that benefit from the standard behavior. However, algorithms that require many iterations suffer from the high overheads of job startup and from frequent reads and writes to durable storage. Relation query languages such as Hive suffer from those issues and from the need to massage multiple datasets into homogeneous inputs as a M/R job can only consume one physical dataset (excluding support for side-data channels such as distributed cache).
+The map-reduce primitive has proved to be very useful as the basis of a *reliable* cluster computation runtime and it is well suited to data processing tasks that involve a small number of jobs that benefit from the standard behavior. However, algorithms that require many *iterations* suffer from the *high overheads* of job startup and from frequent reads and writes to durable storage. **Relation query languages** such as **Hive** suffer from those issues and from the need to massage multiple datasets into homogeneous inputs as a M/R job can only consume one physical dataset (excluding support for side-data channels such as *distributed cache*).
 
-Tez aims to be a general purpose execution runtime that enhances various scenarios that are not well served by classic Map-Reduce. In the short term the major focus is to support Hive and Pig, specifically to enable performance improvements to batch and ad-hoc interactive queries. Specific support for additional scenarios may be added in the future.
+Tez aims to be a general purpose execution runtime that enhances various scenarios that are not well served by classic Map-Reduce. In the short term the major focus is to support **Hive** and **Pig**, specifically to enable performance improvements to batch and ad-hoc interactive queries. Specific support for additional scenarios may be added in the future.
 Systems similar in spirit to Tez have been developed academically and commercially. Some notable examples are Dryad, HTCondor, Clustera, Hyracks, and Nephele-PACTS.Tez pre-requisites
 ---
 For normal operation, Tez assumes:
-* A cluster running YARN
-* Access to a durable shared filesystem accessible through Hadoop Filesystem 
+* A *cluster* running YARN
+* Access to a *durable shared filesystem* accessible through Hadoop Filesystem 
 interface
-Tez can operate in debugging scenarios that do not require a full cluster. This mode uses instantiations of HDFS and YARN running in a single process.What services will Tez provide
+Tez can operate in debugging scenarios that do not require a full cluster. This mode uses instantiations of HDFS and YARN running in a *single process*.What services will Tez provide
 ---
-Tez provides runtime components:  
+Tez provides *runtime components*:  
 
 * An execution environment that can handle traditional map-reduce jobs  
-* An execution environment that handles DAG-based jobs comprising various built-in and extendable primitives.  
+* An execution environment that handles *DAG-based jobs* comprising various built-in and extendable primitives.  
 * Cluster-side determination of input pieces.  
-* Runtime planning such as task cardinality determination and dynamic modification to the DAG structure.
+* Runtime planning such as *task cardinality determination* and *dynamic modification* to the DAG structure.
 
-
-Tez provides APIs to access these services:  
+Tez provides *APIs* to access these services:  
 
 * Traditional map-reduce functionality is accessed via java classes written to the Job interface: org.apache.hadoop.mapred.Job and/or org.apache.hadoop.mapreduce.v2.app.job.Job; and by specifying in yarn-site that the map-reduce framework should be Tez.  
 * DAG-based execution is accessed via the new Tez DAG API: org.apache.tez.dag.api.** , org.apache.tez.engine.api.***.
 
 
-Tez provides pre-made primitives for use with the DAG API (org.apache.tez.engine.common.*)
+Tez provides pre-made primitives for use with the **DAG API** (org.apache.tez.engine.common.*)
 
 * Vertex Input  
 * Vertex Output  
