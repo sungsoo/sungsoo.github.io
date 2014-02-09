@@ -23,7 +23,8 @@ The support for 3rd party AppMasters is the crucial aspect to flexibility in YAR
 ### Behavior of a Map-Reduce job under Hadoop 1.x
 
 1. Client-side determination of input pieces2. Job startup3. Map phase, with optional in-process combinerEach mapper reads input from durable storage4. Hash partition with local per-bucket sort.5. Data movement via framework initiated by reduce-side pullmechanism6. Ordered merge7. Reduce phase8. Write to durable storage
-
+
+![](http://sungsoo.github.com/images/hadoopstack.png)
 The map-reduce primitive has proved to be very useful as the basis of a *reliable* cluster computation runtime and it is well suited to data processing tasks that involve a small number of jobs that benefit from the standard behavior. However, algorithms that require many *iterations* suffer from the *high overheads* of job startup and from frequent reads and writes to durable storage. **Relation query languages** such as **Hive** suffer from those issues and from the need to massage multiple datasets into homogeneous inputs as a M/R job can only consume one physical dataset (excluding support for side-data channels such as *distributed cache*).
 
 Tez aims to be a general purpose execution runtime that enhances various scenarios that are not well served by classic Map-Reduce. In the short term the major focus is to support **Hive** and **Pig**, specifically to enable performance improvements to batch and ad-hoc interactive queries. Specific support for additional scenarios may be added in the future.
