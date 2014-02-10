@@ -31,6 +31,11 @@ windows that convert streams to time-varying relations, and three *relation-to-s
 ```
 
 Note that in the CQL version of this query, as shown above, we need to use <tt class="literal">Rstream</tt> to ensure that the complete result is produced every minute.
-￼References
+
+Summary
+---
+**Table 2.1** summarizes the continuous query languages discussed in this section in terms of their inputs and outputs, and the window types that they support; for a broader comparison, we refer the interested reader to an article by Cherniack and Zdonik.
+
+![](http://sungsoo.github.com/images/summary-cql.png)￼References
 ---
 [1] Lukasz Golab and M. Tamer Özsu, *Data Stream Management*, Synthesis Lectures on Data Management, 2010.
