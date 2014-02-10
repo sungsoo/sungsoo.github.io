@@ -3,7 +3,7 @@ layout: post
 title: Agile Processes and Scrum
 date: 2013-07-22
 categories: [computer science]
-tags: [software engineering]
+tags: [agile, software engineering]
 
 ---
 
