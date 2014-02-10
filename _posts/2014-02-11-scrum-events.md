@@ -9,7 +9,10 @@ tags: [agile, software engineering]
 
 Scrum Events
 ---Prescribed events are used in Scrum to create *regularity* and to minimize the need for meetings not defined in Scrum. Scrum uses time-boxed events, such that every event has a maximum duration. This ensures an appropriate amount of time is spent planning without allowing waste in the planning process.
+
+![](http://sungsoo.github.com/images/scrum-diagram.png)
 Other than the Sprint itself, which is a container for all other events, each event in Scrum is a formal opportunity to inspect and adapt something. These events are specifically designed to enable critical transparency and inspection. Failure to include any of these events results in reduced transparency and is a lost opportunity to inspect and adapt.
+![](http://sungsoo.github.com/images/scrum-overview.png)
 The Sprint
 ---
 The heart of Scrum is a *Sprint*, a time-box of one month or less during which a “**Done**”, useable, and potentially releasable product Increment is created. Sprints have consistent durations throughout a development effort. A new Sprint starts immediately after the conclusion of the previous Sprint.
@@ -28,6 +31,7 @@ Each Sprint may be considered a project with no more than a one-month horizon. L
 When a Sprint is cancelled, any completed and “Done” **Product Backlog** Items are reviewed. If part of the work is potentially releasable, the Product Owner typically accepts it. All incomplete Product Backlog Items are re-estimated and put back on the Product Backlog. The work done on them depreciates quickly and must be frequently re-estimated.
 Sprint cancellations consume resources, since everyone has to regroup in another Sprint Planning Meeting to start another Sprint. Sprint cancellations are often traumatic to the Scrum Team, and are very uncommon.
 
+![](http://sungsoo.github.com/images/task-board.jpg)
 References
 ---
 [1] Ken Schwaber and Jeff Sutherland, *The Scrum GuideThe Definitive Guide to Scrum: The Rules of the Game*, October, 2011.
