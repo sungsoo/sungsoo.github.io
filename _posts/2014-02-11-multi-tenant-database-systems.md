@@ -12,7 +12,7 @@ Introduction
 
 In this post, we shift our focus to another class of applications typically observed in a cloud platform, namely applications whose database and usage *footprints* are *small*. Such applications are typically observed in **Software-as-a-Service** (*SaaS*) solutions such as Salesforce.com or Microsoft Dynamics CRM (customer relationship management), and in applications deployed in various **Platform-as-a-Service** (*PaaS*) providers such as Google AppEngine and Microsoft Window Azure. Such SaaS and PaaS cloud infrastructures typically serve hundreds of thousands of small applications (called *tenants*). Dedicating a DBMS server for each tenant is often wasteful since the individual tenants’ resource requirements are often *small*. In order to reduce the total cost of operation, cloud providers typically *share resources* among the **tenants**, a model referred to as *multi-tenancy*. Multi-tenancy is possible in all tiers of the cloud software stack: the web/application tier, the caching tier, and the database tier (refer to Figure 1.1 for a simplified view of the cloud software stack). This post focuses on *multi-tenancy* in the database tier. Sharing the underlying data management infrastructure among a pool of tenants allows efficient use of resources and lowers the overall cost of serving applications.
 
-### Figure 1.1:A simplified view of the software stack of a typical web-based application deployed in a cloud infrastructure.
+### Figure 1.1: A simplified view of the software stack of a typical web-based application deployed in a cloud infrastructure.
 ![](http://sungsoo.github.com/images/cloud-software-stack.png)
 
 Cloud Databases - Addressing The Multi-Tenant Problem
