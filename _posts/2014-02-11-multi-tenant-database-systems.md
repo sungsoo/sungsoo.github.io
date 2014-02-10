@@ -17,7 +17,7 @@ In this post, we shift our focus to another class of applications typically obse
 
 Cloud Databases - Addressing The Multi-Tenant Problem
 ---
-<iframe width="853" height="480" src="//www.youtube.com/embed/KfLvQaLkoaE" frameborder="0" allowfullscreen></iframe>
+<iframe width="600" height="400" src="//www.youtube.com/embed/KfLvQaLkoaE" frameborder="0" allowfullscreen></iframe>
 
 In addition to the sheer scale of the number of applications deployed, these small applications deployed in cloud platforms are often characterized by *high variance* in popularity, unpredictable load characteristics, flash crowds, and varying resource requirements. As a result, Cloud service providers hosting these applications face unprecedented challenges in serving these applications and managing their data. Such challenges include management of large DBMS installations supporting *thousands* of *tenants, tolerating failures, dynamic partitioning of databases, elastic load balancing* for effective resource utilization and cost optimization.
 The concept of a multi-tenant database has been predominantly used in the context of **Software as a Service** (*SaaS*). The Salesforce.com model is often cited as a canonical example of this service paradigm. However, it is also interesting to study the various other models of multi-tenancy in the database tier and their interplay with resource sharing in the various cloud paradigms. A thorough understanding of these models of multi-tenancy is crucial for designing effective database management system (DBMS) targeting different application domains.
