@@ -30,4 +30,4 @@ Security Threats by the Numbers
 ---
 Online security threats are growing at a rapid pace and IT departments are faced with keeping networks secure. Read the Cisco 2013 Annual [Security Report](http://cs.co/jlbYTcr13). 
 
-<iframe width="853" height="480" src="//www.youtube.com/embed/n-gOj10QRxI?list=PLFT-9JpKjRTCXWQNxx4dn-8WgYgPxZZYW" frameborder="0" allowfullscreen></iframe>
+<iframe width="600" height="400" src="//www.youtube.com/embed/n-gOj10QRxI?list=PLFT-9JpKjRTCXWQNxx4dn-8WgYgPxZZYW" frameborder="0" allowfullscreen></iframe>
