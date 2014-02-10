@@ -26,6 +26,29 @@ In addition to the sheer scale of the number of applications deployed, these sma
 ### Figure 1.2: The different multi-tenancy models and their associated trade-offs.
 
 ![](http://sungsoo.github.com/images/multi-tenancy.png)
+
+What is Multi-Tenant Storage?
+---
+Multi-tenant storage is an ideal way to deliver storage management granularization. It allows IT to meet its organization's performance and scaling demands, without increasing storage management costs. It is ideal for both cloud providers and managed service providers. 
+
+George Crump's latest chalk-talk video takes a detailed look at multi-tenancy and one approach to multi-tenant storage provided by CloudByte, which is a native multi-tenant storage solution.
+
+George Crump is the President and Founder of Storage Switzerland. With 25 years of experience designing storage solutions for data centers across the US, he has seen the birth of such technologies as RAID, NAS and SAN. Prior to founding Storage Switzerland, he was CTO at one of the nation's largest storage integrators where he was in charge of technology testing, integration and product selection.
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/efvsFBzZlj8" frameborder="0" allowfullscreen></iframe>
+
+How to Plan for Multitenancy
+---
+Discussion of some security and networking considerations when building a multitenant cloud.
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/68vKW4DdL5I" frameborder="0" allowfullscreen></iframe>
+
+
+Building Multi-Tenant SaaS Solutions on Windows Azure
+---
+"Software as a Service" (SaaS) is a software distribution model that uses the Internet to deploy, maintain and run software solutions. Applications that are built to be used by thousands of customers have the need to be configurable and customizable to a high degree. This has a strong impact on the applications' architectures. A single code base and a limited number of deployed instances have to serve a large number of customers (=tenants) although the users' view on the system may be very different. In this session Rainer Stropek presents challenges that ISVs are typically faced with when building such configurable multi-tenancy solutions. Based on this discussion Rainer will point out important consequences of multi-tenancy on operational costs and pricing models in SaaS solutions.
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/l3KacGF0nQQ" frameborder="0" allowfullscreen></iframe>
 References
 ---
 [1] Divyakant Agrawal, Sudipto Das, and Amr El Abbadi, *Data Management in the Cloud: Challenges and Opportunities*, Morgan & Claypool, 2013.
