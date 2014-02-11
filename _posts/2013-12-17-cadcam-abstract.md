@@ -19,5 +19,9 @@ tags: [papers, research]
 <iframe width="600" height="420" src="//www.youtube.com/embed/MIy_EMMUXvg" frameborder="0" allowfullscreen></iframe>
 
 
+N-Scrren Collaboration Agent Demo.
+---
+<iframe width="600" height="400" src="//www.youtube.com/embed/p7_e_LS9Azg" frameborder="0" allowfullscreen></iframe>
+
 ### References
 [1] 김성수, 조충래, 손지연, P2P 환경에서 스마트 앱간 협업을 위한 논리적 통신기반 미들웨어, 2014 한국CAD/CAM학회 학술발표회 초록집, Feb. 2014. 
