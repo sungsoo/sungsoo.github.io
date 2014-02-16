@@ -64,17 +64,22 @@ Distribution Models
 ---
 
 * There are two styles of distributing data:
-	* Sharding distributes different data across multiple servers, so each server acts as the single source for a subset of data.
-	* Replication copies data across multiple servers, so each bit of data can be found in multiple places.
+	* *Sharding* distributes different data across multiple servers, so each server acts as the single source for a subset of data.
+![](http://sungsoo.github.com/images/sharding.png)
+	* *Replication* copies data across multiple servers, so each bit of data can be found in multiple places.
 	
 	A system may use either or both techniques.
 
-* Replication comes in two forms:
-	* Master-slave replication makes one node the authoritative copy that handles writes while slaves synchronize with the master and may handle reads.
-	* Peer-to-peer replication allows writes to any node; the nodes coordinate to synchronize their copies of the data.
-	
-	Master-slave replication reduces the chance of update conflicts but peer-to-peer replication avoids loading all writes onto a single point of failure.
-	
+* **Replication** comes in two forms:
+	* *Master-slave replication* makes one node the authoritative copy that handles writes while slaves synchronize with the master and may handle reads.
+![](http://sungsoo.github.com/images/master-to-slaves.png)  
+	* *Peer-to-peer replication* allows writes to any node; the nodes coordinate to synchronize their copies of the data.  
+![](http://sungsoo.github.com/images/peer-to-peer-replication.png)  
+
+	Master-slave replication *reduces* the chance of *update conflicts* but peer-to-peer replication avoids loading *all* writes onto a single point of failure.  
+![](http://sungsoo.github.com/images/master-slave-replication-with-sharding.png)
+
+![](http://sungsoo.github.com/images/peer-to-peer-replication-with-sharding.png)	
 Consistency
 ---
 
