@@ -82,17 +82,25 @@ Consistency
 
 * Pessimistic approaches lock data records to prevent conflicts. Optimistic approaches detect conflicts and fix them.
 
+![](http://sungsoo.github.com/images/read-write-conflict.png)
+
 * Distributed systems see read-write conflicts due to some nodes having received updates while other nodes have not. Eventual consistency means that at some point the system will become consistent once all the writes have propagated to all the nodes.
 
 * Clients usually want read-your-writes consistency, which means a client can write and then immediately read the new value. This can be difficult if the read and the write happen on different nodes.
 
 * To get good consistency, you need to involve many nodes in data operations, but this increases latency. So you often have to trade off consistency versus latency.
 
+![](http://sungsoo.github.com/images/replication-inconsistency.png)
+
 * The CAP theorem states that if you get a network partition, you have to trade off availability of data versus consistency.
 
 * Durability can also be traded off against latency, particularly if you want to survive failures with replicated data.
 
 * You do not need to contact all replicants to preserve strong consistency with replication; you just need a large enough quorum.
+
+
+![](http://sungsoo.github.com/images/network-partition.png)
+
 
 Version Stamps
 ---
