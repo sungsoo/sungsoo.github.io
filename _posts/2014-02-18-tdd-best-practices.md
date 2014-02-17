@@ -210,7 +210,7 @@ This test has many asserts. It is unclear what is the functionality and if one o
 
 ### Do not introduce dependencies between tests
 
-Benefits: tests work in any order independently whether all or only subset is run
+**Benefits**: tests work in any order independently whether all or only subset is run
 
 Each test should be independent from others. Developers should be able to execute any individual test, set of tests or all of them. Often there is no guarantee that tests will be executed in any particular order. If there are dependencies between tests they might easily be broken with introduction of new tests.
 
@@ -218,11 +218,11 @@ Each test should be independent from others. Developers should be able to execut
 
 **tddbestpracticesduration.png**
 
-Benefits: tests are used often
+**Benefits**: tests are used often
 
 If it takes a lot of time to run tests, developers will stop using them or run only a small subset related to the changes they are making. Benefit of fast tests, besides fostering their usage, is fast feedback. Sooner the problem is detected, easier it is to fix it. Knowledge about the code that produced the problem is still fresh. If developer already started working on a next feature while waiting for the completion of the execution of tests, he might decide to postpone fixing the problem until that new feature is developed. On the other hand, if he drops his current work to fix the bug, time is lost in context switching.
 
-Use mocks
+### Use mocks
 
 Benefits: reduced code dependency; faster tests execution.
 
