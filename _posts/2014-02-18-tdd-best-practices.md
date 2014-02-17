@@ -168,7 +168,6 @@ Few examples:
 public final void whenOneNumberIsUsedThenReturnValueIsThatSameNumber() {
 Assert.assertEquals(3, StringCalculator.add("3"));
 }
- 
 @Test
 public final void whenTwoNumbersAreUsedThenReturnValueIsTheirSum() {
 Assert.assertEquals(3+6, StringCalculator.add("3,6"));
@@ -224,38 +223,42 @@ If it takes a lot of time to run tests, developers will stop using them or run o
 
 ### Use mocks
 
-Benefits: reduced code dependency; faster tests execution.
+**Benefits**: reduced code dependency; faster tests execution.
 
 Mocks are prerequisites for fast execution of tests and ability to concentrate on a single unit of functionality. By mocking dependencies external to the method that is being tested developer is able to focus on the task at hand without spending time to set them up. In case of bigger teams, those dependencies might not even be developed. Also, execution of tests without mocks tends to be slow. Good candidates for mocks are databases, other products, services, etc. Mock objects are a big topic and will be described in more details in a future article.
 
-Use setup and tear-down methods
+### Use setup and tear-down methods
 
-Benefits: allows setup and tear-down code to be executed before and after the class or each method.
+**Benefits**: allows setup and tear-down code to be executed before and after the class or each method.
 
 In many cases some code needs to be executed before test class or before each method in a class. For that purpose JUnit has @BeforeClass and @Before annotations that should be used as the setup phase. @BeforeClass executes the associated method before the class is loaded (before first test method is run). @Before executes the associated method before each test is run. Both should be used when there are certain preconditions required by tests. Most common example is setting up test data in the (hopefully in-memory) database. On the opposite end are @After and @AfterClass annotations that should be used as tear-down phase. Their main purpose is to destroy data or state created during the setup phase or by tests themselves. As stated in one of the previous practices, each test should be independent from others. More over, no test should be affected by others. Tear-down phase helps maintaining the system as if no test was previously executed.
 
-Do not use base classes
+### Do not use base classes
 
-Benefits: test clarity.
+**Benefits**: test clarity.
 
 Developers often approach test code in the same way as implementation. One of the common mistakes is to create base classes that are extended by tests. This practice avoids code duplication at the expense of tests clarity. When possible, base classes used for testing should be avoided or limited. Having to navigate from the test class to its parent, parent of the parent and so on in order to understand the logic behind tests introduces, often unnecessary, confusion. Tests clarity should more important than avoiding code duplication.
 
 Tools
+---
 TDD, coding and testing in general are heavily dependent on other tools and processes. Some of the most important are following. Each of them is a too big of a topic to be explored in this article so they will be described only briefly.
 
-Code coverage
+### Code coverage
 
-Benefit: assurance that everything is tested.
+**Benefit**: assurance that everything is tested.
 
 Code coverage practice and tools are very valuable in determining that all code, branches and complexity is tested. Some of the tools are JaCoCo, Clover and Cobertura.
 
-Continuous integration (CI)
+### Continuous integration (CI)
 
 Continuous Integration (CI) tools are a must for all but most trivial projects. Some of the most used tools are Jenkins, Hudson, Travis and Bamboo.
 
-Use TDD together with BDD
+### Use TDD together with BDD
 
-Benefits: both developer unit test and functional customer facing tests are covered.
+**Benefits**: both developer unit test and functional customer facing tests are covered.
 
 While TDD with unit tests is a great practice, in many cases it does not provide all the testing projects need. TDD is fast to develop, helps the design process and gives confidence through fast feedback. On the other hand, BDD is more suitable for integration and functional testing, provide better process for requirements gathering through narratives and is the better way of communication with clients through scenarios. Both should be used and together they provide the full process that involves all stakeholders and team members. TDD and BDD should be driving the development process. Recommendation is to use TDD for high “code coverage” and fast feedback and BDD as automated acceptance tests. While TDD is mostly oriented towards white-box, BDD often aims at black-box testing (more info on black-box vs white-box testing). Both TDD and BDD are trying to focus on quality assurance instead quality checking.
+
+References
+---
 
