@@ -21,7 +21,7 @@ TDD in a nutshell
 
 
 
-
+![](http://sungsoo.github.com/images/tdd01.png)
 
 
 
@@ -30,7 +30,7 @@ Test-Driven Development Cycle
 A graphical representation of the development cycle, using a basic flowchart
 The following sequence is based on the book [*Test-Driven Development by Example*](http://en.wikipedia.org/wiki/Test-Driven_Development_by_Example).
 
-![](http://sungsoo.github.com/images/tdd01.png)
+![](http://sungsoo.github.com/images/tdd-cycle.png)
 
 Add a test
 ---
@@ -68,5 +68,5 @@ Creating a Basic Test
 
 References
 ---
-[1] 
+[1] Beck, K. *Test-Driven Development by Example*, Addison Wesley - Vaseem, 2003.
 
