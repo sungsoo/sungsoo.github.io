@@ -261,4 +261,4 @@ While TDD with unit tests is a great practice, in many cases it does not provide
 
 References
 ---
-
+[1] [*TEST DRIVEN DEVELOPMENT (TDD): BEST PRACTICES USING JAVA EXAMPLES*](http://technologyconversations.com/2013/12/24/test-driven-development-tdd-best-practices-using-java-examples-2/), 2013.
