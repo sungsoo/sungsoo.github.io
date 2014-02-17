@@ -281,6 +281,10 @@ TDD, coding and testing in general are heavily dependent on other tools and proc
 
 Code coverage practice and tools are very valuable in determining that all code, branches and complexity is tested. Some of the tools are JaCoCo, Clover and Cobertura.
 
+EMMA: code coverage tool for Java [http://emman.sourceforge.net/index.html](http://emman.sourceforge.net/index.html)
+
+Eciplse plugin for EMMA: [http://www.eclemma.org](http://www.eclemma.org)
+
 ### Continuous integration (CI)
 
 Continuous Integration (CI) tools are a must for all but most trivial projects. Some of the most used tools are Jenkins, Hudson, Travis and Bamboo.
