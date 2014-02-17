@@ -9,6 +9,9 @@ tags: [computer graphics, research]
 
 Making of Disney’s Frozen Snow Simulation
 ---
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/O0kyDKu8K-k" frameborder="0" allowfullscreen></iframe>
+
 Snow is a challenging natural phenomenon to visually simulate. While the graphics community has previously considered accumulation and rendering of snow, animation of snow dynamics has not been fully addressed. Additionally, existing techniques for solids and fluids have difficulty producing convincing snow results.
 
 ![](http://sungsoo.github.com/images/frozen01.png)
@@ -44,10 +47,6 @@ In the case of Frozen, the snow had to do all of those things and one more: it h
 
 Even with an effects crew of more than forty, it was never easy. The team had to develop a visual glossary of all the different terminology like frosty and flurry, and some travelled to Jackson Hole, WY to experience deep snow in person. They also had to take up a production schedule unlike any Disney project that has come before, reformatting their typical proess to tackle the unique interplay of characters and effects. “Every week there was some discussion about combinations of Elsa’s magic or how her performance would affect an effect,” said Dale. “On this film we had tons of meetings with all of the departments and it was a lot more of a free-flowing collaborative nature as opposed to a linear one.” Marlon added, “I really hope that continues to be the way we do things going forward. You can see the benefits of it in the film we produced.”
 
-Technical Presentation
----
-
-<iframe width="853" height="480" src="//www.youtube.com/embed/O0kyDKu8K-k" frameborder="0" allowfullscreen></iframe>
 
 ![](http://sungsoo.github.com/images/frozen08.png)
 
