@@ -223,6 +223,8 @@ If it takes a lot of time to run tests, developers will stop using them or run o
 
 ### Use mocks
 
+![](http://sungsoo.github.com/images/class-dependency.png)
+
 **Benefits**: reduced code dependency; faster tests execution.
 
 Mocks are prerequisites for fast execution of tests and ability to concentrate on a single unit of functionality. By mocking dependencies external to the method that is being tested developer is able to focus on the task at hand without spending time to set them up. In case of bigger teams, those dependencies might not even be developed. Also, execution of tests without mocks tends to be slow. Good candidates for mocks are databases, other products, services, etc. Mock objects are a big topic and will be described in more details in a future article.
