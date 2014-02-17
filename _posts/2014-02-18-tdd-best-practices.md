@@ -215,7 +215,7 @@ Each test should be independent from others. Developers should be able to execut
 
 ### Tests should run fast
 
-**tddbestpracticesduration.png**
+![](http://sungsoo.github.com/images/tddbestpracticesduration.png)
 
 **Benefits**: tests are used often
 
