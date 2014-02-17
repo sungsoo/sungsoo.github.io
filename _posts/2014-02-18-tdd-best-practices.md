@@ -229,6 +229,36 @@ If it takes a lot of time to run tests, developers will stop using them or run o
 
 Mocks are prerequisites for fast execution of tests and ability to concentrate on a single unit of functionality. By mocking dependencies external to the method that is being tested developer is able to focus on the task at hand without spending time to set them up. In case of bigger teams, those dependencies might not even be developed. Also, execution of tests without mocks tends to be slow. Good candidates for mocks are databases, other products, services, etc. Mock objects are a big topic and will be described in more details in a future article.
 
+### Typical reasons for Mock Objects
+ 
+![](http://sungsoo.github.com/images/mock-objects.png)
+
+* Real object hasn't been written yet
+* What you're calling has a UI / needs human interaction
+* Slow or difficult to set up
+* External resource: file system, database, network, printer
+* Non-deterministic behavior
+
+### Fake Objects vs. Mock Objects
+* Fake Objects  
+	* Match the original (or intended) method implementations  
+	* Return pre-arraged results
+	
+* Mock Objects
+	* Assert the expected values from unit under test
+
+Mock Object Framework
+---
+* Provide structure for defining mock objects
+	* Sometimes removing need to create a custom class
+* Can aid in generating (or autogenerating) method stubs
+* Often provide prearraged mock objects
+	* For file stream, console, network, printer equivalents
+* jMock: [http://jmock.org](http://jmock.org)
+* EasyMock: [http://easymock.org](http://easymock.org)
+* mockito: [http://code.google.com/p/mockito](http://code.google.com/p/mockito)
+
+
 ### Use setup and tear-down methods
 
 **Benefits**: allows setup and tear-down code to be executed before and after the class or each method.
