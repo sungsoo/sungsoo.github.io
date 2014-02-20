@@ -10,6 +10,8 @@ tags: [presentation]
 Like a Star
 ---
 
+![](http://sungsoo.github.com/images/you-from-the-star.gif)
+
 ### 별처럼 - 케이윌 
  
 그대 어디 있어도  
