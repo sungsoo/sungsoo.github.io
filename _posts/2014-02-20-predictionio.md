@@ -76,9 +76,68 @@ A user performs an action that implies the strongest preference, e.g. when a use
 
 You may also add your own custom action type.
 
-concepts-app-engine-algo.png
+PREDICTIVE MODELING
+---
 
-concepts-systemdesign.png
+Predictive modeling is a process by which a model is built (or trained) to predict future or unknown outcome. The accuracy and the performance of the model is determined by the algorithm you select as well as the parameter settings of this algorithm.
+
+Every engine manages a predictive model independently in PredictionIO. In another word, there is one deployed algorithm running in each engine.
+
+Note Depends on the implementation of the engine type, the system can train the model with the collected data in batch mode or in real-time.
+
+Algorithm
+---
+
+Algorithm is sometimes called 'learning algorithm' in Machine Learning. It determines how your system learns to predict from data. Each type of engine in PredictionIO comes with different built-in algorithms available for use. An algorithm is deployed with default parameters when you create a new engine. You can deploy another one to fit your needs.
+
+Algorithm Parameter
+---
+
+Some algorithms require you to specify parameter values. (They are sometimes referred to as hyperparameters in academic disciplines.) Parameters adjust how an algorithm learns. For instance, a regularization parameter tries to ensure that the model does not overfit its data. Some algorithms provide an automatic tuning feature to help you find better parameter settings. This feature requires a lot of computational resources though.
+
+Choose an Algorithm
+---
+
+Algorithms can rely on very different assumptions and theories. There is no one-size-fit-all solution that is suitable for every prediction problem. To improve prediction accuracy for your specific case, you may need to evaluate various combination of algorithms and parameter settings. To learn more about it, read *Accuracy Optimization*.
+
+SYSTEM DESIGN OF PREDICTIONIO
+---
+
+PredictionIO is mainly built with Scala. Scala runs on the JVM, so Java and Scala stacks can be freely mixed for totally seamless integration. PredictionIO Server consists of a few components:
+
+* Admin Server
+* IO Server
+* Scheduler
+* Data Store
+* Data Processing Stack
+
+![](http://sungsoo.github.com/images/concepts-systemdesign.png)
+
+Admin Server
+---
+
+PredictionIO's Admin Server component provides a web interface for developers to manage applications, engines and algorithms. It is built on top of Play Framework.
+
+IO Server
+---
+
+IO Server offers scalable REST API services to communicate with your web or mobile app. It is responsible for handling data input and prediction output. It is built on top of Play Framework.
+
+Scheduler
+---
+
+A scalable scheduler that can be used to manage schedules for executing tens, hundreds, or even tens-of-thousands of jobs. Quartz is the default scheduler.
+
+Data Store
+---
+
+Data store manages the collected data, the predictive model and the cached prediction results. MongoDB is the default data store.
+
+Data Processing Stack
+---
+
+Built on top of solid data frameworks and technology, such as Hadoop, Cascading, Scalding and Mahout, PredictionIO can handle a huge amount of data efficiently. A variety of machine learning algorithms are available for you to implement with just a few clicks.
+
 
 References
 ---
