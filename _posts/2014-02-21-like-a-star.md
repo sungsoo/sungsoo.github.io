@@ -12,6 +12,8 @@ Like a Star
 
 ![](http://sungsoo.github.com/images/you-from-the-star.gif)
 
+<iframe width="600" height="400" src="//www.youtube.com/embed/pwcxpfiAoEQ" frameborder="0" allowfullscreen></iframe>
+
 ### 별처럼 - 케이윌 
  
 그대 어디 있어도  
