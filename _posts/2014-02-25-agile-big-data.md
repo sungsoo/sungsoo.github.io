@@ -40,7 +40,7 @@ Agile Big Data Teams
 The broad skillset needed to build data products presents both an opportunity and a problem. If these skills can be brought to bear by experts in each role working as a team on a rich dataset, problems can be decomposed into parts and directly attacked. Data science is then an efficient assembly line, as illustrated in Figure 1-2.However, as team size increases to satisfy the need for expertise in these diverse areas, communication overhead quickly dominates. A researcher who is eight persons away from customers is unlikely to solve relevant problems and more likely to solve arcane problems. Likewise, team meetings of a dozen individuals are unlikely to be productive. We might split this team into multiple departments and establish contracts of delivery between them, but then we lose both agility and cohesion. Waiting on the output of research, we invent specifications and soon we find ourselves back in the waterfall method.
 
 ![](http://sungsoo.github.com/images/expert-contributor.png)
-And yet we know that agility and a cohesive vision and consensus about a product are essential to our success in building products. The worst product problem is one team working on more than one vision. How are we to reconcile the increased span of ex‐ pertise and the disjoint timelines of applied research, data science, software develop‐ ment, and design?
+And yet we know that agility and a cohesive vision and consensus about a product are essential to our success in building products. The worst product problem is one team working on more than one vision. How are we to reconcile the increased span of expertise and the disjoint timelines of applied research, data science, software development, and design?
 
 References
 ---
