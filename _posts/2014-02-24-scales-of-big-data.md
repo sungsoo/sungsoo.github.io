@@ -15,7 +15,7 @@ Big Data
 ![](http://sungsoo.github.com/images/scales-of-data.png)
 
 
-Respondents whose top Skills Group was **ML/Big** Data were most likely to work with larger data sets, with over half at least occasionally working on TB-scale problems, compared with about a quarter for other respondents. Even in the ML/Big Data Skills group, however, the vast majority rarely or never worked with PB-scale data. True big data work seems limited to a relatively small subset of data scientists.![](http://sungsoo.github.com/images/skills-group.png)
+Respondents whose top Skills Group was **ML/Big** Data were most likely to work with larger data sets, with over half at least occasionally working on *TB-scale problems*, compared with about a quarter for other respondents. Even in the ML/Big Data Skills group, however, the vast majority rarely or never worked with *PB-scale data*. True big data work seems limited to a relatively small subset of data scientists.![](http://sungsoo.github.com/images/skills-group.png)
 References
 ---
 [1] Harlan D. Harris, Sean Patrick Murphy, and Marck Vaisman, *Analyzing the Analyzers*, O’Reilly Media, Inc., 2013.
