@@ -35,8 +35,9 @@ Chest aching Story
 
 남자로써 꼭 해야하는 말 goodbye goodbye  
 마지막으로 너를 힘껏 안고서 goodbye goodbye  
-늘어난 테잎처럼 무겁게 더듬대며 행복해 goodbye 
-안녕 미워도 너는 내사랑 사랑을 알려준 첫 사람 그런 너를 보내는 한 남자의 거짓말 goodbye goodbye  
+늘어난 테잎처럼 무겁게 더듬대며 행복해 goodbye  
+안녕 미워도 너는 내사랑 사랑을 알려준 첫 사람  
+그런 너를 보내는 한 남자의 거짓말 goodbye goodbye  
 
 Rap)안녕 좋은 사람 만나 행복해  
 뻔한 드라마 속 이별 장면을 베낀다  
