@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Apache Hadoop YARN – Background & Overview
+title: Apache Hadoop YARN – Background and Overview
 date: 2014-02-28 
 categories: [computer science]
 tags: [hadoop, yarn]
@@ -76,6 +76,7 @@ What is the notion of customer agility?
 
 In real-world deployments, Hadoop is very commonly deployed as a *shared*, *multi-tenant system*. As a result, changes to the Hadoop software stack affect a large cross-section if not the entire enterprise. Against that backdrop, customers are very keen on controlling upgrades to the software stack as it has a direct impact on their applications. Thus, allowing multiple, if limited, versions of the **MapReduce framework is critical for Hadoop.
 **
+
 Enter Apache Hadoop YARN
 ---
 
