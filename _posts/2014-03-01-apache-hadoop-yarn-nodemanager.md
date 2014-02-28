@@ -35,20 +35,30 @@ This is the core of the NodeManager. It is composed of the following sub-compone
 
 컨테이너매니저는 노드매니저의 핵심이다. 컨테이너매니저는, 노드에서 동작 중인 컨테이너를 관리하기 위해 필요한 기능의 일부를 수행하는 다음의 하위 구성요소를 가진다.
 
-A. **RPC server**: ContainerManager accepts requests from Application Masters (AMs) to start new containers, or to stop running ones. It works with ContainerTokenSecretManager (described below) to authorize all requests. All the operations performed on containers running on this node are written to an audit-log which can be post-processed by security tools.
-B. **ResourceLocalizationService**: Responsible for securely downloading and organizing various file resources needed by containers. It tries its best to distribute the files across all the available disks. It also enforces access control restrictions of the downloaded files and puts appropriate usage limits on them.
-C. **ContainersLauncher**: Maintains a pool of threads to prepare and launch containers as quickly as possible. Also cleans up the containers’ processes when such a request is sent by the RM or the ApplicationMasters (AMs).
-D. **AuxServices**: The NM provides a framework for extending its functionality by configuring auxiliary services. This allows per-node custom services that specific frameworks may require, and still sandbox them from the rest of the NM. These services have to be configured before NM starts. Auxiliary services are notified when an application’s first container starts on the node, and when the application is considered to be complete.
-E. **ContainersMonitor**: After a container is launched, this component starts observing its resource utilization while the container is running. To enforce isolation and fair sharing of resources like memory, each container is allocated some amount of such a resource by the RM. The ContainersMonitor monitors each container’s usage continuously and if a container exceeds its allocation, it signals the container to be killed. This is done to prevent any runaway container from adversely affecting other well-behaved containers running on the same node.
+A. **RPC server**: ContainerManager accepts requests from Application Masters (AMs) to start new containers, or to stop running ones. It works with ContainerTokenSecretManager (described below) to authorize all requests. All the operations performed on containers running on this node are written to an audit-log which can be post-processed by security tools.  
+
+B. **ResourceLocalizationService**: Responsible for securely downloading and organizing various file resources needed by containers. It tries its best to distribute the files across all the available disks. It also enforces access control restrictions of the downloaded files and puts appropriate usage limits on them.  
+
+C. **ContainersLauncher**: Maintains a pool of threads to prepare and launch containers as quickly as possible. Also cleans up the containers’ processes when such a request is sent by the RM or the ApplicationMasters (AMs).  
+
+D. **AuxServices**: The NM provides a framework for extending its functionality by configuring auxiliary services. This allows per-node custom services that specific frameworks may require, and still sandbox them from the rest of the NM. These services have to be configured before NM starts. Auxiliary services are notified when an application’s first container starts on the node, and when the application is considered to be complete.  
+
+E. **ContainersMonitor**: After a container is launched, this component starts observing its resource utilization while the container is running. To enforce isolation and fair sharing of resources like memory, each container is allocated some amount of such a resource by the RM. The ContainersMonitor monitors each container’s usage continuously and if a container exceeds its allocation, it signals the container to be killed. This is done to prevent any runaway container from adversely affecting other well-behaved containers running on the same node.  
+
 F. **LogHandler**: A pluggable component with the option of either keeping the containers’ logs on the local disks or zipping them together and uploading them onto a file-system.
 
 ---
 
-A. **RPC server**: 컨테이너매니저는 애플리케이션마스터로부터 새로운 컨테이너를 시작하거나 동작중인 컨테이너를 정지시키는 요청을 받는다. ContainerManager는 아래에서 설명할  ContainerTokenSecretManager와 협력하여 모든 요청을 인증한다. 이 노드에서 수행중인 컨테이너에 대한 모든 연산은 보안 도구에 의해 후처리될 수 있는 로그에 기록된다.   
-B. **ResourceLocalizationService**: 컨테이너가 필요한 다양한 파일 리소스를 안전하게 다운로드하고 관리할 책임이 있다. 이 구성요소는 가능한 모든 디스크에 파일을 분산하도록 최선을 다하여 시도한다. 또한 다운로드받은 파일들의 접근 권한과 적절한 사용량를 제한한다.
-C. **ContainersLauncher**: 컨테이너를 가능한 빠르게 준비하고 시작하기 위해서 스레드 풀을 유지한다. 또한 RM이나 AMs에서 보내진 요청이 있다면 컨테이너의 프로세스들을 정리한다.
-D. **AuxServices**: 노드매니저는 예비 서비스들을 설정하여 노드매니저의 기능을 확장하기 위한 프레임워크를 제공한다. 이 기능은 특정한 프레임워크들이 필요로 하는 노드 별 커스텀 서비스 사용을 허가하면서도 여전히 NM의 다른 부분으로부터 분리한다. 이러한 서비스들은 NM이 시작되기전에 설정되어야 한다. 예비 서비스들은 노드에서 응용프로그램의 첫번째 컨테이너가 시작되었을때와 응용프로그램이 완료되었다고 여겨질 때 통보받는다.
-E. **ContainersMonitor**: 컨테이너가 시작된 후 이 구성요소는 컨테이너가 실행되는 동안의 자원 사용 관측을 시작한다. 메모리같은 자원의 공평한 공유와 격리를 강제하기 위해서 각 컨테이너는 RM에 의해서 자원들의 일부를 할당받는다. ContainersMonitor는 각 컨테이너의 사용을 지속적으로 모니터링 하고, 컨테이너가 할당을 넘어선다면, 컨테이너를 종료시키기 위해 신호를 보낸다. 이 것은 탈주자 컨테이너가 동일한 노드에서 실행중인 다른 정상 동작하는 컨테이너들에게 영향을 주는 것을 막는다.
+A. **RPC server**: 컨테이너매니저는 애플리케이션마스터로부터 새로운 컨테이너를 시작하거나 동작중인 컨테이너를 정지시키는 요청을 받는다. ContainerManager는 아래에서 설명할  ContainerTokenSecretManager와 협력하여 모든 요청을 인증한다. 이 노드에서 수행중인 컨테이너에 대한 모든 연산은 보안 도구에 의해 후처리될 수 있는 로그에 기록된다.     
+
+B. **ResourceLocalizationService**: 컨테이너가 필요한 다양한 파일 리소스를 안전하게 다운로드하고 관리할 책임이 있다. 이 구성요소는 가능한 모든 디스크에 파일을 분산하도록 최선을 다하여 시도한다. 또한 다운로드받은 파일들의 접근 권한과 적절한 사용량를 제한한다.  
+
+C. **ContainersLauncher**: 컨테이너를 가능한 빠르게 준비하고 시작하기 위해서 스레드 풀을 유지한다. 또한 RM이나 AMs에서 보내진 요청이 있다면 컨테이너의 프로세스들을 정리한다.  
+
+D. **AuxServices**: 노드매니저는 예비 서비스들을 설정하여 노드매니저의 기능을 확장하기 위한 프레임워크를 제공한다. 이 기능은 특정한 프레임워크들이 필요로 하는 노드 별 커스텀 서비스 사용을 허가하면서도 여전히 NM의 다른 부분으로부터 분리한다. 이러한 서비스들은 NM이 시작되기전에 설정되어야 한다. 예비 서비스들은 노드에서 응용프로그램의 첫번째 컨테이너가 시작되었을때와 응용프로그램이 완료되었다고 여겨질 때 통보받는다.  
+
+E. **ContainersMonitor**: 컨테이너가 시작된 후 이 구성요소는 컨테이너가 실행되는 동안의 자원 사용 관측을 시작한다. 메모리같은 자원의 공평한 공유와 격리를 강제하기 위해서 각 컨테이너는 RM에 의해서 자원들의 일부를 할당받는다. ContainersMonitor는 각 컨테이너의 사용을 지속적으로 모니터링 하고, 컨테이너가 할당을 넘어선다면, 컨테이너를 종료시키기 위해 신호를 보낸다. 이 것은 탈주자 컨테이너가 동일한 노드에서 실행중인 다른 정상 동작하는 컨테이너들에게 영향을 주는 것을 막는다.  
+
 F. **LogHandler**: 컨테이너의 로그들을 로컬 디스크에 유지하거나 압축하여 파일 시스템에 업로드할 수 있도록 설정할 수 있는 탈착가능한 구성요소이다.
 
 ### ContainerExecutor
@@ -62,12 +72,15 @@ Provides functionality of checking the health of the node by running a configure
 이 구성요소는 미리 구성된 스크립트를 주기적으로 실행하여 노드의 상태를 점검하는 기능을 제공한다. 또한 특히 디스크에 가끔 임시파일을 생성하여 디스크의 상태를 모니터링한다. 시스템의 모든 상태 변경은 정보를 차례차례 RM으로 전송하는 NodeStatusUpdater로 보고된다.
 
 ### Security
-A. **ApplicationACLsManager**: NM needs to gate the user facing APIs like container-logs’ display on the web-UI to be accessible only to authorized users. This component maintains the ACLs lists per application and enforces them whenever such a request is received.
+
+A. **ApplicationACLsManager**: NM needs to gate the user facing APIs like container-logs’ display on the web-UI to be accessible only to authorized users. This component maintains the ACLs lists per application and enforces them whenever such a request is received.  
+
 B. **ContainerTokenSecretManager**: verifies various incoming requests to ensure that all the incoming operations are indeed properly authorized by the RM.
 
 ---
 
-A. **ApplicationACLsManager**: NM은 허가된 사용자만 접근해야 하는 웹UI의 컨테이너 로그 디스플레이 같은 사용자 방향 API를 선별할 필요가 있다. 이 구성요소는 ACL(접근 조정 목록)을 응용프로그램별로 관리하며 그런 요청을 받았을 때 ACL을 강제한다. 
+A. **ApplicationACLsManager**: NM은 허가된 사용자만 접근해야 하는 웹UI의 컨테이너 로그 디스플레이 같은 사용자 방향 API를 선별할 필요가 있다. 이 구성요소는 ACL(접근 조정 목록)을 응용프로그램별로 관리하며 그런 요청을 받았을 때 ACL을 강제한다.   
+
 B. **ContainerTokenSecretManager**: 이 구성요소는 모든 동작이 RM에 의해서 인증되었는가 확실히 보장하기 위해서 다양한 도착 요청을 확인한다. 
 
 ### WebServer
