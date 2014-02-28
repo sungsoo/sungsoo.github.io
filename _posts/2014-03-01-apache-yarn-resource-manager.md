@@ -15,6 +15,14 @@ Apache Hadoop YARN – ResourceManager
 1. **NodeManagers** take instructions from the ResourceManager and manage resources available on a single node.
 2. **ApplicationMasters** are responsible for negotiating resources with the ResourceManager and for working with the NodeManagers to start the containers.
 
+---
+
+**리소스매니저**는 모든 가용한 클러스터 자원을 중재하는 마스터이고, 그렇기 때문에 얀 시스템에서 동작 중인 분산 응용프로그램을 관리하는 것을 돕는다. 리소스마스터는 노드 당 설치되는 노드마스터, 응용프로그램당 생성되는 애플리케이션마스터와 함께 동작한다.
+
+1. **노드매니저**는 리소스매니저로부터 명령을 받고 단일 노드상의 자원들을 가용하게 관리한다.
+2. **애플리케이션마스터**는 리소스매니저와 자원을 협상하는 역할을 하며 컨테이너들이 시작할 수 있도록 노드매니저와 함께 동작한다.
+
+
 ### Diagram of resource manager components
 
 ![](http://sungsoo.github.com/images/resource_manager_small.gif)
@@ -46,11 +54,42 @@ The ResourceManager has the following components (see the figure above):
 	* **RMDelegationTokenSecretManager**: A ResourceManager specific delegation-token secret-manager. It is responsible for generating delegation tokens to clients which can be passed on to unauthenticated processes that wish to be able to talk to RM.
 6. **DelegationTokenRenewer**: In secure mode, RM is Kerberos authenticated and so provides the service of renewing file-system tokens on behalf of the applications. This component renews tokens of submitted applications as long as the application runs and till the tokens can no longer be renewed.
 
+---
+
+리소스매니저는 다음의 구성요소를 가지고 있다.
+
+1. 리소스매니저와 클라이언트간의 통신을 하는 구성요소  
+	* **ClientService**: 리소스매니저의 클라이언트 인터페이스이다. 이 요소는 응용프로그램 제출, 응용프로그램 종료, 큐 정보 획득, 클러스터 상태 등의 클라이언트에서 RM으로 오는 모든 RPC 인터페이스를 관리한다. 
+	* **AdminService**: 관리 요청이 일반 사용자 요청때문에 서비스를 받지 못하는 경우가 없도록, 그리고 더 높은 우선순위를 가지도록 하기 위해서 노드-목록 갱신, 큐의 설정 등의 관리 명령은 이 별도의 인터페이스를 통하여 수행된다.  
+
+2. RM과 노드를 연결하는 구성요소  
+	* ResourceTrackerService: 이 요소는 모든 노드에서 오는 RPC에 응답한다. 또한 새 노드의 등록, 유효하지 않거나 퇴역한 노드로부터의 연결 거부, 노드의 하트비트 획득과 스케쥴러로의 전달을 책임지고 있다. 이 요소는 다음의 NMLivelinessMonitor와 매우 밀접하게 연관되어 있다.
+	* NMLivelinessMonitor: 운영되고 있는 노드들을 추적하고 내려간(정지한) 노드를 명확히 하기 위해서 이 구성요소는 각 노드의 마지막 하트비트 시간을 추적한다. 미리 정의된 간격의 시간내에 하트비트를 보내지 않는 어떠한 노드든 정지한 것으로 여기고 RM에 의해서 만료된다. 만료된 노드에서 현재 수행중인 모든 컨테이너는 정지한 것으로 표시되고 이후로 만료된 노드에는 어떠한 새 컨테이너도 배정하지 않습니다.
+	* NodesListManager: 유효 및 제외된 노드의 집합이다. `yarn.resourcemanager.nodes.include-path`와 `yarn.resourcemanager.nodes.exclude-path`에 설정된 호스트 설정 파일을 읽고 그 파일들에 기반하여 초기 노드 목록을 생성할 책임이 있다. 또한 시간이 진행됨에 따라 퇴역한 노드에 대한 추적을 유지해야 한다.
+3. 애플리케이션당 생성되는 AM과 통신하는 구성요소
+	* ApplicationMasterService: 이 요소는 모든 AM들과의 RPC를 책임진다. 이 요소는 새 AM의 등록과 종료된 AM으로부터 보내오는 종료/해제 요청, 현재 동작중인 모든 AM으로부터의 컨테이터 배치/해제 요청을 받아 YarnScheduler로 전송하는 역할을 책임진다. 이 요소는 아래에 설명된 AMLivelinessMonitor와 밀접하게 연관되어 있다.
+	* AMLivelinessMonitor: 동작, 정지/응답없는 AM들의 관리를 돕기 위해서 이 요소는 각 AM의 추적과 마지막 하트비트 시간을 유지한다. 미리 정의된 간격의 시간내에 하트비트를 보내지 않는 어떠한 AM이든 정지한 것으로 여기고 RM에 의해서 만료된다. 만료된 AM에서 현재 수행중인 모든 컨테이너는 정지(dead)한 것으로 표시한다. RM은 동일한 AM을 새 컨테이너에서 동작시키기 위해 스케쥴한다. 이러한 동작은 최대 4번 시도될 수 있다.
+4. RM의 핵심 - 스케쥴러와 관련 구성 요소
+	* ApplicationsManager: 제출된 응용프로그램의 집합을 관리할 책임이 있음. 또한 완료된 응용프로그램의 캐시를 유지하여 웹 UI나 명령행을 통한 사용자의 요청에 대해 응답함.
+	* ApplicationACLsManager: RM은 클라이언트와 어드민에 권한이 있는 사용자만 접근을 허락하는 문이 필요하다. 이 구성요소는 ACL(Access-Control-List)들을 응용프로그램별로 관리하면서 응용프로그램의 중단, 응용프로그램의 상태 요청등이 있을 때 권한을 강제한다.
+	* ApplicationMasterLauncher: 어떠한 요청으로 인하여 종료괸 이전의 AM 시도들과 함께 새로 제출된 AM을 실행하기 위한 스레드 풀을 관리한다. 또한 응용프로그램이 정상적으로 혹은 강제로 종료되었을 경우 AM을 청소할 책임을 가지고 있다.
+	* YarnScheduler: 스케쥴러는 자원들을 수용력, 큐 등의 제한을 조건으로 현재 실행중인 다양한 응용프로그램에 할당할 책임이 있다. 스케쥴러는 메모리, CPU, 디스크, 네트워크 등, 응용프로그램의 자원 요구사항에 기반하여 스케쥴링 함수를 동작시킨다. 현재 메모리만이 지원되고 있으며 CPU에 대한 지원이 완성되기 직전이다.
+	* ContainerAllocationExpirer: 이 구성요소는 모든 할당된 컨테이너들이 AM들에 의해서 사용되고 있으며 차후에 컨테이너가 해당되는 노드메니저에서 실행되는지 확인할 책임이 있다. AM들은 신뢰할 수 없는 사용자 코드로 실행되며 컨테이너를 사용하지 않고 할당을 유지할 수 있을 수 있으며, 이에 따라 클러스터 사용률이 저하될 수 있다. 이 문제를 해결하기 위해서, 	* ContainerAllocationExpirer는 해당하는 노드에서 사용되고 있지 않는 할당된 컨테이너들의 목록을 유지한다.어떠한 컨테이너이든 해당하는 노드매니저가 정해진 시간- 기본 10분 -안에 RM으로 컨테이너가 동작을 시작하였다고 보고하지 않으면 컨테이너는 정지했다고 가정하고 RM에의해 만료된다.
+5. TokenSecretManagers(보안을 위해): 리소스매니저는 토큰, 다양한 RPC 인터페이스에서 인증/허가를 위해 사용되는 비밀키를 관리하기 위해 몇개의 SecretManager를 가지고 있다. 얀 보안에 대한 미래의 글에는 토큰, 비밀키, SecretManager들에 대한 설명을 할 것이며, 현재는 다음의 대략적인 설명만 한다.
+	* ApplicationTokenSecretManager: RM 스케쥴링 요청을 전송하는 독단적인 프로세스를 피하기 위해 RM은 ApplicationToken이라는 응용프로그램별 토큰을 사용한다. 이 구성요소는 각 토큰을 응용 프로그램이 종료되기전까지 지역적으로 메모리에 저장하고 유효한 AM 프로세스로부터 오는 모든 요청을 인증하기 위해 사용한다.
+	* ContainerTokenSecretManager: RM에 의해 특정한 노드에 있는 컨테이너를 위해 AM에게 발급하는 특별한 토큰인 ContainerToken을 위한 SecretManager이다. ContainerToken은 컨테이너가 할당된 해당하는 노드매니저와 연결을 생성하기 위해 AM에 의해 사용된다. 이 구성요소는 RM 특정이며 근본적인 마스터와 비밀키를 기록하고 가끔 키를 롤한다.
+RMDelegationTokenSecretManager: 리소스매니저 특정 위임 토큰 SecretManager이다. 이 구성요소는 RM과 통신이 가능하기를 원하는 인증되지않은 프로세서에게 전달할 가능성이 있는 클라이언트에게 위임 토큰을 생성할 책임이 있다.
+6. DelegationTokenRenewer: 보안 모드에서 RM은 Kerberos로 인증되며 응용프로그램을 대신하여 파일 시스템 토큰을 갱신하는 서비스를 제공해야 한다. 이 구성요소는 응용프로그램이 동작하는 동안 그리고 토큰이 갱신할 수 없기 전까지 제출된 응용프로그램의 토큰을 갱신한다.
+
 
 Conclusion
 ---
 
 In YARN, the **ResourceManager** is primarily limited to *scheduling* i.e. only arbitrating available resources in the system among the competing applications and not concerning itself with *per-application state management*. Because of this clear separation of responsibilities coupled with the modularity described above, and with the powerful scheduler API discussed in the previous post, RM is able to address the most important design requirements – *scalability*, support for alternate programming paradigms.
+
+---
+
+얀에서 리소스매니저는 주로 스케쥴링, 단지 시스템에 있는 가용한 자원들을 경쟁관계에 있는 응용프로그램들 사이에 중재만 하는 것으로 한정되어 있으며 응용프로그램별 상태 관리는 고려하지 않는다. 이러한 분명한 책임 구분과 짝을 이룬 모듈 방식 그리고 강력한 스케쥴러 API로 인하여 RM은 가장 중요한 설계 요구조건인 확장성과 다른 프로그래밍 모델의 지원을 해결할 수 있다.
 
 To allow for different policy constraints, the scheduler described above in the RM is *pluggable* and allows for different algorithms. In a future post of this series, we will dig deeper into various features of **CapacityScheduler** that schedules containers based on capacity guarantees and queues.
 
