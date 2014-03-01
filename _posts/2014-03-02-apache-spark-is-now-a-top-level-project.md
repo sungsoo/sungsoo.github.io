@@ -29,6 +29,29 @@ However, MapReduce isn’t yesterday’s news quite yet. Although many new workl
 
 If you want to hear more about Spark and its role in the future of Hadoop, come to our [Structure Data conference](http://events.gigaom.com/structuredata-2014/?utm_source=data&utm_medium=editorial&utm_campaign=intext&utm_term=820915+as-mapreduce-fades-apache-spark-is-now-a-top-level-project&utm_content=dharrisstructure) March 19-20 in New York. Databricks co-founder and CEO Ion Stoica will be speaking as part of our Structure Data Awards presentation, and we’ll have the CEOs of Cloudera, Hortonworks, and Pivotal talking about the future of big data platforms and how they plan to capitalize on them.
 
+How to build Spark project
+---
+* Build Envrionements
+	* Mac OS X 10.9.2
+	* Maven 3
+
+---
+
+1. **Build** project using maven  
+```
+sungsoo$ mvn install -DskipTests
+```
+2. **Create** Eclipse project  
+```
+sungsoo$ mvn eclipse:eclipse -DdownloadSources=true -DdownloadJavadocs=true
+```  
+	* If Java OutofMemory error occured... then try to  
+	```
+	sungsoo$ export MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m"
+	```
+3. **Import** the existing project from the Eclipse  
+
+
 References
 ---
 [1] Derrick Harris, [*As MapReduce fades, Apache Spark is now a top-level project*](http://gigaom.com/2014/02/27/as-mapreduce-fades-apache-spark-is-now-a-top-level-project/), Feb. 2014.
