@@ -58,16 +58,16 @@ The client, which submits the *MapReduce job*.
 Studying Hadoop or MapReduce can be a daunting task if you get your hand dirty at the start.  
 I followed the schedule as follows :
 
-1. Start with very basics of MR with [code.google.com/edu/parallel/dsd-tutorial.html](code.google.com/edu/parallel/dsd-tutorial.html) [code.google.com/edu/parallel/mapreduce-tutorial.html]()code.google.com/edu/parallel/mapreduce-tutorial.html)  
-2. Then go for the first two lectures in [www.cs.washington.edu/education/courses/cse490h/08au/lectures.htm](www.cs.washington.edu/education/courses/cse490h/08au/lectures.htm) A very good course intro to MapReduce and Hadoop.  
-3. Read the seminal paper [labs.google.com/papers/mapreduce.html](labs.google.com/papers/mapreduce.html) and its improvements in the updated version [http://www.cs.washington.edu/education/courses/cse490h/08au/readings/communications200801-dl.pdf](http://www.cs.washington.edu/education/courses/cse490h/08au/readings/communications200801-dl.pdf)  
+1. Start with very basics of MR with [code.google.com/edu/parallel/dsd-tutorial.html](http://code.google.com/edu/parallel/dsd-tutorial.html) [code.google.com/edu/parallel/mapreduce-tutorial.html](http://code.google.com/edu/parallel/mapreduce-tutorial.html)  
+2. Then go for the first two lectures in [www.cs.washington.edu/education/courses/cse490h/08au/lectures.htm](http://www.cs.washington.edu/education/courses/cse490h/08au/lectures.htm) A very good course intro to MapReduce and Hadoop.  
+3. Read the seminal paper [labs.google.com/papers/mapreduce.html](http://labs.google.com/papers/mapreduce.html) and its improvements in the updated version [http://www.cs.washington.edu/education/courses/cse490h/08au/readings/communications200801-dl.pdf](http://www.cs.washington.edu/education/courses/cse490h/08au/readings/communications200801-dl.pdf)  
 4. Then go for all the other videos in the U.Washington link given above.  
 5. Try youtubing the terms Map reduce and hadoop to find videos by ORielly and Google RoundTable for good overview of the future of Hadoop and MapReduce  
 6. Then off to the most important videos - Cloudera Videos
-[www.cloudera.com/resources/?media=Video](www.cloudera.com/resources/?media=Video)
+[www.cloudera.com/resources/?media=Video](http://www.cloudera.com/resources/?media=Video)
 and 
 Google MiniLecture Series
-[code.google.com/edu/submissions/mapreduce-minilecture/listing.html](code.google.com/edu/submissions/mapreduce-minilecture/listing.html)
+[code.google.com/edu/submissions/mapreduce-minilecture/listing.html](http://code.google.com/edu/submissions/mapreduce-minilecture/listing.html)
 
 
 Along with all the Multimedia above we need good written material
@@ -77,8 +77,8 @@ Documents:
 1. Architecture diagrams at hadooper.blogspot.com are good to have on your wall  
 2. Hadoop: The definitive guide goes more into the nuts and bolts of the whole system where as Hadoop in Action is a good read with lots of teaching examples to learn the concepts of hadoop. Pro Hadoop is not for beginners  
 3. pdfs of the documentation from Apache Foundation
-[hadoop.apache.org/common/docs/current/](hadoop.apache.org/common/docs/current/)
-and [hadoop.apache.org/common/docs/stable/]()hadoop.apache.org/common/docs/stable/) 
+[hadoop.apache.org/common/docs/current/](http://hadoop.apache.org/common/docs/current/)
+and [hadoop.apache.org/common/docs/stable/](http://hadoop.apache.org/common/docs/stable/) 
 will help you learn as to how model your problem into a MR solution in order to gain the advantages of Hadoop in total.  
 4. HDFS paper by Yahoo! Research is also a good read in order to gain in depth knowledge of hadoop  
 5. Subscribe to the User Mailing List of Commons, MapReduce and HDFS in order to know problems, solutions and future solutions.  
