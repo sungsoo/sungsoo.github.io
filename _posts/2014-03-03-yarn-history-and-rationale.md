@@ -7,6 +7,21 @@ tags: [hadoop, yarn]
 
 ---
 
+Requirements' Origin
+---
+
+1. Scalability
+2. Multi-tenancy
+3. Serviceability
+4. Locality Awareness
+5. High Cluster Utilization
+6. Reliability/Availability
+7. Secure and Auditable Operation
+8. Support for Programming Model Diversity
+9. Flexible Resource Model
+10. Backward compatibility
+
+
 In this section, we provide the historical account of how YARN’s requirements emerged from practical needs. The reader not interested in the requirements’ origin is invited to skim over this section (the requirements are highlighted for convenience), and proceed to Section 3 where we provide a terse description of the YARN’s architecture.
 **Yahoo!** adopted Apache Hadoop in 2006 to replace the infrastructure driving its WebMap application [11], the technology that builds a graph of the known web to power its search engine. At the time, the web graph contained more than 100 billion nodes and 1 trillion edges. The previous infrastructure, named “Dreadnaught,” [25] had reached the limits of its scalability at 800 machines and a significant shift in its architecture was required to match the pace of the web. Dreadnought already executed distributed applications that resembled MapReduce [12] programs, so by adopting a more scalable MapReduce framework, significant parts of the search pipeline could be migrated easily. This highlights the first requirement that will survive throughout early versions of Hadoop, all the way to YARN—**[R1:] Scalability**.
 In addition to extremely large-scale pipelines for Yahoo! Search, scientists optimizing advertising analytics, spam filtering, and content optimization drove many of its early requirements. As the Apache Hadoop community scaled the platform for ever-larger MapReduce jobs, requirements around **[R2:] Multi-tenancy** started to take shape. The engineering priorities and intermediate stages of the compute platform are best understood inthis context. YARN’s architecture addresses many long-standing requirements, based on experience evolving the MapReduce platform. In the rest of the paper, we will assume general understanding of classic Hadoop architecture, a brief summary of which is provided in Appendix A [33].
