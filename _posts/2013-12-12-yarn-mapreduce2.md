@@ -60,6 +60,234 @@ I followed the schedule as follows :
 
 1. Start with very basics of MR with [code.google.com/edu/parallel/dsd-tutorial.html](http://code.google.com/edu/parallel/dsd-tutorial.html) [code.google.com/edu/parallel/mapreduce-tutorial.html](http://code.google.com/edu/parallel/mapreduce-tutorial.html)  
 2. Then go for the first two lectures in [www.cs.washington.edu/education/courses/cse490h/08au/lectures.htm](http://www.cs.washington.edu/education/courses/cse490h/08au/lectures.htm) A very good course intro to MapReduce and Hadoop.  
+
+---
+
+<li><b>Thursday September 25:</b>  
+<a href="lectures/Intro.pdf">Introduction/Overview</a>
+(<a href=lectures/Intro.ppt>ppt</a>)
+<br>
+Reading:  <a href=http://code.google.com/edu/parallel/dsd-tutorial.html>"Introduction
+to Distributed System Design"</a>
+<br>
+Reading:  <a href="http://www.cs.berkeley.edu/~brewer/papers/GiantScale-IEEE.pdf">"Lessons
+from Giant-Scale Services"</a>
+<br>
+Reading:  <a href="http://research.google.com/archive/googlecluster.html">"Web
+Search for a Planet:  The Google Cluster Architecture"</a>
+
+<li><b>Tuesday September 30:</b>  <a href="lectures/mapred.pdf">Functional programming and
+MapReduce</a> (<a href="lectures/mapred.ppt">ppt</a>)
+<br>
+Reading:  <a href=http://code.google.com/edu/parallel/mapreduce-tutorial.html>"Introduction
+to Parallel Programming and MapReduce"</a>
+<br>
+Reading:  <a href=http://labs.google.com/papers/mapreduce.html>"MapReduce:
+Simplified Data Processing on Large Clusters"</a>
+(updated version at page 107
+<a href=readings/communications200801-dl.pdf>here</a>)
+
+<li><b>Thursday October 2:</b>  <a href="lectures/hadoop.pdf">Hadoop
+nuts and bolts</a> (<a href="lectures/hadoop.ppt">ppt</a>)
+<br>
+Reading:  <a href=http://hadoop.apache.org/core/docs/r0.18.0/mapred_tutorial.html>"Hadoop Map/Reduce Tutorial"</a>
+
+<li><b>Tuesday October 7, 3:30-4:20:</b>
+<a href="http://research.google.com/people/jeff/index.html">Jeff Dean</a>
+(Google)
+Distinguished Lecture,
+<a href=lectures/Jeff.Dean.colloq.pdf>"Research
+Problems Inspired by Large-Scale
+Computing at Google"</a>
+
+<li><b>Tuesday October 7:</b>
+<a href="http://research.google.com/people/jeff/index.html">Jeff Dean</a>
+(Google),
+<a href=lectures/Jeff.Dean.class.pdf>"Handling
+Large Datasets at Google:  Current Systems and
+Future Directions"</a>
+
+<li><b>Thursday October 9:</b>
+<a href=lectures/490h-asn.pdf>Architecture, Systems,
+and Networking in 80 minutes</a>
+(<a href=lectures/490h-asn.ppt>ppt</a>)
+
+
+<li><b>Tuesday October 14, 3:30-4:20:</b>
+<a href="http://www.google.com/corporate/execs.html#vint">Vint Cerf</a>
+(Google)
+Distinguished Lecture,
+<a href=lectures/cerf.dls.pdf>"Internet Evolution and Some
+Challenges for the Early 21st Century"</a>
+
+<li><b>Tuesday October 14:</b>  <a href="lectures/algorithms.pdf">MapReduce 
+algorithms</a> (<a href="lectures/algorithms.ppt">ppt</a>)
+<a href=lectures/2008_10_490h_route_stability.pdf>Internet
+route stability example</a>
+<br>
+Reading:  <a href=http://infolab.stanford.edu/pub/papers/google.pdf>"The
+Anatomy of a Large-Scale Hypertextual Web Search Engine"</a>
+
+<li><b>Thursday October 16:</b>
+<a href=lectures/490h-gfs.pdf>The Google File System</a>
+(<a href=lectures/490h-gfs.ppt>ppt</a>)
+<br>
+Reading:  <a href=http://labs.google.com/papers/gfs.html>"The
+Google File System"</a>
+
+<li><b>Tuesday October 21:</b>  Mike Cafarella (UW),
+<a href=lectures/490h_nutch.pdf>Nutch, and Search Engine
+History</a>
+<br>
+Reading:  <a href="http://www.acmqueue.com/modules.php?name=Content&pa=showpage&pid=144">"Building Nutch: Open Source Search"</a>
+(cleaner copy
+<a href=http://www.cs.washington.edu/education/courses/490h/08au/readings/building_nutch.pdf>here</a>)
+
+<li><b>Thursday October 23:</b>
+<a href="http://conferences.oreillynet.com/cs/et2007/view/e_spkr/3432">Barry
+Brumitt</a> (Google),
+<a href=lectures/MapReduceDesignPatterns-UW2.pdf>"MapReduce
+Design Patterns"</a>
+<br>
+Reading:  <a href="http://www.cs.stanford.edu/people/ang/papers/nips06-mapreducemulticore.pdf">"Map-Reduce for Machine Learning on Multicore"</a>
+<br>
+Reading:  <a href="http://www2.informatik.hu-berlin.de/alkox/lehre/lvws0809/verkehr/esaHwyHierarchies.pdf">"Highway Hierarchies Hasten
+Exact Shortest Path Queries"</a>
+<br>
+Reading:  <a href="http://avglab.com/andrew/pub/alenex06.pdf">"Reach
+for A*: Efficient Point-to-Point Shortest Path Algorithms"</a>
+
+<li><b>Tuesday October 28:</b>
+<a href="http://research.microsoft.com/~philbe/">Phil Bernstein</a>
+(Microsoft),
+<a href=lectures/PhilBeCSE490H-F08.pdf>"Transactions and Replication"</a>
+<br>
+Reading:  <a href=readings/ReplicationByBernstein&Newcomer.pdf>"Replication"</a>
+(from <i>Principles of Transaction Processing</i>, Bernstein & Newcomer,
+Elsevier, Inc.)
+<br>
+Reading:  <a href=http://www.chandrakin.com/paper2.pdf>"Paxos
+Made Live - An Engineering Perspective"</a>
+
+<li><b>Thursday October 30:</b>  <a href="lectures/chubby.pdf">Additional 
+topics in reliability / availability / consistency</a> 
+(<a href="lectures/chubby.ppt">ppt</a>)
+<br>
+Reading:  <a href="http://www.allthingsdistributed.com/2008/12/eventually_consistent.html">"Eventually Consistent - Revisited"</a>
+<br>
+Reading:  <a href=http://labs.google.com/papers/chubby.html>"The
+Chubby Lock Service for Loosely-Coupled Distributed Systems"</a>
+
+<li><b>Tuesday November 4:</b> <i>[Aaron away]</i>
+<a href="http://www.cs.washington.edu/homes/gribble/">Steve
+Gribble</a> (UW and Google),
+<a href=lectures/cse490_virtualization.pdf>"Virtual
+Machine Monitors:  Implementation and Applications"</a>
+<br>
+Reading: <a href=http://www.cl.cam.ac.uk/research/srg/netos/papers/2003-xensosp.pdf>"Xen and the Art of Virtualization"</a>
+<br>
+Reading:  <a href=http://cs.ubc.ca/~brendan/papers/remus-nsdi08.pdf>"Remus:
+High Availability via Asynchronous Virtual Machine Replication"</a>
+
+<li><b>Thursday November 6:</b> <i>[Aaron away]</i>
+<a href=lectures/490h-bt.pdf>BigTable</a>
+(<a href=lectures/490h-bt.ppt>ppt</a>)
+<br>
+Reading:  <a href=http://labs.google.com/papers/bigtable.html>"Bigtable:
+A Distributed Storage System for Structured Data"</a>
+<br>
+(See
+<a href="http://norfolk.cs.washington.edu/htbin-post/unrestricted/colloq/details.cgi?id=437">Jeff
+Dean's October 2005 colloquium</a>.)
+
+<li><b>Tuesday November 11:</b>  <i>Veteran's Day -- UW holiday</i>
+
+<li><b>Thursday November 13:</b>  <a href="lectures/aws.pdf">EC2</a>
+(<a href="lectures/aws.ppt">ppt</a>)
+<br>
+Reading:
+<a href="http://docs.amazonwebservices.com/AWSEC2/2008-05-05/GettingStartedGuide/">"Amazon
+Elastic Compute Cloud Getting Started Guide"</a>
+<br>
+Reading:
+<a href="http://developer.amazonwebservices.com/connect/entry.jspa?externalID=931&categoryID=100">"Using
+Amazon S3 from Amazon EC2 with Ruby"</a>
+<br>
+Reading:
+<a href="http://developer.amazonwebservices.com/connect/entry.jspa?externalID=1632&categoryID=100">"Building
+GrepTheWeb in the Cloud, Part 1: Cloud Architectures"</a>
+<br>
+Reading:
+<a href="http://developer.amazonwebservices.com/connect/entry.jspa?externalID=1633&categoryID=100">"Building
+GrepTheWeb in the Cloud, Part 2: Best Practices"</a>
+
+<li><b>Tuesday November 18, 3:30-4:20:</b>
+<a href="http://www.allthingsdistributed.com/">Werner
+Vogels</a> (Amazon.com) Distinguished Lecture,
+<a href="http://wernervogels.s3.amazonaws.com/public/uw-dl-2008.pdf">"Ahead
+in the Cloud:  Amazon Web Services"</a>
+
+<li><b>Tuesday November 18:</b>
+<a href=lectures/490h-power.pdf>Hardware issues:  power, reliability,
+etc.</a>
+(<a href=lectures/490h-power.ppt>ppt</a>)
+<br>
+Reading:
+<a href=http://www.cs.cmu.edu/~bianca/fast07.pdf>"Disk
+failures in the real world: What does an MTTF
+of 1,000,000 hours mean to you?"</a>
+<br>
+Reading:
+<a href=http://labs.google.com/papers/disk_failures.html>"Failure
+Trends in a Large Disk Drive Population"</a>
+<br>
+Reading:
+<a href="http://www.barroso.org/publications/ieee_computer07.pdf">"The
+Case for Energy-Proportional Computing"</a>
+
+<li><b>Thursday November 20:</b> <i>[Ed away]</i>
+<a href="http://www.cs.washington.edu/homes/yoshi/">Yoshi
+Kohno</a> (UW),
+<a href=lectures/security-overview.pdf>Security,
+Privacy, and Cryptography</a>
+<br>
+Reading:
+<a href=http://www.cl.cam.ac.uk/~rja14/wcf.html>"Why
+Cryptosystems Fail"</a>
+<br>
+Reading:
+<a href=http://cubist.cs.washington.edu/Security/2007/11/22/why-a-computer-security-course-blog/>"How to <i>think</i> like
+a security professional"</a>
+
+<li><b>Tuesday November 25:</b>
+<a href="http://www.allthingsdistributed.com/">Werner Vogels</a> (Amazon.com),
+<a href="http://wernervogels.s3.amazonaws.com/public/uw-dl-2008.pdf">Software
+and hardware architecture of large-scale web services</a>
+<br>
+Reading:
+<a href="http://s3.amazonaws.com/AllThingsDistributed/sosp/amazon-dynamo-sosp2007.pdf">"Dynamo: Amazon's Highly Available
+Key-value Store"</a>
+
+<li><b>Thursday November 27:</b>  <i>Thanksgiving -- UW holiday</i>
+
+<li><b>Tuesday December 2:</b> <i>[Aaron away]</i>
+<a href="http://perspectives.mvdirona.com/2008/12/03/TwoPresentationsAtUniversityOfWashington.aspx">James
+Hamilton</a> (Microsoft),
+<a href="http://mvdirona.com/jrh/TalksAndPapers/JamesHamilton_OpsFriendlyApps.pdf">"Designing and Deploying Internet-Scale Services"</a> and
+<a href="http://mvdirona.com/jrh/TalksAndPapers/JamesHamilton_WhereDoesThePowerGo.pdf">"Where Does the Power Go and What to do About it?"</a>
+<br>
+Reading:
+<a href=http://www-db.cs.wisc.edu/cidr/cidr2007/papers/cidr07p35.pdf>"An
+Architecture for Modular Datacenters"</a>
+<br>
+Reading:
+<a href=http://research.google.com/archive/power_provisioning.pdf>"Power
+Provisioning for a Warehouse-sized Computer"</a>
+<br>
+Reading:
+<a href=http://mvdirona.com/jrh/talksAndPapers/JamesRH_Lisa.pdf>"On
+Designing and Deploying Internet-Scale Services"</a>
+
 3. Read the seminal paper [labs.google.com/papers/mapreduce.html](http://labs.google.com/papers/mapreduce.html) and its improvements in the updated version [http://www.cs.washington.edu/education/courses/cse490h/08au/readings/communications200801-dl.pdf](http://www.cs.washington.edu/education/courses/cse490h/08au/readings/communications200801-dl.pdf)  
 4. Then go for all the other videos in the U.Washington link given above.  
 5. Try youtubing the terms Map reduce and hadoop to find videos by ORielly and Google RoundTable for good overview of the future of Hadoop and MapReduce  
