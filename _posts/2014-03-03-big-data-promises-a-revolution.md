@@ -115,6 +115,27 @@ The commonly held perception by government that there is limited, significant pu
 
 Some customer-centered local governments are already using information technology to flatten their organizational structures, streamline their permitting processes and procedures, reduce processing times and inspection costs, enhance the effectiveness and efficiency of services, and empower their customers to help themselves [10]. They are, however, at this point in time, the exception rather than the rule.
 
+---
+
+Predictive policing
+---
+
+**Predictive policing** refers to the usage of predictive and analytical techniques in law enforcement to identify potential offenders. It uses technology based on earthquake prediction, and has been described in the media as a revolutionary innovation capable of "stopping crime before it starts".
+
+In November 2011, *TIME Magazine* named predictive policing as one of the *50 best inventions of 2011*. In the United States, the practice of predictive policing has been implemented by police departments in several states such as California, Washington, South Carolina, Arizona, Tennessee, and Illinois.
+
+### History
+
+In 2008, Police Chief William Bratton at the Los Angeles Police Department (LAPD) began working with the acting directors of the Bureau of Justice Assistance (BJA) and the National Institute of Justice (NJI) to explore the concept of predictive policing in crime prevention.
+
+In 2010, researchers proposed that it was possible to predict certain crimes, much like scientists forecast earthquake aftershocks.
+
+*Predictive policing* program is currently used by the police departments in several U.S. state such as California, Washington, South Carolina, Arizona, Tennessee, and Illinois.
+
+### Effectiveness
+
+The effectivess of predictive policing was recently tested by the Los Angeles Police Department (LAPD), which found its accuracy to be twice that of its current practices. In Santa Cruz, California, the implementation of predictive policing over a 6-month period resulted in a 19 percent drop in the number of burglaries. In Kent, 8.5 percent of all street crime occurred in locations predicted by PredPol, beating the 5 percent from police analysts.
+
 References
 ---
 
