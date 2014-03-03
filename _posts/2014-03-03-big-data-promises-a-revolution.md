@@ -120,12 +120,12 @@ References
 
 [1] Mayer-Schonberger, and Cukier, Kenneth. 2013. *Big Data: A Revolution That Will Transform How We Live, Work*, and Think. Boston: Houghton Mifflin Harcourt.  
 [2] Feuer, Alan. 2013. *The Mayor’s Geek Squad.*, The New York Times. New York: The New York Times Company, March 23, 2013. 3  
-[3]	http://www.wired.com/wiredscience/2010/07/manhole-explosions/ (Ehrenberg, Rachel. “Predicting the Next Deadly Manhole Explosion”).  
+[3]	[http://www.wired.com/wiredscience/2010/07/manhole-explosions/](http://www.wired.com/wiredscience/2010/07/manhole-explosions/) (Ehrenberg, Rachel. [“Predicting the Next Deadly Manhole Explosion”](http://www.wired.com/wiredscience/2010/07/manhole-explosions/)).  
 [4] See N.1 Supra.  
-[5]	http://www.suntimes.com/news/metro/3295264-418/intelligence-weis-center-crime-department.html. (Police sensing crime before it happens).  
+[5]	[http://www.suntimes.com/news/metro/3295264-418/intelligence-weis-center-crime-department.html.](http://www.suntimes.com/news/metro/3295264-418/intelligence-weis-center-crime-department.html) (Police sensing crime before it happens).  
 [6]	Siegel, Eric. 2013. *Predictive Analytics: The Power to Predict Who Will Click*, Buy, Lie, and Die. Hoboken, New Jersey: John Wiley & Sons.  
-[7]	http://www.nytimes.com/2011/08/16/us/16police.html?_r=0.  
-[8]	http://www.gtweekly.com/index.php/santa-cruz-news/santa-cruz-local-news/3472-scpd-predictive-policing-review.html.  
-[9]	www.predpol.com.  
+[7]	[http://www.nytimes.com/2011/08/16/us/16police.html?_r=0](http://www.nytimes.com/2011/08/16/us/16police.html?_r=0).  
+[8]	[http://www.gtweekly.com/index.php/santa-cruz-news/santa-cruz-local-news/3472-scpd-predictive-policing-review.html](http://www.gtweekly.com/index.php/santa-cruz-news/santa-cruz-local-news/3472-scpd-predictive-policing-review.html).  
+[9]	[www.predpol.com](www.predpol.com).  
 [10] McClendon, Bruce and Birch, Mac and Quay, Ray. 2013. Customer Service Gov. Citygate Press.  
 [11] Bruce McClendon and Wally Hill, *“Big Data” Promises a Revolution*, PM Magazine, VOLUME 95, NUMBER 6, JULY 2013
