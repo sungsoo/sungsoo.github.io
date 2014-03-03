@@ -120,7 +120,7 @@ Some customer-centered local governments are already using information technolog
 Predictive policing
 ---
 
-**Predictive policing** refers to the usage of predictive and analytical techniques in law enforcement to identify potential offenders. It uses technology based on earthquake prediction, and has been described in the media as a revolutionary innovation capable of "stopping crime before it starts".
+**Predictive policing** refers to the usage of predictive and analytical techniques in law enforcement to identify potential offenders. It uses technology based on earthquake prediction, and has been described in the media as a revolutionary innovation capable of "*stopping crime before it starts*" [12].
 
 In November 2011, *TIME Magazine* named predictive policing as one of the *50 best inventions of 2011*. In the United States, the practice of predictive policing has been implemented by police departments in several states such as California, Washington, South Carolina, Arizona, Tennessee, and Illinois.
 
@@ -150,3 +150,4 @@ References
 [9]	[www.predpol.com](www.predpol.com).  
 [10] McClendon, Bruce and Birch, Mac and Quay, Ray. 2013. Customer Service Gov. Citygate Press.  
 [11] Bruce McClendon and Wally Hill, *“Big Data” Promises a Revolution*, PM Magazine, VOLUME 95, NUMBER 6, JULY 2013
+[12][Predictive policing](http://en.wikipedia.org/wiki/Predictive_policing), From Wikipedia, the free encyclopedia, 2013.
