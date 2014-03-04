@@ -9,7 +9,7 @@ tags: [big data, analytics, graph mining]
 
 Summary
 ---
-* Article Source: Walter L. Perry, Brian McInnis, Carter C. Price, Susan C. Smith, John S. Hollywood, *Predictive Policing; The Role of Crime Forecasting in Law Enforcement Operations*, 2013 [1].
+* **Article Source**: Walter L. Perry, Brian McInnis, Carter C. Price, Susan C. Smith, John S. Hollywood, *Predictive Policing; The Role of Crime Forecasting in Law Enforcement Operations*, 2013 [1].
 
 
 Introduction
