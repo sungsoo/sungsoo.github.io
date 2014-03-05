@@ -24,6 +24,7 @@ Objectives and Approach
 We approached this task in three ways:
 1. We conducted a literature search of academic papers, vendor tool presentations, and recent presentations at conferences, drawing lessons from similar predictive techniques used in counterinsurgency and counter–improvised explosive devicesoperations and related research by the U.S. Department of Defense.2. We reviewed a number of cases of departments using predictive policing techniques that appear promising.3. We developed a taxonomy of the different types of operational applications thatcan be supported using predictive policing.
 In many cases, we were able to illustrate how predictive technologies are beingused to support police operations through a set of examples and case studies. Although some of the methods are promising and describe the current state of field, they are still more academic than practical. Consequently, this guide can also be viewed as a profile of the state of the art of predictive policing practices and the development of new *predictive technologies*. As such, it can be considered a baseline document.
-References
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/3K5aR5mnaYU" frameborder="0" allowfullscreen></iframe>References
 ---
 [1] Walter L. Perry, Brian McInnis, Carter C. Price, Susan C. Smith, John S. Hollywood, *Predictive Policing; The Role of Crime Forecasting in Law Enforcement Operations*, 2013.
