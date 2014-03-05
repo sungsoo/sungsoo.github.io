@@ -7,6 +7,37 @@ tags: [hadoop, mapreduce]
 
 ---
 
+What is Apache Drill?
+---
+
+Apache Drill is a distributed system for *interactive* analysis of *large-scale* datasets. Drill is similar to [**Google's Dremel**](http://research.google.com/pubs/pub36632.html), with the additional flexibility needed to support a broader range of query languages, data formats and data sources. It is designed to efficiently process *nested* data. It is a design goal to scale to 10,000 servers or more and to be able to process *petabyes* of data and *trillions* of records in seconds.
+
+Many organizations have the need to run *data-intensive* applications, including *batch processing*, *stream processing* and *interactive analysis*. In recent years open source systems have emerged to address the need for scalable *batch* processing (Apache Hadoop) and *stream* processing (Storm, Apache S4). In 2010 Google published a paper called “*Dremel: Interactive Analysis of Web-Scale Datasets*,” describing a scalable system used internally for interactive analysis of nested data. No open source project has successfully replicated the capabilities of Dremel.
+
+Why is MapR involved in the Drill Project?
+---
+
+**MapR** is a recognized as the leading **Hadoop** innovator and is dedicated to providing the best Big Data processing capabilities. MapR is committed to a highly transparent, open source project so that best architecture can be put in place to ensure a high quality and flexible solution. This includes developing and defining open APIs to ensure a robust ecosystem. Apache Drill represents a huge leap forward for organizations looking to augment their *Big Data processing with interactive queries* across massive data sets. Driving Drill as an open source project reduces the barriers to adopting a new set of Big Data APIs.
+
+How is Apache Drill different from HBase™?
+---
+
+Drill provides a *distributed execution engine* for interactive queries. HBase™ represents a supported data source for Drill.
+
+ 	
+How is Apache Drill different from Hive, Pig and Cascading?
+---
+
+Today these systems compile higher-level languages (eg, HiveQL, Pig Latin) into MapReduce jobs. Once Drill is available, these systems may support Drill as an underlying low-latency execution engine, enabling interactive queries across billions of records. Chris Wensel, the author of Cascading, is collaborating with MapR on this project and is one of the initial committers.
+
+Where can I find more information about Drill?
+---
+
+[http://incubator.apache.org/drill/](http://incubator.apache.org/drill/)  
+ 
+Please contact drill@mapr.com with questions.  
+Follow @ApacheDrill on Twitter.
+
 Drill Overview
 ---
 
@@ -81,5 +112,8 @@ For more information including how to run a Apache Drill cluster, visit the [Apa
 
 References
 ---
-[1] [*Apache Drill Overview*](http://incubator.apache.org/drill/drill_overview.html), 2012.
+[1] [*Apache Drill Overview*](http://incubator.apache.org/drill/drill_overview.html), 2012.  
+[2] [*Apache Drill MapR*](http://www.mapr.com/resources/community-resources/apache-drill), 2012.  
+[3] [ApacheDrill; Interactive Ad-Hoc Analysis at Scale](http://www.mapr.com/sites/default/files/apache_drill_interactive_ad-hoc_query_at_scale-hausenblas_nadeau1.pdf), White Paper, 
+
 
