@@ -19,5 +19,5 @@ Wiki Syntax
 References
 ---
 [1] [*Redmine Text Formatting*](http://www.redmine.org/projects/redmine/wiki/RedmineTextFormatting), 2012.  
-
+[2] [*A Textile Reference*](http://redcloth.org/hobix.com/textile/), 2012.
 
