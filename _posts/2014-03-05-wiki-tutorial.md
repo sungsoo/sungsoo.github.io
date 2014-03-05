@@ -10,11 +10,11 @@ tags: [agile]
 Introduction to Wiki
 ---
 
-<iframe width="640" height="400" src="//www.youtube.com/embed/-Q6LIoqij1I" frameborder="0" allowfullscreen></iframe>
+<iframe width="600" height="400" src="//www.youtube.com/embed/-Q6LIoqij1I" frameborder="0" allowfullscreen></iframe>
 
 Wiki Syntax
 ---
-<iframe width="640" height="400" src="//www.youtube.com/embed/xmxXbG1LQMU" frameborder="0" allowfullscreen></iframe>
+<iframe width="600" height="400" src="//www.youtube.com/embed/xmxXbG1LQMU" frameborder="0" allowfullscreen></iframe>
 
 References
 ---
