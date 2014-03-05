@@ -10,14 +10,14 @@ tags: [big data, stream computing]
 
 # Presto
 
-Presto is a distributed SQL query engine for big data.
+Presto is a *distributed SQL query engine* for big data.
 
 See the [User Manual](http://prestodb.io/docs/current/) for deployment instructions and end user documentation.
 
 WHAT IS PRESTO?
 ---
 
-Presto is an open source distributed SQL query engine for running interactive analytic queries against data sources of all sizes ranging from gigabytes to petabytes.
+Presto is an open source distributed SQL query engine for running *interactive analytic queries* against data sources of all sizes ranging from gigabytes to petabytes.
 
 Presto was designed and written from the ground up for interactive analytics and approaches the speed of commercial data warehouses while scaling to the size of organizations like Facebook.
 
@@ -26,7 +26,7 @@ WHAT CAN IT DO?
 
 Presto allows querying data where it lives, including Hive, HBase, relational databases or even proprietary data stores. A single Presto query can combine data from multiple sources, allowing for analytics across your entire organization.
 
-Presto is targeted at analysts who expect response times ranging from sub-second to minutes. Presto breaks the false choice between having fast analytics using an expensive commercial solution or using a slow "free" solution that requires excessive hardware.
+Presto is targeted at analysts who expect response times ranging from sub-second to minutes. Presto breaks the false choice between having *fast analytics* using an expensive commercial solution or using a slow "free" solution that requires excessive hardware.
 
 WHO USES IT?
 ---
