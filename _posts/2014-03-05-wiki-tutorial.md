@@ -18,8 +18,6 @@ Wiki Syntax
 
 References
 ---
-[1] [*Apache Drill Overview*](http://incubator.apache.org/drill/drill_overview.html), 2012.  
-[2] [*Apache Drill MapR*](http://www.mapr.com/resources/community-resources/apache-drill), 2012.  
-[3] [ApacheDrill; Interactive Ad-Hoc Analysis at Scale](http://www.mapr.com/sites/default/files/apache_drill_interactive_ad-hoc_query_at_scale-hausenblas_nadeau1.pdf), White Paper, 
+[1] [*Redmine Text Formatting*](http://www.redmine.org/projects/redmine/wiki/RedmineTextFormatting), 2012.  
 
 
