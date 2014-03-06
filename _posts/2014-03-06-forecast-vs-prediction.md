@@ -7,6 +7,13 @@ tags: [big data, analytics, graph mining]
 
 ---
 
+Foresight can provoke a handful of outcomes. It can dictate your future or help you calibrate your approach. In essence, knowing the future could help you or hurt you depending on your measurement of reason.
+
+A common misconception is that a prediction is identical to a forecast. This perception isn’t completely incorrect, but the idea of a prediction can become confusing and misrepresented when taken out of context.
+
+Unlike the gypsy who can magically predict your true love story with only a quick glimpse of your palm, Levers looks much deeper. The Levers predictive analytics method uses all your historical data to give you a better idea of where you’re headed. In other words, there are prerequisites to your envisaged “love story.”
+
+Levers recommends a minimum three months (90 days) of properly tracked performance marketing data prior to ordering forecasts or testing simulations. Wonder why? In order to accurately guide you towards the right direction, Levers needs the ability to look at your past data. The data is then processed into an accurate forecast based on how your website has performed.
 
 Forecast Vs. Prediction. What’s the difference?
 ---
