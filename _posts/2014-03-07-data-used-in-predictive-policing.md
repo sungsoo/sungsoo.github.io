@@ -39,6 +39,6 @@ The social behavior theory, therefore, predicts an increase in both violent and 
 References
 ---
 [1] Jennifer Bachner, *Predictive Policing; Preventing Crime with Data and Analytics*, Improving Performance Series, [IBM Center for The Business of Government](http://www.businessofgovernment.org), 2013.  
-[2] Colleen McCue and Andre Parker, “*Connecting the Dots: Data Mining and Predictive Analytics in Law Enforcement and Intelligence Analysis*,” Police Chief Magazine (July 2012)  
-[3] Sociologist Emile Durkheim, in *Suicide* (1951)  
+[2] Colleen McCue and Andre Parker, “*Connecting the Dots: Data Mining and Predictive Analytics in Law Enforcement and Intelligence Analysis*,” Police Chief Magazine, July 2012.  
+[3] Sociologist Emile Durkheim, in *Suicide*, 1951.  
 [4] John Hipp, Patrick Curran, and Kenneth Bollen, “*Crimes of Opportunity or Crimes of Emotion? Testing Two Explanations of Seasonal Change in Crime*,” Social Forces 82:4 (2004), pp. 1333–1372.
