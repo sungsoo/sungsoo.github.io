@@ -22,4 +22,4 @@ Another way to frame the systematic and nonsystematic components is in terms of 
 References
 ---
 [1] Jennifer Bachner, *Predictive Policing; Preventing Crime with Data and Analytics*, Improving Performance Series, [IBM Center for The Business of Government](http://www.businessofgovernment.org), 2013.  
-[2] Elizabeth R. Groff and Nancy G. La Vigne, “*Forecasting the Future of Predictive Crime Mapping*,” Crime Prevention Studies 13 (2002):
+[2] Elizabeth R. Groff and Nancy G. La Vigne, “*Forecasting the Future of Predictive Crime Mapping*,” Crime Prevention Studies 13 (2002)
