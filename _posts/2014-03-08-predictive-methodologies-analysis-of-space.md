@@ -50,7 +50,7 @@ associated with high-crime areas, such as transportation routes, entertainment e
 References
 ---
 [1] Jennifer Bachner, *Predictive Policing; Preventing Crime with Data and Analytics*, Improving Performance Series, [IBM Center for The Business of Government](http://www.businessofgovernment.org), 2013.  
-[2] Ned Levine & Associates and the National Institute of Justice, *CrimeStat III: A Spatial Statistics Program*.
+[2] Ned Levine & Associates and the National Institute of Justice, *CrimeStat III: A Spatial Statistics Program*.  
 [3] Graham Farrell and William Sousa, “*Repeat Victimization and Hot Spots: The Overlap and its Implications for Crime Control andProblem-Oriented Policing*,” Crime Prevention Studies 12 (2001): 221–240.  
 [4] Tony H. Grubesic, “On the Application of Fuzzy Clustering for Crime Hot Spot Detection,” *Journal of Quantitative Criminology* 22 (2006): 77–105.  
 [5] Leslie Kennedy, Joel Caplan and Eric Piza, “Risk Clusters, Hotspots, and Spatial Intelligence: Risk Terrain Modeling as an Algorithm for Police Resource Allocation Strategies,” *Journal of Quantitative Criminology* 27 (2011): 339–362.  
