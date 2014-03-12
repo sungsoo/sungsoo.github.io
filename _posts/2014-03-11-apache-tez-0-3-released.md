@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Apache Tez 0.3 Released!
-date: 2014-03-12 
+date: 2014-03-11 
 categories: [computer science]
 tags: [hadoop, mapreduce, tez]
 
@@ -26,10 +26,9 @@ Apache™ Tez is a replacement of MapReduce that provides a powerful framework f
 3. **Fault Tolerance**. Apache Tez executes a complex DAG workflow that can be subject to multiple failure conditions in clusters of commodity hardware and is highly resilient to these and other sorts of failures.
 4. **Stability**. A large number of bug fixes went into this release as early adopters and testers put the software through its paces and reported issues.
 
-
 To prove the stability and performance of Tez, we executed complex jobs comprised of more than 50 different stages and tens of thousands of tasks on a fairly large cluster (> 300 Nodes, > 30TB data). Tez passed all our tests and we are certain that new adopters can integrate confidently with Tez and enjoy the same benefits as Apache Hive & Apache Pig have already.
 
-There are promising signs of wider adoption of Tez, with the Apache Pig community being in the final testing phase of its initial migration to this new framework. The [43rd Bay Area Hadoop User Group](http://www.meetup.com/hadoop/events/116895522/) meetup became a Tez evening with Apache Hive and Apache Pig [showcasing](http://www.slideshare.net/ydn/pig-on-tez-hugfeb19) their current and future plans around Apache Tez. In addition, Concurrent Inc. has [plans](http://www.infoq.com/news/2013/11/cascading) to port to Tez as an execution engine for the Cascading, Scalding & Cascalog family of API’s. Last but not the least, Apache Hive with Tez integration is close to its first official [release](http://mail-archives.apache.org/mod_mbox/hive-dev/201402.mbox/%3CCD11B938-B4D9-4D2A-917D-60570A017716@hortonworks.com%3E) in [Hive 0.13](http://svn.apache.org/viewvc/hive/branches/branch-0.13/). That’s a great vote of confidence in the readiness of Tez.
+There are promising signs of wider adoption of Tez, with the Apache Pig community being in the final testing phase of its initial migration to this new framework. The [43rd Bay Area Hadoop User Group](http://www.meetup.com/hadoop/events/116895522/) meetup became a Tez evening with Apache Hive and Apache Pig [showcasing](http://www.slideshare.net/ydn/pig-on-tez-hugfeb19) their current and future plans around Apache Tez. In addition, Concurrent Inc. has [plans]((http://www.infoq.com/news/2013/11/cascading)) to port to Tez as an execution engine for the Cascading, Scalding & Cascalog family of API’s. Last but not the least, Apache Hive with Tez integration is close to its first official [release](http://mail-archives.apache.org/mod_mbox/hive-dev/201402.mbox/%3CCD11B938-B4D9-4D2A-917D-60570A017716@hortonworks.com%3E) in [Hive 0.13](http://svn.apache.org/viewvc/hive/branches/branch-0.13/). That’s a great vote of confidence in the readiness of Tez.
 
 Acknowledgements
 ---
@@ -37,7 +36,6 @@ Acknowledgements
 The rapid progress made by Apache Tez can be attributed to the close cooperation displayed by the Tez, Hive and Pig communities. We would like to call out Vikram Dixit & Gunther Hagleitner from Hive, Rohini Palaniswamy, Daniel Dai & Cheolsoo Park from Pig, Gopal Vijayaraghavan – all-round performance ninja, Rajesh Balamohan – Hive performance guru, Ramya Sunil & Tassapol Athiapinya – Hortonworks QA, for their relentless scrutiny, valuable suggestions and timeless patience.
 
 – Apache Tez team
-
 
 
 # References
