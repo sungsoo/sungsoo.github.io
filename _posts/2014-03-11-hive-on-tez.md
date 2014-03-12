@@ -21,10 +21,10 @@ The [Apache Tez](http://hortonworks.com/hadoop/tez/) community has [voted](http:
 
 Apache™ Tez is a replacement of MapReduce that provides a powerful framework for executing a complex topology of tasks. Tez 0.3.0 is an important release towards making the software ready for wider adoption by focussing on fundamentals and ironing out several key functions. The major action areas in this release were
 
-1. Security. Apache Tez now works on secure Hadoop 2.x clusters using the built-in security mechanisms of the Hadoop ecosystem.
-2. Scalability. We tested the software on large clusters, very large data sets and large applications processing tens of TB each to make sure it scales well with both data-sets and machines.
-3. Fault Tolerance. Apache Tez executes a complex DAG workflow that can be subject to multiple failure conditions in clusters of commodity hardware and is highly resilient to these and other sorts of failures.
-4. Stability. A large number of bug fixes went into this release as early adopters and testers put the software through its paces and reported issues.
+1. **Security**. Apache Tez now works on secure Hadoop 2.x clusters using the built-in security mechanisms of the Hadoop ecosystem.
+2. **Scalability**. We tested the software on large clusters, very large data sets and large applications processing tens of TB each to make sure it scales well with both data-sets and machines.
+3. **Fault Tolerance**. Apache Tez executes a complex DAG workflow that can be subject to multiple failure conditions in clusters of commodity hardware and is highly resilient to these and other sorts of failures.
+4. **Stability**. A large number of bug fixes went into this release as early adopters and testers put the software through its paces and reported issues.
 
 
 To prove the stability and performance of Tez, we executed complex jobs comprised of more than 50 different stages and tens of thousands of tasks on a fairly large cluster (> 300 Nodes, > 30TB data). Tez passed all our tests and we are certain that new adopters can integrate confidently with Tez and enjoy the same benefits as Apache Hive & Apache Pig have already.
