@@ -118,7 +118,7 @@ Here’s a TPC-DS query and plans with and without tez optimizations enabled.
 
 The query (rewritten for hive).
 
-```SQL
+```sql
 select
   i_item_desc
   ,i_category
