@@ -27,14 +27,14 @@ In Tez parlance a map-reduce job is basically a simple DAG consisting of a *sing
 
 Tez also provides what basically is a *map-reduce compact layer* that let’s one run MR jobs on top of the *new execution layer* by implementing Map/Reduce concepts on the new execution framework.
 
-More information about Tez can be found here:
+More information about Tez can be found here. 
 
 * Tez apache page: [http://incubator.apache.org/projects/tez.html](http://incubator.apache.org/projects/tez.html)
 * Tez design doc: [https://issues.apache.org/jira/browse/TEZ-65](https://issues.apache.org/jira/browse/TEZ-65)
 * Tez presentation: [http://www.youtube.com/watch?v=9ZLLzlsz7h8]()http://www.youtube.com/watch?v=9ZLLzlsz7h8)
 * Tez slides: [http://www.slideshare.net/Hadoop_Summit/murhty-saha-june26255pmroom212](http://www.slideshare.net/Hadoop_Summit/murhty-saha-june26255pmroom212)
 
-**Hive** uses map-reduce as its execution engine. Any query will produce a graph of MR jobs potentially interspersed with some local/client-side work. This leads to many inefficiencies in the planning and execution of queries. Here are some examples that can be improved by using the more flexible Tez primitives:
+**Hive** uses map-reduce as its execution engine. Any query will produce a graph of MR jobs potentially interspersed with some local/client-side work. This leads to many inefficiencies in the planning and execution of queries. Here are some examples that can be improved by using the more flexible Tez primitives.
 
 Multiple reduce stages
 ---
@@ -55,7 +55,7 @@ Joins
 ---
 
 Distributed join algorithms are difficult to express in map-reduce. A regular shuffle join for instance has to process different inputs in the same map task, use tags to be written to disk for distinguishing tables, use secondary sort to get the rows from each table in a predictable order, etc. Tez is a much more natural platform to implement these algorithms.
-For example: It is possible to have one Tez task take multiple bipartite edges as input thus exposing the input relations directly to the join implementation. The case where multiple tasks feed into the same shuffle join task will be referred to as multi-parent shuffle join.
+For example, It is possible to have one Tez task take multiple bipartite edges as input thus exposing the input relations directly to the join implementation. The case where multiple tasks feed into the same shuffle join task will be referred to as multi-parent shuffle join.
 
 Fine-tuned algorithms
 ---
@@ -92,14 +92,14 @@ Limiting the integration to the fairly simple MRR/MPJ pattern will require minim
 * The user will be able to get statistics and diagnostic information as before (counters, logs, debug info on the console)
 * Hive has unit tests to cover all new functionality
 
-The following things are out of scope for the first phase:
+The following things are out of scope for the first phase.
 
 * Local tasks will still run as MR only
 * Only Map and Reduce Tez tasks with SimpleEdges will be used (i.e.: no new tasks, new input/output/processors, no new edge types)
 * No multi-output task optimizations will be introduced
 
 
-One new configuration variable will be introduced:
+One new configuration variable will be introduced.
 
 * hive.optimize.tez   
 hive.execution.engine (changed in [HIVE-6103](https://issues.apache.org/jira/browse/HIVE-6103))
@@ -114,9 +114,9 @@ mapreduce.framework.name = yarn-tez
 # Example
 
 
-Here’s a TPC-DS query and plans with and without tez optimizations enabled:  
+Here’s a TPC-DS query and plans with and without tez optimizations enabled.  
 
-The query (rewritten for hive):
+The query (rewritten for hive).
 
 ```SQL
 select
@@ -194,7 +194,7 @@ Summary of changes
 ---
 
 
-Changes that impact current hive code paths:
+Changes that impact current hive code paths.
 
 * Split MR compilation from SemanticAnalyzer (simple)
 * Break MapRedWork into MapWork and ReduceWork (straight forward but a number of changes)
@@ -204,18 +204,19 @@ Changes that impact current hive code paths:
 
 I believe that all of these are valuable by themselves and make the code cleaner and easier to maintain. Especially the second item will touch quite a few places in the code though. None of them change functionality.  
 
-New code paths (only active when running Tez):  
+New code paths (only active when running Tez).
+  
 * **Execution**: TezWork, TezTask, TezJobMonitor (small)  
 * **Planning**: Compiler to generate TezTasks, Perform physical optimizations on Tez (large)  
 
-The following outlines the changes across the various hive components:
+The following outlines the changes across the various hive components.
 
 # Execution layer
 
 
 We’ve initially investigated to add Tez as a simple shim option to the code base. This didn’t work out mostly because Tez’ API is very different from the MR api. It does not make much sense to move the entire “execute” infrastructure to the shim layer. That would require large code changes with little benefit. Instead there will be separate “Task” implementations for MR and TEZ and hive will decide at runtime which implementation to use.
 
-We’re planning to have two packages:
+We’re planning to have two packages.
 
 * org.apache.hadoop.hive.ql.exec.mr  
 * org.apache.hadoop.hive.ql.exec.tez
