@@ -3,7 +3,7 @@ layout: post
 title: Git Concepts and Architecture
 date: 2012-04-10
 categories: [information technology]
-tags: [developments, github, source code control]
+tags: [developments]
 
 ---
 ### The Three Trees Architecture
