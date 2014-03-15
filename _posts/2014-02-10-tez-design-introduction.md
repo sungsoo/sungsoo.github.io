@@ -3,7 +3,7 @@ layout: post
 title: Tez Design - Introduction
 date: 2014-02-10 
 categories: [computer science]
-tags: [hadoop, mapreduce, tez]
+tags: [hadoop & mapreduce, tez]
 
 ---
 
