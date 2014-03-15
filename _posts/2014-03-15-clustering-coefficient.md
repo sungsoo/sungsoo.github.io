@@ -13,9 +13,11 @@ tags: [graph mining]
 
 Intuitively, a community is a set of nodes where each node has more connections within the community than outside it. This effect has been found (or is believed to exist) in many real-world graphs, especially social networks: Moody finds groupings based on race and age in a network of friendships in one American school;, Schwartz and Wood group people with shared interests from email logs; Borgs et al. find communities from “cross-posts” on Usenet; and Flake et al. discover communities of webpages in the WWW.
 We divide the discussion into two parts. First, we will describe the *clustering coefficient*, which is one particular measure of community structure that has been widely used in the literature. Next, we will describe methods for *extracting* community structure from large graphs.
-**Informal description:** The clustering coefficient measures the “clumpiness” of a graph, and has relatively high values in many graphs.
+# Clustering Coefficient**Informal description:** The clustering coefficient measures the “clumpiness” of a graph, and has relatively high values in many graphs.
 **Detailed description:** We will first define the clustering coefficient for one node, following [279] and [214]:
-Clustering Coefficient
+
+![](http://sungsoo.github.com/images/clustering-coefficient.png)
+Defintion Clustering Coefficient
 ---
 Suppose a node i has ki neighbors, and there are ni edges between the neighbors. Then the clustering coefficient of node i is defined asThus, it measures the degree of “transitivity” of a graph; higher values imply that “friends of friends” are themselves likely to be friends, leading to a “clumpy” structure of the graph. See Figure 16.1 for an example.
 For the clustering coefficient of a graph (the global clustering coefficient), there are two definitions:
