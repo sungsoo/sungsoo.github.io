@@ -3,7 +3,7 @@ layout: post
 title: PRODML Data Schema and API Specifications
 date: 2014-01-03
 categories: [computer science]
-tags: [specifications, stream computing]
+tags: [stream computing]
 
 ---
 
