@@ -3,7 +3,7 @@ layout: post
 title: Reflections on Image-Based Modeling and Rendering
 date: 2014-02-16 
 categories: [computer science]
-tags: [computer graphics, research]
+tags: [computer graphics]
 
 ---
 

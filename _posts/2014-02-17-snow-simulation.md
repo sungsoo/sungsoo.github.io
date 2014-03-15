@@ -3,7 +3,7 @@ layout: post
 title: A Material Point Method For Snow Simulation
 date: 2014-02-17 
 categories: [computer science]
-tags: [computer graphics, research]
+tags: [computer graphics]
 
 ---
 
