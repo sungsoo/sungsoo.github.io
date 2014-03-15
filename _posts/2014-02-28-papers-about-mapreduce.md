@@ -3,7 +3,7 @@ layout: post
 title: Papers about MapReduce
 date: 2014-02-28 
 categories: [computer science]
-tags: [hadoop, mapreduce, papers]
+tags: [hadoop & mapreduce, papers]
 
 ---
 
