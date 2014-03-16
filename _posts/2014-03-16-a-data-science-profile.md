@@ -7,8 +7,11 @@ tags: [data science]
 
 ---
 
+# Data Science JobsColumbia just decided to start an [Institute for Data Sciences and Engineering](http://idse.columbia.edu) with [Bloomberg’s help](http://mikebloomberg.com/index.cfm?objectid=D867EFB0-C29C-7CA2-F4B1FEBC8B06249D). There are 465 job openings in New York City alone for data scientists last time we checked. That’s a lot. So even if data science isn’t a real field, it has *real* jobs.
+And here’s one thing we noticed about most of the job descriptions: they ask data scientists to be experts in computer science, statistics, communication, data visualization, *and* to have extensive domain expertise. Nobody is an expert in everything, which is why it makes more sense to create teams of people who have different profiles and different expertise—together, as a team, they can specialize in all those things. We’ll talk about this more after we look at the composite set of skills in demand for today’s data scientists.
+
 # A Data Science Profile
-In the class, Rachel handed out index cards and asked everyone to profile themselves (on a relative rather than absolute scale) with re‐ spect to their skill levels in the following domains:
+In the class, Rachel handed out index cards and asked everyone to profile themselves (on a relative rather than absolute scale) with respect to their skill levels in the following domains:
 * Computer science
 * Math
 * Statistics
@@ -20,6 +23,8 @@ tags: [data science]
 
 As an example, Figure 1-2 shows Rachel’s data science profile.
 
-We taped the index cards to the blackboard and got to see how every‐ one else thought of themselves. There was quite a bit of variation, which is cool—lots of people in the class were coming from social sciences, for example.Where is your data science profile at the moment, and where would you like it to be in a few months, or years?As we mentioned earlier, a data science team works best when different skills (profiles) are represented across different people, because no‐ body is good at everything. It makes us wonder if it might be more worthwhile to define a “data science team”—as shown in Figure 1-3— than to define a data scientist.
+![data science profile](http://sungsoo.github.com/images/data-science-profile.png)We taped the index cards to the blackboard and got to see how everyone else thought of themselves. There was quite a bit of variation, which is cool—lots of people in the class were coming from *social sciences*, for example.
+Where is your data science profile at the moment, and where would you like it to be in a few months, or years?
+As we mentioned earlier, a data science team works best when different skills (profiles) are represented across different people, because nobody is good at everything. It makes us wonder if it might be more worthwhile to define a “**data science team**”—as shown in Figure 1-3— than to define a *data scientist*.![data science profile](http://sungsoo.github.com/images/data-science-team-profile.png)
 # References
 [1] Rachel Schutt and Cathy O’Neil, *Doing Data Science*, O’Reilly Media, Inc., 2014.
