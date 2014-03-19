@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Polyglot Persistence
-date: 2014-03-16
+date: 2014-03-20
 categories: [computer science]
 tags: [big data]
 
