@@ -24,4 +24,4 @@ One of the most important services provided by operational databases (also calle
 The rise of NoSQL is characterized with confusion and ambiguity; very much like any fast-emerging organic movement in the absence of well-defined standards and adequate software solutions. Whether you are a developer or an architect, many questions come to mind when faced with the decision of where your data should be stored and how it should be managed. This talk will address many of these questions, as well as survey the most popular NoSQL technologies.
 <iframe width="600" height="400" src="//www.youtube.com/embed/nbWPcmDS6X4" frameborder="0" allowfullscreen></iframe>
 # References
-[1] udith Hurwitz, Alan Nugent, Dr. Fern Halper, and Marcia Kaufman, *Big Data For Dummies*, John Wiley & Sons, Inc., 2013.
+[1] Judith Hurwitz, Alan Nugent, Dr. Fern Halper, and Marcia Kaufman, *Big Data For Dummies*, John Wiley & Sons, Inc., 2013.
