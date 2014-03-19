@@ -13,6 +13,12 @@ tags: [parallel programming]
 What is Functional Programming?
 ---
 
+*Concurrent programming* has been around for a long time. It's now becoming popular because there are these systems with multiple CPUs in them. As a result, other things are also becoming popular that have been around for some time, and that is functional programming.
+
+*Functional programming* turns out to be a good way to do concurrent programming. Functional programming is the idea that, well, you might maybe imagine how a traditional procedural program would work where it calls one thing, then it calls another, and then it calls another. Along the way it's modifying some data structure, something in the cloud, some files, some piece of memory, When it's done, you take a look at that data structure or that file in the cloud and you say, hey it's complete.
+
+*Functional programming* is different. It keeps a copy of everything that it's working on, it always returns the results. So it takes an input, which is this data structure you are going to run, and it returns the data structure. So that it never, ever, has to touch something else in the cloud. You can see how this would work well, right? Because if you don't have to touch anything out there, then everybody can act independently. They don't care what's going out elsewhere in the cloud. And there's some languages that are very good for this. One of the classic ones is Erlang, which is getting a lot of play these days, and there are new ones like Scala. However, one of the bigger points that I think, for the developers out there, if there are any developers out there out there, hi! For the developers out there, it's important to not just jump on the latest bandwagon. Hey, lets write everything in Scala, or Erlang, or whatever. Functional programming and concurrent programming is really just a paradigm for how to program, right? You can program in any language; you can program in Python, in Java, in Erlang. Those other languages are very good and, historically, very interesting. The reason they are, is because they kind of force you to do things right. But if you just have some discipline, you can do it correctly.
+
 <iframe width="600" height="400" src="//www.youtube.com/embed/TNYKNJlKY-c" frameborder="0" allowfullscreen></iframe>
 # References
 [1] Judith Hurwitz, Alan Nugent, Dr. Fern Halper, and Marcia Kaufman, *Big Data For Dummies*, John Wiley & Sons, Inc., 2013.
