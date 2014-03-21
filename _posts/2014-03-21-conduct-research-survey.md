@@ -122,15 +122,15 @@ STEP 3.	Determine the purpose, research question(s) or hypothesis(es)
 
 Identifying a clear purpose helps determine how the research should be conducted, what research design you will use, and the research question(s) or *hypothesis*(es) of your study.
 
-	Hypothesis – a predictive statement about what one would expect to find or occur if a theory is correct.
+**Hypothesis** – a predictive statement about what one would expect to find or occur if a theory is correct.
 
 For surveys, the purpose of your study will generally be more explorative or descriptive in nature rather than testing a hypothesis. However, surveys can also be used to explain (and *triangulate*) findings obtained from other methods. For example, if we determine from an experiment that A is better than B, a survey can be used to help us understand why A is better than B.
 
-	Triangulation - using multiple research methods to gather information or multiple sources of information on one topic or research question usually with the intent of improving reliability and/or validity . Sometimes referred to as using "multiple measures."
+**Triangulation** - using multiple research methods to gather information or multiple sources of information on one topic or research question usually with the intent of improving reliability and/or validity . Sometimes referred to as using "multiple measures."
 
 A more complex survey is a *validated scale*, which can be used to determine the effects of an intervention or to predict future behavior. [more](https://www.utexas.edu/academic/ctl/assessment/iar/research/plan/method/survey-valid.php)
 
-	Validated scale - a collection of questions intended to identify and quantify constructs based on educational theory that are not readily observable such as knowledge, abilities, attitudes, or personality traits.
+**Validated scale** - a collection of questions intended to identify and quantify constructs based on educational theory that are not readily observable such as knowledge, abilities, attitudes, or personality traits.
 
 Once you have created your research question(s) or hypothesis(es), specify or match which question(s) surveys will help to answer, or which hypothesis(es) surveys will help to triangulate or test.
 
