@@ -1,6 +1,6 @@
 ---
 layout: post
-title: The Big Data Dilemma
+title: Big Data Dilemma
 date: 2014-03-21
 categories: [computer science]
 tags: [big data]
@@ -14,7 +14,7 @@ tags: [big data]
 
 ![hgcho](http://sungsoo.github.com/images/hgcho.jpg)
 
-# The Big Data Dilemma
+# Big Data Dilemma
 빅데이터 열풍이 대단하다. 창조경제의 원투펀치로 등장한 빅데이터에 대한 기대는 좋지만 성공한 사례, 또는 그 결과의 달콤함에만 매몰되어 전체를 보지 못하면 안될 것이다. 
 
 
