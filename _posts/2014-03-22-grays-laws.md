@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Gray’s Laws Database-centric Computing in Science
-date: 2014-03-21
+date: 2014-03-22
 categories: [computer science]
 tags: [big data]
 
