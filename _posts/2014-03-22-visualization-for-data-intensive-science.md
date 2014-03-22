@@ -3,7 +3,7 @@ layout: post
 title: Visualization for Data-Intensive Science
 date: 2014-03-22
 categories: [computer science]
-tags: [big data]
+tags: [big data, computer graphics]
 
 ---
 
