@@ -18,8 +18,9 @@ Learn from academic literature about how the mapreduce parallel model and hadoop
 
 # Which areas do the papers cover?
 
-<ul>
-<strong>Ads &#038; E-commerce</strong><br />
+
+### Ads & E-commerce  
+
 <a href="http://www.wsdm-conference.org/2010/proceedings/docs/p361.pdf">Improving ad relevance in sponsored search</a><br />
 <a href="http://web2py.iiit.ac.in/publications/default/download/techreport.pdf.a373bbf4a5b76063.4164436c69636b5468726f7567685261746549494954485265706f72742e706466.pdf">Predicting the Click-Through Rate for Rare/New Ads</a><br />
 <a href="http://www.cs.ubc.ca/~goyal/research/wsdm339-goyal.pdf">Learning Influence Probabilities in Social Networks</a><br />
@@ -31,27 +32,39 @@ Learn from academic literature about how the mapreduce parallel model and hadoop
 <span style="color: #ff0000;"><strong>*</strong></span><A href="http://wwwconference.org/www2011/proceeding/proceedings/p377.pdf">A stochastic learning-to-rank algorithm and its application to contextual advertising</a> (2011)<br />
 <span style="color: #ff0000;"><strong>*</strong></span><A href="http://budiu.info/work/gonina-mr11.pdf">Parallelizing large-scale data processing applications with data skew: a case study in product-offer matching</a> (2011)<br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://portal.acm.org/citation.cfm?id=1935892">Learning website hierarchies for keyword enrichment in contextual advertising</a> (2011)</p>
-<p><strong>Astronomy</strong><br />
+
+### Astronomy
+
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://www.cs.cmu.edu/~binf/thesis_proposal/proposal.pdf">Algorithms for Large-Scale Astronomical Problems</a> (2011)</p>
-<p><Strong>Social Networks</strong><br />
+
+### Social Networks
+
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://www.vldb.org/pvldb/vol4/p460-morales.pdf">Social Content Matching in MapReduce</a> (2011)<br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://www.scientific.net/AMR.204-210.1646">Parallel Knowledge Community Detection Algorithm Research Based on MapReduce</a> (2011)<br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://static.googleusercontent.com/external_content/untrusted_dlcp/research.google.com/en/us/pubs/archive/36923.pdf">Large-Scale Community Detection on YouTube for Topic Discovery and Exploration</a> (2011)</p>
-<p><strong>Bioinformatics/Medical Informatics</strong><br />
+
+### Bioinformatics/Medical Informatics
+
 <a href="http://portal.acm.org/citation.cfm?id=1779599.1779601">A novel approach to multiple sequence alignment using hadoop data grids</a><br />
 <a href="http://www.springerlink.com/content/861l014845934682/">MapReduce-Based Pattern Finding Algorithm Applied in Motif Detection for Prescription Compatibility Network</a> (2009)<br />
 <a href="http://www.biomedcentral.com/1471-2105/11/S1/S15">MrsRF: an efficient MapReduce algorithm for analyzing large collections of evolutionary trees</a><br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://www.aaai.org/ocs/index.php/SSS/SSS11/paper/viewFile/2479/2898">HBase, MapReduce, and Integrated Data Visualization for Processing Clinical Signal Data</a> (2011)<br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://spie.org/x648.html?product_id=877877">Accelerating statistical image reconstruction algorithms for fan-beam x-ray CT using cloud computing</a> (2011)</p>
-<p><strong>Machine Translation</strong><br />
+
+### Machine Translation
+
 <a href="http://ufal.mff.cuni.cz/pbml/93/art-gao-vogel.pdf">Training Phrase-Based Machine Translation Models on the Cloud Open Source Machine Translation Toolkit Chaski</a><br />
 <a href="http://www.cs.cmu.edu/~zollmann/publications/samt-toolkit.pdf"> Grammar based statistical MT on Hadoop</a> (2009)<br />
 <a href="http://acl.ldc.upenn.edu/D/D07/D07-1090.pdf"> Large Language Models in Machine Translation</a> (2008)<br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://aclweb.org/anthology-new/W/W08/W08-0333.pdf">Fast, Easy and Cheap: Construction of Statistical Machine Translation Models with Mapreduce</a></p>
-<p><strong>Spatial Data Processing</strong><br />
+
+### Spatial Data Processing
+
 <a href="http://users.cis.fiu.edu/~vagelis/publications/Spatial-MapReduce-SSDBM2009.pdf">Experiences on Processing Spatial Data with MapReduce</a><br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://portal.acm.org/citation.cfm?id=1963265">Scalable spatio-temporal knowledge harvesting</a> (2011)</p>
-<p><strong>Information Extraction and Text Processing</strong><br />
+
+### Information Extraction and Text Processing
+
 <a href="http://www.cs.uchicago.edu/files/ms_paper/soner.pdf">Statistical Sentence Chunking Using Map Reduce</a><br />
 <a href="http://portal.acm.org/citation.cfm?id=1620950.1620951">Data-intensive text processing with MapReduce</a><br />
 <a href="http://www.aclweb.org/anthology/D/D09/D09-1098.pdf"> Web-Scale Distributional Similarity and Entity Set Expansion</a> (2009)<br />
@@ -59,7 +72,9 @@ Learn from academic literature about how the mapreduce parallel model and hadoop
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://www.springerlink.com/index/Y1232511X6751300.pdf">Batch Text Similarity Search with MapReduce</a> (2011)<br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://www.springerlink.com/index/QR43263807617U78.pdf">An Empirical Study of Massively Parallel Bayesian Networks Learning for Sentiment Extraction from Unstructured Text</a> (2011)<br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://wwwconference.org/www2011/proceeding/companion/p19.pdf">EntityTagger: automatically tagging entities with descriptive phrases</a> (2011)</p>
-<p><strong>Artificial Intelligence/Machine Learning/Data Mining</strong><br />
+
+### Artificial Intelligence/Machine Learning/Data Mining
+
 <a href="http://arxiv.org/pdf/1003.0951">LogMaster: Mining Event Correlations in Logs of Large Scale Cluster Systems</a><br />
 <a href="http://cseweb.ucsd.edu/~kyocum/pubs/socc122-logothetis.pdf">Stateful Bulk Processing for Incremental Analytics</a><br />
 <a href="http://www.signatures.nu/papers/Mining%20Dependency%20in%20Distributed%20Systems%20through%20Unstructured%20Logs%20Analysis.pdf">Mining dependency in distributed systems through unstructured logs analysis</a><br />
@@ -88,11 +103,15 @@ Learn from academic literature about how the mapreduce parallel model and hadoop
 <ul>
 For an example of Parallel Machine Learning with Hadoop/Mapreduce, check out our <a href="http://atbrox.com/2010/02/08/parallel-machine-learning-for-hadoopmapreduce-a-python-example/">previous blog post</a>.
 </ul>
-<p><strong>Search Query Analysis</strong><br />
+
+### Search Query Analysis
+
 <a href="http://portal.acm.org/citation.cfm?id=1779599.1779607">Parallelizing Random Walk with Restart for large-scale query recommendation</a><br />
 <a href="http://research.microsoft.com/apps/pubs/default.aspx?id=80592"> BBM: Bayesian Browsing Model from Petabyte-scale Data</a> (2009)<br />
 <a href="http://portal.acm.org/citation.cfm?id=1559990&amp;dl=GUIDE&amp;coll=GUIDE&amp;CFID=54492464&amp;CFTOKEN=33063869"> AIDE: Ad-hoc Intents Detection Engine over Query Logs </a>(2009)</p>
-<p><strong>Information Retrieval (Search)</strong><br />
+
+### Information Retrieval (Search)
+
 <a href="http://www.cis.upenn.edu/~zives/research/auto-integrate.pdf">Automatically Incorporating New Sources in Keyword Search-Based Data Integration</a><br />
 <a href="http://nlp.cs.nyu.edu/pubs/papers/sekine-ngram10.pdf">Ngram Search Engine with Patterns Combining Token, POS, Chunk and NE Information</a><br />
 <a href="http://www.wsdm-conference.org/2010/proceedings/docs/p381.pdf">Learning URL patterns for webpage de-duplication</a><br />
@@ -114,13 +133,17 @@ For an example of Parallel Machine Learning with Hadoop/Mapreduce, check out our
 <ul>
 For more about mapreduce in information retrieval, check out our presentation <a href="http://atbrox.com/2011/04/09/mapreduce-in-search/">Mapreduce in Search</a>.
 </ul>
-<p><strong>Spam &amp; Malware Detection</strong><br />
+
+### Spam & Malware Detection
+
 <a href="http://www.usenix.org/event/leet08/tech/full_papers/zhuang/zhuang.pdf">Characterizing Botnets from Email Spam Records</a> (2008)<br />
 - Clustering of emails into spam campaign<br />
 - Finding probability that 2 spam messages are sent form same machine<br />
 - Estime likelihood of botnets based on common senders in spam campaigns<br />
 <a href="http://www.usenix.org/event/hotbots07/tech/full_papers/provos/provos.pdf">The Ghost In The Browser Analysis of Web-based Malware</a> (2007)</p>
-<p><strong>Image and Video Processing</strong><br />
+
+### Image and Video Processing
+
 <a href="http://www.hpl.hp.com/techreports/2009/HPL-2009-181.pdf">Font rendering on a GPU-based raster image processor</a><br />
 <a href="http://www.hpl.hp.com/personal/Thomas_Sandholm/sandholm2009a.pdf">MapReduce Optimization Using Regulated Dynamic Prioritization</a> (2009)<br />
 - Video Stream Re-Rendering<br />
@@ -128,12 +151,18 @@ For more about mapreduce in information retrieval, check out our presentation <a
 - Location detection in images<br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://portal.acm.org/citation.cfm?id=1963491">Counting triangles and the curse of the last reducer</a> (2011)<br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://www.springerlink.com/content/x4811t67234qnu34/">Adapting Skyline Computation to the MapReduce Framework: Algorithms and Experiments</a> (2011)</p>
-<p><strong>Networking</strong><br />
+
+### Networking
+
 <a href="http://wwwse.inf.tu-dresden.de/papers/preprint-pfeifer2008reducible.pdf">Reducible Complexity in DNS</a></p>
-<p><strong>Simulation</strong><br />
+
+### Simulation
+
 <a href="http://www.pittsburgh.intel-research.net/~chensm/papers/IRP-TR-08-05.pdf">Map-Reduce Meets Wider Varieties of Applications</a> (2008)<br />
 - Simulation of earthquakes (geology)</p>
-<p><strong>Statistics</strong><br />
+
+### Statistics
+
 <a href="http://www.computer.org/portal/web/csdl/doi/10.1109/WKDD.2010.54">User-based collaborative filtering recommendation algorithms on hadoop</a><br />
 <a href="http://www.umiacs.umd.edu/~jimmylin/publications/Lin_SIGIR2009.pdf">Brute Force and Indexed Approaches to Pairwise Document Similarity Comparisons with MapReduce</a> (2009)<br />
 <a href="http://thepublicgrid.org/papers/koufakou_wcci_08.pdf">Fast Parallel Outlier Detection for Categorical Datasets using Mapreduce</a> (2009)<br />
@@ -144,13 +173,17 @@ For more about mapreduce in information retrieval, check out our presentation <a
 <a href="http://www.pittsburgh.intel-research.net/~chensm/papers/IRP-TR-08-05.pdf">Map-Reduce Meets Wider Varieties of Applications</a> (2008)<br />
 - Netflix video recommendation<br />
 <a href="http://www.hpl.hp.com/personal/Robert_Schreiber/papers/2008%20AAIM%20Netflix/netflix_aaim08(submitted).pdf">Large-scale Parallel Collaborative Filtering for the Netflix Prize</a> (2008)</p>
-<p><strong>Numerical Mathematics</strong><br />
+
+### Numerical Mathematics
+
 <a href="http://research.microsoft.com/pubs/119077/DNMF.pdf">Distributed non-negative matrix factorization for dyadic data analysis on mapreduce</a><br />
 <a href="http://www.cs.uwaterloo.ca/conferences/dl2010/papers/dl2010.pdf#page=464">A mapreduce algorithm for SC</a><br />
 <a href="http://jeff.bleugris.com/gpmr_mapreduce2010.pdf">Multi-GPU Volume Rendering using MapReduce</a><br />
 <a href="http://arxiv.org/PS_cache/arxiv/pdf/1001/1001.0421v1.pdf">Mapreduce for Integer Factorization</a><br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="https://mpi-inf.mpg.de/~rgemulla/publications/rj10481.pdf">Large-Scale Matrix Factorization with Distributed Stochastic Gradient Descent</a> (2011)</p>
-<p><strong>Sets &#038; Graphs</strong><br />
+
+### Sets & Graphs
+
 <a href="http://portal.acm.org/citation.cfm?id=1779599.1779604">Towards scalable RDF graph analytics on MapReduce </a><br />
 <a href="http://asterix.ics.uci.edu/pub/sigmod10-vernica-long.pdf">Efficient Parallel Set-Similarity Joins using Mapreduce</a><br />
 <a href="http://portal.acm.org/citation.cfm?id=1772715">Max-cover algorithm in map-reduce</a><br />
@@ -166,7 +199,9 @@ For more about mapreduce in information retrieval, check out our presentation <a
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://portal.acm.org/citation.cfm?id=1921634">HADI: Mining radii of large graphs</a> (2011)<br />
 <span style="color: #ff0000;"><strong>*</strong></span><a href="http://www.springerlink.com/index/1161J111121U042L.pdf">Towards Efficient Subgraph Search in Cloud Computing Environment</a> (2011)</p>
 </ul>
-<p><strong>Author organizations and companies?</strong><br />
+
+### Author organizations and companies
+
 Companies: China Mobile, eBay, Google, Hewlett Packard and Intel, Microsoft, Wikipedia, Yahoo and Yandex.<br />
 Government Institutions and Universities: US National Security Agency (NSA)<br />
 , Carnegie Mellon University, TU Dresden, University of Pennsylvania, University of Central Florida, National University of Ireland, University of Missouri, University of Arizona, University of Glasgow, Berkeley University and National Tsing Hua University, University of California, Poznan University, Florida International University, Zhejiang University, Texas A&#038;M University, University of California at Irvine, University of Illinois, Chinese Academy of Sciences, Vrije Universiteit, Engenharia University, State University of New York, Palacky University, University of Texas at Dallas</p>
@@ -174,7 +209,9 @@ Government Institutions and Universities: US National Security Agency (NSA)<br /
 # Mapreduce & Hadoop Algorithms in Academic Papers (5th update – Nov 2011)
 
 <p>Changes from the prior postings is that this posting only includes _new_ papers (2011):</p>
-<h3>Artificial Intelligence/Machine Learning/Data Mining</h3>
+
+### Artificial Intelligence/Machine Learning/Data Mining
+
 <ul>
 <a href="http://users.cis.fiu.edu/~lzhen001/activities/KDD2011Program/docs/p334.pdf">NIMBLE: a toolkit for the implementation of parallel data mining and machine learning algorithms on mapreduce </a> <br />
 <a href="http://www.springerlink.com/index/V78NRR330X21823K.pdf">Distributed Evolutionary Algorithm Using the MapReduce Paradigm–A Case Study for Data Compaction Problem </a> <br />
@@ -193,7 +230,9 @@ Government Institutions and Universities: US National Security Agency (NSA)<br /
 <a href="http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=6020074">A MapReduce based parallel SVM for large scale spam filtering </a> <br />
 <a href="http://oai.dtic.mil/oai/oai?verb=getRecord&#038;metadataPrefix=html&#038;identifier=ADA547540">Clustering Systems with Kolmogorov Complexity and MapReduce </a> 
 </ul>
-<h3>Bioinformatics/Medical Informatics</h3>
+
+### Bioinformatics/Medical Informatics
+
 <ul>
 <a href="http://schatzlab.cshl.edu/publications/2011-GenomeIndexingMapReduce.pdf">Rapid parallel genome indexing with MapReduce </a> <br />
 <a href="http://www.biomedcentral.com/content/pdf/1756-0500-4-171.pdf">CloudAligner: A fast and full-featured MapReduce based tool for sequence mapping </a> <br />
@@ -202,7 +241,8 @@ Government Institutions and Universities: US National Security Agency (NSA)<br /
 <a href="http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=6012859">Parallel Metagenomic Sequence Clustering via Sketching and Maximal Quasi-clique Enumeration on Map-reduce Clouds </a> <br />
 <a href="https://web.cci.emory.edu/confluence/download/attachments/4033450/CCI-TR-2011-3.pdf">Hadoop-GIS: A High Performance Query System for Analytical Medical Imaging with MapReduce </a> 
 </ul>
-<h3>Image and Video Processing</h3>
+
+### Image and Video Processing
 <ul>
 <a href="http://202.113.25.19/SIGIR/SIGIR_2011/docs/p1121.pdf">Multi-layer graph-based semi-supervised learning for large-scale image datasets using mapreduce </a> <br />
 <a href="http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=5974508">Skyline web service selection with MapReduce </a> <br />
@@ -210,20 +250,23 @@ Government Institutions and Universities: US National Security Agency (NSA)<br /
 <a href="http://www.springerlink.com/index/D502266281776X56.pdf">An Approach for Processing Large and Non-uniform Media Objects on MapReduce-Based Clusters </a> <br />
 <a href="http://vldb.org/pvldb/vol5/p109_jeffreyjestes_vldb2012.pdf">Building Wavelet Histograms on Large Data in MapReduce </a> 
 </ul>
-<h3>Statistics and Numerical Mathematics</h3>
+
+### Statistics and Numerical Mathematics
 <ul>
 <a href="https://domino.mpi-sb.mpg.de/intranet/ag5/ag5publ.nsf/951b6516df8639d3c1256464004a33d0/24d5dc0dea1f99d1c1257903003a46a3/$FILE/Mahdi%20Ebrahimi_Master%20Thesis.pdf">Solving Linear Programs in MapReduce </a> <br />
 <a href="http://etd.ohiolink.edu/send-pdf.cgi/Sugandharaju%20Ravi%20Kumar%20Chatnahalli.pdf?ucin1307323875">Gaussian Deconvolution and MapReduce Approach for Chipseq Analysis </a> <br />
 <a href="http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=6045047">Design and implementation of parallel statistical algorithm based on Hadoop&#8217;s MapReduce model </a> <br />
 <a href="http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=5980759">A MapReduce framework for on-road mobile fossil fuel combustion CO2 emission estimation </a> 
 </ul>
-<h3>Search and Information Retrieval</h3>
+
+### Search and Information Retrieval
 <ul>
 <a href="http://portal.acm.org/citation.cfm?id=1989425">Fast personalized PageRank on MapReduce </a> <br />
 <a href="http://eprints.eemcs.utwente.nl/19796/">MapReduce for Experimental Search </a> <br />
 <a href="http://www.umiacs.umd.edu/~jimmylin/publications/Lin_etal_MAPREDUCE2011.pdf">Full-text indexing for optimizing selection operations in large-scale data analytics </a> 
 </ul>
-<h3>Sets &#038; Graphs</h3>
+
+### Sets & Graphs
 <ul>
 <a href="http://www.sciencedirect.com/science/article/pii/S0167819111000172">MapReduce in MPI for Large-scale Graph Algorithms </a> <br />
 <a href="http://www.jofcis.com/publishedpapers/2011_7_7_2267_2276.pdf">Design Distributed Digraph Algorithms using MapReduce </a> <br />
@@ -235,24 +278,28 @@ Government Institutions and Universities: US National Security Agency (NSA)<br /
 <a href="http://arxiv.org/abs/1103.6073">Colorful Triangle Counting and a MapReduce Implementation </a> <br />
 <a href="http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=6022061">A parallel computing model for large-graph mining with MapReduce </a> 
 </ul>
-<h3>Simulation</h3>
+
+### Simulation
 <ul>
 <a href="http://digitalcommons.unl.edu/computerscidiss/25/">Molecular Dynamics Simulation Based on Hadoop Mapreduce</a> <br />
 <a href="http://link.aip.org/link/?MPHYA6/38/3869/3">TH‐E‐BRC‐04: Monte‐Carlo Simulation in a Cloud Computing Environment with MapReduce </a> <br />
 <a href="http://dl.acm.org/citation.cfm?id=2023317">Distributed simulation of P systems by means of map-reduce: first steps with hadoop and P-lingua </a> 
 </ul>
-<h3>Social Networks</h3>
+
+### Social Networks
 <ul>
 <p><a href="http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=5954313">Implementation of a Large-Scalable Social Data Analysis System Based on MapReduce </a> 
 </ul>
-<h3>Spatial Data Processing</h3>
+
+### Spatial Data Processing
 <ul>
 <a href="http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=6057775">SDPPF—A MapReduce based parallel processing framework for spatial data </a> <br />
 <a href="http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=5980991">MRGIR: Open geographical information retrieval using MapReduce </a> <br />
 <a href="http://ncg.nuim.ie/content/staff/staff/downloads/apozdnoukhov/stream_spatial_mapreduce.pdf">Scalable Local Regression for Spatial Analytics </a> <br />
 <a href="http://www.scientific.net/AMR.301-303.1133">Research on Parallel DBSCAN Algorithm Design Based on MapReduce </a> 
 </ul>
-<h3>Text Processing</h3>
+
+### Text Processing
 <ul>
 <a href="http://www.springerlink.com/index/D5578857P4257134.pdf">P 2 LSA and P 2 LSA+: two paralleled probabilistic latent semantic analysis algorithms based on the mapreduce model </a> <br />
 <a href="http://cs.smith.edu/dftwiki/images/0/0a/XGridHadoopFeb2011.pdf">Processing Wikipedia Dumps: A Case-Study comparing the XGrid and MapReduce Approaches </a> <br />
