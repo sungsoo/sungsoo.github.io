@@ -327,4 +327,46 @@ One possible remedy to this problem is to instruct Avro to explicitly return an 
 
 For details see [AVRO-803 Java generated Avro classes make using Avro painful and surprising](https://issues.apache.org/jira/browse/AVRO-803).
 
+### Enforce use of String when using sbt
+
+Add the following to your `build.sbt`, assuming you use cavorite's [sbt-avro](https://github.com/cavorite/sbt-avro) plugin.
+
+```
+(stringType in avroConfig) := "String"
+```
+
+
+### Enforce use of String when using gradle
+
+Add the following to your `build.gradle`, assuming you use my
+[avro-gradle-plugin](https://github.com/miguno/avro-gradle-plugin).
+
+```gradle
+compileAvro {
+  stringType = 'String'
+}
+```
+
+
+### Enforce use of String when using maven
+
+Add the following to the configuration of
+[avro-maven-plugin](http://mvnrepository.com/artifact/org.apache.avro/avro-maven-plugin) in your `pom.xml`.
+
+```xml
+<stringType>String</stringType>
+```
+
+
+<a name="Further readings on Java"></a>
+
+## Further readings on Java
+
+* [Package Documentation for org.apache.avro.mapred](http://avro.apache.org/docs/1.7.6/api/java/index.html?org/apache/avro/mapred/package-summary.html)
+  -- Run Hadoop MapReduce jobs over Avro data, with map and reduce functions written in Java.  This document provides
+  detailed information on how you should use the Avro Java API to implement MapReduce jobs that read and/or write data
+  in Avro format.
+* [Java MapReduce and Avro](http://www.cloudera.com/content/cloudera-content/cloudera-docs/CDH4/latest/CDH4-Installation-Guide/cdh4ig_topic_26_5.html)
+  -- Cloudera CDH4 documentation
+
 
