@@ -48,3 +48,55 @@ tags: [hadoop & mapreduce, papers]
 2. Makoto Onizuka, Hiroyuki Kato, Soichiro Hidaka, Keisuke Nakano, Zhenjiang Hu:
 [Optimization for iterative queries on MapReduce.](http://www.vldb.org/pvldb/vol7/p241-onizuka.pdf) 241 - 252.
 
+
+# Data-intensive Computing Systems
+
+Required Readings
+-----------------
+
+1.  Textbook [1] Chapter 3: The Hadoop Distributed FileSystem
+2.  Textbook [1] Chapter 6: How MapReduce Works
+3.  Textbook [1] Chapter 8: MapReduce Features
+4.  [Pig Latin: A Not-so-foreign Language for Data
+    Processing](http://research.yahoo.com/files/sigmod08.pdf)\
+     By Christopher Olston, Benjamin Reed, Utkarsh Srivastava, Ravi
+    Kumar, and Andrew Tomkins. SIGMOD Conference 2008
+5.  [Building a High-Level Dataflow System on top of MapReduce: The Pig
+    Experience](http://www.vldb.org/pvldb/2/vldb09-1074.pdf) \
+     By Alan Gates, Olga Natkovich, Shubham Chopra, Pradeep Kamath,
+    Shravan Narayanam, Christopher Olston, Benjamin Reed, Santhosh
+    Srinivasan, Utkarsh Srivastava. VLDB Conference 2009
+6.  [Query Optimization](Readings/query-opt.ps) \
+     Read **Section 5 (Size-Distribution Estimator)** of this paper by
+    Yannis Ioannidis
+7.  [A Case for Flash Memory SSD in Enterprise Database
+    Applications](http://www.cs.arizona.edu/~bkmoon/papers/sigmod08ssd.pdf)
+    \
+     By Sang-Won Lee, Bongki Moon, Chanik Park, Jae-Myung Kim, and
+    Sang-Woo Kim
+8.  [CoHadoop: Flexible Data Placement and its Exploitation in
+    Hadoop](https://researcher.ibm.com/researcher/files/us-ytian/colocation.pdf)
+    \
+     By Mohamed Y. Eltabakh, Yuanyuan Tian, Fatma Ozcan, Rainer Gemulla,
+    Aljoscha Krettek, and John McPherson
+9.  [Anatomy of the Google search engine (early
+    version)](http://infolab.stanford.edu/~backrub/google.html) \
+     By Sergey Brin and Lawrence Page
+
+Recommended Readings
+--------------------
+
+1.  [Big data: The next frontier for
+    competition](http://www.mckinsey.com/en/Features/Big_Data.aspx),
+    McKinsey report, 2011
+2.  [EMC's articles on the Digital
+    Universe](http://www.emc.com/leadership/programs/digital-universe.htm).
+    See the bottom right-hand corner for a series of interesting
+    articles such as: [The Diverse and Exploding Digital
+    Universe](http://www.emc.com/collateral/analyst-reports/expanding-digital-idc-white-paper.pdf)
+3.  [Different subsystems in big data
+    processing](http://www.thinkbiganalytics.com/resources_reference),
+    Think Big Analytics.
+
+# References
+[1] *Hadoop: The Definitive Guide*, by Tom White. O'Reilly Media. May 2012.
