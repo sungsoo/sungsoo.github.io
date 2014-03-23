@@ -1,6 +1,6 @@
 ---
 layout: post
-title: MapReduce and Hadoop Papers in VLDB Conference
+title: MapReduce and Hadoop Papers in the VLDB 
 date: 2014-03-23
 categories: [computer science]
 tags: [hadoop & mapreduce, papers]
