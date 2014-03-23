@@ -15,3 +15,6 @@ SIGGRAPH 95 was held during 6 to 11 of August, 1995, at the Los Angeles Conventi
 <iframe width="600" height="400" src="//www.youtube.com/embed/lUZ_8NLRJq0" frameborder="0" allowfullscreen></iframe>
 
 
+# Pixar 25 Magic Moments
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/sPeDGDQHYEQ" frameborder="0" allowfullscreen></iframe>
