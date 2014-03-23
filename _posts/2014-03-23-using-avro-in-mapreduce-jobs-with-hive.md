@@ -13,7 +13,7 @@ tags: [hadoop & mapreduce]
 
 ---
 
-Table of Contents
+## Table of Contents
 
 * <a href="#Requirements">Requirements</a>
 * <a href="#Example data">Example data</a>
