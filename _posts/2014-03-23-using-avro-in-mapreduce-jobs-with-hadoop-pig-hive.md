@@ -45,3 +45,44 @@ The examples require the following software versions:
 More precisely, the examples where tested with those Hadoop stack components that ship with
 [Cloudera CDH 4.x](http://www.cloudera.com/content/cloudera/en/products/cdh.html).
 
+<a name="Example data"></a>
+
+# Example data
+
+We are using a small, Twitter-like data set as input for our example MapReduce jobs.
+
+
+<a name="Avro schema"></a>
+
+## Avro schema
+
+[twitter.avsc](src/main/resources/avro/twitter.avsc) defines a basic schema for storing tweets:
+
+```json
+{
+  "type" : "record",
+  "name" : "Tweet",
+  "namespace" : "com.miguno.avro",
+  "fields" : [ {
+    "name" : "username",
+    "type" : "string",
+    "doc"  : "Name of the user account on Twitter.com"
+  }, {
+    "name" : "tweet",
+    "type" : "string",
+    "doc"  : "The content of the user's Twitter message"
+  }, {
+    "name" : "timestamp",
+    "type" : "long",
+    "doc"  : "Unix epoch time in seconds"
+  } ],
+  "doc:" : "A basic schema for storing Twitter messages"
+}
+```
+
+The latest version of the schema is always available at [twitter.avsc](src/main/resources/avro/twitter.avsc).
+
+If you want to generate Java classes from this Avro schema follow the instructions described in section
+<a href="#Usage">Usage</a>.  Alternatively you can also use the Avro Compiler directly.
+
+
