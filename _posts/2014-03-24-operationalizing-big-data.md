@@ -38,7 +38,7 @@ This process may sound familiar because businesses have been doing a variation o
 4. **Gather the data, process it, and analyze the results**:  
 	a. Commence treatment  
 	b. Monitor patient and adjust treatment as needed
-	Figure 17-1 illustrates the process.
+	**Figure 17-1** illustrates the process.
 
 ![traditional-patient-process.png](http://sungsoo.github.com/images/traditional-patient-process.png)This is how medical practitioners work with patients today. Most of the data is local to a healthcare network, and physicians have little time to go outside the network to find the latest information or practice.
 
@@ -62,7 +62,7 @@ made available for integration into existing processes. Clinical trial data, gen
 4. Gather the data, process it, and analyze the results:   
 	a. Commence treatment  
 	b. Monitor patient and adjust treatment as needed  
-Figure 17-2 identifies the same operational process as before, but with **big data integrations**.
+**Figure 17-2** identifies the same operational process as before, but with **big data integrations**.
 
 ![big-data-patient-process.png](http://sungsoo.github.com/images/big-data-patient-process.png)This represents the optimal case where no new processes need to be created to support *big data integrations*. While the processes are relatively unchanged, the underlying technologies include the applications that will need to be altered to accommodate the *impact of characteristics of big data*, including the *volume* of data, the *variety* of data sources, and the speed or *velocity* required to process that data.
 The introduction of big data into the process of managing healthcare will make a big difference in *effectiveness* to diagnosing and managing healthcare in the future. This same operational approach process can be applied to a variety of industries, ranging from oil and gas to financial markets and retail, to name a few. What are the keys to successfully applying big data to operational processes? Here are some of the most important issues to consider:

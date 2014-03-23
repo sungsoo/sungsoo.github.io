@@ -12,7 +12,7 @@ tags: [big data]
 * Article Source: Big Data for Dummies, Chapter 17  
 * Authors: Judith Hurwitz, et. al
 
-High *volume*, high *variety*, and high *velocity* are the essential characteristics of big data. These characteristics are covered in detail in Chapter 1. But other characteristics of big data are equally important, especially when you apply big data to operational processes. This **second set of “V” characteristics** that are key to operationalizing big data includes
+High *volume*, high *variety*, and high *velocity* are the essential characteristics of big data. These characteristics are covered in detail in Chapter 1 [1]. But other characteristics of big data are equally important, especially when you apply big data to operational processes. This **second set of “V” characteristics** that are key to operationalizing big data includes
 * **Validity**: Is the data *correct* and *accurate* for the intended usage?  
 * **Veracity**: Are the results *meaningful* for the given problem space?  
 * **Volatility**: How *long* do you need to *store* this data?
