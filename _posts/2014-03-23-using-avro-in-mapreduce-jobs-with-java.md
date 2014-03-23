@@ -287,3 +287,27 @@ You can also run `./gradlew cobertura` which will generate a test coverage repor
 of tweets created by Twitter users.
 
     TweetCount: Usage: TweetCount <input path> <output path>
+
+### TweetCountTest
+
+[TweetCountTest](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/java/com/miguno/avro/hadoop/TweetCountTest.java) is very similar to `TweetCount`.  
+It uses [twitter.avro](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/resources/avro/twitter.avro) as its input and runs a unit test on it with the same MapReduce job as `TweetCount`.  The unit test includes comparing the actual MapReduce output (in Snappy-compressed Avro format) with expected output.  `TweetCountTest` extends [ClusterMapReduceTestCase](https://github.com/apache/hadoop-common/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/java/org/apache/hadoop/mapred/ClusterMapReduceTestCase.java)(MRv1), which means that the corresponding MapReduce job is launched in-memory via [MiniMRCluster](https://github.com/apache/hadoop-common/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/java/org/apache/hadoop/mapred/MiniMRCluster.java).
+
+<a name="MiniMRCluster and Hadoop MRv2"></a>
+
+## MiniMRCluster and Hadoop MRv2
+
+The MiniMRCluster that is used by `ClusterMapReduceTestCase` in MRv1 is deprecated in Hadoop MRv2.  When using MRv2
+you should switch to
+[MiniMRClientClusterFactory](https://github.com/apache/hadoop-common/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/java/org/apache/hadoop/mapred/MiniMRClientClusterFactory.java),
+which provides a wrapper interface called
+[MiniMRClientCluster](https://github.com/apache/hadoop-common/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/java/org/apache/hadoop/mapred/MiniMRClientCluster.java)
+around the
+[MiniMRYarnCluster](https://github.com/apache/hadoop-common/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/java/org/apache/hadoop/mapreduce/v2/MiniMRYarnCluster.java) (MRv2):
+
+### MiniMRClientClusterFactory
+
+A MiniMRCluster factory. In MR2, it provides a wrapper MiniMRClientCluster interface around the MiniMRYarnCluster. While in MR1, it provides such wrapper around MiniMRCluster. This factory should be used in tests to provide an easy migration of tests across MR1 and MR2.
+
+See [Experimenting with MapReduce 2.0](http://blog.cloudera.com/blog/2012/07/experimenting-with-mapreduce-2-0/) for more
+information.
