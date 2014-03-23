@@ -92,7 +92,7 @@ We are using a small, Twitter-like data set as input for our example MapReduce j
 
 ## Avro schema
 
-**twitter.avsc** defines a basic schema for storing tweets:
+[twitter.avro](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/resources/avro/twitter.avro) defines a basic schema for storing tweets:
 
 ```json
 {
@@ -116,7 +116,7 @@ We are using a small, Twitter-like data set as input for our example MapReduce j
 }
 ```
 
-The latest version of the schema is always available at [twitter.avsc](src/main/resources/avro/twitter.avsc).
+The latest version of the schema is always available at [twitter.avsc](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/main/resources/avro/twitter.avsc).
 
 If you want to generate Java classes from this Avro schema follow the instructions described in section
 <a href="#Usage">Usage</a>.  Alternatively you can also use the Avro Compiler directly.
@@ -127,9 +127,9 @@ If you want to generate Java classes from this Avro schema follow the instructio
 
 The actual data is stored in the following files:
 
-* [twitter.avro](src/test/resources/avro/twitter.avro) -- encoded (serialized) version of the example data in binary
+* [twitter.avro](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/resources/avro/twitter.avro) -- encoded (serialized) version of the example data in binary
   Avro format, compressed with Snappy
-* [twitter.json](src/test/resources/avro/twitter.json) -- JSON representation of the same example data
+* [twitter.json](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/resources/avro/twitter.json) -- JSON representation of the same example data
 
 You can convert back and forth between the two encodings (Avro vs. JSON) using Avro Tools.  See
 [Reading and Writing Avro Files From the Command Line](http://www.michael-noll.com/blog/2013/03/17/reading-and-writing-avro-files-from-the-command-line/)
@@ -177,7 +177,7 @@ We are using a small, Twitter-like data set as input for our example MapReduce j
 
 ## Avro schema
 
-[twitter.avsc](src/main/resources/avro/twitter.avsc) defines a basic schema for storing tweets:
+[twitter.avsc](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/main/resources/avro/twitter.avsc) defines a basic schema for storing tweets:
 
 ```json
 {
@@ -201,7 +201,7 @@ We are using a small, Twitter-like data set as input for our example MapReduce j
 }
 ```
 
-The latest version of the schema is always available at [twitter.avsc](src/main/resources/avro/twitter.avsc).
+The latest version of the schema is always available at [twitter.avsc](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/main/resources/avro/twitter.avsc).
 
 If you want to generate Java classes from this Avro schema follow the instructions described in section
 <a href="#Usage">Usage</a>.  Alternatively you can also use the Avro Compiler directly.
@@ -213,9 +213,9 @@ If you want to generate Java classes from this Avro schema follow the instructio
 
 The actual data is stored in the following files:
 
-* [twitter.avro](src/test/resources/avro/twitter.avro) -- encoded (serialized) version of the example data in binary
+* [twitter.avro](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/resources/avro/twitter.avro) -- encoded (serialized) version of the example data in binary
   Avro format, compressed with Snappy
-* [twitter.json](src/test/resources/avro/twitter.json) -- JSON representation of the same example data
+* [twitter.json](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/resources/avro/twitter.json) -- JSON representation of the same example data
 
 You can convert back and forth between the two encodings (Avro vs. JSON) using Avro Tools.  See
 [Reading and Writing Avro Files From the Command Line](http://www.michael-noll.com/blog/2013/03/17/reading-and-writing-avro-files-from-the-command-line/)
@@ -235,20 +235,20 @@ Here is a snippet of the example data:
 
 ## Preparing the input data
 
-The example input data we are using is [twitter.avro](src/test/resources/avro/twitter.avro).
+The example input data we are using is [twitter.avro](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/resources/avro/twitter.avro).
 Upload `twitter.avro` to HDFS to make the input data available to our MapReduce jobs.
 
 ```bash
 # Upload the input data
 $ hadoop fs -mkdir examples/input
-$ hadoop fs -copyFromLocal src/test/resources/avro/twitter.avro examples/input
+$ hadoop fs -copyFromLocal https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/resources/avro/twitter.avro examples/input
 ```
 
-We will also upload the Avro schema [twitter.avsc](src/main/resources/avro/twitter.avsc) to HDFS because we will use
+We will also upload the Avro schema [twitter.avsc](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/main/resources/avro/twitter.avsc) to HDFS because we will use
 a schema available at an HDFS location in one of the Hive examples.
 
 ```bash
 # Upload the Avro schema
 $ hadoop fs -mkdir examples/schema
-$ hadoop fs -copyFromLocal src/main/resources/avro/twitter.avsc examples/schema
+$ hadoop fs -copyFromLocal https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/main/resources/avro/twitter.avsc examples/schema
 ```
