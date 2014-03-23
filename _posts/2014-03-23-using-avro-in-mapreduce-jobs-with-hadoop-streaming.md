@@ -1,13 +1,13 @@
 ---
 layout: post
-title: Using Avro in MapReduce Jobs With Hadoop, Pig, Hive 
+title: Using Avro in MapReduce Jobs With Hadoop Streaming
 date: 2014-03-23
 categories: [computer science]
 tags: [hadoop & mapreduce]
 
 ---
 
-# Using Avro in MapReduce Jobs With Hadoop, Pig, Hive
+# Using Avro in MapReduce Jobs With Hadoop Streaming
 
 [Apache Avro](http://avro.apache.org/) is a very popular data serialization format in the Hadoop technology stack. In this article I show code examples of MapReduce jobs in Java, Hadoop Streaming, Pig and Hive that read and/or write data in Avro format. We will use a small, Twitter-like data set as input for our example MapReduce jobs.
 
@@ -20,31 +20,11 @@ Table of Contents
     * <a href="#Avro schema">Avro schema</a>
     * <a href="#Avro data files">Avro data files</a>
     * <a href="#Preparing the input data">Preparing the input data</a>
-* <a href="#Java">Java</a>
-    * <a href="#Usage">Usage</a>
-    * <a href="#Examples-Java">Examples</a>
-    * <a href="#MiniMRCluster and Hadoop MRv2">MiniMRCluster and Hadoop MRv2</a>
-    * <a href="#Avro-String-vs-CharSequence-vs-Utf8">Avro: String vs CharSequence vs Utf8</a>
-    * <a href="#Further readings on Java">Further readings on Java</a>
 * <a href="#Hadoop Streaming">Hadoop Streaming</a>
     * <a href="#Preliminaries-Streaming">Preliminaries</a>
     * <a href="#Streaming data">How Streaming sees data when reading via AvroAsTextInputFormat</a>
     * <a href="#Examples-Streaming">Examples</a>
     * <a href="#Further readings on Hadoop Streaming">Further readings on Hadoop Streaming</a>
-* <a href="#Hive">Hive</a>
-    * <a href="#Preliminaries-Hive">Preliminaries</a>
-    * <a href="#Examples-Hive">Examples</a>
-    * <a href="#Further readings on Hive">Further readings on Hive</a>
-* <a href="#Pig">Pig</a>
-    * <a href="#Preliminaries-Pig">Preliminaries</a>
-    * <a href="#Examples-Pig">Examples</a>
-    * <a href="#Further readings on Pig">Further readings on Pig</a>
-* <a href="#Bijection">Twitter Bijection</a>
-    * <a href="#Examples-Bijection">Examples</a>
-* <a href="#Related documentation">Related documentation</a>
-* <a href="#Contributing">Contributing to avro-hadoop-starter</a>
-* <a href="#License">License</a>
-
 ---
 
 ## avro-hadoop-starter 
@@ -253,152 +233,164 @@ $ hadoop fs -mkdir examples/schema
 $ hadoop fs -copyFromLocal https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/main/resources/avro/twitter.avsc examples/schema
 ```
 
+<a name="Hadoop Streaming"></a>
 
-<a name="Java"></a>
-
-# Java
+# Hadoop Streaming
 
 
-<a name="Usage"></a>
+<a name="Preliminaries-Streaming"></a>
 
-## Usage
+## Preliminaries
 
-To prepare your Java IDE:
+Important: The examples below assume you have access to a running Hadoop cluster.
 
-```bash
-# IntelliJ IDEA
-$ ./gradlew cleanIdea idea   # then File > Open... > avro-hadoop-starter.ipr
-# Eclipse
-$ ./gradlew cleanEclipse eclipse
-```
 
-To build the Java code and to compile the Avro-based Java classes from the schemas (`*.avsc`) in
-`https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/main/resources/avro/`:
+<a name="Streaming data"></a>
 
-```bash
-$ ./gradlew clean build
-```
+## How Streaming sees data when reading via AvroAsTextInputFormat
 
-The generated Avro-based Java classes are written under the directory tree `generated-sources/`.  The Avro
-compiler will generate a Java class `Tweet` from the `twitter.avsc` schema.
+When using [AvroAsTextInputFormat](http://avro.apache.org/docs/1.7.6/api/java/org/apache/avro/mapred/AvroAsTextInputFormat.html)
+as the input format your streaming code will receive the data in JSON format, one record ("datum" in Avro parlance) per
+line.  Note that Avro will also add a trailing TAB (`\t`) at the end of each line.
 
-To run the unit tests (notably `TweetCountTest`, see section _Examples_ below):
+    <JSON representation of Avro record #1>\t
+    <JSON representation of Avro record #2>\t
+    <JSON representation of Avro record #3>\t
+    ...
 
-```bash
-$ ./gradlew test
-```
+Here is the basic data flow from your input data in binary Avro format to our streaming mapper:
 
-Note: `./gradlew test` executes any JUnit unit tests.  If you add any TestNG unit tests you need to run
-`./gradlew testng` for executing those.
+    input.avro (binary)  ---AvroAsTextInputFormat---> deserialized data (JSON) ---> Mapper
 
-You can also run `./gradlew cobertura` which will generate a test coverage report at
-`./build/reports/cobertura/coverage.xml` that you can integrate into your CI setup.
 
-<a name="Examples-Java"></a>
+<a name="Examples-Streaming"></a>
 
 ## Examples
 
-### TweetCount
 
-[TweetCount](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/main/java/com/miguno/avro/hadoop/TweetCount.java) implements a MapReduce job that counts the number
-of tweets created by Twitter users.
+### Prerequisites
 
-    TweetCount: Usage: TweetCount <input path> <output path>
+The example commands below use the Hadoop Streaming jar _for MRv1_ shipped with Cloudera CDH4:
 
+* [hadoop-streaming-2.0.0-mr1-cdh4.3.0.jar](https://repository.cloudera.com/artifactory/cloudera-repos/org/apache/hadoop/hadoop-streaming/2.0.0-mr1-cdh4.3.0/hadoop-streaming-2.0.0-mr1-cdh4.3.0.jar)
+  (as of July 2013)
 
-### TweetCountTest
+If you are not using Cloudera CDH4 or are using a new version of CDH4 just replace the jar file with the one included
+in your Hadoop installation.
 
-[TweetCountTest](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/java/com/miguno/avro/hadoop/TweetCountTest.java) is very similar to `TweetCount`.  It uses
-[twitter.avro](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/resources/avro/twitter.avro) as its input and runs a unit test on it with the same MapReduce job
-as `TweetCount`.  The unit test includes comparing the actual MapReduce output (in Snappy-compressed Avro format) with
-expected output.  `TweetCountTest` extends
-[ClusterMapReduceTestCase](https://github.com/apache/hadoop-common/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/java/org/apache/hadoop/mapred/ClusterMapReduceTestCase.java)
-(MRv1), which means that the corresponding MapReduce job is launched in-memory via
-[MiniMRCluster](https://github.com/apache/hadoop-common/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/java/org/apache/hadoop/mapred/MiniMRCluster.java).
+The Avro jar files are straight from the [Avro project](https://avro.apache.org/releases.html):
 
-
-<a name="MiniMRCluster and Hadoop MRv2"></a>
-
-## MiniMRCluster and Hadoop MRv2
-
-The MiniMRCluster that is used by `ClusterMapReduceTestCase` in MRv1 is deprecated in Hadoop MRv2.  When using MRv2
-you should switch to
-[MiniMRClientClusterFactory](https://github.com/apache/hadoop-common/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/java/org/apache/hadoop/mapred/MiniMRClientClusterFactory.java),
-which provides a wrapper interface called
-[MiniMRClientCluster](https://github.com/apache/hadoop-common/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/java/org/apache/hadoop/mapred/MiniMRClientCluster.java)
-around the
-[MiniMRYarnCluster](https://github.com/apache/hadoop-common/blob/trunk/hadoop-mapreduce-project/hadoop-mapreduce-client/hadoop-mapreduce-client-jobclient/https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/test/java/org/apache/hadoop/mapreduce/v2/MiniMRYarnCluster.java) (MRv2):
-
-### MiniMRClientClusterFactory
-
-A MiniMRCluster factory. In MR2, it provides a wrapper MiniMRClientCluster interface around the MiniMRYarnCluster. While in MR1, it provides such wrapper around MiniMRCluster. This factory should be used in tests to provide an easy migration of tests across MR1 and MR2.
-
-See [Experimenting with MapReduce 2.0](http://blog.cloudera.com/blog/2012/07/experimenting-with-mapreduce-2-0/) for more
-information.
+* [avro-1.7.6.jar](http://www.eu.apache.org/dist/avro/avro-1.7.6/java/avro-1.7.6.jar)
+* [avro-mapred-1.7.6-hadoop1.jar](http://www.eu.apache.org/dist/avro/avro-1.7.6/java/avro-mapred-1.7.6-hadoop1.jar)
+* [avro-tools-1.7.6.jar](http://www.eu.apache.org/dist/avro/avro-1.7.6/java/avro-tools-1.7.6.jar)
 
 
-<a name="Avro-String-vs-CharSequence-vs-Utf8"></a>
+### Reading Avro, writing plain-text
 
-## Avro: String vs CharSequence vs Utf8
+The following command reads Avro data from the relative HDFS directory `examples/input/` (which normally resolves
+to `/user/<your-unix-username>/examples/input/`).  It writes the
+deserialized version of each data record (see section _How Streaming sees data when reading via AvroAsTextInputFormat_
+above) as is to the output HDFS directory `streaming/output/`.  For this simple demonstration we are using
+the `IdentityMapper` as a naive map step implementation -- it outputs its input data unmodified (equivalently we
+coud use the Unix tool `cat`, here) .  We do not need to run a reduce phase here, which is why we disable the reduce
+step via the option `-D mapred.reduce.tasks=0` (see
+[Specifying Map-Only Jobs](http://hadoop.apache.org/docs/r1.1.2/streaming.html#Specifying+Map-Only+Jobs) in the
+Hadoop Streaming documentation).
 
-One caveat when using Avro in Java (or Scala, ...) is that you may create a new Avro-backed object with a
-`java.lang.String` parameter (e.g. the username in the Avro schema we use in our examples), but as you convert your data
-record to binary and back to POJO you will observe that Avro actually gives you an instance of
-[CharSequence](http://docs.oracle.com/javase/7/docs/api/java/lang/CharSequence.html) instead of a `String`.
-Now the problem is that by default Avro generated Java classes expose
-[CharSequence](http://docs.oracle.com/javase/7/docs/api/java/lang/CharSequence.html) for string fields in their API
-_but unfortunately you cannot use just any CharSequence when interacting with your data records_ -- such as
-[java.lang.String](http://docs.oracle.com/javase/7/docs/api/java/lang/String.html), which does implement `CharSequence`.
-You _must_ use Avro's own [Utf8](http://avro.apache.org/docs/1.7.6/api/java/org/apache/avro/util/Utf8.html) instead.
-A typical case where you run into this gotcha is when your unit tests complain that doing a round-trip conversion of a
-data record does apparently not result in the original record.
-
-One possible remedy to this problem is to instruct Avro to explicitly return an instance of `String`.  This is usually
-what you want as it provides you with the intuitive behavior that you'd typically expect.  Your mileage may vary though.
-
-For details see [AVRO-803: Java generated Avro classes make using Avro painful and surprising](https://issues.apache.org/jira/browse/AVRO-803).
-
-
-### Enforce use of String when using sbt
-
-Add the following to your `build.sbt`, assuming you use cavorite's
-[sbt-avro](https://github.com/cavorite/sbt-avro) plugin:
-
-```
-(stringType in avroConfig) := "String"
+```bash
+# Run the streaming job
+$ hadoop jar hadoop-streaming-2.0.0-mr1-cdh4.3.0.jar \
+    -D mapred.job.name="avro-streaming" \
+    -D mapred.reduce.tasks=0 \
+    -files avro-1.7.6.jar,avro-mapred-1.7.6-hadoop1.jar \
+    -libjars avro-1.7.6.jar,avro-mapred-1.7.6-hadoop1.jar \
+    -input  examples/input/ \
+    -output streaming/output/ \
+    -mapper org.apache.hadoop.mapred.lib.IdentityMapper \
+    -inputformat org.apache.avro.mapred.AvroAsTextInputFormat
 ```
 
+Once the job completes you can inspect the output data as follows:
 
-### Enforce use of String when using gradle
-
-Add the following to your `build.gradle`, assuming you use my
-[avro-gradle-plugin](https://github.com/miguno/avro-gradle-plugin):
-
-```gradle
-compileAvro {
-  stringType = 'String'
-}
+```
+$ hadoop fs -cat streaming/output/part-00000 | head -4
+{"username": "miguno", "tweet": "Rock: Nerf paper, scissors is fine.", "timestamp": 1366150681}
+{"username": "BlizzardCS", "tweet": "Works as intended.  Terran is IMBA.", "timestamp": 1366154481}
+{"username": "DarkTemplar", "tweet": "From the shadows I come!", "timestamp": 1366154681}
+{"username": "VoidRay", "tweet": "Prismatic core online!", "timestamp": 1366160000}
 ```
 
+Please be aware that the output data just happens to be JSON.  This is because we opted not to modify any of the input
+data in our MapReduce job.  And since the input data to our MapReduce job is deserialized by Avro into JSON, the output
+turns out to be JSON, too.  With a different MapReduce job you could of course write the output data in TSV or CSV
+format, for instance.
 
-### Enforce use of String when using maven
 
-Add the following to the configuration of
-[avro-maven-plugin](http://mvnrepository.com/artifact/org.apache.avro/avro-maven-plugin) in your `pom.xml`:
+### Reading Avro, writing Avro
 
-```xml
-<stringType>String</stringType>
+#### AvroTextOutputFormat (implies "bytes" schema)
+
+To write the output in Avro format instead of plain-text, use the same general options as in the previous example but
+also add:
+
+```bash
+$ hadoop jar hadoop-streaming-2.0.0-mr1-cdh4.3.0.jar \
+    [...]
+    -outputformat org.apache.avro.mapred.AvroTextOutputFormat
+```
+
+[AvroTextOutputFormat](http://avro.apache.org/docs/1.7.6/api/java/index.html?org/apache/avro/mapred/AvroTextOutputFormat.html)
+is the equivalent of TextOutputFormat.  It writes Avro data files with a "bytes" schema.
+
+Note that using `IdentityMapper` as a naive mapper as shown in the previous example will not result in the output file
+being identical to the input file.  This is because `AvroTextOutputFormat` will escape (quote) the input data it
+receives.  An illustration might be worth a thousand words:
+
+```bash
+# After having used IdentityMapper as in the previous example
+$ hadoop fs -copyToLocal streaming/output/part-00000.avro .
+$ java -jar avro-tools-1.7.6.jar tojson part-00000.avro  | head -4
+"{\"username\": \"miguno\", \"tweet\": \"Rock: Nerf paper, scissors is fine.\", \"timestamp\": 1366150681}\t"
+"{\"username\": \"BlizzardCS\", \"tweet\": \"Works as intended.  Terran is IMBA.\", \"timestamp\": 1366154481}\t"
+"{\"username\": \"DarkTemplar\", \"tweet\": \"From the shadows I come!\", \"timestamp\": 1366154681}\t"
+"{\"username\": \"VoidRay\", \"tweet\": \"Prismatic core online!\", \"timestamp\": 1366160000}\t"
 ```
 
 
-<a name="Further readings on Java"></a>
+#### Custom Avro output schema
 
-## Further readings on Java
+This looks not to be supported by stock Avro at the moment.  A related JIRA ticket
+[AVRO-1067](https://issues.apache.org/jira/browse/AVRO-1067), created in April 2012, is still unresolved as of July
+2013.
 
-* [Package Documentation for org.apache.avro.mapred](http://avro.apache.org/docs/1.7.6/api/java/index.html?org/apache/avro/mapred/package-summary.html)
-  -- Run Hadoop MapReduce jobs over Avro data, with map and reduce functions written in Java.  This document provides
-  detailed information on how you should use the Avro Java API to implement MapReduce jobs that read and/or write data
-  in Avro format.
-* [Java MapReduce and Avro](http://www.cloudera.com/content/cloudera-content/cloudera-docs/CDH4/latest/CDH4-Installation-Guide/cdh4ig_topic_26_5.html)
+For a workaround take a look at the section _Avro output for Hadoop Streaming_ at
+[avro-utils](https://github.com/tomslabs/avro-utils), a third-party library for Avro.
+
+
+#### Enabling compression of Avro output data (Snappy or Deflate)
+
+If you want to enable compression for the Avro output data, you must add the following parameters to the streaming job:
+
+    # For compression with Snappy
+    -D mapred.output.compress=true -D avro.output.codec=snappy
+
+    # For compression with Deflate
+    -D mapred.output.compress=true -D avro.output.codec=deflate
+
+Be aware that if you enable compression with `mapred.output.compress` but are NOT specifying an Avro output format
+(such as AvroTextOutputFormat) your cluster's configured default compression codec will determine the final format
+of the output data.  For instance, if `mapred.output.compression.codec` is set to
+`com.hadoop.compression.lzo.LzopCodec` then the job's output files would be compressed with LZO (e.g. you would
+see `part-00000.lzo` output files instead of uncompressed `part-00000` files).
+
+See also [Compression and Avro](http://www.cloudera.com/content/cloudera-content/cloudera-docs/CDH4/latest/CDH4-Installation-Guide/cdh4ig_topic_26_2.html)
+in the CDH4 documentation.
+
+
+<a name="Further readings on Hadoop Streaming"></a>
+
+## Further readings on Hadoop Streaming
+
+* [Streaming and Avro](http://www.cloudera.com/content/cloudera-content/cloudera-docs/CDH4/latest/CDH4-Installation-Guide/cdh4ig_topic_26_6.html)
   -- Cloudera CDH4 documentation
 
