@@ -13,7 +13,7 @@ tags: [hadoop & mapreduce]
 
 ---
 
-Table of Contents
+## Table of Contents
 
 * <a href="#Requirements">Requirements</a>
 * <a href="#Example data">Example data</a>
@@ -26,24 +26,6 @@ Table of Contents
     * <a href="#MiniMRCluster and Hadoop MRv2">MiniMRCluster and Hadoop MRv2</a>
     * <a href="#Avro-String-vs-CharSequence-vs-Utf8">Avro: String vs CharSequence vs Utf8</a>
     * <a href="#Further readings on Java">Further readings on Java</a>
-* <a href="#Hadoop Streaming">Hadoop Streaming</a>
-    * <a href="#Preliminaries-Streaming">Preliminaries</a>
-    * <a href="#Streaming data">How Streaming sees data when reading via AvroAsTextInputFormat</a>
-    * <a href="#Examples-Streaming">Examples</a>
-    * <a href="#Further readings on Hadoop Streaming">Further readings on Hadoop Streaming</a>
-* <a href="#Hive">Hive</a>
-    * <a href="#Preliminaries-Hive">Preliminaries</a>
-    * <a href="#Examples-Hive">Examples</a>
-    * <a href="#Further readings on Hive">Further readings on Hive</a>
-* <a href="#Pig">Pig</a>
-    * <a href="#Preliminaries-Pig">Preliminaries</a>
-    * <a href="#Examples-Pig">Examples</a>
-    * <a href="#Further readings on Pig">Further readings on Pig</a>
-* <a href="#Bijection">Twitter Bijection</a>
-    * <a href="#Examples-Bijection">Examples</a>
-* <a href="#Related documentation">Related documentation</a>
-* <a href="#Contributing">Contributing to avro-hadoop-starter</a>
-* <a href="#License">License</a>
 
 ---
 
@@ -339,7 +321,7 @@ information.
 
 <a name="Avro-String-vs-CharSequence-vs-Utf8"></a>
 
-## Avro: String vs CharSequence vs Utf8
+## Avro - String vs CharSequence vs Utf8
 
 One caveat when using Avro in Java (or Scala, ...) is that you may create a new Avro-backed object with a
 `java.lang.String` parameter (e.g. the username in the Avro schema we use in our examples), but as you convert your data
@@ -347,9 +329,9 @@ record to binary and back to POJO you will observe that Avro actually gives you 
 [CharSequence](http://docs.oracle.com/javase/7/docs/api/java/lang/CharSequence.html) instead of a `String`.
 Now the problem is that by default Avro generated Java classes expose
 [CharSequence](http://docs.oracle.com/javase/7/docs/api/java/lang/CharSequence.html) for string fields in their API
-_but unfortunately you cannot use just any CharSequence when interacting with your data records_ -- such as
+*but unfortunately you cannot use just any CharSequence when interacting with your data records* -- such as
 [java.lang.String](http://docs.oracle.com/javase/7/docs/api/java/lang/String.html), which does implement `CharSequence`.
-You _must_ use Avro's own [Utf8](http://avro.apache.org/docs/1.7.6/api/java/org/apache/avro/util/Utf8.html) instead.
+You *must* use Avro's own [Utf8](http://avro.apache.org/docs/1.7.6/api/java/org/apache/avro/util/Utf8.html) instead.
 A typical case where you run into this gotcha is when your unit tests complain that doing a round-trip conversion of a
 data record does apparently not result in the original record.
 
