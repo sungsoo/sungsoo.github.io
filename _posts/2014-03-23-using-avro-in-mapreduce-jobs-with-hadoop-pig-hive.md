@@ -11,7 +11,7 @@ tags: [hadoop & mapreduce]
 
 [Apache Avro](http://avro.apache.org/) is a very popular data serialization format in the Hadoop technology stack. In this article I show code examples of MapReduce jobs in Java, Hadoop Streaming, Pig and Hive that read and/or write data in Avro format. We will use a small, Twitter-like data set as input for our example MapReduce jobs.
 
-# avro-hadoop-starter [![Build Status](https://travis-ci.org/miguno/avro-hadoop-starter.png?branch=master)](https://travis-ci.org/miguno/avro-hadoop-starter)
+## avro-hadoop-starter 
 
 Example MapReduce jobs in Java, Hadoop Streaming, Pig and Hive that read and/or write data in Avro format.
 
@@ -54,7 +54,7 @@ Table of Contents
 # Prerequisites
 First you must clone my [avro-hadoop-starter](https://github.com/miguno/avro-hadoop-starter) repository on GitHub.
 
-```
+```bash
 $ git clone git@github.com:miguno/avro-hadoop-starter.git
 $ cd avro-hadoop-starter
 ```
