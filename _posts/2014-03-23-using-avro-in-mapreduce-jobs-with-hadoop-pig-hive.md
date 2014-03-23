@@ -11,6 +11,42 @@ tags: [hadoop & mapreduce]
 
 [Apache Avro](http://avro.apache.org/) is a very popular data serialization format in the Hadoop technology stack. In this article I show code examples of MapReduce jobs in Java, Hadoop Streaming, Pig and Hive that read and/or write data in Avro format. We will use a small, Twitter-like data set as input for our example MapReduce jobs.
 
+---
+
+Table of Contents
+
+* <a href="#Requirements">Requirements</a>
+* <a href="#Example data">Example data</a>
+    * <a href="#Avro schema">Avro schema</a>
+    * <a href="#Avro data files">Avro data files</a>
+    * <a href="#Preparing the input data">Preparing the input data</a>
+* <a href="#Java">Java</a>
+    * <a href="#Usage">Usage</a>
+    * <a href="#Examples-Java">Examples</a>
+    * <a href="#MiniMRCluster and Hadoop MRv2">MiniMRCluster and Hadoop MRv2</a>
+    * <a href="#Avro-String-vs-CharSequence-vs-Utf8">Avro: String vs CharSequence vs Utf8</a>
+    * <a href="#Further readings on Java">Further readings on Java</a>
+* <a href="#Hadoop Streaming">Hadoop Streaming</a>
+    * <a href="#Preliminaries-Streaming">Preliminaries</a>
+    * <a href="#Streaming data">How Streaming sees data when reading via AvroAsTextInputFormat</a>
+    * <a href="#Examples-Streaming">Examples</a>
+    * <a href="#Further readings on Hadoop Streaming">Further readings on Hadoop Streaming</a>
+* <a href="#Hive">Hive</a>
+    * <a href="#Preliminaries-Hive">Preliminaries</a>
+    * <a href="#Examples-Hive">Examples</a>
+    * <a href="#Further readings on Hive">Further readings on Hive</a>
+* <a href="#Pig">Pig</a>
+    * <a href="#Preliminaries-Pig">Preliminaries</a>
+    * <a href="#Examples-Pig">Examples</a>
+    * <a href="#Further readings on Pig">Further readings on Pig</a>
+* <a href="#Bijection">Twitter Bijection</a>
+    * <a href="#Examples-Bijection">Examples</a>
+* <a href="#Related documentation">Related documentation</a>
+* <a href="#Contributing">Contributing to avro-hadoop-starter</a>
+* <a href="#License">License</a>
+
+---
+
 ## avro-hadoop-starter 
 
 Example MapReduce jobs in Java, Hadoop Streaming, Pig and Hive that read and/or write data in Avro format.
