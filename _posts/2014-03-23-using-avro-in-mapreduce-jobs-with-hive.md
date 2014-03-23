@@ -24,6 +24,7 @@ tags: [hadoop & mapreduce]
     * <a href="#Preliminaries-Hive">Preliminaries</a>
     * <a href="#Examples-Hive">Examples</a>
     * <a href="#Further readings on Hive">Further readings on Hive</a>
+    
 ---
 
 ## avro-hadoop-starter 
