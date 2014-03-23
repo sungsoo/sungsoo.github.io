@@ -145,7 +145,6 @@ $ hadoop fs -copyFromLocal src/main/resources/avro/twitter.avsc examples/schema
 
 To prepare your Java IDE:
 
-```bash
 
 # IntelliJ IDEA
 
