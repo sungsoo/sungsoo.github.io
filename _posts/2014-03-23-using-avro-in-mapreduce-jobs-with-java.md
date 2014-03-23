@@ -277,3 +277,13 @@ You can also run `./gradlew cobertura` which will generate a test coverage repor
 `./build/reports/cobertura/coverage.xml` that you can integrate into your CI setup.
 
 
+<a name="Examples-Java"></a>
+
+## Examples
+
+### TweetCount
+
+[TweetCount](https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/main/java/com/miguno/avro/hadoop/TweetCount.java) implements a MapReduce job that counts the number
+of tweets created by Twitter users.
+
+    TweetCount: Usage: TweetCount <input path> <output path>
