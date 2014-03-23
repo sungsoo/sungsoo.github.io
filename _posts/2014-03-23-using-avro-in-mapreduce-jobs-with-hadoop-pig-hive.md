@@ -252,3 +252,45 @@ a schema available at an HDFS location in one of the Hive examples.
 $ hadoop fs -mkdir examples/schema
 $ hadoop fs -copyFromLocal https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/main/resources/avro/twitter.avsc examples/schema
 ```
+
+
+<a name="Java"></a>
+
+# Java
+
+
+<a name="Usage"></a>
+
+## Usage
+
+To prepare your Java IDE:
+
+```bash
+# IntelliJ IDEA
+$ ./gradlew cleanIdea idea   # then File > Open... > avro-hadoop-starter.ipr
+# Eclipse
+$ ./gradlew cleanEclipse eclipse
+```
+
+To build the Java code and to compile the Avro-based Java classes from the schemas (`*.avsc`) in
+`https://github.com/sungsoo/avro-hadoop-starter/tree/master/src/main/resources/avro/`:
+
+```bash
+$ ./gradlew clean build
+```
+
+The generated Avro-based Java classes are written under the directory tree `generated-sources/`.  The Avro
+compiler will generate a Java class `Tweet` from the `twitter.avsc` schema.
+
+To run the unit tests (notably `TweetCountTest`, see section _Examples_ below):
+
+```bash
+$ ./gradlew test
+```
+
+Note: `./gradlew test` executes any JUnit unit tests.  If you add any TestNG unit tests you need to run
+`./gradlew testng` for executing those.
+
+You can also run `./gradlew cobertura` which will generate a test coverage report at
+`./build/reports/cobertura/coverage.xml` that you can integrate into your CI setup.
+
