@@ -1043,4 +1043,3 @@ Copyright © 2013-2014 Michael G. Noll
 
 See [LICENSE](LICENSE) for licensing information.
 
-[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/3783cb35c77123156b11034f93bc9c1c "githalytics.com")](http://githalytics.com/miguno/avro-hadoop-starter)
