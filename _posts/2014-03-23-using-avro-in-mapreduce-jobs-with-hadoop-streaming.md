@@ -13,7 +13,7 @@ tags: [hadoop & mapreduce]
 
 ---
 
-Table of Contents
+## Table of Contents
 
 * <a href="#Requirements">Requirements</a>
 * <a href="#Example data">Example data</a>
@@ -25,6 +25,7 @@ Table of Contents
     * <a href="#Streaming data">How Streaming sees data when reading via AvroAsTextInputFormat</a>
     * <a href="#Examples-Streaming">Examples</a>
     * <a href="#Further readings on Hadoop Streaming">Further readings on Hadoop Streaming</a>
+    
 ---
 
 ## avro-hadoop-starter 
