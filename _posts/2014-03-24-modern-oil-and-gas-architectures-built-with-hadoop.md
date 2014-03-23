@@ -25,15 +25,15 @@ March 6th, 2014
 industry verticals. Others in the series are:**
 
 -   [**Modern Healthcare Architectures Built with
-    Hadoop**](http://hortonworks.com/blog/modern-healthcare-architectures-built-with-hadoop/)****
+    Hadoop**](http://hortonworks.com/blog/modern-healthcare-architectures-built-with-hadoop/)
 -   [**Modern Manufacturing Architectures Built with
     Hadoop**](http://hortonworks.com/blog/modern-manufacturing-architectures-built-hadoop/)
 -   [**Modern Telecom Architectures Built with
-    Hadoop**](http://hortonworks.com/blog/modern-telecom-architectures-built-hadoop)****
+    Hadoop**](http://hortonworks.com/blog/modern-telecom-architectures-built-hadoop)
 -   [**Modern Retail Architectures Built with
-    Hadoop**](http://hortonworks.com/blog/modern-retail-architectures-built-hadoop/)****
--   **[Modern Advertising Architectures Built with
-    Hadoop](http://hortonworks.com/blog/modern-advertising-architectures-built-hadoop/)**
+    Hadoop**](http://hortonworks.com/blog/modern-retail-architectures-built-hadoop/)
+-   [**Modern Advertising Architectures Built with
+    Hadoop**](http://hortonworks.com/blog/modern-advertising-architectures-built-hadoop/)
 
 The United States is enjoying resurgent fossil fuel production. In fact,
 the International Energy Agency estimates that by 2016, the [U.S. will
