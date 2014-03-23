@@ -146,10 +146,15 @@ $ hadoop fs -copyFromLocal src/main/resources/avro/twitter.avsc examples/schema
 To prepare your Java IDE:
 
 ```bash
+
 # IntelliJ IDEA
+
+```bash
 $ ./gradlew cleanIdea idea   # then File > Open... > avro-hadoop-starter.ipr
+```
 
 # Eclipse
+```bash
 $ ./gradlew cleanEclipse eclipse
 ```
 
