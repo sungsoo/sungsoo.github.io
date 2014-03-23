@@ -289,7 +289,7 @@ The Avro jar files are straight from the [Avro project](https://avro.apache.org/
 
 The following command reads Avro data from the relative HDFS directory `examples/input/` (which normally resolves
 to `/user/<your-unix-username>/examples/input/`).  It writes the
-deserialized version of each data record (see section _How Streaming sees data when reading via AvroAsTextInputFormat_
+deserialized version of each data record (see section *How Streaming sees data when reading via AvroAsTextInputFormat*
 above) as is to the output HDFS directory `streaming/output/`.  For this simple demonstration we are using
 the `IdentityMapper` as a naive map step implementation -- it outputs its input data unmodified (equivalently we
 coud use the Unix tool `cat`, here) .  We do not need to run a reduce phase here, which is why we disable the reduce
@@ -363,7 +363,7 @@ This looks not to be supported by stock Avro at the moment.  A related JIRA tick
 [AVRO-1067](https://issues.apache.org/jira/browse/AVRO-1067), created in April 2012, is still unresolved as of July
 2013.
 
-For a workaround take a look at the section _Avro output for Hadoop Streaming_ at
+For a workaround take a look at the section *Avro output for Hadoop Streaming* at
 [avro-utils](https://github.com/tomslabs/avro-utils), a third-party library for Avro.
 
 
