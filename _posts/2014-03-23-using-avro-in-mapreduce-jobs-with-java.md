@@ -1,13 +1,13 @@
 ---
 layout: post
-title: Using Avro in MapReduce Jobs With Java 
+title: Using Avro in MapReduce Jobs with Java 
 date: 2014-03-23
 categories: [computer science]
 tags: [hadoop & mapreduce]
 
 ---
 
-# Using Avro in MapReduce Jobs With Java
+# Using Avro in MapReduce Jobs with Java
 
 [Apache Avro](http://avro.apache.org/) is a very popular data serialization format in the Hadoop technology stack. In this article I show code examples of MapReduce jobs in Java, Hadoop Streaming, Pig and Hive that read and/or write data in Avro format. We will use a small, Twitter-like data set as input for our example MapReduce jobs.
 

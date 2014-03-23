@@ -1,13 +1,13 @@
 ---
 layout: post
-title: Using Avro in MapReduce Jobs With Hadoop Streaming
+title: Using Avro in MapReduce Jobs with Hadoop Streaming
 date: 2014-03-23
 categories: [computer science]
 tags: [hadoop & mapreduce]
 
 ---
 
-# Using Avro in MapReduce Jobs With Hadoop Streaming
+# Using Avro in MapReduce Jobs with Hadoop Streaming
 
 [Apache Avro](http://avro.apache.org/) is a very popular data serialization format in the Hadoop technology stack. In this article I show code examples of MapReduce jobs in Java, Hadoop Streaming, Pig and Hive that read and/or write data in Avro format. We will use a small, Twitter-like data set as input for our example MapReduce jobs.
 
@@ -323,7 +323,7 @@ $ hadoop fs -cat streaming/output/part-00000 | head -4
 
 Please be aware that the output data just happens to be JSON.  This is because we opted not to modify any of the input
 data in our MapReduce job.  And since the input data to our MapReduce job is deserialized by Avro into JSON, the output
-turns out to be JSON, too.  With a different MapReduce job you could of course write the output data in TSV or CSV
+turns out to be JSON, too.  with a different MapReduce job you could of course write the output data in TSV or CSV
 format, for instance.
 
 

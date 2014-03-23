@@ -1,13 +1,13 @@
 ---
 layout: post
-title: Using Avro in MapReduce Jobs With Pig
+title: Using Avro in MapReduce Jobs with Pig
 date: 2014-03-23
 categories: [computer science]
 tags: [hadoop & mapreduce]
 
 ---
 
-# Using Avro in MapReduce Jobs With Pig
+# Using Avro in MapReduce Jobs with Pig
 
 [Apache Avro](http://avro.apache.org/) is a very popular data serialization format in the Hadoop technology stack. In this article I show code examples of MapReduce jobs in Java, Hadoop Streaming, Pig and Hive that read and/or write data in Avro format. We will use a small, Twitter-like data set as input for our example MapReduce jobs.
 
@@ -433,7 +433,7 @@ _Note: This example is not working yet._
 
 To store the `usernames` relation from the _Reading Avro_ section above:
 
-    -- TODO: WHY DOES THIS STATEMENT FAIL DURING MAPREDUCE RUNTIME WITH
+    -- TODO: WHY DOES THIS STATEMENT FAIL DURING MAPREDUCE RUNTIME with
     --          java.io.IOException: org.apache.avro.file.DataFileWriter$AppendWriteException:
     --              java.lang.RuntimeException: Unsupported type in record:class java.lang.String
     --
@@ -452,7 +452,7 @@ To store the `usernames` relation from the _Reading Avro_ section above:
             }');
 
 
-    -- TODO: THIS STATEMENT FAILS, TOO, WITH THE SAME RUNTIME EXCEPTION
+    -- TODO: THIS STATEMENT FAILS, TOO, with THE SAME RUNTIME EXCEPTION
     --
     STORE usernames INTO 'pig/output/'
         USING org.apache.pig.piggybank.storage.avro.AvroStorage(

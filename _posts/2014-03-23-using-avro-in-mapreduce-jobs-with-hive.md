@@ -1,13 +1,13 @@
 ---
 layout: post
-title: Using Avro in MapReduce Jobs With Hive 
+title: Using Avro in MapReduce Jobs with Hive 
 date: 2014-03-23
 categories: [computer science]
 tags: [hadoop & mapreduce]
 
 ---
 
-# Using Avro in MapReduce Jobs With Hive
+# Using Avro in MapReduce Jobs with Hive
 
 [Apache Avro](http://avro.apache.org/) is a very popular data serialization format in the Hadoop technology stack. In this article I show code examples of MapReduce jobs in Java, Hadoop Streaming, Pig and Hive that read and/or write data in Avro format. We will use a small, Twitter-like data set as input for our example MapReduce jobs.
 
@@ -262,7 +262,7 @@ in a very basic data structure that consists of username, content of the message
 
 *For Hive version 0.11+:*
 
-Starting with Hive version 0.11 you must use `SERDEPROPERTIES` instead of `WITH TBLPROPERTIES` to specify the Avro
+Starting with Hive version 0.11 you must use `SERDEPROPERTIES` instead of `with TBLPROPERTIES` to specify the Avro
 schema.  If you mistakingly use `TBLPROPERTIES` Hive will complain with a `AvroSerdeException`.
 
 ```sql
@@ -271,7 +271,7 @@ schema.  If you mistakingly use `TBLPROPERTIES` Hive will complain with a `AvroS
 CREATE EXTERNAL TABLE tweets
     COMMENT "A table backed by Avro data with the Avro schema stored in HDFS"
     ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
-    WITH SERDEPROPERTIES (
+    with SERDEPROPERTIES (
         'avro.schema.url' = 'hdfs:///user/YOURUSER/examples/schema/twitter.avsc'
     )
     STORED AS
@@ -297,7 +297,7 @@ CREATE EXTERNAL TABLE tweets_deprecated
     );
 ```
 
-_Important: Notice how `WITH SERDEPROPERTIES` is specified after `SERDE` and `TBLPROPERTIES` after `LOCATION`, respectively._
+_Important: Notice how `with SERDEPROPERTIES` is specified after `SERDE` and `TBLPROPERTIES` after `LOCATION`, respectively._
 
 _Note: You must replace `YOURUSER` with your actual username._
 _See section [Preparing the input data](#Preparing the input data) above._
@@ -319,13 +319,13 @@ If you need to point to a particular HDFS namespace you can include the hostname
 
 ```sql
 CREATE EXTERNAL TABLE [...]
-    WITH SERDEPROPERTIES (
+    with SERDEPROPERTIES (
         'avro.schema.url'='hdfs://namenode01:8020/path/to/twitter.avsc'
     )
     [...]
 ```
 
-_Note: Remember to use `TBLPROPERTIES` (after `LOCATION`) instead of `WITH SERDEPROPERTIES` (after `SERDE`) for Hive versions <= 0.10._
+_Note: Remember to use `TBLPROPERTIES` (after `LOCATION`) instead of `with SERDEPROPERTIES` (after `SERDE`) for Hive versions <= 0.10._
 
 
 #### Using avro.schema.literal to embed an Avro schema
@@ -337,7 +337,7 @@ the `CREATE TABLE` statement:
 CREATE EXTERNAL TABLE tweets
     COMMENT "A table backed by Avro data with the Avro schema embedded in the CREATE TABLE statement"
     ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
-    WITH SERDEPROPERTIES (
+    with SERDEPROPERTIES (
         'avro.schema.literal' = '{
             "type": "record",
             "name": "Tweet",
@@ -355,7 +355,7 @@ CREATE EXTERNAL TABLE tweets
     LOCATION '/user/YOURUSER/examples/input/';
 ```
 
-_Note: Remember to use `TBLPROPERTIES` (after `LOCATION`) instead of `WITH SERDEPROPERTIES` (after `SERDE`) for Hive versions <= 0.10._
+_Note: Remember to use `TBLPROPERTIES` (after `LOCATION`) instead of `with SERDEPROPERTIES` (after `SERDE`) for Hive versions <= 0.10._
 
 _Note: You must replace `YOURUSER` with your actual username._
 _See section [Preparing the input data](#Preparing the input data) above._
@@ -364,10 +364,10 @@ Hive can also use variable substitution to embed the required Avro schema at run
 
 ```sql
 CREATE EXTERNAL TABLE tweets [...]
-    WITH SERDEPROPERTIES ('avro.schema.literal' = '${hiveconf:schema}');
+    with SERDEPROPERTIES ('avro.schema.literal' = '${hiveconf:schema}');
 ```
 
-_Note: Remember to use `TBLPROPERTIES` (after `LOCATION`) instead of `WITH SERDEPROPERTIES` (after `SERDE`) for Hive versions <= 0.10._
+_Note: Remember to use `TBLPROPERTIES` (after `LOCATION`) instead of `with SERDEPROPERTIES` (after `SERDE`) for Hive versions <= 0.10._
 
 To execute the Hive script you would then run:
 
