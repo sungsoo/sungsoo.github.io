@@ -27,6 +27,6 @@ This is illustrated schematically in the below **Figure**. (Mathematically incli
 ### Figure: Network distance in Hadoop
 ![network-distance.png](http://sungsoo.github.com/images/network-distance.png)
 
-Finally, it is important to realize that Hadoop cannot divine your network topology for you. It needs some help, we’ll cover how to configure topology in “Network Topology” on page 299. By default, though, it assumes that the network is flat—a singlelevel hierarchy—or in other words, that all nodes are on a single rack in a single data center. For small clusters, this may actually be the case, and no further configuration is required.
+Finally, it is important to realize that Hadoop cannot divine your network topology for you. It needs some help, we’ll cover how to configure topology in “Network Topology” on page 299 [1]. By default, though, it assumes that the network is flat—a singlelevel hierarchy—or in other words, that all nodes are on a single rack in a single data center. For small clusters, this may actually be the case, and no further configuration is required.
 # References
 [1] Tom White, *Hadoop: The Definitive Guide, Third Edition*, pp. 69-70, O’Reilly Media, Inc., 2012. 
