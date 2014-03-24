@@ -7,7 +7,7 @@ tags: [hadoop & mapreduce]
 
 ---
 
-# OLAP vs. OLTP: what makes the differenceOLPT and OLAP are complementing technologies. You can't live without
+# OLAP vs. OLTP: what makes the differenceOLTP and OLAP are complementing technologies. You can't live without
 OLTP: it runs your business day by day. So, using getting strategic
 information from OLTP is usually first “quick and dirty” approach, but
 can become limiting later.
