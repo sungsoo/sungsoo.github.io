@@ -105,7 +105,7 @@ The following table summarized main differences between OLPT and OLAP:
     <col width="85" />
     <col width="63" />
     <col width="107" />
-    <tbody><tr valign="top">
+    <tbody><tr valign="top" bgcolor="#E6E3FD">
         <td width="33%">
             <p><br />
             </p>
