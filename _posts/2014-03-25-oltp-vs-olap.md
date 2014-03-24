@@ -15,6 +15,68 @@ can become limiting later.
 
 ![olap_vs_oltp.jpg](http://sungsoo.github.com/images/olap_vs_oltp.jpg)
 
+**OLTP (On-line Transaction Processing)** is characterized by a large number of short on-line transactions (INSERT, UPDATE, DELETE). The main emphasis for OLTP systems is put on very fast query processing, maintaining data integrity in multi-access environments and an effectiveness measured by number of transactions per second. In OLTP database there is detailed and current data, and schema used to store transactional databases is the entity model (usually 3NF). 
+
+**OLAP (On-line Analytical Processing)** is characterized by relatively low volume of transactions. Queries are often very complex and involve aggregations. For OLAP systems a response time is an effectiveness measure. OLAP applications are widely used by Data Mining techniques. In OLAP database there is aggregated, historical data, stored in multi-dimensional schemas (usually star schema). 
+
+ <table border="0" cellspacing="2" cellpadding="1" class="font2">
+      <tr valign="middle" bgcolor="#000000">
+        <td align="center"> <h4><font color="#FFFFFF"><b></b></font></h4></td>
+        <td align="center"> <h4><font color="#FFFFFF"><b>OLTP System <br>Online Transaction Processing <br> (Operational System)</b></font></h4></td>
+        <td align="center"> <h4><font color="#FFFFFF"><b>OLAP System <br>Online Analytical Processing <br>(Data Warehouse)</b></font></h4></td>
+      </tr>
+      <tr valign="middle" bgcolor="#E6E3FD">
+        <td> <p align="center">Source of data</p></td>
+        <td> <p align="center">Operational data; OLTPs are the original source of the data.</p></td>
+        <td> <p align="center">Consolidation data; OLAP data comes from the various OLTP Databases</p></td>
+      </tr>
+      <tr valign="middle" bgcolor="#E6E3FD">
+        <td> <p align="center">Purpose of data</p></td>
+        <td> <p align="center">To control and run fundamental business tasks</p></td>
+        <td> <p align="center">To help with planning, problem solving, and decision support</p></td>
+      </tr>
+      <tr valign="middle" bgcolor="#E6E3FD">
+        <td> <p align="center">What the data</p></td>
+        <td> <p align="center">Reveals a snapshot of ongoing business processes</p></td>
+        <td> <p align="center">Multi-dimensional views of various kinds of business activities</p></td>
+      </tr>
+      <tr valign="middle" bgcolor="#E6E3FD">
+        <td> <p align="center">Inserts and Updates</p></td>
+        <td> <p align="center">Short and fast inserts and updates initiated by end users</p></td>
+        <td> <p align="center">Periodic long-running batch jobs refresh the data</p></td>
+      </tr>
+      <tr valign="middle" bgcolor="#E6E3FD">
+        <td> <p align="center">Queries</p></td>
+        <td> <p align="center">Relatively standardized and simple queries Returning relatively few records</p></td>
+        <td> <p align="center">Often complex queries involving aggregations</p></td>
+      </tr>
+      <tr valign="middle" bgcolor="#E6E3FD">
+        <td> <p align="center">Processing Speed</p></td>
+        <td> <p align="center">Typically very fast</p></td>
+        <td> <p align="center">Depends on the amount of data involved; batch data refreshes and complex queries may take many hours;
+                               query speed can be improved by creating indexes</p></td>
+      </tr>
+      <tr valign="middle" bgcolor="#E6E3FD">
+        <td> <p align="center">Space Requirements</p></td>
+        <td> <p align="center">Can be relatively small if historical data is archived</p></td>
+        <td> <p align="center">Larger due to the existence of aggregation structures and history data; requires more indexes than OLTP</p></td>
+      </tr>
+      <tr valign="middle" bgcolor="#E6E3FD">
+        <td> <p align="center">Database Design</p></td>
+        <td> <p align="center">Highly normalized with many tables</p></td>
+        <td> <p align="center">Typically de-normalized with fewer tables; use of star and/or snowflake schemas</p></td>
+      </tr>
+      <tr valign="middle" bgcolor="#E6E3FD">
+        <td> <p align="center">Backup and Recovery</p></td>
+        <td> <p align="center">Backup religiously; operational data is critical to run the business, data loss is likely to entail significant monetary loss and legal liability</p></td>
+        <td> <p align="center">Instead of regular backups, some environments may consider simply reloading the OLTP data as a recovery method</p></td>
+      </tr>
+   <tr> 
+         <td bgcolor="#FEFEE7" colspan="3" > <i>source: www.rainmakerworks.com</i></td>
+       </tr>
+    </table>
+    
+
 This post explores key differences between two technologies.
 
 [OLTP](http://en.wikipedia.org/wiki/Online_analytical_processing) stands
