@@ -216,3 +216,9 @@ a different point of view, and may offer it’s own difficulties.
             Only static elements can be compiled</td>
 </tr>
 </table>
+
+## Why Hive is not supporting Stored Procedure?
+
+Hive and Hbase are not support stored procedure. However, Hive plans to support Sp ([HIVE-3087](https://issues.apache.org/jira/browse/HIVE-3087)) in the future. HBase has no plan about supporting Sp since it only focuses on being a Storage and more like NoSQL.
+
+[Hive UDF](https://cwiki.apache.org/Hive/languagemanual-udf.html) could implement some function of stored procedure, though it's not enough.
