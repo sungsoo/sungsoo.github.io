@@ -19,6 +19,10 @@ can become limiting later.
 
 **OLAP (On-line Analytical Processing)** is characterized by relatively low volume of transactions. Queries are often very complex and involve aggregations. For OLAP systems a response time is an effectiveness measure. OLAP applications are widely used by Data Mining techniques. In OLAP database there is aggregated, historical data, stored in multi-dimensional schemas (usually star schema). 
 
+* **Star schema:** In computing, the Star Schema (also called star-join schema) is the simplest style of data mart schema. The star schema consists of one or more fact tables referencing any number of dimension tables. The star schema is an important special case of the snowflake schema, and is more effective for handling simpler queries.
+
+
+
  <table border="0" cellspacing="2" cellpadding="1" class="font2">
       <tr valign="middle" bgcolor="#000000">
         <td align="center"> <h4><font color="#FFFFFF"><b></b></font></h4></td>
