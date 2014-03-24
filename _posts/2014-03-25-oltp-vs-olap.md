@@ -12,6 +12,9 @@ OLTP: it runs your business day by day. So, using getting strategic
 information from OLTP is usually first “quick and dirty” approach, but
 can become limiting later.
 
+
+![olap_vs_oltp.jpg](http://sungsoo.github.com/images/olap_vs_oltp.jpg)
+
 This post explores key differences between two technologies.
 
 [OLTP](http://en.wikipedia.org/wiki/Online_analytical_processing) stands
