@@ -16,7 +16,7 @@ a different point of view, and may offer it’s own difficulties.
 
 <table cellpadding="5" cellspacing="1" border="0" width="630" font-size:10px;color:#000;">
 <tr>
-<td valign="top" width="100">&nbsp;</td>
+<td valign="top" width="100" style="background-color:#DEDEDE;">&nbsp;</td>
 <td valign="top" style="background-color:#DEDEDE;"><b>Ad-Hoc Query</b></td>
 <td valign="top" style="background-color:#DEDEDE;"><b>Stored Procedure</b></td>
 <td valign="top" style="background-color:#DEDEDE;"><b>Dynamic SQL</b></td>
