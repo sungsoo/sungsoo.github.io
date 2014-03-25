@@ -222,3 +222,59 @@ a different point of view, and may offer it’s own difficulties.
 Hive and Hbase are not support stored procedure. However, Hive plans to support Sp ([HIVE-3087](https://issues.apache.org/jira/browse/HIVE-3087)) in the future. HBase has no plan about supporting Sp since it only focuses on being a Storage and more like NoSQL.
 
 [Hive UDF](https://cwiki.apache.org/Hive/languagemanual-udf.html) could implement some function of stored procedure, though it's not enough.
+
+# RDBMS vs.Hadoop
+
+Here is a comparison of the overall differences between the RDBMS and MapReduce-based systems such as Hadoop:
+
+<table class="tableStyle greyScheme">
+<thead>
+<tr>
+	<td width="150px" ></td>
+	<th style="background-color: #DEDEDE;" width="150px" id="RDBMS">RDBMS</th>
+	<th style="background-color: #DEDEDE;" id="MapReduce">MapReduce</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+	<td class="firstColumn" headers=""><em>Data size</em></td>
+	<td headers="RDBMS">Gigabytes</td>
+	<td headers="MapReduce">Petabytes</td>
+</tr>
+<tr>
+	<td class="firstColumn" headers=""><em>Access</em></td>
+	<td headers="RDBMS">Interactive and batch</td>
+	<td headers="MapReduce">Batch</td>
+</tr>
+<tr>
+	<td class="firstColumn" headers=""><em>Structure</em></td>
+	<td headers="RDBMS">Fixed schema</td>
+	<td headers="MapReduce">Unstructured schema</td>
+</tr>
+<tr>
+	<td class="firstColumn" headers=""><em>Language</em></td>
+	<td headers="RDBMS">SQL</td>
+	<td headers="MapReduce">Procedural (Java, C++, Ruby, etc)</td>
+</tr>
+<tr>
+	<td class="firstColumn" headers=""><em>Integrity</em></td>
+	<td headers="RDBMS">High</td>
+	<td headers="MapReduce">Low</td>
+</tr>
+<tr>
+	<td class="firstColumn" headers=""><em>Scaling</em></td>
+	<td headers="RDBMS">Nonlinear</td>
+	<td headers="MapReduce">Linear</td>
+</tr>
+<tr>
+	<td class="firstColumn" headers=""><em>Updates</em></td>
+	<td headers="RDBMS">Read and write</td>
+	<td headers="MapReduce">Write once, read many times</td>
+</tr>
+<tr>
+	<td class="firstColumn" headers=""><em>Latency</em></td>
+	<td headers="RDBMS">Low</td>
+	<td headers="MapReduce">High</td>
+</tr>
+</tbody>
+</table>
