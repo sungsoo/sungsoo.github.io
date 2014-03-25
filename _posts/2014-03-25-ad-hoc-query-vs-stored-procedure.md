@@ -278,3 +278,7 @@ Here is a comparison of the overall differences between the RDBMS and MapReduce-
 </tr>
 </tbody>
 </table>
+
+# Beyond Hadoop: Fast Ad-Hoc Queries on Big Data
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/eCbXoGSyHbg" frameborder="0" allowfullscreen></iframe>
