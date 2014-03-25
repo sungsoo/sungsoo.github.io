@@ -3,7 +3,7 @@ layout: post
 title: OLAP vs. OLTP
 date: 2014-03-25
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [data management]
 
 ---
 
