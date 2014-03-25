@@ -21,7 +21,12 @@ can become limiting later.
 
 * **Star schema:** In computing, the Star Schema (also called *star-join schema*) is the simplest style of data mart schema. The star schema consists of one or more fact tables referencing any number of dimension tables. The star schema is an important special case of the snowflake schema, and is more effective for handling simpler queries.
 
+## What is OLAP?
 
+<iframe width="600" height="400" src="//www.youtube.com/embed/2ryG3Jy6eIY" frameborder="0" allowfullscreen></iframe>
+
+## Introduction to OLAP
+<iframe width="600" height="400" src="//www.youtube.com/embed/1Qdf5c_nmtw" frameborder="0" allowfullscreen></iframe>
 
  <table border="0" cellspacing="2" cellpadding="1" class="font2">
       <tr valign="middle" bgcolor="#000000">
