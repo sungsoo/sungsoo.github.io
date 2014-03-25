@@ -196,6 +196,9 @@ The following table summarized main differences between OLPT and OLAP:
     </tr>
 </tbody></table>
 
+<iframe width="600" height="400" src="//www.youtube.com/embed/Zd4VK3gHYs0" frameborder="0" allowfullscreen></iframe>
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/I-HVEP8xoQo" frameborder="0" allowfullscreen></iframe>
 ## Horizon 
 
 OLTP databases store “live” operational information. An invoice, for
