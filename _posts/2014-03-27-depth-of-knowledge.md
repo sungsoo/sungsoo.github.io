@@ -21,3 +21,14 @@ Webb identified *four* distinct depth of knowledge levels.
 * Level 3 includes strategic thinking that requires reasoning and is abstract and complex. 
 * Level 4 includes extended thinking such as an investigation or application to real work.
 
+Depth of Knowledge Levels
+---
+
+The Depth of Knowledge is not determined by the verb, but the context in which the verb is used and the depth of thinking required.
+
+Level 1:  Recall and Reproduction
+---
+ Requires recall of *information*, such as a *fact*, *definition*, *term*, or *performance* of a simple process or procedure.  Answering a Level 1 item involves following a simple, *well-known procedure* or *formula*.  Simple skills and abilities or recall characterize this level.Level 2:  Skills/Concepts---
+Includes the engagement of some *mental processing* beyond recalling or reproducing a response.  Items require students to make some decisions as to how to approach the question or problem.  These actions imply more than one mental or cognitive process/step.Level 3:   Strategic Thinking---
+Requires *deep understanding* as exhibited through planning, using evidence, and more demanding cognitive reasoning.  The cognitive demands at this level are complex and abstract.   An assessment item that has more than one possible answer and requires students to justify the response they give would most likely be a Level 3.  Level 4:  Extended Thinking---
+Requires *high cognitive demand* and is very *complex*.  Students are expected to make connections - relate ideas within the content or among content areas – and have to select or devise one approach among many alternatives on how the situation can be solved.  Due to the complexity of cognitive demand, this level often requires an extended period of time.
