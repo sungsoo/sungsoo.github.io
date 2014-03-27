@@ -34,7 +34,7 @@ u: 속도 f: 단위체적당 걸리는 외력 ρ: 밀도 p: 압력 ν: 점성계
 위식을 벡터를 이용하여,
 
 
-![](http://sungsoo.github.com/images/ns-eqn2.png)
+![](http://sungsoo.github.com/images/ns-eqn02.png)
 
 로 쓸 수도 있다.
 
