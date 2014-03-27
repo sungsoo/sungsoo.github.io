@@ -2,7 +2,7 @@
 layout: post
 title: Principal Component Analysis
 date: 2014-01-13
-categories: [mathmatical science]
+categories: [mathematical science]
 tags: [graph mining]
 
 ---
