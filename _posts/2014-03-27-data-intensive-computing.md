@@ -425,109 +425,109 @@ See also
 References
 ----------
 
-1.  **[\^](#cite_ref-1)** [Handbook of Cloud
+1.  **<a name="#cite_ref-1"></a>** [Handbook of Cloud
     Computing](http://www.cse.fau.edu/~borko/HandbookofCloudComputing.html),
     "Data-Intensive Technologies for Cloud Computing," by A.M.
     Middleton. Handbook of Cloud Computing. Springer, 2010.
-2.  **[\^](#cite_ref-2)** [An Information
+2.  **<a name="#cite_ref-2"></a>** [An Information
     Avalanche](http://research.google.com/pubs/author32412.html), by
     Vinton Cerf, IEEE Computer, Vol. 40, No. 1, 2007, pp. 104-105.
-3.  **[\^](#cite_ref-3)** [The Expanding Digital
+3.  **<a name="#cite_ref-3"></a>** [The Expanding Digital
     Universe](http://www.emc.com/collateral/analyst-reports/expanding-digital-idc-white-paper.pdf),
     by J.F. Gantz, D. Reinsel, C. Chute, W. Schlichting, J. McArthur, S.
     Minton, J. Xheneti, A. Toncheva, and A. Manfrediz,
     [IDC](http://en.wikipedia.org/wiki/International_Data_Corporation "International Data Corporation"),
     White Paper, 2007.
-4.  **[\^](#cite_ref-4)** [How Much Information?
+4.  **<a name="#cite_ref-4"></a>** [How Much Information?
     2003](http://www2.sims.berkeley.edu/research/projects/how-much-info-2003/),
     by P. Lyman, and H.R. Varian, University of California at Berkeley,
     Research Report, 2003.
-5.  **[\^](#cite_ref-5)** [Got Data? A Guide to Data Preservation in the
+5.  **<a name="#cite_ref-5"></a>** [Got Data? A Guide to Data Preservation in the
     Information
     Age](http://www.sdsc.edu/about/director/pubs/communications200812-DataDeluge.pdf),
     by F. Berman, Communications of the ACM, Vol. 51, No. 12, 2008, pp.
     50-56.
-6.  **[\^](#cite_ref-6)** [Models and languages for parallel
+6.  **<a name="#cite_ref-6"></a>** [Models and languages for parallel
     computation](http://portal.acm.org/citation.cfm?id=280278), by D.B.
     Skillicorn, and D. Talia, ACM Computing Surveys, Vol. 30, No. 2,
     1998, pp. 123-169.
-7.  **[\^](#cite_ref-7)** [Computing in the 21st
+7.  **<a name="#cite_ref-7"></a>** [Computing in the 21st
     Century](http://www.pnl.gov/science/images/highlights/computing/dic_special.pdfData-Intensive),
     by I. Gorton, P. Greenfield, A. Szalay, and R. Williams, IEEE
     Computer, Vol. 41, No. 4, 2008, pp. 30-32.
-8.  **[\^](#cite_ref-8)** [High-Speed, Wide Area, Data Intensive
+8.  **<a name="#cite_ref-8"></a>** [High-Speed, Wide Area, Data Intensive
     Computing: A Ten Year
     Retrospective](http://www.computer.org/portal/web/csdl/doi/10.1109/MC.2008.122),
     by W.E. Johnston, IEEE Computer Society, 1998.
-9.  **[\^](#cite_ref-9)** [IEEE: Hardware Technologies for
+9.  **<a name="#cite_ref-9"></a>** [IEEE: Hardware Technologies for
     High-Performance Data-Intensive
     Computing](https://computation.llnl.gov/casc/dcca-pub/dcca/Papers_files/data-intensive-ieee-computer-0408.pdf),
     by M. Gokhale, J. Cohen, A. Yoo, and W.M. Miller, IEEE Computer,
     Vol. 41, No. 4, 2008, pp. 60-68.
-10. **[\^](#cite_ref-10)** [IEEE: A Design Methodology for Data-Parallel
+10. **<a name="#cite_ref-10"></a>** [IEEE: A Design Methodology for Data-Parallel
     Applications](http://www.agoldberg.org/Publications/DesignMethForDP.pdf),
     by L.S. Nyland, J.F. Prins, A. Goldberg, and P.H. Mills, IEEE
     Transactions on Software Engineering, Vol. 26, No. 4, 2000, pp.
     293-314.
-11. **[\^](#cite_ref-11)** [Handbook of Cloud
+11. **<a name="#cite_ref-11"></a>** [Handbook of Cloud
     Computing](http://www.cse.fau.edu/~borko/HandbookofCloudComputing.html/),
     "Data-Intensive Technologies for Cloud Computing," by A.M.
     Middleton. Handbook of Cloud Computing. Springer, 2010, pp. 83-86.
-12. **[\^](#cite_ref-12)** [The terascale
+12. **<a name="#cite_ref-12"></a>** [The terascale
     challenge](http://www.patrickpantel.com/download/papers/2004/kdd-msw04-1.pdf)
     by D. Ravichandran, P. Pantel, and E. Hovy. "The terascale
     challenge," Proceedings of the KDD Workshop on Mining for and from
     the Semantic Web, 2004
-13. **[\^](#cite_ref-13)** [Dynamic adaptation to available resources
+13. **<a name="#cite_ref-13"></a>** [Dynamic adaptation to available resources
     for parallel computing in an autonomous network of
     workstations](http://www.cs.rochester.edu/u/umit/papers/ppopp01.ps)
     by U. Rencuzogullari, and S. Dwarkadas. "Dynamic adaptation to
     available resources for parallel computing in an autonomous network
     of workstations," Proceedings of the Eighth ACM SIGPLAN Symposium on
     Principles and Practices of Parallel Programming, 2001
-14. **[\^](#cite_ref-14)** [Information Extraction to Large Document
+14. **<a name="#cite_ref-14"></a>** [Information Extraction to Large Document
     Collections](http://www.mathcs.emory.edu/~eugene/publications.html)
     by E. Agichtein, "Scaling Information Extraction to Large Document
     Collections," Microsoft Research, 2004
-15. **[\^](#cite_ref-15)** ["Data-intensive
+15. **<a name="#cite_ref-15"></a>** ["Data-intensive
     Computing"](http://www.nsf.gov/funding/pgm_summ.jsp?pims_id=503324&org=IIS).
     *Program description*. NSF. 2009. Retrieved November 2013. 
-16. **[\^](#cite_ref-16)** [Data Intensive
+16. **<a name="#cite_ref-16"></a>** [Data Intensive
     Computing](http://www.cs.cmu.edu/~bryant/presentations/DISC-concept.ppt)
     by PNNL. "Data Intensive Computing," 2008
-17. **[\^](#cite_ref-17)** [The Changing Paradigm of Data-Intensive
+17. **<a name="#cite_ref-17"></a>** [The Changing Paradigm of Data-Intensive
     Computing](http://www.computer.org/portal/web/csdl/doi/10.1109/MC.2009.26)
     by R.T. Kouzes, G.A. Anderson, S.T. Elbert, I. Gorton, and D.K.
     Gracio, "The Changing Paradigm of Data-Intensive Computing,"
     Computer, Vol. 42, No. 1, 2009, pp. 26-3
-18. **[\^](#cite_ref-18)** [Cloud computing and emerging IT
+18. **<a name="#cite_ref-18"></a>** [Cloud computing and emerging IT
     platforms](http://www.sciencedirect.com/science?_ob=ArticleURL&_udi=B6V06-4V47C7R-1&_user=10&_coverDate=06%2F30%2F2009&_rdoc=1&_fmt=high&_orig=gateway&_origin=gateway&_sort=d&_docanchor=&view=c&_rerunOrigin=google&_acct=C000050221&_version=1&_urlVersion=0&_userid=10&md5=824e4c2635a53c6fe068f3f2d11df096&searchtype=a)
     by R. Buyya, C.S. Yeo, S. Venugopal, J. Broberg, and I. Brandic,
     "Cloud computing and emerging IT platforms: Vision, hype, and
     reality for delivering computing as the 5th utility," Future
     Generation Computer Systems, Vol. 25, No. 6, 2009, pp. 599-616
-19. **[\^](#cite_ref-19)** [Distributed Computing
+19. **<a name="#cite_ref-19"></a>** [Distributed Computing
     Economics](http://queue.acm.org/detail.cfm?id=1394131) by J. Gray,
     "Distributed Computing Economics," ACM Queue, Vol. 6, No. 3, 2008,
     pp. 63-68.
-20. **[\^](#cite_ref-20)** [Computing in the 21st
+20. **<a name="#cite_ref-20"></a>** [Computing in the 21st
     Century](http://www.pnl.gov/science/images/highlights/computing/dic_special.pdfData-Intensive),
     by I. Gorton, P. Greenfield, A. Szalay, and R. Williams, IEEE
     Computer, Vol. 41, No. 4, 2008, pp. 30-32.
-21. **[\^](#cite_ref-21)** [Data Intensive Scalable
+21. **<a name="#cite_ref-21"></a>** [Data Intensive Scalable
     Computing](http://www.cs.cmu.edu/~bryant/presentations/DISC-concept.ppt)
     by R.E. Bryant. "Data Intensive Scalable Computing," 2008
-22. **[\^](#cite_ref-22)** [A Comparison of Approaches to Large-Scale
+22. **<a name="#cite_ref-22"></a>** [A Comparison of Approaches to Large-Scale
     Data
     Analysis](http://www.cse.nd.edu/~dthain/courses/cse40771/spring2010/benchmarks-sigmod09.pdf)
     by A. Pavlo, E. Paulson, A. Rasin, D.J. Abadi, D.J. Dewitt, S.
     Madden, and M. Stonebraker. Proceedings of the 35th SIGMOD
     International conference on Management of Data, 2009.
-23. **[\^](#cite_ref-23)** [MapReduce: Simplified Data Processing on
+23. **<a name="#cite_ref-23"></a>** [MapReduce: Simplified Data Processing on
     Large Clusters](http://labs.google.com/papers/mapreduce-osdi04.pdf)
     by J. Dean, and S. Ghemawat. Proceedings of the Sixth Symposium on
     Operating System Design and Implementation (OSDI), 2004.
-24. **[\^](#cite_ref-24)** [as a First-Class Citizen Pig Latin: A
+24. **<a name="#cite_ref-24"></a>** [as a First-Class Citizen Pig Latin: A
     Not-So-Foreign Language for Data
     Processing](http://i.stanford.edu/~usriv/talks/sigmod08-pig-latin.ppt#283,18,User-Code)
     by C. Olston, B. Reed, U. Srivastava, R. Kumar, and A. Tomkins.
