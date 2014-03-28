@@ -19,7 +19,7 @@ Choosing an Implementation Strategy
 
 One of the primary considerations when developing a graph-based application is the choice of an implementation strategy and the frameworks and tools that will support it. 
 
-On some platforms, Object Graph Mapping (OGM) frameworks are available, such as Spring Data Neo4j (SDN). In a nutshell, OMG frameworks provide a simple and consistent means of mapping between graph resources and application objects within a programming model that is familiar to most developers. Given these benefits, a fair question to ask is whether we should routinely pick up an OGM framework every time we implement an application backed by a graph database. The answer is, as usual, it depends. The most important factor that should guide this choice is the nature of the domain and the available data. Broadly speaking, applications can be domain-centric or data-centric. For more background about this concept please refer to the previous part: Designing Graph-Based applications.
+On some platforms, **Object Graph Mapping** (OGM) frameworks are available, such as Spring Data Neo4j (SDN). In a nutshell, OMG frameworks provide a simple and consistent means of mapping between graph resources and application objects within a programming model that is familiar to most developers. Given these benefits, a fair question to ask is whether we should routinely pick up an OGM framework every time we implement an application backed by a graph database. The answer is, as usual, it depends. The most important factor that should guide this choice is the nature of the domain and the available data. Broadly speaking, applications can be domain-centric or data-centric. For more background about this concept please refer to the previous part: []Designing Graph-Based applications](http://www.terminalstate.net/2013/08/designing-graph-based-applications.html).
 
 If the application is domain-centric, it is sensible to consider using an OGM framework. In domain centric-applications, the domain and the data that compose it are clearly defined and are under the control of the application. Therefore we are able to predict the quality and the structure of the data that the application is going to manipulate, and to design upfront the basis of a stable object domain model that is able to graceful evolve when new requirements arise.
 
@@ -61,11 +61,13 @@ When implementing a graph algorithm or a query, it is often tempting to try to d
 
 Therefore, it is preferable to approach graph algorithms by decomposing them into a series of simple composable steps. Decomposition greatly simplifies the development process, but also opens the door to a number of interesting composition patterns. For example:
 
-Multi-pass processing: broadly the same nodes are traversed in successive passes, limiting focus to one part of the job at each pass. The main advantage of this approach is that each pass is simplified while maintaining the overall computational complexity of the algorithm constant. This technique is very common in compilers operating on tree or graph representations of computer programmes but it is also suitable for a number of business problems.
+*Multi-pass processing*: broadly the same nodes are traversed in successive passes, limiting focus to one part of the job at each pass. The main advantage of this approach is that each pass is simplified while maintaining the overall computational complexity of the algorithm constant. This technique is very common in compilers operating on tree or graph representations of computer programmes but it is also suitable for a number of business problems.
 
-Pipelined processing: in this style, the output of each step provides the input of the next one; the overall algorithm is expressed as a chain of simple steps across a number of potentially overlapping paths.
+*Pipelined processing*: in this style, the output of each step provides the input of the next one; the overall algorithm is expressed as a chain of simple steps across a number of potentially overlapping paths.
 
 As an example of decomposition, let’s consider an impact analysis system that endeavours to predict the impact of different forms of failure in a network of software and hardware components.
+
+![](http://sungsoo.github.com/images/decomposition.jpg)
 
 For this example, we are using the node ‘Data Centre 1’ as the starting point for the analysis operation. The first traversal (red arrows) identifies the impact path by traversing all the nodes all the way up to the application layer (‘App1’, ‘App2’ and ‘App3’). Given that ‘User Store’ is found on impact path and that it relies on a number of redundant database services, the next step is to test for the existence of a backup path that would lead to a different data centre node - this is what the second traversal does (green arrows).
 
@@ -85,6 +87,8 @@ Asserting key properties about the structure and the attributes of the graph at 
 
 Continuing with the previous example, when exploring backup paths for an impacted service, it is sensible to verify that any node representing a database on a candidate path is effectively linked to a data centre node. If the data model requires the presence of such a relationship for each database node, its absence can indicate that the dataset is incomplete or corrupted. Adding appropriate assertions allows to detect this type of situation when they happen.
 
+![](http://sungsoo.github.com/images/preconditions.jpg)
+
 Assertions should be designed to allow the program to fail fast if the data diverges from expectations in such way that can yield a wrong result. Decomposition provides a number of natural points to add assertions at the beginning of key functions. Assertions are also a great way to document the intent of each function, especially if they carry a clear error message. 
 
 Assertions closely relate to the concept of local graph constraints, which has already made its way into Cypher and which is likely to be extended in the future to express more sophisticated graph data semantics.
@@ -95,12 +99,13 @@ The robustness principle states that you should "be conservative in what you sen
 
 Variation in the structure of a graph can arise quite commonly in some applications that depend heavily on dynamic data integrated from external sources, and where the quality of the data is hard to enforce. Writing robust algorithms that tolerate reasonable variation in data structure can also contribute to the stability of the application’s data model, which may then evolve flexibly - to a certain degree - without the need to adjust business logic constantly with each modification in the dataset.
 
+![](http://sungsoo.github.com/images/robustness.jpg)
+
 Going back to the previous example, let’s consider the impact of a corrupt data node that sneaks into our dataset, perhaps due to a data integration issue. If this foreign node does not have any impact on the outcome of the query we are running, it can safely be ignored.
 
 Let’s also consider the effect of extending the dataset with data about users who perform actions on the system. The addition of a node indicating the deployer of a component should not require any modification to the impact analysis algorithm and therefore it should be ignored in this context.
 
 Decomposition, assertions and variation-tolerant logic, if combined judiciously, enable a programming style that is particularly well-suited for semi-structured data. 
-The next part of the series will focus on how to test graph data effectively.
 
 References
 ---
