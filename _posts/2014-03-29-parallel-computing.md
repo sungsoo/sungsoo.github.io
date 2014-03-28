@@ -121,7 +121,7 @@ to add extra hardware for parallel computing.
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/e/ea/AmdahlsLaw.svg/300px-AmdahlsLaw.svg.png)](http://en.wikipedia.org/wiki/File:AmdahlsLaw.svg)
 
-[![](//bits.wikimedia.org/static-1.23wmf18/skins/common/images/magnify-clip.png)](http://en.wikipedia.org/wiki/File:AmdahlsLaw.svg "Enlarge")
+
 
 A graphical representation of [Amdahl's
 law](http://en.wikipedia.org/wiki/Amdahl%27s_law "Amdahl's law"). The speed-up of a program
@@ -171,7 +171,7 @@ processors is
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/4/40/Optimizing-different-parts.svg/400px-Optimizing-different-parts.svg.png)](http://en.wikipedia.org/wiki/File:Optimizing-different-parts.svg)
 
-[![](//bits.wikimedia.org/static-1.23wmf18/skins/common/images/magnify-clip.png)](http://en.wikipedia.org/wiki/File:Optimizing-different-parts.svg "Enlarge")
+
 
 Assume that a task has two independent parts, A and B. B takes roughly
 25% of the time of the whole computation. With effort, a
@@ -498,7 +498,7 @@ parallelism](http://en.wikipedia.org/wiki/Instruction_level_parallelism "Instruc
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/2/21/Fivestagespipeline.png/300px-Fivestagespipeline.png)](http://en.wikipedia.org/wiki/File:Fivestagespipeline.png)
 
-[![](//bits.wikimedia.org/static-1.23wmf18/skins/common/images/magnify-clip.png)](http://en.wikipedia.org/wiki/File:Fivestagespipeline.png "Enlarge")
+
 
 A canonical five-stage pipeline in a [RISC](http://en.wikipedia.org/wiki/RISC "RISC") machine
 (IF = Instruction Fetch, ID = Instruction Decode, EX = Execute, MEM =
@@ -526,7 +526,7 @@ processor had a 35-stage pipeline.[[20]](#cite_note-20)
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/4/46/Superscalarpipeline.svg/300px-Superscalarpipeline.svg.png)](http://en.wikipedia.org/wiki/File:Superscalarpipeline.svg)
 
-[![](//bits.wikimedia.org/static-1.23wmf18/skins/common/images/magnify-clip.png)](http://en.wikipedia.org/wiki/File:Superscalarpipeline.svg "Enlarge")
+
 
 A five-stage pipelined [superscalar](http://en.wikipedia.org/wiki/Superscalar "Superscalar")
 [processor](http://en.wikipedia.org/wiki/Microprocessor "Microprocessor"), capable of issuing
@@ -581,7 +581,7 @@ to local memory are typically faster than accesses to non-local memory.
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Numa.svg/400px-Numa.svg.png)](http://en.wikipedia.org/wiki/File:Numa.svg)
 
-[![](//bits.wikimedia.org/static-1.23wmf18/skins/common/images/magnify-clip.png)](http://en.wikipedia.org/wiki/File:Numa.svg "Enlarge")
+
 
 A logical view of a [Non-Uniform Memory
 Access](http://en.wikipedia.org/wiki/Non-Uniform_Memory_Access "Non-Uniform Memory Access")
@@ -710,7 +710,6 @@ cluster](http://en.wikipedia.org/wiki/Computer_cluster "Computer cluster")
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Beowulf.jpg/170px-Beowulf.jpg)](http://en.wikipedia.org/wiki/File:Beowulf.jpg)
 
-[![](//bits.wikimedia.org/static-1.23wmf18/skins/common/images/magnify-clip.png)](http://en.wikipedia.org/wiki/File:Beowulf.jpg "Enlarge")
 
 A [Beowulf cluster](http://en.wikipedia.org/wiki/Beowulf_(computing) "Beowulf (computing)")
 
@@ -750,7 +749,7 @@ interconnect."[[30]](#cite_note-30)
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/a/a7/BlueGeneL_cabinet.jpg/170px-BlueGeneL_cabinet.jpg)](http://en.wikipedia.org/wiki/File:BlueGeneL_cabinet.jpg)
 
-[![](//bits.wikimedia.org/static-1.23wmf18/skins/common/images/magnify-clip.png)](http://en.wikipedia.org/wiki/File:BlueGeneL_cabinet.jpg "Enlarge")
+
 
 A cabinet from [Blue Gene](http://en.wikipedia.org/wiki/Blue_Gene "Blue Gene")/L, ranked as the
 fourth fastest supercomputer in the world according to the 11/2008
@@ -836,8 +835,6 @@ Main article: [GPGPU](http://en.wikipedia.org/wiki/GPGPU "GPGPU")
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/3/32/NvidiaTesla.jpg/220px-NvidiaTesla.jpg)](http://en.wikipedia.org/wiki/File:NvidiaTesla.jpg)
 
-[![](//bits.wikimedia.org/static-1.23wmf18/skins/common/images/magnify-clip.png)](http://en.wikipedia.org/wiki/File:NvidiaTesla.jpg "Enlarge")
-
 Nvidia's [Tesla GPGPU card](http://en.wikipedia.org/wiki/Nvidia_Tesla "Nvidia Tesla")
 
 General-purpose computing on [graphics processing
@@ -905,8 +902,6 @@ Main article: [Vector
 processor](http://en.wikipedia.org/wiki/Vector_processor "Vector processor")
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Cray_1_IMG_9126.jpg/220px-Cray_1_IMG_9126.jpg)](http://en.wikipedia.org/wiki/File:Cray_1_IMG_9126.jpg)
-
-[![](//bits.wikimedia.org/static-1.23wmf18/skins/common/images/magnify-clip.png)](http://en.wikipedia.org/wiki/File:Cray_1_IMG_9126.jpg "Enlarge")
 
 The [Cray-1](http://en.wikipedia.org/wiki/Cray-1 "Cray-1") is the most famous vector processor.
 
@@ -1104,7 +1099,7 @@ computing](http://en.wikipedia.org/wiki/History_of_computing "History of computi
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/9/91/ILLIAC_4_parallel_computer.jpg/220px-ILLIAC_4_parallel_computer.jpg)](http://en.wikipedia.org/wiki/File:ILLIAC_4_parallel_computer.jpg)
 
-[![](//bits.wikimedia.org/static-1.23wmf18/skins/common/images/magnify-clip.png)](http://en.wikipedia.org/wiki/File:ILLIAC_4_parallel_computer.jpg "Enlarge")
+
 
 [ILLIAC IV](http://en.wikipedia.org/wiki/ILLIAC_IV "ILLIAC IV"), "perhaps the most infamous of
 Supercomputers"[[43]](#cite_note-infamous-43)
@@ -1401,11 +1396,11 @@ References
     Babbage](http://www.fourmilab.ch/babbage/sketch.html). Bibliothèque
     Universelle de Genève. Retrieved on November 7, 2007.
 45. Patterson and Hennessy, p. 753.
-46. 46)** da Cruz, Frank (2003). ["Columbia University
+46. da Cruz, Frank (2003). ["Columbia University
     Computing History: The IBM
     704"](http://www.columbia.edu/acis/history/704.html). Columbia
     University. Retrieved 2008-01-08. 
-47. 47)** Parallel Programming, S. Gill, The Computer
+47. Parallel Programming, S. Gill, The Computer
     Journal Vol. 1 \#1, pp2-10, British Computer Society, April 1958.
 48. Wilson, Gregory V (1994). ["The
     History of the Development of Parallel
