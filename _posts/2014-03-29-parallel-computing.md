@@ -63,62 +63,6 @@ The maximum possible [speed-up](http://en.wikipedia.org/wiki/Speedup "Speedup") 
 program as a result of parallelization is known as [Amdahl's
 law](http://en.wikipedia.org/wiki/Amdahl%27s_law "Amdahl's law").
 
-Contents
---------
-
--   [1 Background](#Background)
-    -   [1.1 Amdahl's law and Gustafson's
-        law](#Amdahl.27s_law_and_Gustafson.27s_law)
-    -   [1.2 Dependencies](#Dependencies)
-    -   [1.3 Race conditions, mutual exclusion, synchronization, and
-        parallel
-        slowdown](#Race_conditions.2C_mutual_exclusion.2C_synchronization.2C_and_parallel_slowdown)
-    -   [1.4 Fine-grained, coarse-grained, and embarrassing
-        parallelism](#Fine-grained.2C_coarse-grained.2C_and_embarrassing_parallelism)
-    -   [1.5 Consistency models](#Consistency_models)
-    -   [1.6 Flynn's taxonomy](#Flynn.27s_taxonomy)
--   [2 Types of parallelism](#Types_of_parallelism)
-    -   [2.1 Bit-level parallelism](#Bit-level_parallelism)
-    -   [2.2 Instruction-level
-        parallelism](#Instruction-level_parallelism)
-    -   [2.3 Task parallelism](#Task_parallelism)
--   [3 Hardware](#Hardware)
-    -   [3.1 Memory and communication](#Memory_and_communication)
-    -   [3.2 Classes of parallel
-        computers](#Classes_of_parallel_computers)
-        -   [3.2.1 Multicore computing](#Multicore_computing)
-        -   [3.2.2 Symmetric
-            multiprocessing](#Symmetric_multiprocessing)
-        -   [3.2.3 Distributed computing](#Distributed_computing)
-            -   [3.2.3.1 Cluster computing](#Cluster_computing)
-            -   [3.2.3.2 Massive parallel
-                processing](#Massive_parallel_processing)
-            -   [3.2.3.3 Grid computing](#Grid_computing)
-        -   [3.2.4 Specialized parallel
-            computers](#Specialized_parallel_computers)
-            -   [3.2.4.1 Reconfigurable computing with
-                field-programmable gate
-                arrays](#Reconfigurable_computing_with_field-programmable_gate_arrays)
-            -   [3.2.4.2 General-purpose computing on graphics
-                processing units
-                (GPGPU)](#General-purpose_computing_on_graphics_processing_units_.28GPGPU.29)
-            -   [3.2.4.3 Application-specific integrated
-                circuits](#Application-specific_integrated_circuits)
-            -   [3.2.4.4 Vector processors](#Vector_processors)
--   [4 Software](#Software)
-    -   [4.1 Parallel programming
-        languages](#Parallel_programming_languages)
-    -   [4.2 Automatic parallelization](#Automatic_parallelization)
-    -   [4.3 Application checkpointing](#Application_checkpointing)
--   [5 Algorithmic methods](#Algorithmic_methods)
--   [6 Fault-tolerance](#Fault-tolerance)
--   [7 History](#History)
--   [8 See also](#See_also)
--   [9 References](#References)
--   [10 Further reading](#Further_reading)
--   [11 External links](#External_links)
-
-<a name="Background"></a>
 
 Background
 ----------
@@ -249,7 +193,7 @@ size so that the total amount of work to be done in parallel is also
 assumes that the total amount of work to be done in parallel *varies
 linearly with the number of processors*.
 
-### Dependencies[[edit](/w/index.php?title=Parallel_computing&action=edit&section=3 "Edit section: Dependencies")]
+### Dependencies
 
 Understanding [data
 dependencies](http://en.wikipedia.org/wiki/Data_dependency "Data dependency") is fundamental in
@@ -313,7 +257,7 @@ between accesses is necessary, such as
 or some other [synchronization
 method](http://en.wikipedia.org/wiki/Synchronization_(computer_science) "Synchronization (computer science)").
 
-### Race conditions, mutual exclusion, synchronization, and parallel slowdown[[edit](/w/index.php?title=Parallel_computing&action=edit&section=4 "Edit section: Race conditions, mutual exclusion, synchronization, and parallel slowdown")]
+### Race conditions, mutual exclusion, synchronization, and parallel slowdown
 
 Subtasks in a parallel program are often called
 [threads](http://en.wikipedia.org/wiki/Thread_(computing) "Thread (computing)"). Some parallel
@@ -395,7 +339,7 @@ workload over even more threads) increases rather than decreases the
 amount of time required to finish. This is known as [parallel
 slowdown](http://en.wikipedia.org/wiki/Parallel_slowdown "Parallel slowdown").
 
-### Fine-grained, coarse-grained, and embarrassing parallelism[[edit](/w/index.php?title=Parallel_computing&action=edit&section=5 "Edit section: Fine-grained, coarse-grained, and embarrassing parallelism")]
+### Fine-grained, coarse-grained, and embarrassing parallelism
 
 Applications are often classified according to how often their subtasks
 need to synchronize or communicate with each other. An application
@@ -406,7 +350,7 @@ parallel](http://en.wikipedia.org/wiki/Embarrassingly_parallel "Embarrassingly p
 they rarely or never have to communicate. Embarrassingly parallel
 applications are considered the easiest to parallelize.
 
-### Consistency models[[edit](/w/index.php?title=Parallel_computing&action=edit&section=6 "Edit section: Consistency models")]
+### Consistency models
 
 Main article: [Consistency
 model](http://en.wikipedia.org/wiki/Consistency_model "Consistency model")
@@ -462,7 +406,7 @@ and [Actor event
 diagrams](http://en.wikipedia.org/wiki/Actor_model_theory "Actor model theory"), have also been
 developed to describe the behavior of concurrent systems.
 
-### Flynn's taxonomy[[edit](/w/index.php?title=Parallel_computing&action=edit&section=7 "Edit section: Flynn's taxonomy")]
+### Flynn's taxonomy
 
 [Michael J. Flynn](http://en.wikipedia.org/wiki/Michael_J._Flynn "Michael J. Flynn") created
 one of the earliest classification systems for parallel (and sequential)
@@ -512,10 +456,10 @@ model has survived because it is simple, easy to understand, and gives a
 good first approximation. It is also—perhaps because of its
 understandability—the most widely used scheme."[[17]](#cite_note-17)
 
-Types of parallelism[[edit](/w/index.php?title=Parallel_computing&action=edit&section=8 "Edit section: Types of parallelism")]
-------------------------------------------------------------------------------------------------------------------------------
+Types of parallelism
+-----
 
-### Bit-level parallelism[[edit](/w/index.php?title=Parallel_computing&action=edit&section=9 "Edit section: Bit-level parallelism")]
+### Bit-level parallelism
 
 Main article: [Bit-level
 parallelism](http://en.wikipedia.org/wiki/Bit-level_parallelism "Bit-level parallelism")
@@ -547,7 +491,7 @@ Not until recently (c. 2003–2004), with the advent of
 [x86-64](http://en.wikipedia.org/wiki/X86-64 "X86-64") architectures, have
 [64-bit](http://en.wikipedia.org/wiki/64-bit "64-bit") processors become commonplace.
 
-### Instruction-level parallelism[[edit](/w/index.php?title=Parallel_computing&action=edit&section=10 "Edit section: Instruction-level parallelism")]
+### Instruction-level parallelism
 
 Main article: [Instruction level
 parallelism](http://en.wikipedia.org/wiki/Instruction_level_parallelism "Instruction level parallelism")
@@ -602,7 +546,7 @@ renaming](http://en.wikipedia.org/wiki/Register_renaming "Register renaming")) a
 most common techniques for implementing out-of-order execution and
 instruction-level parallelism.
 
-### Task parallelism[[edit](/w/index.php?title=Parallel_computing&action=edit&section=11 "Edit section: Task parallelism")]
+### Task parallelism
 
 Main article: [Task
 parallelism](http://en.wikipedia.org/wiki/Task_parallelism "Task parallelism")
@@ -614,10 +558,10 @@ with data parallelism, where the same calculation is performed on the
 same or different sets of data. Task parallelism does not usually scale
 with the size of a problem.[[22]](#cite_note-Culler125-22)
 
-Hardware[[edit](/w/index.php?title=Parallel_computing&action=edit&section=12 "Edit section: Hardware")]
--------------------------------------------------------------------------------------------------------
+Hardware
+----
 
-### Memory and communication[[edit](/w/index.php?title=Parallel_computing&action=edit&section=13 "Edit section: Memory and communication")]
+### Memory and communication
 
 Main memory in a parallel computer is either [shared
 memory](http://en.wikipedia.org/wiki/Shared_memory "Shared memory") (shared between all
@@ -695,7 +639,7 @@ between nodes that are not directly connected. The medium used for
 communication between the processors is likely to be hierarchical in
 large multiprocessor machines.
 
-### Classes of parallel computers[[edit](/w/index.php?title=Parallel_computing&action=edit&section=14 "Edit section: Classes of parallel computers")]
+### Classes of parallel computers
 
 Parallel computers can be roughly classified according to the level at
 which the hardware supports parallelism. This classification is broadly
@@ -703,7 +647,7 @@ analogous to the distance between basic computing nodes. These are not
 mutually exclusive; for example, clusters of symmetric multiprocessors
 are relatively common.
 
-#### Multicore computing[[edit](/w/index.php?title=Parallel_computing&action=edit&section=15 "Edit section: Multicore computing")]
+#### Multicore computing
 
 Main article: [Multi-core
 (computing)](http://en.wikipedia.org/wiki/Multi-core_(computing) "Multi-core (computing)")
@@ -733,7 +677,7 @@ when that execution unit is idling (such as during a [cache
 miss](http://en.wikipedia.org/wiki/Cache_miss "Cache miss")), it uses that execution unit to
 process a second thread.
 
-#### Symmetric multiprocessing[[edit](/w/index.php?title=Parallel_computing&action=edit&section=16 "Edit section: Symmetric multiprocessing")]
+#### Symmetric multiprocessing
 
 Main article: [Symmetric
 multiprocessing](http://en.wikipedia.org/wiki/Symmetric_multiprocessing "Symmetric multiprocessing")
@@ -749,7 +693,7 @@ for bus bandwidth achieved by large caches, such symmetric
 multiprocessors are extremely cost-effective, provided that a sufficient
 amount of memory bandwidth exists."[[24]](#cite_note-HP549-24)
 
-#### Distributed computing[[edit](/w/index.php?title=Parallel_computing&action=edit&section=17 "Edit section: Distributed computing")]
+#### Distributed computing
 
 Main article: [Distributed
 computing](http://en.wikipedia.org/wiki/Distributed_computing "Distributed computing")
@@ -759,7 +703,7 @@ multiprocessor) is a distributed memory computer system in which the
 processing elements are connected by a network. Distributed computers
 are highly scalable.
 
-##### Cluster computing[[edit](/w/index.php?title=Parallel_computing&action=edit&section=18 "Edit section: Cluster computing")]
+##### Cluster computing
 
 Main article: [Computer
 cluster](http://en.wikipedia.org/wiki/Computer_cluster "Computer cluster")
@@ -789,7 +733,7 @@ and [Donald Becker](http://en.wikipedia.org/wiki/Donald_Becker "Donald Becker").
 majority of the [TOP500](http://en.wikipedia.org/wiki/TOP500 "TOP500") supercomputers are
 clusters.[[28]](#cite_note-28)
 
-##### Massive parallel processing[[edit](/w/index.php?title=Parallel_computing&action=edit&section=19 "Edit section: Massive parallel processing")]
+##### Massive parallel processing
 
 Main article: [Massively parallel
 (computing)](http://en.wikipedia.org/wiki/Massively_parallel_(computing) "Massively parallel (computing)")
@@ -817,7 +761,8 @@ parallel processor.
 supercomputer in the world according to the June 2009 TOP500 ranking, is
 a MPP.
 
-##### Grid computing[[edit](/w/index.php?title=Parallel_computing&action=edit&section=20 "Edit section: Grid computing")]
+##### Grid computing
+
 
 Main article: [Distributed
 computing](http://en.wikipedia.org/wiki/Distributed_computing "Distributed computing")
@@ -844,14 +789,14 @@ Computing](http://en.wikipedia.org/wiki/Berkeley_Open_Infrastructure_for_Network
 (BOINC). Often, distributed computing software makes use of "spare
 cycles", performing computations at times when a computer is idling.
 
-#### Specialized parallel computers[[edit](/w/index.php?title=Parallel_computing&action=edit&section=21 "Edit section: Specialized parallel computers")]
+#### Specialized parallel computers
 
 Within parallel computing, there are specialized parallel devices that
 remain niche areas of interest. While not
 [domain-specific](http://en.wikipedia.org/wiki/Domain-specific_programming_language "Domain-specific programming language"),
 they tend to be applicable to only a few classes of parallel problems.
 
-##### Reconfigurable computing with field-programmable gate arrays[[edit](/w/index.php?title=Parallel_computing&action=edit&section=22 "Edit section: Reconfigurable computing with field-programmable gate arrays")]
+##### Reconfigurable computing with field-programmable gate arrays
 
 [Reconfigurable
 computing](http://en.wikipedia.org/wiki/Reconfigurable_computing "Reconfigurable computing") is
@@ -885,7 +830,7 @@ Corporation](/w/index.php?title=DRC_Computer_Corporation&action=edit&redlink=1 "
 [socket](http://en.wikipedia.org/wiki/CPU_socket "CPU socket") stealers.' Now they call us
 their partners."[[32]](#cite_note-DAmour-32)
 
-##### General-purpose computing on graphics processing units (GPGPU)[[edit](/w/index.php?title=Parallel_computing&action=edit&section=23 "Edit section: General-purpose computing on graphics processing units (GPGPU)")]
+##### General-purpose computing on graphics processing units (GPGPU)
 
 Main article: [GPGPU](http://en.wikipedia.org/wiki/GPGPU "GPGPU")
 
@@ -925,7 +870,7 @@ across platforms consisting of CPUs and GPUs. [AMD](http://en.wikipedia.org/wiki
 [Nvidia](http://en.wikipedia.org/wiki/Nvidia "Nvidia") and others are supporting
 [OpenCL](http://en.wikipedia.org/wiki/OpenCL "OpenCL").
 
-##### Application-specific integrated circuits[[edit](/w/index.php?title=Parallel_computing&action=edit&section=24 "Edit section: Application-specific integrated circuits")]
+##### Application-specific integrated circuits
 
 Main article: [Application-specific integrated
 circuit](http://en.wikipedia.org/wiki/Application-specific_integrated_circuit "Application-specific integrated circuit")
@@ -954,7 +899,7 @@ MDGRAPE-3](http://en.wikipedia.org/wiki/RIKEN_MDGRAPE-3 "RIKEN MDGRAPE-3") machi
 custom ASICs for [molecular
 dynamics](http://en.wikipedia.org/wiki/Molecular_dynamics "Molecular dynamics") simulation.
 
-##### Vector processors[[edit](/w/index.php?title=Parallel_computing&action=edit&section=25 "Edit section: Vector processors")]
+##### Vector processors
 
 Main article: [Vector
 processor](http://en.wikipedia.org/wiki/Vector_processor "Vector processor")
@@ -984,10 +929,10 @@ and [Streaming SIMD
 Extensions](http://en.wikipedia.org/wiki/Streaming_SIMD_Extensions "Streaming SIMD Extensions")
 (SSE).
 
-Software[[edit](/w/index.php?title=Parallel_computing&action=edit&section=26 "Edit section: Software")]
--------------------------------------------------------------------------------------------------------
+Software
+--------
 
-### Parallel programming languages[[edit](/w/index.php?title=Parallel_computing&action=edit&section=27 "Edit section: Parallel programming languages")]
+### Parallel programming languages
 
 Main article: [List of concurrent and parallel programming
 languages](http://en.wikipedia.org/wiki/List_of_concurrent_and_parallel_programming_languages "List of concurrent and parallel programming languages")
@@ -1041,7 +986,7 @@ projects is [Erlang (programming
 language)](http://en.wikipedia.org/wiki/Erlang_(programming_language) "Erlang (programming language)").
 See the wiki article for numerous references on these applications.
 
-### Automatic parallelization[[edit](/w/index.php?title=Parallel_computing&action=edit&section=28 "Edit section: Automatic parallelization")]
+### Automatic parallelization
 
 Main article: [Automatic
 parallelization](http://en.wikipedia.org/wiki/Automatic_parallelization "Automatic parallelization")
@@ -1065,7 +1010,7 @@ exist—[SISAL](http://en.wikipedia.org/wiki/SISAL "SISAL"), Parallel
 [Mitrion-C](/w/index.php?title=Mitrion-C&action=edit&redlink=1 "Mitrion-C (page does not exist)"),
 [VHDL](http://en.wikipedia.org/wiki/VHDL "VHDL"), and [Verilog](http://en.wikipedia.org/wiki/Verilog "Verilog").
 
-### Application checkpointing[[edit](/w/index.php?title=Parallel_computing&action=edit&section=29 "Edit section: Application checkpointing")]
+### Application checkpointing
 
 Main article: [Application
 checkpointing](http://en.wikipedia.org/wiki/Application_checkpointing "Application checkpointing")
@@ -1085,8 +1030,8 @@ especially useful in highly parallel systems with a large number of
 processors used in [high performance
 computing](http://en.wikipedia.org/wiki/High_performance_computing "High performance computing").[[41]](#cite_note-41)
 
-Algorithmic methods[[edit](/w/index.php?title=Parallel_computing&action=edit&section=30 "Edit section: Algorithmic methods")]
------------------------------------------------------------------------------------------------------------------------------
+Algorithmic methods
+------------
 
 As parallel computers become larger and faster, it becomes feasible to
 solve problems that previously took too long to run. Parallel computing
@@ -1133,15 +1078,11 @@ are:[[42]](#cite_note-42)
     machine](http://en.wikipedia.org/wiki/Finite-state_machine "Finite-state machine")
     simulation
 
-Fault-tolerance[[edit](/w/index.php?title=Parallel_computing&action=edit&section=31 "Edit section: Fault-tolerance")]
----------------------------------------------------------------------------------------------------------------------
+Fault-tolerance
+----------------
 
 Further information: [Fault-tolerant computer
 system](http://en.wikipedia.org/wiki/Fault-tolerant_computer_system "Fault-tolerant computer system")
-
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------- ------------------------------------------------------------------------------------------------------------------------
-  [![[icon]](//upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Wiki_letter_w_cropped.svg/20px-Wiki_letter_w_cropped.svg.png)](http://en.wikipedia.org/wiki/File:Wiki_letter_w_cropped.svg)   This section requires [expansion](//en.wikipedia.org/w/index.php?title=Parallel_computing&action=edit). *(March 2014)*
-  --------------------------------------------------------------------------------------------------------------------------------------------------------------------- ------------------------------------------------------------------------------------------------------------------------
 
 Parallel computing can also be applied to the design of [fault-tolerant
 computer
@@ -1155,8 +1096,8 @@ detection](http://en.wikipedia.org/wiki/Error_detection "Error detection") and [
 correction](http://en.wikipedia.org/wiki/Error_correction "Error correction") if the results
 differ.
 
-History[[edit](/w/index.php?title=Parallel_computing&action=edit&section=32 "Edit section: History")]
------------------------------------------------------------------------------------------------------
+History
+-------
 
 Main article: [History of
 computing](http://en.wikipedia.org/wiki/History_of_computing "History of computing")
@@ -1231,8 +1172,8 @@ finally ready to run its first real application in 1976, it was
 outperformed by existing commercial supercomputers such as the
 [Cray-1](http://en.wikipedia.org/wiki/Cray-1 "Cray-1").
 
-See also[[edit](/w/index.php?title=Parallel_computing&action=edit&section=33 "Edit section: See also")]
--------------------------------------------------------------------------------------------------------
+See also
+-------------------------------------
 
 -   [List of important publications in concurrent, parallel, and
     distributed
@@ -1247,17 +1188,17 @@ See also[[edit](/w/index.php?title=Parallel_computing&action=edit&section=33 "Ed
     Processor](http://en.wikipedia.org/wiki/Content_Addressable_Parallel_Processor "Content Addressable Parallel Processor")
 -   [Transputer](http://en.wikipedia.org/wiki/Transputer "Transputer")
 
-References[[edit](/w/index.php?title=Parallel_computing&action=edit&section=34 "Edit section: References")]
------------------------------------------------------------------------------------------------------------
+References
+----------
 
-1.  **[\](#cite_ref-1)** Gottlieb, Allan; Almasi, George S. (1989).
+1.  Gottlieb, Allan; Almasi, George S. (1989).
     [*Highly parallel
     computing*](http://dl.acm.org/citation.cfm?id=160438). Redwood City,
     Calif.: Benjamin/Cummings.
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-8053-0177-1](http://en.wikipedia.org/wiki/Special:BookSources/0-8053-0177-1 "Special:BookSources/0-8053-0177-1"). 
     Cite uses deprecated parameters
     ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
-2.  **[\](#cite_ref-2)** S.V. Adve et al. (November 2008). ["Parallel
+2.  S.V. Adve et al. (November 2008). ["Parallel
     Computing Research at Illinois: The UPCRC
     Agenda"](http://www.upcrc.illinois.edu/documents/UPCRC_Whitepaper.pdf)
     (PDF). Parallel@Illinois, University of Illinois at
@@ -1267,10 +1208,10 @@ References[[edit](/w/index.php?title=Parallel_computing&action=edit&section=34 "
     The computer industry has accepted that future performance increases
     must largely come from increasing the number of processors (or
     cores) on a die, rather than making a single core go faster."
-3.  **[\](#cite_ref-3)** Asanovic et al. Old [conventional wisdom]:
+3.   Asanovic et al. Old [conventional wisdom]:
     Power is free, but transistors are expensive. New [conventional
     wisdom] is [that] power is expensive, but transistors are "free".
-4.  **[\](#cite_ref-View-Power_4-0)** Asanovic, Krste et al. (December
+4.   Asanovic, Krste et al. (December
     18, 2006). ["The Landscape of Parallel Computing Research: A View
     from
     Berkeley"](http://www.eecs.berkeley.edu/Pubs/TechRpts/2006/EECS-2006-183.pdf)
@@ -1283,122 +1224,117 @@ References[[edit](/w/index.php?title=Parallel_computing&action=edit&section=34 "
     clock-speed is better' position, warned that traditional approaches
     to maximizing performance through maximizing clock speed have been
     pushed to their limit."
-5.  **[\](#cite_ref-5)** Hennessy, John L.; Patterson, David A., Larus,
+5.  Hennessy, John L.; Patterson, David A., Larus,
     James R. (1999). *Computer organization and design : the
     hardware/software interface* (2. ed., 3rd print. ed.). San
     Francisco: Kaufmann.
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [1-55860-428-6](http://en.wikipedia.org/wiki/Special:BookSources/1-55860-428-6 "Special:BookSources/1-55860-428-6"). 
     Cite uses deprecated parameters
     ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
-6.  \ [***a***](#cite_ref-llnltut_6-0)
-    [***b***](#cite_ref-llnltut_6-1) Barney, Blaise. ["Introduction to
+6.  Barney, Blaise. ["Introduction to
     Parallel
     Computing"](http://www.llnl.gov/computing/tutorials/parallel_comp/).
     Lawrence Livermore National Laboratory. Retrieved 2007-11-09. 
-7.  **[\](#cite_ref-7)** Hennessy, John L.; Patterson, David A. (2002).
+7.  Hennessy, John L.; Patterson, David A. (2002).
     *Computer architecture / a quantitative approach.* (3rd ed.). San
     Francisco, Calif.: International Thomson. p. 43.
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [1-55860-724-2](http://en.wikipedia.org/wiki/Special:BookSources/1-55860-724-2 "Special:BookSources/1-55860-724-2"). 
     Cite uses deprecated parameters
     ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
-8.  **[\](#cite_ref-8)** Rabaey, Jan M. (1996). *Digital integrated
+8.  Rabaey, Jan M. (1996). *Digital integrated
     circuits : a design perspective*. Upper Saddle River, N.J.:
     Prentice-Hall. p. 235.
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-13-178609-1](http://en.wikipedia.org/wiki/Special:BookSources/0-13-178609-1 "Special:BookSources/0-13-178609-1"). 
-9.  **[\](#cite_ref-9)** Flynn, Laurie J. (8 May 2004). ["Intel Halts
+9.  Flynn, Laurie J. (8 May 2004). ["Intel Halts
     Development Of 2 New
     Microprocessors"](http://www.nytimes.com/2004/05/08/business/08chip.html?ex=1399348800&en=98cc44ca97b1a562&ei=5007).
     *New York Times*. Retrieved 5 June 2012. 
-10. **[\](#cite_ref-Moore1965paper_10-0)** Moore, Gordon E. (1965).
+10. Moore, Gordon E. (1965).
     ["Cramming more components onto integrated
     circuits"](ftp://download.intel.com/museum/Moores_Law/Articles-Press_Releases/Gordon_Moore_1965_Article.pdf)
     (PDF). *[Electronics
     Magazine](http://en.wikipedia.org/wiki/Electronics_(magazine) "Electronics (magazine)")*.
     p. 4. Retrieved 2006-11-11. 
-11. **[\](#cite_ref-11)** Amdahl, Gene M. (1967). ["Validity of the
+11. Amdahl, Gene M. (1967). ["Validity of the
     single processor approach to achieving large scale computing
     capabilities"](http://dl.acm.org/citation.cfm?id=160438).
     *Proceeding AFIPS '67 (Spring) Proceedings of the April 18–20, 1967,
     spring joint computer conference*: 483–485.
     [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1145/1465482.1465560](http://dx.doi.org/10.1145%2F1465482.1465560). 
-12. **[\](#cite_ref-12)** Brooks, Frederick P. (1996). *The mythical
+12. Brooks, Frederick P. (1996). *The mythical
     man month essays on software engineering* (Anniversary ed., repr.
     with corr., 5. [Dr.] ed.). Reading, Mass. [u.a.]: Addison-Wesley.
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-201-83595-9](http://en.wikipedia.org/wiki/Special:BookSources/0-201-83595-9 "Special:BookSources/0-201-83595-9"). 
-13. **[\](#cite_ref-13)** Gustafson, John L. (May 1988). ["Reevaluating
+13. Gustafson, John L. (May 1988). ["Reevaluating
     Amdahl's
     law"](http://www.scl.ameslab.gov/Publications/Gus/AmdahlsLaw/Amdahls.html).
     *Communications of the ACM* **31** (5): 532–533.
     [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1145/42411.42415](http://dx.doi.org/10.1145%2F42411.42415). 
-14. **[\](#cite_ref-14)** Bernstein, A. J. (1 October 1966). "Analysis
+14. Bernstein, A. J. (1 October 1966). "Analysis
     of Programs for Parallel Processing". *IEEE Transactions on
     Electronic Computers*. EC-15 (5): 757–763.
     [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1109/PGEC.1966.264565](http://dx.doi.org/10.1109%2FPGEC.1966.264565). 
-15. **[\](#cite_ref-15)** Roosta, Seyed H. (2000). *Parallel processing
+15. Roosta, Seyed H. (2000). *Parallel processing
     and parallel algorithms : theory and computation*. New York, NY
     [u.a.]: Springer. p. 114.
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-387-98716-9](http://en.wikipedia.org/wiki/Special:BookSources/0-387-98716-9 "Special:BookSources/0-387-98716-9"). 
-16. **[\](#cite_ref-16)** Lamport, Leslie (1 September 1979). "How to
+16. Lamport, Leslie (1 September 1979). "How to
     Make a Multiprocessor Computer That Correctly Executes Multiprocess
     Programs". *IEEE Transactions on Computers* **C–28** (9): 690–691.
     [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1109/TC.1979.1675439](http://dx.doi.org/10.1109%2FTC.1979.1675439). 
-17. **[\](#cite_ref-17)** Patterson and Hennessy, p. 748.
-18. **[\](#cite_ref-18)** Singh, David Culler ; J.P. (1997). *Parallel
+17. Patterson and Hennessy, p. 748.
+18. Singh, David Culler ; J.P. (1997). *Parallel
     computer architecture* ([Nachdr.] ed.). San Francisco: Morgan
     Kaufmann Publ. p. 15.
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [1-55860-343-3](http://en.wikipedia.org/wiki/Special:BookSources/1-55860-343-3 "Special:BookSources/1-55860-343-3"). 
-19. **[\](#cite_ref-19)** Culler et al. p. 15.
-20. **[\](#cite_ref-20)** [Patt, Yale](http://en.wikipedia.org/wiki/Yale_Patt "Yale Patt")
+19. Culler et al. p. 15.
+20. Patt, Yale](http://en.wikipedia.org/wiki/Yale_Patt "Yale Patt")
     (April 2004). "[The Microprocessor Ten Years From Now: What Are The
     Challenges, How Do We Meet
     Them?](http://users.ece.utexas.edu/~patt/Videos/talk_videos/cmu_04-29-04.wmv)
     (wmv). Distinguished Lecturer talk at [Carnegie Mellon
     University](http://en.wikipedia.org/wiki/Carnegie_Mellon_University "Carnegie Mellon University").
     Retrieved on November 7, 2007.
-21. **[\](#cite_ref-Culler124_21-0)** Culler et al. p. 124.
-22. **[\](#cite_ref-Culler125_22-0)** Culler et al. p. 125.
-23. \ [***a***](#cite_ref-PH713_23-0)
-    [***b***](#cite_ref-PH713_23-1) Patterson and Hennessy, p. 713.
-24. \ [***a***](#cite_ref-HP549_24-0)
-    [***b***](#cite_ref-HP549_24-1) Hennessy and Patterson, p. 549.
-25. **[\](#cite_ref-25)** Patterson and Hennessy, p. 714.
-26. **[\](#cite_ref-26)** [What is
+21. Culler et al. p. 124.
+22. Culler et al. p. 125.
+23. Patterson and Hennessy, p. 713.
+24. Hennessy and Patterson, p. 549.
+25. Patterson and Hennessy, p. 714.
+26. [What is
     clustering?](http://www.webopedia.com/TERM/c/clustering.html)
     Webopedia computer dictionary. Retrieved on November 7, 2007.
-27. **[\](#cite_ref-27)** [Beowulf
+27. [Beowulf
     definition.](http://www.pcmag.com/encyclopedia_term/0,2542,t=Beowulf&i=38548,00.asp)
     *PC Magazine*. Retrieved on November 7, 2007.
-28. **[\](#cite_ref-28)** [Architecture share for
+28. [Architecture share for
     06/2007](http://www.top500.org/stats/list/29/archtype). TOP500
     Supercomputing Sites. Clusters make up 74.60% of the machines on the
     list. Retrieved on November 7, 2007.
-29. **[\](#cite_ref-29)** Hennessy and Patterson, p. 537.
-30. **[\](#cite_ref-30)** [MPP
+29. Hennessy and Patterson, p. 537.
+30. [MPP
     Definition.](http://www.pcmag.com/encyclopedia_term/0,,t=mpp&i=47310,00.asp)
     *PC Magazine*. Retrieved on November 7, 2007.
-31. **[\](#cite_ref-31)** Kirkpatrick, Scott (2003). "COMPUTER SCIENCE:
+31. Kirkpatrick, Scott (2003). "COMPUTER SCIENCE:
     Rough Times Ahead". *Science* **299** (5607): 668–669.
     [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1126/science.1081623](http://dx.doi.org/10.1126%2Fscience.1081623).
     [PMID](http://en.wikipedia.org/wiki/PubMed_Identifier "PubMed Identifier") [12560537](//www.ncbi.nlm.nih.gov/pubmed/12560537). 
-32. \ [***a***](#cite_ref-DAmour_32-0)
-    [***b***](#cite_ref-DAmour_32-1)
-    [***c***](#cite_ref-DAmour_32-2) D'Amour, Michael R., Chief
+32. D'Amour, Michael R., Chief
     Operating Officer, [DRC Computer
     Corporation](/w/index.php?title=DRC_Computer_Corporation&action=edit&redlink=1 "DRC Computer Corporation (page does not exist)").
     "Standard Reconfigurable Computing". Invited speaker at the
     University of Delaware, February 28, 2007.
-33. **[\](#cite_ref-33)** Boggan, Sha'Kia and Daniel M. Pressel (August
+33. Boggan, Sha'Kia and Daniel M. Pressel (August
     2007). [GPUs: An Emerging Platform for General-Purpose
     Computation](http://www.arl.army.mil/arlreports/2007/ARL-SR-154.pdf)
     (PDF). ARL-SR-154, U.S. Army Research Lab. Retrieved on November 7,
     2007.
-34. **[\](#cite_ref-34)** Maslennikov, Oleg (2002). ["Systematic
+34. Maslennikov, Oleg (2002). ["Systematic
     Generation of Executing Programs for Processor Elements in Parallel
     ASIC or FPGA-Based Systems and Their Transformation into
     VHDL-Descriptions of Processor Element Control
     Units".](http://www.springerlink.com/content/jjrdrb0lelyeu3e9/)
     *Lecture Notes in Computer Science*, **2328/2002:** p. 272.
-35. **[\](#cite_ref-35)** Shimokawa, Y.; Y. Fuwa and N. Aramaki (18-21
+35. Shimokawa, Y.; Y. Fuwa and N. Aramaki (18-21
     Nov 1991). ["A parallel ASIC VLSI neurocomputer for a large number
     of neurons and billion connections per second
     speed"](http://ieeexplore.ieee.org/xpl/freeabs_all.jsp?arnumber=170708).
@@ -1410,13 +1346,13 @@ References[[edit](/w/index.php?title=Parallel_computing&action=edit&section=34 "
     ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"));
     Check date values in: `|date=`
     ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#bad_date "Help:CS1 errors"))
-36. **[\](#cite_ref-36)** Acken, Kevin P.; Irwin, Mary Jane; Owens,
+36. Acken, Kevin P.; Irwin, Mary Jane; Owens,
     Robert M. (1 January 1998). *The Journal of VLSI Signal Processing*
     **19** (2): 97–113.
     [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1023/A:1008005616596](http://dx.doi.org/10.1023%2FA%3A1008005616596). 
     Cite uses deprecated parameters
     ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
-37. **[\](#cite_ref-37)** Kahng, Andrew B. (June 21, 2004) "[Scoping
+37. Kahng, Andrew B. (June 21, 2004) "[Scoping
     the Problem of DFM in the Semiconductor
     Industry](http://www.future-fab.com/documents.asp?grID=353&d_ID=2596)."
     University of California, San Diego. "Future design for
@@ -1425,13 +1361,12 @@ References[[edit](/w/index.php?title=Parallel_computing&action=edit&section=34 "
     [non-recoverable expenditures] – the cost of a mask set and probe
     card – which is well over \$1 million at the 90 nm technology node
     and creates a significant damper on semiconductor-based innovation."
-38. \ [***a***](#cite_ref-PH751_38-0)
-    [***b***](#cite_ref-PH751_38-1) Patterson and Hennessy, p. 751.
-39. **[\](#cite_ref-39)** The [Sidney Fernbach Award given to MPI
+38. Patterson and Hennessy, p. 751.
+39. The [Sidney Fernbach Award given to MPI
     inventor Bill
     Gropp](http://awards.computer.org/ana/award/viewPastRecipients.action?id=16)
     refers to MPI as "the dominant HPC communications interface"
-40. **[\](#cite_ref-40)** Shen, John Paul; Mikko H. Lipasti (2004).
+40. Shen, John Paul; Mikko H. Lipasti (2004).
     *Modern processor design : fundamentals of superscalar processors*
     (1st ed.). Dubuque, Iowa: McGraw-Hill. p. 561.
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-07-057064-7](http://en.wikipedia.org/wiki/Special:BookSources/0-07-057064-7 "Special:BookSources/0-07-057064-7").
@@ -1445,54 +1380,47 @@ References[[edit](/w/index.php?title=Parallel_computing&action=edit&section=34 "
     large multidimensional arrays of float-point data)."  Cite uses
     deprecated parameters
     ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
-41. **[\](#cite_ref-41)** *Encyclopedia of Parallel Computing, Volume
+41. *Encyclopedia of Parallel Computing, Volume
     4* by David Padua 2011 [ISBN
     0387097651](http://en.wikipedia.org/wiki/Special:BookSources/0387097651) page 265
-42. **[\](#cite_ref-42)** Asanovic, Krste, et al. (December 18, 2006).
+42. Asanovic, Krste, et al. (December 18, 2006).
     [The Landscape of Parallel Computing Research: A View from
     Berkeley](http://www.eecs.berkeley.edu/Pubs/TechRpts/2006/EECS-2006-183.pdf)
     (PDF). University of California, Berkeley. Technical Report No.
     UCB/EECS-2006-183. See table on pages 17–19.
-43. \ [***a***](#cite_ref-infamous_43-0)
-    [***b***](#cite_ref-infamous_43-1) Patterson and Hennessy,
+43. Patterson and Hennessy,
     pp. 749–50: "Although successful in pushing several technologies
     useful in later projects, the ILLIAC IV failed as a computer. Costs
     escalated from the \$8 million estimated in 1966 to \$31 million by
     1972, despite the construction of only a quarter of the planned
     machine ... It was perhaps the most infamous of supercomputers. The
     project started in 1965 and ran its first real application in 1976."
-44. **[\](#cite_ref-44)** [Menabrea, L.
+44. [Menabrea, L.
     F.](http://en.wikipedia.org/wiki/Federico_Luigi,_Conte_Menabrea "Federico Luigi, Conte Menabrea")
     (1842). [Sketch of the Analytic Engine Invented by Charles
     Babbage](http://www.fourmilab.ch/babbage/sketch.html). Bibliothèque
     Universelle de Genève. Retrieved on November 7, 2007.
-45. \ [***a***](#cite_ref-PH753_45-0)
-    [***b***](#cite_ref-PH753_45-1) [***c***](#cite_ref-PH753_45-2)
-    Patterson and Hennessy, p. 753.
-46. **[\](#cite_ref-46)** da Cruz, Frank (2003). ["Columbia University
+45. Patterson and Hennessy, p. 753.
+46. 46)** da Cruz, Frank (2003). ["Columbia University
     Computing History: The IBM
     704"](http://www.columbia.edu/acis/history/704.html). Columbia
     University. Retrieved 2008-01-08. 
-47. **[\](#cite_ref-47)** Parallel Programming, S. Gill, The Computer
+47. 47)** Parallel Programming, S. Gill, The Computer
     Journal Vol. 1 \#1, pp2-10, British Computer Society, April 1958.
-48. \ [***a***](#cite_ref-G_Wilson_48-0)
-    [***b***](#cite_ref-G_Wilson_48-1)
-    [***c***](#cite_ref-G_Wilson_48-2)
-    [***d***](#cite_ref-G_Wilson_48-3)
-    [***e***](#cite_ref-G_Wilson_48-4) Wilson, Gregory V (1994). ["The
+48. Wilson, Gregory V (1994). ["The
     History of the Development of Parallel
     Computing"](http://ei.cs.vt.edu/~history/Parallel.html). Virginia
     Tech/Norfolk State University, Interactive Learning with a Digital
     Library in Computer Science. Retrieved 2008-01-08. 
-49. **[\](#cite_ref-49)** Anthes, Gry (November 19, 2001). ["The Power
+49. Anthes, Gry (November 19, 2001). ["The Power
     of
     Parallelism"](http://www.computerworld.com/action/article.do?command=viewArticleBasic&articleId=65878).
     *[Computerworld](http://en.wikipedia.org/wiki/Computerworld "Computerworld")*. Retrieved
     2008-01-08. 
-50. **[\](#cite_ref-50)** Patterson and Hennessy, p. 749.
+50. Patterson and Hennessy, p. 749.
 
-Further reading[[edit](/w/index.php?title=Parallel_computing&action=edit&section=35 "Edit section: Further reading")]
----------------------------------------------------------------------------------------------------------------------
+Further reading
+-------
 
 -   Rodriguez, C.; Villagra, M.; Baran, B. (29 August 2008).
     ["Asynchronous team algorithms for Boolean
@@ -1501,8 +1429,8 @@ Further reading[[edit](/w/index.php?title=Parallel_computing&action=edit&section
     2007. Bionetics 2007. 2nd*: 66–69.
     [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1109/BIMNICS.2007.4610083](http://dx.doi.org/10.1109%2FBIMNICS.2007.4610083). 
 
-External links[[edit](/w/index.php?title=Parallel_computing&action=edit&section=36 "Edit section: External links")]
--------------------------------------------------------------------------------------------------------------------
+External links
+-------
 
 **Listen to this article**
 ([info/dl](http://en.wikipedia.org/wiki/File:En-Parallel_computing.ogg "File:En-Parallel computing.ogg"))
