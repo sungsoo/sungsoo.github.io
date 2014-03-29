@@ -1213,9 +1213,9 @@ References
     [*Highly parallel
     computing*](http://dl.acm.org/citation.cfm?id=160438). Redwood City,
     Calif.: Benjamin/Cummings.
-    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-8053-0177-1](http://en.wikipedia.org/wiki/Special:BookSources/0-8053-0177-1 "Special:BookSources/0-8053-0177-1"). 
+    [ISBN](/wiki/International_Standard_Book_Number "International Standard Book Number") [0-8053-0177-1](/wiki/Special:BookSources/0-8053-0177-1 "Special:BookSources/0-8053-0177-1"). 
     Cite uses deprecated parameters
-    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))    </a>
+    ([help](/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
 2.  S.V. Adve et al. (November 2008). ["Parallel
     Computing Research at Illinois: The UPCRC
     Agenda"](http://www.upcrc.illinois.edu/documents/UPCRC_Whitepaper.pdf)
@@ -1225,14 +1225,11 @@ References
     complex architectures – are now hitting the so-called power wall.
     The computer industry has accepted that future performance increases
     must largely come from increasing the number of processors (or
-    cores) on a die, rather than making a single core    note
-3">
-/a>
-3.   Asanovic et al. Old [conventional wisdom]:
+    cores) on a die, rather than making a single core go faster."
+3.  Asanovic et al. Old [conventional wisdom]:
     Power is free, but transistors are expensive. New [conventional
-    wisdom] is [that] power is expensive, but transistors are-4">/a>    
-
-4.   Asanovic, Krste et al. (December
+    wisdom] is [that] power is expensive, but transistors are "free".
+4.  View-Power_4-0 Asanovic, Krste et al. (December
     18, 2006). ["The Landscape of Parallel Computing Research: A View
     from
     Berkeley"](http://www.eecs.berkeley.edu/Pubs/TechRpts/2006/EECS-2006-183.pdf)
@@ -1244,90 +1241,84 @@ References
     from Intel, a company generally associated with the 'higher
     clock-speed is better' position, warned that traditional approaches
     to maximizing performance through maximizing clock speed have been
-    pushed to their "></a>
-
+    pushed to their limit."
 5.  Hennessy, John L.; Patterson, David A., Larus,
     James R. (1999). *Computer organization and design : the
     hardware/software interface* (2. ed., 3rd print. ed.). San
     Francisco: Kaufmann.
-    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [1-55860-428-6](http://en.wikipedia.org/wiki/Special:BookSources/1-55860-428-6 "Special:BookSources/1-55860-428-6"). 
+    [ISBN](/wiki/International_Standard_Book_Number "International Standard Book Number") [1-55860-428-6](/wiki/Special:BookSources/1-55860-428-6 "Special:BookSources/1-55860-428-6"). 
     Cite uses deprecated parameters
-    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 er"></a>
-
-6.  Barney, Blaise. ["Introduction to
+    ([help](/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
+6.   Barney, Blaise. ["Introduction to
     Parallel
     Computing"](http://www.llnl.gov/computing/tutorials/parallel_comp/).
-    Lawrence Livermore National Laboratory. Retrieved 2007-"></a>
-
+    Lawrence Livermore National Laboratory. Retrieved 2007-11-09. 
 7.  Hennessy, John L.; Patterson, David A. (2002).
     *Computer architecture / a quantitative approach.* (3rd ed.). San
     Francisco, Calif.: International Thomson. p. 43.
-    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [1-55860-724-2](http://en.wikipedia.org/wiki/Special:BookSources/1-55860-724-2 "Special:BookSources/1-55860-724-2"). 
+    [ISBN](/wiki/International_Standard_Book_Number "International Standard Book Number") [1-55860-724-2](/wiki/Special:BookSources/1-55860-724-2 "Special:BookSources/1-55860-724-2"). 
     Cite uses deprecated parameters
-    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 er"></a>
-
+    ([help](/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
 8.  Rabaey, Jan M. (1996). *Digital integrated
     circuits : a design perspective*. Upper Saddle River, N.J.:
     Prentice-Hall. p. 235.
-    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-13-178609-1](http://en.wikipedia.org/wiki/Special:BookSources/0-13-178609-1 "Special:BookSources/0-13-17860"></a>
-
+    [ISBN](/wiki/International_Standard_Book_Number "International Standard Book Number") [0-13-178609-1](/wiki/Special:BookSources/0-13-178609-1 "Special:BookSources/0-13-178609-1"). 
 9.  Flynn, Laurie J. (8 May 2004). ["Intel Halts
     Development Of 2 New
     Microprocessors"](http://www.nytimes.com/2004/05/08/business/08chip.html?ex=1399348800&en=98cc44ca97b1a562&ei=5007).
-    *New York Times*. Retrieved 5 June"></a>
-
-10. Moore, Gordon E. (1965).
+    *New York Times*. Retrieved 5 June 2012. 
+10. Moore1965paper_10-0 Moore, Gordon E. (1965).
     ["Cramming more components onto integrated
     circuits"](ftp://download.intel.com/museum/Moores_Law/Articles-Press_Releases/Gordon_Moore_1965_Article.pdf)
     (PDF). *[Electronics
-    Magazine](http://en.wikipedia.org/wiki/Electronics_(magazine) "Electronics (magazine)")*.
+    Magazine](/wiki/Electronics_(magazine) "Electronics (magazine)")*.
     p. 4. Retrieved 2006-11-11. 
 11. Amdahl, Gene M. (1967). ["Validity of the
     single processor approach to achieving large scale computing
     capabilities"](http://dl.acm.org/citation.cfm?id=160438).
     *Proceeding AFIPS '67 (Spring) Proceedings of the April 18–20, 1967,
     spring joint computer conference*: 483–485.
-    [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1145/1465482.1465560](http://dx.doi.org/10.1145%2F1465482.1465560). 
+    [doi](/wiki/Digital_object_identifier "Digital object identifier"):[10.1145/1465482.1465560](http://dx.doi.org/10.1145%2F1465482.1465560). 
 12. Brooks, Frederick P. (1996). *The mythical
     man month essays on software engineering* (Anniversary ed., repr.
     with corr., 5. [Dr.] ed.). Reading, Mass. [u.a.]: Addison-Wesley.
-    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-201-83595-9](http://en.wikipedia.org/wiki/Special:BookSources/0-201-83595-9 "Special:BookSources/0-201-83595-9"). 
+    [ISBN](/wiki/International_Standard_Book_Number "International Standard Book Number") [0-201-83595-9](/wiki/Special:BookSources/0-201-83595-9 "Special:BookSources/0-201-83595-9"). 
 13. Gustafson, John L. (May 1988). ["Reevaluating
     Amdahl's
     law"](http://www.scl.ameslab.gov/Publications/Gus/AmdahlsLaw/Amdahls.html).
     *Communications of the ACM* **31** (5): 532–533.
-    [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1145/42411.42415](http://dx.doi.org/10.1145%2F42411.42415). 
+    [doi](/wiki/Digital_object_identifier "Digital object identifier"):[10.1145/42411.42415](http://dx.doi.org/10.1145%2F42411.42415). 
 14. Bernstein, A. J. (1 October 1966). "Analysis
     of Programs for Parallel Processing". *IEEE Transactions on
     Electronic Computers*. EC-15 (5): 757–763.
-    [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1109/PGEC.1966.264565](http://dx.doi.org/10.1109%2FPGEC.1966.264565). 
+    [doi](/wiki/Digital_object_identifier "Digital object identifier"):[10.1109/PGEC.1966.264565](http://dx.doi.org/10.1109%2FPGEC.1966.264565). 
 15. Roosta, Seyed H. (2000). *Parallel processing
     and parallel algorithms : theory and computation*. New York, NY
     [u.a.]: Springer. p. 114.
-    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-387-98716-9](http://en.wikipedia.org/wiki/Special:BookSources/0-387-98716-9 "Special:BookSources/0-387-98716-9"). 
+    [ISBN](/wiki/International_Standard_Book_Number "International Standard Book Number") [0-387-98716-9](/wiki/Special:BookSources/0-387-98716-9 "Special:BookSources/0-387-98716-9"). 
 16. Lamport, Leslie (1 September 1979). "How to
     Make a Multiprocessor Computer That Correctly Executes Multiprocess
     Programs". *IEEE Transactions on Computers* **C–28** (9): 690–691.
-    [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1109/TC.1979.1675439](http://dx.doi.org/10.1109%2FTC.1979.1675439). 
+    [doi](/wiki/Digital_object_identifier "Digital object identifier"):[10.1109/TC.1979.1675439](http://dx.doi.org/10.1109%2FTC.1979.1675439). 
 17. Patterson and Hennessy, p. 748.
 18. Singh, David Culler ; J.P. (1997). *Parallel
     computer architecture* ([Nachdr.] ed.). San Francisco: Morgan
     Kaufmann Publ. p. 15.
-    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [1-55860-343-3](http://en.wikipedia.org/wiki/Special:BookSources/1-55860-343-3 "Special:BookSources/1-55860-343-3"). 
+    [ISBN](/wiki/International_Standard_Book_Number "International Standard Book Number") [1-55860-343-3](/wiki/Special:BookSources/1-55860-343-3 "Special:BookSources/1-55860-343-3"). 
 19. Culler et al. p. 15.
-20. Patt, Yale](http://en.wikipedia.org/wiki/Yale_Patt "Yale Patt")
+20. [Patt, Yale](/wiki/Yale_Patt "Yale Patt")
     (April 2004). "[The Microprocessor Ten Years From Now: What Are The
     Challenges, How Do We Meet
     Them?](http://users.ece.utexas.edu/~patt/Videos/talk_videos/cmu_04-29-04.wmv)
     (wmv). Distinguished Lecturer talk at [Carnegie Mellon
-    University](http://en.wikipedia.org/wiki/Carnegie_Mellon_University "Carnegie Mellon University").
+    University](/wiki/Carnegie_Mellon_University "Carnegie Mellon University").
     Retrieved on November 7, 2007.
-21. Culler et al. p. 124.
-22. Culler et al. p. 125.
+21. Culler124_21-0 Culler et al. p. 124.
+22. Culler125_22-0 Culler et al. p. 125.
 23. Patterson and Hennessy, p. 713.
 24. Hennessy and Patterson, p. 549.
 25. Patterson and Hennessy, p. 714.
-26. [What is
+26. What is
     clustering?](http://www.webopedia.com/TERM/c/clustering.html)
     Webopedia computer dictionary. Retrieved on November 7, 2007.
 27. [Beowulf
@@ -1343,8 +1334,8 @@ References
     *PC Magazine*. Retrieved on November 7, 2007.
 31. Kirkpatrick, Scott (2003). "COMPUTER SCIENCE:
     Rough Times Ahead". *Science* **299** (5607): 668–669.
-    [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1126/science.1081623](http://dx.doi.org/10.1126%2Fscience.1081623).
-    [PMID](http://en.wikipedia.org/wiki/PubMed_Identifier "PubMed Identifier") [12560537](//www.ncbi.nlm.nih.gov/pubmed/12560537). 
+    [doi](/wiki/Digital_object_identifier "Digital object identifier"):[10.1126/science.1081623](http://dx.doi.org/10.1126%2Fscience.1081623).
+    [PMID](/wiki/PubMed_Identifier "PubMed Identifier") [12560537](//www.ncbi.nlm.nih.gov/pubmed/12560537). 
 32. D'Amour, Michael R., Chief
     Operating Officer, [DRC Computer
     Corporation](/w/index.php?title=DRC_Computer_Corporation&action=edit&redlink=1 "DRC Computer Corporation (page does not exist)").
@@ -1367,18 +1358,18 @@ References
     speed"](http://ieeexplore.ieee.org/xpl/freeabs_all.jsp?arnumber=170708).
     *International Joint Conference on Neural Networks* **3**:
     2162–2167.
-    [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1109/IJCNN.1991.170708](http://dx.doi.org/10.1109%2FIJCNN.1991.170708).
-    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-7803-0227-3](http://en.wikipedia.org/wiki/Special:BookSources/0-7803-0227-3 "Special:BookSources/0-7803-0227-3"). 
+    [doi](/wiki/Digital_object_identifier "Digital object identifier"):[10.1109/IJCNN.1991.170708](http://dx.doi.org/10.1109%2FIJCNN.1991.170708).
+    [ISBN](/wiki/International_Standard_Book_Number "International Standard Book Number") [0-7803-0227-3](/wiki/Special:BookSources/0-7803-0227-3 "Special:BookSources/0-7803-0227-3"). 
     Cite uses deprecated parameters
-    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"));
+    ([help](/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"));
     Check date values in: `|date=`
-    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#bad_date "Help:CS1 errors"))
+    ([help](/wiki/Help:CS1_errors#bad_date "Help:CS1 errors"))
 36. Acken, Kevin P.; Irwin, Mary Jane; Owens,
     Robert M. (1 January 1998). *The Journal of VLSI Signal Processing*
     **19** (2): 97–113.
-    [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1023/A:1008005616596](http://dx.doi.org/10.1023%2FA%3A1008005616596). 
+    [doi](/wiki/Digital_object_identifier "Digital object identifier"):[10.1023/A:1008005616596](http://dx.doi.org/10.1023%2FA%3A1008005616596). 
     Cite uses deprecated parameters
-    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
+    ([help](/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
 37. Kahng, Andrew B. (June 21, 2004) "[Scoping
     the Problem of DFM in the Semiconductor
     Industry](http://www.future-fab.com/documents.asp?grID=353&d_ID=2596)."
@@ -1396,7 +1387,7 @@ References
 40. Shen, John Paul; Mikko H. Lipasti (2004).
     *Modern processor design : fundamentals of superscalar processors*
     (1st ed.). Dubuque, Iowa: McGraw-Hill. p. 561.
-    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-07-057064-7](http://en.wikipedia.org/wiki/Special:BookSources/0-07-057064-7 "Special:BookSources/0-07-057064-7").
+    [ISBN](/wiki/International_Standard_Book_Number "International Standard Book Number") [0-07-057064-7](/wiki/Special:BookSources/0-07-057064-7 "Special:BookSources/0-07-057064-7").
     "However, the holy grail of such research – automated
     parallelization of serial programs – has yet to materialize. While
     automated parallelization of certain classes of algorithms has been
@@ -1406,10 +1397,10 @@ References
     statically analyzable memory access patterns. (e.g., walks over
     large multidimensional arrays of float-point data)."  Cite uses
     deprecated parameters
-    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
+    ([help](/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
 41. *Encyclopedia of Parallel Computing, Volume
     4* by David Padua 2011 [ISBN
-    0387097651](http://en.wikipedia.org/wiki/Special:BookSources/0387097651) page 265
+    0387097651](/wiki/Special:BookSources/0387097651) page 265
 42. Asanovic, Krste, et al. (December 18, 2006).
     [The Landscape of Parallel Computing Research: A View from
     Berkeley](http://www.eecs.berkeley.edu/Pubs/TechRpts/2006/EECS-2006-183.pdf)
@@ -1423,7 +1414,7 @@ References
     machine ... It was perhaps the most infamous of supercomputers. The
     project started in 1965 and ran its first real application in 1976."
 44. [Menabrea, L.
-    F.](http://en.wikipedia.org/wiki/Federico_Luigi,_Conte_Menabrea "Federico Luigi, Conte Menabrea")
+    F.](/wiki/Federico_Luigi,_Conte_Menabrea "Federico Luigi, Conte Menabrea")
     (1842). [Sketch of the Analytic Engine Invented by Charles
     Babbage](http://www.fourmilab.ch/babbage/sketch.html). Bibliothèque
     Universelle de Genève. Retrieved on November 7, 2007.
@@ -1442,9 +1433,10 @@ References
 49. Anthes, Gry (November 19, 2001). ["The Power
     of
     Parallelism"](http://www.computerworld.com/action/article.do?command=viewArticleBasic&articleId=65878).
-    *[Computerworld](http://en.wikipedia.org/wiki/Computerworld "Computerworld")*. Retrieved
+    *[Computerworld](/wiki/Computerworld "Computerworld")*. Retrieved
     2008-01-08. 
 50. Patterson and Hennessy, p. 749.
+
 
 Further reading
 -------
