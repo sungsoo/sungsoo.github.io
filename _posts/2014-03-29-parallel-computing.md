@@ -418,7 +418,7 @@ were using a single set or multiple sets of data.
 
 [Flynn's taxonomy](http://en.wikipedia.org/wiki/Flynn%27s_taxonomy "Flynn's taxonomy")
  
-<table class="wikitable" style="float: right; margin: 0 0 1em 1em; text-align: center;">
+<table class="wikitable" style="float: right; margin: 0 0 1em 1em; text-align: bordercolor="#000000" border="1" center;">
 <caption><strong class="selflink">Flynn's taxonomy</strong></caption>
 <tr>
 <th>&#160;</th>
@@ -452,7 +452,7 @@ common type of parallel programs.
 
 Visually, these four architectures are shown below where each "PU" is a central processing unit:
 
-<table class="wikitable">
+<table class="wikitable"bordercolor="#000000" border="1">
 <tr>
 <th style="text-align:center;">SISD</th>
 <th style="text-align:center;">MISD</th>
