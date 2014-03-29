@@ -427,13 +427,13 @@ were using a single set or multiple sets of data.
 </tr>
 <tr>
 <th>Single data</th>
-<td><a href="/wiki/SISD" title="SISD">SISD</a></td>
-<td><a href="/wiki/MISD" title="MISD">MISD</a></td>
+<td><a href=http://en.wikipedia.org/wiki/SISD" title="SISD">SISD</a></td>
+<td><a href=http://en.wikipedia.org/wiki/MISD" title="MISD">MISD</a></td>
 </tr>
 <tr>
 <th>Multiple data</th>
-<td><a href="/wiki/SIMD" title="SIMD">SIMD</a></td>
-<td><a href="/wiki/MIMD" title="MIMD">MIMD</a></td>
+<td><a href=http://en.wikipedia.org/wiki/SIMD" title="SIMD">SIMD</a></td>
+<td><a href=http://en.wikipedia.org/wiki/MIMD" title="MIMD">MIMD</a></td>
 </tr>
 </table>
 
@@ -449,6 +449,25 @@ While computer architectures to deal with this were devised (such as
 applications that fit this class materialized.
 Multiple-instruction-multiple-data (MIMD) programs are by far the most
 common type of parallel programs.
+
+<table class="wikitable">
+<tr>
+<th style="text-align:center;">SISD</th>
+<th style="text-align:center;">MISD</th>
+</tr>
+<tr>
+<td style="text-align:center;"><a href=http://en.wikipedia.org/wiki/File:SISD.svg" class="image"><img alt="SISD.svg" src="//upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SISD.svg/250px-SISD.svg.png" width="250" height="250" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SISD.svg/375px-SISD.svg.png 1.5x, //upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SISD.svg/500px-SISD.svg.png 2x" /></a></td>
+<td style="text-align:center;"><a href=http://en.wikipedia.org/wiki/File:MISD.svg" class="image"><img alt="MISD.svg" src="//upload.wikimedia.org/wikipedia/commons/thumb/9/97/MISD.svg/250px-MISD.svg.png" width="250" height="250" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/9/97/MISD.svg/375px-MISD.svg.png 1.5x, //upload.wikimedia.org/wikipedia/commons/thumb/9/97/MISD.svg/500px-MISD.svg.png 2x" /></a></td>
+</tr>
+<tr>
+<th style="text-align:center;">SIMD</th>
+<th style="text-align:center;">MIMD</th>
+</tr>
+<tr>
+<td style="text-align:center;"><a href=http://en.wikipedia.org/wiki/File:SIMD.svg" class="image"><img alt="SIMD.svg" src="//upload.wikimedia.org/wikipedia/commons/thumb/2/21/SIMD.svg/250px-SIMD.svg.png" width="250" height="250" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/2/21/SIMD.svg/375px-SIMD.svg.png 1.5x, //upload.wikimedia.org/wikipedia/commons/thumb/2/21/SIMD.svg/500px-SIMD.svg.png 2x" /></a></td>
+<td style="text-align:center;"><a href=http://en.wikipedia.org/wiki/File:MIMD.svg" class="image"><img alt="MIMD.svg" src="//upload.wikimedia.org/wikipedia/commons/thumb/c/c6/MIMD.svg/250px-MIMD.svg.png" width="250" height="250" srcset="//upload.wikimedia.org/wikipedia/commons/thumb/c/c6/MIMD.svg/375px-MIMD.svg.png 1.5x, //upload.wikimedia.org/wikipedia/commons/thumb/c/c6/MIMD.svg/500px-MIMD.svg.png 2x" /></a></td>
+</tr>
+</table>
 
 According to [David A.
 Patterson](http://en.wikipedia.org/wiki/David_A._Patterson_(scientist) "David A. Patterson (scientist)")
