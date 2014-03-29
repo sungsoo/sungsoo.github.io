@@ -450,6 +450,8 @@ applications that fit this class materialized.
 Multiple-instruction-multiple-data (MIMD) programs are by far the most
 common type of parallel programs.
 
+Visually, these four architectures are shown below where each "PU" is a central processing unit:
+
 <table class="wikitable">
 <tr>
 <th style="text-align:center;">SISD</th>
