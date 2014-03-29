@@ -1208,7 +1208,7 @@ See also
 
 References
 ----------
-
+<a name="cite_note-1"></a>
 1.  Gottlieb, Allan; Almasi, George S. (1989).
     [*Highly parallel
     computing*](http://dl.acm.org/citation.cfm?id=160438). Redwood City,
@@ -1216,6 +1216,7 @@ References
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-8053-0177-1](http://en.wikipedia.org/wiki/Special:BookSources/0-8053-0177-1 "Special:BookSources/0-8053-0177-1"). 
     Cite uses deprecated parameters
     ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
+<a name="cite_note-2"></a>
 2.  S.V. Adve et al. (November 2008). ["Parallel
     Computing Research at Illinois: The UPCRC
     Agenda"](http://www.upcrc.illinois.edu/documents/UPCRC_Whitepaper.pdf)
@@ -1226,6 +1227,7 @@ References
     The computer industry has accepted that future performance increases
     must largely come from increasing the number of processors (or
     cores) on a die, rather than making a single core go faster."
+<a name="cite_note-3"></a>
 3.   Asanovic et al. Old [conventional wisdom]:
     Power is free, but transistors are expensive. New [conventional
     wisdom] is [that] power is expensive, but transistors are "free".
