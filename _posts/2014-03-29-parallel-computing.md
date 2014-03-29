@@ -1208,15 +1208,14 @@ See also
 
 References
 ----------
-<a name="cite_note-1"></a>
+
 1.  Gottlieb, Allan; Almasi, George S. (1989).
     [*Highly parallel
     computing*](http://dl.acm.org/citation.cfm?id=160438). Redwood City,
     Calif.: Benjamin/Cummings.
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-8053-0177-1](http://en.wikipedia.org/wiki/Special:BookSources/0-8053-0177-1 "Special:BookSources/0-8053-0177-1"). 
     Cite uses deprecated parameters
-    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
-<a name="cite_note-2"></a>
+    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))    </a>
 2.  S.V. Adve et al. (November 2008). ["Parallel
     Computing Research at Illinois: The UPCRC
     Agenda"](http://www.upcrc.illinois.edu/documents/UPCRC_Whitepaper.pdf)
@@ -1226,11 +1225,13 @@ References
     complex architectures – are now hitting the so-called power wall.
     The computer industry has accepted that future performance increases
     must largely come from increasing the number of processors (or
-    cores) on a die, rather than making a single core go faster."
-<a name="cite_note-3"></a>
+    cores) on a die, rather than making a single core    note
+3">
+/a>
 3.   Asanovic et al. Old [conventional wisdom]:
     Power is free, but transistors are expensive. New [conventional
-    wisdom] is [that] power is expensive, but transistors are "free".
+    wisdom] is [that] power is expensive, but transistors are-4">/a>    
+
 4.   Asanovic, Krste et al. (December
     18, 2006). ["The Landscape of Parallel Computing Research: A View
     from
@@ -1243,32 +1244,38 @@ References
     from Intel, a company generally associated with the 'higher
     clock-speed is better' position, warned that traditional approaches
     to maximizing performance through maximizing clock speed have been
-    pushed to their limit."
+    pushed to their "></a>
+
 5.  Hennessy, John L.; Patterson, David A., Larus,
     James R. (1999). *Computer organization and design : the
     hardware/software interface* (2. ed., 3rd print. ed.). San
     Francisco: Kaufmann.
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [1-55860-428-6](http://en.wikipedia.org/wiki/Special:BookSources/1-55860-428-6 "Special:BookSources/1-55860-428-6"). 
     Cite uses deprecated parameters
-    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
+    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 er"></a>
+
 6.  Barney, Blaise. ["Introduction to
     Parallel
     Computing"](http://www.llnl.gov/computing/tutorials/parallel_comp/).
-    Lawrence Livermore National Laboratory. Retrieved 2007-11-09. 
+    Lawrence Livermore National Laboratory. Retrieved 2007-"></a>
+
 7.  Hennessy, John L.; Patterson, David A. (2002).
     *Computer architecture / a quantitative approach.* (3rd ed.). San
     Francisco, Calif.: International Thomson. p. 43.
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [1-55860-724-2](http://en.wikipedia.org/wiki/Special:BookSources/1-55860-724-2 "Special:BookSources/1-55860-724-2"). 
     Cite uses deprecated parameters
-    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 errors"))
+    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#deprecated_params "Help:CS1 er"></a>
+
 8.  Rabaey, Jan M. (1996). *Digital integrated
     circuits : a design perspective*. Upper Saddle River, N.J.:
     Prentice-Hall. p. 235.
-    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-13-178609-1](http://en.wikipedia.org/wiki/Special:BookSources/0-13-178609-1 "Special:BookSources/0-13-178609-1"). 
+    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-13-178609-1](http://en.wikipedia.org/wiki/Special:BookSources/0-13-178609-1 "Special:BookSources/0-13-17860"></a>
+
 9.  Flynn, Laurie J. (8 May 2004). ["Intel Halts
     Development Of 2 New
     Microprocessors"](http://www.nytimes.com/2004/05/08/business/08chip.html?ex=1399348800&en=98cc44ca97b1a562&ei=5007).
-    *New York Times*. Retrieved 5 June 2012. 
+    *New York Times*. Retrieved 5 June"></a>
+
 10. Moore, Gordon E. (1965).
     ["Cramming more components onto integrated
     circuits"](ftp://download.intel.com/museum/Moores_Law/Articles-Press_Releases/Gordon_Moore_1965_Article.pdf)
