@@ -417,24 +417,26 @@ or multiple sets of instructions, and whether or not those instructions
 were using a single set or multiple sets of data.
 
 [Flynn's taxonomy](http://en.wikipedia.org/wiki/Flynn%27s_taxonomy "Flynn's taxonomy")
-
  
+<table class="wikitable" style="float: right; margin: 0 0 1em 1em; text-align: center;">
+<caption><strong class="selflink">Flynn's taxonomy</strong></caption>
+<tr>
+<th>&#160;</th>
+<th>Single instruction</th>
+<th>Multiple instruction</th>
+</tr>
+<tr>
+<th>Single data</th>
+<td><a href="/wiki/SISD" title="SISD">SISD</a></td>
+<td><a href="/wiki/MISD" title="MISD">MISD</a></td>
+</tr>
+<tr>
+<th>Multiple data</th>
+<td><a href="/wiki/SIMD" title="SIMD">SIMD</a></td>
+<td><a href="/wiki/MIMD" title="MIMD">MIMD</a></td>
+</tr>
+</table>
 
-Single instruction
-
-Multiple instruction
-
-Single data
-
-[SISD](http://en.wikipedia.org/wiki/SISD "SISD")
-
-[MISD](http://en.wikipedia.org/wiki/MISD "MISD")
-
-Multiple data
-
-[SIMD](http://en.wikipedia.org/wiki/SIMD "SIMD")
-
-[MIMD](http://en.wikipedia.org/wiki/MIMD "MIMD")
 
 The single-instruction-single-data (SISD) classification is equivalent
 to an entirely sequential program. The single-instruction-multiple-data
