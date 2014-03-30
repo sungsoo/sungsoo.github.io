@@ -45,5 +45,5 @@ A few years ago, when many developers started talking about functional programmi
 References
 ---
 [1] Dean Wampler, *Functional Programming for Java Developers*, O’Reilly Media, Inc., 2011.  
-[2] Carliss Baldwin and Kim B. Clark, *Design Rules: The Power of Modu- larity*, Vol. 1, MIT Press, 2000
+[2] Carliss Baldwin and Kim B. Clark, *Design Rules: The Power of Modularity*, Vol. 1, MIT Press, 2000
 
