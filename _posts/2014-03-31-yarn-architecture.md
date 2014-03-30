@@ -22,7 +22,7 @@ Requirements' Origin
 10. **Backward compatibility**
 
 
-# Architecture Overview
+# Architecture 
 To address the requirements, YARN lifts some functions into a platform layer responsible for resource management, leaving coordination of logical execution plans to a host of framework implementations. Specifically, a per-cluster ResourceManager (RM) tracks resource usage and node liveness, enforces allocation invariants, and arbitrates contention among tenants. By separating these duties in the JobTracker’s charter, the central allocator can use an abstract description of tenants’ requirements, but remain ignorant of the
 semantics of each allocation. That responsibility is delegated to an ApplicationMaster (AM), which coordinates the logical plan of a single job by requesting resources from the RM, generating a physical plan from the resources it receives, and coordinating the execution of that plan around faults.
 Overview
