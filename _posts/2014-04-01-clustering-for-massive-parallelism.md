@@ -35,15 +35,15 @@ A Unix cluster of SMP servers running VMS/OS with extensions, mainly used in hig
 References
 ---
 
-1. Adiga N, et al. In: An overview of the blue gene/L supercomputer. ACM Supercomputing Conference 2002. November 2002; http://SC-2002.org/paperpdfs/pap.pap207.pdf.
+1. Adiga N, et al. In: An overview of the blue gene/L supercomputer. ACM Supercomputing Conference 2002. November 2002; [http://SC-2002.org/paperpdfs/pap.pap207.pdf](http://SC-2002.org/paperpdfs/pap.pap207.pdf).
 2. Bader D, Pennington R. Cluster computing applications. Int J High Perform Comput. 2001.
-3. Baker M, et al. Cluster computing white paper January 2001; http://arxiv.org/abs/cs/0004014.
-4. Barak A, Shiloh A. The MOSIX Management Systems for Linux Clusters. Multi-Clusters and Clouds White paper 2010; www.MOSIX.org//txt_pub.html.
+3. Baker M, et al. Cluster computing white paper January 2001; [http://arxiv.org/abs/cs/0004014](http://arxiv.org/abs/cs/0004014).
+4. Barak A, Shiloh A. The MOSIX Management Systems for Linux Clusters. Multi-Clusters and Clouds White paper 2010; [http://www.MOSIX.org//txt_pub.html](http://www.MOSIX.org//txt_pub.html).
 5. Barak A, La’adan R. The MOSIX multicomputer operating systems for high-performance cluster computing. Future Gener Comput Syst. 1998;13:361–372.
 6. Barroso L, Dean J, Holzle U. Web search for a planet: The Google cluster architecture. IEEE Micro. 2003;23(2):22–28.
 7. High-Performance Cluster Computing. Vols. 1 and 2. Buyya R, ed. New Jersey: Prentice Hall; 1999.
 8. Celebioglu O, Rajagopalan R, Ali R. Exploring InfiniBand as an HPC cluster interconnect 2004.
-9. Cray, Inc, CrayXT System Specifications. www.cray.com/Products/XT/Specifications.aspx, January 2010.
+9. Cray, Inc, CrayXT System Specifications. [http://www.cray.com/Products/XT/Specifications.aspx](http://www.cray.com/Products/XT/Specifications.aspx), January 2010.
 10. Dally B. GPU Computing to Exascale and Beyond. In: Keynote Address. ACM Supercomputing Conference. November 2010.
 11. J. Dongarra, Visit to the National Supercomputer Center in Tianjin, China, Technical Report, University of “Tennessee and Oak Ridge National Laboratory, 20 February 2011.
 12. Dongarra J. Survey of present and future supercomputer architectures and their interconnects. In: International Supercomputer Conference. Heidelberg, Germany. 2004.
@@ -52,8 +52,8 @@ A Unix cluster of SMP servers running VMS/OS with extensions, mainly used in hig
 15. Hwang K, Wang CM, Wang CL, Xu Z. Resource scaling effects on MPP performance: STAP benchmark implications. IEEE Trans Parallel Distrib Syst. 1999;(May):509–527.
 16. Hwang K, Jin H, Chow E, Wang CL, Xu Z. Designing SSI clusters with hierarchical checkpointing and single-I/O space. IEEE Concurrency 1999;(January):60–69.
 17. Jin H, Hwang K. Adaptive sector grouping to reduce false sharing of distributed RAID clusters. J Clust Comput. 2001;4(2):133–143.
-18. J. Kevin, et al., Entering the petaflop era: the architecture of performance of Roadrunner, www.c3.lanl.gov/~kei/mypubbib/papers/SC08:Roadrunner.pdf, November 2008.
-19. Kindratenko V, et al. GPU Clusters for High-Performance Computing. National Center for Supercomputing Applications Urbana, IL: Universi“ty of Illinois at Urban-Champaign; 2009.
+18. J. Kevin, et al., Entering the petaflop era: the architecture of performance of Roadrunner, [http://www.c3.lanl.gov/~kei/mypubbib/papers/SC08:Roadrunner.pdf](http://www.c3.lanl.gov/~kei/mypubbib/papers/SC08:Roadrunner.pdf), November 2008.
+19. Kindratenko V, et al. GPU Clusters for High-Performance Computing. National Center for Supercomputing Applications Urbana, IL: University of Illinois at Urban-Champaign; 2009.
 20. Kopper K. The Linux Enterprise Cluster: Building a Highly Available Cluster with Commodity Hardware and Free Software San Francisco, CA: No Starch Press; 2005.
 21. Lin SW, Lau RW, Hwang K, Lin X, Cheung PY. Adaptive parallel Image rendering on multiprocessors and workstation clusters. IEEE Trans Parallel Distrib Syst. 2001;12(3):241–258.
 22. Liu J, Panda DK, et al. Performance comparison of MPI implementations over InfiniBand. Myrinet and Quadrics 2003.
@@ -62,11 +62,12 @@ A Unix cluster of SMP servers running VMS/OS with extensions, mainly used in hig
 25. TOP500.org. Top-500 World’s fastest supercomputers, www.top500.org, November 2010.
 26. Pfister GF. Search of Clusters second ed. Prentice-Hall 2001.
 27. Sun NH. China’s Nebulae Supercomputer Institute of Computing Technology, Chinese Academy of Sciences July 2010.
-28. Wikipedia, IBM Roadrunner. http://en.wikipedia.org/wiki/IBM_Roadrunner, 2010, (accessed 10.01.10).
-29. Wikipedia, Tianhe-1. http://en.wikipedia.org/wiki/Tianhe-1, 2011, (accessed 5.02.11).
-30. Wikipedia, MOSIX. http://en.wikipedia.org/wiki/MOSIX, 2011, (accessed 10.02.11).
-31. Wikipedia, CUDA. http://en.wikipedia.org/wiki/CUDA, 2011, (accessed 19.02.11).
+28. Wikipedia, IBM Roadrunner. [http://en.wikipedia.org/wiki/IBM_Roadrunner](http://en.wikipedia.org/wiki/IBM_Roadrunner), 2010, (accessed 10.01.10).
+29. Wikipedia, Tianhe-1. [http://en.wikipedia.org/wiki/Tianhe-1](http://en.wikipedia.org/wiki/Tianhe-1), 2011, (accessed 5.02.11).
+30. Wikipedia, MOSIX. [http://en.wikipedia.org/wiki/MOSIX](http://en.wikipedia.org/wiki/MOSIX), 2011, (accessed 10.02.11).
+31. Wikipedia, CUDA. [http://en.wikipedia.org/wiki/CUDA](http://en.wikipedia.org/wiki/CUDA), 2011, (accessed 19.02.11).
 32. Wong K, Franklin M. Checkpointing in distributed computing systems. J Parallel Distrib Comput 1996;67–75.
 33. Xu Z, Hwang K. Designing superservers with clusters and commodity components. Annual Advances in Scalable Computing Singapore: World Scientific; 1999.
 34. Xu Z, Hwang K. MPP versus clusters for scalable computing. In: Proceedings of the 2nd IEEE International Symposium on Parallel Architectures, Algorithms, and Networks. June 1996;117–123.
 35. Zhou S. LSF: Load Sharing and Batch Queuing Software Canada: Platform Computing Corp.; 1996.
+
