@@ -233,8 +233,7 @@ as exemplified by the AppLogic system from
 7.  ["Client Statistics by
     OS"](http://fah-web.stanford.edu/cgi-bin/main.py?qtype=osstats2).
     *Folding@home*. Stanford University. Retrieved April 23, 2013. 
-    Check date values in: `|date=`
-    ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#bad_date "Help:CS1 errors"))
+    Check date values in: ([help](http://en.wikipedia.org/wiki/Help:CS1_errors#bad_date "Help:CS1 errors"))
 8.  ["BOINCstats – BOINC combined
     credit overview"](http://boincstats.com/en/stats/-1/project/detail).
     Retrieved March 3, 2013. 
