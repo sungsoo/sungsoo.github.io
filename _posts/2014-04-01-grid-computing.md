@@ -163,6 +163,16 @@ Kesselman](http://en.wikipedia.org/wiki/Carl_Kesselman "Carl Kesselman") publish
 seminal work, "The Grid: Blueprint for a new computing infrastructure"
 (1999).
 
+---
+
+인터넷과 마찬가지로, 그리드 컴퓨팅은 상용이 아닌 과학 프로젝트들을 지원하기 위해 개발되어 진화하고 있다. 인터넷은 처음에 미국 연방정부의 지원을 받는 컴퓨팅 연구소들을 통신 연결하여 정보의 공유를 수월하게 하려는 필요성에 의해 개발이 되었는데, 그리드 컴퓨팅 또한 이러한 노력의 연장선상에 있는 더욱 포괄적인 자원의 공유를 위한 프레임워크로 볼 수 있다.
+
+그리드의 개념은 소위 "그리드의 아버지들"이라 불리는 Ian Foster, Carl Kesselman, Steve Tuecke가 시작하였으며, 그들은 CPU 관리 (클러스터링, 사이클 훔쳐오기) 이외에도 저장소 관리, 보안 조항, 데이터 이동, 모니터링, 그리고 그 밖의 다른 서비스들을 개발하는 데 필요한 도구들을 한데 모은 글로버스 툴킷(Globus Toolkit)을 개발하였다.
+
+그리드 컴퓨팅은 원래 1990년대 초반에 파워 그리드에서 유래된 것으로, 전기처럼 쉽게 어디서나 컴퓨팅을 할 수 있게 한다는 개념에서 비롯되었다.
+
+---
+
 CPU scavenging and [volunteer
 computing](http://en.wikipedia.org/wiki/Volunteer_computing "Volunteer computing") were
 popularized beginning in 1997 by
