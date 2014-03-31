@@ -7,6 +7,13 @@ tags: [parallel computing]
 
 ---
 
+## Summary
+
+* Article Source: *Distributed and Cloud Computing*; From Parallel Processing to the Internet of Things    
+* Authors: Kai Hwang, Geoffery C. Fox, Jack J. Dongarra
+
+
+
 # Design Objectives of Computer Clusters
 
 Clusters have been classified in various ways in the literature. We classify clusters using *six* orthogonal attributes: *scalability*, *packaging*, *control*, *homogeneity*, *programmability*, and *security*.
