@@ -32,7 +32,16 @@ The ResourceManager exposes two public interfaces towards: 1) *clients submittin
 This resource model serves current applications well in *homogeneous* environments, but we expect it to evolve over time as the ecosystem matures and new requirements emerge. Recent and developing extensions include: *explicit tracking* of *gang-scheduling* needs, and soft/hard constraints to express arbitrary co-location or *disjoint placement*. While the RM uses locality as a weight for placing containers, network bandwidth is not explicitly modeled and reserved as in Oktopus [5] or Orchestra [9].The scheduler tracks, updates, and satisfies these requests with available resources, as advertised on NM heartbeats. In response to AM requests, the RM generates containers together with tokens that grant access to resources. The RM forwards the exit status of finished containers, as reported by the NMs, to the responsible AMs. AMs are also notified when a new NM joins the cluster so that they can start requesting resources on the new nodes.
 A recent extension of the protocol allows the RM to *symmetrically* request resources back from an application. This typically happens when cluster resources become scarce and the scheduler decides to revoke some of the resources that were given to an application to maintain scheduling invariants. We use structures similar to **ResourceRequests** to capture the *locality preferences* (which could be *strict* or *negotiable*). AMs have some flexibility when fulfilling such ’preemption’ requests, e.g., by yielding containers that are less crucial for its work (for e.g. tasks that made only little progress till now), by checkpointing the state of a task, or by migrating the computation to other running containers. Overall, this allows applications to preserve work, in contrast to platforms that forcefully kill containers to satisfy resource constraints. If the application is noncollaborative, the RM can, after waiting for a certain amount of time, obtain the needed resources by instructing the NMs to forcibly terminate containers.Given the prenominate requirements from section 2, it is important to point out what the ResourceManager is not responsible for. As discussed, it is *not* responsible for coordinating application execution or task fault-tolerance, but neither is is charged with 1) providing status or metrics for running applications (now part of the ApplicationMaster), nor 2) serving framework specific reports of completed jobs (now delegated to a per-framework daemon).
 YARN does provide *generic information* about completed apps, containers etc. via a common daemon called **Application History Server**.
-This is consistent with the view that the ResourceManager should only handle live resource scheduling, and helps central components in YARN scale beyond the Hadoop 1.0 JobTracker.References
+This is consistent with the view that the ResourceManager should only handle live resource scheduling, and helps central components in YARN scale beyond the Hadoop 1.0 JobTracker.
+
+Major Research Topic Keywords
+---
+### Dynamic Negotiation
+
+### Discretized Continuum
+
+### Explicit Tracking of Gang-Scheduling
+References
 ---
 [1] [Apache hadoop](http://hadoop.apache.org). http://hadoop.apache.org.  
 [2] [Apache tez](http://incubator.apache.org/projects/tez.html). http://incubator.apache.org/projects/tez.html.   
