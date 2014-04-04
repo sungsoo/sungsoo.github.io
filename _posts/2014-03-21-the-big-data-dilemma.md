@@ -47,4 +47,4 @@ tags: [big data]
 
 
 # References
-[1] 조환규, [*빅데이터의 딜레마*](http://news.khan.co.kr/kh_news/khan_art_view.html?artid=201403022028505), 과학 오디세이, 경향신문, 2 March 2013.
+[1] 조환규, [*빅데이터의 딜레마*](http://news.khan.co.kr/kh_news/khan_art_view.html?artid=201403022028505), 과학 오디세이, 경향신문, 2 March 2014.
