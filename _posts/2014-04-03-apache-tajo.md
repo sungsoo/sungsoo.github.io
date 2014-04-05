@@ -33,7 +33,7 @@ Documents
 =========
 * [Tajo Wiki](http://wiki.apache.org/tajo)
 * [Getting Started](https://wiki.apache.org/tajo/GettingStarted)
-* [Build Instruction](https://wiki.apache.org/tajo/BuildInstruction)
+* [Build Instruction](http://sungsoo.github.io/2014/04/03/apache-tajo-building.html)
 * [Query Language](https://wiki.apache.org/tajo/QueryLanguage)
 * [Configuration Guide](https://wiki.apache.org/tajo/Configuration)
 * [Backup and Restore Guide](https://wiki.apache.org/tajo/BackupAndRestore)

@@ -83,4 +83,3 @@ Create binary distribution
 
   $ mvn package -Pdist -DskipTests -Dtar
 
---------------------------
