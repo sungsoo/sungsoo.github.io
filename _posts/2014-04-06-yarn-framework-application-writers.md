@@ -3,7 +3,7 @@ layout: post
 title: YARN Framework and Fault Tolerance
 date: 2014-04-06
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [hadoop & mapreduce, tez, yarn]
 
 ---
 
