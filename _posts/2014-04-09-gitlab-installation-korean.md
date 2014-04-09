@@ -9,7 +9,7 @@ tags: [developments, software engineering]
 
 ## Summary
 
-* Article Source: [[원문](http://lambert.tistory.com/497)    
+* Article Source: [[원문](http://lambert.tistory.com/497)]    
 
 
 ## Using gitLab
