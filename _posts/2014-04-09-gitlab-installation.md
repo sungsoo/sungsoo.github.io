@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Design Objectives of Computer Clusters
+title: Gitlab Installation on Mac OS X
 date: 2014-04-09
 categories: [information technology]
 tags: [developments, software engineering]
