@@ -15,7 +15,9 @@ The University of North Carolina at Chapel Hill is using big data to find better
 
 ### Charles Schmitt, Director of Informatics and Data Sciences at RENCI, UNC
 
-![charles-schmitt.jpg](http://sungsoo.github.com/images/charles-schmitt.jpg) 
+![charles-schmitt.jpg](http://sungsoo.github.com/images/charles-schmitt.jpg)  
+*Charles Schmitt*  
+“*The Hadoop system allows us to perform very custom analysis that you wouldn’t find in a traditional business intelligence tool or that would work in a SQL relational type of structure.*”
 
 **The University of North Carolina at Chapel Hill (UNC) decided to
 invest heavily in genomics sequencing technologies, both to support the
