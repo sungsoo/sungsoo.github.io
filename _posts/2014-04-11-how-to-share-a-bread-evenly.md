@@ -2,8 +2,8 @@
 layout: post
 title: How to Share a Bread Evenly
 date: 2014-04-11
-categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+categories: [literature]
+tags: [presentation, publications]
 
 ---
 
