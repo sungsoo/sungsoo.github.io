@@ -109,9 +109,11 @@ output on your screen.
 
 Then, let’s execute the hiveql as below.
 
+```sql
     select h.*, b.country, b.hvacproduct, b.buildingage, b.buildingmgr 
     from building b join hvac h 
     on b.buildingid = h.buildingid;
+```
 
 ![enter image description
 here](http://hortonassets.s3.amazonaws.com/tutorial/stinger/images/map%20reduce%20job%20without%20tez.JPG)
@@ -141,9 +143,11 @@ Use the following step to set the execution engine to Tez:
 Run the same query as we had run earlier in Step 2, to see if the speed
 has improved or not.
 
+```sql
     select h.*, b.country, b.hvacproduct, b.buildingage, b.buildingmgr 
     from building b join hvac h 
     on b.buildingid = h.buildingid;
+```
 
 ![enter image description
 here](http://hortonassets.s3.amazonaws.com/tutorial/stinger/images/Hive%20on%20Tez.JPG)
@@ -163,10 +167,12 @@ Congratulations! You have successfully run your Hive on Tez Job.
 
 Now let’s rerun the same query from Step 2 or Step 4.
 
+```sql
     select a.buildingid, b.buildingmgr, max(a.targettemp-a.actualtemp)
     from hvac a join building b
     on a.buildingid = b.buildingid
     group by a.buildingid, b.buildingmgr;
+```
 
 Again, it should run faster as it will use hot containers produced in
 the Step 4 since you are executing in the same Hive Client session.
@@ -209,7 +215,9 @@ only.
 
 Let’s create a table with ORC file format as follows:
 
+```sql
     create table hvac_orc stored as orc as select * from hvac;
+```
 
 ### Step 2:
 
@@ -221,7 +229,9 @@ Run the following statement to enable Tez.
 
 Run the following query.
 
+```sql
     select date, count(buildingid) from hvac group by date;
+```
 
 Note down the time taken.
 
@@ -229,7 +239,9 @@ Note down the time taken.
 
 Now let’s run the following sql query:
 
+```sql
     select date, count(buildingid) from hvac_orc group by date;
+```
 
 Note down the time taken and compare to step 3.
 
@@ -241,7 +253,9 @@ Now let’s run the following steps to enable vectorization:
 
 and then run the sql query from previous step
 
+```sql
     select date, count(buildingid) from hvac_orc group by date;
+```
 
 This time it runs with a vectorized query plan, which scales very well
 especially with large datasets.
@@ -352,7 +366,9 @@ Let’s rerun the query now and observe if it runs faster. You will see
 better gain with a good volume of dataset than the one we are working
 with.
 
-`select buildingid, max(targettemp-actualtemp) from hvac group by buildingid;`
+```sql
+select buildingid, max(targettemp-actualtemp) from hvac group by buildingid;
+```
 
 Please note down total time taken and compare to Step 1.
 
@@ -397,7 +413,9 @@ Ambari is turned on, you will see the following screen.
 
 Now, go to hive terminal and execute any simple query.
 
-`select count(*) from hvac;`
+```sql
+select count(*) from hvac;
+```
 
 ### Step 3:
 
