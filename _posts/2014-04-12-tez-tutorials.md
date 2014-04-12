@@ -10,6 +10,7 @@ tags: [big data, hadoop & mapreduce]
 # Interactive Query for Hadoop with Apache Hive on Apache Tez
 
 Benefits of the Stinger Initiative delivered
+---
 
 In this tutorial, we’ll focus on taking advantage of improvements to
 [Apache Hive](http://hortonworks.com/hadoop/hive) and [Apache
