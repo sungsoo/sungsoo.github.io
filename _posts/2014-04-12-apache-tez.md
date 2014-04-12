@@ -33,6 +33,8 @@ community effort involving 145 developers across 44 companies) and the
 upcoming release of [Apache Hive
 0.13](http://hortonworks.com/hadoop/hive).
 
+<iframe width="600" height="400" src="//www.youtube.com/embed/Pn7Sp2-hUXE" frameborder="0" allowfullscreen></iframe>
+
 Major community achievements in this Tez 0.4 release were:
 
 -   **Application Recovery** – This is a major improvement to the Tez
