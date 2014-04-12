@@ -459,4 +459,4 @@ There are several SQL query enhancements in this version of Hive.
             -   Using views to restrict data visibility
 
 # References
-[1] Charles Schmitt, [*Big Data Genomics Sequencing*](http://www.intel.com/content/www/us/en/big-data/renci-peer-story.html), Intel Big Data Blog.
+[1] [*HDP2.1: Interactive Query for Hadoop with Apache Hive on Apache Tez*](http://hortonworks.com/hadoop-tutorial/supercharging-interactive-queries-hive-tez/), Hortonworks Blog.
