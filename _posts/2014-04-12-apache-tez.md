@@ -71,7 +71,7 @@ support and cooperation.
 ### Download
 
 -   [Tez 0.4
-    Release](http://apache.mirrors.tds.net/incubator/tez/tez-0.4.0-incubating/)****
+    Release](http://apache.mirrors.tds.net/incubator/tez/tez-0.4.0-incubating/)
 
 # References
 [1] [Bikas
