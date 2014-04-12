@@ -14,8 +14,9 @@ Community Rocks
 ---
 
 
-![Tez04](http://hortonworks.com/wp-content/uploads/2014/04/Tez04.png)We
-are excited to announce that the [Apache™
+![Tez04](http://hortonworks.com/wp-content/uploads/2014/04/Tez04.png)
+
+We are excited to announce that the [Apache™
 Tez](http://hortonworks.com/hadoop/tez) community
 [voted](http://mail-archives.apache.org/mod_mbox/tez-dev/201404.mbox/%3CCAOapiptvXSU1w6z36LEYW0zqD0EHLo3xKRS33%3DtXgCSpffECBg%40mail.gmail.com%3E)
 to release version 0.4 of the software.
