@@ -12,6 +12,11 @@ tags: [algorithms]
 
 # Bloom Filter
 
+**블룸 필터(Bloom filter)**는 원소가 집합에 속하는지 여부를 검사하는데 사용되는 확률적 자료 구조이다. 1970년 Burton Howard Bloom에 의해 고안되었다. 블룸 필터에 의해 어떤 원소가 집합에 속한다고 판단된 경우 실제로는 원소가 집합에 속하지 않는 긍정 오류가 발생하는 것이 가능하지만, 반대로 원소가 집합에 속하지 않는 것으로 판단되었는데 실제로는 원소가 집합에 속하는 부정 오류는 절대로 발생하지 않는다는 특성이 있다. 집합에 원소를 추가하는 것은 가능하나, 집합에서 원소를 삭제하는 것은 불가능하다. 집합 내 원소의 숫자가 증가할수록 긍정 오류 발생 확률도 증가한다.
+
+
+---
+
 A **Bloom filter** is a space-efficient[probabilistic](http://en.wikipedia.org/wiki/Probabilistic "Probabilistic") [data
 structure](http://en.wikipedia.org/wiki/Data_structure "Data structure"), conceived by [Burton Howard Bloom](/w/index.php?title=Burton_Howard_Bloom&action=edit&redlink=1 "Burton Howard Bloom (page does not exist)")
 in 1970, that is used to test whether an
@@ -78,7 +83,6 @@ Contents
     -   [13.1 Implementations](#Implementations)
 
 <a name="Algorithm_description"></a>
-
 # Algorithm description
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Bloom_filter.svg/360px-Bloom_filter.svg.png)](http://en.wikipedia.org/wiki/File:Bloom_filter.svg)
@@ -155,8 +159,8 @@ to enumerate (for example, requiring many disk reads). When the false
 positive rate gets too high, the filter can be regenerated; this should
 be a relatively rare event.
 
-Space and time advantages[[edit](/w/index.php?title=Bloom_filter&action=edit&section=2 "Edit section: Space and time advantages")]
-----------------------------------------------------------------------------------------------------------------------------------
+<a name="Space_and_time_advantages"></a>
+# Space and time advantages
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Bloom_filter_speed.svg/360px-Bloom_filter_speed.svg.png)](http://en.wikipedia.org/wiki/File:Bloom_filter_speed.svg)
 
@@ -220,8 +224,8 @@ false positive rate; if the parameters (*k* and *m*) are chosen well,
 about half of the bits will be set, and these will be apparently random,
 minimizing redundancy and maximizing information content.
 
-Probability of false positives[[edit](/w/index.php?title=Bloom_filter&action=edit&section=3 "Edit section: Probability of false positives")]
---------------------------------------------------------------------------------------------------------------------------------------------
+<a name="Probability_of_false_positives"></a>
+# Probability of false positives
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Bloom_filter_fp_probability.svg/360px-Bloom_filter_fp_probability.svg.png)](http://en.wikipedia.org/wiki/File:Bloom_filter_fp_probability.svg)
 
@@ -313,7 +317,9 @@ positives is
 
 as before.
 
-### Optimal number of hash functions[[edit](/w/index.php?title=Bloom_filter&action=edit&section=4 "Edit section: Optimal number of hash functions")]
+<a name="Optimal_number_of_hash_functions"></a>a>
+Optimal number of hash functions
+---
 
 For a given *m* and *n*, the value of *k* (the number of hash functions)
 that minimizes the probability is
@@ -358,8 +364,8 @@ most
 So we can use the asymptotic formula if we pay a penalty for at most
 half an extra element and at most one fewer bit.^[[5]](#cite_note-5)^
 
-Approximating the number of items in a Bloom filter[[edit](/w/index.php?title=Bloom_filter&action=edit&section=5 "Edit section: Approximating the number of items in a Bloom filter")]
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+<a name="Approximating_the_number_of_items_in_a_Bloom_filter"></a>
+# Approximating the number of items in a Bloom filter
 
 [Swamidass & Baldi (2007](#CITEREFSwamidassBaldi2007)) showed that the
 number of items in a Bloom filter can be approximated with the following
@@ -374,8 +380,8 @@ is an estimate of the number of items in the filter, N is length of the
 filter, k is the number of hash functions per item, and X is the number
 of bits set to one.
 
-The union and intersection of sets[[edit](/w/index.php?title=Bloom_filter&action=edit&section=6 "Edit section: The union and intersection of sets")]
-----------------------------------------------------------------------------------------------------------------------------------------------------
+<a name="The_union_and_intersection_of_sets"></a>
+# The union and intersection of sets
 
 Bloom filters are a way of compactly representing a set of items. It is
 common to try and compute the size of the intersection or union between
@@ -409,8 +415,7 @@ B\^\*](//upload.wikimedia.org/math/1/b/c/1bc193aa35138a96442bd3c51ed06f0a.png),
 
 Using the three formulas together.
 
-Interesting properties[[edit](/w/index.php?title=Bloom_filter&action=edit&section=7 "Edit section: Interesting properties")]
-----------------------------------------------------------------------------------------------------------------------------
+# Interesting properties
 
 -   Unlike a standard [hash table](http://en.wikipedia.org/wiki/Hash_table "Hash table"), a
     Bloom filter of a fixed size can represent a set with an arbitrary
@@ -444,8 +449,8 @@ Interesting properties[[edit](/w/index.php?title=Bloom_filter&action=edit&sectio
     represented by notches on a card, with a random pattern of four
     notches for each category.
 
-Examples[[edit](/w/index.php?title=Bloom_filter&action=edit&section=8 "Edit section: Examples")]
-------------------------------------------------------------------------------------------------
+<a name="Examples"></a>
+# Examples
 
 Google [BigTable](http://en.wikipedia.org/wiki/BigTable "BigTable") and [Apache
 Cassandra](http://en.wikipedia.org/wiki/Apache_Cassandra "Apache Cassandra") use Bloom filters
@@ -480,8 +485,8 @@ where one of the joined data sets is significantly larger than the other
 (often called Bloom join^[[13]](#cite_note-13)^ in the database
 literature).^[[14]](#cite_note-14)^
 
-Alternatives[[edit](/w/index.php?title=Bloom_filter&action=edit&section=9 "Edit section: Alternatives")]
---------------------------------------------------------------------------------------------------------
+<a name="Alternatives"></a>
+# Alternatives
 
 Classic Bloom filters use
 ![1.44\\log\_2(1/\\epsilon)](//upload.wikimedia.org/math/2/c/9/2c90d45cc041b2162a64eea0e6e76570.png)
@@ -553,10 +558,11 @@ hash table is constructed, the keys stored in the hash table are
 replaced with short signatures of the keys. Those signatures are strings
 of bits computed using a hash function applied on the keys.
 
-Extensions and applications[[edit](/w/index.php?title=Bloom_filter&action=edit&section=10 "Edit section: Extensions and applications")]
----------------------------------------------------------------------------------------------------------------------------------------
+<a name="Extensions_and_applications"></a>
+# Extensions and applications
 
-### Counting filters[[edit](/w/index.php?title=Bloom_filter&action=edit&section=11 "Edit section: Counting filters")]
+<a name="Counting_filters"></a>
+## Counting filters
 
 Counting filters provide a way to implement a *delete* operation on a
 Bloom filter without recreating the filter afresh. In a counting filter
@@ -610,7 +616,8 @@ their positiveness. If a sum represented by a counter value cannot be
 composed of the corresponding variable increment for the queried
 element, a negative answer can be returned to the query.
 
-### Data synchronization[[edit](/w/index.php?title=Bloom_filter&action=edit&section=12 "Edit section: Data synchronization")]
+<a name="Data_synchronization"></a>
+## Data synchronization
 
 Bloom filters can be used for approximate [data
 synchronization](http://en.wikipedia.org/wiki/Data_synchronization "Data synchronization") as
@@ -619,7 +626,8 @@ Counting Bloom filters can be used to approximate the number of
 differences between two sets and this approach is described in [Agarwal
 & Trachtenberg (2006](#CITEREFAgarwalTrachtenberg2006)).
 
-### Bloomier filters[[edit](/w/index.php?title=Bloom_filter&action=edit&section=13 "Edit section: Bloomier filters")]
+<a name="Bloomier_filters"></a>
+## Bloomier filters
 
 [Chazelle et al. (2004](#CITEREFChazelleKilianRubinfeldTal2004))
 designed a generalization of Bloom filters that could associate a value
@@ -631,7 +639,8 @@ probability of false positives. In the case of "Bloomier filters", a
 the map. The map will never return the wrong value for a key that *is*
 in the map.
 
-### Compact approximators[[edit](/w/index.php?title=Bloom_filter&action=edit&section=14 "Edit section: Compact approximators")]
+<a name="Compact_approximators"></a>
+## Compact approximators
 
 [Boldi & Vigna (2005](#CITEREFBoldiVigna2005)) proposed a
 [lattice](http://en.wikipedia.org/wiki/Lattice_(order) "Lattice (order)")-based generalization
@@ -645,7 +654,8 @@ When reading the value associated to a key, they compute the minimum of
 the values found in the k locations associated to the key. The resulting
 value approximates from above the original value.
 
-### Stable Bloom filters[[edit](/w/index.php?title=Bloom_filter&action=edit&section=15 "Edit section: Stable Bloom filters")]
+<a name="Stable_Bloom_filters"></a>
+## Stable Bloom filters
 
 [Deng & Rafiei (2006](#CITEREFDengRafiei2006)) proposed Stable Bloom
 filters as a variant of Bloom filters for streaming data. The idea is
@@ -659,7 +669,8 @@ the method is superior to standard bloom filters in terms of false
 positive rates and time efficiency when a small space and an acceptable
 false positive rate are given.
 
-### Scalable Bloom filters[[edit](/w/index.php?title=Bloom_filter&action=edit&section=16 "Edit section: Scalable Bloom filters")]
+<a name="Scalable_Bloom_filters"></a>
+## Scalable Bloom filters
 
 [Almeida et al. (2007](#CITEREFAlmeidaBaqueroPreguicaHutchison2007))
 proposed a variant of Bloom filters that can adapt dynamically to the
@@ -670,7 +681,8 @@ probabilities, so as to ensure that a maximum false positive probability
 can be set beforehand, regardless of the number of elements to be
 inserted.
 
-### Attenuated Bloom filters[[edit](/w/index.php?title=Bloom_filter&action=edit&section=17 "Edit section: Attenuated Bloom filters")]
+<a name="Attenuated_Bloom_filters"></a>
+## Attenuated Bloom filters
 
 An attenuated bloom filter of depth D can be viewed as an array of D
 normal bloom filters. In the context of service discovery in a network,
@@ -703,7 +715,8 @@ services at more than one hop distance can be discovered while avoiding
 saturation of the Bloom filter by attenuating (shifting out) bits set by
 sources further away.^[[15]](#cite_note-kgsb09-15)^
 
-### Chemical structure searching[[edit](/w/index.php?title=Bloom_filter&action=edit&section=18 "Edit section: Chemical structure searching")]
+<a name="Chemical_structure_searching"></a>
+## Chemical structure searching
 
 Bloom filters are commonly used to search large databases of chemicals
 (see [chemical
@@ -713,16 +726,16 @@ this field) which stores substructures of the molecule. Commonly, the
 [tanimoto](http://en.wikipedia.org/wiki/Jaccard_index "Jaccard index") similarity is used to
 quantify the similarity between molecules' bloom filters.
 
-See also[[edit](/w/index.php?title=Bloom_filter&action=edit&section=19 "Edit section: See also")]
--------------------------------------------------------------------------------------------------
+<a name="See_also"></a>
+# See also
 
 -   [Feature hashing](http://en.wikipedia.org/wiki/Feature_hashing "Feature hashing")
 -   [MinHash](http://en.wikipedia.org/wiki/MinHash "MinHash")
 -   [Quotient filter](http://en.wikipedia.org/wiki/Quotient_filter "Quotient filter")
 -   [Skip list](http://en.wikipedia.org/wiki/Skip_list "Skip list")
 
-Notes[[edit](/w/index.php?title=Bloom_filter&action=edit&section=20 "Edit section: Notes")]
--------------------------------------------------------------------------------------------
+<a name="Notes"></a>
+# Notes
 
 1.  **[\^](#cite_ref-1)** [Mitzenmacher & Upfal
     (2005](#CITEREFMitzenmacherUpfal2005)).
@@ -760,8 +773,8 @@ Notes[[edit](/w/index.php?title=Bloom_filter&action=edit&section=20 "Edit sectio
 16. **[\^](#cite_ref-16)** [Kubiatowicz et al.
     (2000](#CITEREFKubiatowiczBindelCzerwinskiGeels2000))
 
-References[[edit](/w/index.php?title=Bloom_filter&action=edit&section=21 "Edit section: References")]
------------------------------------------------------------------------------------------------------
+<a name="References"></a>
+# References
 
 -   Koucheryavy, Y.; Giambene, G.; Staehle, D.; Barcelo-Arroyo, F.;
     Braun, T.; Siris, V. (2009), "Traffic and QoS Management in Wireless
@@ -975,13 +988,14 @@ References[[edit](/w/index.php?title=Bloom_filter&action=edit&section=21 "Edit s
     [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1109/INFCOM.2012.6195563](http://dx.doi.org/10.1109%2FINFCOM.2012.6195563),
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [978-1-4673-0773-4](http://en.wikipedia.org/wiki/Special:BookSources/978-1-4673-0773-4 "Special:BookSources/978-1-4673-0773-4") 
 
-External links[[edit](/w/index.php?title=Bloom_filter&action=edit&section=22 "Edit section: External links")]
--------------------------------------------------------------------------------------------------------------
+<a name="External_links"></a>
+# External links
 
-  ------------------------------------------------------------------------------------------------ --------------------------------------------------------------------------------------------------------------------------------------------------
+---
   ![](//upload.wikimedia.org/wikipedia/en/thumb/4/4a/Commons-logo.svg/30px-Commons-logo.svg.png)   Wikimedia Commons has media related to ***[Bloom filter](//commons.wikimedia.orghttp://en.wikipedia.org/wiki/Category:Bloom_filter "commons:Category:Bloom filter")***.
-  ------------------------------------------------------------------------------------------------ --------------------------------------------------------------------------------------------------------------------------------------------------
 
+---
+  
 -   [Why Bloom filters work the way they do (Michael Nielsen,
     2012)](http://www.michaelnielsen.org/ddi/why-bloom-filters-work-the-way-they-do/)
 -   [Table of false-positive rates for different
@@ -1002,11 +1016,13 @@ External links[[edit](/w/index.php?title=Bloom_filter&action=edit&section=22 "Ed
     Filters](http://matthias.vallentin.net/blog/2011/06/a-garden-variety-of-bloom-filters/)
     - Explanation and Analysis of Bloom filter variants
 
-### Implementations[[edit](/w/index.php?title=Bloom_filter&action=edit&section=23 "Edit section: Implementations")]
+<a name="Implementations"></a>
+## Implementations
 
-  -------------------------------------------------------------------------------------------- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  ![](//upload.wikimedia.org/wikipedia/en/thumb/f/f2/Edit-clear.svg/40px-Edit-clear.svg.png)   This article's **use of [external links](http://en.wikipedia.org/wiki/Wikipedia:External_links "Wikipedia:External links") may not follow Wikipedia's policies or guidelines**. Please [improve this article](//en.wikipedia.org/w/index.php?title=Bloom_filter&action=edit) by removing [excessive](http://en.wikipedia.org/wiki/Wikipedia:What_Wikipedia_is_not#Wikipedia_is_not_a_mirror_or_a_repository_of_links.2C_images.2C_or_media_files "Wikipedia:What Wikipedia is not") or [inappropriate](http://en.wikipedia.org/wiki/Wikipedia:External_links "Wikipedia:External links") external links, and converting useful links where appropriate into [footnote references](http://en.wikipedia.org/wiki/Wikipedia:Citing_sources "Wikipedia:Citing sources"). *(April 2013)*
-  -------------------------------------------------------------------------------------------- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---
+![](//upload.wikimedia.org/wikipedia/en/thumb/f/f2/Edit-clear.svg/40px-Edit-clear.svg.png)   This article's **use of [external links](http://en.wikipedia.org/wiki/Wikipedia:External_links "Wikipedia:External links") may not follow Wikipedia's policies or guidelines**. Please [improve this article](//en.wikipedia.org/w/index.php?title=Bloom_filter&action=edit) by removing [excessive](http://en.wikipedia.org/wiki/Wikipedia:What_Wikipedia_is_not#Wikipedia_is_not_a_mirror_or_a_repository_of_links.2C_images.2C_or_media_files "Wikipedia:What Wikipedia is not") or [inappropriate](http://en.wikipedia.org/wiki/Wikipedia:External_links "Wikipedia:External links") external links, and converting useful links where appropriate into [footnote references](http://en.wikipedia.org/wiki/Wikipedia:Citing_sources "Wikipedia:Citing sources"). *(April 2013)*
+  
+---
 
 -   [Implementation in
     C](http://en.literateprograms.org/Bloom_filter_(C)) from
