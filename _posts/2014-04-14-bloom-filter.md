@@ -17,7 +17,7 @@ tags: [algorithms]
 
 ---
 
-A **Bloom filter** is a space-efficient[probabilistic](http://en.wikipedia.org/wiki/Probabilistic "Probabilistic") [data
+A **Bloom filter** is a space-efficient [probabilistic](http://en.wikipedia.org/wiki/Probabilistic "Probabilistic") [data
 structure](http://en.wikipedia.org/wiki/Data_structure "Data structure"), conceived by [Burton Howard Bloom](/w/index.php?title=Burton_Howard_Bloom&action=edit&redlink=1 "Burton Howard Bloom (page does not exist)")
 in 1970, that is used to test whether an
 [element](http://en.wikipedia.org/wiki/Element_(mathematics) "Element (mathematics)") is a
@@ -200,7 +200,7 @@ be in the set, the Bloom filter is easily surpassed by the deterministic
 for each potential element. Note also that hash tables gain a space and
 time advantage if they begin ignoring collisions and store only whether
 each bucket contains an entry; in this case, they have effectively
-become Bloom filters with *k* = 1.^[[1]](#cite_note-1)^
+become Bloom filters with *k* = 1.[[1]](#cite_note-1)
 
 Bloom filters also have the unusual property that the time needed either
 to add items or to check whether an item is in the set is a fixed
@@ -251,16 +251,16 @@ function during the insertion of an element is then
 
 The probability that it is not set to 1 by any of the hash functions is
 
-![\\left(1-\\frac{1}{m}\\right)\^k.](//upload.wikimedia.org/math/9/3/c/93c1c6a16fb6a043288abe3b38e50bc4.png)
+![\\left(1-\\frac{1}{m}\\right)\k.](//upload.wikimedia.org/math/9/3/c/93c1c6a16fb6a043288abe3b38e50bc4.png)
 
 If we have inserted *n* elements, the probability that a certain bit is
 still 0 is
 
-![\\left(1-\\frac{1}{m}\\right)\^{kn};](//upload.wikimedia.org/math/4/c/d/4cd626814ca58918e431b8b2485536f8.png)
+![\\left(1-\\frac{1}{m}\\right)\{kn};](//upload.wikimedia.org/math/4/c/d/4cd626814ca58918e431b8b2485536f8.png)
 
 the probability that it is 1 is therefore
 
-![1-\\left(1-\\frac{1}{m}\\right)\^{kn}.](//upload.wikimedia.org/math/8/5/1/851ec340757b925dc058d263254f14e1.png)
+![1-\\left(1-\\frac{1}{m}\\right)\{kn}.](//upload.wikimedia.org/math/8/5/1/851ec340757b925dc058d263254f14e1.png)
 
 Now test membership of an element that is not in the set. Each of the
 *k* array positions computed by the hash functions is 1 with a
@@ -268,9 +268,9 @@ probability as above. The probability of all of them being 1, which
 would cause the [algorithm](http://en.wikipedia.org/wiki/Algorithm "Algorithm") to erroneously
 claim that the element is in the set, is often given as
 
-![\\left(1-\\left[1-\\frac{1}{m}\\right]\^{kn}\\right)\^k \\approx
-\\left( 1-e\^{-kn/m}
-\\right)\^k.](//upload.wikimedia.org/math/2/1/8/2180ac79da81e5b3721963b4d80cf5a6.png)
+![\\left(1-\\left[1-\\frac{1}{m}\\right]\{kn}\\right)\k \\approx
+\\left( 1-e\{-kn/m}
+\\right)\k.](//upload.wikimedia.org/math/2/1/8/2180ac79da81e5b3721963b4d80cf5a6.png)
 
 This is not strictly correct as it assumes independence for the
 probabilities of each bit being set. However, assuming it is a close
@@ -280,7 +280,7 @@ as *m* (the number of bits in the array) increases, and increases as *n*
 
 An alternative analysis arriving at the same approximation without the
 assumption of independence is given by Mitzenmacher and
-Upfal.^[[2]](#cite_note-2)^ After all *n* items have been added to the
+Upfal.[[2]](#cite_note-2) After all *n* items have been added to the
 Bloom filter, let *q* be the fraction of the *m* bits that are set to 0.
 (That is, the number of bits still set to 0 is *qm*.) Then, when testing
 membership of an element not in the set, for the array position given by
@@ -289,31 +289,31 @@ to 1 is
 ![1-q](//upload.wikimedia.org/math/e/5/b/e5b98395fb433f933f1919176b6fc93c.png).
 So the probability that all *k* hash functions find their bit set to 1
 is ![(1 -
-q)\^k](//upload.wikimedia.org/math/7/7/9/77929939fdd3e831885eca70f63c66c9.png).
+q)\k](//upload.wikimedia.org/math/7/7/9/77929939fdd3e831885eca70f63c66c9.png).
 Further, the expected value of *q* is the probability that a given array
 position is left untouched by each of the *k* hash functions for each of
 the *n* items, which is (as above)
 
 ![E[q] = \\left(1 -
-\\frac{1}{m}\\right)\^{kn}](//upload.wikimedia.org/math/2/7/d/27d8109a8f8463478c6d3922dc6c0428.png).
+\\frac{1}{m}\\right)\{kn}](//upload.wikimedia.org/math/2/7/d/27d8109a8f8463478c6d3922dc6c0428.png).
 
 It is possible to prove, without the independence assumption, that *q*
 is very strongly concentrated around its expected value. In particular,
 from the [Azuma–Hoeffding
 inequality](http://en.wikipedia.org/wiki/Azuma%E2%80%93Hoeffding_inequality "Azuma–Hoeffding inequality"),
-they prove that^[[3]](#cite_note-3)^
+they prove that[[3]](#cite_note-3)
 
 ![ \\Pr(\\left|q - E[q]\\right| \\ge \\frac{\\lambda}{m}) \\le
-2\\exp(-2\\lambda\^2/m)
+2\\exp(-2\\lambda\2/m)
 ](//upload.wikimedia.org/math/b/2/2/b220b6db28cc2b3d0c35b08b92060fd8.png)
 
 Because of this, we can say that the exact probability of false
 positives is
 
-![ \\sum\_{t} \\Pr(q = t) (1 - t)\^k \\approx (1 - E[q])\^k =
-\\left(1-\\left[1-\\frac{1}{m}\\right]\^{kn}\\right)\^k \\approx \\left(
-1-e\^{-kn/m}
-\\right)\^k](//upload.wikimedia.org/math/b/0/9/b09ba941c93c7d94f8d62d0772af6dac.png)
+![ \\sum\_{t} \\Pr(q = t) (1 - t)\k \\approx (1 - E[q])\k =
+\\left(1-\\left[1-\\frac{1}{m}\\right]\{kn}\\right)\k \\approx \\left(
+1-e\{-kn/m}
+\\right)\k](//upload.wikimedia.org/math/b/0/9/b09ba941c93c7d94f8d62d0772af6dac.png)
 
 as before.
 
@@ -329,40 +329,40 @@ that minimizes the probability is
 
 which gives
 
-![2\^{-k} \\approx
-{0.6185}\^{m/n}.](//upload.wikimedia.org/math/b/0/3/b034d3e23c33e9fe7748bb05eb4e0dec.png)
+![2\{-k} \\approx
+{0.6185}\{m/n}.](//upload.wikimedia.org/math/b/0/3/b034d3e23c33e9fe7748bb05eb4e0dec.png)
 
 The required number of bits *m*, given *n* (the number of inserted
 elements) and a desired false positive probability *p* (and assuming the
 optimal value of *k* is used) can be computed by substituting the
 optimal value of *k* in the probability expression above:
 
-![p = \\left( 1-e\^{-(m/n\\ln 2) n/m} \\right)\^{(m/n\\ln
+![p = \\left( 1-e\{-(m/n\\ln 2) n/m} \\right)\{(m/n\\ln
 2)}](//upload.wikimedia.org/math/a/8/5/a851db877e6d966852e07a26af409df5.png)
 
 which can be simplified to:
 
 ![\\ln p = -\\frac{m}{n} \\left(\\ln
-2\\right)\^2.](//upload.wikimedia.org/math/e/e/2/ee23f71bfda7600216de709c77eec806.png)
+2\\right)\2.](//upload.wikimedia.org/math/e/e/2/ee23f71bfda7600216de709c77eec806.png)
 
 This results in:
 
 ![m=-\\frac{n\\ln p}{(\\ln
-2)\^2}.](//upload.wikimedia.org/math/3/a/7/3a7fbb4930336523b2ebd301bb7bd159.png)
+2)\2}.](//upload.wikimedia.org/math/3/a/7/3a7fbb4930336523b2ebd301bb7bd159.png)
 
 This means that for a given false positive probability *p*, the length
 of a Bloom filter *m* is proportionate to the number of elements being
-filtered *n*.^[[4]](#cite_note-4)^ While the above formula is asymptotic
+filtered *n*.[[4]](#cite_note-4) While the above formula is asymptotic
 (i.e. applicable as *m*,*n* → ∞), the agreement with finite values of
 *m*,*n* is also quite good; the false positive probability for a finite
 bloom filter with *m* bits, *n* elements, and *k* hash functions is at
 most
 
-![\\left( 1-e\^{-k(n+0.5)/(m-1)}
-\\right)\^k.](//upload.wikimedia.org/math/d/e/7/de7fe8cf33a9d3a561056ac04d171b33.png)
+![\\left( 1-e\{-k(n+0.5)/(m-1)}
+\\right)\k.](//upload.wikimedia.org/math/d/e/7/de7fe8cf33a9d3a561056ac04d171b33.png)
 
 So we can use the asymptotic formula if we pay a penalty for at most
-half an extra element and at most one fewer bit.^[[5]](#cite_note-5)^
+half an extra element and at most one fewer bit.[[5]](#cite_note-5)
 
 <a name="Approximating_the_number_of_items_in_a_Bloom_filter"></a>
 # Approximating the number of items in a Bloom filter
@@ -371,11 +371,11 @@ half an extra element and at most one fewer bit.^[[5]](#cite_note-5)^
 number of items in a Bloom filter can be approximated with the following
 formula,
 
-![ X\^\* = - \\tfrac{ N \\ln \\left[ 1 - \\tfrac{X}{N} \\right] } { k}
+![ X\\* = - \\tfrac{ N \\ln \\left[ 1 - \\tfrac{X}{N} \\right] } { k}
 ](//upload.wikimedia.org/math/7/0/a/70a20610ea03d5789d9b29248a63b9b7.png)
 
 where
-![X\^\*](//upload.wikimedia.org/math/f/2/d/f2d6c5f9b59bae5bc8a1ff91f8ae7ded.png)
+![X\\*](//upload.wikimedia.org/math/f/2/d/f2d6c5f9b59bae5bc8a1ff91f8ae7ded.png)
 is an estimate of the number of items in the filter, N is length of the
 filter, k is the number of hash functions per item, and X is the number
 of bits set to one.
@@ -392,17 +392,17 @@ length
 ![N](//upload.wikimedia.org/math/8/d/9/8d9c307cb7f3c4a32822a51922d1ceaa.png),
 their counts, respectively can be estimated as
 
-![ A\^\* = -N \\ln \\left[ 1 - A / N \\right] /
+![ A\\* = -N \\ln \\left[ 1 - A / N \\right] /
 k](//upload.wikimedia.org/math/f/b/6/fb65666b660f0ebb95d08833aff41d25.png)
 
 and
 
-![ B\^\* = -N \\ln \\left[ 1 - B / N
+![ B\\* = -N \\ln \\left[ 1 - B / N
 \\right]/k](//upload.wikimedia.org/math/0/e/6/0e654f20c67c166e428cb80790270758.png).
 
 The size of their union can be estimated as
 
-![ A\^\*\\cup B\^\* = -N \\ln \\left[ 1 - A \\cup B / N
+![ A\\*\\cup B\\* = -N \\ln \\left[ 1 - A \\cup B / N
 \\right]/k](//upload.wikimedia.org/math/c/8/e/c8e13a05eed128a21a6c7f9141d5aa13.png),
 
 where ![A \\cup
@@ -410,8 +410,8 @@ B](//upload.wikimedia.org/math/f/e/e/fee055b62470bc8713ed312fb67bbc55.png)
 is the number of bits set to one in either of the two bloom filters. And
 the intersection can be estimated as
 
-![ A\^\*\\cap B\^\* = A\^\* + B\^\* - A\^\*\\cup
-B\^\*](//upload.wikimedia.org/math/1/b/c/1bc193aa35138a96442bd3c51ed06f0a.png),
+![ A\\*\\cap B\\* = A\\* + B\\* - A\\*\\cup
+B\\*](//upload.wikimedia.org/math/1/b/c/1bc193aa35138a96442bd3c51ed06f0a.png),
 
 Using the three formulas together.
 
@@ -456,34 +456,34 @@ Google [BigTable](http://en.wikipedia.org/wiki/BigTable "BigTable") and [Apache
 Cassandra](http://en.wikipedia.org/wiki/Apache_Cassandra "Apache Cassandra") use Bloom filters
 to reduce the disk lookups for non-existent rows or columns. Avoiding
 costly disk lookups considerably increases the performance of a database
-query operation.^[[6]](#cite_note-6)^
+query operation.[[6]](#cite_note-6)
 
 The [Google Chrome](http://en.wikipedia.org/wiki/Google_Chrome "Google Chrome") web browser
 uses a Bloom filter to identify malicious URLs. Any URL is first checked
 against a local Bloom filter and only upon a hit a full check of the URL
-is performed.^[[7]](#cite_note-7)^
+is performed.[[7]](#cite_note-7)
 
 The [Squid](http://en.wikipedia.org/wiki/Squid_(software) "Squid (software)")
 [Web](http://en.wikipedia.org/wiki/World_Wide_Web "World Wide Web") Proxy
 [Cache](http://en.wikipedia.org/wiki/Web_cache "Web cache") uses Bloom filters for [cache
-digests](http://wiki.squid-cache.org/SquidFaq/CacheDigests).^[[8]](#cite_note-Wessels172-8)^
+digests](http://wiki.squid-cache.org/SquidFaq/CacheDigests).[[8]](#cite_note-Wessels172-8)
 
 [Bitcoin](http://en.wikipedia.org/wiki/Bitcoin "Bitcoin") uses Bloom filters to verify payments
 without running a full network
-node.^[[9]](#cite_note-9)^^[[10]](#cite_note-10)^
+node.[[9]](#cite_note-9)[[10]](#cite_note-10)
 
 The [Venti](http://en.wikipedia.org/wiki/Venti "Venti") archival storage system uses Bloom
-filters to detect previously stored data.^[[11]](#cite_note-11)^
+filters to detect previously stored data.[[11]](#cite_note-11)
 
 The [SPIN model checker](http://en.wikipedia.org/wiki/SPIN_model_checker "SPIN model checker")
 uses Bloom filters to track the reachable state space for large
-verification problems.^[[12]](#cite_note-12)^
+verification problems.[[12]](#cite_note-12)
 
 The [Cascading](http://en.wikipedia.org/wiki/Cascading_(software) "Cascading (software)")
 analytics framework uses Bloom filters to speed up asymmetric joins,
 where one of the joined data sets is significantly larger than the other
-(often called Bloom join^[[13]](#cite_note-13)^ in the database
-literature).^[[14]](#cite_note-14)^
+(often called Bloom join[[13]](#cite_note-13) in the database
+literature).[[14]](#cite_note-14)
 
 <a name="Alternatives"></a>
 # Alternatives
@@ -692,7 +692,7 @@ the node itself. The attenuated filter of level i indicates which
 services can be found on nodes that are i-hops away from the current
 node. The i-th value is constructed by taking a union of local bloom
 filters for nodes i-hops away from the
-node.^[[15]](#cite_note-kgsb09-15)^
+node.[[15]](#cite_note-kgsb09-15)
 
 [![](//upload.wikimedia.org/wikipedia/commons/thumb/0/0c/AttenuatedBloomFilter.png/220px-AttenuatedBloomFilter.png)](http://en.wikipedia.org/wiki/File:AttenuatedBloomFilter.png)
 
@@ -708,12 +708,12 @@ the patterns don't match, we check the attenuated bloom filter in order
 to determine which node should be the next hop. We see that n2 doesn't
 offer service A but lies on the path to nodes that do. Hence, we move to
 n2 and repeat the same procedure. We quickly find that n3 offers the
-service, and hence the destination is located.^[[16]](#cite_note-16)^
+service, and hence the destination is located.[[16]](#cite_note-16)
 
 By using attenuated Bloom filters consisting of multiple layers,
 services at more than one hop distance can be discovered while avoiding
 saturation of the Bloom filter by attenuating (shifting out) bits set by
-sources further away.^[[15]](#cite_note-kgsb09-15)^
+sources further away.[[15]](#cite_note-kgsb09-15)
 
 <a name="Chemical_structure_searching"></a>
 ## Chemical structure searching
@@ -737,40 +737,40 @@ quantify the similarity between molecules' bloom filters.
 <a name="Notes"></a>
 # Notes
 
-1.  **[\^](#cite_ref-1)** [Mitzenmacher & Upfal
+1.  **[\](#cite_ref-1)** [Mitzenmacher & Upfal
     (2005](#CITEREFMitzenmacherUpfal2005)).
-2.  **[\^](#cite_ref-2)** [Mitzenmacher & Upfal
+2.  **[\](#cite_ref-2)** [Mitzenmacher & Upfal
     (2005](#CITEREFMitzenmacherUpfal2005)), pp. 109–111, 308.
-3.  **[\^](#cite_ref-3)** [Mitzenmacher & Upfal
+3.  **[\](#cite_ref-3)** [Mitzenmacher & Upfal
     (2005](#CITEREFMitzenmacherUpfal2005)), p. 308.
-4.  **[\^](#cite_ref-4)** [Starobinski, Trachtenberg & Agarwal
+4.  **[\](#cite_ref-4)** [Starobinski, Trachtenberg & Agarwal
     (2003](#CITEREFStarobinskiTrachtenbergAgarwal2003)).
-5.  **[\^](#cite_ref-5)** [Goel & Gupta (2010](#CITEREFGoelGupta2010)).
-6.  **[\^](#cite_ref-6)** ([Chang et al.
+5.  **[\](#cite_ref-5)** [Goel & Gupta (2010](#CITEREFGoelGupta2010)).
+6.  **[\](#cite_ref-6)** ([Chang et al.
     2006](#CITEREFChangDeanGhemawatHsieh2006)).
-7.  **[\^](#cite_ref-7)**
+7.  **[\](#cite_ref-7)**
     [http://blog.alexyakunin.com/2010/03/nice-bloom-filter-application.html](http://blog.alexyakunin.com/2010/03/nice-bloom-filter-application.html)
-8.  **[\^](#cite_ref-Wessels172_8-0)** Wessels, Duane (January 2004),
+8.  **[\](#cite_ref-Wessels172_8-0)** Wessels, Duane (January 2004),
     "10.7 Cache Digests", *Squid: The Definitive Guide* (1st ed.),
     O'Reilly Media, p. 172,
     [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [0-596-00162-2](http://en.wikipedia.org/wiki/Special:BookSources/0-596-00162-2 "Special:BookSources/0-596-00162-2"),
     "Cache Digests are based on a technique first published by Pei Cao,
     called Summary Cache. The fundamental idea is to use a Bloom filter
     to represent the cache contents." 
-9.  **[\^](#cite_ref-9)** [Bitcoin
+9.  **[\](#cite_ref-9)** [Bitcoin
     0.8.0](http://sourceforge.net/projects/bitcoin/files/Bitcoin/bitcoin-0.8.0/)
-10. **[\^](#cite_ref-10)** [Core Development Status Report
+10. **[\](#cite_ref-10)** [Core Development Status Report
     \#1](https://bitcoinfoundation.org/blog/?p=16)
-11. **[\^](#cite_ref-11)**
+11. **[\](#cite_ref-11)**
     [http://plan9.bell-labs.com/magic/man2html/8/venti](http://plan9.bell-labs.com/magic/man2html/8/venti)
-12. **[\^](#cite_ref-12)** [http://spinroot.com/](http://spinroot.com/)
-13. **[\^](#cite_ref-13)** [Mullin (1990](#CITEREFMullin1990))
-14. **[\^](#cite_ref-14)**
+12. **[\](#cite_ref-12)** [http://spinroot.com/](http://spinroot.com/)
+13. **[\](#cite_ref-13)** [Mullin (1990](#CITEREFMullin1990))
+14. **[\](#cite_ref-14)**
     [http://blog.liveramp.com/2013/04/03/bloomjoin-bloomfilter-cogroup/](http://blog.liveramp.com/2013/04/03/bloomjoin-bloomfilter-cogroup/)
-15. \^ [^***a***^](#cite_ref-kgsb09_15-0)
-    [^***b***^](#cite_ref-kgsb09_15-1) [Koucheryavy et al.
+15. \ [***a***](#cite_ref-kgsb09_15-0)
+    [***b***](#cite_ref-kgsb09_15-1) [Koucheryavy et al.
     (2009](#CITEREFKoucheryavyGiambeneStaehleBarcelo-Arroyo2009))
-16. **[\^](#cite_ref-16)** [Kubiatowicz et al.
+16. **[\](#cite_ref-16)** [Kubiatowicz et al.
     (2000](#CITEREFKubiatowiczBindelCzerwinskiGeels2000))
 
 <a name="References"></a>
@@ -851,7 +851,7 @@ quantify the similarity between molecules' bloom filters.
     *Proceedings of the 2003 ACM SIGMOD International Conference on
     Management of Data*, pp. 241–252,
     [doi](http://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier"):[10.1145/872757.872787](http://dx.doi.org/10.1145%2F872757.872787),
-    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [158113634X](http://en.wikipedia.org/wiki/Special:BookSources/158113634X "Special:BookSources/158113634X") ^[*[dead\\ link](http://en.wikipedia.org/wiki/Wikipedia:Link_rot "Wikipedia:Link rot")*]^
+    [ISBN](http://en.wikipedia.org/wiki/International_Standard_Book_Number "International Standard Book Number") [158113634X](http://en.wikipedia.org/wiki/Special:BookSources/158113634X "Special:BookSources/158113634X") [*[dead\\ link](http://en.wikipedia.org/wiki/Wikipedia:Link_rot "Wikipedia:Link rot")*]
 -   Deng, Fan; Rafiei, Davood (2006), ["Approximately Detecting
     Duplicates for Streaming Data using Stable Bloom
     Filters"](http://webdocs.cs.ualberta.ca/~drafiei/papers/DupDet06Sigmod.pdf),
