@@ -7,11 +7,13 @@ tags: [algorithms]
 
 ---
 
-A **Bloom filter** is a space-efficient
-[probabilistic](http://en.wikipedia.org/wiki/Probabilistic "Probabilistic") [data
-structure](http://en.wikipedia.org/wiki/Data_structure "Data structure"), conceived by [Burton
-Howard
-Bloom](/w/index.php?title=Burton_Howard_Bloom&action=edit&redlink=1 "Burton Howard Bloom (page does not exist)")
+# Article Source
+[1] [*Bloom filter*](http://en.wikipedia.org/wiki/Bloom_filter), From Wikipedia, the free encyclopedia.
+
+# Bloom Filter
+
+A **Bloom filter** is a space-efficient[probabilistic](http://en.wikipedia.org/wiki/Probabilistic "Probabilistic") [data
+structure](http://en.wikipedia.org/wiki/Data_structure "Data structure"), conceived by [Burton Howard Bloom](/w/index.php?title=Burton_Howard_Bloom&action=edit&redlink=1 "Burton Howard Bloom (page does not exist)")
 in 1970, that is used to test whether an
 [element](http://en.wikipedia.org/wiki/Element_(mathematics) "Element (mathematics)") is a
 member of a
@@ -74,6 +76,8 @@ Contents
 -   [12 References](#References)
 -   [13 External links](#External_links)
     -   [13.1 Implementations](#Implementations)
+
+<a name="Algorithm_description"></a>
 
 # Algorithm description
 
@@ -1048,5 +1052,4 @@ External links[[edit](/w/index.php?title=Bloom_filter&action=edit&section=22 "Ed
 -   [Implementation in
     TypeScript](http://typescript.codeplex.com/sourcecontrol/latest#src/compiler/bloomFilter.ts)
     from codeplex.com
-# References
-[1] [*HDP2.1: Interactive Query for Hadoop with Apache Hive on Apache Tez*](http://hortonworks.com/hadoop-tutorial/supercharging-interactive-queries-hive-tez/), Hortonworks Blog.
+    
