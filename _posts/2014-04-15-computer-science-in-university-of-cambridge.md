@@ -7,7 +7,15 @@ tags: [profile]
 
 ---
 
+# Rainbow Group, Univeristy of Cambridge
+
+10년전(2004년) 박사과정 지원과 관련해서 만나서 이야기 나눴던, 영국 캠브리지 대학의 Neil Dodgson 교수님. Cambridge 대학, 전산학과에서 computer graphics 연구하는 곳이 바로 "Rainbow Group" 이다. 
+
+추측컨데, 무지개(빨주노초파남보)와 3차원 공간상에 색을 표현하는 것이 computer graphics 라고 생각해서 Rainbow Group 이라 한 것 같다.
+
 ![](http://sungsoo.github.com/images/cambridge.jpg)
+
+아래 유투브 동영상을 보니, Neil Dodgson 교수님이 안내해 주신 곳들이 나오니, 반갑기만 하다. ㅎㅎ
 
 <iframe width="600" height="400" src="//www.youtube.com/embed/H7hV86PC4hc" frameborder="0" allowfullscreen></iframe>
 
