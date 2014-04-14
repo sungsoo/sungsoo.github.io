@@ -15,7 +15,7 @@ tags: [profile]
 
 ![](http://sungsoo.github.com/images/cambridge.jpg)
 
-아래 유투브 동영상을 보니, Neil Dodgson 교수님이 안내해 주신 곳들이 나오니, 반갑기만 하다. ㅎㅎ
+아래 유투브 동영상을 보니, Neil Dodgson 교수님이 내가 Cambridge 대학에 갔을 때, 안내해 주신 곳들이 나오니 반갑기만 하다. ^^
 
 <iframe width="600" height="400" src="//www.youtube.com/embed/H7hV86PC4hc" frameborder="0" allowfullscreen></iframe>
 
