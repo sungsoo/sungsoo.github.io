@@ -11,7 +11,7 @@ tags: [big data, hadoop & mapreduce, tez]
 * Title: [11 SQL-on-Hadoop Tools](/blog/2014/04/11-sql-on-hadoop-tools/)
 * Authors: [Saggi Neumann](/blog/2014/04/11-sql-on-hadoop-tools/)
 
-# 11 SQL-on-Hadoop Tools {title="11 SQL-on-Hadoop Tools"}
+# 11 SQL-on-Hadoop Tools 
 
 
 In our recent post, [8 SQL-on-Hadoop
@@ -208,4 +208,4 @@ Bottom line - Pivotal’s SQL-on-Hadoop
 
 
 # References
-[1] Charles Schmitt, [*Big Data Genomics Sequencing*](http://www.intel.com/content/www/us/en/big-data/renci-peer-story.html), Intel Big Data Blog.
+[1] [Saggi Neumann](/blog/2014/04/11-sql-on-hadoop-tools/), [11 SQL-on-Hadoop Tools](/blog/2014/04/11-sql-on-hadoop-tools/).
