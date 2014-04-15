@@ -63,4 +63,4 @@ Hadoop works quite differently from SQL and requires learning new concepts and t
 
 
 # References
-[1] Charles Schmitt, [*Big Data Genomics Sequencing*](http://www.intel.com/content/www/us/en/big-data/renci-peer-story.html), Intel Big Data Blog.
+[1] Yaniv Mor, [Eight SQL on Hadoop Challenges](http://www.xplenty.com/blog/2014/04/eight-sql-on-hadoop-challenges/).

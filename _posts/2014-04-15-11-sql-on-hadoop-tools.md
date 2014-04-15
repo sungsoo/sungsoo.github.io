@@ -8,12 +8,11 @@ tags: [big data, hadoop & mapreduce, tez]
 ---
 
 # Article Source
-* Title: [11 SQL-on-Hadoop Tools](http://www.xplenty.com/blog/2014/04/11-sql-on-hadoop-tools/#.U0xD9H-HXgQ.twitter)
-* Authors: [Yaniv Mor](http://www.xplenty.com/blog/2014/04/11-sql-on-hadoop-tools/#.U0xD9H-HXgQ.twitter)
+* Title: [11 SQL-on-Hadoop Tools](/blog/2014/04/11-sql-on-hadoop-tools/)
+* Authors: [Saggi Neumann](/blog/2014/04/11-sql-on-hadoop-tools/)
 
 # 11 SQL-on-Hadoop Tools {title="11 SQL-on-Hadoop Tools"}
 
-** April 14, 14
 
 By [Saggi Neumann](/blog/2014/04/11-sql-on-hadoop-tools/)
 
