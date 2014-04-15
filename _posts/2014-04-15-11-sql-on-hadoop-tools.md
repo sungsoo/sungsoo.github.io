@@ -14,16 +14,8 @@ tags: [big data, hadoop & mapreduce, tez]
 # 11 SQL-on-Hadoop Tools {title="11 SQL-on-Hadoop Tools"}
 
 
-By [Saggi Neumann](/blog/2014/04/11-sql-on-hadoop-tools/)
-
-** [](/blog/2014/04/11-sql-on-hadoop-tools/#disqus_thread)
-
-([Ramblin' Wreck
-image](http://en.wikipedia.org/wiki/File:Ramblinwreck.jpg) by John Bird,
-public domain)
-
 In our recent post, [8 SQL-on-Hadoop
-challenges](http://www.xplenty.com/blog/2014/04/eight-sql-on-hadoop-challenges/?utm_source=xplenty%20blog&utm_medium=in-blog%20link&utm_term=upd&utm_campaign=April%202014),
+challenges](http://sungsoo.github.io/2014/04/15/eight-sql-on-hadoop-challenges.html),
 we quickly listed several tools that help to bridge the gap between the
 two technologies without going into details. This time we’ll dive in and
 learn about 11 tools that bring SQL to Hadoop in various ways.
