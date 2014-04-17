@@ -66,8 +66,7 @@ It is critical that we integrate this functionality into Hive using
 standard SQL syntax. In particular, over the course of the project,
 we’ll add the following standard SQL statements to Hive:
 
-``` {.brush: .sql; .title: .; .notranslate title=""}
-
+```sql 
 INSERT INTO tbl SELECT ...
 INSERT INTO tbl VALUES ...
 UPDATE tbl SET ... WHERE ...
@@ -143,8 +142,7 @@ the transaction id of the transaction that inserted it (or 0 for the
 base file), the row id, and the implicit bucket number. The
 implementation of delta files will be ORC files with a row format of:
 
-``` {.brush: .sql; .title: .; .notranslate title=""}
-
+```sql
 create table deltaFile (
  operation int,      -- 0 = insert, 1 = delete, 2 = update
  transactionId long, -- transaction that inserted the row
