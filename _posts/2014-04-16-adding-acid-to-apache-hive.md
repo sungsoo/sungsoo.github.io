@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Adding ACID to Apache Hive 
-date: 2014-04-15
+date: 2014-04-16
 categories: [computer science]
 tags: [big data, hadoop & mapreduce]
 
