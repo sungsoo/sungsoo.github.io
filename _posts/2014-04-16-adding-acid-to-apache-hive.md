@@ -271,5 +271,4 @@ patch on the open source project just before the project’s next release.
 
 
 # References
-[1] [Owen
-O'Malley](http://hortonworks.com/blog/author/owen_omalley/ "Posts by Owen O'Malley"), Adding ACID to Apache Hive](http://hortonworks.com/blog/adding-acid-to-apache-hive/), HortonWorks Blog, October 11th, 2013.
+[1] [Owen O'Malley](http://hortonworks.com/blog/author/owen_omalley/ "Posts by Owen O'Malley"), [*Adding ACID to Apache Hive*](http://hortonworks.com/blog/adding-acid-to-apache-hive/), HortonWorks Blog, October 11th, 2013.
