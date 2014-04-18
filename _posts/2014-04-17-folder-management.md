@@ -110,8 +110,8 @@ comes to finding what you're looking for.
 ## 짜짠! 문제를 해결해 주마!
 
 * Mac OS X Mavericks (10.9.2): *Desktop Spotlight, Finder Spotlight*
-* > 당신의 할일에 집중하세요. 나머지는 저한테 맡기세요. - DEVONthink Pro Office"
-* > 묻지도 말고, 따지지도 말고 DEVONthink 쓰세요! - Sung-Soo Kim
+> 당신의 할일에 집중하세요. 나머지는 저한테 맡기세요. - DEVONthink Pro Office  
+> 묻지도 말고, 따지지도 말고 DEVONthink 쓰세요! - Sung-Soo Kim
 * Tag, Labeling, Status, Fast Search,.... You name it!!!
 * 7-rule: 사람은 7가지 이상으로 구성된 연관관계를 기억하기가 어렵다. UML 탄생 배경
 
