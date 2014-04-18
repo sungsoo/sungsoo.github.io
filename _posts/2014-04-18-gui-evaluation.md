@@ -1,7 +1,7 @@
 ---
 layout: post
 title: 10 Usability Heuristics for User Interface Design 
-date: 2014-04-17
+date: 2014-04-18
 categories: [information technology]
 tags: [presentation]
 
