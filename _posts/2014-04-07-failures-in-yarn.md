@@ -7,15 +7,28 @@ tags: [hadoop & mapreduce, yarn]
 
 ---
 
-# FailuresIn the real world, user code is *buggy*, processes *crash*, and machines *fail*. One of the major benefits of using Hadoop is its ability to handle such *failures* and allow your job to complete.# Failures in YARN
-For MapReduce programs running on YARN, we need to consider the failure of any of the following entities: the *task*, the *application master*, the *node manager*, and the *resource manager*.Task Failure
+# FailuresIn the real world, user code is *buggy*, processes *crash*, and machines *fail*. One of the major benefits of using Hadoop is its ability to handle such *failures* and allow your job to complete.
+# Failures in YARN
+For MapReduce programs running on YARN, we need to consider the failure of any of the following entities: the *task*, the *application master*, the *node manager*, and the *resource manager*.---얀에서 실행 중인 맵리듀스 프로그램도 태스크 실패, 애플리케이션 마스터 실패, 노드 매니저 실패, 리소스 매니저 실패에 대해 고려할 필요가 있다.
+Task Failure
 ---
 Failure of the running task is similar to the classic case. Runtime exceptions and sudden exits of the JVM are propagated back to the application master and the task attempt is marked as failed. Likewise, hanging tasks are noticed by the application master by the absence of a ping over the *umbilical channel* (the timeout is set by <tt class="literal">mapreduce.task.time out</tt>), and again the task attempt is marked as failed.
 The *configuration properties* for determining when a task is considered to be failed are the same as the classic case: a task is marked as failed after four attempts (set by <tt class="literal">mapreduce.map.maxattempts</tt> for map tasks and <tt class="literal">mapreduce.reduce.maxattempts</tt> for reducer tasks). A job will be failed if more than <tt class="literal">mapreduce.map.failures.maxpercent</tt> percent of the map tasks in the job fail, or more than <tt class="literal">mapreduce.reduce.failures.maxpercent</tt> percent of the reduce tasks fail.
-Application Master Failure
+---
+
+실행 중인 태스크의 실패는 전통적인 맵리듀스와 비슷하다. JVM의 런타임 예외 상황과 갑작스런 종료는 애플리케이션 마스터로 거슬러 전파되고 태스크의 시행은 실패로 마킹된다. 같은 방식으로 애플리케이션 마스터는 태스크에 밀접하게 연결된 채널을 통해 핑(ping)의 부재를 확인(<tt class="literal">mapreduce.task.time out</tt>으로 설정된 타임아웃)하고 태스크의 행(hang)을 인지한 후 태스크의 시행을 실패로 마킹한다.
+
+태스크 실패 여부를 결정하는 환경 설정 속성은 고전적인 맵리듀스 때와 같다. 태스크는 네 번의 시행 후 실패로 마킹된다. (맵 태스크는 <tt class="literal">mapreduce.map.maxattempts</tt>로 설정하고, 리듀스 태스크는 <tt class="literal">mapreduce.reduce.failures.maxpercent</tt>로 설정). 잡 실패가 <tt class="literal">mapreduce.map.failures.maxpercent</tt>에 설정된 맵 태스크의 실패율보다 많거나 <tt class="literal">mapreduce.reduce.failures.maxpercent</tt>에 설정된 맵 태스크의 실패율보다 많으면 그 잡은 실패할 것이다. 
+
+---
+Application Master Failure
 ---Just like MapReduce tasks are given several attempts to succeed (in the face of hardware or network failures) applications in YARN are tried multiple times in the event of failure. By default, applications are marked as failed if they fail once, but this can be increased by setting the property <tt class="literal">yarn.resourcemanager.am.max-retries</tt>.
 An application master sends periodic heartbeats to the resource manager, and in the event of application master failure, the resource manager will detect the failure and start a new instance of the master running in a new container (managed by a node manager). In the case of the MapReduce application master, it can recover the state of the tasks that had already been run by the (failed) application so they don’t have to be rerun. By default, recovery is not enabled, so failed application masters will not rerun all their tasks, but you can turn it on by setting <tt class="literal">yarn.app.mapreduce.am.job.recov ery.enable</tt> to <tt class="literal">true</tt>.
 The client polls the application master for progress reports, so if its application master fails the client needs to locate the new instance. During job initialization the client asks the resource manager for the application master’s address, and then caches it, so it doesn’t overload the the resource manager with a request every time it needs to poll the application master. If the application master fails, however, the client will experience a timeout when it issues a status update, at which point the client will go back to the resource manager to ask for the new application master’s address.
+
+---
+
+맵리듀스 태스크가 성공적인 수행을 위해 몇 번의 시행 기회가 있는 것처럼 (하드웨어나 네트워크 장애의 경우), 얀에서 애플리케이션도 실패한 경우 몇 번 더 실행할 수 있다. 기본적으로 애플리케이션은 한 번 실패하면 바로 실패된 것으로 마킹된다. 그러나 <tt class="literal">yarn.resourcemanager.am.max-retries</tt> 
 Node Manager Failure
 ---If a node manager fails, then it will stop sending heartbeats to the resource manager, and the node manager will be removed from the resource manager’s pool of available nodes. The property <tt class="literal">yarn.resourcemanager.nm.liveness-monitor.expiry-intervalms</tt>, which defaults to 600000 (10 minutes), determines the minimum time the resource manager waits before considering a node manager that has sent no heartbeat in that time as failed.
 Any task or application master running on the failed node manager will be recovered using the mechanisms described in the previous two sections.Node managers may be blacklisted if the number of failures for the application is high. Blacklisting is done by the application master, and for MapReduce the application master will try to reschedule tasks on different nodes if more than three tasks fail on a node manager. The threshold may be set with <tt class="literal">mapreduce.job.maxtaskfai lures.per.tracker</tt>.
