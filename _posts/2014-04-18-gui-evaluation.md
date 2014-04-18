@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Folder Management 
+title: 10 Usability Heuristics for User Interface Design 
 date: 2014-04-17
 categories: [information technology]
 tags: [presentation]
