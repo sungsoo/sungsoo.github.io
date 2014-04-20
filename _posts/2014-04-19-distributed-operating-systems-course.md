@@ -8,7 +8,7 @@ tags: [parallel computing]
 ---
 
 # Article Source
-* Title: [10 Usability Heuristics for User Interface Design](http://www.cs.cmu.edu/~15712/index.html)
+* Title: [Advanced and Distributed Operating Systems](http://www.cs.cmu.edu/~15712/index.html)
 
 # Advanced and Distributed Operating Systems
 
