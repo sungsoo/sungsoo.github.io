@@ -30,7 +30,7 @@ that you can subscribe to.  </p>
 <tr class="lecture">
  <td>Mon 09/09</td>
  <td>Introduction <br />
-[<a href="lectures/01-intro.pdf">pdf</a>] [<a href="lectures/01-intro.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/01-intro.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/01-intro.key">key</a>]  </td>
  <td></td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//Lampson84.pdf">Lampson84</a>, <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//Gabriel91.pdf">Gabriel91&ndash;Section&nbsp;2.1&nbsp;only</a>, <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//YouAndYourResearch.pdf">Hamming</a> </td>
 </tr>
@@ -40,7 +40,7 @@ that you can subscribe to.  </p>
 <tr class="lecture alt">
  <td>Wed 09/11</td>
  <td>Implementing remote procedure calls <br />
-[<a href="lectures/02-rpc.pdf">pdf</a>] [<a href="lectures/02-rpc.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/02-rpc.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/02-rpc.key">key</a>]  </td>
  <td></td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//birrell842.pdf">Birrell84</a> </td>
 </tr>
@@ -54,21 +54,21 @@ that you can subscribe to.  </p>
 <tr class="lecture">
  <td>Mon 09/16</td>
  <td>Using threads in interactive systems: A case study <br />
-[<a href="lectures/03-threads.pdf">pdf</a>] [<a href="lectures/03-threads.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/03-threads.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/03-threads.key">key</a>]  </td>
  <td></td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//hauser93.pdf">Hauser93</a> </td>
 </tr>
 <tr class="lecture alt">
  <td>Wed 09/18</td>
  <td>Time, Clocks, and the Ordering of Events in a Distributed System <br />
-[<a href="lectures/04-clocks.pdf">pdf</a>] [<a href="lectures/04-clocks.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/04-clocks.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/04-clocks.key">key</a>]  </td>
  <td></td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//lamport782.pdf">Lamport78</a> </td>
 </tr>
 <tr class="lecture">
  <td>Fri 09/20</td>
  <td>Eraser: A Dynamic Data Race Detector for Multi-Threaded Programs <br />
-[<a href="lectures/05-eraser.pdf">pdf</a>] [<a href="lectures/05-eraser.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/05-eraser.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/05-eraser.key">key</a>]  </td>
  <td>Mentioned in class:  <a href="http://www.stanford.edu/~engler/deviant-sosp-01.pdf">Bugs as Deviant Behavior</a>.</td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//Savage97.pdf">Savage97</a> </td>
 </tr>
@@ -78,7 +78,7 @@ that you can subscribe to.  </p>
 <tr class="lecture alt">
  <td>Mon 09/23</td>
  <td>A Case for Redundant Arrays of Inexpensive Disks (RAID) <br />
-[<a href="lectures/06-raid.pdf">pdf</a>] [<a href="lectures/06-raid.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/06-raid.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/06-raid.key">key</a>]  </td>
  <td><a href="http://en.wikipedia.org/wiki/Therac-25">Therac-25</a>, <a href="http://www.nytimes.com/2010/01/24/health/24radiation.html?pagewanted=all">NY Times article</a></td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//Patterson88.pdf">Patterson88</a>, <a href="http://www.pdl.cmu.edu/PDL-FTP/Failure/failure-fast07.pdf">Schroeder07</a> </td>
 </tr>
@@ -99,7 +99,7 @@ that you can subscribe to.  </p>
 <tr class="lecture">
  <td>Mon 09/30</td>
  <td>The Design and Implementation of a Log-Structured File System <br />
-[<a href="lectures/07-lfs.pdf">pdf</a>] [<a href="lectures/07-lfs.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/07-lfs.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/07-lfs.key">key</a>]  </td>
  <td></td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//Rosenblum92.pdf">Rosenblum92</a> </td>
 </tr>
@@ -120,7 +120,7 @@ that you can subscribe to.  </p>
 <tr class="lecture">
  <td>Mon 10/07</td>
  <td>OS Architecture and Extensibility: SPIN and the Exokernel <br />
-[<a href="lectures/11-os.pdf">pdf</a>] [<a href="lectures/11-os.ppt">ppt</a>] [<a href="lectures/11-os.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/11-os.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/11-os.ppt">ppt</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/11-os.key">key</a>]  </td>
  <td>Project groups and initial ideas due</td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//Bershad95.pdf">Bershad95</a>, <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//Kaashoek97.pdf">Kaashoek97</a> </td>
 </tr>
@@ -144,14 +144,14 @@ that you can subscribe to.  </p>
 <tr class="lecture">
  <td>Mon 10/14</td>
  <td>On Optimistic Methods for Concurrency Control <br />
-[<a href="lectures/12-optimism.pdf">pdf</a>] [<a href="lectures/12-optimism.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/12-optimism.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/12-optimism.key">key</a>]  </td>
  <td>Project proposal due (in class).  For further reading, see <a href="http://www.cs.cmu.edu/~dga/15-849/papers/speculator-sosp2005.pdf">Spectulative Execution in a Distributed File System</a></td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//kung81.pdf">Kung81</a> </td>
 </tr>
 <tr class="lecture alt">
  <td>Wed 10/16</td>
  <td>Efficient Locking for Concurrent Operations on B-Trees <br />
-[<a href="lectures/13-b-link.pdf">pdf</a>] [<a href="lectures/13-b-link.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/13-b-link.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/13-b-link.key">key</a>]  </td>
  <td>See also <a href="http://pdos.csail.mit.edu/papers/chord:sigcomm01/chord_sigcomm.pdf">Chord-Sigcomm2001</a> if you'd like more details.</td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//Lehman81.pdf">Lehman81</a> </td>
 </tr>
@@ -165,7 +165,7 @@ that you can subscribe to.  </p>
 <tr class="lecture">
  <td>Mon 10/21</td>
  <td>Principles of Transaction-Oriented Database Recovery <br />
-[<a href="lectures/14-transactions.pdf">pdf</a>] [<a href="lectures/14-transactions.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/14-transactions.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/14-transactions.key">key</a>]  </td>
  <td><a href="http://www.sai.msu.su/~megera/postgres/gist/papers/concurrency/p465-bernstein.pdf">Bernstein's concurrency notes - MVCC</a>, <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.5.299&rep=rep1&type=pdf">Why snapshot isolation is useful</a>, <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.5.299&rep=rep1&type=pdf">short paper about an anomaly in snapshot isolation, mentioning history</a>.</td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//franklin97concurrency.pdf">Franklin97</a> </td>
 </tr>
@@ -245,7 +245,7 @@ that you can subscribe to.  </p>
 <tr class="lecture">
  <td>Fri 11/15</td>
  <td>Paxos <br />
-[<a href="lectures/16-paxos.pdf">pdf</a>] [<a href="lectures/16-paxos.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/16-paxos.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/16-paxos.key">key</a>]  </td>
  <td><a href="http://en.wikipedia.org/wiki/Paxos_algorithm">Wikipedia Paxos article</a>.  <a href="http://research.microsoft.com/users/lamport/pubs/lamport-paxos.pdf">Lamport's original Greek parable</a>.</td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//paxos-simple.pdf">Lamport01</a> </td>
 </tr>
@@ -259,7 +259,7 @@ that you can subscribe to.  </p>
 <tr class="lecture alt">
  <td>Wed 11/20</td>
  <td>The Byzantine General's Problem, Practical Byzantine Fault Tolerance <br />
-[<a href="lectures/18-bft.pdf">pdf</a>] [<a href="lectures/18-bft.ppt">ppt</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/18-bft.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/18-bft.ppt">ppt</a>]  </td>
  <td><a href="http://research.microsoft.com/users/lamport/pubs/pubs.html#byz">Lamport's comments on the Byzantine Generals paper</a> (see also <a href="http://research.microsoft.com/users/lamport/pubs/pubs.html#reaching">here</a>).</td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//castro99.pdf">Castro99</a>, <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//lamport82.pdf">Lamport82</a> </td>
 </tr>
@@ -273,7 +273,7 @@ that you can subscribe to.  </p>
 <tr class="lecture">
  <td>Mon 11/25</td>
  <td>Reflections on Trusting Trust, Why Cryptosystems Fail, Crisis and Aftermath <br />
-[<a href="lectures/19-security.pdf">pdf</a>] [<a href="lectures/19-security.key">key</a>]  </td>
+[<a href="http://www.cs.cmu.edu/~15712/lectures/19-security.pdf">pdf</a>] [<a href="http://www.cs.cmu.edu/~15712/lectures/19-security.key">key</a>]  </td>
  <td></td>
  <td> <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//p761-thompson.pdf">Thompson84</a>, <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//anderson94.pdf">Anderson94</a>, <a href="http://www.cs.cmu.edu/~dga/15-712/F13/papers//Spafford89.pdf">Spafford89</a> </td>
 </tr>
