@@ -583,15 +583,40 @@ sentences.[[45]](#cite_note-LDCTIMIT-45) Its small size allows many
 different configurations to be tried effectively with it. The error
 rates presented are phone error rates (PER).
 
-  Method                                PER (%)
-  ------------------------------------- ---------
-  Randomly Initialized RNN              26.1
-  Bayesian Triphone GMM-HMM             25.6
-  Monophone Randomly Initialized DNN    23.4
-  Monophone DBN-DNN                     22.4
-  Triphone GMM-HMM with BMMI Training   21.7
-  Monophone DBN-DNN on fbank            20.7
-  Convolutional DNN                     20.0
+<table class="wikitable">
+<tr>
+<th>Method</th>
+<th>PER (%)</th>
+</tr>
+<tr>
+<td>Randomly Initialized RNN</td>
+<td>26.1</td>
+</tr>
+<tr>
+<td>Bayesian Triphone GMM-HMM</td>
+<td>25.6</td>
+</tr>
+<tr>
+<td>Monophone Randomly Initialized DNN</td>
+<td>23.4</td>
+</tr>
+<tr>
+<td>Monophone DBN-DNN</td>
+<td>22.4</td>
+</tr>
+<tr>
+<td>Triphone GMM-HMM with BMMI Training</td>
+<td>21.7</td>
+</tr>
+<tr>
+<td>Monophone DBN-DNN on fbank</td>
+<td>20.7</td>
+</tr>
+<tr>
+<td>Convolutional DNN</td>
+<td>20.0</td>
+</tr>
+</table>
 
 ### Image classification
 
