@@ -298,10 +298,9 @@ It is worth explaining some common architectures used for deep learning.
 Basic models of deep neural networks and deep belief networks are given
 below.
 
-## Deep neural networks[[edit](/w/index.php?title=Deep_learning&action=edit&section=5 "Edit section: Deep neural networks")]
+## Deep neural networks
 
-A deep neural network (DNN) is defined to be an [artificial neural
-network](http://en.wikipedia.org/wiki/Artificial_neural_network "Artificial neural network")
+A deep neural network (DNN) is defined to be an [artificial neural network](http://en.wikipedia.org/wiki/Artificial_neural_network "Artificial neural network")
 with at least one hidden layer of units between the input and output
 layers, it is also a [universal
 approximator](http://en.wikipedia.org/wiki/Universal_approximation_theorem "Universal approximation theorem").[[30]](#cite_note-30)
