@@ -9,4 +9,4 @@ tags: [parallel computing]
 
 # Resource Management Fundamentals
 
-![](http://sungsoo.github.com/images/resource-management.png)
+[![](http://sungsoo.github.com/images/resource-management.png)](http://sungsoo.github.com/images/resource-management.png)
