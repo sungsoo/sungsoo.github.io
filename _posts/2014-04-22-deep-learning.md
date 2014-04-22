@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: default
 title: Deep Learning
 date: 2014-04-22
 categories: [computer science]
