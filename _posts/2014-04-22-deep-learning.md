@@ -69,7 +69,7 @@ Contents
 -   [6 Publicity around deep learning](#Publicity_around_deep_learning)
 -   [7 Criticisms](#Criticisms)
 -   [8 See also](#See_also)
--   [9 References](http://sungsoo.github.com/2014/04/22/deep-learning.html#References)
+-   [9 References](#References)
 -   [10 External links](#External_links)
 
 <a name="Introduction"></a>
