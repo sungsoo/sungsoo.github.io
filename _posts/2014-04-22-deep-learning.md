@@ -7,13 +7,12 @@ tags: [machine learning]
 
 ---
 
-### Article Source
+## Article Source
 * Title: [Deep Learning](http://en.wikipedia.org/wiki/Deep_learning)
 * Source: Wikipedia, the free encyclopedia
 
 Deep learning 
 =============
-
 
 **Deep learning** is a set of [algorithms](http://en.wikipedia.org/wiki/Algorithm "Algorithm")
 in [machine learning](http://en.wikipedia.org/wiki/Machine_learning "Machine learning") that
@@ -73,8 +72,8 @@ Contents
 -   [9 References](#References)
 -   [10 External links](#External_links)
 
-Introduction[[edit](/w/index.php?title=Deep_learning&action=edit&section=1 "Edit section: Introduction")]
----------------------------------------------------------------------------------------------------------
+Introduction
+-----
 
 Deep learning architectures, specifically those built from [artificial
 neural
@@ -140,8 +139,8 @@ algorithms by orders of magnitude, bringing running times of weeks back
 to
 days.[[10]](#cite_note-CIRESAN2010-10)[[11]](#cite_note-RAINA2009-11)
 
-Fundamental concepts[[edit](/w/index.php?title=Deep_learning&action=edit&section=2 "Edit section: Fundamental concepts")]
--------------------------------------------------------------------------------------------------------------------------
+Fundamental concepts
+---
 
 Deep learning algorithms are based on distributed representations, a
 concept used in machine learning. The underlying assumption behind
@@ -170,8 +169,8 @@ these algorithms. The deep belief network introduced in the next section
 is an example of a deep structure that can be trained in an unsupervised
 manner.[[1]](#cite_note-BENGIO2012-1)
 
-Deep learning in artificial neural networks[[edit](/w/index.php?title=Deep_learning&action=edit&section=3 "Edit section: Deep learning in artificial neural networks")]
------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Deep learning in artificial neural networks
+---
 
 Some of the most successful deep learning methods involve artificial
 [neural networks](http://en.wikipedia.org/wiki/Neural_network "Neural network"). Artificial
@@ -292,14 +291,14 @@ Such supervised deep learning methods also were the first artificial
 pattern recognizers to achieve human-competitive performance on certain
 tasks.[[29]](#cite_note-ciresan2011CVPR-29)
 
-Deep learning architectures[[edit](/w/index.php?title=Deep_learning&action=edit&section=4 "Edit section: Deep learning architectures")]
----------------------------------------------------------------------------------------------------------------------------------------
+Deep learning architectures
+---
 
 It is worth explaining some common architectures used for deep learning.
 Basic models of deep neural networks and deep belief networks are given
 below.
 
-### Deep neural networks[[edit](/w/index.php?title=Deep_learning&action=edit&section=5 "Edit section: Deep neural networks")]
+## Deep neural networks[[edit](/w/index.php?title=Deep_learning&action=edit&section=5 "Edit section: Deep neural networks")]
 
 A deep neural network (DNN) is defined to be an [artificial neural
 network](http://en.wikipedia.org/wiki/Artificial_neural_network "Artificial neural network")
@@ -335,12 +334,12 @@ using the following equation:
 
 ![ \\Delta w\_{ij}(t + 1) = \\Delta w\_{ij}(t) + \\eta\\frac{\\partial
 C}{\\partial w\_{ij}}
-](//upload.wikimedia.org/math/8/d/6/8d660b9c30a6958c5a6ac3957eca5048.png)
+](http://upload.wikimedia.org/math/8/d/6/8d660b9c30a6958c5a6ac3957eca5048.png)
 
 Here, ![ \\eta
-](//upload.wikimedia.org/math/7/1/7/7174cbd6aeaaa56e37102b72386bb2b9.png)
+](http://upload.wikimedia.org/math/7/1/7/7174cbd6aeaaa56e37102b72386bb2b9.png)
 is the learning rate, and ![ C
-](//upload.wikimedia.org/math/0/d/6/0d61f8370cad1d412f80b84d143e1257.png)
+](http://upload.wikimedia.org/math/0/d/6/0d61f8370cad1d412f80b84d143e1257.png)
 is the [cost function](http://en.wikipedia.org/wiki/Loss_function "Loss function"). The choice
 of the cost function depends on factors such as the learning type
 (supervised, unsupervised, reinforcement, etc.) and the [activation
@@ -352,32 +351,32 @@ are the
 function and [cross entropy](http://en.wikipedia.org/wiki/Cross_entropy "Cross entropy")
 function, respectively. The softmax function is defined as ![ p\_j =
 \\frac{\\exp(x\_j)}{\\sum\_k \\exp(x\_k)}
-](//upload.wikimedia.org/math/b/e/4/be47ec6321a59103c951cf8e312f66c9.png)
+](http://upload.wikimedia.org/math/b/e/4/be47ec6321a59103c951cf8e312f66c9.png)
 where ![ p\_j
-](//upload.wikimedia.org/math/0/2/9/0299430ed9ef9635331dcdcbe5ba1cba.png)
+](http://upload.wikimedia.org/math/0/2/9/0299430ed9ef9635331dcdcbe5ba1cba.png)
 represents the class probability and ![ x\_j
-](//upload.wikimedia.org/math/f/4/b/f4bb95e27d8505366199bb81f2b75b6f.png)
+](http://upload.wikimedia.org/math/f/4/b/f4bb95e27d8505366199bb81f2b75b6f.png)
 and ![ x\_k
-](//upload.wikimedia.org/math/4/2/b/42b7fa117615f02a4d47823ab2862a10.png)
+](http://upload.wikimedia.org/math/4/2/b/42b7fa117615f02a4d47823ab2862a10.png)
 represent the total input to units ![ j
-](//upload.wikimedia.org/math/3/6/3/363b122c528f54df4a0446b6bab05515.png)
+](http://upload.wikimedia.org/math/3/6/3/363b122c528f54df4a0446b6bab05515.png)
 and ![ k
-](//upload.wikimedia.org/math/8/c/e/8ce4b16b22b58894aa86c421e8759df3.png)
+](http://upload.wikimedia.org/math/8/c/e/8ce4b16b22b58894aa86c421e8759df3.png)
 respectively. Cross-entropy is defined as ![ C = -\\sum\_j d\_j
 \\log(p\_j)
-](//upload.wikimedia.org/math/b/5/0/b507483b913c748b0ef3909d5d221856.png)
+](http://upload.wikimedia.org/math/b/5/0/b507483b913c748b0ef3909d5d221856.png)
 where ![ d\_j
-](//upload.wikimedia.org/math/1/8/d/18dcc10831be4494a9c0fcda3f7bec40.png)
+](http://upload.wikimedia.org/math/1/8/d/18dcc10831be4494a9c0fcda3f7bec40.png)
 represents the target probability for output unit ![ j
-](//upload.wikimedia.org/math/3/6/3/363b122c528f54df4a0446b6bab05515.png)
+](http://upload.wikimedia.org/math/3/6/3/363b122c528f54df4a0446b6bab05515.png)
 and ![ p\_j
-](//upload.wikimedia.org/math/0/2/9/0299430ed9ef9635331dcdcbe5ba1cba.png)
+](http://upload.wikimedia.org/math/0/2/9/0299430ed9ef9635331dcdcbe5ba1cba.png)
 is the probability output for ![ j
-](//upload.wikimedia.org/math/3/6/3/363b122c528f54df4a0446b6bab05515.png)
+](http://upload.wikimedia.org/math/3/6/3/363b122c528f54df4a0446b6bab05515.png)
 after applying the activation
 function.[[34]](#cite_note-HINTON2012-34)
 
-### Issues with deep neural networks[[edit](/w/index.php?title=Deep_learning&action=edit&section=6 "Edit section: Issues with deep neural networks")]
+## Issues with deep neural networks[[edit](/w/index.php?title=Deep_learning&action=edit&section=6 "Edit section: Issues with deep neural networks")]
 
 Like with ANNs, many issues can arise with DNNs if they are naively
 trained. Two common issues are
@@ -387,9 +386,9 @@ DNNs are very prone to overfitting because of the added layers of
 abstraction, which allow them to model rare dependencies in the training
 data. [Regularization](http://en.wikipedia.org/wiki/Regularization "Regularization") methods
 such as weight decay (![ \\ell\_2
-](//upload.wikimedia.org/math/9/0/2/902cd22ddac3688e57164bcea0705451.png)-regularization)
+](http://upload.wikimedia.org/math/9/0/2/902cd22ddac3688e57164bcea0705451.png)-regularization)
 or [sparsity](http://en.wikipedia.org/wiki/Sparse_matrix "Sparse matrix") (![ \\ell\_1
-](//upload.wikimedia.org/math/6/c/7/6c72c4de2714433908be059a006a95d9.png)-regularization)
+](http://upload.wikimedia.org/math/6/c/7/6c72c4de2714433908be059a006a95d9.png)-regularization)
 can be applied during training to help combat
 overfitting.[[35]](#cite_note-BENGIO2013-35) Another regularization
 method that has been more recently applied to DNNs is "dropout"
@@ -416,12 +415,12 @@ However, it is hard to make use of large cluster machines for training
 DNNs, so better methods of parallelizing training will undoubtedly give
 a significant speed up as well.
 
-### Deep belief networks[[edit](/w/index.php?title=Deep_learning&action=edit&section=7 "Edit section: Deep belief networks")]
+## Deep belief networks[[edit](/w/index.php?title=Deep_learning&action=edit&section=7 "Edit section: Deep belief networks")]
 
 Main article: [Deep belief
 network](http://en.wikipedia.org/wiki/Deep_belief_network "Deep belief network")
 
-[![](//upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Restricted_Boltzmann_machine.svg/220px-Restricted_Boltzmann_machine.svg.png)](http://en.wikipedia.org/wiki/File:Restricted_Boltzmann_machine.svg)
+[![](http://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Restricted_Boltzmann_machine.svg/220px-Restricted_Boltzmann_machine.svg.png)](http://en.wikipedia.org/wiki/File:Restricted_Boltzmann_machine.svg)
 
 [![](//bits.wikimedia.org/static-1.23wmf21/skins/common/images/magnify-clip.png)](http://en.wikipedia.org/wiki/File:Restricted_Boltzmann_machine.svg "Enlarge")
 
@@ -469,61 +468,61 @@ In training a single RBM, weight updates are performed with [gradient
 ascent](http://en.wikipedia.org/wiki/Gradient_descent "Gradient descent") via the following
 equation: ![ \\Delta w\_{ij}(t+1) = w\_{ij}(t) + \\eta\\frac{\\partial
 \\log(p(v))}{\\partial w\_{ij}}
-](//upload.wikimedia.org/math/b/1/9/b19e3735797638ffd6e4dcbba05823cd.png).
+](http://upload.wikimedia.org/math/b/1/9/b19e3735797638ffd6e4dcbba05823cd.png).
 Here,
-![p(v)](//upload.wikimedia.org/math/8/f/1/8f1baf2045173c7cad01a5615c4a4dd1.png)
+![p(v)](http://upload.wikimedia.org/math/8/f/1/8f1baf2045173c7cad01a5615c4a4dd1.png)
 is the probability of a visible vector, which is given by ![p(v) =
-\\frac{1}{Z}\\sum\_he\{-E(v,h)}](//upload.wikimedia.org/math/d/9/5/d953fabab4429f6ba1f772b1c159c238.png).
+\\frac{1}{Z}\\sum\_he\{-E(v,h)}](http://upload.wikimedia.org/math/d/9/5/d953fabab4429f6ba1f772b1c159c238.png).
 ![ Z
-](//upload.wikimedia.org/math/2/1/c/21c2e59531c8710156d34a3c30ac81d5.png)
+](http://upload.wikimedia.org/math/2/1/c/21c2e59531c8710156d34a3c30ac81d5.png)
 is the partition function (used for normalizing) and
-![E(v,h)](//upload.wikimedia.org/math/0/1/5/0154fd706580c907e37d92635916f59c.png)
+![E(v,h)](http://upload.wikimedia.org/math/0/1/5/0154fd706580c907e37d92635916f59c.png)
 is the energy function assigned to the state of the network. A lower
 energy indicates the network is in a more "desirable" configuration. The
 gradient ![\\frac{\\partial \\log(p(v))}{\\partial
-w\_{ij}}](//upload.wikimedia.org/math/c/2/f/c2fb97eb9a2c9b09491bf2384f3e5070.png)
+w\_{ij}}](http://upload.wikimedia.org/math/c/2/f/c2fb97eb9a2c9b09491bf2384f3e5070.png)
 has the simple form ![\\langle v\_ih\_j\\rangle\_\\text{data} - \\langle
-v\_ih\_j\\rangle\_\\text{model}](//upload.wikimedia.org/math/6/9/f/69fbe3ff4172d747b01bed95a518ed65.png)
+v\_ih\_j\\rangle\_\\text{model}](http://upload.wikimedia.org/math/6/9/f/69fbe3ff4172d747b01bed95a518ed65.png)
 where
-![\\langle\\cdots\\rangle\_p](//upload.wikimedia.org/math/4/d/d/4ddeeac98c88b8b25a29da5428ea4831.png)
+![\\langle\\cdots\\rangle\_p](http://upload.wikimedia.org/math/4/d/d/4ddeeac98c88b8b25a29da5428ea4831.png)
 represent averages with respect to distribution
-![p](//upload.wikimedia.org/math/8/3/8/83878c91171338902e0fe0fb97a8c47a.png).
+![p](http://upload.wikimedia.org/math/8/3/8/83878c91171338902e0fe0fb97a8c47a.png).
 The issue arises in sampling ![\\langle
-v\_ih\_j\\rangle\_\\text{model}](//upload.wikimedia.org/math/f/0/7/f075e5cdfcc6deee1566d027e7cc666b.png)
+v\_ih\_j\\rangle\_\\text{model}](http://upload.wikimedia.org/math/f/0/7/f075e5cdfcc6deee1566d027e7cc666b.png)
 as this requires running alternating [Gibbs
 sampling](http://en.wikipedia.org/wiki/Gibbs_sampling "Gibbs sampling") for a long time. CD
 replaces this step by running alternating Gibbs sampling for
-![n](//upload.wikimedia.org/math/7/b/8/7b8b965ad4bca0e41ab51de7b31363a1.png)
+![n](http://upload.wikimedia.org/math/7/b/8/7b8b965ad4bca0e41ab51de7b31363a1.png)
 steps (values of ![n =
-1](//upload.wikimedia.org/math/6/d/2/6d24e2bc97c5e4283dd8e34674afe7ea.png)
+1](http://upload.wikimedia.org/math/6/d/2/6d24e2bc97c5e4283dd8e34674afe7ea.png)
 have empirically been shown to perform well). After
-![n](//upload.wikimedia.org/math/7/b/8/7b8b965ad4bca0e41ab51de7b31363a1.png)
+![n](http://upload.wikimedia.org/math/7/b/8/7b8b965ad4bca0e41ab51de7b31363a1.png)
 steps, the data is sampled and that sample is used in place of
 ![\\langle
-v\_ih\_j\\rangle\_\\text{model}](//upload.wikimedia.org/math/f/0/7/f075e5cdfcc6deee1566d027e7cc666b.png).
+v\_ih\_j\\rangle\_\\text{model}](http://upload.wikimedia.org/math/f/0/7/f075e5cdfcc6deee1566d027e7cc666b.png).
 The CD procedure works as follows:[[37]](#cite_note-RBMTRAIN-37)
 
 1.  Initialize the visible units to a training vector.
 2.  Update the hidden units in parallel given the visible units:
     ![p(h\_j = 1 \\mid \\textbf{V}) = \\sigma(b\_j + \\sum\_i
-    v\_iw\_{ij})](//upload.wikimedia.org/math/8/0/d/80d244fddab1317f020230844c12964f.png).
-    ![\\sigma](//upload.wikimedia.org/math/9/d/4/9d43cb8bbcb702e9d5943de477f099e2.png)
+    v\_iw\_{ij})](http://upload.wikimedia.org/math/8/0/d/80d244fddab1317f020230844c12964f.png).
+    ![\\sigma](http://upload.wikimedia.org/math/9/d/4/9d43cb8bbcb702e9d5943de477f099e2.png)
     represents the sigmoid function and
-    ![b\_j](//upload.wikimedia.org/math/4/b/1/4b1c460d195b56b860a97c750fc914d8.png)
+    ![b\_j](http://upload.wikimedia.org/math/4/b/1/4b1c460d195b56b860a97c750fc914d8.png)
     is the bias of
-    ![h\_j](//upload.wikimedia.org/math/b/4/0/b40f0479deb1e9cf5bcedd11c470a657.png).
+    ![h\_j](http://upload.wikimedia.org/math/b/4/0/b40f0479deb1e9cf5bcedd11c470a657.png).
 3.  Update the visible units in parallel given the hidden units:
     ![p(v\_i = 1 \\mid \\textbf{H}) = \\sigma(a\_i + \\sum\_j
-    h\_jw\_{ij})](//upload.wikimedia.org/math/c/b/f/cbf8d3dafeb5ebb13723af74f657cd86.png).
-    ![a\_i](//upload.wikimedia.org/math/d/8/d/d8dd7d0f3eb7145ca41c711457b7eb8f.png)
+    h\_jw\_{ij})](http://upload.wikimedia.org/math/c/b/f/cbf8d3dafeb5ebb13723af74f657cd86.png).
+    ![a\_i](http://upload.wikimedia.org/math/d/8/d/d8dd7d0f3eb7145ca41c711457b7eb8f.png)
     is the bias of
-    ![v\_i](//upload.wikimedia.org/math/f/0/e/f0e66f55342ef85ba8be3415dd92d8e2.png).
+    ![v\_i](http://upload.wikimedia.org/math/f/0/e/f0e66f55342ef85ba8be3415dd92d8e2.png).
     This is called the "reconstruction" step.
 4.  Reupdate the hidden units in parallel given the reconstructed
     visible units using the same equation as in step 2.
 5.  Perform the weight update: ![\\Delta w\_{ij} \\propto \\langle
     v\_ih\_j\\rangle\_\\text{data} - \\langle
-    v\_ih\_j\\rangle\_\\text{reconstruction}](//upload.wikimedia.org/math/9/9/c/99cd1aef38a92bde5657aea156b83e90.png).
+    v\_ih\_j\\rangle\_\\text{reconstruction}](http://upload.wikimedia.org/math/9/9/c/99cd1aef38a92bde5657aea156b83e90.png).
 
 Once an RBM is trained, another RBM can be "stacked" atop of it to
 create a multilayer model. Each time another RBM is stacked, the input
@@ -539,7 +538,7 @@ Despite the approximation of CD to maximum likelihood being very crude
 empirical results have shown it to be an effective method for use with
 training deep architectures.[[37]](#cite_note-RBMTRAIN-37)
 
-### Convolutional neural networks[[edit](/w/index.php?title=Deep_learning&action=edit&section=8 "Edit section: Convolutional neural networks")]
+## Convolutional neural networks
 
 Main article: [Convolutional neural
 network](http://en.wikipedia.org/wiki/Convolutional_neural_network "Convolutional neural network")
@@ -556,7 +555,7 @@ CNNs are easier to train than other regular, deep, feed-forward neural
 networks and have many fewer parameters to estimate, making them a
 highly attractive architecture to use.[[42]](#cite_note-42)
 
-### Convolutional Deep Belief Networks[[edit](/w/index.php?title=Deep_learning&action=edit&section=9 "Edit section: Convolutional Deep Belief Networks")]
+## Convolutional Deep Belief Networks
 
 Arguably the most recent achievement in deep learning is from the use of
 convolutional deep belief networks (CDBN). A CDBN is very similar to
@@ -572,9 +571,9 @@ Belief Networks. Recently, many benchmark results on standard image
 datasets like CIFAR [[43]](#cite_note-43) have been obtained using
 CDBNs.[[44]](#cite_note-44)
 
-### Results[[edit](/w/index.php?title=Deep_learning&action=edit&section=10 "Edit section: Results")]
+## Results
 
-#### Automatic speech recognition[[edit](/w/index.php?title=Deep_learning&action=edit&section=11 "Edit section: Automatic speech recognition")]
+### Automatic speech recognition
 
 The results shown in the table below are for automatic speech
 recognition on the popular [TIMIT](http://en.wikipedia.org/wiki/TIMIT "TIMIT") data set. This
@@ -595,7 +594,7 @@ rates presented are phone error rates (PER).
   Monophone DBN-DNN on fbank            20.7
   Convolutional DNN                     20.0
 
-#### Image classification[[edit](/w/index.php?title=Deep_learning&action=edit&section=12 "Edit section: Image classification")]
+### Image classification
 
 A common evaluation set for image classification is the [MNIST
 database](http://en.wikipedia.org/wiki/MNIST_database "MNIST database") data set. MNIST is
@@ -606,8 +605,8 @@ can be found in.[[46]](#cite_note-YANNMNIST-46) The current best
 result on MNIST is an error rate of 0.23%, achieved by Ciresan et al. in
 2012.[[47]](#cite_note-CIRESAN2012-47)
 
-Deep learning in the human brain[[edit](/w/index.php?title=Deep_learning&action=edit&section=13 "Edit section: Deep learning in the human brain")]
---------------------------------------------------------------------------------------------------------------------------------------------------
+Deep learning in the human brain
+---
 
 Computational deep learning is closely related to a class of theories of
 brain development (specifically, neocortical development) proposed by
@@ -658,8 +657,8 @@ training. The theory of deep learning therefore sees the coevolution of
 culture and cognition as a fundamental condition of human
 evolution.[[54]](#cite_note-SHRAGER2-54)
 
-Publicity around deep learning[[edit](/w/index.php?title=Deep_learning&action=edit&section=14 "Edit section: Publicity around deep learning")]
-----------------------------------------------------------------------------------------------------------------------------------------------
+Publicity around deep learning
+---
 
 Deep learning is often presented as a step towards realising [strong
 AI](http://en.wikipedia.org/wiki/Artificial_general_intelligence "Artificial general intelligence")[[55]](#cite_note-HERN2013-55)
@@ -681,8 +680,8 @@ products at Google and also help deal with the growing amount of data
 Google has. Google also purchased Hinton's company, DNNresearch, for an
 undisclosed sum of money.
 
-Criticisms[[edit](/w/index.php?title=Deep_learning&action=edit&section=15 "Edit section: Criticisms")]
-------------------------------------------------------------------------------------------------------
+Criticisms
+----
 
 A main criticism of deep learning concerns the lack of theory
 surrounding many of the methods. Most of the learning in deep
@@ -715,8 +714,8 @@ ensemble of techniques, ranging from the statistical technique of
 [deductive reasoning](http://en.wikipedia.org/wiki/Deductive_reasoning "Deductive reasoning")."
 [[57]](#cite_note-MARCUS-57)
 
-See also[[edit](/w/index.php?title=Deep_learning&action=edit&section=16 "Edit section: See also")]
---------------------------------------------------------------------------------------------------
+See also
+---
 
 -   [Graphical model](http://en.wikipedia.org/wiki/Graphical_model "Graphical model")
 -   [Applications of artificial
@@ -727,8 +726,7 @@ See also[[edit](/w/index.php?title=Deep_learning&action=edit&section=16 "Edit se
 -   [Center for Biological and Computational Learning at
     MIT](http://en.wikipedia.org/wiki/CBCL_(MIT) "CBCL (MIT)")
 
-References[[edit](/w/index.php?title=Deep_learning&action=edit&section=17 "Edit section: References")]
-------------------------------------------------------------------------------------------------------
+# References
 
 1.  \ [***a***](#cite_ref-BENGIO2012_1-0)
     [***b***](#cite_ref-BENGIO2012_1-1)
