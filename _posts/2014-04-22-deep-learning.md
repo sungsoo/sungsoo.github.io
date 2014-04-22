@@ -141,7 +141,7 @@ algorithms by orders of magnitude, bringing running times of weeks back
 to
 days.[[10]](#cite_note-CIRESAN2010-10)[[11]](#cite_note-RAINA2009-11)
 
-<a name="Fundamental concepts"></a>
+<a name="Fundamental_concepts"></a>
 
 Fundamental concepts
 ---
@@ -173,7 +173,7 @@ these algorithms. The deep belief network introduced in the next section
 is an example of a deep structure that can be trained in an unsupervised
 manner.[[1]](#cite_note-BENGIO2012-1)
 
-<a name="Deep learning in artificial neural networks"></a>
+<a name="Deep_learning_in_artificial_neural_networks"></a>
 
 Deep learning in artificial neural networks
 ---
@@ -297,7 +297,7 @@ Such supervised deep learning methods also were the first artificial
 pattern recognizers to achieve human-competitive performance on certain
 tasks.[[29]](#cite_note-ciresan2011CVPR-29)
 
-<a name="Deep learning architectures"></a>
+<a name="Deep_learning_architectures"></a>
 
 Deep learning architectures
 ---
@@ -306,7 +306,7 @@ It is worth explaining some common architectures used for deep learning.
 Basic models of deep neural networks and deep belief networks are given
 below.
 
-<a name="Deep neural networks"></a>
+<a name="Deep_neural_networks"></a>
 
 ## Deep neural networks
 
@@ -385,7 +385,7 @@ is the probability output for ![ j
 after applying the activation
 function.[[34]](#cite_note-HINTON2012-34)
 
-<a name="Issues with deep neural networks"></a>
+<a name="Issues_with_deep_neural_networks"></a>
 
 ## Issues with deep neural networks
 
@@ -426,7 +426,7 @@ However, it is hard to make use of large cluster machines for training
 DNNs, so better methods of parallelizing training will undoubtedly give
 a significant speed up as well.
 
-<a name="Deep belief networks"></a>
+<a name="Deep_belief_networks"></a>
 
 ## Deep belief networks
 
@@ -551,7 +551,7 @@ Despite the approximation of CD to maximum likelihood being very crude
 empirical results have shown it to be an effective method for use with
 training deep architectures.[[37]](#cite_note-RBMTRAIN-37)
 
-<a name="Convolutional neural networks"></a>
+<a name="Convolutional_neural_networks"></a>
 
 ## Convolutional neural networks
 
@@ -570,7 +570,7 @@ CNNs are easier to train than other regular, deep, feed-forward neural
 networks and have many fewer parameters to estimate, making them a
 highly attractive architecture to use.[[42]](#cite_note-42)
 
-<a name="Convolutional Deep Belief Networks"></a>
+<a name="Convolutional_Deep_Belief_Networks"></a>
 
 ## Convolutional Deep Belief Networks
 
@@ -592,7 +592,7 @@ CDBNs.[[44]](#cite_note-44)
 
 ## Results
 
-<a name="Automatic speech recognition"></a>
+<a name="Automatic_speech_recognition"></a>
 
 ### Automatic speech recognition
 
@@ -640,7 +640,7 @@ rates presented are phone error rates (PER).
 </tr>
 </table>
 
-<a name="Image classification"></a>
+<a name="Image_classification"></a>
 
 ### Image classification
 
@@ -653,7 +653,7 @@ can be found in.[[46]](#cite_note-YANNMNIST-46) The current best
 result on MNIST is an error rate of 0.23%, achieved by Ciresan et al. in
 2012.[[47]](#cite_note-CIRESAN2012-47)
 
-<a name="Deep learning in the human brain"></a>
+<a name="Deep_learning_in_the_human_brain"></a>
 
 Deep learning in the human brain
 ---
@@ -707,7 +707,7 @@ training. The theory of deep learning therefore sees the coevolution of
 culture and cognition as a fundamental condition of human
 evolution.[[54]](#cite_note-SHRAGER2-54)
 
-<a name="Publicity around deep learning"></a>
+<a name="Publicity_around_deep_learning"></a>
 
 Publicity around deep learning
 ---
@@ -768,7 +768,7 @@ ensemble of techniques, ranging from the statistical technique of
 [deductive reasoning](http://en.wikipedia.org/wiki/Deductive_reasoning "Deductive reasoning")."
 [[57]](#cite_note-MARCUS-57)
 
-<a name="See also"></a>
+<a name="See_also"></a>
 
 See also
 ---
