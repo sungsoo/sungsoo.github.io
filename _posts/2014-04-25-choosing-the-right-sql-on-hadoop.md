@@ -7,6 +7,12 @@ tags: [hadoop & mapreduce, nosql]
 
 ---
 
+## Article Source
+* Title: [어떤 SQL-on-Hadoop을 선택해야 할까?](http://blrunner.com/67)
+* Authors: 정재화
+
+ 
+   
 # Choosing the Right SQL-on-Hadoop
 
 
