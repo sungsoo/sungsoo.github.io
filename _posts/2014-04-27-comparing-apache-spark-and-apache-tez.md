@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Comparing Apache Tez and Microsoft Dryad
+title: Apache Spark and Apache Tez
 date: 2014-04-27
 categories: [computer science]
 tags: [hadoop & mapreduce, tez]
@@ -11,7 +11,7 @@ tags: [hadoop & mapreduce, tez]
 * Title: [Big Data Joe: Things You Need To Know – Apache Spark and Apache Tez – Near Real-Time Analysis of Data at Rest](http://www.trace3.com/blog/?p=1589)
 
 
-![](http://sungsoo.github.com/images/spark-vs-dryad.png)
+![](http://sungsoo.github.com/images/spark-vs-tez.png)
 # Apache Spark and Apache Tez – Near Real-Time Analysis of Data at Rest
 
 A buzzword for Big Data is “Real-time” and every product is stating they
@@ -69,6 +69,7 @@ Here is a break down of these 2 projects.
 ![]()
 
 **TL;DR (Too Long; Didn’t Read)**
+
  There are a lot of products, projects and companies that are trying to
 solve near real-time analysis of data at rest but Apache Spark and
 Apache Tez seem to be the most promising. While these two projects are
