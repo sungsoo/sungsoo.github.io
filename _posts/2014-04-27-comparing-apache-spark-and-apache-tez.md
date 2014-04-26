@@ -50,7 +50,7 @@ Apache Spark
 How It Fits: Apache Spark
 ---
 
-![]()
+![](http://sungsoo.github.com/images/apache-spark.png)
 
 Apache Tez
 ---
@@ -70,7 +70,7 @@ Apache Tez
 How It Fits: Apache Tez
 ---
 
-![]()
+![](http://sungsoo.github.com/images/yarn-3.png)
 
 TL;DR (Too Long; Didn’t Read)
 ---
