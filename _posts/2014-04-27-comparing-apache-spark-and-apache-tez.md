@@ -31,7 +31,8 @@ clusters needed to run the job and avoiding unnecessary writes to HDFS.
 
 Here is a break down of these 2 projects.
 
-**Apache Spark**
+Apache Spark
+---
 
 -   Creators founded company called “Databricks” and received 14mil from
     Andreessen Horowitz in it’s first round of funding.
@@ -46,11 +47,13 @@ Here is a break down of these 2 projects.
 -   Utilizes a tool called “Shark” which makes Apache Hive Spark
     compatible to give you the ability to run SQL-like queries
 
-**How It Fits: Apache Spark**
+How It Fits: Apache Spark
+---
 
 ![]()
 
-**Apache Tez**
+Apache Tez
+---
 
 -   Hortonworks created and supported
 -   Created to be run natively on YARN
@@ -64,11 +67,13 @@ Here is a break down of these 2 projects.
     the ability to replace MR in the long run as it’s functionality is
     extended
 
-**How It Fits: Apache Tez**
+How It Fits: Apache Tez
+---
 
 ![]()
 
-**TL;DR (Too Long; Didn’t Read)**
+TL;DR (Too Long; Didn’t Read)
+---
 
  There are a lot of products, projects and companies that are trying to
 solve near real-time analysis of data at rest but Apache Spark and
@@ -78,11 +83,11 @@ differently (Spark replacing MapReduce and Tez complimenting MapReduce)
 I think there is room for both, at least for the time being.
 
 Want To Know More?
-Apache Spark: [http://spark.apache.org/](http://spark.apache.org/)
- Databricks: [http://databricks.com/](http://databricks.com/)
- Shark: [http://shark.cs.berkeley.edu/](http://shark.cs.berkeley.edu/)
- Apache Tez:
-[http://tez.incubator.apache.org/](http://tez.incubator.apache.org/)
- Hortonworks: “A framework for near real-time big data processing” –
-[http://hortonworks.com/hadoop/tez/](http://hortonworks.com/hadoop/tez/)
- Apache Hive: [https://hive.apache.org/](https://hive.apache.org/)
+---
+
+* Apache Spark: [http://spark.apache.org/](http://spark.apache.org/)
+* Databricks: [http://databricks.com/](http://databricks.com/)
+* Shark: [http://shark.cs.berkeley.edu/](http://shark.cs.berkeley.edu/)
+* Apache Tez:[http://tez.incubator.apache.org/](http://tez.incubator.apache.org/)
+* Hortonworks: “A framework for near real-time big data processing” – [http://hortonworks.com/hadoop/tez/](http://hortonworks.com/hadoop/tez/)
+* Apache Hive: [https://hive.apache.org/](https://hive.apache.org/)
