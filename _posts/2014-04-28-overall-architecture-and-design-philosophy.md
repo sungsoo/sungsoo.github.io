@@ -3,7 +3,7 @@ layout: post
 title: Overall Architecture and Design Philosophy
 date: 2014-04-28
 categories: [computer science]
-tags: [hadoop & mapreduce, tez]
+tags: [design patterns, hadoop & mapreduce]
 
 ---
 
