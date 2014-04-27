@@ -40,7 +40,9 @@ The type can be one of:
 Again, we can see uses of each annotation in the *Book* message format illustrated in Figure 21.7.
 The unique number (=1, =2 and so on) represents the tag that a particular field has in the binary encoding of the message.
 This specification is contained in a *.proto* file and compiled by a *protoc* tool. The output of this tool is generated code that allows programmers to manipulate the particular message type, in particular assigning/extracting values to/from messages. In more detail, the *protoc* tool generates a *builder* class that provides *getter* and *setter* methods for each field together with additional methods to *test* if a method has been set and to *clear* a field to the associated null value. For example, the following methods would be generated for the title field:
-```javapublic boolean hasTitle();public java.lang.String getTitle(); public Builder setTitle(String value); public Builder clearTitle();```The importance of the builder class is that while messages are immutable in protocol buffers, builders are mutable and are used to construct and manipulate new messages.
+```javapublic boolean hasTitle();public java.lang.String getTitle();   
+public Builder setTitle(String value);   
+public Builder clearTitle();```The importance of the builder class is that while messages are immutable in protocol buffers, builders are mutable and are used to construct and manipulate new messages.
 For repeated fields the generated code is slightly more complicated, with methods provided to return a count of the number of elements in the associated list, to get or set specific fields in the list, to append a new element to a list and to add a set of elements to a list (the addAll method). We illustrate this by example by listing the methods generated for the keyword field:```javapublic List<string> getKeywordList();public int getKeywordCount();public string getKeyword(int index);public Builder setKeyword(int index, string value); 
 public Builder addKeyword(string value);public Builder addAllKeyword(Iterable<string> value); 
 public Builder clearKeyword();
