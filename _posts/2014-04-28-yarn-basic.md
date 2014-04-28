@@ -221,7 +221,7 @@ import the guide directly.
 
 `build.gradle`
 
-``` {.prettyprint .java .language-java}
+```java
 buildscript {
     repositories {
         maven { url "http://repo.spring.io/libs-milestone" }
@@ -290,7 +290,7 @@ task wrapper(type: Wrapper) {
 
 `settings.gradle`
 
-``` {.prettyprint .java .language-java}
+```java
 rootProject.name = 'gs-yarn-basic'
 include 'gs-yarn-basic-client','gs-yarn-basic-appmaster','gs-yarn-basic-container','gs-yarn-basic-dist'
 ```
@@ -306,7 +306,7 @@ Here you create `ContainerApplication` and `HelloPojo` classes.
 
 `gs-yarn-basic-container/src/main/java/hello/container/ContainerApplication.java`
 
-``` {.prettyprint .java .language-java}
+```java
 package hello.container;
 
 import org.springframework.boot.SpringApplication;
@@ -351,7 +351,7 @@ user facing logic what container is supposed to do.
 
 `gs-yarn-basic-container/src/main/java/hello/container/HelloPojo.java`
 
-``` {.prettyprint .java .language-java}
+```java
 package hello.container;
 
 import org.apache.commons.logging.Log;
@@ -427,7 +427,7 @@ Here you create an `AppmasterApplication` class.
 
 `gs-yarn-basic-appmaster/src/main/java/hello/appmaster/AppmasterApplication.java`
 
-``` {.prettyprint .java .language-java}
+```java
 package hello.appmaster;
 
 import org.springframework.boot.SpringApplication;
@@ -475,7 +475,7 @@ Here you create a `ClientApplication` class.
 
 `gs-yarn-basic-client/src/main/java/hello/client/ClientApplication.java`
 
-``` {.prettyprint .java .language-java}
+```java
 package hello.client;
 
 import org.springframework.boot.SpringApplication;
@@ -517,7 +517,7 @@ Create a new yaml configuration file for all sub-projects.
 `gs-yarn-basic-appmaster/src/main/resources/application.yml`
 `gs-yarn-basic-client/src/main/resources/application.yml`
 
-``` {.prettyprint .yaml .language-yaml}
+```
 spring:
     hadoop:
         fsUri: hdfs://localhost:8020
@@ -562,25 +562,25 @@ Build the Application
 
 For gradle simply execute the `clean` and `build` tasks.
 
-``` {.prettyprint .text .language-text}
+``` 
 ./gradlew clean build
 ```
 
 To skip existing tests if any:
 
-``` {.prettyprint .text .language-text}
+``` 
 ./gradlew clean build -x test
 ```
 
 For maven simply execute the `clean` and `package` goals.
 
-``` {.prettyprint .text .language-text}
+``` 
 mvn clean package
 ```
 
 To skip existing tests if any:
 
-``` {.prettyprint .text .language-text}
+``` 
 mvn clean package -DskipTests=true
 ```
 
