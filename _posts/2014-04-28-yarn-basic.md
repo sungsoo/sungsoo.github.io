@@ -14,7 +14,7 @@ tags: [yarn]
 
 # Simple YARN Application
 
-Getting Started
+## Getting Started
 
 This guide walks you through the process of creating a Spring Hadoop
 YARN application.
