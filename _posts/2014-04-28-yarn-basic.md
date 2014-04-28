@@ -637,7 +637,6 @@ Summary
 
 Congratulations! You’ve just developed a Spring YARN application!
 
-[![](https://drone.io/github.com/spring-guides/gs-yarn-basic/status.png)](https://drone.io/github.com/spring-guides/gs-yarn-basic/latest)
 
 Get the Code
 ------------
