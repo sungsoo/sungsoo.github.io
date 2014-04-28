@@ -10,7 +10,7 @@ tags: [yarn]
 # Article Source
 * Title: [GETTING STARTED - Simple YARN Application](http://spring.io/guides/gs/yarn-basic/)
 
-
+[![](http://sungsoo.github.com/images/yarn-sample.png)](http://sungsoo.github.com/images/yarn-sample.png)
 
 # Simple YARN Application
 
