@@ -19,7 +19,7 @@ Gates](http://hortonworks.com/blog/author/alan_gates/ "Posts by Alan Gates")
 **UPDATE: Since this article was posted, the Stinger initiative has
 continued to drive to the goal of 100x Faster Hive. You can read the
 latest information at
-[http://hortonworks.com/stinger](http://hortonworks.com/stinger)**
+[http://hortonworks.com/labs/stinger](http://hortonworks.com/labs/stinger)**
 
 Introduced by Facebook in 2007, [Apache
 Hive](http://hive.apache.org/) and its HiveQL interface has become the
