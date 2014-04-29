@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Stinger Intiative - Making Apache Hive 100 Times Faster
+title: Stinger - Interactive Query for Hive
 date: 2014-04-29
 categories: [computer science]
 tags: [hadoop & mapreduce, nosql]
@@ -8,114 +8,151 @@ tags: [hadoop & mapreduce, nosql]
 ---
 
 # Article Source
-* Title: [Stinger Intiative - Making Apache Hive 100 Times Faster](http://hortonworks.com/blog/100x-faster-hive/)
+* Title: [Stinger : Interactive Query for Hive](http://hortonworks.com/labs/stinger/)
 * Authors: [Alan
 Gates](http://hortonworks.com/blog/author/alan_gates/ "Posts by Alan Gates")
 
-[![](http://sungsoo.github.com/images/stinger.png)](http://sungsoo.github.com/images/stinger.png)
+[![](http://sungsoo.github.com/images/stinger-initiative.png)](http://sungsoo.github.com/images/stinger-initiative.png)
 
-# The Stinger Initiative: Making Apache Hive 100 Times Faster
+# Stinger : Interactive Query for Hive
 
-**UPDATE: Since this article was posted, the Stinger initiative has
-continued to drive to the goal of 100x Faster Hive. You can read the
-latest information at
-[http://hortonworks.com/labs/stinger](http://hortonworks.com/labs/stinger)**
+Speed, Scale and SQL Compatibility with Apache Hive
 
-Introduced by Facebook in 2007, [Apache
-Hive](http://hive.apache.org/) and its HiveQL interface has become the
-**de facto SQL interface** for Hadoop.  Today, companies of all types
-and sizes use Hive to access Hadoop data in a familiar way and to extend
-value to their organization or customers either directly or though a
-broad ecosystem of existing BI tools that rely on this key proven
-interface.  The who’s who of business analytics have already adopted
-Hive.
+![](http://hortonworks.com/wp-content/uploads/2013/10/delivered.png)
 
-Apache Hive was originally built for large-scale operational batch
-processing and it is very effective with reporting, data mining and data
-preparation use cases.  These usage patterns remain very important but
-with widespread adoption of Hadoop, the enterprise requirement for
-Hadoop to become more real time or interactive has increased in
-importance as well. At Hortonworks, we believe in the power of the open
-source community to innovate faster than any proprietary offering and
-the Stinger initiative is proof of this once again as we collaborate
-with others to improve Hive performance.
+Apache Hive is the de facto standard for SQL-in-Hadoop with more
+enterprises relying on this open source project than any
+alternative. The Stinger Initiative is a broad, community-based effort
+to drive the future of Apache Hive, delivering 100x performance
+improvements at petabyte scale with familiar SQL semantics.
 
-## So, What is Stinger?
+Project Goals
+-------------
 
-Enabling Hive to answer human-time use cases (i.e. queries in the 5-30
-second range) such as big data exploration, visualization, and
-parameterized reports without needing to resort to yet another tool to
-install, maintain and learn can deliver a lot of value to the large
-community of users with existing Hive skills and investments.
+**Speed**
 
-To this end, we have launched the Stinger Initiative, with input and
-participation from the broader community, to enhance Hive with more SQL
-and better performance for these human-time use cases. All the while,
-HiveQL remains the same before and after these advancements so it just
-gets better. And in keeping with the ecosystem of existing tools, it is
-complementary to best-of-breed data warehouses and analytic platforms.
+Deliver interactive query through 100x performance increases as compared
+to Hive 10.
 
-[![stingerRoad](http://hortonworks.com/wp-content/uploads/2013/02/stingerRoad-300x236.png)](http://hortonworks.com/wp-content/uploads/2013/02/stingerRoad.png)
+**Scale**
 
--   First,
-    we are making Hive a more suitable tool for the decision support
-    queries people want to perform on Hadoop.  This includes adding
-    analytics features like the OVER clause, support for subqueries in
-    WHERE, and aligning Hive’s type system more with the standard SQL
-    model.
--   Second, we are optimizing Hive’s query execution plans and based on
-    our initial changes, we have already seen query time drop by 90% on
-    some of our test queries. We are also looking at additional changes
-    inside Hive’s execution engine that we believe will significantly
-    increase the number of records per second that a Hive task can
-    process.
--   Third, we have introduced a new columnar file format (i.e. ORCFile)
-    within the Hive community to provide a more modern, efficient, and
-    high performing way to store Hive data.
--   And lastly, we’ve introduced a new runtime framework, called Tez,
-    which aims to eliminate Hive’s latency and throughput constraints
-    that result from its reliance on MapReduce. Tez optimizes Hive job
-    execution by eliminating unnecessary tasks, synchronization
-    barriers, and reads from and write to HDFS.  This optimizes the
-    execution chain within Hadoop and drastically speeds Hive’s workload
-    processing.
+The only SQL interface to Hadoop designed for queries that scale from
+Terabytes to Petabytes.
 
-All of these modifications to Hive are underway in the open and an
-initial preview will be available in advance of [Hadoop Summit Amsterdam
-in March](http://hadoopsummit.org/amsterdam/).
+**SQL**
 
-## Embrace the community, Embrace Hive…
+Support the broadest array of SQL semantics for analytic applications
+running in Hadoop.
 
-A diverse group of individuals within the Hive community are
-collaborating on these efforts. As part f the community, a wide group
-of people contributed to this effort, including resources from SAP,
-[Microsoft](http://hortonworks.com/microsoft), Facebook and Hortonworks.
+Status
+------
 
-Harish Butani from SAP has led an effort to add analytics and windowing
-functions to Hive.  This will add the OVER clause for use with existing
-aggregate functions as well as adding analytics functions like RANK and
-NTILE and windowing functions like LEAD and LAG; you can see this work
-at [HIVE-896](https://issues.apache.org/jira/browse/HIVE-896).  Namit
-Jain from Facebook has been spending a lot of time lately optimizing
-Hive’s query execution planning so that it performs joins and other
-operations more efficiently and with less need for hints from the user. 
-Hortonworks engineers have been collaborating on these and other
-community efforts to improve Hive.
+The Stinger initiative outlined three phases, and the Apache community
+delivered each on schedule. During Stinger’s thirteen months of
+continuous community collaboration 145 developers from 44 companies
+closed 1,672 Jira and added 392,000 lines of Java code. In just over one
+year, Stinger delivered speed, scale and SQL semantics.
 
-Owen O’Malley, a Hortonworks co-founder and early Hadoop developer, has
-been working with Facebook on the new ORCFile in order to greatly
-improve performance when Hive is reading, writing, and processing data;
-you can see this work at
-[HIVE-3874](https://issues.apache.org/jira/browse/HIVE-3874). We are
-also working on farther reaching changes and optimizations such as
-reworking Hive’s operators to process records in blocks of a thousand or
-more and thus be much more efficient than it is today.
+In the first phase of delivery, with HDP 1.3, we saw:
 
-We believe the performance changes we are making today, along with the
-work being done in
-[Tez](http://hortonworks.com/blog/introducing-tez-faster-hadoop-processing)
-will transform Hive into a single tool that Hadoop users can use to do
-report generation, ad hoc queries, and large batch jobs spanning 10s or
-100s of terabytes.
+-   Performance improvements of 35x-45x for common analytical queries
+    and
+-   Introduction of SQL windowing functions such as Rank, Lead, Lag,
+    etc.
+-   Introduction of the ORCFile format
 
-Why reinvent the wheel?
+The release of HDP 2.0 marked the second major milestone of Stinger
+based improvements for Hive, introducing:
+
+-   A preview of the vectorized query engine, jointly developed with
+    Microsoft and other community contributors, that speeds all types of
+    queries, adding another 5x-10x improvement.
+-   Simplified SQL interoperability through the new VARCHAR and DATE
+    datatypes and
+-   A new query optimizer that speeds complex queries by several
+    factors.
+
+Phase 3, delivered with HDP 2.1, will complete the Stinger Initiative on
+schedule with:
+
+-   Apache Hive on  Apache Tez, with pre-launched hot containers
+-   Vectorized query execution
+-   ACID framework for managing dimension tables and other master data
+-   Support for additional SQL functions and operators
+-   Support for data access: HTTP, SSL, Kerberos authentication
+
+The improvements to Apache Hive—through the Stinger Initiative—delivered
+order-of-magnitude improvements in query latency and pushed several
+types of queries past 100x faster than in Hive 0.10.
+
+## Speed
+
+HDP 2.0 introduced several major new performance features that benefit
+both small reporting queries and deep analytical queries. Some of which
+are described in this table:
+
+![](http://hortonworks.com/wp-content/uploads/2013/09/hive1.png)
+
+We looked at TPC-DS Query 27, a fairly simple reporting query, back in
+February 2013 and showed that some improvements to the Hive query
+planner led to massive performance benefits. HDP 2.0 brings incremental
+progress by introducing vectorized query, which makes the map stages far
+more efficient.
+
+![](http://hortonworks.com/wp-content/uploads/2013/09/hive2.png)
+
+HDP 2.1 delivers Apache Hive 0.13 on Apache Tez. With Hive on Tez, users
+have the option of executing queries on Tez. Tez’s dataflow model on a
+DAG of nodes facilitates simpler, more efficient query plans, which
+translates to significant performance improvements.
+
+Hive 0.13 also delivers vectorized query execution mode that performs
+CPU computations 5-10x faster, translating to a 2-3x improvement in
+query performance.
+
+**[Further discussion on speed
+here…](http://hortonworks.com/blog/stinger-phase-2-the-journey-to-100x-faster-hive/)**
+
+## Scale
+
+ORCFile was introduced in Hive 0.11 and offered excellent compression,
+delivered through a number of techniques including run-length encoding,
+dictionary encoding for strings and bitmap encoding. These improvements
+meant:
+
+-   **Sustained Query Times.** Apache Hive 0.12 provides sustained
+    acceptable query times even at petabyte scale.
+-   **Smaller Footprint**. Better encoding with ORCFile in Apache Hive
+    12 reduces resource requirements for a cluster.
+
+This picture shows the sizes of the TPC-DS dataset at Scale 500 in
+various encodings. This dataset contains randomly generated data
+including strings, floating point and integer data.
+
+![ORCFile](http://hortonworks.com/wp-content/uploads/2013/10/ORCFile.png)
+
+We’ve already seen customers whose clusters were maxed out for storage
+move to ORCFile as a way to free up space while preserving complete
+compatibility with existing jobs.
+
+Data stored in ORCFile can be read or written through HCatalog, so any
+Pig or Map/Reduce process works seamlessly. Hive 0.12 built on Hive
+0.11’s impressive compression ratios and delivered deep integration at
+the Hive and execution layers, which further accelerated queries even
+over larger datasets.
+
+**[Further discussion on ORCFile
+here…](http://hortonworks.com/blog/orcfile-in-hdp-2-better-compression-better-performance/)**
+
+## SQL Semantics
+
+Our goal with SQL support is simple: Make Apache Hive a comprehensive
+and compliant SQL engine that meets enterprise needs. Hive 0.13
+introduces the DECIMAL and CHAR datatypes. With the SQL standard-based
+authorization feature in Hive 0.13, users can now define their
+authorization policies in an SQL-compliant fashion. The Apache Hive
+community extended SQL language to support *grant* and *revoke* on
+entities. Hive also now supports *show roles*, *user privileges*, and
+*active privileges*.
+
+![SQLSemantics](http://hortonworks.com/wp-content/uploads/2014/04/SQL-In-Stinger-Phase-3.png)
