@@ -7,7 +7,7 @@ tags: [big data, hadoop & mapreduce, tez]
 
 ---
 
-[![](http://sungsoo.github.com/images/singer-project.png)](http://sungsoo.github.com/images/singer-project.png)
+[![](http://sungsoo.github.com/images/stinger-project.png)](http://sungsoo.github.com/images/stinger-project.png)
 
 # Abstract
 
