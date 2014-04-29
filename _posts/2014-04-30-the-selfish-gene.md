@@ -2,7 +2,7 @@
 layout: post
 title: The Selfish Gene
 date: 2014-04-30
-categories: [literature, human]
+categories: [literature, evolutionary biology]
 tags: [presentation]
 
 ---
