@@ -18,8 +18,6 @@ Gates](http://hortonworks.com/blog/author/alan_gates/ "Posts by Alan Gates")
 
 Speed, Scale and SQL Compatibility with Apache Hive
 
-![](http://hortonworks.com/wp-content/uploads/2013/10/delivered.png)
-
 Apache Hive is the de facto standard for SQL-in-Hadoop with more
 enterprises relying on this open source project than any
 alternative. The Stinger Initiative is a broad, community-based effort
