@@ -12,7 +12,7 @@ tags: [presentation]
 
 # Richard Dawkins
 
-[![](http://sungsoo.github.com/images/dawkins.jpg.png)](http://sungsoo.github.com/images/dawkins.jpg.png)
+[![](http://sungsoo.github.com/images/dawkins.jpg)](http://sungsoo.github.com/images/dawkins.jpg)
 
 세계에서 가장 영향력 있는 과학자이자 저술가인 리처드 도킨스는 1941년 케냐 나이로비에서 태어나 옥스퍼드대학교에서 수학하였다. 이후 동물행동학 연구로 노벨상을 수상한 니코 틴버겐에게 배운 뒤 촉망 받는 젊은 학자로 학문적 여정을 시작했다. 옥스퍼드대학교에서 과학의 대중적 이해를 전담하는 석좌교수직을 맡았으며, 1987년에 왕립문화학회상과 로스앤젤레스 타임스 문학상을 수상했다. 
 
