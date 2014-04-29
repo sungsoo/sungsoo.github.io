@@ -7,6 +7,8 @@ tags: [big data, hadoop & mapreduce, tez]
 
 ---
 
+[![](http://sungsoo.github.com/images/singer-project.png)](http://sungsoo.github.com/images/singer-project.png)
+
 # Abstract
 
 Stefan Groschupf and Ari Zilka, the CTO of Hortonworks talk about Ari's prior work as the founder and CTO of Terracotta. Ari diagrams how Terracotta works before diving into what he does as the new CTO of Hortonworks. Ari discusses Project Stinger, which is aimed at making Hive faster, and talks about ORC files and vectorization for the storage and access layer.
