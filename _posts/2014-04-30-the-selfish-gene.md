@@ -18,6 +18,8 @@ tags: [presentation]
 
 지은 책으로 <확장된 표현형 (The Extended Phenotype)>, <눈먼 시계공 (The Blind Watchmaker)>, <만들어진 신 (The God Delusion)>등이 있다.
 
+# Beautiful Minds
+
 <iframe width="600" height="400" src="//www.youtube.com/embed/BLtOffrpsHQ" frameborder="0" allowfullscreen></iframe>
 
 ---
