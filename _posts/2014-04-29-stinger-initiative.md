@@ -16,7 +16,9 @@ Gates](http://hortonworks.com/blog/author/alan_gates/ "Posts by Alan Gates")
 
 # Stinger : Interactive Query for Hive
 
-Speed, Scale and SQL Compatibility with Apache Hive
+### Speed, Scale and SQL Compatibility with Apache Hive
+
+[![](http://sungsoo.github.com/images/stinger-timeline.png)](http://sungsoo.github.com/images/stinger-timeline.png)
 
 Apache Hive is the de facto standard for SQL-in-Hadoop with more
 enterprises relying on this open source project than any
