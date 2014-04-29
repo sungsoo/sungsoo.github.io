@@ -18,6 +18,10 @@ tags: [presentation]
 
 지은 책으로 <확장된 표현형 (The Extended Phenotype)>, <눈먼 시계공 (The Blind Watchmaker)>, <만들어진 신 (The God Delusion)>등이 있다.
 
+<iframe width="600" height="400" src="//www.youtube.com/embed/BLtOffrpsHQ" frameborder="0" allowfullscreen></iframe>
+
+---
+
 # 1. 사람은 왜 존재하는가? 
 
   원시수프를 생각해보라고 다윈이 이미 명쾌하게 설명했잖아. 더 이상 무슨 설명이 필요한가. 그러나 다윈의 “생물은 종의 이익을 위하여” 또는 ‘집단의 이익을 위하여“ 행위하도록 진화한다는 오해라고 생각해, 생물에서 동물의 생활은 대부분 번식에 이바지하고 있고 자연계에서 볼 수 있는 대부분의 이타적 자기 행위는 어미가 새끼에게 하는 것이거든. 이타주의가 바람직하다고 물론 그렇겠지. 하지만 이타주의의 대상은 가족인가, 국가인가, 인종인가, 종인가, 전체 생물인가, 결국은 한정된 자원을 둘러싼 싸움에서는 자기네 집단에 동조하게 되지 않겠는가? 
