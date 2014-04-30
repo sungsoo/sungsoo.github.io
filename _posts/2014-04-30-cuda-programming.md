@@ -6,6 +6,10 @@ categories: [computer science]
 tags: [parallel programming]
 
 ---
+# Article Source
+* Title: [GPU Accelerated Computing with C and C++](https://developer.nvidia.com/how-to-cuda-c-cpp)
+* Source: NVIDIA CUDA Zone
+
 
 [![](http://sungsoo.github.com/images/cuda.png)](http://sungsoo.github.com/images/cuda.png)
 
