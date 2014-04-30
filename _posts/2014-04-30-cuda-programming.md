@@ -50,10 +50,9 @@ Getting Started:
     network & system support Web Sockets in section "Web Sockets (Port
     80)", all check marks should be green.
 3.  Download and install the [CUDA Toolkit](/cuda-toolkit).
-    -   You can watch a quick how-to video for Windows showing this
+	- You can watch a quick how-to video for Windows showing this
         process:
-
-	-   Also see Getting Started Guides for
+    - Also see Getting Started Guides for
         [Windows](http://docs.nvidia.com/cuda/cuda-getting-started-guide-for-microsoft-windows/index.html),
         [Mac](http://docs.nvidia.com/cuda/cuda-getting-started-guide-for-mac-os-x/index.html),
         and
