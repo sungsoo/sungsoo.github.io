@@ -70,10 +70,10 @@ Technologies](/wiki/AMAX_Information_Technologies "AMAX Information Technologies
 [Hewlett-Packard](/wiki/Hewlett-Packard "Hewlett-Packard") and [Silicon
 Graphics](/wiki/Silicon_Graphics "Silicon Graphics") are some of the few
 companies that provides a complete line of GPU clusters and
-systems.^[[1]](#cite_note-1)^
+systems.[[1]](#cite_note-1)
 
 [ATI](/wiki/ATI_Technologies "ATI Technologies")
-currently^[*[when?](/wiki/Wikipedia:Manual_of_Style/Dates_and_numbers#Chronological_items "Wikipedia:Manual of Style/Dates and numbers")*]^
+currently[*[when?](/wiki/Wikipedia:Manual_of_Style/Dates_and_numbers#Chronological_items "Wikipedia:Manual of Style/Dates and numbers")*]
 does not have a list of Preferred Partners. ATI Marketing has been
 contacted for confirmation as this information is being constantly
 updated
