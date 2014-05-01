@@ -11,7 +11,7 @@ tags: [parallel programming]
 * Source: [Wikipedia, the free encyclopedia](http://en.wikipedia.org/)
 
 
-[![](http://sungsoo.github.com/images/cuda.png)](http://sungsoo.github.com/images/gpu-cluster.png)
+[![](http://sungsoo.github.com/images/gpu-cluster.png)](http://sungsoo.github.com/images/gpu-cluster.png)
 
 # GPU GPU cluster
 
