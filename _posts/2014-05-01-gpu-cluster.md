@@ -29,7 +29,7 @@ Units](/wiki/General-Purpose_Computing_on_Graphics_Processing_Units "General-Pur
 The hardware classification of GPU clusters fall into two categories:
 Heterogeneous and Homogeneous.
 
-**Heterogeneous**
+## Heterogeneous
 
 Hardware from both of the major
 [IHV](/wiki/Independent_hardware_vendor "Independent hardware vendor")'s
@@ -37,7 +37,7 @@ can be used (ATi and nVidia). Even if different models of the same GPU
 are used (e.g. 8800GT mixed with 8800GTX) the gpu cluster is considered
 heterogeneous.
 
-**Homogeneous**
+## Homogeneous
 
 Every single GPU is of the same hardware class, make, and model. (i.e. a
 homogeneous cluster comprising 100 8800GTs, all with the same amount of
@@ -50,7 +50,7 @@ different capabilities that can be utilized.
 
 # Hardware (Other)
 
-**Interconnect**
+## Interconnect
 
 In addition to the computer nodes and their respective GPUs, a fast
 enough interconnect is needed in order to shuttle data amongst the
@@ -59,7 +59,7 @@ present. Some examples of interconnects include [Gigabit
 Ethernet](/wiki/Gigabit_Ethernet "Gigabit Ethernet") and
 [InfiniBand](/wiki/InfiniBand "InfiniBand").
 
-**Vendors**
+## Vendors
 
 [NVIDIA](/wiki/NVIDIA "NVIDIA") provides a list of dedicated Tesla
 Preferred Partners (TPP) with the capability of building and delivering
