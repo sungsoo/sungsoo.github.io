@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Apache Tajo RCFile
+title: Apache Tajo Parquet
 date: 2014-05-10
 categories: [computer science]
 tags: [hadoop & mapreduce, tajo, yarn]
