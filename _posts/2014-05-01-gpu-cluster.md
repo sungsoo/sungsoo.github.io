@@ -3,7 +3,7 @@ layout: post
 title: GPU Cluster
 date: 2014-05-01
 categories: [computer science]
-tags: [parallel programming]
+tags: [parallel computing]
 
 ---
 # Article Source
