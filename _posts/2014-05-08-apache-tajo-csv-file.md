@@ -12,7 +12,7 @@ tags: [hadoop & mapreduce, tajo, yarn]
 
 [![](http://sungsoo.github.com/images/tajo-documentation.png)](http://sungsoo.github.com/images/tajo-documentation.png)
 
-### CSV (TextFile)
+# CSV (TextFile)
 A character-separated values (CSV) file represents a tabular data set consisting of rows and columns. Each row is a plan-text line. A line is usually broken by a character line feed `\n` or carriage-return `\r`. The line feed `\n` is the default delimiter in Tajo. Each record consists of multiple fields, separated by some other character or string, most commonly a literal vertical bar `|`, comma `,` or tab `\t`. The vertical bar is used as the default field delimiter in Tajo.
 
 ## How to Create a CSV Table ?
