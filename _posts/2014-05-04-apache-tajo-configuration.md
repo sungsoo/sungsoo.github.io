@@ -225,10 +225,10 @@ In addition, it can limit the memory capacity used for Tajo worker as follows:
 
 <table border="1" class="docutils">
 <colgroup>
-<col width="32%" />
-<col width="25%" />
-<col width="18%" />
-<col width="24%" />
+<col width="34%" />
+<col width="35%" />
+<col width="14%" />
+<col width="17%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">property name</th>
@@ -238,20 +238,10 @@ In addition, it can limit the memory capacity used for Tajo worker as follows:
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td>tajo.worker.resource.cpu-cores</td>
-<td>the number of cpu cores</td>
-<td>integer</td>
-<td>1</td>
-</tr>
-<tr class="row-odd"><td>tajo.worker.resource.memory-mb</td>
-<td>memory size (MB)</td>
-<td>integer</td>
-<td>1024</td>
-</tr>
-<tr class="row-even"><td>tajo.worker.resource.disks</td>
-<td>the number of disks</td>
-<td>integer</td>
-<td>1</td>
+<tr class="row-even"><td>tajo.worker.resource.dedicated-memory-ratio</td>
+<td>how much memory to be used in whole memory</td>
+<td>float</td>
+<td>0.8</td>
 </tr>
 </tbody>
 </table>
