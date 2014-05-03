@@ -12,7 +12,7 @@ tags: [hadoop & mapreduce, tajo, yarn]
 
 [![](http://sungsoo.github.com/images/tajo-documentation.png)](http://sungsoo.github.com/images/tajo-documentation.png)
 
-### Introduction to Partitioning
+# Introduction to Partitioning
 
 Table partitioning provides two benefits: easy table management and data pruning by partition keys. Currently, Apache Tajo only provides Apache Hive-compatible column partitioning.
 
