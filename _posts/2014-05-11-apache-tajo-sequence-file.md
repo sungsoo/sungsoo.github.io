@@ -13,7 +13,7 @@ tags: [hadoop & mapreduce, tajo, yarn]
 [![](http://sungsoo.github.com/images/tajo-documentation.png)](http://sungsoo.github.com/images/tajo-documentation.png)
 
 
-### SequenceFile
+# SequenceFile
 ## Introduce
 SequenceFiles are flat files consisting of binary key/value pairs. SequenceFile is basic file format which provided by Hadoop, and Hive also provides it to create a table.
 
