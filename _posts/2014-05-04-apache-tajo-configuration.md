@@ -223,9 +223,38 @@ Tajo provides a dedicated mode that allows each worker in a Tajo cluster to use 
 In addition, it can limit the memory capacity used for Tajo worker as follows:
 
 
-| property name  |  description | value type  | default value  |
-|---|---|:-:|:-:|
-| tajo.worker.resource.dedicated-memory-ratio  | how much memory to be used in whole memory  |  float | 0.8  |
+<table border="1" class="docutils">
+<colgroup>
+<col width="32%" />
+<col width="25%" />
+<col width="18%" />
+<col width="24%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">property name</th>
+<th class="head">description</th>
+<th class="head">value type</th>
+<th class="head">default value</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>tajo.worker.resource.cpu-cores</td>
+<td>the number of cpu cores</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+<tr class="row-odd"><td>tajo.worker.resource.memory-mb</td>
+<td>memory size (MB)</td>
+<td>integer</td>
+<td>1024</td>
+</tr>
+<tr class="row-even"><td>tajo.worker.resource.disks</td>
+<td>the number of disks</td>
+<td>integer</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
 
 
 # Catalog Configuration
@@ -234,12 +263,33 @@ If you want to customize the catalog service, copy `$TAJO_HOME/conf/catalog-site
 * tajo.catalog.master.addr - If you want to launch a Tajo cluster in distributed mode, you must specify this address. For more detail information, see [Default Ports](#DefaultPorts).
 * tajo.catalog.store.class - If you want to change the persistent storage of the catalog server, specify the class name. Its default value is tajo.catalog.store.DerbyStore. In the current version, Tajo provides three persistent storage classes as follows:
 
-| Driver Class	 | Descriptions|
-|---|---|
-| tajo.catalog.store.DerbyStore  | this storage class uses Apache Derby.  |
-|tajo.catalog.store.MySQLStore |	this storage class uses MySQL. |
-|tajo.catalog.store.MemStore |	this is the in-memory storage. It is only used in unit tests to shorten the duration of unit tests.|
-|tajo.catalog.store.HCatalogStore |	this storage class uses HiveMetaStore.
+<table border="1" class="docutils">
+<colgroup>
+<col width="42%" />
+<col width="58%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Driver Class</th>
+<th class="head">Descriptions</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>tajo.catalog.store.DerbyStore</td>
+<td>this storage class uses Apache Derby.</td>
+</tr>
+<tr class="row-odd"><td>tajo.catalog.store.MySQLStore</td>
+<td>this storage class uses MySQL.</td>
+</tr>
+<tr class="row-even"><td>tajo.catalog.store.MemStore</td>
+<td>this is the in-memory storage. It is only used
+in unit tests to shorten the duration of unit
+tests.</td>
+</tr>
+<tr class="row-odd"><td>tajo.catalog.store.HCatalogStore</td>
+<td>this storage class uses HiveMetaStore.</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -315,18 +365,77 @@ Lastly, you should add the following config to conf/catalog-site.xml :
 
 # Configuration Defaults
 ## Tajo Master Configuration Defaults
-| Service Name |	Config Property Name |	Description | default address |
-| --- | --- | --- | :-: | 
-| Tajo Master Umbilical Rpc | 	tajo.master.umbilical-rpc.address |  | 	 	localhost:26001 | 
-| Tajo Master Client Rpc | 	tajo.master.client-rpc.address | | 	 	localhost:26002 | 
-| Tajo Master Info Http	 | tajo.master.info-http.address |  | 	 	0.0.0.0:26080 | 
-| Tajo Catalog Client Rpc | 	tajo.catalog.client-rpc.address |  | 	 	localhost:26005 | 
+
+<table border="1" class="docutils">
+<colgroup>
+<col width="24%" />
+<col width="53%" />
+<col width="9%" />
+<col width="13%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Service Name</th>
+<th class="head">Config Property Name</th>
+<th class="head">Description</th>
+<th class="head">default address</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Tajo Master Umbilical Rpc</td>
+<td>tajo.master.umbilical-rpc.address</td>
+<td>&nbsp;</td>
+<td>localhost:26001</td>
+</tr>
+<tr class="row-odd"><td>Tajo Master Client Rpc</td>
+<td>tajo.master.client-rpc.address</td>
+<td>&nbsp;</td>
+<td>localhost:26002</td>
+</tr>
+<tr class="row-even"><td>Tajo Master Info Http</td>
+<td>tajo.master.info-http.address</td>
+<td>&nbsp;</td>
+<td>0.0.0.0:26080</td>
+</tr>
+<tr class="row-odd"><td>Tajo Catalog Client Rpc</td>
+<td>tajo.catalog.client-rpc.address</td>
+<td>&nbsp;</td>
+<td>localhost:26005</td>
+</tr>
+</tbody>
+</table>
 
 
 ## Tajo Worker Configuration Defaults
-| Service Name  | 	Config Property Name  | Description | default address | 
-| --- | --- | --- | :-: | 
-| Tajo Worker Peer Rpc | 	tajo.worker.peer-rpc.address |  | 0.0.0.0:28091 | 
-| Tajo Worker Client Rpc | 	tajo.worker.client-rpc.address |  | 0.0.0.0:28092 |
-| Tajo Worker Info Http	 | tajo.worker.info-http.address |  | 0.0.0.0:28080 | 
 
+<table border="1" class="docutils">
+<colgroup>
+<col width="24%" />
+<col width="53%" />
+<col width="9%" />
+<col width="13%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Service Name</th>
+<th class="head">Config Property Name</th>
+<th class="head">Description</th>
+<th class="head">default address</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Tajo Worker Peer Rpc</td>
+<td>tajo.worker.peer-rpc.address</td>
+<td>&nbsp;</td>
+<td>0.0.0.0:28091</td>
+</tr>
+<tr class="row-odd"><td>Tajo Worker Client Rpc</td>
+<td>tajo.worker.client-rpc.address</td>
+<td>&nbsp;</td>
+<td>0.0.0.0:28092</td>
+</tr>
+<tr class="row-even"><td>Tajo Worker Info Http</td>
+<td>tajo.worker.info-http.address</td>
+<td>&nbsp;</td>
+<td>0.0.0.0:28080</td>
+</tr>
+</tbody>
+</table>
