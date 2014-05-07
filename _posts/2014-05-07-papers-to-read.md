@@ -10,7 +10,7 @@ tags: [hadoop & mapreduce]
 ## Article Source
 * Title: [Papers to Read](https://csuwaterlooca/~tozsu/courses/CS742/W13/Papershtml)
 
-[![](http://sungsoogithubcom/images/papers-to-readpng)](http://sungsoogithubcom/images/papers-to-readpng)
+[![](http://sungsoogithubcom/images/papers-to-read.png)](http://sungsoogithubcom/images/papers-to-read.png)
 
 ## Data Partitioning/Placement
 
