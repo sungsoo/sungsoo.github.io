@@ -9,7 +9,7 @@ tags: [agile]
 
 ## Article Source
 * Title: [Burn down chart](http://en.wikipedia.orghttp://en.wikipedia.org/wiki/Burn_down_chart)
-* Authors:  Wikipedia, the free encyclopedia
+* Authors:  *Wikipedia, the free encyclopedia*
 
 
 [![](http://sungsoo.github.com/images/burndown-chart.png)](http://sungsoo.github.com/images/burndown-chart.png)
