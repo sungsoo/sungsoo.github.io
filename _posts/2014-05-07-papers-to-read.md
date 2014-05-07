@@ -8,7 +8,7 @@ tags: [hadoop & mapreduce]
 ---
 
 ## Article Source
-* Title: [Papers to Read](https://cs.uwaterloo.ca/~tozsu/courses/CS742/W13/Papershtml)
+* Title: [Papers to Read](https://cs.uwaterloo.ca/~tozsu/courses/CS742/W13/Papers.html)
 
 [![](http://sungsoo.github.com/images/papers-to-read.png)](http://sungsoo.github.com/images/papers-to-read.png)
 
