@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Burndown Chart
-date: 2014-05-07
+title: 5 technologies that will help big data cross the chasm
+date: 2014-05-11
 categories: [computer science]
 tags: [big data]
 
