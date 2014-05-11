@@ -419,12 +419,6 @@ a set of simultaneous linear equations in the parameters, which are
 solved to yield the parameter estimators, ![\\widehat{\\beta}\_0,
 \\widehat{\\beta}\_1](http://upload.wikimedia.org/math/5/8/b/58bd4a9496d8ed0c8b6008797283aaf0.png).
 
-[![](http://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Linear_regression.svg/300pxLinear_regression.svg.png)](http://en.wikipedia.org/wiki/File:Linear_regression.svg)
-
-[![](http://bits.wikimedia.org/static1.24wmf3/skins/common/images/magnifyclip.png)](http://en.wikipedia.org/wiki/File:Linear_regression.svg "Enlarge")
-
-Illustration of linear regression on a data set.
-
 In the case of simple regression, the formulas for the least squares
 estimates are
 
