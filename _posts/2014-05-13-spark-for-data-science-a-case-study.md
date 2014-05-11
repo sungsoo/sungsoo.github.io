@@ -79,8 +79,7 @@ steps. We’re going to cover
 We’ll close with my impressions of using Spark as an analytics platform.
 Hope you enjoy!
 
-Data Gathering
---------------
+# Data Gathering
 
 Of course, to be data driven, a minimal requirement is to have some
 data. The good folks at [CommandLineFu](http://www.commandlinefu.com)
@@ -102,8 +101,7 @@ drawing robust conclusions:
 Even so, perhaps we can see some high-level patterns emerge. At the very
 least, we’ll be able to try out a new analytics platform.
 
-The Spark of Inspiration
-------------------------
+# The Spark of Inspiration
 
 ## Word Collocations as Inspiration
 
@@ -129,8 +127,8 @@ Methods for Statistics of Surprise and
 Coincidence”](http://acl.ldc.upenn.edu/J/J93/J93-1003.pdf), namely using
 the *G* Statistical test.
 
-Statistical Tests in Natural Language Processing for Fun and Profit
--------------------------------------------------------------------
+# Statistical Tests in Natural Language Processing for Fun and Profit
+
 
 ## ![\\chi\^2](http://s0.wp.com/latex.php?latex=%5Cchi%5E2&bg=ffffff&fg=000&s=0 "\chi^2") Statistical Test
 
@@ -173,8 +171,7 @@ Coincidence”](http://acl.ldc.upenn.edu/J/J93/J93-1003.pdf) for a
 spirited argument in favor of log-likelihood statistical tests as the
 basis of bigram collocation analysis.
 
-Apache Spark: An Analytics Platform
------------------------------------
+# Apache Spark: An Analytics Platform
 
 As part of my career, I have specialized in Data Science on the Hadoop
 stack. [Amp Labs](https://amplab.cs.berkeley.edu/) at Berkeley have
@@ -197,8 +194,8 @@ examples of wordcount or
 ![\\pi](http://s0.wp.com/latex.php?latex=%5Cpi&bg=ffffff&fg=000&s=0 "\pi")
 estimation. I think this just fits the bill!
 
-The Analysis Process
---------------------
+# The Analysis Process
+
 
 ## Data Engineering
 
