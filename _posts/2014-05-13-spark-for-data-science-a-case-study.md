@@ -486,4 +486,181 @@ rankings. Note that while the table is sorted by *G* score, the columns
 in the following table are sortable, so go explore. Also, for each
 score, the higher the score, the more important the pair of commands.
 
+<table class="tablesorter" id="resultTable">
+<thead>
+<tr>
+<th colspan="2">Command</th>
+<th><a href="https://github.com/cestella/UnixCommandAnalysis/blob/master/results.freq">Frequency</a></th>
+<th>Relative Rank</th>
+<th><a href="https://github.com/cestella/UnixCommandAnalysis/blob/master/results.g_2"><i>G</i> score</a></th>
+<th>Relative Rank</th>
+<th>Absolute Difference in Rank</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>find</td>
+<td>xargs</td>
+<td>0.022</td>
+<td>2</td>
+<td>336.60</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>sort</td>
+<td>uniq</td>
+<td>0.019</td>
+<td>3</td>
+<td>262.10</td>
+<td>2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>du</td>
+<td>sort</td>
+<td>0.011</td>
+<td>8</td>
+<td>233.09</td>
+<td>3</td>
+<td>5</td>
+</tr>
+<tr>
+<td>sort</td>
+<td>grep</td>
+<td>0.00037</td>
+<td>500</td>
+<td>163.51</td>
+<td>4</td>
+<td>496</td>
+</tr>
+<tr>
+<td>awk</td>
+<td>grep</td>
+<td>0.003</td>
+<td>41</td>
+<td>156.78</td>
+<td>5</td>
+<td>36</td>
+</tr>
+<tr>
+<td>grep</td>
+<td>sort</td>
+<td>0.002</td>
+<td>66</td>
+<td>108.48</td>
+<td>6</td>
+<td>60</td>
+</tr>
+<tr>
+<td>uniq</td>
+<td>sort</td>
+<td>0.011</td>
+<td>7</td>
+<td>94.37</td>
+<td>7</td>
+<td>0</td>
+</tr>
+<tr>
+<td>ps</td>
+<td>grep</td>
+<td>0.009</td>
+<td>10</td>
+<td>86.39</td>
+<td>8</td>
+<td>1</td>
+</tr>
+<tr>
+<td>netstat</td>
+<td>grep</td>
+<td>0.006</td>
+<td>15</td>
+<td>83.88</td>
+<td>9</td>
+<td>4</td>
+</tr>
+<tr>
+<td>cut</td>
+<td>grep</td>
+<td>0.00092</td>
+<td>192</td>
+<td>82.88</td>
+<td>10</td>
+<td>182</td>
+</tr>
+<tr>
+<td>sort</td>
+<td>head</td>
+<td>0.009</td>
+<td>9</td>
+<td>44.21</td>
+<td>34</td>
+<td>25</td>
+</tr>
+<tr>
+<td>grep</td>
+<td>awk</td>
+<td>0.031</td>
+<td>1</td>
+<td>24.37</td>
+<td>77</td>
+<td>76</td>
+</tr>
+<tr>
+<td>grep</td>
+<td>cut</td>
+<td>0.014</td>
+<td>4</td>
+<td>10.27</td>
+<td>369</td>
+<td>365</td>
+</tr>
+<tr>
+<td>awk</td>
+<td>xargs</td>
+<td>0.013</td>
+<td>5</td>
+<td>4.37</td>
+<td>905</td>
+<td>900</td>
+</tr>
+<tr>
+<td>awk</td>
+<td>sort</td>
+<td>0.013</td>
+<td>6</td>
+<td>4.37</td>
+<td>1632</td>
+<td>1626</td>
+</tr>
+</tbody>
+</table>
 
+
+Takeaways from the analysis:
+
+* As you can see by sorting the absolute difference in rank ascending, there is much overlap between the two rankings
+* sort, uniq shows up second in the list for the G ranking, so at the very least this ranking can recover some of what our intuition indicates should be true.
+* The relative difference between all of the pairs of commands where grep is the second in the pair have G ranking much higher (e.g. sort, grep has a difference in ranking of 496). Intuitively, this feels right considering the situations where I use grep as a filtering utility after some processing (i.e. sort, awk, etc).
+* It is not proper, of course, to draw too many conclusions from an eyeball analysis as we are subject to humanity’s tendency to rationalize and find patterns to justify preconceived notions.
+
+# Conclusions
+The secondary purpose for this project is to discuss Spark as a platform for Data science. I’ll break it down into pros and cons regarding Spark.
+
+## Fast, Featureful and Gets Things Done
+Spark, contrary to traditional big data analytics platforms like Hadoop MapReduce, does not assume that caching is of no use. That being said, despite aggressive caching, they have worked hard to have graceful degradation when you cannot fit a working set into memory. This assumption is particularly true in data science, where you are refining a large dataset into a (possibly) much smaller dataset to operate on. The dominant pattern for modern big data analytics systems has always borrowed heavily from functional languages. Spark substantially reinforces this pattern. Not only did it choose a functional language, Scala, as a first-level programming language, but it borrowed most of your favorite higher-order functional primitives for collections or streams (e.g. foldl, foldr, flatMap, reduce, etc.).
+
+## Exists within a Popular Programming Environment
+Existing within the JVM (for the Scala and Java API bindings) and Python ecosystem (for the Python bindings), comes with the ability to use libraries written for two of the most popular programming environments available today in a dead-simple way. Everything from Stanford CoreNLP to scikit-learn is available without any of the integration challenges that you see in the big data scripting languages (i.e. wrapping the calls in user defined functions).
+
+##  Works on Hadoop
+Spark did not try to bite off more than it could chew. The AmpLabs guys realized that resource allocation in distributed systems is hard and they chose, quite correctly, to separate the analytics framework from the resource allocation framework. Initially, and continuing to today, they have strong support for Apache Mesos. With the advent of Hadoop 2.0 resource management and scheduling have been abstracted into YARN. This means that Spark can now run on Hadoop, which comes with the distinct advantage that you can run Spark alongside the rest of the Hadoop ecosystem applications, such as Apache Hive, Apache Pig, etc. With Hadoop’s increased adoption into the data center as a batch analytics system for doing ETL, it substantially decreases the barrier to entry to have Spark available as it can use the same hardware. An open question, however, is just how good Spark is at multitenancy. If anyone has any examples of large Hadoop MapReduce-based workloads being run alongside Spark (as opposed to running in separate clusters), I’d love to hear impressions and challenges.
+
+##  Oriented toward the coding data scientist
+Almost all of the previous positive points tag my orientation as in the “comfortable with coding” type of data scientist. I have attempted to keep my foot in both worlds and that biases my perspective. Many people working and doing good analytics are daunted, to say the least, with a (new to them, most likely) language like Scala. That being said, I think that two points alleviate this criticism:
+
+* The quality support for the Spark Python API
+* The SparkR package, intended to expose processing on RDDs and some of the RDD transformations to R.
+
+
+These are attempts by the Spark community to reach out to the comfort-zone of the existing community of Data scientists by supporting some of their favorite tooling. I do not think that this will make someone who has had a career writing SAS comfortable in the system, unfortunately, but it does help.
