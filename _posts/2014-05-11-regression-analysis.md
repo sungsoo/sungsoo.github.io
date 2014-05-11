@@ -639,7 +639,7 @@ extrapolation is considered. At a minimum, it can ensure that any
 extrapolation arising from a fitted model is "realistic" (or in accord
 with what is known).
 
-Nonlinear regression[[edit](/w/index.php?title=Regression_analysis&action=edit&section=11 "Edit section: Nonlinear regression")]
+# Nonlinear regression
 
 
 Main article: [Nonlinear
@@ -677,7 +677,7 @@ is 4, because
 
 ![\\frac{\\log{1000}}{\\log{5}}=4.29](http://upload.wikimedia.org/math/e/2/1/e211fa16defe776e3ded773303bb06ef.png).
 
-Other methods[[edit](/w/index.php?title=Regression_analysis&action=edit&section=13 "Edit section: Other methods")]
+# Other methods
 
 
 Although the parameters of a regression model are usually estimated
@@ -705,8 +705,7 @@ include:
     which is learned by the search of a meaningful distance metric in a
     given input space.[[26]](http://en.wikipedia.org/wiki/Regression_analysis#cite_note26)
 
-Software[[edit](/w/index.php?title=Regression_analysis&action=edit&section=14 "Edit section: Software")]
-
+# Software
 
 Main article: [List of statistical
 packages](http://en.wikipedia.org/wiki/List_of_statistical_packages "List of statistical packages")
@@ -724,36 +723,23 @@ methods, and a method with a given name may be implemented differently
 in different packages. Specialized regression software has been
 developed for use in fields such as survey analysis and neuroimaging.
 
-See also[[edit](/w/index.php?title=Regression_analysis&action=edit&section=15 "Edit section: See also")]
-
-
-   
-  [![Portal icon](http://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Fisher_iris_versicolor_sepalwidth.svg/32pxFisher_iris_versicolor_sepalwidth.svg.png)](http://en.wikipedia.org/wiki/File:Fisher_iris_versicolor_sepalwidth.svg)   [Statistics portal](http://en.wikipedia.org/wiki/Portal:Statistics "Portal:Statistics")
+## [Statistics portal](http://en.wikipedia.org/wiki/Portal:Statistics "Portal:Statistics")
    
 
-   [Curve fitting](http://en.wikipedia.org/wiki/Curve_fitting "Curve fitting")
-   [Forecasting](http://en.wikipedia.org/wiki/Forecasting "Forecasting")
-   [Fraction of variance
-    unexplained](http://en.wikipedia.org/wiki/Fraction_of_variance_unexplained "Fraction of variance unexplained")
-   [Kriging](http://en.wikipedia.org/wiki/Kriging "Kriging") (a linear least squares
-    estimation algorithm)
-   [Local regression](http://en.wikipedia.org/wiki/Local_regression "Local regression")
-   [Modifiable areal unit
-    problem](http://en.wikipedia.org/wiki/Modifiable_areal_unit_problem "Modifiable areal unit problem")
-   [Multivariate adaptive regression
-    splines](http://en.wikipedia.org/wiki/Multivariate_adaptive_regression_splines "Multivariate adaptive regression splines")
-   [Multivariate normal
-    distribution](http://en.wikipedia.org/wiki/Multivariate_normal_distribution "Multivariate normal distribution")
-   [Pearson productmoment correlation
-    coefficient](http://en.wikipedia.org/wiki/Pearson_productmoment_correlation_coefficient "Pearson productmoment correlation coefficient")
-   [Prediction
-    interval](http://en.wikipedia.org/wiki/Prediction_interval "Prediction interval")
-   [Robust regression](http://en.wikipedia.org/wiki/Robust_regression "Robust regression")
-   [Segmented
-    regression](http://en.wikipedia.org/wiki/Segmented_regression "Segmented regression")
-   [Stepwise
-    regression](http://en.wikipedia.org/wiki/Stepwise_regression "Stepwise regression")
-   [Trend estimation](http://en.wikipedia.org/wiki/Trend_estimation "Trend estimation")
+*    [Curve fitting](http://en.wikipedia.org/wiki/Curve_fitting "Curve fitting")
+*    [Forecasting](http://en.wikipedia.org/wiki/Forecasting "Forecasting")
+*    [Fraction of variance   unexplained](http://en.wikipedia.org/wiki/Fraction_of_variance_unexplained "Fraction of variance unexplained")
+*    [Kriging](http://en.wikipedia.org/wiki/Kriging "Kriging") (a linear least squares estimation algorithm)
+*    [Local regression](http://en.wikipedia.org/wiki/Local_regression "Local regression")
+*    [Modifiable areal unit     problem](http://en.wikipedia.org/wiki/Modifiable_areal_unit_problem "Modifiable areal unit problem")
+*    [Multivariate adaptive regression     splines](http://en.wikipedia.org/wiki/Multivariate_adaptive_regression_splines "Multivariate adaptive regression splines")
+*    [Multivariate normal     distribution](http://en.wikipedia.org/wiki/Multivariate_normal_distribution "Multivariate normal distribution")
+*    [Pearson productmoment correlation     coefficient](http://en.wikipedia.org/wiki/Pearson_productmoment_correlation_coefficient "Pearson productmoment correlation coefficient")
+*    [Prediction   interval](http://en.wikipedia.org/wiki/Prediction_interval "Prediction interval")
+*    [Robust regression](http://en.wikipedia.org/wiki/Robust_regression "Robust regression")
+*    [Segmented regression](http://en.wikipedia.org/wiki/Segmented_regression "Segmented regression")
+*    [Stepwise regression](http://en.wikipedia.org/wiki/Stepwise_regression "Stepwise regression")
+*    [Trend estimation](http://en.wikipedia.org/wiki/Trend_estimation "Trend estimation")
 
 # References
 
