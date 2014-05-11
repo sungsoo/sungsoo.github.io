@@ -27,7 +27,7 @@ In this direction, the *YARN Resource Manager Service* (RM) is the
 central controlling authority for resource management and makes
 allocation decisions
 
-ResourceManager has two main components: ***Scheduler*****and
+ResourceManager has two main components: ***Scheduler*** and 
 ***ApplicationsManager.***
 
 The ***Scheduler***API is specifically designed to negotiate resources
