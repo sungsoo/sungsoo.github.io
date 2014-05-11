@@ -1,10 +1,11 @@
-
+---
 layout: post
 title: Regression Analysis
 date: 20140511
 categories: [computer science]
 tags: [data science]
 
+---
 
 
 ## Article Source
