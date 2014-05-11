@@ -12,7 +12,7 @@ tags: [data science]
 * Title: [Regression Analysis](http://en.wikipedia.org/wiki/Regression_analysis)
 * Authors: Wikipedia, the free encyclopedia
 
-[![](http://sungsoo.github.com/images/regressionanalysis.png)](http://sungsoo.github.com/images/regressionanalysis.png)
+[![](http://sungsoo.github.com/images/regression-analysis.png)](http://sungsoo.github.com/images/regression-analysis.png)
 
 # Regression Analysis
 
