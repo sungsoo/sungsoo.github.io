@@ -326,11 +326,14 @@ use
 [LogLikelihood.logLikelihoodRatio](https://github.com/apache/mahout/blob/trunk/math/src/main/java/org/apache/mahout/math/stats/LogLikelihood.java)
 from Mahout:
 
-                                                                                                        Contingency Table
-  ----- ----------------------------------------------------------------------------------------------- --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  k11   ![\\rightarrow](http://s0.wp.com/latex.php?latex=%5Crightarrow&bg=ffffff&fg=000&s=0 "\rightarrow")   The number of times ![w\_1](http://s0.wp.com/latex.php?latex=w_1&bg=ffffff&fg=000&s=0 "w_1") and ![w\_2](http://s0.wp.com/latex.php?latex=w_2&bg=ffffff&fg=000&s=0 "w_2") appear next to each other.
-  k12   ![\\rightarrow](http://s0.wp.com/latex.php?latex=%5Crightarrow&bg=ffffff&fg=000&s=0 "\rightarrow")   The number of times ![w\_2](http://s0.wp.com/latex.php?latex=w_2&bg=ffffff&fg=000&s=0 "w_2") appears *without* ![w\_1](http://s0.wp.com/latex.php?latex=w_1&bg=ffffff&fg=000&s=0 "w_1")
-  k21   ![\\rightarrow](http://s0.wp.com/latex.php?latex=%5Crightarrow&bg=ffffff&fg=000&s=0 "\rightarrow")   The number of times ![w\_1](http://s0.wp.com/latex.php?latex=w_1&bg=ffffff&fg=000&s=0 "w_1") appears *without* ![w\_2](http://s0.wp.com/latex.php?latex=w_2&bg=ffffff&fg=000&s=0 "w_2")
+### Contigency Table
+ 
+  k11   ![\\rightarrow](http://s0.wp.com/latex.php?latex=%5Crightarrow&bg=ffffff&fg=000&s=0 "\rightarrow")   The number of times ![w\_1](http://s0.wp.com/latex.php?latex=w_1&bg=ffffff&fg=000&s=0 "w_1") and ![w\_2](http://s0.wp.com/latex.php?latex=w_2&bg=ffffff&fg=000&s=0 "w_2") appear next to each other.  
+
+  k12   ![\\rightarrow](http://s0.wp.com/latex.php?latex=%5Crightarrow&bg=ffffff&fg=000&s=0 "\rightarrow")   The number of times ![w\_2](http://s0.wp.com/latex.php?latex=w_2&bg=ffffff&fg=000&s=0 "w_2") appears *without* ![w\_1](http://s0.wp.com/latex.php?latex=w_1&bg=ffffff&fg=000&s=0 "w_1")  
+
+  k21   ![\\rightarrow](http://s0.wp.com/latex.php?latex=%5Crightarrow&bg=ffffff&fg=000&s=0 "\rightarrow")   The number of times ![w\_1](http://s0.wp.com/latex.php?latex=w_1&bg=ffffff&fg=000&s=0 "w_1") appears *without* ![w\_2](http://s0.wp.com/latex.php?latex=w_2&bg=ffffff&fg=000&s=0 "w_2")  
+
   k22   ![\\rightarrow](http://s0.wp.com/latex.php?latex=%5Crightarrow&bg=ffffff&fg=000&s=0 "\rightarrow")   The number of times neither ![w\_1](http://s0.wp.com/latex.php?latex=w_1&bg=ffffff&fg=000&s=0 "w_1") or ![w\_2](http://s0.wp.com/latex.php?latex=w_2&bg=ffffff&fg=000&s=0 "w_2") appear together.
 
 Just as before with raw frequency, let’s start with some useful typedefs
@@ -483,4 +486,4 @@ rankings. Note that while the table is sorted by *G* score, the columns
 in the following table are sortable, so go explore. Also, for each
 score, the higher the score, the more important the pair of commands.
 
-![](http://www.bizographics.com/collect/?pid=6008&fmt=gif)
+
