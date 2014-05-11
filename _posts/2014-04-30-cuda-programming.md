@@ -3,7 +3,7 @@ layout: post
 title: GPU Accelerated Computing with C and C++
 date: 2014-04-30
 categories: [computer science]
-tags: [parallel programming]
+tags: [parallel computing]
 
 ---
 # Article Source

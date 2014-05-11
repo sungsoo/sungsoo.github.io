@@ -3,7 +3,7 @@ layout: post
 title: Functional versus Procedural Programming Models
 date: 2014-03-20
 categories: [computer science]
-tags: [parallel programming]
+tags: [parallel computing]
 
 ---
 
