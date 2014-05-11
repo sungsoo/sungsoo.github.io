@@ -275,11 +275,10 @@ parameters. This excess of information is referred to as the [degrees of
 freedom](http://en.wikipedia.org/wiki/Degrees_of_freedom_(statistics)#Linear_regression "Degrees of freedom (statistics)")
 of the regression.
 
-Underlying assumptions[[edit](/w/index.php?title=Regression_analysis&action=edit&section=5 "Edit section: Underlying assumptions")]
+# Underlying assumptions
 
 
-Classical
-[assumptions](http://en.wikipedia.org/wiki/Statistical_assumption "Statistical assumption") for
+Classical [assumptions](http://en.wikipedia.org/wiki/Statistical_assumption "Statistical assumption") for
 regression analysis include:
 
    The sample is representative of the population for the inference
@@ -335,7 +334,7 @@ parameters.[[19]](http://en.wikipedia.org/wiki/Regression_analysis#cite_note19) 
 political boundaries, postal codes or census areas results may be very
 distinct with a different choice of units.
 
-Linear regression[[edit](/w/index.php?title=Regression_analysis&action=edit&section=6 "Edit section: Linear regression")]
+# Linear regression
 
 
 Main article: [Linear
@@ -592,8 +591,7 @@ regression](http://en.wikipedia.org/wiki/Poisson_regression "Poisson regression"
 [negative binomial](http://en.wikipedia.org/wiki/Negative_binomial "Negative binomial") model
 may be used instead.
 
-Interpolation and extrapolation[[edit](/w/index.php?title=Regression_analysis&action=edit&section=10 "Edit section: Interpolation and extrapolation")]
-
+## Interpolation and extrapolation
 
 Regression models predict a value of the *Y* variable given known values
 of the *X* variables. Prediction *within* the range of values in the
@@ -651,8 +649,7 @@ many complications which are summarized in [Differences between linear
 and nonlinear least
 squares](http://en.wikipedia.org/wiki/Least_squares#Differences_between_linear_and_nonlinear_least_squares "Least squares")
 
-Power and sample size calculations[[edit](/w/index.php?title=Regression_analysis&action=edit&section=12 "Edit section: Power and sample size calculations")]
-
+## Power and sample size calculations
 
 There are no generally agreed methods for relating the number of
 observations versus the number of independent variables in the model.
