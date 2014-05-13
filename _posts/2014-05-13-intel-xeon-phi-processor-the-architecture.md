@@ -13,7 +13,21 @@ tags: [parallel computing]
 
 # Many Core and GPU
 
+## Session 3, Hot Chips 24 (2012), Tuesday, August 28, 2012.
+
+#### AMD HD7970 Graphics Core Next (GCN) Architecture
+Michael Mantor, AMD
+
+#### AMD Trinity Fusion APU
+Sebstian Nussbaum, AMD
+
+#### Knights Corner, Intel's First Many Integrated Core (MIC) Architecture Product
+George Chrysos, Intel
+
+
+
 <iframe width="600" height="400" src="//www.youtube.com/embed/CS-POoiCOQo" frameborder="0" allowfullscreen></iframe>
+
 
 ---
 
