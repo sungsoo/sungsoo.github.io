@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Key-Value and Document Data Models
+title: Column-Family Stores
 date: 2014-05-19
 categories: [computer science]
 tags: [nosql]
