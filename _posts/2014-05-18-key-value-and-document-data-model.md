@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Key-Value Model and Document Data Model
+title: Key-Value and Document Data Models
 date: 2014-05-18
 categories: [computer science]
 tags: [nosql]
