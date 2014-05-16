@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Introduction to Distributed Database Management Systems (Distributed DBMSs)
+title: Introduction to Distributed Database Management Systems
 date: 2014-05-17
 categories: [computer science]
 tags: [data management]
