@@ -7,7 +7,7 @@ tags: [data management]
 
 ---
 
-[![](http://sungsoo.github.com/images/ml.png)](http://sungsoo.github.com/images/ml.png)
+[![](http://sungsoo.github.com/images/rdbms.png)](http://sungsoo.github.com/images/rdbms.png)
 
 # Research Topics in Database Systems
 
