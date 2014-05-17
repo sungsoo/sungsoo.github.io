@@ -7,6 +7,8 @@ tags: [data science]
 
 ---
 
+[![](http://sungsoo.github.com/images/ml.png)](http://sungsoo.github.com/images/ml.png)
+
 ## What is the difference between data mining, statistics, machine learning and AI?
 
 **Statistics** is just about the numbers, and quantifying the data. There are many tools for finding relevant properties of the data but this is pretty close to pure mathematics.
