@@ -21,7 +21,7 @@ tags: [data management]
 
 <TR>
 	<TD ROWSPAN="1" COLSPAN="1">1</TD>
-	<Td>9/2</Td>
+	<Td>6/2</Td>
 	<!--
 	<td><a href="notes/intro.html">Course Introduction</a></td><td>None</td>
 	-->
@@ -29,7 +29,7 @@ tags: [data management]
 </tr>
 <tr>
 	<TD ROWSPAN="2" COLSPAN="1">2</TD>
-	<Td>9/7</Td>
+	<Td>6/7</Td>
 	<td>The Beginning of the Relational Era</td>
 	<td>
 	<a href="http://sungsoo.github.com/papers/taylor-1976.pdf">CODASYL Database Management Systems</a>
@@ -40,7 +40,7 @@ tags: [data management]
 </tr>
 
 <tr>
-	<td>9/9</td><td>Early Relational Systems</td>
+	<td>6/9</td><td>Early Relational Systems</td>
 	<td>
 	<a href="http://sungsoo.github.com/papers/astrahan-1976.pdf">System R: Relational Approach to
 	Data Management</a>
@@ -52,7 +52,7 @@ tags: [data management]
 
 <tr>
 	<td rowspan="2">3</td>
-	<td>9/14</td>
+	<td>6/14</td>
 	<td>Early Concurrency Control</td>
 	<td>
 	<a href="http://sungsoo.github.com/papers/gray-1976.pdf">Granularity of Locks and Degrees of
@@ -62,7 +62,7 @@ tags: [data management]
 	Control</a>
 	</td>
 <tr>
-	<td>9/16</td>
+	<td>6/16</td>
 	<td>Transactions & Concurrency</td>
 	<td>
 	<a href="http://sungsoo.github.com/papers/haerder-1983.pdf">Principles of Transaction-Oriented
@@ -73,7 +73,7 @@ tags: [data management]
 </tr>
 <tr>
 	<td rowspan="2">4</td>
-	<td>9/21</td>
+	<td>6/21</td>
 	<td>ARIES</td>
 	<td>
 	<a href="http://sungsoo.github.com/papers/mohan-1992.pdf">ARIES</a><br>
@@ -82,7 +82,7 @@ tags: [data management]
 
 </tr>
 <tr>
-	<td>9/23</td>
+	<td>6/23</td>
 	<td>Transactions and Concurrency Revisited</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/cahill-2008.pdf">Serializable isolation
@@ -94,7 +94,7 @@ tags: [data management]
 </tr>
 <tr>
 	<td rowspan="2">5</td>
-	<td>9/28</td>
+	<td>6/28</td>
 	<td>Object-Oriented Systems</td>
 	<td>
 	    <a href="http://sungsoo.github.com/papers/lamb-1991.pdf">The ObjectStore Database System</a>
@@ -103,7 +103,7 @@ tags: [data management]
 	    Database Management System</a>
 </tr>
 <tr>
-	<td>9/30</td>
+	<td>6/30</td>
 	<td>OLTP Details</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/harizopoulos-2008.pdf">OLTP Through The
@@ -112,7 +112,7 @@ tags: [data management]
 </tr>
 <tr>
 	<td rowspan="2">6</td>
-	<td>10/5</td>
+	<td>7/5</td>
 	<td>Column Stores</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/stonebraker-2005.pdf">C-Store: A
@@ -122,7 +122,7 @@ tags: [data management]
 	</td>
 </tr>
 <tr>
-	<td>10/7</td>
+	<td>7/7</td>
 	<td>Semi-Structured Data</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/buneman-1997.pdf">Semi-Structured
@@ -133,7 +133,7 @@ tags: [data management]
 </tr>
 <tr>
 	<td rowspan="2">7</td>
-	<td>10/12</td>
+	<td>7/12</td>
 	<td>Optimizing Column Stores</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/abadi-2006.pdf">Integrating compression
@@ -144,7 +144,7 @@ tags: [data management]
 
 </tr>
 <tr>
-	<td>10/14</td>
+	<td>7/14</td>
 	<td>Graphical Data</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/he-2008.pdf">Graphs-at-a-time: Query
@@ -155,7 +155,7 @@ tags: [data management]
 </tr>
 <tr>
 	<td rowspan="2">8</td>
-	<td>10/19</td>
+	<td>7/19</td>
 	<td>More Graphical Data</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/neumann-2008.pdf">RDF-3X: a RISC-style Engine
@@ -166,7 +166,7 @@ tags: [data management]
 </tr>
 <tr>
 
-	<td>10/21</td>
+	<td>7/21</td>
 	<td>Self-Assessment</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/tandem-1990.pdf">The Laguna Beach Report</a>
@@ -174,7 +174,7 @@ tags: [data management]
 </tr>
 <tr>
 	<td rowspan="2">9</td>
-	<td>10/26</td>
+	<td>7/26</td>
 	<td>Provenance</td>
 	<td>
 		(background)<A HREF="http://sungsoo.github.com/papers/buneman-2007.pdf">Provenance
@@ -185,7 +185,7 @@ tags: [data management]
 
 </tr>
 <tr>
-	<td>10/28</td>
+	<td>7/28</td>
 	<td>Provenance in Practice</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/buneman-2006.pdf">Provenance Management
@@ -196,7 +196,7 @@ tags: [data management]
 </tr>
 <tr>
 	<td rowspan="2">10</td>
-	<td>11/2</td>
+	<td>8/2</td>
 	<td>Querying Provenance</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/tannen-2010.pdf">Querying Data Provenance</a></br>
@@ -206,7 +206,7 @@ tags: [data management]
 
 </tr>
 <tr>
-	<td>11/4</td>
+	<td>8/4</td>
 	<td>Distribution</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/lamport-1998.pdf">The Part-Time Parliament</a></br>
@@ -215,7 +215,7 @@ tags: [data management]
 </tr>
 <tr>
 	<td rowspan="2">11</td>
-	<td>11/9</td>
+	<td>8/9</td>
 	<td>Replication</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/gray-1996.pdf">The Dangers of Replication
@@ -226,14 +226,14 @@ tags: [data management]
 
 </tr>
 <tr>
-	<td>11/11</td>
+	<td>8/11</td>
 	<td>Veteran's Day</td>
 	<td>
 	</td>
 </tr>
 <tr>
 	<td rowspan="2">12</td>
-	<td>11/16</td>
+	<td>8/16</td>
 	<td>Google's Big Data</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/ghemewat-2003.pdf">The Google File System</a></br>
@@ -243,7 +243,7 @@ tags: [data management]
 
 </tr>
 <tr>
-	<td>11/18</td>
+	<td>8/18</td>
 	<td>Data in the Cloud</td>
 	<td>
 		<A HREF="http://sungsoo.github.com/papers/pavlo-2009.pdf">A Comparison of
