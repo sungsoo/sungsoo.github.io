@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Statistics, Data Mining, Machine Learning and Artificial Intelligence
+title: Research Topics in Database Systems
 date: 2014-05-22
 categories: [computer science]
 tags: [data management]
