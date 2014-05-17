@@ -32,7 +32,6 @@ tags: [data management]
 	<Td>9/7</Td>
 	<td>The Beginning of the Relational Era</td>
 	<td>
-	<i><a href="#s7">Reading Notes</a></i><br>
 	<a href="http://sungsoo.github.com/papers/taylor-1976.pdf">CODASYL Database Management Systems</a>
 	<br>
 	<a href="http://sungsoo.github.com/papers/codd-1970.pdf">A Relational Model of Data for Large
@@ -43,8 +42,6 @@ tags: [data management]
 <tr>
 	<td>9/9</td><td>Early Relational Systems</td>
 	<td>
-	<i><a href="#s9">Reading Notes</a></i>
-	<br>
 	<a href="http://sungsoo.github.com/papers/astrahan-1976.pdf">System R: Relational Approach to
 	Data Management</a>
 	<br>
@@ -79,7 +76,6 @@ tags: [data management]
 	<td>9/21</td>
 	<td>ARIES</td>
 	<td>
-	<b><a href="asst1.html">Assignment 1</a> due MONDAY, September 20 at 5:00 PM</b><br>
 	<a href="http://sungsoo.github.com/papers/mohan-1992.pdf">ARIES</a><br>
 	<a href ="http://sungsoo.github.com/papers/kathuria-2008.pdf"> Transaction Isolation and Lazy Commit</a>
 	</td>
@@ -110,7 +106,6 @@ tags: [data management]
 	<td>9/30</td>
 	<td>OLTP Details</td>
 	<td>
-		<B>Quiz #1</b></br>
 		<A HREF="http://sungsoo.github.com/papers/harizopoulos-2008.pdf">OLTP Through The
 		Looking Glass And What We Found There</a>
 	</td>
@@ -120,7 +115,6 @@ tags: [data management]
 	<td>10/5</td>
 	<td>Column Stores</td>
 	<td>
-		<b>Project Research  Plan Due, Monday at 5:00 PM</b><br>
 		<A HREF="http://sungsoo.github.com/papers/stonebraker-2005.pdf">C-Store: A
 		Column-oriented DBMS</a></br>
 		<A HREF="http://sungsoo.github.com/papers/abadi-2008.pdf">Column-Storees vs.
@@ -142,7 +136,6 @@ tags: [data management]
 	<td>10/12</td>
 	<td>Optimizing Column Stores</td>
 	<td>
-		<b>Project Meetings this week</b><br>
 		<A HREF="http://sungsoo.github.com/papers/abadi-2006.pdf">Integrating compression
 		and execution in column-oriented database systems</a></br>
 		<A HREF="http://sungsoo.github.com/papers/jagadish-1997.pdf">Incremental
@@ -176,7 +169,6 @@ tags: [data management]
 	<td>10/21</td>
 	<td>Self-Assessment</td>
 	<td>
-		<B>Quiz #2</b></br>
 		<A HREF="http://sungsoo.github.com/papers/tandem-1990.pdf">The Laguna Beach Report</a>
 	</td>
 </tr>
@@ -185,7 +177,6 @@ tags: [data management]
 	<td>10/26</td>
 	<td>Provenance</td>
 	<td>
-		<a href="#o26"<i>Reading Notes</i></a><br>
 		(background)<A HREF="http://sungsoo.github.com/papers/buneman-2007.pdf">Provenance
 		in Databases (Tutorial outline)</a></br>
 		<A HREF="http://sungsoo.github.com/papers/cheney-2007.pdf">Provenance in Databases: Why,
@@ -208,7 +199,6 @@ tags: [data management]
 	<td>11/2</td>
 	<td>Querying Provenance</td>
 	<td>
-		<b>Project Meetings this week</b><br>
 		<A HREF="http://sungsoo.github.com/papers/tannen-2010.pdf">Querying Data Provenance</a></br>
 		<A HREF="http://sungsoo.github.com/papers/zhou-2010.pdf">Efficient Querying and
 		Maintenance of Network Provenance at Internet-Scale</a>
@@ -219,7 +209,6 @@ tags: [data management]
 	<td>11/4</td>
 	<td>Distribution</td>
 	<td>
-		<a href="#n4"><i>Reading Notes</i></a><br>
 		<A HREF="http://sungsoo.github.com/papers/lamport-1998.pdf">The Part-Time Parliament</a></br>
 		<A HREF="http://sungsoo.github.com/papers/lamport-2001.pdf">PAXOS made simple</a>
 	</td>
@@ -263,41 +252,6 @@ tags: [data management]
 		Architectures for Transaction Processing in the Cloud</a>
 	</td>
 </tr>
-<tr>
-	<td rowspan="2">13</td>
-	<td>11/23</td>
-	<td>Short Class</td>
-	<td><b>Quiz #3</b><br>
-	<b>Rough Drafts Due by 5:00 PM</b></td>
-</tr>
-<tr>
-	<td>11/25</td>
-	<td>Thanksgiving</td>
-	<td>None!</td>
-</tr>
-<tr>
-	<td rowspan="2">14</td>
-	<td>11/30</td>
-	<td>Project Presentations</td>
-</tr>
-<tr>
-	<td>12/2</td>
-	<td>Mock Program Committee</td>
-	<td><b>Paper Reviews due by 5:00 PM WEDNESDAY 12/1<b></td>
-</tr>
-<tr>
-	<td rowspan="2">15</td>
-	<td>12/6</td>
-	<td>Reading Period</td>
-	<td></td>
-</tr>
-<tr>
-	<td>12/11</td>
-	<td>FINAL PROJECTS</td>
-	<td><b>Final projects due at 5:00 PM</b></td>
-</tr>
-
-
 </TABLE>
 
 ## Other Papers You Should Read
