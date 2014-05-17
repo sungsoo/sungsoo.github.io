@@ -16,7 +16,7 @@ tags: [data management]
 	<TH ROWSPAN="1" COLSPAN="1">Week</TH>
 	<TH>Date</TH>
 	<th>Topic</th>
-	<th>Reading and Assignments</th>
+	<th>Readings</th>
 </tr>
 
 <TR>
