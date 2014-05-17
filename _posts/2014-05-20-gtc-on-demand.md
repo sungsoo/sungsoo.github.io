@@ -13,6 +13,12 @@ tags: [gpgpu, parallel computing]
 
 [![](http://sungsoo.github.com/images/gtc.png)](http://sungsoo.github.com/images/gtc.png)
 
+# GPU Technology Conference 2014: Opening
+
+GTC: NVIDIA co-founder and CEO Jen-Hsun Huang describes the growth of the company's annual GPU Technology Conference, in San Jose, Calif., and kicks things off by announcing NVLink, the world's first high-speed GPU interconnect. For more NVIDIA news.
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/qaJGfWDFo74?list=PLZHnYvH1qtOZZJB2RtwGVK7b233j7bw1K" frameborder="0" allowfullscreen></iframe>
+
 # Algorithms & Numerical Techniques
 
 ## Portability, Scalability, and Numerical Stability in Accelerated Kernels
