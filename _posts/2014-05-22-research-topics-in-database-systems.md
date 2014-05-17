@@ -306,7 +306,7 @@ The following are important papers that you either should have read
 (e.g., in CS165) or that you should read, because they provide important
 information with which you should be familiar
 <UL>
-<li><a href="http://db.cs.berkeley.edu/http://sungsoo.github.com/papers/fntdb07-architecture.pdf">
+<li><a href="http://db.cs.berkeley.edu/papers/fntdb07-architecture.pdf">
 Anatomy of a Database (Hellerstein, Stonebraker, Hamilton)</a>
 <li> <a href="http://sungsoo.github.com/papers/mapreduce.pdf">MapReduce: Simplified Data Processing
 on Large Clusters</a>
