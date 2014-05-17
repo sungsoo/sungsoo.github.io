@@ -26,5 +26,6 @@ John Stratton (University of Illinois at Urbana-Champaign)
 ## Understanding Parallel Graph Algorithms
 Michael Garland (NVIDIA), Duane Merrill (NVIDIA)
 
-Keywords: Algorithms & Numerical Techniques, GTC Express 2013 - ID GTCE027
-Download: [MP4](http://on-demand.gputechconf.com/gtc-express/2013/videos/understanding-parallel-graph-algorithms.mp4) [PDF](http://on-demand.gputechconf.com/gtc-express/2013/presentations/understanding-parallel-graph-algorithms.pdf)
+**Keywords**: Algorithms & Numerical Techniques, GTC Express 2013 - ID GTCE027
+
+**Download**: [MP4](http://on-demand.gputechconf.com/gtc-express/2013/videos/understanding-parallel-graph-algorithms.mp4) [PDF](http://on-demand.gputechconf.com/gtc-express/2013/presentations/understanding-parallel-graph-algorithms.pdf)
