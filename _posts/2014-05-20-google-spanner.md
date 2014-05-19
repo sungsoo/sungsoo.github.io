@@ -8,7 +8,7 @@ tags: [nosql]
 ---
 
 ## Article Source
-* Title: [Spanner (database)](http://en.wikipedia.org/wiki/Spanner_(database))
+* Title: http://en.wikipedia.org/wiki/Spanner_(database)
 * Authors: Wikipedia, the free encyclopedia
 
 
