@@ -39,7 +39,7 @@ The atomicity and the durability properties of a transaction imply that each tra
 
 The main goal of the recovery manager is to ensure that the database is constantly in a resilient state in face of all potential failures, and upon a failure (transaction failure or system failure), is always capable of restoring the database state to the consistent state defined as of the time of failure.
 
-## The principles:
+## The Principles:
 
 1. Before a transaction T reaches its commit point, the system must ensure that it maintains enough information to allow T to be backed out, or aborted.
 2. After a transaction T reaches its commit point, its updates are captured in such a way that, despite subsequent system failures, these updates are not lost and will in any case be restored in the database state.
