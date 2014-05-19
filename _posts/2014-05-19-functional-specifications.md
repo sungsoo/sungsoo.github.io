@@ -11,28 +11,11 @@ tags: [software engineering]
 ## Article Source
 * Title: [functional specification](http://searchsoftwarequality.techtarget.com/definition/functional-specification)
 
-[![](http://sungsoo.github.com/images/gtc.png)](http://sungsoo.github.com/images/gtc.png)
+[![](http://sungsoo.github.com/images/functional-specifications.png)](http://sungsoo.github.com/images/functional-specifications.png)
 
-functional specification
-========================
+# Functional Specifications
 
--   [E-Mail](# "Email a Friend")
--   [Print](http://searchsoftwarequality.techtarget.com/definition/functional-specification?vgnextfmt=print "Print This Page")
--   [A](# "Change Font Size")
--   [AA](# "Change Font Size")
--   [AAA](# "Change Font Size")
--   [LinkedIn](# "Add to LinkedIn")
--   [Facebook](#)
--   [Twitter](# "Add to Twitter")
--   [Share This](#)
--   [RSS](http://searchsoftwarequality.techtarget.com/rss/ContentSyndication.xml)
--   [Reprints](http://reprints.ygsgroup.com/m/techtarget "Reprints")
-
--   [Software Requirements
-    Techniques](http://searchsoftwarequality.techtarget.com/resources/Software-Requirements-Gathering-Techniques)
--   [Programming](http://whatis.techtarget.com/glossary/Programming)
-
-A functional specification (or sometimes *functional specifications*) is
+A **functional specification** (or sometimes *functional specifications*) is
 a formal document used to describe in detail for software developers a
 product's intended capabilities, appearance, and interactions with
 users. The functional specification is a kind of guideline and
