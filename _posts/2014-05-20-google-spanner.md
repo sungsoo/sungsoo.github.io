@@ -14,6 +14,7 @@ tags: [nosql]
 
 [![](http://sungsoo.github.com/images/spanner.png)](http://sungsoo.github.com/images/spanner.png)
 
+[OSDI 2012 Conference Presentation](http://new.livestream.com/accounts/1545775/osdi12/videos/4646642)
 
 # Google's Spanner
 
