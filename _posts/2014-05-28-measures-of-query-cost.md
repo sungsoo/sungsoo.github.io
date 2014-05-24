@@ -23,7 +23,6 @@ There are multiple possible evaluation plans for a query, and it is important to
 
 * We ignore CPU costs for simplicity
 	* Real systems do take CPU cost into account
-	
 * We do not include cost to writing output to disk in our cost formulae
 
 ---
