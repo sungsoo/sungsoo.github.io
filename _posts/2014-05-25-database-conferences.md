@@ -21,10 +21,6 @@ tags: [data management]
 
 # 9 Big Data Conferences to Put on Your Calendar 
 
-
-February 21, 2014 by
-[Datahead](http://www.mastersindatascience.org/author/jessica-merritt/)
-
 Big data is now an active frontier for innovation. The analysis of large
 data sets is increasingly important in business, medicine, finance,
 government, and beyond. As this new resource for growth and
