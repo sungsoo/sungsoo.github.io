@@ -41,12 +41,12 @@ inventor and world’s largest user of Hive), the emergence of Shark (Hive
 running on the Apache Spark DAG), and the “Stinger” initiative (Hive
 running on the Apache Tez [incubating] DAG).
   
- Given the introduction of a number of new SQL-on-Hadoop implementations
+ Given the introduction of a number of new *SQL-on-Hadoop implementations*
 it seemed like a good time to do a roundup of the latest versions of
 each engine to see how they differ. We find that Impala maintains a
 significant performance advantage over the various other open source
-alternatives — ranging from 5x to 23x depending on the workload and the
-implementations that are compared. This advantage is due to some
+alternatives — ranging from 5x to 23x depending on the *workload* and the
+*implementations* that are compared. This advantage is due to some
 inherent design differences among the various systems, which we’ll
 explain below. Impala’s advantage is strongest for multi-user workloads,
 which arguably is the most relevant measure for users evaluating their
