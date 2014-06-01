@@ -229,7 +229,7 @@ realized that computers could be used to make curves and graphs that
 were visually appealing. Thus, the computer might be a tool for creating
 art.
 
-## The First Computer Art {data-textannotation-id="36dce645154d5d4b8d7c459582f44e1d"}
+## The First Computer Art 
 
 The first tools used to make electronic art—a predecessor to digital
 art— were originally designed for testing sound equipment. The company
