@@ -152,7 +152,7 @@ stick around for its entire lifetime.
 
 ![](http://blog.cloudera.com/wp-content/uploads/2014/05/spark-yarn-f31.png "spark-yarn-f2")
 
-**yarn-cluster mode**
+### yarn-cluster mode
 
 The yarn-cluster mode, however, is not well suited to using Spark
 interactively. Spark applications that require user input, like
@@ -164,7 +164,7 @@ after they start:
 
 ![](http://blog.cloudera.com/wp-content/uploads/2014/05/spark-yarn-f22.png "spark-yarn-f3")
 
-**yarn-client mode**
+### yarn-client mode
 
 This table offers a concise list of differences between these modes:
 
