@@ -15,7 +15,7 @@ tags: [data management, hadoop & mapreduce]
 
 ---
 
-# New SQL Choices in the Apache Hadoop Ecosystem: Why Impala Continues to Lead 
+# New SQL Choices in the Apache Hadoop Ecosystem: Why Impala Continues to Lead? 
 
 **Impala continues to demonstrate performance leadership compared to
 alternatives (by 950% or more), while providing greater query throughput
