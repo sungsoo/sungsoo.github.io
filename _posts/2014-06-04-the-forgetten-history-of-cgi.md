@@ -19,7 +19,7 @@ tags: [computer graphics]
 
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--TaaHK1ID--/c_fit,fl_progressive,q_80,w_636/dmvupqogh2lmdeedjmfo.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--TaaHK1ID--/c_fit,fl_progressive,q_80,w_636/dmvupqogh2lmdeedjmfo.jpg)
 
 The roots of CGI lie in the first mechanical aids to drawing and
 painting. The earliest of these were developed to help solve a problem
@@ -44,7 +44,7 @@ perspective drawings. These were perhaps the first mechanical devices to
 be used to create art.
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--guMNJ5Py--/c_fit,fl_progressive,q_80,w_320/teu2j3xxvma0x3bdmaak.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--guMNJ5Py--/c_fit,fl_progressive,q_80,w_320/teu2j3xxvma0x3bdmaak.jpg)
 
 Most artists quickly adapted these new technologies to create their
 artwork. In the ensuing centuries they have used all sorts of machines
@@ -54,7 +54,7 @@ are not only still used by artists today, they have wide applications in
 modern industry as well.
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--3rgiaDSM--/c_fit,fl_progressive,q_80,w_320/fonpk40erhr4sgsqthx2.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--3rgiaDSM--/c_fit,fl_progressive,q_80,w_320/fonpk40erhr4sgsqthx2.jpg)
 
 ![The Forgotten History Of
 CGI](http://i.kinja-img.com/gawker-media/image/upload/s--8hqlvGnJ--/iisu3d4wdjo5nvkikvum.png)
@@ -138,7 +138,7 @@ numerical. They have used machines and other devices to translate
 numerical data into visual form for more than a century.
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--bvsplI4v--/c_fit,fl_progressive,q_80,w_320/thewliw2fbzc84zx5nsd.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--bvsplI4v--/c_fit,fl_progressive,q_80,w_320/thewliw2fbzc84zx5nsd.jpg)
 
 For instance, in 1787 the German physicist Ernst Chladni found that when
 he drew a violin bow against the edge of a metal plate covered with fine
@@ -166,7 +166,7 @@ only way to save an oscilloscope image was to take a photograph of the
 oscilloscope screen.
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--p1UBndaZ--/c_fit,fl_progressive,q_80,w_320/ihvte1jxpv9qfqkxraxb.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--p1UBndaZ--/c_fit,fl_progressive,q_80,w_320/ihvte1jxpv9qfqkxraxb.jpg)
 
 Two devices create patterns like oscilloscopes through purely mechanical
 means. The harmonograph was a very popular household item in the late
@@ -193,7 +193,7 @@ mathematical curve called a trochoid. A trochoid is the path of a point
 fixed relative to a circle that is rolling along a straight line.
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--aDILrcFw--/c_fit,fl_progressive,q_80,w_636/fafsgg41ngawqbb7gzbu.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--aDILrcFw--/c_fit,fl_progressive,q_80,w_636/fafsgg41ngawqbb7gzbu.jpg)
 
 Imagine a reflector attached to one of the spokes of a bicycle wheel.
 When the wheel turns, the reflector makes a circle as it rotates around
@@ -241,7 +241,7 @@ screen give scientists and engineers information about the wave and its
 source.
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--CdBg33nf--/c_fit,fl_progressive,q_80,w_320/pat6c3um8mxbvcgrmsgn.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--CdBg33nf--/c_fit,fl_progressive,q_80,w_320/pat6c3um8mxbvcgrmsgn.jpg)
 
 Ben Laposky, an artist and mathematician from Cherokee, Iowa, realized
 that by changing the input he could create patterns of his own design.
@@ -256,7 +256,7 @@ his own artistic sensibilities and goals. Franke eventually wrote the
 first book on digital art: *Computer**Graphics-Computer Art*(1971).
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--SoqngAuz--/c_fit,fl_progressive,q_80,w_636/nrnnwtlsgsxkqxm5hgsa.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--SoqngAuz--/c_fit,fl_progressive,q_80,w_636/nrnnwtlsgsxkqxm5hgsa.jpg)
 
 John Whitney Sr., who studied music and photography, closely followed
 Laposky's and Franke's work. In the 1940s, Whitney created an
@@ -349,7 +349,7 @@ different shapes into new ones. Then she printed her final results with
 a plotter.
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--ETABsAOP--/c_fit,fl_progressive,q_80,w_636/kb1uep82zfvnqligfpns.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--ETABsAOP--/c_fit,fl_progressive,q_80,w_636/kb1uep82zfvnqligfpns.jpg)
 
 "Proceeding by small steps," she said, "the painter is in a position to
 delicately pinpoint the image of dreams. Without the aid of a computer,
@@ -367,7 +367,7 @@ Paris gave him a one-man show. It was the first such honor from any
 museum for a computer artist.
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--RwZWQT9y--/c_fit,fl_progressive,q_80,w_320/inidzqlmc0trvw14iqex.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--RwZWQT9y--/c_fit,fl_progressive,q_80,w_320/inidzqlmc0trvw14iqex.jpg)
 
 Larry Cuba is a widely known pioneer of computer animation. He created
 his first film, *First Fig,*in 1974. Computers capable of digital art
@@ -379,7 +379,7 @@ as *3/78 (Objects and Transformations)*(1978), *Two Space*(1979), and
 *Calculated**Movements*(1985) have been shown all over the world.
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--DolOPNLT--/c_fit,fl_progressive,q_80,w_320/uydy2ceaewbzc6dlh3na.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--DolOPNLT--/c_fit,fl_progressive,q_80,w_320/uydy2ceaewbzc6dlh3na.jpg)
 
 Lillian Schwartz pioneered the use of computers in graphics, film,
 video, animation, special effects, virtual reality, and multimedia. Her
@@ -393,7 +393,7 @@ Her award-winning films—such as *Mirage*(1974)—have been shown all over
 the world.
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--bWV5xrXT--/c_fit,fl_progressive,q_80,w_320/wtngwjwxuu5fzoljnmnx.png)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--bWV5xrXT--/c_fit,fl_progressive,q_80,w_320/wtngwjwxuu5fzoljnmnx.png)
 
 Yoichiro Kawaguchi, one of the leading international computer artists,
 originally teamed up with computer scientists. With their help, he
@@ -404,7 +404,7 @@ found in natural forms, such as seashells and plants, inspired him. He
 won many international honors and awards for his art and animation.
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--H3mTlJCN--/c_fit,fl_progressive,q_80,w_320/xw5dqyudzenlsxvhdixz.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--H3mTlJCN--/c_fit,fl_progressive,q_80,w_320/xw5dqyudzenlsxvhdixz.jpg)
 
 Ed Emshwiller is mostly famed as a science-fiction illustrator. He was
 also a highly respected video artist and dean of the School of
@@ -433,7 +433,7 @@ lines the same length as the section you just removed. Do this to all
 three sides of the triangle.
 
 ![The Forgotten History Of
-CGI](http://i.kinja-img.com/gawker-media/image/upload/s--4Sjkjqd5--/c_fit,fl_progressive,q_80,w_320/wdsnumxfyfevcruckpq6.jpg)S
+CGI](http://i.kinja-img.com/gawker-media/image/upload/s--4Sjkjqd5--/c_fit,fl_progressive,q_80,w_320/wdsnumxfyfevcruckpq6.jpg)
 
 The result will be a six-pointed star. Do this again with the twelve new
 sides you've created. And do it again and again . . . The resulting
