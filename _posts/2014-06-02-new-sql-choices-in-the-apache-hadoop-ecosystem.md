@@ -1,6 +1,6 @@
 ---
 layout: post
-title: New SQL Choices in the Apache Hadoop Ecosystem - Why Impala Continues to Lead?
+title: Why Impala Continues to Lead?
 date: 2014-06-02
 categories: [computer science]
 tags: [data management, hadoop & mapreduce]
