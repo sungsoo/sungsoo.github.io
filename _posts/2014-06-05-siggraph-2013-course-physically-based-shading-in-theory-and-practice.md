@@ -33,7 +33,7 @@ the same result, so it’s no surprise that physically based models have
 increased in popularity, particularly because they are often no more
 difficult to implement or evaluate. Since last year’s course
 ([*Practical Physically Based Shading in Film and Game
-Production*](/publications/s2012-shading-course/), SIGGRAPH 2012), many
+Production*](http://blog.selfshadow.com/publications/s2012-shading-course/), SIGGRAPH 2012), many
 advances have been made in this field, and once again game and film
 studios present their latest research and production-proven techniques.
 
