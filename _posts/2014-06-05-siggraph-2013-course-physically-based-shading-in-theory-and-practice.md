@@ -48,8 +48,8 @@ Syllabus
 * 10:00–10:30 **Crafting a Next-Gen Material Pipeline for The Order: 1886** (David Neubelt and Matt Pettineo) [slides:[ppt](http://blog.selfshadow.com/publications/s2013-shading-course/rad/s2013_pbs_rad_slides.pptx), [pdf](http://blog.selfshadow.com/publications/s2013-shading-course/rad/s2013_pbs_rad_slides.pdf)] [[course notes]](http://blog.selfshadow.com/publications/s2013-shading-course/rad/s2013_pbs_rad_notes.pdf) [[video]](http://vimeo.com/70992723)
 * [[code]](https://mjp.codeplex.com/releases/view/109905)
 * 10:30–10:45 *Break*
-* 10:45–11:10 **Everything You Always Wanted to Know About mia_material** (Zap Andersson) [slides: [ppt](andersson/s2013_pbs_mia_slides_v2.pptx), [pdf](andersson/s2013_pbs_mia_slides_v2.pdf)] [[course notes]](andersson/s2013_pbs_mia_notes.pdf)
-* 11:10–11:35 **OSL The Great and Powerful** (Adam Martinez) [[slides]](martinez/s2013_pbs_osl_slides.pdf)
+* 10:45–11:10 **Everything You Always Wanted to Know About mia_material** (Zap Andersson) [slides: [ppt](http://blog.selfshadow.com/publications/s2013-shading-course/andersson/s2013_pbs_mia_slides_v2.pptx), [pdf](http://blog.selfshadow.com/publications/s2013-shading-course/andersson/s2013_pbs_mia_slides_v2.pdf)] [[course notes]](http://blog.selfshadow.com/publications/s2013-shading-course/andersson/s2013_pbs_mia_notes.pdf)
+* 11:10–11:35 **OSL The Great and Powerful** (Adam Martinez) [[slides]](http://blog.selfshadow.com/publications/s2013-shading-course/martinez/s2013_pbs_osl_slides.pdf)
 * 11:35–12:15 **Physically Based Shading at Pixar** (Christophe Hery and Ryusuke Villemin) [[slides]](http://blog.selfshadow.com/publications/s2013-shading-course/pixar/s2013_pbs_pixar_slides.pdf) [[course notes]](http://blog.selfshadow.com/publications/s2013-shading-course/pixar/s2013_pbs_pixar_notes.pdf)
 
 **Note**: please direct any corrections or general questions to:
