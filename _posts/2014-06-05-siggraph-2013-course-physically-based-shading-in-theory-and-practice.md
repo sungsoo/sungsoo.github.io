@@ -17,7 +17,7 @@ tags: [computer graphics]
 
 # SIGGRAPH 2013 Course: Physically Based Shading in Theory and Practice 
 
-![](http://sungsoo.github.com/images/s2013-shading/title.jpg)
+![](http://sungsoo.github.com/images/title.jpg)
 
 *© Disney/Pixar 2013.*
 
