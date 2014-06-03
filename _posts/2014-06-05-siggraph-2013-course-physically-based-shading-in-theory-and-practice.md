@@ -53,7 +53,7 @@ Syllabus
 * 11:35–12:15 **Physically Based Shading at Pixar** (Christophe Hery and Ryusuke Villemin) [[slides]](http://blog.selfshadow.com/publications/s2013-shading-course/pixar/s2013_pbs_pixar_slides.pdf) [[course notes]](http://blog.selfshadow.com/publications/s2013-shading-course/pixar/s2013_pbs_pixar_notes.pdf)
 
 **Note**: please direct any corrections or general questions to:
-s2013course <at> selfshadow <dot> com.
+s2013course @ selfshadow . com.
 
 Organisers
 ----------
