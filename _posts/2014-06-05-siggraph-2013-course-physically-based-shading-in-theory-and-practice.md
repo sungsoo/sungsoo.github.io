@@ -41,16 +41,16 @@ Syllabus
 --------
 
 * 09:00–09:05 **Introduction** (Stephen Hill)
-* 09:05–09:20 **Background: Physics and Math of Shading** (Naty Hoffman)[[slides]](hoffman/s2013_pbs_physics_math_slides.pdf) [[course notes]](hoffman/s2013_pbs_physics_math_notes.pdf) ![](http://sungsoo.github.com/images/new.png) [notebook: [mathematica](hoffman/s2013_pbs_physics_math_notebook.nb),[pdf](hoffman/s2013_pbs_physics_math_notebook.pdf)]![](http://sungsoo.github.com/images/new.png)
-* 09:20–09:40 **Getting More Physical in Call of Duty: Black Ops II** (Dimitar Lazarov) [slides: [ppt](lazarov/2013_pbs_black_ops_2_slides_v2.pptx), [pdf](lazarov/s2013_pbs_black_ops_2_slides_v2.pdf)] [[course notes]](lazarov/s2013_pbs_black_ops_2_notes.pdf) [[notebook]](lazarov/mathematica.zip)
+* 09:05–09:20 **Background: Physics and Math of Shading** (Naty Hoffman)[[slides]](http://blog.selfshadow.com/publications/s2013-shading-course/hoffman/s2013_pbs_physics_math_slides.pdf) [[course notes]](http://blog.selfshadow.com/publications/s2013-shading-course/hoffman/s2013_pbs_physics_math_notes.pdf) ![](http://sungsoo.github.com/images/new.png) [notebook: [mathematica](http://blog.selfshadow.com/publications/s2013-shading-course/hoffman/s2013_pbs_physics_math_notebook.nb),[pdf](http://blog.selfshadow.com/publications/s2013-shading-course/hoffman/s2013_pbs_physics_math_notebook.pdf)]![](http://sungsoo.github.com/images/new.png)
+* 09:20–09:40 **Getting More Physical in Call of Duty: Black Ops II** (Dimitar Lazarov) [slides: [ppt](http://blog.selfshadow.com/publications/s2013-shading-course/lazarov/2013_pbs_black_ops_2_slides_v2.pptx), [pdf](http://blog.selfshadow.com/publications/s2013-shading-course/lazarov/s2013_pbs_black_ops_2_slides_v2.pdf)] [[course notes]](http://blog.selfshadow.com/publications/s2013-shading-course/lazarov/s2013_pbs_black_ops_2_notes.pdf) [[notebook]](http://blog.selfshadow.com/publications/s2013-shading-course/lazarov/mathematica.zip)
 * 09:40–10:00 **Real Shading in Unreal Engine 4** (Brian Karis) [slides:
-* [ppt](karis/s2013_pbs_epic_slides.pptx), [pdf](karis/s2013_pbs_epic_slides.pdf)] [[course notes]](karis/s2013_pbs_epic_notes_v2.pdf)
-* 10:00–10:30 **Crafting a Next-Gen Material Pipeline for The Order: 1886** (David Neubelt and Matt Pettineo) [slides:[ppt](rad/s2013_pbs_rad_slides.pptx), [pdf](rad/s2013_pbs_rad_slides.pdf)] [[course notes]](rad/s2013_pbs_rad_notes.pdf) [[video]](http://vimeo.com/70992723)
+* [ppt](http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_slides.pptx), [pdf](http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_slides.pdf)] [[course notes]](http://blog.selfshadow.com/publications/s2013-shading-course/karis/s2013_pbs_epic_notes_v2.pdf)
+* 10:00–10:30 **Crafting a Next-Gen Material Pipeline for The Order: 1886** (David Neubelt and Matt Pettineo) [slides:[ppt](http://blog.selfshadow.com/publications/s2013-shading-course/rad/s2013_pbs_rad_slides.pptx), [pdf](http://blog.selfshadow.com/publications/s2013-shading-course/rad/s2013_pbs_rad_slides.pdf)] [[course notes]](http://blog.selfshadow.com/publications/s2013-shading-course/rad/s2013_pbs_rad_notes.pdf) [[video]](http://vimeo.com/70992723)
 * [[code]](https://mjp.codeplex.com/releases/view/109905)
 * 10:30–10:45 *Break*
 * 10:45–11:10 **Everything You Always Wanted to Know About mia_material** (Zap Andersson) [slides: [ppt](andersson/s2013_pbs_mia_slides_v2.pptx), [pdf](andersson/s2013_pbs_mia_slides_v2.pdf)] [[course notes]](andersson/s2013_pbs_mia_notes.pdf)
 * 11:10–11:35 **OSL The Great and Powerful** (Adam Martinez) [[slides]](martinez/s2013_pbs_osl_slides.pdf)
-* 11:35–12:15 **Physically Based Shading at Pixar** (Christophe Hery and Ryusuke Villemin) [[slides]](pixar/s2013_pbs_pixar_slides.pdf) [[course notes]](pixar/s2013_pbs_pixar_notes.pdf)
+* 11:35–12:15 **Physically Based Shading at Pixar** (Christophe Hery and Ryusuke Villemin) [[slides]](http://blog.selfshadow.com/publications/s2013-shading-course/pixar/s2013_pbs_pixar_slides.pdf) [[course notes]](http://blog.selfshadow.com/publications/s2013-shading-course/pixar/s2013_pbs_pixar_notes.pdf)
 
 **Note**: please direct any corrections or general questions to:
 s2013course <at> selfshadow <dot> com.
