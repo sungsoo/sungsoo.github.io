@@ -8,8 +8,8 @@ tags: [data science, gpgpu, parallel computing]
 ---
 
 ## Article Source
-* Title: [SIGGRAPH 2013 Course: Physically Based Shading in Theory and Practice](http://blog.selfshadow.com/publications/s2013-shading-course/)
-* Authors: Stephen Hill
+* Title: [GPU Programming for the Data Sciences](http://www.sfbayacm.org/event/gpu-programming-data-sciences)
+* Authors: Mark Ebersole, NVIDIA
 
 [![](http://sungsoo.github.com/images/gpu-programming.png)](http://sungsoo.github.com/images/gpu-programming.png)
 
