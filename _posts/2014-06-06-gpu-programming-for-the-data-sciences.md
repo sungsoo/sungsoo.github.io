@@ -1,7 +1,7 @@
 ---
 layout: post
 title: GPU Programming for the Data Sciences
-date: 2014-06-05
+date: 2014-06-06
 categories: [computer science]
 tags: [data science, gpgpu, parallel computing]
 
