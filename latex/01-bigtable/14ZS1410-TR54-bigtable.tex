@@ -139,7 +139,7 @@ Column key는 다음과 같은 문법을 갖는다 :
  
 \section{API}
  빅테이블 API는 테이블이나 컬럼 패밀리(column family)를 생성하거나 지울 수 있는 함수들을 제공한다. 또한 클러스터, 테이블, column family, 메타데이타, 접근제어권한과 같은 것들을 변경할 수 있는 함수도 제공한다.
-클라이언트 어플리케이션은 빅테이블에 쓰거나 지울 수 있고, 클라이언트 어플리케이션 개인의 row 에서 데이터를 가져오거나, 테이블에 있는 데이터의 하위집합(subset)에 대해서도 이와같은 일을 반복할 수 있다.
+클라이언트 어플리케이션은 빅테이블에 쓰거나 지울 수 있고, 클라이언트 어플리케이션 개인의 row 에서 데이터를 가져오거나, 테이블에 있는 데이터의 하위집합(subset)에 대해서도 이와같은 일을 반복할 수 있다.  아래 코드는 업데이트를 수행하기 위해 RowMutation을 추출하는 C++ 코드를 보여준다. 
 
 \begin{verbnobox}[\small]
 // Open the tableTable *T = OpenOrDie("/bigtable/web/webtable");// Write a new anchor and delete an old anchor 
@@ -148,8 +148,19 @@ r1.Set("anchor:www.c-span.org", "CNN");
 r1.Delete("anchor:www.abc.com");Operation op;Apply(&op, &r1);
 \end{verbnobox}
  
- 그림 2는 업데이트를 수행하기 위해 RowMutation을 추출하는 C++ 코드를 보여준다. Apply를 호출함으로 웹테이블에 작은 변경이 일어난다 : www.cnn.com 을 anchor에 더하고 다른걸 지운다.
-그림 3은 특정 row에 있는 모든 anchor들을 반복적으로 추출하는 Scanner를 사용하는 C++ 코드이다. 클라이언트는 다수의 column family에 사용할 수 있고 rows, columns, timestamps 를 검색할 때 사용하는 몇가지 limit 메카니즘을 가지고 있다. 예들들면, 정규표현식 anchor:*.cnn.com 에 매칭되는 것들만 검색하라는 제한을 두거나, 현재시간으로부터 10일 안의 timestamps 만을 가져오도록 할 수 있다.
+Apply를 호출함으로 웹테이블에 작은 변경이 일어난다 : www.cnn.com 을 anchor에 더하고 다른걸 지운다.
+아래 코드는 특정 row에 있는 모든 anchor들을 반복적으로 추출하는 Scanner를 사용하는 C++ 코드이다. 
+
+\begin{verbnobox}[\small]
+Scanner scanner(T);ScanStream *stream;stream = scanner.FetchColumnFamily("anchor"); 
+stream->SetReturnAllVersions(); 
+scanner.Lookup("com.cnn.www");for (; !stream->Done(); stream->Next()) {
+	printf("%s %s %lld %s\n",
+		scanner.RowName(),          		stream->ColumnName(),       		stream->MicroTimestamp(),       		stream->Value());
+}
+\end{verbnobox}
+
+클라이언트는 다수의 column family에 사용할 수 있고 rows, columns, timestamps 를 검색할 때 사용하는 몇가지 limit 메카니즘을 가지고 있다. 예들들면, 정규표현식 anchor:*.cnn.com 에 매칭되는 것들만 검색하라는 제한을 두거나, 현재시간으로부터 10일 안의 timestamps 만을 가져오도록 할 수 있다.
 빅테이블은 더욱 다양한 방법으로 데이터를 조작하기 위해 몇가지 다른 특성들을 지원하고 있다. 첫째로, 빅테이블은 현재 row key간의 일반적인 트랜잭션을 지원하지 않지만 배치(batch)로 row key를 교차하며 기록할 수 있는 기능을 클라이언트 측에 제공한다. 둘째로, 빅테이블은 cell 이 정수 카운터로 사용되는 것을 허락한다. 결국 빅테이블은 서버의 공간에서 클라이언트가 수행할 수 있는 스크립트를 지원한다. 이 스크립트는 Sawzall이라 불리고, 데이터를 처리하기 위해 구글에서 개발한 언어이다. 현재는, Sawzall 을 기반으로한 API 에서 클라이언트의 스크립트가 빅테이블에 데이터를 쓰는 것을 허락하지 않는다. 그러나, 애매한 표현들에 대한 필터링과 다양한 연산자들에 대한 요약을 클라이언트에 제공하고 있다.
  빅테이블은 구글에서 대용량 병렬 처리를 하기위해 개발한 프레임웍인 MapReduce룰 사용할 수 있다. 우리는 빅테이블에서 input source 와 output target 의 경우 모두에 MapReduce job을 사용하기 위해 wrapper를 사용했다.
  
@@ -169,15 +180,75 @@ r1.Delete("anchor:www.abc.com");Operation op;Apply(&op, &r1);
 \subsection{Tablet Location}
 우리는 타블렛 위치 정보를 저장하기 위해서 B+- 트리의 그것과 비슷한 3 단계의 계층구조를 사용한다.
 
-% tablet_location_hierachy.JPG
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{tablet}
+        \caption{\small Tablet location hierarchy.}
+        \label{fig02}
+\end{figure}
 
- 첫번째 단계는 Chubby에 저장된 루트 타블렛(root tablet)의 위치를 가지고 있는 파일이다. 루트 타블렛은 특별한 METADATA 테이블에 모든 타블렛들의 위치를 가지고 있다. 각각의 METADATA 타블렛은 유저 타블렛들의 집합에 대한 위치를 가지고 있다. 루트 타블렛은 단지 METADATA 테이블의 첫번째 타블렛에 불과하지만, 타블렛 위치 계층구조가 3단계 이상을 가지지 않게하기 위해 특별하게 취급된다. - 루트 타블렛은 절대 쪼개지지 않는다.
-METADATA 테이블은 타블렛의 테이블 식별자와 마지막 row를 인코딩한 row key 아래에 타블렛 위치를 저장한다. 각각의 METADATA row 는 메모리에 있는 데이터의 대략 1KB를 저장한다. 그다지 크지 않은 128MB METADATA 타블렛 사이즈로, 우리의 3단계 계층구조의 위치 스키마는 2의 34제곱 타블렛들의 어드레스를 하는 것이 가능하다(또는 128MB 타블렛에서 2의 61 제곱 바이트).
+ 첫번째 단계는 Chubby에 저장된 루트 타블렛(\textit{root tablet})의 위치를 가지고 있는 파일이다. 루트 타블렛은 특별한 METADATA 테이블에 모든 타블렛들의 위치를 가지고 있다. 각각의 METADATA 타블렛은 유저 타블렛들의 집합에 대한 위치를 가지고 있다. 루트 타블렛은 단지 METADATA 테이블의 첫번째 타블렛에 불과하지만, 타블렛 위치 계층구조가 3단계 이상을 가지지 않게하기 위해 특별하게 취급된다. - 루트 타블렛은 절대 쪼개지지 않는다.
+
+METADATA 테이블은 타블렛의 테이블 식별자와 마지막 row를 인코딩한 row key 아래에 타블렛 위치를 저장한다. 각각의 METADATA row 는 메모리에 있는 데이터의 대략 1KB를 저장한다. 그다지 크지 않은 128MB METADATA 타블렛 사이즈로, 우리의 3단계 계층구조의 위치 스키마는 $2^{34}$ 타블렛들의 어드레스를 하는 것이 가능하다(또는 128MB 타블렛에서 $2^{61}$ 바이트).
+
 클라이언트 라이브러리는 타블렛 위치를 캐쉬한다. 만약 클라이언트가 타블렛의 위치를 모르거나, 캐쉬된 위치정보가 잘못되었다는 것을 발견하면 타블렛 계층구조를 타고 위로 올라가게 된다. 만약 클라이언트의 캐쉬가 비어있으면, 위치 알고리즘은 Chubby로 부터 읽어오는 것을 포함하여 네트워크를 3번 왕복하는 것을 요구한다. 만약 캐쉬의 정보가 오래되었다면, 위치 알고리즘은 네트워크를 여섯번 왕복하도록 만든다. 왜냐하면, METADATA 타블렛들이 빈번하게 움직이지 않는다는 가정하에, 빠뜨렸던 것을 발견할 수 있기 때문이다.  타블렛 위치가 메모리에 저장되기 때문에 구글파일시스템(GFS)에 접근할 필요가 없긴 하지만, 앞으로는 클라이언트 라이브러리가 타블렛 위치들을 미리 패치하도록 함으로써 이러한 비용을 점점 줄여나갈 것이다 : 메타데이타 테이블을 읽을때는 반드시 하나 이상 타블렛의 메타데이터를 읽는다.
+
 우리는 메타데이터 테이블의 각 타블렛에서 발생하는 모든 이벤트 로그와 같은 2차 정보들을 저장한다. 이러한 정보는 디버깅이나 성능을 분석하는데 매우 유용하다.
  
 \subsection{Tablet Assignment}
-타블렛들은 각각 하나의 타블렛 서버에 할당된다. 마스터는 살아있는 타블렛 서버들을 확인하고, 타블렛 서버에 할당되어진 타블렛들이 현재 수행하는 작업을 추적하고, 작업이 할당되지 않은 타블렛 또한 확인한다.
+타블렛들은 각각 하나의 타블렛 서버에 할당된다. 마스터는 살아있는 타블렛 서버들을 확인하고, 타블렛 서버에 할당되어진 타블렛들이 현재 수행하는 작업을 추적하고, 작업이 할당되지 않은 타블렛 또한 확인한다. 태블릿이 할당되지 않고, 태블릿을 위해 충부한 여유공간을 가진 태블릿 서버가 있는 경우, 마스터는 태블릿 로드 요청을 전송함으로써, 태블릿을 할당한다. 
+
+빅 테이블은 태블릿 서버를 추적하기 위해 춰비(Chubby)를 사용한다. 태블릿 서버가 시작하면, 춰비를 생성하고, 특정 춰비 디렉토리내의 고유한 이름을 가진 파일에 배타적인 락(exclusive lock)을 획득한다. 마스터는 태블릿 서버를 탐색하기 위해 서버 디렉토리를 모니터링한다.
+태블릿 서버는 춰비 세션 끝남에 따라 서버에서 야기한 네트워크 파티션 등으로 인해 배타적 락을 잃게되면 해당 태블릿 서비스를 중단한다.
+춰비는 네트워크 트래픽을 발생시키지 않고도 태블릿 서버에게 락을 가지고 있는지를 체크할 수 있도록 효율적인 메카니즘을 제공한다.
+태블릿 서버는 파일이 존재하는 한 파일에 대한 배타적인 락을 재 획득하려고 시도할 것이다. 만약 파일이 더이상 존재하지 않으면,  태블릿 서버는 스스로 종료(kill)하고 태블릿 서버를 제공하지 않게 된다.
+태블릿 서버가 종료될 때마다, 마스터가 좀더 빠르게 태블릿을 재할당할 수 있도록, 태블릿 서버는 자신이 가지고 있던 락을 해제(release)한다.
+마스터는 태블릿 서버가 더이상 태블릿을 제공하지 않는지 감지하고 가능한한 빨리 다른 태블릿들을 재할당하는 역할을 수행한다.
+태블릿 서버가 태블릿을 더이상 제공하지 않는 지를 감지하기 위해, 마스터는 주기적으로 태블릿이 가진 락의 상태에 대해 태블릿 서버에게 물어본다.
+If a tablet server reports that it has lost its lock, or if the master was unable to reach a server during its last several attempts, 
+만약에 태블릿 서버가 락을 잃어버렸다고 보고하거나, 마스터가 태블릿 서버에게 여러번 시도해도 요청이 도달하지 않는 경우,
+마스터는 서버의 파일에 대한 배타적인 락에 대한 획득을 시도한다.
+
+the master attempts to acquire an exclusive lock on the server’s file. 
+If the master is able to acquire the lock, then Chubby is live and the tablet server is either dead or having trouble reaching Chubby, 
+마스터가 락을 획득할 수 있으면, 처비는 살아있고 태블릿 서버는 죽었거나 처비에 도달하는 데 문제가 가지고 있다는 것이므로,
+마스터는 서버 파일을 삭제함으로써 태블릿 서버가 더이상 서비스를 제공할 수 없음을 보장한다.
+
+so the master ensures that the tablet server can never serve again by deleting its server file. 
+Once a server’s file has been deleted, the master can move all the tablets that were previously assigned to that server into the set of unassigned tablets. 
+
+To ensure that a Bigtable cluster is not vulnera- ble to networking issues between the master and Chubby, the master kills itself if its Chubby session expires. How- ever, as described above, master failures do not change the assignment of tablets to tablet servers.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 \end{document}
