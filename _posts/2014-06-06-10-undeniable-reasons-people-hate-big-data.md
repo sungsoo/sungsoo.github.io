@@ -1,7 +1,7 @@
 ---
 layout: post
 title: 10 undeniable reasons people hate Big Data
-date: 2014-06-05
+date: 2014-06-06
 categories: [computer science]
 tags: [big data]
 
