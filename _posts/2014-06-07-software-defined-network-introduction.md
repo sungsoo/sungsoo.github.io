@@ -39,4 +39,4 @@ Up until a few years ago, storage, computing, and network resources were intenti
 This book focuses on the network aspects of software-defined, software-driven, and programmable networks while giving sufficient coverage to the virtualization, location, and programming of storage, network, and compute aspects of the equation. It is the goal of this book to explore the details and motivations around the advances in network technology that gave rise to and support of hyper virtualization of network, storage, and computing resources that are now considered to be part of SDN.
 
 # References
-[1] Thomas D. Nadeau and Ken Gray, *SDN: Software Defined Networks*, pp.137-138, O’Reilly Media, Inc., 2013.
+[1] Thomas D. Nadeau and Ken Gray, *SDN: Software Defined Networks*, O’Reilly Media, Inc., 2013.
