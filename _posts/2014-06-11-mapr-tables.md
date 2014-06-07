@@ -170,7 +170,53 @@ the column values for a given key can be null.
 This example uses JSON notation for representational clarity. In this
 example, timestamps are arbitrarily assigned.
 
- Expand this section to see the JSON code sample.
+```json
+{
+ "arbitraryFirstKey" : {
+     "firstColumnFamily" : {
+          "firstColumn" : {
+               10 : "valueFive",
+               7 : "valueThree",
+               4 : "valueOne",
+               }
+          "secondColumn" : {
+               16 : "valueEight",
+               1 : "valueSeven",
+               }
+          }
+     "secondColumnFamily" : {
+          "firstColumn" : {
+               37 : "valueFive",
+               23 : "valueThree",
+               11 : "valueSeven",
+               4 : "valueOne",
+               }
+          "secondColumn" : {
+               15 : "valueEight",
+               }
+          }
+     }
+ "arbitrarySecondKey" : {
+     "firstColumnFamily" : {
+          "firstColumn" : {
+               10 : "valueFive",
+               4 : "valueOne",
+               }
+          "secondColumn" : {
+               16 : "valueEight",
+               7 : "valueThree",
+               1 : "valueSeven",
+               }
+          }
+     "secondColumnFamily" : {
+          "firstColumn" : {
+               23 : "valueThree",
+               11 : "valueSeven",
+               }
+          }
+     }
+}
+```
 
 HBase queries return the most recent timestamp by default. A query for
 the value in "arbitrarySecondKey"/"secondColumnFamily:firstColumn"
