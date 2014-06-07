@@ -8,8 +8,8 @@ tags: [big data, hadoop & mapreduce]
 ---
 
 ## Article Source
-* Title: [M7 - Native Storage for MapR Tables](http://doc.mapr.com/display/MapR/M7+-+Native+Storage+for+MapR+Tables)
-* Authors: [Peter Conrad](http://doc.mapr.com/display/~admin) and [Paul Echeverri](http://doc.mapr.com/display/~pecheverri) 
+* Title: [M7 - Native Storage for MapR Tables](http://doc.mapr.comhttp://doc.mapr.com/display/MapR/M7+-+Native+Storage+for+MapR+Tables)
+* Authors: [Peter Conrad](http://doc.mapr.comhttp://doc.mapr.com/display/~admin) and [Paul Echeverri](http://doc.mapr.comhttp://doc.mapr.com/display/~pecheverri) 
 
 
 
@@ -65,7 +65,7 @@ storage, providing an enterprise-grade HBase environment.
     useful grouping.
 -   Tables are stored in volumes on the cluster alongside unstructured
     files. Storage policy settings for
-    [volumes](/display/MapR/Managing+Data+with+Volumes) apply to tables
+    [volumes](http://doc.mapr.com/display/MapR/Managing+Data+with+Volumes) apply to tables
     as well as files.
 -   Volume mirrors and snapshots provide flexible, reliable read-only
     access.
@@ -96,24 +96,24 @@ Apache HBase tables. Similar to development for Apache HBase, the
 simplest way to create tables and column families in MapR-FS, and put
 and get data from them, is to use `hbase shell`. MapR tables can be
 created from the [MapR Control
-System](/display/MapR/MapR+Control+System) (MCS) user interface or from
-the Linux [command line](/display/MapR/table), without the need to
+System](http://doc.mapr.com/display/MapR/MapR+Control+System) (MCS) user interface or from
+the Linux [command line](http://doc.mapr.com/display/MapR/table), without the need to
 coordinate with a database administrator. You can treat a MapR table
 just as you would a file, specifying a path to a location in a
 directory, and the table appears in the same namespace as your regular
 files. You can also create and manage [column
-families](/display/MapR/table+cf) for your table from the MCS or
+families](http://doc.mapr.com/display/MapR/table+cf) for your table from the MCS or
 directly from the command line.
 
 
-* The Apache HBase API exposes many low-level administrative functions that can be tuned for performance or reliability. The reliability and functionality of MapR tables renders these low-level functions moot, and these low-level calls are not supported for MapR tables. See [MapR Table Support for Apache HBase API](/display/MapR/MapR+Table+Support+for+Apache+HBase+API) for detailed information.
+* The Apache HBase API exposes many low-level administrative functions that can be tuned for performance or reliability. The reliability and functionality of MapR tables renders these low-level functions moot, and these low-level calls are not supported for MapR tables. See [MapR Table Support for Apache HBase API](http://doc.mapr.com/display/MapR/MapR+Table+Support+for+Apache+HBase+API) for detailed information.
 
 During [data
-migration](/display/MapR/Migrating+Between+Apache+HBase+Tables+and+MapR+Tables)
+migration](http://doc.mapr.com/display/MapR/Migrating+Between+Apache+HBase+Tables+and+MapR+Tables)
 or other specific scenarios where you need to refer to a MapR table of
 the same name as an Apache HBase table in the same cluster, you can [map
 the table
-namespace](/display/MapR/Mapping+Table+Namespace+Between+Apache+HBase+Tables+and+MapR+Tables)
+namespace](http://doc.mapr.com/display/MapR/Mapping+Table+Namespace+Between+Apache+HBase+Tables+and+MapR+Tables)
 to enable that operation.
 
 To summarize:
@@ -232,10 +232,10 @@ both systems concurrently, particularly during the migration phase.
 Alternately, you can leave Apache HBase running for existing
 applications, and use MapR tables for new applications. You can set up
 [namespace
-mappings](/display/MapR/Mapping+Table+Namespace+Between+Apache+HBase+Tables+and+MapR+Tables)
+mappings](http://doc.mapr.com/display/MapR/Mapping+Table+Namespace+Between+Apache+HBase+Tables+and+MapR+Tables)
 for your cluster to run both MapR tables and Apache HBase tables
 concurrently, during
-[migration](/display/MapR/Migrating+Between+Apache+HBase+Tables+and+MapR+Tables)
+[migration](http://doc.mapr.com/display/MapR/Migrating+Between+Apache+HBase+Tables+and+MapR+Tables)
 or on an ongoing basis.
 
 # Current Limitations 
@@ -245,22 +245,22 @@ or on an ongoing basis.
     permissions for tables and columns are supported.
 -   HBase authentication is not supported.
 -   HBase replication is handled with [Mirror
-    Volumes](/display/MapR/Mirror+Volumes).
+    Volumes](http://doc.mapr.com/display/MapR/Mirror+Volumes).
 -   Bulk loads using the HFiles workaround are not supported and not
     necessary.
 -   HBase coprocessors are not supported.
 -   Filters use a different regular expression library from
     `java.util.regex.Pattern`. See [Supported Regular Expressions in
     MapR
-    Tables](/display/MapR/Supported+Regular+Expressions+in+MapR+Tables)
+    Tables](http://doc.mapr.com/display/MapR/Supported+Regular+Expressions+in+MapR+Tables)
     for a complete list of supported regular expressions.
 -   The maximum row size is 16MB.
 
 # Administering MapR Tables 
 
-The [MapR Control System](/display/MapR/MapR+Control+System) and the
-[command-line interface](/display/MapR/API+Reference) provide a compact
-set of features for [adding and managing tables](/display/MapR/table).
+The [MapR Control System](http://doc.mapr.com/display/MapR/MapR+Control+System) and the
+[command-line interface](http://doc.mapr.com/display/MapR/API+Reference) provide a compact
+set of features for [adding and managing tables](http://doc.mapr.com/display/MapR/table).
 In a traditional HBase environment, cluster administrators are typically
 involved in provisioning tables and column families, because of
 limitations on the number of tables and column families that Apache
@@ -272,17 +272,17 @@ tables and column families as needed for the particular application.
 Programmers can also use tables to store intermediate data in a
 multi-stage MapReduce program, then delete the tables without assistance
 from an administrator. See [Working With MapR Tables and Column
-Families](/display/MapR/Working+With+MapR+Tables+and+Column+Families)
+Families](http://doc.mapr.com/display/MapR/Working+With+MapR+Tables+and+Column+Families)
 for more information.
 
 # Related Topics 
 
 -   [Setting Up MapR-FS to Use
-    Tables](/display/MapR/Setting+Up+MapR-FS+to+Use+Tables)
+    Tables](http://doc.mapr.com/display/MapR/Setting+Up+MapR-FS+to+Use+Tables)
 -   [Working With MapR Tables and Column
-    Families](/display/MapR/Working+With+MapR+Tables+and+Column+Families)
+    Families](http://doc.mapr.com/display/MapR/Working+With+MapR+Tables+and+Column+Families)
 -   [Mapping Table Namespace Between Apache HBase Tables and MapR
-    Tables](/display/MapR/Mapping+Table+Namespace+Between+Apache+HBase+Tables+and+MapR+Tables)
--   [Protecting Table Data](/display/MapR/Protecting+Table+Data)
+    Tables](http://doc.mapr.com/display/MapR/Mapping+Table+Namespace+Between+Apache+HBase+Tables+and+MapR+Tables)
+-   [Protecting Table Data](http://doc.mapr.com/display/MapR/Protecting+Table+Data)
 -   [Migrating Between Apache HBase Tables and MapR
-    Tables](/display/MapR/Migrating+Between+Apache+HBase+Tables+and+MapR+Tables)
+    Tables](http://doc.mapr.com/display/MapR/Migrating+Between+Apache+HBase+Tables+and+MapR+Tables)
