@@ -7,6 +7,12 @@ tags: [big data, hadoop & mapreduce]
 
 ---
 
+## Article Source
+* Title: [M7 - Native Storage for MapR Tables](http://doc.mapr.com/display/MapR/M7+-+Native+Storage+for+MapR+Tables)
+* Authors: [Peter Conrad](http://doc.mapr.com/display/~admin) and [Paul Echeverri](http://doc.mapr.com/display/~pecheverri) 
+
+
+
 [![](http://sungsoo.github.com/images/mapr-tables.png)](http://sungsoo.github.com/images/mapr-tables.png)
 
 ---
