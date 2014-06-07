@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Software-Defined Network Introduction
+title: Software-Defined Networks
 date: 2014-06-07
 categories: [computer science]
 tags: [computer networks]
