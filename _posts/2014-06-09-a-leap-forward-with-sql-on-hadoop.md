@@ -1,7 +1,7 @@
 ---
 layout: post
 title: A Leap Forward With SQL on Hadoop
-date: 2014-06-08
+date: 2014-06-09
 categories: [computer science]
 tags: [big data]
 
