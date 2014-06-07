@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Future of the Network Documentary
-date: 2014-06-08
+date: 2014-06-10
 categories: [computer science]
 tags: [computer networks]
 
