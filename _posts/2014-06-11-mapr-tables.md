@@ -27,7 +27,7 @@ tables. For users experienced with standard Apache HBase, this document
 describes the differences in capabilities and behavior between MapR
 tables and Apache HBase tables.
 
-# MapR-FS Handles Structured and Unstructured Data 
+## MapR-FS Handles Structured and Unstructured Data 
 
 The 3.0 release of the MapR distribution for Hadoop features a unified
 architecture for files and tables, providing distributed data
@@ -54,7 +54,7 @@ implementations.
 
 ![](http://sungsoo.github.com/images/hbase_stack_comparison.png)
 
-# Benefits of Integrated Tables in MapR-FS 
+## Benefits of Integrated Tables in MapR-FS 
 
 The MapR cluster architecture provides the following benefits for table
 storage, providing an enterprise-grade HBase environment.
@@ -76,7 +76,7 @@ storage, providing an enterprise-grade HBase environment.
 -   Node upgrades and other administrative tasks do not cause downtime
     for table storage.
 
-# The MapR Implementation of HBase 
+## The MapR Implementation of HBase 
 
 MapR's implementation supports the core HBase API. Programmers who are
 used to writing code for the HBase API will have immediate, intuitive
@@ -105,15 +105,8 @@ files. You can also create and manage [column
 families](/display/MapR/table+cf) for your table from the MCS or
 directly from the command line.
 
-Icon
 
-The Apache HBase API exposes many low-level administrative functions
-that can be tuned for performance or reliability. The reliability and
-functionality of MapR tables renders these low-level functions moot, and
-these low-level calls are not supported for MapR tables. See [MapR Table
-Support for Apache HBase
-API](/display/MapR/MapR+Table+Support+for+Apache+HBase+API) for detailed
-information.
+* The Apache HBase API exposes many low-level administrative functions that can be tuned for performance or reliability. The reliability and functionality of MapR tables renders these low-level functions moot, and these low-level calls are not supported for MapR tables. See [MapR Table Support for Apache HBase API](/display/MapR/MapR+Table+Support+for+Apache+HBase+API) for detailed information.
 
 During [data
 migration](/display/MapR/Migrating+Between+Apache+HBase+Tables+and+MapR+Tables)
@@ -129,7 +122,7 @@ To summarize:
 -   MapR tables implement the HBase feature set.
 -   You can use MapR tables as the datastore for Hive applications.
 
-# Effects of Decoupling API and Architecture 
+## Effects of Decoupling API and Architecture 
 
 The following features of MapR tables result from decoupling the HBase
 API from the Apache HBase architecture:
@@ -146,7 +139,7 @@ API from the Apache HBase architecture:
     tables.
 -   Crash recovery is significantly faster than Apache HBase.
 
-# The HBase Data Model 
+## The HBase Data Model 
 
 Apache HBase stores structured data as a nested series of maps. Each map
 consists of a set of key-value pairs, where the value can be the key in
