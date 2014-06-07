@@ -10,8 +10,23 @@ tags: [computer networks]
 [![](http://sungsoo.github.com/images/sdn.png)](http://sungsoo.github.com/images/sdn.png)
 
 ---
+# Introduction to Software Defined Networks
+## Part 1, Virtualization Basics
+Part 1 introduces server and network virtualization, as well as virtual machine (VM) mobility, as a background for introducing Software Defined Networks (aka network virtualization) in Part 2. 
 
-# Software-Defined Network Introduction
+<iframe width="600" height="400" src="//www.youtube.com/embed/p5WJBnKX44Y" frameborder="0" allowfullscreen></iframe>
+
+---
+
+## Part 2, The Future of Networking - Now
+
+Part 2 discusses the drivers of Software Defined Networks (SDN), what SDN is and how it differs from conventional networking, SDN in the data center, and impacts and ramifications of SDN.
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/pXJyUjRK3AI" frameborder="0" allowfullscreen></iframe>
+
+---
+
+# Software-Defined Networks
 
 Up until a few years ago, storage, computing, and network resources were intentionally kept physically and operationally separate from one another. Even the systems used to manage those resources were separated—often physically. Applications that interacted with any of these resources, such as an operational monitoring system, were also kept at arm’s length significantly involved access policies, systems, and access procedures all in the name of security. This is the way IT departments liked it. It was really only after the introduction of (and demand for) inexpensive computing power, storage, and networking in data center environments that organizations were forced to bring these different elements together. It was a paradigm shift that also brought applications that manage and operate these resources much, much closer than ever before.
 Data centers were originally designed to physically separate traditional computing elements (e.g., PC servers), their associated storage, and the networks that interconnected them with client users. The computing power that existed in these types of data centers became focused on specific server functionality—running applications such as mail servers, database servers, or other such widely used functionality in order to serve desktop clients. Previously, those functions—which were executed on the often thousands (or more) of desktops within an enterprise organization—were handled by departmental servers that provided services dedicated only to local use. As time went on, the departmental servers migrated into the data center for a variety of reasons—first and foremost, to facilitate ease of management, and second, to enable sharing among the enterprise’s users.
