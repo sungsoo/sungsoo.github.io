@@ -70,7 +70,7 @@ Then list the processes:
 If Storm processes are running, you will see something similar to the
 following:
 
-![1000-image](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/1000-Storm%20process.JPG)\
+[![1000-image](http://sungsoo.github.com/images/1000-Storm%20process.JPG)]((http://sungsoo.github.com/images/1000-Storm%20process.JPG))
  If Storm processes are not running, we can manually start those as
 steps below:
 
@@ -80,7 +80,7 @@ Let’s look at Storm Home folders to see the location of it’s binaries,
 libraries, etc.:
 
 ![1000-image
-Folder](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/1000%20=%20storm%20folders.JPG)
+Folder](http://sungsoo.github.com/images/1000%20=%20storm%20folders.JPG)
 
 ### Step 3:
 
@@ -94,7 +94,7 @@ Go to the following directory and open storm.yaml file.
 `cd /usr/lib/storm/conf`
 
 ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/1000storm.yaml.JPG)
+here](http://sungsoo.github.com/images/1000storm.yaml.JPG)
 
 Review the entire body of this file for the configuration options. You
 can see only the top part in this screen shot
@@ -125,7 +125,7 @@ Let’s review and discuss about a few parameters.
 -   **ui.port.** This is the port on which the Storm UI will use. In our
     case, it is 8080.
 -   **supervisor.slots.ports.** This is another important configuration.
-    \# of ports defined, allows that many workers per node. Here are the
+    # of ports defined, allows that many workers per node. Here are the
     default ports:
     -   supervisor.slots.ports:
         -   6700
@@ -135,7 +135,7 @@ Let’s review and discuss about a few parameters.
     -   In your storm.yaml file, here are a few samples listed.
 
 ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/1000%20storm.yaml%20review.JPG)
+here](http://sungsoo.github.com/images/1000%20storm.yaml%20review.JPG)
 
 Please notice that the Zookeeper server is set as
 sandbox.hortonworks.com. Also, Nimbus server is set as
@@ -148,14 +148,14 @@ Let’s start the Storm Nimbus and Supervisor Processes:
 `./storm nimbus`
 
 ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/Storm%20Nimbus.JPG)
+here](http://sungsoo.github.com/images/Storm%20Nimbus.JPG)
 
 Let’s start the Supervisor Server:
 
 `./storm supervisor`
 
 ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/1000%20supervisor.JPG)\
+here](http://sungsoo.github.com/images/1000%20supervisor.JPG)
  Nimbus is the main master process and supervisor process is the worker
 process.
 
@@ -169,7 +169,7 @@ please start Storm UI as follows:
 `./storm ui`
 
 ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/storm%20ui%20starting.JPG)
+here](http://sungsoo.github.com/images/storm%20ui%20starting.JPG)
 
 In case, you get into already running Storm UI situation, you could
 always look for what is running on the port 8744 using
@@ -181,7 +181,7 @@ Before you can access you Storm Cluster via UI, please set up your
 /etc/hosts file in your local host machine (not sandbox) and map to
 localhost if it is not setup.
 
-The file hosts is usually located at c:\\Windows\\System32\\drivers
+The file hosts is usually located at c:WindowsSystem32drivers
 folder in windows and in /etc folder in a Mac.
 
 Setup as follows :
@@ -190,16 +190,16 @@ Setup as follows :
 
     10.0.2.15   sandbox.hortonworks.com
 
-Let’s save now as follows. Hosts file doesn’t have any extension.\
+Let’s save now as follows. Hosts file doesn’t have any extension.
 
-![Image](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/how%20to%20save.JPG)
+![Image](http://sungsoo.github.com/images/how%20to%20save.JPG)
 
 ### Step 8 :
 
 Let’s open the Storm UI using your browser.
 
 ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/1000%20storm%20ui.JPG)
+here](http://sungsoo.github.com/images/1000%20storm%20ui.JPG)
 
 ### Step 9 :
 
@@ -215,7 +215,7 @@ see how to turn it ON. We will also track this in Storm UI.
     wget http://public-repo-1.hortonworks.com/HDP-LABS/Projects/Storm/0.9.0.1/storm-starter-0.0.1-storm-0.9.0.1.jar
 
 ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/10000%20storm%20example%20download.JPG)
+here](http://sungsoo.github.com/images/10000%20storm%20example%20download.JPG)
 
 ### Step 10 :
 
@@ -233,7 +233,7 @@ You can check the classes available in the jar as follows:
     jar -xvf storm-starter-0.0.1-storm-0.9.0.1.jar | grep WordCount
 
 ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/10000%20jar%20classes.JPG)
+here](http://sungsoo.github.com/images/10000%20jar%20classes.JPG)
 
 ### Step 11 :
 
@@ -246,28 +246,28 @@ Let’s run the Storm Jar file.
     /usr/lib/storm/bin/storm jar storm-starter-0.0.1-storm-0.9.0.1.jar storm.starter.WordCountTopology WordCount -c storm.starter.WordCountTopology WordCount -c nimbus.host=sandbox.hortonworks.com
 
 ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/10000%20jar%20running.JPG)
+here](http://sungsoo.github.com/images/10000%20jar%20running.JPG)
 
 ### Step 12 :
 
-Let’s use Storm UI and look at it graphically:\
+Let’s use Storm UI and look at it graphically:
  ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/10000%20Storm%20UI.JPG)
+here](http://sungsoo.github.com/images/10000%20Storm%20UI.JPG)
 
 You should notice the Storm Topology, WordCount in the Topology summary.
 
 ### Step 13 :
 
-Please click on the WordCount Topology. You will see the following:\
+Please click on the WordCount Topology. You will see the following:
  ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/1000%20Storm%20UI%20next%20step.JPG)
+here](http://sungsoo.github.com/images/1000%20Storm%20UI%20next%20step.JPG)
 
 ### Step 14 :
 
 In this page, please click on count in the Bolt Section.
 
 ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/10000Click%20on%20Bolt.JPG)
+here](http://sungsoo.github.com/images/10000Click%20on%20Bolt.JPG)
 
 ### Step 15 :
 
@@ -281,7 +281,7 @@ following folder. These logs are extremely useful for debugging or
 status finding.
 
 ![enter image description
-here](http://hortonassets.s3.amazonaws.com/tutorial/storm/images/1000%20log.JPG)
+here](http://sungsoo.github.com/images/1000%20log.JPG)
 
 You just processed streaming data using Apache Storm.
 
