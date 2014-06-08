@@ -14,6 +14,10 @@ tags: [big data, data management]
 
 ---
 
+![GraphX](http://sungsoo.github.com/images/graphx_logo.png)
+
+---
+
 Overview
 ========
 
