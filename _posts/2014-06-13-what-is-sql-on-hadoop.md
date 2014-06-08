@@ -32,20 +32,20 @@ SQL-On-Hadoop 시스템이 집중 조명 받는 이유는 다음과 같은 이�
 [Presentation slide](http://www.slideshare.net/gruter/tech-planet-final)
 
 ### MapReduce의 한계
-  . 데이터 처리 모델상의 한계 (관계형 처리를 위해 고안된 것이 아님)
-    Map -> Shuffle -> Reduce
-  . Pig, Hive는 MapReduce가 제공하는 기능 이상의 최적화 불가능
-  . 느린 속도 (초기화 및 스케쥴링 지연)
-    MapReduce가 느린 것이 아님, 하둡 구현이 느린 것
+* 데이터 처리 모델상의 한계 (관계형 처리를 위해 고안된 것이 아님)      
+	Map -> Shuffle -> Reduce
+* Pig, Hive는 MapReduce가 제공하는 기능 이상의 최적화 불가능
+* 느린 속도 (초기화 및 스케쥴링 지연)  
+	MapReduce가 느린 것이 아님, 하둡 구현이 느린 것
 
 ### 높은 learning curve 및 Legacy 시스템들과 호환성 문제
-  . MapReduce는 어렵고, 개발 노력이 많이 들고, 성능 보장이 어려움
-    MapReduce의 직접 사용은 점차 줄고 있음
-  . HiveQL != SQL
+* MapReduce는 어렵고, 개발 노력이 많이 들고, 성능 보장이 어려움  
+	MapReduce의 직접 사용은 점차 줄고 있음
+* HiveQL != SQL
 
 ### Ad-hoc 질의에 대한 속도 문제로 DBMS 병행 사용 불가피
-  . 부담이 큰 ETL의 문제 (HDFS <-> DBMS)
-  . 추가적인 스토리지 공간 필요, 비싼 DBMS 라이센스 비용의 벽
+* 부담이 큰 ETL의 문제 (HDFS <-> DBMS)
+* 추가적인 스토리지 공간 필요, 비싼 DBMS 라이센스 비용의 벽
 
 즉, 기존 Hadoop MapReduce 플랫폼의 단점과 사용자에게 익숙하면서 기존
 시스템과 통합이 쉬운 SQL 기반으로 Hadoop의 데이터를 처리하는 방식인
