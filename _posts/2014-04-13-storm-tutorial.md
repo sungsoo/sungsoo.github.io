@@ -70,7 +70,7 @@ Then list the processes:
 If Storm processes are running, you will see something similar to the
 following:
 
-[![1000-image](http://sungsoo.github.com/images/1000-Storm%20process.JPG)]((http://sungsoo.github.com/images/1000-Storm%20process.JPG))
+[![1000-image](http://sungsoo.github.com/images/1000-Storm%20process.JPG)](http://sungsoo.github.com/images/1000-Storm%20process.JPG)
  If Storm processes are not running, we can manually start those as
 steps below:
 
@@ -79,8 +79,8 @@ steps below:
 Let’s look at Storm Home folders to see the location of it’s binaries,
 libraries, etc.:
 
-![1000-image
-Folder](http://sungsoo.github.com/images/1000%20=%20storm%20folders.JPG)
+[![1000-image
+Folder](http://sungsoo.github.com/images/1000%20=%20storm%20folders.JPG)](http://sungsoo.github.com/images/1000%20=%20storm%20folders.JPG)
 
 ### Step 3:
 
@@ -93,8 +93,8 @@ Go to the following directory and open storm.yaml file.
 
 `cd /usr/lib/storm/conf`
 
-![enter image description
-here](http://sungsoo.github.com/images/1000storm.yaml.JPG)
+[![enter image description
+here](http://sungsoo.github.com/images/1000storm.yaml.JPG)](http://sungsoo.github.com/images/1000storm.yaml.JPG)
 
 Review the entire body of this file for the configuration options. You
 can see only the top part in this screen shot
@@ -134,8 +134,8 @@ Let’s review and discuss about a few parameters.
         -   6703
     -   In your storm.yaml file, here are a few samples listed.
 
-![enter image description
-here](http://sungsoo.github.com/images/1000%20storm.yaml%20review.JPG)
+[![enter image description
+here](http://sungsoo.github.com/images/1000%20storm.yaml%20review.JPG)](http://sungsoo.github.com/images/1000%20storm.yaml%20review.JPG)
 
 Please notice that the Zookeeper server is set as
 sandbox.hortonworks.com. Also, Nimbus server is set as
@@ -147,15 +147,15 @@ Let’s start the Storm Nimbus and Supervisor Processes:
 
 `./storm nimbus`
 
-![enter image description
-here](http://sungsoo.github.com/images/Storm%20Nimbus.JPG)
+[![enter image description
+here](http://sungsoo.github.com/images/Storm%20Nimbus.JPG)](http://sungsoo.github.com/images/Storm%20Nimbus.JPG)
 
 Let’s start the Supervisor Server:
 
 `./storm supervisor`
 
-![enter image description
-here](http://sungsoo.github.com/images/1000%20supervisor.JPG)
+[![enter image description
+here](http://sungsoo.github.com/images/1000%20supervisor.JPG)](http://sungsoo.github.com/images/1000%20supervisor.JPG)
  Nimbus is the main master process and supervisor process is the worker
 process.
 
@@ -168,8 +168,8 @@ please start Storm UI as follows:
 
 `./storm ui`
 
-![enter image description
-here](http://sungsoo.github.com/images/storm%20ui%20starting.JPG)
+[![enter image description
+here](http://sungsoo.github.com/images/storm%20ui%20starting.JPG)](http://sungsoo.github.com/images/storm%20ui%20starting.JPG)
 
 In case, you get into already running Storm UI situation, you could
 always look for what is running on the port 8744 using
@@ -192,14 +192,14 @@ Setup as follows :
 
 Let’s save now as follows. Hosts file doesn’t have any extension.
 
-![Image](http://sungsoo.github.com/images/how%20to%20save.JPG)
+[![Image](http://sungsoo.github.com/images/how%20to%20save.JPG)](http://sungsoo.github.com/images/how%20to%20save.JPG)
 
 ### Step 8 :
 
 Let’s open the Storm UI using your browser.
 
-![enter image description
-here](http://sungsoo.github.com/images/1000%20storm%20ui.JPG)
+[![enter image description
+here](http://sungsoo.github.com/images/1000%20storm%20ui.JPG)]((http://sungsoo.github.com/images/1000%20storm%20ui.JPG))
 
 ### Step 9 :
 
@@ -214,8 +214,8 @@ see how to turn it ON. We will also track this in Storm UI.
 
     wget http://public-repo-1.hortonworks.com/HDP-LABS/Projects/Storm/0.9.0.1/storm-starter-0.0.1-storm-0.9.0.1.jar
 
-![enter image description
-here](http://sungsoo.github.com/images/10000%20storm%20example%20download.JPG)
+[![enter image description
+here](http://sungsoo.github.com/images/10000%20storm%20example%20download.JPG)](http://sungsoo.github.com/images/10000%20storm%20example%20download.JPG)
 
 ### Step 10 :
 
@@ -232,8 +232,8 @@ You can check the classes available in the jar as follows:
     jar -xvf storm-starter-0.0.1-storm-0.9.0.1.jar | grep Split
     jar -xvf storm-starter-0.0.1-storm-0.9.0.1.jar | grep WordCount
 
-![enter image description
-here](http://sungsoo.github.com/images/10000%20jar%20classes.JPG)
+[![enter image description
+here](http://sungsoo.github.com/images/10000%20jar%20classes.JPG)](http://sungsoo.github.com/images/10000%20jar%20classes.JPG)
 
 ### Step 11 :
 
@@ -245,29 +245,29 @@ Let’s run the Storm Jar file.
 
     /usr/lib/storm/bin/storm jar storm-starter-0.0.1-storm-0.9.0.1.jar storm.starter.WordCountTopology WordCount -c storm.starter.WordCountTopology WordCount -c nimbus.host=sandbox.hortonworks.com
 
-![enter image description
-here](http://sungsoo.github.com/images/10000%20jar%20running.JPG)
+[![enter image description
+here](http://sungsoo.github.com/images/10000%20jar%20running.JPG)](http://sungsoo.github.com/images/10000%20jar%20running.JPG)
 
 ### Step 12 :
 
 Let’s use Storm UI and look at it graphically:
- ![enter image description
-here](http://sungsoo.github.com/images/10000%20Storm%20UI.JPG)
+ [![enter image description
+here](http://sungsoo.github.com/images/10000%20Storm%20UI.JPG)]((http://sungsoo.github.com/images/10000%20Storm%20UI.JPG))
 
 You should notice the Storm Topology, WordCount in the Topology summary.
 
 ### Step 13 :
 
 Please click on the WordCount Topology. You will see the following:
- ![enter image description
-here](http://sungsoo.github.com/images/1000%20Storm%20UI%20next%20step.JPG)
+ [![enter image description
+here](http://sungsoo.github.com/images/1000%20Storm%20UI%20next%20step.JPG)](http://sungsoo.github.com/images/1000%20Storm%20UI%20next%20step.JPG)
 
 ### Step 14 :
 
 In this page, please click on count in the Bolt Section.
 
-![enter image description
-here](http://sungsoo.github.com/images/10000Click%20on%20Bolt.JPG)
+[![enter image description
+here](http://sungsoo.github.com/images/10000Click%20on%20Bolt.JPG)](http://sungsoo.github.com/images/10000Click%20on%20Bolt.JPG)
 
 ### Step 15 :
 
@@ -280,8 +280,8 @@ Lastly but most importantly, you can always look at the log files in the
 following folder. These logs are extremely useful for debugging or
 status finding.
 
-![enter image description
-here](http://sungsoo.github.com/images/1000%20log.JPG)
+[![enter image description
+here](http://sungsoo.github.com/images/1000%20log.JPG)](http://sungsoo.github.com/images/1000%20log.JPG)
 
 You just processed streaming data using Apache Storm.
 
