@@ -87,7 +87,7 @@ programming guide](bagel-programming-guide.html). However, we encourage
 Bagel users to explore the new GraphX API and comment on issues that may
 complicate the transition from Bagel.
 
-Migrating from Spark 0.9.1 {#migrating-from-spark-091}
+Migrating from Spark 0.9.1 
 --------------------------
 
 GraphX in Spark 1.0.0 contains one user-facing interface change from
@@ -97,7 +97,7 @@ now store adjacent vertex attributes to construct the triplets, so it
 has gained a type parameter. The edges of a graph of type
 `Graph[VD, ED]` are of type `EdgeRDD[ED, VD]` rather than `EdgeRDD[ED]`.
 
-Workaround for `Graph.partitionBy` in Spark 1.0.0 {#workaround-for-graphpartitionby-in-spark-100}
+Workaround for `Graph.partitionBy` in Spark 1.0.0 
 -------------------------------------------------
 
 The
