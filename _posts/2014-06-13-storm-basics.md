@@ -7,7 +7,7 @@ tags: [big data, hadoop & mapreduce, stream computing]
 
 ---
 
-# Basics
+# Apache Storm Basics
 
 *Storm* is a distributed, reliable, fault-tolerant system for processing streams of data. The work is delegated to different types of components that are each responsible for a simple specific processing task. The input stream of a Storm cluster is handled by a component called a *spout*. The spout passes the data to a component called a *bolt*, which transforms it in some way. A bolt either persists the data in some sort of storage, or passes it to some other bolt. You can imagine a Storm cluster as a chain of bolt components that each make some kind of transformation on the data exposed by the spout.
 To illustrate this concept, here’s a simple example. Last night I was watching the news when the announcers started talking about politicians and their positions on various topics. They kept repeating different names, and I wondered if each name was mentioned an equal number of times, or if there was a bias in the number of mentions.
