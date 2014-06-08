@@ -57,4 +57,4 @@ Now imagine easily defining the level of parallelism for each bolt and spout acr
 	You can get exactly once messaging semantics for pretty much any computation.
 
 # References
-[1] [*HDP 2.1: Processing streaming data in Hadoop with Apache Storm*](http://hortonworks.com/hadoop-tutorial/processing-streaming-data-near-real-time-apache-storm/), Hortonworks Blog.
+[1] Jonathan Leibiusky, Gabriel Eisbruch, and Dario Simonassi, *Getting Started with Storm*, O’Reilly Media, Inc., 2012.
