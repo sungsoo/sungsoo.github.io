@@ -34,4 +34,3 @@ Table 6.2 lists some low-level infrastructure features. Table 6.3 lists traditio
 
 ![](http://sungsoo.github.com/images/table6-4.png)
 
-![](http://sungsoo.github.com/images/table6-5.png)
