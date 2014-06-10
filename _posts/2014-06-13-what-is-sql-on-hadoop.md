@@ -28,7 +28,7 @@ SQL-On-Hadoop은 다음 그림과 같이  데이터 파일을 Hadoop에 저장�
 
 ![사용자 삽입 이미지](http://sungsoo.github.com/images/1206927860.png)
 
-SQL-On-Hadoop 시스템이 집중 조명 받는 이유는 다음과 같은 이유때문이다.
+SQL-On-Hadoop 시스템이 집중 조명 받는 이유는 다음과 같은 이유 때문이다.
 [Presentation slide](http://www.slideshare.net/gruter/tech-planet-final)
 
 ### MapReduce의 한계
