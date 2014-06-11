@@ -243,13 +243,10 @@ You now have Hadoop installed! Try running an example!
 Monitoring
 -----------
 
-You can monitor your HDFS, MapReduce and Tasks:
+You can monitor your NameNode and DataNode:
 
-* HDFS Administrator : [http://localhost:50070](http://localhost:50070)
+* Namenode Information : [http://localhost:50070](http://localhost:50070)
 
-* Task Tracker : [http://localhost:50060](http://localhost:50060)
-
-* MapReduce Administrator : [http://localhost:50030](http://localhost:50030)
 
 Finally, run the following command to stop all daemons:
 
