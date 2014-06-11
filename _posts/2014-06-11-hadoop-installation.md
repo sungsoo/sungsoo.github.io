@@ -73,12 +73,12 @@ check "Remote Login" of "Sharing" in System Preference.
 Sharing is checked to enable SSH. If you have SSH keys already setup,
 ssh into your localhost machine. If you don’t, set those bad boys up:
 
-	KIWI-GDEF@:~ sungsoo$ ssh-keygen -t rsa -P ""
+	KIWI-GDEF@:~ sungsoo$ ssh-keygen -t dsa -P '' -f ~/.ssh/id_dsa
 
 To authorize your public key and avoid being asked for a password every
 time you ssh into localhost:
 
-	KIWI-GDEF@:~ sungsoo$ cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
+	KIWI-GDEF@:~ sungsoo$ cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
 
 Now ssh into your localhost and allow authorization
 
