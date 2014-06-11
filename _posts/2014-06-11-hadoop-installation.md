@@ -252,5 +252,7 @@ You can monitor your NameNode and DataNode:
 
 Finally, run the following command to stop all daemons:
 
-	$ stop-all.sh
+	$ stop-dfs.sh
+	$ stop-yarn.sh
+
 
