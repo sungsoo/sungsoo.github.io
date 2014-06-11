@@ -58,10 +58,16 @@ Java HotSpot(TM) 64-Bit Server VM (build 24.51-b03, mixed mode)
 **Homebrew**. Though we can go without it, Homebrew will make installing
 Hadoop on a Mac significantly easier:
 
-
 ```
 KIWI-GDEF@:~ sungsoo$ ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
 ```
+
+Remote Login Setting
+---
+
+check "Remote Login" of "Sharing" in System Preference.
+
+![](http://sungsoo.github.com/images/remotelogin.png)
 
 **SSH keys.**First, ensure Remote Login under System Preferences ->
 Sharing is checked to enable SSH. If you have SSH keys already setup,
