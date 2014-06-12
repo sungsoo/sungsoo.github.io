@@ -165,7 +165,7 @@ This structure results in versioned values that you can access flexibly
 and quickly. Because Apache HBase and MapR tables are *sparse*, any of
 the column values for a given key can be null.
 
-## Example HBase Table {#M7-NativeStorageforMapRTables-ExampleHBaseTable}
+## Example HBase Table 
 
 This example uses JSON notation for representational clarity. In this
 example, timestamps are arbitrarily assigned.
