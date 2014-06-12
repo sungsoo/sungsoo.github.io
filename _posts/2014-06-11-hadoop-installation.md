@@ -246,7 +246,9 @@ Monitoring
 You can monitor your NameNode and DataNode:
 
 * Namenode Information : [http://localhost:50070](http://localhost:50070)
-* 
+
+
+
 ![](http://sungsoo.github.com/images/nodeinfo.png)
 
 
