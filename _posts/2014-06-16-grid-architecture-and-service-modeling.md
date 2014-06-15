@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Features of Cloud and Grid Platforms
+title: Grid Architecture and Service Modeling
 date: 2014-06-16
 categories: [computer science]
 tags: [parallel computing]
