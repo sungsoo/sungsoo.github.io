@@ -7,7 +7,7 @@ tags: [parallel computing]
 
 ---
 
-[![](http://sungsoo.github.com/images/features-of-cloud.png)](http://sungsoo.github.com/images/features-of-cloud.png)
+[![](http://sungsoo.github.com/images/features-of-cloud.png)](http://sungsoo.github.com/images/grid-computing.png)
 
 
 ---
