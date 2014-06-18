@@ -24,3 +24,6 @@ These different characteristics have influenced how we capture, store, process, 
 Here are some capabilities that you can leverage:
 
 [![](http://sungsoo.github.com/images/t02.png)](http://sungsoo.github.com/images/t02.png)
+
+# References
+[1] *Oracle Information Architecture: An Architect’s Guide to Big Data*, An Oracle White Paper in Enterprise Architecture, August 2012.
