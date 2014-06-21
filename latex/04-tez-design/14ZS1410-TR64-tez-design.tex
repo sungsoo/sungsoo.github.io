@@ -26,6 +26,39 @@
 }
 \usepackage{hyperref}
 \usepackage{listings}
+% the following is needed for syntax highlighting
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{ %
+  language=Java,                  % the language of the code
+  basicstyle=\tiny,       % the size of the fonts that are used for the code
+  numbers=left,                   % where to put the line-numbers
+  numberstyle=\tiny\color{gray},  % the style that is used for the line-numbers
+  stepnumber=1,                   % the step between two line-numbers. If it's 1, each line 
+                                  % will be numbered
+  numbersep=3.8pt,                  % how far the line-numbers are from the code
+  backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+  showspaces=false,               % show spaces adding particular underscores
+  showstringspaces=false,         % underline spaces within strings
+  showtabs=false,                 % show tabs within strings adding particular underscores
+  frame=false,                   % adds a frame around the code
+  rulecolor=\color{black},        % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. commens (green here))
+  tabsize=2,                      % sets default tabsize to 2 spaces
+  captionpos=b,                   % sets the caption-position to bottom
+  breaklines=true,                % sets automatic line breaking
+  breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+  title=\lstname,                 % show the filename of files included with \lstinputlisting;
+                                  % also try caption instead of title
+  keywordstyle=\color{blue},          % keyword style
+  commentstyle=\color{dkgreen},       % comment style
+  stringstyle=\color{mauve},         % string literal style
+  escapeinside={\%*}{*)},            % if you want to add a comment within your code
+  morekeywords={*,...}               % if you want to add more keywords to the set
+}
 
 %\usepackage[hangul,nonfrench,finemath]{kotex}
     
@@ -45,7 +78,7 @@
 \begin{tabular}{ll}\begin{minipage}{4.75in}\vspace{6px}
 \noindent\large {\it KIWI Project}@Data Management Research Section\\
 \vspace{-12px}\\
-\noindent\LARGE ETRI\qquad  \large Technical Report 14ZS1410-TR-64
+\noindent\LARGE ETRI\qquad  \large Technical Report 14ZS1410-TR-65
 \end{minipage}&\begin{minipage}{2in}\vspace{6px}\small
 218 Gajeong-ro, Yuseong-gu\\
 Daejeon, 305-700, South Korea\\
@@ -75,12 +108,34 @@ usage patterns. A key and emerging example is the need for
 \emph{interactive query}, which today is challenged by the
 \emph{batch-oriented nature} of MapReduce. A key step to enabling this
 new world was \emph{Apache YARN} and today the community proposes the
-next step\ldots{} \emph{Tez}}
+next step\ldots{} \emph{Tez}.
+
+This report amis to analyze the insights of the design aspects of the Apache Tez.
+In exploring the questions of the designing an efficient distributed execution engine such as the Tez, this technical report will be limited to consideration of major capabilities and  their application programming interface (API) structures of the DAG execution engine. 
+}
 \end{abstract}
 
 \section{Introduction}
 Apache Hadoop 2.0 (aka \textbf{YARN}) continues to make its way through the open source community process at the Apache Software Foundation and is getting closer to being declared “ready” from a community development perspective.  YARN on its own provides many benefits over Hadoop 1.x and its Map-Reduce job execution engine:
 \bi\ii Concurrent cluster applications via \textit{multiple independent AppMasters}\ii Reduced job \textit{startup overheads}\ii \textit{Pluggable} scheduling policy framework\ii Improved \textit{security} framework\ei
+
+\subsection{Motivation}
+
+\emph{Distributed data processing} is the core application that Apache
+Hadoop is built around \cite{FOWLER:2013}.  Storing and analyzing \emph{large volumes} and
+\emph{variety} of data efficiently has been the cornerstone use case
+that has driven large scale adoption of Hadoop, and has resulted in
+creating enormous value for the Hadoop adopters. Over the years, while
+building and running data processing applications based on MapReduce, we
+have understood a lot about the strengths and weaknesses of this
+framework and how we would like to evolve the \emph{Hadoop data
+processing framework} to meet the evolving needs of Hadoop users. 
+
+As the Hadoop compute platform moves into its next phase with \textbf{YARN}, it
+has decoupled itself from MapReduce being the only application, and
+opened the opportunity to create a new data processing framework to meet
+the new challenges. Apache Tez aspires to live up to these lofty goals.
+Fundamentally, YARN resource scheduling is a \textbf{2-step framework} with \textit{resource allocation} done by YARN and \textit{task scheduling} done by the application. This allows YARN to be a generic compute platform while still allowing flexibility of scheduling strategies. An analogy would be general purpose operating systems that allocate computer resources among concurrent processes.
 
 The support for third party AppMasters is the crucial aspect to flexibility in YARN.  It permits new job runtimes in addition to classical map-reduce, whilst still keeping M/R available and allowing both the old and new to co-exist on a single cluster.  \textbf{Apache Tez} is one such job runtime that provides richer capabilities than traditional map-reduce \cite{hortonworks}.  The motivation is to provide a better runtime for scenarios such as relational-querying that do not have a strong affinity for the map-reduce primitive.   This need arises because the Map-Reduce primitive mandates a very particular shape to every job and although this mandatory shape is very general and can be used to implement essentially any batch-oriented data processing job, it conflates too many details and provides too little flexibility.
 
@@ -91,6 +146,16 @@ The common behavior of a Map-Reduce job under Hadoop 1.x is as follows.
 \ee
 
 The map-reduce primitive has proved to be very useful as the basis of a reliable cluster computation runtime and it is well suited to data processing tasks that involve a small number of jobs that benefit from the standard behavior.  However, algorithms that require \textit{many iterations} suffer from the \textit{high overheads of job startup} and from frequent reads and writes to durable storage.  \textit{Relation query languages} such as Hive suffer from those issues and from the need to massage multiple datasets into homogeneous inputs as a M/R job can only consume one physical dataset (excluding support for side-data channels such as \textit{distributed cache}).  
+
+The \textbf{YARN Resource Manager} service is the central controlling authority for resource management and makes allocation decisions as shown in Figure \ref{yarn}. It exposes a Scheduler API that is specifically designed to negotiate resources and not schedule tasks. Applications can request resources at different layers of the cluster topology such as nodes, racks etc. The scheduler determines how much and where to allocate based on resource availability and the configured sharing policy.
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{rm}
+        \caption{The resource manager in the YARN.}
+        \label{yarn}
+\end{figure}
+
+Currently, there are two sharing policies – \textit{fair scheduling} and \textit{capacity scheduling}. Thus, the API reflects the Resource Manager’s role as the resource allocator. This API design is also crucial for Resource Manager scalability because it limits the complexity of the operations to the size of the cluster and not the size of the tasks running on the cluster.The actual task scheduling decisions are delegated to the application manager that runs the application logic. It decides when, where and how many tasks to run within the resources allocated to it. It has the flexibility to choose its locality, co-scheduling, co-location and other scheduling strategies.
 
 \subsection{What is Tez?}
 
@@ -105,8 +170,7 @@ and Cascading can meet requirements for human-interactive response times
 and extreme throughput at petabyte scale (clearly MapReduce has been a
 key driver in achieving this).
 
-\subsection{What Tez Does}
-
+%\subsection{What Tez Does}
 Tez is the logical next step for Apache Hadoop after \textbf{Apache
 Hadoop YARN}. With YARN the community generalized Hadoop MapReduce to
 provide a \emph{general-purpose resource management framework} wherein
@@ -122,7 +186,7 @@ small-scale, low-latency and large-scale, high-throughput workloads.
 \begin{figure}[htb]
         \centering
         \includegraphics[width=0.48\textwidth]{hadoopstack}
-        \caption{Hadoop 1.0 vs. Hadoop 2.0}
+        \caption{\textit{Monolithic} Hadoop 1.0 vs. \textit{Layered} Hadoop 2.0}
         \label{fig01}
 \end{figure}
 
@@ -168,21 +232,32 @@ cluster. With Tez, we build on YARN and our experience with the
 MapReduce to provide a more general data-processing application to the
 benefit of the entire ecosystem i.e. Apache Hive, Apache Pig etc.
 
-\subsection{Motivation}
-
-\emph{Distributed data processing} is the core application that Apache
-Hadoop is built around \cite{FOWLER:2013}.  Storing and analyzing \emph{large volumes} and
-\emph{variety} of data efficiently has been the cornerstone use case
-that has driven large scale adoption of Hadoop, and has resulted in
-creating enormous value for the Hadoop adopters. Over the years, while
-building and running data processing applications based on MapReduce, we
-have understood a lot about the strengths and weaknesses of this
-framework and how we would like to evolve the \emph{Hadoop data
-processing framework} to meet the evolving needs of Hadoop users. As the
-Hadoop compute platform moves into its next phase with \textbf{YARN}, it
-has decoupled itself from MapReduce being the only application, and
-opened the opportunity to create a new data processing framework to meet
-the new challenges. Apache Tez aspires to live up to these lofty goals.
+Major community achievements in the recent Tez  were:
+\begin{itemize}
+\item
+  \textbf{Application Recovery} -- This is a major improvement to the
+  Tez framework that preserves work when the job controller (YARN Tez
+  Application Master) gets restarted due to node loss or cluster
+  maintenance. When the Tez Application Master restarts, it will recover
+  all the work that was already completed by the previous master. This
+  is especially useful for long running jobs where restarting from
+  scratch would waste work already completed.
+\item
+  \textbf{Stability for Hive on Tez} -- We did considerable testing with
+  the Apache Hive community to make sure the imminent release of Hive
+  0.13 is stable on Tez. We appreciate the great partnership.
+\item
+  \textbf{Data Shuffle Improvements}-- Data shuffling re-partitions and
+  re-distributes data across the cluster. This is a major operation in
+  distributed data processing, so performance and stability are
+  important. Tez 0.4 includes improvements in memory consumption,
+  connection management, and in the handling of errors and empty
+  partitions.
+\item
+  \textbf{Windows Support} -- The community fixed bugs and made changes
+  to Tez so that it runs as smoothly on Windows as it does on Linux. We
+  hope this will encourage adoption of Tez on Windows-based systems.
+\end{itemize}
 
 \section{Key Design Themes}
 
@@ -192,64 +267,84 @@ efficient manner and then execute it with \textit{high performance}.
 Apache Tez has been built around the following main design themes that solve these
 key challenges in the Hadoop data processing domain.
 
-\subsection{Ability to express, model and execute data processing logic}
-
-Tez models data processing as a \emph{dataflow graph} with vertices in
+%\subsection{Ability to express, model and execute data processing logic}
+\subsection{Dataflow Graph Representation}
+\textbf{Expressing the Computation:} Tez models data processing as a \emph{dataflow graph} with vertices in
 the graph representing \emph{application logic} and edges representing
 \emph{movement of data}. A rich dataflow definition API allows users to
 express \emph{complex query logic} in an intuitive manner and it is a
 natural fit for \emph{query plans} produced by higher-level declarative
-applications like \textbf{Hive} and \textbf{Pig}. As an example, the
-diagram shows how to model an \emph{ordered distributed sort} using
-\textbf{range partitioning}. The \emph{Preprocessor} stage sends samples
-to a \textbf{Sampler} that calculates sorted data ranges for each data
+applications like \emph{Hive} and \emph{Pig}. 
+
+As an example, Figure \ref{fig03} shows how to model an \emph{ordered distributed sort} using
+\emph{range partitioning}. The \emph{Preprocessor} stage sends samples
+to a \emph{Sampler} that calculates sorted data ranges for each data
 partition such that the work is \emph{uniformly distributed}. The ranges
-are sent to \textbf{Partition} and \textbf{Aggregate} stages that read
-their assigned ranges and perform the data \emph{scatter-gather}. This
-dataflow pipeline can be expressed as a single Tez job that will run the
-entire computation. Expanding this logical graph into a physical graph
-of tasks and executing it is taken care of by Tez.
+are sent to \emph{Partition} and \emph{Aggregate} stages that read
+their assigned ranges and perform the data \emph{scatter-gather}. 
 
 \begin{figure}[htb]
         \centering
         \includegraphics[width=0.48\textwidth]{tez1}
-        \caption{DAG execution}
+        \caption{The representation of the data processing flow}
         \label{fig03}
 \end{figure}
 
-\subsection{Flexible Input-Processor-Output task model}
 
+This dataflow pipeline can be expressed as a single Tez job that will run the
+entire computation. Expanding this logical graph into a physical graph
+of tasks and executing it is taken care of by Tez.
+Tez provides the following APIs to define the processing.
+
+\bi
+\ii \textbf{DAG API}
+\bi
+\ii Defines the structure of the data processing and the relationship between producers and consumers.
+\ii Enable definition of complex data flow pipelines using simple graph connection API’s. Tez expands the logical DAG at runtime.
+\ii This is how all the tasks in the job get specified.
+\ei
+\ii \textbf{Runtime API}
+\bi
+\ii Defines the interfaces using which the framework and application code interact with each other.
+\ii Application code transforms data and moves it between tasks.
+\ii This is how we specify what actually executes in each task on the cluster nodes.
+\ei
+\ei
+
+\subsection{Flexible Task Model}
 Tez models the user logic running in each vertex of the dataflow graph
-as a composition of \textbf{Input}, \textbf{Processor} and
-\textbf{Output} modules. Input \& Output determine the \emph{data
+as a composition of \emph{Input}, \emph{Processor} and
+\emph{Output} modules. Input \& Output determine the \emph{data
 format} and how and where it is read/written. \emph{Processor} holds the
 \emph{data transformation} logic. Tez does not impose any data format
 and only requires that a combination of Input, Processor and Output must
 be compatible with each other with respect to their formats when they
 are composed to instantiate a \emph{vertex task}. Similarly, an Input
 and Output pair connecting two tasks should be compatible with each
-other. In the diagram, we can see how composing different Inputs,
+other. In Figure \ref{fig04}, we can see how composing different Inputs,
 Outputs and Processors can produce different tasks.
 
 \begin{figure}[htb]
         \centering
         \includegraphics[width=0.48\textwidth]{tez2}
-        \caption{DAG execution}
+        \caption{Flexible Input-Processor-Output runtime model}
         \label{fig04}
 \end{figure}
 
-\subsection{Performance via Dynamic Graph Reconfiguration}
+\subsection{Dynamic Graph Reconfiguration}
 
-Distributed data processing is \emph{dynamic} by nature and it is
+\textbf{Late Binding:} Distributed data processing is \emph{dynamic} by nature and it is
 extremely difficult to statically determine \emph{optimal concurrency}
 and \emph{data movement methods} a priori. More information is available
 during runtime, like data samples and sizes, which may help optimize the
 \emph{execution plan} further. We also recognize that Tez by itself
 cannot always have the smarts to perform these \emph{dynamic
-optimizations}. The design of Tez includes support for pluggable vertex
+optimizations}. 
+
+The design of Tez includes support for \textit{pluggable} vertex
 management modules to collect relevant information from tasks and change
 the dataflow graph at runtime to optimize for performance and resource
-usage. The diagram shows how Tez can determine an appropriate number of
+usage. Figure \ref{fig05} shows how Tez can determine an appropriate number of
 reducers in a MapReduce like job by observing the actual data output
 produced and the desired load per reduce task.
 
@@ -260,21 +355,22 @@ produced and the desired load per reduce task.
         \label{fig05}
 \end{figure}
 
-\subsection{Performance via Optimal Resource Management}
+\subsection{Optimal Resource Management}
 
-Resources acquisition in a \emph{distributed multi-tenant environment}
+Resources acquisition in a \emph{distributed multi-tenant} environment
 is based on cluster capacity, load and other quotas enforced by the
 \emph{resource management framework} like \textbf{YARN}. Thus resource
 available to the user may vary over time and over different executions
 of the job. It becomes paramount to be able to efficiently use all
 available resources to run a job as fast as possible during one instance
 of execution and predictably over different instances of execution. The
+
 Tez execution engine framework allows for efficient acquisition of
 resources from YARN along with \emph{extensive reuse} of every component
 in the pipeline such that no operation is duplicated unnecessarily.
 These efficiencies are exposed to user logic, where possible, such that
 users may also leverage this for \emph{efficient caching} and avoid
-\emph{work duplication}. The diagram shows how Tez runs multiple
+\emph{work duplication}. Figure \ref{fig06} shows how Tez runs multiple
 containers within the same YARN container host and how users can
 leverage that to store their own objects that may be shared across
 tasks.
@@ -298,8 +394,8 @@ tasks.
 %along with the associated performance benefits of that model.
 
 
-\section{Data Processing API in Apache Tez}
-\subsection{Overview}
+\section{Data Processing API}
+%\subsection{Overview}
 
 Apache Tez models data processing as a \emph{dataflow graph}, with the
 \textbf{vertices} in the graph representing \emph{processing of data}
@@ -308,15 +404,15 @@ processing. Thus \emph{user logic}, that analyses and modifies the data,
 sits in the \textbf{vertices}. Edges determine the consumer of the data,
 how the data is transferred and the \emph{dependency} between the
 \emph{producer} and \emph{consumer} vertices. This model concisely
-captures the \emph{logical definition of the computation}. When the Tez
+captures the \emph{logical definition of the computation}. 
+
+When the Tez
 job executes on the cluster, it expands this \emph{logical graph} into a
 \emph{physical graph} by adding parallelism at the vertices to scale to
 the data size being processed. Multiple tasks are created per logical
 vertex to perform the computation in parallel.
-
-\subsection{DAG Definition API}
-
-More technically, the data processing is expressed in the form of a
+\\
+\textbf{DAG Definition API:} More technically, the data processing is expressed in the form of a
 \emph{directed acyclic graph} (\textbf{DAG}). The processing starts at
 the root vertices of the DAG and continues down the \emph{directed
 edges} till it reaches the leaf vertices. When all the vertices in the
@@ -326,7 +422,7 @@ is \textbf{re-execution} of failed tasks. When the input to a task is
 lost then the producer task of the input is re-executed and so Tez needs
 to be able to \emph{walk up} the graph edges to locate a non-failed task
 from which to re-start the computation. \emph{Cycles} in the graph can
-make this walk \emph{difficult} to perform. In some cases, cycles may be
+make this work \emph{difficult} to perform. In some cases, cycles may be
 handled by \emph{unrolling} them to create a DAG.
 
 Tez defines a simple Java API to express a DAG of data processing \cite{Saha:2013-02}. 
@@ -348,12 +444,12 @@ The API has three components
 
 \begin{figure}[htb]
         \centering
-        \includegraphics[width=0.48\textwidth]{tez11}
-        \caption{DAG execution}
+        \includegraphics[width=0.45\textwidth]{tez11}
+        \caption{A dataflow logical graph using the DAG API}
         \label{fig07}
 \end{figure}
 
-The diagram shows a \emph{dataflow graph} and its definition using the
+Figure \ref{fig07} shows a \emph{dataflow graph} and its definition using the
 DAG API (simplified). The job consists of 2 vertices performing a
 ``\textbf{Map}'' operation on 2 datasets. Their output is consumed by 2
 vertices that do a ``\textbf{Reduce}'' operation. Their output is
@@ -361,7 +457,7 @@ brought together in the last vertex that does a ``\textbf{Join}''
 operation.
 
 Tez handles expanding this \emph{logical graph} at runtime to perform
-the operations \emph{in parallel} using multiple tasks. The diagram
+the operations \emph{in parallel} using multiple tasks. Figure \ref{fig08}
 shows a runtime expansion in which the first M-R pair has a parallelism
 of 2 while the second has a parallelism of 3. Both branches of
 computation merge in the \textbf{Join operation} that has a parallelism
@@ -369,8 +465,8 @@ of 2. \emph{Edge properties} are at the heart of this runtime activity.
 
 \begin{figure}[htb]
         \centering
-        \includegraphics[width=0.48\textwidth]{tez21}
-        \caption{DAG execution}
+        \includegraphics[width=0.49\textwidth]{tez21}
+        \caption{Expanding the logical graph at runtime}
         \label{fig08}
 \end{figure}
 
@@ -386,16 +482,16 @@ is determined based on \emph{user guidance}, \emph{data size} and
   \textbf{Data movement.} Defines \emph{routing} of data between tasks
   \begin{itemize}
   \item
-    \emph{One-To-One}: Data from the \emph{i}th producer task routes to
-    the \emph{i}th consumer task.
+    \emph{One-To-One}: Data from the \emph{i}-th producer task routes to
+    the \emph{i}-th consumer task.
   \item
     \emph{Broadcast}: Data from a producer task routes to \emph{all}
     consumer tasks.
   \item
     \emph{Scatter--Gather}: Producer tasks \emph{scatter} data into
     \emph{shards} and consumer tasks \emph{gather} the \emph{shards}.
-    The \emph{i}th shard from all producer tasks routes to the
-    \emph{i}th consumer task.
+    The \emph{i}-th shard from all producer tasks routes to the
+    \emph{i}-th consumer task.
   \end{itemize}
 \item
   \textbf{Scheduling.} Defines when a \emph{consumer} task is
@@ -426,31 +522,33 @@ is determined based on \emph{user guidance}, \emph{data size} and
 
 \begin{figure}[htb]
         \centering
-        \includegraphics[width=0.2\textwidth]{tez31}
-        \caption{DAG execution}
+        \includegraphics[width=0.18\textwidth]{tez31}
+        \caption{Data movement patterns (\textit{one-to-one, broadcast, scatter-gather})}
         \label{fig09}
 \end{figure}
 
 Some real life use cases will help in clarifying the edge properties.
-\textbf{Mapreduce} would be expressed with the \emph{scatter-gather},
-\emph{sequential} and \emph{persisted} edge properties. \textbf{Map
-tasks} \emph{scatter} partitions and reduce tasks gather them.
-\textbf{Reduce tasks} are \emph{scheduled} after the map tasks complete
+\emph{Mapreduce} would be expressed with the \emph{scatter-gather},
+\emph{sequential} and \emph{persisted} edge properties. Map
+tasks \emph{scatter} partitions and reduce tasks \emph{gather} them.
+Reduce tasks are \emph{scheduled} after the map tasks complete
 and the map task outputs are written to local disk and hence available
-after the map tasks have completed. When a vertex \emph{checkpoints} its
-output into HDFS then its \emph{output edge} has a
+after the map tasks have completed. 
+
+When a vertex \emph{checkpoints} its output into HDFS then its \emph{output edge} has a
 \emph{persisted-reliable} property. If a producer vertex is
 \emph{streaming data} directly to a consumer vertex then the edge
 between them has \emph{ephemeral} and \emph{concurrent} properties. A
 \emph{broadcast} property is used on a \emph{sampler vertex} that
-produces a \textbf{global histogram} of data ranges for \emph{range
+produces a global histogram of data ranges for \emph{range
 partitioning}.
 
-We hope that the Tez dataflow definition API will be able to express a
-broad spectrum of \emph{data processing topologies} and enable higher
-level languages to elegantly transform their queries into Tez jobs.
+% Conclusion part
+%We hope that the Tez dataflow definition API will be able to express a
+%broad spectrum of \emph{data processing topologies} and enable higher
+%level languages to elegantly transform their queries into Tez jobs.
 
-\section{Runtime API in Apache Tez}
+\section{Runtime API}
 Apache Tez models data processing as a \emph{dataflow graph}, with the
 \textbf{vertices} in the graph representing \emph{processing of data}
 and \textbf{edges} representing \emph{movement of data} between the
@@ -469,18 +567,17 @@ supporting multiple options of data transfer between different vertices
 that are not restricted to the \textbf{MapReduce} \emph{shuffle
 transport mechanism}.
 
-\subsection{The Building Blocks of Tez}
+\subsection{The Building Blocks}
 
-The Task API provides the building blocks for a user to plug-in their
-logic to analyze and modify data into the vertex and augment this
+The \textit{Task API} provides the building blocks for a user to plug-in their
+logic to analyze and modify data into the \textit{vertex} and augment this
 processing logic with the necessary plugins to \emph{transfer} and
 \emph{route} data between vertices.
 
 Tez models the user logic running in each vertex as a composition of a
-set of Inputs, a Processor and a set of Outputs.
+set of \textit{Inputs}, a \textit{Processor} and \textit{a set of Outputs}.
 
 \begin{itemize}
-
 \item
   \textbf{Input:} An input represents a pipe through which a processor
   can accept input data from a \emph{data source} such as HDFS or the
@@ -494,8 +591,8 @@ set of Inputs, a Processor and a set of Outputs.
   \emph{data sink} such as HDFS.
 \end{itemize}
 
-Given that an edge in a DAG is a logical entity that represents a number
-of physical connections between the tasks of 2 connected vertices, to
+Given that an edge in a DAG is a \textit{logical entity} that represents a number
+of \textit{physical connections} between the tasks of 2 connected vertices, to
 improve ease of programmability for a developer implementing a new
 Processor, there are 2 kinds of Inputs and Outputs to either expose or
 hide the level of complexity:
@@ -508,94 +605,94 @@ hide the level of complexity:
   underlying physical connections and exposes a single view to the
   data.
 \item
-  \textbf{Physical:} The pair of Physical Input and Output represents
+  \textbf{Physical:} The pair of \textit{Physical Input} and \textit{Output} represents
   the \emph{connection} between a task of the \emph{Source vertex} and a
   task of a \emph{Destination vertex}.
 \end{itemize}
 
-An example of the \emph{Reduce stage} within an MR job would be a
-\textbf{Reduce Processor} that receives data from the maps via
-\textbf{ShuffleInput} and generates output to HDFS. Likewise, an
-intermediate Reduce stage in an \textbf{MRR chain} would be quite
+An example of the \emph{Reduce stage} within an MR job as shown in Figure \ref{fig10} would be a
+\emph{Reduce Processor} that receives data from the maps via
+\emph{ShuffleInput} and generates output to HDFS. Likewise, an
+intermediate Reduce stage in an \emph{MRR chain} would be quite
 similar to the final Reduce stage except for the difference in the
 Output type.
 
 \begin{figure}[htb]
         \centering
         \includegraphics[width=0.48\textwidth]{tez12}
-        \caption{DAG execution}
+        \caption{An example of the Reduce stage within an MR jobs}
         \label{fig10}
 \end{figure}
 
 
 \subsection{Tez Runtime API}
 
+To implement a new \textit{Input, Processor} or \textit{Output}, a user to implement the
+appropriate interfaces mentioned above. All objects are given a \textit{Context}
+object in their initialize functions. This context is the hook for these
+objects to communicate to the Tez framework. 
+
 \begin{figure}[htb]
         \centering
         \includegraphics[width=0.48\textwidth]{tez32}
-        \caption{DAG execution}
+        \caption{Tez runtime API (Input, Processor and Output)}
         \label{fig11}
 \end{figure}
 
-
-To implement a new Input, Processor or Output, a user to implement the
-appropriate interfaces mentioned above. All objects are given a Context
-object in their initialize functions. This context is the hook for these
-objects to communicate to the \emph{Tez framework}. The Inputs and
-Outputs are expected to provide implementations for their respective
-Readers and Writers which are then used by the Processor to read/write
+The Inputs and Outputs are expected to provide implementations for their respective
+\textit{Readers} and \textit{Writers} which are then used by the \textit{Processor} to read/write
 data. In a task, after the Tez framework has initialized all the
 necessary Inputs, Outputs and the Processor, the Tez framework invokes
-the Processor's run function and passes the appropriate handles to all
+the Processor's run function and passes the appropriate \textit{handles} to all
 the Inputs and Outputs for that particular task.
 
 Tez allows all inputs and outputs to be \emph{pluggable}. This requires
 support for passing of information from the Output of a source vertex to
 the Input of the destination vertex. For example, let us assume that the
 Output of a source vertex writes all of its data to a \emph{key-value
-store}. The Output would need to communicate the ``\textbf{key}'' to the
+store}. The Output would need to communicate the ``\emph{key}'' to the
 Input of the next stage so that the Input can retrieve the correct data
-from the key-value store. To facilitate this, Tez uses \textbf{Events}.
+from the key-value store. To facilitate this, Tez uses \emph{Events}.
 
 \subsection{Events in Tez}
 
-\emph{Events} in Tez are a way to pass information amongst different
-components.
+\textit{Events} used to communicate between the tasks and between ApplicationMaster (AM). 
+\textit{Data Movement Event} used by producer task to inform the consumer task about data location, size etc.
+\textit{Input Error event }sent by task to AM to inform about errors in reading input. AM then takes action by re-generating the input. Other events to send task completion notification, data statistics and other control plane information.
+Similarly, \emph{Events} in Tez are a way to pass information amongst different components.
 
 \begin{itemize}
-
 \item
   The Tez framework uses Events to pass information of system events
   such as \emph{task failures} to the required components.
 \item
   Inputs of a vertex can inform the framework of any failures
   encountered when trying to retrieve data from the source vertex's
-  Output that in turn can be used by the framework to take failure
-  recovery measures.
+  Output that in turn can be used by the framework to take \textit{failure
+  recovery} measures.
 \item
   An Output can pass information of the location of the data, which it
   generates, to the Inputs of the destination vertex. An example of this
-  is described in the Shuffle Event diagram which shows how the output
+  is described in the \textit{Shuffle Event} as shown in Figure \ref{fig12} which shows how the output
   of a Map stage informs the Shuffle Input of the Reduce stage of the
-  location of its output via a Data Movement Event.
+  location of its output via a \textit{Data Movement Event}.
 \end{itemize}
 
 \begin{figure}[htb]
         \centering
-        \includegraphics[width=0.4\textwidth]{tez22}
-        \caption{DAG execution}
+        \includegraphics[width=0.3\textwidth]{tez22}
+        \caption{An example of the Suhffle Event}
         \label{fig12}
 \end{figure}
 
-
-Another use of Events is to enable run-time changes to the DAG execution
+Another use of Events is to enable \textit{run-time changes} to the DAG execution
 plan. For example, based on the amount of the data being generated by a
 Map stage, it may be more optimal to run less reduce tasks within the
 following Reduce stage. Events generated by Outputs are routed to the
-pluggable Vertex/Edge management modules, allowing them to make the
+\textit{pluggable} Vertex/Edge management modules, allowing them to make the
 necessary decisions to modify some run-time parameters as needed.
 
-\subsection{Available implementations of Inputs/Processors/Outputs}
+\subsection{Implementations}
 
 The \emph{flexibility} of Tez allows anyone to implement their Inputs
 and Outputs, whether they use \emph{blocking/non-blocking transport
@@ -604,19 +701,18 @@ etc., and build Processors to handle these variety of Inputs and
 Outputs.
 
 There is already a small repository of various implementations of
-Inputs/Outputs/Processors:
+\textit{Inputs/Outputs/Processors}:
 
 \begin{itemize}
-
 \item
   \emph{MRInput} and \emph{MROutput}: Basic input and outputs to
   handle data to/from HDFS that are MapReduce compatible as they use
-  MapReduce constructs such as InputFormat, RecordReader, OutputFormat
-  and RecordWriter.
+  MapReduce constructs such as \textit{InputFormat}, \textit{RecordReader}, \textit{OutputFormat}
+  and \textit{RecordWriter}.
 \item
   \emph{OnFileSortedOutput} and \emph{ShuffleMergedInput}: A pair of  key-value based Input and Output that use the local disk for all I/O
-  and provide the same sort+merge functionality that is required for the
-  ``shuffle'' edge between the Map and Reduce stages in a MapReduce job.
+  and provide the same \textit{sort+merge} functionality that is required for the
+  \textit{``shuffle'' edge} between the Map and Reduce stages in a MapReduce job.
 \item
   \emph{OnFileUnorderedKVOutput} and
   \emph{ShuffledUnorderedKVInput}: These are similar to the shuffle
@@ -626,38 +722,38 @@ Inputs/Outputs/Processors:
   \emph{MapProcessor} and \emph{ReduceProcessor}: As the names
   suggest, these processors are available for anyone trying to run a
   MapReduce job on the Tez execution framework. They can be used to run
-  an MRR chain too.
+  an \textit{MRR chain} too.
 \end{itemize}
 
-As the Hive and Pig projects adapt to use Tez, we hope this repository
-will grow to house a common set of building blocks for use across the
-different projects.
+% We should move the below statements to the conclusions section.
+%As the Hive and Pig projects adapt to use Tez, we hope this repository
+%will grow to house a common set of building blocks for use across the
+%different projects.
 
 \section{Writing a Tez Input, Processor and Output}
-\subsection{Tez Task}
 
-Tez task is constituted of all the Inputs on its incoming edges, the
-Processor configured for the Vertex, and all the Output(s) on it's
+\subsection{Tez Task}
+Tez task is constituted of all the \textit{Inputs} on its incoming edges, the
+\textit{Processor} configured for the \textit{Vertex}, and all the \textit{Output}(s) on it's
 outgoing edge \cite{Saha:2013-04}.
 
-The number of tasks for a vertex is equal to the parallelism set for
+The number of tasks for a vertex is equal to the \textit{parallelism set} for
 that vertex -- which is set at DAG construction time, or modified during
 runtime via user plugins running in the AM.
 
 \begin{figure}[htb]
         \centering
-        \includegraphics[width=0.48\textwidth]{tez01}
-        \caption{tez01}
+        \includegraphics[width=0.3\textwidth]{tez01}
+        \caption{A single Tez task}
         \label{fig13}
 \end{figure}
 
-
-The diagram shows a single task. The vertex is configured to run
-Processor1 -- has two incoming edges -- with the output of the edge
-specified as Input1 and Input2 respectively, and has a single outgoing
-edge -- with the input to this edge configured as Output1. There will be
-n such Task instances created per Vertex -- depending on the
-parallelism.
+Figure \ref{fig13} shows a single task. The vertex is configured to run
+\textit{Processor1} -- has two incoming edges -- with the output of the edge
+specified as \textit{Input1} and \textit{Input2} respectively, and has a single outgoing
+edge -- with the input to this edge configured as \textit{Output1}. There will be
+$n$ such Task instances created per Vertex -- depending on the
+\textit{parallelism}.
 
 \subsection{Initialization of a Tez task}
 
@@ -667,61 +763,57 @@ The Tez framework will first construct instances of the specified
 Input(s), Processor, Output(s) using a 0 argument constructor.
 
 For a LogicalInput and a LogicalOutput -- the Tez framework will set the
-number of physical connections using the respective setNumPhysicalInputs
-and setNumPhysicalOutputs methods.
+number of physical connections using the respective \textit{setNumPhysicalInputs}
+and \textit{setNumPhysicalOutputs} methods.
 
 The Input(s), Processor and Output(s) will then be initialized via their
-respective initialize methods. Configuration and context information is
+respective \textit{initialize} methods. Configuration and context information is
 made available to the Is/P/Os via this call. More information on the
-Context classes is available in the JavaDoc for TezInputContext,
-TezProcessorContext and TezOutputContext.
+\textit{Context} classes is available in the JavaDoc for \textit{TezInputContext},
+\textit{TezProcessorContext} and \textit{TezOutputContext}.
 
-The Processor run method will be called with the initialized Inputs and
+The Processor \textit{run} method will be called with the initialized Inputs and
 Outputs passed in as arguments (as a Map -- connected vertexName to
 Input/Output).
-
 Once the run method completes, the Input(s), Processor and Output(s)
 will be closed, and the task is considered to be complete.
-
+\\
 Notes for I/P/O writers:
-
-Each Input / Processor / Output must provide a 0 argument constructor.
-No assumptions should be made about the order in which the Inputs,
-Processor and Outputs will be initialized, or closed. Assumptions should
-also not be made about how the Initialization, Close and Processor run
+\bi
+\ii Each Input / Processor / Output must provide a 0 argument constructor.
+\ii No assumptions should be made about the order in which the Inputs,
+Processor and Outputs will be initialized, or closed. 
+\ii Assumptions should also not be made about how the Initialization, Close and Processor run
 will be invoked -- i.e. on the same thread or multiple threads.
+\ei
 
-\subsubsection{Common Interfaces to be implemented by
+\subsubsection*{Common Interfaces to be implemented by
 Input/Processor/Output}
 
-List initialize(Tez*Context) -This is where I/P/O receive their
-corresponding context objects. They can, optionally, return a list of
-events. handleEvents(List events) -- Any events generated for the
-specific I/P/O will be passed in via this interface. Inputs receive
-DataMovementEvent(s) generated by corresponding Outputs on this
-interface -- and will need to interpret them to retrieve data. At the
-moment, this can be ignored for Outputs and Processors. List close() --
+\bi
+\ii \textbf{List initialize(Tez*Context)} -This is where I/P/O receive their corresponding context objects. They can, optionally, return a list of
+events. 
+\ii \textbf{handleEvents(List events)} -- Any events generated for the specific I/P/O will be passed in via this interface. Inputs receive DataMovementEvent(s) generated by corresponding Outputs on this interface -- and will need to interpret them to retrieve data. At the moment, this can be ignored for Outputs and Processors. 
+\ii \textbf{List close()} --
 Any cleanup or final commits will typically be implemented in the close
 method. This is generally a good place for Outputs to generate
 DataMovementEvent(s). More on these events later.
-
-\subsubsection{Providing User Information to an Input / Processor /
-Output}
-
+\ei 
+\subsubsection*{Providing User Information to an Input/Processor/Output}
 Information specified in the bytePayload associated with an
 Input/Processor/Output is made available to the respective I/P/O via
-their context objects.
+their \textit{context} objects.
 
 Users provide this information as a byte array -- and can specify any
 information that may be required at runtime by the I/P/O. This could
-include configuration, execution plans for Hive/PIG, etc. As an example,
+include \textit{configuration}, \textit{execution plans} for Hive/PIG, etc. As an example,
 the current inputs use a Hadoop Configuration instance for backward
-compatibility. Hive may choose to send it's vertex execution plan as
+compatibility. Hive may choose to send it's \textit{vertex execution plan} as
 part of this field instead of using the distributed cache provided by
 YARN.
 
-Typically, Inputs and Outputs exist as a pair -- the Input knows how to
-process DataMovementEvent(s) generated by the corresponding Output, and
+Typically, \textit{Inputs} and \textit{Outputs} exist as a pair -- the Input knows how to
+process \textit{DataMovementEvent}(s) generated by the corresponding \textit{Output}, and
 how to interpret the data. This information will generally be encoded
 into some form of configuration (specified via the userPayload) used by
 the Output-Input pair, and should match. As an example -- the output Key
@@ -730,17 +822,18 @@ corresponding Input.
 
 \subsection{Writing a Tez LogicalOutput}
 
-A LogicalOutput can be considered to have two main responsibilities --
-1) dealing with the actual data provided by the Processor --
-partitioning it for the `physical' edges, serializing it etc, and 2)
-Providing information to Tez (in effect the subsequent Input) on where
+A \textit{LogicalOutput} can be considered to have two main responsibilities.
+
+\be
+\ii dealing with the actual data provided by the \textit{Processor} --
+partitioning it for the `\textit{physical}' edges, serializing it etc.
+\ii Providing information to Tez (in effect the subsequent Input) on where
 this data is available.
-
-\subsubsection{Processing the Data}
-
+\ee
+\subsubsection*{Processing the Data}
 Depending on the connection pattern being used -- an Output will
-generate data to a single `physical' edge or multiple `physical' edges.
-A LogicalOutput is responsible for partitioning the data into these
+generate data to a single `\textit{physical}' edge or multiple `physical' edges.
+A \textit{LogicalOutput} is responsible for partitioning the data into these
 `physical' edges.
 
 It would typically work in conjunction with the configured downstream
@@ -748,26 +841,25 @@ Input to write data in a specific data format understood by the
 downstream Input. This includes a serialization mechanism, compression
 etc.
 
-As an example: OnFileSortedOutput which is the Output used for a
-MapReduce shuffle makes use of a Partitioner to partition the data into
+As an example: \textit{OnFileSortedOutput} which is the Output used for a
+MapReduce shuffle makes use of a \textit{Partitioner} to partition the data into
 n partitions (`physical' edges) -- where n corresponds to the number of
 downstream tasks. It also sorts the data per partition, and writes it
 out as Key-Value pairs using Hadoop serialization which is understood by
-the downstream Input (ShuffledMergedInput in this case).
+the downstream Input (\textit{ShuffledMergedInput} in this case).
 
-\subsubsection{Providing information on how the data is to be retrieved}
-
+\subsubsection*{Providing information on how the data is to be retrieved}
 A LogicalOutput needs to send out information on how data is to be
 retrieved by the corresponding downstream Input defined on an edge. This
-is done by generating DataMovementEvent(s). These events are routed by
+is done by generating \textit{DataMovementEvent}(s). These events are routed by
 the AM, based on the connection pattern, to the relevant LogicalInputs.
 
-These events can be sent at anytime by using the TezOutputContext with
+These events can be sent at anytime by using the \textit{TezOutputContext} with
 which the Output was initialized. Alternately, they can be returned as
-part of the initialize() or close() calls. More on DataMovementEvent(s)
+part of the \textit{initialize()} or \textit{close()} calls. More on \textit{DataMovementEvent}(s)
 further down.
 
-Continuing with the OnFileSortedOutput example: This will generate one
+Continuing with the \textit{OnFileSortedOutput} example: This will generate one
 event per partition -- the sourceIndex for each of these events will be
 the partition number. This particular Output makes use of the MapReduce
 ShuffleHandler, which requires downstream Inputs to pull data over HTTP.
@@ -775,100 +867,101 @@ The payload for these events contains the host name and port for the
 http server, as well as an identifier which uniquely identifies the
 specific task and Input instance running this output.
 
-In case of OnFileSortedOutput -- these events are generated during the
-close() call.
+In case of \textit{OnFileSortedOutput} -- these events are generated during the
+\textit{close()} call.
+For more detail, see OnFileSortedOutput.java in the Appendix.
 
-View OnFileSortedOutput.java
+\subsubsection*{Specific interface for a LogicalOutput}
 
-\subsubsection{Specific interface for a LogicalOutput}
-
-setNumPhysicalOutputs(int) -- This is where a Logical Output is informed
+\bi
+\ii \textbf{setNumPhysicalOutputs(int)} -- This is where a Logical Output is informed
 about the number of physical outgoing edges for the output. Writer
-getWriter() -- An implementation of the Writer interface, which can be
+\ii \textbf{getWriter()} -- An implementation of the \textit{Writer} interface, which can be
 used by a Processor to write to this Output.
+\ei
 
 \subsection{Writing a Tez LogicalInput}
 
-The main responsibilities of a Logical Input are 1) Obtaining the actual
-data over the `physical' edges, and 2) Interpreting the data, and
-providing a single `Logical' view of this data to the Processor.
+The main responsibilities of a Logical Input are
+\be
+\ii Obtaining the actual data over the `\textit{physical}' edges, and 
+\ii Interpreting the data, and providing a single `\textit{Logical}' view of this data to the Processor.
+\ee
 
-\subsubsection{Obtaining the Data}
-
-A LogicalInput will receive DataMovementEvent(s) generated by the
-corresponding LogicalOutput which generated them. It needs to interpret
-these events to get hold of the data. The number of DataMovementEvent(s)
+\subsubsection*{Obtaining the Data:}
+A LogicalInput will receive \textit{DataMovementEvent}(s) generated by the
+corresponding \textit{LogicalOutput} which generated them. It needs to interpret
+these events to get hold of the data. The number of \textit{DataMovementEvent}(s)
 a LogicalInput receives is typically equal to the number of physical
 edges it is configured with, and is used as a termination condition.
 
-As an example: ShuffledMergedInput (which is the Input on the
-OnFileSortedOutput-ShuffledMergedInput O-I edge) would fetch data from
+As an example: \textit{ShuffledMergedInput} (which is the Input on the
+\textit{OnFileSortedOutput-ShuffledMergedInput} O-I edge) would fetch data from
 the ShuffleHandler by interpretting the host, port and identifier from
-the DataMovementEvent(s) it receives.
+the \textit{DataMovementEvent}(s) it receives.
 
-\subsubsection{Providing a view of the data to the Processor}
-
+\subsubsection*{Providing a view of the data to the Processor} 
 A LogicalInput will typically expose the data to the Processor via a
 Reader interface. This would involve interpreting the data, manipulating
 it if required -- decompression, ser-de etc.
 
-Continuing with the ShuffledMergedInput example: This input fetches all
+Continuing with the \textit{ShuffledMergedInput} example: This input fetches all
 the data -- one chunk per source task and partition -- each of which is
 sorted. It then proceeds to merge the sorted chunks and makes the data
 available to the Processor only after this step -- via a KeyValues
 reader implementation.
+For more detail, see ShuffledMergedInput.java and ShuffledUnorderedKVInput.java in the Appendix.
 
-View ShuffledMergedInput.java
-
-View ShuffledUnorderedKVInput.java
-
-\subsubsection{Specific interface for a LogicalInput}
-
-setNumPhysicalInputs(int) -- This is where a LogicalInput is informed
-about the number of physical incoming edges. Reader getReader() -- An
-implementation of the Reader interface, which can be used by a Processor
+\subsubsection*{Specific interface for a LogicalInput}
+\bi
+\ii \textbf{setNumPhysicalInputs(int)} -- This is where a LogicalInput is informed
+about the number of physical incoming edges. 
+\ii \textbf{Reader getReader()} -- An
+implementation of the \textit{Reader} interface, which can be used by a Processor
 to read from this Input
+\ei
 
 \subsection{Writing a Tez LogicalIOProcessor}
 
-A logical processor receives configured LogicalInput(s) and
-LogicalOutput(s). It is responsible for reading source data from the
+A logical processor receives configured \textit{LogicalInput}(s) and
+\textit{LogicalOutput}(s). It is responsible for reading source data from the
 Input(s), processing it, and writing data out to the configured
 Output(s).
 
 A processor is aware of which vertex (vertex-name) a specific Input is
 from. Similarly, it is aware of the output vertex (via the vertex-name)
 associated with a specific Output. It would typically validate the Input
-and Output types, process the Inputs based on the source vertex and
-generate output for the various destination vertices.
+and Output types, process the Inputs based on the \textit{source} vertex and
+generate output for the various \textit{destination} vertices.
 
-As an example: The MapProcessor validates that it is configured with
-only a single Input of type MRInput -- since that is the only input it
+As an example: The \textit{MapProcessor} validates that it is configured with
+only a single Input of type \textit{MRInput} -- since that is the only input it
 knows how to work with. It also validates the Output to be an
-OnFileSortedOutput or a MROutput. It then proceeds to obtain a KeyValue
-reader from the MRInput, and KeyValueWriter from the OnFileSortedOutput
-or MROutput. The KeyvalueReader instance is used to walk all they keys
+\textit{OnFileSortedOutput} or a \textit{MROutput}. It then proceeds to obtain a KeyValue
+reader from the \textit{MRInput}, and KeyValueWriter from the \textit{OnFileSortedOutput}
+or MROutput. The \textit{KeyvalueReader} instance is used to walk all they keys
 in the input -- on which the user configured map function is called,
-with a MapReduce output collector backed by the KeyValue writer
+with a MapReduce output collector backed by the \textit{KeyValue} writer
 instance.
 
-\subsubsection{Specific interface for a LogicalIOProcessor}
+\subsubsection*{Specific interface for a LogicalIOProcessor}
 
-run(Map inputs, Map outputs) -- This is where a processor should
+\bi
+\ii \textbf{run(Map inputs, Map outputs)} -- This is where a processor should
 implement it's compute logic. It receives initialized Input(s) and
 Output(s) along with the vertex names to which the Input(s) and
 Output(s) are connected.
+\ei
+\subsection{DataMovementEvent}
 
-\subsection{Data Movement Event}
-
-A DataMovementEvent is used to communicate between Outputs and Inputs to
+A \textit{DataMovementEvent} is used to communicate between Outputs and Inputs to
 specify location information. A byte payload field is available for this
 -- the contents of which should be understood by the communicating
 Outputs and Inputs. This byte payload could be interpreted by
-user-plugins running within the AM to modify the DAG (Auto
-reduce-parallelism as an example).
+user-plugins running within the AM to modify the DAG (\textit{Auto
+reduce-parallelism} as an example).
 
-DataMovementEvent(s) are typically generated per physical edge between
+\textit{DataMovementEvent}(s) are typically generated per physical edge between
 the Output and Input. The event generator needs to set the sourceIndex
 on the event being generated -- and this matches the physical
 Output/Input that generated the event. Based on the ConnectionPattern
@@ -881,7 +974,7 @@ target Index.
 \begin{figure}[htb]
         \centering
         \includegraphics[width=0.48\textwidth]{tez02}
-        \caption{tez01}
+        \caption{An example of data movement events}
         \label{fig14}
 \end{figure}
 
@@ -890,94 +983,103 @@ input generates 1 partition (physical output) for the downstream tasks,
 and each downstream task consumes the same partition from each of the
 upstream tasks.
 
-Vertex1, Task1 will generate two DataMovementEvents -- E1 and E2. E1,
-sourceIndex = 0 (since it is generated by the 1st physical output) E2,
-sourceIndex = 1 (since it is generated by the 2nd physical output)
-
-Similarly Vertex1, Task2 and Task3 will generate two data movement
-events each. E3 and E5, sourceIndex=0 E4 and E6, sourceIndex=1
-
-Based on the ScatterGather ConnectionPattern, the AM will rout the
-events to respective tasks. E1, E3, E5 with sourceIndex 1 will be sent
-to Vertex2, Task1 E2, E4, E6 with sourceIndex 2 will be sent to Vertex2,
+\be
+\ii Vertex1, Task1 will generate two DataMovementEvents -- E1 and E2.
+\bi
+\ii E1, sourceIndex = 0 (since it is generated by the 1st physical output) 
+\ii E2, sourceIndex = 1 (since it is generated by the 2nd physical output)
+\ei
+\ii Similarly Vertex1, Task2 and Task3 will generate two data movement
+events each. 
+\bi
+\ii E3 and E5, sourceIndex=0 
+\ii E4 and E6, sourceIndex=1
+\ei
+\ii Based on the ScatterGather ConnectionPattern, the AM will rout the
+events to respective tasks. 
+\bi
+\ii E1, E3, E5 with sourceIndex 1 will be sent
+to Vertex2, Task1 
+\ii E2, E4, E6 with sourceIndex 2 will be sent to Vertex2,
 Task2
-
-The destination will see the following targetIndex (based on the
-physical edges between the tasks (arrows)) E1, targetIndex=0 -- first
-physical input to V2, Task1 E3, targetIndex=1 -- second physical input
-to V2, Task1 E5, targetIndex=5 -- third physical input to V2, Task1
-Similarly, E2, E4, E6 will have target indices 0,1 and 2 respectively --
+\ei
+\ii The destination will see the following targetIndex (based on the
+physical edges between the tasks (arrows)) 
+\bi
+\ii E1, targetIndex=0 -- first
+physical input to V2, Task1 
+\ii E3, targetIndex=1 -- second physical input
+to V2, Task1 
+\ii E5, targetIndex=5 -- third physical input to V2, Task1
+\ii Similarly, E2, E4, E6 will have target indices 0,1 and 2 respectively --
 i.e. first, second and third physical input to V2 Task2.
-
+\ei
+\ee
 DataMovement events generated by an Input are routed to the
 corresponding upstream Input defined on the edge. Similarly data
 movement events generated by an Output are routed to the corresponding
 downstream Input defined on the edge.
-
 If the Output is one of the Leaf Outputs for a DAG -- it will typically
 not generate any events.
 
 \subsection{Error Handling}
-
-Reporting errors from an Input/Processor/Output Fatal Errors -- fatal
-errors can be reported to Tez via the fatalError method available on the
+\subsubsection*{Reporting errors from an Input/Processor/Output}
+\bi
+\ii \textbf{Fatal Errors} -- fatal errors can be reported to Tez via the \textit{fatalError} method available on the
 context instances, with which the I/P/O was initialized. Alternately,
-throwing an Exception from the initialize, close or run methods are
+throwing an Exception from the \textit{initialize}, \textit{close} or \textit{run} methods are
 considered to be fatal. Fatal errors cause the current running task to
-be killed. Actionable Non Fatal Errors -- Inputs can report the failure
+be killed. 
+\ii \textbf{Actionable Non Fatal Errors} -- Inputs can report the failure
 to obtain data from a specific Physical connection by sending an
-InputReaderErrorEvent via the InputContext. Depending on the Edge
+\textit{InputReaderErrorEvent} via the InputContext. Depending on the Edge
 configuration, this may trigger a retry of the previous stage task which
-generated this data. Errors reported to an Input If the AM determines
+generated this data. 
+\ei
+\subsubsection*{Errors reported to an Input} 
+If the AM determines
 that data generated by a previous task is no longer available, Inputs
-which require this data are informed via an InputFailedEvent. The
+which require this data are informed via an \textit{InputFailedEvent}. The
 sourceIndex, targetIndex and attemptNumber information on this event
-would correspond to the DataMovementEvent event with the same values.
+would correspond to the \textit{DataMovementEvent} event with the same values.
 The Input will typically handle this event by not attempting to obtain
 data based on the specific DataMovement event, and would wait for an
 updated DataMovementEvent for the same data.
-
-Notes on Reader and Writer Tez does not enforce any interface on the
-Reader and Writer to stay data format agnostic. Specific Writers and
+\\
+\textbf{Notes:} Tez does not enforce any interface on the Reader and Writer to stay data format agnostic. Specific Writers and
 Readers can be implemented for Key-Value, Record or other data formats.
 A KeyValue and KeyValues Reader/Writer interface and implementation,
 based on Hadoop serialization, is used by the Shuffle Input/Output
 provided by the Tez Runtime library.
 
-\section{Apache Tez Dynamic Graph Reconfiguration}
+\section{Dynamic Graph Reconfiguration}
 \subsection{Case Study: Automatic Reduce Parallelism}
+%\textbf{Motivation:} 
+%\emph{Distributed data processing} is dynamic by nature and it is
+%extremely difficult to statically determine \emph{optimal concurrency}
+%and \emph{data movement methods} a priori. More information is available
+%during runtime, like \emph{data samples and sizes}, which may help
+%optimize the execution plan further. We also recognize that Tez by
+%itself cannot always have the smarts to perform these \emph{dynamic
+%optimizations}. The design of Tez includes support for \emph{pluggable
+%vertex management} modules to collect relevant information from tasks
+%and change the \emph{dataflow graph} at runtime to optimize for
+%\emph{performance} and \emph{resource usage} \cite{Saha:2013-05}. 
+%
+%Figure \ref{fig15} shows how we can determine an appropriate number of reducers in a MapReduce like
+%job by observing the actual data output produced and the \emph{desired
+%load} per reduce task.
+%
+%\begin{figure}[htb]
+%        \centering
+%        \includegraphics[width=0.48\textwidth]{dtez11}
+%        \caption{tez01}
+%        \label{fig15}
+%\end{figure}
 
-\subsubsection{Motivation}
-
-\emph{Distributed data processing} is dynamic by nature and it is
-extremely difficult to statically determine \emph{optimal concurrency}
-and \emph{data movement methods} a priori. More information is available
-during runtime, like \emph{data samples and sizes}, which may help
-optimize the execution plan further. We also recognize that Tez by
-itself cannot always have the smarts to perform these \emph{dynamic
-optimizations}. The design of Tez includes support for \emph{pluggable
-vertex management} modules to collect relevant information from tasks
-and change the \emph{dataflow graph} at runtime to optimize for
-\textbf{performance} and \textbf{resource usage} \cite{Saha:2013-05}. The diagram shows how
-we can determine an appropriate number of reducers in a MapReduce like
-job by observing the actual data output produced and the \emph{desired
-load} per reduce task.
-
-\begin{figure}[htb]
-        \centering
-        \includegraphics[width=0.48\textwidth]{dtez11}
-        \caption{tez01}
-        \label{fig15}
-\end{figure}
-
-\subsubsection{Performance \& Efficiency via Dynamic Graph
-Reconfiguration}
-
+\subsubsection*{Performance and Efficiency} 
 Tez envisions running computation by the most \emph{resource efficient}
-and \emph{high-performance} means possible given the runtime conditions
-in the cluster and the results of the previous steps of the computation.
-This functionality is constructed using a couple of basic building
-blocks
+and \emph{high-performance} means possible given the runtime conditions in the cluster and the results of the previous steps of the computation. This functionality is constructed using a couple of basic building blocks
 
 \begin{itemize}
 \item
@@ -999,7 +1101,8 @@ blocks
   VertexManager of a given vertex.
 \end{itemize}
 
-\subsection{Case Study: Reduce task parallelism and Reduce Slow-start}
+\subsection{Case Study: Reduce Task Parallelism and Reduce Slow-Start}
+%\textbf{Reduce Task Parallelism and Reduce Slow-Start}
 
 Determining the correct number of reduce tasks has been a long standing
 issue for Map Reduce jobs. The output produced by the map tasks is not
@@ -1052,7 +1155,7 @@ key-ranges to each partition. Thus, in Tez, this operation could be
 achieved without the overhead of a separate sampling job.
 
 \section{Re-Using Containers in Apache Tez}
-\subsection{Motivation}
+%\subsection{Motivation}
 
 Tez follows the traditional Hadoop model of \emph{dividing a job into
 individual tasks}, all of which are run as processes via \textbf{YARN},
@@ -1060,14 +1163,12 @@ on the users' behalf -- for \emph{isolation}, among other reasons. This
 model comes with inherent costs -- some of which are listed below.
 
 \begin{itemize}
-
 \item
   Process \emph{startup} and \emph{initialization} cost, especially when
   running a Java process is fairly high. For short running tasks, this
   initialization cost ends up being a significant fraction of the actual
   task runtime. \emph{Re-using containers} can significantly reduce this
   cost.
-
 \item
   Stragglers have typically been another problem for jobs -- where
   \emph{a job runtime is limited by the slowest running task}. With
@@ -1075,7 +1176,7 @@ model comes with inherent costs -- some of which are listed below.
   tasks, each with a smaller work-unit. This reduces the runtime of
   stragglers (\emph{smaller work-unit}), while allowing faster tasks to
   process additional work-units which can \emph{overlap} with the
-  stragglers.\\
+  stragglers.
 \item
   \emph{Re-using containers} has the additional advantage of not needing
   to allocate each container via the \textbf{YARN ResourceManager (RM)} \cite{Saha:2013-06}.
@@ -1087,8 +1188,7 @@ can be \emph{shared} between tasks.
 
 \subsection{Consideration for Re-Using Containers}
 
-\subsubsection{Compatibility of containers}
-
+\subsubsection*{Compatibility of Containers} 
 Each vertex in Tez specifies parameters, which are used when launching
 containers. These include the requested resources (memory, CPU etc),
 \textbf{YARN LocalResources}, the environment, and the command line
@@ -1099,8 +1199,7 @@ becomes the container's signature. An already running container is
 considered to be compatible for another task when the running
 container's signature is a superset of what the task requires.
 
-\subsubsection{Scheduling}
-
+\subsubsection*{Scheduling}
 Initially, when no containers are available, the Tez AM will request
 containers from the RM with location information specified, and rely on
 YARN's scheduler for locality-aware assignments. However, for containers
@@ -1136,52 +1235,52 @@ decision}. This could be dictated by common resources shared between
 tasks, which need only be loaded by the first task running in a
 container, or by the data generated by the first task, which can then
 directly be processed by subsequent tasks, without needing to
-move/serialize the data -- especially in the case of \textbf{One-to-One
+move/serialize the data -- especially in the case of \emph{One-to-One
 edges}.
 
 \subsection{Beyond simple JVM Re-Use}
 
-\subsubsection{Cluster Dependent Work Allocation}
+\subsubsection*{Cluster Dependent Work Allocation}
 
 At the moment, the number of tasks for a vertex, and their corresponding
-`\textbf{work-units}' are determined up front. Going forward, this is
+`\emph{work-units}' are determined up front. Going forward, this is
 likely to change to a model, where a certain number of tasks are setup
 up front based on cluster resources, but \emph{work-units} for these
 tasks are determined at runtime. This allows additional optimizations
 where tasks which complete early are given additional work, and also
 allows for better \emph{locality-based assignment} of work.
 
-\subsubsection{Object Registry}
+\subsubsection*{Object Registry}
 
 Each Tez JVM (or \emph{container}) contains an \emph{object cache},
 which can be used to \emph{share data} between different tasks running
-within the same container. This is a simple \textbf{Key-Object store},
+within the same container. This is a simple \emph{Key-Object store},
 with different levels of \emph{visibility/retention}. Objects can be
 cached for use within tasks belonging to the same Vertex, for all tasks
-within a \textbf{DAG}, and for tasks running across a \textbf{Tez
+within a \emph{DAG}, and for tasks running across a \emph{Tez
 Session} (more on Sessions in a subsequent post). The resources being
 cached may, in the future, be made available as a hint to the Tez
 Scheduler for affinity based \emph{scheduling}.
 
-\subsubsection{Examples of usage:}
+\subsubsection*{Examples of Usage}
+
+\be
+\ii \emph{Hive} makes use of this \emph{object registry} to cache data
+for \emph{Broadcast Joins}, which is fetched and computed once by the
+first task, and used directly by remaining tasks which run in the same
+JVM.
+\ii The sort buffer used by \emph{OnFileSortedOutput} can be cached,
+and re-used across tasks.
+\ee
 
 \begin{figure}[htb]
         \centering
-        \includegraphics[width=0.48\textwidth]{tez121}
-        \caption{tez01}
+        \includegraphics[width=0.4\textwidth]{tez121}
+        \caption{Container reuse in the Tez}
         \label{fig16}
 \end{figure}
 
-1) \textbf{Hive} makes use of this \emph{object registry} to cache data
-for \textbf{Broadcast Joins}, which is fetched and computed once by the
-first task, and used directly by remaining tasks which run in the same
-JVM.
-
-2) The sort buffer used by \emph{OnFileSortedOutput} can be cached,
-and re-used across tasks.
-
 \section{Tez Sessions}
-\subsection{Introduction}
 
 Most relational databases have had a notion of sessions for quite some
 time. A database session can be considered to represent a connection
@@ -1198,9 +1297,9 @@ start a single Tez Session and then can submit DAGs to this Session AM
 serially without incurring the overhead of launching new AMs for each
 DAG.
 
-\subsection{Motivation for Tez Sessions}
-
-As mentioned earlier, the main proponents for Tez are Apache projects
+\noindent
+\\
+\textbf{Motivation:} As mentioned earlier, the main proponents for Tez are Apache projects
 such as Hive and Pig. Consider a Pig script, the amount of work
 programmed into a script may not be doable within a single Tez DAG. Or
 let us take a common data analytics use-case in Hive where a user uses a
@@ -1215,7 +1314,7 @@ All of the above can leverage Tez Sessions \cite{Saha:2013-07}.
 \begin{figure}[htb]
         \centering
         \includegraphics[width=0.48\textwidth]{sessions-tez1}
-        \caption{tez01}
+        \caption{Tez sessions}
         \label{fig17}
 \end{figure}
 
@@ -1224,7 +1323,6 @@ All of the above can leverage Tez Sessions \cite{Saha:2013-07}.
 Using a Tez Session is quite simple:
 
 \begin{enumerate}
-
 \item
   Firstly, instantiate a \emph{TezSession} object with the required
   configuration using \emph{TezSessionConfiguration}.
@@ -1245,35 +1343,32 @@ Using a Tez Session is quite simple:
   subsequent DAGs.
 \item
   Shutdown the Session once all work is done via
-  \emph{TezSession::stop()}.
+ \emph{TezSession::stop()}.
 \end{enumerate}
 
 There are some things to keep in mind when using a Tez Session:
 
 \begin{itemize}
-
 \item
-  A \textbf{Tez Session} maps to a single \textbf{Application Master}
+  A \emph{Tez Session} maps to a single \emph{Application Master}
   and therefore, all resources required by any user-logic (in any
-  subsequent DAG) running within the \textbf{ApplicationMaster} should
-  be available when the \textbf{AM} is launched.
-
+  subsequent DAG) running within the \emph{ApplicationMaster} should
+  be available when the \emph{AM} is launched.
   \begin{itemize}
-  
   \item
     This mostly pertains to code related to the
-    \textbf{VertexOutputCommitter} and any user-logic in the
-    \textbf{Vertex} \emph{scheduling} and \emph{management} layers.
+    \emph{VertexOutputCommitter} and any user-logic in the
+    \emph{Vertex} \emph{scheduling} and \emph{management} layers.
   \item
     User-logic run in tasks is not governed by the above restriction.
   \end{itemize}
 \item
-  The resources (memory, CPU) of the \textbf{AM} are fixed so please
+  The resources (memory, CPU) of the \emph{AM} are fixed so please
   keep this in mind when configuring the AM for use in a session. For
   example, memory requirements may be higher for a very large DAG.
 \end{itemize}
 
-\subsection{Performance Benefits of using Tez Sessions}
+\subsection{Performance Benefits}
 
 \textbf{Container Re-Use}. We know that \emph{re-use} of containers was
 doable within a single DAG. In a Tez Session, containers are re-used
@@ -1281,48 +1376,51 @@ even across DAGs as long as the containers are compatible with the task
 to be run on them. This vastly improves performance by not incurring the
 overheads of launching containers for subsequent DAGs. Containers, when
 not in use, are kept around for a \emph{configurable period} before
-being released back to YARN's \textbf{ResourceManager}.
+being released back to YARN's \emph{ResourceManager}.
 
+\noindent
+\\
 \textbf{Caching with the Session}. When running drill-down queries on
 common datasets, smarting caching of meta-data and potentially even
 caching of intermediate data or previous results can help improve
-performance. \emph{Caching} could be done either within the \textbf{AM}
+performance. \emph{Caching} could be done either within the \emph{AM}
 or within \emph{launched containers}. Such caching allows for more
 \emph{fine-grained controls} with respect to caching policies. A
 \emph{session-based cache} as compared to a global cache potentially
 provides more predictable performance improvements.
 
-\subsection{Example Usage of a Tez Session}
+\subsection{Example Usage}
 
 The Tez source code has a
 \href{https://git-wip-us.apache.org/repos/asf?p=incubator-tez.git;a=blob_plain;f=tez-mapreduce-examples/src/main/java/org/apache/tez/mapreduce/examples/OrderedWordCount.java;hb=master}{simple
-\textbf{OrderedWordCount} example}. This DAG is similar to the
-\textbf{WordCount} example in \textbf{MapReduce} except that it also
+\emph{OrderedWordCount} example}. This DAG is similar to the
+\emph{WordCount} example in \emph{MapReduce} except that it also
 orders the words based on their frequency of occurrence in the dataset.
-The DAG is an \textbf{MRR chain} i.e. a \emph{3-vertex linear chain} of
-\textbf{Map-Reduce-Reduce}.
+The DAG is an \emph{MRR chain} i.e. a \emph{3-vertex linear chain} of
+\emph{Map-Reduce-Reduce}.
 
-To run the \textbf{OrderedWordCount} example to process different
+To run the \emph{OrderedWordCount} example to process different
 data-sets via a single Tez Session, use:
 
-{\tiny
+{\footnotesize
 \begin{verbatim}
 hadoop jar tez-mapreduce-examples.jar orderedwordcount 
 -DUSE_TEZ_SESSION=true -DINTER_JOB_SLEEP_INTERVAL=0
-/input1/ /output1/ /input2/ /output2/ /input3/ /output3/ /input4/ /output4/
+/input1/ /output1/ /input2/ /output2/ 
+/input3/ /output3/ /input4/ /output4/
 \end{verbatim}
 }
 
-Below is a graph depicting the times seen when running \emph{multiple}
+Figure \ref{fig18} is a graph depicting the times seen when running \emph{multiple}
 MRR DAGs on the same dataset (the dataset had 6 files to ensure multiple
 containers are needed in the map stage ) in the same session. This test
 was run on my old MacBook running a single node Hadoop cluster having
-only one \textbf{DataNode} and one \textbf{NodeManager}.
+only one \emph{DataNode} and one \emph{NodeManager}.
 
 \begin{figure}[htb]
         \centering
         \includegraphics[width=0.48\textwidth]{sessions-tez2}
-        \caption{tez01}
+        \caption{Performance results of multiple MRR DAGs on the same dataset}
         \label{fig18}
 \end{figure}
 
@@ -1330,11 +1428,25 @@ As you can see, even though this is just a simulation test running on a
 \emph{very small data} set, leveraging containers across DAGs has a huge
 performance benefit.
 
+\section{Conclusions}
+
+A key and emerging example is the need for \emph{interactive query}, which today is challenged by the \emph{batch-oriented nature} of MapReduce. 
+A key step to enabling this new world was \emph{Apache YARN} and today the community proposes the next step.
+
+We expect that the Tez dataflow definition API will be able to express a
+broad spectrum of \emph{data processing topologies} and enable higher
+level languages to elegantly transform their queries into Tez jobs.
+
+As the Hive and Pig projects adapt to use Tez, we expect that the repository of various implementations of Inputs/Outputs/Processors will grow to house a common set of building blocks for use across the different projects.
+
+
 \bibliographystyle{IEEEtran}
 \bibliography{References}
 
 \section*{Appendix}
-
+\lstinputlisting[language=Java]{OnFileSortedOutput.java}
+\lstinputlisting[language=Java]{ShuffledMergedInput.java}
+\lstinputlisting[language=Java]{SuffledUnorderedKVInput.java}
 
 
 \end{document}
