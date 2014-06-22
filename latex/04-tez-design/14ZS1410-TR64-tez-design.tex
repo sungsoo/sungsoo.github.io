@@ -26,6 +26,7 @@
 }
 \usepackage{hyperref}
 \usepackage{listings}
+\usepackage{longtable}
 % the following is needed for syntax highlighting
 \usepackage{color}
 
@@ -35,7 +36,7 @@
 
 \lstset{ %
   language=Java,                  % the language of the code
-  basicstyle=\tiny,       % the size of the fonts that are used for the code
+  basicstyle=\scriptsize,       % the size of the fonts that are used for the code
   numbers=left,                   % where to put the line-numbers
   numberstyle=\tiny\color{gray},  % the style that is used for the line-numbers
   stepnumber=1,                   % the step between two line-numbers. If it's 1, each line 
@@ -131,6 +132,11 @@ have understood a lot about the strengths and weaknesses of this
 framework and how we would like to evolve the \emph{Hadoop data
 processing framework} to meet the evolving needs of Hadoop users. 
 
+The common behavior of a Map-Reduce job under Hadoop 1.x is as follows.
+\be
+\ii Client-side determination of input pieces\ii Job startup\ii Map phase, with optional in-process combiner \\Each mapper reads input from durable storage\ii Hash partition with local per-bucket sort.\ii Data movement via framework initiated by reduce-side pull mechanism\ii Ordered merge\ii Reduce phase\ii Write to durable storage
+\ee
+
 As the Hadoop compute platform moves into its next phase with \textbf{YARN}, it
 has decoupled itself from MapReduce being the only application, and
 opened the opportunity to create a new data processing framework to meet
@@ -138,12 +144,6 @@ the new challenges. Apache Tez aspires to live up to these lofty goals.
 Fundamentally, YARN resource scheduling is a \textbf{2-step framework} with \textit{resource allocation} done by YARN and \textit{task scheduling} done by the application. This allows YARN to be a generic compute platform while still allowing flexibility of scheduling strategies. An analogy would be general purpose operating systems that allocate computer resources among concurrent processes.
 
 The support for third party AppMasters is the crucial aspect to flexibility in YARN.  It permits new job runtimes in addition to classical map-reduce, whilst still keeping M/R available and allowing both the old and new to co-exist on a single cluster.  \textbf{Apache Tez} is one such job runtime that provides richer capabilities than traditional map-reduce \cite{hortonworks}.  The motivation is to provide a better runtime for scenarios such as relational-querying that do not have a strong affinity for the map-reduce primitive.   This need arises because the Map-Reduce primitive mandates a very particular shape to every job and although this mandatory shape is very general and can be used to implement essentially any batch-oriented data processing job, it conflates too many details and provides too little flexibility.
-
-The common behavior of a Map-Reduce job under Hadoop 1.x is as follows.
-
-\be
-\ii Client-side determination of input pieces\ii Job startup\ii Map phase, with optional in-process combiner \\Each mapper reads input from durable storage\ii Hash partition with local per-bucket sort.\ii Data movement via framework initiated by reduce-side pull mechanism\ii Ordered merge\ii Reduce phase\ii Write to durable storage
-\ee
 
 The map-reduce primitive has proved to be very useful as the basis of a reliable cluster computation runtime and it is well suited to data processing tasks that involve a small number of jobs that benefit from the standard behavior.  However, algorithms that require \textit{many iterations} suffer from the \textit{high overheads of job startup} and from frequent reads and writes to durable storage.  \textit{Relation query languages} such as Hive suffer from those issues and from the need to massage multiple datasets into homogeneous inputs as a M/R job can only consume one physical dataset (excluding support for side-data channels such as \textit{distributed cache}).  
 
@@ -203,15 +203,18 @@ DAG of tasks, within a single application or job, that is better aligned
 with the required processing task -- thus, for e.g., any \emph{given SQL
 query can be expressed as a single job} using Tez.
 
-Figure \ref{fig02} illustrates the advantages provided by Tez for complex
-SQL queries in Apache Hive or complex Apache Pig scripts.
-
 \begin{figure}[htb]
         \centering
         \includegraphics[width=0.48\textwidth]{pighivetez.png}
         \caption{General example of a Map-Reduce execution plan compared to DAG execution plan}
         \label{fig02}
 \end{figure}
+
+The usefulness of DAG plans to \textit{relational query processing} is well known and has been explored in research and mission-critical systems (various SQL engines, Dryad, etc.).   The flexibility of\textit{ DAG-style execution} plans makes them useful for various data processing tasks such as iterative batch computing.
+Figure \ref{fig02} illustrates the advantages provided by Tez for complex
+SQL queries in Apache Hive or complex Apache Pig scripts.
+
+
 
 Tez is critical to the
 \href{http://hortonworks.com/blog/100x-faster-hive}{\textbf{Stinger
@@ -411,6 +414,8 @@ job executes on the cluster, it expands this \emph{logical graph} into a
 \emph{physical graph} by adding parallelism at the vertices to scale to
 the data size being processed. Multiple tasks are created per logical
 vertex to perform the computation in parallel.
+
+\noindent
 \\
 \textbf{DAG Definition API:} More technically, the data processing is expressed in the form of a
 \emph{directed acyclic graph} (\textbf{DAG}). The processing starts at
@@ -543,11 +548,53 @@ between them has \emph{ephemeral} and \emph{concurrent} properties. A
 produces a global histogram of data ranges for \emph{range
 partitioning}.
 
-% Conclusion part
-%We hope that the Tez dataflow definition API will be able to express a
-%broad spectrum of \emph{data processing topologies} and enable higher
-%level languages to elegantly transform their queries into Tez jobs.
 
+\subsubsection*{DAG Topologies and Scenarios}
+There are various DAG \textit{topologies} and associated dynamic strategies that aid efficient execution of jobs.   
+
+\noindent
+\\
+\textbf{One-to-One Edge:}  A basic connection between job vertices that indication each Task in first stage has a 1:1 connection to Tasks in subsequent stage.This type of edge appears in a variety of scenarios such as in the \textit{hash-join plan}.  Job composition may also lead to graphs with 1-to-1 edges.  
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{one-to-one}
+        \caption{One-to-One edge}
+        \label{one-to-one}
+\end{figure}
+
+A \textit{One-to-All} edge indicates that each source task will produce data that is read by all of the destination tasks.  
+There are a variety of ways to make this happen and so a One-to-All edge may have properties describing its exact behavior.Two important variants are described below.
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{one-to-all}
+        \caption{One-to-All basic edge}
+        \label{one-to-one}
+\end{figure}
+\noindent
+\textbf{One-to-All (Basic):} 
+In a graph of two job vertices having cardinality N and M, a basic 1-to-All edge has each task produce M outputs, one for each of the M destination tasks.  Each destination task receives one input from each of the source tasks.This shape is also known as \textit{complete bipartite}.
+The primary point to note is that the tasks in the first vertex must open M output targets and write to them individually.  If implemented with real files or network ports this may not scale to support thousands of destination tasks.  
+
+\noindent
+\\
+\textbf{One-to-All (Shared):} 
+A “1-to-All shared” edge has each task produce one output file and that file is made available to all the destination tasks.  The primary use of this edge is to implement \textit{hash-partitioning} without the need to open many outputs per task that would be required with the basic 1-to-All edge.  The strategy is to have each source task produce a single output file that comprises a packed and indexed representation of M partitions.  The destination tasks receive an identifier for each output, read the index,  then only transfer their portion of the output.
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{one-to-all-shared}
+        \caption{One-to-All shared edge}
+        \label{one-to-one}
+\end{figure}
+
+\subsubsection*{Dynamic Task Cardinality}For relational query processing it is frequently necessary to support \textit{runtime decisions} for\textit{ task-cardinality} \cite{hortonworks}.  Some scenarios include:\be\ii A standard container might be known to handle $X$ bytes of data without suffering OOM or taking excessively long.  
+At runtime, each stage should create sufficient tasks such that each receives no more than $X$ bytes of input.\ii A job hint might specify resource usage guidelines such as "Use as few resources as required to make progress" or "Use as many cluster resources as makes sense".   \ii Dynamic decision making may also involve how to schedule tasks against available container slots.  
+If there are $N$ files requiring processing but only $M$ slots available, we have choices:
+\be\ii run $M$ tasks, and provide groups of files to each\ii run $N$ tasks but only activate $M$ at a time\ii file-sized based dynamic decisions.
+\ee\eeTez expects to supports these types of data-size constraints as needed by adopters. 
+
+\subsubsection*{Skew Handling}\textit{Data skew} is an ever present issue for relational queries as it routinely leads to a vertex in which the tasks have unequal data sizes to process.  Various strategies such as \textit{over-partitioning} and \textit{dynamic task cardinality} are useful to resolve data-skew situations.  A particular cause of concern is a data-skew in which a large portion of rows share a common key.  For example, if a key column contains many NULLs, or perhaps simply a frequent value such as “en-US”, then a \textit{hash-partitioning} operation may yield very uneven buckets.
 \section{Runtime API}
 Apache Tez models data processing as a \emph{dataflow graph}, with the
 \textbf{vertices} in the graph representing \emph{processing of data}
@@ -869,7 +916,7 @@ specific task and Input instance running this output.
 
 In case of \textit{OnFileSortedOutput} -- these events are generated during the
 \textit{close()} call.
-For more detail, see OnFileSortedOutput.java in the Appendix.
+For more detail, see Listing \ref{sorted-output-code} (OnFileSortedOutput.java) in the Appendix.
 
 \subsubsection*{Specific interface for a LogicalOutput}
 
@@ -910,7 +957,7 @@ the data -- one chunk per source task and partition -- each of which is
 sorted. It then proceeds to merge the sorted chunks and makes the data
 available to the Processor only after this step -- via a KeyValues
 reader implementation.
-For more detail, see ShuffledMergedInput.java and ShuffledUnorderedKVInput.java in the Appendix.
+For more detail, see Listing \ref{merged-input-code} (ShuffledMergedInput.java) and Listing \ref{kv-input-code} (ShuffledUnorderedKVInput.java) in the Appendix.
 
 \subsubsection*{Specific interface for a LogicalInput}
 \bi
@@ -1402,9 +1449,9 @@ The DAG is an \emph{MRR chain} i.e. a \emph{3-vertex linear chain} of
 To run the \emph{OrderedWordCount} example to process different
 data-sets via a single Tez Session, use:
 
-{\footnotesize
+{\scriptsize
 \begin{verbatim}
-hadoop jar tez-mapreduce-examples.jar orderedwordcount 
+$ hadoop jar tez-mapreduce-examples.jar orderedwordcount 
 -DUSE_TEZ_SESSION=true -DINTER_JOB_SLEEP_INTERVAL=0
 /input1/ /output1/ /input2/ /output2/ 
 /input3/ /output3/ /input4/ /output4/
@@ -1428,10 +1475,132 @@ As you can see, even though this is just a simulation test running on a
 \emph{very small data} set, leveraging containers across DAGs has a huge
 performance benefit.
 
-\section{Conclusions}
+\section{Discussion and Future Work}
+There are many different methods and tools for interacting and querying data within Hadoop. The most widely used tools allow for SQL based querying of the data. The following article summarizes a great comparison by MapR of the most common SQL on Hadoop technologies available today \cite{Intelli:2014}.
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.5\textwidth]{dst01}
+        \caption{A Common Tool Comparison: SQL Mode}
+        \label{dst01}
+\end{figure}
+
+Initially developed by Facebook, Apache Hive is a data warehouse infrastructure that is built on top of Hadoop. It allows querying data stored on HDFS for analysis via HQL, an SQL-like language that is translated to MapReduce jobs. Although it seems to provide SQL functionality, Hive still runs jobs on Hadoop as batch processing and does not provide interactive querying. It stores metadata in a relational database and requires maintaining a schema for the data. Only four file formats are supported by Hive: text, SequenceFile, ORC and RCFile. Hive supports processing compressed on Hadoop and also user defined functions.
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.5\textwidth]{dst02}
+        \caption{SQL ANSI Completeness}
+        \label{dst02}
+\end{figure}
+
+Cloudera's Impala is a query engine that runs on top of Hadoop and executes interactive SQL queries on HDFS and HBase. While Hive runs in batch processing, Impala runs the queries in real-time, thus integrating SQL based business intelligence tools with Hadoop. Although Cloudera is the main developer behind this tool, it is fully open source and supports the following file formats:  text, LZO, SequenceFile, Avro and RCFile. Impala can also run on the cloud via Amazon’s Elastic MapReduce.
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.5\textwidth]{dst03}
+        \caption{Client Access Methods}
+        \label{dst03}
+\end{figure}
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.5\textwidth]{dst04}
+        \caption{Common File Format Support}
+        \label{dst04}
+\end{figure}
+
+Presto is also an interactive SQL query engine. It runs on top of Hive, HBase, and even relational databases and proprietary data stores, thus combining data from multiple sources across the organization. Facebook is the main developer behind Presto and the company uses it to query internal data stores, including a 300PB data warehouse. Airbnb and Dropbox also use Presto, so it seems tried and tested for the enterprise.
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.5\textwidth]{dst05}
+        \includegraphics[width=0.5\textwidth]{dst06}
+        \includegraphics[width=0.5\textwidth]{dst07}
+        \caption{Data Sources, Data Types and Metadata}
+        \label{dst06}
+\end{figure}
+%\noindent
+%\\
+%{\scriptsize
+%\begin{tabular}{llllll}
+%\textbf{SQL Mode} & \textbf{Hive} & \textbf{Drill} & \textbf{Impala} & \textbf{Presto}	& \textbf{Spark/Shark} \\
+%\hline
+%\hline
+% &Batch &	Interactive & Interactive & Interactive	& In-memory\\
+%& & & &  &/streaming
+%\end{tabular}
+%
+%\begin{tabular}{llllll}
+%\textbf{SQL ANSI Completeness} & \textbf{Hive} & \textbf{Drill} & \textbf{Impala} & \textbf{Presto}	& \textbf{Spark/Shark} \\
+%\hline
+%\hline
+% &Batch &	Interactive & Interactive & Interactive	& In-memory\\
+%& & & &  &/streaming
+%\end{tabular}
+%
+%}
+
+\subsection*{SQL-on-Hadoop Challenges}
+
+\noindent
+\\
+\textbf{File Formats: }
+While Hadoop supports storing all file formats, SQL-on-Hadoop technologies require data to be in rigid formats in order to process it. Therefore, they might not support storing and querying all of an organization’s data, which can arrive in various formats or in no format at all. Jethro and other tools require using their own file structure. Impala is fully compatible with text files and Parquet, a columnar storage format for Hadoop, while providing partial support for other formats. Presto is supposed to work with Hadoop file formats such as text, RCFile, and SquenceFile. Hive supports implementing a custom serializer/deserializer function that can read/write any file format, but this requires extra programming \cite{Mor}.
+
+\noindent
+\\
+\textbf{Server Maintenance:}
+Some SQL-on-Hadoop technologies such as CitusDB, Hadapt, and BigSQL require PostgreSQL to be installed on each node in the cluster. This could be cumbersome to deploy and maintain, especially when dealing with large clusters.
+
+\noindent
+\\
+\textbf{Schema Maintenance:}
+One of Hadoop’s advantages is the lack of schema. However, making SQL available on Hadoop requires defining and managing a schema, something which may present a problem when new data comes in that does not fit the schema. Hadapt, one of the SQL-on-Hadoop solutions, claims it does not require schema definition for self descriptive JSON or XML formats, but this ability is already available with standard SQL databases.
+
+\noindent
+\\
+\textbf{ACID:}
+SQL databases support ACID (Atomicity, Consistency, Isolation, Durability) to guarantee reliable database transactions. Hadoop does not support it, so it is up to the relevant technology to provide it, if it does provide it at all. Hive plans to support ACID in the future.
+
+\noindent
+\\
+\textbf{OLTP:}
+Since Hadoop is based on sequential reads and does not support updates, it is a lot more useful for On-line Analytical Processing (OLAP) by definition. Therefore, Hive, which is based on MapReduce, does not support On-line Transaction Processing (OLTP) since MapReduce does not do single row operations (future support is planned as part of ACID). Although other tools are not based on MapReduce, they still target analytical queries. HBase does provide transactional functionality, although it isn’t ACID compliant yet.
+
+\noindent
+\\
+\textbf{SQL Functionality:}
+SQL supports more features than just queries such as views, stored procedures, and user defined functions. Most SQL-on-Hadoop tools do not support them and require writing extra code instead - e.g. Java for Hive and C++ for Impala.
+
+\noindent
+\\
+\textbf{Update Statements:}
+Unlike SQL, HDFS does not support update statements. SQL-on-Hadoop tools may implement it, but it isn’t clear exactly how since it requires random read/write access to all the data on Hadoop, a feature that Hadoop does not provide. Maybe they implement it like HBase which uses in-memory indexes and compacts files once in a while to remove older versions.
+
+\noindent
+\\
+\textbf{Joins and Dimensions:}
+HDFS automatically manages how to spread blocks of data over the cluster, and this process cannot be controlled manually. In certain cases this could be counter-productive. Saving several pieces of data together on the same node or maybe on all of the cluster nodes could be necessary to help execute joins and dimensions more efficiently, data such as product names, categories, or clients. Otherwise it could take much more time to bring all the relevant data together from across the network.
+
+Summary Hadoop works quite differently from SQL and requires learning new concepts and technologies. SQL-on-Hadoop tools can help bridge this knowledge gap. The best strategy though is to use each technology for its strength rather than to bend it into something else - SQL for transactional queries and Hadoop for batch processing.
+
+\section{Conclusion}
 
 A key and emerging example is the need for \emph{interactive query}, which today is challenged by the \emph{batch-oriented nature} of MapReduce. 
 A key step to enabling this new world was \emph{Apache YARN} and today the community proposes the next step.
+
+Tez is a framework that builds upon Apache Hadoop 2.0 (YARN).  YARN provides cluster management and resource allocation services and Tez provides a new AppMaster that processes a new job definition.  The Tez AppMaster calls on the YARN ResourceManager to allocate worker containers and calls the YARN NodeManagers to actually execute worker processes within the allocated containers.
+
+\noindent
+Tez provides \textit{runtime components}.
+\bi\ii An execution environment that can handle traditional map-reduce jobs. \ii An execution environment that handles DAG-based jobs comprising various built-in and extendable primitives.\ii Cluster-side determination of input pieces.\ii Runtime planning such as \textit{task cardinality} determination and \textit{dynamic modification} to the DAG structure.\ei
+
+\noindentTez provides APIs to access these services.\bi\ii Traditional map-reduce functionality is accessed via java classes written to the Job interface. \ii DAG-based execution is accessed via the new Tez DAG API.\ei
+
+\noindentTez provides pre-made primitives for use with the \textit{DAG API}.\bi\ii Vertex Input,  Vertex Output\ii Sorting,  Shuffling, Merging\ii Data transfer 
+\ei
+
 
 We expect that the Tez dataflow definition API will be able to express a
 broad spectrum of \emph{data processing topologies} and enable higher
@@ -1443,10 +1612,13 @@ As the Hive and Pig projects adapt to use Tez, we expect that the repository of 
 \bibliographystyle{IEEEtran}
 \bibliography{References}
 
+
+\cleardoublepage
+
 \section*{Appendix}
-\lstinputlisting[language=Java]{OnFileSortedOutput.java}
-\lstinputlisting[language=Java]{ShuffledMergedInput.java}
-\lstinputlisting[language=Java]{SuffledUnorderedKVInput.java}
+\lstinputlisting[label=sorted-output-code,caption=Tez LogicalInput,language=Java]{OnFileSortedOutput.java}
+\lstinputlisting[label=merged-input-code,caption=Tez LogicalOutput,language=Java]{ShuffledMergedInput.java}
+\lstinputlisting[label=kv-input-code,caption=Tez LogicalOutput,language=Java]{SuffledUnorderedKVInput.java}
 
 
 \end{document}
