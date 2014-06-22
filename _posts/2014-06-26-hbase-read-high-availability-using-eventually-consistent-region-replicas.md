@@ -12,3 +12,9 @@ tags: [hadoop & mapreduce]
 
 
 <iframe width="600" height="400" src="//www.youtube.com/embed/wZgrSSn140c" frameborder="0" allowfullscreen></iframe>
+
+---
+
+# Hbase Low Latency
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/4__KDW06RNk" frameborder="0" allowfullscreen></iframe>
