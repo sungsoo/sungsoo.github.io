@@ -92,7 +92,7 @@ http:/$\!$/sungsoo.github.com/\quad
 %        \label{fig1}
 %\end{figure}
 2000년 초부터 구글은 구조화된 데이터(structured data)를 관리하기 위한, 빅테이블이라 불리는 분산 저장 시스템을 디자인하고, 구현하고, 배포했다.
-빅테이블은 수천대의 머신(machine)과 페타(peta)바이트의 스케일에서도 신뢰성을 가질 수 있도록 디자인 되었으며, 확장성과 높은 성능, 그리고 유용성등의 목표들을 달성하였다.
+빅테이블은 수천대의 머신(machine)과 페타(peta)바이트의 스케일에서도 신뢰성을 가질 수 있도록 디자인 되었으며, 확장성과 높은 성능, 그리고 유용성등의 목표들을 달성하였다 \cite{Chang:2008:BDS}.
 
 빅테이블은 Google Analytics, Google Finance, Orkut, Personalized Search, Writely, Google Earth 등과 같은 60개 이상의 구글 상품(product) 또는 프로젝트에서 이용이 되고 있으며, 이러한 상품들은 간단한 배치 프로세싱에서부터, 최종 유저에게 잠재되어있는 미묘한 데이터를 제공하는 등과 같은 다양한 요구를 수행하기 위해 빅테이블을 사용한다.
  
@@ -113,7 +113,7 @@ http:/$\!$/sungsoo.github.com/\quad
 
 \begin{figure}[htb]
         \centering
-        \includegraphics[width=0.48\textwidth]{figure01}
+        \includegraphics[width=0.48\textwidth]{concept}
         \caption{\small A slice of an example table that stores Web pages. The row name is a reversed URL. The contents column family contains the page contents, and the anchor column family contains the text of any anchors that reference the page. CNN’s home page is referenced by both the Sports Illustrated and the MY-look home pages, so the row contains columns named anchor:cnnsi.com and anchor:my.look.ca. Each anchor cell has one version; the contents column has three versions, at timestamps $t_3$, $t_5$, and $t_6$.}
         \label{fig01}
 \end{figure}
@@ -143,7 +143,7 @@ Column key는 다음과 같은 문법을 갖는다 :
  빅테이블 API는 테이블이나 컬럼 패밀리(column family)를 생성하거나 지울 수 있는 함수들을 제공한다. 또한 클러스터, 테이블, column family, 메타데이타, 접근제어권한과 같은 것들을 변경할 수 있는 함수도 제공한다.
 클라이언트 어플리케이션은 빅테이블에 쓰거나 지울 수 있고, 클라이언트 어플리케이션 개인의 row 에서 데이터를 가져오거나, 테이블에 있는 데이터의 하위집합(subset)에 대해서도 이와같은 일을 반복할 수 있다.  아래 코드는 업데이트를 수행하기 위해 RowMutation을 추출하는 C++ 코드를 보여준다. 
 
-\begin{verbnobox}[\small]
+\begin{verbnobox}[\scriptsize]
 // Open the tableTable *T = OpenOrDie("/bigtable/web/webtable");// Write a new anchor and delete an old anchor 
 RowMutation r1(T, "com.cnn.www");
 r1.Set("anchor:www.c-span.org", "CNN"); 
@@ -188,6 +188,7 @@ scanner.Lookup("com.cnn.www");for (; !stream->Done(); stream->Next()) {
         \caption{\small Tablet location hierarchy.}
         \label{fig02}
 \end{figure}
+
 
  첫번째 단계는 Chubby에 저장된 루트 타블렛(\textit{root tablet})의 위치를 가지고 있는 파일이다. 루트 타블렛은 특별한 METADATA 테이블에 모든 타블렛들의 위치를 가지고 있다. 각각의 METADATA 타블렛은 유저 타블렛들의 집합에 대한 위치를 가지고 있다. 루트 타블렛은 단지 METADATA 테이블의 첫번째 타블렛에 불과하지만, 타블렛 위치 계층구조가 3단계 이상을 가지지 않게하기 위해 특별하게 취급된다. 루트 타블렛은 절대 쪼개지지 않는다.
 
@@ -241,8 +242,39 @@ Chubby는 네트워크 트래픽을 발생시키지 않고도 태블릿 서버�
 태블릿 서버는 분할을 마스터에게 통보할 것이다.
 
 
-%\subsection{Tablet Serving}
-%%The persistent state of a tablet is stored in GFS, as illustrated in Figure 5. Updates are committed to a commit log that stores redo records. Of these updates, the recently committed ones are stored in memory in a sorted buffer called a memtable; the older updates are stored in a sequence of SSTables. To recover a tablet, a tablet server reads its metadata from the METADATA table. This metadata contains the list of SSTables that comprise a tablet and a set of a redo points, which are pointers into any commit logs that may contain data for the tablet. The server reads the indices of the SSTables into memory and reconstructs the memtable by applying all of the updates that have committed since the redo points.%When a write operation arrives at a tablet server, the server checks that it is well-formed, and that the sender is authorized to perform the mutation. Authorization is performed by reading the list of permitted writers from a Chubby file (which is almost always a hit in the Chubby client cache). A valid mutation is written to the commit log. Group commit is used to improve the throughput of lots of small mutations [13, 16]. After the write has been committed, its contents are inserted into the memtable.%When a read operation arrives at a tablet server, it is similarly checked for well-formedness and proper authorization. A valid read operation is executed on a merged view of the sequence of SSTables and the memtable. Since the SSTables and the memtable are lexicographically sorted data structures, the merged view can be formed efficiently.%Incoming read and write operations can continue while tablets are split and merged.
+\subsection{Tablet Serving}
+
+빅테이블내 태블릿에 대한 상세한 저장소 표현은 그림 \ref{fig:sstable}와 같다.
+빅테이블에서 주요한 저장단위는 SSTable이다. SSTable은 구글 인프라스트럭쳐에서도 사용되는 파일 포맷이다. 
+SSTable은 임의의 스트링으로된 키와 밸류를 매핑하는 정렬되어 있고 변경할 수 없는 맵이다. 
+주어진 키와 연관된 밸류를 효과적으로 읽을 수 있고 주어진 키 범위내에 속한 밸류의 집합에 대해 반복하며  읽을 수 있는 연산을 제공하고 있다.
+SSTable의 인덱스는 SSTable의 끝부분에 저장되어 있으며, SSTable을 엑세스할 때 메모리에서 읽어온다. 
+다시 말해, 주어진 엔트리를 디스크를 한번만 읽어는 것 만으로 읽어올 수 있다는 의미다. 
+전체 SSTable 엔트리를 메인 메모리에 필요에 따라 저장할 수도 있다.
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{sstable}
+        \caption{    태블릿 표현}
+        \label{fig:sstable}
+\end{figure}
+
+주어진 태블릿은 많은 SSTable들로 표현된다. 뮤테이션(mutation)을 직접 수행하기보다 복구(recovery)를 지원하기 위해 로그에 먼저 쓰기를 커밋한다. 이러한 로그 엔트리는 메인 메모리내의 memtable을 통해 쓴다. 따라서, SSTable은 태블릿 상태에 대한 스냅샷과 같은 역할을 한다. 
+실패시, 가장 최근 스냅샷이후의 최근 로그 엔트리를 이용하여 복구가 이루어진다.
+
+
+
+\section{Conclusion}
+본 기술문서에서 이러한 칼럼 패밀리 데이터베이스들의 선조격인 빅테이블에 대해 살펴봤다.
+구글의 빅테이블은 초창기부터 많은 영향을 끼친 NoSQL 데이터베이스 중 하나였다. 이름을 보면 표 구조가 떠오르지만, 실제로는 희박한 칼럼으로 되어 있고 스키마는 없다. 이걸 테이블 구조로 생각하는 것은 도움이 되지 않는다. 그보다는 두 단계로 된 맵으로 생각하는 편이 낫다.
+구조야 어떻든, 빅 테이블은 HBase나 카산드라(Cassandra) 같은 이후에 나온 데이터베이스에 영향을 주었다.
+
+빅테이블 형식의 데이터 모델을 가진 데이터베이스는 흔히 칼럼 저장소라 부르지만, 이 이름은 다른 녀석을 나타내는 용어였다. 
+C-스토어(C-Store) 같은 NoSQL 이전의 칼럼 저장소는 SQL과 관계형 모델에도 잘 맞았다. 다른 점은 데이터의 물리적 저장 방식이였다.
+대다수 데이터베이스는 행을 저장 단위로 다뤄 쓰기 성능에 도움을 준다. 그러나 쓰기는 거의 없지만 많은 행에 대해 칼럼 몇 개만 한꺼번에 읽어야 하는 경우도 있다. 이런 경우라면, 모든 행에 대한 칼럼 그룹을 저장 단위로 사용하는 편이 낫다. 이런 이유로 이런 데이터베이스를 칼럼 저장소라 부른 것이다.
+
+빅테이블과 그 후손은 칼럼 그룹(칼럼 패밀리)을 함께 저장한다는 개념을 따랐지만, 관계형 모델과 SQL을 버렸다는 점에서 C-스코어나 그 친구들과는 다르다. 
+%When a write operation arrives at a tablet server, the server checks that it is well-formed, and that the sender is authorized to perform the mutation. Authorization is performed by reading the list of permitted writers from a Chubby file (which is almost always a hit in the Chubby client cache). A valid mutation is written to the commit log. Group commit is used to improve the throughput of lots of small mutations [13, 16]. After the write has been committed, its contents are inserted into the memtable.%When a read operation arrives at a tablet server, it is similarly checked for well-formedness and proper authorization. A valid read operation is executed on a merged view of the sequence of SSTables and the memtable. Since the SSTables and the memtable are lexicographically sorted data structures, the merged view can be formed efficiently.%Incoming read and write operations can continue while tablets are split and merged.
 %
 %\subsection{Compactions}
 %As write operations execute, the size of the memtable increases. When the memtable size reaches a threshold, the memtable is frozen, a new memtable is created, and the frozen memtable is converted to an SSTable and written to GFS. This minor compaction process has two goals: it shrinks the memory usage of the tablet server, and it reduces the amount of data that has to be read from the commit log during recovery if this server dies. Incoming read and write operations can continue while compactions occur.%Every minor compaction creates a new SSTable. If this behavior continued unchecked, read operations might need to merge updates from an arbitrary number of SSTables. Instead, we bound the number of such files by periodically executing a merging compaction in the background. A merging compaction reads the contents of a few SSTables and the memtable, and writes out a new SSTable. The input SSTables and memtable can be discarded as soon as the compaction has finished.%A merging compaction that rewrites all SSTables into exactly one SSTable is called a major compaction. SSTables produced by non-major compactions can contain special deletion entries that suppress deleted data in older SSTables that are still live. A major compaction, on the other hand, produces an SSTable that contains no deletion information or deleted data. Bigtable cycles through all of its tablets and regularly applies major compactions to them. These major compactions allow Bigtable to reclaim resources used by deleted data, and also allow it to ensure that deleted data disappears from the system in a timely fashion, which is important for services that store sensitive data.
@@ -255,6 +287,7 @@ Chubby는 네트워크 트래픽을 발생시키지 않고도 태블릿 서버�
 
 
 
-
+\bibliographystyle{abbrv}
+\bibliography{sqlonhadoop}
 
 \end{document}
