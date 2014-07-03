@@ -7,6 +7,8 @@ tags: [hadoop & mapreduce]
 
 ---
 
+
+
 ## Article Source
 * Title: [Selecting the right SQL-on-Hadoop engine to access big data](https://amplab.cs.berkeley.edu/benchmark/)
 * Authors: [Rick van der Lans](http://searchbusinessanalytics.techtarget.com/contributor/Rick-van-der-Lans)
