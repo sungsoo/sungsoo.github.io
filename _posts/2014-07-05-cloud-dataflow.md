@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Selecting the right SQL-on-Hadoop engine to access big data
-date: 2014-07-03
+title: Google Cloud Dataflow, a Cloud-native data processing service
+date: 2014-07-05
 categories: [computer science]
 tags: [hadoop & mapreduce]
 
@@ -15,8 +15,7 @@ tags: [hadoop & mapreduce]
 
 [![](http://sungsoo.github.com/images/cloud-dataflow.png)](http://sungsoo.github.com/images/cloud-dataflow.png)
 
-Google Cloud Platform Blog
-------------
+# Google Cloud Dataflow, a Cloud-native data processing service
 
 In today's world, information is being generated at an incredible rate.
 However, unlocking insights from large datasets can be cumbersome and
