@@ -19,19 +19,28 @@ Thus you may need to search on the page to find the actual document.
 **ACM Digital Library:** ACM Transactions on Graphics (TOG) Volume 33,
 Issue 4 (July 2014) Proceedings of ACM SIGGRAPH 2014
 
-[![ACM DOI](http://sungsoo.github.com/images/ACM-big.png)](http://www.acm.org/) **ACM Digital Library
-(DOI)** Link for the paper   
+[![ACM DOI](http://sungsoo.github.com/images/ACM-big.png)](http://www.acm.org/) **ACM Digital Library(DOI) Link for the paper**   
 
 ![Paper Abstract](http://sungsoo.github.com/images/Abstract-big.png) **Paper
 Abstract**   
 
 [![Author version](http://sungsoo.github.com/images/Preprint-big.png)](http://iconka.com)
-**Author Preprint**   ![Paper Video](http://sungsoo.github.com/images/Video-big.png) **Paper Video**  
+**Author Preprint**   
 
-![Paper Presentation](http://sungsoo.github.com/images/Ppt-big.png) **Paper Presentation**   ![Paper
-Images](http://sungsoo.github.com/images/Images-big.png) **Paper Images**   ![Paper Data](http://sungsoo.github.com/images/Data-big.png)
-**Paper Data**   ![Demo Program or Source Code](http://sungsoo.github.com/images/Code-big.png) **Demo
-Program or Source Code** ![Related Links](http://sungsoo.github.com/images/URL-big.png) **Related Links**
+![Paper Video](http://sungsoo.github.com/images/Video-big.png) **Paper Video**  
+
+![Paper Presentation](http://sungsoo.github.com/images/Ppt-big.png) **Paper Presentation**   
+
+![Paper
+Images](http://sungsoo.github.com/images/Images-big.png) **Paper Images**   
+
+![Paper Data](http://sungsoo.github.com/images/Data-big.png)
+**Paper Data**  
+
+![Demo Program or Source Code](http://sungsoo.github.com/images/Code-big.png) **Demo
+Program or Source Code** 
+
+![Related Links](http://sungsoo.github.com/images/URL-big.png) **Related Links**
 
 
 ---
@@ -40,7 +49,7 @@ Program or Source Code** ![Related Links](http://sungsoo.github.com/images/URL-b
 [Shape Collection](http://s2014.siggraph.org/attendees/technical-papers/sessions/shape-collection)
 ---
 
-* **Meta-representations of Shape Families** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://vecg.cs.ucl.ac.uk/Projects/SmartGeometry/metarep/metaRep_sigg14.html) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://vecg.cs.ucl.ac.uk/Projects/SmartGeometry/metarep/metaRep_sigg14.html) 
+* **Meta-representations of Shape Families** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://vecg.cs.ucl.ac.uk/Projects/SmartGeometry/metarep/metaRep_sigg14.html) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://vecg.cs.ucl.ac.uk/Projects/SmartGeometry/metarep/metaRep_sigg14.html)  
 :   [Noa Fish](http://www0.cs.ucl.ac.uk/people/N.Fish.html), [Melinos
     Averkiou](http://www0.cs.ucl.ac.uk/people/M.Averkiou.html)
     ([University College London](http://www.ucl.ac.uk/)), [Oliver van
