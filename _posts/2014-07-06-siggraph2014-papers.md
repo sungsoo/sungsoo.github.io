@@ -20,8 +20,12 @@ Thus you may need to search on the page to find the actual document.
 Issue 4 (July 2014) Proceedings of ACM SIGGRAPH 2014
 
 [![ACM DOI](http://sungsoo.github.com/images/ACM-big.png)](http://www.acm.org/) **ACM Digital Library
-(DOI)** Link for the paper   ![Paper Abstract](http://sungsoo.github.com/images/Abstract-big.png) **Paper
-Abstract**   [![Author version](http://sungsoo.github.com/images/Preprint-big.png)](http://iconka.com)
+(DOI)** Link for the paper   
+
+![Paper Abstract](http://sungsoo.github.com/images/Abstract-big.png) **Paper
+Abstract**   
+
+[![Author version](http://sungsoo.github.com/images/Preprint-big.png)](http://iconka.com)
 **Author Preprint**   ![Paper Video](http://sungsoo.github.com/images/Video-big.png) **Paper Video**  
 
 ![Paper Presentation](http://sungsoo.github.com/images/Ppt-big.png) **Paper Presentation**   ![Paper
