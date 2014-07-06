@@ -197,14 +197,6 @@ GFS내 복제된 청크들(chunks)이 주어졌을 때, 데이터에 대한 쓰�
 
 만약 청크서버가 고장날 경우, 마스터는 고장나지 않은 청크 서버를 이용하여 파일의 읽기/쓰기를 실행할 수 있으며, 마스터 서버가 고장나는 경우, 별도의 외부 장비가 마스터 서버의 고장유무를 체크하며, 다른 서버가 마스터 서버의 기능을 대체하게 된다. 이러한 방식으로 무정지 기능(fault tolerance)를 제공한다.
 
-\begin{figure}[htb]
-        \centering
-        \includegraphics[width=0.45\textwidth]{process}
-        \caption{Write Control and Data Flow}
-        \label{fig:writecontrol}
-\end{figure}
-
-
 \subsection{Leases and Mutation Order}뮤테이션(mutation)은 쓰기나 추가 작업과 같은 청크의 내용이나 메타데이터를 변경하는 연산을 의미한다.각 뮤테이션은 모든 청크의 복제본에서 수행된다.
 복제들간에 일관된 뮤테이션 순서를 유지하기 위해 임대(lease)를 이용한다.
 마스터는 프라이머리(primary)라 부르는 복제본의 하나에게 청크 임대를 해준다.
@@ -217,6 +209,14 @@ GFS내 복제된 청크들(chunks)이 주어졌을 때, 데이터에 대한 쓰�
 이러한 연장 요청과 부여는 마스터와 모든 청크서버들간에 주기적으로 주고받는 하트비트 메세지에 편승(piggybacked)된다.
 마스터는 때때로 임대가 만료되기 전에 임대를 취소하려고 하는 경우가 있다. 예를 들어, 마스터가 파일명을 변경하려는 파일에 대한 뮤테이션 설정을 해제하려고 하는 경우이다.
 마스터가 프라이머리와의 통신이 끊어졌다라도, 마스터는 이전 임대가 만료된 후 다른 복제본에게 새로운 임대를 안전하게 부여할 수가 있다.
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.45\textwidth]{process}
+        \caption{Write Control and Data Flow}
+        \label{fig:writecontrol}
+\end{figure}
+
 그림 \ref{fig:writecontrol}에서 보여주고 있는 이러한 제어 흐름의 주요 단계를 기술하면 다음과 같다.
 \be\ii 클라이언트는 청크에 대한 현재 임대와 다른 복제본들의 위치를 가지고 있는 청크서버가 어떤 것인지 마스터에게 물어본다.
 만약 임대하고 있는 서버가 하나도 없다면, 마스터는 선택한 복제본의 하나를 임대해 준다.
@@ -232,8 +232,13 @@ GFS내 복제된 청크들(chunks)이 주어졌을 때, 데이터에 대한 쓰�
 이 요청은 모든 복제본들에게 앞서 전송한 데이터를 식별한다.
 프라이머리는 직렬화를 제공하는 다수의 클라이언트로 부터의 요청을 수신 모든 뮤테이션들에게 연속된 일련번호를 할당한다.
 이것은 일련 번호 순서인 자신의 지역 상태로 뮤테이션을 적용한다.
-5. The primary forwards the write request to all secondary replicas. Each secondary replica applies mutationsin the same serial number order assigned by the primary.6. The secondaries all reply to the primary indicating that they have completed the operation.7. The primary replies to the client. Any errors encountered at any of the replicas are reported to the client.In case of errors, the write may have succeeded at the primary and an arbitrary subset of the secondary replicas.(If it had failed at the primary, it would not have been assigned a serial number and forwarded.)The client request is considered to have failed, and the modified region is left in an inconsistent state. 
-Our client code handles such errors by retrying the failed mutation. It will make a few attempts at steps (3) through (7) before falling back to a retry from the beginning of the write.
+\ii 프라이머리는 모든 세컨더리 복제본에게 쓰기 요청을 포워드한다.
+각 세컨더리 복제본은 프라이머리로부터 요청받은 순번대로 같은 순서로 뮤테이션을 적용한다.\ii  세컨더리들은 프라이머리에게 각자 연산이 완료되었음을 응답한다.
+\ii 프라이머리는 클라이언트에게 완료되었음을 응답한다. 복제본중 오류가 발생한 것들에 대한 내용도 클라이언트에게 보고한다.
+오류의 경우, 쓰기가 프라이머리와 임의의 세컨더리 복제본의 서브셋에서 성공한 경우이다.
+만약 프라이머리에서 실패한다면, 일련번호를 지정하지 못하고 포워드한다.
+클라이언트 요청은 실패로 간주되고 수정된 영역은 불일치한 상태로 내버려둔다.
+클라이언트 코드는 이러한 오류에 대해 뮤테이션을 재시도함으로써 처리한다.쓰기 시작점에서의 재시도를 대신하기 전에 3단계에서 7단계까지를 몇번 시도하게 된다
 \ee
 
 \section{Summary}
