@@ -36,7 +36,7 @@ Program or Source Code** ![Related Links](http://sungsoo.github.com/images/URL-b
 [Shape Collection](http://s2014.siggraph.org/attendees/technical-papers/sessions/shape-collection)
 ---
 
-**Meta-representations of Shape Families** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://vecg.cs.ucl.ac.uk/Projects/SmartGeometry/metarep/metaRep_sigg14.html) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://vecg.cs.ucl.ac.uk/Projects/SmartGeometry/metarep/metaRep_sigg14.html) 
+* **Meta-representations of Shape Families** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://vecg.cs.ucl.ac.uk/Projects/SmartGeometry/metarep/metaRep_sigg14.html) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://vecg.cs.ucl.ac.uk/Projects/SmartGeometry/metarep/metaRep_sigg14.html) 
 :   [Noa Fish](http://www0.cs.ucl.ac.uk/people/N.Fish.html), [Melinos
     Averkiou](http://www0.cs.ucl.ac.uk/people/M.Averkiou.html)
     ([University College London](http://www.ucl.ac.uk/)), [Oliver van
@@ -48,7 +48,7 @@ Program or Source Code** ![Related Links](http://sungsoo.github.com/images/URL-b
     University](http://www.tau.ac.il/)), [Niloy
     Mitra](http://www0.cs.ucl.ac.uk/staff/n.mitra/) ([University College
     London](http://www.ucl.ac.uk/))
-**Organizing Heterogeneous Scene Collections through Contextual Focal Points** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://www.kevinkaixu.net/k/projects/focal.html) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://www.kevinkaixu.net/k/projects/focal.html) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://www.kevinkaixu.net/k/projects/focal.html) 
+* **Organizing Heterogeneous Scene Collections through Contextual Focal Points** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://www.kevinkaixu.net/k/projects/focal.html) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://www.kevinkaixu.net/k/projects/focal.html) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://www.kevinkaixu.net/k/projects/focal.html) 
 :   [Kai Xu](http://www.kevinkaixu.net/k/index.html)
     ([VisuCA/SIAT](http://vcc.siat.ac.cn/) and [National University of
     Defense Technology](http://english.nudt.edu.cn/)), Rui Ma, [Hao
@@ -62,12 +62,12 @@ Program or Source Code** ![Related Links](http://sungsoo.github.com/images/URL-b
     University](http://www.tau.ac.il/)), [Hui
     Huang](http://web.siat.ac.cn/~huihuang/)
     ([VisuCA/SIAT](http://vcc.siat.ac.cn/))
-**Functional Map Networks for Analyzing and Browsing Large Shape Collections** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://graphics.stanford.edu/~huangqx/Papers.htm) 
+* **Functional Map Networks for Analyzing and Browsing Large Shape Collections** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://graphics.stanford.edu/~huangqx/Papers.htm) 
 :   [Qixing Huang](http://graphics.stanford.edu/~huangqx/), [Fan
     Wang](http://www.stanford.edu/~fanw/), [Leonidas
     Guibas](http://geometry.stanford.edu/member/guibas/) ([Stanford
     University](http://www.stanford.edu/))
-**Geometry and Context for Semantic Correspondences and Functionality Recognition in Man-Made 3D Shapes** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](https://sites.google.com/site/hamidlaga/Home/functionality) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](https://sites.google.com/site/hamidlaga/Home/functionality) 
+* **Geometry and Context for Semantic Correspondences and Functionality Recognition in Man-Made 3D Shapes** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](https://sites.google.com/site/hamidlaga/Home/functionality) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](https://sites.google.com/site/hamidlaga/Home/functionality) 
 :   [Hamid
     Laga](http://www.unisanet.unisa.edu.au/staff/homepage.asp?Name=Hamid.Laga)
     ([University of South Australia](http://www.unisa.edu.au/)),
@@ -75,7 +75,7 @@ Program or Source Code** ![Related Links](http://sungsoo.github.com/images/URL-b
     Spagnuolo](http://www.ge.imati.cnr.it/Spagnuolo) ([Istituto di
     Matematica Applicata e Tecnologie
     Informatiche](http://www.imati.cnr.it/))
-**Learning 3D Attributes of Images through Shape Collection** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://graphics.stanford.edu/~huangqx/Papers.htm) 
+* **Learning 3D Attributes of Images through Shape Collection** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://graphics.stanford.edu/~huangqx/Papers.htm) 
 :   [Su Hao](http://ai.stanford.edu/~haosu/), [Qixing
     Huang](http://graphics.stanford.edu/~huangqx/), ([Stanford
     University](http://www.stanford.edu/)), [Niloy
@@ -88,27 +88,27 @@ Program or Source Code** ![Related Links](http://sungsoo.github.com/images/URL-b
 [Sound & Light](http://s2014.siggraph.org/attendees/technical-papers/sessions/sound-light)
 ------------------------------------------------------------------------------------------
 
-**Parametric Wave Field Coding for Precomputed Sound Propagation** 
+* **Parametric Wave Field Coding for Precomputed Sound Propagation** 
 :   [Nikunj
     Raghuvanshi](http://research.microsoft.com/en-us/people/nikunjr/),
     [John
     Snyder](http://research.microsoft.com/en-us/um/people/johnsny/)
     ([Microsoft Research](http://research.microsoft.com/))
-**High-Order Diffraction and Diffuse Reflections for Interactive Sound Propagation in Large Environments** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://gamma.cs.unc.edu/HIGHDIFF/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://gamma.cs.unc.edu/HIGHDIFF/) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://gamma.cs.unc.edu/HIGHDIFF/) 
+* **High-Order Diffraction and Diffuse Reflections for Interactive Sound Propagation in Large Environments** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://gamma.cs.unc.edu/HIGHDIFF/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://gamma.cs.unc.edu/HIGHDIFF/) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://gamma.cs.unc.edu/HIGHDIFF/) 
 :   [Carl Schissler](http://www.cs.unc.edu/~schissle/), [Ravish
     Mehra](http://www.cs.unc.edu/~ravishm/), [Dinesh
     Manocha](http://www.cs.unc.edu/~dm/) ([University of North Carolina
     at Chapel Hill](http://www.unc.edu/))
-**Eigenmode Compression for Modal Sound Models** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://www.cs.cornell.edu/Projects/Sound/modec/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://www.cs.cornell.edu/Projects/Sound/modec/) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://www.cs.cornell.edu/Projects/Sound/modec/) 
+* **Eigenmode Compression for Modal Sound Models** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://www.cs.cornell.edu/Projects/Sound/modec/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://www.cs.cornell.edu/Projects/Sound/modec/) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://www.cs.cornell.edu/Projects/Sound/modec/) 
 :   [Timothy R. Langlois](http://www.cs.cornell.edu/~langlois/), [Steven
     S. An](http://www.cs.cornell.edu/~stevenan/), Kelvin K. Jin, [Doug
     L. James](http://www.cs.cornell.edu/~djames/) ([Cornell
     University](http://www.cornell.edu/))
-**Inverse-Foley Animation: Synchronizing rigid-body motions to sound** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://www.cs.cornell.edu/Projects/Sound/ifa/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://www.cs.cornell.edu/Projects/Sound/ifa/) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://www.cs.cornell.edu/Projects/Sound/ifa/) 
+* **Inverse-Foley Animation: Synchronizing rigid-body motions to sound** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://www.cs.cornell.edu/Projects/Sound/ifa/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://www.cs.cornell.edu/Projects/Sound/ifa/) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://www.cs.cornell.edu/Projects/Sound/ifa/) 
 :   [Timothy R. Langlois](http://www.cs.cornell.edu/~langlois/), [Doug
     L. James](http://www.cs.cornell.edu/~djames/) ([Cornell
     University](http://www.cornell.edu/))
-**Refractive Radiative Transfer Equation** [![ACM DOI](http://sungsoo.github.com/images/ACM.png)](http://dx.doi.org/10.1145/2557605) [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://www.vis.uni-stuttgart.de/~amentmo/) (**TOG Paper**)
+* **Refractive Radiative Transfer Equation** [![ACM DOI](http://sungsoo.github.com/images/ACM.png)](http://dx.doi.org/10.1145/2557605) [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://www.vis.uni-stuttgart.de/~amentmo/) (**TOG Paper**)
 :   [Marco Ament](http://www.vis.uni-stuttgart.de/~amentmo/), Christoph
     Bergmann, [Daniel
     Weiskopf](http://www.vis.uni-stuttgart.de/~weiskopf/) ([University
