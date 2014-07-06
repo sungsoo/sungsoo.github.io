@@ -151,7 +151,7 @@ Program or Source Code**
     ([RIKEN](http://www.riken.jp/)), [Takeo
     Igarashi](http://www-ui.is.s.u-tokyo.ac.jp/~takeo/) ([The University
     of Toky](http://www.u-tokyo.ac.jp/en/))
-**k-d Darts: Sampling by k-Dimensional Flat Searches** [![ACM DOI](http://sungsoo.github.com/images/ACM.png)](http://dx.doi.org/10.1145/2522528) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://www.cs.sandia.gov/~samitch/bibliography_2007.html) (**TOG Paper**)
+### k-d Darts: Sampling by k-Dimensional Flat Searches [![ACM DOI](http://sungsoo.github.com/images/ACM.png)](http://dx.doi.org/10.1145/2522528) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://www.cs.sandia.gov/~samitch/bibliography_2007.html) (**TOG Paper**)
 :   Mohamed S. Ebeida ([Sandia National
     Laboratories](http://www.sandia.gov/contact_us/)), [Anjul
     Patney](http://idav.ucdavis.edu/~anjul/) ([University of California,
@@ -160,11 +160,11 @@ Program or Source Code**
     Andrew A. Davidson, [John D.
     Owens](http://www.ece.ucdavis.edu/~jowens/) ([University of
     California, Davis](http://www.ucdavis.edu/))
-**Point Morphology** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://perso.telecom-paristech.fr/~boubek/papers/PointMorphology/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://perso.telecom-paristech.fr/~boubek/papers/PointMorphology/) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://perso.telecom-paristech.fr/~boubek/papers/PointMorphology/) 
+### Point Morphology [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://perso.telecom-paristech.fr/~boubek/papers/PointMorphology/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://perso.telecom-paristech.fr/~boubek/papers/PointMorphology/) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://perso.telecom-paristech.fr/~boubek/papers/PointMorphology/) 
 :   Stephane Calderon, [Tamy
     Boubekeur](http://perso.telecom-paristech.fr/~boubek/) ([Telecom
     ParisTech](http://www.telecom-paristech.fr/en/))
-**Floating Scale Surface Reconstruction** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://www.gris.informatik.tu-darmstadt.de/projects/floating-scale-surface-recon/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://www.gris.informatik.tu-darmstadt.de/projects/floating-scale-surface-recon/) [![Demo Program or Source Code](http://sungsoo.github.com/images/Code.png)](http://www.gris.informatik.tu-darmstadt.de/projects/floating-scale-surface-recon/) 
+### Floating Scale Surface Reconstruction [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://www.gris.informatik.tu-darmstadt.de/projects/floating-scale-surface-recon/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://www.gris.informatik.tu-darmstadt.de/projects/floating-scale-surface-recon/) [![Demo Program or Source Code](http://sungsoo.github.com/images/Code.png)](http://www.gris.informatik.tu-darmstadt.de/projects/floating-scale-surface-recon/) 
 :   [Simon
     Fuhrmann](http://www.gris.informatik.tu-darmstadt.de/~sfuhrman/),
     [Michael
@@ -174,7 +174,7 @@ Program or Source Code**
 [Faces](http://s2014.siggraph.org/attendees/technical-papers/sessions/faces)
 ----------------------------------------------------------------------------
 
-**Facial Performance Enhancement Using Dynamic Shape Space Analysis** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://www.disneyresearch.com/project/facial-performance-enhancement-using-dynamic-shape-space-analysis/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://www.disneyresearch.com/project/facial-performance-enhancement-using-dynamic-shape-space-analysis/) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://www.disneyresearch.com/project/facial-performance-enhancement-using-dynamic-shape-space-analysis/) (**TOG Paper**)
+### Facial Performance Enhancement Using Dynamic Shape Space Analysis [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://www.disneyresearch.com/project/facial-performance-enhancement-using-dynamic-shape-space-analysis/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://www.disneyresearch.com/project/facial-performance-enhancement-using-dynamic-shape-space-analysis/) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://www.disneyresearch.com/project/facial-performance-enhancement-using-dynamic-shape-space-analysis/) (**TOG Paper**)
 :   Amit H. Bermano ([ETH Zurich](http://www.ethz.ch/) and [Disney
     Research
     Zurich](http://www.disneyresearch.com/research-labs/disney-research-zurich/)),
@@ -198,7 +198,7 @@ Program or Source Code**
     Gross](http://graphics.ethz.ch/~grossm/) ([ETH
     Zurich](http://www.ethz.ch/) and [Disney Research
     Zurich](http://www.disneyresearch.com/research-labs/disney-research-zurich/))
-**Controllable High-Fidelity Facial Performance Transfer** 
+### Controllable High-Fidelity Facial Performance Transfer 
 :   Feng Xu ([Microsoft Research
     Asia](http://research.microsoft.com/aboutmsr/labs/asia/default.aspx)),
     [Yilong Liu](http://media.au.tsinghua.edu.cn/liuyilong.html)
@@ -209,11 +209,11 @@ Program or Source Code**
     Tong](http://research.microsoft.com/en-us/um/people/xtong/xtong.html)
     ([Microsoft Research
     Asia](http://research.microsoft.com/aboutmsr/labs/asia/default.aspx))
-**Displaced Dynamic Expression Regression for Real-time Facial Tracking and Animation** [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://gaps-zju.org/DDE/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://gaps-zju.org/DDE/) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://gaps-zju.org/DDE/) [![Paper Data](http://sungsoo.github.com/images/Data-small.png)](http://gaps-zju.org/DDE/) 
+### Displaced Dynamic Expression Regression for Real-time Facial Tracking and Animation [![Paper Abstract](http://sungsoo.github.com/images/Abstract.png)](http://gaps-zju.org/DDE/) [![Author Preprint](http://sungsoo.github.com/images/Preprint.png)](http://gaps-zju.org/DDE/) [![Paper Video](http://sungsoo.github.com/images/Video.png)](http://gaps-zju.org/DDE/) [![Paper Data](http://sungsoo.github.com/images/Data-small.png)](http://gaps-zju.org/DDE/) 
 :   [Chen Cao](https://sites.google.com/site/zjucaochen/home), [Qiming
     Hou](http://www.houqiming.net/), [Kun Zhou](http://www.kunzhou.net/)
     ([Zhejiang University](http://www.zju.edu.cn/english/))
-**Rigid Stabilization of Facial Expressions** 
+### Rigid Stabilization of Facial Expressions
 :   [Thabo Beeler](http://www.disneyresearch.com/people/thabo-beeler/),
     [Derek Bradley](http://cheveone.blogspot.tw/) ([Disney Research
     Zurich](http://zurich.disneyresearch.com/)),
