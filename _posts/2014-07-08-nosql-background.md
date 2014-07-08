@@ -29,8 +29,6 @@ on clusters of standard, commodity servers, and a schema-less data model
 is often better for the variety and type of data captured and processed
 today.
 
-[![](/sites/default/files/uploads/all/images/thumb_206x267px_why_nosql.png)](http://info.couchbase.com/WhyNoSQLWhitepaper.html)
-
 [Why NoSQL?
  Download the White Paper
  Available now](http://info.couchbase.com/WhyNoSQLWhitepaper.html)
