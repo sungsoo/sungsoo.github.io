@@ -94,7 +94,7 @@ Now this capability is supported by YARN such that every vendor can
 utilize the resource scheduling/prioritization based on need.
 
 [![Hadoop
-2.0](http://www.iolap.com/blog/wp-content/uploads/2014/04/Hadoop-2.0-300x125.png)](http://www.iolap.com/blog/wp-content/uploads/2014/04/Hadoop-2.0.png)
+2.0](http://www.iolap.com/blog/wp-content/uploads/2014/04/Hadoop-2.0.png)](http://www.iolap.com/blog/wp-content/uploads/2014/04/Hadoop-2.0.png)
    
 ## No longer reliant on Map/Reduce
 
@@ -153,7 +153,7 @@ player” category and not within the challengers/leaders, it is still
 promising to see its entry among the database management systems.
 
 [![Gartner
-Quad](http://www.iolap.com/blog/wp-content/uploads/2014/04/Gartner-Quad-300x300.png)](http://www.iolap.com/blog/wp-content/uploads/2014/04/Gartner-Quad.png)
+Quad](http://www.iolap.com/blog/wp-content/uploads/2014/04/Gartner-Quad.png)](http://www.iolap.com/blog/wp-content/uploads/2014/04/Gartner-Quad.png)
 
 In their analysis, Gartner does have a cautionary disclaimer,
 *“Cloudera**is moving forward with its ‘data hub’ alternative to
