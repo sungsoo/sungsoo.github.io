@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Data
-date: 2014-07-09
+date: 2014-07-10
 categories: [computer science]
 tags: [big data, hadoop & mapreduce]
 
@@ -19,8 +19,7 @@ tags: [big data, hadoop & mapreduce]
 
 # Building a Data Warehouse with Hadoop 
 
-There
-have been several advancements within the Hadoop world that have
+There have been several advancements within the Hadoop world that have
 positioned Hadoop closer to the data warehousing community than ever
 before. With a series of Hadoop 2.0 releases starting in October 2013,
 Hadoop is now much closer to being a platform for a data warehouse.
@@ -76,7 +75,7 @@ that leverages features from the latest Hadoop release.
 Below are three key advancements in Hadoop that promote the case for
 data warehousing:
 
-**1)    YARN resource manager**
+## YARN resource manager
 
 YARN is a sub-project of Apache Hadoop 2.0 that separates resource
 management and processing components. Previously every tool/application
@@ -95,8 +94,9 @@ Now this capability is supported by YARN such that every vendor can
 utilize the resource scheduling/prioritization based on need.
 
 [![Hadoop
-2.0](http://www.iolap.com/blog/wp-content/uploads/2014/04/Hadoop-2.0-300x125.png)](http://www.iolap.com/blog/wp-content/uploads/2014/04/Hadoop-2.0.png)**2)   
-No longer reliant on Map/Reduce**
+2.0](http://www.iolap.com/blog/wp-content/uploads/2014/04/Hadoop-2.0-300x125.png)](http://www.iolap.com/blog/wp-content/uploads/2014/04/Hadoop-2.0.png)
+   
+## No longer reliant on Map/Reduce
 
 Until now, Map/Reduce was the biggest bottleneck due to its higher
 latency batch processing architecture. Map/Reduce was meant for
@@ -121,7 +121,7 @@ Hive SQL for accessing data directly on Hadoop.
 The tedious, painstaking Map/Reduce component is no longer a mandatory
 skillset necessary for developers.
 
-**3)    In-Memory data processing**
+## In-Memory data processing
 
 Today Hadoop is primarily used for batch processing where the data is
 written once and data processing is performed multiple times over the
@@ -167,7 +167,7 @@ Hadoop much faster than before, it is still no match for the traditional
 SQL capabilities of a regular RDBMS.  There is still a long way to go in
 getting the performance of normal SQL queries on Hadoop.
 
-**Summary**
+## Summary
 
 All query engines discussed above have limitations and are not as robust
 and mature as the standard SQL query that runs on traditional
@@ -177,7 +177,7 @@ data using these tools—yet.   An in-memory solution is not suitable for
 all type of data warehouse needs either.  But this is definitely a huge
 step forward considering where Hadoop 1.0 was just a year ago.
 
-**About the Author**
+### About the Author
 
 Prakash Sukumar is a Principal Consultant at iOLAP, Inc., and
 specializes in Data Architecture.  He has had many years of experience
