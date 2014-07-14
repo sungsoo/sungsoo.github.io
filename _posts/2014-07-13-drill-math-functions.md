@@ -22,9 +22,11 @@ queries to play around with sqlline. Try out more fancier queries from
 [Drill Wiki
 here](https://cwiki.apache.org/confluence/display/DRILL/Running+Queries "Drill - Running queries").
 
+```sql
     $ cd incubator-drill
     $ ./sqlline -u jdbc:drill:schema=parquet-local -n admin -p admin
     SELECT * FROM "sample-data/region.parquet";
+```
 
 ## Trying out a new Math Function
 
@@ -33,6 +35,7 @@ ExpressionParsingException on the prompt. If we try to make a call for
 floor/ceil in our query we will end up with an exception below. Try this
 query on the sqlline prompt:
 
+```sql
     $ SELECT FLOOR(2.3) FROM "sample-data/region.parquet";
 
     Query failed: org.apache.drill.exec.rpc.RpcException: Remote failure while running query.[error_id: "6e482ea4-9578-4a33-a268-077cbec014f9"
@@ -44,6 +47,7 @@ query on the sqlline prompt:
      error_type: 0
      message: "Failure while setting up Foreman. < ExpressionParsingException:[ Unable to find function definition for function named \'floor\' ]"
      ]
+```
 
 This tells us that Drill cannot find any implementation of a function
 named floor/ceil. Now we need to provide the implementation for floor &
@@ -71,34 +75,25 @@ We add two classes for handling the floor and ceil functions here, and
 also give it an annotated name. This name is then used to register in
 the Function Definition in the drill-common’s MathFunctions class.
 
-``` {.brush:java}
-  
-  @FunctionTemplate(name = "floatceil", scope = FunctionScope.SIMPLE, nulls = NullHandling.NULL_IF_NULL)
-  public static class Float8Ceil implements DrillSimpleFunc{
 
+```java
+@FunctionTemplate(name = "floatceil", scope = FunctionScope.SIMPLE, nulls = NullHandling.NULL_IF_NULL)
+  public static class Float8Ceil implements DrillSimpleFunc{
     @Param Float8Holder input;
     @Output Float8Holder out;
-
     public void setup(RecordBatch b){}
-
     public void eval(){
       out.value = Math.ceil(input.value);
     }
-
   }
-
-  @FunctionTemplate(name = "floatfloor", scope = FunctionScope.SIMPLE, nulls = NullHandling.NULL_IF_NULL)
+@FunctionTemplate(name = "floatfloor", scope = FunctionScope.SIMPLE, nulls = NullHandling.NULL_IF_NULL)
   public static class Float8Floor implements DrillSimpleFunc{
-
     @Param Float8Holder input;
     @Output Float8Holder out;
-
     public void setup(RecordBatch b){}
-
     public void eval(){
       out.value = Math.floor(input.value);
     }
-
   }
 ```
 
@@ -109,7 +104,7 @@ These two line of code are added in the get function definition method.
 It is the place where we specify FLOOR and CEIL as functions and provide
 it the annotated name of the class which would handle the operation.
 
-``` {.brush:java}
+```java
 FunctionDefinition.simple("floatfloor", new BasicArgumentValidator(new Arg(Types.required(TypeProtos.MinorType.FLOAT8))), new OutputTypeDeterminer.SameAsFirstInput(), "floor"),
 FunctionDefinition.simple("floatceil", new BasicArgumentValidator(new Arg(Types.required(TypeProtos.MinorType.FLOAT8))), new OutputTypeDeterminer.SameAsFirstInput(), "ceil"),
 ```
@@ -120,10 +115,10 @@ FunctionDefinition.simple("floatceil", new BasicArgumentValidator(new Arg(Types.
 Have a clean build and go to the sqlline prompt to test our newly
 created Math Functions.
 
+```sql
     $ cd incubator-drill
     $ mvn clean install -DskipTests
     $  ./sqlline -u jdbc:drill:schema=parquet-local -n admin -p admin
-
 ```
 0: jdbc:drill:schema=parquet-local> SELECT CEIL(1.768) AS CEIL_VALUE FROM "sample-data/region.parquet";
 
