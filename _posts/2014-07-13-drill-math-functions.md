@@ -119,9 +119,9 @@ created Math Functions.
     $ cd incubator-drill
     $ mvn clean install -DskipTests
     $  ./sqlline -u jdbc:drill:schema=parquet-local -n admin -p admin
-```
 0: jdbc:drill:schema=parquet-local> SELECT CEIL(1.768) AS CEIL_VALUE FROM "sample-data/region.parquet";
-
+```
+```
 +-------------+
 | CEIL_VALUE  |
 +-------------+
@@ -132,9 +132,11 @@ created Math Functions.
 | 2.0         |
 +-------------+
 5 rows selected (0.638 seconds)
-
+```
+```sql
 0: jdbc:drill:schema=parquet-local> SELECT FLOOR(1.768) AS FLOOR_VALUE FROM "sample-data/region.parquet";
-
+```
+```
 +--------------+
 | FLOOR_VALUE  |
 +--------------+
