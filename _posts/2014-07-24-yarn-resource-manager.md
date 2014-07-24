@@ -29,8 +29,7 @@ YARN의 가장 중요한 컴포넌트는 리소스매니저와 노드매니저�
 
 ![리소스매니저.jpg](https://lh5.googleusercontent.com/zeHaQIVui-3SdVl3R10gQj6WEcKSRGVDcuoyUP0T4OsRSbVTQpHQTONk-Pu1WmGknIa7SDUvnj3t3Mo-BuDq5vgKoMgh5dvWq9fwnFs84UGfAafSpHUchjhv2L6ywfZGDA)
 
-[그림 1] ResourceManager Architecture
-
+**[그림 1] ResourceManager Architecture**
 
 
 각각의 컴포넌트는 다음과 같은 기능을 담당합니다.
