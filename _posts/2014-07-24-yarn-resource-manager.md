@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Apache Hadoop YARNResourceManager
+title: Apache Hadoop YARN ResourceManager
 date: 2014-07-24
 categories: [computer science]
 tags: [big data, hadoop & mapreduce]
