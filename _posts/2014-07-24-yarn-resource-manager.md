@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Special "Use Cases" Big Data & Brews - Hortonworks, Pivotal, MapR
-date: 2014-07-17
+date: 2014-07-24
 categories: [computer science]
 tags: [big data, hadoop & mapreduce]
 
