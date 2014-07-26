@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Pivotal HD Introduction & Demo
+title: Benchmarking Apache Hive 13 for Enterprise Hadoop 
 date: 2014-07-26
 categories: [computer science]
 tags: [big data, tez]
