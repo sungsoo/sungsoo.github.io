@@ -17,7 +17,7 @@ Wojciech Indyk talks about Apache Tez. He provides an introduction to the Apache
 
 <iframe width="600" height="400" src="//www.youtube.com/embed/J5j1FOFJl2U" frameborder="0" allowfullscreen></iframe>
 
----
+
 
 ## Slides
 
