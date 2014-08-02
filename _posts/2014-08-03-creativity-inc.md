@@ -12,7 +12,6 @@ tags: [computer graphics]
 
 Ed Catmull, co-founder of Pixar and president of Pixar and Disney Animation Studios discusses his book Creativity, Inc.
 
-Learn more at [http://s2014.siggraph.org/](http://s2014.siggraph.org/).
 
 ---
 
