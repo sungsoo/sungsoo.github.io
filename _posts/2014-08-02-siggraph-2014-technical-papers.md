@@ -19,3 +19,12 @@ Learn more at [http://s2014.siggraph.org/](http://s2014.siggraph.org/).
 <iframe width="600" height="400" src="//www.youtube.com/embed/u3Z1hDwGEmM?list=PLUPhVMQuDB_aHfUAfZpFj9HE-JE8XZ3SE" frameborder="0" allowfullscreen></iframe>
 
 
+# Computer Animation Festival Trailer
+
+The SIGGRAPH Computer Animation Festival is the leading annual festival for the world's most innovative, accomplished, and amazing digital film and video creators. An internationally recognized jury selects outstanding achievements in time-based art, scientific visualization, visual effects, real-time graphics, and narrative shorts.
+
+SIGGRAPH 2014, 10-14 August 2014 in Vancouver, BC, brings together thousands of computer graphics professionals.
+
+---
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/Hmmlsx7rZHU?list=PLUPhVMQuDB_aHfUAfZpFj9HE-JE8XZ3SE" frameborder="0" allowfullscreen></iframe>
