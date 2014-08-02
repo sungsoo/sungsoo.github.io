@@ -28,3 +28,12 @@ SIGGRAPH 2014, 10-14 August 2014 in Vancouver, BC, brings together thousands of 
 ---
 
 <iframe width="600" height="400" src="//www.youtube.com/embed/Hmmlsx7rZHU?list=PLUPhVMQuDB_aHfUAfZpFj9HE-JE8XZ3SE" frameborder="0" allowfullscreen></iframe>
+
+
+# Emerging Technologies Preview Trailer
+
+The SIGGRAPH Emerging Technologies program showcases the latest interactive and graphics technologies before they transform the way we live and work. Emerging Technologies presents demonstrations of research from several fields, including displays, input devices, collaborative environments, gaming, computer vision, biometrics, wearable computing, scientific visualization, design, medicine, and robotics.
+
+---
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/rmyGD4yRTGE?list=PLUPhVMQuDB_aHfUAfZpFj9HE-JE8XZ3SE" frameborder="0" allowfullscreen></iframe>
