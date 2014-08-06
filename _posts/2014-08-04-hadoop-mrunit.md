@@ -16,8 +16,8 @@ tags: [hadoop & mapreduce]
 # MRUnit Tutorial
 
 ## Setup development environment
-* Download the latest version of MRUnit jar from Apache website: https://repository.apache.org/content/repositories/releases/org/apache/mrunit/mrunit/. For example if you are using the Hadoop version 1.0.3, download mrunit-x.x.x-incubating-hadoop2.jar.
-* Include the jar in your IDE classpath. Also download the latest verison of mokito (http://code.google.com/p/mockito/) and JUnit jar and add them to your class path of development environment.
+* Download the latest version of MRUnit jar from Apache website: [https://repository.apache.org/content/repositories/releases/org/apache/mrunit/mrunit/](https://repository.apache.org/content/repositories/releases/org/apache/mrunit/mrunit/). For example if you are using the Hadoop version 1.0.3, download mrunit-x.x.x-incubating-hadoop2.jar.
+* Include the jar in your IDE classpath. Also download the latest verison of mokito ([http://code.google.com/p/mockito/](http://code.google.com/p/mockito/)) and JUnit jar and add them to your class path of development environment.
 
 
 Using from Maven add dependency like.
