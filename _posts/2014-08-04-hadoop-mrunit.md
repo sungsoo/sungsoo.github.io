@@ -1,6 +1,6 @@
 ---
 layout: post
-title: MRUnnit Tutorial
+title: MRUnit Tutorial
 date: 2014-08-04
 categories: [computer science]
 tags: [hadoop & mapreduce]
