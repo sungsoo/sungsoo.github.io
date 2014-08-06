@@ -143,6 +143,7 @@ One common use of self-created Counter is to track malformed records in the inpu
 For example, when the input CDR record is not SMS type, the Mapper can ignore that record and increase the counter.
 
 The revised Mapper with Counter is shown below.
+
 ```java
 public class SMSCDRMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
   private Text status = new Text();
@@ -167,6 +168,7 @@ public class SMSCDRMapper extends Mapper<LongWritable, Text, Text, IntWritable> 
 ```
 
 The revised testMapper() method:
+
 ```java
 public void testMapper() {
     mapDriver.withInput(new LongWritable(), new Text(
@@ -187,11 +189,13 @@ Configuration parameters are fetched using
 Configuration.get() methods in Mapper and Reducer classes
 
 Declare new Configruation object for your test class
+
 ```java
 Configuration conf = new Configuration();
 ```
 
 In setUp() method add following
+
 ```java
 mapDriver.setConfiguration(conf);
 conf.set("myParameter1", "20");
