@@ -79,12 +79,12 @@ compression algorithms transparently, i.e. writes, read, compresses and
 decompresses data automatically based on settings and file endings.
 Another common optimisation, especially for time series data, is the
 ability to partition data by a hierarchical directory structure, e.g.
-dates are common with schemas like ‘/data\_directory/year/month/day’.
+dates are common with schemas like `/data\_directory/year/month/day`.
 Hive, given a partitioned table definition, optimises queries to access
 only the data in question, e.g. to read only a month or day of data
 depending on the query. Further developments have culminated in
 specialised file formats like ORC, which is easy to use (merely requires
-a ‘STORED AS ORC’ in a create table statement) and combine faster data
+a `STORED AS ORC` in a create table statement) and combine faster data
 access with better compression characteristics.
 
 Today Hadoop and Hive also support Amazon Web Services S3 file system
@@ -141,7 +141,7 @@ it. Effectively a data scientist or engineer can use the same service as
 a business user but in different ways.
 
 QDS (Qubole Data Service) supports professional requirements for Hadoop
-as a Service\< with complex data pipelines including a wide range of
+as a Service with complex data pipelines including a wide range of
 data(base) adapters and scheduled workflows. Latter of which can consist
 of traditional map-reduce jobs, Pig Latin scripts, or Hadoop streaming.
  Beyond this sophisticated Big Data solution QDS provides an easy to use
