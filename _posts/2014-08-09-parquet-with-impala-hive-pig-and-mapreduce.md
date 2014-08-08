@@ -25,10 +25,10 @@ Hadoop ecosystem. In particular, Parquet has several features that make
 it highly suited to use with [Cloudera Impala](http://impala.io) for
 data warehouse-style operations:
 
--   **Columnar storage layout:**A query can examine and perform
+-   **Columnar storage layout:** A query can examine and perform
     calculations on all values for a column while reading only a small
     fraction of the data from a data file or table.
--   **Flexible compression options:**The data can be compressed with any
+-   **Flexible compression options:** The data can be compressed with any
     of several codecs. Different data files can be compressed
     differently. The compression is transparent to applications that
     read the data files.
