@@ -35,7 +35,7 @@ How to give a good research talk
 "How to give a good research talk", Simon Peyton Jones, John Launchbury,
 John Hughes, SIGPLAN Notices 28(11), Nov 1993.
 
--   The paper: [HTML](giving-a-talk-html.html) [thanks to Tyler
+-   The paper: [HTML](http://research.microsoft.com/en-us/um/people/simonpj/papers/giving-a-talk/giving-a-talk-html.html) [thanks to Tyler
     Heibeck], [Postscript](http://research.microsoft.com/en-us/um/people/simonpj/papers/giving-a-talk/giving-a-talk.ps.Z) or
     [PDF](http://research.microsoft.com/en-us/um/people/simonpj/papers/giving-a-talk/giving-a-talk.pdf.gz) \
 -   Powerpoint slides of the talk [updated 2004]: [Zipped PPT
@@ -47,7 +47,7 @@ John Hughes, SIGPLAN Notices 28(11), Nov 1993.
     v10.)
 
 Since we wrote the paper quite a few people have written with
-[constructive comments](giving-a-talk-comments.html). Nick Nethercote
+[constructive comments](http://research.microsoft.com/en-us/um/people/simonpj/papers/giving-a-talk/giving-a-talk-comments.html). Nick Nethercote
 also has a [useful 2-page
 guide](http://www.valgrind.org/njn/good-talk.html) about giving a talk.
 
@@ -135,4 +135,7 @@ though Google will find you a lot more besides.
         results](http://portal.acm.org/citation.cfm?id=5666.5673&coll=GUIDE&dl=GUIDE&CFID=106744944&CFTOKEN=90490737)
         Fleming & Wallace, CACM 29(3), pp218-221, March 1986.
 
+---
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/g3dkRsTqdDA" frameborder="0" allowfullscreen></iframe>
 
