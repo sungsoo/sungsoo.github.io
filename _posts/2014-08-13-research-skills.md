@@ -36,11 +36,11 @@ How to give a good research talk
 John Hughes, SIGPLAN Notices 28(11), Nov 1993.
 
 -   The paper: [HTML](giving-a-talk-html.html) [thanks to Tyler
-    Heibeck], [Postscript](giving-a-talk.ps.Z) or
-    [PDF](giving-a-talk.pdf.gz) \
+    Heibeck], [Postscript](http://research.microsoft.com/en-us/um/people/simonpj/papers/giving-a-talk/giving-a-talk.ps.Z) or
+    [PDF](http://research.microsoft.com/en-us/um/people/simonpj/papers/giving-a-talk/giving-a-talk.pdf.gz) \
 -   Powerpoint slides of the talk [updated 2004]: [Zipped PPT
-    (200k)](giving-a-talk.zip) or [PDF
-    (600k)](giving-a-talk-slides.pdf).
+    (200k)](http://research.microsoft.com/en-us/um/people/simonpj/papers/giving-a-talk/giving-a-talk.zip) or [PDF
+    (600k)](http://research.microsoft.com/en-us/um/people/simonpj/papers/giving-a-talk/giving-a-talk-slides.pdf).
 -   [Video of me giving the
     talk](http://www.wit.at/events/peyton-jones/giving_a_talk.ram) at
     the Technical University of Vienna, October 2004. (Needs RealPlayer
@@ -60,8 +60,8 @@ I gave this talk at the Technical University of Vienna in October 2004.
 There isn't a paper about it, only the talk:
 
 -   Powerpoint slides of the talk: [Zipped PPT
-    (400k)](writing-a-paper.zip) or [PDF
-    (850k)](writing-a-paper-slides.pdf).
+    (400k)](http://research.microsoft.com/en-us/um/people/simonpj/papers/giving-a-talk/writing-a-paper.zip) or [PDF
+    (850k)](http://research.microsoft.com/en-us/um/people/simonpj/papers/giving-a-talk/writing-a-paper-slides.pdf).
 -   [Video of the talk](http://sms.cam.ac.uk/media/1464870) (34 mins)
     which I gave at the Cambridge Computer Lab, Spring 2013, with huge
     thanks to Neil Dodgson for the editing and production.
@@ -75,9 +75,9 @@ How to write a good research proposal
 Bundy.
 
 -   A web page giving [general advice about writing research
-    proposals](../Proposal.html).
+    proposals](http://research.microsoft.com/en-us/um/people/simonpj/papers/Proposal.html).
 -   Powerpoint slides of a talk on the subject, given in Moscow, April
-    2006: [Zipped PPT (115k)](writing-a-proposal.zip)
+    2006: [Zipped PPT (115k)](http://research.microsoft.com/en-us/um/people/simonpj/papers/giving-a-talk/writing-a-proposal.zip)
 
 Other resources
 ---------------
