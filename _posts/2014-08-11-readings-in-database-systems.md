@@ -180,6 +180,502 @@ These papers are present in the fourth edition:
     Balazinska, Don Carney, Ugur Çetintemel, Mitch Cherniack, Chrstian
     Convey, Eddie Galvez, Jon Salz, Michael Stonebraker, Nesime Tatbul,
     Richard Tibbetts, and Stan Zdonik
+    
+# Links
+    
+Query Processing
+----------------
+
+[Patricia G.
+Selinger](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Patricia%20G%20Selinger)
+[Morton M.
+Astrahan](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Morton%20M%20Astrahan)
+[Donald D.
+Chamberlin](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Donald%20D%20Chamberlin)
+[Raymond A.
+Lorie](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Raymond%20A%20Lorie)
+[Thomas G.
+Price](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Thomas%20G%20Price).
+**[Access Path Selection in a Relational Database Management
+System.](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/SelingerACLP79.html)**.
+Proc. SIGMOD Conference, 1979, 23-34.
+
+[Leonard D.
+Shapiro](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Leonard%20D%20Shapiro).
+**[Join Processing in Database Systems with Large Main
+Memories.](http://www.informatik.uni-trier.de/~ley/db/journals/tods/Shapiro86.html)**.
+ACM Trans. Database Syst., 11(3), 1986, 239-264.
+
+[David J.
+DeWitt](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=David%20J%20DeWitt)
+[Jim
+Gray](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jim%20Gray).
+**[Parallel Database Systems: The Future of High Performance Database
+Systems.](http://www.informatik.uni-trier.de/~ley/db/journals/cacm/DeWittG92.html)**.
+Commun. ACM, 35(6), 1992, 85-98.
+
+[Goetz
+Graefe](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Goetz%20Graefe).
+**[Encapsulation of Parallelism in the Volcano Query Processing
+System.](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/Graefe90.html)**.
+Proc. SIGMOD Conference, 1990, 102-111.
+
+[Chris
+Nyberg](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Chris%20Nyberg)
+[Tom
+Barclay](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Tom%20Barclay)
+[Zarka
+Cvetanovic](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Zarka%20Cvetanovic)
+[Jim
+Gray](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jim%20Gray)
+[David B.
+Lomet](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=David%20B%20Lomet).
+**[AlphaSort: A Cache-Sensitive Parallel External
+Sort](http://www.informatik.uni-trier.de/~ley/db/journals/vldb/NybergBCGL95.html)**.
+VLDB J., 4(4), 1995, 603-627.
+
+[Lothar F.
+Mackert](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Lothar%20F%20Mackert)
+[Guy M.
+Lohman](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Guy%20M%20Lohman).
+**[R\* Optimizer Validation and Performance Evaluation for Distributed
+Queries.](http://www.informatik.uni-trier.de/~ley/db/conf/vldb/MackertL86.html)**.
+Proc. VLDB, 1986, 149-159.
+
+[Michael
+Stonebraker](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Michael%20Stonebraker)
+[Paul M.
+Aoki](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Paul%20M%20Aoki)
+[Witold
+Litwin](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Witold%20Litwin)
+[Avi
+Pfeffer](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Avi%20Pfeffer)
+[Adam
+Sah](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Adam%20Sah)
+[Jeff
+Sidell](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jeff%20Sidell)
+[Carl
+Staelin](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Carl%20Staelin)
+[Andrew
+Yu](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Andrew%20Yu).
+**[Mariposa: A Wide-Area Distributed Database
+System](http://www.informatik.uni-trier.de/~ley/db/journals/vldb/StonebrakerALPSSSY96.html)**.
+VLDB J., 5(1), 1996, 48-63.
+
+Data Storage and Access Methods
+-------------------------------
+
+[Norbert
+Beckmann](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Norbert%20Beckmann)
+[Hans-Peter
+Kriegel](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=HansPeter%20Kriegel)
+[Ralf
+Schneider](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Ralf%20Schneider)
+[Bernhard
+Seeger](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Bernhard%20Seeger).
+**[The R\*-Tree: An Efficient and Robust Access Method for Points and
+Rectangles.](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/BeckmannKSS90.html)**.
+Proc. SIGMOD Conference, 1990, 322-331.
+
+[Michael
+Stonebraker](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Michael%20Stonebraker).
+**[Operating System Support for Database
+Management.](http://www.informatik.uni-trier.de/~ley/db/journals/cacm/Stonebraker81.html)**.
+Commun. ACM, 24(7), 1981, 412-418.
+
+[Jim
+Gray](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jim%20Gray)
+[Goetz
+Graefe](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Goetz%20Graefe).
+**[The Five-Minute Rule Ten Years Later, and Other Computer Storage
+Rules of
+Thumb.](http://www.informatik.uni-trier.de/~ley/db/journals/sigmod/GrayG97.html)**.
+SIGMOD Record, 26(4), 1997, 63-68.
+
+[David A.
+Patterson](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=David%20A%20Patterson)
+[Garth A.
+Gibson](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Garth%20A%20Gibson)
+[Randy H.
+Katz](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Randy%20H%20Katz).
+**[A Case for Redundant Arrays of Inexpensive Disks
+(RAID).](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/PattersonGK88.html)**.
+Proc. SIGMOD Conference, 1988, 109-116.
+
+Transaction Management
+----------------------
+
+[Jim
+Gray](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jim%20Gray)
+[Raymond A.
+Lorie](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Raymond%20A%20Lorie)
+[Gianfranco R.
+Putzolu](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Gianfranco%20R%20Putzolu)
+[Irving L.
+Traiger](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Irving%20L%20Traiger).
+**[Granularity of Locks and Degrees of Consistency in a Shared Data
+Base.](http://www.informatik.uni-trier.de/~ley/db/.html)**. IBM,
+September, 1975.
+
+[H. T.
+Kung](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=H%20T%20Kung)
+[John T.
+Robinson](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=John%20T%20Robinson).
+**[On Optimistic Methods for Concurrency
+Control.](http://www.informatik.uni-trier.de/~ley/db/conf/vldb/KungR79.html)**.
+Proc. VLDB, 1979, 351.
+
+[Rakesh
+Agrawal](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Rakesh%20Agrawal)
+[Michael J.
+Carey](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Michael%20J%20Carey)
+[Miron
+Livny](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Miron%20Livny).
+**[Concurrency Control Performance Modeling: Alternatives and
+Implications.](http://www.informatik.uni-trier.de/~ley/db/journals/tods/AgrawalCL87.html)**.
+ACM Trans. Database Syst., 12(4), 1987, 609-654.
+
+[Philip L.
+Lehman](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Philip%20L%20Lehman)
+[S. Bing
+Yao](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=S%20Bing%20Yao).
+**[Efficient Locking for Concurrent Operations on
+B-Trees.](http://www.informatik.uni-trier.de/~ley/db/journals/tods/LehmanY81.html)**.
+ACM Trans. Database Syst., 6(4), 1981, 650-670.
+
+[C.
+Mohan](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=C%20Mohan)
+[Donald J.
+Haderle](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Donald%20J%20Haderle)
+[Bruce G.
+Lindsay](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Bruce%20G%20Lindsay)
+[Hamid
+Pirahesh](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Hamid%20Pirahesh)
+[Peter M.
+Schwarz](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Peter%20M%20Schwarz).
+**[ARIES: A Transaction Recovery Method Supporting Fine-Granularity
+Locking and Partial Rollbacks Using Write-Ahead
+Logging.](http://www.informatik.uni-trier.de/~ley/db/journals/tods/MohanHLPS92.html)**.
+ACM Trans. Database Syst., 17(1), 1992, 94-162.
+
+[C.
+Mohan](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=C%20Mohan)
+[Bruce G.
+Lindsay](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Bruce%20G%20Lindsay)
+[Ron
+Obermarck](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Ron%20Obermarck).
+**[Transaction Management in the R\* Distributed Database Management
+System.](http://www.informatik.uni-trier.de/~ley/db/journals/tods/MohanLO86.html)**.
+ACM Trans. Database Syst., 11(4), 1986, 378-396.
+
+[Jim
+Gray](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jim%20Gray)
+[Pat
+Helland](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Pat%20Helland)
+[Patrick E.
+O'Neil](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Patrick%20E%20O'Neil)
+[Dennis
+Shasha](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Dennis%20Shasha).
+**[The Dangers of Replication and a
+Solution.](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/GrayHOS96.html)**.
+Proc. SIGMOD Conference, 1996, 173-182.
+
+Extensible Systems
+------------------
+
+[Michael
+Stonebraker](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Michael%20Stonebraker).
+**[Inclusion of New Types in Relational Data Base
+Systems.](http://www.informatik.uni-trier.de/~ley/db/conf/icde/Stonebraker86.html)**.
+Proc. ICDE, 1986, 262-269.
+
+[Joseph M.
+Hellerstein](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Joseph%20M%20Hellerstein)
+[Jeffrey F.
+Naughton](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jeffrey%20F%20Naughton)
+[Avi
+Pfeffer](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Avi%20Pfeffer).
+**[Generalized Search Trees for Database
+Systems.](http://www.informatik.uni-trier.de/~ley/db/conf/vldb/HellersteinNP95.html)**.
+Proc. VLDB, 1995, 562-573.
+
+[Guy M.
+Lohman](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Guy%20M%20Lohman).
+**[Grammar-like Functional Rules for Representing Query Optimization
+Alternatives.](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/Lohman88.html)**.
+Proc. SIGMOD Conference, 1988, 18-27.
+
+Database Evolution
+------------------
+
+[Surajit
+Chaudhuri](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Surajit%20Chaudhuri)
+[Vivek R.
+Narasayya](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Vivek%20R%20Narasayya).
+**[AutoAdmin 'What-if' Index Analysis
+Utility.](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/ChaudhuriN98.html)**.
+Proc. SIGMOD Conference, 1998, 367-378.
+
+[Philip A.
+Bernstein](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Philip%20A%20Bernstein).
+**[Applying Model Management to Classical Meta Data
+Problems.](http://www.informatik.uni-trier.de/~ley/db/conf/cidr/Bernstein03.html)**.
+Proc. CIDR, 2003.
+
+[C.
+Mohan](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=C%20Mohan)
+[Inderpal
+Narang](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Inderpal%20Narang).
+**[Algorithms for Creating Indexes for Very Large Tables Without
+Quiescing
+Updates.](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/MohanN92.html)**.
+Proc. SIGMOD Conference, 1992, 361-370.
+
+Data Warehousing
+----------------
+
+[Surajit
+Chaudhuri](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Surajit%20Chaudhuri)
+[Umeshwar
+Dayal](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Umeshwar%20Dayal).
+**[An Overview of Data Warehousing and OLAP
+Technology.](http://www.informatik.uni-trier.de/~ley/db/journals/sigmod/ChaudhuriD97.html)**.
+SIGMOD Record, 26(1), 1997, 65-74.
+
+[Patrick E.
+O'Neil](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Patrick%20E%20O'Neil)
+[Dallan
+Quass](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Dallan%20Quass).
+**[Improved Query Performance with Variant
+Indexes.](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/ONeilQ97.html)**.
+Proc. SIGMOD Conference, 1997, 38-49.
+
+[Jim
+Gray](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jim%20Gray)
+[Surajit
+Chaudhuri](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Surajit%20Chaudhuri)
+[Adam
+Bosworth](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Adam%20Bosworth)
+[Andrew
+Layman](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Andrew%20Layman)
+[Don
+Reichart](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Don%20Reichart)
+[Murali
+Venkatrao](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Murali%20Venkatrao)
+[Frank
+Pellow](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Frank%20Pellow)
+[Hamid
+Pirahesh](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Hamid%20Pirahesh).
+**[Data Cube: A Relational Aggregation Operator Generalizing Group-by,
+Cross-Tab, and Sub
+Totals.](http://www.informatik.uni-trier.de/~ley/db/journals/datamine/GrayCBLRVPP97.html)**.
+Data Min. Knowl. Discov., 1(1), 1997, 29-53.
+
+[Yihong
+Zhao](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Yihong%20Zhao)
+[Prasad
+Deshpande](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Prasad%20Deshpande)
+[Jeffrey F.
+Naughton](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jeffrey%20F%20Naughton).
+**[An Array-Based Algorithm for Simultaneous Multidimensional
+Aggregates.](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/ZhaoDN97.html)**.
+Proc. SIGMOD Conference, 1997, 159-170.
+
+[Stefano
+Ceri](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Stefano%20Ceri)
+[Jennifer
+Widom](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jennifer%20Widom).
+**[Deriving Production Rules for Constraint
+Maintainance.](http://www.informatik.uni-trier.de/~ley/db/conf/vldb/CeriW90.html)**.
+Proc. VLDB, 1990, 566-577.
+
+[Joseph M.
+Hellerstein](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Joseph%20M%20Hellerstein)
+[Ron
+Avnur](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Ron%20Avnur)
+[Vijayshankar
+Raman](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Vijayshankar%20Raman).
+**[Informix under CONTROL: Online Query
+Processing.](http://www.informatik.uni-trier.de/~ley/db/journals/datamine/HellersteinAR00.html)**.
+Data Min. Knowl. Discov., 4(4), 2000, 281-314.
+
+[Yannis
+Kotidis](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Yannis%20Kotidis)
+[Nick
+Roussopoulos](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Nick%20Roussopoulos).
+**[DynaMat: A Dynamic View Management System for Data
+Warehouses.](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/KotidisR99.html)**.
+Proc. SIGMOD Conference, 1999, 371-382.
+
+Data Mining
+-----------
+
+[Tian
+Zhang](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Tian%20Zhang)
+[Raghu
+Ramakrishnan](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Raghu%20Ramakrishnan)
+[Miron
+Livny](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Miron%20Livny).
+**[BIRCH: An Efficient Data Clustering Method for Very Large
+Databases.](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/ZhangRL96.html)**.
+Proc. SIGMOD Conference, 1996, 103-114.
+
+[John C.
+Shafer](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=John%20C%20Shafer)
+[Rakesh
+Agrawal](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Rakesh%20Agrawal)
+[Manish
+Mehta](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Manish%20Mehta).
+**[SPRINT: A Scalable Parallel Classifier for Data
+Mining](http://www.informatik.uni-trier.de/~ley/db/conf/vldb/ShaferAM96.html)**.
+Proc. VLDB, 1996, 544-555.
+
+[Rakesh
+Agrawal](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Rakesh%20Agrawal)
+[Ramakrishnan
+Srikant](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Ramakrishnan%20Srikant).
+**[Fast Algorithms for Mining Association Rules in Large
+Databases.](http://www.informatik.uni-trier.de/~ley/db/conf/vldb/AgrawalS94.html)**.
+Proc. VLDB, 1994, 487-499.
+
+[Surajit
+Chaudhuri](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Surajit%20Chaudhuri)
+[Vivek R.
+Narasayya](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Vivek%20R%20Narasayya)
+[Sunita
+Sarawagi](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Sunita%20Sarawagi).
+**[Efficient Evaluation of Queries with Mining
+Predicates.](http://www.informatik.uni-trier.de/~ley/db/conf/icde/ChaudhuriNS02.html)**.
+Proc. ICDE, 2002, 529-.
+
+Web Services and Databases
+--------------------------
+
+[Eric A.
+Brewer](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Eric%20A%20Brewer).
+**[Combining Systems and Databases: A Search Engine
+Retrospective](http://www.informatik.uni-trier.de/~ley/db/.html)**.
+
+[Sergey
+Brin](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Sergey%20Brin)
+[Lawrence
+Page](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Lawrence%20Page).
+**[The Anatomy of a Large-Scale Hypertextual Web Search
+Engine.](http://www.informatik.uni-trier.de/~ley/db/journals/cn/BrinP98.html)**.
+Computer Networks, 30(1-7), 1998, 107-117.
+
+[Sergej
+Sizov](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Sergej%20Sizov)
+[Martin
+Theobald](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Martin%20Theobald)
+[Stefan
+Siersdorfer](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Stefan%20Siersdorfer)
+[Gerhard
+Weikum](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Gerhard%20Weikum)
+[Jens
+Graupmann](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jens%20Graupmann)
+[Michael
+Biwer](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Michael%20Biwer)
+[Patrick
+Zimmer](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Patrick%20Zimmer).
+**[The BINGO! System for Information Portal Generation and Expert Web
+Search.](http://www.informatik.uni-trier.de/~ley/db/conf/cidr/SizovTSWGBZ03.html)**.
+Proc. CIDR, 2003.
+
+[Dean
+Jacobs](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Dean%20Jacobs).
+**[Data Management in Application
+Servers](http://www.informatik.uni-trier.de/~ley/db/.html)**.
+
+[Serge
+Abiteboul](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Serge%20Abiteboul).
+**[Querying Semi-Structured
+Data.](http://www.informatik.uni-trier.de/~ley/db/conf/icdt/Abiteboul97.html)**.
+Proc. ICDT, 1997, 1-18.
+
+[Roy
+Goldman](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Roy%20Goldman)
+[Jennifer
+Widom](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jennifer%20Widom).
+**[DataGuides: Enabling Query Formulation and Optimization in
+Semistructured
+Databases.](http://www.informatik.uni-trier.de/~ley/db/conf/vldb/GoldmanW97.html)**.
+Proc. VLDB, 1997, 436-445.
+
+[Jianjun
+Chen](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Jianjun%20Chen)
+[David J.
+DeWitt](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=David%20J%20DeWitt)
+[Feng
+Tian](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Feng%20Tian)
+[Yuan
+Wang](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Yuan%20Wang).
+**[NiagaraCQ: A Scalable Continuous Query System for Internet
+Databases.](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/ChenJDTW00.html)**.
+Proc. SIGMOD Conference, 2000, 379-390.
+
+Stream-Based Data Management
+----------------------------
+
+[Eric N.
+Hanson](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Eric%20N%20Hanson)
+[Chris
+Carnes](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Chris%20Carnes)
+[Lan
+Huang](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Lan%20Huang)
+[Mohan
+Konyala](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Mohan%20Konyala)
+[Lloyd
+Noronha](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Lloyd%20Noronha)
+[Sashi
+Parthasarathy](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Sashi%20Parthasarathy)
+[J. B.
+Park](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=J%20B%20Park)
+[Albert
+Vernon](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Albert%20Vernon).
+**[Scalable Trigger
+Processing.](http://www.informatik.uni-trier.de/~ley/db/conf/icde/HansonCHKNPPV99.html)**.
+Proc. ICDE, 1999, 266-275.
+
+[Praveen
+Seshadri](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Praveen%20Seshadri)
+[Miron
+Livny](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Miron%20Livny)
+[Raghu
+Ramakrishnan](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Raghu%20Ramakrishnan).
+**[The Design and Implementation of a Sequence Database
+System.](http://www.informatik.uni-trier.de/~ley/db/conf/vldb/SeshadriLR96.html)**.
+Proc. VLDB, 1996, 99-110.
+
+[Ron
+Avnur](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Ron%20Avnur)
+[Joseph M.
+Hellerstein](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Joseph%20M%20Hellerstein).
+**[Eddies: Continuously Adaptive Query
+Processing](http://www.informatik.uni-trier.de/~ley/db/conf/sigmod/HellersteinA00.html)**.
+Proc. SIGMOD Conference, 2000, 261-272.
+
+[Donald
+Carney](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Donald%20Carney)
+[Ugur
+Çetintemel](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Ugur%20%C3%87etintemel)
+[Mitch
+Cherniack](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Mitch%20Cherniack)
+[Christian
+Convey](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Christian%20Convey)
+[Sangdon
+Lee](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Sangdon%20Lee)
+[Greg
+Seidman](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Greg%20Seidman)
+[Michael
+Stonebraker](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Michael%20Stonebraker)
+[Nesime
+Tatbul](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Nesime%20Tatbul)
+[Stanley B.
+Zdonik](http://www.informatik.uni-trier.de/ley/dbbin/dblpquery.cgi?author=Stanley%20B%20Zdonik).
+**[Monitoring Streams - A New Class of Data Management
+Applications.](http://www.informatik.uni-trier.de/~ley/db/conf/vldb/CarneyCCCLSSTZ02.html)**.
+Proc. VLDB, 2002, 215-226.    
 
 Readings in Database Systems, Third Edition
 ===============================
