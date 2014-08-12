@@ -9,7 +9,6 @@ tags: [hadoop & mapreduce]
 
 ## Article Source
 * Title: [Running a cluster of virtual machines with Hadoop (HDFS + YARN) v2.4.1 and Spark v1.0.1 using Vagrant](http://vangjee.wordpress.com/2014/08/03/running-a-cluster-of-hadoop-hdfs-yarn-v2-4-1-with-spark-v1-0-1-on-vagrant/)
-* Authors: Simon Peyton Jones (Microsoft)
 
 
 Running a cluster of virtual machines with Hadoop (HDFS + YARN) v2.4.1 and Spark v1.0.1 using Vagrant
