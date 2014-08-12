@@ -11,7 +11,175 @@ tags: [data management]
 * Title: Readings in Database Systems
 * Authors: Michael Stonebraker and Joseph M. Hellerstein
 
+Readings in Database Systems (4th Edition)
+===
 
+Understanding the history of a topic is very helpful for developing a
+useful conceptualization of future evolution and a thorough knowledge of
+present challenges. Database system research has long yielded valuable
+insights, but many findings are primarily locatabale within complex
+academic papers in obscure publications. This useful collection of
+papers published by *The MIT Press* presents some old documents and some
+newer ones.
+
+Many innovations have yet to be made in teh field of database system
+design, but there are many complexities associated with database
+management systems, and sometimes researches waste time by working
+through studies that have already been completed and throughly
+documented. In order to be able to pave the way for the future of
+databases, it is necessary to h ave an understanding of what has
+happened to this point and what current challenges need new solutions.
+
+The preface to the anthology describes the editors' objective:
+
+> This book is intended to provide software technolgoists—both
+> professionals and students—with a grounding in database research past
+> and present, and a technical context for understanding new
+> innovations. It is also designed to be a reference to anyone already
+> active in database systems. This set of readings represents what we
+> perceive to be the most important issues in the database area; the
+> core mateiral for any DBMS [database management system] professional
+> to study.
+>
+> (page *ix*)
+
+These papers are present in the fourth edition:
+
+## Data Models and DBMS Architecture
+
+-   *What Goes Around Comes Around* by Michael Stonebraker and Joseph M.
+    Hellerstein
+-   *Anatomy of a Database System* by Joseph M. Hellerstein and Michael
+    Stonebraker
+
+## Query Processing
+
+-   *Access Path Selection in a Relational Database Management System*
+    by P. Griffiths Selinger, M.M. Astrahan, D.D. Chamberlin, R.A.
+    Lorie, and T.G. Price
+-   *Join Processing in Database Systems with Large Main Memories* by
+    Leonard D. Shapiro
+-   *Parallel Database Systems: The Future of High Performance Database
+    Systems* by David DeWitt and Jim Gray
+-   *Encapsulation of Parallelism in the Volcano Query Processing
+    System* by Goetz Graefe
+-   *AlphaSort: A RISC Machine Sort* by Chris Nyberg, Tom Barclay, Zarka
+    Cvetanovic, Jim Gray, and Dave Lomet
+-   *R\* Optimizer Validation and Performance Evaluation for Distributed
+    Systems* by Lothar F. Mackert and Guy M. Lohman
+-   *Mariposa: A Wide-Area Distributed Database System* by Michael
+    Stonebraker, Paul M. Aoki, Witold Litwin, Avi Pfeffer, Adam Sah,
+    Jeff Sidell, Carl Staelin, and Andrew Yu
+
+## Data Storage and Access Methods
+
+-   *The R\*-tree: An Efficient and Robust Access Method for Points and
+    Rectangles* by Norbert Beckmann, Hans-Peter Kriegel, Ralf Schneider,
+    and Bernhard Seeger
+-   *Operating System Support for Database Management* by Michael
+    Stonebraker
+-   *The Five-Minute Rule Ten Years Later, and Other Computer Storage
+    Rules of Thumb* by Jim Gray and Goetz Graefe
+-   *A Case for Redundant Arrays of Inexpensive Disks (RAID)* by David
+    A. Patterson, Garth Gibson, and Randy H. Katz
+
+## Transaction Management
+
+-   *Granularity of Locks and Degrees of Consistency in a Shared Data
+    Base* by Jim N. Gray, Raymond A. Lorie, Gianfranco R. Putzolu, and
+    Irving L. Traiger
+-   *On Optimistic Methods for Concurrency Control* by H. T. Kung and
+    John T. Robinson
+-   *Concurrency Control Performance Modeling: Alternatives and
+    Implications* by Rakesh Agrawal, Michael J. Carey, and Miron Livny
+-   *Efficient Locking for Concurrent Operations on B-Trees* by Philip
+    L. Lehman and S. Bing Yao
+-   *ARIES: A Transaction Recovery Method Supporting Fine-Granularity
+    Locking and Partial Rollbacks Using Write-Ahead Logging* by C.
+    Mohan, Don Haderle, Bruce Lindsay, Hamid Pirahesh, and Peter Schwarz
+-   *Transaction Management in the R\* Distributed Database Management
+    System* by C. Mohan, Bruce Lindsay, and R. Obermack
+-   *The Dangers of Replication and a Solution* by Jim Gray, Pat
+    Helland, Patrick O'Neil, and Dennis Shasha
+
+## Extensibility
+
+-   *Inclusion of New Types in Relational Data Base Systems* by Michael
+    Stonebraker
+-   *Generalized Search Trees for Database Systems* by Joseph M.
+    Hellerstein, Jeffrey F. Naughton, and Avi Pfeffer
+-   *Grammar-like Functional Rules for Representing Query Optimization
+    Alternatives* by Guy M. Lohman
+
+## Database Evolution
+
+-   *AutoAdmin "What-if" Index Analysis Utility* by Surajit Chaudhuri
+    and Vivek Narasayya
+-   *Applying Model Management to Classical Meta Data Problems* by
+    Philip A. Bernstein
+-   *Algorithms for Creating Indexes for Very Large Tables Without
+    Quiescing Updates* by C. Mohan and Inderpal Narang
+
+## Data Warehousing
+
+-   *An Overview of Data Warehousing and OLAP Technology* by Surajit
+    Chaudhuri and Umeshwar Dayal
+-   *Improved Query Performance with Variant Indexes* by Patrick O'Neil
+    and Dallan Quass
+-   *DataCube: A Relational Aggregation Operator Generalizing Group-By,
+    Cross-Tab, and Sub-Totals* by Jim Gray, Surajit Chaudhuri, Adam
+    Bosworth, Andrew Layman, Don Reichart, and Murali Venkatrao
+-   *An Array-Based Algorithm for Simultaneous Multidimensional
+    Aggregates* by Yihong Zhao, Prasad M. Despande, and Jeffrey F.
+    Naughton
+-   *Deriving Production Rules for Incremental View Maintenance* by
+    Stefano Ceri and Jennifer Widom
+-   *Informix under CONTROL: Online Query Processing* by Joseph M.
+    Hellerstein, Ron Avnur, and Vijayshankar Raman
+-   *DynaMat: A Dynamic View Management System for Data Warehouses* by
+    Yannis Kotidis and Nick Roussopoulos
+
+## Data Mining
+
+-   *BIRCH: An Efficient Data Clustering Method for Very Large
+    Databases* by Tian Zhang, Raghu Ramakrishnan, and Miron Livny
+-   *SPRINT: A Scalable Parallel Classifier for Data Mining* by John
+    Shafer, Rakesh Agrawal, and Manish Mehta
+-   *Fast Algorithms for Mining Association Rules* by Rakesh Agrawal and
+    Ramakrishnan Srikant
+-   *Efficient Evaluation of Queries with Mining Predicates* by Surajit
+    Chaudhuri, Vivek Narasayya, and Sunita Sarawagi
+
+## Web Services and Data Bases
+
+-   *Combining Systems and Databases: A Search Engine Retrospective* by
+    Eric A. Brewer
+-   *The Anatomy of a Large-Scale Hypertextual Web Search Engine* by
+    Sergey Brin and Lawrence Page
+-   *The BINGO! System for Information Portal Generation and Expert Web
+    Search* by Sergej Sizov, Michael Biwer, Jens Graupmann, Stefan
+    Siersdorfer, Martin Theobald, Gerhard Weikum, and Patrick Zimmer
+-   *Data Management in Application Servers* by Dean Jacobs
+-   *Querying Semi-Structured Data* by Serge Abiteboul
+-   *DataGuides: Enabling Query Formulation and Optimization in
+    Semistructured Databases* by Roy GOldman and Jennifer Widom
+-   *NiagaraCQ: A Scalable Continuous Query System for the Internet
+    Databases* by Jianjun Chen, David J. DeWitt, Feng Tian, and Yuan
+    Wang
+
+## Stream-Based Data Management
+
+-   *Scalable Trigger Processing* by Eric N. Hanson, Chris Carnes, Lan
+    Huang, Mohan Konyala, Lloyd Noronha, Sashi Parthasarathy, J. B.
+    Park, and Albert Vernon
+-   *The Design and Implementation of a Sequence Database System* by
+    Praveen Seshadri, Miron Livny, and Raghu Ramakrishnan
+-   *Eddies: Continuously Adaptive Query Processing* by Ron Avnur and
+    Joseph M. Hellerstein
+-   *Retrospective on Aurora* by Hari Balakrishnan, Magdalena
+    Balazinska, Don Carney, Ugur Çetintemel, Mitch Cherniack, Chrstian
+    Convey, Eddie Galvez, Jon Salz, Michael Stonebraker, Nesime Tatbul,
+    Richard Tibbetts, and Stan Zdonik
 
 Readings in Database Systems, Third Edition
 ===============================
