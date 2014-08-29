@@ -70,7 +70,7 @@ $ gksudo gedit /etc/default/apport
 
 The file would contain something like this
 
-``` {.pre_text}
+``` 
 # set this to 0 to disable apport, or to 1 to enable it
 # you can temporarily override this with
 # sudo service apport start force_start=1
@@ -79,7 +79,7 @@ enabled=1
 
 Just set the value of enabled to 0, and this will disable apport.
 
-``` {.pre_text}
+``` 
 enabled=0
 ```
 
