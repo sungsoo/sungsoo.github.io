@@ -10,8 +10,9 @@ tags: [hadoop & mapreduce]
 Map-Side Join Vs. Join
 ======================
 
-[![joins](http://www.edureka.in/blog/wp-content/uploads/2013/11/joins3.jpg)](http://www.edureka.in/blog/map-side-join-vs-join/)In
-this blog we shall discuss about **Map-side join** and its advantages
+[![joins](http://www.edureka.in/blog/wp-content/uploads/2013/11/joins3.jpg)](http://www.edureka.in/blog/map-side-join-vs-join/)
+
+In this blog we shall discuss about **Map-side join** and its advantages
 over the normal join operation in **Hive**. But before knowing about
 this, we should first understand the concept of**‘Join’** and what
 happens internally when we perform the join in **Hive**.
