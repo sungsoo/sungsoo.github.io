@@ -320,7 +320,7 @@ latency, but Hive has a concept of storage handlers and having many
 tasks access the same external data source (HBase, database, etc.) might
 overwhelm or slow down the source.
 
-### ### Further Options for Optimization 
+### Further Options for Optimization 
 
 1.  Increase the replication factor on dimension tables.
 2.  Use the distributed cache to hold dimension tables.
