@@ -34,9 +34,9 @@ id="ImageCaption8f1a0e8c-ca36-4c4e-97e9-3fbde58e87ac"
 class="ImageCaptionCoreCss ImageCaption"></span></span>
 DryadLINQ translates LINQ programs into distributed Dryad computations:
 
--   C\# and LINQ data objects become distributed partitioned files.
+-   C# and LINQ data objects become distributed partitioned files.
 -   LINQ queries become distributed Dryad jobs.
--   C\# methods become code running on the vertices of a Dryad job.
+-   C# methods become code running on the vertices of a Dryad job.
 
 DryadLINQ has the following features:
 
@@ -77,17 +77,17 @@ Publications
 ============
 
 -   [Optimus: A Dynamic Rewriting Framework for Data-Parallel Execution
-    Plans](/apps/pubs/default.aspx?id=185714),\
-    *Qifa Ke, Michael Isard, and Yuan Yu*\
+    Plans](/apps/pubs/default.aspx?id=185714),
+    *Qifa Ke, Michael Isard, and Yuan Yu*
     *Eurosys 2013*, ACM, April 2013
 -   [Fay: Extensible Distributed Tracing from Kernels to
-    Clusters](http://budiu.info/work/fay-sosp11.pdf)\
-    *Úlfar Erlingsson, Marcus Peinado, Simon Peter, and Mihai Budiu*\
+    Clusters](http://budiu.info/work/fay-sosp11.pdf)
+    *Úlfar Erlingsson, Marcus Peinado, Simon Peter, and Mihai Budiu*
     ACM Symposium on Operating Systems Principles (SOSP), Cascais,
     Portugal, October 23-26, 2011
 -   [Parallelizing the Training of the Kinect Body Parts Labeling
-    Algorithm](http://budiu.info/work/budiu-biglearn11.pdf)\
-    *Mihai Budiu, Jamie Shotton, Derek G. Murray, and Mark Finocchio*\
+    Algorithm](http://budiu.info/work/budiu-biglearn11.pdf)
+    *Mihai Budiu, Jamie Shotton, Derek G. Murray, and Mark Finocchio*
     Big Learning: Algorithms, Systems and Tools for Learning at Scale,
     Sierra Nevada, Spain, December 16-17, 2011
 -   Large-Scale Machine Learning using DryadLINQ, chapter in **Scaling
@@ -100,13 +100,13 @@ Publications
     Proceedings of the USENIX Annual Technical Conference (USENIX'11),
     USENIX, 15 June 2011
 -   [Monitoring and Debugging DryadLINQ Applications with
-    Daphne](http://budiu.info/work/jagannath-hips11.pdf)\
-    *Vilas Jagannath, Zuoning Yin, and Mihai Budiu*\
+    Daphne](http://budiu.info/work/jagannath-hips11.pdf)
+    *Vilas Jagannath, Zuoning Yin, and Mihai Budiu*
     International Workshop on High-Level Parallel Programming Models and
     Supportive Environments (HIPS), Anchorage, AK, May 20, 2011
 -   [DryadOpt: Branch-and-Bound on Distributed Data-Parallel Execution
-    Engines](http://budiu.info/work/ipdps11.pdf)\
-    *Mihai Budiu, Daniel Delling, and Renato Werneck*\
+    Engines](http://budiu.info/work/ipdps11.pdf)
+    *Mihai Budiu, Daniel Delling, and Renato Werneck*
     IEEE International Parallel and Distributed Processing Symposium
     (IPDPS), Anchorage, AK, May 16-20, 2011
 -   [Steno: automatic optimization of declarative
@@ -143,34 +143,34 @@ Publications
     2009
 
 -   [DryadInc: Reusing work in large-scale
-    computations](http://budiu.info/work/hotcloud09.pdf)\
-    *Lucian Popa, Mihai Budiu, Yuan Yu, and Michael Isard*\
+    computations](http://budiu.info/work/hotcloud09.pdf)
+    *Lucian Popa, Mihai Budiu, Yuan Yu, and Michael Isard*
     Workshop on Hot Topics in Cloud Computing (HotCloud), San Diego, CA,
     June 15, 2009
 
 -   [Hunting for problems with
-    Artemis](http://budiu.info/work/wasl08.pdf)\
-    *Gabriela F. Creţu-Ciocârlie, Mihai Budiu, and Moises Goldszmidt*\
+    Artemis](http://budiu.info/work/wasl08.pdf)
+    *Gabriela F. Creţu-Ciocârlie, Mihai Budiu, and Moises Goldszmidt*
     USENIX Workshop on the Analysis of System Logs (WASL), San Diego,
     CA, December 7, 2008
 -   [DryadLINQ: A System for General-Purpose Distributed Data-Parallel
     Computing Using a High-Level
-    Language](http://research.microsoft.com/en-us/projects/dryadlinq/dryadlinq.pdf)\
+    Language](http://research.microsoft.com/en-us/projects/dryadlinq/dryadlinq.pdf)
     *Yuan Yu, Michael Isard, Dennis Fetterly, Mihai Budiu, Ulfar
-    Erlingsson, Pradeep Kumar Gunda, and Jon Currey*\
+    Erlingsson, Pradeep Kumar Gunda, and Jon Currey*
     Symposium on Operating System Design and Implementation (OSDI), San
     Diego, CA, December 8-10, 2008.
 -   [Some sample programs written in
-    DryadLINQ](/research/pubs/view.aspx?msr_tr_id=msr-tr-2008-74)\
+    DryadLINQ](/research/pubs/view.aspx?msr_tr_id=msr-tr-2008-74)
     *Yuan Yu, Michael Isard, Dennis Fetterly, Mihai Budiu, Ulfar
     Erlingsson, Pradeep Kumar Gunda, Jon Currey, Frank McSherry, and
-    Kannan Achan\
+    Kannan Achan
     *Microsoft Research Technical Report, MSR-TR-2008-74, May 2008, 37
     pages
 -   [Dryad: Distributed Data-Parallel Programs from Sequential Building
-    Blocks](http://research.microsoft.com/en-us/projects/dryadlinq/eurosys07.pdf)\
+    Blocks](http://research.microsoft.com/en-us/projects/dryadlinq/eurosys07.pdf)
     *Michael Isard, Mihai Budiu, Yuan Yu, Andrew Birrell, and Dennis
-    Fetterly*\
+    Fetterly*
     European Conference on Computer Systems (EuroSys), Lisbon, Portugal,
     March 21-23, 2007.
 
@@ -178,17 +178,17 @@ Presentations
 =============
 
 -   [Distributed Data-Parallel Computing Using a High-Level Programming
-    Language](http://research.microsoft.com/en-us/projects/dryadlinq/dryadlinq-sigmod.pptx)\
+    Language](http://research.microsoft.com/en-us/projects/dryadlinq/dryadlinq-sigmod.pptx)
     Presentation by Yuan Yu at SIGMOD, July, 2009
 -   [DryadLINQ: A System for General-Purpose Distributed Data-Parallel
-    Computing](http://research.microsoft.com/en-us/projects/dryadlinq/dryadlinq-osdi.pptx)\
+    Computing](http://research.microsoft.com/en-us/projects/dryadlinq/dryadlinq-osdi.pptx)
     Presentation by Yuan Yu at OSDI, December, 2008
 -   [Cluster Computing with
-    DryadLINQ](http://research.microsoft.com/en-us/projects/dryadlinq/dryad-talk-parc.pptx)\
+    DryadLINQ](http://research.microsoft.com/en-us/projects/dryadlinq/dryad-talk-parc.pptx)
     Presentation by Mihai Budiu at Palo Alto Research Center CSL
     Colloquium, Palo Alto, CA May 8, 2008
 -   [A Machine-Learning toolking in
-    DryadLINQ](http://research.microsoft.com/en-us/projects/dryadlinq/ml-dryadlinq.pptx)\
+    DryadLINQ](http://research.microsoft.com/en-us/projects/dryadlinq/ml-dryadlinq.pptx)
     Presentation slides in PowerPoint by Mihai Budiu and Kannan Achan.
 
 
