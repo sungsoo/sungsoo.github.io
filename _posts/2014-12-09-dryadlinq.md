@@ -1,7 +1,7 @@
 ---
 layout: post
 title: DryadLINQ
-date: 2014-10-12
+date: 2014-12-09
 categories: [computer science]
 tags: [hadoop & mapreduce]
 
