@@ -7,6 +7,11 @@ tags: [big data]
 
 ---
 
+
+* Article Source: *Understanding Analytic Workloads*, NETEZZA an IBM Company
+
+
+
 ## Extreme Data Volume
 While there is no specific threshold that makes a data set “large,” it’s fair to say that data volumes tend to be large in analytics processing. Applications like *fraud detection*, *web analytics*, and *decision support* are all routinely associated with the largest data stores, often measured in petabytes of data. Two direct metrics combine to drive up data volume:
 * **Row Cardinality (Number of Rows)** – A single table’s rows may number in the billions, tens of billions, or even hundreds of billions. Analytic workload requirements increase directly with row numbers. Simple physics dictates that when analyzing billions of rows, any inefficiency or overhead cost, no matter how small, becomes expensive.

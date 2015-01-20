@@ -7,6 +7,10 @@ tags: [big data]
 
 ---
 
+* Article Source: *Understanding Analytic Workloads*, NETEZZA an IBM Company
+
+
+
 # Characteristics of an Analytic Workload
 
 ## Introduction
