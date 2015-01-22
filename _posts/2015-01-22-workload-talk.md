@@ -39,7 +39,7 @@ tags: [big data]
 ![](http://sungsoo.github.com/images/workloads.png)
 
 * Manage the execution of multiple workloads to meet **explicit or implicit service level objectives**
-* Look beyound the performance of an individual request to the performance of an entire workload
+* Look beyond the performance of an individual request to the performance of an entire workload
 
 ## ￼Problems Addressed by Workload Management
 * Workload isolation	* Important for multi-tenant systems* Priorities	* How to interpret them?* Admission control and scheduling 
