@@ -15,7 +15,8 @@ The ResourceManager is the master that arbitrates all the available cluster reso
 
 * The per-application ApplicationMasters, which are responsible for negotiating resources with the ResourceManager and for working with the NodeManagers to start, monitor, and stop the containers
 
-## Overview of the ResourceManager ComponentsThe ResourceManager components are illustrated in Figure 7.3. To better describe the workings of each component, they will be introduced separately by grouping them corresponding to each external entity for which they provide services: clients, the NodeManagers, the ApplicationMasters, or other internal core components.## Client Interaction with the ResourceManagerThe first interaction point of a user with the platform comes in the form of a client to the ResourceManager. The following components in ResourceManager interact with the client.### Client Service
+## Overview of the ResourceManager ComponentsThe ResourceManager components are illustrated in Figure 7.3. To better describe the workings of each component, they will be introduced separately by grouping them corresponding to each external entity for which they provide services: clients, the NodeManagers, the ApplicationMasters, or other internal core components.![](http://sungsoo.github.com/images/rm.png)
+## Client Interaction with the ResourceManagerThe first interaction point of a user with the platform comes in the form of a client to the ResourceManager. The following components in ResourceManager interact with the client.### Client Service
 This service implements *ApplicationClientProtocol*, the basic client interface to the ResourceManager. This component handles all the remote procedure call (RPC) communications to the ResourceManager from the clients, including operations such as the following:* Application submission
 * Application termination
 * Exposing information about applications, queues, cluster statistics, user ACLs, and more
