@@ -13,6 +13,8 @@ tags: [computer networks]
 SDN과 NFV와 네트워크 가상화의 차이점 이해하기
 ===
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/Db5TKt79KjU" frameborder="0" allowfullscreen></iframe>
+
 네트워크 관리자에게는 며칠, 길게는 몇 주가 걸릴 수 있는 환경 설정 요청들이 마구 쏟아진다. 다행히 네트워크 민첩성을 높여줄 수 있는 여러 가지 방안들이 나오고 있는데, 그 중에서 네트워크 가상화(Network Virtualization), NFV(Network Functions Virtualization, 네트워크 기능 가상화), 그리고 SDN(Software Defined Networking, 소프트웨어 정의 네트워킹(SDN)이 가장 두드러진다.
 
 난해한 용어들은 보기만 해도 머리가 지끈거리겠지만 이 접근 방법들은 네트워크 이동성이라는 큰 문제에 있어 각기 서로 다른 부분집합을 해결하기 위한 것이다. 네트워크 가상화와 NFV, SDN이 어떻게 다르고, 각각이 어떻게 프로그래밍 가능한 네트워크를 향한 길을 안내하는지 살펴보도록 하자.
