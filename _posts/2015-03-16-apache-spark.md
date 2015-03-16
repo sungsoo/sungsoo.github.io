@@ -3,7 +3,7 @@ layout: post
 title: Apache Spark
 date: 2015-03-17
 categories: [computer science]
-tags: [computer networks]
+tags: [big data]
 
 ---
 
