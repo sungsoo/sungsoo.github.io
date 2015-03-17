@@ -74,7 +74,7 @@ Where to Find the Example Code
 
 The example code is included in the source code package, under the
 "examples" directory. [Download it
-here.](/protocol-buffers/docs/downloads.html)
+here.](https://developers.google.com/protocol-buffers/docs/downloads.html)
 
 Defining Your Protocol Format
 -----------------------------
