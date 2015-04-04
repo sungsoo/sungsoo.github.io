@@ -25,7 +25,7 @@ streamingContext.fileStream<KeyClass, ValueClass, InputFormatClass>(dataDirector
 streamingContext.textFileStream(dataDirectory)
 ```
 
-park Streaming will monitor the directory `dataDirectory` and
+Spark Streaming will monitor the directory `dataDirectory` and
     process any files created in that directory (files written in nested
     directories not supported). Note that
 
