@@ -24,15 +24,15 @@ is the main entry point for all streaming functionality. We create a
 local StreamingContext with two execution threads, and batch interval of
 1 second.
 
+```scala
     import org.apache.spark._
     import org.apache.spark.streaming._
     import org.apache.spark.streaming.StreamingContext._ // not necessary in Spark 1.3+
-
     // Create a local StreamingContext with two working thread and batch interval of 1 second.
     // The master requires 2 cores to prevent from a starvation scenario.
-
     val conf = new SparkConf().setMaster("local[2]").setAppName("NetworkWordCount")
     val ssc = new StreamingContext(conf, Seconds(1))
+```
 
 Using this context, we can create a DStream that represents streaming
 data from a TCP source, specified as hostname (e.g. `localhost`) and
