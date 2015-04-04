@@ -20,27 +20,27 @@ and Akka actors as input sources.
     DStream can be created as
 
 ```scala
-          streamingContext.fileStream[KeyClass, ValueClass, InputFormatClass](dataDirectory)
-          streamingContext.fileStream<KeyClass, ValueClass, InputFormatClass>(dataDirectory);
-          streamingContext.textFileStream(dataDirectory)
+streamingContext.fileStream[KeyClass, ValueClass, InputFormatClass](dataDirectory)
+streamingContext.fileStream<KeyClass, ValueClass, InputFormatClass>(dataDirectory);
+streamingContext.textFileStream(dataDirectory)
 ```
 
-    Spark Streaming will monitor the directory `dataDirectory` and
+park Streaming will monitor the directory `dataDirectory` and
     process any files created in that directory (files written in nested
     directories not supported). Note that
 
-    -   The files must have the same data format.
-    -   The files must be created in the `dataDirectory` by atomically
+-   The files must have the same data format.
+-   The files must be created in the `dataDirectory` by atomically
         *moving* or *renaming* them into the data directory.
-    -   Once moved, the files must not be changed. So if the files are
+-   Once moved, the files must not be changed. So if the files are
         being continuously appended, the new data will not be read.
 
-    For simple text files, there is an easier method
+For simple text files, there is an easier method
     `streamingContext.textFileStream(dataDirectory)`. And file streams
     do not require running a receiver, hence does not require allocating
     cores.
 
-    Python API `fileStream` is not available in the Python API, only
+ Python API `fileStream` is not available in the Python API, only
     `textFileStream` is available.
 
 -   **Streams based on Custom Actors:** DStreams can be created with
@@ -94,13 +94,13 @@ following.
 
 
 ```scala
-    import org.apache.spark.streaming.twitter._
+import org.apache.spark.streaming.twitter._
+TwitterUtils.createStream(ssc)
+```
 
-    TwitterUtils.createStream(ssc)
-
-    import org.apache.spark.streaming.twitter.*;
-
-    TwitterUtils.createStream(jssc);
+```java
+import org.apache.spark.streaming.twitter.*;
+TwitterUtils.createStream(jssc);
 ```
 
 Note that these advanced sources are not available in the Spark shell,
