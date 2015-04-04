@@ -21,19 +21,24 @@ Similar to Spark, Spark Streaming is available through Maven Central. To
 write your own Spark Streaming program, you will have to add the
 following dependency to your SBT or Maven project.
 
+```xml
     <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-streaming_2.10</artifactId>
         <version>1.3.0</version>
     </dependency>
+```
 
+```
     libraryDependencies += "org.apache.spark" % "spark-streaming_2.10" % "1.3.0"
+```
 
 For ingesting data from sources like Kafka, Flume, and Kinesis that are
 not present in the Spark Streaming core API, you will have to add the
 corresponding artifact `spark-streaming-xyz_2.10` to the dependencies.
 For example, some of the common ones are as follows.
 
+```
   ------------------------------------------------------------------------
   Source     Artifact
   ---------- -------------------------------------------------------------
@@ -52,6 +57,7 @@ For example, some of the common ones are as follows.
 
              
   ------------------------------------------------------------------------
+```
 
 For an up-to-date list, please refer to the [Maven
 repository](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.apache.spark%22%20AND%20v%3A%221.3.0%22)
