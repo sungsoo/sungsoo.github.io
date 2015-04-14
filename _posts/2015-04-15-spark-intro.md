@@ -9,7 +9,7 @@ tags: [big data, spark]
 
 ## Spark*MapReduce* is the primary workhorse at the core of most Hadoop clusters. While highly effective for very large batch-analytic jobs, MapReduce has proven to be suboptimal for applications like graph analysis that require iterative processing and data sharing.
 Spark is designed to provide a more *flexible* model that supports many of the multipass applications that falter in MapReduce. It accomplishes this goal by taking advantage of memory whenever possible in order to reduce the amount of data that is written to and read from disk. Unlike Pig and Hive, Spark is not a tool for making MapReduce easier to use. It is a complete replacement for MapRe‐ duce that includes its own work execution engine.
-Spark operates with three core ideas:
+Spark operates with *three* core ideas:
 *Resilient Distributed Dataset (RDD)*  
 RDDs contain data that you want to transform or analyze. They can either be be read from an external source, such as a file or a database, or they can be created by a transformation.*Transformation*  
 A transformation modifies an existing RDD to create a new RDD. For example, a filter that pulls ERROR messages out of a log file would be a transformation.
