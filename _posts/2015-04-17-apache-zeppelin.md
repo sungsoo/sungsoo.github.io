@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Apache Zeppelin
-date: 2015-04-16
+date: 2015-04-17
 categories: [computer science]
 tags: [big data]
 
@@ -33,9 +33,10 @@ To know more about Zeppelin, visit our web site [http://zeppelin.incubator.apach
 
 ## Getting Started
 
-### Before Build
+## Before Build
 If you don't have requirements prepared, install it. 
 (The installation method may vary according to your environment, example is for Ubuntu.)
+
 ```
 sudo apt-get update
 sudo apt-get install openjdk-7-jdk
@@ -44,44 +45,60 @@ sudo apt-get install maven
 sudo apt-get install npm
 ```
 
-### Build
+## Build
 If you want to build Zeppelin from the source, please first clone this repository. And then:
+
 ```
 mvn clean package
 ```
+
 Build with specific version
 
 Spark 1.1.x
+
 ```
 mvn clean package -Pspark-1.1 -Dhadoop.version=2.2.0 -Phadoop-2.2 -DskipTests 
 ```
+
 Spark 1.2.x
+
 ```
 mvn clean package -Pspark-1.2 -Dhadoop.version=2.2.0 -Phadoop-2.2 -DskipTests 
 ```
+
 Spark 1.3.x
+
 ```
 mvn clean package -Pspark-1.3 -Dhadoop.version=2.2.0 -Phadoop-2.2 -DskipTests
 ```
+
 CDH 5.X
+
 ```
 mvn clean package -Pspark-1.2 -Dhadoop.version=2.5.0-cdh5.3.0 -Phadoop-2.4 -DskipTests
 ```
+
 Yarn (Hadoop 2.2.x and later)
+
 ```
 mvn clean package -Pspark-1.1 -Dhadoop.version=2.2.0 -Phadoop-2.2 -Pyarn -DskipTests
 ```
 
-### Configure
+
+## Configure
 If you wish to configure Zeppelin option (like port number), configure the following files:
+
 ```
 ./conf/zeppelin-env.sh
 ./conf/zeppelin-site.xml
 ```
+
 (You can copy ```./conf/zeppelin-env.sh.template``` into ```./conf/zeppelin-env.sh```. 
+
 Same for ```zeppein-site.xml```.)
 
-#### External cluster configuration
+### External cluster configuration
+
 Mesos
 
     # ./conf/zeppelin-env.sh
@@ -98,7 +115,7 @@ Yarn
   
 `HADOOP_CONF_DIR` should contains yarn-site.xml and core-site.xml.
 
-### Run
+## Run
     ./bin/zeppelin-daemon.sh start
 
     browse localhost:8080 in your browser. 8081 port should be accessible for websocket connection.
@@ -106,14 +123,14 @@ Yarn
 
 For configuration details check __./conf__ subdirectory.
 
-### Package
+## Package
 To package final distribution do:
 
       mvn clean package -P build-distr
 
 The archive is generated under _zeppelin-distribution/target_ directory
 
-###Run end-to-end tests
+##Run end-to-end tests
 Zeppelin comes with a set of end-to-end acceptnce tests driving headless selenium browser
 
       #assumes zeppelin-server running on localhost:8080 (use -Durl=.. to override)
