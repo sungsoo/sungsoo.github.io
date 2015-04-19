@@ -48,15 +48,15 @@ with big data (e.g., semistructured data and advanced analytics).
 Second, we wanted to enable external developers to extend the optimizer
 — for example, by adding data source specific rules that can push
 filtering or aggregation into external storage systems, or support for
-new data types. Catalyst supports both rule-based and cost-based
+new data types. Catalyst supports both *rule-based* and *cost-based*
 optimization.
 
-At its core, Catalyst contains a general library for representing trees
-and applying rules to manipulate them. On top of this framework, we have
+At its core, Catalyst contains a general library for representing *trees*
+and applying *rules* to manipulate them. On top of this framework, we have
 built libraries specific to relational query processing (e.g.,
 expressions, logical query plans), and several sets of rules that handle
-different phases of query execution: analysis, logical optimization,
-physical planning, and code generation to compile parts of queries to
+different phases of query execution: *analysis, logical optimization,
+physical planning,* and *code generation* to compile parts of queries to
 Java bytecode. For the latter, we use another Scala feature,
 [quasiquotes](http://docs.scala-lang.org/overviews/quasiquotes/intro.html),
 that makes it easy to generate code at runtime from composable
@@ -66,9 +66,9 @@ including external data sources and user-defined types.
 Trees
 -----
 
-The main data type in Catalyst is a tree composed of node objects. Each
+The main data type in Catalyst is a *tree* composed of *node* objects. Each
 node has a node type and zero or more children. New node types are
-defined in Scala as subclasses of the TreeNode class. These objects are
+defined in Scala as subclasses of the **TreeNode** class. These objects are
 immutable and can be manipulated using functional transformations, as
 discussed in the next subsection.
 
@@ -93,18 +93,18 @@ Add(Attribute(x), Add(Literal(1), Literal(2)))
 Rules
 -----
 
-Trees can be manipulated using rules, which are functions from a tree to
+Trees can be manipulated using *rules*, which are functions from a tree to
 another tree. While a rule can run arbitrary code on its input tree
 (given that this tree is just a Scala object), the most common approach
-is to use a set of pattern matching functions that find and replace
+is to use a set of *pattern matching* functions that find and replace
 subtrees with a specific structure.
 
 Pattern matching is a feature of many functional languages that allows
 extracting values from potentially nested structures of algebraic data
-types. In Catalyst, trees offer a transform method that applies a
+types. In Catalyst, trees offer a **transform** method that applies a
 pattern matching function recursively on all nodes of the tree,
 transforming the ones that match each pattern to a result. For example,
-we could implement a rule that folds Add operations between constants as
+we could implement a rule that folds **Add** operations between constants as
 follows:
 
 ``` scala
@@ -118,8 +118,8 @@ The `case` keyword here is Scala’s standard pattern matching syntax, and
 can be used to match on the type of an object as well as give names to
 extracted values (`c1` and `c2` here).
 
-The pattern matching expression that is passed to transform is a partial
-function, meaning that it only needs to match to a subset of all
+The pattern matching expression that is passed to *transform* is a *partial
+function*, meaning that it only needs to match to a subset of all
 possible input trees. Catalyst will tests which parts of a tree a given
 rule applies to, automatically skipping over and descending into
 subtrees that do not match. This ability means that rules only need to
@@ -140,8 +140,8 @@ tree.transform {
 ```
 
 In practice, rules may need to execute multiple times to fully transform
-a tree. Catalyst groups rules into batches, and executes each batch
-until it reaches a fixed point, that is, until the tree stops changing
+a tree. Catalyst groups rules into *batches*, and executes each batch
+until it reaches a *fixed point*, that is, until the tree stops changing
 after applying its rules. Running rules to fixed point means that each
 rule can be simple and self-contained, and yet still eventually have
 larger global effects on a tree. In the example above, repeated
@@ -180,8 +180,8 @@ We now describe each of these phases.
 Analysis
 --------
 
-Spark SQL begins with a relation to be computed, either from an abstract
-syntax tree (AST) returned by a SQL parser, or from a DataFrame object
+Spark SQL begins with a relation to be computed, either from an *abstract
+syntax tree* (AST) returned by a SQL parser, or from a DataFrame object
 constructed using the API. In both cases, the relation may contain
 unresolved attribute references or relations: for example, in the SQL
 query `SELECT col FROM sales`, the type of col, or even whether it is a
@@ -235,7 +235,7 @@ object DecimalAggregates extends Rule[LogicalPlan] {
 }
 ```
 As another example, a 12-line rule optimizes LIKE expressions with
-simple regular expressions into String.startsWith or String.contains
+simple regular expressions into `String.startsWith` or `String.contains`
 calls. The freedom to use arbitrary Scala code in rules made these kinds
 of optimizations, which go beyond pattern-matching the structure of a
 subtree, easy to express.
@@ -270,20 +270,19 @@ Code Generation
 ---------------
 
 The final phase of query optimization involves generating Java bytecode
-to run on each machine. Because Spark SQL often operates on in-memory
-datasets, where processing is CPU-bound, we wanted to support code
+to run on each machine. Because Spark SQL often operates on *in-memory
+datasets*, where processing is CPU-bound, we wanted to support code
 generation to speed up execution. Nonetheless, code generation engines
 are often complicated to build, amounting essentially to a compiler.
 Catalyst relies on a special feature of the Scala language, quasiquotes,
-to make code generation simpler. Quasiquotes allow the programmatic
+to make code generation simpler. *Quasiquotes* allow the programmatic
 construction of abstract syntax trees (ASTs) in the Scala language,
 which can then be fed to the Scala compiler at runtime to generate
 bytecode. We use Catalyst to transform a tree representing an expression
 in SQL to an AST for Scala code to evaluate that expression, and then
 compile and run the generated code.
 
-As a simple example, consider the Add, Attribute and Literal tree nodes
-introduced in Section 4.2, which allowed us to write expressions such as
+As a simple example, consider the Add, Attribute and Literal tree nodes, which allowed us to write expressions such as
 `(x+y)+1`. Without code generation, such expressions would have to be
 interpreted for each row of data, by walking down a tree of Add,
 Attribute and Literal nodes. This introduces large amounts of branches
@@ -298,7 +297,7 @@ def compile(node: Node): AST = node match {
   case Add(left, right) => q"${compile(left)} + ${compile(right)}"
 }
 ```
-The strings beginning with `q` are quasiquotes, meaning that although
+The strings beginning with `q` are *quasiquotes*, meaning that although
 they look like strings, they are parsed by the Scala compiler at compile
 time and represent ASTs for the code within. Quasiquotes can have
 variables or other ASTs spliced into them, indicated using `$` notation.
@@ -307,16 +306,16 @@ For example, `Literal(1)` would become the Scala AST for 1, while
 `Add(Literal(1), Attribute("x"))` becomes an AST for a Scala expression
 like `1+row.get("x")`.
 
-Quasiquotes are type-checked at compile time to ensure that only
+*Quasiquotes* are type-checked at compile time to ensure that only
 appropriate ASTs or literals are substituted in, making them
 significantly more useable than string concatenation, and they result
 directly in a Scala AST instead of running the Scala parser at runtime.
 Moreover, they are highly composable, as the code generation rule for
 each node does not need to know how the trees returned by its children
 are constructed. Finally, the resulting code is further optimized by the
-Scala compiler in case there are expression-level optimizations that
+Scala compiler in case there are *expression-level optimizations* that
 Catalyst missed. The following figure shows that quasiquotes let us
-generate code with performance similar to hand-tuned programs.\
+generate code with performance similar to hand-tuned programs.
 
 ![](https://databricks.com/wp-content/uploads/2015/04/Screen-Shot-2015-04-12-at-8.45.27-AM-300x129.png)
 
