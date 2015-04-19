@@ -94,9 +94,6 @@ young.groupBy("gender").count()
 # Join young users with another DataFrame called logs
 young.join(logs, logs.userId == users.userId, "left_outer")
 ```
-
- 
-
 You can also incorporate SQL while working with DataFrames, using Spark
 SQL. This example counts the number of users in the *young* DataFrame.
 
@@ -104,8 +101,6 @@ SQL. This example counts the number of users in the *young* DataFrame.
 young.registerTempTable("young")
 context.sql("SELECT count(*) FROM young")
 ```
- 
-
 In Python, you can also convert freely between Pandas DataFrame and
 Spark DataFrame:
 
@@ -115,9 +110,6 @@ pandas_df = young.toPandas()
 # Create a Spark DataFrame from Pandas
 spark_df = context.createDataFrame(pandas_df)
 ```
-
- 
-
 Similar to RDDs, DataFrames are evaluated lazily. That is to say,
 computation only happens when an action (e.g. display result, save
 output) is required. This allows their executions to be optimized, by
@@ -175,9 +167,6 @@ hashingTF = HashingTF(inputCol="words", outputCol="features")
 lr = LogisticRegression(maxIter=10, regParam=0.01)
 pipeline = Pipeline(stages=[tokenizer, hashingTF, lr])
 ```
-
- 
-
 Once the pipeline is setup, we can use it to train on a DataFrame
 directly:
 
@@ -185,9 +174,6 @@ directly:
 df = context.load("/path/to/data")
 model = pipeline.fit(df)
 ```
-
- 
-
 For more complicated tasks beyond what the machine learning pipeline API
 provides, applications can also apply arbitrarily complex functions on a
 DataFrame, which can also be manipulated using Spark’s existing RDD API.
