@@ -13,7 +13,7 @@ tags: [spark]
 ----
 
 ## Article Source
-* Title: [Introducing DataFrames in Spark for Large Scale Data Science](https://databricks.com/blog/2015/02/17/introducing-dataframes-in-spark-for-large-scale-data-science.html)
+* Title: [Deep Dive into Spark SQL’s Catalyst Optimizer](https://databricks.com/blog/2015/04/13/deep-dive-into-spark-sqls-catalyst-optimizer.html)
 * Authors: Michael Armbrust, Yin Huai, Cheng Liang, Reynold Xin
 and Matei Zaharia
 
