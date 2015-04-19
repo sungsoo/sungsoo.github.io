@@ -338,4 +338,3 @@ It’s novel, simple design has enabled the Spark community to rapidly
 prototype, implement, and extend the engine. You can read through rest
 of the [paper
 here](http://people.csail.mit.edu/matei/papers/2015/sigmod_spark_sql.pdf).
-If you are attending SIGMOD this year, please drop by our session!
