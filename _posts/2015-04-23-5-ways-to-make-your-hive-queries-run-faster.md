@@ -7,6 +7,9 @@ tags: [hadoop & mapreduce]
 
 ---
 
+[![cbo\_1](http://sungsoo.github.com/images/hive-query.png)](http://sungsoo.github.com/images/hive-query.png)
+
+---
 
 # 5 Ways to Make Your Hive Queries Run Faster 
 

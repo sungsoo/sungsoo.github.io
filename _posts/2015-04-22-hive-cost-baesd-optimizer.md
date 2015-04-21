@@ -7,6 +7,10 @@ tags: [hadoop & mapreduce]
 
 ---
 
+[![cbo\_1](http://sungsoo.github.com/images/hive-cbo.png)](http://sungsoo.github.com/images/hive-cbo.png)
+
+---
+
 
 # HIVE 0.14 Cost Based Optimizer (CBO) Technical Overview 
 
