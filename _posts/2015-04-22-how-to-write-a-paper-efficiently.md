@@ -88,7 +88,7 @@ Idea를 나열하는 방법은 Delineato Pro가 훨씬 편하고 직관적입니
 주로 이용합니다 (표 1).
 
 <span class="imageblock"
-style="display:inline-block;width:683px;;height:auto"><span
+style="display:inline-block;width:610px;;height:auto"><span
 dir="http://cfile7.uf.tistory.com/original/2310E04451CBCA47254DC1"
 rel="lightbox"
 target="_blank">![](http://cfile7.uf.tistory.com/image/2310E04451CBCA47254DC1)</span></span>
@@ -132,7 +132,7 @@ style="color: rgb(204, 61, 61);">DEVONAgent</span>](http://www.devontechnologies
 생각됩니다 (표 2).
 
 <span class="imageblock"
-style="display:inline-block;width:683px;;height:auto"><span
+style="display:inline-block;width:610px;;height:auto"><span
 dir="http://cfile21.uf.tistory.com/original/26734C4451CBCA48353EA1"
 rel="lightbox"
 target="_blank">![](http://cfile21.uf.tistory.com/image/26734C4451CBCA48353EA1)</span></span>
@@ -170,7 +170,7 @@ Papers를 이용하면 동시에 PubMed, Google Scholar를 검색할 수 있을 
 수 있습니다. (표 3). ￼ 
 
 <span class="imageblock"
-style="display:inline-block;width:683px;;height:auto"><span
+style="display:inline-block;width:610px;;height:auto"><span
 dir="http://cfile30.uf.tistory.com/original/247F7D4451CBCA4A31FBB6"
 rel="lightbox"
 target="_blank">![](http://cfile30.uf.tistory.com/image/247F7D4451CBCA4A31FBB6)</span></span>
@@ -195,7 +195,7 @@ EndNote가 왜 안 나오냐고 물어볼 수 있을 것 같은데 EndNote의 ci
 나중에 수고를 덜어 줍니다.
 
 <span class="imageblock"
-style="display:inline-block;width:683px;;height:auto"><span
+style="display:inline-block;width:610px;;height:auto"><span
 dir="http://cfile4.uf.tistory.com/original/23795B4451CBCA4A373F3E"
 rel="lightbox"
 target="_blank">![](http://cfile4.uf.tistory.com/image/23795B4451CBCA4A373F3E)</span></span>
@@ -232,7 +232,7 @@ Map에 기록해 놓은 아이디어를 위치에 맡게 배치합니다. 그리
 놓으세요 (표 5).
 
 <span class="imageblock"
-style="display:inline-block;width:683px;;height:auto"><span
+style="display:inline-block;width:610px;;height:auto"><span
 dir="http://cfile24.uf.tistory.com/original/2605304451CBCA4D2C2350"
 rel="lightbox"
 target="_blank">![](http://cfile24.uf.tistory.com/image/2605304451CBCA4D2C2350)</span></span>
@@ -262,7 +262,7 @@ style="color: rgb(204, 61, 61);">Scrivener</span>](http://www.literatureandlatte
 Note)처럼 관리할 수 있어 위치를 옮기고 넣고 빼기가 아주 편합니다 (표.6)
 
 <span class="imageblock"
-style="display:inline-block;width:683px;;height:auto"><span
+style="display:inline-block;width:610px;;height:auto"><span
 dir="http://cfile5.uf.tistory.com/original/2517B53B51CBD54320DC06"
 rel="lightbox"
 target="_blank">![](http://cfile5.uf.tistory.com/image/2517B53B51CBD54320DC06)</span></span>
