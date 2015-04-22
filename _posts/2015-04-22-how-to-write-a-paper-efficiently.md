@@ -95,6 +95,7 @@ target="_blank">![](http://cfile7.uf.tistory.com/image/2310E04451CBCA47254DC1)</
 <span id="callbacknestmacnewstistorycom13122598"
 style="width:1px; height:1px; float:right"></span>
 *표 1. Delineato Pro 모습. 기존의 Mind Map 의 한계를 넘어서고 있다.*
+
 우리의 선배님들이나 선생님들을 보면 조그만 수첩을 갖고 다니는 분들이
 많았습니다. 그때그때 떠오르는 아이디어나 여러 가지를 메모하기 위해서죠.
 아이디어는 수시로 떠오르므로 (전철 안에서, 컨퍼런스 도중에, 잘려고
