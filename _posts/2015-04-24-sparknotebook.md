@@ -71,6 +71,7 @@ If not available, it'll gracefully build it for you and notify you want it'll be
 The zip/tgz distributions are publicly available in the bucket: <a href="http://s3.eu-central-1.amazonaws.com/spark-notebook">s3://spark-notebook</a>.
 
 Here is an example for **zip** (replace all zip by **tgz** for the tarbal version):
+
 ```
 wget https://s3.eu-central-1.amazonaws.com/spark-notebook/zip/spark-notebook-0.4.0-scala-2.10.4-spark-1.3.0-hadoop-1.0.4.zip
 unzip spark-notebook-0.2.0-spark-1.2.0-hadoop-1.0.4.zip
@@ -116,6 +117,7 @@ Of course, you will also need a working [GIT](http://git-scm.com/) installation 
 
 ### Procedure
 ### Download the code
+
 ```
 git clone https://github.com/andypetrella/spark-notebook.git
 cd spark-notebook
@@ -123,6 +125,7 @@ cd spark-notebook
 
 ### Launch the server
 Enter the `sbt console` by running `sbt` within the `spark-notebook` folder:
+
 ```
 [info] Loading global plugins from /home/noootsab/.sbt/0.13/plugins
 [info] Loading project definition from /home/Sources/noootsab/spark-notebook/project
@@ -146,11 +149,13 @@ When using **Spark** we generally have to take a lot of care with the **Spark** 
 There is another dependency which is tricky to update, the **jets3t** one.
 
 To update that, you can pass those version as properties, here is an example with the current default ones:
+
 ```
 sbt -D"spark.version"="1.2.1" -D"hadoop.version"="1.0.4" -D"jets3t.version"="0.7.1"
 ```
 
 ### Create your distribution
+
 ```
 [spark-notebook] $ dist
 ```
@@ -245,6 +250,7 @@ For this configuration to be shareable, and you don't want to use the `reset` fu
 ```
 
 ### Example
+
 ```
 {
   "name": "My cluster conf",
@@ -271,6 +277,7 @@ For this configuration to be shareable, and you don't want to use the `reset` fu
 ### YARN
 
 - Example YARN Cluster
+
 ```
   "Example YARN" : {
     "name" : "Example YARN-Client",
@@ -292,6 +299,7 @@ For this configuration to be shareable, and you don't want to use the `reset` fu
 ```
 
 - Example YARN Profile
+
 ```
   "yarn" : {
       "id" : "yarn-client",
@@ -314,12 +322,14 @@ For this configuration to be shareable, and you don't want to use the `reset` fu
 To using YARN cluster,
 
 1. Put the spark-assembly-*.jar to the HDFS
+
 ```
 # sudo -u hdfs hdfs dfs -mkdir -p /user/spark
 # sudo -u hdfs hdfs dfs -put /usr/lib/spark/lib/spark-assembly.jar /user/spark/spark-assembly.jar
 ```
 1. Point the location of spark-assembly.jar with `spark.yarn.jar` property.
 1. Add Hadoop Conf dir such as `/etc/hadoop/conf` to the classpath in the executable script `bin/spark-notebook`:
+
 ```
 declare -r script_conf_file="/etc/default/spark-notebook"
 
@@ -327,6 +337,7 @@ declare -r app_classpath="/etc/hadoop/conf:$lib_dir/...
 
 addJava "-Duser.dir=$(cd "${app_home}/.."; pwd -P)"
 ```
+
 1. Start spark-notebook, then create notebook from example yarn cluster. After a while, spark should be initialized and `sparkContext` will be ready to use.
 
 ### Create a preconfigured notebook
@@ -348,7 +359,8 @@ In order to adapt the configuration of the `SparkContext`, one can add the widge
 This widget takes the current context as only argument and will produce an HTML `form` that will allow manual and friendly changes to be applied.
 
 So first, adding the widget in a cell,
-```{scala}
+
+```scala
 import notebook.front.widgets.Spark
 new Spark(sparkContext)
 ```
@@ -367,13 +379,15 @@ Submit the first part and the `SparkContext` will restart in the background (you
 The  *function* `reset` is available in all notebooks: This function takes several parameters, but the most important one is `lastChanges` which is itself a function that can adapt the [SparkConf](https://github.com/apache/spark/blob/master/core%2Fsrc%2Fmain%2Fscala%2Forg%2Fapache%2Fspark%2FSparkConf.scala). This way, we can change the *master*, the *executor memory* and a *cassandra sink* or whatever before restarting it. For more Spark configuration options see: [Spark Configuration]([Spark Configuration](https://spark.apache.org/docs/1.1.0/configuration.html##available-properties))
 
 In this example we reset `SparkContext` and add configuration options to use the [cassandra-connector]:
-```{scala}
+
+```scala
 import org.apache.spark.{Logging, SparkConf}
 val cassandraHost:String = "localhost"
 reset(lastChanges= _.set("spark.cassandra.connection.host", cassandraHost))
 ```
 This makes Cassandra connector avaible in the Spark Context. Then you can use it, like so:
-```{scala}
+
+```scala
 import com.datastax.spark.connector._
 sparkContext.cassandraTable("test_keyspace", "test_column_family")
 ```
@@ -382,7 +396,7 @@ sparkContext.cassandraTable("test_keyspace", "test_column_family")
 Accessing the Spark UI is not always allowed or easy, hence a simple widget is available for us to keep a little eye on the stages running on the Spark cluster.
 
 Luckily, it's fairly easy, just add this to the notebook:
-```{scala}
+```scala
 import org.apache.spark.ui.notebook.front.widgets.SparkInfo
 import scala.concurrent.duration._
 new SparkInfo(sparkContext, checkInterval=1 second, execNumber=Some(100))
@@ -401,7 +415,8 @@ Scala or whatever code, with the clear advantage that the resulting DAG is optim
 
 The spark-notebook offers SparkSQL support.
 To access it, we first we need to register an `RDD` as a table:
-```{scala}
+
+```scala
 dataRDD.registerTempTable("data")
 ```
 Now, we can play with SQL in two different ways, the static and the dynamic ones.
@@ -414,7 +429,8 @@ Then we can play with this `data` table like so:
 This will give access to the result via the `resXYZ` variable.
 
 This is already helpful, but the `resXYZ` nummering can change and is not friendly, so we can also give a name to the result:
-```
+
+```sql
 :sql[col1Var] select col1 from data where col2 == 'thingy'
 ```
 Now, we can use the variable `col1Var` wrapping a `SchemaRDD`.
@@ -431,7 +447,8 @@ A dynamic SQL is looking like a static SQL but where specific tokens are used. S
 When executing the command, the notebook will produce a form by generating on input for each dynamic part. See the show case below.
 
 An example of such dynamic SQL is
-```
+
+```sql
 :sql[selectKids] SELECT name FROM people WHERE name = "{String: name}" and age >= {Int: age}
 ```
 Which will create a form with to inputs, one text and on number.
@@ -450,7 +467,7 @@ This is how it looks like in the notebook:
 ## Shell scripts `:sh`
 There is a way to easily use (rudimentary) shell scripts via the `:sh` context.
 
-```sh
+```
 :sh ls -la ~/data
 ```
 
@@ -512,7 +529,7 @@ Plotting timeseries is very common, for this purpose the spark notebook includes
 Rickshaw is available through `Playground` and a dedicated function for simple needs `rickshawts`.
 
 To use it, you are only required to convert/wrap your data points into a dedicated `Series` object:
-```{scala}
+```scala
 def createTss(start:Long, step:Int=60*1000, nb:Int = 100):Seq[Series] = ...
 val data = createTss(orig, step, nb)
 
