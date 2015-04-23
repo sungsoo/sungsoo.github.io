@@ -67,7 +67,7 @@ If not available, it'll gracefully build it for you and notify you want it'll be
 **IMPORTANT**: then you can check the related section for instructions on how to use it (although it's very easy).
 
 ### Hard ways
-#### ZIP/TGZ
+### ZIP/TGZ
 The zip/tgz distributions are publicly available in the bucket: <a href="http://s3.eu-central-1.amazonaws.com/spark-notebook">s3://spark-notebook</a>.
 
 Here is an example for **zip** (replace all zip by **tgz** for the tarbal version):
@@ -78,7 +78,7 @@ cd spark-notebook-0.2.0-spark-1.2.0-hadoop-1.0.4
 ./bin/spark-notebook
 ```
 
-#### Docker
+### Docker
 If you're a Docker user, the following procedure will be even simpler!
 
 **Checkout** the needed version <a href="https://registry.hub.docker.com/u/andypetrella/spark-notebook/tags/manage/">here</a>.
@@ -88,7 +88,7 @@ docker pull andypetrella/spark-notebook:0.4.0-scala-2.10.4-spark-1.2.1-hadoop-2.
 docker run -p 9000:9000 andypetrella/spark-notebook:0.4.0-scala-2.10.4-spark-1.2.1-hadoop-2.4.0
 ```
 
-#### boot2docker (Mac OS X)
+### boot2docker (Mac OS X)
 On Mac OS X, you need something like _boot2docker_ to use docker. However, port forwarding needs an extra command necessary for it to work (cf [this](http://stackoverflow.com/questions/28381903/spark-notebook-not-loading-with-docker) and [this](http://stackoverflow.com/questions/21653164/map-ports-so-you-can-access-docker-running-apps-from-osx-host) SO questions).
 
 ```
@@ -96,7 +96,7 @@ VBoxManage modifyvm "boot2docker-vm" --natpf1 "tcp-port9000,tcp,,9000,,9000"
 ```
 
 
-#### DEB
+### DEB
 Using debian packages is one of the standard, hence the spark notebook is also available in this form (from v0.4.0):
 
 
@@ -115,13 +115,13 @@ The spark notebook requires a [Java(TM)](http://en.wikipedia.org/wiki/Java_(prog
 Of course, you will also need a working [GIT](http://git-scm.com/) installation to download the code and build it.
 
 ### Procedure
-#### Download the code
+### Download the code
 ```
 git clone https://github.com/andypetrella/spark-notebook.git
 cd spark-notebook
 ```
 
-#### Launch the server
+### Launch the server
 Enter the `sbt console` by running `sbt` within the `spark-notebook` folder:
 ```
 [info] Loading global plugins from /home/noootsab/.sbt/0.13/plugins
@@ -141,7 +141,7 @@ play 2.2.6 built with Scala 2.10.3 (running Java 1.7.0_72), http://www.playframe
 [spark-notebook] $
 ```
 
-#### Change relevant versions
+### Change relevant versions
 When using **Spark** we generally have to take a lot of care with the **Spark** version itself but also the **Hadoop** version.
 There is another dependency which is tricky to update, the **jets3t** one.
 
@@ -150,7 +150,7 @@ To update that, you can pass those version as properties, here is an example wit
 sbt -D"spark.version"="1.2.1" -D"hadoop.version"="1.0.4" -D"jets3t.version"="0.7.1"
 ```
 
-#### Create your distribution
+### Create your distribution
 ```
 [spark-notebook] $ dist
 ```
@@ -196,7 +196,7 @@ When adding dependencies, it can be interesting to preconfigure a repository whe
 
 This will save the dependency manager to download the internet.
 
-```json
+```
     "customLocalRepo" : "/<home>/.m2/repository",
 ```
 
@@ -206,7 +206,7 @@ Some dependencies might not be available from usual repositories.
 
 While the context `:remote-repo` is available from the notebook, we can also add them right in the preconfiguration:
 
-```json
+```
     "customRepos"     : [
       "s3-repo % default % s3://<bucket-name>/<path-to-repo> % (\"$AWS_ACCESS_KEY_ID\", \"$AWS_SECRET_ACCESS_KEY\")",
       "local % default % file://<home>/.m2/repository"
@@ -217,7 +217,7 @@ While the context `:remote-repo` is available from the notebook, we can also add
 
 Adding dependencies in the classpath **and** in the spark context can be done, this way (see also `:dp`).
 
-```json
+```
     "customDeps"      : "med-at-scale        %  ga4gh-model-java % 0.1.0-SNAPSHOT\norg.apache.avro     %  avro-ipc         % 1.7.6\n- org.mortbay.jetty % org.eclipse.jetty % _",
 ```
 
@@ -226,7 +226,7 @@ Adding dependencies in the classpath **and** in the spark context can be done, t
 
 Some package, classes, types, functions and so forth could be automatically imported, by using:
 
-```json
+```
     "customImports"   : "import scala.util.Random\n",
 ```
 
@@ -236,7 +236,7 @@ Apache Spark needs some configuration to access clusters, tune the memory and [m
 
 For this configuration to be shareable, and you don't want to use the `reset` functions, you can add:
 
-```json
+```
     "customSparkConf" : {
       "spark.app.name": "Notebook",
       "spark.master": "local[8]",
@@ -245,7 +245,7 @@ For this configuration to be shareable, and you don't want to use the `reset` fu
 ```
 
 ### Example
-```json
+```
 {
   "name": "My cluster conf",
   "profile": "Local",
@@ -268,10 +268,10 @@ For this configuration to be shareable, and you don't want to use the `reset` fu
 
 ![Clusters](https://raw.github.com/andypetrella/spark-notebook/master/images/conf_cluster.png)
 
-#### YARN
+### YARN
 
 - Example YARN Cluster
-```json
+```
   "Example YARN" : {
     "name" : "Example YARN-Client",
     "profile" : "yarn-client",
@@ -292,7 +292,7 @@ For this configuration to be shareable, and you don't want to use the `reset` fu
 ```
 
 - Example YARN Profile
-```json
+```
   "yarn" : {
       "id" : "yarn-client",
       "name" : "YARN-Client",
@@ -336,7 +336,7 @@ Now you can use the configuration, by clicking `create`
 You'll have the hand on the configuration (fine tuning) before creating the notebook:
 ![Clusters](https://raw.github.com/andypetrella/spark-notebook/master/images/conf_new_notebook.png)
 
-#### Update preconfigurations in metadata
+### Update preconfigurations in metadata
 Actually, the configuration are stored in the `metadata` of the notebooks.
 
 To change them, simply go to `edit > Edit Notebook Metadata` and you'll have:
