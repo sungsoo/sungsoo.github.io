@@ -52,7 +52,7 @@ that accept messages from a (possibly remote) asynchronous caller.
 
 
 
-![](http://sungsoo.github.com/images/reef-architecture.png)
+[![](http://sungsoo.github.com/images/reef-architecture.png)](http://sungsoo.github.com/images/reef-architecture.png)
 
 *A running REEF job with two `RunningEvaluators` and one `RunningTask`*
 
@@ -79,7 +79,7 @@ the form of Rx messages.
 
 
 
-![](http://sungsoo.github.com/images/states-horizontal.png)
+[![](http://sungsoo.github.com/images/states-horizontal.png)](http://sungsoo.github.com/images/states-horizontal.png)
 
 *States of `Evaluator`, `Contexts`, and `Activities`*
 
