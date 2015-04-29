@@ -3,13 +3,21 @@ layout: post
 title: Introduction to REEF 
 date: 2015-04-27
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [yarn]
 
 ---
 
+<<<<<<< HEAD
 # What is REEF?
 
 REEF, the Retainable Evaluator Execution Framework, is our approach to simplify and unify the lower layers of big data systems on modern resource managers.
+=======
+# Apache REEF
+
+## What is REEF?
+
+**REEF**, the Retainable Evaluator Execution Framework, is our approach to simplify and unify the lower layers of big data systems on modern resource managers.
+>>>>>>> origin/master
 
 For managers like Apache YARN, Apache Mesos, Google Omega, and Facebook Corona, REEF provides a centralized control plane abstraction that can be used to build a decentralized data plane for supporting big data systems. Special consideration is given to graph computation and machine learning applications, both of which require data retention on allocated resources to execute multiple passes over the data.
 
@@ -17,7 +25,11 @@ More broadly, applications that run on YARN will have the need for a variety of 
 
 In that sense, our long-term vision is that REEF will mature into a Big Data Application Server, that will host a variety of tool kits and applications, on modern resource managers.
 
+<<<<<<< HEAD
 [![](http://sungsoo.github.com/images/REEFDiagram.png)](http://sungsoo.github.com/images/REEFDiagram.png)
+=======
+[![](http://reef.incubator.apache.org/REEFDiagram.png)](http://reef.incubator.apache.org/REEFDiagram.png)
+>>>>>>> origin/master
 
 Introduction to REEF
 ====================
