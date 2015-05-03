@@ -7,6 +7,10 @@ tags: [data science]
 
 ---
 
+[![](http://sungsoo.github.com/images/clustering-req.png)](http://sungsoo.github.com/images/clustering-req.png)
+
+---
+
 # Requirements for Cluster Analysis
 Clustering is a challenging research field. In this section, you will learn about the requirements for clustering as a data mining tool, as well as aspects that can be used for comparing clustering methods.
 The following are typical requirements of clustering in data mining.
