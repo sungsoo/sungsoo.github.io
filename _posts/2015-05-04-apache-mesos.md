@@ -49,8 +49,8 @@ on the corresponding slaves.
 The figure below shows an example of how a framework gets scheduled to
 run a task.
 
-![Mesos
-Architecture](http://mesos.apache.org/assets/img/documentation/architecture-example.jpg)
+[![Mesos
+Architecture](http://mesos.apache.org/assets/img/documentation/architecture-example.jpg)](http://mesos.apache.org/assets/img/documentation/architecture-example.jpg)
 
 Let’s walk through the events in the figure.
 
