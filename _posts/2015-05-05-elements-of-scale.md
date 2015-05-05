@@ -11,6 +11,14 @@ tags: [big data]
 
 ---
 
+## Article Source
+
+* Title: [Elements of Scale: Composing and Scaling Data Platforms](http://www.benstopford.com/2015/04/28/elements-of-scale-composing-and-scaling-data-platforms/)
+* Authors: [Ben Stopford](http://www.benstopford.com)
+
+---
+
+
 # Elements of Scale: Composing and Scaling Data Platforms
 
 As software engineers we are inevitably affected by the tools we

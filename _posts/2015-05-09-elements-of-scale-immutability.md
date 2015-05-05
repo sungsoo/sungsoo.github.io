@@ -10,6 +10,12 @@ tags: [big data]
 [![](http://sungsoo.github.com/images/scaling_data.png)](http://sungsoo.github.com/images/scaling_data.png)
 
 ---
+## Article Source
+
+* Title: [Elements of Scale: Composing and Scaling Data Platforms](http://www.benstopford.com/2015/04/28/elements-of-scale-composing-and-scaling-data-platforms/)
+* Authors: [Ben Stopford](http://www.benstopford.com)
+
+---
 
 # Immutability
 
