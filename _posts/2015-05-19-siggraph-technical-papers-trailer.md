@@ -16,7 +16,12 @@ You never know what kinds of things you might see at the SIGGRAPH 2015 Technical
 
 
 
-## Computational Hydrographic Printing (SIGGRAPH 2015)
+## Computational Hydrographic Printing 
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/YlUhPrAqiY0" frameborder="0" allowfullscreen></iframe>
+
+
+## Computational Design of Twisty Joints and Puzzles 
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/M6OI8qjeNnE" frameborder="0" allowfullscreen></iframe>
