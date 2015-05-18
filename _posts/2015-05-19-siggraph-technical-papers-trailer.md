@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Tensor Decomposition
+title: SIGGRAPH 2015 - Technical Papers Trailer
 date: 2015-05-19
 categories: [computer science]
 tags: [computer graphics]
