@@ -12,6 +12,10 @@ tags: [hadoop & mapreduce]
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/TeWWxi3jHx4" frameborder="0" allowfullscreen></iframe>
 
+# High Performance MPI, PGAS and Big Data (Hadoop & Spark) over InfiniBand 
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/exUzF__jHZE" frameborder="0" allowfullscreen></iframe>
+
 ## RDMA-Apache-Hadoop-2.x 0.9.6 Features
 
 -   Based on Apache Hadoop 2.6.0
