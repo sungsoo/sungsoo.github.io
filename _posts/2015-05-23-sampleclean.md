@@ -16,10 +16,8 @@ tags: [spark]
 
 # SampleClean
 
-![](http://sampleclean.org/logo.png)
 
-Data Cleaning With Algorithms, Machines, and People
----------------------------------------------------
+> Data Cleaning With Algorithms, Machines, and People
 
 Analysts report spending upwards of 80% of their time on problems in
 data cleaning including extraction, formatting, handling missing values,
@@ -27,9 +25,8 @@ and entity resolution. As a part of the SampleClean project, we are
 developing scalable techniques for data cleaning and statistical
 inference on dirty data.
 
-[](http://sampleclean.org/release.html)
+[Download Release v0.1](http://sampleclean.org/release.html)
 
-Download Release v0.1
 
 Introduction
 ============
