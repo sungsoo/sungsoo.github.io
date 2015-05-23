@@ -16,7 +16,7 @@ tags: [spark]
 
 # SampleClean
 
-![](http://sampleclean.org/http://sampleclean.org/logo.png)
+![](http://sampleclean.org/logo.png)
 
 Data Cleaning With Algorithms, Machines, and People
 ---------------------------------------------------
@@ -27,7 +27,7 @@ and entity resolution. As a part of the SampleClean project, we are
 developing scalable techniques for data cleaning and statistical
 inference on dirty data.
 
-[](release.html)
+[](http://sampleclean.org/release.html)
 
 Download Release v0.1
 
@@ -92,9 +92,7 @@ parameters.
  
  
 
-Steps in a typical cleaning workflow
-====================================
-
+# Steps in a typical cleaning workflow
 
 
 Sample data and explore with aggregate statistics
