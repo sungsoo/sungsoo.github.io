@@ -164,7 +164,7 @@ sql("SELECT countMatches('a', text) ...")
     to the jobs (it is possible to specify the storage of RDD like
     *in-memory only*, *disk only* or *memory and disk*;
 -   it supports caching data in memory using a SchemaRDD columnar format
-    (cacheTable(“\
+    (cacheTable(“
      “))exposing *ByteBuffer*, it can also use memory-only caching
     exposing *User object*;
 -   it supports nested structures (see
@@ -176,12 +176,12 @@ sql("SELECT countMatches('a', text) ...")
 Cloudera’s
 [benchmark](http://blog.cloudera.com/blog/2014/09/new-benchmarks-for-sql-on-hadoop-impala-1-4-widens-the-performance-gap/)
 in September 2014 showed much better performances than the alternatives
-(Hive on Tez, Spark SQL, Presto), with a factor of 2x to 13x.\
+(Hive on Tez, Spark SQL, Presto), with a factor of 2x to 13x.
  However, Facebook has shown [recent
 improvements](http://www.zdnet.com/article/how-facebook-is-speeding-up-the-presto-sql-query-engine/)
 in Presto query engine competing with Impala on Parquet. Presto is used
 by large companies such as Airbnb, AWS, DropBox and Netflix. Facebook
-uses a new ORC reader for Presto, called DWRF (fork of ORC).\
+uses a new ORC reader for Presto, called DWRF (fork of ORC).
  Cloudera Impala comes with multiple advanced features such as OLAP
 features and is more mature than the alternatives. A great strength of
 Spark SQL is its high integration with Spark, allowing to use other
