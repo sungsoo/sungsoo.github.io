@@ -14,7 +14,6 @@ tags: [parallel computing, developments]
 ----
 
 
-
 Object-oriented Features
 ===============
 
