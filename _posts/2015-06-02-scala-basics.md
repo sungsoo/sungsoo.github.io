@@ -124,7 +124,7 @@ def printGreetings(name: String) {
 block expression 을 이용할 수 있으며, 당연히 리턴값은 묶여진 표현식의
 마지막 값입니다.
 
-## Define anonymous function {.c2 .c16}
+## Define anonymous function 
 
 Scala에서는 함수 literal 이라 불리는 표현법으로도 함수 선언이
 가능합니다.
