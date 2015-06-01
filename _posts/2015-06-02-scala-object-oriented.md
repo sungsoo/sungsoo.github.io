@@ -45,32 +45,19 @@ class Rational(n: Int, d: Int) {
 
     require(d != 0) //if failed, IllegalArgumentException will be raised
 
-   
-
     val numer: Int = n
-
     val denom: Int = d
-
-   
 
     def this(n: Int) = this(n, 1) // auxiliary constructor
 
-   
-
     override def toString = numer +"/"+ denom
-
-   
 
     def add(that: Rational): Rational =
 
         new Rational(
-
             numer \* that.denom + that.numer \* denom,
-
             denom \* that.denom
-
         )
-
 }
 ```
 
@@ -126,7 +113,8 @@ Thread-safe 하게 만들기 위해서 double checked locking 패턴이
 
 동일한 역할의 Scala 코드입니다.
 
-```scalaobject Singleton {
+```scala
+object Singleton {
 
     def greeting(name: String) {
 
