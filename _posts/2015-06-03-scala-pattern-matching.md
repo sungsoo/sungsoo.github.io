@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Scala - Pattern Matching
-date: 2015-06-02
+date: 2015-06-03
 categories: [computer science]
 tags: [parallel computing, developments]
 
