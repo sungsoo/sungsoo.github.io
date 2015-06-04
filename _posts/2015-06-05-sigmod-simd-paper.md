@@ -1,27 +1,17 @@
 ---
 layout: post
-title: Rethinking Data-Intensive Science Using Scalable Analytics Systems
+title: Rethinking SIMD Vectorization for In-Memory Databases
 date: 2015-06-05
 categories: [computer science]
 tags: [parallel computing, developments]
 
 ---
 
-# [Rethinking Data-Intensive Science Using Scalable Analytics Systems](http://dl.acm.org/authorize?N97170 "Get the Full Text from the ACM Digital Library")
+# [Rethinking SIMD Vectorization for In-Memory Databases](http://dl.acm.org/authorize?N97256 "Get the Full Text from the ACM Digital Library")
 
-  Frank Austin Nothaft
-  Matt Massie
-  Timothy Danford
-  Zhao Zhang
-  Uri Laserson
-  Carl Yeksigian
-  Jey Kottalam
-  Arun Ahuja
-  Jeff Hammerbacher
-  Michael Linderman
-  Michael J. Franklin
-  Anthony D. Joseph
-  David A. Patterson
+-   Orestis Polychroniou
+-   Arun Raghavan
+-   Kenneth A. Ross
 
 
 ## Abstract
