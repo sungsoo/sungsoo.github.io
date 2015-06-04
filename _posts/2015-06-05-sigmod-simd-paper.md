@@ -1,6 +1,6 @@
 ---
 layout: post
-title: [SIGMOD'15] Rethinking Data-Intensive Science Using Scalable Analytics Systems
+title: Rethinking Data-Intensive Science Using Scalable Analytics Systems
 date: 2015-06-05
 categories: [computer science]
 tags: [parallel computing, developments]
