@@ -3,7 +3,7 @@ layout: post
 title: Teradata Bets Big on Presto for Hadoop SQL
 date: 2015-06-10
 categories: [computer science]
-tags: [spark]
+tags: [sql on hadoop]
 
 ---
 
