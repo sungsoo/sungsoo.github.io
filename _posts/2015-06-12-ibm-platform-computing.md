@@ -97,7 +97,7 @@ computing infrastructure by using IBM Platform Symphony.
 
 ![UCB SWIM Results. Simulated Facebook workload. Symphony 5.2 SWIM 1,690
 secs. Hadoop 1.0.1 SWIM 10,165
-secs](/systems/resources/symphony_performance_swimchart_364x250.jpg)
+secs](http://sungsoo.github.com/images/symphony_performance_swimchart_364x250.jpg)
 
 ​
 
