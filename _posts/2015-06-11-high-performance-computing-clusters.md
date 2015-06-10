@@ -21,23 +21,23 @@ High-Performance Computing Cluster
 
 **HPCC** (High-Performance Computing Cluster), also known as **DAS**
 (Data Analytics Supercomputer), is an open source, [data-intensive
-computing](/wiki/Data-intensive_computing "Data-intensive computing")
-system platform developed by [LexisNexis](/wiki/LexisNexis "LexisNexis")
+computing](http://en.wikipedia.org/wiki/Data-intensive_computing "Data-intensive computing")
+system platform developed by [LexisNexis](http://en.wikipedia.org/wiki/LexisNexis "LexisNexis")
 Risk Solutions. The HPCC platform incorporates a [software
-architecture](/wiki/Software_architecture "Software architecture")
+architecture](http://en.wikipedia.org/wiki/Software_architecture "Software architecture")
 implemented on [commodity computing
-clusters](/wiki/Commodity_computing "Commodity computing") to provide
+clusters](http://en.wikipedia.org/wiki/Commodity_computing "Commodity computing") to provide
 high-performance, data-parallel processing for applications utilizing
-[big data](/wiki/Big_data "Big data"). The HPCC platform includes system
+[big data](http://en.wikipedia.org/wiki/Big_data "Big data"). The HPCC platform includes system
 configurations to support both parallel batch data processing (Thor) and
 high-performance online query applications using indexed data files
 (Roxie). The HPCC platform also includes a data-centric declarative
 programming language for parallel data processing called
-[ECL](/wiki/ECL_(data-centric_programming_language) "ECL (data-centric programming language)").
+[ECL](http://en.wikipedia.org/wiki/ECL_(data-centric_programming_language) "ECL (data-centric programming language)").
 
 The public release of HPCC was announced in 2011, after ten years of
 in-house development (according to LexisNexis). It competes directly
-with [Hadoop](/wiki/Hadoop "Hadoop").^[[1]](#cite_note-1)^
+with [Hadoop](http://en.wikipedia.org/wiki/Hadoop "Hadoop").
 
 
 ## System architecture
@@ -52,12 +52,12 @@ parallel data processing purpose. The first of these platforms is called
 a data refinery whose overall purpose is the general processing of
 massive volumes of raw data of any type for any purpose but typically
 used for data cleansing and hygiene, [extract, transform,
-load](/wiki/Extract,_transform,_load "Extract, transform, load")
+load](http://en.wikipedia.org/wiki/Extract,_transform,_load "Extract, transform, load")
 processing of the raw data, record linking and entity resolution,
 large-scale ad-hoc complex analytics, and creation of keyed data and
 indexes to support high-performance structured queries and data
 warehouse applications. The data refinery is also referred to as
-[Thor](/wiki/Thor "Thor"), a reference to the mythical Norse god of
+[Thor](http://en.wikipedia.org/wiki/Thor "Thor"), a reference to the mythical Norse god of
 thunder with the large hammer symbolic of crushing large amounts of raw
 data into useful information. A Thor cluster is similar in its function,
 execution environment, filesystem, and capabilities to the Google and
@@ -80,7 +80,7 @@ data warehouse delivering the parallel data access processing
 requirements of online applications through Web services interfaces
 supporting thousands of simultaneous queries and users with sub-second
 response times. Roxie utilizes a [distributed indexed
-filesystem](/wiki/Distributed_file_system "Distributed file system") to
+filesystem](http://en.wikipedia.org/wiki/Distributed_file_system "Distributed file system") to
 provide parallel processing of queries using an optimized execution
 environment and filesystem for high-performance online processing. A
 Roxie cluster is similar in its function and capabilities to Hadoop with
@@ -110,7 +110,7 @@ the Roxie cluster.
 ## Software architecture
 
 The HPCC software architecture incorporates the Thor and Roxie clusters
-as well as common [middleware](/wiki/Middleware "Middleware")
+as well as common [middleware](http://en.wikipedia.org/wiki/Middleware "Middleware")
 components, an external communications layer, client interfaces which
 provide both end-user services and system management tools, and
 auxiliary components to support monitoring and to facilitate loading and
