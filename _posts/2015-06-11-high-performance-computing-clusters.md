@@ -42,7 +42,8 @@ with [Hadoop](/wiki/Hadoop "Hadoop").^[[1]](#cite_note-1)^
 
 ## System architecture
 
-[![](http://sungsoo.github.com/images/Fig2_Thor_Cluster.jpg)](http://sungsoo.github.com/images/Fig2_Thor_Cluster.jpg)
+[![](http://sungsoo.github.com/images/Fig2_Thor_Cluster.jpg)](http://sungsoo.github.com/images/Fig2_Thor_Cluster.jpg)  
+
 **Figure 2. Thor processing cluster**
 
 The HPCC system architecture includes two distinct cluster processing
@@ -68,7 +69,8 @@ data-intensive computing applications. In addition to the Thor master
 and slave nodes, additional auxiliary and common components are needed
 to implement a complete HPCC processing environment.
 
-[![](http://sungsoo.github.com/images/Fig3_Roxie_Cluster.jpg)](http://sungsoo.github.com/images/Fig3_Roxie_Cluster.jpg)
+[![](http://sungsoo.github.com/images/Fig3_Roxie_Cluster.jpg)](http://sungsoo.github.com/images/Fig3_Roxie_Cluster.jpg)  
+
 **Figure 3. Roxie processing cluster**
 
 The second of the parallel data processing platforms is called Roxie and
@@ -101,7 +103,8 @@ build the distributed index files used by the Roxie cluster and to
 develop online queries which will be deployed with the index files to
 the Roxie cluster.
 
-[![](http://sungsoo.github.com/images/Fig4b_HPCC.jpg)](http://sungsoo.github.com/images/Fig4b_HPCC.jpg)
+[![](http://sungsoo.github.com/images/Fig4b_HPCC.jpg)](http://sungsoo.github.com/images/Fig4b_HPCC.jpg)  
+
 **Figure 4. HPCC software architecture**
 
 ## Software architecture
