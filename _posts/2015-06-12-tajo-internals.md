@@ -76,7 +76,7 @@ task is completed, TaskManager releases the allocated resource and
 NodeStatusUpdater sends node status with latest resource status to the
 ResourceTracker in TajoMaster</span>
 
-![](http://sungsoo.github.com/images/TajoWorker.001.jpg)
+![](http://sungsoo.github.com/images/TajoWorker.001.png)
 
 CatalogServer 
 -------------
