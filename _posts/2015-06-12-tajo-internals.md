@@ -10,19 +10,19 @@ tags: [tajo]
 # Tajo Cluster Architecture 
 ## Terminology 
 
--   Execution Block - A distributed query plan consists of a tree of
+-   *Execution Block* - A distributed query plan consists of a tree of
     execution blocks. In other words, a logical plan of a query
     statement is broken into multiple parts, each of which is included
     in an execution block. Each execution block is a distributed
     processing phase which is similar to map or reduce phase in
     MapReduce. A number of tasks are created with the logical plan and
     control flags of an execution block.
--   SubQuery - It is a control instance and a state machine for an
+-   *SubQuery* - It is a control instance and a state machine for an
     execution block.
--   QueryUnit (Task) - QueryUnit indicates a Task. In the design stage,
+-   *QueryUnit (Task)* - QueryUnit indicates a Task. In the design stage,
     we named QueryUnit to indicate a task. Recently, we are changing
     QueryUnit to Task.
--   QueryUnitAttempt - Like MapReduce, each running query unit (task)
+-   *QueryUnitAttempt* - Like MapReduce, each running query unit (task)
     has an attempt instance and an attempt id. A task can be restarted
     if it is failed. So, we need a way to identify failed or succeeded
     tasks.
@@ -31,7 +31,7 @@ tags: [tajo]
 TaskRunnerLaunchImpl class 
 --------------------------
 
-The main objective of TaskRunnerLaunchImpl is to launch TaskRunner
+The main objective of *TaskRunnerLaunchImpl* is to launch *TaskRunner*
 through Yarn's ContainerManager. 
 
 The TaskRunnerLaunchImpl class handles two events
@@ -42,8 +42,7 @@ These events come from SubQuery::allocateContainers(SubQuery) method.
 Task 
 ----
 
-
-In TaskRunner, a Task is created from the response (QueryUnitRequest) of
+In *TaskRunner*, a Task is created from the response (QueryUnitRequest) of
 'getTask()' rpc call. Task contains three main attributes as follows:
 
 -   A logical plan of an execution block which created the task.
