@@ -78,15 +78,13 @@ SQL온하둡 (SQL-on-Hadoop)은 하둡분산파일시스템(HDFS)에 저장된 �
 이 기술을 통해 하둡 환경의 데이터를 기존 데이터 웨어하우스처럼 SQL 방식으로 들여다볼 수 있게 해준다. 
 맵리듀스와 하이브QL의 단점을 개선하고 기존 DW시스템에 준하는 성능을 제공하는 것이 SQL온하둡의 궁극적인 목표다.
 
-본 기술문서에서는 SQL온하둡의 시초라 볼 수 있는 구글의 드레멜 논문을 리뷰한다. 
-구글 드레멜을 이해하는 목적은 
-KIWI의 근사 질의 처리 (AQP; Approximate Query Processing) 구현을 위해 참조하고 있는, BlinkDB \cite{Agarwal:2013}가 하이브에 근사 질의 처리 기능이 구현되어 있고, KIWI 엔진에 AQP를 추가하기 위해서는 질의처리와 연관된 하이브 내부 소스 흐름의 
-이해가 필수적이기 때문이다. 
-하이브에서의 질의 처리 및 실행과 관련된 주요 소스 코드의 메소드와 해당 기능 중심으로 설명하고 있다.
+본 기술문서에서는 SQL온하둡의 시초라 볼 수 있는 구글의 드레멜 논문을 리뷰한다.  그럼 왜 이 논문을 리뷰해야 하는가?
+그 이유는 구글에서 기존 맵리듀스에서 얻을 수 없었던 웹스케일 데이터에 대한 인터랙티브 분석을 위해 제시한 기술이 무엇이며, 어떠한 장단점이 있는 지 이해하는 것이 KIWI 과제 연구개발에 도움을 줄 수 있기 때문이다. 
+드레멜의 주요한 연구동기, 공헌, 문제해결법, 그리고 장단점 중심으로 설명하고 있다.
 \end{abstract}
 
 \section{Introduction}
-Dremel is a distributed system developed at Google for interactively querying large datasets and powers Google's BigQuery service. Google Dremel is the inspiration for Apache Drill project.
+Dremel is a distributed system developed at Google for interactively querying large datasets and powers Google's BigQuery service \cite{Melnik:2011}. Google Dremel is the inspiration for Apache Drill project.
 \bi
 \ii \textit{Near real time interactive analysis} (instead batch processing). SQL-like query language.\ii \textit{Nested data} (most of unstructured data supported) with a column storage representation.\ii \textit{Tree architecture} (as in web search): multi-level execution trees for query processing.
 \ei
@@ -108,14 +106,37 @@ The minor contribution of this paper is the use of actual Google data set in the
 This usage gives other researchers insight on the practical magnitude of web-scale data-sets.
 
 
-\section{Solutions}\subsection{Columnar Data Model}As mentioned before, ad-hoc queries only need small subset of fields/columns in tables. Record-structure data model introduces significant inefficiencies. The reason is in order to retrieve the needed fields/columns, we need to read the whole record data, including unnecessary fields/columns. To reduce these inefficiencies, columnar data model is intro- duced. Columnar data model allows us to read only the needed fields/columns for ad hoc queries. This model will reduce the data retrieval inefficiencies and increase the speed. The authors also explain how to convert from record-structure data model to columnar model and vice versa.\subsection{Multi-level Serving Tree}The authors use multi-level serving tree in columnar data processing. Typical multi-level serving tree consists of a root server, several intermediate servers and many leaf servers. There are two reasons behind multi-level serving tree:
+\section{Solutions}
+Why Dremel can be so drastically fast? 
+The answer can be found in two core technologies which gives Dremel this unprecedented performance:
+\be\ii \textbf{Columnar Storage.} Data is stored in a columnar storage fashion which makes possible to achieve very high compression ratio and scan throughput.
+\ii \textbf{Tree Architecture} is used for dispatching queries and aggregating results across thousands of machines in a few seconds.
+\ee
+\subsection{Columnar Data Model}As mentioned before, ad-hoc queries only need small subset of fields/columns in tables. Record-structure data model introduces significant inefficiencies. The reason is in order to retrieve the needed fields/columns, we need to read the whole record data, including unnecessary fields/columns. To reduce these inefficiencies, columnar data model is intro- duced. Columnar data model allows us to read only the needed fields/columns for ad hoc queries. This model will reduce the data retrieval inefficiencies and increase the speed. The authors also explain how to convert from record-structure data model to columnar model and vice versa.\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{column-oriented.png}
+        \caption{Columnar storage of Dremel}
+        \label{fig:column-oriented}
+\end{figure}
+\subsection{Multi-level Serving Tree}The authors use multi-level serving tree in columnar data processing. Typical multi-level serving tree consists of a root server, several intermediate servers and many leaf servers. There are two reasons behind multi-level serving tree:
 \be\ii Characteristics of ad hoc queries where the result set size is small or medium. The overhead of processing these kinds of data in parallel is small.\ii High degree of parallelism to process small or medium-size data.\ee
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{query-execution-tree.png}
+        \caption{Tree architecture of Dremel}
+        \label{fig:tree}
+\end{figure}
 \subsection{Query Dispatcher}The authors propose a mechanism to regulate resource allocation for each leaf servers and the mechanism is handled by module called query dispatcher. Query dispatcher works in slot(number of processing unit available for execution) unit. It allocates appropriate number of tablets into their respective slot. It deals with stragglers by moving the tablets from slow straggler slots into new slots.
 
 \subsection{SQL-like query}People with SQL background can easily use Dremel to perform data analytics in web- scale datasets. Unlike Pig and Hive, Dremel does not convert SQL-like queries into MapReduce jobs, therefore Dremel should have faster execution time compared to Pig and Hive.\section{Strong Points}\be\ii Identification of the characteristics of ad-hoc queries data set.The authors correctly identify the main characteristic of data set returned from ad-hoc queries, which is: only small number of fields are used by ad hoc-queries. This finding allows the authors to develop columnar data model and use multi-level serving tree to process the columnar data model.\ii Fast and lossless conversion between nested record structure model and columnar data model.Although columnar data model has been used in other related works, the fast and lossless conversion algorithm that the authors propose is novel and one of the key contributions of Dremel.\ii Magnitude and variety of datasets for experiments.The magnitude of datasets is huge and practical. These magnitude and variety of data-sets increase the confirming power of Dremel solution and proof its high performance.\ee\section{Weak Points}
 \be\ii Record-oriented data model can still outperform columnar data model. This is the main shortcoming of Dremel, however credit must be given on the authors since they do not hide this shortcoming and they provide some insight on this shortcoming.\ii Performance analysis on the data model conversion is not discussed. They claim that the conversion is fast, but they do not support this argument using experiment data.\ii "Cold" setting usage in Local Disk experiment. In Local Disk experiment, the au- thors mention that "all reported times are cold". Using cold setting in database or storage benchmarking is not recommended because the data is highly biased with disk access performance. When the database is "cold", query execution per- formance in the start of the experiment will highly depend on the disk speed. In the start of the experiment, most of the operations involve moving data from disk to OS cache, and the execution performance will be dominated by disk access.
 \ee
-
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{google-bigquery.png}
+        \caption{Google BigQuery}
+        \label{fig:bigquery}
+\end{figure}
 
 %The Apache Hive \textit{data warehouse} software facilitates querying and managing large datasets residing in distributed storage \cite{Thusoo:2010}. Hive provides a mechanism to project structure onto this data and query the data using a SQL-like language called HiveQL. At the same time this language also allows traditional map/reduce programmers to plug in their custom mappers and reducers when it is inconvenient or inefficient to express this logic in HiveQL.\\
 %
