@@ -9,7 +9,7 @@ tags: [sql on hadoop]
 
 ## Article Source
 * Title: [Common misconceptions about SQL on Hadoop](http://www.odbms.org/2015/06/common-misconceptions-about-sql-on-hadoop/)
-* Authors: [Roberto Zicari](http://www.odbms.org/author/rzicari/ "Posts by Roberto Zicari"), 
+* Authors: [Roberto Zicari](http://www.odbms.org/author/rzicari/ "Posts by Roberto Zicari") 
 
 ---
 
