@@ -7,6 +7,7 @@ tags: [flink, big data]
 
 ---
 
+
 # Apache Flink: Fast and Reliable Large-scale Data Processing 
 
 This talk presents Apache Flink from a user’s perspective, introduces the APIs and highlights the most interesting design points behind Flink, discussing how they contribute to the goals of performance, robustness, and flexibility. Finally, presenters give an outlook on Flink’s development roadmap.
