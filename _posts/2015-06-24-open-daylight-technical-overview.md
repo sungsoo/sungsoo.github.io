@@ -33,7 +33,7 @@ application requirements.
 From a high level view, software defined networking is commonly
 described in layers.
 
-![](http://sungsoo.github.com/images/odp_diagram_helium.jpg)
+[![](http://sungsoo.github.com/images/odp_diagram_helium.jpg)](http://sungsoo.github.com/images/odp_diagram_helium.jpg)
 
 **Network Apps & Orchestration:** The top layer consists of business and
 network logic applications that control and monitor network behavior. In
