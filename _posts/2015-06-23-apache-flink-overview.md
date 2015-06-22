@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Apache Flink Seminar
+title: Overview of the Apache Flink 
 date: 2015-06-23
 categories: [computer science]
 tags: [flink, big data]
