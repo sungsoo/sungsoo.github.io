@@ -9,7 +9,7 @@ tags: [computer networks]
 
 # Open Daylight Technical Overview
 
-Software Defined Networking (SDN) separates the control plane from the
+*Software Defined Networking (SDN)* separates the control plane from the
 data plane within the network, allowing the intelligence and state of
 the network to be managed centrally while abstracting the complexity of
 the underlying physical network. Great strides have been made within the
