@@ -7,6 +7,11 @@ tags: [presentation]
 
 ---
 
+## Article Source
+* Title: [A More Beautiful Question](https://janav.wordpress.com/2014/03/21/a-more-beautiful-question/)
+* Authors: Jana Vembunarayanan 
+
+
 
 A More Beautiful Question 
 =========================
