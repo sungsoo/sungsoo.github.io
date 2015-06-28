@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Massive Throughput Database Queries with LLVM on GPUs  
+title: Five most popular similarity measures implementation in python  
 date: 2015-06-29
 categories: [computer science]
 tags: [big data, data science]
