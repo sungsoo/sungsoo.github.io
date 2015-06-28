@@ -27,6 +27,8 @@ tags: [presentation]
 
 인간 존재의 의미는 물론 그 의미를 찾아나가는 인간의 욕구를 다룬 이 이론은 한마디로 의미없이 세상을 살아가는 사람을 다루는 심리치료 방법입니다.
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/ujgcv8x3gTs" frameborder="0" allowfullscreen></iframe>
+
 ## 의미있게 산다는 것: 그 존재만으로 빛났던 빅터 프랭클의 이야기
 
 ![](http://cfile22.uf.tistory.com/image/242F1F3852CA5CCF2CC2C4)
