@@ -1,6 +1,6 @@
 ---
 layout: post
-title: **What You're Really Meant to Do**
+title: Understanding the Differences between SDN and Server Virtualization 
 date: 2015-07-02
 categories: [computer science]
 tags: [computer networks]
