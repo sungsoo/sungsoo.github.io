@@ -35,3 +35,8 @@ performance, scale-out.
 
 Checkout out our [website](http://www.onosproject.org) and our
 [tools](http://www.onosproject.org/software/#tools)
+
+## Tech Talk: ONOS- A Distributed SDN Network Operating System
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/cTHVwZ9FzN4" frameborder="0" allowfullscreen></iframe>
+
