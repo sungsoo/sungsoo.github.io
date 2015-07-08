@@ -225,7 +225,7 @@ RamCloud에 대한 간단한 소개와 그들의 프로젝트 홈페이지는 �
 같다.
 
 [<span
-    style="font-size: 11pt; ">https://ramcloud.stanford.edu/wiki/display/ramcloud/Home](https://ramcloud.stanford.edu/wiki/display/ramcloud/Home)
+    style="font-size: 11pt; ">https://ramcloud.stanford.edu/wiki/display/ramcloud/Home](https://ramcloud.atlassian.net/wiki/display/RAM/RAMCloud)
 
 
 
