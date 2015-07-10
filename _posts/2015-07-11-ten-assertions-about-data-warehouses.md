@@ -36,14 +36,14 @@ Michael Stonebraker는 Jim Gray와 함께 존경받는 DB 계의 두 guru 중의
 이 분이 DW 시장에 대한 자신의 10가지 주장(assertion)에 대한 얘기를 했는데, 여기에서는 그에 대한 간단한 요약을 해볼까
 합니다.
  
- 1. **Assertion 1: Star and snowflake schemas are a good idea in the data warehouse world.**
+1. **Assertion 1: Star and snowflake schemas are a good idea in the data warehouse world.**
 	- Star 또는 snowflake schema는 DW에서 좋은 아이디어.
  	- 스키마가 이런 모습이 아니라면 뭔가 이상한것임.
   
- 2. **Assertion 2: Column stores will dominate the data warehouse market over time, replacing row stores.**
+2. **Assertion 2: Column stores will dominate the data warehouse market over time, replacing row stores.**
 	- column store 들이 DW 시장을 row store를 점진적으로 대체할 것임.
 	- 가령 200 개의 컬럼을 갖는 행 기반 스토어에서는 1컬럼 값을 읽으려 해도 한행을 load 해야 하므로 199개의 낭비. 본질적으로 읽기 연산에서는 row store가 column store보다 우수할 수가 없다.
-
+		
 3. **Assertion 3: The vast majority of data warehouses are not candidates for main memory or flash memory.**
 	- 데이터 웨어하우스는 메인 메모리나 플래시 메모리에 기록할 대상이 아니다. 
 	- 데이터의 증가 속도는 스토리지의 비용 감소속도보다 더 빠르다.
@@ -62,7 +62,7 @@ Michael Stonebraker는 Jim Gray와 함께 존경받는 DB 계의 두 guru 중의
 	- 본인의 40년 DBMS 경험에 비추어 특화된 DB 머신이 이기는 경우를 아직 보지 못했다.
 	- 범용 머신을 제작하는 벤더들은 DB 머신을 제작하는 곳보다 훨씬 많고, 그만큼 가격도 훨씬 저렴하다. 
 	- 본인 경험으로는 DB 어플라이언스란 HW + 패키징 사례로 생각된다. 미리 설정된 범용의 HW와 거기에 미리 잘 조직화되어 적재된 DBMS
- 
+	 
 7. **Assertion 7: Hybrid workloads are not optimized by "one-size fits all."**
 	- One size fits all DBMS은 복합적인 작업들을 지원하지 못한다. 
 	- OLTP와 OLAP를 한 DBMS에서 모두 잘 지원한다는 것은 어려운 일이다.
