@@ -146,6 +146,8 @@ Thinking)에 대해 이야기 해 보겠습니다.
     직장인’ 구본준 기자
     [http://tvcast.naver.com/v/102943](http://tvcast.naver.com/v/102943 "구본준 기자 강의로 가는 새창")
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/TwiafdbBbTU" frameborder="0" allowfullscreen></iframe>
+
 ![글도 진짜 잘써야하는 사람 바로 직장인! 을 비주얼씽킹으로 강의정리한
 이미지
 이다](http://social.lge.co.kr/wp-content/uploads/2013/12/171.jpg "글도 진짜 잘써야하는 사람 바로 직장인! 을 비주얼씽킹으로 강의정리한 이미지 이다")
