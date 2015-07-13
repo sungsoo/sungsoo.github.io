@@ -7,6 +7,12 @@ tags: [big data]
 
 ---
 
+## Article Source
+* Title: [DAQ: A New Paradigm for Approximate Query Processing](http://dl.acm.org/citation.cfm?id=2777599)
+* Authors: Navneet Potti,Jignesh M. Patel (University of Wisconsin - Madison)
+
+--- 
+
 # DAQ: A New Paradigm for Approximate Query Processing
 
 ## Introduction
