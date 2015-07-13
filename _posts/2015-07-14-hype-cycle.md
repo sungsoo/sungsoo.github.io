@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Hype Cycle
-date: 2015-07-13
+date: 2015-07-14
 categories: [information technology]
 tags: [analytics, big data]
 
