@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Visual Thinking
+title: Whast is Visual Thinking?
 date: 2015-07-15
 categories: [arts and music]
 tags: [presentation]
