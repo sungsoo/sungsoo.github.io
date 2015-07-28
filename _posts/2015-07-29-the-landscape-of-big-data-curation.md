@@ -1,17 +1,15 @@
 ---
 layout: post
-title: The Landscape of Big Data - Curation
+title: The Landscape of Big Data, Curation
 date: 2015-07-29
 categories: [computer science]
 tags: [big data]
 
 ---
 
-
 ## Article Source
 * Title: [The Landscape of Big Data - Curation](http://info.trianagroup.com/blog/the-landscape-of-big-data-curation)
-* Authors: [Reed
-MacMillan](http://info.trianagroup.com/blog/author/reed-macmillan)
+* Authors: [Reed MacMillan](http://info.trianagroup.com/blog/author/reed-macmillan)
 
 
 The Landscape of Big Data - Curation
@@ -25,9 +23,7 @@ The Landscape of Big Data - Curation
 
 To get a sense of how such a process may play out with your own
 datasets, let's consider the flight data example referenced in the
-[first Landscape of Data
-blog](http://info.trianagroup.com/blog/big-data-case-studies) article on
-Context and Case Studies. To try and determine whether the query values
+[first Landscape of Data blog](http://info.trianagroup.com/blog/big-data-case-studies) article on Context and Case Studies. To try and determine whether the query values
 that resulted from a "flight status" query were consistent across
 multiple sites, they performed these queries at 3 airline websites, 8
 airport websites, and 27-third-party websites such as Orbitz and
@@ -93,7 +89,7 @@ here:
 Instead of a human with some tools for transformation, it's an automatic
 system with a console that lets you decide what you want to do next
 (e.g. ingest a new data source). One of the other really cool aspects of
-[Tamr](http://www.tamr.com/)is that as it works through the ingestion of
+[Tamr](http://www.tamr.com/) is that as it works through the ingestion of
 source data, and does schema integration, it gets better and better at
 learning to ingest and map sources to the global schema.
 
@@ -138,5 +134,3 @@ Next week, we will consider the "Clouds of Data" that enable such
 expansive data sets and some of the considerations of these
 architectures, in terms of elasticity, system lock-in, and privacy and
 security.
-
-.
