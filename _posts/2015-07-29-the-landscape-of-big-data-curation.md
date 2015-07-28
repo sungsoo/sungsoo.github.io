@@ -9,15 +9,15 @@ tags: [big data]
 
 
 ## Article Source
-* Title: [The Landscape of Big Data: Curation](http://info.trianagroup.com/blog/the-landscape-of-big-data-curation)
+* Title: [The Landscape of Big Data - Curation](http://info.trianagroup.com/blog/the-landscape-of-big-data-curation)
 * Authors: [Reed
 MacMillan](http://info.trianagroup.com/blog/author/reed-macmillan)
 
 
-The Landscape of Big Data: Curation
+The Landscape of Big Data - Curation
 ----------
 
-![data_curation](http://sungsoo.github.com/images/data_curation.png) Let's call curation "The 80% problem." Before data scientists can get to the yummy parts of their jobs - writing algorithms to analyze and visualize data in meaningful ways, they spend the bulk of their time ingesting, validating, transforming, correcting, and consolidating their data sources.
+![](http://sungsoo.github.com/images/data_curation.png) Let's call curation "The 80% problem." Before data scientists can get to the yummy parts of their jobs - writing algorithms to analyze and visualize data in meaningful ways, they spend the bulk of their time ingesting, validating, transforming, correcting, and consolidating their data sources.
 
 > Organizations seeking to "extract" the value from data sources must find ways to Extract, Transform, and Load (ETL) the data into a global schema of the consolidated data warehouse. So, what does an ETL tool let you do? It will allow you to write scripts to perform the ETL conversion, and in some cases, the tools may allow you to define your modules and line them up with boxes and arrows to do the mapping. The picture below gives an overview of the process.
 
