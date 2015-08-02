@@ -11,7 +11,7 @@ tags: [big data, data curation]
 * Title: [Stonebraker points to data curation as next integration step](http://searchdatamanagement.techtarget.com/news/4500250976/Stonebraker-points-to-data-curation-as-next-integration-step?__scoop_post=40f24480-38c5-11e5-efc2-00221934899c&__scoop_topic=2632592#__scoop_post=40f24480-38c5-11e5-efc2-00221934899c&__scoop_topic=2632592)
 * Authors: [Jack Vaughan](http://www.techtarget.com/contributor/Jack-Vaughan)
 
-===
+---
 
 
 # Stonebraker points to data curation as next integration step

@@ -11,7 +11,7 @@ tags: [big data, data curation]
 * Title: [Does ethical content curation exist? A data-driven answer](http://blog.scoop.it/2015/07/30/does-ethical-content-curation-exist-a-data-driven-answer/?__scoop_post=e228da10-3769-11e5-dc21-842b2b775358&__scoop_topic=2632592#__scoop_post=e228da10-3769-11e5-dc21-842b2b775358&__scoop_topic=2632592)
 * Authors: [Guillaume Decugis](http://blog.scoop.it/author/guillaume/)
 
-===
+---
 
 
 # Does ethical content curation exist? A data-driven answer
