@@ -2,7 +2,7 @@
 layout: post
 title: Tackling Data Curation
 date: 2015-07-27
-categories: [computer science]
+categories: [computer science, data curation]
 tags: [big data]
 
 ---
