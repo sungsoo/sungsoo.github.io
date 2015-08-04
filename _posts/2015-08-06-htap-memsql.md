@@ -14,7 +14,7 @@ tags: [big data, data management]
 
 # CIOs and the Ongoing Data Persistence Struggle
 
-MemSQL ([www.memsql.com](www.memsql.com)), the leader in real-time databases for transactions and analytics, today announced a new Gartner report -- "Five Data Persistence Dilemmas That Will Keep CIOs Up at Night" -- that outlines the evolution of HTAP using in-memory processing, the shortcomings of NoSQL DBMSs and the importance of cloud deployments.
+MemSQL ([www.memsql.com](http://www.memsql.com)), the leader in real-time databases for transactions and analytics, today announced a new Gartner report -- "Five Data Persistence Dilemmas That Will Keep CIOs Up at Night" -- that outlines the evolution of HTAP using in-memory processing, the shortcomings of NoSQL DBMSs and the importance of cloud deployments.
 
 **Report: CIOs and the Ongoing Data Persistence Struggle** 
 
