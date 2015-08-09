@@ -10,7 +10,7 @@ tags: [big data, data curation, data management]
 
 ## Article Source
 * Title: [Data Curation as Publishing for the Digital Humanities Journal of Digital Humanities](http://journalofdigitalhumanities.org/2-3/data-curation-as-publishing-for-the-digital-humanities/)
-* Authors: Trevor Muñoz](http://journalofdigitalhumanities.org/author/tmunoz/ "Posts by Trevor Muñoz") 
+* Authors: [Trevor Muñoz](http://journalofdigitalhumanities.org/author/tmunoz/ "Posts by Trevor Muñoz") 
 
 ---
 
