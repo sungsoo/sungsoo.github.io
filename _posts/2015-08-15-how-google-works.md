@@ -17,7 +17,7 @@ tags: [presentation]
 
 [![](http://sungsoo.github.com/images/google_01.png)](http://sungsoo.github.com/images/google_01.png)
 
-
+[![](http://sungsoo.github.com/images/google_03.png)](http://sungsoo.github.com/images/google_03.png)
 
 ## 문화 - 자신의 구호를 믿어라
 
@@ -62,6 +62,8 @@ tags: [presentation]
 ### 아치리에(나를 따르라) 
 전투에 돌입할 때 "돌격" 이라고 외치지 않는다.
 "나를 따르라" 라고 외친다. 리더십은 열정과 평등주의적인 성격이 필요하고 행동으로 증명해야 한다.
+
+[![](http://sungsoo.github.com/images/google_05.png)](http://sungsoo.github.com/images/google_05.png)
 
 ## 전략 - 당신의 전략은 잘못되었다.
 
@@ -118,6 +120,8 @@ tags: [presentation]
 
 ### 초콜릿은 내보내고 건포도는 간직하기 
 최고의 직원에게는 언제나 흥미거리를 찾아주어야 한다. 부수적인 프로젝트일 때도 있고 새로운 역할을 만들 때도 있다.
+
+[![](http://sungsoo.github.com/images/google_06.png)](http://sungsoo.github.com/images/google_06.png)
 
 ### 정말로 아끼는 사람이라면 
 전문성과 창의력을 갖춘 직원이 떠날 때에는 그들의 관심사를 물어봐야 한다. '이렇게 해주지 않으면 나는 떠날거요' 이런
