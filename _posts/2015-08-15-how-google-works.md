@@ -15,7 +15,7 @@ tags: [presentation]
 # How Google Works
 
 
-![](http://sungsoo.github.com/images/google_works.jpg)
+[![](http://sungsoo.github.com/images/google_01.png)](http://sungsoo.github.com/images/google_01.png)
 
 
 
