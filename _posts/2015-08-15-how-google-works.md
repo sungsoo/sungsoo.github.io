@@ -19,7 +19,15 @@ tags: [presentation]
 
 [![](http://sungsoo.github.com/images/google_03.png)](http://sungsoo.github.com/images/google_03.png)
 
+[![](http://sungsoo.github.com/images/google_08.png)](http://sungsoo.github.com/images/google_08.png)
+
+[![](http://sungsoo.github.com/images/google_09.png)](http://sungsoo.github.com/images/google_09.png)
+
+[![](http://sungsoo.github.com/images/google_10.png)](http://sungsoo.github.com/images/google_10.png)
+
 ## 문화 - 자신의 구호를 믿어라
+
+[![](http://sungsoo.github.com/images/google_11.png)](http://sungsoo.github.com/images/google_11.png)
 
 ### R&R 보다는 문제해결을 중심으로 
 전통적인 직무와 책임은 존재하지 않으며 해당 분야에서 어떤 문제를 해결할 것인지에 집중해야 한다.
@@ -28,8 +36,12 @@ tags: [presentation]
 ### 붐비는 사무실 
 사무실은 지위의 상징보다는 상호작용이 극대화 되도록 설계되어야 한다. 그리고 소회의실, 테라스처럼 집중할 수 있는 은신처도 필요하다.
 
+[![](http://sungsoo.github.com/images/google_12.png)](http://sungsoo.github.com/images/google_12.png)
+
 ### 업무에 대한 지원은 관대하게 
 업무에 몰입하는 태도를 이끌어내는 방법이 있다면 이에 대한 투자는 낭비가 아니다. 우리가 사무실에 투자하는 이유는 직원들이 집에서가 아니라 바로 회사의 자기 자리에서 일하기를 기대하기 때문이다.
+
+[![](http://sungsoo.github.com/images/google_13.png)](http://sungsoo.github.com/images/google_13.png)
 
 ### 실력주의 
 반대할 의무가 존재하는 문화가 필요하며 반대는 선택이 아닌 필수이다. 당신이 누군가가 중요한 것이 아니라 당신이 무엇을 하는 가를
@@ -67,11 +79,15 @@ tags: [presentation]
 
 ## 전략 - 당신의 전략은 잘못되었다.
 
+[![](http://sungsoo.github.com/images/google_14.png)](http://sungsoo.github.com/images/google_14.png)
+
 ### 시장조사가 아닌 기술혁신에 승부를 걸어라 
 기술혁신은 비용을 절감하거나 중요한 요인으로 기능과 유용성을 높여주는 기술 또는 디자인에 대한 새로운 적용방식이다. 전략은 오로지 경쟁우위에만 의존해라. 구글에서 실패한 대부분의 제품은 기술혁신이 부족했던 것들이다.
 
 ### 조합의 혁신 시대 
 기존의 문제를 해결하는 새로운 방식이 계속 등장하고 있다. 수많은 응용분야를 활용하여 문제를 해결하라.
+
+[![](http://sungsoo.github.com/images/google_15.png)](http://sungsoo.github.com/images/google_15.png)
 
 ### 이익보다는 성장이 중요하다. 
 플랫폼은 확대를 통해 성장하며 투자를 유치할 수 있다. 이를 통해 플랫폼이 지원하는 제품과 서비스의 기능을 개선할 수 있다.
@@ -105,6 +121,8 @@ tags: [presentation]
 
 ### 뛰어난 인재는 누구나 알아본다 
 뛰어난 인재를 채용하는 것은 채용 담당자의 업무만 되어서는 안된다.
+
+[![](http://sungsoo.github.com/images/google_16.png)](http://sungsoo.github.com/images/google_16.png)
 
 ### 면접이 가장 중요한 기술이다 
 면접은 예의바른 대화가 아니라 그 사람이 가진 가능성의 한계를 밝혀내는 것. 구글에서는 면접관을 뽑기 위해 면접을 진행한다. 
@@ -213,6 +231,8 @@ tags: [presentation]
 ### (거의) 이룰 수 없는 목표를 세워라 
 그저 그런 목표를 100% 달성하는 것보다 대단한 목표를 70% 달성하는 것이 나으며 그 목표는 자신과의 경쟁이어야 한다.
 
+[![](http://sungsoo.github.com/images/google_18.png)](http://sungsoo.github.com/images/google_18.png)
+
 ### 70/20/10 
 핵심사업 70, 최근에 개발된 것 20, 신제품 10을 신제품에 할당.
 10 정도가 되어야 미련없이 포기할 수 있으며 자원의 결핍이 재주를
@@ -228,14 +248,19 @@ Ship and iterate. 개선팀은 부정적인 피드백을 받게 되기 때문에
 제품의 가치를 판단할 수 있다. 크롬 브라우저는 7,000만 명의 사용자를
 넘었을 때 지원하겠다는 목표가 있었다. 
 
+
 ### 실패도 잘해야 한다. 
 구글 웨이브는 실패했지만 기술은 구글 플러스와 지메일로 옮겨갔다. 실패는 통찰력으로 이어져야 한다. 실패에 대한 판단은
 신속해 해야 한다.
+
+[![](http://sungsoo.github.com/images/google_19.png)](http://sungsoo.github.com/images/google_19.png)
 
 ### 문제는 돈이 아니다 
 일은 돈을 벌기 위한 허드렛일이 아니다. 자신이 가치있는 일을 할 때 일에서 의미를 찾는다.
 
 ## 결론 - 상상할 수 없는 것을 상상하라
+
+[![](http://sungsoo.github.com/images/google_23.png)](http://sungsoo.github.com/images/google_23.png)
 
 ### 가장 어려운 질문을 제기하라 
 기업에는 언제나 어려운 질문이 있지만 마땅한 대답이 없고 사람들을 불안하게 만든다. 
