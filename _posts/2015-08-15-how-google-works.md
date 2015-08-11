@@ -12,11 +12,11 @@ tags: [presentation]
 
 [![](http://sungsoo.github.com/images/google_01.png)](http://sungsoo.github.com/images/google_01.png)
 
-[![](http://sungsoo.github.com/images/google_03.png)](http://sungsoo.github.com/images/google_03.png)
-
 [![](http://sungsoo.github.com/images/google_08.png)](http://sungsoo.github.com/images/google_08.png)
 
 [![](http://sungsoo.github.com/images/google_09.png)](http://sungsoo.github.com/images/google_09.png)
+
+[![](http://sungsoo.github.com/images/google_03.png)](http://sungsoo.github.com/images/google_03.png)
 
 [![](http://sungsoo.github.com/images/google_10.png)](http://sungsoo.github.com/images/google_10.png)
 
