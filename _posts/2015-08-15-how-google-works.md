@@ -7,11 +7,6 @@ tags: [presentation]
 
 ---
 
-## Article Source
-* Title: [구글은 어떻게 일하는가 - How Google Works](http://asteray.egloos.com/3117945)
-
----
-
 # How Google Works
 
 
