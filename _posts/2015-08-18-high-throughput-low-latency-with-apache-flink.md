@@ -91,7 +91,7 @@ and not the framework is usually the bottleneck.
 
  
 
-## **Record acknowledgements (Apache Storm)**
+## Record acknowledgements (Apache Storm)
 
 While stream processing has been widely used in industries such as
 finance for years, it is recently becoming part of the data
@@ -132,7 +132,7 @@ based on micro-batching.
 
  
 
-## **Micro batches (Apache Storm Trident, Apache Spark Streaming)**
+## Micro batches (Apache Storm Trident, Apache Spark Streaming)
 
 Storm and prior streaming systems do not deliver some of the
 requirements that were essential for large-scale applications, in
@@ -236,7 +236,7 @@ network, while having continuous operators.
 
  
 
-## **Transactional updates (Google Cloud Dataflow)**
+## Transactional updates (Google Cloud Dataflow)
 
 A clean and powerful way to guarantee exactly once processing while
 keeping the benefits of the continuous operator model (low latency,
@@ -297,7 +297,7 @@ frequency of writes to the distributed store.
 
  
 
-## **Distributed Snapshots (Apache Flink)**
+## Distributed Snapshots (Apache Flink)
 
 The problem of providing exactly once guarantees really boils down to
 determining what state the streaming computation currently is (including
@@ -396,7 +396,7 @@ model and along with it, low latency and natural flow control.
 
  
 
-## **Summary**
+# Summary
 
 We started this post with a list of desiderata from distributed
 streaming architectures. The following table summarizes how each
@@ -481,7 +481,7 @@ the same applications on top of Apache Storm, one of the most widely
 used streaming systems, which implements both “record acknowledgements”,
 as well as the “mini-batches” (via the *Trident* library).
 
-## **Throughput**
+## Throughput
 
 We measure the throughput of Flink and Storm for two different programs
 in a 30-node cluster of a total of 120 cores.
@@ -541,7 +541,7 @@ second per core.
 
 [![throughput\_grouping](http://data-artisans.com/wp-content/uploads/2015/08/throughput_grouping-1024x533.png)](http://data-artisans.com/wp-content/uploads/2015/08/throughput_grouping.png)
 
-## **Latency**
+## Latency
 
 Being able to process lots of events is great. The other side, which is
 especially important in stream processing is latency. For applications
@@ -606,7 +606,7 @@ timeout expiration. At a buffer timeout of 50 milliseconds, the system
 reaches full throughput of 750,000 events per second per core with a
 median latency of 50 milliseconds.
 
-## **Correctness and Recovery Overhead**
+## Correctness and Recovery Overhead
 
 Our last experiment evaluates the correctness of the checkpointing
 mechanism and the overhead of recoveries. We run a streaming program
@@ -652,21 +652,21 @@ At data Artisans, we are working on several features for Flink streaming
 and aim to make them available soon as part of the next Flink releases,
 starting with the next Flink 0.10 release.
 
-## **High availability**
+## High availability
 
 Right now, Flink’s master node (called JobManager) is a single point of
 failure. We are introducing master high-availability with standby master
 nodes that uses [Apache Zookeeper](https://zookeeper.apache.org/) for
 primary/standby coordination.
 
-## **Event time and watermarks**
+## Event time and watermarks
 
 We are adding to Flink the ability to handle out-of-order events by
 *event time*, i.e., the timestamp when a record was created rather
 instead of the timestamp when it was processed, as well as the notion of
 watermarks to ensure continuous progress of jobs.
 
-## **Improved monitoring of running jobs**
+## Improved monitoring of running jobs
 
 We are working on a completely reworked monitoring interface that
 provides a dataflow representation of the job in which users can zoom in
