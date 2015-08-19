@@ -66,7 +66,7 @@ score](/improve-patient-satisfaction-5-lessons-from-disney)[s](/patient-satisfac
 for each visit, which means they’re inadequate for quality and cost
 improvement projects. There are other limitations as well.
 
--   ### Clinical data repositories are inefficient.
+- *Clinical data repositories are inefficient.*
 
     It’s important for clinicians to be able to access their data to
     generate reports. But when clinicians request many reports all at
@@ -88,7 +88,7 @@ data rather than interpreting it, leaving a tremendous opportunity to
 improve efficiency by using a centralized data environment.*
 
 
--   ### There’s a large margin for costly errors.
+- *There’s a large margin for costly errors.*
 
     Clinical data repositories often use complex [data
     models](/best-healthcare-data-warehouse-model) and their structure
@@ -106,7 +106,7 @@ improve efficiency by using a centralized data environment.*
 
 
 
--   ### Reports aren’t standardized.
+- *Reports aren’t standardized.*
 
     When data is being pulled from clinical data repositories and then
     different [visualization
@@ -118,7 +118,7 @@ improve efficiency by using a centralized data environment.*
 
 
 
--   ### Tools aren’t standardized.
+- *Tools aren’t standardized.*
 
     When tools aren’t standardized, users of the tools, such as
     clinicians or analysts, need to learn how to use each tool to
@@ -128,7 +128,7 @@ improve efficiency by using a centralized data environment.*
 
 
 
--   ### Data isn’t always secure.
+- *Data isn’t always secure.*
 
     When data is spread across many clinical data repositories, there is
     no way to audit who is looking at the data, which can be deadly for
@@ -155,7 +155,7 @@ of organizational truth, analysts can provide reliable and repeatable
 reports. There are other benefits to a Late-Binding™ data warehouse as
 well:
 
--   ### Faster time to value.
+- *Faster time to value.*
 
     With a Late-Binding™ Data Warehouse, you don’t need to wait months
     or years to map all of your data. Instead, you can start small,
@@ -166,7 +166,7 @@ well:
     gain the support of clinicians for additional analytics and quality
     improvement initiatives in the future.
 
--   ### Flexible architecture means easy adjustments.
+- *Flexible architecture means easy adjustments.*
 
     The flexibility of a Late-Binding™ Data Warehouse is critical
     because of the simple fact that healthcare definitions change
@@ -195,7 +195,7 @@ well:
 
 
 
--   ### Reduction in waste and inefficiencies
+- *Reduction in waste and inefficiencies*
 
     . Instead of analysts using their precious time to hunt down data,
     they spend time doing what they’re good at — adding value to the
@@ -210,7 +210,7 @@ well:
 
 
 
--   ### Reduced errors means reduced costs.
+- *Reduced errors means reduced costs.*
 
     A Late-Binding™ architecture decreases the possibility of expensive
     errors. When analysts need to perform data validation to ensure the
@@ -221,7 +221,7 @@ well:
 
 
 
--   ### Reports are standardized.
+- *Reports are standardized.*
 
     [Reports](/hospital-data-warehouse-best-reports) from a
     Late-Binding™ Data Warehouse look the same across the entire
@@ -233,7 +233,7 @@ well:
 
 
 
--   ### No more long wait times.
+- *No more long wait times.*
 
     IT departments are usually overwhelmed with requests, and it can
     take a long time for an analyst to respond to the next request in
@@ -246,7 +246,7 @@ well:
 
 
 
--   ### Data is secure.
+- *Data is secure.*
 
     With a Late-Binding™ Data Warehouse, the organization now has a
     central, secure repository for all data within the organization.
