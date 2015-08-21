@@ -25,17 +25,17 @@ into main memory, whereas the desired sample does.
 
  Let's first review how this problem is tackled in a *sequential*
 setting - then we'll proceed with a *distributed map-reduce solution*.
+
 ## Reservoir sampling
 
-One of the most common *sequential* approaches to this problem is the
-so-called [reservoir
-sampling](http://en.wikipedia.org/wiki/Reservoir_sampling). The
-algorithm works as follows: the data is coming through a stream and the
+One of the most common *sequential* approaches to this problem is the so-called [*reservoir
+sampling*](http://en.wikipedia.org/wiki/Reservoir_sampling). The
+algorithm works as follows: the data is coming through a *stream* and the
 solution keeps a vector of *k* elements (the *reservoir*) initialized
 with the first *k* elements in the stream and incrementally updated as
-follows: when the *i*-th element arrives (with *i gt k*), pick a
-random integer *r* in the interval *[1,..,i]*, and if *r* happens
-to be in the interval *[1,..,k]*, replace the *r*-th element in the
+follows: when the *i*-th element arrives (with \\(i \gt k \\)), pick a
+random integer *r* in the interval \\([1,..,i]\\), and if *r* happens
+to be in the interval \\([1,..,k]\\), replace the *r*-th element in the
 solution with the current element.
 
  A simple implementation in Python is the following. The input items are
@@ -72,24 +72,24 @@ $ for i in {1..100}; do echo $i; done | python ./reservoir_sampling.py 3
 friends)*
  Let's convince ourselves that every element belongs to the final
 solution with the same probability.
- Let *x_i* be the *i*-th element and *S_i* be the solution
+ Let *x_i* be the *i*-th element and \\(S_i \\) be the solution
 obtained after examining the first *i* elements. We will show that
-*Pr[x_j in S_i] = k/i* for all *jle i* with *kle ile
+\\(Pr[x_j \in S_i] = k/i \\) for all \\(j \le i \\) with *kle ile
 n*. This will imply that the probability that any element is in the
-final solution *S_n* is exactly *k/n*.
+final solution \\(S_n\\) is exactly *k/n*.
  The proof is by induction on *i*: the base case *i=k* is clearly
 true since the first *k* elements are in the solution with probability
 exactly 1. Now let's say we're looking at the *i*-th element for some
-*i>k*. We know that this element will enter the solution *S_i*
+*i>k*. We know that this element will enter the solution \\(S_i\\)
 with probability exactly *k/i*. On the other hand, for any of the
-elements *jlt i*, we know that it will be in *S_i* only if it was
-in *S_{i-1}* and is not kicked out by the *i*-th element. By
-induction hypothesis, *Pr[x_j in S_{i-1}]= k/(i-1)*, whereas the
+elements j\lt i*, we know that it will be in \\(S_i\\) only if it was
+in \\(S_{i-1}\\) and is not kicked out by the *i*-th element. By
+induction hypothesis, \\(Pr[x_j \in S_{i-1}]= k/(i-1)\\), whereas the
 probability that *x_j* is not kicked out by the current element is
-*(1-1/i) = (i-1)/i*. We can conclude that *Pr[x_j in S_{i}] =
-frac{k}{i-1}cdotfrac{i-1}{i} = frac{k}{i}*.
+\\((1-1/i) = (i-1)/i \\). We can conclude that \\(Pr[x_j \in S_{i}] =
+\frac{k}{i-1} \cdot \frac{i-1}{i} = \frac{k}{i}\\).
 
-## MapReduce solution
+# MapReduce solution
 
 How do we move from a sequential solution to a distributed solution?
  To make the problem more concrete, let's say we have a number of files
@@ -129,6 +129,7 @@ in the heap (the heap's root), we replace the heap's root with this new
 element.
 
  A simple implementation in Python is the following:
+ 
 ```
 # rand_subset_seq.py
 
@@ -148,8 +149,9 @@ print ''.join([x for (r,x) in H]),
 
 Again, the following test pick 3 distinct random numbers between 1 and
 100:
+
 ```
-* for i in {1..100}; do echo *i; done | python ./rand_subset_seq.py 3
+$ for i in {1..100}; do echo $i; done | python ./rand_subset_seq.py 3
 ```
 
 By looking at the problem under this new light, we can now provide an
@@ -232,6 +234,7 @@ the data between our Map and Reduce phases via standard input and
 output. Run the following command, replacing [myinput] and [myoutput]
 with your desired locations. Here, we assume that the environment
 variable HADOOP_INSTALL refers to the Hadoop installation directory.
+
 ```
 $ k=10 # set k to what you need
 $ hadoop jar ${HADOOP_INSTALL}/contrib/streaming/hadoop-*streaming*.jar 
@@ -258,9 +261,9 @@ be improved as the heap replace operation is only executed when the
 *i*-th element is larger than the root of the heap. This happens only
 if the *i*-th element is one of the *k* largest elements among the
 first *i* elements, which happens with probability *k/i*. Therefore
-the expected number of heap replacements is *sum_{i=k+1}^n k/i
-approx k log(n/k)*. The overall time complexity is then *O(n +
-klog(n/k)log k)*, which is substantially linear in *n* unless
+the expected number of heap replacements is \\(\sum_{i=k+1}^n k/i
+\approx k \log(n/k)\\). The overall time complexity is then \\(O(n +
+k\log(n/k)\log k)\\), which is substantially linear in *n* unless
 *k* is comparable to *n*.
 
 ## What if the sample doesn't fit into memory?
@@ -281,7 +284,7 @@ it has to go through them, which can be time-consuming if *k* is very
 large (say *k=n/2*).
 
  We now discuss a different approach that uses multiple reducers. The
-key idea is the following: suppose we have *ell* buckets and
+key idea is the following: suppose we have \\(\ell\\) buckets and
 generate a random ordering of the elements first by putting each element
 in a random bucket and then by generating a random ordering in each
 bucket. The elements in the first bucket are considered smaller (with
@@ -289,15 +292,15 @@ respect to the ordering) than the elements in the second bucket and so
 on. Then, if we want to pick a sample of size *k*, we can collect all
 of the elements in the first *j* buckets if they overall contain a
 number of elements *t* less than *k*, and then pick the remaining
-*k-t* elements from the next bucket. Here *ell* is a parameter
-such that *n/ell* elements fit into memory. Note the key aspect that
+*k-t* elements from the next bucket. Here \\(\ell\\) is a parameter
+such that \\(n/\ell\\) elements fit into memory. Note the key aspect that
 buckets can be processed distributedly.
 
  The implementation is as follows: mappers associate with each element
 an id *(j,r)* where *j* is a random index in
-*{1,2,ldots,ell}* to be used as key, and *r* is a random
+\\({1,2, \ldots,\ell}\\) to be used as key, and *r* is a random
 float for secondary sorting. In addition, mappers keep track of the
-number of elements with key less than *j* (for *1le jle ell*)
+number of elements with key less than *j* (for \\(1 \le j \le \ell\\))
 and transmit this information to the reducers. The reducer associated
 with some key (bucket) *j* acts as follows: if the number of elements
 with key less or equal than *j* is less or equal than *k* then
@@ -310,6 +313,7 @@ strictly less than *j* is at least *k*, don't output anything.
  After outputting the elements, the mapper sends the relevant counts to
 each reducer, using -1 as secondary key so that this info is presented
 to the reducer first.
+
 ```
 #!/usr/bin/python
 # rand_large_subset_m.py
@@ -378,14 +382,12 @@ while line:
   line = sys.stdin.readline()
 ```
 
-The following bash statement tests the code with *ell=10* and
+The following bash statement tests the code with *\ell=10* and
 *k=50* (note the sort flag to simulate secondary sorting):
 
 ```
 $ l=10; k=50; for i in {1..100}; do echo $i; done | ./rand_large_subset_m.py *l | sort -k1,2n | ./rand_large_subset_r.py $k
 ```
-
-
 
 ## Running the Hadoop job
 
@@ -394,19 +396,20 @@ follow [these
 steps](http://had00b.blogspot.com/2013/08/setup-apache-hadoop-on-your-machine.html)).
 To run our Python MapReduce job with Hadoop, run the following command,
 replacing [myinput] and [myoutput] with your desired locations.
+
 ```
 $ k=100000 # set k to what you need
 $ l=50 # set the number of "buckets"
 $ r=16 # set the number of "reducers" (depends on your cluster)
-$ hadoop jar ${HADOOP_INSTALL}/contrib/streaming/hadoop-*streaming*.jar 
--D mapred.reduce.tasks=$r 
--D mapred.output.key.comparator.class=org.apache.hadoop.mapred.lib.KeyFieldBasedComparator 
--D stream.num.map.output.key.fields=2 
--D mapred.text.key.partitioner.options=-k1,1 
--D mapred.text.key.comparator.options="-k1n -k2n" 
--partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner 
--file ./rand_large_subset_m.py -mapper "./rand_large_subset_m.py $l" 
--file ./rand_large_subset_r.py -reducer "./rand_large_subset_r.py $k" 
+$ hadoop jar ${HADOOP_INSTALL}/contrib/streaming/hadoop-*streaming*.jar \
+-D mapred.reduce.tasks=$r \
+-D mapred.output.key.comparator.class=org.apache.hadoop.mapred.lib.KeyFieldBasedComparator \
+-D stream.num.map.output.key.fields=2 \
+-D mapred.text.key.partitioner.options=-k1,1 \
+-D mapred.text.key.comparator.options="-k1n -k2n" \
+-partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner \
+-file ./rand_large_subset_m.py -mapper "./rand_large_subset_m.py $l" \
+-file ./rand_large_subset_r.py -reducer "./rand_large_subset_r.py $k" \
 -input [myinput] -output [myoutput]
 ```
 
