@@ -10,6 +10,7 @@ html header: <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/
 
 ## Article Source
 * Title: [Reservoir Sampling in MapReduce](http://had00b.blogspot.kr/2013/07/random-subset-in-mapreduce.html)
+* Authors: had00b
 
 ---
 
