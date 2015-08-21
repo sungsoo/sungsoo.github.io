@@ -75,8 +75,8 @@ friends)*
 solution with the same probability.
  Let *x_i* be the *i*-th element and \\(S_i \\) be the solution
 obtained after examining the first *i* elements. We will show that
-\\(Pr[x_j \in S_i] = k/i \\) for all \\(j \le i \\) with *kle ile
-n*. This will imply that the probability that any element is in the
+\\(Pr[x_j \in S_i] = k/i \\) for all \\(j \le i \\) with \\(k \le i \le
+n\\). This will imply that the probability that any element is in the
 final solution \\(S_n\\) is exactly *k/n*.
  The proof is by induction on *i*: the base case *i=k* is clearly
 true since the first *k* elements are in the solution with probability
