@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Diving into Spark Streaming’s Execution Model
+title: Diving into Spark Streaming's Execution Model
 date: 2015-09-03
 categories: [computer science]
 tags: [spark]
@@ -14,7 +14,7 @@ tags: [spark]
 
 ---
 
-Diving into Spark Streaming’s Execution Model 
+Diving into Spark Streaming's Execution Model 
 =============================================
 
 With so many distributed stream processing engines available, people
@@ -185,7 +185,7 @@ apply arbitrary Spark functions on each batch of streaming data: for
 example, it’s easy to join a DStream with a precomputed static dataset
 (as an RDD).
 
-``` {style="margin: 0; line-height: 125%;"}
+```scala
 // Create data set from Hadoop file
 val dataset = sparkContext.hadoopFile(“file”)
     
@@ -218,7 +218,7 @@ server](http://spark.apache.org/docs/latest/sql-programming-guide.html#running-t
 you can expose the state of the stream to any external application that
 talks SQL.
 
-``` {style="margin: 0; line-height: 125%;"}
+```scala
 val hiveContext = new HiveContext(sparkContext)
 ...
 wordCountsDStream.foreachRDD { rdd =>
@@ -262,7 +262,7 @@ streaming data. For example, the following code trains a KMeans
 clustering model with some static data and then uses the model to
 classify events in a Kafka data stream.
 
-``` {style="margin: 0; line-height: 125%;"}
+```scala
 // Learn model offline
 val model = KMeans.train(dataset, ...)
 
