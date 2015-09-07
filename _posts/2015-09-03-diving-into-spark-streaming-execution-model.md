@@ -45,7 +45,7 @@ Stream Processing Architectures – The Old and the New
 At a high level, modern distributed stream processing pipelines execute
 as follows:
 
-1.  **Receive**streaming data from data sources (e.g. live logs, system
+1.  **Receive** streaming data from data sources (e.g. live logs, system
     telemetry data, IoT device data, etc.) into some data ingestion
     system like Apache Kafka, Amazon Kinesis, etc.
 2.  **Process** the data in parallel on a cluster. This is what stream
