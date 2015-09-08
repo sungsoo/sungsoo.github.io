@@ -29,3 +29,9 @@ Can computers think like humans and help diagnose problems? Eric Brown of IBM Re
 IBM Watson is for everyone and is here to help us live, work and learn better. Through the power of cognitive computing, Watson can understand information and bridge gaps in our knowledge, helping experts glean better insights, helping companies build better products and helping improve our everyday lives. Working with partners across industries, Watson is learning to help accelerate discovery, and bring new technologies and innovations to every corner of the globe. Adding the benefits of cognitive computing to everyday life. 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/XGjZGoI9C8I" frameborder="0" allowfullscreen></iframe>
+
+## Cognitive Science: The Future of Cognitive Computing
+
+How do we solve the complex problems of the world? Utilizing cognitive science, IBM Watson is combining human intelligence with the power a supercomputer. To learn more about the science and computing systems behind IBM Watson visit [http://www.ibm.com/watson](http://www.ibm.com/watson).
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/Q3e4q2wTOOQ" frameborder="0" allowfullscreen></iframe>
