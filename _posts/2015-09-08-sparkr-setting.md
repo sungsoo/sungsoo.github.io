@@ -18,23 +18,23 @@ SparkR originated at UC Berkeley AMPLAB, with additional contributions from Alte
 
 ## What is SparkR?
 
-* New R language API for Spark and SparkSQL
-* Exposes existing Spark functionality in an R-friendly syntax via the DataFrame API
+* New *R language API* for Spark and SparkSQL
+* Exposes existing Spark functionality in an R-friendly syntax via the *DataFrame API*
 * Has its own shell, but can also be imported like a standard R package and used with Rstudio.
 
 ## History of DataFrames
 
-* SparkR began as an R package that ported Spark’s core functionality (RDDs) to the R language.
+* SparkR began as an R package that ported Spark’s core functionality (*RDDs*) to the R language.
 * The next logical step was to add SparkSQL and SchemaRDDs.
-* Initial implementation of SQLContext and SchemaRDDs working in SparkR
+* Initial implementation of *SQLContext* and *SchemaRDDs* working in SparkR
 
 ## Why DataFrames?
 
-* Uses the distributed, parallel capabilities offered by RDDs, but imposes a schema on the data
+* Uses the *distributed, parallel* capabilities offered by RDDs, but imposes a schema on the data
 * More structure == Easier access and manipulation
 * Natural extension of existing R conventions since DataFrames are already the standard
-* Super awesome distributed, in-memory collections
-* Schemas == metadata, structure, declarative instead of imperative
+* Super awesome *distributed, in-memory collections*
+* *Schemas* == *metadata, structure, declarative* instead of imperative
 
 ```
 Sys.setenv(SPARK_HOME="/usr/local/Cellar/apache-spark/1.4.1/libexec")
