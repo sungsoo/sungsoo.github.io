@@ -31,3 +31,14 @@ StoredIQ Suite delivers:
 Powerful solution for managing *unstructured* data in-place
 
 IBM Software Subscription and Support is included in the product price for the first year.
+
+
+The primary source of enterprise data growth, unstructured data, comes from disparate data sources, is spread across departments and locations, and is governed by ever changing compliance mandates and regulations. Practitioners across legal, records, compliance, and IT struggle to identify, analyze, and act on unstructured data in preparation for a data clean-up project, merger/acquisition/divestiture, eDiscovery request, records classification, internal investigation, cloud migration, or even a data analytics project. Learn how IBM StoredIQ is conquering big data and serving as an information governance “start button” for today's enterprise organizations.
+
+Enterprise organizations today are at a critical intersection of increasing data growth and declining data value, creating a ripple effect across the business and exposing the organization to increasing expense, as well as legal and compliance risk. IBM's Information Lifecycle Governance solutions help organizations improve their information economics strategy, lower information cost and risk, and maximize data value.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/yByjouHzuQs" frameborder="0" allowfullscreen></iframe>
+
+For more information about IBM Stored IQ and Information Lifecycle Governance, visit [https://ibm.biz/BdFq6h](https://ibm.biz/BdFq6h)
+
+Visit the IBM Enterprise Content Management website for more information about our business solutions: [https://ibm.biz/BdFqXz](https://ibm.biz/BdFqXz)
