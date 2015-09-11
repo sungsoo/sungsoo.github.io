@@ -15,18 +15,18 @@ tags: [spark]
 Overview
 ========
 
-Based on our observation, majority of Spark workloads are not bottlenecked by I/O or network, but rather CPU and memory. This project focuses on 3 areas to improve the efficiency of memory and CPU for Spark applications, to push performance closer to the limits of the underlying hardware.
+Based on our observation, majority of Spark workloads are not bottlenecked by I/O or network, but rather *CPU and memory*. This project focuses on 3 areas to improve the *efficiency of memory and CPU* for Spark applications, to push performance closer to the limits of the underlying hardware.
 
 ## Memory Management and Binary Processing
 
-* Avoiding non-transient Java objects (store them in binary format), which reduces GC overhead.
-* Minimizing memory usage through denser in-memory data format, which means we spill less.
-* Better memory accounting (size of bytes) rather than relying on heuristics
+* *Avoiding non-transient Java objects* (store them in binary format), which reduces GC overhead.
+* Minimizing memory usage through *denser in-memory data format*, which means we spill less.
+* Better *memory accounting* (size of bytes) rather than relying on heuristics
 * For operators that understand data types (in the case of DataFrames and SQL), work directly against binary format in memory, i.e. have no serialization/deserialization
 
 ## Cache-aware Computation
 
-* Faster sorting and hashing for aggregations, joins, and shuffle
+* Faster *sorting* and *hashing* for aggregations, joins, and shuffle
 
 ## Code Generation
 
