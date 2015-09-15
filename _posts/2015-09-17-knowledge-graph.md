@@ -10,6 +10,8 @@ tags: [big data, data curation]
 
 # Introducing the Knowledge Graph
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/Ymo4knt44dA" frameborder="0" allowfullscreen></iframe>
+
 Get an under the hood look at the next frontier in Search, from the team at Google behind the technology. The Knowledge Graph is a huge collection of the people, places and things in the world and how they're connected to one another. With this technology, Google can get you the best possible answers and help jump start your discovery.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/mmQl6VGvX-c?list=PLOU2XLYxmsII2vIhzAyW6eouf62ur2Z2q" frameborder="0" allowfullscreen></iframe>
