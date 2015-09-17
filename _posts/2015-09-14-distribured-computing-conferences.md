@@ -35,7 +35,7 @@ Conferences
 -----
 
 -   **DISC** — [International Symposium on Distributed
-    Computing](/wiki/International_Symposium_on_Distributed_Computing "International Symposium on Distributed Computing")
+    Computing](https://en.wikipedia.org/wiki/International_Symposium_on_Distributed_Computing "International Symposium on Distributed Computing")
     [<span>[</span>1<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-lynch-1)[<span>[</span>2<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-tel-2)[<span>[</span>3<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-georgiou-3)[<span>[</span>4<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-podc-mailinglist-4)[<span>[</span>5<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-wattenhofer-5)[<span>[</span>6<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-core-6)
     -   formerly: WDAG — Workshop on Distributed Algorithms on Graphs
     -   organized in cooperation with the [European Association for
@@ -51,7 +51,7 @@ Conferences
 
 
 -   **ICDCN** — [International Conference on Distributed Computing and
-    Networking](/w/index.php?title=International_Conference_on_Distributed_Computing_and_Networking&action=edit&redlink=1 "International Conference on Distributed Computing and Networking (page does not exist)")
+    Networking](https://en.wikipedia.org/w/index.php?title=International_Conference_on_Distributed_Computing_and_Networking&action=edit&redlink=1 "International Conference on Distributed Computing and Networking (page does not exist)")
     [<span>[</span>4<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-podc-mailinglist-4)
     -   formerly: IWDC — International Workshop on Distributed Computing
     -   proceedings published by
@@ -71,7 +71,7 @@ Conferences
 
 
 -   **ICDCS** — [International Conference on Distributed Computing
-    Systems](/wiki/International_Conference_on_Distributed_Computing_Systems "International Conference on Distributed Computing Systems")
+    Systems](https://en.wikipedia.org/wiki/International_Conference_on_Distributed_Computing_Systems "International Conference on Distributed Computing Systems")
     [<span>[</span>3<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-georgiou-3)[<span>[</span>4<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-podc-mailinglist-4)[<span>[</span>5<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-wattenhofer-5)[<span>[</span>6<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-core-6)[<span>[</span>7<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-zaiane-dp-7)
     -   sponsored by [IEEE Computer
         Society](/wiki/IEEE_Computer_Society "IEEE Computer Society")
@@ -87,7 +87,7 @@ Conferences
 
 
 -   **ICPADS** — [International Conference on Parallel and Distributed
-    Systems](/wiki/International_Conference_on_Parallel_and_Distributed_Systems "International Conference on Parallel and Distributed Systems")
+    Systems](https://en.wikipedia.org/wiki/International_Conference_on_Parallel_and_Distributed_Systems "International Conference on Parallel and Distributed Systems")
     [<span>[</span>6<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-core-6)[<span>[</span>7<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-zaiane-dp-7)
     -   sponsored by [IEEE Computer
         Society](/wiki/IEEE_Computer_Society "IEEE Computer Society")
@@ -105,7 +105,7 @@ Conferences
 
 -   **IDCS** — [International Conference on Internet and Distributed
     Computing
-    Systems](/w/index.php?title=International_Conference_on_Internet_and_Distributed_Computing_Systems&action=edit&redlink=1 "International Conference on Internet and Distributed Computing Systems (page does not exist)")
+    Systems](https://en.wikipedia.org/w/index.php?title=International_Conference_on_Internet_and_Distributed_Computing_Systems&action=edit&redlink=1 "International Conference on Internet and Distributed Computing Systems (page does not exist)")
     -   organized annually since 2008, next edition: 2-4 Sept. 2015,
         Windsor, UK
     -   proceedings published by
@@ -119,7 +119,7 @@ Conferences
 
 
 -   **OPODIS** — [International Conference on Principles of Distributed
-    Systems](/w/index.php?title=International_Conference_on_Principles_of_Distributed_Systems&action=edit&redlink=1 "International Conference on Principles of Distributed Systems (page does not exist)")
+    Systems](https://en.wikipedia.org/w/index.php?title=International_Conference_on_Principles_of_Distributed_Systems&action=edit&redlink=1 "International Conference on Principles of Distributed Systems (page does not exist)")
     [<span>[</span>3<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-georgiou-3)[<span>[</span>4<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-podc-mailinglist-4)[<span>[</span>5<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-wattenhofer-5)
     -   proceedings published by
         [Springer](/wiki/Springer_Science%2BBusiness_Media "Springer Science+Business Media")
@@ -135,7 +135,7 @@ Conferences
 
 
 -   **PODC** — ACM [Symposium on Principles of Distributed
-    Computing](/wiki/Symposium_on_Principles_of_Distributed_Computing "Symposium on Principles of Distributed Computing")
+    Computing](https://en.wikipedia.org/wiki/Symposium_on_Principles_of_Distributed_Computing "Symposium on Principles of Distributed Computing")
     [<span>[</span>1<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-lynch-1)[<span>[</span>2<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-tel-2)[<span>[</span>3<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-georgiou-3)[<span>[</span>6<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-core-6)[<span>[</span>7<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-zaiane-dp-7)
     -   sponsored by the
         [ACM](/wiki/Association_for_Computing_Machinery "Association for Computing Machinery")
@@ -152,7 +152,7 @@ Conferences
 
 -   **PPoPP** — ACM SIGPLAN [Symposium on Principles and Practice of
     Parallel
-    Programming](/wiki/Symposium_on_Principles_and_Practice_of_Parallel_Programming "Symposium on Principles and Practice of Parallel Programming")
+    Programming](https://en.wikipedia.org/wiki/Symposium_on_Principles_and_Practice_of_Parallel_Programming "Symposium on Principles and Practice of Parallel Programming")
     [<span>[</span>4<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-podc-mailinglist-4)[<span>[</span>6<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-core-6)[<span>[</span>7<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-zaiane-dp-7)
     -   sponsored by the
         [ACM](/wiki/Association_for_Computing_Machinery "Association for Computing Machinery")
@@ -170,7 +170,7 @@ Conferences
 
 -   **SIROCCO** — [International Colloquium on Structural Information
     and Communication
-    Complexity](/wiki/International_Colloquium_on_Structural_Information_and_Communication_Complexity "International Colloquium on Structural Information and Communication Complexity")
+    Complexity](https://en.wikipedia.org/wiki/International_Colloquium_on_Structural_Information_and_Communication_Complexity "International Colloquium on Structural Information and Communication Complexity")
     [<span>[</span>3<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-georgiou-3)[<span>[</span>4<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-podc-mailinglist-4)[<span>[</span>5<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-wattenhofer-5)
     -   proceedings published by
         [Springer](/wiki/Springer_Science%2BBusiness_Media "Springer Science+Business Media")
@@ -186,7 +186,7 @@ Conferences
 
 
 -   **SPAA** — ACM [Symposium on Parallelism in Algorithms and
-    Architectures](/wiki/Symposium_on_Parallelism_in_Algorithms_and_Architectures "Symposium on Parallelism in Algorithms and Architectures")
+    Architectures](https://en.wikipedia.org/wiki/Symposium_on_Parallelism_in_Algorithms_and_Architectures "Symposium on Parallelism in Algorithms and Architectures")
     [<span>[</span>1<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-lynch-1)[<span>[</span>3<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-georgiou-3)[<span>[</span>4<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-podc-mailinglist-4)[<span>[</span>5<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-wattenhofer-5)[<span>[</span>6<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-core-6)[<span>[</span>7<span>]</span>](https://en.wikipedia.org/wiki/List_of_distributed_computing_conferences#cite_note-zaiane-dp-7)
     -   formerly: ACM Symposium on Parallel Algorithms and Architectures
     -   sponsored by the
