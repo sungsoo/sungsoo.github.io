@@ -34,3 +34,12 @@ Check out [http://developer.google.com/](http://developer.google.com/) for the f
 <iframe width="600" height="400" src="https://www.youtube.com/embed/UsvTkoBCrME" frameborder="0" allowfullscreen></iframe>
 
 
+The *Knowledge Graph* is an incredibly powerful tool and can help people make better decisions about the media they consume. Learn how your critic review and video actions can be surfaced on Google to help users find your content. 
+
+For more information about integrating with the Knowledge Graph, visit: [https://developers.google.com/structu...](https://developers.google.com/structured-data/) and [https://g.co/SearchCriticReviews](https://g.co/SearchCriticReviews) 
+
+Watch more Google Search for Developers videos here: [https://www.youtube.com/playlist?list...](https://www.youtube.com/playlist?list=PLOU2XLYxmsIKJztQt-R87yS7ORKu3QV1k) 
+
+Subscribe to the Google Developers channel at [http://goo.gl/mQyv5L](http://goo.gl/mQyv5L)
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/EFOinOXGC2M" frameborder="0" allowfullscreen></iframe>
