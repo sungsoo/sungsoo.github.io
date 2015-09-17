@@ -8,8 +8,7 @@ tags: [big data, sql on hadoop]
 ---
 
 
-# Using Presto to combine data from Hive and MySQL in one SQL-like query
-
+# Using Presto to combine data from Hive and MySQL
 
 [Presto](http://prestodb.io/) (originated at Facebook) is a yet another
 distributed SQL query engine for Hadoop that has recently generated huge
