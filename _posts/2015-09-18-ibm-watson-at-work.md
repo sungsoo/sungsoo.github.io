@@ -8,9 +8,21 @@ tags: [analytics, big data]
 ---
 
 
+
+
 # IBM Watson at Work: Transforming Healthcare 
 
-- Boston Children's Hospital | Innovation Summit 2014 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/pHqtrrTaJKY" frameborder="0" allowfullscreen></iframe>
+
+## What healthcare will look like in 2020
+This talk was given at a local TEDx event, produced independently of the TED Conferences. How will healthcare change in the future? Dr. Stephen Klasko shares his insights on healthcare reform in this informative talk cleverly staged in the year 2020. As the President and CEO of Thomas Jefferson University and its affiliated Hospital, Dr. Klasko manages enormous change – both in health care and in the business of running a major college and hospital. His work focuses on merging the two, finding ways to expand medicine into the community in innovative ways.
+
+Dr. Stephen Klasko is the President and CEO of Thomas Jefferson University and Jefferson Health System. Jefferson is the largest freestanding academic medical center in Philadelphia, with over 12,000 employees and 3,700 students.
+
+About TEDx, x = independently organized event In the spirit of ideas worth spreading, TEDx is a program of local, self-organized events that bring people together to share a TED-like experience. At a TEDx event, TEDTalks video and live speakers combine to spark deep discussion and connection in a small group. These local, self-organized events are branded TEDx, where x = independently organized TED event. The TED Conference provides general guidance for the TEDx program, but individual TEDx events are self-organized.* (*Subject to certain rules and regulations)
+
+
+## Boston Children's Hospital | Innovation Summit 2014 
 
 Join Mike Rhodin, Senior Vice President of the IBM Watson Group, and Dan Cerutti, Vice President of Watson Commercialization, for a discussion about how a new era of computing, Cognitive Computing, is transforming healthcare. Hear about what’s new with Watson, and how Boston Children’s Hospital and IBM are working together. Discover how the partnership between humans and computers is being redefined to enhance, scale and accelerate human expertise.
 
