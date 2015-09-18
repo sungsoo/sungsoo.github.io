@@ -8,8 +8,6 @@ tags: [analytics, big data]
 ---
 
 
-
-
 # IBM Watson at Work: Transforming Healthcare 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/pHqtrrTaJKY" frameborder="0" allowfullscreen></iframe>
