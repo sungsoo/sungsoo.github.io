@@ -15,6 +15,8 @@ R is a high-level programming language used primarily for statistical
 computing and graphics. 
 
 
+## Base Graphics Package
+
 ```r
 library(ggplot2)
 
@@ -41,7 +43,11 @@ pairs(data=diamonds, carat ~ price)
 plot(x=diamonds$cut)  # bar
 plot(x=diamonds$color, y=diamonds$price) # box
 plot(x=diamonds$x, y=diamonds$y, cex=.3) # scatter
+```
 
+## Lattice Graphics Package
+
+```r
 library(ggplot2) # Using this for the diamonds dataset
 
 library(lattice)
@@ -95,7 +101,11 @@ xyplot(Sepal.Width ~ Sepal.Length | Species, iris)
 
 # y~x | A means display the relationship between variables y and x
 # separately for every combination of factor A
+```
 
+## ggplot2 Package
+
+```r
 demo(package='ggplot2') #None
 
 # Comparing base R plots and ggplot2
