@@ -282,7 +282,7 @@ data type); and a description of the return value, denoted by
 use the function without reading any of the function's code.
 
 ### Example Function 
-
+```r
     CalculateSampleCovariance <- function(x, y, verbose = TRUE) {
       # Computes the sample covariance between two vectors.
       #
@@ -308,7 +308,7 @@ use the function without reading any of the function's code.
         cat("Covariance = ", round(covariance, 4), ".n", sep = "")
       return(covariance)
     }
-
+```
 ### TODO Style
 
 Use a consistent style for TODOs throughout your code. 
