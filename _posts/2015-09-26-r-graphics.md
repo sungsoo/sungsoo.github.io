@@ -8,8 +8,8 @@ tags: [big data, analytics]
 ---
 
 
-R Graphics
-======================
+# R Graphics
+
 
 R is a high-level programming language used primarily for statistical
 computing and graphics. 
