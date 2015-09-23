@@ -1,6 +1,6 @@
 ---
 layout: post
-title: AMP Camp 5
+title: AMP Camp 6
 date: 2015-09-24
 categories: [computer science]
 tags: [big data, spark]
@@ -12,7 +12,7 @@ tags: [big data, spark]
 
 ---
 
-# AMP Camp 5
+# AMP Camp 6
 
 AMP Camp 6 will be held in Berkeley, California on November 19 and 20, 2015. Participants will get hands-on experience with data analytics and machine learning using the Berkeley Data Analytics Stack (BDAS), the set of open-source projects including Spark, SparkR, GraphX, Tachyon and MLlib/MLbase that interoperate with, and are part of, the Hadoop ecosystem.
 
