@@ -92,7 +92,7 @@ http:/$\!$/sungsoo.github.com/\quad
 인-메모리 컴퓨팅은 초기에는 증권사의 실시간 트레이딩, 통신사의 로그인 세션 관리 등 빠른 처리가 필수적인 OLTP 데이터 처리에 주로 사용됐으나, 최근에는 분석용 DBMS, 시각화 기반 데이터 탐색 도구, 하둡 기반 빅데이터 분석 등 분석 어플리케이션을 위한 기반 기술로 자리 잡았다. 
 
 KIWI는  DAG (Directed Acyclic Graph) 기반 엔진을 이용하여 질의를 처리하고 있다. 질의 처리 과정에서 클러스터 각 노드에 중간 처리결과를 로컬 디스크에 저장한 후, 최종결과를 취합하는 과정을 거친다. 성능 개선을 위해, 이러한 중간 결과를 인-메모리 분산 저장 시스템인 타키온(Tachyon)에 저장하여 취합하는 방식을 고려하고 있다. 
-이와 관련하여 본 기술문서에서는 인-메모리 분산 데이터 저장 시스템의 설계 개념과 타키온 구현에 적용된 기술들을 분석한다.
+이와 관련하여 본 기술문서에서는 인-메모리 분산 데이터 저장 시스템의 설계 개념과 구현에 적용된 기술들을 분석한다.
 \end{abstract}
 
 %\begin{algorithm}[H]
@@ -120,7 +120,7 @@ Jim Gray's insight that ``\textit{Memory is the new disk, disk is the new tape}'
 In the last decade, multi-core processors and the availability of large amounts of main memory at
 plummeting cost are creating new breakthroughs, making it viable to
 build in-memory systems where a significant part, if not the entirety,
-of the database fits in memory \cite{Hao:2015}.
+of the database fits in memory.% \cite{Hao:2015}.
 
 Database systems have been evolving over the last few decades, mainly
 driven by advances in hardware, availability of a large amount of data,
@@ -129,11 +129,13 @@ so on. The landscape of data management systems is increasingly
 fragmented based on application domains (i.e., applications relying on
 relational data, graph-based data, stream data).
 
+Memory is the key to fast big data processing. This has been realized by many, and frameworks such as Spark and Shark already leverage memory performance. As data sets continue to grow, storage is increasingly becoming a critical bottleneck in many workloads.
+
 \section{Related Work}
 In this section, we introduce some concepts and techniques that are important for efficient in-memory distributed data storage systems, including distributed storage systems, cluster computation frameworks, and caching systems.
 
 \noindent
-\textbf{Distributed Storage Systems} In big data analytics, distributed file systems, e.g., GFS and FDS, and key/value stores, e.g., RAMCloud \cite{Ousterhout:2015} and HBase \cite{hbase:2015}, replicate data to different nodes for fault tolerance. Their write throughput is bottlenecked by network bandwidth. FDS uses a fast network to achieve higher throughput. Despite the higher cost of building FDS, its throughput is still far from memory throughput. Tachyon leverages the lineage concept in the storage layer to eschew replication and instead stores a single in-memory copy of files \cite{Li:2014}. The Apache HDFS community is shifting towards pushing the lineage into the system, which they claimed was partially inspired by Tachyon. The proposed system maintains materialized views in un-replicated memory and can recompute them using the required SQL computations.BAD-FS separates out a scheduler from storage, which provides external control to the scheduler. 
+\textbf{Distributed Storage Systems} In big data analytics, distributed file systems, e.g., GFS and FDS, and key/value stores, e.g., RAMCloud and HBase \cite{hbase:2015}, replicate data to different nodes for fault tolerance. Their write throughput is bottlenecked by network bandwidth. FDS uses a fast network to achieve higher throughput. Despite the higher cost of building FDS, its throughput is still far from memory throughput. Tachyon leverages the lineage concept in the storage layer to eschew replication and instead stores a single in-memory copy of files \cite{Li:2014}. The Apache HDFS community is shifting towards pushing the lineage into the system, which they claimed was partially inspired by Tachyon. The proposed system maintains materialized views in un-replicated memory and can recompute them using the required SQL computations.BAD-FS separates out a scheduler from storage, which provides external control to the scheduler. 
 Users submit jobs to the scheduler through a declarative workflow language, 
 and thus the system knows the \textit{lineage} among jobs. 
 However, to make this practical for parallel big data engines (e.g. Spark, MapReduce, Tez), two fundamental issues stood out: (1) ensuring that the interaction between the scheduler and the storage system is correct, e.g. avoiding deadlocks/priority inversion, (2) bounding recomputation time, which otherwise in a \textit{24/7 system} can grow unbounded. 
@@ -161,13 +163,11 @@ Many cache systems have been developed for various objectives.
 Like Tachyon, Nectar also uses the concept of lineage, but it does so only for a specific programming framework (DryadLINQ), and in the context of a traditional, replicated file system. 
 Nectar is a data reuse system for DryadLINQ queries whose goals are to save space and to avoid redundant computations. The former goal is achieved by deleting largely unused files and rerunning the jobs that created them when needed. However, no time bound is provided to retrieve deleted data. The latter goal is achieved by identifying pieces of code that are common in different programs and reusing previously computed files. Nectar achieves this by heavily resting on the SQL like DryadLINQ query semantics—in particular, it needs to analyze LINQ code to determine when results may be reused— and stores data in a replicated on-disk file system rather than attempting to speed up data access. In contrast, Tachyon’s goal is to provide data sharing across different frameworks with memory speed and bounded recovery time.
 
-PACMan is a memory caching system for dataintensive parallel jobs. It explores different policies to make data warehouse caching efficient. However, PACMan does not improve the performance of writes, nor the first read of any data item. Therefore, the throughput of many applications remains disk-limited—for example, a multi-job MapReduce workflow will still need to replicate data at disk speed between each step.Lineage Besides the applications in the above fields, lineage has been applied in other areas, such as scientific computing, databases, and distributed computing, for applications such as providing the history of data, which can be used for accountability, security, and data audit. Tachyon applies lineage in a different environment to achieve memory throughput read and write, which entails a different set of challenges.
+PACMan \cite{Anan:2012} is a memory caching system for data-intensive parallel jobs. It explores different policies to make data warehouse caching efficient. However, PACMan does not improve the performance of writes, nor the first read of any data item. Therefore, the throughput of many applications remains disk-limited—for example, a multi-job MapReduce workflow will still need to replicate data at disk speed between each step.Lineage besides the applications in the above fields, lineage has been applied in other areas, such as scientific computing, databases, and distributed computing, for applications such as providing the history of data, which can be used for accountability, security, and data audit. Tachyon applies lineage in a different environment to achieve memory throughput read and write, which entails a different set of challenges.
 
 
 \section{RAMCloud}
-RAMCloud is a distributed in-memory key-value
-store, featured for low latency, high availability and high memory
-utilization. In particular, it can achieve tens of microseconds latency
+RAMCloud is a distributed in-memory key-value store, featured for low latency, high availability and high memory utilization \cite{Ousterhout:2015}. In particular, it can achieve tens of microseconds latency
 by taking advantage of low-latency networks (e.g., Infiniband and
 Myrinet), and provide ``continuous availability'' by harnessing large
 scale to recover in 1-2 seconds from system failure. In addition, it
@@ -181,6 +181,13 @@ two components, a master module which manages the in-memory data and
 handles read/write requests from clients, and a backup module which uses
 local disks or flash memory to backup replicas of data owned by other
 servers.
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{architecture_ramcloud.png}
+        \caption{RAMCloud Architecture}
+        \label{fig:ramcloud_architecture}
+\end{figure}
 
 \noindent
 \textbf{\emph{Data organization}}. Key-value objects in RAMCloud are grouped into
@@ -251,6 +258,14 @@ distribution of resource usage (e.g., the number of records and space
 consumption) within a single table/tablet. The \emph{will} aims to
 balance the partitions of a recovery job such that they require roughly
 equal time to recover.
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{buffered_logging.png}
+        \caption{Buffered Logging Approach}
+        \label{fig:buffered_logging}
+\end{figure}
+
 The random replication strategy produces almost uniform allocation of
 replicas and takes advantage of the large scale, thus preventing data
 loss and minimizing recovery
@@ -274,9 +289,34 @@ all the other servers (except the server that wants to replicate) in the
 cluster, Copyset then turns to random replication.
 
 \section{Tachyon}
-Memory is the key to fast big data processing. This has been realized by many, and frameworks such as Spark and Shark already leverage memory performance. As data sets continue to grow, storage is increasingly becoming a critical bottleneck in many workloads.
-Tachyon is a memory-centric fault-tolerant distributed storage system, which enables reliable file sharing at memory-speed across cluster frameworks such as Spark and MapReduce. 
+Tachyon is a \textit{memory-centric fault-tolerant distributed storage system}, which enables reliable file sharing at memory-speed across cluster frameworks such as Spark and MapReduce. 
 Tachyon is Hadoop compatible. Existing Spark and MapReduce programs can run on top of it without any code changes. Tachyon is the default off-heap option in Spark, which means that RDDs can automatically be stored inside Tachyon to make Spark more resilient and avoid GC overheads. 
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{tachyon_architecture.pdf}
+        \caption{Tachyon Architecture}
+        \label{fig:tachyon_architecture}
+\end{figure}
+
+Tachyon consists of two layers: \textit{lineage} and \textit{persistence}. The lineage layer provides high throughput I/O and tracks the sequence of jobs that have created a particular data output. The persistence layer persists data onto storage without the lineage concept. This is mainly used to do asynchronous checkpoints. The persistence layer can be any existing replication based storage systems, such as HDFS, S3, Glusterfs.
+
+Tachyon employs a standard master-slave architecture similar to HDFS and GFS as shown in Figure \ref{fig:tachyon_architecture}.
+In addition to managing metadata, the master also contains a \textit{workflow manager}. 
+The role of this manager is to track lineage information, compute \textit{checkpoint order}, and interact with a cluster resource manager to allocate resources for \textit{recomputation}.Each worker runs a daemon that manages local resources, and periodically reports the status to the master. 
+In addition, each worker uses a RAMdisk for storing \textit{memory-mapped files}. A user application can bypass the daemon and interact directly with RAMdisk. This way, an application with \textit{data locality} can interact with data at memory speeds, while avoiding any extra data copying.
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=0.48\textwidth]{stack.pdf}
+        \caption{Tachyon Integration Stack}
+        \label{fig:tachyon_stack}
+\end{figure}
+
+\section{Conclusion}
+As memory becomes the new disk, in-memory data management and processing becomes increasingly interesting for both academia and industry.
+Shifting the data storage layer from disks to main memory can lead to more than 100$\times$ theoretical improvement in terms of response time and throughput. 
+As ever more datacenter workloads start to be in memory, write throughput becomes a major bottleneck for applications. Therefore, we believe that lineage-based recovery might be the only way to speed up cluster storage systems to achieve memory throughput.
 
 \bibliographystyle{abbrv}
 \bibliography{sqlonhadoop-2015-10}
