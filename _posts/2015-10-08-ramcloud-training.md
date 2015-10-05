@@ -42,3 +42,8 @@ RAMCloud is a distributed datacenter storage system built to provide web applica
 This is part 2 of 2 on this topic.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/gXprpPlLl48" frameborder="0" allowfullscreen></iframe>
+
+## RAMCloud Project
+In this video, Ankita Kejriwal from Stanford presents: The RAMCloud Project. Recorded at the HPC Advisory Council Stanford Conference 2013.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/6B9CLcDLwmE" frameborder="0" allowfullscreen></iframe>
