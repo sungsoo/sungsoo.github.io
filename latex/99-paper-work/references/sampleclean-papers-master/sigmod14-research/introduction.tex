@@ -1,0 +1,193 @@
+
+
+\section{Introduction}
+Aggregate query processing over very large datasets can be
+slow and prone to error due to dirty (missing, erroneous, duplicated,
+or corrupted) values. 
+Sampling-based approximate query processing  (\saqp) is a powerful technique that allows for fast approximate results on large datasets. 
+It has been well studied in the database community since the 1990s~\cite{DBLP:conf/sigmod/HellersteinHW97,DBLP:conf/sigmod/AcharyaGPR99}, and methods such as BlinkDB~\cite{DBLP:conf/eurosys/AgarwalMPMMS13} have drawn renewed attention in recent big data research. 
+
+%However, in practice, the data may contain dirty (missing, erroneous, duplicated, or corrupted) values. According to an industry survey, more than 25\% of critical data in the world's top companies is flawed [47]. For example, real-world data is commonly integrated from multiple sources, and the integration process may lead to a variety of data errors, such as incorrect data values, duplicate representations of the same real-world entity [18]. Even running a query on the entire data may still not get the accurate query results. Therefore, \saqp further reduces answer quality by introducing sampling error.
+
+
+\iffalse
+Sampling-based approximate query processing (\saqp) has been well studied in the database community since the 1990s~\cite{DBLP:conf/vldb/GarofalakisG01}.
+Since aggregation queries on large datasets may be slow, \saqp provides a framework for fast, approximate results with quality guarantees.
+The basic idea is to sample the data, then run the queries (e.g., \avgfunc, \sumfunc, etc.) on the sample to obtain approximate results, and then provide a confidence interval bounding the approximate result.
+By increasing or decreasing the sample size, these systems can trade-off between fast response times or tighter confidence intervals.
+\saqp has attracted recent interest in big data research~\cite{DBLP:conf/eurosys/AgarwalMPMMS13,DBLP:conf/cidr/SidirourgosKB11}.
+BlinkDB~\cite{DBLP:conf/eurosys/AgarwalMPMMS13} is a recent example of an \saqp system which provides interactive response times on massive datasets.
+\fi
+
+SAQP's result estimates assume that the only source of error is uncertainty introduced by sampling, however, the data itself may contain errors which could also affect query results. 
+%By processing queries on a sample of data, \saqp can provide fast response time with approximate answers.
+%However, answer quality is not only dependent on sampling error. The data itself may contain errors which could affect query results.
+According to an industry survey, more than 25\% of the critical data in top companies contained significant data errors~\cite{Gartner}.
+Real-world data is commonly integrated from multiple sources, and the integration process may lead to a variety of data errors, such as incorrect values and duplicate representations of the same real-world entity~\cite{DBLP:journals/pvldb/DongS13}. 
+Therefore, even running a query on the entire data may still not get an accurate query result, and sampling further reduces result quality.
+
+Data cleaning typically requires domain-specific software that can be costly and time-consuming to develop. Particularly, in order to obtain reliable cleaning results, many data-cleaning techniques need humans to get involved~\cite{DBLP:conf/sigmod/JefferyFH08,DBLP:journals/pvldb/FanLMTY10,DBLP:journals/pvldb/YakoutENOI11}. While crowdsourcing makes this increasingly feasible, it is still highly inefficient for large datasets~\cite{DBLP:journals/pvldb/WangKFF12}. 
+
+In this paper, we explore an intriguing opportunity that sampling presents, namely, that when integrated with data cleaning, sampling has potential to improve answer quality.
+We present \saqpplus, a novel framework that cleans only samples of the data to process aggregate queries (e.g., \avgfunc, \countfunc, \sumfunc, etc). \saqpplus employs two approaches to estimate a query from the cleaned sample: (1) \biascorrected uses the cleaned sample to correct the error in a query result over the dirty data; (2) \sampleclean directly estimates the true query result based on the cleaned sample. 
+Both of these approaches return unbiased query results and confidence intervals as a function of sample size.
+
+Comparing the two approaches, we find that \biascorrected gives more accurate results on datasets with relatively small errors, whereas \sampleclean is more robust to datasets with more errors.
+Since \saqpplus can return the better result of \biascorrected and \sampleclean, it gives accurate estimates for a variety of different error distributions. %To better manage cleaning effort and answer quality, we further explore how \saqpplus can integrate with cleaning cost or result quality constraints. We formalize these as the cost-constraint problem and quality-constraint problem respectively, and give the optimal solution to these problems.
+
+
+
+%Compared to existing solutions to deal with data errors, our framework (1) subsumes the solution that needs to clean the entire data and provides a flexible trade-off between data-cleaning cost and answer quality; (2) obtains unbiased quality guranteed answer 
+
+%Employing data-cleaning techniques could be costly and time consuming. In order to obtain reliable cleaning results, most data-cleaning techniques require human to get involved~\cite{DBLP:conf/sigmod/JefferyFH08,DBLP:journals/pvldb/FanLMTY10,DBLP:journals/pvldb/YakoutENOI11,DBLP:journals/pvldb/WangKFF12}, which makes them even harder to scale to big data.
+
+
+%Cleaning data requires either domain-specific software (which can be costly and time-consuming to develop) or human inspection~\cite{DBLP:conf/sigmod/JefferyFH08,DBLP:journals/pvldb/FanLMTY10,DBLP:journals/pvldb/YakoutENOI11}.  The latter is increasingly feasible with crowdsourcing but highly inefficient for large datasets~\cite{DBLP:journals/pvldb/WangKFF12}. 
+
+
+ 
+
+%Recent developments in big data systems, such as Shark~\cite{DBLP:conf/sigmod/XinRZFSS13} and Dremel~\cite{DBLP:journals/pvldb/MelnikGLRSTV10}, allow for increasingly fast aggregations of very large amounts of data. We may be able to reduce sampling errors with more efficient querying processing systems, but we still need a scalable technique to manage data errors. 
+\iffalse
+Drawing inspiration from \saqp, in this paper, we explore how sampling can make data cleaning more efficient on large datasets.
+Sampling presents an intriguing opportunity, namely, that when integrated with data cleaning, sampling actually improve answer quality.
+We present \saqpplus, a novel framework that requires cleaning only samples from the data, and utilizes the cleaned sample to process aggregate queries.
+\saqpplus employs two approaches to benefit from the cleaned sample: (1) \biascorrected uses the cleaned sample to estimate the bias of the query results of the dirty data; (2) \sampleclean uses the cleaned sample to directly estimate the query results of the cleaned data.
+These approaches not only return an unbiased query result w.r.t the true values; they also give confidence intervals as a function of sample size to bound the result errors.
+In comparison, we find that \biascorrected gives more accurate the error in the query results is small, and \sampleclean is more accurate when this error is large.
+Since \saqpplus returns the better result of \biascorrected and \sampleclean, we can give accurate estimates for a variety of different error distributions. 
+\fi
+
+
+%In this paper, we use an example cleaning cost, the number of dirty database tuples corrected in the sample, but in principle, the constraints can be extended to more sophisticated cost models (eg. money spent on crowdsourcing tasks, or time needed for a data cleaning algorithm).
+
+
+
+%A key application of \saqp is interactive response times on large datasets.
+%In \saqpplus, \sampleclean has a property that its estimate is only dependent on a single clean sample of data.
+%We only have to clean the sample data once, and then we can answer a variety aggregation queries on the sample.
+%If the sampling error is smaller than the data error, we may even return faster results with significantly better quality.
+%\saqpplus also offers the additional feature that the confidence in the result is estimated with respect to the clean data,
+%and is not affected by data errors as in \saqp.
+
+%Compared to existing approaches that either ignore data errors or clean the entire data, \saqpplus is not only able to obtain unbiased query results with quality guarantees, but also provide a flexible trade-off between data-cleaning cost and result quality.
+
+%we propose \biascorrected, a hybrid query processing approach that integrates sampling techniques and data cleaning. \biascorrected only needs users to clean a random sample of the data. Given an aggregation query, it can estimate how the query result will be affected by the data error based on the cleaned sample, and correct the bias of the query result computed from the entire uncleaned data. Compared to existing approaches that either ignore data error or clean the entire data, \biascorrected can obtain unbiased query results with quality guarantees by only cleaning a sample of the data.
+
+
+
+%Inspired by \saqp, we may also obtain query results directly from the cleaned sample instead of accessing the entire data. Based on this idea, we develop \sampleclean that aims to directly estimate results from the cleaned sample. Unlike existing \saqp, data errors bring some new challenges in \sampleclean result estimation. For instance, suppose we want to compute the average citation of a set of papers. Assume the data has duplication errors (i.e., different representations of the same paper), and the papers with higher citations tend to have more duplicates. Since duplicate papers have larger probabilities to be sampled, the created sample will contain more highly cited papers, thus the average citation number computed on the sample will be over-estimated. To address this issue, we devise a novel estimation method for \sampleclean, which can obtain an unbiased estimate result along with the quality guarantee based on a cleaned sample data.
+
+%Furthermore, we observe that \sampleclean may achieve both lower latency and better quality than running queries over the entire data.
+%As \sampleclean only executes queries on the sampled data, \sampleclean can return results faster.
+%In querying techniques that ignore data errors, the query result quality is always bounded by these errors.
+%Since \sampleclean estimates results based on the cleaned sample, it only involves sampling error.
+
+%This surprising observation suggests that a query on a sample could be better than one on the entire data. 
+
+%By comparing \sampleclean and \biascorrected, we find that when data error is relatively small, \biascorrected typically returns better results; when the data error becomes harder to estimate, \sampleclean performs better. Therefore, we combine \biascorrected and \sampleclean into a single framework, called \saqpplus, and always return the result with higher quality. This makes our framework very robust to different magnitudes of data error, and we can consistently report good estimate results. Similar to how \saqp provides a flexible tradeoff between query response time and sampling error, \saqpplus provides a tradeoff between data cleaning cost and accuracy.
+
+%If users are targeting at interactive response times on large dataset, they can only use \sampleclean in the \saqpplus framework for query processing.
+%Although there may be some loss in result quality, it will significantly reduce the query time, and may still return more accurate results than running queries over the entire data (as discussed above).
+
+\iffalse
+Employing data-cleaning techniques could be costly and time consuming.
+In order to obtain reliable cleaning results, most data-cleaning techniques require human to get involved~\cite{DBLP:conf/sigmod/JefferyFH08,DBLP:journals/pvldb/FanLMTY10,DBLP:journals/pvldb/YakoutENOI11,DBLP:journals/pvldb/WangKFF12}, which makes them even harder to scale to big data. 
+However, \saqp inspired us to devise a new hybrid \saqp framework, called \saqpplus, which integrates sample query processing and data cleaning.
+We create a random sample of the data, apply a data-cleaning technique to clean the sample, and then use the cleaned sample to estimate the query result.
+Similar to how \saqp provides a flexible tradeoff between query response time and sampling error, \saqpplus provides a tradeoff between data cleaning cost and accuracy.
+%While it may require additional time to process a query in \saqpplus, this may be better suited than \saqp for applications that are sensitive to accuracy of results.
+In querying techniques that ignore data errors, the result quality is always bounded by these errors.
+In \saqpplus, as we increase our sample size, we get an increasingly accurate result estimate.
+This surprising observation suggests that a query on \emph{less} data could be better than one on \emph{more} data.
+
+%While sampling can reduce the query time, people usually prefer more accurate query results even at the cost of longer response time, which limits the applicability of \saqp in real data analytics.  When the data is clean, such systems are able to provide exact query results. 
+%Existing \saqp systems have shown that it is possible to obtain good approximate results by running queries only on a sample of the data. These systems inspire us to devise a new \saqp framework, called \saqpplus, which  only clean a sample of data, and then use the cleaned sample to estimate the query result. As the query result is estimated based on the sample data, it does not need to clean the entire data, thus saves the cleaning cost. On the other hand, compared to the systems that ignore the data error and simply run queries over the entire dirty data, \saqpplus possibly achieves even better result quality since it cleans the sample data, and avoids the data error. With more data is sampled, it involves less sampling error and might be smaller than the data error. This surprising observation implies that \emph{less} data could be better than \emph{more} data. While it is promising, \saqpplus faces many challenging issues. 
+
+However, \saqpplus has distinct technical challenges.
+In an ideal world, we could clean a sample of data and apply existing \saqp result estimation.
+Unfortunately, the data cleaning may affect the uniformity of the sampling leading to incorrect result estimates.
+For instance, assume the dirty data has duplication errors, i.e. duplicate representations of the same entity.
+The greater the number of duplicates, the higher probability an entity is sampled and thus such a sample is not representative of the clean data.
+To address this issue, we devise a novel estimation method in our framework, called \sampleclean, which can obtain an unbiased estimate result along with the quality guarantee based on a cleaned sample data by correcting for such problems.
+
+%The first one is how to estimate query results based on a cleaned sample data.
+%Note that the sample data is originally sampled from the dirty data and then cleaned using data-cleaning techniques, rather than directly sampled from the clean data.
+
+Secondly, when data error is relatively small, there is less benefit from cleaning the data.
+It might be better to compute the query result using the entire data instead of estimating it based on the sample data.
+We propose another estimation method, called \bias, which can estimate the data error by cleaning a sample of data, and then use the estimated error to correct the bias of the query result computed on the entire data.
+We incorporate this new estimation method into our framework and make an online decision about which estimate result, either \sampleclean or \bias, should be returned.
+This makes our framework very robust to different magnitudes of data error, and we can consistently report good estimate results. 
+
+
+
+\fi
+
+In summary, our paper makes the following contributions:
+\begin{itemize}\vspace{-.5em}
+\item We present \saqpplus, a novel framework which only requires users to clean a sample of data, and utilizes the cleaned sample to process aggregate queries. \vspace{-.5em}
+\item We propose \bias that can use a cleaned sample to correct the bias of the query results over the uncleaned data. \vspace{-.5em}
+\item We develop \sampleclean that can use a cleaned sample to directly estimate the query results of the cleaned data.\vspace{-.5em}
+%\item We formalize the cost-constraint and quality-constraint problems, and present the optimal solutions to them. \vspace{-.5em} 
+\item We conduct extensive experiments on both real and synthetic data sets. The results suggest that estimated values can rapidly converge toward the true values with surprisingly few cleaned samples, offering significant improvement in cost over cleaning all of the data and significant improvement in accuracy over cleaning none of the data. \vspace{-.5em}
+\end{itemize}
+
+
+The paper is organized as follows. Section~\ref{sec:error} presents \saqpplus framework for query processing on dirty data. We present \sampleclean in Section~\ref{sec:sampleclean} and discuss \bias in Section~\ref{sec:biascorrected}. %Section~\ref{sec:query-processing} discusses the solutions to cost-constraint and quality-constraint problems.
+We describe the experimental results in Section~\ref{sec:exp}. Section~\ref{sec:rw} covers related work and Section~\ref{sec:con} makes the conclusion.
+
+
+\iffalse
+
+\section{Introduction}
+
+\begin{itemize}
+  \item Data analysis is very important
+  \item Analysis results over the dirty data is doubtful
+  \item Cleaning the entire data is costly and time consuming
+  \item It makes sense to run an aggregation query on a sample of the data (approximate query processing systems)
+  \item We propose a new paradigm to cope with dirty data
+  \begin{itemize}
+     \item{Unbiased result with probability guarantee}
+     \item{Possibly outperform AllDirty}
+     \item{Achieve a better quality/cost trade-off than AllClean}
+  \end{itemize}
+  \item SampleClean
+  \item \bias
+  \item Result Estimation
+  \item Contributions
+  \begin{itemize}
+    \item Analyze how sampling error and data error will affect the query result of big data
+    \item Propose a new paradigm to cope with dirty data
+    \item Unbiased result estimation for SampleClean and \bias
+    \item Quality/Cost Constraints
+    \item Experiments
+  \end{itemize}
+\end{itemize}
+
+
+
+
+
+Aggregate statistics are central to industrial decision making. <Examples here> For example, a business may want to know the mean number website visits per day.  Dirty data complicates these decisions and aggregate statistics can be influenced by <list of types of errors> incorrect values, semantic errors, and unit errors <citations for all>. Recently, there has been work on employing humans to clean data errors <citations>, but cleaning an entire dataset is costly and time consuming.
+Recent interest in approximate query processing systems have shown that it is possible to obtain approximate results by running an aggregation query only on a sample of the data <citations>. Inspired by these systems, we propose a new paradigm to cope with dirty data.  Our method is to first sample data, then clean the sampled data, and use the cleaned sample data to estimate an aggregate statistic of the entire dataset. In this paper, we propose a data cleaning and query processing framework with the following properties:
+
+(1) It is an unbiased estimator of the aggregate statistic; that is in expectation the answer is equivalent to running the query on fully clean data.
+
+(2) It minimizes the cleaning effort required to achieve a result with a satisfactory confidence interval.
+
+(3) It is adaptive and we can clean as much or as little data to meet cost, quality, or time constraints.
+
+Central to our framework are two algorithms that we denote as SAMPLECLEAN and BIASCORRECTED. In SAMPLECLEAN, we estimate the statistic using only the cleaned data sample, ie. we run the aggregation query on the sample and report the result.  In BIASCORRECTED, we use cleaned data to estimate the statistical properties of the dirtiness and use this information to correct a query on the entire dirty data. In this paper, we will show analysis for the conditions under which either algorithm works better and how to integrate cost, quality, or time constraints. Our main contributions are:
+
+In summary, we make the following contributions in our paper:
+\begin{itemize}
+\item We propose a new framework for data cleaning where a user can have a fraction of the data cleaned and still achieve an unbiased estimate of a set of supported aggregate statistics.
+\item We develop working prototype of this framework <git hub link/project web page>
+\item With this framework, we provide theoretical analysis and guarantees about the estimates, their error distributions, and assumptions about the data under which the analysis is valid.
+\item We evaluate our method on experiments with practical datasets.
+\end{itemize}
+
+
+\fi

@@ -1,0 +1,559 @@
+{\noindent \normalsize \bf Dear PVLDB Chair and Referees: }
+
+\vspace{.5em}
+We thank the reviewers and chair for the very helpful feedback on our paper. We have addressed all of the listed concerns and include references to the revised text in the cover letter. 
+To summarize :
+\begin{enumerate}
+\item We revised our background section (Section \ref{subsec-inc}) to include a detailed running example which is referenced in Examples 1-6 after each major concept.
+\item We revised our overview section (Section 3) to formalize our problem setting, assumptions, terminology, and key prerequisite concepts and includes more formal problem statements.
+\item The sampling section (Section 4) included a detailed discussion about the challenges and new ideas (Section 4.1) and clarified a reviewer request about the definition of ``primary keys".
+\item The result estimation section (Section 5) has been revised to include itemized descriptions of all of the algorithms and is self-contained with respect to our prior work.
+\item The experiments section (Section 7) has been revised to merge redundant experimental results. We feel that the distributed experiment is a valuable contribution since it evaluates the technique at scale and on a real dataset. However, we noticed that the views in the distributed experiment were group by aggregates and we removed a TPCD evaluation of this same class of views.
+Rather than presenting two different experimental results, we use our real dataset to evaluate \svc on group by aggregate views, while also discussing the performance at scale. 
+\end{enumerate}
+We first will detail our changes in response to the meta reviewer comments and then address the detailed reviewer comments subsequently.
+
+\vspace{2em}
+\noindent\textbf{[Meta Reviews]}
+\vspace{1em}
+
+\emph{M1. The definitions and discussions, which are currently presented in a very hand-waiving manner, need to be replaced with their formal counterparts. The presentation should be revised, also to avoid the continuous references to the tech report for details. Please see the detailed comments E1 of reviewer 1, and C1,C2, C4, C5, and C6 of reviewer 2 for more details.}
+\vspace{.25em}
+
+{\bf Responses:} We have significantly clarified the presentation of the concepts and the algorithms. Section 3.1 (Notations and Definitions) has been expanded to formally present the core preliminaries of our work: Materialized Views, Staleness, Relational Expressions for Maintenance, and Uniform Sampling. Section 3.2 presents an itemized workflow of SVC and formal descriptions of the problems that SVC solves. In our sampling section (Section 4), we replace the informal descriptions with their formal counterparts including Definition 1 (Provenance), Proposition 1 (Primary Key based Provenance), and Property 1 (Correspondence). We summarize the intutitions in these formal concepts with Example 3 and Example 4. We revised Section 5 to have an itemized description of the estimation algorithms proposed in this work.  Additionally, the technical report is now only cited in the Experiments section with reference to details in the experimental setup and materialized view choice.
+
+\vspace{1em}
+\emph{M2. There are several assumptions and restrictions that are not spelled out clearly in the first part of the paper. It should be clarified how much they limit the applicability of the proposal. The real-world scenarios used is very interesting, but do the techniques apply in other popular applications, where the assumption in sec 4.2 may not hold?}
+
+\vspace{.25em}
+
+{\bf Responses:} We have revised the presentation of the work to be more explicit about limitations. We added the following paragraph before the problem statements in Section 3.1:
+\begin{displayquote}In SVC, we explore the problem of approximate aggregate query
+processing on stale materialized views using a data-cleaning approach.
+We assume that these materialized views are periodically
+maintained and thus are stale in between maintenance periods. The
+focus of this paper is analytic workloads where the typical query on the view is a group by aggregate. SVC provides a framework for increased
+query accuracy for a flexible maintenance cost that can
+scale with system constraints.\end{displayquote}
+
+We believe this concisely summarizes our problem domain and applicability of our proposal. 
+Furthermore, we have clarified that the primary key definition proposed in 4.2 
+(Section 4.3 in the revised paper) is not an assumption but a generation procedure. For the relational expressions described in the paper (select, project, join, aggregate, union, difference), if there is a unique primary key for the base relations, we can ensure that any derived relation also has a unique primary key by the rules described in Definition 2. If the base relations do not have primary keys, then we can add an extra column to the relation that assigns each row a unique id. We added Example 3 and Figure 2 to describe this process concretely.
+
+\vspace{1em}
+\emph{M3. There are recent proposals in data cleaning over materialized views that tackle an orthogonal problem: While the setting is different, work has been done on how to use a different statistical measure (sensitivity analysis) to tackle similar technical problems (sec 5.1.1, sec 6.3). The authors can find related techniques in the recent work on data cleaning over views. It would be useful to have a technical discussion of how the proposed techniques can be applied in this related setting and vice versa (an experimental evaluation is not needed): (1) Wu and Madden. Scorpion: Explaining Away Outliers in Aggregate Queries. PVLDB 2013, (2) Chalamalla et al. Descriptive and prescriptive data cleaning. SIGMOD 2014, (3) Meliou et al. Tracing data errors with view-conditioned causality. SIGMOD 2011}
+
+\vspace{.25em}
+
+{\bf Responses:} Thank you for bringing this to our attention.
+\svc builds on the prior work about cleaning materialized views by using ideas like provenance.
+However, the materialized view problem setting adds new challenges that prior work does not address.
+We have added a paragraph to our related work (Section 8) contrasting these works from \svc:
+\begin{displayquote}
+\svc shares ideas, such as provenance, with prior work on cleaning materialized views.
+Meliou et al. \cite{DBLP:conf/sigmod/MeliouGNS11} proposed a technique to trace errors in an MV to base data and find responsible erroneous tuples. 
+They do not, however, propose a technique to correct the errors as in \svc.
+Correcting general errors as in Meliou et al. is a hard constraint satisfaction problem.
+However, in \svc, through our formalization of staleness, we have a model of how updates to the base data (modeled as errors) affect MVs, which allows us to both trace errors and clean them.
+Wu and Madden \cite{DBLP:journals/pvldb/0002M13} did propose a model to correct ``outliers" in an MV through deletion of records in the base data.
+This is a more restricted model of data cleaning than \svc, where the authors only consider changes to existing rows in an MV (no insertion or deletion) and does not handle the same generality of relational expressions (e.g., nested aggregates).
+Challamalla et al. \cite{DBLP:conf/sigmod/ChalamallaIOP14} proposed an approximate technique for specifying errors as constraints on a materialized view and proposing changes to the base data such that these constraints can be satisfied.
+While complementary, one major difference between the three works \cite{DBLP:conf/sigmod/MeliouGNS11, DBLP:journals/pvldb/0002M13, DBLP:conf/sigmod/ChalamallaIOP14} and \svc is that they require an explicit specification of erroneous rows in a materialized view.
+Identifying whether a row is erroneous requires materialization and thus specifying the errors is equivalent to full incremental maintenance. 
+We use the formalism of a ``maintenance strategy", the relational expression that updates the view, to allow us to sample rows that are not yet materialized.
+However, while not directly applicable for staleness, we see \svc as complementary to these works in the dirty data setting. 
+The sampling technique proposed in Section 4 of our paper could be used to approximate the data cleaning techniques in \cite{DBLP:conf/sigmod/MeliouGNS11, DBLP:journals/pvldb/0002M13, DBLP:conf/sigmod/ChalamallaIOP14} and this is an exciting avenue of future work.\end{displayquote}
+
+\vspace{1em}
+\emph{M4. The experiments sections needs to be improved to include comparison with relevant work, more details and explanation. Please look at the detailed comments E2, E4, and E5 of reviewer 1, and B1 and B2 of reviewer 2 for more details. }
+
+\vspace{.25em}
+
+{\bf Responses:} We have addressed all of the details in the reviewer section of the cover letter. To summarize, we cited the algorithm that we used for Incremental View Maintenance which is the change-table algorithm (also called a delta table e.g \cite{DBLP:journals/vldb/KochAKNNLS14}) described in “Maintenance of Materialized Views: Problems, Techniques, and Applications” by Gupta et al. \cite{gupta1995maintenance, gupta2006incremental}. 
+We further clarified our contribution for the two compared query processing approaches, SVC+ CORR and SVC+AQP. Both techniques use our Stale View Cleaning technique but have a different result estimation procedure. 
+
+There were also reviewer concerns about the selectivity (for which we added a theoretical analysis) and the update size (for which we clarified the experiment in which those results can be seen).
+In addition, two reviewers suggested removing our detailed evaluation on a distributed platform to save space. We have consolidated our experiments such that we still present accuracy and performance results for the real dataset from Conviva Inc. but do not describe the details of our implementation and deployment on Apache Spark.
+
+\vspace{1em}
+\emph{M5. The paper's main motivation is that eager IVM cannot keep up with the rate of incoming updates. However, there have been approaches in the literature (most notable DBToaster) suggesting that this issue can be resolved by accelerating IVM. Do you think that there is still a need of SVC? What is the rate of updates over which a system such as DBToaster cannot keep up with the updates?}
+
+\vspace{.25em}
+
+{\bf Responses:} Thank you for brining this to our attention. In the paper (Section 2.1), we have added the following clarification and motivation of the work:
+\begin{displayquote}
+
+There has been significant research on fast MV maintenance algorithms, most recently DBToaster \cite{DBLP:journals/vldb/KochAKNNLS14} which uses SQL query compilation and higher-order maintenance.
+However, even with these optimizations, some materialized views are computationally difficult to maintain and will have maintenance costs that can grow with the size of data (e.g, correlated aggregate in a sub-query).
+Increasingly large views require distribution and this further increases maintenance costs due to coordination.
+Furthermore, in real deployments, it is common to use the same infrastructure to maintain multiple materialized views (along with other analytics tasks) adding further contention to computational resources and reducing overall maintenance throughput. 
+When faced with these challenges, it is common to batch updates to amortize maintenance overheads and add flexibility to scheduling.
+In such settings, we see an opportunity for approximation through sampling which can give bounded query results in rapidly changing data for a reduced maintenance cost.
+Any amount of staleness can lead to erroneous query results where the user has no idea about the magnitude or the scope of query error. 
+\svc uses a small sample of up-to-date data to return a bounded approximation, which while still approximate, shows the user how far they are from the true answer.
+\svc is complementary to the choice of maintenance algorithm and maintenance setting (e.g mini-batch on the order of seconds/minutes or periodic deferral).
+\end{displayquote}
+
+We see integration with DBToaster as an exciting opportunity for future work exploring how sampled maintenance plans can be compiled and how \svc integrates with higher-order view maintenance.
+
+\vspace{1em}
+\emph{M6. Typos and other minor issues as listed by E6 of reviewer 1 and C7, C8, C9, C10 and C11 of reviewer 2 should be addressed.}
+
+\vspace{.25em}
+
+{\bf Responses:} We thank the reviewers for their careful read of the paper, and have addressed all of these issues.
+
+\vspace{2em}
+\noindent\textbf{[Reviewer 1]}
+\vspace{1em}
+
+\emph{B1. There are several assumptions and restrictions that are not spelled out clearly in the first part of the paper. It should be clarified how much they limit the applicability of the proposal. The real-world scenarios used is very interesting, but do the techniques apply in other popular applications, where the assumption in sec 4.2 may not hold?}
+
+\vspace{.25em}
+
+{\bf Responses:} This review is addressed above in Meta Review Section (M2).
+
+\vspace{1em}
+\emph{B2. It is great to see many technical and engineering contributions, but the paper is very dense and hard to read. The first clear example of what is going on appears at page 4, after the reader had tried hard to understand the problem statement in sec 3.3.1. The presentation should be revised, also to avoid the continuos references to the tech report for details.}
+
+\vspace{.25em}
+
+{\bf Responses:} We have revised the presentation of the work to be easier to follow. In Section 2.1, we describe a running example of Video Streaming Log Analysis. In Section 3, there are two detailed examples of the concepts presented. Example 1 describes the terminology and prerequisite concepts in terms of a concrete use case, and Example 2 illustrates the end-to-end workflow of \svc. In Section 4, we add Example 3 to clarify the reviewer concern about the applicability of primary key lineage in this setting and Example 4 to show how we can optimize sampling of a materialized view in a real application. In Section 5, we add Example 5 to describe our query processing approaches. In Section 6, we add Example 6 to describe how outlier indexing would be used in practice. 
+
+We have further minimized the references to the technical report. The technical report is now only for details in the experimental setup. The theoretical presentation of this work is now self contained with respect to our prior work.
+
+\vspace{1em}
+\emph{B3. There are recent proposals in data cleaning over materialized views that tackle an orthogonal problem: given a view, they clean a sample of its data and go back to the base relations to identify useful explanations. While the setting is different, work has been done on how to use a different statistical measure (sensitivity analysis) to tackle similar technical problems (sec 5.1.1, sec 6.3). Given the data cleaning angle of the proposal, a comparison with these techniques is relevant in this work.}
+
+\vspace{.25em}
+
+{\bf Responses:} We address this issue in the Meta Review Section (M3).
+
+\vspace{1em}
+\emph{E1. I would recommend the authors to revise the presentation of the paper to make it more accessible to the readers, for example with more examples and by limiting the tech report for relevant information. While it is great to show great engineering effort, I think it would be beneficial for this work to deliver more clearly what are the key intuitions and novel ideas. For example, I am not sure I understand the need to conduct the experiment on a distributed platform, as it doesn't touch any of the key contributions of the work. Of course, it is hard to add examples, comparisons, and clarifications without removing something, but in this case I'd say this experiment could be moved to the tech report to leave more room to clarify the basic ideas of the paper and make it more self-contained (e.g., the discussion on CLT with the ref to [36]).}
+
+\vspace{.25em}
+
+{\bf Responses:} We now summarize our contributions in the introduction as follows:
+\begin{displayquote}
+(1) we formalize maintenance of a sample MV as a data cleaning operation on the sample, (2) we propose an optimization technique that materializes the clean sample efficiently while preserving correctness, (3) we derive a query processing approach to answer aggregate queries accurately using the clean sample, (4) we propose an outlier index to reduce sensitivity to skewed datasets, and (5) we evaluate our approach on real and synthetic datasets confirming that indeed sampling can reduce view maintenance time while providing accurate query results. 
+\end{displayquote}
+To make the presentation more accessible, we have revised the work with the clarifying examples described above (B2), and introduced a itemized summary of all of the components in Section 3.2. We have also revised Section 4 (Stale View Cleaning) of the paper with the following clarifications: introducing problem specific challenges (Section 4.1) and a clarified presentation of Provenance (Section 4.2-3). As the reviewer suggested, we have limited the use of the technical report to experimental engineering details. In our submission, many of the details in Section 5 (Query Result Estimation) were omitted and discussed in the technical report. In addition to the clarifying examples described for review B2, we have made the following revisions to Section 5 to make it more accessible: (1) we present itemized algorithms for our query result estimation approaches, (2) we provide SQL descriptions of confidence interval calculations via the CLT, and (3) we present a simpler taxonomy of different families of aggregate queries and their properties. 
+To make space for these additional clarifications, we consolidated our experiments. We believe that our distributed experiment is a valuable contribution as it demonstrates the usefulness of sampling at large scales, however, noticing that in this real experiment all of the views were group by aggregates, we removed our ``data cubing" experiment illustrating the same points with real data.
+
+\vspace{1em}
+\emph{E2. I would anticipate a discussion on the context in which the approach works. I would also like to understand why it is hard to go beyond the assumptions with a more general discussion. Right now there are limitations spread over the paper: }
+
+\vspace{.25em}
+
+{\bf Responses:} We address the first part of this question in the Meta Review section (M2). For the second part of the question, we expanded the Limitations section (Section~9) at the end of the paper:
+\begin{displayquote}
+While our experiments show that \svc works for a variety applications, there are a few limitations which we summarize in this section.
+There are three primary limitations for \svc: class of queries and types of materialized views. 
+In this work, we primarily focused on aggregate queries and showed that accuracy decreases as the selectivity of the query increases.
+Sampled-based methods are fundamentally limited in the way they can support ``point lookup" queries that select a single row.
+This is predicted by our theoretical result that accuracy decreases with $\frac{1}{p}$ where $p$ is the fraction of rows that satisfy the predicate.
+In terms of more view definitions, \svc does not support views with ordering or ``top-k'' clauses, as our sampling assumes no ordering on the rows of the MV and it is not clear how sampling commutes with general ordering operations.
+\end{displayquote}
+
+\emph{E2-1. In 3.3.2 for the sql I was also expecting an experiment to see different quality results depending on the selectivity of the query}
+
+\vspace{.25em}
+
+{\bf Responses:} We included a theoretical analysis of selectivity in Section 5.3.3:
+\begin{displayquote}
+Let $p$ be the selectivity of the query and $k$ be the sample size; that is, a fraction $p$ records from the relation satisfy the predicate.
+For these queries, we can model selectivity as a reduction of effective sample size $k\cdot p$ making the
+estimate variance: $O(\frac{1}{k*p})$.
+Thus, the confidence interval's size is scaled up by $\frac{1}{\sqrt{p}}$.
+Just like there is a tradeoff between accuracy and maintenance cost, for a fixed accuracy, 
+there is also a tradeoff between answering more selective queries and maintenance cost.
+\end{displayquote}
+We believe these results are predictable as for a fixed $p$, $\frac{1}{\sqrt{p}}$ is just a constant scaling on the accuracy results.
+In our experiments, we randomly generated queries with a variety of different selectivities described in Section 7.1.1:
+\begin{displayquote}
+For each of the views, we generated \emph{queries on the views}.
+Since the outer queries of our views were group by aggregates, we picked a random attribute $a$ from the group by clause and a random attribute $b$ from aggregation.
+We use $a$ to generate a predicate.
+For each attribute $a$, the domain is specified in the TPCD standard.
+We selected a random subset of this domain, e.g., if the attribute is country then the predicate can be $\text{countryCode} > 50$ and $\text{countryCode} < 100$.
+We generated 100 random \sumfunc, \avgfunc, and \countfunc queries for each view.
+\end{displayquote}
+For example, in Figure 5, the average selectivity was 24.1\%.
+If we chose twice as selective queries, the errors would scale by up $\sqrt{2} \approx 1.4$.
+
+\vspace{1em}
+
+\emph{E2-2. In 4.2 for the PK requirement  this seems very strong and not realistic in many applications: what if this assumption does not hold? would AQP also fails?}
+
+\vspace{.25em}
+
+{\bf Responses:} We have clarified that the primary key definition proposed in 4.2 (Section 4.3 in the revised paper) is not an assumption but a generation procedure. For the relational expressions described in the paper (select, project, join, aggregate, union, difference), if there is a unique primary key for the base relations, we can ensure that any derived relation also has a unique primary key by the rules described in Definition 2. If the base relations do not have primary keys, then we can add an extra column to the relation that assigns each row a unique id. We added Example 3 and Figure 2 to describe this process concretely.
+
+\vspace{1em}
+\emph{E2-3. In 6.1 for the background knowledge is it realistic to have the user defining all these indexes? can also the traditional incremental solution benefit for a similar optimization? you should clarify if the experiments before 7.2.4 are done with or without the indexing. If they all done without the indexing, it seems that your methods does not really needed this optimization}
+
+\vspace{.25em}
+
+{\bf Responses:} We have added clarification on how these indices may be constructed in Section 6.1:
+\begin{displayquote}There are many approaches to select a threshold. We can use prior information from the base table, a calculation which can be done in the background during the periodic maintenance cycles. If our size limit is $k$, for a given attribute we can select the top-k records with that attributes. Then, we can use that top-k list to set a threshold for our index.  Then, the attribute value of the lowest record becomes the threshold $t$. Alternatively, we can calculate the variance of the attribute and set the threshold to represent $c$ standard deviations above the mean.\end{displayquote}
+We used the top-k approach in our experiments (Section 7.2.4) and list the tradeoff between outlier index size and improvements in query result accuracy.
+This outlier optimization is only relevant to sampling based approaches as those can be sensitive to the presence of outliers. Traditional IVM cannot benefit from this approach. 
+We have also clarified that none of our experiments before 7.2.4 used an outlier index. The caveat is that these experiments were done with moderately skewed data with Zipfian parameter = 2, if this parameter is set to 4 then the 75\% quartile query estimation error is nearly 20\% (Figure 8).
+Outlier indexing always improves query results as we are reducing the variance of the estimation set, however, this reduction in variance is largest when there is a longer tail.
+In this setting, outlier indexing significantly helps for both SVC+AQP and SVC+CORR. 
+
+\vspace{1em}
+\emph{E3. As mentioned in B3, the authors can find related techniques in the recent work on data cleaning over views. It would be useful to have a technical discussion of how the proposed techniques can be applied in this related setting and vice versa (an experimental evaluation is not needed):
+- Wu and Madden. Scorpion: Explaining Away Outliers in Aggregate Queries. PVLDB 2013
+- Chalamalla et al. Descriptive and prescriptive data cleaning. SIGMOD 2014
+- Meliou et al. Tracing data errors with view-conditioned causality. SIGMOD 2011}
+
+\vspace{.25em}
+
+{\bf Responses:} This discussion is clarified in the Meta Review section (M3) and we have added a discussion to our related work.
+
+\vspace{1em}
+\emph{E4. I am not sure I got why you are not reporting the execution times for AQP in fig 7.a, 9.a, 11.a. It would be interesting to have it to understand better the trade-off.}
+
+\vspace{.25em}
+
+{\bf Responses:} To address this comment, we clarified the contributions of our approach. In our Stale Sample View Cleaning problem, we study how to efficiently maintain a sample of a materialized view. After maintenance, there are two query result estimation approaches that can be used: SVC+CORR and SVC+AQP. Thus, the “maintenance time” for both SVC+CORR and SVC+AQP is the same as they both use SVC as an underlying sample maintenance framework.  In fig 7.a, 9.a, and 11.a, we measure the maintenance time so there is no need to compare the methods. We clarify this point in the Section 7.1.2 of the experiments:
+
+\vspace{.5em}
+We use the following notation to represent the different approaches:
+\begin{displayquote}
+\noindent\textbf{\svcnospace+AQP: } We maintain a sample of the materialized view using \svc and estimate the result with AQP-style estimation technique. 
+
+\noindent\textbf{\svcnospace+CORR: } We maintain a sample of the materialized view using \svc and process queries on the view using the correction with applies the AQP to both the clean and dirty samples, and uses both estimates to correct a stale query result.
+\end{displayquote}
+
+\vspace{1em}
+\emph{E5. I got the justification for Def 1 only after reading the rest of the paper (e.g., sec 4.4). While it is natural, the first time I read it I was wondering why don't model it as a graph homomorphism, or any common, existing definition to describe a transformation between two instances. It would be easier to understand and justify.}
+
+\vspace{.25em}
+
+{\bf Responses:} We have clarified this point by re-arranging the text. The correspondence definition is now in Section 4.5, where we carefully explain the intuition behind this property. Correspondence formalizes the link between the unique keys in sample of a stale materialized view and a sample of an up-to-date materialized view. 
+We also clarified the correspondence formally in Property 1 (Section~4.5), where we define four conditions: uniformity, removal of superfluous rows, sampling of missing rows, and key preservation for updated rows.
+
+\vspace{1em}
+\emph{E6. typos:
+(1) sec 1: which USES APPLIES data
+(2) sec 3.2: STRATFIED sampling
+(3) some sentences need revised punctuation. For example, in sec 6: ``The intuition is that there.... outliers"
+(4) missing $s$ at the end of 7.1.1
+(5) sec 7.2.1: , instead of . after view}
+
+\vspace{.25em}
+
+{\bf Responses:} We have corrected these typos.
+
+
+
+\vspace{2em}
+\noindent\textbf{[Reviewer 2]}
+
+\vspace{1em}
+\emph{WP1. Major flaws in the presentation: Most of the concepts and algorithms are introduced using words (and on top of that formulations that can be misinterpreted), making it hard to completely follow and be able to replicate the proposed approach. Other presentation issues include lack of examples, and introduction of the approach not in a standalone way but through comparison to previous work by the authors.}
+
+\vspace{.25em}
+
+{\bf Responses:} We have added the following formalization to clarify the concepts presented in the paper. In Section 3.1, we formalize the prerequisite concepts in this work: materialized view maintenance, staleness data error, unique primary keys, and uniform sampling. We conclude Section 3.1 with a detailed discussion of our running example making the formalization concrete. In Section 3.2, we present an itemized formal workflow of the entire SVC system. This introduces the two problems addressed in this work: Stale Sample View Cleaning and Query Result Estimation. In Section 4, we add Definition 1-3, Proposition 1, and Property 1 to formally present the key concepts in our work. In addition, there are two examples in this section to clarify the concepts. In Section 5, we present itemized descriptions of the algorithms for query result estimation and present the confidence interval calculation in terms of SQL expressions. We have minimized references to our prior work, SampleClean. We introduce this once and describe the key contributions that build on the SampleClean theoretical framework.
+
+\vspace{1em}
+\emph{WP2. Support for non-aggregate queries seems like an afterthought: It is only briefly discussed in two paragraphs in Section 5.3 and it is not clear how it would work (and how the error in such a case could be measured). As far as I could tell no experiments were executed on such queries.}
+
+\vspace{.25em}
+
+{\bf Responses:} Due to space restrictions, we have removed our discussion of support for non-aggregate queries as it is not essential to our work. 
+
+\vspace{1em}
+\emph{WP3. Motivation is slightly weak, given that recent IVM approaches, such as DBToaster have suggested that IVM can be greatly accelerated, making it thus much easier to keep up with changes to the base tables.}
+
+\vspace{.25em}
+
+{\bf Responses:} In Meta Review 5, we clarify that there are some views for which even DBToaster is slow. Sampling, as proposed in this work, reduces the cost of maintenance and is complementary to the choice of maintenance algorithm.
+
+\vspace{1em}
+\emph{A. The paper's main motivation is that eager IVM cannot keep up with the rate of incoming updates. However, there have been approaches in the literature (most notable DBToaster) suggesting that this issue can be resolved by accelerating IVM. Do you think that there is still a need of SVC? What is the rate of updates over which a system such as DBToaster cannot keep up with the updates?}
+
+\vspace{.25em}
+
+{\bf Responses:} 
+We address this issue in the Meta Review Section (M5). We first clarify that SVC is complementary to the choice of maintenance algorithm. Sampling has the potential to reduce maintenance costs for any algorithm (provided it can be specified in relational algebra) by reducing the number tuples processed. In the specific case of DBToaster, over the TPCH queries there was a 3 order of magnitude variation in maintenance throughput. If this data grows, is distributed, or resources are contended by other tasks, this latency can easily grow significantly. While approaches like DBToaster greatly accelerate IVM, there are some views that are slow to maintain just due to processing each tuple for aggregates and joins. Sampling reduces the number of tuples processed and trades off accuracy in these settings where eager maintenance is expensive. 
+
+\vspace{1em}
+\emph{B1. What is the exact IVM algorithm that is used in the experiments?}
+
+\vspace{.25em}
+
+{\bf Responses:} The algorithm that we used for Incremental View Maintenance is the change-table (called a delta table in our work as in \cite{DBLP:journals/vldb/KochAKNNLS14}) algorithm described in Gupta et al. \cite{gupta1995maintenance,gupta2006incremental}. This is cited and clarified in our experiments section. From the text\begin{displayquote} 
+The incremental maintenance algorithm used in our experiments is the ``change-table" or ``delta-table" method used in numerous works in incremental maintenance \cite{gupta1995maintenance,gupta2006incremental, DBLP:journals/vldb/KochAKNNLS14}.
+We implement incremental view maintenance with an ``update...on duplicate key insert'' command.
+\end{displayquote} 
+
+
+\vspace{1em}
+\emph{B2. In the join view experiment, you report the accuracy of SVC for 10\% sample size. What is the update size in this case? It would be great to see how the update size (which has been shown before to affect the speedup) affects also the accuracy of the algorithm.}
+
+\vspace{.25em}
+
+{\bf Responses:} We clarified that the update size was 1GB corresponding to 10\% of the base data (Figure 4). Figure 6b illustrates the tradeoff between update size and the accuracy of the algorithms. SVC+CORR grows in error proportional to the update rate, while SVC+AQP stays constant. The break even point is when the update size is about 30\% of the base data. 
+
+\vspace{1em}
+\emph{C1. Formulations: Most of the concepts are introduced very informally in words, in a way that makes it hard to fully understand what is meant. The use of terminology is very lax as well. }
+
+\vspace{.25em}
+
+{\bf Responses:} See Meta Review Section (M1) for the summary of changes made to the concepts.
+
+\vspace{1em}
+\emph{C1-1. Here are a few examples: (a) definition 1 is not formal enough. For instance, what does it mean ``required a delete"? Although in this case one can understand what is meant, it should be presented in a more rigorous way,} 
+
+\vspace{.25em}
+
+{\bf Responses:} We revised the definition of staleness data error in Section 3.1. We included both an intuitive definition and a formal definition for this concept:
+\begin{displayquote} 
+\noindent \textbf{Staleness as Data Error: } The consequences of staleness are incorrect, missing, and superfluous rows. 
+Formally, for a stale view $S$ with primary key $u$ and an up-to-date view $S'$:
+
+\vspace{-.5em}
+
+\begin{itemize}[noitemsep] \sloppy
+	\item \textbf{Incorrect: } Incorrect row errors are the set of rows (identified by the primary key) that are updated in $S'$: \[\{\forall u \in S : (\exists u \in S' \wedge (\sigma_u(S) \ne \sigma_u(S')))\}\]
+	\item \textbf{Missing: } Missing row errors are the set of rows (identified by the primary key) that exist in the up-to-date view but not in the stale view: \[\{\forall u \in S' : \not \exists u \in S\}\]
+	\item \textbf{Superfluous: } Superfluous row errors are the set of rows (identified by the primary key) that exist in the stale view but not in the up-to-date view : \[\{ \forall u \in S : \not\exists u \in S' \}\]
+\end{itemize}
+
+\vspace{-.5em}
+
+\end{displayquote} 
+
+\vspace{1em}
+\emph{C1-2. The term ``query correction" in Section 3.3.2 is misleading since it is not the query statement that is corrected but the query result}
+
+\vspace{.25em}
+
+{\bf Responses:} We have also revised the query correction term to ``Query Result Estimation" which we feel is more accurate.
+
+\vspace{1em}
+\emph{C1-3. In the last paragraph in Section 7.1.2, the views are referred to interchangeably as ``views" and ``dataset". I would suggest to have a more formal introduction of the concepts and establish a terminology that is used consistently throughout the paper.}
+
+\vspace{.25em}
+
+{\bf Responses:} We corrected the inconsistencies in term usage, using the term “dataset” ONLY to refer to the base data of the experimental data from TPCH and Conviva. 
+
+\vspace{1em}
+\emph{C1-4. If you end up needing more space in the process a few places you could compress are the following: (a) the algebra in Section 3.1, since it is standard relational algebra, (b) Section 7.3.2, which although interesting is I believe less important than a formal representation of the core concepts, (c) Section 7.2.3 (together with the corresponding graphs) which could be replaced just by a datapoint showing that if hashing cannot be pushed down, the resulting speedup is limited.}
+
+\vspace{.25em}
+
+{\bf Responses:} We have also incorporated the reviewer’s space saving suggestions by revising the presentation of the relational algebra, experiment 7.3.2, and consolidated our experiment on real data and the TPCD data cubing example.
+
+\vspace{1em}
+\emph{C2. Algorithms: Please try to introduce the algorithms formally (e.g., through pseudocode). Also consider adding a more formal description of the entire workflow followed by SVC apart from Figure 1 (something close to the itemization in Section 5.2 but with formal notation instead).}
+
+\vspace{.25em}
+
+{\bf Responses:} We have included an itemization for all of the algorithms in Section 5, including the SQL for calculating the bounds for \sumfunc, \avgfunc, and \countfunc and the pseudocode for the bootstrap algorithm to bound general aggregate queries. In addition, in Section 3.2 we added an itemized description of the full workflow of SVC.
+
+\vspace{1em}
+\emph{C3. Related Work: Currently comparisons to related work (especially SampleClean but also AQP and SAQP) are dispersed in various places throughout the paper, breaking its flow. In many cases SVC is not introduced on its own but through comparisons to SampleClean (e.g., in Sections 3.3.2, 5.1, 5.2, etc). I would suggest to introduce instead SVC without reference to SampleClean and if a comparison is needed, to limit it either to Section 2 or to a short discussion at the end of each (sub)section.}
+
+\vspace{.25em}
+
+{\bf Responses:} We have addressed the reviewers suggestion and made this comparison more concise and introduced SVC on its own. SampleClean is cited once in Section 2.2, where we introduce SVC and explain the challenges in the materialized view problem setting that differ from the problem studied in SampleClean. In the remaining paper, references to SampleClean’s algorithms and approaches have been removed. Section 5 has been greatly revised to present SVC on its own. We present a self contained theoretical discussion of the Central Limit Theorem and how to calculate the confidence intervals. We only cite SampleClean once in Section 5.2 in reference to other approximate query processing techniques that use analytic confidence intervals.
+
+\vspace{1em}
+\emph{C4. Examples: Please add examples after the introduction of each concept/algorithm to help the reader follow them. For instance, present the correction generated for the running example in Section 5.1. Similarly, show the generated plan in the presence of indexes in Section 6.2.}
+
+\vspace{.25em}
+
+{\bf Responses:} We introduced a running example in Section 2.1 based on our experimental dataset. In Section 3.1, we used this running example to clarify our prerequisite concepts and terminology. In Section 3.2, we give an intuitive end-to-end example of the entire workflow. In Section 4.3, we use this example to describe the primary key generation method. In Section 4.4, we describe our hash pushdown optimization. In Section 5.2, we use the example to describe our query result estimation approaches.  In Section 6.4, we describe a concrete example of how to use the outlier index. We present an example of using the pushup rules to propagate indexes from the base data to the view and then using the index to estimate a query result. 
+
+\vspace{1em}
+\emph{C5. Figures/References: Please increase the size of both figures and references, as they are currently extremely hard to read. In the case of figures you may be able to achieve this simply by using more concise captions.}
+
+\vspace{.25em}
+
+{\bf Responses:} With our saved space we have increased the size of images and captions.
+
+\vspace{1em}
+\emph{C6. Abbreviations: Please make sure that you have introduced all abbreviations before you use them and remind the reader of their meaning if they have been defined in previous sections. For instance, (a) SAQP used in Section 5.2 has not been defined and (b) AQP used in Section 5.1 has just been defined in passing in Section 2.1 and should probably be re-introduced.}
+
+\vspace{.25em}
+
+{\bf Responses:} We have taken the reviewers suggestion and clarified these acronyms in Section 2 and Section 5.
+
+\vspace{1em}
+\emph{C7. p. 1, col. 1, last par.: ``making incremental maintenance infeasible" $->$ You probably mean ``making eager incremental maintenance infeasible"}
+
+\vspace{.25em}
+
+{\bf Responses:} We have made this revision.
+
+\vspace{1em}
+\emph{C8. The primary key of the result of a union, intersection and difference between R\_1 and R\_2 is erroneously defined as the primary key of R. It should instead be expressed in terms of R\_1 and R\_2.}
+
+\vspace{.25em}
+
+{\bf Responses:} We have made the following revisions to fix this definition:
+(1) $R_1 \cup R_2$: Primary key of the result is the union of the primary keys of $R_1$ and $R_2$, (2) $R_1 \cap R_2$: Primary key of the result is the intersection of the primary keys of $R_1$ and $R_2$, and (3) $R_1 - R_2$: Primary key of the result is the primary key of $R_1$
+
+
+\vspace{1em}
+\emph{C9. Theorem 2: I could not parse the 2nd sentence of the theorem. Please rephrase!}
+
+\vspace{.25em}
+
+{\bf Responses:} We added a clarification to Section 5.2.4 to simplify the discussion of optimality. It is now framed as a discussion of conditions under which our technique is optimal rather than an absolute claim of optimality. The relevant text is now phrased as follows:
+\begin{displayquote}
+A sampled relation $R$ defines a discrete distribution. It is important to note that this distribution is different from the data generating distribution, since even if $R$ has continuous valued attributes $R$ still defines a discrete distribution. Our population is finite and we take a finite sample thus every sample takes on only a discrete set of values. In the general case, this distribution is only described by the set of all of its values (i.e., no smaller parametrized representation). In this setting, the sample mean is an MVUE. In other words, if we make no assumptions about the underlying distribution of values in $R$, SVC+AQP and SVC+CORR are optimal for their respective estimates ($q(S')$ and $c$).
+\end{displayquote}
+
+
+\vspace{1em}
+\emph{C10. p. 8, col. 2, par. 4: I could not parse the sentence ``We remove views... or are static". Please rephrase!}
+
+\vspace{.25em}
+
+{\bf Responses:} We clarified this statement in the following way:
+10 out of the 22 sets of views can benefit from \svc.
+For the 12 excluded views, 3 were static (i.e, this means that there are no updates to the view based on the TPCD workload), and the remaining 9 views have a small cardinality not making them suitable for sampling.
+
+
+\vspace{1em}
+\emph{C11. Typos/Minor syntactic errors:
+(1) p. 2, col. 2, par. 5: ``insertions into Log which are cached"
+(2) p. 3, col. 1, example: ``then the following expressions are needed"
+(3) p. 3, col. 1, last line: ``Stratified sampling"
+(4) p. 3, col. 2, first par. of Section 3.3.2: ``Given a query q which has been applied to the stale view q(S) giving a stale result, out query"
+(5) p. 5, col. 1, first par.: ``there is an equality outer join"
+(6) p. 5, col. 1, par. 2: ``Foreign Key Join"
+(7) p. 5, col. 2, last par.: ``A case statement is defined as follows: We define pred(*)"
+(8) p. 7, col. 1, first par. of Section 6: ``when the sample contains an outlier"
+(9) p. 7, col. 2, par. 2: ``we can find the records with the top k attribute values"
+(10) p. 8, col. 2, par. 4: ``and use those as our materialized views"
+(11) p. 8, col. 2, par. 5: Change the symbols in the two predicates involving countryCode
+(12) p. 8, col. 2, par. 2: ``For small update sizes, the speedup is smaller, 6.5x for a 2.5\% (250GB) update size": it should probably be "MB" instead of "GB"
+(13) p. 12, col. 1, par. 4: ``if that is a black box"}
+
+\vspace{.25em}
+
+{\bf Responses:} We have made these changes to the text.
+
+\vspace{2em}
+
+\noindent\textbf{[Reviewer 3]}
+\vspace{1em}
+
+\emph{Theorem 2 is based on a very naive assumption. The assumption that nothing else is known about the distribution is false in this setting. Given the data in the materialized view, a pretty good a priori estimation of the distribution of the data can be made. Given this estimation, the estimator (MVUE) that best fits the distribution should be chosen. It is not enough to just separate out some outliers.}
+
+\vspace{.25em}
+
+{\bf Responses:} We thank the reviewer for this detailed comment and clarified the concepts presented in Section 5.2.4 as more a discussion about optimality (the conditions under which the presented approach is optimal) rather than an absolute claim of optimality. We further revised that our query result estimation algorithms (\svcnospace+AQP and \svcnospace+CORR) are complementary to the choice of estimator and if the data distribution warrants a different estimator with lower variance SVC+CORR and SVC+AQP inherit that optimality property. From the text:  
+\begin{displayquote}A sampled relation $R$ defines a discrete distribution. It is important to note that this distribution is different from the data generating distribution, since even if $R$ has continuous valued attributes $R$ still defines a discrete distribution. Our population is finite and we take a finite sample thus every sample takes on only a discrete set of values. In the general case, this distribution is only described by the set of all of its values (i.e no smaller parametrized representation). In this setting, the sample mean is an MVUE. In other words, if we make no assumptions about the underlying distribution of values in $R$, SVC+AQP and SVC+CORR are optimal for their respective estimates ($q(S')$ and $c$). Since they estimate different variables, even with optimality SVC+CORR might be more accurate than SVC+AQP and vice versa. 
+
+There are, however, some cases when the assumptions of this optimality do not hold.
+ The intuitive problem is that if there are a small number of parameters that completely describe the discrete distribution there might be a way to reconstruct the distribution from those parameters rather than estimating the mean. As a simple counter example, if we knew our data were exactly on a line, a sample size of two is sufficient to answer any aggregate query. However, even for many parametric distributions, the sample mean estimators are still MVUEs, e.g., poisson, bernouilli, binomial, normal, exponential. It is often difficult and unknown in many cases to derive an MVUE other than a sample mean. Furthermore, the sample mean is unbiased for any distribution, but it is often the case that alternative MVUEs are biased when the data is not exactly from correct model family (such as our example of the line). Our approach is valid for any choice of estimator if one exists, even though we do the analysis for sample mean estimators and this is the setting in which that estimator is optimal.\end{displayquote}
+
+
+
+\clearpage
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+

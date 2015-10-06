@@ -1,0 +1,317 @@
+\section{Query Result Estimation}
+\label{correction}
+%In the previous section, we discussed how to efficiently maintain a sample of a materialized view by applying the hashing operator to the maintenance strategy.
+%The result of the previous section is a cleaned sampled materialized view $\hat{S'}$.
+\svc returns two corresponding samples, $\widehat{S}$ and $\widehat{S}'$.
+$\widehat{S}$ is a ``dirty" sample (sample of the stale view) and $\widehat{S}'$ is a ``clean" sample (sample of the up-to-date view).
+In this section, we first discuss how to estimate query results using the two corresponding samples. 
+Then, we discuss the bounds and guarantees on different classes of aggregate queries.
+
+%Our data cleaning perspective allows us to look at each dirty row in an MV and what cleaning was applied to clean it (insert, delete, or update).
+%We can use this analysis to calculate corrections that compensate for the effect of staleness of aggregate queries.
+%The intuition is to take a point-wise difference of $\hat{S'}$ and $\hat{S}$ which is challenging in the presence of missing data.
+%This gives us a uniform sample of the differences between the stale view and a hypothetical up-to-date view, and allows us to test how query results can be affected by the updates.
+%\reminder{The following text is not consistent with the structure of the section.}
+%We first present our extensions to the existing SampleClean queries: \sumfunc, \countfunc, and \avgfunc.
+%Then, we discuss how to extend this framework to other aggregate functions.
+%We also show how SampleClean can work with biased estimates as well and what statistical tools we can use to bound these estimates.
+%Next, we discuss selection queries and how SampleClean can give limited support to these.
+%We summarize these results in Table \ref{table:nonlin}, where we list common aggregation queries and describe 
+%how \svc estimates their results. 
+%Finally, we analyze the cost of query correction.
+
+
+
+
+\subsection{Result Estimation}\label{re}
+Suppose, we have an aggregate query $q$ of the following form:
+\begin{lstlisting} [mathescape]
+$\;\;\;\;$q(View) := SELECT f(attr) FROM View WHERE cond(*)
+\end{lstlisting}
+We quantify the staleness $c$ of the aggregate query result as the difference
+between the query applied to the stale view $S$ compared to the up-to-date view $S'$:
+\[
+q(S') = q(S) + c
+\]
+The objective of this work is to estimate $q(S')$.
+In the Approximate Query Processing (AQP) literature, sample-based estimates have been well studied \cite{OlkenR86, AgarwalMPMMS13}.
+This inspires our first estimation algorithm, \svcnospace+AQP, which uses \svc to materialize a sample view and an AQP-style
+result estimation technique.
+
+\vspace{0.25em}
+
+\noindent\textbf{SVC+AQP: }  Given a clean sample view $\widehat{S}'$, the query $q$, and a scaling factor $s$. 
+We apply the query to the sample and scale it by $s$:
+\[
+q(S') \approx s \cdot q(\widehat{S}')
+\]
+For example, for the \sumfunc and \countfunc the scaling factor is $\frac{1}{m}$. For the \avgfunc the scaling factor is 1.
+Refer to \cite{OlkenR86, AgarwalMPMMS13} for a detailed discussion on the scaling factors.
+
+\svcnospace+AQP returns what we call a direct estimate of $q(S')$.
+We could, however, try to estimate $c$ instead.
+Since we have the stale view $S$, we could run the query $q$ on the full stale view and 
+estimate the difference $c$ using the samples $\widehat{S}$ and $\widehat{S}'$.
+We call this approach \svcnospace+CORR, which represents calculating a correction to $q(S)$ instead of a direct estimate.
+
+\vspace{0.25em}
+
+\noindent\textbf{SVC+CORR: } Given a clean sample $\widehat{S}'$, its corresponding dirty sample $\widehat{S}$, a query q, and a scaling factor $s$:
+\begin{enumerate}[noitemsep]
+\item Apply \svcnospace+AQP to $\widehat{S}'$:
+$r_{est\_fresh} = s \cdot q(\widehat{S}') $
+\item Apply \svcnospace+AQP to $\widehat{S}$:
+$r_{est\_stale} = s \cdot q(\widehat{S}) $ 
+\item Apply q to the full stale view:
+$r_{stale} = q(S) $
+\item Take the difference between (1) and (2) and add it to (3):
+\[
+q(S') \approx r_{stale} + (r_{est\_fresh} - r_{est\_stale})
+\]
+\end{enumerate}
+
+A commonly studied property in the AQP literature is unbiasedness.
+An unbiased result estimate means that average value of the estimate over all possible samples is $q(S')$.
+We can prove that if \svcnospace+AQP is unbiased (there is an AQP method that gives an unbiased result) then \svcnospace+CORR also gives unbiased results.
+\begin{lemma}\label{lemma:unbiased}
+If there exists an unbiased sample estimator for q(S') then there exists an unbiased sample estimator for c.
+\end{lemma}
+\begin{proof}[Sketch] 
+Suppose, we have an unbiased sample estimator $e_q$ of $q$. 
+Then, it follows that $\mathbb{E}\big[e_q(\widehat{S'})\big] = q(S')$
+If we substitute in this expression:
+$c = \mathbb{E}\big[e_q(\widehat{S'})\big] - q(S) $.
+Applying the linearity of expectation:
+$ c = \mathbb{E}\big[e_q(\widehat{S'}) - q(S)\big] $
+\end{proof}
+Some queries do not have unbiased sample estimators, but the bias of their sample estimators can be bounded. Example queries include: \medfunc, \percfunc.
+A corollary to the previous lemma, is that if we can bound the bias for our estimator then we can achieve a bounded bias for $c$ as well.
+%\begin{corollary}
+%If there exists a bounded bias sample estimator for $q$ then there exists a bounded bias sample estimator for $c$.
+%\end{corollary}
+
+
+\begin{example}
+We can formalize our earlier example query in Section \ref{infexample} in terms of SVC+CORR and SVC+AQP.
+Let us suppose the initial query result is $45$.
+There now have been new log records inserted into the Log table making the old result stale, and suppose we are working with a sampling ratio of 5\%.
+For SVC+AQP, we count the number of videos in the clean sample that currently have counts greater than 100 and scale that result by $\frac{1}{5\%} = 20$. 
+If the count from the clean sample is $4$, then the estimate for SVC+AQP is $80$.
+For SVC+CORR, we also run SVC+AQP on the dirty sample.
+Suppose that there are only two videos in the dirty sample with counts above 100, then the result of running SVC+AQP on the dirty sample is $20\cdot2 = 40$.
+We take the difference of the two values $80 - 40 = 40$.
+This means that we should correct the old result by $40$ resulting in the estimate of $45+40 = 85$.
+\end{example}
+
+\subsection{Estimate Accuracy}
+To analyze the estimate accuracy, we taxonomize common SQL aggregate queries into different \emph{estimator families}.
+For example, \sumfunc, \countfunc, and \avgfunc can all be written as sample means.
+\sumfunc is the sample mean scaled by the relation size and \countfunc is the mean of the indicator function scaled by the relation size.
+There are some key properties of interest within different estimator families: unbiasedness, existence analtyic confidence intervals, and optimality.
+\svcnospace+AQP and \svcnospace+CORR inherit the properties of the estimator family.
+
+Table \ref{estimators} describes these families and their properties for common queries.
+Sample mean family of estimators (\sumfunc, \countfunc, and \avgfunc) has analytic solutions and has been the focus of other approximate query processing works \cite{OlkenR86, wang1999sample}, we analyze this family in detail.
+The general case can only be bounded empirically which is more challenging.
+
+\begin{table}\footnotesize \vspace{-1em}
+\centering
+\begin{tabular}{ l l l l}
+  SQL Query & Family & Unbiased & Variance \\ \hline
+  \avgfunc, \sumfunc, \countfunc & Mean & Yes & Optimal \\
+  \stdfunc, \varfunc & Variance & Yes & Optimal \\
+  \medfunc, \percfunc & Ranking & Bounded & Suboptimal \\
+  \maxfunc, \minfunc & Extrema & Unbounded & Suboptimal \\
+\end{tabular}
+\caption{SQL queries and the properties of their statistical estimation family. \label{estimators}}\vspace{-0.5em}
+\end{table}
+
+\subsubsection{Confidence Intervals For Sample Means}
+Now we will discuss bounding our estimates in confidence intervals for \sumfunc, \countfunc, and \avgfunc, which can be
+estimated with ``sample mean" estimators.
+Sample means for uniform random samples (also called sampling without replacement) converge to the population mean by the Central Limit Theorem (CLT).
+Let $\bar{\mu}$ be a sample mean calculated from $k$ samples, $\sigma^2$ be the variance of the sample, and $\mu$ be the population mean. 
+Then, the error $(\mu - \bar{\mu})$ is normally distributed:
+$
+ N(0,\frac{\sigma^2}{k})
+$
+Therefore, the confidence interval is given by:
+\[
+\bar{\mu} \pm \gamma \sqrt{\frac{\sigma^2}{k}}
+\]
+where $\gamma$ is the Gaussian tail probability value (e.g., 1.96 for 95\%, 2.57 for 99\%).
+
+We discuss how to calculate this confidence interval in SQL for SVC+AQP.
+The first step is a query rewriting step where we move the predicate \textsf{cond(*)} into the SELECT clause (1 if true, 0 if false). 
+Let \emph{attr} be the aggregate attribute and $m$ be the sampling ratio. 
+We define an intermediate result $trans$ which is a table of transformed rows with the first column the 
+primary key and the second column defined in terms of \texttt{cond(*)} statement and scaling.
+For \sumfunc:
+\begin{lstlisting}[mathescape,basicstyle={\scriptsize}]
+trans= SELECT pk,1.0/m$\cdot$attr$\cdot$cond(*) as trans_attr FROM s 
+\end{lstlisting} 
+For \countfunc:
+\begin{lstlisting}[mathescape,basicstyle={\scriptsize}]
+trans= SELECT pk, 1.0/m $\cdot$ cond(*) as trans_attr FROM s
+\end{lstlisting}
+For \avgfunc since there is no scaling we do not need to re-write the query:
+\begin{lstlisting}[mathescape,basicstyle={\scriptsize}]
+trans= SELECT pk,attr as trans_attr FROM s WHERE cond(*) 
+\end{lstlisting}
+
+\vspace{0.25em}
+
+\noindent\textbf{SVC+AQP: } The confidence interval on this result is defined 
+as:
+\begin{lstlisting}[mathescape,basicstyle={\scriptsize}]
+SELECT $\gamma\cdot$stdev(trans_attr)/sqrt(count(1)) FROM trans
+\end{lstlisting}
+
+\vspace{0.25em}
+
+To calculate the confidence intervals for \svcnospace+CORR we have to look at the statistics of the difference, i.e., $c = q(S) - q(S')$, from a sample.
+If we did not have rows in $\widehat{S}$ do not exist in $\widehat{S}'$ and vice versa, we could use the associativity of addition and subtraction to rewrite this as:
+$c = q(S - S')$, where $-$ is the row-by-row difference between $S$ and $S'$.
+The challenge is that the missing rows make this ill-defined.
+Thus, we have define the following null-handling semantics with a subtraction operator we call $\dot{-}$.
+\begin{definition}[Correspondence Subtract] Given an aggregate query, and two corresponding relations $R_1$ and $R_2$ with the schema $(a_1, a_2, ...)$ where $a_1$ is the primary key for $R_1$ and $R_2$, and $a_2$ is the aggregation attribute for the query. 
+$\dot{-}$ is defined as a projection of the full outer join on equality of $R_1.a_1 = R_2.a_1$: \[ \Pi_{R_1.a_2 - R_2.a_2} ( R_1 \fullouterjoin R_2 ) \]
+Null values $\emptyset$ are represented as~zero.
+\end{definition}
+Using this operator, we can define a new intermediate result $diff$:
+\[diff := trans(\widehat{S}') \dot{-} trans(\widehat{S}) \]
+
+\vspace{0.35em}\noindent\textbf{SVC+CORR: } Then, as in \svcnospace+AQP, we bound the result using the CLT:
+\begin{lstlisting}[mathescape,basicstyle={\scriptsize}]
+SELECT $\gamma\cdot$stdev(trans_attr)/sqrt(count(1)) FROM diff
+\end{lstlisting}
+
+\subsubsection{AQP vs. CORR For Sample Means}
+In terms of these bounds, we can analyze how \svcnospace+AQP compares to \svcnospace+CORR for a fixed sample size $k$.
+\sloppy
+\svcnospace+AQP gives an estimate that is proportional to the variance of the clean sample view: 
+$\frac{\sigma_{S'}^2}{k}$.
+\svcnospace+CORR to the variance of the \emph{differences}: 
+$\frac{\sigma_{c}^2}{k}$.
+Since the change is the difference between the stale and up-to-date view, this can be rewritten as
+\[\frac{\sigma_{S}^2 + \sigma_{S'}^2 - 2cov(S,S')}{k}\]
+Therefore, a correction will have less variance when:
+\[\sigma_{S}^2 \le 2cov(S,S')\]
+
+As we saw in the previous section, correspondence correlates the samples.
+If the difference is small, i.e. $S$ is nearly identical to $S'$, then $cov(S,S')~\approx~\sigma_{S}^2$. 
+This result also shows that there is a point when updates to the stale MV are significant enough that direct estimates are more accurate.
+When we cross the break-even point we can switch from using \svcnospace+CORR to \svcnospace+AQP.
+%An intersting implication of this break-even point is it gives us a bound on the approximation error no matter how significant the staleness is.
+\svcnospace+AQP does not depend on $cov(S,S')$ which is a measure of how much the data has changed.
+Thus, we guarantee an approximation error of at most $\frac{\sigma_{S'}^2}{k}$.
+In our experiments (Figure \ref{exp-1-total}(b)), we evaluate this break even point empirically. 
+
+\subsubsection{Selectivity For Sample Means}
+Let $p$ be the selectivity of the query and $k$ be the sample size; that is, a fraction $p$ records from the relation satisfy the predicate.
+For these queries, we can model selectivity as a reduction of effective sample size $k\cdot p$ making the
+estimate variance: $O(\frac{1}{k*p})$.
+Thus, the confidence interval's size is scaled up by $\frac{1}{\sqrt{p}}$.
+Just like there is a tradeoff between accuracy and maintenance cost, for a fixed accuracy, 
+there is also a tradeoff between answering more selective queries and maintenance cost.
+
+\subsubsection{Optimality For Sample Means}
+Optimality in unbiased estimation theory is defined in terms of the variance of the estimate \cite{cox1979theoretical}.
+\begin{proposition}
+An estimator is called a minimum variance unbiased estimator (MVUE) if it is unbiased and the variance of the estimate is less than or equal to that of any other unbiased estimate.
+\end{proposition}
+
+A sampled relation $R$ defines a discrete distribution. It is important to note that this distribution is different from the data generating distribution, since even if $R$ has continuous valued attributes $R$ still defines a discrete distribution. Our population is finite and we take a finite sample thus every sample takes on only a discrete set of values. In the general case, this distribution is only described by the set of all of its values (i.e no smaller parametrized representation). In this setting, the sample mean is an MVUE. In other words, if we make no assumptions about the underlying distribution of values in $R$, SVC+AQP and SVC+CORR are optimal for their respective estimates ($q(S')$ and $c$). Since they estimate different variables, even with optimality SVC+CORR might be more accurate than SVC+AQP and vice versa. 
+
+There are, however, some cases when the assumptions of this optimality do not hold.
+ The intuitive problem is that if there are a small number of parameters that completely describe the discrete distribution there might be a way to reconstruct the distribution from those parameters rather than estimating the mean. As a simple counter example, if we knew our data were exactly on a line, a sample size of two is sufficient to answer any aggregate query. However, even for many parametric distributions, the sample mean estimators are still MVUEs, e.g., poisson, bernouilli, binomial, normal, exponential. It is often difficult and unknown in many cases to derive an MVUE other than a sample mean. Furthermore, the sample mean is unbiased for any distribution, but it is often the case that alternative MVUEs are biased when the data is not exactly from correct model family (such as our example of the line). Our approach is valid for any choice of estimator if one exists, even though we do the analysis for sample mean estimators and this is the setting in which that estimator is optimal.
+
+\subsubsection{General Estimators}
+The theory for bounding general estimators outside of the sample mean family is more complex.
+We may not get analytic confidence intervals on our results, nor is it guaranteed that our estimates are optimal.
+In AQP, the commonly used technique is called a statistical bootstrap \cite{AgarwalMPMMS13} to empirically bound the results.
+In this approach, we repeatedly subsample with replacement from our sample and apply the query to the sample.
+This gives us a technique to bound SVC+AQP the details of which can be found in \cite{AgarwalMPMMS13, agarwalknowing, DBLP:conf/sigmod/ZengGMZ14}. 
+For SVC+CORR, we have to propose a variant of bootstrap to bound the estimate of $c$.
+In this variant, repeatedly estimate $c$ from subsamples and build an empirical distribution for $c$.
+
+\vspace{0.35em}
+
+\noindent\textbf{SVC+CORR: } To use bootstrap to find a 95\% confidence interval:
+\begin{enumerate}[noitemsep]
+\item Subsample $\widehat{S}_{sub}'$ and $\widehat{S}_{sub}$ with replacement from $\widehat{S}'$ and $\widehat{S}$ respectively
+\item Apply SVC+AQP to $\widehat{S}_{sub}'$ and $\widehat{S}_{sub}$
+\item Record the difference $s\cdot(q(\widehat{S}_{sub}')-q(\widehat{S}_{sub}))$, note that for some queries such as \medfunc $s=1$.
+\item Return to 1, for k iterations.
+\item Return the $97.5$\% and the $2.5$\% percentile of the distribution of results. 
+\end{enumerate}
+
+%Bootstrap is known to be computationally intensive.
+%There has been recent research in using techniques such as Poissonized resampling \cite{agarwalknowing}, analytical bootstrap\cite{DBLP:conf/sigmod/ZengGMZ14}, and bagging \cite{DBLP:conf/kdd/KleinerTASJ13} to make this algorithm better suited for latency-sensitive query processing application.
+%Furthermore, bootstrap will only work when estimator satisfies some differentiability conditions \cite{agarwalknowing}.
+%Refer to the extended technical report for the details on the bootstrap procedure \cite{technicalReport}.
+\iffalse
+\subsubsection{MIN and MAX}
+\minfunc and \maxfunc fall into their own category since this is a canonical case where bootstrap fails.
+We devise an estimation procedure that corrects these queries.
+However, we can only achieve bound that has a slightly different interpretation than the confidence intervals seen before.
+We can calculate the probability that a larger (or smaller) element exists in the unsampled view.
+%Refer to the extended technical report for the details on \minfunc and \maxfunc \cite{technicalReport}.
+
+We devise the following correction estimate for \maxfunc: (1) For all rows in both $S$ and $S'$, calculate the row-by-row difference, (2) let $c$ be the max difference, and (3) add $c$ to the max of the stale view.
+
+We can give weak bounds on the results using Cantelli's Inequality.
+If $X$ is a random variable with mean $\mu_x$ and variance $var(X)$, then the probability that $X$ is larger than a constant $\epsilon$ 
+\[
+\mathbb{P}(X \ge \epsilon + \mu_x ) \le \frac{var(X)}{var(X) + \epsilon^2}
+\]
+Therefore, if we set $\epsilon$ to be the difference between max value estimate and the average value, we can calculate the probability that we will see a higher value. 
+
+The same estimator can be modified for \minfunc, with a corresponding bound:
+\[
+\mathbb{P}(X \le \mu_x - a )) \le \frac{var(x)}{var(x) + a^2}
+\]
+This bound has a slightly different interpretation than the confidence intervals seen before.
+This gives the probability that a larger (or smaller) element exists in the unsampled view.
+
+
+\vspace{-.25em}
+\subsection{Select Queries}
+In \svc, we also explore how to extend this correction procedure to Select queries.
+Suppose, we have a Select query with a predicate:
+\begin{lstlisting} [mathescape]
+SELECT $*$ FROM View WHERE Condition(A);
+\end{lstlisting}
+
+We first run the Select query on the stale view, and this returns a set of rows.
+This result has three types of data error: rows that are missing, rows that are falsely included, and rows whose values are incorrect.
+
+As in the \sumfunc, \countfunc, and \avgfunc query case, we can apply the query to the sample of the up-to-date view.
+From this sample, using our lineage defined earlier, we can quickly identify which rows were added, updated, and deleted.
+For the updated rows in the sample, we overwrite the out-of-date rows in the stale query result.
+For the new rows, we take a union of the sampled selection and the updated stale selection.
+For the missing rows, we remove them from the stale selection.
+To quantify the approximation error, we can rewrite the Select query as \countfunc to get an estimate of number of rows that were updated, added, or deleted (thus three ``confidence'' intervals). 
+\fi
+
+
+\iffalse
+\subsection{Bounded Bias Aggregates}
+Some queries do not have unbiased sample estimators, but the bias of their sample estimators can be bounded. Example queries include: \medfunc, \percfunc.
+
+A corollary to the previous lemma, is that if we can bound the bias for our estimator then we can achieve a bounded bias for $c$ as well.
+\begin{corollary}
+If there exists a bounded bias sample estimator for $q$ then there exists a bounded bias sample estimator for $c$.
+\end{corollary}
+
+What this means for a user is that the error bars are asymmetric with increased error in the direction of the bias (often in the direction of skew in the dataset).
+Functionally, we can apply the same technique discussed in the previous section for these queries and apply the bootstrap to bound the results. 
+\fi
+
+\iffalse 
+
+\subsection{Query Execution Cost}
+It is true that \svc adds to the query execution time by issuing a correction. 
+However, this correction is only calculated on a sample and thus is small compared to the query execution time over the entire old view.
+In our experiments, we show that the overheads are small in comparison to the execution time over the entire old view and the savings from only maintaining a sample (Section \ref{exp-datacube}).
+\fi

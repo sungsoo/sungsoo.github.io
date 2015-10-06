@@ -1,0 +1,95 @@
+\section{Model Processing}
+
+\subsection{Error Predicate Case} 
+For a tuple $(x_j,y_j)$, there are basically two cases:
+\[
+(x_j,y_j)= \begin{cases} (x_j,y_j) &\rho_i \text{ is false} \\ 
+(C_i(x_j),C_i(y_j)) & \rho_i \text{ is true} 
+\end{cases} 
+\]
+We can calculate the average change over already cleaned data that satisfy the predicate\footnote{For added features, we create dummy feature vectors in the dirty data}:
+\[
+\Delta_i = \sum_{j \in \rho(cleaned)} (C_i(x_j),C_i(y_j)) - (x_j,y_j)
+\]
+the resulting estimator is:
+\[
+\hat{C}_i= \begin{cases} (x_j,y_j) &\rho_i \text{ is false} \\ 
+(x_j,y_j) + \Delta_i & \rho_i \text{ is true} 
+\end{cases} 
+\]
+
+The oracular algorithm gets modified as follows:
+\begin{enumerate}[noitemsep]
+\item Initialize all $\Delta = 0$
+\item For rounds i=1...T
+\begin{enumerate}
+	\item For each cleaning op j=1...K
+	\begin{enumerate}
+		\item For all points that do not satisfy $\rho_j$, calculate the average gradient and call this result $g_1$.
+		\item For all points that do satisfy $\rho_j$, sample $\frac{B}{T}$ data points using $\hat{C}_j$ described above.
+		\item Apply data cleaning to the sample of data, or if already cleaned skip.
+		\item For all newly cleaned points update $\Delta_j$
+		\item Calculate weighted gradient of the sample points call this $g_2$.
+		\item For $N_1$ points that do not satisfy the predicate and $N_2$ points that do,  apply gradient descent using the gradient $\frac{N_1g_1 + N_2g_2}{N_1 + N_2}$.
+	\end{enumerate}
+\end{enumerate}
+\item Return $\theta^{(T)}$
+\end{enumerate} 
+
+To actually implement this algorithm efficiently there are physical design considerations that we will discuss in the next section.
+
+\subsubsection{Error Predicate Case: Analysis}
+Using the error predicates can significantly increase the accuracy when errors are sparse.
+In fact, this saving is quadratic in the sparsity $O(sparsity^2)$.
+\begin{theorem}
+The error-predicate algorithm converges to the correct answer.
+Furthermore, suppose there are $N_1$ erroneous points out of $N$ total points.
+\[\sigma^2_{ep} = \frac{N^2_1\sigma^2_{imp}}{N^2}\]
+\end{theorem}
+\begin{proof}
+Gradient is unbiased at each step.
+\reminder{Probably cite TR for proof}
+\end{proof}
+
+\subsection{General Case}
+Finally, in the general case, we do not know the error predicate in advance.
+Consider a crowd-based cleaning technique whose effects are hard to predict a priori. 
+In this case, we have to continuously update a classifier to partition the data into 
+clean and dirty.
+The challenge is that this potentially biases our result if our classifier is not perfect.
+Some dirty points may be classified as clean.
+The quadratic savings seen in the predicate case can often outweigh small biases due to classification error.
+
+Like before, suppose we decomposed the function $C$ into its consituent cleaning operations ${C}_i^{k}$.
+For each cleaning operation, we have a classifier, e.g., Support Vector Machine, that learns which points are dirty and which points are cleaned based on that operation.
+To account for potential bias in the classifier, we allow the analyst to specify the design point in the bias variance tradeoff.
+Many types of classifiers allow users to tradeoff precision and recall.
+For an SVM, we may only classify a point as clean if it is sufficiently far from the margin.
+Or for Logistic Regression, we may do so if its class likelihood is over 80\%.
+In our experiments, we use SVMs and the margin distance provides a flexible way to tradeoff potential bias and gradient variance.
+
+Adding the classifier also adds a complex depedence between batch size and performance.
+Initially, the classifier is likely very inaccurate due to the lack of training examples.
+As we clean more data, we can learn what is clean and what is dirty.
+Accordingly, we can delay the classifier's introduction by $l$ iterations until such time it is accurate. 
+
+\begin{enumerate}[noitemsep]
+\item Initialize all $\Delta = 0$
+\item For rounds i=1...T
+\begin{enumerate}
+	\item For each cleaning op j=1...K
+	\begin{enumerate}
+		\item If $i \ge l$, apply classifier to partition dirty and cleaned data.
+		\item Follow error predicate algorithm steps ii-v
+		\item For $N_1$ ``clean" points and $N_2$ ``dirty" points, apply gradient descent using the gradient $\frac{N_1g_1 + N_2g_2}{N_1 + N_2}$.
+		\item Update classifier with newly cleaned data.
+	\end{enumerate}
+\end{enumerate}
+\item Return $\theta^{(T)}$
+\end{enumerate} 
+
+The general case algorithm is harder to analyze and thus we rely on empirical performance on real data.
+
+
+
+

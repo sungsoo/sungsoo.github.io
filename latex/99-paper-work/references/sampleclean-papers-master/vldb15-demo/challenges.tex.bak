@@ -1,0 +1,177 @@
+% !TEX root = demo.tex
+\section{Challenges}
+In this section, we describe some of the research and engineering challenges in developing \sys.
+
+\subsection{Research Challenges}
+To support evolving data quality needs, there are three main research challenges in \sys: (1) sampling, (2) recommendation, and (3) crowd sourcing.
+
+\subsubsection{Sampling}
+In prior work, we explored the problem of estimating aggregate query results over dirty data ~\cite{wang1999sample}.
+In SampleClean \cite{wang1999sample}, we found that aggregate queries can often be answered with very high accuracy (i.e 99\%) with only a small fraction of clean data, and we can clean just enough for the applications data quality requirements.
+In the context of the iterative design, data analysts often run aggregate queries e.g., the number of Chinese restaurants, on a new data source to assess the quality of the data.
+In \sys, we implement sampling as a logical operator that can be used for quickly prototyping and optimizing workflows on samples of data and then transferring these optimizations to full datasets.
+There are many additional research opportunities with sampling.
+For example, sampling allows for quick introspection of otherwise opaque operators, such as testing the quality of a crowd with a small set of records.
+We also build a significance testing framework to allow users to declare aggregate queries of interest and notify them when a change to 
+a plan has a statistically significant effect.
+
+\subsubsection{Recommendation}
+Our next research challenge is to recommend changes to a data cleaning plan based on user feedback. 
+The user can inspect the output of an operator and identify result tuples that are incorrect. This feedback is operator specific. For example, in a Similarity Join the user can mark false positives (matched pairs that should not be similar) and false negatives (unmatched similar pairs) and in an Extraction the user can mark incorrect attribute values. 
+We highlight two key challenges: generating recommendations and applying the recommendations mid-execution.
+
+\vspace{.25em}
+
+{\noindent \bf Recommendations:} There are three types of recommendations: (1) parameter change, (2) operator replacement, and (3) operator addition.
+
+\textit{Parameter Change.} Many of the physical operators in \sys have tunable parameters, whose values is often very dataset-specifc, and the user feedback gives us a way to evaluate the quality of the initial parameter choice. 
+For example, Similarity Joins have a similarity threshold and a similarity function. 
+Increasing this threshold reduces the selectivity of the join, \sys chooses a threshold that maximizes the F1-score. 
+
+\textit{Operator Replacement.} 
+\sys recommends changes to these physical operators when the user indicates that they are not satisfied with the output.
+For example, we can use the user feedback as training examples in our learners as an estimate of the crowd performance.
+This allows us to estimate the value of replacing the physical operator with a active learning variant.
+Additionally, we can try different variants of automated operators to test how accurate they are with respect to the user feedback.
+
+\textit{Operator Addition.}  There are also cases where we may want to add another physical operator, while still preserving the logical input-output behavior of the workflow.
+It is common in extraction tasks to have most records accurately extracted with an automated extractor but only a small subset requiring additional inspection. 
+For these cases, we can add a crowd-based Filter operator to separate these examples for additional cleaning.
+
+\vspace{.5em}
+
+{\noindent \bf Dynamic Modification:} To be able to quickly modify cleaning plans after recommendations, we explore ways to intelligently re-use computation. Because cleaning can be time-consuming, it is inefficient to 
+restart the plan every time the user wants to make a small change.
+We design a framework for \emph{hot swapping} plan operators that re-uses existing results while ensuring that the output of the swapped plan is the same as if the new plan had been run from the start.
+
+\textit{Caching.} allows for result re-use if a downstream operator is modified or added.
+If the system has sufficient memory, then we can cache all of the intermediate results. 
+However this is not always possible, and the key challenge is to select which results to cache.
+To do this, we have to integrate the caching framework with our recommendation engine.
+When we make a recommendation for a change, we must cache the preceding operator. 
+
+\textit{Lineage.} allows us to understand how results change if upstream operators are modified.
+For example, decreasing a similarity join threshold increases the number of output pairs, but adding an additional filtering step 
+reduces the number of output tuples. The key property here is monotonicity, and some types of monotone \textsf{Filter} and \textsf{SimilarityJoin} are data cleaning analogs for a Select-Join relational algebra.
+We can therefore model this problem as a view/lineage and perform a variant of incremental maintenance to update the 
+final result given insertion or deletion of intermediate tuples.
+
+\iffalse
+\vspace{.5em}
+
+{\noindent \bf Cost Estimates:} Of course, changing plans when using crowdsourcing may significantly change its cost.
+For every recommendation, we estimate the number of additional tuples processed by the crowd operators and provide 
+the user with an estimated cost.
+
+\fi
+
+%\subsubsection{Dynamic Modification}
+%The next category of optimizations happen at the plan-level, i.e., the sequence or execution pattern of the operators.
+%We highlight two challenges: allowing users to see early results, and allowing users to modify plans mid-execution.
+%\vspace{.3em}
+%{\noindent \bf Asynchronous Data Cleaning:} To provide fine-grained feedback during a data cleaning process, our system executes data cleaning operations asynchronously. Tuples are processed in a streaming fashion by each of the operators in the plan and the intermediate results are persisted, allowing users to query the results at any time. Thus, at any time, the user can get a ``best effort" query result.
+%\vspace{.3em}
+
+
+\vspace{-0.2cm}
+\subsubsection{Crowd Operator Latency}
+\vspace{.2em}
+
+%{\noindent \bf Sampling:} One way to reduce operator latency is to reduce the number of tuples each operator processes.
+%In \sys, sampling is a first-class logical operator that can be used for quickly prototyping and optimizing workflows on samples of data and then transfering these optimizations to full datasets.
+%Sampling allows for quick introspection of otherwise opaque components, such as testing the quality of a crowd with a small set of records.
+%\sys also provides the statistical tools to extrapolate (with confidence intervals) the insights learned on a sample.
+%The problem of estimating aggregate query results over dirty data has been investigated in prior work~\cite{wang1999sample}, 
+%addressing the challenge that data cleaning may change the underlying statistics of a sample.
+%In this work, we build on these results to allow users to declare aggregate queries of interest and notify them when a change to 
+%a plan has a statistically significant effect.
+
+%Recently proposed, sample-based query processing methods for dirty data can help inform users the changes about the statistical significance of 
+%changes made to the data.
+%For example, suppose one collects a restaurant dataset, and runs some aggregation queries on the dataset, e.g., computing the number of the restaurants in San Fransisco and getting a query result of 12000. 
+%But, when looking at the dataset, she finds that there are many duplicate restaurants in the dataset, and some restaurants' locations are misspelled (e.g., S\underline{e}n Fransisco). She can use our system to create a sample of the data, and then apply a data cleaning procedure to the sample. 
+%After the sample is cleaned, our system can estimate the impact of data cleaning on her original query results, and return her corrected answers with confidence intervals, e.g., $5000\pm300$. Intuitively, this result means that if the same data-cleaning procedure is applied to the full dataset, the number of the restaurants in San Fransisco will be within $[4700, 5300]$. 
+
+%\vspace{.5em}
+%{\noindent \bf Crowdsourcing and Active Learning:} 
+Crowd-based operators are often the rate-limiting steps in a data cleaning plan.
+Completion time of an operator depends on the response times of individual workers, and on real-world crowdsourcing 
+platforms, the distribution of response latencies is highly skewed; analogous to the straggler problem in distributed systems.
+We address this problem by maintaining a pool of high-speed, high-quality crowd workers and develop task routing strategies 
+that can avoid assigning tasks to slow workers and leverage redundancy to significantly reduce the time that is required to clean 
+data with the crowd. Additionally, active learning techniques reduce the number of tuples that require crowd work to clean the
+data.
+%Even cleaning a sample of data, data cleaning can still take a lot of time. This is especially true when it requires humans to clean the data. 
+
+\vspace{-0.25cm}
+
+
+\iffalse
+\subsection{Research Challenges}
+
+Architecturally, we separate crowd sourcing and automated data cleaning.
+There is a crowd server that acts as a layer of indirection between the Spark codebase and crowd sourcing APIs.
+
+\team{Describe Research Challenges.  To what extend can we actually do
+optimization given the physical operators?  Unlike relalgebra, the physical operators here are
+not interchangable!}
+
+
+
+\subsection{Learning Parameters From Example}
+In simple cases, it might be easy to use domain knowledge to select and tune physical operators. 
+In more complex cases, it might be easier to specify a sample of dirty and clean data instead of the function.
+It may also not be feasible to have the crowd clean the entire dataset.
+In these cases, we want to learn a statistical model from which we can extrapolate those responses to the rest 
+of the data.
+
+In our current implementation of \projx, we pose this learning problem as classification problems.
+In general, these parameter functions can be quite complex and this is a simplification of the learning problem.
+The choice of classifier and featurization is upto the user. 
+We currently support Support Vector Machines and Decision Trees with a featurization library that includes common text processing features.
+
+\vspace{0.5em}
+
+\noindent \textsf{Filter(R, $\mathcal{T}^+$, $\mathcal{T}^-$)}: Given a set of positive training examples $\mathcal{T}^+$ (i.e, $r$ that satisfy the condition) and
+negative training examples $\mathcal{T}^-$ (i.e, r that do not satisfy the condition), we learn a classifier that predicts whether a record satisfies the condition. 
+
+\vspace{0.5em}
+
+\noindent \textsf{Extract(R, a, $\mathcal{T}$)} We restrict the learned problem setting to delimited extraction. Given a set of training examples $R(a)$ and the output $v_1,v_2,...,v_k$, we learn a classifier to predict which characters in $R(a)$ are delimiters based on the tokens in the string.
+
+\vspace{1em}
+
+To acquire the samples of clean data, uniform sampling may not be the best strategy.
+For example, if there examples of dirty data are very rare, we will not be able to learn a model.
+We implement a technique called Active Learning to sample.
+Active Learning selects the most informative examples based on the current model so far.
+We use an Active Learning algorithm called uncertainty sampling to do this.
+
+
+
+
+\subsection{Inspection}
+
+Data cleaning requires inspection -- user wants to see how the dataset
+has been "cleaned"  through the pipeline.  What does that even mean?
+
+\subsection{Dynamic Re-optimization}
+
+Crowd means want to swap in or out operators at run time.
+
+
+\subsection{Lineage}
+
+\noindent\textbf{Lineage: }
+We track the lineage of rows using a primary key.
+Users are not allowed to modify this primary key with any operations.
+This allows us to apply operations like transitive closure even after projection since we have a unique identifier for each row.
+
+\vspace{0.5em}
+\noindent \textbf{Example: } Suppose, we are interested in deduplication of unstructured data. Then, we could apply the following logical operations.
+We first apply an \textsf{Extract} operation to extract the unstructured data into columns. If some of the columns are inconsistent in their representation,
+we apply \textsf{Project} to those columns that are inconsistent. We can then take a \textsf{SimilarityJoin} to group rows that are similar, and finally
+we resolve those differences with \textsf{TransitiveClosure}.
+\fi
+
+

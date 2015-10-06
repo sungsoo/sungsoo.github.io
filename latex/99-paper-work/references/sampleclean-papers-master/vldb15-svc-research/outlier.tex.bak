@@ -1,0 +1,59 @@
+\section{Outlier Indexing}\label{outlier}
+The presented approach may be senstive to long-tailed distributions and power-laws which are common in large datasets\cite{clauset2009power}.
+Sampling may also hide any outliers, records with abnormally large or small attribute values.
+Since oultiers may occur very rarely, they are unlikely to be represented in a small sample.
+We address this problem using a technique called outlier indexing which has been applied in SAQP \cite{chaudhuri2001overcoming}.
+The user specifies a threshold $t$ and an attribute on one of the base tables.
+If a record has an attribute that exceeds $t$ it is added to the index.
+We ensure that when we sample the update patterns for views that these records are represented in the sample.
+The user can additionally place a size limit on the outlier index $k$.
+The same approach can be extended to attributes that have tails in both directions by making the threshold $t$ a range, which takes the highest and the lowest values.
+However, in this section, we present the technique as a threshold for clarity.
+
+\subsection{Building The Outlier Index}
+The first step is that the user selects an attribute of the base table to index and specifies a threshold $t$ and a size limit $k$.
+In a single pass of updates, the index is built storing references to the records with attributes greater than $t$.
+If the size limit is reached, the incoming record is compared to the smallest indexed record and if it is greater then we evict the smallest record.
+
+To select the threshold, we can use prior information from the base table.
+This approach is, of course, a heuristic which assumes that the updates are distributionally similar to the 
+base table. 
+This can be done in the background during the periodic maintenance cycles.
+If our size limit is $k$, we can find the records with the top $k$ attributes in the base table as to set a threshold to maximally fill up our index. 
+Then, the attribute value of the lowest record becomes the threshold $t$.
+
+\subsection{Adding Outliers to the Sample}
+Since the outlier indices index the base table, all of the materialized views in the system share a common set of these indices.
+We discuss how to ensure that these records are added to the sample and what overhead this introduces.
+For Select-Project and Foreign-Key Join views, we sample updates to view.
+In the same pass as the sample, we can test each record against the outlier indices. 
+If the record exists in any of the indices it is added to the sample with a flag indicating that it is an outlier.
+
+For aggregation views, we sample the view by taking a hash of the group by keys.
+If a record is in the outlier index, we must ensure that all records with its group by key are also added to the sample.
+To acheive this, we have to select all of the distinct group by keys in the outlier index and add those aggregates to the sample.
+As before, these records are maked with a flag denoting they are outliers.
+
+Outlier indexing adds additional overhead since for Select-Project and Join views it adds the overhead of a hash table lookup for each record, and for Aggregation views it further requires a scan of the entire index.
+However, we envision that in most datasets the outlier index will be very small making this overhead neglible.
+In our experiments, we show that even a very small outlier index (less than .01\% of records) is sufficent to greatly improve the accuracy of
+correction estimates.
+
+\subsection{Query Processing with the Outlier Index} 
+The outlier index has two uses: (1) we can answer \emph{selection} queries on the outliers, 
+and (2) we can improve the accuracy of our \emph{aggregation} queries.
+For selection queries, we must simply check to see if the record satisfying the query is in the outlier index.
+While the outlier index is small, outliers (and their derived materialized view rows) are often the records that
+we want to query.
+
+We can also incorporate the outliers into our correction estimates. 
+By guaranteeing that certain rows are in the index, we
+have to merge a deterministic result (set of outlier rows) with the
+estimate. One way to think of this is that we have $\dans$ is
+calculated from the set of records that are not outliers. Let $\dans_{cnt} + \ans_{cnt}$
+be the size of the updated view, and $l$ be the number of rows in the
+outlier index. Furthermore, let $\dans(o)$ be the delta answer calculated on only the outliers.
+We can update $\dans$ with the outlier information by:
+\[
+\frac{\dans_{cnt} + \ans_{cnt}-l}{\dans_{cnt} + \ans_{cnt}}\ans+\frac{l}{\dans_{cnt} + \ans_{cnt}}\dans(o)
+\]

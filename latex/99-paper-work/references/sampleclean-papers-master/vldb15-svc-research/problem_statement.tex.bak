@@ -1,0 +1,68 @@
+\section{Background}\label{sec-background}
+%In this section, we briefly overview the problem setting.
+
+\subsection{Motivation And Example}\label{subsec-inc}
+There has been significant research on fast MV maintenance algorithms, most recently DBToaster \cite{DBLP:journals/vldb/KochAKNNLS14}.
+However, even for these optimized systems, some materialized views are computationally difficult to maintain.
+In their evaluation of DBToaster, Koch et al. \cite{DBLP:journals/vldb/KochAKNNLS14} reported a three order of magnitude variation in maintenance
+throughput over the 22 TPCH queries defined as MVs.
+Furthermore, in real deployments, it is common to use the same infrastructure to maintain multiple materialized views (along with other analytics tasks) adding further contention to computational resources and reducing overall maintenance throughput.
+SVC is complementary to existing maintenance algorithms, whether recomputation, IVM, or higher order methods like DBToaster, provided they are specified in standard relational algebra.
+Through the use of sampling, we provide the user another tool to flexibly manage and schedule maintenance of MVs for aggregate analytics.
+
+\vspace{0.5em}
+
+\noindent \textbf{Log Analysis Example: } %Let us consider a typical use case for Online Analytics Processing.
+Suppose we are a video streaming company analyzing user engagement.
+Our database consists of two tables \tbl{Log} and \tbl{Video}, with the following schema:
+\begin{lstlisting}[mathescape,basicstyle={\scriptsize}]
+Log(sessionId$\textrm{,}$ videoId$\textrm{,}$ responseTime$\textrm{,}$ userAgent)
+Video(videoId$\textrm{,}$ ownerId$\textrm{,}$ lang$\textrm{,}$ duration)
+\end{lstlisting}
+The \tbl{Log} table stores each visit to a specific video with primary key (\texttt{sessionId}), a foreign-key to the \tbl{Video} table (\texttt{videoId}), latency of the visit (\texttt{responseTime}), and the browser used to access the video (\texttt{userAgent}).
+The \tbl{Video} stores each video with the primary key (\texttt{videoId}), a number identifying the owner of the view (\texttt{ownerId}), language (\texttt{lang}), and the video duration (\texttt{duration}).
+
+For our analysis, we are interested in finding aggregate statistics on visits, such as the average visits per video and the total number of visits for each language, predicated on different subsets of owners. 
+To avoid repeatedly performing the join and visit aggregation, we could define the following MV:
+\begin{lstlisting}[mathescape,basicstyle={\scriptsize}]
+CREATE VIEW visitView
+AS SELECT videoId, ownerId, language, duration
+count(1) as visitCount
+FROM Log, Video
+WHERE Log.videoId = Video.videoId
+GROUP BY videoId, ownerId, language, duration
+\end{lstlisting}
+Our queries of interest are aggregates on this view, are of the form:
+\begin{lstlisting}[mathescape,basicstyle={\scriptsize}]
+SELECT agg(visitCount) FROM visitView 
+WHERE Condition(*)
+\end{lstlisting}
+
+As \tbl{Log} table grows, this MV becomes stale, and let us denote the insertions and deltions to the table as:
+\begin{lstlisting}[mathescape,basicstyle={\scriptsize}]
+LogIns(sessionId$\textrm{,}$ videoId$\textrm{,}$ responseTime$\textrm{,}$ userAgent)
+LogDels(sessionId$\textrm{,}$ videoId$\textrm{,}$ responseTime$\textrm{,}$ userAgent)
+\end{lstlisting}
+Intuitively, if we take a uniform sample of the rows in \texttt{visitView} and do sufficient computation to materialize updates from \texttt{LogIns} and \texttt{LogDels} to just those rows, we can reduce the maintenance time of the view.
+If we are intelligent about restricting the computation, this can reduce the number of \tbl{Log} records to aggregate and to join with the \texttt{Video} table.
+However, from this uniform sample, we can still estimate our aggregate queries of interest, trading off maintenance throughput for accuracy.
+
+\subsection{SampleClean~\cite{wang1999sample}}
+In this paper, we formalize the intuition from our log analysis example. 
+To do this, we leverage theory developed for query processing on dirty data.
+SampleClean is a framework for scalable aggregate query processing on dirty data.
+Traditionally, data cleaning has explored expensive, up-front cleaning of entire datasets for increased query accuracy.
+Those who were unwilling to pay the full cleaning cost avoided data cleaning altogether.
+We proposed SampleClean to add an additional trade-off to this design space by using sampling, i.e. bounded results for aggregate queries when only a sample of data is cleaned.
+The problem of high computational costs for accurate results mirrors the challenge faced in the MV setting with the tradeoff between immediate maintenance (expensive and up-to-date) and deferred maintenance (inexpensive and stale). 
+Thus, we explore how samples of ``clean" (up-to-date) data can be used for improved query processing on MVs without incurring the full cost of maintenance.
+
+However, the metaphor of stale MVs as a Sample-and-Clean problem only takes so far.
+In SampleClean, we modeled data cleaning as a row-by-row transformation of relation with an unknown expensive cost. 
+This transformation was a user-specified  ``black box'' that operated on each row, and we applied this to a sample of dirty data.
+In the MV setting, we found that the staleness cleaning problem interacts with sampling in complex ways which results in missing and superfluous rows. 
+Furthermore, MV maintenance does not necessarily commute with sampling, nor is sampling guaranteed to save on maintenance cost and it requires analysis to best optimize the sampling.
+We also greatly expand the query processing scope of SampleClean beyond \sumfunc, \countfunc, and \avgfunc queries as studied in that work.
+This requires new analytic tools such as statistical bootstrap estimation to calculate bounds.
+
+

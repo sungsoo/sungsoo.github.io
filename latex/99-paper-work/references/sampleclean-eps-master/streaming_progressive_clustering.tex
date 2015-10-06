@@ -1,0 +1,104 @@
+\section{Streaming Progressive Correlation Clustering}
+Given a graph $G = (V, E, W(e), M(v))$, we need to translate $G$ into actual changes to the tuples in the database.
+In particular, we need to assign vertices to clusters -- each cluster represents an entity, and vertices in the cluster are duplicates of that entity.
+
+We also want to provide low-latency intermediate results as the graph is updated in a streaming setting.
+
+Currently, this is solved in SampleClean using connected components, which is prone to making significant errors in the presence of erroneous edges.
+
+This problem has also been studied in the context of correlation clustering, a discrete optimization problem that attempts to find an assignment $\chi_{OPT}$ of vertices $v\in V$ to clusters satisfying
+\[
+\chi_{OPT} = \underset{\chi: V \rightarrow \mathbb{Z}}{\arg\min} \sum_{v \in V} \sum_{u \neq v} \mathbb{I}((u,v) \in E \oplus \chi(u) = \chi(v))
+\]
+where $\oplus$ is the exclusive-or operator.
+That is, we wish to minimize the disagreements between the clustering $\chi$ and the graph $G$.
+
+A simple randomized approximation algorithm is \emph{KwikCluster} [cite]. \reminder{Describe serial algorithm.}
+\emph{KwikCluster} guarantees a 3 approximation, in expectation, to the correlation clustering problem for unweighted graphs.
+
+However, this algorithm is serial and thus ill-suited for providing low-latency streaming results.
+In this section, we explore parallel and streaming versions of KwikCluster.
+Upon receiving a graph, the parallel KwikCluster implementation quickly returns a serializable clustering result;
+as new vertices and edges are streamed in, the streaming algorithm updates the result in an eventually consistent fashion.
+
+      \begin{algorithm}[h]
+        \DontPrintSemicolon
+        \caption{{\it KwikCluster}: serial peeling}
+        \label{alg:seqgreedy}
+        Init $\forall v\in V, \chi_{ser}(v) = \infty$\;
+        Init $\forall v\in V, \gamma_{ser}(v) = $ UNASSIGNED\;
+        \For {$i = 1$ to $n$}{
+          Let $v$ be vertex such that $\pi(v) = i$.\;
+          \If {$\gamma_{ser}(v) == $ UNASSIGNED}{
+            $\gamma_{ser}(v) = $ CENTER\;
+            $\chi_{ser}(v) = \pi(v)$\;
+            \For {$u: (u,v) \in E^+$}{
+              \If {$\gamma_{ser}(u) == $ UNASSIGNED}{
+                $\gamma_{ser}(u) = $ SPOKE\;
+                $\chi_{ser}(u) = \pi(v)$
+              }
+            }
+          }
+        }
+      \end{algorithm}
+
+\subsection{C4: Correlation Clustering using Concurrency Control}
+
+We treat each set of KwikCluster operations on a vertex as an atomic transaction, and apply concurrency control mechanisms to ensure serializability.
+
+C4 is guaranteed to be serializable.
+
+      \begin{algorithm}[h]
+        \DontPrintSemicolon
+        \caption{{\it C4}: Parallel peeling}
+        \label{alg:pargreedy}
+        Init $\forall v\in V, \chi_{C4}(v) = \infty$\;
+        Init $\forall v\in V, \gamma_{C4}(v) = $ UNASSIGNED\;
+        \ParForAll{$p \in \{1, \ldots, P\}$}{
+          \For {$i = p, p+P, \ldots, p + \lfloor n/P \rfloor P$}{
+            \tcp{Transaction $T_v$}
+            Let $v$ be vertex such that $\pi(v) = i$.\;
+            \If {$\gamma_{C4}(v) == $ UNASSIGNED}{
+              \tcp{Check concurrent neighbors}
+              isCenter = {\scriptsize{\texttt{verifyIsCenter}}}($v$)\;
+              \tcp{Create cluster}
+              \lIf {isCenter}{
+                {\scriptsize{\texttt{createCluster}}}($v$)
+              }
+            }
+          }
+        }
+      \end{algorithm}
+
+      \begin{algorithm}[h]
+        \DontPrintSemicolon
+        \caption{\texttt{verifyIsCenter($v$)}}
+        \label{alg:verifyiscenter}
+              \For {$u: (u,v) \in E^+$}{
+                \If {$\pi(u) < \pi(v)$}{
+                  \WaitUntil $\gamma_{C4}(u) \neq $ UNASSIGNED\;
+                  \If {$\gamma_{C4}(u) == $ CENTER}{
+                    return $false$
+                  }
+                }
+              }
+              return $true$
+      \end{algorithm}
+      \begin{algorithm}[h]
+        \DontPrintSemicolon
+        \caption{\texttt{createCluster($v$)}}
+        \label{alg:createcluster}
+        $\gamma_{C4}(v) = $ CENTER\;
+        $\chi_{C4}(v) = \pi(v)$\;
+        \For {$u: (u,v) \in E^+$}{
+          \tcp{Atomic check \& set}
+          \If {$\chi_{C4}(u) > \pi(v)$}{
+            $\gamma_{C4}(u) = $ SPOKE;
+            $\quad\chi_{C4}(u) = \pi(v)$
+          }
+        }
+      \end{algorithm}
+
+
+\subsection{EC3: Eventually Consistent Correlation Clustering}
+

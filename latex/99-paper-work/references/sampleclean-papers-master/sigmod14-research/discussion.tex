@@ -1,0 +1,75 @@
+\section{Constrained group-by Queries}\label{sec:query-processing}
+In this section, we discuss how to enforce quality and cost constraints on the queries by setting the size of our sample.
+In this work, we define the cleaning cost as the number of cleaned tuples.
+Our model could support more complex costs to model processor time in algorithmic cleaning or human costs for crowdsourced cleaning.
+We defer handling general costs for future work.
+
+If the query does not have a \groupby clause, handling constraints is trivial.
+For a query with a cleaning-cost constraint, we should draw and clean a uniform sample of the maximum size.
+For a query with a result-quality constraint, we use the results in Section \ref{sec:sampleclean} and \ref{sec:biascorrected} to solve for $K$ that meets our desired quality.
+
+
+When there are multiple populations, as in \groupby queries, we need to allocate samples to each of the groups.
+In Sections~\ref{sec:group-by} and~\ref{subsec:constraint}, we discuss some of the theory behind satisfying \groupby queries.
+Using this theory, we present the optimal solutions to the quality-constraint and cost-constraint problems.
+
+%an example of statistical optimization of our queries; acheiving narrower confidence intervals for special aggregations.
+\subsection{Confidence Intervals For Group-By Queries}\label{sec:group-by}
+To address \groupby queries (with multiple populations $\{P_1, P_2,\cdots, P_M\}$), we can simply sample from each group independently and then apply our algorithms.
+In order to better balance the estimate results of different populations, we set the maximally sized confidence interval to quantify the uncertainty in the group-by query: $\max\limits_i e_i$,
+where $e_i$ denotes the size of confidence interval for the $i$-th population.
+
+When there are errors in the \groupby attributes, sampling independently from each of the multiple populations is not possible.
+In this case, we can sample uniformly from a union of all the populations, and then treat the \groupby clause as a predicate.
+We can then return the maximally sized confidence interval as the confidence interval of our estimate, and apply the constraint handling scheme for a single population described above.
+
+%However, the cleaning cost of our result is determined by highest-variance group in \groupby clause.
+%Additional cleaning effort will be spent on lower-variance groups without improving the confidence interval.
+However, many practical queries do not have errors in the \groupby attributes, and we can sample directly from each population.
+For example, in one of our experimental datasets, we found that while sensor readings were often incorrect, their reported timestamp was accurate.
+In these datasets, we can minimize the additional effort by solving an optimal allocation problem.
+
+\subsection{Handling Constraints}\label{subsec:constraint}
+Recall that our framework handles two types of constraints: quality and cleaning-cost.
+A quality constraint problem is defined as: given an error tolerance, return a result with a confidence interval of at most that size with the least possible cost.
+Similarly, the cost constraint problem is defined as: given a cleaned sample size, return a result with the highest quality.
+
+\subsubsection{Sample Allocation Theory}
+Before we discuss the constraints, we discuss optimal allocations of samples in \groupby queries. Since we define the total confidence interval as the maximally sized confidence interval,
+and in Sections~\ref{sec:sampleclean} and~\ref{sec:biascorrected}, we return intervals of the form $\pm\lambda\frac{\sigma}{\sqrt{k}}$, then the optimal allocation problem is formally:
+\begin{definition}
+\label{def:allocation}
+Given a set of $M$ populations $\{P_1,P_2,...,P_M\}$, population variances $\{\sigma_1^2,\sigma_2^2,...,\sigma_M^2\}$, and a budget B, the optimal allocation problem is:
+\[ \min_K \max(\frac{\sigma_1^2}{k_1},\frac{\sigma_2^2}{k_2},...,\frac{\sigma_M^2}{k_M})\]
+\vspace{-7pt}\[ \text{subject to: } \sum_i^M k_i \le B \]
+\vspace{-7pt}\[ \forall i: k_i \le |P_i| \]
+\end{definition}
+
+This problem is a convex Geometric Program, and can be readily solved with many different techniques/solvers.
+Problems of this form have been well studied in stratified sampling theory \cite{kalton1983introduction}, e.g. Neyman allocation.
+%Building off this theory and basic convex analysis we can reason about this problem.
+%It turns out, that for large data sizes we can solve it without a general purpose optimizer.
+
+%\begin{proposition}\label{pro:large-enough}
+%If the budget B and the sizes of the populations $|P_i|$ are \emph{large enough}\reminder{How large is enough?}, then optimal policy is:
+%\[ \frac{\sigma_1}{k_1} = \frac{\sigma_2}{k_2}=...=\frac{\sigma_M}{k_M}\]
+%Assume that the populations are large enough that the constraint is not active, then substituting the budget constraint, we find that:
+%\begin{equation}\label{eq:sample-allocate}
+%k_i = B\frac{\sigma_i}{\sum_i^M \sigma_i}
+%\end{equation}
+%\end{proposition}
+%\emph{Proof Sketch}: (See appendix for qualification of \emph{large enough}) Minimizing the objective function $max(...)$, is equivalent to minimizing a dummy variable $t$ under the constraint that each $\frac{\sigma_i}{k_i} \le t$ (ie. each argument is less than or equal to the max).
+%When B is large enough, there is enough budget to make $t$ small enough so this constraint tight for each group.
+%Then, it follows that in the optimum all $\frac{\sigma_i}{\sqrt{k_i}}=t$ and thus are all equal.
+
+\subsubsection{Cost Constraint Problem}
+The solution to Definition \ref{def:allocation}, gives a clear way to solve a cost constraint problem.
+Suppose, we are given a budget of B samples to clean.
+We first clean a small constant number of samples $c$ for each population.
+Then, we apply the result estimation approach, which will return a confidence interval of the form $\pm\lambda\frac{\sigma_i}{\sqrt{c}}$.
+With the $\sigma_i$ from the confidence intervals, we solve the optimization problem for the remaining $B-cM$ samples allocating them optimally.
+
+\subsubsection{Quality Constraint Problem}
+The solution to the quality constraint problem follows directly from the fact that to satisfy $max(...)\le q$, every argument must be no larger than $q$, where $q$ is the quality constraint.
+Therefore, like before we first clean a small constant number of samples $c$ for each population to estimate the variance.
+Then, for each population $i$, we solve for $k_i$ from $\lambda \frac{\sigma_i}{\sqrt{k_i+c}}\leq q$.

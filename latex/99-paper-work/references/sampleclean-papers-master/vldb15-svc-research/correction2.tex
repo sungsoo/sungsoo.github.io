@@ -1,0 +1,42 @@
+\section{Further Optimizations}
+As hinted in Section ??? optimizing joins is of particular interest. 
+One of the most important use cases of materialized views to pre-compute expensive joins.
+In \cite{DBLP:journals/vldb/KochAKNNLS14}, Koch et al. list the following properties of delta relations and joins:
+\[ \Delta(R_1 \bowtie R_2) =  (R_1 \bowtie \Delta R_2) \dot{\cup} (\Delta R_1 \bowtie  R_2) \dot{\cup} (\Delta R_1 \bowtie  \Delta R_2)\]
+\[ \nabla(R_1 \bowtie R_2) =  (R_1 \bowtie \nabla R_2) \dot{\cup} (\nabla R_1 \bowtie  R_2) \dot{\cup} (\nabla R_1 \bowtie  \nabla R_2)\]
+When working with these delta relations, it would seem as though one join turns into three joins.
+In this section, we explore when prune such expressions based on prior knowledge about the base relations and the updates.
+In particular, we look at constraints on the primary key defined earlier in an insertion-only context.
+
+\subsection{Foreign-Key Constraints}
+
+\reminder{the way that we model this subexpressions may violate constraints}
+
+\textbf{Many-to-one insertion: } Suppose $R_1$ and $R_2$ have a foreign key constraint between them, and $R_1$ is the ``many" relation. Then, since every tuple in $R_1$ has to map to exactly one tuple in $R_2$, we know that insertions to $R_2$ could not affect existing tuples in $R_1$. Thus, we can prune the delta expression to:
+\[ \Delta(R_1 \bowtie R_2) =  (\Delta R_1 \bowtie  R_2) \dot{\cup} (\Delta R_1 \bowtie  \Delta R_2)\]
+
+\textbf{One-to-one insertion: } Suppose $R_1$ and $R_2$ have a foreign key constraint between them, and the relationship is exactly one-to-one. Then, since every tuple in $R_1$ has to map to exactly one tuple in $R_2$ and vice versa, we know that insertions to $R_2$ could not affect existing tuples in $R_1$ (and vice versa). Thus, we can prune the delta expression to:
+\[ \Delta(R_1 \bowtie R_2) =  (\Delta R_1 \bowtie  \Delta R_2)\]
+
+\subsection{Time/Causality Constraints}
+In many important use cases such as log analysis, one or more of the base relations have time (e.g. timestamps or sequence numbers) as their primary key.
+\textbf{$\theta$ join on time: } If we are applying a $\theta$ join, where the join key is time, then we can apply a similar optimization to the many-to-one insertion case.
+\[ \Delta(R_1 \bowtie R_2) =   (\Delta R_1 \bowtie_{\theta}  R_2) \dot{\cup} (\Delta R_1 \bowtie_{\theta}  \Delta R_2)\]
+
+\textbf{Aggregation on time: } Similarly, with group by aggregations if the group by expression is a monotonic function of time (e.g. count visits group by day), then we can apply a similar trick as used when there are unique key constraints and bound the effect of updating a stale view to the last group by key.
+
+\subsection{Unique-Key Constraints and Stale Views}
+In some cases, due to unique key constraints our delta expressions may be guaranteed to not overlap with another table. 
+This is of particular interest when such constraints appear at the highest level of our maintenance plan.
+Consider the case of a simple selection view that selects records from a base relation. 
+To update the view, we should take the union and not the join of the delta relation and the stale view. 
+\[ \Delta(S) = S \dot{\cup} \Delta(S_{def}) \]
+Recall our hash operator pushdown rules, we can push the operator to both S and the delta relation.
+
+Thus, we can sample the stale view and the updates to the view independently.
+The implications of this optimization will be more evident in the following section about formulating a correction plan as this gives us the strong guarantee that our query time is strictly less than what it would be without sampling:
+\[O(\mid S \mid + m \cdot \mid \Delta S' \mid) \le O(\mid S \mid + \cdot \mid \Delta ' \mid)\]
+
+
+
+

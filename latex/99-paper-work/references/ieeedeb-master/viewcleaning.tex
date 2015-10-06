@@ -1,0 +1,130 @@
+\section{View Cleaning: Stale Views are Dirty Data \cite{krishnan2015svc}}
+Suppose the relation $R$ is in fact a derived relation $V$ of an underlying dirty database $D$.
+We explored how we can efficiently apply a data cleaning operation to a sample of $V$.
+This extension has an important application in approximate Materialized View maintenance, where we model a stale Materialized View as dirty data, and the maintenance procedure as cleaning.  
+
+\subsection{Motivation}
+Some materialized views are computationally difficult to maintain and will have maintenance costs that can grow with the size of data (e.g, correlated aggregate in a sub-query).
+When faced with such challenges, it is common to batch updates to amortize maintenance overheads and add flexibility to scheduling.
+Like dirty data, any amount of staleness can lead to erroneous query results where the user has no idea about the magnitude or the scope of query error. 
+Thus, we explore how samples of ``clean" (up-to-date) data can be used for improved query processing on MVs without incurring the full cost of maintenance.
+
+\subsection{Notation and Definitions}\label{notation}
+\svc returns a bounded approximation for aggregate queries on stale MVs for a flexible additional maintenance cost.
+
+\noindent \textbf{Materialized Views:} Let $\mathcal{D}$ be a database which is a collection of relations $\{R_i\}$. 
+A \emph{materialized view} $V$ is the result of applying a \emph{view definition} to $\mathcal{D}$. 
+View definitions are composed of standard relational algebra expressions: Select ($\sigma_{\phi}$), Project ($\Pi$), Join ($\bowtie$), Aggregation ($\gamma$), Union ($\cup$), Intersection ($\cap$) and Difference ($-$). 
+
+\vspace{0.5em}
+
+\noindent \textbf{Staleness:} For each relation $R_i$ there is a set of insertions $\Delta R_i$ (modeled as a relation)
+and a set of deletions $\nabla R_i$.
+An ``update'' to $R_i$ can be modeled as a deletion and then an insertion.
+We refer to the set of insertion and deletion relations as ``delta relations", denoted by $\partial \mathcal{D}$:
+\[
+	\partial \mathcal{D} = \{\Delta R_1,...,\Delta R_k\} \cup \{\nabla R_1,...,\nabla R_k\}
+\]
+A view $S$ is considered \emph{stale} when there exist insertions or deletions to any of its base relations.
+This means that at least one of the delta relations in $\partial \mathcal{D}$ is non-empty.
+
+\vspace{0.5em}
+
+\noindent \textbf{Maintenance:} There may be multiple ways (e.g., incremental maintenance or re-computation) to maintain a view $V$, and we denote the up-to-date view as $V'$.
+We formalize the procedure to maintain the view as a \emph{maintenance strategy} $\mathcal{M}$.
+A maintenance strategy is a relational expression the execution of which will return $V'$.
+It is a function of the database $\mathcal{D}$, the stale view $V$, and all the insertion and deletion relations $\partial \mathcal{D}$. 
+In this work, we consider maintenance strategies composed of the same relational expressions as materialized views described above.
+\[
+V' = \mathcal{M}(V,\mathcal{D}, \partial D)
+\]
+
+\vspace{0.5em}
+
+\noindent \textbf{Uniform Random Sampling:}
+We define a sampling ratio $m\in [0,1]$ and for each row in a view $V$, we include it into a sample with probability $m$.
+The relation $S$ is a \emph{uniform sample} of $V$ if
+\[\text{(1) } \forall s \in S : s \in V\text{;~~~~~ (2) }Pr(s_1 \in S) =  Pr(s_2 \in S) = m.\]
+
+\vspace{0.5em}
+
+A sample is \emph{clean} if and only if it is a uniform random sample of the up-to-date view $V'$. 
+
+\subsection{Stale View Cleaning Problem}
+We are given a stale view $S$, a sample of this stale view $S$ with ratio $m$, the maintenance strategy $\mathcal{M}$, the base relations $\mathcal{D}$, and
+the insertion and deletion relations $\partial \mathcal{D}$.
+We want to find a relational expression $\mathcal{C}$ such that:
+\[
+V' = \mathcal{C}(S,\mathcal{D},\partial \mathcal{D}),
+\]
+where $V'$ is a sample of the up-to-date view with ratio $m$. 
+
+\noindent\textbf{Query Result Estimation: }
+This problem can be addressed with the direct estimation and correction techniques 
+described previously once we have a sample of up-to-date rows.
+
+\subsection{Cleaning a Sample View}
+We need to find an efficient maintnenance plan that avoids extra effort (i.e., materialization of rows outside the sample).
+The challenge is that $\mathcal{M}$ does not always commute with sampling.
+To address the commutativity problem, we need to ensure that for each $s \in V'$ all contributing rows in subexpressions to $s$ are also sampled. 
+We address this with a two-step process: (1) build a relation expression tree that preserves primary key relationships, and (2) use a hashing operator to push down along these relationships.
+
+\noindent\textbf{Primary Key: }We recursively define a set of primary keys for all relations in the expression tree to define tuple provenance.
+The primary keys allow us to determine the set of rows that contribute to a row $r$ in a derived relation.
+The following rules define a constructive definition for these keys: 
+\begin{definition} [Primary Key Generation]\label{pk}
+For every relational expression $R$, we define the primary key attribute(s) of every expression to be:
+\begin{itemize}[noitemsep]
+\item Base Case: All relations (leaves) must have an attribute $p$ which is designated as a primary key. 
+\item $\sigma_{\phi}(R)$: Primary key of the result is the primary key of R 
+\item $\Pi_{(a_1,...,a_k)}(R)$: Primary key of the result is the primary key of R. The primary key must always be included in the projection.
+\item $\bowtie_{\phi (r1,r2)}(R_1,R_2)$: Primary key of the result is the tuple of the primary keys of $R_1$ and $R_2$. 
+\item $\gamma_{f,A}(R)$: The primary key of the result is the group by key $A$ (which may be a set of attributes).
+\item $R_1 \cup R_2$: Primary key of the result is the union of the primary keys of $R_1$ and $R_2$
+\item $R_1 \cap R_2$: Primary key of the result is the intersection of the primary keys of $R_1$ and $R_2$
+\item $R_1 - R_2$: Primary key of the result is the primary key of $R_1$
+\end{itemize}
+For every node at the expression tree, these keys are guaranteed to uniquely identify a row.
+\end{definition}
+
+\noindent\textbf{Hashing: } Next, instead of sampling with pseudo-random number generation, we use a hashing procedure.
+This procedure is a deterministic way of mapping a primary key to a Boolean, we can ensure that all contributing rows are also sampled. 
+Let us denote the hashing operator $\eta_{a, m}(R)$. 
+For all tuples in R, this operator applies a hash function whose range is $[0,1]$ to primary key $a$ (which may be a set) and selects those records with hash less than or equal to $m$.
+In a process analgous to predicate push down, we can optimize the maintenance expression by applying $\eta_{a, m}(\mathcal{M})$.
+The result $\mathcal{C}$ is an optimized maintenance plan expression that materializes a sample of rows.
+
+\begin{definition}[Hash push-down]
+For a derived relation $R$, the following rules can be applied to push $\eta_{a, m}(R)$ down the expression tree. 
+\begin{itemize}[noitemsep]
+\item $\sigma_{\phi}(R)$: Push $\eta$ through the expression.  
+\item $\Pi_{(a_1,...,a_k)}(R)$: Push $\eta $ through if $a$ is in the projection.
+\item $\bowtie_{\phi (r1,r2)}(R_1,R_2)$: Push down is possible for foreign key equality joins.
+\item $\gamma_{f,A}(R)$: Push $\eta $ through if $a$ is in the group by clause $A$.
+\item $R_1 \cup R_2$: Push $\eta $ through to both $R_1$ and $R_2$
+\item $R_1 \cap R_2$: Push $\eta $ through to both $R_1$ and $R_2$
+\item $R_1 - R_2$: Push $\eta $ through to both $R_1$ and $R_2$
+\end{itemize}
+\end{definition}
+
+\subsection{Results: Video Streaming Log Analysis}
+We evaluate \svc on Apache Spark~1.1.0 with 1TB of logs from a video streaming company, Conviva \cite{conviva}.
+This is a denormalized user activity log corresponding to video views and various metrics such as data transfer rates, and latencies.
+Accompanying this data is a four month trace of queries in SQL.
+We identified 8 common summary statistics-type queries that calculated engagement and error-diagnosis metrics.
+We populated these view definitions using the first 800GB of user activity log records.  
+We then applied the remaining 200GB of user activity log records as the updates (i.e., in the order they arrived) in our experiments.
+We generated aggregate random queries over this view by taking either random time ranges or random subsets of customers.
+
+\begin{figure}[t]
+\centering
+ \includegraphics[scale=0.16]{figs/con_3.pdf}
+ \includegraphics[scale=0.16]{figs/con_4.pdf} \vspace{-1.5em}
+ \caption{(a) We compare the maintenance time of \svc with a 10\% sample and full incremental maintenance (IVM). (b) We also evaluate the accuracy of the estimation techniques: (Direct DIR), Correction (CORR), and Dirty (Stale). \label{conv-1}}\vspace{-1.5em}
+\end{figure}
+
+In Figure \ref{conv-1}(a), we show that on average over all the views, \svc with a 10\% sample gives a 7.5x speedup.
+For one of the views full incremental maintenance takes nearly 800 seconds, even on a 10-node cluster, which is a very significant cost.
+In Figure \ref{conv-1}(b), we show that \svc also gives highly accurate results with an average error of 0.98\% for the correction estimate.
+This experiment highlights a few salient benefits of \svc: (1) sampling is a relatively cheap operation and the relative speedups in a single node and distributed environment are similar, (2) for analytic workloads like Conviva (i.e., user engagement analysis) a 10\% sample gives results with 99\% accuracy, and (3) savings are still significant in systems like Spark that do not support selective updates.
+

@@ -1,0 +1,101 @@
+\vspace{-.5em}
+\section{Outlier Indexing}\label{outlier}
+Sampling is known to be sensitive to outliers \cite{clauset2009power, chaudhuri2001overcoming}.
+Power-laws and other long-tailed distributions are common in practice \cite{clauset2009power}.
+We address this problem using a technique called outlier indexing which has been applied in AQP \cite{chaudhuri2001overcoming}.
+The basic idea is that we create an index of outlier records (records whose attributes deviate from the mean value greatly) and ensure that these records are included in the sample, since these records greatly increase the variance of the data. 
+%Furthermore, since they are likely rare the probability of sampling them is low leading to wildly varying estimates.  
+However, as this has not been explored in the materialized view setting there are new challenges in using this index for improved result accuracy.
+
+\subsection{Indices on the Base Relations}
+In \cite{chaudhuri2001overcoming}, the authors applied outlier indexing to improve the accuracy of AQP on base relations.
+%We apply a similar technique, however, their problem setting is different in a few ways.
+%First, in the AQP setting, queries are issued to base relations.
+In our problem, we issue queries to materialized views.
+We need to define how to propagate information from an outlier index on the base relation to a materialized view.
+
+The first step is that the user selects an attribute of any base relation to index and specifies a threshold $t$ and a size limit $k$.
+In a single pass of updates (without maintaining the view), the index is built storing references to the records with attributes greater than $t$.
+If the size limit is reached, the incoming record is compared to the smallest indexed record and if it is greater then we evict the smallest record.
+The same approach can be extended to attributes that have tails in both directions by making the threshold $t$ a range, which takes the highest and the lowest values.
+However, in this section, we present the technique as a threshold for clarity.
+
+There are many approaches to select a threshold.
+We can use prior information from the base table, a calculation which can be done in the background during the periodic maintenance cycles.
+If our size limit is $k$, for a given attribute we can select the the top-k records with that attributes.
+Then, we can use that top-k list to set a threshold for our index. 
+Then, the attribute value of the lowest record becomes the threshold $t$.
+Alternatively, we can calculate the variance of the attribute and set the threshold to represent $c$ standard deviations above the mean.
+
+This threshold can be adaptively set at each maintenance period to include more or less outliers.
+The caveat is that the outlier index should not be too expensive to calculate nor should it be too large as it negates the performance benefits of sampling.  
+The query processing approach that we propose in the following sub-sections is agnostic to how we choose this threshold.
+In fact, our approach allows us to incorporate any deterministic subset into our sample-based correction calculations.
+
+\subsection{Adding Outliers to the Sample}
+%Given this index, the next question is how we can use this information in our materialized views.
+%We ensure that any row in a materialized view that is derived from an indexed record is guaranteed to be in the sample.
+%This problem is sort of an inverse to the efficient sampling problem studied in Section~\ref{sampling}.
+We need to propagate the indices upwards through the expression tree.
+%The next challenge is the outlier index must not require any additional effort to materialize.
+We add the condition that the only eligible indices are ones on base relations that are being sampled (i.e., we can push the hash operator down to that relation).
+Therefore, in the same iteration as sampling, we can also test the index threshold and add records to the outlier index. 
+We formalize the propagation property recursively. 
+Every relation can have an outlier index which is a set of attributes and a set of records that exceed the threshold value on those attributes.
+The main idea is to treat the indexed records as a sub-relation that gets propagated upwards with the maintenance strategy.
+\begin{definition}[outlier index pushup]
+Define an outlier index to be a tuple of a set of indexed attributes, and a set of records $(I,O)$. The outlier index propagates upwards with the following rules: 
+\begin{itemize}[noitemsep]
+\item Base Relations: Outlier indices on base relations are pushed up only if that relation is being sampled, i.e., if the sampling operator can be pushed down to that relation.
+\item $\sigma_{\phi}(R)$: Push up with a new outlier index and apply the selection to the outliers $(I,\sigma_{\phi}(O))$ 
+\item $\Pi_{(a_1,...,a_k)}(R)$: Push upwards with new outlier index $(I \cap (a_1,...,a_k), O)$.
+\item $\bowtie_{\phi (r1,r2)}(R_1,R_2)$: Push upwards with new outlier index $(I_{1} \cup I_{2}, O_1 \bowtie O_2)$. 
+\item $\gamma_{f,A}(R)$: For group-by aggregates, we set $I$ to be the aggregation attribute. For the outlier index, we do the following steps. (1) Apply the aggregation to the outlier index $\gamma_{f,A}(O)$, (2) for all distinct $A$ in $O$ select the row in $\gamma_{f,A}(R)$ with the same $A$, and (3) this selection is the new set of outliers $O$. 
+\item $R_1 \cup R_2$: Push up with a new outlier index $(I_1 \cap I_2, O_1 \cup O_2)$. The set of index attributes is combined with an intersection to avoid missed outliers.
+\item $R_1 \cap R_2$: Push up with a new outlier index $(I_1 \cap I_2, O_1 \cap O_2)$.
+\item $R_1 - R_2$: Push up with a new outlier index $(I_1 \cup I_2, O_1 - O_2)$.
+\end{itemize}
+\end{definition}
+
+For all outlier indices that can propagate to the view (i.e., the top of the tree), we get a final set $O$ of records. 
+Given these rules, $O$ is, in fact, a subset of our materialized view $S'$.
+Thus, our query processing can take advantage of the theory described in the previous section to incorporate the set $O$ into our results.
+We implement the outlier index as an additional attribute on our sample with a boolean flag true or false if it is an outlier indexed record.
+If a row is contained both in the sample and the outlier index, the outlier index takes precedence.
+This ensures that we do not double count the outliers.
+
+\subsection{Query Processing}\label{oqp} 
+For result estimation, we can think of our sample $\hat{S'}$ and our outlier index $O$ as two distinct parts.
+Since $O \subset S'$, and we give membership in our outlier index precedence, our sample is actually a sample restricted to the set $\widehat{(S'-O)}$. 
+The outlier index has two uses: (1) we can query all the rows that correspond to outlier rows, 
+and (2) we can improve the accuracy of our \emph{aggregation} queries.
+To query the outlier rows, we can select all of the rows in the materialized view that are flagged as outliers, and these rows are guaranteed to be up-to-date.
+
+For (2), we can also incorporate the outliers into our correction estimates.  
+For a given query, let $c_{reg}$ be the correction calculated on $\widehat{(S'-O)}$ using the technique proposed in the previous section and adjusting the sampling ratio $m$ to account for outliers removed from the sample.
+We can also apply the technique to the outlier set $O$ since this set is deterministic the sampling ratio for this set is $m=1$, and we call this result $c_{out}$.
+Let $N$ be the count of records that satisfy the query's condition and $l$ be the number of outliers that satisfy the condition.
+Then, we can merge these two corrections in the following way:
+$
+ v = \frac{N-l}{N}c_{reg} + \frac{l}{N}c_{out}
+$.
+For the queries in the previous section that are unbiased, this approach preserves unbiasedness.
+Since we are averaging two unbiased estimates $c_{reg}$ and $c_{out}$, the linearity of the expectation operator preserves this property.
+Furthermore, since $c_{out}$ is deterministic (and in fact its bias/variance is 0), $c_{reg}$ and $c_{out}$ are uncorrelated making the bounds described in the previous section applicable as well.
+
+\begin{example}
+Suppose, we want to use outlier indexing to process the query in the previous section on \tbl{visitView}.
+We chose an attribute in the base data to index, for example \texttt{duration}, and an example threshold of 1.5 hours.
+We first push the index through the join of \tbl{Log} and \tbl{Video}.
+Then, we reach the group by aggregate, where we select all the distinct groups (videos) for which 
+the duration is longer than 1.5 hours.
+This materializes the entire set of rows whose duration is longer than 1.5 hours.
+For SVC+AQP, we run the query on the set of clean rows with durations longer than 1.5 hours.
+Then, we use the update rule in Section \ref{oqp} to update the result based on the number of records in the index and the total size of the view.
+For SVC+CORR, we additionally run the query on the set of dirty rows with durations longer than 1.5 hours and take the difference between SVC+AQP.
+As in SVC+AQP, we use the update rule in Section \ref{oqp} to update the result based on the number of records in the index and the total size of the view.
+\end{example}
+
+%sum of uncorrelated unbiased estimates since one is deterministic.
+
+%See \cite{chaudhuri2001overcoming} for additional query processing details.

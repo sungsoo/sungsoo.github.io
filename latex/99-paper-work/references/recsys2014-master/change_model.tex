@@ -1,0 +1,67 @@
+\section{Bias Mitigation}
+\label{changemod}
+In our learning phase, we collect rating triplets ($g_i[j]$, $m[j]$, $g_f[j]$), and in our analysis phase, we determine whether the triplets exhibit statistically significant social influence bias. 
+In the mitigation phase, we propose two models: a correction model (infers the initial rating given a final rating and the median), and a prediction model (predicts final ratings given an initial rating and the median).
+Once trained, the correction model can be applied to correct final grades collected without the triplet (either historical or post-learning).
+The prediction model can be used to analyze properties of the social influence bias eg. are ratings above the median affected the same way as ratings below the median.
+
+Previous work, suggests that social influence is not a homogeneous bias, namely, positive influences are different from negative influences.
+In Muchnik et al. \cite{muchnik2013social}, they found that when they positively treated posts with higher up-vote counts it lead to a significant increase in the likelihood of additional up votes (32\% more likely). 
+On the other hand, they argue negative treatments inspired correction behavior; where some participants wanted to correct what they felt was an incorrect score. 
+They found that this also increased the likelihood of up-voting (88\% more likely); as opposed to the conforming response which would be increased down-votes.
+
+These results suggest that the effects of viewing median ratings can be non-linear and are very context/question dependent.
+Similar to the previous section where we applied non-parametric tests that did not make a strong assumption about the distribution of the data, we propose a information theoretic polynomial function search that does not make strong assumptions about the nature of the relationship.
+
+\subsection{Correction Model}
+Recall that $g_f[j]$ is the final rating for participant j, and $m[j] - g_i[j]$ is the difference between the median and the initial rating.
+We want to find a polynomial function $f$ such that:
+ \begin{equation} f(g_f[j]) 
+ \approx m[j] - g_i[j]
+ \end{equation}
+Let $f\in \mathcal{P}^k$ be a polynomial of degree $k$.
+The square loss of $f$, is the error in predicting $m[j] - g_i[j]$ from $f(g_f[j])$:
+\begin{equation}
+\mathcal{L}(X_c;f,k) = \sum_j ((m[j] - g_i[j]) - f(g_f[j]))^2 
+\end{equation}
+For a given $k$, the best-fit polynomial minimizes this square-loss:
+\begin{equation}
+f^*_k =\arg \min_f \mathcal{L}(X_c;f,k)
+\end{equation}
+For a given $k$, this problem can be solved with least squares.
+To search over the space of polynomial models, we apply a well-studied technique called the Bayesian Information Criterion (BIC) \cite{schwarz1978estimating,burnham2002model}.
+This technique converts the optimization problem into a penalized problem that jointly optimizes over the ``complexity parameter" $k$.
+This penalty can be interpreted as bias towards lower degree models, in other words, an Occam's Razor prior belief. 
+Cross-validation is an alternate method to empirically determine optimal model, and in practice, they give very similar results.
+BIC, however, is derived through maximum likelihood estimate and is not an empirical estimate so the learned model has a notion of optimality conditioned on the BIC prior belief.
+
+Thus, we reformulate the optimization problem in the following way to incorporate the BIC penalty:
+\begin{equation}
+\arg \min_{f,k} |X_c|\log(\mathcal{L}(X_c;f,k)) + k\log(|X_c|)
+\end{equation}
+The resulting optimal polynomial will tell how to correct a final rating to infer the initial one.
+Let q:
+\begin{equation}q(j) = m[j] - f(g_f[j])\end{equation}
+the predicted initial grade, and this value can be the input to our recommendation algorithm.
+
+\subsection{Applying the Corrections}
+There are two ways in which we can apply the correction model to existing recommender systems data.
+First, we can train our correction on all triplets, including ones that did not change, to get a correction that we can then apply to all ratings in the post-learning phase.
+The second way is to estimate the probability that a rating is changed, and if that probability is above a threshold $\alpha$ (eg. 50\%) we can apply the correction.
+With the second way, the correction model is only trained on those triplets where the initial rating is different from the final one.
+To estimate this probability, we can apply a logistic regression model to predict whether or not a rating has been changed from all other ratings.
+Let $c(i,j)$ be 1 if participant j changed his or her rating for issue i and 0 if not. 
+Our feature vector is the vector of all final ratings for that participant $v[j]_f = [g_f^1[j],...,g_f^6[j]]$.
+Then, we can apply this logistic regression model to estimate the probability that $c(i,j) = 1$, using the logistic function:
+ \begin{equation}
+ P[c(i,j) = 1] = \frac{1}{e^{-\beta^Tv[j]_f}}
+ \end{equation}
+We include results from both approaches in our experiments.
+
+\subsection{Prediction Model}
+For the prediction model, we make the dependent variable $m[j] - g_i[j]$ and the independent variable $g_f[j] - g_i[j]$.
+We apply the polynomial regression with the BIC optimization as before, and find an optimal function $f$ such that \begin{equation}f(m[j] - g_i[j]) \approx g_f[j] - g_i[j]\end{equation}
+$f$ is a function of the difference between the initial rating and the median, that predicts the change in rating.
+This model allows us to reason about the nature of the social influence bias in the system.
+For example, if $|f(x)| > |f(-x)|$ for $x > 0$, we know that ratings above the median lead to a larger rating change.
+Additionally, $f'(x)$ tells us how the change varies as the observed difference with the median increases. 
