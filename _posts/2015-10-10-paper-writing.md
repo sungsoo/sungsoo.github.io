@@ -321,3 +321,4 @@ Professor Simon Peyton Jones, Microsoft Research, gives a guest lecture on writi
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/g3dkRsTqdDA" frameborder="0" allowfullscreen></iframe>
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/Hax6GU_v5BA" frameborder="0" allowfullscreen></iframe>
