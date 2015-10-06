@@ -13,13 +13,11 @@ tags: [papers, publications]
 
 ## (1) 일을 다 끝내기 전에라도 미리 논문을 쓴다/쓰기 시작한다.
 
-첫째로 일반적으로 하고있는 프로젝트 전체가 하나의 논문이 되는 것은 아니다. 
+첫째로 일반적으로 하고 있는 프로젝트 전체가 하나의 논문이 되는 것은 아니다. 
 프로젝트와는 별도로 논문을 쓰기 시작하면 어떤 한 부분에 대해 더 집중할 수 있게 된다. 
-(그리고 먼저 시작한 사람이, 전체 기여도와는 관계없이, 보통 그 논문 1저자 먹는다. 젠장. 
-그러므로 먼저 논문을 기획하는 역할을 맡을 것.)
 
-둘째로 논문을 쓰는(계획하는) 과정에서 자신의 생각을 정리할수 있게된다.
-지금 하고 있는 일의 의미가 뭔지.어떤 것을 다른 사람들에게 보여주고 싶은건지. 
+둘째로 논문을 쓰는(계획하는) 과정에서 자신의 생각을 정리할 수 있게 된다.
+지금 하고 있는 일의 의미가 뭔지.어떤 것을 다른 사람들에게 보여주고 싶은 건지. 
 내가 한 일이 남들에게는 어떻게 비치게 되는지. 
 
 > 이 과정에서 지금 자기가 잘못된방향으로 가고 있는 것을 발견하고, 일찍 잘못을 수정할 수 있게 된다.
@@ -33,11 +31,12 @@ tags: [papers, publications]
 
 하지만 그 와중에서 보통 좋은 커멘트들을 많이 건질 수 있다. 
 현재 자기 아이디어의 문제가 무엇인지, 혹은 실험 방법의 문제가무엇인지 나름대로 전문적이고 똑똑한 교수(대학원생)들이 조언을 해준다. 
-만약 이 사람들이 잘못 이해하고 엉뚱한 커멘트를 해댄다면논문이 자신의 아이디어를 정확하게 전달하지 못하고 있는 것이므로, 좀더 이해하기 쉽도록 고쳐 써야 한다.
+만약 이 사람들이 잘못 이해하고 엉뚱한 커멘트를 해댄다면논문이 자신의 아이디어를 정확하게 전달하지 못하고 있는 것이므로, 
+좀더 이해하기 쉽도록 고쳐 써야 한다.
 
 > 그리고 보통 이렇게 두번째 세번째로 작성된 논문은 첫 논문보다 향상되기 마련이다.
 
-## (3) 먼저 핵심이 되는 주요 기여 항목(컨트리뷰션)을 먼저쓴다. 
+## (3) 먼저 핵심이 되는 주요 기여 항목(contribution)을 먼저쓴다. 
 
 단순히 자기가 한 일을 나열해서는 논문이 되지 않는다. 
 
@@ -49,7 +48,7 @@ tags: [papers, publications]
 
 그러므로 위에서 기술한 컨트리뷰션에 집중해서, 필요없는 내용을 넣지 말고 꼭 필요한 내용들이 어떤 식으로, 어떤 순서로 덧붙여 질지를 생각해서 논문을 구성해야 한다.
 
-## (5) 명심할 것은 논문은 자기가 한 일(소프트웨어, 하드웨어)에 대한 상세 사용 설명서가 아니다. 
+## (5) 명심할 것은 논문은 자기가 한 일(S/W, H/W)에 대한 상세 사용 설명서가 아니다. 
 
 > 논문에서 가장 중요한 일은 이것을 잘 모르는 사람에게 주된 아이디어를 전달하는 일이다. 
 
@@ -59,7 +58,7 @@ tags: [papers, publications]
 
 > 본인이 (특히나 시간에 쫒겨가며) 남의 논문 읽을 때 어떻게 하는지 생각해 보면 감이 온다.
 
-## (6)논문의 구조를 잡을 때는 워드나 레이텍말고 파워포인트로 하는 것을 추천한다. 
+## (6)논문의 구조를 잡을 때는 워드나 LaTeX 말고 파워포인트(또는 MindManager)로 하는 것을 추천한다. 
 
 워드나 레이텍을 쓰더라도 일단 문장과 패러그래프를 만드는 것 보다는 *개조식*으로 (Bullet을 이용해서) 내용을 작성하는 것이 스스로 논문 전체 구조를 흩어보는데 편하다.
 즉, 구조를 잡을때는 각 섹션(절)별로 그 세션에서 무슨 이야기를 하고 싶을지를 몇 개의 간단한 문장으로 적는 것이다.
@@ -72,7 +71,9 @@ tags: [papers, publications]
 
 ## (7) 자신이 보통 논문이 읽는 순서대로 구조를 작성한다. 
 
-(즉 스스로 독자를 가정해서) 나같으면 Abstract ->Conclusion -> Introduction ->
+(즉 스스로 독자를 가정해서) 나같으면 
+
+Abstract ->Conclusion -> Introduction ->
 Experimental Results -> RelatedWork -> Main How-To의 순서로 쓰겠다.
 
 ## (8) Abstract를 작성하는 일은 논문 전체의 구조를 잡는 일과 직결된다.
@@ -106,7 +107,7 @@ Abstract에서는 다음의 내용을 대충 다음 비중으로 적는다.
 * 우리 결과에서 평균 40%의 시스템 변경이 X%의 코드 변경만 요구되었다.
 
 
-## (10) Introduction 은 풀려고자 문제를 독자에게 소개하는 자리이다. 
+## (10) Introduction은 풀려고자 문제를 독자에게 소개하는 자리이다. 
 독자들도 바쁜사람이라서 흥미가 없으면 논문을 대충읽게 되니까, 
 여기서 독자의 흥미를 끌어야 한다. 즉, "어떤 문제가 있는데", "이 문제가 왜 중요하고", "나는 어떤식으로 접근한다." + "그러므로 내 기여는 아래와 같다." 의 순으로 쓰게 된다. 
 바쁜사람들은 인트로덕션까지만 읽고, 본문은 쳐다 보지도 않는다.
@@ -303,3 +304,20 @@ Abstract에서는 다음의 내용을 대충 다음 비중으로 적는다.
 (아무도 읽지 않고 알아 주지도 않는다). 
 
 > 약간 높은데에서 시작해서 점점 내려가는 방식을 택하자.
+
+---
+
+## How to Write a Great Research Paper
+
+Professor Simon Peyton Jones, Microsoft Research, gives a guest lecture on writing. 
+
+Seven simple suggestions: 
+
+> don't wait - write, identify your key idea, tell a story, nail your contributions, put related work at the end, put your readers first, listen to your readers.
+
+### Abstract of the talk
+
+Professor Simon Peyton Jones, Microsoft Research, gives a guest lecture on writing. Seven simple suggestions: don't wait - write, identify your key idea, tell a story, nail your contributions, put related work at the end, put your readers first, listen to your readers. Prof. Peyton Jones' lecture contained a lot of question and answer sessions with the audience. These have been removed from this video, cutting the original 50 minute lecture down to 30 minutes.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/g3dkRsTqdDA" frameborder="0" allowfullscreen></iframe>
+
