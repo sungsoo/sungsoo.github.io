@@ -21,7 +21,7 @@ tags: [big data, spark]
 Step 6. To invoke the standalone Python program, issue the following command:
 ```python taxistreams.py
 ```The program has been started and is awaiting Spark Streams to connect and receive the data.
-Step 7. Start a new docker window.
+Step 7. **Start a new docker window.**
 ```docker exec -it bdu_spark bash
 ```Step 8. Start the spark-shell.
 ```$SPARK_HOME/bin/spark-shell
