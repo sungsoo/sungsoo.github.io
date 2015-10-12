@@ -13,7 +13,7 @@ tags: [big data, spark]
 ## Resilient Distributed Datasets (RDD)
 The primary abstraction of Spark is RDD. Remember, there are two types of RDD operations: transformations and actions. Transformations return a pointer to the new RDD. Actions return the value of the operation. RDD transformations are lazy evaluations. This means nothing is processed until an action occurs. Each transformation updates the *direct acyclic graph (DAG)*, which is only executed after an action is called. Due to this inherent behavior, Spark’s applications are fault tolerant. The DAG can be used to rebuild the data within a node.In this lab exercise, you will work with various RDD operations and learn some of the APIs from Scala and Python.
 After completing this hands-on lab, you should be able to:* Create a RDD froman external dataset
-* View the Direct Acyclic Graph(DAG)of an RDD
+* View the Direct Acyclic Graph(DAG) of an RDD
 * Work with various RDD operations including shared variables and key-value pairsAllow 60 minutes to complete this section of lab.
 ## 1.1 Uploading files to the HDFS
 Step 1. Open up a docker terminal. If you closed the terminal from the previous exercise, run the commands to start up the same bdu_spark container:
