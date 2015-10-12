@@ -26,7 +26,10 @@ tags: [big data, spark]
 ```Step 8. Start the spark-shell.
 ```$SPARK_HOME/bin/spark-shell
 ```Step 9. Turn off logging for this shell so that you can see the output of the application:
-```scalaimport org.apache.log4j.Loggerimport org.apache.log4j.Level Logger.getLogger("org").setLevel(Level.OFF) Logger.getLogger("akka").setLevel(Level.OFF)
+```scalaimport org.apache.log4j.Loggerimport org.apache.log4j.Level 
+
+Logger.getLogger("org").setLevel(Level.OFF) 
+Logger.getLogger("akka").setLevel(Level.OFF)
 ```
 Step 10. Import the required libraries. Copy and paste this into the shell.
 ```scalaimport org.apache.spark._import org.apache.spark.streaming._import org.apache.spark.streaming.StreamingContext._
