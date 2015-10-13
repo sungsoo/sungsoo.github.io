@@ -232,13 +232,15 @@ In this section, we run a Spark program to interact with Tachyon. The
 first one is to do a word count on `/LICENSE` file. In `/root/spark`
 folder, execute the following command to start Spark shell.
 
+```scala
     $ ./bin/spark-shell
-
     sc.hadoopConfiguration.set("fs.tachyon.impl", "tachyon.hadoop.TFS")
     var file = sc.textFile("tachyon://localhost:19998/LICENSE")
     val counts = file.flatMap(line => line.split(" ")).map(word => (word, 1)).reduceByKey(_ + _)
     counts.saveAsTextFile("tachyon://localhost:19998/result")
+```
 
+```java
     JavaRDD<String> file = spark.textFile("tachyon://localhost:19998/LICENSE");
     JavaRDD<String> words = file.flatMap(new FlatMapFunction<String, String>()
       public Iterable<String> call(String s) { return Arrays.asList(s.split(" ")); }
@@ -250,12 +252,15 @@ folder, execute the following command to start Spark shell.
       public Integer call(Integer a, Integer b) { return a + b; }
     });
     counts.saveAsTextFile("tachyon://localhost:19998/result");
+```
 
+```python
     file = sc.textFile("tachyon://localhost:19998/LICENSE")
     counts = file.flatMap(lambda line: line.split(" ")) \
                  .map(lambda word: (word, 1)) \
                  .reduceByKey(lambda a, b: a + b)
     counts.saveAsTextFile("tachyon://localhost:19998/result")
+```
 
 The results are stored in `/result` folder. You can verfy the results
 through Web UI or commands. Because `/LICENSE` is in memory, when a new
@@ -276,12 +281,14 @@ info](http://spark.apache.org/docs/latest/programming-guide.html)):
 
 Please try to the following example:
 
+```scala
     sc.hadoopConfiguration.set("fs.tachyon.impl", "tachyon.hadoop.TFS")
     var file = sc.textFile("tachyon://localhost:19998/LICENSE")
     val counts = file.flatMap(line => line.split(" ")).map(word => (word, 1)).reduceByKey(_ + _)
     counts.persist(org.apache.spark.storage.StorageLevel.OFF_HEAP)
     counts.take(10)
     counts.take(10)
+```
 
 You will notice the second time take(10) is much faster than the first
 time because that the counts RDD has been stored OFF_HEAP in Tachyon.
