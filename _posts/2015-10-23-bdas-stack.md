@@ -26,6 +26,7 @@ BDAS consists of the components shown below. Components shown in Blue or
 Green are available for download now. Click on a title to go that
 project’s homepage.
 
+![](http://sungsoo.github.com/images/bdas_stack.png)
 
 <div style="float:left;margin-right:1px;padding:2px;">
 <table style="background-color:#f6f6f6; " width="161">
@@ -136,6 +137,8 @@ table#w3t124e td {
 <ul>
 <li><a href="http://amplab.github.io/ampcrowd" target="_blank">AMPCrowd</a>: A RESTful web service for sending tasks to human workers on crowd platforms like Amazon’s Mechanical Turk. Used by the <a href="http://sampleclean.org" target="_blank">SampleClean</a> project for context-heavy data cleaning tasks.</li>  
 
+
+
 In addition to BDAS, the AMPLab has released additional software
 components useful for processing data:
 
@@ -143,6 +146,7 @@ components useful for processing data:
     for sending tasks to human workers on crowd platforms like Amazon’s
     Mechanical Turk. Used by the [SampleClean](http://sampleclean.org)
     project for context-heavy data cleaning tasks.
+
 
 Roadmap
 -------
