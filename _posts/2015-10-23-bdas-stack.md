@@ -26,7 +26,7 @@ BDAS consists of the components shown below. Components shown in Blue or
 Green are available for download now. Click on a title to go that
 project’s homepage.
 
-![](http://sungsoo.github.com/images/bdas_stack.png)
+[![](http://sungsoo.github.com/images/bdas_stack.png)](http://sungsoo.github.com/images/bdas_stack.png)
 
 <div style="float:left;margin-right:1px;padding:2px;">
 <table style="background-color:#f6f6f6; " width="161">
