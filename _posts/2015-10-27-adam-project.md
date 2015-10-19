@@ -7,7 +7,7 @@ tags: [spark]
 
 ---
 
-ADAM
+ADAM Project
 ====
 
 # Introduction
@@ -45,7 +45,7 @@ $ head /tmp/kmers.adam/part-*
 
 ADAM does much more than just k-mer counting. Running the ADAM CLI without arguments or with `--help` will display available commands, e.g.
 
-```
+```bash
 $ adam-submit
 
      e            888~-_              e                 e    e
