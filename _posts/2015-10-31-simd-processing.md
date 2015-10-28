@@ -14,12 +14,13 @@ tags: [parallel computing]
 
 # Introduction to Computer Architecture 
 
-<div class="level1">
 <ul>
 <li class="level1"><div class="li"> <a href="http://www.ece.cmu.edu/~ece447/s14/lib/exe/fetch.php?media=syllabus-18-447-mutlu-s14.pdf" class="media mediafile mf_pdf" title="syllabus-18-447-mutlu-s14.pdf (332 KB)">Syllabus</a></div>
 </li>
 </ul>
-<div class="table sectionedit7"><table class="inline">
+
+
+<table class="inline">
 	<tbody><tr class="row0">
 		<th class="col0"> Week </th><th class="col1"> Date </th><th class="col2"> Lecture </th><th class="col3"> Readings </th><th class="col4"> Lab </th><th class="col5"> HW </th>
 	</tr>
