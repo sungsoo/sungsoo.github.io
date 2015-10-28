@@ -21,7 +21,7 @@ What is HTAP?
 [![what is htap
 large](http://timoelliott.com/blog/wp-content/uploads/2014/12/what-is-htap-large-608x608.jpg)](http://timoelliott.com/blog/wp-content/uploads/2014/12/what-is-htap-large.jpg)
 
-[HTAP](http://en.wikipedia.org/wiki/Hybrid_Transactional/Analytical_Processing_(HTAP)
+[HTAP](http://en.wikipedia.org/wiki/Hybrid_Transactional/Analytical_Processing_(HTAP))
 stands for Hybrid Transaction / Analytical Processing — and it’s the
 future of business applications.
 
