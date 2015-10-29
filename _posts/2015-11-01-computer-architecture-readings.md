@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Introduction to Computer Architecture 
+title: Computer Architecture Recommended Readings
 date: 2015-11-01
 categories: [computer science]
 tags: [parallel computing]
