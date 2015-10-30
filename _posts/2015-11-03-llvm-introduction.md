@@ -52,7 +52,7 @@ LLVM은 언어에서 독립적인 명령어 집합과 형식 시스템을 갖추
 
 3.1 The LLVM Virtual Instruction Set The common language- and target-independent IR Internal (IR) and external (persistent) representation
 
-3.2A collection of well-integrated libraries Analyses, optimizations, code generators, JIT compiler, garbage collection support, profiling, 
+3.2 A collection of well-integrated libraries Analyses, optimizations, code generators, JIT compiler, garbage collection support, profiling, 
 
 3.3 Acollection of tools built from the libraries Assemblers, automatic debugger, linker, code generator, compiler driver, modular optimizer, 
 
