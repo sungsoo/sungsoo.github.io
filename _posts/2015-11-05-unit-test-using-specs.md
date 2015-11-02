@@ -20,7 +20,7 @@ tags: [developments]
 이번 강좌에서는 Specs를 사용해 테스트하는 법을 다룬다. 
 Specs는 스칼라용 동작 주도 설계(*Behavior-Driven Design*, BDD) 프레임워크이다.
 
-Specifcation(명세 클래스) 확장하기
+Specification(명세 클래스) 확장하기
 ----------------------------------
 
 코드부터 살펴보자.
