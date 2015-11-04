@@ -17,7 +17,6 @@ tags: [parallel computing]
 # Extreme Scale Computing
 ## Agenda 2014
 
-<div class="entry-content">
 <table border="0" cellpadding="0" cellspacing="0" width="709">
 <tbody>
 <tr>
