@@ -1,6 +1,6 @@
 ---
 layout: post
-title: MySQL Installation
+title: MySQL Installation on Ubuntu
 date: 2015-11-18
 categories: [computer science]
 tags: [data management]
