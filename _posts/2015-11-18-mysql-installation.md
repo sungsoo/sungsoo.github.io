@@ -34,7 +34,7 @@ tags: [data management]
 
 	 use mysql;
 
-### (3) 권한부어
+### (3) 권한부여
 
 	GRANT ALL PRIVILEGES ON *.* to 'root'@'%' IDENTIFIED BY 'password';
 
@@ -62,7 +62,9 @@ bind-address = 127.0.0.1 이부분을 주석처리
 
 ### 6) 한글 설정
 
-	sudo vi /etc/mysql/my.cnf 열어 
+	sudo vi /etc/mysql/my.cnf 
+
+열어서 아래와 같이 편집한다. 
 
 
 ```
