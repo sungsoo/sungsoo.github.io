@@ -114,3 +114,9 @@ innodb_log_buffer_size = 8M
 innodb_flush_log_at_trx_commit = 1
 innodb_lock_wait_timeout = 50
 ```
+
+## JDBC 설정 
+
+	$ wget http://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.27.tar.gz && tar xvzf mysql*.gz
+	$ cp mysql-connector-java-5.1.27/*.jar $HIVE_HOME/lib
+
