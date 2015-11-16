@@ -7,7 +7,7 @@ tags: [data management]
 
 ---
 
-# MySQL Installation
+# MySQL Installation on Ubuntu
 
 
 ## 1) mysql 검색
