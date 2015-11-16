@@ -1,13 +1,13 @@
 ---
 layout: post
-title: MySQL Installation
+title: MySQL Installation on Mac OS X
 date: 2015-11-02
 categories: [computer science]
 tags: [data management]
 
 ---
 
-# MySQL Installation
+# MySQL Installation on Mac OS X
 
 <p>설치는 간단하다. <a href="http://dev.mysql.com/downloads/mysql/">MySQL 홈페이지</a>에서 .dmg 파일을 받아서 깔면 된다. 그런데 요세미티로 업그레이드 한 사람들은 그렇게 간단하진 않다! 일단 현재(2014.11월) MySQL 홈페이지에서 제공하는 설치파일이 10.9 버전까지만 있다. 나도 살짝 당황했다. 어랍쇼? 10.10이 없네? 요세미티에선 안되는건가? 혹시나 싶어 10.9 버전을 받아서 설치했더니… 뚜둥! 설치오류<img src="http://i0.wp.com/miconblog.com/wp-content/uploads/2014/11/스크린샷-2014-11-20-오전-1.12.41.png?resize=648%2C330" alt="<img src=" http:="" i0.wp.com="" miconblog.com="" wp-content="" uploads="" 2014="" 11="" 스크린샷-2014-11-20-오전-1.12.41.png?resize="648%2C330&quot;" class="aligncenter size-full wp-image-1664" height="330" width="648">” /&gt; 그래서 나는 요세미티에선 MySQL 안깔린다! 라는 매우 성급한 결론을 내버렸다. 진짜 알깔리는건가? 설마~~ 그럴리가!! 그냥 10.8 버전 설치파일로 깔면 된다. ㅎㅎㅎ 뭐냐? -_-;;;;</p>
 <p>이때 설치되는 경로는 아래와 같다.</p>
