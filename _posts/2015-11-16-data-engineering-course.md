@@ -15,7 +15,7 @@ tags: [data management]
 <tbody>
 <tr style="background: rgb(182, 203, 235) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-origin: initial; -moz-background-inline-policy: initial;"><td>Week</td><td>Date</td><td>Topic</td><td>Reference Material</td></tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td>1</td><td>08-24</td><td>Introduction and overview</td>
@@ -31,7 +31,7 @@ tags: [data management]
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; -moz-background-clip: 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: 
 initial; -moz-background-origin: initial; -moz-background-inline-policy: 
 initial;"><td></td><td>08-26</td><td>
 Introduction to parallel computing with Spark</td>
@@ -40,19 +40,19 @@ Introduction to parallel computing with Spark</td>
 <a href="http://www.cs.duke.edu/courses/fall15/compsci290.1/Lectures/SparkIntro.pdf">pdf</a>
 </td></tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; -moz-background-clip: 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: 
 initial; -moz-background-origin: initial; -moz-background-inline-policy: 
 initial;"><td>2</td><td>08-31</td> <td>Introduction to parallel computing with Spark (contd.)</td>
 <td>
 </td></tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; -moz-background-clip: 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: 
 initial; -moz-background-origin: initial; -moz-background-inline-policy: 
 initial;"><td></td><td>09-02</td> <td>BTrace tutorial</td>
 <td>
 </td></tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; -moz-background-clip: 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: 
 initial; -moz-background-origin: initial; -moz-background-inline-policy: 
 initial;"><td>3</td><td>09-07</td> <td>Deep dive into techniques for parallel execution</td>
 <td>
@@ -62,7 +62,7 @@ initial;"><td>3</td><td>09-07</td> <td>Deep dive into techniques for parallel ex
 
 
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; -moz-background-clip: 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: 
 initial; -moz-background-origin: initial; -moz-background-inline-policy: 
 initial;"><td></td><td>09-09</td> <td>
 Deep dive into techniques for parallel execution (contd.)
@@ -73,7 +73,7 @@ Deep dive into techniques for parallel execution (contd.)
 </td></tr>
 
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td>4</td><td>09-14</td><td>Introduction to the MapReduce computation model</td>
@@ -84,7 +84,7 @@ Deep dive into techniques for parallel execution (contd.)
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td></td><td>09-16</td><td>How MapReduce works</td>
@@ -94,7 +94,7 @@ Deep dive into techniques for parallel execution (contd.)
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td>5</td><td>09-21</td><td>How MapReduce works (contd.)</td>
@@ -104,7 +104,7 @@ Deep dive into techniques for parallel execution (contd.)
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td></td><td>09-23</td><td>Data Partitioning and Assignment</td>
@@ -113,7 +113,7 @@ Chapter 2 from Foundations article
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td>6</td><td>09-28</td><td>Introduction to Amazon Web Services</td>
@@ -121,7 +121,7 @@ Chapter 2 from Foundations article
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td></td><td>09-30</td><td>Midterm 1</td>
@@ -129,7 +129,7 @@ Chapter 2 from Foundations article
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td>7</td><td>10-05</td><td>SQL Query Processing</td>
@@ -139,7 +139,7 @@ Chapter 2 from Foundations article
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td></td><td>10-07</td><td>SQL Query Processing (contd.)</td>
@@ -149,7 +149,7 @@ Chapter 2 from Foundations article
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td>8</td><td>10-12</td><td>Fall Break</td>
@@ -157,7 +157,7 @@ Chapter 2 from Foundations article
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td></td><td>10-14</td><td>Pipelined Query Execution</td>
@@ -168,7 +168,7 @@ Chapter 2 from Foundations article
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td>9</td><td>10-19</td><td>SQL Query Plan Selection</td>
@@ -178,7 +178,7 @@ Chapter 2 from Foundations article
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td></td><td>10-21</td><td>SQL Query Plan Selection (contd.)</td>
@@ -188,7 +188,7 @@ Chapter 2 from Foundations article
 </td>   
 </tr>
 
-<tr style="background: rgb(102, 153, 204) none repeat scroll 0% 50%; 
+<tr style="background: rgb(255, 255, 255) none repeat scroll 0% 50%; 
 -moz-background-clip: initial; -moz-background-origin: initial; 
 -moz-background-inline-policy: initial;">
 <td>10</td><td>10-26</td><td>Data Stream Processing</td>
