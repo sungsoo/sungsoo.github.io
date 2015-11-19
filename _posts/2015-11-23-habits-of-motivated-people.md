@@ -10,6 +10,10 @@ tags: [presentation]
 
 # 12 Habits of Extraordinarily Motivated People
 
+자신의 능력에 대한 강한 자신감을 가지고 보다 높은 목표를 향해 끊임없이 도전하는 사람들이 있다. 
+
+한마디로 성취동기가 매우 강한 사람들이다. 아래에 이들이 공통적으로 가지고 있는 12가지 습관에 대해 소개한다.
+
 ## 1. 내적으로 동기부여 되어 있다 (They’re internally motivated)
 그들을 목표를 향해 끊임없이 움직이게 하는 힘의 근원은 ‘내적 욕구(intrinsic desire)’다. 그들은 누구의 강요에 의해서가 아니라 내적 동기에 의해 새로운 도전에 나서며 이를 위해 스스로 배우고 탐험한다.
 
