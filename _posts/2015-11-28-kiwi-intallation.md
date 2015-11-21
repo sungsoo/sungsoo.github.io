@@ -9,7 +9,7 @@ tags: [developments]
 
 # KIWI Installation
 
-## Environments Variables
+## 환경변수 설정
 
 KIWI_HOME/conf/kiwi-env.sh 에 아래의 필수 환경 변수를 설정해 준다. 
 
