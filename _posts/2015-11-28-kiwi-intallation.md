@@ -34,6 +34,11 @@ start-kiwi.sh를 실행하여 키위를 기동한다. ```$KIWI_HOME/bin/start
 
 ### MySQL Database 설정
 
+```bash
+rose:~sungsoo$ mysql.server start
+rose:~sungsoo$ mysql -u root
+```
+
 ```xml
 mysql> create user 'kiwi'@'localhost' identified by 'kiwi'; Query OK, 0 rows affected (0.00 sec)mysql> create database kiwi; Query OK, 1 row affected (0.00 sec)mysql> grant all on kiwi.* to 'kiwi'@'localhost'; Query OK, 0 rows affected (0.01 sec)```
 
