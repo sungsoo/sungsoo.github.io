@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Building Postgresql on OS X
+title: Main Memory and Streaming Databases
 date: 2015-12-14
 categories: [computer science]
 tags: [data management, papers]
@@ -13,7 +13,7 @@ tags: [data management, papers]
 
 ---
 
-# Main Memory and Streaming Databases
+# Topics in Main Memory and Streaming Databases
 
 ## Main Memory Databases
 
