@@ -19,3 +19,18 @@ tags: [data management]
 
 
 
+
+## Need for Speed: How In-Memory Changes Everything
+
+The Briefing Room with Robin Bloor and GridGain
+
+Being faster than your competitors has always been valuable, but in most industries these days, only the fastest will thrive. That's where in-memory computing comes into play. Whether for Big Data Analytics, or for high-speed transactional systems, in-memory technology can transform business processes. The big questions will be: how and where should this technology be applied?
+
+Check out this episode of The Briefing Room to learn from veteran database Analyst Robin Bloor, who will explain how in-memory computing can fundamentally change the way business is done. He'll show how in-memory technology can improve performance by magnitudes of order, thereby creating significant competitive advantage. Bloor will be briefed by Nikita Ivanov of GridGain, who will tout his company's products, including their Big Data Grid Edition which offers full integration with the Hadoop ecosystem, using either HDFS or HBase.
+
+Live Webcast July 17, 2012
+
+[http://insideanalysis.com](http://insideanalysis.com)
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/fh46ZGIkwqo" frameborder="0" allowfullscreen></iframe>
+
