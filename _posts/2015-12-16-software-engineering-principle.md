@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Principle 1
+title: Software Engineering Principle 1
 date: 2015-12-16
 categories: [computer science]
 tags: [software engineering]
