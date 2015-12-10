@@ -7,6 +7,8 @@ tags: [software engineering]
 
 ---
 
+
+
 # Principle 1: Quality is #1
 
 
