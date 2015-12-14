@@ -22,6 +22,7 @@ Concurrent computation on uniprocessor and multiprocessor architectures have man
 
 Our textbook is [The Art of Multiprocesor Programming, Revised Print](http://www.amazon.com/Art-Multiprocessor-Programming-Revised-Reprint/dp/0123973376/ref=sr_1_3?s=books&ie=UTF8&qid=1344803864&sr=1-3), by Maurice Herlihy and Nir Shavit. Students will be able to provide comments and feedback on it using MIT's NB. The textbook is also available to students through the Brown University Library website.
 
+[CSCI 1760-FALL 2012](http://www.brown.edu/cis/sta/dev/herlihy_csci1760_fa12/#vid)
 
 ## Course Information
 
