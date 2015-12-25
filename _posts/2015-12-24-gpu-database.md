@@ -134,7 +134,7 @@ big corporations, gaining even more adoption in the big data market.
 
  
 
-In comes the GPU (Graphic Processing Unit)
+In comes the GPU (Graphics Processing Units)
 ------------------------------------------
 
 Over the past decade, graphics processors have made leaps and bounds and
