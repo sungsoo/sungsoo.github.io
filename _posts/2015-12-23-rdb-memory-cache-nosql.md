@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Comparing Relational Databases, Memory Cache, and NoSQL Databases
+title: Comparing Relational Databases, Memory Cache, and NoSQL
 date: 2015-12-23
 categories: [computer science]
 tags: [big data]
