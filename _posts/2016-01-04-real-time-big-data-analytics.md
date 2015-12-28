@@ -55,6 +55,9 @@ IDC 관계자는 "빅데이터 제품과 서비스를 제공하는 기업들은 
 * 수만 컬럼의 데이터 수용이 가능한 컴럼(*Columnar*) 기반
 * 리눅스 기반의 표준 하드웨어(H/W) 사양으로 저렴한 x86, 가상화 머신에 설치 가능한 낮은 TCO
 
+### ParStream: Real-time Big Data Analytics in Telecommunications
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/D2Qry6Bg3Rw" frameborder="0" allowfullscreen></iframe>
 
 ## 대용량 데이터 1초 이내 분석 가능
 
@@ -88,6 +91,11 @@ IDC 관계자는 "빅데이터 제품과 서비스를 제공하는 기업들은 
 제조분야의 독일 지멘스(SIEMENS) 가스터빈 모니터링에 파스트림 적용 후 가스터빈 당 100Hz의 5,000개 센서를 통해 시간당 18억 건의 데이터를 적재하고 실시간 분석을 실시해 설비의 피로도 예측이 가능해졌고 정비 효율성이 향상 되었다. 
 
 에너지 분야의 중국 인비전(ENVISION) 풍력발전 모니터링 시스템의 경우 20TB 이상의 Historical data에 대한 분석을 포함하여 20,000대의 풍력터빈에서 발생하는 센서 데이터에 대한 연속적인 실시간 모니터링을 통해 연간 15%의 효율 증가로 1억 5,800달러 상당의 경제적 효과를 얻었다. 
+
+### IoT Data Analytics
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/j_4YeOprcX8" frameborder="0" allowfullscreen></iframe>
+
 
 ## MPREIS, 파스트림 적용 후 4억 건 분석에서 500억 건 실시간 분석 가능
 리테일 분야 오스트리아 엠피알리스(MPREIS)사의 POS 정보 분석 시스템의 경우 기존 RDBMS에서는 4억 건을 데이터분석 하였으나 파스트림 적용 후 500억 건의 판매정보를 실시간으로 분석할 수 있었다. 또한, 기존 시스템에서는 과거 2주치 데이터를 분석하였으나 파스트림 적용 후 과거 6개월 데이터를 분석할 수 있었다. 
