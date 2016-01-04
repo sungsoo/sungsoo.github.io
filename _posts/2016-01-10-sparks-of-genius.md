@@ -14,12 +14,14 @@ By Robert & Michele Root-Bernstein.
 ## Chapter 1 – Rethinking Thinking
 
 Invention presupposes imagination. Einstein once revealed to his friend,
-“The words of the language, as they are written or spoken, do not seem
-to play any role in my mechanism of thought” Some scientists insist that
-thinking in feelings and mental images can be rationally manipulated.
 
-MIT Prof. Richard Feynman (Nobel Prize winner) told once, “Mathematics
-is the form in which we express our understanding of nature, but it is
+> “The words of the language, as they are written or spoken, do not seem
+to play any role in my mechanism of thought” 
+
+Some scientists insist that thinking in feelings and mental images can be rationally manipulated.
+
+MIT Prof. Richard Feynman (Nobel Prize winner) told once, 
+> “Mathematics is the form in which we express our understanding of nature, but it is
 not the content of that understanding”
 
 In Creating minds and Frames of mind, scientists are logico-mathamatical
@@ -29,12 +31,12 @@ intrapersonal thinkers and politicians as interpersonal thinkers.
 Poincre (greatest mathematician in19th century) once said, “it is by
 logic we prove, but by intuition that we discover...”
 
-French physician Armand Trousseau agreed, “All science touches on art;
-all art has its scientific side. The worst scientist is he who is not an
-artist; the worst artist is he who is no scientist.
+French physician Armand Trousseau agreed, 
+> “All science touches on art; all art has its scientific side. The worst scientist is he who is not an artist; the worst artist is he who is no scientist.
 
-Sculptor Naum Gabo once wrote. “Every great scientist has experiences a
-moment when the artist in him saved the scientist”
+
+Sculptor Naum Gabo once wrote. 
+> “Every great scientist has experiences a moment when the artist in him saved the scientist”
 
 Various professions including medicine are beginning to recognize
 intuition as a necessary part of disciplinary thinking.
