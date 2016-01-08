@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Source compilation on OS X
+title: MonetDB Source compilation on OS X
 date: 2016-01-13
 categories: [computer science]
 tags: [data management, htap]
@@ -8,7 +8,7 @@ tags: [data management, htap]
 ---
 
 
-# Source compilation on OS X
+# MonetDB Source compilation on OS X
 
 ## Install Xcode
 
