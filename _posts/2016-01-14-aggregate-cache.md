@@ -14,6 +14,7 @@ The *aggregate cache* leverages the concept of the *main-delta architecture* in 
 
 ![](http://sungsoo.github.com/images/aggregate-cache.png)
 
+
 In the general main-delta architecture, *records are not updated in place*. 
 Instead, the updated record is inserted in the delta partition whereas the old record in the main (or delta) partition is *invalidated*. 
 Other database implementations with a *delta storage* or *differential buffers* such as C-Store, Sybase IQ, MonetDB/X100, Hyrise, or memoryoptimized tables in SQL Server handle updates very similarly to the mechanism implemented in SAP HANA. During the next merge, all invalidated records can either be removed from the main storage or kept so that temporal query processing on historical data can be supported. To handle invalidations in the main partition, we apply a *main compensation* process as described in Section 2.2.
