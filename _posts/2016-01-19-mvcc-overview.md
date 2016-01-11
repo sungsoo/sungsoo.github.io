@@ -7,35 +7,15 @@ tags: [data management, htap]
 
 ---
 
+## Article Source
+* Title: [MVCC Part 1: An Overview]()
+* Authors: Trek Palmer
+
+---
 
 
 MVCC Part 1: An Overview 
 ------------------------
-
-Greetings, technically-minded nuonians! I am Trek Palmer and I am one of
-the engineers here at nuodb. I spend most of my time implementing and
-debugging the atom layer of nuodb. For the last year I’ve been living
-and breathing distributed transactional consistency. Recently, I’ve had
-the opportunity to engage directly with customers and users of nuodb and
-one of the questions that routinely arises is how we maintain
-consistency in the face of ridiculous numbers of updates on multiple
-nodes simultaneously. The answer is, in fact, that we have an
-implementation of Multi-Version Concurrency Control (MVCC) that works in
-a distributed context. However to fully appreciate that, one must have a
-decent handle of MVCC.
-
-I am a big concurrency nerd, and I also used to be a teacher so I jump
-at the chance to explain technical things. Therefore, I’m going to start
-my blogging off by posting a series of primers on MVCC. First I will
-just describe MVCC abstractly, and then I’ll dive into how nuodb
-leverages MVCC semantics to implement a fully transactional distributed
-database. Therefore, without further ado I’ll introduce MVCC.
-
- 
--
-
-**Whither MVCC?**
------------------
 
 Databases are simple souls. They want to ingest your data, cherish it,
 and return it to you (the programmer) in whatever form you demand. For
