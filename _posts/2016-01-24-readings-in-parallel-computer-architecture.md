@@ -10,10 +10,6 @@ tags: [parallel computing]
 
 # Readings in Parallel Computer Architecture
 
-<h3 class="sectionedit2" id="reading_list_in_reverse_order">Reading List (in reverse order)</h3>
-<div class="level3">
-
-</div>
 
 <h4 id="section1232014">12/3/2014</h4>
 <div class="level4">
