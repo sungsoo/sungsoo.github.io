@@ -10,21 +10,6 @@ tags: [parallel computing]
 
 # Readings in Parallel Computer Architecture
 
-<div class="level2">
-
-<p>
-<strong>Please submit your paper reviews <a href="http://safari2.ece.cmu.edu/18742-f14/submissions/" class="urlextern" target="_blank" title="http://safari2.ece.cmu.edu/18742-f14/submissions/" rel="nofollow">here</a>.</strong> <br>
-
-Please create your account as soon as possible so that we can send you the paper for review. If you have any problem with the website, please let me know. (Send me an email at camellyx@gmail.com) <br>
-
-</p>
-
-<p>
-Note that the reviews are due at 11:59 PM on the due date.
-</p>
-
-</div>
-
 <h3 class="sectionedit2" id="reading_list_in_reverse_order">Reading List (in reverse order)</h3>
 <div class="level3">
 
