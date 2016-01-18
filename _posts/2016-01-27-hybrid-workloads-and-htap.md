@@ -11,6 +11,7 @@ tags: [data management, htap]
 
 ## Article Source
 * Title: [HYBRID WORKLOADS AND HTAP](http://www.nuodb.com/use-cases/hybrid-workloads-HTAP)
+* Authors: Barry Devlin
 
 ---
 
