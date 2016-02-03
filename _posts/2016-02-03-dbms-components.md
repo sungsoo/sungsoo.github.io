@@ -1,7 +1,7 @@
 ---
 layout: post
 title: DBMS Components 
-date: 2016-02-04
+date: 2016-02-03
 categories: [computer science]
 tags: [data management]
 
