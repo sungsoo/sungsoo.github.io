@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Dictionary-based Order-preserving String Compression 
-date: 2016-02-05
+date: 2016-02-04
 categories: [computer science]
 tags: [data management]
 
