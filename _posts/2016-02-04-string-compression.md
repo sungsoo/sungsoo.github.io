@@ -7,7 +7,6 @@ tags: [data management]
 
 ---
 
-
 # Dictionary-based Order-preserving String Compression for Main Memory Column Stores
 
 ## Abstract
