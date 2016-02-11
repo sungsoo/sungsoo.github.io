@@ -9,7 +9,7 @@ tags: [profile]
 
 ## Article Source
 * Title: Search Inside Yourself
-* Authors: 차드 멍 탄
+* Authors: Chade-Meng Tan
 
 ---
 
