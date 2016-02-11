@@ -80,9 +80,9 @@ In a *row-based index*, the data in the Employee table is stored in one or more 
 
 In a *column-based index*, the data in the Employee table is stored in separate pages for each of the columns, as shown in Figure 2.
 
-<p><img src="http://logicalread.solarwinds.com/media/402772/nw0002-y.jpg" alt="Nw 0002-y" height="158" width="397"></p>
+<img src="http://logicalread.solarwinds.com/media/402772/nw0002-y.jpg" alt="Nw 0002-y" height="158" width="397">
 
-<p>Performance advantages in columnstore indexes are possible by leveraging the VertiPaq compression technology, which enables large amounts of data to be compressed in-memory. This in-memory compressed store reduces the number of disk reads and increases buffer cache hit ratios because only the smaller column-based data pages that need to satisfy a query are moved into memory.</p>
+Performance advantages in columnstore indexes are possible by leveraging the VertiPaq compression technology, which enables large amounts of data to be compressed in-memory. This in-memory compressed store reduces the number of disk reads and increases buffer cache hit ratios because only the smaller column-based data pages that need to satisfy a query are moved into memory.</p>
 <p>For wide tables, such as those commonly found in data warehouses, columnstore indexes come in handy as you essentially reduce the amount and size of data needed to be accessed for any given query. For example, consider the following query:
 
 ```sql
