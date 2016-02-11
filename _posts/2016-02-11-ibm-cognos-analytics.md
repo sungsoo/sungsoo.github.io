@@ -1,7 +1,7 @@
 ---
 layout: post
 title: IBM Cognos Analytics 
-date: 2016-02-06
+date: 2016-02-11
 categories: [computer science]
 tags: [data management]
 
