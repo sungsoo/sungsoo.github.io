@@ -88,7 +88,7 @@ In a *column-based index*, the data in the Employee table is stored in separate 
 ```sql
 SELECT FirstName, LastName,
 FROM EmployeeTable
-WHERE HireDate &gt;= ‘1/1/2010’
+WHERE HireDate >= '1/1/2010'
 ```
 
 A *column-store index* is more efficient for this example because only one smaller-sized (*compressed*) data page is needed to satisfy the query. In this case, the columnstore index for the HireDate column satisfies the WHERE clause. A row-based index is not as efficient because it may need to load one or more larger-sized data pages into memory and read the entire rows, including columns not needed to satisfy the query. A larger-sized data page and additional unnecessary columns increases data size, memory usage, disk reads, and overall query time. Imagine if this table had 20 or more columns!
