@@ -2,7 +2,7 @@
 layout: post
 title: Publications
 date: 2013-12-09 
-categories: [My profile]
+categories: [my profile]
 tags: [publications]
 
 ---
