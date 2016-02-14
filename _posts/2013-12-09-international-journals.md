@@ -7,7 +7,9 @@ tags: [publications]
 
 ---
 
-### International Journals
+# Publications
+
+## International Journals
 
 [1]	Y.M. Kang, H.G. Cho, **S.S Kim**, Plausible and Realtime Rendering of Scratched Metal by Deforming MDF of Normal Mapped Anisotropic Surface, *Journal of WSCG*, Vol 19, Number 1-3, pp.101-109, 2011.  
 [2]	**S. S Kim**, S. W. Nam, I. H. Lee, Fast Ray-Triangle Intersection Computation Using Reconfigurable Hardware, *Lecture Notes in Computer Science*(MIRAGE 2007).  
@@ -17,14 +19,15 @@ tags: [publications]
 [6]	**S. S. Kim**, S. K. Choe, Stylized Silhouette Rendering using Progressive Meshes, *Journal of WSCG*, Vol 10, Number 3, pp. 51-58, Feb. 2002.
 
 
-###Domestic Journals
+## Domestic Journals
+
 [1] **김성수**, 손지연, 박준희, 디지털 오일필드에서 빅데이터 분석기반 IT융합 기술 동향, *전자통신동향분석*, 28권 4호 (통권 142), 2013.  
 [2] **김성수**, 조충래, 클라우드기반 멀티스크린 서비스 및 기술 동향, *한국스마트미디어학회 학회지*, 2012.   
 [3] J. H. Lee, **S. S. Kim**, H. J. Park, Comparing BRDF Models: Representation of Measured BRDF, *Transactions on SCCE*, Vol. 14, No. 5, 2009.  
 [4] **S. S. Kim**, K. H. Kim, K. O. Kim, Web-Based Media GIS Architecture using the Virtual World Mapping Technique, *Korean Journal of Remote Sensing*, Vol. 19, No. 1, pp. 71-80, 2003.  
 [5] **S. S. Kim**, S. H. Lee, K. O. Kim, J. H. Lee, *Video GIS using Virtual World Mapping Technique, Journal of the Korean Geo-spatial Information Society*, Sep. 2002. (in Korean)
 
-###International Conferences
+## International Conferences
 
 [1] **S. S. Kim**, C.L. Cho, Multiscreen-based Gaming Services using Multi-view Rendering with Different Resolutions, *MOBILITY 2012, The Second International Conference on Mobile Services, Resources, and Users*, 2012.  
 [2] **S. S. Kim**, K. I. Kim, J.H. Won, Multi-view Rendering Approach for Cloud-based Gaming Services, *The Third International Conference on Advances in Future Internet 2011*, Aug. 2011. [**Best Paper Award**]  
@@ -56,7 +59,7 @@ tags: [publications]
 [29] **S. S. Kim**, Y. S. Kim, M. G. Cho, H. G. Cho, A Geometric Compression Algorithm for Massive Terrain Data Using Delaunay Triangulation, In *Proceedings of WSCG'99*, pp. 124-131, Feb. 1999.   
 [30] J. K. Park, Y. M. Kang, **S. S. Kim**, H. G. Cho, Expressive Character Animation with Energy Constraints, In *Proceedings of COMPUGRAPHICS'97*, Dec. 1997.
 
-###Domestic Conferences (in Korean)
+## Domestic Conferences (in Korean)
 [1] 김성수, 조충래, 손지연, P2P 환경에서 스마트 앱간 협업을 위한 논리적 통신기반 미들웨어, 한국컴퓨터그래픽스학회 2014 학술대회 학술발표집, 2014.  
 [2] 김성수, 조충래, 손지연, 멀티스크린 서비스를 위한 서로 다른 해상도를 제공하는 다시점 렌더링, 한국컴퓨터그래픽스학회 2013 학술대회 학술발표집, 2013.  
 [3] 김성수, 조충래, 손지연, 김진태, 박광로, 스마트 디바이스 협업 미들웨어 설계 및 구현, 한국 CAD/CAM 학회 논문집, 2013.  
