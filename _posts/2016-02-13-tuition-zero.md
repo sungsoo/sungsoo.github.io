@@ -2,7 +2,7 @@
 layout: post
 title: 등록금 0원
 date: 2016-02-13
-categories: [arta and music]
+categories: [arts and music]
 tags: [presentation]
 
 ---
