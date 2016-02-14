@@ -1,7 +1,7 @@
 ---
 layout: post
 title: The 5 Leadership Styles
-date: 2016-02-13
+date: 2016-02-14
 categories: [liberal arts]
 tags: [presentation]
 
