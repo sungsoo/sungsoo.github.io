@@ -12,11 +12,12 @@ tags: [data management, htap]
 
 ---
 
+
 # Peloton Architecture
 
 ## Introduction
 
-Peloton is an in-memory DBMS designed for real-time analytics. It can handle both fast ACID transaction and complex analytical queries on the same database. 
+Peloton is an *in-memory DBMS* designed for *real-time analytics*. It can handle both *fast ACID transaction* and *complex analytical queries* on the same database. 
 
 This page describes the high level architecture of Peloton. As Peloton's frontend is based on the Postgres DBMS, please pay attention to similar concepts and data structures in the two systems. For instance, we use both Postgres and our own Peloton query plan nodes in our system.
 
