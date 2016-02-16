@@ -154,7 +154,7 @@ additional contexts, but all other contexts should be direct or indirect
 children of one of these contexts to ensure they are not leaked in event
 of an error.
 
-TopMemoryContext --- this is the actual top level of the context tree;
+*TopMemoryContext* --- this is the actual top level of the context tree;
 every other context is a direct or indirect child of this one.  Allocating
 here is essentially the same as "malloc", because this context will never
 be reset or deleted.  This is for stuff that should live forever, or for
@@ -164,7 +164,7 @@ the context management nodes for memory contexts themselves.  Avoid
 allocating stuff here unless really necessary, and especially avoid
 running with CurrentMemoryContext pointing here.
 
-PostmasterContext --- this is the postmaster's normal working context.
+*PostmasterContext* --- this is the postmaster's normal working context.
 After a backend is spawned, it can delete PostmasterContext to free its
 copy of memory the postmaster was using that it doesn't need.
 (Anything that has to be passed from postmaster to backends is passed
@@ -172,7 +172,7 @@ in TopMemoryContext.  The postmaster has only TopMemoryContext,
 PostmasterContext, and ErrorContext --- the remaining top-level contexts
 are set up in each backend during startup.)
 
-CacheMemoryContext --- permanent storage for relcache, catcache, and
+*CacheMemoryContext* --- permanent storage for relcache, catcache, and
 related modules.  This will never be reset or deleted, either, so it's
 not truly necessary to distinguish it from TopMemoryContext.  But it
 seems worthwhile to maintain the distinction for debugging purposes.
@@ -182,7 +182,7 @@ storage associated with a relcache entry; that way we can free rule
 parsetrees and so forth easily, without having to depend on constructing
 a reliable version of freeObject().)
 
-MessageContext --- this context holds the current command message from the
+*MessageContext* --- this context holds the current command message from the
 frontend, as well as any derived storage that need only live as long as
 the current message (for example, in simple-Query mode the parse and plan
 trees can live here).  This context will be reset, and any children
@@ -191,7 +191,7 @@ is kept separate from per-transaction and per-portal contexts because a
 query string might need to live either a longer or shorter time than any
 single transaction or portal.
 
-TopTransactionContext --- this holds everything that lives until end of the
+*TopTransactionContext* --- this holds everything that lives until end of the
 top-level transaction.  This context will be reset, and all its children
 deleted, at conclusion of each top-level transaction cycle.  In most cases
 you don't want to allocate stuff directly here, but in CurTransactionContext;
@@ -200,7 +200,7 @@ status across multiple subtransactions.  Note: this context is NOT cleared
 immediately upon error; its contents will survive until the transaction block
 is exited by COMMIT/ROLLBACK.
 
-CurTransactionContext --- this holds data that has to survive until the end
+*CurTransactionContext* --- this holds data that has to survive until the end
 of the current transaction, and in particular will be needed at top-level
 transaction commit.  When we are in a top-level transaction this is the same
 as TopTransactionContext, but in subtransactions it points to a child context.
@@ -216,12 +216,12 @@ have dangling pointers leading to a crash at top-level commit.  An example of
 data kept here is pending NOTIFY messages, which are sent at top-level commit,
 but only if the generating subtransaction did not abort.
 
-PortalContext --- this is not actually a separate context, but a
+*PortalContext* --- this is not actually a separate context, but a
 global variable pointing to the per-portal context of the currently active
 execution portal.  This can be used if it's necessary to allocate storage
 that will live just as long as the execution of the current portal requires.
 
-ErrorContext --- this permanent context is switched into for error
+*ErrorContext* --- this permanent context is switched into for error
 recovery processing, and then reset on completion of recovery.  We arrange
 to have a few KB of memory available in it at all times.  In this way, we
 can ensure that some memory is available for error recovery even if the
@@ -339,6 +339,7 @@ creating other types has never gone away entirely, so we retain this API.)
 
 A memory context is represented by an object like
 
+```c
 typedef struct MemoryContextData
 {
     NodeTag        type;           /* identifies exact kind of context */
@@ -348,6 +349,7 @@ typedef struct MemoryContextData
     MemoryContextData *nextchild;  /* next child of same parent */
     char          *name;           /* context name (just for debugging) */
 } MemoryContextData, *MemoryContext;
+```
 
 This is essentially an abstract superclass, and the "methods" pointer is
 its virtual function table.  Specific memory context types will use
@@ -355,6 +357,7 @@ derived structs having these fields as their first fields.  All the
 contexts of a specific type will have methods pointers that point to the
 same static table of function pointers, which look like
 
+```c
 typedef struct MemoryContextMethodsData
 {
     Pointer     (*alloc) (MemoryContext c, Size size);
@@ -363,6 +366,7 @@ typedef struct MemoryContextMethodsData
     void        (*reset) (MemoryContext c);
     void        (*delete) (MemoryContext c);
 } MemoryContextMethodsData, *MemoryContextMethods;
+```
 
 Alloc, reset, and delete requests will take a MemoryContext pointer
 as parameter, so they'll have no trouble finding the method pointer
@@ -371,11 +375,13 @@ require all memory context types to produce allocated chunks that
 are immediately preceded by a standard chunk header, which has the
 layout
 
+```c
 typedef struct StandardChunkHeader
 {
     MemoryContext mycontext;         /* Link to owning context object */
     Size          size;              /* Allocated size of chunk */
 };
+```
 
 It turns out that the pre-existing aset.c memory context type did this
 already, and probably any other kind of context would need to have the
@@ -387,11 +393,12 @@ constraining context-type designers very much.)
 
 Given this, the pfree routine looks something like
 
+```c
     StandardChunkHeader * header =
         (StandardChunkHeader *) ((char *) p - sizeof(StandardChunkHeader));
 
     (*header->mycontext->methods->free_p) (p);
-
+```
 
 More Control Over aset.c Behavior
 ---------------------------------
@@ -431,10 +438,12 @@ Such a function will be called, once, just before the context is next
 reset or deleted.  It can be used to give up resources that are in some
 sense associated with an object allocated within the context.  Possible
 use-cases include
+
 * closing open files associated with a tuplesort object;
 * releasing reference counts on long-lived cache objects that are held
   by some object within the context being reset;
 * freeing malloc-managed memory associated with some palloc'd object.
+
 That last case would just represent bad programming practice for pure
 Postgres code; better to have made all the allocations using palloc,
 in the target context or some child context.  However, it could well
