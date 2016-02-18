@@ -48,7 +48,7 @@ The overall cost per allocated byte of this scheme is *very low*; almost all all
 
 The basic concept of regions is very old, first appearing as early as 1967 in Douglas T. Ross's AED Free Storage Package, in which memory was partitioned into a hierarchy of zones; each zone had its own allocator, and a zone could be freed all-at-once, making zones usable as regions. In 1976 the PL/I standard included the AREA data type. In 1990, Hanson demonstrated that *explicit regions* in C (which he called *arenas*) could achieve time performance per allocated byte superior to even the fastest-known heap allocation mechanism. *Explicit regions* were instrumental in the design of a number of early C-based software projects, including the Apache HTTP Server, which calls them pools, and the PostgreSQL database management system, which calls them *memory contexts*. Like traditional heap allocation, these schemes do not provide memory safety; it is possible for a programmer to access a region after it is deallocated through a dangling pointer, or to forget to deallocate a region, causing a memory leak.
 
-## Region inference
+### Region inference
 
 In 1988, researchers began investigating how to use regions for safe memory allocation by introducing the concept of *region inference*, where the creation and deallocation of regions, as well as the assignment of individual static allocation expressions to particular regions, is inserted by the compiler at compile-time. The compiler is able to do this in such a way that it can guarantee dangling pointers and leaks do not occur.
 
@@ -65,7 +65,7 @@ This extended lambda calculus was intended to serve as a provably memory-safe *i
 
 
 
-## Generalization to new language environments
+### Generalization to new language environments
 
 Following the development of ML Kit, regions began to be generalized to other language environments:
 
