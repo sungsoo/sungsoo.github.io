@@ -7,6 +7,12 @@ tags: [data management, htap]
 
 ---
 
+## Article Source
+* Title: [Region-based Memory Management](https://en.wikipedia.org/wiki/Region-based_memory_management)
+* From Wikipedia, the free encyclopedia
+
+---
+
 Region-based Memory Management
 ======================================
 
