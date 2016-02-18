@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Studying in Germany
-date: 2016-02-18
+date: 2016-02-10
 categories: [my profile]
 tags: [profile]
 
