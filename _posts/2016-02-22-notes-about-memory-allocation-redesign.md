@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Notes About Memory Allocation Redesign
-date: 2016-02-18
+date: 2016-02-22
 categories: [computer science]
 tags: [data management, htap]
 
