@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Hekaton Research
-date: 2016-02-24
+date: 2016-02-25
 categories: [computer science]
 tags: [data management, htap]
 
