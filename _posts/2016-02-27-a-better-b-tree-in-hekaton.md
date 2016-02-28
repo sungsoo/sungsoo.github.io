@@ -11,7 +11,7 @@ tags: [data management, htap]
 
 Microsoft Research has been releasing details of how **Hekaton**, the *in-memory database* that will ship with the next version of SQL Server, is achieving up to **100x performance** increases.
 
-Hekaton was first revealed at PASS 2012 in November, where Ted Kummert, Corporate Vice President of Microsoft’s Business Platform Division, described it as “a fully in-memory transactional engine delivered as a part of SQL Server.” For a fuller description, check out our report. Now we can begin understand the mechanisms that give Hekaton its advantages.
+Hekaton was first revealed at PASS 2012 in November, where Ted Kummert, Corporate Vice President of Microsoft’s Business Platform Division, described it as “a fully in-memory transactional engine delivered as a part of SQL Server.” For a fuller description, check out [our report](http://www.i-programmer.info/news/84-database/5076-hekaton-adds-in-memory-transaction-support-to-sql.html). Now we can begin understand the mechanisms that give Hekaton its advantages.
 
 According to Paul Larson, who is part of the Hekaton team:
 > “In traditional models, the assumption is that data lives on disk and is stored on disk pages. This creates a lot of overhead when you try to access records. When data lives totally in memory, we can use much, much simpler data structures. Hekaton’s index data structures and storage structures are optimized on the basis that when a table is declared memory-optimized, all of its records live in memory.”
