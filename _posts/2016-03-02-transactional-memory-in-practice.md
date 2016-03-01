@@ -15,8 +15,8 @@ tags: [data management]
 
 ---
 
-Brett is the lead developer on Dynamics, a data collection and analysis package developed at Wyatt Technology(http://www.wyatt.com/) for use with their light scattering instruments. He holds a PhD in Physics from the University of California, Santa Barbara. Previous to joining Wyatt, Brett worked in the game industry, remote sensing, and web development. He also blogs about C++, among other things, at backwardsincompatibilities.wordpress.com­.
+Brett is the lead developer on Dynamics, a data collection and analysis package developed at Wyatt Technology([http://www.wyatt.com/](http://www.wyatt.com/)) for use with their light scattering instruments. He holds a PhD in Physics from the University of California, Santa Barbara. Previous to joining Wyatt, Brett worked in the game industry, remote sensing, and web development. He also blogs about C++, among other things, at [backwardsincompatibilities.wordpress.com](backwardsincompatibilities.wordpress.com)­.
 
 ---
 
-Videos Filmed & Edited by Bash Films: http://www.BashFilms.com
+Videos Filmed & Edited by Bash Films: [http://www.BashFilms.com](http://www.BashFilms.com)
