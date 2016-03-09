@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Readings in Computer Graphics
+title: Readings in Physically Based Rendering
 date: 2016-03-09
 categories: [computer science]
 tags: [computer graphics]
@@ -12,7 +12,7 @@ tags: [computer graphics]
 
 ---
 
-# Readings in Computer Graphics 
+# Readings in Physically Based Rendering 
 
 
 ## Overview 
