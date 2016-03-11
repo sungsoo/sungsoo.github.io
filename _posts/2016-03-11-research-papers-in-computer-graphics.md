@@ -48,32 +48,32 @@ tags: [computer graphics]
 
 Page maintained by [Ke-Sen Huang](http://kesen.huang.googlepages.com/)
 
--   [SIGGRAPH 2015](sig2015.html) (Submitted: ???     Accepted:   ???
+-   [SIGGRAPH 2015](http://kesen.huang.googlepages.com/sig2015.html) (Submitted: ???     Accepted:   ???
         Acceptance Rate: ??%) ![](http://sungsoo.github.com/images/new.gif)
--   [SIGGRAPH 2014](sig2014.html) (Submitted: 505     Accepted:   127
+-   [SIGGRAPH 2014](http://kesen.huang.googlepages.com/sig2014.html) (Submitted: 505     Accepted:   127
         Acceptance Rate: 25%)
--   [SIGGRAPH 2013](sig2013.html) (Submitted: 480     Accepted:   115
+-   [SIGGRAPH 2013](http://kesen.huang.googlepages.com/sig2013.html) (Submitted: 480     Accepted:   115
         Acceptance Rate: 24%)
--   [SIGGRAPH 2012](sig2012.html) (Submitted: 449     Accepted:   94    
+-   [SIGGRAPH 2012](http://kesen.huang.googlepages.com/sig2012.html) (Submitted: 449     Accepted:   94    
     Acceptance Rate: 21%)
--   [SIGGRAPH 2011](sig2011.html) (Submitted: 432     Accepted:   82    
+-   [SIGGRAPH 2011](http://kesen.huang.googlepages.com/sig2011.html) (Submitted: 432     Accepted:   82    
     Acceptance Rate: 19%)
--   [SIGGRAPH 2010](sig2010.html) (Submitted: 390     Accepted:   103
+-   [SIGGRAPH 2010](http://kesen.huang.googlepages.com/sig2010.html) (Submitted: 390     Accepted:   103
         Acceptance Rate: 26%)
--   [SIGGRAPH 2009](sig2009.html) (Submitted: 439     Accepted:    78
+-   [SIGGRAPH 2009](http://kesen.huang.googlepages.com/sig2009.html) (Submitted: 439     Accepted:    78
         Acceptance Rate: 18%)
--   [SIGGRAPH 2008](sig2008.html) (Submitted: 518     Accepted:    90
+-   [SIGGRAPH 2008](http://kesen.huang.googlepages.com/sig2008.html) (Submitted: 518     Accepted:    90
         Acceptance Rate: 17%)
 
 Page maintained by [Ke-Sen Huang](http://kesen.huang.googlepages.com/)
 and [Tim Rowley](http://trowley.org/)
--   [SIGGRAPH 2007](sig2007.html) (Submitted: 455     Accepted: 108    
+-   [SIGGRAPH 2007](http://kesen.huang.googlepages.com/sig2007.html) (Submitted: 455     Accepted: 108    
     Acceptance Rate: 24%)
 
--   [SIGGRAPH 2006](sig2006.html) (Submitted: 474     Accepted:   86    
+-   [SIGGRAPH 2006](http://kesen.huang.googlepages.com/sig2006.html) (Submitted: 474     Accepted:   86    
     Acceptance Rate: 18%)
 
--   [SIGGRAPH 2005](sig2005.html) (Submitted: 461     Accepted:   98    
+-   [SIGGRAPH 2005](http://kesen.huang.googlepages.com/sig2005.html) (Submitted: 461     Accepted:   98    
     Acceptance Rate: 21%)
 
 Page maintained by [Tim Rowley](http://trowley.org/)
@@ -95,21 +95,21 @@ Page maintained by [Tim Rowley](http://trowley.org/)
 ## SIGGRAPH Asia
 
 Page maintained by [Ke-Sen Huang](http://kesen.huang.googlepages.com/)
--   [SIGGRAPH Asia 2015](siga2015Papers.htm) (Submitted:  ???    
+-   [SIGGRAPH Asia 2015](http://kesen.huang.googlepages.com/siga2015Papers.htm) (Submitted:  ???    
     Accepted:   ??     Acceptance Rate:  ??%) ![](http://sungsoo.github.com/images/new.gif)
--   [SIGGRAPH Asia 2014](siga2014Papers.htm) (Submitted:  352    
+-   [SIGGRAPH Asia 2014](http://kesen.huang.googlepages.com/siga2014Papers.htm) (Submitted:  352    
     Accepted:   63     Acceptance Rate:  18%)
--   [SIGGRAPH Asia 2013](siga2013Papers.htm) (Submitted:  ???    
+-   [SIGGRAPH Asia 2013](http://kesen.huang.googlepages.com/siga2013Papers.htm) (Submitted:  ???    
     Accepted:   ??     Acceptance Rate:  ??%)
--   [SIGGRAPH Asia 2012](siga2012Papers.htm) (Submitted:  326    
+-   [SIGGRAPH Asia 2012](http://kesen.huang.googlepages.com/siga2012Papers.htm) (Submitted:  326    
     Accepted:   77     Acceptance Rate:  24%)
--   [SIGGRAPH Asia 2011](siga2011Papers.htm) (Submitted:  330    
+-   [SIGGRAPH Asia 2011](http://kesen.huang.googlepages.com/siga2011Papers.htm) (Submitted:  330    
     Accepted:   68     Acceptance Rate:  21%)
--   [SIGGRAPH Asia 2010](siga2010Papers.htm) (Submitted:  274    
+-   [SIGGRAPH Asia 2010](http://kesen.huang.googlepages.com/siga2010Papers.htm) (Submitted:  274    
     Accepted:   49     Acceptance Rate:  18%)
--   [SIGGRAPH Asia 2009](siga2009Papers.htm) (Submitted:  275    
+-   [SIGGRAPH Asia 2009](http://kesen.huang.googlepages.com/siga2009Papers.htm) (Submitted:  275    
     Accepted:   70     Acceptance Rate:  25%)
--   [SIGGRAPH Asia 2008](siga2008Papers.htm) (Submitted:  320    
+-   [SIGGRAPH Asia 2008](http://kesen.huang.googlepages.com/siga2008Papers.htm) (Submitted:  320    
     Accepted:   59     Acceptance Rate:  18%)
 
 ## SIGGRAPH Resource
@@ -130,200 +130,200 @@ Page maintained by [Stephen Hill](http://blog.selfshadow.com/)
 
 ## Eurographics
 
--   [EG 2016](eg2016Papers.htm) (Submitted:   ???     Accepted:   ??    
+-   [EG 2016](http://kesen.huang.googlepages.com/eg2016Papers.htm) (Submitted:   ???     Accepted:   ??    
     Acceptance Rate: ??%)![](http://sungsoo.github.com/images/new.gif)
--   [EG 2015](eg2015Papers.htm) (Submitted:   207     Accepted:   55    
+-   [EG 2015](http://kesen.huang.googlepages.com/eg2015Papers.htm) (Submitted:   207     Accepted:   55    
     Acceptance Rate: 27%)
--   [EG 2014](eg2014Papers.htm) (Submitted:   209     Accepted:   52    
+-   [EG 2014](http://kesen.huang.googlepages.com/eg2014Papers.htm) (Submitted:   209     Accepted:   52    
     Acceptance Rate: 25%)
--   [EG 2013](eg2013Papers.htm) (Submitted:   205     Accepted:   52    
+-   [EG 2013](http://kesen.huang.googlepages.com/eg2013Papers.htm) (Submitted:   205     Accepted:   52    
     Acceptance Rate: 25%)
--   [EG 2012](eg2012Papers.htm) (Submitted:   260     Accepted:   66    
+-   [EG 2012](http://kesen.huang.googlepages.com/eg2012Papers.htm) (Submitted:   260     Accepted:   66    
     Acceptance Rate: 25%)
--   [EG 2011](eg2011Papers.htm) (Submitted:   236     Accepted:   40    
+-   [EG 2011](http://kesen.huang.googlepages.com/eg2011Papers.htm) (Submitted:   236     Accepted:   40    
     Acceptance Rate: 17%)
--   [EG 2010](eg2010Papers.htm) (Submitted:   261     Accepted:   53    
+-   [EG 2010](http://kesen.huang.googlepages.com/eg2010Papers.htm) (Submitted:   261     Accepted:   53    
     Acceptance Rate: 20%)
--   [EG 2009](eg2009Papers.htm) (Submitted:   243     Accepted:   56    
+-   [EG 2009](http://kesen.huang.googlepages.com/eg2009Papers.htm) (Submitted:   243     Accepted:   56    
     Acceptance Rate: 23%)
--   [EG 2008](eg2008Papers.htm) (Submitted:   300     Accepted:   58    
+-   [EG 2008](http://kesen.huang.googlepages.com/eg2008Papers.htm) (Submitted:   300     Accepted:   58    
     Acceptance Rate: 19%)
--   [EG 2007](eg2007Papers.htm) (Submitted:   212     Accepted:   50    
+-   [EG 2007](http://kesen.huang.googlepages.com/eg2007Papers.htm) (Submitted:   212     Accepted:   50    
     Acceptance Rate: 24%)
--   [EG 2006](eg2006Papers.htm) (Submitted:   250     Accepted:   42    
+-   [EG 2006](http://kesen.huang.googlepages.com/eg2006Papers.htm) (Submitted:   250     Accepted:   42    
     Acceptance Rate: 17%)
--   [EG 2005](eg2005Papers.htm) (Submitted:   303     Accepted:   47    
+-   [EG 2005](http://kesen.huang.googlepages.com/eg2005Papers.htm) (Submitted:   303     Accepted:   47    
     Acceptance Rate: 16%)
--   [EG 2004](eg2004Papers.htm) (Submitted:   243     Accepted:   44    
+-   [EG 2004](http://kesen.huang.googlepages.com/eg2004Papers.htm) (Submitted:   243     Accepted:   44    
     Acceptance Rate: 18%)
--   [EG 2003](eg2003Papers.htm) (Submitted:   221     Accepted:   45    
+-   [EG 2003](http://kesen.huang.googlepages.com/eg2003Papers.htm) (Submitted:   221     Accepted:   45    
     Acceptance Rate: 20%)
 
 ## Symposium on Interactive 3D Graphics and Games
 
--   [I3D 2016](i3d2016Papers.htm) (Submitted:   48     Accepted:   20
+-   [I3D 2016](http://kesen.huang.googlepages.com/i3d2016Papers.htm) (Submitted:   48     Accepted:   20
         Acceptance Rate: 42%) ![](http://sungsoo.github.com/images/new.gif)
--   [I3D 2015](i3d2015Papers.htm) (Submitted:   39     Accepted:   15
+-   [I3D 2015](http://kesen.huang.googlepages.com/i3d2015Papers.htm) (Submitted:   39     Accepted:   15
         Acceptance Rate: 38%)
--   [I3D 2014](i3d2014Papers.htm) (Submitted:   47     Accepted:   19
+-   [I3D 2014](http://kesen.huang.googlepages.com/i3d2014Papers.htm) (Submitted:   47     Accepted:   19
         Acceptance Rate: 40%)
--   [I3D 2013](i3d2013Papers.htm) (Submitted:   68     Accepted:   20
+-   [I3D 2013](http://kesen.huang.googlepages.com/i3d2013Papers.htm) (Submitted:   68     Accepted:   20
         Acceptance Rate: 29%)
--   [I3D 2012](i3d2012Papers.htm) (Submitted:   63     Accepted:   25
+-   [I3D 2012](http://kesen.huang.googlepages.com/i3d2012Papers.htm) (Submitted:   63     Accepted:   25
         Acceptance Rate: 40%)
--   [I3D 2011](i3d2011Papers.htm) (Submitted:   64     Accepted:   24
+-   [I3D 2011](http://kesen.huang.googlepages.com/i3d2011Papers.htm) (Submitted:   64     Accepted:   24
         Acceptance Rate: 38%)
--   [I3D 2010](i3d2010Papers.htm) (Submitted:   72     Accepted:   24
+-   [I3D 2010](http://kesen.huang.googlepages.com/i3d2010Papers.htm) (Submitted:   72     Accepted:   24
         Acceptance Rate: 33%)
--   [I3D 2009](i3d2009Papers.htm) (Submitted:   87     Accepted:   28
+-   [I3D 2009](http://kesen.huang.googlepages.com/i3d2009Papers.htm) (Submitted:   87     Accepted:   28
         Acceptance Rate: 32%)
--   [I3D 2008](i3d2008Papers.htm) (Submitted:   57     Accepted:   24
+-   [I3D 2008](http://kesen.huang.googlepages.com/i3d2008Papers.htm) (Submitted:   57     Accepted:   24
         Acceptance Rate: 42%)
--   [I3D 2007](i3d2007Papers.htm) (Submitted:   72     Accepted:   25
+-   [I3D 2007](http://kesen.huang.googlepages.com/i3d2007Papers.htm) (Submitted:   72     Accepted:   25
         Acceptance Rate: 35%)
--   [I3D 2006](i3d2006Papers.htm) (Submitted:   73     Accepted:   28
+-   [I3D 2006](http://kesen.huang.googlepages.com/i3d2006Papers.htm) (Submitted:   73     Accepted:   28
         Acceptance Rate: 38%)
--   [I3D 2005](i3d2005Papers.htm) (Submitted:   95     Accepted:   26
+-   [I3D 2005](http://kesen.huang.googlepages.com/i3d2005Papers.htm) (Submitted:   95     Accepted:   26
         Acceptance Rate: 27%)
--   [I3D 2003](i3d2003Papers.htm) (Submitted: 102    Accepted:   27    
+-   [I3D 2003](http://kesen.huang.googlepages.com/i3d2003Papers.htm) (Submitted: 102    Accepted:   27    
     Acceptance Rate: 26%)
 
 ## Eurographics Symposium on Rendering
 
--   [EGSR 2015](egsr2015Papers.htm) (Submitted:   ??     Accepted:   ??
+-   [EGSR 2015](http://kesen.huang.googlepages.com/egsr2015Papers.htm) (Submitted:   ??     Accepted:   ??
         Acceptance Rate:  ??%)![](http://sungsoo.github.com/images/new.gif)
--   [EGSR 2014](egsr2014Papers.htm) (Submitted:   41     Accepted:   15
+-   [EGSR 2014](http://kesen.huang.googlepages.com/egsr2014Papers.htm) (Submitted:   41     Accepted:   15
         Acceptance Rate:  37%)
--   [EGSR 2013](egsr2013Papers.htm) (Submitted:   45     Accepted:   17
+-   [EGSR 2013](http://kesen.huang.googlepages.com/egsr2013Papers.htm) (Submitted:   45     Accepted:   17
         Acceptance Rate:  38%)
--   [EGSR 2012](egsr2012Papers.htm) (Submitted:   69     Accepted:   21
+-   [EGSR 2012](http://kesen.huang.googlepages.com/egsr2012Papers.htm) (Submitted:   69     Accepted:   21
         Acceptance Rate:  30%)
--   [EGSR 2011](egsr2011Papers.htm) (Submitted:   56     Accepted:   22
+-   [EGSR 2011](http://kesen.huang.googlepages.com/egsr2011Papers.htm) (Submitted:   56     Accepted:   22
         Acceptance Rate:  39%)
--   [EGSR 2010](egsr2010Papers.htm) (Submitted:   72     Accepted:   28
+-   [EGSR 2010](http://kesen.huang.googlepages.com/egsr2010Papers.htm) (Submitted:   72     Accepted:   28
         Acceptance Rate:  39%)
--   [EGSR 2009](egsr2009Papers.htm) (Submitted:   72     Accepted:   21
+-   [EGSR 2009](http://kesen.huang.googlepages.com/egsr2009Papers.htm) (Submitted:   72     Accepted:   21
         Acceptance Rate:  29%)
--   [EGSR 2008](egsr2008Papers.htm) (Submitted:   71     Accepted:   26
+-   [EGSR 2008](http://kesen.huang.googlepages.com/egsr2008Papers.htm) (Submitted:   71     Accepted:   26
         Acceptance Rate:  37%)
--   [EGSR 2007](egsr2007Papers.htm) (Submitted:   94     Accepted:   33
+-   [EGSR 2007](http://kesen.huang.googlepages.com/egsr2007Papers.htm) (Submitted:   94     Accepted:   33
         Acceptance Rate:  35%)
--   [EGSR 2006](egsr2006Papers.htm) (Submitted: 109     Accepted:   39
+-   [EGSR 2006](http://kesen.huang.googlepages.com/egsr2006Papers.htm) (Submitted: 109     Accepted:   39
         Acceptance Rate:  36%)
--   [EGSR 2005](egsr2005Papers.htm) (Submitted:   93     Accepted:   31
+-   [EGSR 2005](http://kesen.huang.googlepages.com/egsr2005Papers.htm) (Submitted:   93     Accepted:   31
         Acceptance Rate:  33%)
--   [EGSR 2004](egsr2004Papers.htm) (Submitted:   98     Accepted:   39
+-   [EGSR 2004](http://kesen.huang.googlepages.com/egsr2004Papers.htm) (Submitted:   98     Accepted:   39
         Acceptance Rate:  40%)
--   [EGSR 2003](egsr2003Papers.htm) (Submitted:   81     Accepted:   30
+-   [EGSR 2003](http://kesen.huang.googlepages.com/egsr2003Papers.htm) (Submitted:   81     Accepted:   30
         Acceptance Rate:  37%)
 
 ## ACM SIGGRAPH / Eurographics Symposium on Computer Animation
 
--   [SCA 2015](sca2015Papers.htm) (Submitted:   ??     Accepted:   ??
+-   [SCA 2015](http://kesen.huang.googlepages.com/sca2015Papers.htm) (Submitted:   ??     Accepted:   ??
         Acceptance Rate: ??%)![](http://sungsoo.github.com/images/new.gif)
--   [SCA 2014](sca2014Papers.htm) (Submitted:   48     Accepted:   18
+-   [SCA 2014](http://kesen.huang.googlepages.com/sca2014Papers.htm) (Submitted:   48     Accepted:   18
         Acceptance Rate: 38%)
--   [SCA 2013](sca2013Papers.htm) (Submitted:   57     Accepted:   20
+-   [SCA 2013](http://kesen.huang.googlepages.com/sca2013Papers.htm) (Submitted:   57     Accepted:   20
         Acceptance Rate: 35%)
--   [SCA 2012](sca2012Papers.htm) (Submitted:   80     Accepted:   27
+-   [SCA 2012](http://kesen.huang.googlepages.com/sca2012Papers.htm) (Submitted:   80     Accepted:   27
         Acceptance Rate: 34%)
--   [SCA 2011](sca2011Papers.htm) (Submitted:   77     Accepted:   30
+-   [SCA 2011](http://kesen.huang.googlepages.com/sca2011Papers.htm) (Submitted:   77     Accepted:   30
         Acceptance Rate: 39%)
--   [SCA 2010](sca2010Papers.htm) (Submitted:   56     Accepted:   24
+-   [SCA 2010](http://kesen.huang.googlepages.com/sca2010Papers.htm) (Submitted:   56     Accepted:   24
         Acceptance Rate: 43%)
--   [SCA 2009](sca2009Papers.htm) (Submitted:   67     Accepted:   26
+-   [SCA 2009](http://kesen.huang.googlepages.com/sca2009Papers.htm) (Submitted:   67     Accepted:   26
         Acceptance Rate: 39%)
--   [SCA 2008](sca2008Papers.htm) (Submitted:   60     Accepted:   24
+-   [SCA 2008](http://kesen.huang.googlepages.com/sca2008Papers.htm) (Submitted:   60     Accepted:   24
         Acceptance Rate: 40%)
--   [SCA 2007](sca2007Papers.htm) (Submitted:   81     Accepted:   28
+-   [SCA 2007](http://kesen.huang.googlepages.com/sca2007Papers.htm) (Submitted:   81     Accepted:   28
         Acceptance Rate: 35%)
--   [SCA 2006](sca2006Papers.htm) (Submitted: 126     Accepted:   37    
+-   [SCA 2006](http://kesen.huang.googlepages.com/sca2006Papers.htm) (Submitted: 126     Accepted:   37    
     Acceptance Rate: 29%)
--   [SCA 2005](sca2005Papers.htm) (Submitted: 100     Accepted:   35    
+-   [SCA 2005](http://kesen.huang.googlepages.com/sca2005Papers.htm) (Submitted: 100     Accepted:   35    
     Acceptance Rate: 35%)
--   [SCA 2004](sca2004Papers.htm) (Submitted: 120     Accepted:   37    
+-   [SCA 2004](http://kesen.huang.googlepages.com/sca2004Papers.htm) (Submitted: 120     Accepted:   37    
     Acceptance Rate: 31%)
--   [SCA 2003](sca2003Papers.htm) (Submitted: 100     Accepted:   38    
+-   [SCA 2003](http://kesen.huang.googlepages.com/sca2003Papers.htm) (Submitted: 100     Accepted:   38    
     Acceptance Rate: 38%)
 
 ## IEEE/Eurographics Symposium on Point-based Graphics
 
--   [PBG 2007](pbg2007Papers.htm) (Submitted:  26     Accepted:   14    
+-   [PBG 2007](http://kesen.huang.googlepages.com/pbg2007Papers.htm) (Submitted:  26     Accepted:   14    
     Acceptance Rate:  54%)
--   [PBG 2006](pbg2006Papers.htm) (Submitted:  33     Accepted:   16    
+-   [PBG 2006](http://kesen.huang.googlepages.com/pbg2006Papers.htm) (Submitted:  33     Accepted:   16    
     Acceptance Rate: 48%)
--   [PBG 2005](pbg2005Papers.htm) (Submitted:  30     Accepted:   15    
+-   [PBG 2005](http://kesen.huang.googlepages.com/pbg2005Papers.htm) (Submitted:  30     Accepted:   15    
     Acceptance Rate: 50%)
--   [PBG 2004](pbg2004Papers.htm) (Submitted:  44     Accepted:   24    
+-   [PBG 2004](http://kesen.huang.googlepages.com/pbg2004Papers.htm) (Submitted:  44     Accepted:   24    
     Acceptance Rate: 55%)
 
 ## Eurographics Symposium on Geometry Processing
 
--   [SGP 2015](sgp2015Papers.htm) (Submitted:  72     Accepted:   22    
+-   [SGP 2015](http://kesen.huang.googlepages.com/sgp2015Papers.htm) (Submitted:  72     Accepted:   22    
     Acceptance Rate:    31%)![](http://sungsoo.github.com/images/new.gif)
--   [SGP 2014](sgp2014Papers.htm) (Submitted:  89     Accepted:   28    
+-   [SGP 2014](http://kesen.huang.googlepages.com/sgp2014Papers.htm) (Submitted:  89     Accepted:   28    
     Acceptance Rate:    31%)
--   [SGP 2013](sgp2013Papers.htm) (Submitted:  56     Accepted:   23    
+-   [SGP 2013](http://kesen.huang.googlepages.com/sgp2013Papers.htm) (Submitted:  56     Accepted:   23    
     Acceptance Rate:    41%)
--   [SGP 2012](sgp2012Papers.htm) (Submitted:  72     Accepted:   25    
+-   [SGP 2012](http://kesen.huang.googlepages.com/sgp2012Papers.htm) (Submitted:  72     Accepted:   25    
     Acceptance Rate:    35%)
--   [SGP 2011](sgp2011Papers.htm) (Submitted:  77     Accepted:   23    
+-   [SGP 2011](http://kesen.huang.googlepages.com/sgp2011Papers.htm) (Submitted:  77     Accepted:   23    
     Acceptance Rate:    30%)
--   [SGP 2010](sgp2010Papers.htm) (Submitted:  70     Accepted:   24    
+-   [SGP 2010](http://kesen.huang.googlepages.com/sgp2010Papers.htm) (Submitted:  70     Accepted:   24    
     Acceptance Rate:    34%)
--   [SGP 2009](sgp2009Papers.htm) (Submitted:  75     Accepted:   26    
+-   [SGP 2009](http://kesen.huang.googlepages.com/sgp2009Papers.htm) (Submitted:  75     Accepted:   26    
     Acceptance Rate:    35%)
--   [SGP 2008](sgp2008Papers.htm) (Submitted:  96     Accepted:   23    
+-   [SGP 2008](http://kesen.huang.googlepages.com/sgp2008Papers.htm) (Submitted:  96     Accepted:   23    
     Acceptance Rate:    24%)
--   [SGP 2007](sgp2007Papers.htm) (Submitted:  74     Accepted:   21    
+-   [SGP 2007](http://kesen.huang.googlepages.com/sgp2007Papers.htm) (Submitted:  74     Accepted:   21    
     Acceptance Rate:    28%)
--   [SGP 2006](sgp2006Papers.htm) (Submitted:  79     Accepted:   21    
+-   [SGP 2006](http://kesen.huang.googlepages.com/sgp2006Papers.htm) (Submitted:  79     Accepted:   21    
     Acceptance Rate:    27%)
--   [SGP 2005](sgp2005Papers.htm) (Submitted:  87     Accepted:   22    
+-   [SGP 2005](http://kesen.huang.googlepages.com/sgp2005Papers.htm) (Submitted:  87     Accepted:   22    
     Acceptance Rate:    25%)
--   [SGP 2004](sgp2004Papers.htm) (Submitted:   ?     Accepted:   25    
+-   [SGP 2004](http://kesen.huang.googlepages.com/sgp2004Papers.htm) (Submitted:   ?     Accepted:   25    
     Acceptance Rate:    29%)
--   [SGP 2003](sgp2003Papers.htm) (Submitted:  72     Accepted:   25    
+-   [SGP 2003](http://kesen.huang.googlepages.com/sgp2003Papers.htm) (Submitted:  72     Accepted:   25    
     Acceptance Rate:   35%)
 
 ## High Performance Graphics
 
-- [HPG 2015](hpg2015Papers.htm) (Submitted: 41     Accepted: 12    
+- [HPG 2015](http://kesen.huang.googlepages.com/hpg2015Papers.htm) (Submitted: 41     Accepted: 12    
 Acceptance Rate: 29%)![](http://sungsoo.github.com/images/new.gif)
-- [HPG 2014](hpg2014Papers.htm) (Submitted: 40     Accepted: 14    
+- [HPG 2014](http://kesen.huang.googlepages.com/hpg2014Papers.htm) (Submitted: 40     Accepted: 14    
 Acceptance Rate: 35%)
-- [HPG 2013](hpg2013Papers.htm) (Submitted: ??     Accepted: 15    
+- [HPG 2013](http://kesen.huang.googlepages.com/hpg2013Papers.htm) (Submitted: ??     Accepted: 15    
 Acceptance Rate: ??%)
-- [HPG 2012](hpg2012Papers.htm) (Submitted: 47     Accepted: 14    
+- [HPG 2012](http://kesen.huang.googlepages.com/hpg2012Papers.htm) (Submitted: 47     Accepted: 14    
 Acceptance Rate: 30%)
-- [HPG 2011](hpg2011Papers.htm) (Submitted: 64     Accepted: 21    
+- [HPG 2011](http://kesen.huang.googlepages.com/hpg2011Papers.htm) (Submitted: 64     Accepted: 21    
 Acceptance Rate: 33%)
-- [HPG 2010](hpg2010Papers.htm) (Submitted: 60     Accepted: 19    
+- [HPG 2010](http://kesen.huang.googlepages.com/hpg2010Papers.htm) (Submitted: 60     Accepted: 19    
 Acceptance Rate: 32%)
-- [HPG 2009](hpg2009Papers.htm) (Submitted: 72     Accepted: 21    
+- [HPG 2009](http://kesen.huang.googlepages.com/hpg2009Papers.htm) (Submitted: 72     Accepted: 21    
 Acceptance Rate: 29%)
 - This conference is the synthesis of two highly-successful conference
     series: **Graphics Hardware** and **Interactive Ray Tracing**
 
 ## Digital Production Symposium
 
--   [DigiPro 2014](dps2014Papers.htm) (Submitted: ??     Accepted: 5    
+-   [DigiPro 2014](http://kesen.huang.googlepages.com/dps2014Papers.htm) (Submitted: ??     Accepted: 5    
     Acceptance Rate: ??%)![](http://sungsoo.github.com/images/new.gif)
--   [DigiPro 2013](dps2013Papers.htm) (Submitted: ??     Accepted: 5    
+-   [DigiPro 2013](http://kesen.huang.googlepages.com/dps2013Papers.htm) (Submitted: ??     Accepted: 5    
     Acceptance Rate: ??%)
 
 ## IEEE/EG Symposium on Interactive Ray Tracing
 
--   [RT 2008](rt2008Papers.htm) (Submitted: 46     Accepted: 24    
+-   [RT 2008](http://kesen.huang.googlepages.com/rt2008Papers.htm) (Submitted: 46     Accepted: 24    
     Acceptance Rate: 52%)
--   [RT 2007](rt2007Papers.htm) (Submitted: 43     Accepted: 23    
+-   [RT 2007](http://kesen.huang.googlepages.com/rt2007Papers.htm) (Submitted: 43     Accepted: 23    
     Acceptance Rate: 53%)
--   [RT 2006](rt2006Papers.htm) (Submitted: 41     Accepted: 22    
+-   [RT 2006](http://kesen.huang.googlepages.com/rt2006Papers.htm) (Submitted: 41     Accepted: 22    
     Acceptance Rate: 54%)
 
 ## Eurographics Workshop on 3D Object Retrieval
 
--   [3DOR 2008](3dor2008Papers.htm) (Submitted:  19     Accepted:  10
+-   [3DOR 2008](http://kesen.huang.googlepages.com/3dor2008Papers.htm) (Submitted:  19     Accepted:  10
         Acceptance Rate: 53%)
 
 ## Eurographics Workshop on Sketch-Based Interfaces and Modeling
@@ -341,59 +341,59 @@ Walmsley](http://roy.walmsley.googlepages.com/home)
 
 Page maintained by [Ke-Sen Huang](http://kesen.huang.googlepages.com/)
 and [Roy Walmsley](http://roy.walmsley.googlepages.com/home)
--   [APGV 2007](apgv2007Papers.htm) (Submitted: 39     Accepted: 14    
+-   [APGV 2007](http://kesen.huang.googlepages.com/apgv2007Papers.htm) (Submitted: 39     Accepted: 14    
     Acceptance Rate: 36%)
--   [APGV 2006](apgv2006Papers.htm) (Submitted: 45     Accepted: 20    
+-   [APGV 2006](http://kesen.huang.googlepages.com/apgv2006Papers.htm) (Submitted: 45     Accepted: 20    
     Acceptance Rate: 44%)
 
 Page maintained by [Ke-Sen Huang](http://kesen.huang.googlepages.com/)
--   [APGV 2005](apgv2005Papers.htm) (Submitted: 43     Accepted: 21    
+-   [APGV 2005](http://kesen.huang.googlepages.com/apgv2005Papers.htm) (Submitted: 43     Accepted: 21    
     Acceptance Rate: 49%)
--   [APGV 2004](apgv2004Papers.htm) (Submitted: 38     Accepted: 21    
+-   [APGV 2004](http://kesen.huang.googlepages.com/apgv2004Papers.htm) (Submitted: 38     Accepted: 21    
     Acceptance Rate: 55%)
 
 ## Non-Photorealistic Animation and Rendering
 
--   [NPAR 2012](npar2012Papers.htm) (Submitted: ??     Accepted:  ??    
+-   [NPAR 2012](http://kesen.huang.googlepages.com/npar2012Papers.htm) (Submitted: ??     Accepted:  ??    
     Acceptance Rate: ??%)![](http://sungsoo.github.com/images/new.gif)
--   [NPAR 2011](npar2011Papers.htm) (Submitted: 37     Accepted:  18    
+-   [NPAR 2011](http://kesen.huang.googlepages.com/npar2011Papers.htm) (Submitted: 37     Accepted:  18    
     Acceptance Rate: 49%)
--   [NPAR 2010](npar2010Papers.htm) (Submitted: 45     Accepted:  19    
+-   [NPAR 2010](http://kesen.huang.googlepages.com/npar2010Papers.htm) (Submitted: 45     Accepted:  19    
     Acceptance Rate: 42%)
--   [NPAR 2009](npar2009Papers.htm) (Submitted: 21     Accepted:   7    
+-   [NPAR 2009](http://kesen.huang.googlepages.com/npar2009Papers.htm) (Submitted: 21     Accepted:   7    
     Acceptance Rate: 33%)
--   [NPAR 2008](npar2008Papers.htm) (Submitted: 27     Accepted:  11    
+-   [NPAR 2008](http://kesen.huang.googlepages.com/npar2008Papers.htm) (Submitted: 27     Accepted:  11    
     Acceptance Rate: 41%)
--   [NPAR 2007](npar2007Papers.htm) (Submitted: 34     Accepted: 16    
+-   [NPAR 2007](http://kesen.huang.googlepages.com/npar2007Papers.htm) (Submitted: 34     Accepted: 16    
     Acceptance Rate: 47%)
--   [NPAR 2006](npar2006Papers.htm) (Submitted: 43     Accepted: 17    
+-   [NPAR 2006](http://kesen.huang.googlepages.com/npar2006Papers.htm) (Submitted: 43     Accepted: 17    
     Acceptance Rate: 40%)
--   [NPAR 2004](npar2004Papers.htm) (Submitted: 63     Accepted: 14    
+-   [NPAR 2004](http://kesen.huang.googlepages.com/npar2004Papers.htm) (Submitted: 63     Accepted: 14    
     Acceptance Rate: 22%)
 
 ## Pacific Graphics
 
--   [PG 2013](pg2013Papers.htm) (Submitted:  234    Accepted:  45    
+-   [PG 2013](http://kesen.huang.googlepages.com/pg2013Papers.htm) (Submitted:  234    Accepted:  45    
     Acceptance Rate:  19%)![](http://sungsoo.github.com/images/new.gif)
--   [PG 2012](pg2012Papers.htm) (Submitted:  153    Accepted:  30    
+-   [PG 2012](http://kesen.huang.googlepages.com/pg2012Papers.htm) (Submitted:  153    Accepted:  30    
     Acceptance Rate:  20%)
--   [PG 2011](pg2011Papers.htm) (Submitted:  168    Accepted:  27    
+-   [PG 2011](http://kesen.huang.googlepages.com/pg2011Papers.htm) (Submitted:  168    Accepted:  27    
     Acceptance Rate:  16%)
--   [PG 2010](pg2010Papers.htm) (Submitted:  180    Accepted:  31    
+-   [PG 2010](http://kesen.huang.googlepages.com/pg2010Papers.htm) (Submitted:  180    Accepted:  31    
     Acceptance Rate:  17%)
--   [PG 2009](pg2009Papers.htm) (Submitted:  177     Accepted:  31    
+-   [PG 2009](http://kesen.huang.googlepages.com/pg2009Papers.htm) (Submitted:  177     Accepted:  31    
     Acceptance Rate:  18%)
--   [PG 2008](pg2008Papers.htm) (Submitted:  186     Accepted:  34    
+-   [PG 2008](http://kesen.huang.googlepages.com/pg2008Papers.htm) (Submitted:  186     Accepted:  34    
     Acceptance Rate:  18%)
--   [PG 2007](pg2007Papers.htm) (Submitted:  179     Accepted:  39    
+-   [PG 2007](http://kesen.huang.googlepages.com/pg2007Papers.htm) (Submitted:  179     Accepted:  39    
     Acceptance Rate:  22%)
--   [PG 2006](pg2006Papers.htm) (Submitted:  206     Accepted:  35   
+-   [PG 2006](http://kesen.huang.googlepages.com/pg2006Papers.htm) (Submitted:  206     Accepted:  35   
     Acceptance Rate:  17%)
--   [PG 2005](pg2005Papers.htm) (Submitted:  267     Accepted:  37    
+-   [PG 2005](http://kesen.huang.googlepages.com/pg2005Papers.htm) (Submitted:  267     Accepted:  37    
     Acceptance Rate:  14%)
--   [PG 2004](pg2004Papers.htm) (Submitted:  164    Accepted:  41    
+-   [PG 2004](http://kesen.huang.googlepages.com/pg2004Papers.htm) (Submitted:  164    Accepted:  41    
     Acceptance Rate:  25%)
--   [PG 2003](pg2003Papers.htm) (Submitted:  182     Accepted:  35    
+-   [PG 2003](http://kesen.huang.googlepages.com/pg2003Papers.htm) (Submitted:  182     Accepted:  35    
     Acceptance Rate:  19%)
 -   PG 2001 (Submitted:  112     Accepted:  41     Acceptance Rate: 
     37%)
@@ -401,15 +401,15 @@ Page maintained by [Ke-Sen Huang](http://kesen.huang.googlepages.com/)
 
 ## International Conference on Computational Photography
 
--   [ICCP 2015](iccp2015.html) (Submitted: ?     Accepted: ?    
+-   [ICCP 2015](http://kesen.huang.googlepages.com/iccp2015.html) (Submitted: ?     Accepted: ?    
     Acceptance Rate: ?%) ![](http://sungsoo.github.com/images/new.gif)
 
-[ICCP 2009](iccp2009.html) (Submitted: ?     Accepted: ?     Acceptance
+[ICCP 2009](http://kesen.huang.googlepages.com/iccp2009.html) (Submitted: ?     Accepted: ?     Acceptance
 Rate: ?%)
 ##  Shape Modeling International
 
 Page maintained by [Ke-Sen Huang](http://kesen.huang.googlepages.com/)
--   [SMI 2009](smi2009Papers.htm) (Submitted: 105     Accepted:  26   
+-   [SMI 2009](http://kesen.huang.googlepages.com/smi2009Papers.htm) (Submitted: 105     Accepted:  26   
     Acceptance Rate: 25%) ![](http://sungsoo.github.com/images/new.gif)
 
 Page maintained by [Roy
@@ -419,15 +419,15 @@ Walmsley](http://roy.walmsley.googlepages.com/home)
 
 Page maintained by [Ke-Sen Huang](http://kesen.huang.googlepages.com/)
 and [Roy Walmsley](http://roy.walmsley.googlepages.com/home)
--   [SMI 2007](smi2007Papers.htm) (Submitted: 62     Accepted: 23    
+-   [SMI 2007](http://kesen.huang.googlepages.com/smi2007Papers.htm) (Submitted: 62     Accepted: 23    
     Acceptance Rate: 37%)
 
 Page maintained by [Ke-Sen Huang](http://kesen.huang.googlepages.com/)
--   [SIM 2006](smi2006Papers.htm) (Submitted: 58     Accepted: 20    
+-   [SIM 2006](http://kesen.huang.googlepages.com/smi2006Papers.htm) (Submitted: 58     Accepted: 20    
     Acceptance Rate: 34%)
--   [SMI 2005](smi2005Papers.htm) (Submitted: 80     Accepted: 30    
+-   [SMI 2005](http://kesen.huang.googlepages.com/smi2005Papers.htm) (Submitted: 80     Accepted: 30    
     Acceptance Rate: 38%)
--   [SMI 2004](smi2004Papers.htm) (Submitted: 79     Accepted: 29    
+-   [SMI 2004](http://kesen.huang.googlepages.com/smi2004Papers.htm) (Submitted: 79     Accepted: 29    
     Acceptance Rate: 37%)
 
 ## Computer Animation and Social Agents
@@ -447,9 +447,6 @@ Page maintained by [Ke-Sen Huang](http://kesen.huang.googlepages.com/)
 Page maintained by [Roy Walmsley](http://roy.walmsley.googlepages.com/)
 -   [CGI 2008](http://roy.walmsley.googlepages.com/cgi2008papers.htm)
     (Submitted: ?     Accepted: ?     Acceptance Rate: ?%) 
-
-<!-- -->
-
 -   [CGI 2007](http://roy.walmsley.googlepages.com/cgi2007Papers.htm)
     (Submitted: ?     Accepted: ?     Acceptance Rate: ?%)
 -   [CGI 2006](http://roy.walmsley.googlepages.com/cgi2006papers.htm)
@@ -476,37 +473,37 @@ Page maintained by [Roy Walmsley](http://roy.walmsley.googlepages.com/)
 -   [GH 2007](http://trowley.org/gh2007.html) (Submitted: 30    
     Accepted: 12     Acceptance Rate: 40%)
 
-<!-- -->
+
 
 -   [GH 2006](http://trowley.org/gh2006.html) (Submitted: 45    
     Accepted: 14     Acceptance Rate: 31%)
 
-<!-- -->
+
 
 -   [GH 2005](http://trowley.org/gh2005.html) (Submitted: 32    
     Accepted: 13     Acceptance Rate: 41%)
 
-<!-- -->
+
 
 -   [GH 2004](http://trowley.org/gh2004.html) (Submitted: 43    
     Accepted: 14     Acceptance Rate: 33%)
 
-<!-- -->
+
 
 -   [GH 2003](http://trowley.org/hwws2003.html) (Submitted: 39    
     Accepted: 13     Acceptance Rate: 33%)
 
-<!-- -->
+
 
 -   [GH 2002](http://trowley.org/hwws2002.html) (Submitted: 32    
     Accepted: 14     Acceptance Rate: 44%)
 
-<!-- -->
+
 
 -   [GH 2001](http://trowley.org/hwws2001.html) (Submitted:   ?    
     Accepted:   ?     Acceptance Rate:    ?%)
 
-<!-- -->
+
 
 -   [GH 2000](http://trowley.org/hwws2000.html) (Submitted: 31    
     Accepted: 14     Acceptance Rate: 45%)
@@ -556,32 +553,32 @@ Hadwiger](http://www.cg.tuwien.ac.at/%7Emsh/)
 
 ## ACM Symposium on Solid and Physical Modeling
 
--   [SPM 2008](spm2008Papers.htm) (Submitted: 79     Accepted: 25    
+-   [SPM 2008](http://kesen.huang.googlepages.com/spm2008Papers.htm) (Submitted: 79     Accepted: 25    
     Acceptance Rate: 32%)
--   [SPM 2007](spm2007Papers.htm) (Submitted: 94     Accepted: 25    
+-   [SPM 2007](http://kesen.huang.googlepages.com/spm2007Papers.htm) (Submitted: 94     Accepted: 25    
     Acceptance Rate: 27%)
--   [SPM 2006](spm2006Papers.htm) (Submitted: 56     Accepted: 21    
+-   [SPM 2006](http://kesen.huang.googlepages.com/spm2006Papers.htm) (Submitted: 56     Accepted: 21    
     Acceptance Rate: 38%)
--   [SPM 2005](spm2005Papers.htm) (Submitted: 60     Accepted: 22    
+-   [SPM 2005](http://kesen.huang.googlepages.com/spm2005Papers.htm) (Submitted: 60     Accepted: 22    
     Acceptance Rate: 37%) 
 
 ## Graphics Interface
 
--   [GI 2012](gi2012Papers.htm) (Submitted:   57     Accepted: 25    
+-   [GI 2012](http://kesen.huang.googlepages.com/gi2012Papers.htm) (Submitted:   57     Accepted: 25    
     Acceptance Rate: 44%)![](http://sungsoo.github.com/images/new.gif)
--   [GI 2011](gi2011Papers.htm) (Submitted:   74     Accepted: 29    
+-   [GI 2011](http://kesen.huang.googlepages.com/gi2011Papers.htm) (Submitted:   74     Accepted: 29    
     Acceptance Rate: 39%)
--   [GI 2010](gi2010Papers.htm) (Submitted:   88     Accepted: 33    
+-   [GI 2010](http://kesen.huang.googlepages.com/gi2010Papers.htm) (Submitted:   88     Accepted: 33    
     Acceptance Rate: 38%)
--   [GI 2009](gi2009Papers.htm) (Submitted:   77     Accepted: 28    
+-   [GI 2009](http://kesen.huang.googlepages.com/gi2009Papers.htm) (Submitted:   77     Accepted: 28    
     Acceptance Rate: 36%)
--   [GI 2008](gi2008Papers.htm) (Submitted:   85     Accepted: 34    
+-   [GI 2008](http://kesen.huang.googlepages.com/gi2008Papers.htm) (Submitted:   85     Accepted: 34    
     Acceptance Rate: 40%)
--   [GI 2007](gi2007Papers.htm) (Submitted:   89     Accepted: 43    
+-   [GI 2007](http://kesen.huang.googlepages.com/gi2007Papers.htm) (Submitted:   89     Accepted: 43    
     Acceptance Rate: 48%)
--   [GI 2006](gi2006Papers.htm) (Submitted:   94     Accepted: 31    
+-   [GI 2006](http://kesen.huang.googlepages.com/gi2006Papers.htm) (Submitted:   94     Accepted: 31    
     Acceptance Rate: 33%)
--   [GI 2005](gi2005Papers.htm) (Submitted: 104     Accepted: 30    
+-   [GI 2005](http://kesen.huang.googlepages.com/gi2005Papers.htm) (Submitted: 104     Accepted: 30    
     Acceptance Rate: 29%)
 
 ## Winter School of Computer Graphics (WSCG)
