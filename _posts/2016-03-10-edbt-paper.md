@@ -7,7 +7,7 @@ tags: [data management, sql on hadoop]
 
 ---
 
-# Sweet KIWI; Statistics-Driven OLAP Acceleration using Query Column Sets 
+# Sweet KIWI: Statistics-Driven OLAP Acceleration using Query Column Sets 
 
 
 ![](http://sungsoo.github.com/images/edbt2016.png)
