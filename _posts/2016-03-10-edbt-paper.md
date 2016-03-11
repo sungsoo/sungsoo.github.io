@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Sweet KIWI; Statistics-Driven OLAP Acceleration using Query Column Sets
+title: Statistics-Driven OLAP Acceleration using Query Column Sets
 date: 2016-03-10
 categories: [computer science]
 tags: [data management, sql on hadoop]
