@@ -47,6 +47,7 @@ tags: [computer graphics]
 ## SIGGRAPH
 
 Page maintained by [Ke-Sen Huang](http://kesen.huang.googlepages.com/)
+
 -   [SIGGRAPH 2015](sig2015.html) (Submitted: ???     Accepted:   ???
         Acceptance Rate: ??%) ![](http://sungsoo.github.com/images/new.gif)
 -   [SIGGRAPH 2014](sig2014.html) (Submitted: 505     Accepted:   127
@@ -69,12 +70,8 @@ and [Tim Rowley](http://trowley.org/)
 -   [SIGGRAPH 2007](sig2007.html) (Submitted: 455     Accepted: 108    
     Acceptance Rate: 24%)
 
-<!-- -->
-
 -   [SIGGRAPH 2006](sig2006.html) (Submitted: 474     Accepted:   86    
     Acceptance Rate: 18%)
-
-<!-- -->
 
 -   [SIGGRAPH 2005](sig2005.html) (Submitted: 461     Accepted:   98    
     Acceptance Rate: 21%)
@@ -83,22 +80,14 @@ Page maintained by [Tim Rowley](http://trowley.org/)
 -   SIGGRAPH 2004 (Submitted: 478     Accepted:   83     Acceptance
     Rate: 17%) 
 
-<!-- -->
-
 -   SIGGRAPH 2003 (Submitted: 424     Accepted:   81     Acceptance
     Rate: 19%)
-
-<!-- -->
 
 -   SIGGRAPH 2002 (Submitted: 358     Accepted:   67     Acceptance
     Rate: 19%)
 
-<!-- -->
-
 -   SIGGRAPH 2001 (Submitted: 300     Accepted:   65     Acceptance
     Rate: 22%)
-
-<!-- -->
 
 -   SIGGRAPH 2000 (Submitted: 304     Accepted:   59     Acceptance
     Rate: 19%)
@@ -126,6 +115,7 @@ Page maintained by [Ke-Sen Huang](http://kesen.huang.googlepages.com/)
 ## SIGGRAPH Resource
 
 Page maintained by [Stephen Hill](http://blog.selfshadow.com/)
+
 -   [SIGGRAPH 2015 Resource (Courses, Posters,
     ...)](http://blog.selfshadow.com/2015/08/15/siggraph-2015-links/)
     ![](http://sungsoo.github.com/images/new.gif)
@@ -298,21 +288,21 @@ Page maintained by [Stephen Hill](http://blog.selfshadow.com/)
 
 ## High Performance Graphics
 
-[HPG 2015](hpg2015Papers.htm) (Submitted: 41     Accepted: 12    
+- [HPG 2015](hpg2015Papers.htm) (Submitted: 41     Accepted: 12    
 Acceptance Rate: 29%)![](http://sungsoo.github.com/images/new.gif)
-[HPG 2014](hpg2014Papers.htm) (Submitted: 40     Accepted: 14    
+- [HPG 2014](hpg2014Papers.htm) (Submitted: 40     Accepted: 14    
 Acceptance Rate: 35%)
-[HPG 2013](hpg2013Papers.htm) (Submitted: ??     Accepted: 15    
+- [HPG 2013](hpg2013Papers.htm) (Submitted: ??     Accepted: 15    
 Acceptance Rate: ??%)
-[HPG 2012](hpg2012Papers.htm) (Submitted: 47     Accepted: 14    
+- [HPG 2012](hpg2012Papers.htm) (Submitted: 47     Accepted: 14    
 Acceptance Rate: 30%)
-[HPG 2011](hpg2011Papers.htm) (Submitted: 64     Accepted: 21    
+- [HPG 2011](hpg2011Papers.htm) (Submitted: 64     Accepted: 21    
 Acceptance Rate: 33%)
-[HPG 2010](hpg2010Papers.htm) (Submitted: 60     Accepted: 19    
+- [HPG 2010](hpg2010Papers.htm) (Submitted: 60     Accepted: 19    
 Acceptance Rate: 32%)
-[HPG 2009](hpg2009Papers.htm) (Submitted: 72     Accepted: 21    
+- [HPG 2009](hpg2009Papers.htm) (Submitted: 72     Accepted: 21    
 Acceptance Rate: 29%)
--   This conference is the synthesis of two highly-successful conference
+- This conference is the synthesis of two highly-successful conference
     series: **Graphics Hardware** and **Interactive Ray Tracing**
 
 ## Digital Production Symposium
