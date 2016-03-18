@@ -16,4 +16,4 @@ The success of relational databases is due in part to the simplicity of the tabu
 
 ## Enriched Data Model
 [![](http://sungsoo.github.com/images/enriched-data-model.png)](http://sungsoo.github.com/images/enriched-data-model.png)## References
-* Mohammad Sadoghi et. al, Self-Curating Databases, *19th Inter- national Conference on Extending Database Technology (EDBT)*
+* Mohammad Sadoghi et. al, Self-Curating Databases, *19th International Conference on Extending Database Technology (EDBT)*
