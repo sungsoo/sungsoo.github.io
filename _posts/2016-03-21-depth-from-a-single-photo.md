@@ -22,3 +22,7 @@ The paper "3-D Depth Reconstruction from a Single Still Image" is available here
 The source of the shown video at the end:
 
 [https://www.youtube.com/watch?v=GWWIn...](https://www.youtube.com/watch?v=GWWIn29ZV4Q)
+
+---
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/GWWIn29ZV4Q" frameborder="0" allowfullscreen></iframe>
