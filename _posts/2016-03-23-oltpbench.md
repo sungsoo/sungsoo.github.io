@@ -20,6 +20,7 @@ variable mixture load against any JDBC-enabled relational database. The framewor
 features, e.g., per-transaction-type latency and throughput logs.
 
 Together with the framework we provide the following OLTP/Web benchmarks:
+
   * [TPC-C](http://www.tpc.org/tpcc/)
   * Wikipedia
   * Synthetic Resource Stresser 
