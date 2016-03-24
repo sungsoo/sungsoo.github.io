@@ -3,7 +3,7 @@ layout: post
 title: Knowledge Curation and Knowledge Fusion
 date: 2016-03-24
 categories: [computer science]
-tags: [data management]
+tags: [data curation, data management]
 
 ---
 
