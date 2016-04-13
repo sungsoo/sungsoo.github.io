@@ -10,7 +10,7 @@ tags: [data management]
 
 ## Article Source
 
-* Title: Life Beyond Column-Stores: Exploiting intra-cycle parallelism
+* Title: [Life Beyond Column-Stores: Exploiting intra-cycle parallelism](http://bigfastdata.blogspot.kr/2013/06/life-beyond-column-stores-exploiting.html)
 * Authors: Blog from Jignesh Patel's group @ U. Wisconsin
 
 ---
