@@ -105,7 +105,9 @@ The Pieces
 Here’s a picture that shows the major components of LLVM’s architecture
 (and, really, the architecture of any modern compiler):
 
-![Front End, Passes, Back End](http://adriansampson.net/media/llvm/llvm-containers.svg)
+![Front End, Passes, Back End](http://adriansampson.net/media/llvm/compiler-arch.svg)
+
+
 
 There are:
 
@@ -304,7 +306,7 @@ Understanding LLVM IR
 ---------------------
 
 ![Module, Function, BasicBlock,
-Instruction](/media/llvm/llvm-containers.svg)
+Instruction](http://adriansampson.net/media/llvm/llvm-containers.svg)
 [Module](http://llvm.org/docs/doxygen/html/classllvm_1_1Module.html)s
 contain
 [Function](http://llvm.org/docs/doxygen/html/classllvm_1_1Function.html)s,
