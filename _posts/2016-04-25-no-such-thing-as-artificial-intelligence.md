@@ -9,7 +9,7 @@ tags: [data mining]
 
 # No Such Thing As Artificial Intelligence 
 
-What is happening with the neural networks in this video? You'll find the answers in these videos:
+What is happening with the *neural networks* in this video? You'll find the answers in these videos:
 
 1. [How Does Deep Learning Work?](https://www.youtube.com/watch?v=He4t7Zekob0&index=5&list=PLujxSBD-JXglGL3ERdDOhthD3jTlfudC2) 
 
