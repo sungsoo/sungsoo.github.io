@@ -44,13 +44,13 @@ A Recursive Neural Network is a generalization of a Recurrent Neural Network and
 source:  [http://nlp.stanford.edu/~socherr/EMNLP2013_RNTN.pdf](http://nlp.stanford.edu/~socherr/EMNLP2013_RNTN.pdf)
  
 ## Supervised Neural Network
-For a supervised neural network to produce an ideal output, it must have been previously given this output. It is ‘trained’ on a pre-defined dataset and based on this dataset, can produce  accurate outputs depending on the input it has received. You could therefore say that it has been supervised in its learning, having for example been given both the question and the ideal answer.
+For a *supervised neural network* to produce an ideal output, it must have been previously given this output. It is ‘trained’ on a pre-defined dataset and based on this dataset, can produce  accurate outputs depending on the input it has received. You could therefore say that it has been supervised in its learning, having for example been given both the question and the ideal answer.
 
 ## Unsupervised Neural Network
 This involves providing a programme or machine with an unlabeled data set that it has not been previously trained for, with the goal of automatically discovering patterns and trends through clustering.
 
 ## Gradient Descent
-Gradient Descent is an algorithm used to find the local minimum of a function. By initially guessing the solution and using the function gradient at that point, we guide the solution in the negative direction of the gradient and repeat this technique until the algorithm eventually converges at the point where the gradient is zero - local minimum. We essentially descend the error surface until we arrive at a valley.
+*Gradient Descent* is an algorithm used to find the local minimum of a function. By initially guessing the solution and using the function gradient at that point, we guide the solution in the negative direction of the gradient and repeat this technique until the algorithm eventually converges at the point where the gradient is zero - local minimum. We essentially descend the error surface until we arrive at a valley.
 
 ## Word Embedding
 Similar to the way a painting might be a representation of a person, a word embedding is a representation of a word, using real-valued numbers. Word embeddings can be trained and used to derive similarities between both other words, and other relations. They are an arrangement of numbers representing the semantic and syntactic information of words in a format that computers can understand.
