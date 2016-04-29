@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Narrow Band Liquid Simulations
-date: 2016-04-26
+date: 2016-04-29
 categories: [computer science]
 tags: [computer graphics]
 
