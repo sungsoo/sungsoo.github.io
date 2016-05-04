@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Awesome Deep Learning
-date: 2016-05-02
+date: 2016-05-04
 categories: [computer science]
 tags: [machine learning]
 
