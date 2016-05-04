@@ -23,3 +23,7 @@ Real-Time Facial Expression Transfer (previous work)
 - [https://www.youtube.com/watch?v=mkI6q...q...](https://www.youtube.com/watch?v=mkI6qfpEJmI)
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/_S1lyQbbJM4" frameborder="0" allowfullscreen></iframe>
+
+## Real-time Face Capture and Reenactment of RGB Videos (CVPR 2016 Oral)
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/ohmajJTcpNk" frameborder="0" allowfullscreen></iframe>
