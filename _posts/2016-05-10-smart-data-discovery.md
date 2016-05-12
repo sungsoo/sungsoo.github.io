@@ -45,7 +45,11 @@ Vendors like **Platfora, Datameer, FICO, Oracle, MicroStrategy, Pentaho** and **
 
 ### Hadoop based Big Data Discovery and Analytics
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/Y-oKDwVSVAo" frameborder="0" allowfullscreen></iframe>
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/C9wclRqTixo" frameborder="0" allowfullscreen></iframe>
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/qzjGPgTT7cE" frameborder="0" allowfullscreen></iframe>
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/6ixtJrA3ezM" frameborder="0" allowfullscreen></iframe>
 
