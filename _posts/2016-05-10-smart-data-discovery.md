@@ -32,6 +32,10 @@ The convergence is already underway, with each data discovery type providing fea
 * Most *visual-based data discovery* vendors, such as **MicroStrategy Visual Insight**, **Tableau**, **Qlik** and **TIBCO Spotfire**, access data in Hadoop, as well as other sources with roadmaps for expanded support.
 
 * Many *visual-based data discovery* vendors have *natural-language query* (for example, **Qlik**, **IBM Watson Analytics** and **Microsoft PowerBI**) and some offer automated pattern detection or *smart data discovery* (**SAS Visual Analytics** and **IBM Watson Analytics**) as capabilities that they plan to mature over time.  
+
+### Smart Data for Smart Labs
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/maA1nQEedos" frameborder="0" allowfullscreen></iframe>
      
 ## Hadoop-Based or Big Data Discovery
  
