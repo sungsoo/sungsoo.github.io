@@ -3,7 +3,7 @@ layout: post
 title: Real-Time Shading With Area Light Sources 
 date: 2016-05-12
 categories: [computer science]
-tags: [data management]
+tags: [computer graphics]
 
 ---
 
