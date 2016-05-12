@@ -12,6 +12,8 @@ tags: [data management]
 
 *Smart data discovery* is a next-generation data discovery capability that provides insights from advanced analytics to business users or citizen data scientists without requiring them to have traditional data scientist expertise.
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/MGiDFxflRHI" frameborder="0" allowfullscreen></iframe>
+
      
 ## Examples [Market]      
 
