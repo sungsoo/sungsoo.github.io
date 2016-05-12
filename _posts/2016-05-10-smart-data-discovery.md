@@ -49,5 +49,7 @@ Vendors like **Platfora, Datameer, FICO, Oracle, MicroStrategy, Pentaho** and **
 * Governed Data Discovery
 * Search-Based Data Discovery
 
+## References
+* *Smart Data Discovery Will Enable a New Class of Citizen Data Scientist*, Gartner, 29 June 2015.
 
 
