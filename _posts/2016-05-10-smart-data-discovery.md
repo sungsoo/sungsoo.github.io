@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Smart Data Discovery 
-date: 2016-05-11
+date: 2016-05-10
 categories: [computer science]
 tags: [data management]
 
