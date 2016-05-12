@@ -20,4 +20,6 @@ tags: [data management]
 
 ## Introduction to Deep Learning Networks
 
+![](http://sungsoo.github.com/images/deep-learning-networks.png)
+
 * **Sung-Soo Kim**, [*Introduction to Deep Learning Networks*](http://sungsoo.github.com/slideshare/16ZS1410-TP44-Deep-Learning-Network.pdf), 2016.
