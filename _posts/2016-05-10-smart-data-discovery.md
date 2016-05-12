@@ -10,6 +10,27 @@ tags: [data management]
 
 # Smart Data Discovery 
 
+*Smart data discovery* is a next-generation data discovery capability that provides insights from advanced analytics to business users or citizen data scientists without requiring them to have traditional data scientist expertise.
+
+     
+## Examples [Market]      
+
+The convergence is already underway, with each data discovery type providing features of the others.
+
+* Many smart data discovery tools, such as **DataRPM**, run directly on Hadoop/Spark and/or can access data (some directly) in Hadoop as a data source. They feature a *natural-language query interface* (one element of *search-based data discovery*) and interactive visualization (a hallmark of *visual-based data discovery*).
+
+* Most search-based data discovery tools, such as **Oracle Endeca Information Discovery**, **Incorta** and **ThoughtSpot**, also offer *visual-based data discovery*.  
+     
+* Some smart data discovery tools, such as **Ayasdi** and **DataRPM**, leverage *graph analysis* to relate entities and identify important relationships.
+
+* Most *graph-based data discovery* vendors, such as **Cambridge Semantics** and **Centrifuge Systems**, offer *interactive visualization* to explore relationships.
+
+* All *Hadoop-based data discovery* vendors, such as **Platfora** and **Datameer**, offer *visual exploration*.
+
+* Most *visual-based data discovery* vendors, such as **MicroStrategy Visual Insight**, **Tableau**, **Qlik** and **TIBCO Spotfire**, access data in Hadoop, as well as other sources with roadmaps for expanded support.
+
+* Many *visual-based data discovery* vendors have *natural-language query* (for example, **Qlik**, **IBM Watson Analytics** and **Microsoft PowerBI**) and some offer automated pattern detection or *smart data discovery* (**SAS Visual Analytics** and **IBM Watson Analytics**) as capabilities that they plan to mature over time.  
+     
 ## Hadoop-Based or Big Data Discovery
  
  *Hadoop-based data discovery* enables business users to explore and find insights across diverse data (such as clickstreams, social, sensor and transaction data) that is stored and managed in Hadoop. 
