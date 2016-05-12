@@ -43,3 +43,11 @@ Vendors like **Platfora, Datameer, FICO, Oracle, MicroStrategy, Pentaho** and **
 <iframe width="600" height="400" src="https://www.youtube.com/embed/BWNuV7KVtjE" frameborder="0" allowfullscreen></iframe>
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/HJFWrwXGUz4" frameborder="0" allowfullscreen></iframe>
+
+## Others
+* Citizen Data Scientist
+* Governed Data Discovery
+* Search-Based Data Discovery
+
+
+
