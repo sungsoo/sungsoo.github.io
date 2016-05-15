@@ -12,7 +12,12 @@ tags: [computer graphics]
 
 Separable Subsurface Scattering is a novel technique to add real-time subsurface light transport calculations for computer games and other real-time applications.
 
-____________________________
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/P0Tkr4HaIVk" frameborder="0" allowfullscreen></iframe>
+
+---
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/72_iAlYwl0c" frameborder="0" allowfullscreen></iframe>
 
 The paper "Separable Subsurface Scattering" and its implementation is available here:
 
