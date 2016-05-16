@@ -10,7 +10,7 @@ tags: [computer graphics]
 
 # Separable Subsurface Scattering 
 
-Separable Subsurface Scattering is a novel technique to add real-time subsurface light transport calculations for computer games and other real-time applications.
+*Separable Subsurface Scattering* is a novel technique to add real-time subsurface *light transport* calculations for computer games and other real-time applications.
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/P0Tkr4HaIVk" frameborder="0" allowfullscreen></iframe>
