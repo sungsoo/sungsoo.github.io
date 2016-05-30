@@ -9,7 +9,7 @@ tags: [computer graphics]
 
 # Modeling Colliding and Merging Fluids
 
-In Two Minute Papers, we have talked about different fluid simulation techniques. This time, we are going to talk about surface tracking. Surface tracking is required to account for topological changes when different fluid interfaces collide. This work also takes into consideration the possibility of colliding fluids that are made of different materials. The resulting surface tracking algorithm is very robust, which means that it can deal with a large number of materials and topological changes at the same time.
+In Two Minute Papers, we have talked about different fluid simulation techniques. This time, we are going to talk about *surface tracking*. *Surface tracking* is required to account for topological changes when different fluid interfaces collide. This work also takes into consideration the possibility of colliding fluids that are made of different materials. The resulting surface tracking algorithm is very robust, which means that it can deal with a large number of materials and *topological* changes at the same time.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/uj8b5mu0P7Y" frameborder="0" allowfullscreen></iframe>
 
