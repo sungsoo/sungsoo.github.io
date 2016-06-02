@@ -10,6 +10,7 @@ tags: [machine learning]
 
 # TensorFlow Tutorial
 
+[구글의 텐서플로우 공개가 중요한 4가지 이유](http://www.itworld.co.kr/news/96498)
 
 ## 설치
 
