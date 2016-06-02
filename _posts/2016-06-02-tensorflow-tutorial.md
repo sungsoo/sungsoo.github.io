@@ -10,6 +10,23 @@ tags: [machine learning]
 
 # TensorFlow Tutorial
 
+
+## 설치
+
+```
+# six 업그레이드 
+$ sudo easy_install -U six
+
+# python 설치 
+$ brew install python
+
+# pip 업그레이드
+$ sudo pip install --upgrade pip
+
+# TensorFlow 설치
+$ sudo pip install --upgrade https://storage.googleapis.com/tensorflow/mac/tensorflow-0.8.0-py2-none-any.whl
+```
+
 ## 소개
 텐서플로우(TensorFlow)는 기계 학습과 딥러닝을 위해 구글에서 만든 오픈소스 라이브러리입니다. 데이터 플로우 그래프(Data Flow Graph) 방식을 사용하였습니다.
 
