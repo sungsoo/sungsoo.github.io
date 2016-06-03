@@ -7,6 +7,11 @@ tags: [machine learning]
 
 ---
 
+## Article Source
+* Title: [‘Fundamental of Deep Learning’ Preview](https://tensorflowkorea.wordpress.com/2016/04/18/fundamental-of-deep-learning-preview/)
+
+---
+
 
 # Fundamental of Deep Learning
 
