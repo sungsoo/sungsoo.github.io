@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Fundamental of Deep Learning
+title: Fundamentals of Deep Learning
 date: 2016-06-03
 categories: [computer science]
 tags: [machine learning]
@@ -13,7 +13,7 @@ tags: [machine learning]
 ---
 
 
-# Fundamental of Deep Learning
+# Fundamentals of Deep Learning
 
 ![](https://tensorflowkorea.files.wordpress.com/2016/04/rc_lrg.jpg?w=229&h=300)
 
