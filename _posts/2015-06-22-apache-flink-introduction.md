@@ -3,7 +3,7 @@ layout: post
 title: Apache Flink Seminar
 date: 2015-06-22
 categories: [computer science]
-tags: [flink, big data]
+tags: [big data, stream computing]
 
 ---
 

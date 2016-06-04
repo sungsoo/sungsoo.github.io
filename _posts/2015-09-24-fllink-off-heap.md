@@ -3,7 +3,7 @@ layout: post
 title: Off-heap Memory in Apache Flink and the curious JIT compiler
 date: 2015-09-24
 categories: [computer science]
-tags: [big data, flink]
+tags: [big data, stream computing]
 
 ---
 
