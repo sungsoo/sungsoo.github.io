@@ -3,7 +3,7 @@ layout: post
 title: Analytic Processing Environment (APE)
 date: 2015-01-27
 categories: [computer science]
-tags: [big data, workloads]
+tags: [big data]
 
 ---
 

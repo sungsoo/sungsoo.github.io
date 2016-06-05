@@ -3,7 +3,7 @@ layout: post
 title: Analytics vs. OLTP
 date: 2015-01-26
 categories: [computer science]
-tags: [big data, workloads]
+tags: [big data]
 
 ---
 
