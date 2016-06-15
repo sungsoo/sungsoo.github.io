@@ -7,6 +7,11 @@ tags: [data management]
 
 ---
 
+## Article Source
+* Title: [Vectorized executor to speed up PostgreSQL](https://github.com/citusdata/postgres_vectorization_test)
+
+---
+
 Vectorized Executor
 ===================
 
