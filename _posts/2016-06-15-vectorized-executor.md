@@ -119,7 +119,7 @@ simple "Select sum(l_quantity) From lineitem" type queries, and compared the
 regular executor to the vectorized version.
 
 <p align="center">
-  <img src="images/simple_aggregates.png?raw=true" alt="Run-times for simple aggregates"/>
+  <img src="http://sungsoo.github.com/images/simple_aggregates.png?raw=true" alt="Run-times for simple aggregates"/>
 </p>
 
 The results looked cheerful. Vectorized functions showed performance benefits of
@@ -136,7 +136,7 @@ functions. I then compared the two executors for simple group bys with
 aggregates.
 
 <p align="center">
-  <img src="images/groupby_aggregates.png?raw=true" alt="Run-times for group by aggregates"/>
+  <img src="http://sungsoo.github.com/images/groupby_aggregates.png?raw=true" alt="Run-times for group by aggregates"/>
 </p>
 
 These results showed performance benefits of around 3x. These improvements were
