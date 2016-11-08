@@ -27,7 +27,7 @@ jumping back to 2003 to provide some context for a streaming analytics
 paper we’ll be looking at tomorrow. The subject at hand is *skyline*
 computation.
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline.png?w=600)
 
 Not that sort of skyline.
 
@@ -40,7 +40,7 @@ A couple of examples help to make the idea much clearer. The running
 example throughout the paper is a hotels dataset with two attributes per
 hotel: price and distance from the beach.
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline-hotels.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline-hotels.png?w=600)
 
 Given some preference or scoring function that is monotone on all
 attributes (e.g. *min*) we can compute a skyline. A point *p~i~*
@@ -58,7 +58,7 @@ points where there is no point that is better on both (all) dimensions,
 and joining them. The points that define this skyline are *a, i,* and
 *k*.
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline-hotels-with-skyline.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline-hotels-with-skyline.png?w=600)
 
 In a SQL style syntax we might express this query as
 
@@ -72,7 +72,7 @@ cheaper instance types when performance is equivalent, and instance
 types that deliver better application performance when cost is equal,
 then we might draw a skyline that looks like this:
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline-aws-example.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline-aws-example.png?w=600)
 
 “Progressive skyline computation in database systems” shows us how to
 efficiently compute a skyline in a database context, as well as
@@ -108,17 +108,17 @@ structures would also work).
 First we need an R-tree for the data. Let’s build one for the hotels
 data set, with node capacity = 3:
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline-r-tree.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline-r-tree.png?w=600)
 
 And here are the bounding boxes of the nodes of the R-tree. First the
 leaves:
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline-r-tree-nodes-1.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline-r-tree-nodes-1.png?w=600)
 
 …and then we can draw on the bounding boxes for the intermediate nodes
 too:
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline-r-tree-nodes-2.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline-r-tree-nodes-2.png?w=600)
 
 The BBS algorithm starts from the root node of the R-tree, and inserts
 all of its entries (in this case *e6* and *e~7~*) into a sorted list,
@@ -198,7 +198,7 @@ algorithm is completed.
 The pseudo-code for the algorithm is shown below (the paper uses ‘heap’
 for what I called a sorted-list).
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline-fig-3-4.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline-fig-3-4.png?w=600)
 
 > Note that an entry is checked for dominance twice: before it is
 > inserted in the heap, and before it is expanded (processed). The
@@ -226,12 +226,12 @@ be obsolete.
 The query may return nothing, in which case the skyline simply increases
 by one point:
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline-3-7a.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline-3-7a.png?w=600)
 
 If points are returned though (i and k in the example below), these are
 removed from the skyline:
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline-3-7b.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline-3-7b.png?w=600)
 
 > Handling deletions is more complex. First, if the point removed is not
 > in the skyline (which can be easily checked by the main-memory R-tree
@@ -242,11 +242,11 @@ Which part? The part that is *exclusively dominated* by the skyline
 point being deleted (i.e. areas not dominated by other skyline points).
 This corresponds with the shaded area in the example below:
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline-3-8a.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline-3-8a.png?w=600)
 
 Recomputing this part of the skyline leaves us with:
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline-3-8b.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline-3-8b.png?w=600)
 
 ### Variations
 
@@ -292,7 +292,7 @@ most *K* points.
 Using the hotels example, here’s what the result of a 2-skyband query
 would look like.
 
-![](https://adriancolyer.files.wordpress.com/2016/07/skyline-4-5.png?w=600)\
+![](https://adriancolyer.files.wordpress.com/2016/07/skyline-4-5.png?w=600)
 
 *Approximate skylines* can be created from a histogram on the dataset,
 or progressively following the root visit in BBS. See section 5 of the
