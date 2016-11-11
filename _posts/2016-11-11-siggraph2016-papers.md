@@ -33,20 +33,36 @@ Thus you may need to search on the page to find the actual document.
 Issue 4 (July 2016) Proceedings of ACM SIGGRAPH 2016
 
 [![ACM DOI](http://kesen.realtimerendering.com/ACM-big.png)](http://www.acm.org/)
-**ACM Digital Library (DOI)** Link for the paper   ![Paper
-Abstract](http://kesen.realtimerendering.com/Abstract-big.png) **Paper Abstract**  
-[![Author version](http://kesen.realtimerendering.com/Preprint-big.png){width="48"
-height="48"}](http://iconka.com) **Author Preprint**   ![Paper
-Video](http://kesen.realtimerendering.com/Video-big.png) **Paper Video**  
+**ACM Digital Library (DOI)** 
 
-![Paper Presentation](http://kesen.realtimerendering.com/Ppt-big.png) **Paper
-Presentation**   ![Paper Images](http://kesen.realtimerendering.com/Images-big.png)
-**Paper Images**   ![Paper Data](http://kesen.realtimerendering.com/Data-big.png)
-**Paper Data**   ![Demo Program or Source Code](http://kesen.realtimerendering.com/Code-big.png){width="48"
-height="48"} **Demo Program or Source Code** ![Related
-Links](http://kesen.realtimerendering.com/URL-big.png) **Related Links**
+![Paper
+Abstract](http://kesen.realtimerendering.com/Abstract-big.png) **Paper Abstract**
 
-[Changelog](sig2016-changelog.html)
+  
+[![Author version](http://kesen.realtimerendering.com/Preprint-big.png)](http://iconka.com) **Author Preprint**   
+
+![Paper
+Video](http://kesen.realtimerendering.com/Video-big.png) 
+**Paper Video**  
+
+![Paper Presentation](http://kesen.realtimerendering.com/Ppt-big.png) 
+**Paper
+Presentation**   
+
+![Paper Images](http://kesen.realtimerendering.com/Images-big.png)
+**Paper Images**   
+
+![Paper Data](http://kesen.realtimerendering.com/Data-big.png)
+**Paper Data**   
+
+![Demo Program or Source Code](http://kesen.realtimerendering.com/Code-big.png)
+**Demo Program or Source Code** 
+
+![Related
+Links](http://kesen.realtimerendering.com/URL-big.png) 
+**Related Links**
+
+------
 
 [COMPUTATIONAL CAMERAS](http://s2016.siggraph.org/technical-papers/sessions/computational-cameras)
 --------------------------------------------------------------------------------------------------
