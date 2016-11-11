@@ -32,19 +32,19 @@ Thus you may need to search on the page to find the actual document.
 **ACM Digital Library:** ACM Transactions on Graphics (TOG) Volume 35,
 Issue 4 (July 2016) Proceedings of ACM SIGGRAPH 2016
 
-[![ACM DOI](http://kesen.realtimerendering.com/ACM-big.png){width="48" height="48"}](http://www.acm.org/)
+[![ACM DOI](http://kesen.realtimerendering.com/ACM-big.png)](http://www.acm.org/)
 **ACM Digital Library (DOI)** Link for the paper   ![Paper
-Abstract](http://kesen.realtimerendering.com/Abstract-big.png){width="48" height="48"} **Paper Abstract**  
+Abstract](http://kesen.realtimerendering.com/Abstract-big.png) **Paper Abstract**  
 [![Author version](http://kesen.realtimerendering.com/Preprint-big.png){width="48"
 height="48"}](http://iconka.com) **Author Preprint**   ![Paper
-Video](http://kesen.realtimerendering.com/Video-big.png){width="48" height="48"} **Paper Video**  
+Video](http://kesen.realtimerendering.com/Video-big.png) **Paper Video**  
 
-![Paper Presentation](http://kesen.realtimerendering.com/Ppt-big.png){width="48" height="48"} **Paper
-Presentation**   ![Paper Images](http://kesen.realtimerendering.com/Images-big.png){width="48" height="48"}
-**Paper Images**   ![Paper Data](http://kesen.realtimerendering.com/Data-big.png){width="48" height="48"}
+![Paper Presentation](http://kesen.realtimerendering.com/Ppt-big.png) **Paper
+Presentation**   ![Paper Images](http://kesen.realtimerendering.com/Images-big.png)
+**Paper Images**   ![Paper Data](http://kesen.realtimerendering.com/Data-big.png)
 **Paper Data**   ![Demo Program or Source Code](http://kesen.realtimerendering.com/Code-big.png){width="48"
 height="48"} **Demo Program or Source Code** ![Related
-Links](http://kesen.realtimerendering.com/URL-big.png){width="48" height="48"} **Related Links**
+Links](http://kesen.realtimerendering.com/URL-big.png) **Related Links**
 
 [Changelog](sig2016-changelog.html)
 
