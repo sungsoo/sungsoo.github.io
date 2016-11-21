@@ -8,7 +8,7 @@ tags: [data management]
 ---
 
 ## Article Source
-* Title: Data Blocks: Hybrid OLTP and OLAP on Compressed Storage using both Vectorization and Compilation [SIGMOD 2016]
+* Title: [Data Blocks: Hybrid OLTP and OLAP on Compressed Storage using both Vectorization and Compilation [SIGMOD 2016]](http://db.in.tum.de/downloads/publications/datablocks.pdf)
 * Authors: Harald Lang, Tobias Mühlbauer, Florian Funke, Peter Boncz, Thomas Neumann, Alfons Kemper, 2016.
 
 -------
