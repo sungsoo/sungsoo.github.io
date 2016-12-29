@@ -7,6 +7,10 @@ tags: [computer graphics]
 
 ---
 
+The paper "Dispersion Kernels for Water Wave Simulation" is available here:
+
+[http://www.gmrv.es/Publications/2016/...](http://www.gmrv.es/Publications/2016/CMTKPO16/)
+
 # Water Wave Simulation with Dispersion Kernels
 
 [ACM Trans. on Graphics (Proc. of ACM SIGGRAPH Asia), Volume 35, Number 6 - 2016](http://www.gmrv.es/Publications/2016/CMTKPO16/main.pdf)
