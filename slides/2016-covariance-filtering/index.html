@@ -1,0 +1,614 @@
+<!doctype html>
+<html>
+   <head>
+      <meta charset="utf-8">
+
+      <title>Antialasing Appearance in Global Illumination Renderers</title>
+
+      <meta name="description" content="Covariance Fitlering">
+      <meta name="author" content="Laurent Belcour">
+
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+      <link rel="stylesheet" href="../css/reveal.css">
+      <link rel="stylesheet" href="../css/theme/beige.css" id="theme">
+
+      <script src="../js/snap.svg.js"></script>
+      <script src="../js/reveal.js"></script>
+      <script src="../js/mathjax.js"></script>
+   </head>
+   <body>
+      <div class="reveal">
+         <!-- Any section element inside of this container is displayed as a slide -->
+         <div class="slides">
+
+            <!-- Title screen -->
+            <section class="title"> <!-- data-background="./png/background.png" -->
+            <h3>Antialasing Appearance in Global Illumination Renderers</h3>
+            <p><small>
+               <a href="http://belcour.github.io/blog">Laurent Belcour</a>,
+               <a href="http://www.cs.berkeley.edu/~lingqi/">Ling-Qi Yan</a>,
+               Ravi Ramamoorthi,
+               Derek Nowrouzezahrai
+            </small></p>
+            </section>
+
+            <!-- Introduction: problem statement -->
+            <section>
+            <h4 class="text">Antialiasing Surface Appearance</h4>
+            <svg id="intro01" width="800px" height="500px"></svg>
+            <script>
+               var s = Snap("#intro01");
+
+               s.text(5, 285, "eye").attr({fill: 'black', fontSize: '0.8em'});
+               s.text(520, 50, "light").attr({fill: '#ffd527', fontSize: '0.8em'});
+               s.text(340, 450, "geometry").attr({fill: 'black', fontSize: '0.8em'});
+               s.text(650, 365, "material").attr({id: 'material', fill: 'black', fontSize: '0.8em'});
+
+               Snap.load("./svg/singlescatter.svg", function (f) {
+                  var s = Snap("#intro01");
+                  //f.select("#layer1");
+                  f.select("#pixelfootprint").attr({class: "fragment", "data-fragment-index": 0});
+                  f.select("#zoom").attr({class: "fragment", "data-fragment-index": 1});
+                  f.select("#zoomeduv").attr({class: "fragment", "data-fragment-index": 1});
+                  f.select("#zoomedpixelfootprint").attr({class: "fragment", "data-fragment-index": 1});
+                  f.select("#zoomedborder").attr({class: "fragment", "data-fragment-index": 1});
+                  f.select("#zoomedmicrosurface").attr({class: "fragment", "data-fragment-index": 1});
+                  s.select("#material").attr({class: "fragment", "data-fragment-index": 1});
+                  s.append(f);
+               });
+            </script>
+            <p class="fragment"></p>
+            </section>
+
+            <section>
+            <h4 class="text">Antialiasing Surface Appearance</h4>
+            <svg id="intro02" width="800px" height="500px"></svg>
+            <script>
+               Snap.load("./svg/filtering01.svg", function (f) {
+                  var s = Snap("#intro02");
+                  s.text( 25, 310, "pixel").attr({opacity: 0.5, fill: 'black', fontSize: '0.8em'});
+                  s.text(310, 310, "material").attr({opacity: 0.5, fill: 'black', fontSize: '0.8em'});
+                  s.text(635, 310, "light").attr({opacity: 0.5, fill: 'black', fontSize: '0.8em'});
+                  s.append(f);
+
+                  // Animation
+                  s.select("#integral").attr({opacity: 1, class: "fragment", "data-fragment-index": 0});
+                  s.select("#light").transform(s.select("#light").transform() + "t15,0");
+                  s.select("#eq").attr({class: "fragment fade-out", "data-fragment-index": 0});
+                  s.select("#simeq").attr({opacity: 1, class: "fragment", "data-fragment-index": 0});
+               });
+            </script>
+            </section>
+
+            <section>
+            <h4 class="text">Antialiasing Surface Appearance</h4>
+            <svg id="intro03" width="800px" height="500px"></svg>
+            <script>
+               Snap.load("./svg/multiscatter.svg", function (f) {
+                  var s = Snap("#intro03");
+                  s.append(f);
+               });
+            </script>
+            </section>
+
+            <section>
+            <h4 class="text">Antialiasing Surface Appearance</h4>
+            <ul>
+               <li>Pixel projection is ill-defined</li><br />
+               <li>Need to replace it with a kernel</li>
+               <svg id="intro04" width="800px" height="500px"></svg>
+            </ul>
+            </section>
+
+            <section>
+            <h4 class="text">Antialiasing Surface Appearance</h4>
+            <svg id="intro05" width="800px" height="500px"></svg>
+            <script>
+               Snap.load("./svg/filtering02.svg", function (f) {
+                  var s = Snap("#intro05");
+                  s.text( 25, 310, "pixel").attr({opacity: 0.5, fill: 'black', fontSize: '0.8em'});
+                  s.text(280, 310, "kernel").attr({opacity: 0.5, fill: 'black', fontSize: '0.8em'});
+                  s.text(435, 310, "material").attr({opacity: 0.5, fill: 'black', fontSize: '0.8em'});
+                  s.text(640, 310, "light").attr({opacity: 0.5, fill: 'black', fontSize: '0.8em'});
+                  var layer= f.select("#layer1");
+                  var defs = f.select("defs");
+                  s.select("defs").remove();
+                  s.append(defs);
+                  s.append(layer);
+               });
+            </script>
+            </section>
+
+            <section>
+            <h4 class="text">Frequency Analysis Perspective</h4>
+            <ul>
+               <li>The kernel is a low-pass filter on the BRDF</li>
+            </ul>
+            <svg id="kernel01" width="800px" height="600px"></svg>
+            <script type="text/javascript">
+               var createFilter = function(snap, x0, y0, w, h, sigma, orient, style) {
+                  var arrow = snap.polygon([0,5, 4,5, 2,0, 0,5]).attr({fill: '#000'}).transform('r90');
+                  var marker = arrow.marker(0,0, 5,5, 0,2.5).attr({id: "marker"});
+                  var curveA = "M" + x0 + " " + y0;
+                  var curveB = "M" + x0 + " " + y0;
+                  var curveC = "M" + x0 + " " + y0;
+                  const N = 125;
+                  for(var i=0; i<N; ++i) {
+                     var dx  = i / (N-1);
+                     var dy  = Math.random() /(1.0+10*Math.pow(dx-0.5, 2));
+                     if(Math.abs(dx-0.5) < 0.001) { dy = 1; }
+                     var exp = (Math.exp(-0.5 * sigma * Math.pow(dx - 0.5, 2)));
+                     var xi = x0 + w*dx;
+                     var yi = y0 - h*exp;
+
+                     curveA += " " + xi + " " + yi;
+                     curveB += " " + xi + " " + (y0-h*dy);
+                     curveC += " " + xi + " " + (y0-h*exp*dy);
+                  }
+                  var pathA = snap.path(curveA).attr({fillOpacity: 0, stroke: "#ff0000", strokeWidth: 2});
+                  var pathB = snap.path(curveB).attr({fillOpacity: 0, stroke: "#00ee00", strokeWidth: 2});
+                  var pathC = snap.path(curveC).attr({fillOpacity: 0, stroke: "#0000ff", strokeWidth: 2});
+                  var absc1 = snap.line(x0, y0, x0+w, y0);
+                  absc1.attr({stroke: "#000000", strokeWidth: 2, markerEnd: marker});
+                  var ord1 = snap.line(x0+w/2, y0, x0+w/2, y0-h-20);
+                  ord1.attr({stroke: "#000000", strokeWidth: 2, markerEnd: marker});
+                  var textA = snap.text(x0+w, y0-h-30, "Kernel").attr({fill: "#ff0000", textAnchor: "end", fontSize: "0.6em"});
+                  var textA = snap.text(x0+w, y0-h-5, "Material").attr({fill: "#00ee00", textAnchor: "end", fontSize: "0.6em"});
+                  var textA = snap.text(x0+w, y0-h+20, "Antaliased material").attr({fill: "#0000ff", textAnchor: "end", fontSize: "0.6em"});
+                  var grou = snap.g(pathA, pathB, pathC, absc1, ord1);
+                  return grou;
+               }
+               var s = Snap("#kernel01");
+               createFilter(s, 0, 400, 790, 300, 400);
+            </script>
+            </section>
+            <section>
+            <h4 class="text">Summary</h4>
+            <ul>
+               <li class="fragment">We predict the kernel for any number of bounces</li><br />
+               <li class="fragment">We use <a href="https://hal.archives-ouvertes.fr/hal-00814164">covariance tracing</a> to do so</li><br />
+               <li class="fragment">Our method is compatible with BDPT</li>
+            </ul>
+            </section>
+
+            <!-- Covariance Tracing -->
+            <section>
+            <h4 class="text">Covariance Tracing</h4>
+            <svg id="cov01" width="800px" height="500px"></svg>
+            <script>
+               Snap.load("./svg/covariance01.svg", function (f) {
+                  var s = Snap("#cov01");
+                  s.append(f);
+
+                  var newOmegaU = s.select("#omegau").clone(); Snap("#cov02").append(newOmegaU);
+                  var newOmegaX = s.select("#omegax").clone(); Snap("#cov02").append(newOmegaX);
+                  newOmegaX.transform(Snap.matrix(2,0,0,-2,-612.21845,1439.9274).add(Snap.matrix(1,0,0,1,172,-208)));
+                  newOmegaU.transform(Snap.matrix(2,0,0,-2,-612.21845,1439.9274).add(Snap.matrix(1,0,0,1,122,-154)));
+               });
+            </script>
+            <script class="fragment" data-call="CovarianceCall">
+               var CovarianceCall = function(offset) {
+                  var s = Snap("#cov01");
+                  var c = s.select("#covariance");
+                  if( c == null ) { return; }
+
+                  if(offset > 0) { // Apply the change
+                     c.attr({stroke: "#ff0000"});
+                  } else { // Modify back the element
+                     c.attr({stroke: "#1d00fe"});
+                  }
+               }
+            </script>
+            </section>
+
+            <!-- Issue with bidirectionnal path tracing -->
+            <section>
+            <h4>Covariance Tracing</h4>
+            <p id="cov02opT" style="position:absolute;padding-left:175px;padding-top:365px;opacity:0;">
+               $$\left[ \begin{array}{cc} 1 & 0 \\ d & 1 \end{array} \right]^T \quad \quad \quad \quad \quad
+               \left[ \begin{array}{cc} 1 & 0 \\ d & 1 \end{array} \right]$$
+            </p>
+            <p id="cov02opB" style="position:absolute;padding-left:195px;padding-top:370px;opacity:0;">
+               $$\mbox{BRDF}\Huge( \quad \quad \quad \quad \quad \Huge)$$
+            </p>
+
+            <svg id="cov02" width="800px" height="600px"></svg>
+            <script type="text/javascript">
+
+               var s = Snap("#cov02");
+
+               // Load the example figure.
+               Snap.load("./svg/bidir-filter-example.svg", function (f) {
+                  var s = Snap("#cov02");
+                  var layer= f.select("#layer2");
+                  var defs = f.select("#defs4");
+                  s.append(layer.transform(Snap.matrix(1, 0, 0, 1, 800, 0)));
+                  s.append(defs);
+                  //s.select("#layer1").transform(Snap.matrix(1, 0, 0, 1, 0, -50));
+               });
+
+               // Create the covariance representation below.
+               var s = Snap("#cov02");
+               function CreateCovariance(s, cx, cy, wx) {
+                  var arrow = s.polygon([0,5, 4,5, 2,0, 0,5]).attr({fill: '#000'}).transform('r90');
+                  var marker = arrow.marker(0,0, 5,5, 0,2.5).attr({id: "marker"});
+                  s.rect(cx-wx, cy-wx, 2*wx, 2*wx).attr({fill: "#fff", fillOpacity: 1, stroke: "#000000", strokeWidth: 2});
+                  s.rect(cx-wx, cy-0.5*wx, 2*wx, wx).attr({id: "limit", fill: "#999999", fillOpacity: 0});
+                  s.path("M " + (cx-wx-10) + " " + (cy) + " " + (cx+wx+20) + " " + (cy) + "").attr({stroke: "#000000", strokeWidth: 2, markerEnd: marker});
+                  s.path("M " + (cx) + " " + (cy+wx+10) + " " + (cx) + " " + (cy-wx-20) + "").attr({stroke: "#000000", strokeWidth: 2, markerEnd: marker});
+                  s.circle(0, 0, 0.5*   wx).attr({id: "circle", stroke: "#0000ff", fillOpacity: 0, strokeWidth: 2, strokeDasharray: "1,4", strokeLinecap: "round"}).transform(Snap.matrix(1, 0, 0, 1, cx, cy));
+               }
+               const cx = 400, cy = 450, wx = 100;
+               CreateCovariance(s, cx, cy, wx);
+
+               var ShowOpT = function() {
+                  var opT = document.getElementById("cov02opT");
+                  opT.style.opacity = 1;
+
+                  var s  = Snap("#cov02");
+                  var op = s.select("#arrowT").attr({opacity: 1});
+               }
+               var HideOpT = function() {
+                  var opT = document.getElementById("cov02opT");
+                  opT.style.opacity = 0;
+
+                  var s  = Snap("#cov02");
+                  var op = s.select("#arrowT").attr({opacity: 0});
+               }
+               var ShowOpB = function() {
+                  var opT = document.getElementById("cov02opB");
+                  opT.style.opacity = 1;
+
+                  var s  = Snap("#cov02");
+                  s.select("#arrowB").attr({opacity: 1});;
+               }
+               var HideOpB = function() {
+                  var opT = document.getElementById("cov02opB");
+                  opT.style.opacity = 0;
+
+                  var s  = Snap("#cov02");
+                  s.select("#arrowB").attr({opacity: 0});
+               }
+               var ShowOpTT = function() {
+                  var s  = Snap("#cov02");
+                  var op = s.select("#arrowTT").attr({opacity: 1});
+                  s.select("#limit").attr({opacity: 0.0})
+               }
+               var HideOpTT = function() {
+                  var s  = Snap("#cov02");
+                  var op = s.select("#arrowTT").attr({opacity: 0});
+                  s.select("#limit").attr({opacity: 0.5});
+               }
+               var MoveCursorStep1= function(offset) {
+                  var s = Snap("#cov02");
+                  var c = s.select("#cursor");
+
+                  const M = c.transform().localMatrix;
+                  const posX = 285;
+                  const posY = 165;
+                  if(offset > 0) {
+                     Snap.animate(0, 1, function(val) {
+                        c.transform(M);
+                        var temp = Snap.matrix(1, 0, 0, 1, val*posX, val*posY);
+                        c.transform(c.transform().localMatrix.add(temp));
+                     }, 500);
+                  } else {
+                     Snap.animate(0, 1, function(val) {
+                        c.transform(M);
+                        var temp = Snap.matrix(1, 0, 0, 1, val*posX, val*posY);
+                        c.transform(c.transform().localMatrix.add(temp.invert()));
+                     }, 500);
+                  }
+               }
+               var ShearCov = function(offset) {
+                  var s = Snap("#cov02");
+                  var c = s.select("#circle");
+
+                  const M = c.transform().localMatrix;
+                  const o = 1;
+                  if(offset > 0) {
+                     Snap.animate(0, -1, function(val) {
+                        c.transform(M);
+                        var temp = Snap.matrix(1, val, 0, 1, 0, 0);
+                        c.transform(c.transform().localMatrix.add(temp));
+                     }, 500);
+                  } else {
+                     Snap.animate(0, -1, function(val) {
+                        c.transform(M);
+                        var temp = Snap.matrix(1, val, 0, 1, 0, 0);
+                        c.transform(c.transform().localMatrix.add(temp.invert()));
+                     }, 500);
+                  }
+               }
+               var BrdfCov = function(offset) {
+                  var s = Snap("#cov02");
+                  var l = s.select("#limit");
+                  var c = s.select("#circle");
+                  var opB = document.getElementById("cov02opB");
+
+                  const M = c.transform().localMatrix;
+                  if(offset > 0) {
+                     Snap.animate(0, 1, function(val) {
+                        c.transform(M);
+                        c.transform(c.transform().localMatrix.add(Snap.matrix(0.7*val + (1-val), 0.1*val, 0, 0.8*val + (1-val), 0, 0)));
+                        l.attr({fillOpacity: 0.5*val});
+                     }, 500);
+                  } else {
+                     Snap.animate(1, 0, function(val) {
+                        c.transform(M);
+                        c.transform(c.transform().localMatrix.add(Snap.matrix(0.7*(1-val) + val, 0.1*(1-val), 0, 0.8*(1-val) + val, 0, 0).invert()));
+                        l.attr({fillOpacity: 0.5*val});
+                     }, 500);
+                  }
+               }
+
+               Reveal.addEventListener( 'fragmentshown', function( event ) {
+                  // event.fragment = the fragment DOM element
+                  if(event.fragment.id == "ShearCov") { ShowOpT(); ShearCov(1); MoveCursorStep1(1); return; }
+                  if(event.fragment.id == "BrdfCov") { HideOpT(); ShowOpB(); BrdfCov(1); return; }
+                  if(event.fragment.id == "Shear2Cov") { ShowOpTT(); HideOpB(); return; }
+               });
+               Reveal.addEventListener( 'fragmenthidden', function( event ) {
+                  // event.fragment = the fragment DOM element
+                  if(event.fragment.id == "ShearCov") { HideOpT(); ShearCov(-1); MoveCursorStep1(-1); return; }
+                  if(event.fragment.id == "BrdfCov") { HideOpB(); BrdfCov(-1); ShowOpT(); return; }
+                  if(event.fragment.id == "Shear2Cov") { HideOpTT(); ShowOpB(); return; }
+               });
+            </script>
+            <!--
+            <p class="fragment" data-call="ShearCov"></p>
+            <p class="fragment" data-call="BrdfCov"></p>
+            -->
+            <p class="fragment" id="ShearCov"></p>
+            <p class="fragment" id="BrdfCov"></p>
+            <p class="fragment" id="Shear2Cov"></p>
+            </section>
+
+            <section>
+            <h4>Covariance Antialiasing</h4>
+            <svg id="cov03" width="800px" height="600px"></svg>
+            <script type="text/javascript">
+               var createGaussian = function(snap, x0, y0, w, h, sigma, orient, style) {
+                  var curve = "M" + x0 + " " + y0;
+                  for(var i=0; i<100; ++i) {
+                     var dx = i / 99;
+                     if(orient == "vertical") {
+                        var yi = y0 + h*dx;
+                        var xi = x0 + w*(Math.exp(-0.5 * sigma * Math.pow(dx - 0.5, 2)));
+                     } else {
+                        var xi = x0 + w*dx;
+                        var yi = y0 + h*(Math.exp(-0.5 * sigma * Math.pow(dx - 0.5, 2)));
+                     }
+                     curve += " " + xi + " " + yi;
+                  }
+                  var path = snap.path(curve).attr({fillOpacity: 0, stroke: "#ff0000", strokeWidth: 2});
+                  if(style) { path.attr( style ); }
+                  var absc;
+                  if(orient == "vertical") {
+                     absc = snap.line(x0, y0, x0, y0+h);
+                  } else {
+                     absc = snap.line(x0, y0, x0+w, y0);
+                  }
+                  absc.attr({stroke: "#000000", strokeWidth: 2, markerEnd: snap.select("#marker")});
+                  var grou = snap.g(path, absc);
+                  return grou;
+               }
+               Snap.load("./svg/bidir-filter-example.svg", function (f) {
+                  var s = Snap("#cov03");
+                  var layer= f.select("#layer3");
+                  var defs = f.select("#defs4");
+                  s.append(layer.transform(Snap.matrix(1, 0, 0, 1, 1580, 0)));
+                  s.append(defs);
+
+                  // Covariance window
+                  var cx = 110, cy = 440, w = 70;
+                  CreateCovariance(s, cx, cy, w, 100);
+                  s.text(cx, cy+w+30, "Covariance").attr({fontSize: "0.6em", textAnchor: "middle"});
+                  var quad = s.paper.rect(cx-w, cy-2, 2*w, 4).attr({fillOpacity: 0.5, fill: "#ff0000"});
+
+                  // Plot the kernel
+                  var x0 = 255, y0 = 300, w = 300, h=100;
+                  var plot = createGaussian(s, x0, y0, w, h, 100, "horizontal");
+                  var text = s.paper.text(x0+w+50, y0+7, "kernel").attr({fill: "#ff0000", fontSize: "0.6em", textAnchor: "middle"});
+                  s.g(plot, text, quad).attr({id: "plot", opacity: 0});
+               });
+
+               var Cov03MoveCursor01 = function(offset) {
+                  var s = Snap("#cov03");
+                  var c = s.select("#cursor-3");
+
+                  const M = c.transform().localMatrix;
+                  const posX = 285;
+                  const posY = 165;
+                  if(offset > 0) {
+                     Snap.animate(0, 1, function(val) {
+                        c.transform(M);
+                        var temp = Snap.matrix(1, 0, 0, 1, val*posX, val*posY);
+                        c.transform(c.transform().localMatrix.add(temp));
+                     }, 500);
+                  } else {
+                     Snap.animate(0, 1, function(val) {
+                        c.transform(M);
+                        var temp = Snap.matrix(1, 0, 0, 1, -val*posX, -val*posY);
+                        c.transform(c.transform().localMatrix.add(temp));
+                     }, 500);
+                  }
+               }
+               var Cov03ShearCov = function(offset) {
+                  var s = Snap("#cov03");
+                  var c = s.select("#circle");
+
+                  const M = c.transform().localMatrix;
+                  const o = 1;
+                  if(offset > 0) {
+                     Snap.animate(0, -o, function(val) {
+                        c.transform(M);
+                        var temp = Snap.matrix(1, val, 0, 1, 0, 0);
+                        c.transform(c.transform().localMatrix.add(temp));
+                     }, 500);
+                  } else {
+                     Snap.animate(0, o, function(val) {
+                        c.transform(M);
+                        var temp = Snap.matrix(1, val, 0, 1, 0, 0);
+                        c.transform(c.transform().localMatrix.add(temp));
+                     }, 500);
+                  }
+               }
+
+               var Cov03DisplayKernel = function(offset) {
+                  var s = Snap("#cov03");
+                  var c = s.select("#plot");
+                  if(offset > 0) {
+                     c.animate({opacity: 1}, 500);
+                  } else {
+                     c.animate({opacity: 0}, 500);
+                  }
+               }
+
+               Reveal.addEventListener( 'fragmentshown', function( event ) {
+                  // event.fragment = the fragment DOM element
+                  if(event.fragment.id == "cov03shear01") { Cov03ShearCov(1); Cov03MoveCursor01(1); return; }
+                  if(event.fragment.id == "cov03kernel01") { Cov03DisplayKernel(1); return; }
+               });
+               Reveal.addEventListener( 'fragmenthidden', function( event ) {
+                  // event.fragment = the fragment DOM element
+                  if(event.fragment.id == "cov03shear01") { Cov03ShearCov(-1); Cov03MoveCursor01(-1); return; }
+                  if(event.fragment.id == "cov03kernel01") { Cov03DisplayKernel(-1); return; }
+               });
+            </script>
+               <p class="fragment" id="cov03shear01"></p>
+               <p class="fragment" id="cov03kernel01"></p>
+            </section>
+
+
+            <!-- Demo of our uni-directionnal kernels -->
+            <section>
+            <h4>Comparison to Ground Truth Kernel</h4>
+            <svg id="demo01" width="512" height="512"></svg><br />
+            <script>
+               var s = Snap("#demo01");
+               var x = 225;
+               s.clear();
+               s.image("./png/unidirectional-filter-cov.png", 0, 0, 512, 512);
+               var block = s.rect(0, x, 512, 512).attr({fill: "#ffffff", id: "block"});
+               var image = s.image("./png/unidirectional-filter-ref.png", 0, 0, 512, 512);
+               var line  = s.line(0, x, 512, x).attr({id: "line", stroke: "#000", strokeWidth:2});
+               s.rect(1, 1, 510, 510).attr({fillOpacity: 0, strokeWidth: 2, stroke: "#000"});
+               var textu = s.text(500, x-15, "predicted kernel").attr({fillOpacity: 0.7, fill: "#FD5154", fontSize: "0.6em", textAnchor: "end"});
+               var textl = s.text(500, x+25, "ground truth kernel").attr({fillOpacity: 0.7, fill: "#59FE5B", fontSize: "0.6em", textAnchor: "end"});
+               var g = s.g(block, line, textu, textl).attr({id: "group"});
+               image.attr({id: "image", mask: block});
+
+               s.circle(320, 365, 5).attr({fill: "#aaaaff", stroke: "#5555ff", strokeWidth: 2});
+               s.text(330, 370, "pixel").attr({fontSize: "0.6em", fillOpacity: 0.9, fill: "#aaaaff"})
+
+               const demo01move = function(x, y, event) {
+                  var s = Snap("#demo01");
+                  var g = s.select("#group");
+                  var i = s.select("#image");
+                  var b = s.select("#block");
+                  g.transform("t0," + y);
+                  b.attr({transform: "t0," + y});
+                  i.attr({mask: s.select("block")});
+               }
+
+               g.drag(demo01move);
+            </script>
+            <small>Kernel after one bounce</small>
+            </section>
+
+            <!-- Bidirectionnal path tracing -->
+            <section>
+            <h4>Bidirectional Antialiasing</h4>
+            <svg id="bidir01" width="1400px" height="600px"></svg>
+            <script type="text/javascript">
+               Snap.load("./svg/bidir-filter-example.svg", function (f) {
+                  var s = Snap("#bidir01");
+                  var layer= f.select("#layer1");
+                  var defs = f.select("#defs4");
+                  s.append(layer.transform(Snap.matrix(1, 0, 0, 1, -130, -40)));
+                  s.append(defs);
+                  var arrow = s.polygon([0,5, 4,5, 2,0, 0,5]).attr({fill: '#000'}).transform('r90');
+                  var marker = arrow.marker(0,0, 5,5, 0,2.5).attr({id: "marker"});
+
+                  var g0 = createGaussian(s, 800, 60, 100, 300, 100, "vertical");
+                  var g1 = createGaussian(s, 800, 60, 100, 300, 500, "vertical", {stroke: "#0000ff"});
+                  var g2 = createGaussian(s, 220, 450, 300, 100, 300);
+                  s.text(770, 380, "wrong eye kernel!").transform("r90").attr({fontSize: "0.7em", fill: "#ff0000", textAnchor: "middle"});
+               });
+            </script>
+            </section>
+
+            <section>
+            <h4>Bidirectional Antialiasing</h4>
+            <svg id="bidir02" width="1000px" height="600px"></svg>
+            <script type="text/javascript">
+               Snap.load("./svg/filtering03.svg", function (f) {
+                  var s = Snap("#bidir02");
+                  var layer= f.select("#layer2");
+                  var defs = f.select("#defs4");
+                  s.select("defs").remove();
+                  s.append(defs);
+                  s.append(layer.transform(Snap.matrix(1, 0, 0, 1, 0, 70)));
+                  s.text(325, 360, "eye kernel").attr({fontSize: "0.6em", textAnchor: "middle"});
+                  s.text(660, 360, "light kernel").attr({fontSize: "0.6em", textAnchor: "middle"});
+                  s.text(490, 360, "material").attr({fontSize: "0.6em", textAnchor: "middle"});
+                  s.text(830, 360, "light").attr({fontSize: "0.6em", textAnchor: "middle"});
+               });
+            </script>
+            </section>
+
+            <section>
+            <h4>Bidirectional Antialiasing</h4>
+            <div class="fragment" style="position:absolute;padding-left:320px;padding-top:340px;">$$ \Sigma_e \; + \; \Sigma_l \; = \; \Sigma $$</div>
+            <svg id="bidir03" width="1000px" height="600px"></svg>
+            <script type="text/javascript">
+               Snap.load("./svg/filtering03.svg", function (f) {
+                  var s = Snap("#bidir03");
+                  var layer= f.select("#layer3");
+                  var defs = f.select("#defs");
+                  s.append(layer.transform(Snap.matrix(1, 0, 0, 1, 0, -300)));
+                  s.select("defs").remove();
+                  s.append(defs);
+
+                  s.text(275, 280, "eye kernel").attr({fontSize: "0.6em", textAnchor: "middle"});
+                  s.text(650, 280, "bidir kernel").attr({fontSize: "0.6em", textAnchor: "middle"});
+                  s.text(450, 280, "light kernel").attr({fontSize: "0.6em", textAnchor: "middle"});
+               });
+            </script>
+            </section>
+
+            <!-- Results -->
+            <section>
+               <h4>Example: Snail Scene</h4>
+               <iframe data-autoplay width="100%" height="600px" src="https://www.youtube.com/embed/_Sh8xcspWG8?start=127&end=166" frameborder="0" ></iframe>
+            </section>
+
+            <section>
+               <h4 style="padding-top:30%">Thank You!</h4>
+            </section>
+         </div>
+      </div>
+
+      <script>
+         // More info https://github.com/hakimel/reveal.js#configuration
+         Reveal.initialize({
+            controls: false,
+            progress: true,
+            history: true,
+            center: false,
+            slideNumber: true,
+            transition: 'fade',
+            //dependencies: [{ src: 'js/mathjax.js', async: true }]
+         });
+
+         // Reveal.addEventListener( 'fragmentshown', intro01anim01fw);
+         // Reveal.addEventListener( 'fragmenthidden', intro01anim01bw);
+
+
+         // Reveal.addEventListener( 'helloshown', function() { alert("Hello"); } );
+         // Reveal.addEventListener( 'hellohidden', intro01anim01bw);
+      </script>
+   </body>
+</html>
