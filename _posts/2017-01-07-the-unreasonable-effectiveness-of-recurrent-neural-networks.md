@@ -541,10 +541,8 @@ and trained a multilayer LSTM. Amazingly, the resulting sampled Latex
 *almost* compiles. We had to step in and fix a few issues manually but
 then you get plausible looking math, it’s quite astonishing:
 
-<div class="imgcap">
 
 ![](http://karpathy.github.io/assets/rnn/latex4.jpeg)
-<div class="thecap">
 
 Sampled (fake) algebraic geometry. [Here's the actual
 pdf.](http://cs.stanford.edu/people/jcjohns/fake-math/4.pdf)
@@ -555,14 +553,10 @@ pdf.](http://cs.stanford.edu/people/jcjohns/fake-math/4.pdf)
 
 Here’s another sample:
 
-<div class="imgcap">
 
 ![](http://karpathy.github.io/assets/rnn/latex3.jpeg)
-<div class="thecap">
 
 More hallucinated algebraic geometry. Nice try on the diagram (right).
-
-
 
 
 
