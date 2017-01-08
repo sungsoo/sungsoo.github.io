@@ -156,8 +156,6 @@ class RNN:
     return y
 ```
 
-
-
 The above specifies the forward pass of a vanilla RNN. This RNN’s
 parameters are the three matrices
 `W_hh, W_xh, W_hy`. The hidden state
@@ -541,24 +539,16 @@ and trained a multilayer LSTM. Amazingly, the resulting sampled Latex
 *almost* compiles. We had to step in and fix a few issues manually but
 then you get plausible looking math, it’s quite astonishing:
 
-
 ![](http://karpathy.github.io/assets/rnn/latex4.jpeg)
 
 Sampled (fake) algebraic geometry. [Here's the actual
 pdf.](http://cs.stanford.edu/people/jcjohns/fake-math/4.pdf)
 
-
-
-
-
 Here’s another sample:
-
 
 ![](http://karpathy.github.io/assets/rnn/latex3.jpeg)
 
 More hallucinated algebraic geometry. Nice try on the diagram (right).
-
-
 
 As you can see above, sometimes the model tries to generate latex
 diagrams, but clearly it hasn’t really figured them out. I also like the
@@ -566,8 +556,6 @@ part where it chooses to skip a proof (*“Proof omitted.”*, top left). Of
 course, keep in mind that latex has a relatively difficult structured
 syntactic format that I haven’t even fully mastered myself. For
 instance, here is a raw sample from the model (unedited):
-
-
 
 ``` 
 \begin{proof}
