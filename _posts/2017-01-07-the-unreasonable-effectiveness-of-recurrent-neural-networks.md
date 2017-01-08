@@ -235,7 +235,7 @@ which we interpret as the confidence the RNN currently assigns to each
 character coming next in the sequence. Here’s a diagram:
 
 
-![](http://karpathy.github.io/assets/rnn/charseq.jpeg){width="70%"}
+![](http://karpathy.github.io/assets/rnn/charseq.jpeg)
 
 An example RNN with 4-dimensional input and output layers, and a hidden
 layer of 3 units (neurons). This diagram shows the activations in the
