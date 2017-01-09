@@ -18,6 +18,7 @@ ConvNets are amenable to efficient GPU implementations and, unlike exact iterati
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/iOWamCtnwTc" frameborder="0" allowfullscreen></iframe>
 
+
 The paper "Accelerating Eulerian Fluid Simulation With Convolutional 
 Networks" and its source code is available here:
 
