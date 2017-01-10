@@ -75,8 +75,9 @@ algorithms:
 ### **Supervised Learning**
 
 ![Supervised Learning
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Supervised-Learning-Algorithms.png){.alignright
-.size-full .wp-image-2033 width="230" height="262"}Input data is called
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Supervised-Learning-Algorithms.png)
+
+Input data is called
 training data and has a known label or result such as spam/not-spam or a
 stock price at a time.
 
@@ -93,8 +94,9 @@ Neural Network.
 ### **Unsupervised Learning**
 
 ![Unsupervised Learning
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Unsupervised-Learning-Algorithms.png){.alignright
-.size-full .wp-image-2034 width="234" height="264"}Input data is not
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Unsupervised-Learning-Algorithms.png)
+
+Input data is not
 labeled and does not have a known result.
 
 A model is prepared by deducing structures present in the input data.
@@ -110,10 +112,9 @@ Example algorithms include: the Apriori algorithm and k-Means.
 ### **Semi-Supervised Learning**
 
 [![Semi-supervised Learning
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Semi-supervised-Learning-Algorithms.png){.alignright
-.size-full .wp-image-2035 width="231"
-height="271"}](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Semi-supervised-Learning-Algorithms.png)Input
-data is a mixture of labeled and unlabelled examples.
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Semi-supervised-Learning-Algorithms.png)
+
+Input data is a mixture of labeled and unlabelled examples.
 
 There is a desired prediction problem but the model must learn the
 structures to organize the data as well as make predictions.
@@ -187,9 +188,9 @@ in the comments and share it with us. Let’s dive in.
 ### Regression Algorithms
 
 ![Regression
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Regression-Algorithms.png){.alignright
-.size-full .wp-image-2022 width="208" height="229"}Regression is
-concerned with modeling the relationship between variables that is
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Regression-Algorithms.png)
+
+Regression is concerned with modeling the relationship between variables that is
 iteratively refined using a measure of error in the predictions made by
 the model.
 
@@ -210,8 +211,9 @@ The most popular regression algorithms are:
 ### Instance-based Algorithms
 
 ![Instance-based
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Instance-based-Algorithms.png){.alignright
-.size-full .wp-image-2023 width="216" height="246"}Instance-based
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Instance-based-Algorithms.png)
+
+Instance-based
 learning model is a decision problem with instances or examples of
 training data that are deemed important or required to the model.
 
@@ -232,8 +234,9 @@ The most popular instance-based algorithms are:
 ### Regularization Algorithms
 
 ![Regularization
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Regularization-Algorithms.png){.alignright
-.size-full .wp-image-2024 width="214" height="245"}An extension made to
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Regularization-Algorithms.png)
+
+An extension made to
 another method (typically regression methods) that penalizes models
 based on their complexity, favoring simpler models that are also better
 at generalizing.
@@ -252,8 +255,9 @@ The most popular regularization algorithms are:
 ### Decision Tree Algorithms
 
 ![Decision Tree
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Decision-Tree-Algorithms.png){.alignright
-.size-full .wp-image-2025 width="214" height="243"}Decision tree methods
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Decision-Tree-Algorithms.png)
+
+Decision tree methods
 construct a model of decisions made based on actual values of attributes
 in the data.
 
@@ -275,8 +279,9 @@ The most popular decision tree algorithms are:
 ### Bayesian Algorithms
 
 ![Bayesian
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Bayesian-Algorithms.png){.alignright
-.size-full .wp-image-2026 width="219" height="239"}Bayesian methods are
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Bayesian-Algorithms.png)
+
+Bayesian methods are
 those that explicitly apply Bayes’ Theorem for problems such as
 classification and regression.
 
@@ -292,8 +297,9 @@ The most popular Bayesian algorithms are:
 ### Clustering Algorithms
 
 ![Clustering
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Clustering-Algorithms.png){.alignright
-.size-full .wp-image-2027 width="213" height="227"}Clustering, like
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Clustering-Algorithms.png)
+
+Clustering, like
 regression, describes the class of problem and the class of methods.
 
 Clustering methods are typically organized by the modeling approaches
@@ -311,8 +317,9 @@ The most popular clustering algorithms are:
 ### Association Rule Learning Algorithms
 
 ![Assoication Rule Learning
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Assoication-Rule-Learning-Algorithms.png){.alignright
-.size-full .wp-image-2028 width="215" height="250"}Association rule
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Assoication-Rule-Learning-Algorithms.png)
+
+Association rule
 learning methods extract rules that best explain observed relationships
 between variables in data.
 
@@ -328,8 +335,9 @@ The most popular association rule learning algorithms are:
 ### Artificial Neural Network Algorithms
 
 ![Artificial Neural Network
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Artificial-Neural-Network-Algorithms.png){.alignright
-.size-full .wp-image-2029 width="208" height="249"}Artificial Neural
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Artificial-Neural-Network-Algorithms.png)
+
+Artificial Neural
 Networks are models that are inspired by the structure and/or function
 of biological neural networks.
 
@@ -352,8 +360,9 @@ The most popular artificial neural network algorithms are:
 ### Deep Learning Algorithms
 
 ![Deep Learning
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Deep-Learning-Algorithms.png){.alignright
-.size-full .wp-image-2030 width="215" height="246"}Deep Learning methods
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Deep-Learning-Algorithms.png)
+
+Deep Learning methods
 are a modern update to Artificial Neural Networks that exploit abundant
 cheap computation.
 
@@ -372,8 +381,9 @@ The most popular deep learning algorithms are:
 ### Dimensionality Reduction Algorithms
 
 ![Dimensional Reduction
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Dimensional-Reduction-Algorithms.png){.alignright
-.size-full .wp-image-2031 width="212" height="248"}Like clustering
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Dimensional-Reduction-Algorithms.png)
+
+Like clustering
 methods, dimensionality reduction seek and exploit the inherent
 structure in the data, but in this case in an unsupervised manner or
 order to summarize or describe data using less information.
@@ -396,8 +406,9 @@ methods can be adapted for use in classification and regression.
 ### Ensemble Algorithms
 
 ![Ensemble
-Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Ensemble-Algorithms.png){.alignright
-.size-full .wp-image-2032 width="210" height="230"}Ensemble methods are
+Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Ensemble-Algorithms.png)
+
+Ensemble methods are
 models composed of multiple weaker models that are independently trained
 and whose predictions are combined in some way to make the overall
 prediction.
