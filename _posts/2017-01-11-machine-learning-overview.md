@@ -111,7 +111,7 @@ Example algorithms include: the Apriori algorithm and k-Means.
 
 ### **Semi-Supervised Learning**
 
-[![Semi-supervised Learning
+![Semi-supervised Learning
 Algorithms](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/11/Semi-supervised-Learning-Algorithms.png)
 
 Input data is a mixture of labeled and unlabelled examples.
