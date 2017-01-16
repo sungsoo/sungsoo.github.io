@@ -125,7 +125,7 @@ make good decisions by providing intermediate rewards that make it
 easier for the agent to choose which state to go to next, given the
 current state.
 
-[![Figure 1: Value iteration constructs the value function over all
+![Figure 1: Value iteration constructs the value function over all
 states over time. Here each square is a state: S is the start state, G
 the goal state, T squares are traps, and black squares cannot be
 entered. In value iteration we initialize the rewards (traps and goal
