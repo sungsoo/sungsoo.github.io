@@ -42,3 +42,29 @@ If you don’t get accurate predictions, go back to the training set, look at th
 Now that you have the overview, we’ll show you how to create [custom datasets](https://deeplearning4j.org/customdatasets.html).
 
 Various [repositories of open data sets](https://deeplearning4j.org/opendata) that may be useful in training neural networks are available through the link.
+
+## Public Datasets for Machine Learning
+
+
+1.  [UCI Machine Learning Repository](http://archive.ics.uci.edu/ml/)
+    Collection of benchmark datasets for regression and classification
+    tasks
+2.  [UCI KDD Archive](http://kdd.ics.uci.edu/) Extended version of UCI
+    datasets
+3.  [DELVE
+    datasets](http://www.cs.toronto.edu/~delve/data/datasets.html)
+    Platform for comparative assessment of regression and classification
+    tasks
+4.  [Nonlinear dimensinality
+    reduction](http://isomap.stanford.edu/datasets.html)
+5.  [DMOZ open
+    directory](http://www.dmoz.org/Computers/Artificial_Intelligence/Machine_Learning/Datasets/)
+    collection of links for different datasets
+6.  [Google
+    directory](http://www.google.com/Top/Computers/Artificial_Intelligence/Machine_Learning/Datasets/)
+    collection of links for different datasets
+7.  [ChemDB](http://cdb.ics.uci.edu/cgibin/LearningDatasetsWeb.psp)
+    chemical data that can be used as datasets for machine learning
+8.  [Golem
+    dataset](http://www.comlab.ox.ac.uk/activities/machinelearning/applications.html)
+    trying to learn rules for prediction
