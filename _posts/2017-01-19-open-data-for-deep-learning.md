@@ -7,11 +7,16 @@ tags: [machine learning]
 
 ---
 
+## Article Source
+* Title: [Open Data for Deep Learning](https://deeplearning4j.org/opendata#text-datasets)
+
+---
 
 Open Data for Deep Learning
 ===
 
-<h2 id="recent-additions"><a href="#recent-additions">Recent Additions</a></h2>
+## Recent Additions
+
 <ul>
 <li><a href="http://openbiometrics.org/">Open Source Biometric Recognition Data</a></li>
 <li><a href="http://opendata.cern.ch/search?ln=en&amp;p=Run2011A+AND+collection%3ACMS-Primary-Datasets+OR+collection%3ACMS-Simulated-Datasets+OR+collection%3ACMS-Derived-Datasets">300 terabytes of high-quality data from the Large Hadron Collider (LHC) at CERN</a></li>
@@ -21,14 +26,18 @@ Open Data for Deep Learning
 <li><a href="http://www.nationaalgeoregister.nl/geonetwork/srv/dut/search#fast=index&amp;from=1&amp;to=50&amp;any_OR_geokeyword_OR_title_OR_keyword=landinrichting*&amp;relation=within">The Netherlands’ Nationaal Georegister</a> (Dutch)</li>
 <li><a href="http://open.undp.org/#2016">United Nations Development Programme Projects</a></li>
 </ul>
-<h2 id="symbolic-music-datasets"><a href="#symbolic-music-datasets">Symbolic Music Datasets</a></h2>
+
+## Symbolic Music Datasets
+
 <ul>
 <li><a href="http://www.piano-midi.de/">Piano-midi.de: classical piano pieces</a></li>
 <li><a href="http://abc.sourceforge.net/NMD/">Nottingham : over 1000 folk tunes</a></li>
 <li><a href="http://musedata.stanford.edu/">MuseData: electronic library of classical music scores</a></li>
 <li><a href="http://www.jsbchorales.net/index.shtml">JSB Chorales: set of four-part harmonized chorales</a></li>
 </ul>
-<h2 id="natural-image-datasets"><a href="#natural-image-datasets">Natural-Image Datasets</a></h2>
+
+## Natural-Image Datasets
+
 <ul>
 <li><a href="http://yann.lecun.com/exdb/mnist/">MNIST: handwritten digits</a></li>
 <li><a href="https://www.cs.utoronto.ca/~kriz/cifar.html">CIFAR10 / CIFAR100: 32×32 natural image dataset with 10/100 categories</a></li>
@@ -67,7 +76,9 @@ Open Data for Deep Learning
 <li><a href="http://vis-www.cs.umass.edu/~vidit/IndianFaceDatabase/">IndianFaceDatabase</a></li>
 <li><a href="http://vision.ucsd.edu/content/yale-face-database">The Yale Face Database</a> and <a href="http://vision.ucsd.edu/~leekc/ExtYaleDatabase/ExtYaleB.html">The Yale Face Database B</a>).</li>
 </ul>
-<h2 id="text-datasets"><a href="#text-datasets">Text Datasets</a></h2>
+
+## Text Datasets
+
 <ul>
 <li><a href="http://qwone.com/~jason/20Newsgroups/">20 newsgroups: classification task, mapping word occurences to newsgroup ID</a></li>
 <li><a href="http://about.reuters.com/researchandstandards/corpus/">Reuters (RCV*) Corpuses: text/topic prediction</a></li>
@@ -75,7 +86,9 @@ Open Data for Deep Learning
 <li><a href="http://www.ldc.upenn.edu/Catalog/CatalogEntry.jsp?catalogId=LDC97S44">Broadcast News: large text dataset, classically used for next word prediction</a></li>
 <li><a href="https://www.cs.jhu.edu/~mdredze/datasets/sentiment/">Multidomain sentiment analysis dataset</a></li>
 </ul>
-<h2 id="speech-datasets"><a href="#speech-datasets">Speech Datasets</a></h2>
+
+## Speech Datasets
+
 <ul>
 <li><a href="http://www.ldc.upenn.edu/Catalog/CatalogEntry.jsp?catalogId=LDC93S1">TIMIT Speech Corpus: phoneme classification</a></li>
 <li><a href="http://www.grouplens.org">MovieLens</a> The first dataset has 100,000 ratings for 1682 movies by 943 users, subdivided into five disjoint subsets. The second dataset has about 1 million ratings for 3900 movies by 6040 users.</li>
@@ -83,7 +96,9 @@ Open Data for Deep Learning
 <li><a href="http://www.netflixprize.com/">Netflix Prize</a>: Netflix released an anonymized version of their movie rating dataset; it consists of 100 million ratings, done by 480,000 users who have rated between 1 and all of the 17,770 movies.</li>
 <li><a href="http://www.informatik.uni-freiburg.de/~cziegler/BX/">Book-Crossing dataset</a>: From the Book-Crossing community. Contains 278,858 users providing 1,149,780 ratings about 271,379 books.</li>
 </ul>
-<h2 id="miscellaneous-datasets"><a href="#miscellaneous-datasets">Miscellaneous Datasets</a></h2>
+
+## Miscellaneous Datasets
+
 <ul>
 <li><a href="http://mocap.cs.cmu.edu/">CMU Motion Capture Database</a></li>
 <li><a href="http://www.ux.uis.no/~tranden/brodatz.html">Brodatz dataset: texture modeling</a></li>
