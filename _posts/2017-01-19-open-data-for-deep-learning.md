@@ -52,7 +52,9 @@ Open Data for Deep Learning
 <li><a href="http://www.cs.columbia.edu/CAVE/software/softlib/coil-20.php">COIL 20: different objects imaged at every angle in a 360 rotation</a></li>
 <li><a href="http://www1.cs.columbia.edu/CAVE/software/softlib/coil-100.php">COIL100: different objects imaged at every angle in a 360 rotation</a></li>
 </ul>
-<h2 id="artificial-datasets"><a href="#artificial-datasets">Artificial Datasets</a></h2>
+
+## Artificial Datasets
+
 <ul>
 <li><a href="https://github.com/caglar/Arcade-Universe">Arcade Universe</a> - An artificial dataset generator with images containing arcade games sprites such as tetris pentomino/tetromino objects. This generator is based on the O. Breleux’s bugland dataset generator.</li>
 <li>A collection of datasets inspired by the ideas from <a href="http://www.iro.umontreal.ca/~lisa/twiki/bin/view.cgi/Public/BabyAISchool">BabyAISchool</a>:</li>
@@ -64,7 +66,9 @@ Open Data for Deep Learning
 <li><a href="http://www.iro.umontreal.ca/~lisa/twiki/bin/view.cgi/Public/ConvexNonConvex">ConvexNonConvex</a>: discriminating between convex and nonconvex shapes</li>
 <li><a href="http://www.iro.umontreal.ca/~lisa/twiki/bin/view.cgi/Public/BackgroundCorrelation">BackgroundCorrelation</a>: controling the degree of correlation in noisy MNIST backgrounds.</li>
 </ul>
-<h2 id="facial-datasets"><a href="#facial-datasets">Facial Datasets</a></h2>
+
+## Facial Datasets
+
 <ul>
 <li><a href="http://vis-www.cs.umass.edu/lfw/">Labelled Faces in the Wild</a>: 13,000 images of faces collected from the web, labeled with the name of the person pictured.</li>
 <li><a href="http://www.cs.nyu.edu/~roweis/data.html">Olivetti: a few images of several different people</a></li>
