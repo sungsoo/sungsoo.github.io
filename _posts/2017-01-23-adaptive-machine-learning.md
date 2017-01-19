@@ -18,3 +18,9 @@ Direct processing of real-time data can provide a crucial edge in the software-a
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/fAvrUsfMS4Y" frameborder="0" allowfullscreen></iframe>
+
+## Adaptive learning rates for each connection
+
+Lecture from the course Neural Networks for Machine Learning, as taught by Geoffrey Hinton (University of Toronto) on Coursera in 2012. 
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/GZG1hmWA-oA" frameborder="0" allowfullscreen></iframe>
