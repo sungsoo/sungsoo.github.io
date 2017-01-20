@@ -19,12 +19,15 @@ Direct processing of real-time data can provide a crucial edge in the software-a
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/fAvrUsfMS4Y" frameborder="0" allowfullscreen></iframe>
 
+
 ## Adaptive Learning: The Next Generation of Machine Intelligence
 
 ### Abstract
 Adaptive learning optimizes both human and machine learning, to maximize the accuracy of scalable data processing as efficiently as possible. For the auto-industry, adaptive learning is 95% accurate in predicting when social media communications are about purchasing cars, which correlates with actual monthly car sales for the majority models of cars we have investigated. 
 
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/Xz1yCCT78pM" frameborder="0" allowfullscreen></iframe>
+
 
 ### About the speaker:
 
