@@ -75,7 +75,7 @@ pip install -r requirements.txt
 
 ## Experiments
 
-### CIFAR-10
+## CIFAR-10
 
 This section describes how to get the results in the table 1 of the paper.
 
@@ -101,9 +101,9 @@ python cifar.py --save logs/kd_16_1_16_2 --teacher_id resnet_16_2_teacher --alph
 
 We plan to add AT+KD with decaying `beta` to get the best knowledge transfer results soon.
 
-### ImageNet
+## ImageNet
 
-#### Pretrained model
+### Pretrained model
 
 We provide ResNet-18 pretrained model with activation based AT:
 
@@ -120,7 +120,7 @@ Convergence plot:
 
 <img width=50% src=https://cloud.githubusercontent.com/assets/4953728/22037957/5f9d493a-dd0a-11e6-9c68-8410a8c3c334.png>
 
-#### Train from scratch
+### Train from scratch
 
 Download pretrained weights for ResNet-34
 (see also [functional-zoo](https://github.com/szagoruyko/functional-zoo) for more
