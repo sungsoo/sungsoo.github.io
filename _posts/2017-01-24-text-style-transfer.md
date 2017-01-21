@@ -19,6 +19,6 @@ In this work, we explore the problem of generating fantastic special-effects for
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/MtWtY4DdiWs" frameborder="0" allowfullscreen></iframe>
 
-The paper "Awesome Typography: Statistics-Based Text Effects Transfer" is available here:
+The paper "*Awesome Typography: Statistics-Based Text Effects Transfer*" is available here:
 
 * [Paper](https://arxiv.org/abs/1611.09026)
