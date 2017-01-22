@@ -20,7 +20,8 @@ PyTorch code for "Paying More Attention to Attention: Improving the Performance 
 Convolutional Neural Networks via Attention Transfer" <https://arxiv.org/abs/1612.03928><br>
 The paper is under review as a conference submission at ICLR2017: https://openreview.net/forum?id=Sks9_ajex
 
-<img src=https://cloud.githubusercontent.com/assets/4953728/22037632/04f54a7e-dd09-11e6-9a6b-62133fbc1c29.png width=25%><img src=https://cloud.githubusercontent.com/assets/4953728/22037801/d06c526a-dd09-11e6-8986-55c69493a075.png width=75%>
+![](https://cloud.githubusercontent.com/assets/4953728/22037632/04f54a7e-dd09-11e6-9a6b-62133fbc1c29.png)
+![](https://cloud.githubusercontent.com/assets/4953728/22037801/d06c526a-dd09-11e6-8986-55c69493a075.png)
 
 
 What's in this repo so far:
@@ -118,7 +119,7 @@ Model definition: [coming]
 
 Convergence plot:
 
-<img width=50% src=https://cloud.githubusercontent.com/assets/4953728/22037957/5f9d493a-dd0a-11e6-9c68-8410a8c3c334.png>
+![](https://cloud.githubusercontent.com/assets/4953728/22037957/5f9d493a-dd0a-11e6-9c68-8410a8c3c334.png)
 
 ### Train from scratch
 
