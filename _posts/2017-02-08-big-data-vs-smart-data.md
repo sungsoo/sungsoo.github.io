@@ -13,7 +13,6 @@ tags: [big data]
 
 ---
 
-
 Big Data vs. Smart Data
 ===
 
