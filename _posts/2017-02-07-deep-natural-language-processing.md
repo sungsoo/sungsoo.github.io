@@ -9,6 +9,7 @@ tags: [machine learning]
 
 ## Article Source
 * Title: [Deep Natural Language Processing](http://www.cs.ox.ac.uk/teaching/courses/2016-2017/dl/)
+* Repository: [oxford-cs-deepnlp-2017/lectures](https://github.com/oxford-cs-deepnlp-2017/lectures)
 
 ---
 
