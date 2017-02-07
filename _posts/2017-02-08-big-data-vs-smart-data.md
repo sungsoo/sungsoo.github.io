@@ -17,6 +17,8 @@ tags: [big data]
 Big Data vs. Smart Data
 ===
 
+![](http://trepscore.com/wp-content/uploads/2014/09/Big-Data-vs-Smart-Data.png)
+
 # GOING FROM BIG DATA TO SMART DATA
 
 The *transition* from “*Big Data*” to “*Smart Data*” is becoming more of a common conversation today, and for good reason. Right now mankind is creating more than 2.5 quintillion bytes of information every day which has essentially doubled the overall size the data market over the last two years. Collecting this massive amount of data has become fairly routine, it is the *use* of the data that seems to be lacking in today’s market.
@@ -32,11 +34,15 @@ Today there is an overabundance of data and not enough application for it. Smart
 
 Big data isn’t a new dimension in business; it’s simply a new tool. It still takes smart leaders to make it smart. Getting value from data comes down to how easily you can do something with it.
 
+![](http://sungsoo.githhub.com/images/smart-data.jpg)
+
 ## DO YOU NEED BIG DATA TO CREATE SMART DATA?
 
 It is common to hear company’s say that they want/need more data but there is already an overflow of data available today. The real question company’s big and small need to be asking themselves is how to use it and *integrate* it within their organizations.
 
 Deriving value out of the data has little to do with size of the data-sets and much to do with how simply it’s accessed and *how intelligently tools can use it to drive that optimized user experience*. Smart data is what one does with their data irrespective of the size of the data sets.
+
+![](http://sungsoo.githhub.com/images/smart-data-property.png)
 
 ## SMART DATA AND SEMANTICS
 
