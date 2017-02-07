@@ -36,6 +36,7 @@ This course is organised by Phil Blunsom and delivered in partnership with the D
 * Jeremy Appleyard (NVIDIA)
 
 # Lectures
+
 ## 1. Lecture 1a - Introduction [Phil Blunsom]
 This lecture introduces the course and motivates why it is interesting to study language processing using Deep Learning techniques.
 
