@@ -36,37 +36,37 @@ This course is organised by Phil Blunsom and delivered in partnership with the D
 * Jeremy Appleyard (NVIDIA)
 
 # Lectures
-### 1. Lecture 1a - Introduction [Phil Blunsom]
+## 1. Lecture 1a - Introduction [Phil Blunsom]
 This lecture introduces the course and motivates why it is interesting to study language processing using Deep Learning techniques.
 
 [[slides]](https://github.com/oxford-cs-deepnlp-2017/lectures/blob/master/Lecture%201a%20-%20Introduction.pdf)
 [[video]](https://ox.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=ff91caf5-fa7c-42de-8b3d-41f4bc2365b4)
 
-### 2. Lecture 1b - Deep Neural Networks Are Our Friends [Wang Ling]
+## 2. Lecture 1b - Deep Neural Networks Are Our Friends [Wang Ling]
 This lecture revises basic machine learning cocepts that students should know before embarking on this course.
 
 [[slides]](Lecture 1b - Deep Neural Networks Are Our Friends.pdf)
 [[video]](https://ox.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=b7d66d78-0deb-46d5-bc14-b1852b9d95e8)
 
-### 3. Lecture 2a- Word Level Semantics [Ed Grefenstette]
+## 3. Lecture 2a- Word Level Semantics [Ed Grefenstette]
 Words are the core meaning bearing units in language. Representing and learning the meanings of words is a fundamental task in NLP and in this lecture the concept of a word embedding is introduced as a practical and scalable solution.
 
 [[slides]](https://github.com/oxford-cs-deepnlp-2017/lectures/blob/master/Lecture%202a-%20Word%20Level%20Semantics.pdf)
 [[video]](https://ox.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=b8531095-9de9-4d4e-bebd-e4272b90ca39)
 
-### 4. Lecture 2b - Overview of the Practicals [Chris Dyer]
+## 4. Lecture 2b - Overview of the Practicals [Chris Dyer]
 This lecture motivates the practical segment of the course.
 
 [[slides]](https://github.com/oxford-cs-deepnlp-2017/lectures/blob/master/Lecture%202b%20-%20Overview%20of%20the%20Practicals.pdf)
 [[video]](https://ox.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=2ddf7182-43db-44f5-b62a-45e0dfa4f37b)
 
-### 5. Lecture 3 - Language Modelling and RNNs Part 1 [Phil Blunsom]
+## 5. Lecture 3 - Language Modelling and RNNs Part 1 [Phil Blunsom]
 Language modelling is important task of great practical use in many NLP applications. This lecture introduces language modelling, including traditional n-gram based approaches and more contemporary neural approaches. In particular the popular Recurrent Neural Network (RNN) language model is introduced and its basic training and evaluation algorithms described.
 
 [[slides]](https://github.com/oxford-cs-deepnlp-2017/lectures/blob/master/Lecture%203%20-%20Language%20Modelling%20and%20RNNs%20Part%201.pdf)
 [[video]](https://ox.cloud.panopto.eu/Panopto/Pages/Viewer.aspx?id=6bf19af4-d7b3-4ac9-89a1-b719bdd0c2bd)
 
-### 6. Lecture 4 - Language Modelling and RNNs Part 2 [Phil Blunsom]
+## 6. Lecture 4 - Language Modelling and RNNs Part 2 [Phil Blunsom]
 This lecture continues on from the previous one and considers some of the issues involved in producing an effective implementation of an RNN language model. The vanishing and exploding gradient problem is described and architectural solutions, such as Long Short Term Memory (LSTM), are introducted. 
 
 [[slides]](https://github.com/oxford-cs-deepnlp-2017/lectures/blob/master/Lecture%204%20-%20Language%20Modelling%20and%20RNNs%20Part%202.pdf)
