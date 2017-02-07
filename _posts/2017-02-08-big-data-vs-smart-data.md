@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Big Data vs. Smart Data
+title: Big Data and Smart Data
 date: 2017-02-08
 categories: [computer science]
 tags: [big data]
