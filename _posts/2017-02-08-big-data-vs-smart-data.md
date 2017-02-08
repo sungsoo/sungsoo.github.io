@@ -33,7 +33,7 @@ Today there is an overabundance of data and not enough application for it. Smart
 
 Big data isn’t a new dimension in business; it’s simply a new tool. It still takes smart leaders to make it smart. Getting value from data comes down to how easily you can do something with it.
 
-![](http://sungsoo.githhub.com/images/smart-data.jpg)
+![](http://sungsoo.github.com/images/smart-data.jpg)
 
 ## DO YOU NEED BIG DATA TO CREATE SMART DATA?
 
@@ -41,7 +41,7 @@ It is common to hear company’s say that they want/need more data but there is 
 
 Deriving value out of the data has little to do with size of the data-sets and much to do with how simply it’s accessed and *how intelligently tools can use it to drive that optimized user experience*. Smart data is what one does with their data irrespective of the size of the data sets.
 
-![](http://sungsoo.githhub.com/images/smart-data-property.png)
+![](http://sungsoo.github.com/images/smart-data-property.png)
 
 ## SMART DATA AND SEMANTICS
 
