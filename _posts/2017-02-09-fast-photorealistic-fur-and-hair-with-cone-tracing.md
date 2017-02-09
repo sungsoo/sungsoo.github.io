@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Fast Photorealistic Fur and Hair With Cone Tracing
-date: 2017-02-08
+date: 2017-02-09
 categories: [computer science]
 tags: [computer graphics]
 
