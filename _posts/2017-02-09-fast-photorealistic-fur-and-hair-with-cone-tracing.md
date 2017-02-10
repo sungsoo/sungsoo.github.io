@@ -7,6 +7,7 @@ tags: [computer graphics]
 
 ---
 
+
 # Fast Photorealistic Fur and Hair With Cone Tracing
 
 The paper "Cone Tracing for Furry Object Rendering" is available here:
