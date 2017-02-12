@@ -10,7 +10,6 @@ tags: [data management]
 
 What's New with NewSQL?
 ===
-A. Pavlo, et al., What's New with NewSQL?, in SIGMOD Record (vol. 45, iss. 2), 2016
 
 * Authors: A. Pavlo and Matthew Aslett
 * Affiliation: Carnegie Mellon University, 451 Research
