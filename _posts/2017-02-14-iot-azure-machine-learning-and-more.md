@@ -1,6 +1,6 @@
 ---
 layout: post
-title: IoT, Azure, Machine Learning & more
+title: IoT, Azure, Machine Learning and more
 date: 2017-02-14
 categories: [computer science]
 tags: [data management]
@@ -8,7 +8,7 @@ tags: [data management]
 ---
 
 
-IoT, Azure, Machine Learning & more
+IoT, Azure, Machine Learning and more
 ===
 
 In this video Scott Hanselman delivers one of the best and personal demos, he'll show you how a combined solution using technologies such as *IoT devices, cloud platforms, Machine Learning* and Office API's can come together to solve even the most complex problems.
