@@ -22,3 +22,10 @@ See how easy it is to start connecting devices to the IoT and start pulling data
 <iframe width="600" height="400" src="https://www.youtube.com/embed/WvfIr3c6a48" frameborder="0" allowfullscreen></iframe>
 
 
+## The rise of cognitive computing and IoT
+
+The opportunity and *intersection of cognitive computing and the Internet of Things* is allowing business to extract value from the exploding amount of IoT data. 
+
+[http://ibm.com/IoT](http://ibm.com/IoT)
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/kG0jEj6kyMk?list=PLV850jtTzoaKGu880-DTJWzzZK0ea4DLo" frameborder="0" allowfullscreen></iframe>
