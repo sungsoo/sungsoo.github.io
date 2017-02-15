@@ -17,9 +17,10 @@ How to Prepare Data For Machine Learning
 ===
 	
 
-Machine learning algorithms learn from data. It is critical that you feed them the right data for the problem you want to solve. Even if you have good data, you need to make sure that it is in a useful scale, format and even that meaningful features are included.
+*Machine learning* algorithms learn from *data*. It is critical that you feed them the right data for the problem you want to solve. Even if you have good data, you need to make sure that it is in a *useful scale*, *format* and even that *meaningful features* are included.
 
-In this post you will learn how to prepare data for a machine learning algorithm. This is a big topic and you will cover the essentials.
+In this post you will learn *how to prepare data for a machine learning algorithm*. 
+This is a big topic and you will cover the essentials.
 
 ![](http://3qeqpr26caki16dnhd19sv6by6v.wpengine.netdna-cdn.com/wp-content/uploads/2013/12/lots-of-data-300x199.jpg) 
 
@@ -37,7 +38,7 @@ You can follow this process in a linear manner, but it is very likely to be iter
 
 ## Step 1: Select Data
 
-This step is concerned with selecting the subset of all available data that you will be working with. There is always a strong desire for including all data that is available, that the maxim “more is better” will hold. This may or may not be true.
+This step is concerned with selecting the subset of all available data that you will be working with. There is always a strong desire for including all data that is available, that the maxim “*more is better*” will hold. This may or may not be true.
 You need to consider what data you actually need to address the question or problem you are working on. Make some assumptions about the data you require and be careful to record those assumptions so that you can test them later if needed.
 Below are some questions to help you think through this process:
 
