@@ -104,4 +104,4 @@ Azure 기계 학습에서는 올바르게 구성된 테이블 형식 데이터�
 
 ## 참조
 
-[1] *Data Mining: Concepts and Techniques*, Third Edition, Morgan Kaufmann, 2011, Jiawei Han, Micheline Kamber 및 Jian Pei
+[1] *Data Mining: Concepts and Techniques*, Third Edition, Morgan Kaufmann, 2011, Jiawei Han, Micheline Kamber, and Jian Pei
