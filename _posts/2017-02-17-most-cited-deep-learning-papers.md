@@ -191,6 +191,7 @@ If you have any suggestions (missing papers, new papers, key researchers or typo
 
 ## New papers
 *Newly published papers (< 6 months) which are worth reading*
+
 - Batch Renormalization: Towards Reducing Minibatch Dependence in Batch-Normalized Models, S. Ioffe. [[pdf]](https://arxiv.org/abs/1702.03275)
 - Wasserstein GAN, M. Arjovsky et al. [[pdf]](https://arxiv.org/pdf/1701.07875v1)
 - Understanding deep learning requires rethinking generalization, C. Zhang et al. [[pdf]](https://arxiv.org/pdf/1611.03530)
@@ -199,6 +200,7 @@ If you have any suggestions (missing papers, new papers, key researchers or typo
 
 ## Old Papers
 *Classic papers published before 2012*
+
 - An analysis of single-layer networks in unsupervised feature learning (2011), A. Coates et al. [[pdf]](http://machinelearning.wustl.edu/mlpapers/paper_files/AISTATS2011_CoatesNL11.pdf)
 - Deep sparse rectifier neural networks (2011), X. Glorot et al. [[pdf]](http://machinelearning.wustl.edu/mlpapers/paper_files/AISTATS2011_GlorotBB11.pdf)
 - Natural language processing (almost) from scratch (2011), R. Collobert et al. [[pdf]](http://arxiv.org/pdf/1103.0398) 
@@ -253,7 +255,9 @@ If you have any suggestions (missing papers, new papers, key researchers or typo
 - FastML [[web]](http://www.fastml.com/)
 
 ## Appendix: More than Top 100
+
 *(2016)*
+
 - Dermatologist-level classification of skin cancer with deep neural networks (2017), A. Esteva et al. [[html]](http://www.nature.com/nature/journal/v542/n7639/full/nature21056.html)
 - Weakly supervised object localization with multi-fold multiple instance learning (2017), R. Gokberk et al. [[pdf]](https://arxiv.org/pdf/1503.00949)
 - Brain tumor segmentation with deep neural networks (2017), M. Havaei et al. [[pdf]](https://arxiv.org/pdf/1505.03540)
