@@ -8,7 +8,6 @@ tags: [computer graphics, machine learning]
 ---
 
 
-
 # AI Builds 3D Models From Images With a Twist
 
 
