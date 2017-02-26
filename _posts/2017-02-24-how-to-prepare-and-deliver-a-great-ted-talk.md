@@ -1,6 +1,6 @@
 ---
 layout: post
-title: How to Prepare and Deliver a great TED talk
+title: How to Prepare and Deliver a Great TED talk
 date: 2017-02-24
 categories: [computer science]
 tags: [presentation]
@@ -12,7 +12,7 @@ tags: [presentation]
 
 
 
-# How to Prepare and Deliver a great TED talk
+# How to Prepare and Deliver a Great TED talk
 
 
 How to Prepare and Deliver a great TED talk. 
