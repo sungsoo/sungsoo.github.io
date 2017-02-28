@@ -52,7 +52,7 @@ Conferences
 * [Conference on Empirical Methods in Natural Language Processing (EMNLP)](http://www.emnlp2016.net/)
 * [International Conference on Data Engineering (ICDE)](http://icde2016.fi/)
 * [International Conference on Data Mining (ICDM)](http://icdm2016.eurecat.org/)
-* [International Conference on Pattern Recognitio (ICPR)](http://www.icpr2016.org/site/)
+* [International Conference on Pattern Recognition (ICPR)](http://www.icpr2016.org/site/)
 * [International Joint Conference on Artificial Intelligence (IJCAI)](http://ijcai-16.org/)
 * [International Conference on Knowledge Discovery and Data Mining (KDD)](http://kdd.org/kdd2016/)
 * [Conference on Neural Information Processing Systems (NIPS)](https://nips.cc/Conferences/2016)
