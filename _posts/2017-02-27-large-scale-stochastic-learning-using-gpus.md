@@ -14,6 +14,8 @@ tags: [machine learning, parallel computing]
 
 # Large-Scale Stochastic Learning using GPUs
 
+* Authors: Thomas Parnell, Celestine Dunner, Kubilay Atasu, Manolis Sifalakis, Haris Pozidis (IBM Research – Zurich, Saumerstrasse 4, Ruschlikon, Switzerland)
+
 ## Abstract
 
 In this work we propose an *accelerated stochastic learning system* for very large-scale applications. Acceleration is achieved by *mapping* the *training algorithm* onto *massively parallel processors*: we demonstrate a *parallel*, *asynchronous* GPU implementation of the widely used stochastic coordinate descent/ascent algorithm that can provide up to 35x speed-up over a sequential CPU implementation. 
