@@ -26,9 +26,6 @@ Here is also two minute overview video made by Károly Zsolnai-Fehér
 
 The 3rd Best Paper & The 2nd Best Presentation Awards
 
-[Kui Wu](http://www.cs.utah.edu/~kwu/), [Cem
-Yuksel](http://www.cemyuksel.com/)
-
 ![](http://www.cs.utah.edu/~kwu/rtfr.png)
 
 ## Abstract
