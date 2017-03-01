@@ -52,13 +52,13 @@ with shadows and ambient occlusion.
 
 ![](http://www.cs.utah.edu/~kwu/fiber_combine.png)
 
-An example yarn model with our core fibers and regular fibers, and the
-comparison of our full model to a reference model generated offline
+*An example yarn model with our core fibers and regular fibers, and the
+comparison of our full model to a reference model generated offline*
 
 ![](http://www.cs.utah.edu/~kwu/shadow_component.png)
 
-Shadow components: A glove model showing the three shadow components:
-shadow map, self-shadows, and ambient occlusion
+*Shadow components: A glove model showing the three shadow components:
+shadow map, self-shadows, and ambient occlusion*
 
 ## Paper [[**Preprint**](http://www.cs.utah.edu/~kwu/rtfr.pdf)] (PDF, 13Mb) 
 
