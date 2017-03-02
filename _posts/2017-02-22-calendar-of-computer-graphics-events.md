@@ -21,10 +21,10 @@ condensed tabular form and your browser supports tables, then please
 [click here](table.html).
 
  **March 21 - 24, 2017** 
-:   [IMCIC 2017](http://www.iiis-spring17.org/imcic/website/default.asp?vc=26)     Eighth International Multi-Conference on Complexity, Informatics and
+:   [IMCIC 2017](http://www.iiis-spring17.org/imcic/website/default.asp?vc=26) :    Eighth International Multi-Conference on Complexity, Informatics and
     Cybernetics
-    Orlando, Florida
-    For more information, contact <imcic@mail.iiis-spring17.org>.
+:    Orlando, Florida
+:    For more information, contact <imcic@mail.iiis-spring17.org>.
 
  **March 21 - 24, 2017** 
 :   [QRIAA 2017](http://www.iiis.org/cfp-qriaa2017.asp)
