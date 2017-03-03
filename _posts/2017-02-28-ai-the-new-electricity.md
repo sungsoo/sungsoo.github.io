@@ -14,4 +14,6 @@ tags: [machine learning, parallel computing]
 
 * Speaker: Andrew Ng (Baidu)
 
+Andrew Ng, chief scientist at the Chinese web services company Baidu, explains to Inc. reporter Salvador Rodriguez why breakthroughs in machine learning will transform countless industries.
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/4eJhcxfYR4I" frameborder="0" allowfullscreen></iframe>
