@@ -19,19 +19,8 @@ tags: [machine learning]
 The current state of machine intelligence 3.0 
 =============================================
 
-Watching the appeal and applications of machine intelligence expand.
+### Watching the appeal and applications of machine intelligence expand.
 
-
-![The current state of machine intelligence
-3.0.](https://d3tdunqjn7n0wj.cloudfront.net/360x240/main-art-v-3-mi-landscape-3.81-1400px-4f76e61045d9dc463cae0acfff57c210.jpg)
-
-The current state of machine intelligence 3.0. <span
-class="source-name"> (source: [Image courtesy of Shivon Zilis and James
-Cham, designed by Heidi
-Skinner](http://www.shivonzilis.com/)). </span>
-For more information and insight into artificial intelligence, check out
-[The O'Reilly AI Conference 2016 video
-compilation](https://www.safaribooksonline.com/library/view/oreilly-ai-conference/9781491973912/?utm_source=oreilly&utm_medium=newsite&utm_campaign=the-current-state-of-machine-intelligence-3-0-top-cta).
 
 Almost a year ago, we published our now-annual
 [landscape](https://www.oreilly.com/ideas/the-current-state-of-machine-intelligence-2-0)
