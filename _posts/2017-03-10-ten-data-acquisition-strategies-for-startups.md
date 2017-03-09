@@ -342,12 +342,7 @@ autopilot miles every day than Google).
 > * [Tesla](http://www.autoevolution.com/news/tesla-gathers-more-autopilot-miles-in-a-day-than-google-has-in-its-whole-program-107841.html)(collects data when drivers are using the
 autopilot feature)
 
-
-
 ------------------------------------------------------------------------
-
-
-
 
 ## Strategy #7: Publicly available datasets 
 
