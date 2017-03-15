@@ -36,7 +36,7 @@ NIPS 2016
 Abstract
 --------
 
-We learn rich natural sound representations by capitalizing on large
+We learn *rich natural sound representations* by capitalizing on large
 amounts of unlabeled sound data collected in the wild. We leverage the
 natural synchronization between vision and sound to learn an acoustic
 representation using two-million unlabeled videos. Unlabeled video has
