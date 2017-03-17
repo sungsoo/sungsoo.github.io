@@ -9,7 +9,7 @@ tags: [machine learning]
 
 
 ## Article Source
-* Title: [Stable Neural Style Transfer](https://www.youtube.com/watch?v=8u3Hkbev2Gg)
+* Title: [How Deep Neural Networks Work](https://www.youtube.com/watch?v=ILsA4nyG7I0&spfreload=10)
 
 
 ---
