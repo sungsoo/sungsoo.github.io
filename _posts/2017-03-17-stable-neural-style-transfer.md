@@ -27,6 +27,7 @@ Texture synthesis survey: [http://www-sop.inria.fr/reves/Basilic/2009/WLKT09/](h
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/8u3Hkbev2Gg" frameborder="0" allowfullscreen></iframe>
 
+
 ## Stable and Controllable Neural Texture Synthesis and Style Transfer Using Histogram Losses
 
 Abstract
