@@ -7,14 +7,12 @@ tags: [machine learning]
 
 ---
 
-
 ## Article Source
 * Title: [Shape2vec: Understanding 3D Shapes With AI](https://www.youtube.com/watch?v=bB54Wz4kq0E&spfreload=10)
 
 ---
 
-
-Shape2vec: Understanding 3D Shapes With AI 
+Shape2vec; Understanding 3D Shapes With AI 
 ==============
 
 The paper "Shape2Vec: semantic-based descriptors for 3D shapes, sketches and images" is available here:
@@ -26,7 +24,7 @@ Code (coming soon according to the authors): [https://github.com/ftasse/Shape2Ve
 <iframe width="600" height="400" src="https://www.youtube.com/embed/bB54Wz4kq0E" frameborder="0" allowfullscreen></iframe>
 
 
-## Shape2Vec: semantic-based descriptors for 3D shapes, sketches and images
+## Shape2Vec; semantic-based descriptors for 3D shapes, sketches and images
 
 ## Abstract
 
