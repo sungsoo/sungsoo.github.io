@@ -34,4 +34,3 @@ Convolutional neural networks have been successfully used to compute shape descr
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/oVR4af9UWio" frameborder="0" allowfullscreen></iframe>
 
-
