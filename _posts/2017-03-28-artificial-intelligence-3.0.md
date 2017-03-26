@@ -22,6 +22,8 @@ Artificial Intelligence 3.0 – Third Wave of AI
 
 [![](http://sungsoo.github.com/images/machine-intelligence-3.jpg)](http://sungsoo.github.com/images/machine-intelligence-3.jpg)
 
+The current state of machine intelligence 3.0. (source: [Image courtesy of Shivon Zilis and James Cham, designed by Heidi Skinner](http://www.shivonzilis.com/)).
+
 This year we celebrated 60 years of Artificial Intelligence, although there were many individual discoveries and prototypes conducted before 1956, such as the work of von Berthalanfy, Alan Turing (from 1936), artificial neural networks (Warren McCulloch’s and Walter Pitts 1943), Norbert Wiener’s cybernetics (1948) and many others. We are now in what many call the Third Wave of AI – but what were the earlier stages?
 
 ## Early Enthusiasm
