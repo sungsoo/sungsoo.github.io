@@ -121,8 +121,7 @@ Paper Submission
 We received about 2500 papers by the submission deadline. As is often
 the case, most submissions were made right before the deadline:
 
-![Submission timeline](http://www.tml.cs.uni-tuebingen.de/team/luxburg/misc/nips2016/NIPS_plots/submission.png){width="400"
-height="auto"}
+![Submission timeline](http://www.tml.cs.uni-tuebingen.de/team/luxburg/misc/nips2016/NIPS_plots/submission.png)
 
 The deadline was strictly enforced, regardless of personal situations,
 we are sorry for those who missed it. During the next couple of weeks, a
