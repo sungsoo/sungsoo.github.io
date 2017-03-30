@@ -61,34 +61,34 @@ machine learning methods or theory. Examples of such papers may include:
 a paper proposing a new learning algorithm; one that describes a
 solution to a difficult application; or one that proves bounds on the
 error of some learning method. Such papers are expected to make a
-significant (i) algorithmic, (ii) application, or (iii) theoretical
+significant (i) *algorithmic*, (ii) *application*, or (iii) *theoretical*
 contribution. NIPS seeks to publish papers that will have a high impact
 in the world---|both within our research community, and beyond. Whenever
 appropriate, papers will therefore be evaluated on the basis of the
 following five criteria:
 
--   1 Novelty of algorithm. For example, a paper that gives an elegant
+-   **1 Novelty of algorithm.** For example, a paper that gives an elegant
     new derivation for an algorithm; or one that proposes a new approach
     to an existing problem.
 
--   2 Novelty of application/problem. For example, a paper that
+-   **2 Novelty of application/problem.** For example, a paper that
     addresses an important application that has heretofore been
     little-studied at NIPS. Or, one that introduces a novel machine
     learning problem (some past examples include ICA and
     structured prediction) and proposes an algorithm for it.
 
--   3 Difficulty of application. For example, an application of machine
+-   **3 Difficulty of application.** For example, an application of machine
     learning to a difficult, important, and "real" application, that
     takes into account the full complexity of getting a non-trivial
     system to work.
 
--   4 Quality of results. Whether the algorithm is rigorously
+-   **4 Quality of results.** Whether the algorithm is rigorously
     demonstrated to give good empirical performance on the task
     considered (here, "real" data or "real" experiments may be more
     effective than "artificial" or "toy" experiments); or whether the
     theoretical results are strong and interesting; etc.
 
--   5 Insight conveyed. Whether the paper conveys insight into the
+-   **5 Insight conveyed.** Whether the paper conveys *insight* into the
     nature of an algorithm; into the nature of a practical application
     or problem; into general lessons learned; and/or into theoretical or
     mathematical tools that might be used by others for future work.
@@ -304,10 +304,3 @@ may have high expected impact---|largely on the off-chance that the
 claims turn out to be correct---|but is still likely to be rejected.
 Some of these evaluation criteria exactly address this issue of
 providing evidence for the utility of one's work.
-
-
-</div>
-
-![Clicky](//in.getclicky.com/100964351ns.gif){width="1" height="1"}
-
-![Clicky](//in.getclicky.com/100964360ns.gif){width="1" height="1"}

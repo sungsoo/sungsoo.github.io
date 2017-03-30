@@ -12,7 +12,6 @@ tags: [machine learning]
 
 ---
 
-
 The Review Process for NIPS 2016 
 ================================
 
