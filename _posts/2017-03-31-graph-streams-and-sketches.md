@@ -24,15 +24,15 @@ Tutorial Slides
 ![](http://sungsoo.github.com/images/graph-streaming.png)
 
 -   [Part I: Streaming, Sampling, and
-    Sketching](../slides/16-icml-part1.pdf) Andrew McGregor
--   [Part II: Space-Efficient Optimization](../slides/16-icml-part2.pdf)
+    Sketching](http://people.cs.umass.edu/~mcgregor/graphs/slides/16-icml-part1.pdf) Andrew McGregor
+-   [Part II: Space-Efficient Optimization](http://people.cs.umass.edu/~mcgregor/graphs/slides/16-icml-part2.pdf)
     Sudipto Guha
 
 Other General Resources
 =======================
 
--   Presentations [[Slides]](slides/12-michigan.pdf),
-    [[Video]](slides/12-graphs.mov)
+-   Presentations [[Slides]](http://people.cs.umass.edu/~mcgregor/graphs/slides/12-michigan.pdf),
+    [[Video]](http://people.cs.umass.edu/~mcgregor/graphs/slides/12-graphs.mov)
 -   A
     [survey](http://people.cs.umass.edu/~mcgregor/papers/13-graphsurvey.pdf)
     about graph stream algorithms
