@@ -17,11 +17,6 @@ tags: [machine learning]
 CNNs in Practice
 ================
 
-CNN을 실제로 구현하거나 사용할 때 알아두면 좋은 팁과 트릭에 대해
-알아보자. 참고로 data augmentation과 같은 방법은 이전 포스트에서 언급한
-적이 있지만 강의 자료에 충실하게 본 포스트에서 다시 한번 정리하려고
-한다.
-
 Contents
 --------
 
