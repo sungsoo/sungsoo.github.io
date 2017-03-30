@@ -36,12 +36,11 @@ all the 6000 authors who contributed their time to prepare alltogether
 2500 papers for this year's NIPS. We hope to see many of you at the
 conference!
 
-
 Our design of the NIPS 2016 review process follows two main guiding
 principles:
 
--   Ensuring the program quality.
--   Inventing new procedures that will scale with the ever-growing
+-   Ensuring the *program quality*.
+-   Inventing *new procedures* that will scale with the ever-growing
     numbers of submissions.
 
 Selection of Area Chairs
@@ -52,7 +51,6 @@ AC typically handles 20-30 submissions. Hence, we needed to recruit
 about 100 area chairs. As it is impossible to intimately know all the
 diverse research areas covered by NIPS, we came up with the following
 procedure:
-
 
 1.  We asked the NIPS Board and all ACs of the last two NIPS conferences
     to nominate potential ACs for this year. In this way, we covered the
@@ -75,7 +73,6 @@ The process of recruiting reviewers is very time consuming, it
 essentially went on from January until the submission deadline end of
 May. New this year, we had two kinds of reviewers, "invited senior
 reviewers" and "volunteer reviewers":
-
 
 1.  **Invited Experienced Reviewers:** We asked all ACs to suggest at
     least 30 reviewers each who have completed the PhD degree. We
@@ -100,7 +97,6 @@ reviewers" and "volunteer reviewers":
     effect of including author-reviewers was to add transparency to the
     review process as at least one author per paper experienced it.
 
-
 An obvious difficulty was that we could not control the quality of the
 volunteer author-reviewers. We addressed this by keeping invited
 reviewers and volunteer reviewers in two separate pools. In the end, we
@@ -118,17 +114,17 @@ had the following number of reviewers:
 Paper Submission
 ----------------
 
-We received about 2500 papers by the submission deadline. As is often
+We received about **2500 papers** by the submission deadline. As is often
 the case, most submissions were made right before the deadline:
 
 ![Submission timeline](http://www.tml.cs.uni-tuebingen.de/team/luxburg/misc/nips2016/NIPS_plots/submission.png)
 
-The deadline was strictly enforced, regardless of personal situations,
+*The deadline was strictly enforced*, regardless of personal situations,
 we are sorry for those who missed it. During the next couple of weeks, a
 number of papers were withdrawn or deleted by the authors (for example,
 because they had been submitted twice, or remained unfinished at the
 time of the deadline). By the end of the review process, we were left
-with 2406 submitted papers.
+with **2406 submitted papers**.
 
 Paper Assignment to Area Chairs
 -------------------------------
@@ -174,9 +170,8 @@ Review Profiling
 ----------------
 
 In the end, we received 13,674 reviews from 3242 reviewers. On average,
-each reviewer provided 4.05 reviews, and each paper was reviewed 5.97
-times:
-
+each reviewer provided 4.05 reviews, and *each paper was reviewed 5.97
+times*:
 
 ![review numbers](http://www.tml.cs.uni-tuebingen.de/team/luxburg/misc/nips2016/NIPS_plots/reviews.png)
 
@@ -197,10 +192,10 @@ to guide reviewers to focus discussions on "facts" rather than "opinion"
 in the discussion phase. We asked reviewers to provide a score in each
 of the following categories:
 
--   Technical quality
--   Novelty/originality
--   Potential impact or usefulness
--   Clarity and presentation.
+-   *Technical quality*
+-   *Novelty/originality*
+-   *Potential impact or usefulness*
+-   *Clarity and presentation*
 
 The grades were on a scale 1-5:
 -   5 - Award level (1/1000 submissions)
@@ -216,8 +211,6 @@ justifications in designated text boxes.
 
 The following histograms show the distribution of average scores for all
 papers (where the average is taken over all reviews for each paper).
-
-
 
 ![score statistics](http://www.tml.cs.uni-tuebingen.de/team/luxburg/misc/nips2016/NIPS_plots/decision1.png)
 
@@ -248,12 +241,12 @@ Decisions
 Two novel elements were introduced this year in the decision process:
 
 -   No conference calls between ACs and program-chairs: we introduced a
-    decentralized, scalable decision process relying on AC buddy-pairs.
+    *decentralized*, *scalable decision process* relying on AC buddy-pairs.
 -   No poster spotlights. Instead we doubled the number of oral
     presentations by introducing two tracks.
 
 
-The decision process was largely based on AC "buddy" suggestions. The
+The decision process was largely based on AC "*buddy*" suggestions. The
 first round of decisions happened in a moderated, but decentralized
 fashion: each area chair worked with her/his "buddy". The two of them
 were responsible for all papers in their joint bag, and made their
@@ -269,12 +262,10 @@ community with novel and thought provoking ideas. All in all, 568 papers
 got accepted to the conference, among them 46 oral presentations.
 
 
-
 Below is a plot of the distribution per subject areas (combined primary
 and secondary subjects), both for submitted papers and for accepted
 papers. Of course the proportions are not identical, but the plots do
 not show any systematic bias in favor or against certain areas.
-
 
 
 ![subject areas all
