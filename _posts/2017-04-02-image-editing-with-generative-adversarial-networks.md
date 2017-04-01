@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Image Editing with Generative Adversarial Networks
+title: GAN - Image Editing with Generative Adversarial Networks
 date: 2017-04-02
 categories: [computer science]
 tags: [machine learning]
