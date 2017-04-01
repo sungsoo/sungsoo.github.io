@@ -115,20 +115,16 @@ Information GAN
 때문에, Z를 두 가지의 합으로 생각합니다. 첫 번째는 초기값(seed)가 되는
 완전히 무작위로 만든 값이고, 두 번째는 잠재 코드(latent code) C에
 해당하는 값입니다. 잠재 코드 각각은 원래 이미지의 각 표현에 해당하게
-됩니다. MNIST의 예를 들면, ![c_0
-](http:///s0.wp.com/latex.php?latex=c_0+&bg=ffffff&fg=000&s=1 "c_0 ")
-는 숫자의 종류, ![c_1
-](http:///s0.wp.com/latex.php?latex=c_1+&bg=ffffff&fg=000&s=1 "c_1 ")은
-숫자의 기울어진 정도, ![c_2
-](http:///s0.wp.com/latex.php?latex=c_2+&bg=ffffff&fg=000&s=1 "c_2 ")는
+됩니다. MNIST의 예를 들면, ![c_0](http:///s0.wp.com/latex.php?latex=c_0+&bg=ffffff&fg=000&s=1 "c_0 ")
+는 숫자의 종류, ![c_1](http:///s0.wp.com/latex.php?latex=c_1+&bg=ffffff&fg=000&s=1 "c_1 ")은
+숫자의 기울어진 정도, ![c_2](http:///s0.wp.com/latex.php?latex=c_2+&bg=ffffff&fg=000&s=1 "c_2 ")는
 숫자의 굵기라고 생각할 수 있습니다. 첫 번째 코드는 종류가 정해져
 있고(categorical), 두 번째와 세 번째 코드는 연속적인(continuous)
 값입니다.
 
 ![fig3](https://i0.wp.com/khshim.files.wordpress.com/2016/09/fig31.png?resize=600%2C375&ssl=1)
 
-(출처: [2]의 Figure 2) InfoGAN을 훈련시킨 결과입니다. ![c_2, c_3
-](http:///s0.wp.com/latex.php?latex=c_2%2C+c_3+&bg=ffffff&fg=000&s=1 "c_2, c_3 ")은
+(출처: [2]의 Figure 2) InfoGAN을 훈련시킨 결과입니다. ![c_2, c_3](http:///s0.wp.com/latex.php?latex=c_2%2C+c_3+&bg=ffffff&fg=000&s=1 "c_2, c_3 ")은
 훈련 과정에서 -1부터 1까지만 들어가도록 학습시켰음에도, 더 넓은 범위의
 입력에서도 잘 동작하는 것을 볼 수 있습니다. 하지만, 우리가 잠재 코드를
 일일이 알려줄 수도 없고 이 코드가 여기에 해당하도록 훈련하라고 지시할
@@ -143,8 +139,7 @@ Information GAN
 정보량에서 Y를 알았을 때의 X의 정보량을 빼는 것이라고 할 수 있습니다.
 만약 두 변수가 완전히 독립이라면 상호 정보량은 0이 됩니다.
 
-![I(X;Y) = H(X) - H(X|Y) = H(Y) - H(Y|X)
-](http:///s0.wp.com/latex.php?latex=I%28X%3BY%29+%3D+H%28X%29+-+H%28X%7CY%29+%3D+H%28Y%29+-+H%28Y%7CX%29+&bg=ffffff&fg=000&s=1 "I(X;Y) = H(X) - H(X|Y) = H(Y) - H(Y|X) ")
+![I(X;Y) = H(X) - H(X|Y) = H(Y) - H(Y|X)](http:///s0.wp.com/latex.php?latex=I%28X%3BY%29+%3D+H%28X%29+-+H%28X%7CY%29+%3D+H%28Y%29+-+H%28Y%7CX%29+&bg=ffffff&fg=000&s=1 "I(X;Y) = H(X) - H(X|Y) = H(Y) - H(Y|X) ")
 
 InfoGAN은 기존의 손실 식에 상호 정보량 I를 덧붙입니다.
 
@@ -229,8 +224,7 @@ D는 이미지만 받던 것에서 변화해 이미지와 노이즈를 동시에
 역함수(inverse)라는 것을 증명해 놓았습니다. 역함수라는 것은 이런
 뜻입니다.
 
-![G(E(x)) = x
-](http:///s0.wp.com/latex.php?latex=G%28E%28x%29%29+%3D+x+&bg=ffffff&fg=000&s=1 "G(E(x)) = x ")
+![G(E(x)) = x](http:///s0.wp.com/latex.php?latex=G%28E%28x%29%29+%3D+x+&bg=ffffff&fg=000&s=1 "G(E(x)) = x ")
 
 그 외에도 이 논문은 이 구조가 적절히 훈련될 수 있다는 것을 증명하기 위해
 여러 가지 증명을 시도하는데, 궁금한 사람은 읽어 보시길 바랍니다. 특별히
