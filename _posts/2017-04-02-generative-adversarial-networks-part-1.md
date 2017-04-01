@@ -46,8 +46,7 @@ Y가 나올 확률(*likelihood*)을 최대화하려고 합니다. 이를
 *discriminative learning*(분류학습)이라고 합니다. 대표적인 분류 학습
 모델이 logistic regression(선형회귀) 모델입니다.
 
-![P(Y|X)
-](http://s0.wp.com/latex.php?latex=P%28Y%7CX%29+&bg=ffffff&fg=000&s=1 "P(Y|X) ")
+![P(Y|X)](http://s0.wp.com/latex.php?latex=P%28Y%7CX%29+&bg=ffffff&fg=000&s=1 "P(Y|X) ")
 
 그런데 사실, <font color="red">입력과 출력이 있는 위와 같은 형태의 방식은 인간이 사고하는
 방식이 아닙니다.</font> <font color="blue">인간은 X를 보고도 Y를 생각하고 Y를 보고도 X를
