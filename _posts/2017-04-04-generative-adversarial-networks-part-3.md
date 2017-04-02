@@ -67,10 +67,7 @@ DCGAN 구조를 따랐다고 하면 다음 다섯가지를 따라 만든 것입�
 ![fig1](https://i1.wp.com/khshim.files.wordpress.com/2016/09/fig12.png?resize=688%2C290&ssl=1)
 
 (출처: [1]의 Figure 1) 분명 CNN 인데, 다음 맵의 크기가 계속 커집니다.
-이 구조를 보고 <font color="red">*역 컨볼루션(deconvolution)*</font>이라고 부르는 사람이 있는데
-<font color="red">그건 용어를 잘못 쓰는 거라고 논문에서는 명시</font>하고 있습니다. 아마도 원래
-역 컨볼루션이 있기 때문인 것 같습니다. 위 그림에서 보면 풀링이 하나도
-없고, 분수 컨볼루션으로 크기를 키워나가고 있는 것을 확인할 수 있습니다.
+이 구조를 보고 <font color="red">*역 컨볼루션(deconvolution)*</font>이라고 부르는 사람이 있는데 <font color="red">그건 용어를 잘못 쓰는 거라고 논문에서는 명시</font>하고 있습니다. 아마도 원래 역 컨볼루션이 있기 때문인 것 같습니다. 위 그림에서 보면 풀링이 하나도 없고, 분수 컨볼루션으로 크기를 키워나가고 있는 것을 확인할 수 있습니다.
 
 정확한 명칭은 분수 크기의 간격으로 하는 컨볼루션(*fractionally-strided convolution*), 혹은 순서가 뒤집힌 컨볼루션(*transposed convoluton*)입니다.
 [2]의 강의 슬라이드를 보면 좀 더 잘 파악할 수 있습니다.
