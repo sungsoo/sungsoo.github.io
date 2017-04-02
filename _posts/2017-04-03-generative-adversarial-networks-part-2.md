@@ -130,7 +130,7 @@ InfoGAN은 생성기 내부를 좀 더 자세히 들여다보게 해 줍니다.
 
 InfoGAN은 기존의 손실 식에 상호 정보량 I를 덧붙입니다.
 
-![L = min_G max_D L(D,G) = E_X[logD(x)] + E_{Z,C}[log(1-D(G(z,c)))]  hat L = L - lambda I(c; G(z,c))](http://s0.wp.com/latex.php?latex=L+%3D+min_G+max_D+L%28D%2CG%29+%3D+E_X%5BlogD%28x%29%5D+%2B+E_%7BZ%2CC%7D+%5Blog%281-D%28G%28z%2Cc%29%29%29%5D+%5C%5C+%5Chat+L+%3D+L+-+%5Clambda+I%28c%3B+G%28z%2Cc%29%29+&bg=ffffff&fg=000&s=1 "L = min_G max_D L(D,G) = E_X[logD(x)] + E_{Z,C} [log(1-D(G(z,c)))]  hat L = L - lambda I(c; G(z,c)) ")
+![L = min_G max_D](http://s0.wp.com/latex.php?latex=L+%3D+min_G+max_D+L%28D%2CG%29+%3D+E_X%5BlogD%28x%29%5D+%2B+E_%7BZ%2CC%7D+%5Blog%281-D%28G%28z%2Cc%29%29%29%5D+%5C%5C+%5Chat+L+%3D+L+-+%5Clambda+I%28c%3B+G%28z%2Cc%29%29+&bg=ffffff&fg=000&s=1 "L = min_G max_D L(D,G) = E_X[logD(x)] + E_{Z,C} [log(1-D(G(z,c)))]  hat L = L - lambda I(c; G(z,c)) ")
 
 G는 손실 값을 줄이고 싶으니 상호 정보량을 늘리는 방향으로 학습시키려고
 합니다. 즉, 생성된 이미지와 코드의 연관성이 높아지는 방향입니다. D의
@@ -145,7 +145,7 @@ G는 손실 값을 줄이고 싶으니 상호 정보량을 늘리는 방향으�
 최소값은 몬테 카를로(Monte-Carlo) 방식으로 유사 확률(auxiliary
 distribution)을 얻어 사용합니다.
 
-![I(c; G(z,c)) &gt;= E_{Z,C} [log Q(c|G(z,c))]](http://s0.wp.com/latex.php?latex=I%28c%3B+G%28z%2Cc%29%29+%3E%3D+E_%7BZ%2CC%7D+%5Blog+Q%28c%7CG%28z%2Cc%29%29%5D+&bg=ffffff&fg=000&s=1 "I(c; G(z,c)) >= E_{Z,C} [log Q(c|G(z,c))] ")
+![I(c;](http://s0.wp.com/latex.php?latex=I%28c%3B+G%28z%2Cc%29%29+%3E%3D+E_%7BZ%2CC%7D+%5Blog+Q%28c%7CG%28z%2Cc%29%29%5D+&bg=ffffff&fg=000&s=1 "I(c; G(z,c)) >= E_{Z,C} [log Q(c|G(z,c))] ")
 
 Q는 생성된 이미지를 입력으로 받아 각 코드의 확률 혹은 값을 예측하는
 인공신경망입니다. 몬테 카를로 방식을 쓴다는 것은 여러 번 이미지를 생성해
