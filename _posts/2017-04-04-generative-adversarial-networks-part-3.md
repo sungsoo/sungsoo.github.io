@@ -23,8 +23,8 @@ Generative model(생성모델)의 성능을 판단하고 논문에 싣는 것은
 않습니다. 아무래도 정확도로 바로 나타낼 수도 없고, 사람마다 느끼는 바도
 다 다르기 때문입니다. GAN이 만든 이미지가 ‘얼마나’ 정확한지에 대한
 이야기를 하기 위해서는 그에 맞는 측정 방법(measure, criteria)이
-필요합니다. 아무래도 제일 쉽게 사용할 수 있는 방법은 <font color="red">*선호도
-조사(preference test)*</font>입니다. 여러 명의 사람에게 무작위로 이미지를
+필요합니다. 아무래도 제일 쉽게 사용할 수 있는 방법은 <font color="red">선호도
+조사(preference test)</font>입니다. 여러 명의 사람에게 무작위로 이미지를
 보여주고 몇 점을 주겠는지 물어보는 방식입니다. 이 방법은 주관적일 뿐만
 아니라, 주로 자기 편을 들어줄 근처 연구실 사람들에게 부탁하기 떄문에
 엄청 많은 사람에게 부탁하지 않는 이상(그리고 부탁한다고 해도) 신뢰도가
@@ -35,7 +35,7 @@ Generative model(생성모델)의 성능을 판단하고 논문에 싣는 것은
 합니다. 두 모두 수치적으로 검증해 볼 방법이 별로 없습니다. 객관적인
 지표를 소개하기 앞서, 우선 아직까지 생성모델에서 명확하게 사용하는
 공통적인 측정 방법은 없는 것 같다는 사실을 먼저 밝힙니다. 처음 GAN
-논문에서는 <font color="blue">*Parzan window based likelihood*(파첸 창 기반의 유사도
+논문에서는 <font color="blue">Parzan window based likelihood(파첸 창 기반의 유사도
 측정)</font>이라는 방식을 사용해 생성한 이미지와 원래 이미지가 얼마나 유사한지
 비교했지만, <U>이후 논문에서는 잘 사용되지 않고 있습니다.</U>
 
@@ -58,7 +58,7 @@ CNN을 이용하는 GAN의 경우 [1] 이전에도 몇 가지가 있었지만, �
 DCGAN에서 제안하는 다섯 가지 테크닉은 이 논문이 처음 나온 이후 모든 GAN에서 사용되고 있습니다. 
 DCGAN 구조를 따랐다고 하면 다음 다섯가지를 따라 만든 것입니다.
 
--   풀링(pooling) 대신 <font color="blue">*간격을 둔 컨볼루션(strided convolution)*</font>을 하고 <font color="blue">*분수 컨볼루션(fractional convolution)*</font>을 할 것.
+-   풀링(pooling) 대신 <font color="blue">간격을 둔 컨볼루션(strided convolution)</font>을 하고 <font color="blue">분수 컨볼루션(fractional convolution)</font>을 할 것.
 -   *배치 표준화(batch normalization)*을 전부 적용하되, 생성기의 제일 끝 레이어와 분류기의 제일 첫 레이어에는 넣지 않을 것.
 -   <font color="red">Fully-connected 층을 전부 빼고 사용할 것.</font>
 -   생성기의 마지막 층에는 tanh, 그 외 층에는 전부 ReLU.
