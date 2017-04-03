@@ -16,7 +16,7 @@ tags: [computer graphics, machine learning]
 Geometric Detail Transfer
 ===============
 
-The paper "Learning Detail Transfer based on Geometric Features" is available here:
+The paper "*Learning Detail Transfer based on Geometric Features*" is available here:
 
 * [http://www.chongyangma.com/publications/ld/index.html](http://www.chongyangma.com/publications/ld/index.html)
 
