@@ -7,6 +7,7 @@ tags: [big data]
 
 ---
 
+
 ## Article Source
 
 * Title: [From Big to Now: The Changing Face of Data](http://blog.memsql.com/from-big-to-now-the-changing-face-of-data/?_scpsug=crawled_170454_4246ef00-18bd-11e7-c9b5-90b11c40440d#_scpsug=crawled_170454_4246ef00-18bd-11e7-c9b5-90b11c40440d)
