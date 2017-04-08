@@ -28,7 +28,7 @@ Newton explained that "both fog computing and edge computing involve pushing *in
 "The key difference between the two architectures is exactly <font color="red">where that intelligence and computing power is placed</font>," he said. According to Newton:
 
 -   *Fog computing* pushes intelligence down to the <font color="blue">local area network level of network architecture</font>, processing data <font color="blue">in a fog node or IoT gateway</font>.
--   *Edge computing* pushes the intelligence, processing power and communication capabilities of an edge gateway or appliance directly into <font color="blue">devices like *programmable automation controllers* (PACs)</font>.
+-   *Edge computing* pushes the intelligence, processing power and communication capabilities of an edge gateway or appliance directly into <font color="blue">devices like programmable automation controllers (PACs)</font>.
 
 "Many in industry indeed use the terms fog computing and edge computing (or edge processing) interchangeably," said King. "Edge computing is actually an *older expression* that predates the fog computing term. By way of background, Cisco created the term fog computing years ago to describe a layer of computing at the edge of the network that could allow pre-processed data to be quickly and securely transported to the cloud.
 While Cisco certainly mastered the secure transport aspects of fog computing from the earliest days of IoT, very little has been done until recently to effectuate the data processing aspects of fog computing in real world IIoT use cases."
