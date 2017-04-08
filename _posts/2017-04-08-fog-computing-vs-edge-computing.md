@@ -7,7 +7,6 @@ tags: [big data]
 
 ---
 
-
 ## Article Source
 
 * Title: [Fog Computing vs. Edge Computing: What’s the Difference?](https://www.automationworld.com/fog-computing-vs-edge-computing-whats-difference)
@@ -16,7 +15,8 @@ tags: [big data]
 ---
 
 Fog Computing vs. Edge Computing: What’s the Difference?
-=======================================================
+===
+
 
 As companies explore the Internet of Things, *fog computing* and *edge computing* take center stage as strategic ways of dealing with the plethora of data to be analyzed and acted upon. But just how different are they?
 
