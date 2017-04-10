@@ -11,9 +11,7 @@ tags: [machine learning]
 * Title: [A guide to Edge IoT analytics](https://www.ibm.com/blogs/internet-of-things/edge-iot-analytics/)
 * Authors: [Andrea Reale](https://www.ibm.com/blogs/internet-of-things/author/andrea-reale/ "Posts by Andrea Reale")
 
-
 ---
-
 
 A Guide to Edge IoT Analytics 
 =============================
@@ -77,7 +75,7 @@ An Edge Computing application is made of several modules, each running at differ
 The prototype: IBM Edge IoT Analytics
 -------------------------------------
 
-[According to a survey](http://docplayer.net/18508929-The-cost-of-poor-customer-service-the-economic-impact-of-the-customer-experience-and-engagement-in-16-key-economies.html), bad customer service costs organizations \$338.5 billion globally per year in lost business. This is aggravated by the fact that achieving high coverage in capturing customer satisfaction is often difficult. The majority of customers is not filling in paper or online forms, and those who do are not necessarily a fully representative sample of the entire customer base.
+[According to a survey](http://docplayer.net/18508929-The-cost-of-poor-customer-service-the-economic-impact-of-the-customer-experience-and-engagement-in-16-key-economies.html), bad customer service costs organizations $338.5 billion globally per year in lost business. This is aggravated by the fact that achieving high coverage in capturing customer satisfaction is often difficult. The majority of customers is not filling in paper or online forms, and those who do are not necessarily a fully representative sample of the entire customer base.
 
 Focusing on customer satisfaction, we wanted to understand the potential of bringing together the cognitive capabilities of Watson and the advantages of Edge Computing in the following scenario targeting hospitality services.
 
@@ -123,6 +121,7 @@ dashboard, it is possible to visualize the devices on which the application is r
 Using EdgeSQL, the hotel management can build and execute queries like "what is the hotel in the chain that had the most angry interactions with guests?", "What is the average happiness of customer interactions in Rome?" or "what was the saddest conversation in Athens within the last three months?".
 
 All the communication between Cloud and Edge leverage the services provided by the [Watson IoT Platform](https://www.ibm.com/internet-of-things/iot-solutions/watson-iot-platform/).
+
 
 Future directions
 -----------------
