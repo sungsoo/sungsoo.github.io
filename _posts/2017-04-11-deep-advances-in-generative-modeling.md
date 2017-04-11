@@ -13,6 +13,7 @@ tags: [machine learning]
 
 ---
 
+
 # Deep Advances in Generative Modeling
 
 ## Abstract
@@ -22,6 +23,5 @@ In recent years, deep learning approaches have come to dominate *discriminative 
 This talk, led by indico's Head of Research, Alec Radford, will serve as an introduction to several emerging application areas of *generative modeling* and provide a survey of recent techniques in the field.
 
 Boston ML Forum 2016
-
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/KeJINHjyzOU" frameborder="0" allowfullscreen></iframe>
