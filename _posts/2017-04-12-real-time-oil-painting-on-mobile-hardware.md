@@ -33,17 +33,17 @@ The user experience ranges from thick shape-retaining strokes to runny diluted p
 ## Downloads 
 
 [![icon](http://graphics.cs.kuleuven.be/images/icon_pdf.png)](SD2016RTOPOMH_paper.pdf)
-[Preprint](SD2016RTOPOMH_paper.pdf)
+[Preprint](http://graphics.cs.kuleuven.be/publications/SD2016RTOPOMH/SD2016RTOPOMH_paper.pdf)
 PDF
 (9.2 MiB)
 
 [![icon](http://graphics.cs.kuleuven.be/images/icon_tex.png)](SD2016RTOPOMH_citation.bib)
-[Citation](SD2016RTOPOMH_citation.bib)
+[Citation](http://graphics.cs.kuleuven.be/publications/SD2016RTOPOMH/SD2016RTOPOMH_citation.bib)
 BIB
 (0.5 KiB)
 
 [![icon](http://graphics.cs.kuleuven.be/images/icon_txt.png)](SD2016RTOPOMH_abstract.txt)
-[Abstract](SD2016RTOPOMH_abstract.txt)
+[Abstract](http://graphics.cs.kuleuven.be/publications/SD2016RTOPOMH/SD2016RTOPOMH_abstract.txt)
 TXT
 (1.1 KiB)
 
