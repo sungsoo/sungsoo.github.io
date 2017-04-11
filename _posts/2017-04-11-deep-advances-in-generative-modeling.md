@@ -15,7 +15,7 @@ tags: [machine learning]
 
 # Deep Advances in Generative Modeling
 
-## Abstrct
+## Abstract
 
 In recent years, deep learning approaches have come to dominate *discriminative problems* in many sub-areas of machine learning. Alongside this, they have also powered exciting improvements in *generative* and *conditional modeling* of richly structured data such as text, images, and audio. 
 
