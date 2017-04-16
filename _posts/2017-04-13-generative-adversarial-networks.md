@@ -18,7 +18,7 @@ tags: [machine learning]
 
 ## Abstract
 
-Ian Goodfellow, Research Scientist at OpenAI takes us through Generative Adversarial Networks at AI With The Best online developer conference September 2016 [#AIWTB.](https://www.youtube.com/results?q=%23AIWTB)
+Ian Goodfellow, Research Scientist at OpenAI takes us through *Generative Adversarial Networks* at AI0 With The Best online developer conference September 2016 [#AIWTB.](https://www.youtube.com/results?q=%23AIWTB)
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/HN9NRhm9waY" frameborder="0" allowfullscreen></iframe>
