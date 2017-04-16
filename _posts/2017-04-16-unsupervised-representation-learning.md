@@ -8,7 +8,7 @@ tags: [machine learning]
 ---
 
 ## Article Source
-* Title: [Generalization and Equilibrium in Generative Adversarial Nets](https://www.youtube.com/watch?v=V7TliSCqOwI&spfreload=10)
+* Title: [Unsupervised Representation Learning](https://www.youtube.com/watch?v=ceD736_Fknc&t=547s&spfreload=10)
 * Authors: [Yann LeCun, New York University](http://yann.lecun.com/)
 
 ---
