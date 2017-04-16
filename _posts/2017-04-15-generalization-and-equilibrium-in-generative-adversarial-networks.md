@@ -18,9 +18,9 @@ tags: [machine learning]
 
 ## Abstract
 
-This paper makes progress on several open the- oretical issues related to Generative Adversarial Networks. A definition is provided for what it means for the training to generalize, and it is shown that generalization is not guaranteed for the popular distances between distributions such as Jensen-Shannon or Wasserstein. We intro- duce a new metric called neural net distance for which generalization does occur. We also show that an approximate pure equilibrium in the 2- player game exists for a natural training objective (Wasserstein). Showing such a result has been an open problem (for any training objective).
+This paper makes progress on several open theoretical issues related to Generative Adversarial Networks. A definition is provided for what it means for the training to generalize, and it is shown that generalization is not guaranteed for the popular distances between distributions such as Jensen-Shannon or Wasserstein. We introduce a new metric called neural net distance for which generalization does occur. We also show that an approximate pure equilibrium in the 2player game exists for a natural training objective (Wasserstein). Showing such a result has been an open problem (for any training objective).
 
-Finally, the above theoretical ideas lead us to pro- pose a new training protocol, MIX+GAN, which can be combined with any existing method. We present experiments showing that it stabilizes and improves some existing methods.
+Finally, the above theoretical ideas lead us to propose a new training protocol, MIX+GAN, which can be combined with any existing method. We present experiments showing that it stabilizes and improves some existing methods.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/V7TliSCqOwI" frameborder="0" allowfullscreen></iframe>
 
