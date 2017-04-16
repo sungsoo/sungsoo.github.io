@@ -36,3 +36,9 @@ Followed by a super Q&A session
 * 33:34 What do you predict it will take to get the output to scale to a much larger output dimension?
 * 34:16 Can GANs be used for Data Compression?
 * 35:20 What is your goal with GANs?
+
+## NIPS 2016 Workshop on Adversarial Training
+
+## Introduction to GANs
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/RvgYvHyT15E" frameborder="0" allowfullscreen></iframe>
