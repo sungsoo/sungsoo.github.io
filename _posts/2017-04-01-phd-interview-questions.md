@@ -10,7 +10,6 @@ tags: [presentation]
 
 ## Article Source
 * Title: [PhD Interview Questions](https://www.findaphd.com/advice/finding/phd-interview-questions.aspx)
-* Authors:
 
 ---
 
@@ -115,34 +114,22 @@ An appreciation of these will impress your interview panel. (Particularly if you
 
 ### What are your strengths and weaknesses?
 
-A well-worn question, but a great opportunity to reflect on your
-abilities - and opportunities for further development during your PhD.
+A well-worn question, but a great opportunity to reflect on your abilities - and opportunities for further development during your PhD.
 
-The important thing to remember about this question is that the panel
-isn't as interested in judging your 'actual' strengths and weaknesses as
-they are in your ability to identify and reflect upon them.
+The important thing to remember about this question is that the panel isn't as interested in judging your 'actual' strengths and weaknesses as they are in your ability to identify and reflect upon them.
 
-In practice, this means giving solid examples for strengths and showing
-how they relate to the PhD project you have in mind.
+In practice, this means giving solid examples for strengths and showing how they relate to the PhD project you have in mind.
 
-Don't just say you're a good time-keeper. Point out when you've had to
-be well organised and show that you understand the importance of
-self-directed study to a successful PhD.
+Don't just say you're a good time-keeper. Point out when you've had to be well organised and show that you understand the importance of self-directed study to a successful PhD.
 
 When it comes to weaknesses, maintain the right balance.
 
-A PhD interview probably isn't the best time to wallow in existential
-self-doubt (unless you're applying for a very specific topic in
-Philosophy*). Equally though, answers like 'my only downfall is
-excessive perfectionism' can sound a bit contrived. If the panel is
-asking you about strengths *and* weaknesses, they want you to identify
-and reflect on both.
+A PhD interview probably isn't the best time to wallow in existential self-doubt (unless you're applying for a very specific topic in Philosophy. Equally though, answers like 'my only downfall is excessive perfectionism' can sound a bit contrived. If the panel is asking you about strengths and weaknesses, they want you to identify and reflect on both.
 
-Be honest about the things you find challenging, but identify them as
-training needs and say how you expect to improve upon them as part of
+Be honest about the things you find challenging, but identify them as training needs and say how you expect to improve upon them as part of
 your PhD.
 
-*Actually, it's probably still a bad idea.
+Actually, it's probably still a bad idea.
 
 **Do say:**
 
@@ -176,56 +163,26 @@ And don't worry about revealing a few gaps in the core skills required by your d
 Interview questions about your PhD project
 ------------------------------------------
 
-This is the university's chance to further assess your suitability for
-an advertised PhD position, or the likely fit between your planned
-project and the expertise it has available.
+This is the university's chance to further assess your suitability for an advertised PhD position, or the likely fit between your planned project and the expertise it has available.
 
-It's also your chance to expand on your research proposal and show that
-you have the skills, experience and understanding to complete a
-doctorate. For funded places (or other competitive projects), this is
-the time for you to really prove that *you* are the best student for
-this PhD.
+It's also your chance to expand on your research proposal and show that you have the skills, experience and understanding to complete a doctorate. For funded places (or other competitive projects), this is the time for you to really prove that *you* are the best student for this PhD.
 
-It's a good idea to reference your research proposal (or other
-appropriate parts of your application) when answering these questions.
-But expand upon what the panel has already read. (And make sure there
-isn't anything in that proposal that you aren't confident enough to
-'back up' in your interview!)
+It's a good idea to reference your research proposal (or other appropriate parts of your application) when answering these questions. But expand upon what the panel has already read. (And make sure there isn't anything in that proposal that you aren't confident enough to 'back up' in your interview!)
 
 ### Why this project?
 
-The focus of this question will shift slightly depending on whether
-you're applying for an [advertised PhD
-project](/search/phd.aspx?TID=1 "Search pre-defined PhD projects") (more
-common in Science, Engineering and Medicine) or proposing your own
-research within a department's [PhD
-programme](/search/phd.aspx?TID=2 "Search PhD programmes") (more common
-in Arts, Humanities and some branches of the Social Sciences).
+The focus of this question will shift slightly depending on whether you're applying for an [advertised PhD project](/search/phd.aspx?TID=1 "Search pre-defined PhD projects") (more common in Science, Engineering and Medicine) or proposing your own research within a department's [PhD programme](/search/phd.aspx?TID=2 "Search PhD programmes") (more common in Arts, Humanities and some branches of the Social Sciences).
 
-If you're being considered for a pre-defined project, make sure you know
-it inside out. Say what it is that interests you about it. Compare it to
-similar opportunities (if appropriate) and explain your particular
-choice.
+If you're being considered for a pre-defined project, make sure you know it inside out. Say what it is that interests you about it. Compare it to similar opportunities (if appropriate) and explain your particular choice.
 
-If you're proposing your own project, this is your chance to show some
-passion and enthusiasm for it. Refer to your research proposal and take
-the opportunity to discuss and expand upon it.
+If you're proposing your own project, this is your chance to show some passion and enthusiasm for it. Refer to your research proposal and take the opportunity to discuss and expand upon it.
 
-In both cases you should point to some existing scholarship and show an
-awareness of the field you'll be entering. You'll also want to
-re-iterate what makes your project distinctive. After all, the PhD is
-defined as offering 'an original contribution to knowledge.'
+In both cases you should point to some existing scholarship and show an awareness of the field you'll be entering. You'll also want to re-iterate what makes your project distinctive. After all, the PhD is defined as offering 'an original contribution to knowledge.'
 
-This doesn't mean preparing a comprehensive list of key works or current
-research projects (that 'literature review' will be one of the first
-things you do on the actual PhD). At this stage the panel just wants to
-see that you've made an informed choice, understand your proposed
-project and are enthusiastic enough to see it through.
+This doesn't mean preparing a comprehensive list of key works or current research projects (that 'literature review' will be one of the first
+things you do on the actual PhD). At this stage the panel just wants to see that you've made an informed choice, understand your proposed project and are enthusiastic enough to see it through.
 
-Depending on how the question is phrased you may also find yourself
-talking about your choice of university at this stage – or explaining
-why your previous work makes you a good fit for this particular PhD (see
-below).
+Depending on how the question is phrased you may also find yourself talking about your choice of university at this stage – or explaining why your previous work makes you a good fit for this particular PhD (see below).
 
 **Do say:**
 
@@ -237,30 +194,19 @@ below).
 
 ### What makes you the right candidate for this PhD?
 
-If you're applying for a [pre-defined PhD
-project](/search/phd.aspx?TID=1 "Search pre-defined PhD projects"),
-you'll almost certainly be asked why you are the best candidate to
-undertake it (particularly if there's funding available).
+If you're applying for a [pre-defined PhD project](/search/phd.aspx?TID=1 "Search pre-defined PhD projects"), you'll almost certainly be asked why you are the best candidate to undertake it (particularly if there's funding available).
 
-Remember too that some of these projects aren't automatically funded.
-Their financing can depend on the quality of the student they attract,
-so your panel will be very keen to make sure you're going to be 'Dr
-Right'.
+Remember too that some of these projects aren't automatically funded. Their financing can depend on the quality of the student they attract,
+so your panel will be very keen to make sure you're going to be 'Dr Right'.
 
-You might still be asked about your suitability for a self-proposed PhD
-(in Arts or Humanities, for example). This is another way for your
-interviewers to assess those all-important motivation and commitment
-factors.
+You might still be asked about your suitability for a self-proposed PhD (in Arts or Humanities, for example). This is another way for your
+interviewers to assess those all-important motivation and commitment factors.
 
-Whatever your situation, this is a good place to talk a bit about your
-previous work at undergraduate or Masters level. The panel already knows
-the grades you received, but now you have the chance to talk about what
-you actually did on those degrees. Show passion and give examples.
+Whatever your situation, this is a good place to talk a bit about your previous work at undergraduate or Masters level. The panel already knows
+the grades you received, but now you have the chance to talk about what you actually did on those degrees. Show passion and give examples.
 
-If an undergraduate module on gothic literature inspired you to propose
-a PhD on an under-researched aspect of eighteenth-century culture, say
-so. If your Masters has given you skills in exactly the kind of
-statistical analysis required by this doctorate, mention that.
+If an undergraduate module on gothic literature inspired you to propose a PhD on an under-researched aspect of eighteenth-century culture, say
+so. If your Masters has given you skills in exactly the kind of statistical analysis required by this doctorate, mention that.
 
 **Do say:**
 
@@ -272,28 +218,21 @@ statistical analysis required by this doctorate, mention that.
 
 ### What difficulties do you expect to encounter during this project?
 
-This is another fairly popular question topic. It might form part of a
-discussion of your strengths, weaknesses and training needs. Or you
-might be invited to speak more specifically about the challenges
-involved in your project.
+This is another fairly popular question topic. It might form part of a discussion of your strengths, weaknesses and training needs. Or you
+might be invited to speak more specifically about the challenges involved in your project.
 
-The panel isn't trying to catch you out here, so don't be afraid to
-speak frankly. All projects involve their own potential pitfalls and
+The panel isn't trying to catch you out here, so don't be afraid to speak frankly. All projects involve their own potential pitfalls and
 complications.
 
-Overcoming them will be part of completing a PhD; recognising them will
-show that you're ready to begin one.
+Overcoming them will be part of completing a PhD; recognising them will show that you're ready to begin one.
 
-Show that you've put some thought into the approach necessary for your
-research and the methodology you might use.
+Show that you've put some thought into the approach necessary for your research and the methodology you might use.
 
-Don't be afraid to identify problems you aren't yet certain how to solve
-(the best way to organise some data, the authors to include in your
+Don't be afraid to identify problems you aren't yet certain how to solve (the best way to organise some data, the authors to include in your
 initial survey of texts, etc) but suggest how you might go about
 investigating them.
 
-This is also a good time to mention any training needs (if you haven't
-already) and speak about how you plan to take advantage of development
+This is also a good time to mention any training needs (if you haven't already) and speak about how you plan to take advantage of development
 opportunities within your programme.
 
 **Do say:**
@@ -306,39 +245,27 @@ opportunities within your programme.
 
 ### What would you like the impact of this project to be?
 
-'Impact' is an increasingly important factor in academic work and this
-applies to PhD research too – especially if you're funded.
+'Impact' is an increasingly important factor in academic work and this applies to PhD research too – especially if you're funded.
 
-Even if your panel doesn't explicitly ask about impact, it's a good idea
-to mention what you hope the wider outcome of your project might be. If
-you are asked this question – and are prepared for it – this is a great
-chance to get a leg up on the competition.
+Even if your panel doesn't explicitly ask about impact, it's a good idea to mention what you hope the wider outcome of your project might be. If
+you are asked this question – and are prepared for it – this is a great chance to get a leg up on the competition.
 
-Impact essentially refers to the measurable effects of research outside
-academia. It's a given that your PhD will have an effect on future work
-in your field. But universities are increasingly focussed on the
-benefits of their work beyond the 'ivory tower' of higher education and
+Impact essentially refers to the measurable effects of research outside academia. It's a given that your PhD will have an effect on future work
+in your field. But universities are increasingly focussed on the benefits of their work beyond the 'ivory tower' of higher education and
 research.
 
-This is particularly important if your project is funded. The money
-supporting your studies will probably have come from public revenues
-(via a Research Council studentship) or from a large charity or trust.
-Those organisations will want to make sure their investment is
-worthwhile.
+This is particularly important if your project is funded. The money supporting your studies will probably have come from public revenues
+(via a Research Council studentship) or from a large charity or trust. Those organisations will want to make sure their investment is worthwhile.
 
 Examples of impact differ a bit between fields.
 
-If you're in the Social Sciences you may already have some idea of the
-'outputs' from your project. These could be educational workshops,
+If you're in the Social Sciences you may already have some idea of the 'outputs' from your project. These could be educational workshops,
 policy guidance, etc.
 
-If you're in Science, Medicine or Engineering you'll hope to provide
-economic benefits to industry or to healthcare.
+If you're in Science, Medicine or Engineering you'll hope to provide economic benefits to industry or to healthcare.
 
-Arts and Humanities PhDs can have impact too. Think about the ways in
-which you could take part in public engagement (teaching people about
-local history or archival resources they might not be aware of) and ways
-you could partner with local schools, or even media companies producing
+Arts and Humanities PhDs can have impact too. Think about the ways in which you could take part in public engagement (teaching people about
+local history or archival resources they might not be aware of) and ways you could partner with local schools, or even media companies producing
 documentary work.
 
 **Do say:**
@@ -351,23 +278,17 @@ To be honest, I can't really see how my work on medieval manuscript preservation
 
 ### How will you fund this project?
 
-This question is obviously more likely in interviews for non-funded
-PhDs. (It would be somewhat strange for a university to ask you about
-[funding](/funding/guides/phd-funding-guide.aspx "Read more about PhD funding")
-for a project that carries a full studentship).
+This question is obviously more likely in interviews for non-funded PhDs. (It would be somewhat strange for a university to ask you about
+[funding](/funding/guides/phd-funding-guide.aspx "Read more about PhD funding") for a project that carries a full studentship).
 
-However, you might still be asked about contingency plans if funding
-falls through (particularly if funding hasn't been secured at this
+However, you might still be asked about contingency plans if funding falls through (particularly if funding hasn't been secured at this
 stage) or if your project over-runs.
 
-Self-funding students will obviously need to go into more detail here.
-It's not the responsibility of your university to ask for a complete
-breakdown of your finances (or for you to provide one). Yet the panel
-will want to be sure that you understand the cost involved in doing a
+Self-funding students will obviously need to go into more detail here. It's not the responsibility of your university to ask for a complete
+breakdown of your finances (or for you to provide one). Yet the panel will want to be sure that you understand the cost involved in doing a
 PhD and have some kind of plans in place.
 
-It's fine to say that you'll be looking for extra funding and part-time
-work as you start the project. But make it clear that you'll still have
+It's fine to say that you'll be looking for extra funding and part-time work as you start the project. But make it clear that you'll still have
 enough time to apply yourself to the actual research.
 
 **Do say:**
@@ -381,30 +302,22 @@ enough time to apply yourself to the actual research.
 Interview questions about your choice of university
 ---------------------------------------------------
 
-Unsurprisingly, your interview panel will be interested to know why
-you've chosen their university for your PhD.
+Unsurprisingly, your interview panel will be interested to know why you've chosen their university for your PhD.
 
-If proposing your own project you'll be asked about the fit between your
-research aims and the expertise of the department you'd be entering.
+If proposing your own project you'll be asked about the fit between your research aims and the expertise of the department you'd be entering.
 
-If applying to a pre-defined PhD, you'll be invited to say why this
-laboratory or research group particularly appeals to you and what you
+If applying to a pre-defined PhD, you'll be invited to say why this laboratory or research group particularly appeals to you and what you
 yourself can contribute to them.
 
-Preparing for these kinds of questions is actually quite easy. Read up
-on your prospective university, department and supervisors. Show that
+Preparing for these kinds of questions is actually quite easy. Read up on your prospective university, department and supervisors. Show that
 you're aware of the kind of work they do and give examples.
 
-Feel free to mention other aspects of the university that appeal to you
-– its reputation, its alumni, even its location – but keep the main
+Feel free to mention other aspects of the university that appeal to you – its reputation, its alumni, even its location – but keep the main
 focus on the fit between your work and their research environment.
 
 ### Why have you chosen to study a PhD at this university?
 
-Whatever else your panel asks, you can be pretty sure a question about
-your [choice of
-university](/advice/finding/where-to-study-your-phd.aspx "Read about choosing a university for PhD study")
-and department will crop up at some point in a PhD interview.
+Whatever else your panel asks, you can be pretty sure a question about your [choice of university](/advice/finding/where-to-study-your-phd.aspx "Read about choosing a university for PhD study") and department will crop up at some point in a PhD interview.
 
 Your answer gives you the opportunity to do several important things.
 
