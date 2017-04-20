@@ -291,7 +291,7 @@ RNA 간섭 혹은 RNAi라고 불리는 기법은 특정 유전자의 mRNA를 막
 
 1. 레이 커즈와일, 특이점이 온다 The Singularity is near, pp. 52-53. 김영사, 2007.
 2. Vinge, Vernor. "The Coming Technological Singularity: How to Survive in the Post-Human Era", originally in Vision-21: Interdisciplinary Science and Engineering in the Era of Cyberspace, G. A. Landis, ed., NASA Publication CP-10129, pp. 115-126, 1993
-3. "What is the Singularity? | Singularity Institute for Artificial Intelligence". Singinst.org. 2011년 9월 9일에 확인함.
+3. "What is the Singularity? Singularity Institute for Artificial Intelligence". Singinst.org. 2011년 9월 9일에 확인함.
 4. Good, I. J. "Speculations Concerning the First Ultraintelligent Machine", Advances in Computers, vol. 6, 1965.
 5. Ehrlich, Paul. The Dominant Animal: Human Evolution and the Environment
 6. Good, I. J., "Speculations Concerning the First Ultraintelligent Machine", Franz L. Alt and Morris Rubinoff, ed., Advances in Computers (Academic Press) 6: 31–88, 1965.
