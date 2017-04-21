@@ -158,5 +158,6 @@ learning: learning from the mistakes. Let's be the explorer in reinforcement lea
 - ***Playing Atari with Deep Reinforcement Learning*** [[NIPS 2013 Deep Learning Workshop]](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf)
   - Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Alex Graves Ioannis Antonoglou, Daan Wierstra  
   
- # Suggest Paper
+## Suggest Paper
+
 - ***Maximum Entropy Inverse Reinforcement Learning*** [[AAAI 2008]](https://www.cs.uic.edu/pub/Ziebart/Publications/maxentirl-bziebart.pdf)
