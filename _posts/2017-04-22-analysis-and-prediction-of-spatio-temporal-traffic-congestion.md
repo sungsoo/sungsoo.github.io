@@ -28,3 +28,8 @@ tags: [machine learning]
 * Dingxiong Deng, Ph. D student, Computer Science Department, University of Southern California
 
 Ugur Demiryurek is Associate Director of Research at IMSC, and has M.S. and Ph.D. degrees in Computer Science from USC. His research is focused on fundamental and applied data management with special interest in Geospatial Databases, Cloud Computing, and Machine Learning. He has been supported by grants from both government agencies (NSF, Caltrans, Metro) and industry partners (Microsoft Research, Oracle Labs, Intel, HP Labs). Demiryurek authored two book chapters and more than forty research articles since 2010 and holds three US patents. Prior to IMSC, Demiryurek worked for fortune 500 companies in database technology development and data scientist positions. He regularly serves on the program committee of various major database conferences including ACM SIGMOD, ACM SIGSPATIAL, IEEE ICDM, DASFAA, SSTD, and MDM, and is a member of IEEE and ACM.
+
+
+## References
+
+[1] [ICDM 12] Bei Pan, Ugur Demiryurek, and Cyrus Shahabi, [Utilizing Real-World Transportation Data for Accurate Traffic Prediction](http://infolab.usc.edu/DocsDemos/ICDM2012.pdf), *IEEE International Conference on Data Mining (ICDM)*, Brussels, Belgium, December 2012
