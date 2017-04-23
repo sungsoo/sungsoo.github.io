@@ -12,7 +12,7 @@ tags: [machine learning]
 
 ## Abstract 
 
-<font color="blue">강화 학습(Reinforcement learning)</font>은 기계 학습이 다루는 문제 의 하나로, 어떤 환경 안에서 정의된 에이전트가 현재의 상태를 인식하여, 선택 가능한 행동들 중 보상을 최대화하는 행동 혹은 행동 순서를 선택하는 방법이다.
+<font color="blue">강화 학습(Reinforcement learning)</font>은 기계 학습이 다루는 문제의 하나로, 어떤 환경 안에서 정의된 에이전트가 현재의 상태를 인식하여, 선택 가능한 행동들 중 보상을 최대화하는 행동 혹은 행동 순서를 선택하는 방법이다.
 
 환경은 일반적으로 유한상태 <font color="blue">마르코프 결정 프로세스(MDP)</font>로 표현할 수 있다. 이런 관점에서 강화 학습 알고리즘은 동적 계획법과 깊은 연관이 있다. MDP에서 상태 전이 확률(state transition probabilities)와 포상은 확률에 따른 값일 수도 있고, 이미 결정되어 있는 값일 수도 있다.
 
