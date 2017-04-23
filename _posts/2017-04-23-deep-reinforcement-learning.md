@@ -43,7 +43,6 @@ While Atari games demonstrate a wide degree of diversity, they are limited to 2D
 Amazingly, the A3C algorithm achieves human-level performance, out-of-the-box, on many Labyrinth tasks. An [alternative
 approach](https://arxiv.org/pdf/1606.04460) based on episodic memory has also proven successful. Labyrinth will also be released open source in the coming months.
 
-
 ![](https://storage.googleapis.com/deepmind-live-cms/images/Labyrinth.width-320_mWAoIlK.png)
 
 We have also developed a number of deep RL methods for continuous control problems such as robotic manipulation and locomotion. Our Deterministic Policy Gradients algorithm ([DPG](http://jmlr.org/proceedings/papers/v32/silver14.pdf)) provides a continuous analogue to DQN, exploiting the differentiability of the Q-network to solve a [wide](http://arxiv.org/pdf/1509.02971) [variety](http://arxiv.org/pdf/1510.09142) of continuous control tasks. [Asynchronous RL](http://arxiv.org/pdf/1602.01783) also performs well in these domains and, when augmented with a hierarchical control strategy, can solve challenging problems such as ant soccer and a 54-dimensional humanoid slalom, without any prior knowledge of the dynamics.
