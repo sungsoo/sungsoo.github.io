@@ -7,12 +7,12 @@ tags: [computer graphics]
 
 ---
 
-
 # A modular GPU raytracer using OpenCL for non-interactive graphics
 
 * Authors: Henrique Nunes Jung, Vinicius Jurinic Cassol, Universidade do Vale do Rio dos Sinos, Escola Politecnica, Brazil
 * [Publication: SBGames, 2016](http://www.sbgames.org/sbgames2016/downloads/anais/157507.pdf)
 * [Github](https://github.com/henriquenj/rendergirl)
+
 
 ## Abstract
 
