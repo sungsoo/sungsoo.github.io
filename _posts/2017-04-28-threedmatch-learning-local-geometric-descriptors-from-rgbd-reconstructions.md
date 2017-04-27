@@ -7,7 +7,8 @@ tags: [machine learning]
 
 ---
 
-# 3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions
+
+# 3DMatch; Learning Local Geometric Descriptors from RGB-D Reconstructions
 
 #### *Andy Zeng, Shuran Song, Matthias Nießner, Matthew Fisher, Jianxiong Xiao, and Thomas Funkhouser*
 
@@ -58,14 +59,6 @@ Fisher, Matthew and Xiao, Jianxiong and
 
 All 3DMatch code (for training and testing) can be found in our Github repository [here](https://github.com/andyzeng/3dmatch-toolbox).
 
-
-## Keypoint Matching Benchmark
-
-
-![](http://3dmatch.cs.princeton.edu/img/patch-rgb.jpg)![](http://3dmatch.cs.princeton.edu/img/patch-depth.jpg)
-
-This benchmark evaluates how well descriptors (both 2D and 3D) can establish correspondences between RGB-D frames of different views. The dataset contains 2D RGB-D patches and 3D patches (local TDF voxel grid volumes) of wide-baselined correspondences, which are sampled from our testing split of the [RGB-D reconstruction datasets](#rgbd-reconstruction-datasets). The pixel size of each 2D patch is determined by the projection of the 0.3m^3^ local 3D patch around the interest point onto the image plane. We provide Matlab code for generating similar correspondence datasets [here](https://github.com/andyzeng/3dmatch-toolbox#generate-your-own-correspondence-dataset-from-rgb-d-reconstructions).
-Although our baselines are 3D approaches that use depth information only, we are also looking for descriptor algorithms (2D or 3D) that leverage color information or both modalities.
 
 ## References
 [1] [*3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions*](http://3dmatch.cs.princeton.edu/), Princeton University, 2017.
