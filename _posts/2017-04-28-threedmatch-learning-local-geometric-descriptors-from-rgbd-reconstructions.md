@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  Learning Local Geometric Descriptors from RGB-D Reconstructions
+title: Learning Local Geometric Descriptors from RGB-D Reconstructions
 date: 2017-04-28
 categories: [computer science]
 tags: [machine learning]
@@ -9,7 +9,6 @@ tags: [machine learning]
 
 # 3DMatch: Learning Local Geometric Descriptors from RGB-D Reconstructions
 
-
 #### *Andy Zeng, Shuran Song, Matthias Nießner, Matthew Fisher, Jianxiong Xiao, and Thomas Funkhouser*
 
 ##### IEEE Conference on Computer Vision and Pattern Recognition (CVPR) 2017 **Oral Presentation**
@@ -17,6 +16,7 @@ tags: [machine learning]
 <iframe width="600" height="400" src="https://www.youtube.com/embed/1U3YKnuMS7g" frameborder="0" allowfullscreen></iframe>
 
 ## Abstract 
+
 
 Matching local geometric features on real-world depth images is a challenging task due to the noisy, low-resolution, and incomplete nature of 3D scan data. These difficulties limit the performance of current state-of-art methods, which are typically based on histograms over geometric properties. In this paper, we present 3DMatch, a data-driven
 model that learns a local volumetric patch descriptor for establishing correspondences between partial 3D data. To amass training data for our model, we propose an unsupervised feature learning method that leverages the millions of correspondence labels found in existing RGB-D reconstructions. Experiments show that our descriptor is not only able
