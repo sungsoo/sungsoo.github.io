@@ -8,7 +8,7 @@ tags: [analytics, data science, graph mining, machine learning]
 ---
 
 ## Article Source
-* Title: Structural Analysis and Visualization of Networks
+* Title: [Structural Analysis and Visualization of Networks](http://www.leonidzhukov.net/hse/2015/networks/)
 * Authors:  Prof. Leonid Zhukov, National Research University Higher School of Economics
 
 ---
