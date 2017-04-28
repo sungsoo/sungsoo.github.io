@@ -49,12 +49,12 @@ Fisher, Matthew and Xiao, Jianxiong and
 }
 ```
 
+
 ## Video
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/gZrsJJtDvvA" frameborder="0" allowfullscreen></iframe>
 
 ## Code
-
 
 All 3DMatch code (for training and testing) can be found in our Github repository [here](https://github.com/andyzeng/3dmatch-toolbox).
 
