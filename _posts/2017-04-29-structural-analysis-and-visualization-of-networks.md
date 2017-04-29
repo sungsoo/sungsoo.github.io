@@ -17,7 +17,6 @@ tags: [analytics, data science, graph mining, machine learning]
 
 ## Outline
 
-<b>
 <ol>
 <li>Introduction to network science</li>
 <li>Power laws</li>
@@ -30,7 +29,7 @@ tags: [analytics, data science, graph mining, machine learning]
 <li> Diffusion of information</li>
 <li>Influence propagation</li>
 </ol>
-</b>
+
 
 
 <a name="module3"></a>
