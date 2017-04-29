@@ -31,12 +31,10 @@ tags: [analytics, data science, graph mining, machine learning]
 </ol>
 
 
-
-<a name="module3"></a>
-<h3>Module 3</h3>
+<h2>Module 3</h2>
 
 
-<h4>Lectures </h4>
+<h2>Lectures </h2>
 <ol>
 <li>[15.01.2015] <b>Introduction to network science.</b> [<a href="http://www.leonidzhukov.net/hse/2015/networks/lectures/lecture1.pdf">Lecture 1</a>] [<a href="https://youtu.be/UHnmPu8Zevg">Video</a>]<br>
 Introduction to the complex network theory. Network properties and metrics.
@@ -111,7 +109,7 @@ Bi-partite graphs and affiliation networks. Networks with signed edges
 </ol>
 
 <a name="labs3"></a>
-<h4>Labs </h4>
+<h2>Labs </h2>
 iPython <a href="http://nbviewer.ipython.org/github/shestakoff/social_ntwks/blob/master/table_of_contents.ipynb" notebooks=""> notebooks</a>:
 <ol>
 <li>
@@ -160,7 +158,7 @@ Community detection algorithms, part 2.
 
 <a name="homeworks3"></a>
 
-<h4>Homeworks</h4>
+<h2>Homeworks</h2>
 <ol>
 <li>[20.01.2015, due: 28.01.2015]. 
 Power laws. 
@@ -193,9 +191,9 @@ FB or VK personal graph analysis. Midterm exam presentation.
 
 
 
-<h3>Module 4</h3>
+<h2>Module 4</h2>
 
-<h4>Lectures </h4>
+<h2>Lectures </h2>
 <ol>
 <li>[31.03.2015] <b>Diffusion on networks </b> [<a href="http://www.leonidzhukov.net/hse/2015/networks/lectures/lecture11.pdf">Lecture 11</a>] 
 [<a href="http://youtu.be/reTP7XAJztU">Video</a>] 
@@ -262,7 +260,7 @@ Economic models of networks. Course summary.
 </li>
 </ol>
 
-<h4>Labs</h4>
+<h2>Labs</h2>
 iPython <a href="http://nbviewer.ipython.org/github/shestakoff/social_ntwks/blob/master/table_of_contents.ipynb" notebooks=""> notebooks</a>:
 <ol>
 <li>Random walk modeling.
@@ -293,7 +291,7 @@ Segregation models.
 </ol>
 
 
-<h4> Projects</h4>
+<h2> Projects</h2>
 <ol>
 <li>Information and influence propagation in networks.
 <a href="http://nbviewer.ipython.org/github/shestakoff/social_ntwks/blob/master/networks_project1.ipynb">Course Project 1</a>
@@ -307,7 +305,7 @@ Segregation models.
 
 
 <a name="reading3"></a> 
-<h3>Reading material</h3>
+<h2>Reading material</h2>
 
 
 <ul>
@@ -921,10 +919,10 @@ Chapter 6. Strategic Network Formation. Matthew O. Jackson. "Social and Economic
 
 
 <a name="textbooks"></a>
-<h3>Textbooks</h3>
+<h2>Textbooks</h2>
   
  
-<h4> Books</h4>
+<h2> Books</h2>
 <ul>
 <li>
 "Networks: An Introduction", Mark Newman. Oxford University Press, 2010.
@@ -946,7 +944,7 @@ and Katherine Faust, Cambridge University Press, 1994
 </li>
 
 </ul>
-<h4>Reviews</h4>
+<h2>Reviews</h2>
 
 <ul>
 <li>
@@ -976,7 +974,7 @@ Adv. Phys. Vol. 51, N 4,  p 1079-1187
 </ul>
 
 
-<h4>Collections</h4>
+<h2>Collections</h2>
 <ul>
 <li>
 "The Structure and Dynamics of Networks". Eds.M. Newman, A.-L. Barabasi, D. Watts. Princeton University Press, 2006. 
@@ -994,7 +992,7 @@ Adv. Phys. Vol. 51, N 4,  p 1079-1187
 
 
 <a name="software"></a> 
-<h3>Software</h3>
+<h2>Software</h2>
 
 
 <ul>
@@ -1034,7 +1032,7 @@ Graph Visualization Software <a href="http://www.graphviz.org"> GraphViz</a>
 </ul>
 
 
-<h3>Similar courses</h3>
+<h2>Similar courses</h2>
 <ul>
 <li> <a href="http://www.stanford.edu/class/cs224w/">Social and Information Network Analysis</a>, Jure Leskovec, Stanford
 </li>
