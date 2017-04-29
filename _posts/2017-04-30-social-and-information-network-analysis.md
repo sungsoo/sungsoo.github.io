@@ -17,14 +17,14 @@ tags: [analytics, data science, graph mining, machine learning]
 
 <h2>Lecture notes and further reading</h2>
 
-<h3>09/27: Introduction and the Bowtie Structure of the Web  <a href="slides/http://web.stanford.edu/class/cs224w/slides/01-intro.pdf">[Slides]</a></h3>
+<h3>09/27: Introduction and the Bowtie Structure of the Web  <a href="http://web.stanford.edu/class/cs224w/slides/01-intro.pdf">[Slides]</a></h3>
 Reading:
 	<ul>
 		<li>Chapter 1: <a href="http://snap.stanford.edu/class/cs224w-readings/kleinber00book_ch01.pdf">Overview</a>
 		</li><li>A. Broder, R. Kumar, F. Maghoul, P. Raghavan, S. Rajagopalan, R. Stata, A. Tomkins, J. Wiener. <a href="http://snap.stanford.edu/class/cs224w-readings/broder00bowtie.pdf"><i>Graph structure in the Web</i></a>. Computer Networks, 33, 2000.
 	</li></ul>
 
-<h3>09/29: Basic Network Properties and the Random Graph Model <a href="slides/http://web.stanford.edu/class/cs224w/slides/02-gnp.pdf">[Slides]</a> </h3>
+<h3>09/29: Basic Network Properties and the Random Graph Model <a href="http://web.stanford.edu/class/cs224w/slides/02-gnp.pdf">[Slides]</a> </h3>
 Reading:
 	<ul>
 		<li>Chapter 2: <a href="http://snap.stanford.edu/class/cs224w-readings/kleinber00book_ch02.pdf">Graphs</a>
@@ -40,7 +40,7 @@ Reading:
 		<li>S. Arora, S. Rao and U. Vazirani. <a href="http://snap.stanford.edu/class/cs224w-readings/arora04expansion.pdf"><i>Expander Flows, Geometric Embeddings and Graph Partitioning</i></a>. In proc. STOC '04, 2004.</li>
  	</ul>
 
-<h3>10/04: The Small World Phenomena <a href="slides/http://web.stanford.edu/class/cs224w/slides/03-smallworld.pdf">[Slides]</a> </h3>
+<h3>10/04: The Small World Phenomena <a href="http://web.stanford.edu/class/cs224w/slides/03-smallworld.pdf">[Slides]</a> </h3>
 Reading:
 	<ul>
 		<li> Chapter 20: <a href="http://snap.stanford.edu/class/cs224w-readings/kleinber00book_ch20.pdf">The Small-World Phenomena</a></li>
@@ -62,7 +62,7 @@ Reading:
 		<li>J. Ugander, B. Karrer, L. Backstrom, C. Marlow. <a href="http://snap.stanford.edu/class/cs224w-readings/backstrom12fb.pdf"><i>The Anatomy of the Facebook Social Graph.</i></a> Arxiv 2012.</li>
   </ul>
 
-<h3>10/06: Decentralized search in small-world and P2P networks <a href="slides/http://web.stanford.edu/class/cs224w/slides/04-navigation.pdf">[Slides]</a> </h3>
+<h3>10/06: Decentralized search in small-world and P2P networks <a href="http://web.stanford.edu/class/cs224w/slides/04-navigation.pdf">[Slides]</a> </h3>
 Reading:
 	<ul>
 		<li>J. Kleinberg. <a href="http://snap.stanford.edu/class/cs224w-readings/kleinberg99smallworld.pdf">The small-world phenomenon: An algorithmic perspective.</a> Proc. ACM Symposium on Theory of Computing, 2000.</li>
@@ -87,7 +87,7 @@ Reading:
   </ul>
 
  
-  <h3>10/11: User Evaluations in Social Media <a href="slides/http://web.stanford.edu/class/cs224w/slides/05-evals.pdf">[Slides]</a> </h3>
+  <h3>10/11: User Evaluations in Social Media <a href="http://web.stanford.edu/class/cs224w/slides/05-evals.pdf">[Slides]</a> </h3>
 	Reading:
 	<ul>
 		<li>J. Leskovec, D. Huttenlocher, J. Kleinberg. <a href="http://snap.stanford.edu/class/cs224w-readings/leskovec10positivenegative.pdf">Predicting Positive and Negative Links in Online Social Networks</a>. In Proc. WWW, 2010.</li>
@@ -106,7 +106,7 @@ Reading:
 		<li>L. Muchnik, S. Aral, S. J. Taylor. <a href="http://snap.stanford.edu/class/cs224w-readings/muchnik13bias.pdf">Social Influence Bias: A Randomized Experiment</a>. Science, Vol. 341 no. 6146 pp. 647-651, 2013.</li>
   </ul>
 
-  <h3>10/13: Networks with Signed Edges <a href="slides/http://web.stanford.edu/class/cs224w/slides/06-signed.pdf">[Slides]</a> </h3>
+  <h3>10/13: Networks with Signed Edges <a href="http://web.stanford.edu/class/cs224w/slides/06-signed.pdf">[Slides]</a> </h3>
 	Reading:
 	<ul>
 		<li> Chapter 5:  <a href="http://snap.stanford.edu/class/cs224w-readings/kleinber00book_ch05.pdf">Positive and negative relationships</a>.</li>
@@ -133,7 +133,7 @@ Reading:
 	</ul>
 
 
-  <h3>10/18: Cascading Behavior: Decision Based Models of Cascades <a href="slides/http://web.stanford.edu/class/cs224w/slides/07-cascading.pdf">[Slides]</a> </h3>
+  <h3>10/18: Cascading Behavior: Decision Based Models of Cascades <a href="http://web.stanford.edu/class/cs224w/slides/07-cascading.pdf">[Slides]</a> </h3>
 	Reading:
 	<ul>
 		<li> Chapter 19: <a href="http://snap.stanford.edu/class/cs224w-readings/kleinber00book_ch19.pdf">Cascading Behavior in Networks</a></li>
@@ -158,7 +158,7 @@ Reading:
 		<li>A. V. Banerjee. <a href="http://snap.stanford.edu/class/cs224w-readings/banerjee92herd.pdf">A Simple Model of Herd Behavior.</a> The Quarterly Journal of Economics, Vol. 107, No. 3, pp. 797-817, 1992.</li>
 	</ul>
 
-<h3>10/20: Cascading Behavior: Probabilistic Models of Information Flow <a href="slides/http://web.stanford.edu/class/cs224w/slides/08-cascades.pdf">[Slides]</a> </h3>
+<h3>10/20: Cascading Behavior: Probabilistic Models of Information Flow <a href="http://web.stanford.edu/class/cs224w/slides/08-cascades.pdf">[Slides]</a> </h3>
 Reading:
 	<ul>
 		<li> Chapter 21: <a href="http://snap.stanford.edu/class/cs224w-readings/kleinber00book_ch21.pdf">Epidemics</a></li>
@@ -182,7 +182,7 @@ Reading:
 
   
 
-<h3>10/25: Influence Maximization <a href="slides/http://web.stanford.edu/class/cs224w/slides/09-influence.pdf">[Slides]</a> <a href="slides/http://web.stanford.edu/class/cs224w/slides/handout-influence_maximization.pdf">[Handout]</a></h3>
+<h3>10/25: Influence Maximization <a href="http://web.stanford.edu/class/cs224w/slides/09-influence.pdf">[Slides]</a> <a href="http://web.stanford.edu/class/cs224w/slides/handout-influence_maximization.pdf">[Handout]</a></h3>
 Reading:
 	<ul>
 		<li>D. Kempe, J. Kleinberg, E. Tardos. <a href="http://snap.stanford.edu/class/cs224w-readings/kempe03influence.pdf">Maximizing the Spread of Influence through a Social Network.</a> In Proc. KDD 2003.</li>
@@ -203,7 +203,7 @@ Reading:
 		<li>A. Gionis, E. Terzi, P. Tsaparas. <a href="http://snap.stanford.edu/class/cs224w-readings/gionis13opinion.pdf">Opinion maximization in social networks</a>. In Proc. SDM, 2013.</li>
 	</ul>
 
-<h3>10/27: Outbreak Detection <a href="slides/http://web.stanford.edu/class/cs224w/slides/10-outbreak.pdf">[Slides]</a> </h3>
+<h3>10/27: Outbreak Detection <a href="http://web.stanford.edu/class/cs224w/slides/10-outbreak.pdf">[Slides]</a> </h3>
 Reading:
 	<ul>
 		<li>J. Leskovec, A. Krause, C. Guestrin, C. Faloutsos, J. VanBriesen, N. Glance. <a href="http://snap.stanford.edu/class/cs224w-readings/leskovec07outbreak.pdf">Cost-effective Outbreak Detection in Networks.</a>  In Proc. KDD, 2007.</li>
@@ -221,7 +221,7 @@ Reading:
 		<li>T. Lappas, E. Terzi, D. Gunopoulos, H. Mannila. <a href="http://snap.stanford.edu/class/cs224w-readings/lattanzi09affiliation.pdf">Finding Effectors in Social Networks</a>. In Proc. KDD, 2010.</li>
 	</ul>
 
-<h3>11/01: Power-laws and Preferential attachment <a href="slides/http://web.stanford.edu/class/cs224w/slides/11-powerlaws.pdf">[Slides]</a> <a href="slides/http://web.stanford.edu/class/cs224w/slides/handout-powerlaws.pdf">[Handout]</a></h3>
+<h3>11/01: Power-laws and Preferential attachment <a href="http://web.stanford.edu/class/cs224w/slides/11-powerlaws.pdf">[Slides]</a> <a href="http://web.stanford.edu/class/cs224w/slides/handout-powerlaws.pdf">[Handout]</a></h3>
 Reading:
 	<ul>
 		<li> Chapter 18: <a href="http://snap.stanford.edu/class/cs224w-readings/kleinber00book_ch18.pdf">Power Laws and Rich-Get-Richer Phenomena</a></li>
@@ -251,7 +251,7 @@ Reading:
 		<li>D. Pennock, G. Flake, S. Lawrence, E. Glover, C. Lee Giles. <a href="http://snap.stanford.edu/class/cs224w-readings/pennock02competition.pdf">Winners don't take all: Characterizing the competition for links on the web.</a> PNAS 99(8), 2002.</li>
 	</ul>
 
-<h3>11/03: Models of evolving networks  <a href="slides/http://web.stanford.edu/class/cs224w/slides/12-evolution.pdf">[Slides]</a></h3>
+<h3>11/03: Models of evolving networks  <a href="http://web.stanford.edu/class/cs224w/slides/12-evolution.pdf">[Slides]</a></h3>
 Reading:
 	<ul>
 		<li>J. Leskovec, L. Backstrom, R. Kumar, A. Tomkins. <a href="http://snap.stanford.edu/class/cs224w-readings/lesovec08microscopic.pdf">Microscopic Evolution of Social Networks.</a> In Proc. KDD 2008.</li>
@@ -271,7 +271,7 @@ Reading:
 		<li>S. Lattanzi, D. Sivakumar. <a href="http://snap.stanford.edu/class/cs224w-readings/lattanzi09affiliation.pdf">Afﬁliation Networks.</a> In Proc. STOC, 2009.</li>
   </ul>
 
-  <h3>11/08: Kronecker graphs <a href="slides/http://web.stanford.edu/class/cs224w/slides/13-kronecker.pdf">[Slides]</a> </h3>
+  <h3>11/08: Kronecker graphs <a href="http://web.stanford.edu/class/cs224w/slides/13-kronecker.pdf">[Slides]</a> </h3>
 	Reading:
 	<ul>
   		<li>J. Leskovec, D. Chakrabarti, J. Kleinberg, C. Faloutsos, Z. Ghahramani. <a href="http://cs.stanford.edu/people/jure/pubs/kronecker-jmlr10.pdf">Kronecker Graphs: An approach to modeling networks</a>. Journal of Machine Learning Research (JMLR) 11(Feb):985-1042, 2010.</li>
@@ -294,7 +294,7 @@ Reading:
 		<li>M. Kim, J. Leskovec.<a href="http://cs.stanford.edu/people/jure/pubs/kronEM-sdm11.pdf">The Network Completion Problem: Inferring Missing Nodes and Edges in Networks.</a> In Proc. SDM, 2011.</li>
 	</ul>
 
-  <h3>11/10: Link Analysis: HITS and PageRank <a href="slides/http://web.stanford.edu/class/cs224w/slides/14-pagerank.pdf">[Slides]</a><a href="slides/http://web.stanford.edu/class/cs224w/slides/page_rank.pdf">[Handout]</a></h3>
+  <h3>11/10: Link Analysis: HITS and PageRank <a href="http://web.stanford.edu/class/cs224w/slides/14-pagerank.pdf">[Slides]</a><a href="http://web.stanford.edu/class/cs224w/slides/page_rank.pdf">[Handout]</a></h3>
   Reading:
   <ul>
 		<li> Chapter 14: <a href="http://snap.stanford.edu/class/cs224w-readings/kleinber00book_ch14.pdf">Link Analysis and Web Search</a>.</li>
@@ -321,7 +321,7 @@ Reading:
   </ul>
 
 		
-<h3>11/15: Strength of weak ties and Community structure in networks  <a href="slides/http://web.stanford.edu/class/cs224w/slides/15-weakties.pdf">[Slides]</a></h3>
+<h3>11/15: Strength of weak ties and Community structure in networks  <a href="http://web.stanford.edu/class/cs224w/slides/15-weakties.pdf">[Slides]</a></h3>
   Reading:
   <ul>
 		<li> Chapter 3: <a href="http://snap.stanford.edu/class/cs224w-readings/kleinber00book_ch03.pdf">Strong and Weak Ties</a>.</li>
@@ -350,7 +350,7 @@ Reading:
   </ul>
 
   
-  <h3>11/17: Network community detection: Modularity optimization and Spectral Clustering <a href="slides/http://web.stanford.edu/class/cs224w/slides/16-spectral.pdf">[Slides]</a><a href="slides/http://web.stanford.edu/class/cs224w/slides/clustering.pdf">[Handout]</a></h3>
+  <h3>11/17: Network community detection: Modularity optimization and Spectral Clustering <a href="http://web.stanford.edu/class/cs224w/slides/16-spectral.pdf">[Slides]</a><a href="http://web.stanford.edu/class/cs224w/slides/clustering.pdf">[Handout]</a></h3>
 	Reading:
   <ul>
 	A. Rajaraman, J. Ullman, J. Leskovec. <a href="http://infolab.stanford.edu/~ullman/mmds/ch10.pdf">Chapter 10.4</a> of Mining Massive Datasets. 2013.
@@ -367,7 +367,7 @@ Reading:
 	  <li>S. Dill, R. Kumar, K. McCurley, S. Rajagopalan, D. Sivakumar, A. Tomkins. <a href="http://snap.stanford.edu/class/cs224w-readings/Dill01SelfSim.pdf">Self-similarity in the Web.</a>  In Proc. VLDB, 2001.</li>
   </ul>
 
-  <h3>11/29: Overlapping communities in networks <a href="slides/http://web.stanford.edu/class/cs224w/slides/17-overlapping.pdf">[Slides]</a></h3>
+  <h3>11/29: Overlapping communities in networks <a href="http://web.stanford.edu/class/cs224w/slides/17-overlapping.pdf">[Slides]</a></h3>
 	Reading:
   <ul>
 		<li>G. Palla, I. Derenyi, I. Farkas, T. Vicsek. <a href="http://snap.stanford.edu/class/cs224w-readings/palla05overlapping.pdf">Uncovering the overlapping community structure of complex networks in nature and society.</a> Nature 435, 814-818, 2005.</li>
@@ -385,7 +385,7 @@ Reading:
 	  <li>T. Leighton, S. Rao. <a href="http://snap.stanford.edu/class/cs224w-readings/leighton99mincut.pdf">Multicommodity max-flow min-cut theorems and their use in designing approximation algorithms.</a> Journal of the ACM, 1999.</li>
   </ul>
 
-<h3>12/01: Link Prediction and Network Inference <a href="slides/http://web.stanford.edu/class/cs224w/slides/18-linkpred.pdf">[Slides]</a></h3>
+<h3>12/01: Link Prediction and Network Inference <a href="http://web.stanford.edu/class/cs224w/slides/18-linkpred.pdf">[Slides]</a></h3>
 	Readings:
 	<ul>
   	<li>L. Backstrom, J. Leskovec. <a href="http://snap.stanford.edu/class/cs224w-readings/backstrom11randomwalk.pdf">Supervised Random Walks: Predicting and Recommending Links in Social Networks.</a> In Proc. WSDM, 2011.</li>
@@ -403,7 +403,7 @@ Reading:
   </ul>
 
 
-<h3>12/06: Biological networks <a href="slides/http://web.stanford.edu/class/cs224w/slides/19-bionets.pdf">[Slides]</a><a href="slides/http://web.stanford.edu/class/cs224w/slides/handout-bionets.pdf">[Handout]</a></h3>
+<h3>12/06: Biological networks <a href="http://web.stanford.edu/class/cs224w/slides/19-bionets.pdf">[Slides]</a><a href="http://web.stanford.edu/class/cs224w/slides/handout-bionets.pdf">[Handout]</a></h3>
 Readings:
 	<ul>
   	<li>S.D. Ghiassian, J. Menche, A-L. Barabási. <a href="http://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1004120">A DIseAse MOdule Detection (DIAMOnD) Algorithm Derived from a Systematic Analysis of Connectivity Patterns of Disease Proteins in the Human Interactome.</a> PLoS Computational Biology, 2015.</li>
@@ -431,7 +431,7 @@ Readings:
 		<li>E. Guney, et al. <a href="http://www.nature.com/articles/ncomms10331">Network-Based in Silico Drug Efficacy Screening.</a> Nature Communications, 2016.</li>
   </ul>
 
-<h3>12/08: Networks: Two Fun Topics <a href="slides/http://web.stanford.edu/class/cs224w/slides/20-review.pdf">[Slides]</a></h3>
+<h3>12/08: Networks: Two Fun Topics <a href="http://web.stanford.edu/class/cs224w/slides/20-review.pdf">[Slides]</a></h3>
 Readings:
 <ul>
 <li>C. Danescu-Niculescu-Mizil, R. West, D. Jurafsky, J. Leskovec, C. Potts. <a href="http://cs.stanford.edu/people/jure/pubs/language-www13.pdf">No Country for Old Members: User lifecycle and linguistic change in online communities</a>  ACM International Conference on World Wide Web (WWW), 2013</li>
