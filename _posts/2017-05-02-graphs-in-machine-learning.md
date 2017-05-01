@@ -148,7 +148,7 @@ Syllabus
 - Large-scale sparsification
 
 ### No class 
-You can check out the papers the papers that your instructors are presenting at NIPS 2016 during that week: </span>
+You can check out the papers the papers that your instructors are presenting at NIPS 2016 during that week: 
 
 - [*Blazing the trails before beating the path: Sample-efficient Monte-Carlo planning*](serve.php?what=publications/grill2016blazing.pdf)
 - [*Rewards and errors in multi-arm bandits for interactive education*](https://docs.google.com/a/chalearn.org/viewer?a=v&pid=sites&srcid=Y2hhbGVhcm4ub3JnfHdvcmtzaG9wfGd4OjdlYzA2Y2U0MTYwOTZhYjg)
