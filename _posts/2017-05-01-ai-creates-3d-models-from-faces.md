@@ -12,6 +12,7 @@ tags: [computer graphics, machine learning]
 
 ---
 
+
 # AI Creates 3D Models From Faces
 
 The paper "*Photorealistic Facial Texture Inference Using Deep Neural Networks*" is available here:
