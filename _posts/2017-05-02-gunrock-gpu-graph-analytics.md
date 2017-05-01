@@ -7,10 +7,12 @@ tags: [machine learning]
 
 ---
 
+
 # Gunrock - GPU Graph Analytics
 
 * Authors: Yangzihao Wang, Yuechao Pan, Andrew Davidson, Yuduo Wu, Carl Yang, Leyuan Wang, Muhammad Osama, Chenshan Yuan, Weitang Liu, Andy T. Riffel, John D. Owens (University of California, Davis)
 * [Paper](https://arxiv.org/pdf/1701.01170v1)
+
 
 ## Abstract
 
