@@ -43,6 +43,7 @@ Class projects
 --------------
 
 The main part the of the grade comes from the projects. The students are encouraged to come up with the topic of their interest related to the course and start working on it as soon as possible. In this case, please e-mail the lecturer with a short description of the project for the approval. Some [project proposals](https://piazza.com/ens_cachan/fall2016/mvagraphsml/resources) will be given. Additional project proposals will be presented on **7.11.2016**. Deadline for deciding on the project is **28.11.2016**, but the recommended date for picking up the projects is on 21.11.2016.
+
 The deadline for submitting 5-10 page reports in [NIPS format](https://nips.cc/Conferences/2016/PaperInformation/StyleFiles) is **5.1.2017**. The planned time for 15+5 minutes will be on 9. 1. 2016 over Skype/Hangout. Students can work in pairs of 2 and exceptionally 3. Very detailed instructions are given on the [dedicated page for the class projects.](https://piazza.com/ens_cachan/fall2016/mvagraphsml/resources)
 
 Prerequisites
@@ -53,11 +54,11 @@ linear algebra, basic statistics, others tools needed will be covered in the lec
 Syllabus
 --------
 
-### Session 0 - [Overview](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs0.pdf) <span class="note">30.09.2016 - 11h30, Amphi Curie</span>
+### Session 0 - [Overview](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs0.pdf) 
 
 -   Short presentation of the course
 
-### Session 1 - [Lecture 1](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs1.pdf) <span class="note">03.10.2016, Salle Condorcet</span>
+### Session 1 - [Lecture 1](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs1.pdf) 
 
 -   Introduction to graphs in Machine Learning
 -   Motivation and overview of the successful approaches
@@ -70,7 +71,7 @@ Syllabus
 -   Random graphs models – real-world graph models
 -   Social network modeling, Small world phenomena, Advertising
 
-### Session 2 – [Lecture 2](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs2.pdf) <span class="note">10.10.2016, Salle Condorcet</span>
+### Session 2 – [Lecture 2](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs2.pdf) 
 
 -   Graph theory refresher
 -   Data-graph constructions
@@ -81,7 +82,7 @@ Syllabus
 -   Recommendations with graph distances
 -   Resistance networks
 
-### Session 3 – [Lecture 3](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs3.pdf) <span class="note">17.10.2016, Salle Condorcet</span>
+### Session 3 – [Lecture 3](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs3.pdf) 
 
 -   Geometry of the data and connectivity
 -   Spectral clustering
@@ -91,14 +92,14 @@ Syllabus
 -   SSL why and when it helps
 -   SSL with self-training
 
-### Session 4 – TD 1 <span class="note">24.10.2016, Salle Condorcet</span>
+### Session 4 – TD 1 
 
 -   Graph construction and spectral clustering
 -   k-NN and epsilon graphs, comparison
 -   Understand connectivity vs. compactness paradigm in clustering
 -   Spectral clustering on simple image segmentation problem
 
-### Session 5 - [Lecture 4](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs4.pdf) <span class="note">31.10.2016, Salle Condorcet</span>
+### Session 5 - [Lecture 4](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs4.pdf) 
 
 -   Semi-Supervised SVMs
 -   Graph-based semi-supervised learning
@@ -108,7 +109,7 @@ Syllabus
 -   Inductive and transductive semi-supervised learning
 -   Manifold regularization
 
-### Session 6 - [Lecture 5](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs5.pdf) and class project [proposals](https://piazza.com/ens_cachan/fall2016/mvagraphsml/resources) <span class="note">07.11.2016, Salle Condorcet, Deadline: <span style="color:red">TD1 report</span></span>
+### Session 6 - [Lecture 5](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs5.pdf) and class project [proposals](https://piazza.com/ens_cachan/fall2016/mvagraphsml/resources) 
 
 -   Max-margin graph cuts
 -   Theory of Laplacian-based manifold methods
@@ -119,7 +120,7 @@ Syllabus
 -   What to do when graphs grow?
 -   Online incremental k-centers
 
-### Session 7 – TD 2 <span class="note">14.11.2016, Salle Condorcet </span>
+### Session 7 – TD 2 
 
 -   Semi Supervised Learning and Harmonic Function Solution
 -   Face Recognizer with HFS
@@ -127,7 +128,7 @@ Syllabus
 -   Report experiments of one's own face
 -   Suggest improvements
 
-### Session 8 - [Lecture 6](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs6.pdf) <span class="note">21.11.2016, Salle Condorcet, Soft deadline: <span style="color:red">project assignment</span></span>
+### Session 8 - [Lecture 6](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs6.pdf) 
 
 -   Examples of applications of online SSL
 -   Analysis of online SSL
@@ -138,7 +139,7 @@ Syllabus
 -   Scaling harmonic functions to millions of samples
 -   Numerical eigenfunctions
 
-### Session 9 - [Lecture 7](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs7.pdf) and TD3 <span class="note">28.11.2016, <span style="color:red">14h00 - 16h00</span>, Forum de stages in the morning, Salle Condorcet, Deadlines: <span style="color:red">TD2 report</span>, <span style="color:red">project assignment</span></span>
+### Session 9 - [Lecture 7](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs7.pdf) and TD3 
 
 -   Big graph data learning and analysis
 -   Large-scale data processing tools: GraphLab
@@ -146,7 +147,7 @@ Syllabus
 -   Large-scale graph construction
 -   Large-scale sparsification
 
-### No class <span class="note">05.12.2016, NIPS 2016
+### No class 
 You can check out the papers the papers that your instructors are presenting at NIPS 2016 during that week: </span>
 
 -   [*Blazing the trails before beating the path: Sample-efficient
@@ -158,7 +159,7 @@ You can check out the papers the papers that your instructors are presenting at 
     ridge
     regression*](https://sites.google.com/site/nips2016adaptive/10_paper.pdf?attredirects=0)
 
-### Session 10 - [Lecture 8](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs8.pdf) <span class="note">12.12.2016, Salle Condorcet, Deadlines: <span style="color:red">TD3 report</span></span>
+### Session 10 - [Lecture 8](http://researchers.lille.inria.fr/~valko/hp/serve.php?what=../projects/courses/graphsML/20162017/mlgraphs8.pdf) 
 
 -   Graph bandits
 -   Online decision-making on graphs
