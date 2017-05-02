@@ -29,6 +29,8 @@ To some extent, the business driver that has shone a spotlight on graph analysis
 
 [![](http://www.ibmbigdatahub.com/sites/default/files/graphanalytics_embed.jpg)](http://www.ibm.com/analytics/us/en/technology/cloud-data-services/graph/?S_TACT=M1610MMW&iio=panalytics&cmp=m1610&ct=m1610mmw&cr=newsroom&cm=h&csot=-&ccy=-&cpb=-&cd=-)
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/qMitNJ5zzow" frameborder="0" allowfullscreen></iframe>
+
 Different Kinds of Graph Analysis
 -----
 
