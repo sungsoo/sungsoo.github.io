@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Digital Transformation in a Connected World
-date: 2017-05-03
+date: 2017-05-04
 categories: [computer science]
 tags: [data science, graph mining, machine learning]
 
