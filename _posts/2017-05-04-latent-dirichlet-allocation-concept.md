@@ -25,6 +25,8 @@ tags: [data science, machine learning]
 어떤 확률분포와 그 파라미터가 있다고 할 때, 그로부터 랜덤 프로세스에 따라 데이터를 생성하는 관점의 모델이다. 문서 모델링의 말로 설명하면,
 문서의 주제 분포와 각 주제별로 특정 단어를 생성할 확률을 알고 있으면, 특정 문서가 만들어질 확률을 계산할 수 있다는 얘기다.
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/3mHy4OSyRf0" frameborder="0" allowfullscreen></iframe>
+
 ## 개념 학습
 
 ### Latent Dirichlet Allocation이란?
