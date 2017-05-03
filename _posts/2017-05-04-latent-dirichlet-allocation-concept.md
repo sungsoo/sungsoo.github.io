@@ -15,6 +15,20 @@ tags: [data science, machine learning]
 
 ## Latent Dirichlet Allocation (LDA)
 
+### Advantages
+
+* LDA is an effective tool for *topic modeling*.
+* *Easy* to understand conceptually
+* Has been shown to produce *good* results over *many domains*.
+* *New* aaplications
+
+
+### Limitations
+
+* Must know the number of topics *K* in advance
+* Dirichlet topic distribution *cannot capture correlations* among topics
+
+
 ## 배경 설명
 
 정보검색에서 문서 모델링은 중요한 의미가 있다. 간단하게 말하면, 문서 모델링이란 개별 문서 더 나아가 문서 컬렉션(Corpus)를 표현하는 방법을
