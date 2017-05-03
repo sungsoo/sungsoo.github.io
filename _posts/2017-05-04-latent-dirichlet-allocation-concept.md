@@ -22,8 +22,8 @@ tags: [data science, machine learning]
 
 ### Generative Model
 
-어떤 확률분포와 그 파라미터가 있다고 할 때, 그로부터 랜덤 프로세스에 따라 데이터를 생성하는 관점의 모델이다. 문서 모델링의 말로 설명하면,
-문서의 주제 분포와 각 주제별로 특정 단어를 생성할 확률을 알고 있으면, 특정 문서가 만들어질 확률을 계산할 수 있다는 얘기다.
+<font color="blue">어떤 확률분포와 그 파라미터가 있다고 할 때, 그로부터 랜덤 프로세스에 따라 데이터를 생성하는 관점의 모델이다.</font>
+문서 모델링의 말로 설명하면, 문서의 주제 분포와 각 주제별로 특정 단어를 생성할 확률을 알고 있으면, 특정 문서가 만들어질 확률을 계산할 수 있다는 얘기다.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/3mHy4OSyRf0" frameborder="0" allowfullscreen></iframe>
 
@@ -31,7 +31,9 @@ tags: [data science, machine learning]
 
 ### Latent Dirichlet Allocation이란?
 
-LDA(Latent Dirichlet Allocation)는 문서 같은 데이터의 집합에 대한 Generative Probabilistic Model이다. 이건 정의도 아니거니와 LDA에 대해 별로 설명도 안 되니까 그냥 처음부터 구체적인 과정을 살펴보자. 아래는 모델에서 하나의 문서를 생성하는 절차를 보여준다.
+**LDA(Latent Dirichlet Allocation)**는 문서 같은 데이터의 집합에 대한 *Generative Probabilistic Model*이다. 
+이건 정의도 아니거니와 LDA에 대해 별로 설명도 안 되니까 그냥 처음부터 구체적인 과정을 살펴보자. 
+아래는 모델에서 하나의 문서를 생성하는 절차를 보여준다.
 
 ![](http://www.4four.us/wordpress/wp-content/uploads/2010/10/pseudocode.png "pseudocode")
 
@@ -54,14 +56,14 @@ LDA(Latent Dirichlet Allocation)는 문서 같은 데이터의 집합에 대한 
 
 Latent Dirichlet Allocation이라는 이름에 담긴 뜻을 짚어보자.
 
-1.  Latent: 사전적인 의미는 “잠재적인, 숨어 있는”. 위에서 설명한 과정에서 우리가 직접 관찰할 수 있는 것은 문서 내용뿐이다. α, β, θ,
-    z는 모두 감춰진 파라미터이다.
-2.  Dirichlet: 19세기 독일 수학자의 이름. 디리클레 분포(Dirichlet Distribution)가 그의 이름을 따서 지어졌다고 한다. 제일 위의 코드를 보면 θ를 결정할 때 α를 파라미터로 갖 디리클레 분포을 사용하고 있는데, 그 이유는 뒤에서 다시 살펴보겠다.
-3.  Allocation: 말 그대로 ‘할당’. 각 단어를 결정할 때, θ에 대한 다항 분포(Multinomial Distribution)로 주제를 ‘할당’한 뒤 그 주제로부터 단어를 뽑는다. LDA의 개념이나 활용에서 여러 가지 할당이 나오므로 해석은 마음껏.
+1. **Latent**: 사전적인 의미는 <font color="blue">"잠재적인, 숨어 있는"</font>. 위에서 설명한 과정에서 우리가 직접 관찰할 수 있는 것은 문서 내용뿐이다. *α, β, θ, z는 모두 감춰진 파라미터이다*.
+2. **Dirichlet**: 19세기 독일 수학자의 이름. <font color="blue">디리클레 분포(Dirichlet Distribution)</font>가 그의 이름을 따서 지어졌다고 한다. 제일 위의 코드를 보면 θ를 결정할 때 α를 파라미터로 갖는 디리클레 분포을 사용하고 있는데, 그 이유는 뒤에서 다시 살펴보겠다.
+3. **Allocation**: 말 그대로 '할당'. 각 단어를 결정할 때, θ에 대한 *다항 분포(Multinomial Distribution)*로 주제를 '할당'한 뒤 그 주제로부터 단어를 뽑는다. LDA의 개념이나 활용에서 여러 가지 할당이 나오므로 해석은 마음껏.
 
 ## 파라미터 추정
 
-본격적으로 수식이 나와서 어려워지는데, 간단하게 의미만 짚어보자. (자세한 것은 [LDA 파라미터 추정: 깁스 샘플링을 써서](http://www.4four.us/article/2014/10/lda-parameter-estimation) 글을 참고)
+본격적으로 수식이 나와서 어려워지는데, 간단하게 의미만 짚어보자. 
+(자세한 것은 [LDA 파라미터 추정: 깁스 샘플링을 써서](http://www.4four.us/article/2014/10/lda-parameter-estimation) 글을 참고)
 
 ### 왜 디리클레 분포인가?
 
@@ -71,8 +73,7 @@ Latent Dirichlet Allocation이라는 이름에 담긴 뜻을 짚어보자.
 
 ![](http://www.4four.us/wordpress/wp-content/uploads/2010/10/wz.png "wz")
 
-첫 번째 식은 문서의 주제 생성, 두 번째 식은 문서의 주제와 단어 생성을 나타낸다. 문서 주제(=내용)를 나타내는 z는 θ에 대한 조건부 확률이다.
-베이즈룰(Bayes Rule)을 떠올려보자.
+첫 번째 식은 문서의 주제 생성, 두 번째 식은 문서의 주제와 단어 생성을 나타낸다. 문서 주제(=내용)를 나타내는 z는 θ에 대한 조건부 확률이다. 베이즈룰(Bayes Rule)을 떠올려보자.
 
 ![](http://www.4four.us/wordpress/wp-content/uploads/2010/10/bayes.png "bayes")
 
@@ -85,12 +86,11 @@ Latent Dirichlet Allocation이라는 이름에 담긴 뜻을 짚어보자.
 
 ![](http://www.4four.us/wordpress/wp-content/uploads/2010/10/intractable.png "intractable")
 
-그런데 이걸 계산하는 게 Intractable 하다네? 그래서 어쩔 수 없이 모델을 단순화한다, 아래 그림처럼. (위의 그림과 비교해보자.)
+그런데 이걸 계산하는 게 *Intractable* 하다네? 그래서 어쩔 수 없이 모델을 단순화한다. 아래 그림처럼. (위의 그림과 비교해보자.)
 
 ![](http://www.4four.us/wordpress/wp-content/uploads/2010/10/variational.png "variational")
 
-기껏 θ와 z의 관계를 설명하더니 이제 와서 두 개를 γ와 φ로 완전히 분리해버렸다. 그런데 이게 뜬금없는 건 아니고, Variational Inference라고
-해서, 아래와 같이 q로 Variational Distribution을 표기하고,
+기껏 θ와 z의 관계를 설명하더니 이제 와서 두 개를 γ와 φ로 완전히 분리해버렸다. 그런데 이게 뜬금없는 건 아니고, *Variational Inference*라고 해서, 아래와 같이 q로 *Variational Distribution*을 표기하고,
 
 ![](http://www.4four.us/wordpress/wp-content/uploads/2010/10/parameter.png "parameter")
 
