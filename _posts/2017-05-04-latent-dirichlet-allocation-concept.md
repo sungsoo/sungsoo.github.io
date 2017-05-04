@@ -13,7 +13,6 @@ tags: [data science, machine learning]
 
 ---
 
-
 ## Latent Dirichlet Allocation (LDA)
 
 ### Advantages
