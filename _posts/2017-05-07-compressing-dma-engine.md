@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Compressing DMA Engine; Leveraging Activation Sparsity for Training Deep Neural Networks
+title: Leveraging Activation Sparsity for Training Deep Neural Networks
 date: 2017-05-07
 categories: [computer science]
 tags: [computer graphics]
