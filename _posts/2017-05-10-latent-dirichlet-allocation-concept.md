@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Latent Dirichlet Allocation Concept
-date: 2017-05-04
+date: 2017-05-10
 categories: [computer science]
 tags: [data science, machine learning]
 
