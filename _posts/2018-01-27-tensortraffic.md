@@ -28,3 +28,5 @@ First, we obtained very good accuracy of predictions using *neural networks* (av
 Finally, I will tell about conclusions and possible directions of a future research. I will show how achieved results may be applied in *real-time traffic management* and *transport planning*, which may lead to significant reduction of the required time and cost of traffic engineering works, as well as better results in terms of traffic efficiency. Thus, this may lead to developing *AI-based tools* able to support traffic engineers in their work. An interesting conclusion is that similar approach may be used in many other cases, in which it is required to run a large number of simulations, e.g., weather forecast, medicine, bioinformatics. There may be also important theoretical conclusions, related to automata theory and computational complexity.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/XqxwnbKHEEs" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+[https://github.com/pgora/TensorTraffic](https://github.com/pgora/TensorTraffic)
