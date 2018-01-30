@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Neuromorphic Chip
-date: 2015-07-27
+date: 2018-01-31
 categories: [computer science]
 tags: [parallel computing]
 
