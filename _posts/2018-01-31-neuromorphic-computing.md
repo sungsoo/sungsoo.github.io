@@ -51,3 +51,7 @@ D-Wave One 은 범용 양자 컴퓨터는 아니며, *Quantum Annealing* 이라�
 2013년 NASA와 구글이 공동으로 설립할 인공지능 연구소에서 D-Wave 2를 구매할 계획이라고 밝혔다.
 
 이후 D 웨이브는 D 웨이브 1의 후속으로 512개의 큐비트를 사용하는 D 웨이브 2(D-WAVE 2)를 출시했는데 구글이 이를 구입했다. D-Wave 2는 머신러닝과 음성인식, 자연어 처리를 위해 방대한 데이터를 분석할 수 있고, 싱글코어 칩을 활용하는 일반 컴퓨터보다 1억배 이상 빠른 속도로 처리할 수 있는 것으로 알려졌다.
+
+## A Beginner’s Guide To Quantum Computing
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/JRIPV0dPAd4" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
