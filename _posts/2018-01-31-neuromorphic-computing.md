@@ -54,4 +54,6 @@ D-Wave One 은 범용 양자 컴퓨터는 아니며, *Quantum Annealing* 이라�
 
 ## A Beginner’s Guide To Quantum Computing
 
+Dr. Talia Gershon, a materials scientist by training, came to IBM Research in 2012. After 4.5 years of developing next-generation solar cell materials, she got inspired to learn about quantum computing because it might enable all kinds of discoveries (including new materials). Having authored the Beginner's Guide to the QX, she passionately believes that anyone can get started learning quantum! - Maker Faire Bay Area 2017
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/JRIPV0dPAd4" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
