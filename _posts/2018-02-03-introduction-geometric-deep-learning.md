@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Introduction Geometric Deep Learning
+title: Introduction to Geometric Deep Learning
 date: 2018-02-03
 categories: [computer science]
 tags: [machine learning]
