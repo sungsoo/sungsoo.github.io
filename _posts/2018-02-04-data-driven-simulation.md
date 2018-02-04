@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Data-Driven Mesoscopic Simulation Models of Large-Scale Surface Transit Networks
+title: Data-Driven Mesoscopic Simulation Models 
 date: 2018-02-04
 categories: [computer science]
 tags: [machine learning]
