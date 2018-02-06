@@ -7,6 +7,10 @@ tags: [machine learning]
 
 ---
 
+## Article Source
+* Title: [Introduction to Data Mining (Second Edition)](https://www-users.cs.umn.edu/~kumar001/dmbook/index.php)
+
+---
 
 # Data Mining Lecture Slides
 
