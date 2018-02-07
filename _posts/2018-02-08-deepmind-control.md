@@ -13,7 +13,7 @@ tags: [machine learning]
 
 ## Abstract
 
-The DeepMind Control Suite is a set of continuous control tasks with a stan- dardised structure and interpretable rewards, intended to serve as performance benchmarks for reinforcement learning agents. The tasks are written in Python and powered by the MuJoCo physics engine, making them easy to use and mod- ify. We include benchmarks for several learning algorithms. The Control Suite is publicly available at [github.com/deepmind/dm_control](github.com/deepmind/dm_control). A video summary of all tasks is available at [youtu.be/rAai4QzcYbs](youtu.be/rAai4QzcYbs).
+The DeepMind Control Suite is a set of continuous control tasks with a standardised structure and interpretable rewards, intended to serve as performance benchmarks for reinforcement learning agents. The tasks are written in Python and powered by the MuJoCo physics engine, making them easy to use and modify. We include benchmarks for several learning algorithms. The Control Suite is publicly available at [github.com/deepmind/dm_control](github.com/deepmind/dm_control). A video summary of all tasks is available at [youtu.be/rAai4QzcYbs](youtu.be/rAai4QzcYbs).
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/WhaRsrlaXLk" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
