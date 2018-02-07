@@ -10,7 +10,7 @@ tags: [algorithms]
 
 # Cellular Automata
 
-<iframe width="600" height="400 src="https://www.youtube.com/embed/eUcviWn9ACc" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+<iframe width="600" height="400" src="https://www.youtube.com/embed/eUcviWn9ACc" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
 세포 자동자(細胞自動子) 또는 셀룰러 오토마타(cellular automata, 단수 cellular automaton)는 계산 가능성 이론, 수학, 물리학, 복잡계, 수리생물학, 미세구조 모델링에서 다루는 이산 모형이다. 여러 개의 세포 자동자를 세포 공간, 테셀레이션 구조라고도 부른다.
 
