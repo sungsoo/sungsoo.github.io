@@ -8,6 +8,7 @@ tags: [parallel computing]
 ---
 
 
+
 ## Article Source
 * Title: [101-0416-10L  Road Transport Systems](http://www.vvz.ethz.ch/Vorlesungsverzeichnis/lerneinheit.view?semkez=2017S&ansicht=KATALOGDATEN&lerneinheitId=117819&lang=en)
 
