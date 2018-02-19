@@ -1,4 +1,3 @@
-
 ---
 layout: post
 title: This Autonomous Robot Models Your House Interior
