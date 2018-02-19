@@ -1,9 +1,7 @@
-
 ---
 layout: post
 title: Data Vocalization 
 date: 2018-02-20
-
 categories: [computer science]
 tags: [data management]
 

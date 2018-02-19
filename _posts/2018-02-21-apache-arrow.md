@@ -1,9 +1,7 @@
-
 ---
 layout: post
 title: Using Apache Arrow, Calcite and Parquet to build a Relational Cache 
 date: 2018-02-21
-
 categories: [computer science]
 tags: [data management]
 
