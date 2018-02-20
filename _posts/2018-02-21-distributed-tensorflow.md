@@ -7,6 +7,11 @@ tags: [machine learning]
 
 ---
 
+## Article Source
+
+* Title: [Distributed TensorFlow](https://www.tensorflow.org/deploy/distributed)
+
+---
 
 # Distributed TensorFlow
 
