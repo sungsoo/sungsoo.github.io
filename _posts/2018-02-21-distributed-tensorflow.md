@@ -75,6 +75,8 @@ addresses. Pass this dictionary to the
 [`tf.train.ClusterSpec`](https://www.tensorflow.org/api_docs/python/tf/train/ClusterSpec)
 constructor. For example:
 
+
+
 <div class="devsite-table-wrapper"><table>
   <tbody><tr><th><code><span>tf.<wbr>train.<wbr>ClusterSpec</span></code> construction</th><th>Available tasks</th>
   </tr><tr>
