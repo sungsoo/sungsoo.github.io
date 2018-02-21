@@ -75,27 +75,27 @@ addresses. Pass this dictionary to the
 [`tf.train.ClusterSpec`](https://www.tensorflow.org/api_docs/python/tf/train/ClusterSpec)
 constructor. For example:
 
-+--------------------------------------+--------------------------------------+
-| `tf.train.ClusterSpec` construction  | Available tasks                      |
-+======================================+======================================+
-|     tf.train.ClusterSpec({"local": [ | `/job:local/task:0/job:local/task:1` |
-| "localhost:2222", "localhost:2223"]} |                                      |
-| )                                    |                                      |
-+--------------------------------------+--------------------------------------+
-|     tf.train.ClusterSpec({           | `/job:worker/task:0`\                |
-|         "worker": [                  | `/job:worker/task:1`\                |
-|             "worker0.example.com:222 | `/job:worker/task:2`\                |
-| 2",                                  | `/job:ps/task:0`\                    |
-|             "worker1.example.com:222 | `/job:ps/task:1`                     |
-| 2",                                  |                                      |
-|             "worker2.example.com:222 |                                      |
-| 2"                                   |                                      |
-|         ],                           |                                      |
-|         "ps": [                      |                                      |
-|             "ps0.example.com:2222",  |                                      |
-|             "ps1.example.com:2222"   |                                      |
-|         ]})                          |                                      |
-+--------------------------------------+--------------------------------------+
+<div class="devsite-table-wrapper"><table>
+  <tbody><tr><th><code><span>tf.<wbr>train.<wbr>ClusterSpec</span></code> construction</th><th>Available tasks</th>
+  </tr><tr>
+    <td><pre><div class="devsite-code-button-wrapper"><div class="devsite-code-button gc-analytics-event material-icons devsite-dark-code-button" data-category="Site-Wide Custom Events" data-label="Dark Code Toggle" track-type="exampleCode" track-name="darkCodeToggle" data-tooltip-align="b,c" data-tooltip="Dark code theme" aria-label="Dark code theme" data-title="Dark code theme"></div></div>tf.train.ClusterSpec({"local": ["localhost:2222", "localhost:2223"]})
+</pre></td>
+<td><code><span>/job:local/task:0</span><br><span>/job:local/task:1</span></code></td>
+  </tr>
+  <tr>
+    <td><pre><div class="devsite-code-button-wrapper"><div class="devsite-code-button gc-analytics-event material-icons devsite-dark-code-button" data-category="Site-Wide Custom Events" data-label="Dark Code Toggle" track-type="exampleCode" track-name="darkCodeToggle" data-tooltip-align="b,c" data-tooltip="Dark code theme" aria-label="Dark code theme" data-title="Dark code theme"></div></div>tf.train.ClusterSpec({
+    "worker": [
+        "worker0.example.com:2222",
+        "worker1.example.com:2222",
+        "worker2.example.com:2222"
+    ],
+    "ps": [
+        "ps0.example.com:2222",
+        "ps1.example.com:2222"
+    ]})
+</pre></td><td><code><span>/job:worker/task:0</span></code><br><code><span>/job:worker/task:1</span></code><br><code><span>/job:worker/task:2</span></code><br><code><span>/job:ps/task:0</span></code><br><code><span>/job:ps/task:1</span></code></td>
+  </tr>
+</tbody></table></div>
 
 ### Create a `tf.train.Server` instance in each task 
 
@@ -112,13 +112,13 @@ For example, to launch a cluster with two servers running on
 `localhost:2222` and `localhost:2223`, run the following snippets in two
 different processes on the local machine:
 
-``` 
+```python 
 # In task 0:
 cluster = tf.train.ClusterSpec({"local": ["localhost:2222", "localhost:2223"]})
 server = tf.train.Server(cluster, job_name="local", task_index=0)
 ```
 
-``` 
+```python 
 # In task 1:
 cluster = tf.train.ClusterSpec({"local": ["localhost:2222", "localhost:2223"]})
 server = tf.train.Server(cluster, job_name="local", task_index=1)
@@ -139,7 +139,7 @@ To place operations on a particular process, you can use the same
 function that is used to specify whether ops run on the CPU or GPU. For
 example:
 
-``` 
+```python 
 with tf.device("/job:ps/task:0"):
   weights_1 = tf.Variable(...)
   biases_1 = tf.Variable(...)
@@ -213,7 +213,7 @@ implementing **between-graph replication** and **asynchronous
 training**. It includes the code for the parameter server and worker
 tasks.
 
-``` 
+```python 
 import argparse
 import sys
 
