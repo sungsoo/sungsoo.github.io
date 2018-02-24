@@ -15,6 +15,7 @@ tags: [algorithms]
 
 # Microscopic Simulation
 
+
 While dynamic assignment in general can be studied using the macroscopic simulators, the need has arisen to understand at least part of the traffic system at a more detailed level. It has been found that ‘details’ at the macroscopic level, such as the length of an on-ramp or the settings of signal control, are often constraining when it comes to the maximum (capacity) and nominal flows through such sections, and the study of the vehicular interactions is needed to discover and understand such constraining factors.
 
 Whereas the macroscopic models often exhibit a *minimalist approach*, so that an efficient solution can be reached, do the new generation of models aim at modelling the process of vehicular traffic in detail. This type of models, that try to describe the actions and reactions of the particles that make up the traffic as accurately as possible, are called *microscopic models*.
