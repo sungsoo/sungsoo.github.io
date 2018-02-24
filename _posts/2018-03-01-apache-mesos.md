@@ -30,6 +30,8 @@ IT에 종사하지 않는 사람도 '빅데이터'라는 말을 한 번쯤은 �
 * **확장성 용이** 필요할 때 필요한 만큼 손쉽게 자원을 확보할 수 있다.
 * **더욱 견고한 시스템** 특정 서버에 발생한 장애가 서비스 장애로 이어지지 않고, 정상적으로 실행되는 다른 서버로 애플리케이션을 이동하여 계속 실행한다.
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/dyLtK4FhCZE" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
 ## What is Mesos?
 
 Mesos는 2009년 버클리 대학에서 시작된 오픈소스 클러스터 매니저 프로젝트 로, 2011년에는 아파치 인큐베이션 프로젝트에 포함되었고 2013년에는 아파치 최상위 Top-level 프로젝트로 승격되었다. 이미 Twitter와 Airbnb, Apple을 포함 한 많은 기업이 실 서비스 환경에서 Mesos를 사용하고 있다.
