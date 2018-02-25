@@ -20,7 +20,7 @@ The drive to continuous delivery, micro services and PaaS includes the need to a
 
 This session will look at the failings of the many of today's cloud technology, identify the goals we have and look into the tooling of how to get there. In this session we will look at:
 
-- static vs elastic partitioning
+- *static* vs *elastic* partitioning
 - vm vs containers
 - separating cluster capacity from application scale
 - load balancing with HAProxy
