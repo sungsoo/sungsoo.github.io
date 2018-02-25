@@ -70,3 +70,13 @@ GPU-accelerated applications:
 - Service discovery, load-balancing, and health checks
 - Web UI
 - Native Docker support
+
+## Deep Learning on GPU Clusters
+
+In this video from the Nvidia Theater at SC14, Bryan Catanzaro from Baidu presents: Deep Learning on GPU Clusters.
+
+### Abstract
+
+Deep neural networks have recently emerged as an important tool for difficult AI problems, and have found success in many fields ranging from computer vision to speech recognition. Training deep neural networks is computationally intensive, and so practical application of these networks requires careful attention to parallelism. GPUs have been instrumental in the success of deep neural networks, because they significantly reduce the cost of network training, which then has allowed many researchers to train better networks. In this talk, I will discuss how we were able to duplicate results from a 1000 node cluster using only 3 nodes, each with 4 GPUs.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/brui4N2orlI" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
