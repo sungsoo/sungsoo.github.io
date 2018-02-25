@@ -19,6 +19,12 @@ tags: [developments, parallel computing]
 
 ![Mesophere](http://images.nvidia.com/content/products/hpc/mesophere-logo.png "Mesophere")
 
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/hrXiqKGb7OQ" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/VzHVM0SCF44" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
 Manage Accelerated Applications at Data Center Scale 
 ----------------------------------------------------
 
