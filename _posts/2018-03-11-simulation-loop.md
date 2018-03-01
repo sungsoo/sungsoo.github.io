@@ -15,7 +15,7 @@ tags: [algorithms]
 
 # The Simulation Loop
 
-A typical simulation of traffic network operations is illus- trated in the middle column of Figure 2. Basically, a *time-step mesoscopic traffic model* proceeds in two phases: the *update* phase and the *advance* phase.
+A typical simulation of traffic network operations is illustrated in the middle column of Figure 2. Basically, a *time-step mesoscopic traffic model* proceeds in two phases: the *update* phase and the *advance* phase.
 
 ![](http://sungsoo.github.com/images/sim-loop.png)
 
