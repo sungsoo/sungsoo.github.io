@@ -3,7 +3,7 @@ layout: post
 title: Monte-Carlo Methods An Introduction
 date: 2014-01-04
 categories: [mathematical science]
-tags: [mathematics]
+tags: [stream computing]
 
 ---
 <script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>

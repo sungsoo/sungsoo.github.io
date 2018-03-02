@@ -3,7 +3,7 @@ layout: post
 title: The Analytical Bootstrap
 date: 2015-07-07
 categories: [computer science]
-tags: [big data, mathematics]
+tags: [big data]
 
 ---
 
