@@ -130,7 +130,7 @@ live visualisation we used [Processing](https://processing.org/), an
 open-source programming language aimed at programming in a visual
 context and largely based on Java.
   
-[![](https://2.bp.blogspot.com/-lohclCQ4bXY/WA-0kO3UtZI/AAAAAAAAAEE/xKb6sQA0mYUIvyv6KieMX1yeyPEnMzdggCK4B/s640/screen-0092.png){width="640" height="366"}](http://2.bp.blogspot.com/-lohclCQ4bXY/WA-0kO3UtZI/AAAAAAAAAEE/xKb6sQA0mYUIvyv6KieMX1yeyPEnMzdggCK4B/s1600/screen-0092.png)
+[![](https://2.bp.blogspot.com/-lohclCQ4bXY/WA-0kO3UtZI/AAAAAAAAAEE/xKb6sQA0mYUIvyv6KieMX1yeyPEnMzdggCK4B/s640/screen-0092.png)](http://2.bp.blogspot.com/-lohclCQ4bXY/WA-0kO3UtZI/AAAAAAAAAEE/xKb6sQA0mYUIvyv6KieMX1yeyPEnMzdggCK4B/s1600/screen-0092.png)
 
 *Screenshot of the visualisation*
 
