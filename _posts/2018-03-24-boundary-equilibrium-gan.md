@@ -39,3 +39,5 @@ This paper describes InfoGAN, an *information-theoretic extension* to the Genera
 * [Paper](https://arxiv.org/pdf/1606.03657)
 * [초짜 대학원생의 입장에서 이해하는 InfoGAN (1)](http://jaejunyoo.blogspot.com/2017/03/infogan-1.html)
 * [초짜 대학원생의 입장에서 이해하는 InfoGAN (2)](http://jaejunyoo.blogspot.com/2017/03/infogan-2.html)
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/_4jbgniqt_Q" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
