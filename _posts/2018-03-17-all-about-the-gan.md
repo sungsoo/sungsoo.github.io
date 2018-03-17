@@ -21,7 +21,7 @@ The purpose of this repository is providing the curated list of the state-of-the
 
 It provides a list that merged information from various GAN lists and repositories as below:
 
-### :link: Reference repositories
+##  Reference repositories
 * [[GAN zoo]](https://github.com/hindupuravinash/the-gan-zoo) - A list of all named GANs! by hindupuravinash
 * Delving deep into Generative Adversarial Networks (GANs) [[Delving]](https://github.com/GKalliatakis/Delving-deep-into-GANs) by GKalliatakis
 * Awesome GAN for Medical Imaging  [[Medical]](https://github.com/xinario/awesome-gan-for-medical-imaging/) by xinario
@@ -34,6 +34,7 @@ It provides a list that merged information from various GAN lists and repositori
 * Collection of generative models in [[Keras]](https://github.com/eriklindernoren/Keras-GAN), [[Pytorch version]](https://github.com/znxlwm/pytorch-generative-model-collections), [[Tensorflow version]](https://github.com/hwalsuklee/tensorflow-generative-model-collections), [[Chainer version]](https://github.com/pfnet-research/chainer-gan-lib)
 * [[Tensor layer]](https://github.com/tensorlayer/tensorlayer)
 * [[Tensor pack]](https://github.com/ppwwyyxx/tensorpack)
+
 ----
 
 You can also check out the same data in a tabular format with functionality to filter by year or do a quick search by title [here](https://github.com/hollobit/All-About-the-GAN/blob/master/AllGAN-r2.tsv).
