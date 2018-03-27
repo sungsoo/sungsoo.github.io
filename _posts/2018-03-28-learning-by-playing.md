@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Learning by Playing
+title: Learning From Scratch
 date: 2018-03-28
 categories: [computer science]
 tags: [machine learning]
