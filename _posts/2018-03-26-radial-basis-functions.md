@@ -125,11 +125,7 @@ The basis function centers are located at *x*~1~=0.75 and *x*~2~=3.25.
 
 The sum
 
-y ( x ) = ∑ i = 1 N w i ϕ ( ‖ x − x i ‖ ) , {\\displaystyle y(\\mathbf
-{x} )=\\sum \_{i=1}\^{N}w\_{i}\\,\\phi (\\|\\mathbf {x} -\\mathbf {x}
-\_{i}\\|),} ![y(\\mathbf {x} )=\\sum \_{i=1}\^{N}w\_{i}\\,\\phi
-(\\|\\mathbf {x} -\\mathbf {x}
-\_{i}\\|),](https://wikimedia.org/api/rest_v1/media/math/render/svg/9b129b86be238293edd3331fac8937f0311c69a5)
+![](https://wikimedia.org/api/rest_v1/media/math/render/svg/9b129b86be238293edd3331fac8937f0311c69a5)
 
 can also be interpreted as a rather simple single-layer type of
 [artificial neural
