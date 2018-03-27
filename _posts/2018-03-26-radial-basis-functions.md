@@ -15,8 +15,8 @@ tags: [machine learning]
 Radial basis function (RBFs)
 ========
 
-A **radial basis function (RBF)** is a [real-valued
-function](https://en.wikipedia.org/wiki/Real-valued_function "Real-valued function") whose value
+
+A **radial basis function (RBF)** is a [real-valued function](https://en.wikipedia.org/wiki/Real-valued_function "Real-valued function") whose value
 depends only on the distance from the
 [origin](https://en.wikipedia.org/wiki/Origin_(mathematics) "Origin (mathematics)"), so that ![](https://wikimedia.org/api/rest_v1/media/math/render/svg/6d12a2dacd1864e64507532baaafaa627b6a5f14);
 or alternatively on the distance from some other point *c*, called a
@@ -86,7 +86,7 @@ r)\^{2}}}}](https://wikimedia.org/api/rest_v1/media/math/render/svg/7927d57c097f
 
 ## Approximation
 
-Main article: [Kernel smoothing](https://en.wikipedia.org/wiki/Kernel_smoothing "Kernel smoothing")
+* Main article: [Kernel smoothing](https://en.wikipedia.org/wiki/Kernel_smoothing "Kernel smoothing")
 
 Radial basis functions are typically used to build up [function approximations](https://en.wikipedia.org/wiki/Function_approximation "Function approximation")
 of the form
@@ -114,8 +114,7 @@ Deformation](https://en.wikipedia.org/wiki/Pose_Space_Deformation "Pose Space De
 
 ## RBF Network
 
-
-Main article: [radial basis function
+* Main article: [radial basis function
 network](https://en.wikipedia.org/wiki/Radial_basis_function_network "Radial basis function network")
 
 [![](https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Unnormalized_radial_basis_functions.svg/350px-Unnormalized_radial_basis_functions.svg.png)](https://en.wikipedia.org/wiki/File:Unnormalized_radial_basis_functions.svg)
