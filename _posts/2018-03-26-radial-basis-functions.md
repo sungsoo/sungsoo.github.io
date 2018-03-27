@@ -16,52 +16,41 @@ Radial basis function (RBFs)
 ========
 
 A **radial basis function (RBF)** is a [real-valued
-function](/wiki/Real-valued_function "Real-valued function") whose value
+function](https://en.wikipedia.org/wiki/Real-valued_function "Real-valued function") whose value
 depends only on the distance from the
-[origin](/wiki/Origin_(mathematics) "Origin (mathematics)"), so that ϕ (
-x ) = ϕ ( ‖ x ‖ ) {\\displaystyle \\phi (\\mathbf {x} )=\\phi
-(\\|\\mathbf {x} \\|)} ![\\phi (\\mathbf {x} )=\\phi (\\|\\mathbf {x}
-\\|)](https://wikimedia.org/api/rest_v1/media/math/render/svg/6d12a2dacd1864e64507532baaafaa627b6a5f14);
+[origin](https://en.wikipedia.org/wiki/Origin_(mathematics) "Origin (mathematics)"), so that ![](https://wikimedia.org/api/rest_v1/media/math/render/svg/6d12a2dacd1864e64507532baaafaa627b6a5f14);
 or alternatively on the distance from some other point *c*, called a
-*center*, so that ϕ ( x , c ) = ϕ ( ‖ x − c ‖ ) {\\displaystyle \\phi
-(\\mathbf {x} ,\\mathbf {c} )=\\phi (\\|\\mathbf {x} -\\mathbf {c} \\|)}
-![\\phi (\\mathbf {x} ,\\mathbf {c} )=\\phi (\\|\\mathbf {x} -\\mathbf
-{c}
-\\|)](https://wikimedia.org/api/rest_v1/media/math/render/svg/1a3edab3a2d723a6a57c052aa1382aa1003e55b1).
-Any function ϕ {\\displaystyle \\phi } ![\\phi
-](https://wikimedia.org/api/rest_v1/media/math/render/svg/72b1f30316670aee6270a28334bdf4f5072cdde4)
-that satisfies the property ϕ ( x ) = ϕ ( ‖ x ‖ ) {\\displaystyle \\phi
-(\\mathbf {x} )=\\phi (\\|\\mathbf {x} \\|)} ![\\phi (\\mathbf {x}
-)=\\phi (\\|\\mathbf {x}
-\\|)](https://wikimedia.org/api/rest_v1/media/math/render/svg/6d12a2dacd1864e64507532baaafaa627b6a5f14)
-is a [radial function](/wiki/Radial_function "Radial function"). The
+*center*, so that ![](https://wikimedia.org/api/rest_v1/media/math/render/svg/1a3edab3a2d723a6a57c052aa1382aa1003e55b1).
+Any function ![](https://wikimedia.org/api/rest_v1/media/math/render/svg/72b1f30316670aee6270a28334bdf4f5072cdde4)
+that satisfies the property ![](https://wikimedia.org/api/rest_v1/media/math/render/svg/6d12a2dacd1864e64507532baaafaa627b6a5f14)
+is a [radial function](https://en.wikipedia.org/wiki/Radial_function "Radial function"). The
 norm is usually [Euclidean
-distance](/wiki/Euclidean_distance "Euclidean distance"), although other
-[distance functions](/wiki/Distance_function "Distance function") are
+distance](https://en.wikipedia.org/wiki/Euclidean_distance "Euclidean distance"), although other
+[distance functions](https://en.wikipedia.org/wiki/Distance_function "Distance function") are
 also possible.
 
 Sums of radial basis functions are typically used to [approximate given
-functions](/wiki/Function_approximation "Function approximation"). This
+functions](https://en.wikipedia.org/wiki/Function_approximation "Function approximation"). This
 approximation process can also be interpreted as a simple kind of
 [neural
-network](/wiki/Artificial_neural_network "Artificial neural network");
+network](https://en.wikipedia.org/wiki/Artificial_neural_network "Artificial neural network");
 this was the context in which they originally surfaced, in work by
-[David Broomhead](/wiki/David_Broomhead "David Broomhead") and David
+[David Broomhead](https://en.wikipedia.org/wiki/David_Broomhead "David Broomhead") and David
 Lowe in 1988, which stemmed
 from [Michael J. D.
-Powell](/wiki/Michael_J._D._Powell "Michael J. D. Powell")'s seminal
+Powell](https://en.wikipedia.org/wiki/Michael_J._D._Powell "Michael J. D. Powell")'s seminal
 research from
 1977.
 RBFs are also used as a
-[kernel](/wiki/Radial_basis_function_kernel "Radial basis function kernel")
+[kernel](https://en.wikipedia.org/wiki/Radial_basis_function_kernel "Radial basis function kernel")
 in [support vector
-classification](/wiki/Support_vector_machine "Support vector machine").
+classification](https://en.wikipedia.org/wiki/Support_vector_machine "Support vector machine").
 
 Types
 ------
 Commonly used types of radial basis functions include (writing ![](https://wikimedia.org/api/rest_v1/media/math/render/svg/5324bd2f4b400968b2cc91466efffb754c504e9e)):
 
--   [Gaussian](/wiki/Gaussian_function "Gaussian function"):
+-   [Gaussian](https://en.wikipedia.org/wiki/Gaussian_function "Gaussian function"):
 
 ![{](https://wikimedia.org/api/rest_v1/media/math/render/svg/392a6c84ceb04527b95d96858e85c9db4b48cef5)
 
@@ -83,13 +72,13 @@ r)\^{2}}}](https://wikimedia.org/api/rest_v1/media/math/render/svg/212325ac03d03
 r)\^{2}}}}](https://wikimedia.org/api/rest_v1/media/math/render/svg/7927d57c097f24a59647fe64b647dd46ce2b9494)
 
 -   [Polyharmonic
-    spline](/wiki/Polyharmonic_spline "Polyharmonic spline"):
+    spline](https://en.wikipedia.org/wiki/Polyharmonic_spline "Polyharmonic spline"):
 
 ![](https://wikimedia.org/api/rest_v1/media/math/render/svg/f11807be9213f88a51165f3913acbd1cc3ad75f3)
 
 ![](https://wikimedia.org/api/rest_v1/media/math/render/svg/763f10c1b059c13169b24e82f993061e8a079ae0)
 
--   [Thin plate spline](/wiki/Thin_plate_spline "Thin plate spline") (a
+-   [Thin plate spline](https://en.wikipedia.org/wiki/Thin_plate_spline "Thin plate spline") (a
     special polyharmonic spline):
 
 ![](https://wikimedia.org/api/rest_v1/media/math/render/svg/14290cc68e60735b1c2cf411e8bcde6f5203c427)
