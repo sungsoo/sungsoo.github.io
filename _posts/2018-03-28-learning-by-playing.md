@@ -18,5 +18,4 @@ We propose *Scheduled Auxiliary Control* (SAC-X), a new learning paradigm in the
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/veWkBsK0nwU" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
-
 * Paper : [PDF](https://arxiv.org/pdf/1802.10567)
