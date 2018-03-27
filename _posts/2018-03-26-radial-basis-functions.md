@@ -15,7 +15,6 @@ tags: [machine learning]
 Radial basis function (RBFs)
 ========
 
-
 A **radial basis function (RBF)** is a [real-valued function](https://en.wikipedia.org/wiki/Real-valued_function "Real-valued function") whose value
 depends only on the distance from the
 [origin](https://en.wikipedia.org/wiki/Origin_(mathematics) "Origin (mathematics)"), so that ![](https://wikimedia.org/api/rest_v1/media/math/render/svg/6d12a2dacd1864e64507532baaafaa627b6a5f14);
