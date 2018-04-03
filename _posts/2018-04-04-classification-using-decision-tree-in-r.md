@@ -18,6 +18,7 @@ Classification using Decision Trees in R
 
 ![decision_tree_r.png](http://en.proft.me/media/science/decision_tree_r.png)
 
+
 ## Introduction
 
 *Tree based* learning algorithms are considered to be one of the best
