@@ -192,30 +192,30 @@ split is the *Gini index*.
 
 Install and load `rpart` package
 
-``` {.prettyprint}
+~~~r
 install.packages("rpart")
 install.packages("rpart.plot")
 library("rpart")
 library("rpart.plot")
 data("iris")
-```
+~~~
 
 You can explore *iris data set* structure by `str()` command.
 
-``` {.prettyprint}
+~~~r
 str(iris)
-```
+~~~
 
 Now, we split out entire dataset into two parts - *the training set* and
 *the testing set*. This is a very common practice in machine learning -
 wherein, we train a machine learning algorithm with the training data,
 and then test our model using the testing data.
 
-``` {.prettyprint}
+~~~r
 indexes = sample(150, 110)
 iris_train = iris[indexes,]
 iris_test = iris[-indexes,]
-```
+~~~
 
 Now, we need to build our *decision tree*. To do that, we first build a
 formula which we shall be using to depict the dependencies. For this
@@ -225,23 +225,23 @@ problem, we're trying to build a model that tries to classify
 input is a tuple consisting of `Sepal.Width`, `Petal.Width`,
 `Sepal.Length` and `Petal.Length`.
 
-``` {.prettyprint}
+~~~r
 target = Species ~ Sepal.Length + Sepal.Width + Petal.Length + Petal.Width
-```
+~~~
 
 When you set a numerical variable as *y* value (or *target*), the tree
 is a *regression tree* and you can write the function as below.
 
-``` {.prettyprint}
+~~~r
 target = Sepal.Length ~ ., iris
-```
+~~~
 
 Build and plot model
 
-``` {.prettyprint}
+~~~r
 tree = rpart(target, data = iris_train, method = "class")
 rpart.plot(tree)
-```
+~~~
 
 ![r_decision_tree_rpart.png](http://en.proft.me/media/science/r_decision_tree_rpart.png)
 
@@ -259,22 +259,22 @@ pitching it against our test data. So we use the `predict` function to
 predict the classes of the test data. And then create a matrix showing
 the comparison between the prediction result and the actual category.
 
-``` {.prettyprint}
+~~~r
 predictions = predict(tree, iris_test)
 table(predictions, iris$Species)
-```
+~~~
 
 Let's try another package - `party`. It has `ctree()` function for
 fitting conditional trees. Execute `?ctree` for the help page. This
 package has good plotting facilities for conditional trees.
 
-``` {.prettyprint}
+~~~r
 install.packages("party")
 library(party)
 tree = ctree(Species ~ ., data = iris)
 plot(tree, main="Conditional Inference Tree for Iris")
 table(predict(tree), iris$Species)
-```
+~~~
 
 ![r_decision_tree_party.png](http://en.proft.me/media/science/r_decision_tree_party.png)
 
@@ -282,7 +282,7 @@ The C5.0 method is a further extension of C4.5 and pinnacle of that line
 of methods. It is available in the C50 package. The following recipe
 demonstrates the C5.0 with boosting method applied to the iris dataset.
 
-``` {.prettyprint}
+~~~r
 install.packages("C50")
 library(C50)
 
@@ -291,7 +291,7 @@ tree = C5.0(Species ~ ., data = iris, trials=10)
 
 # make predictions
 table(predict(tree, newdata=iris), iris$Species)
-```
+~~~
 
 ## Pruning
 
@@ -314,7 +314,7 @@ to minimum number of data points required before a split is made at a
 node. The below example compares the effect of changing `minsplit`
 parameter.
 
-``` {.prettyprint}
+~~~r
 tree_ms3 = rpart(target, iris_train, control = rpart.control(minsplit = 3))
 tree_ms10 = rpart(target, iris_train, control = rpart.control(minsplit = 10))
 
@@ -323,7 +323,7 @@ rpart.plot(tree_ms3, main = "minsplit=3")
 text(tree_ms3, cex = 0.7)
 rpart.plot(tree_ms10, main = "minsplit=10")
 text(tree_ms10, cex = 0.7)
-```
+~~~
 
 ![r_decision_tree_minsplit.png](http://en.proft.me/media/science/r_decision_tree_minsplit.png)
 
