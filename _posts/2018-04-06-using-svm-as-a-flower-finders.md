@@ -20,7 +20,7 @@ Nature field guides are filled with pictures of plants and animals that teach us
 
 I have lifted the code directly from [the svm function in the R package e1071](http://www.inside-r.org/node/57517).
 
-```r
+~~~r
 library(e1071)
 data(iris)
 attach(iris)
@@ -53,7 +53,7 @@ attr(pred, "decision.values")[1:4,]
 plot(cmdscale(dist(iris[,-5])),
      col = as.integer(iris[,5]),
      pch = c("o","+")[1:150 %in% model$index + 1])
-```
+~~~
 
 
 
