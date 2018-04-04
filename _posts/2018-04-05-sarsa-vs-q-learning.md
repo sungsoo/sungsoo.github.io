@@ -24,11 +24,11 @@ The equations below shows the updated equation for Q-learning and SARSA:
 
 ### Q-learning: 
 
-\$[math\]Q(s\_t,a\_t)\\leftarrow Q(s\_t,a\_t)+\\alpha\[r\_{t+1}+\\gamma \\underset{a}{\\max} Q(s\_{t+1},a)-Q(s\_t,a\_t)\]\$
+\$Q(s\_t,a\_t)\\leftarrow Q(s\_t,a\_t)+\\alpha\[r\_{t+1}+\\gamma \\underset{a}{\\max} Q(s\_{t+1},a)-Q(s\_t,a\_t)\]\$
 
 ### SARSA: 
 
-\$[math\]Q(s\_t,a\_t)\\leftarrow
+\$Q(s\_t,a\_t)\\leftarrow
 Q(s\_t,a\_t)+\\alpha\[r\_{t+1}+\\gamma
 Q(s\_{t+1},a\_{t+1})-Q(s\_t,a\_t)\]\$
 
@@ -40,7 +40,7 @@ In SARSA, we use *the same policy* (i.e *epsilon-greedy*) that generated the
 previous action \$a\_t\$ to generate the next action, \$a\_{t+1}\$ which we run
 through our Q-function for updates, \$Q(s\_{t+1},a\_{t+1}).\$ (This is why the algorithm was termed SARSA, *State-Action-Reward-State-Action*).
 
-Intuitively, SARSA is *on-policy* because we use **the same policy** to generate the current action \$a\_t\$ and the next action \$[math\]a\_{t+1}.\$ We then evaluate our policy’s action selection, and improve upon it by improving the Q-function estimates.
+Intuitively, SARSA is *on-policy* because we use **the same policy** to generate the current action \$a\_t\$ and the next action \$a\_{t+1}.\$ We then evaluate our policy’s action selection, and improve upon it by improving the Q-function estimates.
 
 For Q-learning, we *have no constraint on how the next action is
 selected*, only that we have this "*optimistic*" view that all hence-forth
