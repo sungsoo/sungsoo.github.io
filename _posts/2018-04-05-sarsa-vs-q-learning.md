@@ -86,6 +86,7 @@ beginning. The simulation looks something like exactly like this:
 
 [![mouse vs
 cliff](https://studywolf.files.wordpress.com/2013/06/mouse-vs-cliff.png?w=300&h=131)](https://studywolf.files.wordpress.com/2013/06/mouse-vs-cliff.png)
+
 where the black is the edge of the map (walls), the red is the cliff
 area, the blue is the mouse and the green is the cheese. As mentioned
 and linked to above, the code for all of these examples can be found [on
@@ -103,6 +104,7 @@ we see this scenario:
 
 [![mouse and
 cliff](https://studywolf.files.wordpress.com/2013/06/mouse-and-cliff.jpeg?w=300&h=144)](https://studywolf.files.wordpress.com/2013/06/mouse-and-cliff.jpeg)
+
 There is a chance that that mouse is going to say ‘yes I see the best
 move, but…the hell with it’ and jump over the edge! All in the name of
 exploration. This becomes a problem, because if the mouse was following
@@ -114,6 +116,7 @@ an animation of the result of running the Q-learning code for a long
 time:
 
 [![](https://studywolf.files.wordpress.com/2013/07/optimised.gif?w=580)](https://studywolf.files.wordpress.com/2013/07/optimised.gif)
+
 The solution that the mouse ends up with is running along the edge of
 the cliff and occasionally jumping off and plummeting to its death.
 
@@ -122,6 +125,7 @@ when learning, something very different happens. Here is the result of
 the mouse learning to find its way to the cheese using SARSA:
 
 [![](https://studywolf.files.wordpress.com/2013/07/sarsa-optimised.gif?w=580)](https://studywolf.files.wordpress.com/2013/07/sarsa-optimised.gif)
+
 Why, that’s *much* better! The mouse has learned that from time to time
 it does really foolish things, so the best path is not to run along the
 edge of the cliff straight to the cheese but to get far away from the
