@@ -13,6 +13,7 @@ tags: [algorithms, machine learning]
 
 ---
 
+
 # Brains, Minds and Machines Summer Course
 
 ## Course Description
