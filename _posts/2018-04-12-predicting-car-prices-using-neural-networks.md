@@ -15,6 +15,8 @@ tags: [algorithms, machine learning]
 
 # Predicting Car Prices using Neural Networks
 
+![](http://sungsoo.github.com/images/neuralnetwork.jpg)
+
 ## 1 Introductions:
 
 This is part two of the series. In part one, we used linear regression model to predict the prices of used Toyota Corollas. There are some overlap in the materials for those just reading this post for the first time. For those who read part 1 of the series using linear regression, then you can safely skip to the section where I applied neural networks to the same data set.
