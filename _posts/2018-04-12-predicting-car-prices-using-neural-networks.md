@@ -43,8 +43,12 @@ The independent variables(the predictors) are one or more numeric variables we a
 
 But before we start our modeling exercise, it's good to take a visual look at what we are trying to predict to see what it looks like. Since we are trying to predict Toyota Corolla prices with historical data, let's do a simple histogram plot to see the distribution of Corolla prices:
 
+![](http://sungsoo.github.com/images/nn01.png)
+
+
 We see that most Corollas are around $10K and there are some at the tail end that over $25K. These might be newer cars with a lot of options. And there are fewer of them anyhow.
-2 Data Transformation:
+
+## 2 Data Transformation:
 
 One of the main steps in the predictive analytics is data transformation. Data is never in the way you want them. One might have to do some kinds of transformations to get it to the way we need them either because the data is dirty, not of the type we want, out of bounds, and a host of other reasons.
 
@@ -76,19 +80,39 @@ So, what do we do with PETROL vehicles? This is represented by the case when BOT
 
 The next step in predictive analytics is to explore our underlying. Let's do a few plots of our explantory variables to see how they look against Price.
 
+![](http://sungsoo.github.com/images/nn02.png)
+
+
 This plot is telling and fits out intuition. The newer the car the more expensive it is.
+
+![](http://sungsoo.github.com/images/nn03.png)
 
 The more miles a car has the cheaper it is.
 
+![](http://sungsoo.github.com/images/nn04.png)
+
 This one is not as direct as the other. Yes, the more horsepower the more expensive. But not always the case. Let's see how this variable will behave in our model.
+
+![](http://sungsoo.github.com/images/nn05.png)
 
 The fact that a color has a Metallic Color or not doesn't seem to be that useful. But let's see what the model says.
 
+![](http://sungsoo.github.com/images/nn06.png)
+
 What does this tell us about automatic vs manual cars?
- 
+
+![](http://sungsoo.github.com/images/nn07.png)
+
+![](http://sungsoo.github.com/images/nn08.png) 
+
 The number of cyclinders(CC) plots against Price seems to show the more cyclinder the more expensive though not always the case.
 
+![](http://sungsoo.github.com/images/nn09.png)
+
 What does this tell us about the number of doors as it relates to price of cars? Not much.
+
+![](http://sungsoo.github.com/images/nn10.png)
+
  This shows the heavier(i.e. bigger) cars cost more though there are some outliers that doesn't fit nicely.
 
 ## 4 Model Building: Neural Network
@@ -123,6 +147,8 @@ Now, let's feed the normalized data into our neural network
 ```
 
 Let's see what it looks like(looks like a complex brain with all its neural connections):
+
+![](http://sungsoo.github.com/images/nn11.png)
 
 We are using neural network with 3 hidden layers(denoted by Hs) and each hidden layer has 10 neurons. The Bs are biases introduced.
 
