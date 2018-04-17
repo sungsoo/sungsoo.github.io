@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Equilibrium points in *n*-person games 
+title: Equilibrium points in n-person games 
 date: 2018-04-19
 categories: [computer science]
 tags: [machine learning]
