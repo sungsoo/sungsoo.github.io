@@ -61,6 +61,7 @@ Choice depends on data set!
         vector
     2.  Scale: divide centered vector by their *root mean square*
         (*rms*): 
+        
         \$ x_{rms} = \sqrt{\frac{1}{n-1}\sum_{i=1}^{n}{x_{i}{^2}}} \$
 
     -   Result: *Mean = 0* and *STDEV = 1*
@@ -111,7 +112,7 @@ There are many more distance measures
 
 ### 3.1.1 Overview of algorithm
 
-1.  Identify clusters (items) with closest distance\
+1.  Identify clusters (items) with closest distance
 2.  Join them to new clusters
 3.  Compute distance between clusters (items)
 4.  Return to step 1
