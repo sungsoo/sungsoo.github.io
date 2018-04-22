@@ -398,17 +398,14 @@ ci <- cindex(clV1=clV1, clV2=clV2, self=FALSE, minSZ=1, method="jaccard")
 ci[2:3] # Returns Jaccard index and variables used to compute it 
 ```
 
+```
 ## $variables
 ##    a    b    c 
 ## 9245 4238 3951 
 ## 
 ## $Jaccard_Index
 ## [1] 0.5302856
-
-
-
-<div id="clustering-cluster-sets-with-jaccard-index"
-class="section level4">
+```
 
 #### 3.7.1.2 Clustering cluster sets with Jaccard index
 
@@ -461,14 +458,15 @@ yscaled <- t(scale(t(y))) # Centers and scales y row-wise
 apply(yscaled, 1, sd)
 ```
 
+```
 ##  g1  g2  g3  g4  g5  g6  g7  g8  g9 g10 
 ##   1   1   1   1   1   1   1   1   1   1
+```
 
 
 4.2 Distance Matrices
 --------
 
-<div id="euclidean-distance-matrix" class="section level3">
 
 ### 4.2.1 Euclidean distance matrix
 
@@ -476,14 +474,14 @@ apply(yscaled, 1, sd)
 dist(y[1:4,], method = "euclidean")
 ```
 
+```
 ##          g1       g2       g3
 ## g2 4.793697                  
 ## g3 4.932658 6.354978         
 ## g4 4.033789 4.788508 1.671968
+```
 
 
-
-<div id="correlation-based-distance-matrix" class="section level3">
 
 ### 4.2.2 Correlation-based distance matrix
 
