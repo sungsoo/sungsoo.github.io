@@ -160,10 +160,11 @@ chaotic, and over time converge to have more plausible image statistics:
 
 ![](https://blog.openai.com/content/images/2017/02/gen_models_anim_1.gif)
 
-[VAE](#vae) learning to generate images (log time)
+*VAE: learning to generate images (log time)*
+
 ![](https://blog.openai.com/content/images/2017/02/gen_models_anim_2.gif)
 
-[GAN](#gan) learning to generate images (linear time)
+*GAN: learning to generate images (linear time)*
 
 
 
