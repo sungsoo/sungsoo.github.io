@@ -11,6 +11,7 @@ tags: [machine learning]
 # The Design of Traffic Flow Prediction System Based on Multimodal Data
 
 * Authors: 김성수, 민옥기, 김영국
+* Publications: [2018년 4차산업혁명 이슈시리즈포럼 및 한국지능시스템학회 춘계학술대회](http://fuzzy.or.kr/Conference/ConferenceView.asp?AC=0&CODE=CC20180201&B_CATE=BBC1)
 
 ## Abstract
 
