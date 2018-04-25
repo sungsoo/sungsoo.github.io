@@ -67,7 +67,7 @@ YouTube](https://www.youtube.com/watch?v=HO1LYJb818Q).
 * Learning a Probabilistic Latent Space of Object Shapes via 3D
     Generative-Adversarial Modeling, [Jiajun Wu](http://jiajunwu.com)\*, Chengkai Zhang\*, [Tianfan Xue](http://people.csail.mit.edu/tfxue/), [William T. Freeman](http://billf.mit.edu), and [Joshua B. Tenenbaum](http://web.mit.edu/cocosci/josh.html)
 
-NIPS 2016 [Paper](papers/3dgan_nips.pdf) [Slides](talks/3dgan_slides_nips.pdf) [Poster](talks/3dgan_poster_nips.pdf) [arXiv](http://arxiv.org/abs/1610.07584) [BibTeX](bibtex/3dgan_nips.bib) (* indicates equal contributions)
+NIPS 2016 [Paper](http://3dgan.csail.mit.edu/papers/3dgan_nips.pdf) [Slides](http://3dgan.csail.mit.edu/talks/3dgan_slides_nips.pdf) [Poster](http://3dgan.csail.mit.edu/talks/3dgan_poster_nips.pdf) [arXiv](http://arxiv.org/abs/1610.07584) [BibTeX](bibtex/3dgan_nips.bib) (* indicates equal contributions)
 
 
 ## Downloads
