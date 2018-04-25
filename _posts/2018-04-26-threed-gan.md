@@ -65,7 +65,7 @@ YouTube](https://www.youtube.com/watch?v=HO1LYJb818Q).
 
 
 * Learning a Probabilistic Latent Space of Object Shapes via 3D
-    Generative-Adversarial Modeling, [Jiajun Wu](http://jiajunwu.com)\$^*\$, Chengkai Zhang\$^*\$, [Tianfan Xue](http://people.csail.mit.edu/tfxue/), [William T. Freeman](http://billf.mit.edu), and [Joshua B. Tenenbaum](http://web.mit.edu/cocosci/josh.html)
+    Generative-Adversarial Modeling, [Jiajun Wu](http://jiajunwu.com)\*, Chengkai Zhang\*, [Tianfan Xue](http://people.csail.mit.edu/tfxue/), [William T. Freeman](http://billf.mit.edu), and [Joshua B. Tenenbaum](http://web.mit.edu/cocosci/josh.html)
 
 NIPS 2016 [Paper](papers/3dgan_nips.pdf) [Slides](talks/3dgan_slides_nips.pdf) [Poster](talks/3dgan_poster_nips.pdf) [arXiv](http://arxiv.org/abs/1610.07584) [BibTeX](bibtex/3dgan_nips.bib) (* indicates equal contributions)
 
@@ -78,7 +78,7 @@ NIPS 2016 [Paper](papers/3dgan_nips.pdf) [Slides](talks/3dgan_slides_nips.pdf) [
 ## Related Publication
 
 
-* MarrNet: 3D Shape Reconstruction via 2.5D Sketches [Jiajun Wu](http://jiajunwu.com/)\$^*\$, Yifan Wang\$^*\$, [Tianfan
+* MarrNet: 3D Shape Reconstruction via 2.5D Sketches [Jiajun Wu](http://jiajunwu.com/)\*, Yifan Wang\*, [Tianfan
     Xue](http://people.csail.mit.edu/tfxue/), Xingyuan Sun, [William T.
     Freeman](http://billf.mit.edu/), and [Joshua B.
     Tenenbaum](http://web.mit.edu/cocosci/josh.html)
