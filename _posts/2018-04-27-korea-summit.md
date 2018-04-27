@@ -10,7 +10,7 @@ tags: [presentation]
 
 # Korea Summit 2018
 
-[![](http://sungsoo.github.com/images/peace-korea.jpg)](http://sungsoo.github.com/images/peace-korea.jpg)
+[![](http://sungsoo.github.com/images/peace-korea.png)](http://sungsoo.github.com/images/peace-korea.png)
 
 ## North and South Korean leaders hold historic summit
 
