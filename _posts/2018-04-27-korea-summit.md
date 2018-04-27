@@ -1,0 +1,20 @@
+---
+layout: post
+title: Korea Summit 2018
+date: 2018-04-27
+categories: [liberal arts]
+tags: [presentation]
+
+---
+
+
+# Korea Summit 2018
+
+## North and South Korean leaders hold historic summit
+
+**North Korean leader Kim Jong Un** and **South Korea's President Moon Jae-in** met at the line that separates the divided Koreas. Kim then stepped over the raised Military Demarcation Line, entering territory controlled by the South for the very first time. 
+
+
+[![](http://sungsoo.github.com/images/korea-summit.jpg)](http://sungsoo.github.com/images/korea-summit.jpg)
+
+[![](http://sungsoo.github.com/images/kim-n-moon.jpg)](http://sungsoo.github.com/images/kim-n-moon.jpg)
