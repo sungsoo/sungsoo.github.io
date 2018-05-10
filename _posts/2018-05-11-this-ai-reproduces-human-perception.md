@@ -24,6 +24,11 @@ While it is nearly effortless for humans to quickly assess the *perceptual simil
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/DglrYx9F3UU" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
+Other papers showcased in the video:
+
+* [Automatic Parameter Control for Metropolis Light Transport](https://www.youtube.com/redirect?q=https%3A%2F%2Fusers.cg.tuwien.ac.at%2Fzsolnai%2Fgfx%2Fadaptive_metropolis%2F&event=video_description&v=DglrYx9F3UU&redir_token=HDI48Cs0MUsAZUUZvfwHrqx1Gmd8MTUyNjA2ODQ0OUAxNTI1OTgyMDQ5) 
+* [Gaussian Material Synthesis](https://www.youtube.com/redirect?q=https%3A%2F%2Fusers.cg.tuwien.ac.at%2Fzsolnai%2Fgfx%2Fgaussian-material-synthesis%2F&event=video_description&v=DglrYx9F3UU&redir_token=HDI48Cs0MUsAZUUZvfwHrqx1Gmd8MTUyNjA2ODQ0OUAxNTI1OTgyMDQ5) 
+
 ## Paper
 
 [![](https://richzhang.github.io/PerceptualSimilarity/index_files/page1.png)](http://arxiv.org/abs/1801.03924)
