@@ -31,6 +31,6 @@ Other papers showcased in the video:
 
 ## Paper
 
-[![](https://richzhang.github.io/PerceptualSimilarity/index_files/page1.png)](http://arxiv.org/abs/1801.03924)
+[![](https://richzhang.github.io/PerceptualSimilarity/index_files/page1.png)](https://arxiv.org/pdf/1801.03924.pdf)
 
 R. Zhang, P. Isola, A. A. Efros, E. Shechtman, O. Wang. [**The Unreasonable Effectiveness of Deep Features as a Perceptual Metric**](http://arxiv.org/abs/1801.03924). In CVPR, 2018
