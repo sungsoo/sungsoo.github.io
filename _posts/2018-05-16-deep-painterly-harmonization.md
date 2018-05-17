@@ -13,7 +13,6 @@ tags: [machine learning]
 ---
 
 
-
 # Deep Painterly Harmonization
 
 * Authors: Fujun Luan, Sylvain Paris, Eli Shechtman, Kavita Bala
