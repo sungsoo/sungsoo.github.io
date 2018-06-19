@@ -22,4 +22,3 @@ tags: [machine learning]
 <iframe width="600" height="400" src="https://www.youtube.com/embed/SWW0nVQNm2w" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 
 * Paper: [PDF](https://arxiv.org/pdf/1805.04140)
-* 
