@@ -3,7 +3,7 @@ layout: post
 title: SpatialHadoop - A MapReduce Framework for Big Spatial Data
 date: 2018-06-25
 categories: [computer science]
-tags: [machine learning]
+tags: [big data, machine learning]
 
 ---
 
