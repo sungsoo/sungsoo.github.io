@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Beautiful Layered Materials, Instantly
+title: The GAN Zoo
 date: 2018-07-02
 categories: [computer science]
 tags: [machine learning]
@@ -50,59 +50,20 @@ a fun activity compiling all named GANs in this format: **Name** and
 
 
     
--   <div id="c7b">
-    3D-ED-GAN — [Shape Inpainting using 3D Generative Adversarial
-    Network and Recurrent Convolutional
-    Networks](https://arxiv.org/abs/1711.06375)
+- 3D-ED-GAN — [Shape Inpainting using 3D Generative Adversarial Network and Recurrent Convolutional Networks](https://arxiv.org/abs/1711.06375)
     
--   <div id="cacb">
+- 3D-GAN — [Learning a Probabilistic Latent Space of Object Shapes via 3D Generative-Adversarial Modeling](https://arxiv.org/abs/1610.07584)([github](https://github.com/zck119/3dgan-release))
 
-    
-
-    3D-GAN — [Learning a Probabilistic Latent Space of Object Shapes via
-    3D Generative-Adversarial
-    Modeling](https://arxiv.org/abs/1610.07584)
-    ([github](https://github.com/zck119/3dgan-release))
--   <div id="c7b5">
-
-    
-
-    3D-IWGAN — [Improved Adversarial Systems for 3D Object Generation
-    and
-    Reconstruction](https://arxiv.org/abs/1707.09557)
-([github](https://github.com/EdwardSmith1884/3D-IWGAN)
-    )
--   <div id="71e5">
-
-    
-
-    3D-RecGAN — [3D Object Reconstruction from a Single Depth View with
-    Adversarial
-    Learning](https://arxiv.org/abs/1708.07969)
-([github](https://github.com/Yang7879/3D-RecGAN)
-    )
--   <div id="5859">
-
-    
-
-    ABC-GAN — [ABC-GAN: Adaptive Blur and Control for improved training
-    stability of Generative Adversarial
-    Networks](https://drive.google.com/file/d/0B3wEP_lEl0laVTdGcHE2VnRiMlE/view)
-    ([github](https://github.com/IgorSusmelj/ABC-GAN)
-    )
--   <div id="5f0d">
-
-    
-
-    ABC-GAN — [GANs for LIFE: Generative Adversarial Networks for
+- 3D-IWGAN — [Improved Adversarial Systems for 3D Object Generation and
+    Reconstruction](https://arxiv.org/abs/1707.09557)([github](https://github.com/EdwardSmith1884/3D-IWGAN))
+- 3D-RecGAN — [3D Object Reconstruction from a Single Depth View with Adversarial
+    Learning](https://arxiv.org/abs/1708.07969)([github](https://github.com/Yang7879/3D-RecGAN))
+- ABC-GAN — [ABC-GAN: Adaptive Blur and Control for improved training stability of Generative Adversarial Networks](https://drive.google.com/file/d/0B3wEP_lEl0laVTdGcHE2VnRiMlE/view)([github](https://github.com/IgorSusmelj/ABC-GAN))
+- ABC-GAN — [GANs for LIFE: Generative Adversarial Networks for
     Likelihood Free
     Inference](https://arxiv.org/abs/1711.11139)
     
--   <div id="ed10">
-
-    
-
-    AC-GAN — [Conditional Image Synthesis With Auxiliary Classifier
+- AC-GAN — [Conditional Image Synthesis With Auxiliary Classifier
     GANs](https://arxiv.org/abs/1610.09585)
     
 -   <div id="5e6e">
