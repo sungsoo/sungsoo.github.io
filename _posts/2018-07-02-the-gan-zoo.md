@@ -18,10 +18,7 @@ The GAN Zoo
 A list of all named GANs! 
 -------------------------
 
-
 ![](https://cdn-images-1.medium.com/max/1600/0*ncqqFthh4e9baHxI.jpg)
-
-
 
 Pretty painting is always better than a Terminator
 Every week, new papers on Generative Adversarial Networks (GAN) are
@@ -33,9 +30,7 @@ can read more about GANs in this [Generative Models
 post](https://blog.openai.com/generative-models/) by OpenAI or this [overview
 tutorial](http://www.kdnuggets.com/2017/01/generative-adversarial-networks-hot-topic-machine-learning.html) in KDNuggets.
 
-
 ![](https://cdn-images-1.medium.com/max/1600/1*ReJHU_uDd_URCrWnfUbLkw.png)
-
 
 Explosive growth — All the named GAN variants cumulatively since 2014.
 Credit: [Bruno Gavranović](https://github.com/bgavran)
