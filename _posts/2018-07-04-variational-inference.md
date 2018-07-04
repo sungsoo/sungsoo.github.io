@@ -26,3 +26,7 @@ One of the core problems of modern statistics and machine learning is to approxi
 This tutorial aims to provide both an introduction to VI, a modern view of the field, and an overview of the role that probabilistic inference plays in many of the central areas of machine learning. First, I will provide a review of variational inference. Second, I describe some of the pivotal tools for VI that have been developed in the last few years, tools like Monte Carlo gradient estimation, black box variational inference, stochastic variational inference, and variational autoencoders. Finally, I discuss some of the unsolved problems in VI and point to promising research directions.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/Dv86zdWjJKQ" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+## Variational Inference in Python
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/3KGZDC3-_iY" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
