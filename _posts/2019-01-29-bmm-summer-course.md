@@ -32,7 +32,7 @@ tags: [machine learning]
 <li><a href="https://cbmm.mit.edu/sites/default/files/documents/exercisesolutions.m">Programming Tutorial Solution (M)</a></li>
 <li><a href="https://cbmm.mit.edu/sites/default/files/documents/computational%20models%20of%20vision%20tutorial.pdf">Computational Models of Human Vision Tutorial Part I Slides (PDF)</a></li>
 <li><a href="https://cbmm.mit.edu/sites/default/files/documents/Ko_Comp_model_vision_tutorial_decoding.pdf">Computational Models of Human Vision Tutorial Part II Slides (PDF)</a></li>
-<li><a href="https://github.com/kasmith/IntroOptimization" id="docs-internal-guid-93661338-7fff-2129-0c05-d55bc1f56bbf">Optimization Tutorial Slides &amp; Materials on GitHub</a></li>
+<li><a href="https://github.com/kasmith/IntroOptimization" id="docs-internal-guid-93661338-7fff-2129-0c05-d55bc1f56bbf">Optimization Tutorial Slides Materials on GitHub</a></li>
 <li><a href="https://cbmm.mit.edu/sites/default/files/CBMM_Optimization_Notes.html" target="_blank">CBMM_Optimization_Notes.html</a></li>
 <li><a href="https://cbmm.mit.edu/sites/default/files/documents/BMM%202018%20-%20Deep%20Learning%20Tutorial.pdf">Deep Learning Tutorial Slides (PDF)</a></li>
 <li><a href="https://cbmm.mit.edu/sites/default/files/documents/stats_tutorial_preclass_slides.pdf">Statistics and Data Analysis Tutorial Slides (PDF)</a></li>
