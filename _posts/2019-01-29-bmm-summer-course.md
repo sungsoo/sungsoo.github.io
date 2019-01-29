@@ -14,12 +14,15 @@ tags: [machine learning]
 
 ## BMM Summer Course 2018 Slides
 
-<p>Slides from Seminars:</p>
+### Slides from Seminars:
+
 <ul>
 <li><a href="https://cbmm.mit.edu/sites/default/files/documents/Kreiman_BMM2018_OS.pdf">The Brain's Operating System (PDF)</a> - Gabriel Kreiman</li>
 <li><a href="https://cbmm.mit.edu/sites/default/files/documents/CBMM_0.pdf">Machine Learning (PDF)</a> - Lorenzo Rosasco</li>
 </ul>
-<p>Materials for Tutorials:</p>
+
+### Materials for Tutorials:
+
 <ul>
 <li><a href="https://cbmm.mit.edu/sites/default/files/documents/algebra.pdf">Linear Algebra Tutorial Slides (PDF)</a></li>
 <li><a href="https://cbmm.mit.edu/sites/default/files/documents/Neuroscience_tutorial_1.pdf">Basic Neuroscience Tutorial Slides (PDF)</a></li>
