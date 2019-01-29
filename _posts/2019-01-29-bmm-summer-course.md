@@ -14,6 +14,10 @@ tags: [machine learning]
 
 ## BMM Summer Course 2018 Slides
 
+## Online Lectures
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/YbH4thmJZso" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ### Slides from Seminars:
 
 <ul>
@@ -56,6 +60,3 @@ tags: [machine learning]
 <li><a href="https://github.com/tobiasgerstenberg/webppl_tutorial" id="docs-internal-guid-2b969b9f-7fff-a330-0add-24daf7fa4998">Probabilistic Programming Tutorials Materials on GitHub</a></li>
 <li><a href="https://cbmm.mit.edu/sites/default/files/documents/Ko_Psychophysics_tutorial.pdf">Psychophysics and Data Analysis Tutorial Slides (PDF)</a>
 
-## Online Lectures
-
-<iframe width="600" height="400" src="https://www.youtube.com/embed/YbH4thmJZso" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
