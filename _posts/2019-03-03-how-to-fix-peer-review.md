@@ -25,4 +25,4 @@ Peer review is the foundation of scientific publication, and the task of reviewi
 * [The NIPS Experiment](http://blog.mrtz.org/2014/12/15/the-nips-experiment.html)
 
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/pv8Sl2rWyCQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="600" height="400" src="https://www.youtube.com/embed/pv8Sl2rWyCQ" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
