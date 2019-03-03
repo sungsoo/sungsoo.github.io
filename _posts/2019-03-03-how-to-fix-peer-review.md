@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Google AI's Take on How To Fix Peer Review
-date: 2019-02-26
+date: 2019-03-03
 categories: [computer science]
 tags: [machine learning]
 
