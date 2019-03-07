@@ -15,7 +15,7 @@ tags: [machine learning]
 Trust Region Policy Optimization
 ===
 
-Trust Region Policy Optimization is a fundamental paper for people working in Deep Reinforcement Learning (along with PPO or Proximal Policy Optimization) . From training Mujoco to games, TRPO has been the goto choice. It is implemented by both Unity-ML as well as OpenAI Baselines.
+Trust Region Policy Optimization is a fundamental paper for people working in Deep Reinforcement Learning (along with PPO or Proximal Policy Optimization). From training Mujoco to games, TRPO has been the goto choice. It is implemented by both Unity-ML as well as OpenAI Baselines.
 
 ## Abstract
 
