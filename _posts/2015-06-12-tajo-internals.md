@@ -3,7 +3,7 @@ layout: post
 title: Tajo Cluster Architecture
 date: 2015-06-12
 categories: [computer science]
-tags: [tajo]
+tags: [yarn]
 
 ---
 

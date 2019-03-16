@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo Table Partitioning
 date: 2014-05-12
 categories: [computer science]
-tags: [hadoop & mapreduce, tajo, yarn]
+tags: [hadoop & mapreduce, yarn]
 
 ---
 

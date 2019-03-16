@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo CSV (TextFile)
 date: 2014-05-08
 categories: [computer science]
-tags: [hadoop & mapreduce, tajo, yarn]
+tags: [hadoop & mapreduce, yarn]
 
 ---
 

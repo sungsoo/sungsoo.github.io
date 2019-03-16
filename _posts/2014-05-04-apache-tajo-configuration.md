@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo™ 0.8.0 Configuration
 date: 2014-05-04
 categories: [computer science]
-tags: [hadoop & mapreduce, tajo, yarn]
+tags: [hadoop & mapreduce, yarn]
 
 ---
 

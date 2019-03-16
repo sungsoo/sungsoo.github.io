@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo Internal
 date: 2015-06-13
 categories: [computer science]
-tags: [tajo]
+tags: [data management]
 
 ---
 
