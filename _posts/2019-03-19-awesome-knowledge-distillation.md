@@ -68,7 +68,13 @@ tags: [machine learning]
 ***
 ### Videos
 - [Dark knowledge](https://www.youtube.com/watch?v=EK61htlw8hY), Geoffrey Hinton, 2014
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/EK61htlw8hY" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 - [Model Compression](https://www.youtube.com/watch?v=0WZmuryQdgg), Rich Caruana, 2016
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/0WZmuryQdgg" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ***
 ### Implementations
 
