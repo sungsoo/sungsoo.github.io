@@ -13,7 +13,6 @@ tags: [machine learning]
 ---
 
 # Awesome Knowledge Distillation
-================================
 
 ### Papers
 - [Combining labeled and unlabeled data with co-training](https://www.cs.cmu.edu/~avrim/Papers/cotrain.pdf), A. Blum, T. Mitchell, 1998 
