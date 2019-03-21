@@ -8,7 +8,7 @@ tags: [machine learning]
 ---
 
 ## Article Source
-* Title: [Awesome Knowledge Distillation(https://github.com/dkozlov/awesome-knowledge-distillation)
+* Title: [Awesome Knowledge Distillation](https://github.com/dkozlov/awesome-knowledge-distillation)
 
 ---
 
