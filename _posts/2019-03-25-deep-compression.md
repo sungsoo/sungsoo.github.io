@@ -17,6 +17,7 @@ tags: [machine learning]
 # Deep Compression
 
 * Deep Compression, DSD Training and EIE: Deep Neural Network Model Compression, Regularization and Hardware Acceleration
+* [Presentation Slides](https://www.slideshare.net/embeddedvision/techniques-for-efficient-implementation-of-deep-neural-networks-a-presentation-from-stanford?qid=692d850f-ed75-4b67-98cf-4a74624be990&v=&b=&from_search=2)
 
 ## Abstract
  
