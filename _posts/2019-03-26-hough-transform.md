@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Hough Transform
+title: Hough Transform for Lines
 date: 2019-03-26
 categories: [computer science]
 tags: [machine learning]
@@ -11,8 +11,6 @@ tags: [machine learning]
 * Title: [Hough Space](https://www.youtube.com/watch?v=MA1f9FsrCco&list=PLAwxTw4SYaPnbDacyrK_kB_RUkuxQBlCm&index=99)
 
 ---
-
-
 
 # Hough Transform
 
