@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Machine Learning on Geometrical Data 
-date: 2019-03-26
+date: 2019-03-27
 categories: [computer science]
 tags: [machine learning]
 
