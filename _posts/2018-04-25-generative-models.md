@@ -188,25 +188,25 @@ time in videos, etc.
 More general formulation 
 ------------------------
 
-Mathematically, we think about a dataset of examples (x_1, ldots,
-x_n) as samples from a true data distribution (p(x)). In the
+Mathematically, we think about a dataset of examples (\x_1, \ldots,
+\x_n) as samples from a true data distribution (\p(x)). In the
 example image below, the blue region shows the part of the image space
 that, with a high probability (over some threshold) contains real
 images, and black dots indicate our data points (each is one image in
 our dataset). Now, our model also describes a distribution
-(hat{p}_{theta}(x)) (green) that is defined implicitly by
+(\hat{p}_{\theta}(x)) (green) that is defined implicitly by
 taking points from a unit [Gaussian
 distribution](https://en.wikipedia.org/wiki/Normal_distribution) (red)
 and mapping them through a (deterministic) neural network — our
 generative model (yellow). Our network is a function with parameters
-(theta), and tweaking these parameters will tweak the generated
+(\theta), and tweaking these parameters will tweak the generated
 distribution of images. Our goal then is to find parameters
-(theta) that produce a distribution that closely matches the true
+(\theta) that produce a distribution that closely matches the true
 data distribution (for example, by having a small [KL
 divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence)
 [loss](https://en.wikipedia.org/wiki/Loss_function)). Therefore, you can
 imagine the green distribution starting out random and then the training
-process iteratively changing the parameters (theta) to stretch and
+process iteratively changing the parameters (\theta) to stretch and
 squeeze it to better match the blue distribution.
 
 ![](https://openai.com/content/images/2017/02/gen_models_diag_2.svg)
@@ -225,8 +225,8 @@ you a sense of the variation:
     above, pose the training process as a game between two separate
     networks: a generator network (as seen above) and a second
     discriminative network that tries to classify samples as either
-    coming from the true distribution (p(x)) or the model
-    distribution (hat{p}(x)). Every time the discriminator notices
+    coming from the true distribution (\p(x)) or the model
+    distribution (\hat{p}(x)). Every time the discriminator notices
     a difference between the two distributions the generator adjusts its
     parameters slightly to make it go away, until at the end (in theory)
     the generator exactly reproduces the true data distribution and the
