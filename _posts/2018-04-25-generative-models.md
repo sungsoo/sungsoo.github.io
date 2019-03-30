@@ -78,7 +78,7 @@ internet or robots). If we resize each image to have width and height of
 `1,200,000x256x256x3` (about 200GB) block of pixels. Here are a few
 example images from this dataset:
 
-![](https://blog.openai.com/content/images/2017/02/gen_models_img_1.jpg)
+![](https://openai.com/content/images/2017/02/gen_models_img_1.jpg)
 
 These images are examples of what our visual world looks like and we
 refer to these as "samples from the true data distribution". We now
@@ -111,8 +111,7 @@ layers](http://datascience.stackexchange.com/questions/6107/what-are-deconvoluti
 (reverse of convolutional layers), [fully connected
 layers](http://cs231n.github.io/convolutional-networks/#fc), etc.:
 
-![](https://blog.openai.com/content/images/2017/02/gen_models_diag_1.svg)
-
+![](https://openai.com/content/images/2017/02/gen_models_diag_1.svg)
 DCGAN is initialized with random weights, so a random code plugged into
 the network would generate a completely random image. However, as you
 might imagine, the network has millions of parameters that we can tweak,
@@ -158,13 +157,16 @@ In both cases the samples from the generator start out noisy and
 chaotic, and over time converge to have more plausible image statistics:
 
 
-![](https://blog.openai.com/content/images/2017/02/gen_models_anim_1.gif)
 
-*VAE: learning to generate images (log time)*
+![](https://openai.com/content/images/2017/02/gen_models_anim_1.gif)
 
-![](https://blog.openai.com/content/images/2017/02/gen_models_anim_2.gif)
+[VAE](#vae) learning to generate images (log time)
 
-*GAN: learning to generate images (linear time)*
+![](https://openai.com/content/images/2017/02/gen_models_anim_2.gif)
+
+[GAN](#gan) learning to generate images (linear time)
+
+
 
 
 
@@ -186,27 +188,28 @@ time in videos, etc.
 More general formulation 
 ------------------------
 
-Mathematically, we think about a dataset of examples \$ x_1, ..., x_n \$
-as samples from a true data distribution \$ p(x) \$
-. In the example image below, the blue region shows the part of the
-image space that, with a high probability (over some threshold) contains
-real images, and black dots indicate our data points (each is one image
-in our dataset). Now, our model also describes a distribution \$ \hat{p}_{\theta}(x)\$(green) that is defined implicitly by taking points from a unit
-[Gaussian
+Mathematically, we think about a dataset of examples (x_1, ldots,
+x_n) as samples from a true data distribution (p(x)). In the
+example image below, the blue region shows the part of the image space
+that, with a high probability (over some threshold) contains real
+images, and black dots indicate our data points (each is one image in
+our dataset). Now, our model also describes a distribution
+(hat{p}_{theta}(x)) (green) that is defined implicitly by
+taking points from a unit [Gaussian
 distribution](https://en.wikipedia.org/wiki/Normal_distribution) (red)
 and mapping them through a (deterministic) neural network — our
 generative model (yellow). Our network is a function with parameters
-\$ \theta \$
-, and tweaking these parameters will tweak the generated distribution of
-images. Our goal then is to find parameters \$  \$
-that produce a distribution that closely matches the true data
-distribution (for example, by having a small [KL
+(theta), and tweaking these parameters will tweak the generated
+distribution of images. Our goal then is to find parameters
+(theta) that produce a distribution that closely matches the true
+data distribution (for example, by having a small [KL
 divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence)
 [loss](https://en.wikipedia.org/wiki/Loss_function)). Therefore, you can
 imagine the green distribution starting out random and then the training
-process iteratively changing the parameters \$ \theta \$
-to stretch and squeeze it to better match the blue distribution.
-![](https://blog.openai.com/content/images/2017/02/gen_models_diag_2.svg)
+process iteratively changing the parameters (theta) to stretch and
+squeeze it to better match the blue distribution.
+
+![](https://openai.com/content/images/2017/02/gen_models_diag_2.svg)
 
 ------------------------------------------------------------------------
 
@@ -217,17 +220,17 @@ Most generative models have this basic setup, but differ in the details.
 Here are three popular examples of generative model approaches to give
 you a sense of the variation:
 
--   [Generative Adversarial
-    Networks (GANs)](http://arxiv.org/abs/1406.2661), which we already
-    discussed above, pose the training process as a game between two
-    separate networks: a generator network (as seen above) and a second
+-   [Generative Adversarial Networks
+    (GANs)](http://arxiv.org/abs/1406.2661), which we already discussed
+    above, pose the training process as a game between two separate
+    networks: a generator network (as seen above) and a second
     discriminative network that tries to classify samples as either
-    coming from the true distribution \$ p(x) \$ or the model distribution \$ \hat{p}(x)\$ 
-    . Every time the discriminator notices a difference between the two
-    distributions the generator adjusts its parameters slightly to make
-    it go away, until at the end (in theory) the generator exactly
-    reproduces the true data distribution and the discriminator is
-    guessing at random, unable to find a difference.
+    coming from the true distribution (p(x)) or the model
+    distribution (hat{p}(x)). Every time the discriminator notices
+    a difference between the two distributions the generator adjusts its
+    parameters slightly to make it go away, until at the end (in theory)
+    the generator exactly reproduces the true data distribution and the
+    discriminator is guessing at random, unable to find a difference.
 -   [Variational Autoencoders (VAEs)](https://arxiv.org/abs/1312.6114)
     allow us to formalize this problem in the framework of
     [probabilistic graphical
@@ -262,8 +265,6 @@ they develop in the future!
 
 ------------------------------------------------------------------------
 
-
-
 Our recent contributions 
 ------------------------
 
@@ -286,12 +287,17 @@ These techniques allow us to scale up GANs and obtain nice `128x128`
 ImageNet samples:
 
 
-![](https://blog.openai.com/content/images/2017/02/gen_models_img_2.jpg)
+
+
+![](https://openai.com/content/images/2017/02/gen_models_img_2.jpg)
 
 Real images (ImageNet)
-![](https://blog.openai.com/content/images/2017/02/gen_models_img_3.jpg)
+
+![](https://openai.com/content/images/2017/02/gen_models_img_3.jpg)
 
 Generated images
+
+
 
 
 
@@ -302,10 +308,17 @@ guessing):
 
 
 
-![](https://blog.openai.com/content/images/2017/02/gen_models_img_4.jpg)
+
+
+![](https://openai.com/content/images/2017/02/gen_models_img_4.jpg)
+
 Real images (CIFAR-10)
-![](https://blog.openai.com/content/images/2017/02/gen_models_img_5.jpg)
+
+![](https://openai.com/content/images/2017/02/gen_models_img_5.jpg)
+
 Generated images
+
+
 
 
 
@@ -353,12 +366,17 @@ made in training generative models.
 
 
 
-![](https://blog.openai.com/content/images/2017/02/gen_models_img_6.jpg)
+
+
+![](https://openai.com/content/images/2017/02/gen_models_img_6.jpg)
 
 Generated from a DRAW model
-![](https://blog.openai.com/content/images/2017/02/gen_models_img_7.jpg)
+
+![](https://openai.com/content/images/2017/02/gen_models_img_7.jpg)
 
 Generated from a VAE trained with IAF
+
+
 
 
 
@@ -384,25 +402,34 @@ these features exist and are important:
 
 
 
-![](https://blog.openai.com/content/images/2017/02/infogan_1.jpg)
-
-*(a) Azimuth (pose)*
-
-![](https://blog.openai.com/content/images/2017/02/ingogan_2.jpg)
-
-*(b) Elevation*
-
-![](https://blog.openai.com/content/images/2017/02/infogan_3.jpg)
-
-*(c) Lighting*
-
-![](https://blog.openai.com/content/images/2017/02/infogan_4.jpg)
-
-*(d) Wide or Narrow*
 
 
+![](https://openai.com/content/images/2017/02/infogan_1.jpg)
 
-We also note that nice, disentangled representations have been achieved before (such as with [DC-IGN](https://arxiv.org/abs/1503.03167) by Kulkarni et al.), but these approaches rely on additional supervision, while our approach is entirely unsupervised. 
+(a) Azimuth (pose)
+
+![](https://openai.com/content/images/2017/02/ingogan_2.jpg)
+
+(b) Elevation
+
+![](https://openai.com/content/images/2017/02/infogan_3.jpg)
+
+(c) Lighting
+
+![](https://openai.com/content/images/2017/02/infogan_4.jpg)
+
+(d) Wide or Narrow
+
+
+
+
+
+We also note that nice, disentangled representations have been achieved
+before (such as with [DC-IGN](https://arxiv.org/abs/1503.03167) by
+Kulkarni et al.), but these approaches rely on additional supervision,
+while our approach is entirely unsupervised.
+
+------------------------------------------------------------------------
 
 The next two recent projects are in a [reinforcement
 learning](https://en.wikipedia.org/wiki/Reinforcement_learning) (RL)
@@ -431,13 +458,17 @@ locomotion primitives without any guidance).
 
 
 
-![](https://blog.openai.com/content/images/2017/02/policy_search_1.gif)
 
-*Policy trained with VIME*
 
-![](https://blog.openai.com/content/images/2017/02/policy_search_2.gif)
+![](https://openai.com/content/images/2017/02/policy_search_1.gif)
 
-*Policy trained with naive exploration*
+Policy trained with VIME
+
+![](https://openai.com/content/images/2017/02/policy_search_2.gif)
+
+Policy trained with naive exploration
+
+
 
 
 
@@ -457,9 +488,13 @@ eliminating the need to design a reward function.
 
 
 
-![](https://blog.openai.com/content/images/2017/02/running_human.gif)
 
-![](https://blog.openai.com/content/images/2017/02/running_bug.gif)
+
+![](https://openai.com/content/images/2017/02/running_human.gif)
+
+![](https://openai.com/content/images/2017/02/running_bug.gif)
+
+
 
 
 
@@ -499,3 +534,10 @@ in cases where labeled data is expensive.
 However, the deeper promise of this work is that, in the process of
 training generative models, we will endow the computer with an
 understanding of the world and what it is made up of.
+
+
+
+
+
+
+
