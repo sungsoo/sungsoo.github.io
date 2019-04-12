@@ -1,6 +1,6 @@
 ---
 layout: post
-title: The Power of Self-Learning Systems
+title: Awesome Knowledge Distillation
 date: 2019-04-12
 categories: [computer science]
 tags: [machine learning]
