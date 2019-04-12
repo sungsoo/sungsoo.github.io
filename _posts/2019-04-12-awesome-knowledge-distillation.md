@@ -65,10 +65,11 @@ Awesome Knowledge Distillation
 - [Knowledge Distillation with Adversarial Samples Supporting Decision Boundary](https://arxiv.org/abs/1805.05532), Byeongho Heo, Minsik Lee, Sangdoo Yun, Jin Young Choi, 2018
 - [Knowledge Transfer via Distillation of Activation Boundaries Formed by Hidden Neurons](https://arxiv.org/abs/1811.03233), Byeongho Heo, Minsik Lee, Sangdoo Yun, Jin Young Choi, 2018
 
-***## Videos
+## Videos
 - [Dark knowledge](https://www.youtube.com/watch?v=EK61htlw8hY), Geoffrey Hinton, 2014
 - [Model Compression](https://www.youtube.com/watch?v=0WZmuryQdgg), Rich Caruana, 2016
-***## Implementations
+
+## Implementations
 
 ## MXNet
 - [Bayesian Dark Knowledge](https://github.com/dmlc/mxnet/blob/master/example/bayesian-methods/bdk.ipynb)
