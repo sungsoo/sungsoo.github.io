@@ -8,7 +8,7 @@ tags: [machine learning]
 ---
 
 ## Article Source
-* Title: [Daniel Spielman "Miracles of Algebraic Graph Theory"](https://www.youtube.com/watch?v=CDMQR422LGM)
+* Title: [Exploring And Attacking Neural Networks With Activation Atlases](https://www.youtube.com/watch?v=XSWqLb0VyzM)
 
 ---
 
