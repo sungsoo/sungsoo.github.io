@@ -3,7 +3,7 @@ layout: post
 title: Hybrid Grains
 date: 2019-05-15
 categories: [computer science]
-tags: [machine learning]
+tags: [computer graphics]
 
 ---
 
