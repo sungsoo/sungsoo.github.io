@@ -63,8 +63,8 @@ This approach is actively used in image classification: a common space
 embedding is learned for images and for words and words serve as labels.
 Wouldn’t it be great if we had a vector space embedding of multiple
 labels that reflects semantic relationships between word-labels so that
-word-labels “dog”, “cat”, and “mammal” are closer to each other than to
-“table” whereas “table” is closer to “chair” than to “cat”? We would
+word-labels "dog", "cat", and "mammal" are closer to each other than to
+"table" whereas "table" is closer to "chair" than to "cat"? We would
 have been able to map a new image to this space and then take the label
 of the nearest neighbor even if it is not in the set of training images.
 Luckily, it is possible to learn such word embeddings in an unsupervised
@@ -77,7 +77,7 @@ fashion from large collections of textual data, see
  (Pennington, Socher, and Manning 2014), or recent
 Poincare embeddings (Nickel and Kiela 2017). Using labeled data, one can
 learn embeddings of images of dogs/wolfs to the word embedding space, so
-that images of dogs are mapped to the neighborhood of the “dog”
+that images of dogs are mapped to the neighborhood of the "dog"
 word-vector. When a new example is given, it is mapped to embedding
 space and closest word-vector (nearest neighbor) is taken as a predicted
 label for this example.
@@ -185,11 +185,11 @@ learn an nonlinear update rule for training a neural network.
 In their Model-Agnostic Meta-Learning algorithm (MAML) paper, Finn,
 Abbeel, and Levine (2017) proposed few-shot learning method that is
 applicable to any model that can be trained with gradient descent. To
-cite the authors: “In effect, we will aim to find model parameters that
+cite the authors: "In effect, we will aim to find model parameters that
 are sensitive to changes in the task, such that small changes in the
 parameters will produce large improvements on the loss function of any
 task drawn from the distribution of tasks when altered in the direction
-of the gradient of that loss”. The goal is to learn one model for all
+of the gradient of that loss". The goal is to learn one model for all
 tasks so that its internal representations are well suited to all tasks
 (transferable). To achieve this, first, a general model is trained for a
 one or more gradient descent steps on a single task on a few training
@@ -220,38 +220,38 @@ to miss our next post on multi-domain / multi-task transfer learning.
 ## References 
 
 Bojanowski, Piotr, Edouard Grave, Armand Joulin, and Tomas Mikolov.
-2017. "Enriching Word Vectors with Subword Information.” *Transactions
+2017. "Enriching Word Vectors with Subword Information." *Transactions
 of the Association for Computational Linguistics* 5: 135–46.
 
 Bromley, Jane, Isabelle Guyon, Yann LeCun, Eduard Säckinger, and Roopak
-Shah. 1994. “Signature Verification Using a” Siamese” Time Delay Neural
-Network.” In *Advances in Neural Information Processing Systems*,
+Shah. 1994. "Signature Verification Using a" Siamese" Time Delay Neural
+Network." In *Advances in Neural Information Processing Systems*,
 737–44.
 
-Finn, Chelsea, Pieter Abbeel, and Sergey Levine. 2017. “Model-Agnostic
-Meta-Learning for Fast Adaptation of Deep Networks.” In *ICML*.
+Finn, Chelsea, Pieter Abbeel, and Sergey Levine. 2017. "Model-Agnostic
+Meta-Learning for Fast Adaptation of Deep Networks." In *ICML*.
 
-Graves, Alex, Greg Wayne, and Ivo Danihelka. 2014. “Neural Turing
-Machines.” *arXiv Preprint arXiv:1410.5401*.
+Graves, Alex, Greg Wayne, and Ivo Danihelka. 2014. "Neural Turing
+Machines." *arXiv Preprint arXiv:1410.5401*.
 
-Hochreiter, Sepp, and Jürgen Schmidhuber. 1997. “Long Short-Term
-Memory.” *Neural Computation* 9 (8): 1735–80.
+Hochreiter, Sepp, and Jürgen Schmidhuber. 1997. "Long Short-Term
+Memory." *Neural Computation* 9 (8): 1735–80.
 
-Koch, Gregory, Richard Zemel, and Ruslan Salakhutdinov. 2015. “Siamese
-Neural Networks for One-Shot Image Recognition.” In *ICML Deep Learning
+Koch, Gregory, Richard Zemel, and Ruslan Salakhutdinov. 2015. "Siamese
+Neural Networks for One-Shot Image Recognition." In *ICML Deep Learning
 Workshop*. Vol. 2.
 
 Lake, Brenden, Ruslan Salakhutdinov, Jason Gross, and Joshua Tenenbaum.
-2011. “One Shot Learning of Simple Visual Concepts.” In *Proceedings of
+2011. "One Shot Learning of Simple Visual Concepts." In *Proceedings of
 the Annual Meeting of the Cognitive Science Society*. Vol. 33.
 
 Mikolov, Tomas, Ilya Sutskever, Kai Chen, Greg S Corrado, and Jeff Dean.
-2013. “Distributed Representations of Words and Phrases and Their
-Compositionality.” In *Advances in Neural Information Processing
+2013. "Distributed Representations of Words and Phrases and Their
+Compositionality." In *Advances in Neural Information Processing
 Systems*, 3111–9.
 
-Nickel, Maximilian, and Douwe Kiela. 2017. “Poincaré Embeddings for
-Learning Hierarchical Representations.” In *Advances in Neural
+Nickel, Maximilian, and Douwe Kiela. 2017. "Poincaré Embeddings for
+Learning Hierarchical Representations." In *Advances in Neural
 Information Processing Systems 30*, edited by I. Guyon, U. V. Luxburg,
 S. Bengio, H. Wallach, R. Fergus, S. Vishwanathan, and R. Garnett,
 6341–50. Curran Associates, Inc.
@@ -259,38 +259,38 @@ S. Bengio, H. Wallach, R. Fergus, S. Vishwanathan, and R. Garnett,
 
 Norouzi, Mohammad, Tomas Mikolov, Samy Bengio, Yoram Singer, Jonathon
 Shlens, Andrea Frome, Gregory S. Corrado, and Jeffrey Dean. 2013.
-“Zero-Shot Learning by Convex Combination of Semantic Embeddings.”
+"Zero-Shot Learning by Convex Combination of Semantic Embeddings."
 *CoRR* abs/1312.5650.
 
 Pennington, Jeffrey, Richard Socher, and Christopher Manning. 2014.
-“Glove: Global Vectors for Word Representation.” In *Proceedings of the
+"Glove: Global Vectors for Word Representation." In *Proceedings of the
 2014 Conference on Empirical Methods in Natural Language Processing
 (EMNLP)*, 1532–43.
 
-Ravi, Sachin, and Hugo Larochelle. 2016. “Optimization as a Model for
-Few-Shot Learning.” In.
+Ravi, Sachin, and Hugo Larochelle. 2016. "Optimization as a Model for
+Few-Shot Learning." In.
 
-Romera-Paredes, Bernardino, and Philip Torr. 2015. “An Embarrassingly
-Simple Approach to Zero-Shot Learning.” In *International Conference on
+Romera-Paredes, Bernardino, and Philip Torr. 2015. "An Embarrassingly
+Simple Approach to Zero-Shot Learning." In *International Conference on
 Machine Learning*, 2152–61.
 
 Santoro, Adam, Sergey Bartunov, Matthew Botvinick, Daan Wierstra, and
-Timothy P. Lillicrap. 2016. “Meta-Learning with Memory-Augmented Neural
-Networks.” In *ICML*.
+Timothy P. Lillicrap. 2016. "Meta-Learning with Memory-Augmented Neural
+Networks." In *ICML*.
 
 Socher, Richard, Milind Ganjoo, Christopher D Manning, and Andrew Ng.
-2013. “Zero-Shot Learning Through Cross-Modal Transfer.” In *Advances in
+2013. "Zero-Shot Learning Through Cross-Modal Transfer." In *Advances in
 Neural Information Processing Systems*, 935–43.
 
 Vinyals, Oriol, Charles Blundell, Timothy P. Lillicrap, Koray
-Kavukcuoglu, and Daan Wierstra. 2016. “Matching Networks for One Shot
-Learning.” In *NIPS*.
+Kavukcuoglu, and Daan Wierstra. 2016. "Matching Networks for One Shot
+Learning." In *NIPS*.
 
 Wu, Tailin, John Peurifoy, Isaac L Chuang, and Max Tegmark. 2018.
-“Meta-Learning Autoencoders for Few-Shot Prediction.” *arXiv Preprint
+"Meta-Learning Autoencoders for Few-Shot Prediction." *arXiv Preprint
 arXiv:1807.09912*.
 
 Xian, Yongqin, Christoph H. Lampert, Bernt Schiele, and Zeynep Akata.
-2018. “Zero-Shot Learning — A Comprehensive Evaluation of the Good, the
-Bad and the Ugly.” *IEEE Transactions on Pattern Analysis and Machine
+2018. "Zero-Shot Learning — A Comprehensive Evaluation of the Good, the
+Bad and the Ugly." *IEEE Transactions on Pattern Analysis and Machine
 Intelligence*.
