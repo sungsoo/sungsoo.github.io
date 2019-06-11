@@ -220,7 +220,7 @@ to miss our next post on multi-domain / multi-task transfer learning.
 ## References 
 
 Bojanowski, Piotr, Edouard Grave, Armand Joulin, and Tomas Mikolov.
-2017. “Enriching Word Vectors with Subword Information.” *Transactions
+2017. "Enriching Word Vectors with Subword Information.” *Transactions
 of the Association for Computational Linguistics* 5: 135–46.
 
 Bromley, Jane, Isabelle Guyon, Yann LeCun, Eduard Säckinger, and Roopak
