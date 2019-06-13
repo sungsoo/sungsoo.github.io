@@ -11,9 +11,11 @@ tags: [big data, computer graphics]
 * Title: [39 Data Visualization Tools for Big Data](https://blog.profitbricks.com/39-data-visualization-tools-for-big-data/ "Permanent Link to 39 Data Visualization Tools for Big Data")
 * Authors: [Andy Lurie](https://blog.profitbricks.com/author/andyl/ "Posts by Andy Lurie")
 
-
+## Useful References
 * Title: [A Complete Overview of the Best Data Visualization Tools](https://www.toptal.com/designers/data-visualization/data-visualization-tools)
 * Authors: Cameron Chapman
+
+---
 
 # 39 Data Visualization Tools for Big Data
 
