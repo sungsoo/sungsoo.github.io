@@ -20,7 +20,7 @@ tags: [machine learning]
 **[Second Edition: "[Lifelong Machine
 Learning](https://www.cs.uic.edu/~liub/lifelong-machine-learning.html)."
 by Z. Chen and B. Liu, Morgan & Claypool, August 2018 (1st edition,
-2016). ]{style="font-size:16pt"}**
+2016). ]**
 
 Added three new chapters: (4) [Continual Learning and Catastrophic
 Forgetting](http://www.cs.uic.edu/~liub/lifelong-learning/continual-learning.pdf),
@@ -42,21 +42,21 @@ Nov 2016.
 **[[Lifelong Machine Learning
 Tutorial](http://www.cs.uic.edu/~liub/Lifelong-Machine-Learning-Tutorial-KDD-2016.pdf).
 Title: lifelong machine learning and computer reading the Web, KDD-2016,
-August 13-17, 2016, San Francisco, USA. ]{style="font-size:14pt"}**
+August 13-17, 2016, San Francisco, USA. ]**
 
 **[[Lifelong Machine Learning
 Tutorial](http://www.cs.uic.edu/~liub/IJCAI15-tutorial.html),
 IJCAI-2015, July 25-31, 2015, Buenos Aires,
-Argentina.]{style="font-size:14pt"}**
+Argentina.]**
 
 **[A Podcast: "[Machines that Learn Like
 Humans](http://worldofpiggy.com/podcast/2017/03/28/lifelong-machine-learning/)"
 by my former student Zhiyuan Chen and Francesco Gadaleta
-(host).]{style="font-size:14pt"}**
+(host).]**
 
 
 
-  **[[A Resource Site](http://lifelongml.org/) maintained by Eric Eaton's group]{style="font-size:14pt"}**   **[DARPA program: [Lifelong Learning Machines (L2M)](http://www.darpa.mil/news-events/2017-03-16), 3/16/2017]{style="font-size:14pt"}**
+  **[[A Resource Site](http://lifelongml.org/) maintained by Eric Eaton's group]**   **[DARPA program: [Lifelong Learning Machines (L2M)](http://www.darpa.mil/news-events/2017-03-16), 3/16/2017]**
   
 The classic machine learning paradigm learns in isolation. Given a
 dataset, a learning algorithm is applied to a dataset to produce a model
