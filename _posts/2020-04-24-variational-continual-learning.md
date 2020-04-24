@@ -21,3 +21,5 @@ This talk introduces *variational continual learning*, a simple but general fram
 <iframe width="600" height="400" src="https://www.youtube.com/embed/qRXPS_6fAfE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 
+* Paper: [Variational Continual Learning](https://arxiv.org/abs/1710.10628)
+
