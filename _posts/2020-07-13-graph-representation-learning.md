@@ -32,4 +32,4 @@ In this tutorial, we will cover key advancements in NRL over the last decade, wi
 
 "Graph Neural Networks (GNN) are a general class of networks that work over graphs. By representing a problem as a graph — encoding the information of individual elements as nodes and their relationships as edges — GNNs learn to capture patterns within the graph. These networks have been successfully used in applications such as chemistry and program analysis. In this introductory talk, I will do a deep dive in the neural message-passing GNNs, and show how to create a simple GNN implementation. Finally, I will illustrate how GNNs have been used in applications.
 
-<iframe width="400" height="200" src="https://www.youtube.com/embed/zCEYiCxrL_0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<iframe width="600" height="400" src="https://www.youtube.com/embed/zCEYiCxrL_0" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
