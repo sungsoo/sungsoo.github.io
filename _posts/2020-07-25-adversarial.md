@@ -28,3 +28,9 @@ The tutorial will include demos---we will use Colab notebooks so please bring la
 Github link for demos: [https://github.com/MadryLab/AdvEx_Tut...](https://github.com/MadryLab/AdvEx_Tutorial)
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/fzusr-VdPxw" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Suggested reading (in order of importance): 
+* Adversarial examples [https://arxiv.org/abs/1412.6572](https://arxiv.org/abs/1412.6572)
+* Training robust models [https://arxiv.org/abs/1706.06083](https://arxiv.org/abs/1706.06083)
+* ML models rely on imperceptible features [https://arxiv.org/abs/1905.02175](https://arxiv.org/abs/1905.02175)
+* Robustness as a feature prior [https://arxiv.org/abs/1805.12152](https://arxiv.org/abs/1805.12152), [https://arxiv.org/abs/1906.00945](https://arxiv.org/abs/1906.00945).
