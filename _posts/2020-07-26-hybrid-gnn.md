@@ -8,7 +8,7 @@ tags: [machine learning]
 ---
 
 ### Article Source
-* [Learning Equivariant and Hybrid Message Passing on Graphs](https://www.youtube.com/watch?v=fzusr-VdPxw)
+* [Learning Equivariant and Hybrid Message Passing on Graphs](https://www.youtube.com/watch?v=hUrbS1BhBWc)
 
 ----
 
