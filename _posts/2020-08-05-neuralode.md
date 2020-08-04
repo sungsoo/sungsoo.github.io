@@ -31,3 +31,5 @@ We introduce a new family of deep neural network models. Instead of specifying a
 <iframe width="600" height="400" src="https://www.youtube.com/embed/BzTyEJvnyd8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/2pP0Puj15Nc" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/AD3K8j12EIE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
