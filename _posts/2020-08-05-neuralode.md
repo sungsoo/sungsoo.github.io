@@ -23,6 +23,9 @@ We introduce a new family of deep neural network models. Instead of specifying a
 
 * [Source code](https://github.com/rtqichen/torchdiffeq)
 
+## Reflecting on Neural ODEs
+<iframe width="600" height="400" src="https://www.youtube.com/embed/YZ-_E7A3V2w" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## Neural Ordinary Differential Equations - Algorithm Review
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/BzTyEJvnyd8" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
