@@ -27,3 +27,6 @@ After briefly reviewing how machine learning is becoming ever-more widely used i
 * Symbolic Pregression: Discovering Physical Laws from Raw Distorted Video - [https://arxiv.org/abs/2005.11212](https://arxiv.org/abs/2005.11212)
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/pkJkHB_c3nA" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## Connections between physics and deep learning
+<iframe width="600" height="400" src="https://www.youtube.com/embed/5MdSE-N0bxs" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
