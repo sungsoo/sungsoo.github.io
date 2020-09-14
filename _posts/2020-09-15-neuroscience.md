@@ -12,7 +12,7 @@ tags: [machine learning]
 
 ----
 
-# Machine Learning Projects Against COVID-19
+# AI for Neuroscience & Neuroscience for AI
 
 * Speaker: Irina Rish, Researcher, AI Science, IBM T.J. Watson Research Center
 * Presentation Slide: [slideshare](https://www.slideshare.net/SessionsEvents/ai-for-neuroscience-and-neuroscience-for-ai?qid=50ac10f7-edea-4e5d-b88b-20752e297119&v=&b=&from_search=1)
