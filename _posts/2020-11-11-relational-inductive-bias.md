@@ -26,3 +26,9 @@ In this talk, I will introduce graph networks and one application of them to a *
 Kelsey Allen is a PhD student working with Josh Tenenbaum on the problems of structured physical reasoning, planning, and learning from limited data.
 
 Computational tutorial references and videos can be found on our [stellar site](https://stellar.mit.edu/S/project/bcs-comp-tut/index.html) or on the [CBMM learning hub](https://cbmm.mit.edu/learning-hub/tutorials#block-views-learning-hub-block-4).
+
+## Discovering Symbolic Models from Deep Learning with Inductive Biases
+
+Neural networks are very good at predicting systems' *numerical* outputs, but not very good at deriving the *discrete symbolic equations* that govern many physical systems. This paper combines *Graph Networks with symbolic regression* and shows that the strong *inductive biases* of these models can be used to derive accurate symbolic equations from observation data.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/LMb5tvW-UoQ" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
