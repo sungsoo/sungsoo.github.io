@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Principles and Applications of Relational Inductive Biases in Deep Learning
+title: Principles and Applications of Relational Inductive Biases 
 date: 2020-11-11
 categories: [computer science]
 tags: [machine learning, data management]
