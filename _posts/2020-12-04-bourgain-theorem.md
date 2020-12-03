@@ -728,9 +728,7 @@ scales, we have
 ![\\displaystyle \\mathop{\\mathbb E}\_{A\\sim D} \|f_A(u) - f_A(v)\|
 ](https://s0.wp.com/latex.php?latex=%5Cdisplaystyle++%5Cmathop%7B%5Cmathbb+E%7D_%7BA%5Csim+D%7D+%7Cf_A%28u%29+-+f_A%28v%29%7C+&bg=ffffff&fg=000000&s=0&c=20201002 "\displaystyle  \mathop{\mathbb E}_{A\sim D} |f_A(u) - f_A(v)| ")
 
-![\\displaystyle \\geq \\frac {c}{1+ \\log_2 n} \\cdot (ru\'\_{t\^\*+1}
-+ rv\'\_{t\^\*+1} - ru\'\_0 - rv\'\_0)
-](https://s0.wp.com/latex.php?latex=%5Cdisplaystyle++%5Cgeq+%5Cfrac+%7Bc%7D%7B1%2B+%5Clog_2+n%7D+%5Ccdot+%28ru%27_%7Bt%5E%2A%2B1%7D+%2B+rv%27_%7Bt%5E%2A%2B1%7D+-+ru%27_0+-+rv%27_0%29+&bg=ffffff&fg=000000&s=0&c=20201002 "\displaystyle  \geq \frac {c}{1+ \log_2 n} \cdot (ru'_{t^*+1} + rv'_{t^*+1} - ru'_0 - rv'_0) ")
+![\\displaystyle \\geq \\frac {c}{1+ \\log_2 n} \\cdot (ru\'\_{t\^\*+1} + rv\'\_{t\^\*+1} - ru\'\_0 - rv\'\_0)](https://s0.wp.com/latex.php?latex=%5Cdisplaystyle++%5Cgeq+%5Cfrac+%7Bc%7D%7B1%2B+%5Clog_2+n%7D+%5Ccdot+%28ru%27_%7Bt%5E%2A%2B1%7D+2B+rv%27_%7Bt%5E%2A%2B1%7D+-+ru%27_0+-+rv%27_0%29+&bg=ffffff&fg=000000&s=0&c=20201002 "\displaystyle  \geq \frac {c}{1+ \log_2 n} \cdot (ru'_{t^*+1} + rv'_{t^*+1} - ru'_0 - rv'_0) ")
 
 ![\\displaystyle \\geq \\frac {c}{1+ \\log_2 n} \\cdot \\frac {d(u,v)}
 3](https://s0.wp.com/latex.php?latex=%5Cdisplaystyle++%5Cgeq+%5Cfrac+%7Bc%7D%7B1%2B+%5Clog_2+n%7D+%5Ccdot+%5Cfrac+%7Bd%28u%2Cv%29%7D+3&bg=ffffff&fg=000000&s=0&c=20201002 "\displaystyle  \geq \frac {c}{1+ \log_2 n} \cdot \frac {d(u,v)} 3")
