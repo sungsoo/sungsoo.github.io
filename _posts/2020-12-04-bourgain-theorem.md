@@ -63,7 +63,7 @@ A first observation is that embeddings of finite sets of points into L1
 can be equivalently characterized as probabilistic embeddings into the
 real line.
 
-> **Fact 2** []{#factlone} For every finite set
+> **Fact 2** For every finite set
 > ![{V}](https://s0.wp.com/latex.php?latex=%7BV%7D&bg=ffffff&fg=000000&s=0&c=20201002 "{V}"),
 > dimension
 > ![{m}](https://s0.wp.com/latex.php?latex=%7Bm%7D&bg=ffffff&fg=000000&s=0&c=20201002 "{m}"),
