@@ -62,8 +62,6 @@ tags: [machine learning]
 ## Chapter 4: Summarization of Dynamic Graphs ##
 [TimeCrunch code (Matlab / Python)](http://web.eecs.umich.edu/~dkoutra/CODE/timecrunch.tar.gz)
 
-[Slides]()
-
 ## Chapter 5: Graph Similarity ##
 [DeltaCon code (Matlab)](http://web.eecs.umich.edu/~dkoutra/CODE/deltacon.zip)
 
