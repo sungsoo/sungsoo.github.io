@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Graph Embedding
-date: 2020-12-24
+date: 2020-12-14
 categories: [computer science]
 tags: [machine learning]
 
