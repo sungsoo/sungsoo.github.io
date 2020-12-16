@@ -326,6 +326,4 @@ tags: [machine learning]
     <tr>
       <td>Link</td>
       <td><a href="https://www.youtube.com/watch?v=mJ13HVnAGwg&amp;t=6s">YouTube</a>
-      </tr>
-  </tbody>
-</table>
+
