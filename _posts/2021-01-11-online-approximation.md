@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Online Approximation Techniques for Spatial Data
-date: 2021-01-03
+date: 2021-01-11
 categories: [computer science]
 tags: [machine learning, data management]
 
