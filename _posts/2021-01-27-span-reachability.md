@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Efficiently Answering Span Reachability Queries in Large Temporal Graphs
+title: Efficiently Answering Span Reachability Queries 
 date: 2021-01-27
 categories: [computer science]
 tags: [machine learning, data management]
