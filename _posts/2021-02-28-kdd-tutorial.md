@@ -50,7 +50,6 @@ tags: [machine learning, data management]
     -   [Graphs-10:](http://www.cs.umass.edu/~mcgregor/711S18/graph-10.pdf)
         Correlation Clustering
 
-::: {.section}
 ### Bibliography
 
 The following is not an exhaustive list of papers that are relevant to
