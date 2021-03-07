@@ -9,7 +9,7 @@ tags: [machine learning, data management]
 
 ### Article Source
 
-* [The Master Algorithm: How the Quest for the Ultimate Learning Machine Will Remake Our World](https://www.youtube.com/watch?v=8Ppqep-KAYI&t=2810s)
+* [The Master Algorithm; How the Quest for the Ultimate Learning Machine Will Remake Our World](https://www.youtube.com/watch?v=8Ppqep-KAYI&t=2810s)
 
 ---
 
