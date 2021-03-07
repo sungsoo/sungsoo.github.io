@@ -25,3 +25,5 @@ Algorithms increasingly run our lives. They find books, movies, jobs, and dates 
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/B8J4uefCQMc" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/qIZ5PXLVZfo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
