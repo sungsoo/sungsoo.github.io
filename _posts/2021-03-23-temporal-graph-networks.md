@@ -10,6 +10,7 @@ tags: [machine learning, data management]
 ### Article Source
 
 * [TGN: Temporal Graph Networks for Dynamic Graphs](https://www.youtube.com/watch?v=CdNAempch1E)
+* [Blog post](https://towardsdatascience.com/temporal-graph-networks-ab8f327f2efe)
 
 ---
 
