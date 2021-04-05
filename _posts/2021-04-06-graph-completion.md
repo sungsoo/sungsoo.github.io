@@ -21,3 +21,7 @@ After observing a snapshot of a social network, a *link prediction* (LP) algorit
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/i7WOrkwSL24" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
+
+## Inductive Matrix Completion Based on Graph Neural Networks
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/bY0rJRU65j4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
