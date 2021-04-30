@@ -9,7 +9,7 @@ tags: [machine learning, data management]
 
 ### Article Source
 
-* [Introduction to Pytorch Geometric](https://www.youtube.com/watch?v=MH4yvtgAR-4)
+* [Introduction to Pytorch Geometric](https://www.youtube.com/watch?v=JtDgmmQ60x8&list=PLGMXrbDNfqTzqxB1IGgimuhtfAhGd8lHF)
 
 ---
 
