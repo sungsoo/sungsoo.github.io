@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Deep Learning for Graphs
-date: 2021-04-30
+date: 2021-05-01
 categories: [computer science]
 tags: [machine learning, data management]
 
