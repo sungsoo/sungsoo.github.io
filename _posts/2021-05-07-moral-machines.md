@@ -37,3 +37,7 @@ How do different cultures value human life? To find out, researchers created a v
 ## Moral Machine
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/z-PLjrsutD8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
+## TEACHING CARS TO KILL!
+<iframe width="560" height="315" src="https://www.youtube.com/embed/9VVqYmf5s18" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
