@@ -1,6 +1,6 @@
 ---
 layout: post
-title: MLP-Mixer; An all-MLP Architecture for Vision
+title: Vision Transformer
 date: 2021-05-10
 categories: [computer science]
 tags: [machine learning, data management]
@@ -13,8 +13,8 @@ tags: [machine learning, data management]
 
 ---
 
-# MLP-Mixer
-## An all-MLP Architecture for Vision 
+# Vision Transformer
+## An Image is Worth 16x16 Words; Transformers for Image Recognition at Scale
 
 * [Paper](https://arxiv.org/abs/2010.11929)
 
