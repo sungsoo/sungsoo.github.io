@@ -26,3 +26,6 @@ This video walks through the Keras Code Example implementation of Vision Transfo
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/i2_zJ0ANrw0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/QcCJJOLCeJQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
