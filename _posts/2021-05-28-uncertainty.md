@@ -14,11 +14,10 @@ tags: [machine learning, graph mining]
 
 # Evidential Deep Learning and Uncertainty 
 
-## Make it Light, Accurate and Fast 
-
 * MIT Introduction to Deep Learning 6.S191: Lecture 7
 * Evidential Deep Learning and Uncertainty Estimation
 * Lecturer: Alexander Amini
 * January 2021
+* [Slides](http://introtodeeplearning.com/slides/6S191_MIT_DeepLearning_L7.pdf)
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/toTcf7tZK8c" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
