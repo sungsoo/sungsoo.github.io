@@ -16,7 +16,7 @@ tags: [machine learning, graph mining]
 
 # AI Bias and Fairness 
 
-* MIT Introduction to Deep Learning 6.S191: Lecture 8
+* [MIT Introduction to Deep Learning 6.S191](http://introtodeeplearning.com/): Lecture 8
 * Algorithmic Bias and Fairness
 * Lecturer: Ava Soleimany
 * January 2021
