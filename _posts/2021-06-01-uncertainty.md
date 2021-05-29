@@ -17,7 +17,7 @@ tags: [machine learning, graph mining]
 # Uncertainty in Neural Networks
 ## Approximately Bayesian Ensembling 
 
-* AISTATS 2020 paper
+* AISTATS 2020 [paper](https://arxiv.org/pdf/1810.05546)
 * Tim Pearce, Felix Leibfried, Alexandra Brintrup, Mohamed Zaki, Andy Neely
 
 * Demo site: [https://teapearce.github.io/portfolio/github_io_1_ens/](https://teapearce.github.io/portfolio/github_io_1_ens/)
