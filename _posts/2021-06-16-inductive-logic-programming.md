@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Inductive Logic Programming
-date: 2021-06-14
+date: 2021-06-16
 categories: [computer science]
 tags: [machine learning, graph mining]
 
