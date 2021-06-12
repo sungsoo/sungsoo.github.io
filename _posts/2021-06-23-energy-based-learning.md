@@ -24,3 +24,7 @@ One of the hottest sub-topics of machine learning in recent times has been *Self
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/4lthJd3DNTM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
+
+## Self Supervised Learning @ ICLR 2020
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/8TTK-Dd0H9U" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
