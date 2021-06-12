@@ -24,6 +24,9 @@ One of the hottest sub-topics of machine learning in recent times has been *Self
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/4lthJd3DNTM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
+## Energy-Based Models for Self-Supervised Learning
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/BqgnnrojVBI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ## Self Supervised Learning @ ICLR 2020
 
