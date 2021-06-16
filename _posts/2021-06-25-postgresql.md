@@ -14,7 +14,7 @@ tags: [machine learning, graph mining]
 
 ---
 
-# PPRGo: Scaling Graph Neural Networks with Approximate PageRank
+# PostgreSQL Optimizer Methodology
 
 *  Event Date: Monday June 7, 2021
 *  Event Time: 04:30pm EDT
