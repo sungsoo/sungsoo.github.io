@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Unsupervised Intelligent Agents
-date: 2021-06-30
+date: 2021-07-01
 categories: [computer science]
 tags: [machine learning, graph mining]
 
