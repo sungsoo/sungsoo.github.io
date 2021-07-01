@@ -16,6 +16,14 @@ tags: [machine learning, graph mining]
 
 # Categorical Reparameterization with Gumbel-Softmax
 
+* Eric Jang, Shixiang Gu and Ben Poole
+* Chris J. Maddison, Andriy Mnih and Yee Whye Teh
+
+---
+### Bayesian Deep Learning Workshop
+* NIPS 2016
+* December 10, 2016 — Centre Convencions Internacional Barcelona, Barcelona, Spain
+
 
 ## Abstract
 
