@@ -1,7 +1,6 @@
 ---
 layout: post
-title: A Unified Deep Model of Learning from both Data and Queries
-for Cardinality Estimation
+title: A Unified Deep Model of Learning from both Data and Queries for Cardinality Estimation
 date: 2021-07-20
 categories: [computer science]
 tags: [machine learning, graph mining]
