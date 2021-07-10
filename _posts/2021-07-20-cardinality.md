@@ -16,12 +16,11 @@ for Cardinality Estimation](https://www.youtube.com/watch?v=TcSfvwt53iY&list=PL3
 
 ---
 
-# A Unified Deep Model of Learning from both Data and Queries
-for Cardinality Estimation
+# A Unified Deep Model of Learning from both Data and Queries for Cardinality Estimation
 
 * Authors:  Peizhi Wu, Gao Cong
 * [Paper](https://dl.acm.org/doi/10.1145/3448016.3452830)
-* SIGMOD/PODS '21: Proceedings of the 2021 International Conference on Management of Data, June 2021, Pages 2009–2022
+* SIGMOD/PODS 2021: Proceedings of the 2021 International Conference on Management of Data, June 2021, Pages 2009–2022
 
 
 ## Abstract
