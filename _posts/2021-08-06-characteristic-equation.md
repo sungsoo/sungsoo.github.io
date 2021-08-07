@@ -14,7 +14,13 @@ tags: [machine learning, graph mining]
 
 ---
 
-## Spanning Trees and Kirchhoff's Theorem
+# The Characteristic Polynomial
+
+The definition of the characteristic polynomial (without using determinants). The Cayley-Hamilton Theorem.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/TJ9clajl0Vg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## The Characteristic Equation and Eigenvalues
 
 We introduce the characteristic equation which helps us find eigenvalues.
 
