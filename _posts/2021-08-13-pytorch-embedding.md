@@ -24,6 +24,9 @@ word embedding)들을 가져와 사용하는 방법입니다. 이번 챕터에�
 해당되는 방법에 대해서 배웁니다. 파이토치에서는 이를 nn.Embedding()를
 사용하여 구현합니다.
 
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/euwN5DHfLEo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## **1. 임베딩 층은 룩업 테이블이다.**
 
 임베딩 층의 입력으로 사용하기 위해서 입력 시퀀스의 각 단어들은 모두 정수
