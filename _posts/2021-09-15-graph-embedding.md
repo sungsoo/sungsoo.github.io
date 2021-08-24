@@ -14,13 +14,13 @@ tags: [machine learning, graph mining]
 
 ---
 
-<script type="text/javascript" async
-  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
-</script>
+<meta charset="utf8">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.1.1/katex.min.css">
+
 
 # Supervised Contrastive Learning
 
-$$\mathbf{W}$$
+$$\int_0^1 x^2\,dx$$
 
 The cross-entropy loss has been the default in deep learning for the last few years for supervised learning. This paper proposes a new loss, the supervised contrastive loss, and uses it to pre-train the network in a supervised fashion. The resulting model, when fine-tuned to ImageNet, achieves new state-of-the-art.
 
