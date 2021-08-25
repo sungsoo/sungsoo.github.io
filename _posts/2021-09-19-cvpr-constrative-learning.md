@@ -25,4 +25,5 @@ tags: [machine learning, graph mining]
 * Multi-modal approaches by Jean-Baptiste Alayrac and Adrià Recasens
 * "What is next?" by Andrei Bursuc and Spyros Gidaris
 
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/MdD4UMshl1Q" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
