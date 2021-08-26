@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Graph Neural Networks with Learnable Structural and Positional Representation
+title: GNNs with Learnable Structural and Positional Representation
 date: 2021-09-13
 categories: [computer science]
 tags: [machine learning, graph mining]
