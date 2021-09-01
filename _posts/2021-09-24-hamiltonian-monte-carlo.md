@@ -9,7 +9,7 @@ tags: [machine learning, graph mining]
 
 ### Article Source
 
-* [An Introduction to Hamiltonian Monte Carlo Method for Sampling](https://www.youtube.com/watch?v=k5bQnPtX3wY)
+* [An Introduction to Hamiltonian Monte Carlo Method for Sampling](https://www.youtube.com/watch?v=efqGwPDnlQY)
 
 
 ---
