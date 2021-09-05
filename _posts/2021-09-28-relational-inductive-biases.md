@@ -9,7 +9,7 @@ tags: [machine learning, graph mining]
 
 ### Article Source
 
-* [The Universal Approximation Theorem](https://www.youtube.com/watch?v=Uqs04DEqM0s)
+* [Relational Inductive Biases, Deep Learning, and Graph Networks](https://www.youtube.com/watch?v=56e104J4ehA)
 
 
 ---
