@@ -9,7 +9,7 @@ tags: [machine learning, graph mining]
 
 ### Article Source
 
-* [Geometric Deep Learning-The Erlangen Programme of ML](https://www.youtube.com/watch?v=MblxCqwengI)
+* [Geometric Deep Learning-The Erlangen Programme of ML](https://www.youtube.com/watch?v=w6Pw4MOzMuo)
 
 
 ---
