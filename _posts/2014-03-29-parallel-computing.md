@@ -7,6 +7,9 @@ tags: [parallel computing]
 
 ---
 
+## Related Web Sites
+
+* [jobtensor: Jobs in IT, Science, Engineering](https://jobtensor.com/uk)
 
 # Parallel Computing
 
