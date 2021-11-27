@@ -1,6 +1,6 @@
 ---
 layout: post
-title: A Probabilistic Model for Joint Inference from Differential Equations and Data
+title: A Probabilistic Model for Joint Inference from Differential Equations
 date: 2021-11-17
 categories: [computer science]
 tags: [machine learning, graph mining]
