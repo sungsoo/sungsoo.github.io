@@ -50,8 +50,10 @@ Gao, C., Zheng, Y., Li, N., Li, Y., Qin, Y., Piao, J., Quan, Y., Chang, J., Jin,
    - [Diversity](#Diversity)
    - [Explainability](#Explainability)
    - [Fairness](#Fairness)
+   - 
 ## Recommendation Stages
 ### Matching
+
 | **Name** | **Paper** | **Venue** | **Year** | **Code** |
 | --- | --- | --- | --- | --- |
 | GCMC | [Berg, R. V. D., Kipf, T. N., & Welling, M. (2017). Graph convolutional matrix completion. _arXiv preprint arXiv:1706.02263_.](https://arxiv.org/pdf/1706.02263.pdf) | arxiv | 2017 | [Python](https://paperswithcode.com/paper/graph-convolutional-matrix-completion) |
@@ -63,6 +65,7 @@ Gao, C., Zheng, Y., Li, N., Li, Y., Qin, Y., Piao, J., Quan, Y., Chang, J., Jin,
 | SGL | [Wu, J., Wang, X., Feng, F., He, X., Chen, L., Lian, J., & Xie, X. (2021, July). Self-supervised graph learning for recommendation. In _Proceedings of the 44th International ACM SIGIR Conference on Research and Development in Information Retrieval_ (pp. 726-735).](https://arxiv.org/pdf/2010.10783) | SIGIR | 2021 | [Python](https://github.com/wujcan/SGL) |
 
 ### Ranking
+
 | **Name** | **Paper** | **Venue** | **Year** | **Code** |
 | --- | --- | --- | --- | --- |
 | Fi-GNN | [Li, Z., Cui, Z., Wu, S., Zhang, X., & Wang, L. (2019, November). Fi-gnn: Modeling feature interactions via graph neural networks for ctr prediction. In _Proceedings of the 28th ACM International Conference on Information and Knowledge Management_ (pp. 539-548).](https://arxiv.org/pdf/1910.05552.pdf) | CIKM | 2019 | [Python](https://paperswithcode.com/paper/fi-gnn-modeling-feature-interactions-via) |
@@ -73,12 +76,14 @@ Gao, C., Zheng, Y., Li, N., Li, Y., Qin, Y., Piao, J., Quan, Y., Chang, J., Jin,
 | GCM | [Wu, J., He, X., Wang, X., Wang, Q., Chen, W., Lian, J., & Xie, X. (2020). Graph Convolution Machine for Context-aware Recommender System. _arXiv preprint arXiv:2001.11402_.](https://arxiv.org/pdf/2001.11402.pdf) | Frontiers of Computer Science | 2021 | [Python](https://github.com/wujcan/GCM) |
 
 ### Re-ranking
+
 | **Name** | **Paper** | **Venue** | **Year** | **Code** |
 | --- | --- | --- | --- | --- |
 | IRGPR | [Liu, W., Liu, Q., Tang, R., Chen, J., He, X., & Heng, P. A. (2020, October). Personalized Re-ranking with Item Relationships for E-commerce. In _Proceedings of the 29th ACM International Conference on Information & Knowledge Management_ (pp. 925-934).](https://dl.acm.org/doi/abs/10.1145/3340531.3412332) | CIKM | 2020 | NA |
 
 ## Recommendation Scenarios
 ### Social Recommendation
+
 | **Name** | **Paper** | **Venue** | **Year** | **Code** |
 | --- | --- | --- | --- | --- |
 | DGRec | [Song, W., Xiao, Z., Wang, Y., Charlin, L., Zhang, M., & Tang, J. (2019, January). Session-based social recommendation via dynamic graph attention networks. In _Proceedings of the Twelfth ACM international conference on web search and data mining_ (pp. 555-563).](https://arxiv.org/pdf/1902.09362) | WSDM | 2019 | [Python](https://github.com/DeepGraphLearning/RecommenderSystems) |
@@ -102,6 +107,7 @@ Gao, C., Zheng, Y., Li, N., Li, Y., Qin, Y., Piao, J., Quan, Y., Chang, J., Jin,
 | DiffNetLG | [Song, C., Wang, B., Jiang, Q., Zhang, Y., He, R., & Hou, Y. (2021, July). Social Recommendation with Implicit Social Influence. In _Proceedings of the 44th International ACM SIGIR Conference on Research and Development in Information Retrieval_ (pp. 1788-1792).](https://dl.acm.org/doi/abs/10.1145/3404835.3463043) | SIGIR | 2021 | NA |
 
 ### Sequential Recommendation
+
 | **Name** | **Paper** | **Venue** | **Year** | **Code** |
 | --- | --- | --- | --- | --- |
 | GME | [Xie, M., Yin, H., Xu, F., Wang, H., & Zhou, X. (2016, November). Graph-based metric embedding for next poi recommendation. In _International Conference on Web Information Systems Engineering_ (pp. 207-222). Springer, Cham.](http://net.pku.edu.cn/daim/hongzhi.yin/papers/WISE-2016.pdf) | WISE | 2016 | NA |
@@ -118,6 +124,7 @@ Gao, C., Zheng, Y., Li, N., Li, Y., Qin, Y., Piao, J., Quan, Y., Chang, J., Jin,
 | DGSR | [Zhang, M., Wu, S., Yu, X., & Wang, L. (2021). Dynamic Graph Neural Networks for Sequential Recommendation. _arXiv preprint arXiv:2104.07368_.](https://arxiv.org/pdf/2104.07368) | arxiv | 2021 | NA |
 
 ### Session Recommendation
+
 | **Name** | **Paper** | **Venue** | **Year** | **Code** |
 | --- | --- | --- | --- | --- |
 | SR-GNN | [Wu, S., Tang, Y., Zhu, Y., Wang, L., Xie, X., & Tan, T. (2019, July). Session-based recommendation with graph neural networks. In _Proceedings of the AAAI Conference on Artificial Intelligence_ (Vol. 33, No. 01, pp. 346-353).](https://ojs.aaai.org/index.php/AAAI/article/view/3804/3682) | AAAI | 2019 | [Python](https://paperswithcode.com/paper/session-based-recommendation-with-graph) |
@@ -141,6 +148,7 @@ Gao, C., Zheng, Y., Li, N., Li, Y., Qin, Y., Piao, J., Quan, Y., Chang, J., Jin,
 | SHARE | [Wang, J., Ding, K., Zhu, Z., & Caverlee, J. (2021). Session-based Recommendation with Hypergraph Attention Networks. In _Proceedings of the 2021 SIAM International Conference on Data Mining (SDM)_ (pp. 82-90). Society for Industrial and Applied Mathematics.](https://epubs.siam.org/doi/pdf/10.1137/1.9781611976700.10) | SDM | 2021 | NA |
 
 ### Bundle Recommendation
+
 | **Name** | **Paper** | **Venue** | **Year** | **Code** |
 | --- | --- | --- | --- | --- |
 | BGCN | [Chang, J., Gao, C., He, X., Jin, D., & Li, Y. (2020, July). Bundle recommendation with graph convolutional networks. In _Proceedings of the 43rd international ACM SIGIR conference on Research and development in Information Retrieval_ (pp. 1673-1676).](https://arxiv.org/pdf/2005.03475) | SIGIR | 2020 | [Python](https://github.com/cjx0525/BGCN) |
@@ -149,6 +157,7 @@ Gao, C., Zheng, Y., Li, N., Li, Y., Qin, Y., Piao, J., Quan, Y., Chang, J., Jin,
 | DPR | [Zheng, Z., Wang, C., Xu, T., Shen, D., Qin, P., Huai, B., ... & Chen, E. (2021, April). Drug Package Recommendation via Interaction-aware Graph Induction. In _Proceedings of the Web Conference 2021_ (pp. 1284-1295).](https://arxiv.org/pdf/2102.03577) | WWW | 2021 | NA |
 
 ### Cross Domain Recommendation
+
 | **Name** | **Paper** | **Venue** | **Year** | **Code** |
 | --- | --- | --- | --- | --- |
 | PPGN | [Zhao, C., Li, C., & Fu, C. (2019, November). Cross-domain recommendation via preference propagation graphnet. In _Proceedings of the 28th ACM International Conference on Information and Knowledge Management_ (pp. 2165-2168).](https://dl.acm.org/doi/abs/10.1145/3357384.3358166) | CIKM | 2019 | [Python](https://github.com/WHUIR/PPGN) |
@@ -158,6 +167,7 @@ Gao, C., Zheng, Y., Li, N., Li, Y., Qin, Y., Piao, J., Quan, Y., Chang, J., Jin,
 | DAGCN | [Guo, L., Tang, L., Chen, T., Zhu, L., Nguyen, Q. V. H., & Yin, H. (2021). DA-GCN: A Domain-aware Attentive Graph Convolution Network for Shared-account Cross-domain Sequential Recommendation. _arXiv preprint arXiv:2105.03300_.](https://arxiv.org/pdf/2105.03300) | IJCAI | 2021 | NA |
 
 ### Multi-behavior Recommendation
+
 | **Name** | **Paper** | **Venue** | **Year** | **Code** |
 | --- | --- | --- | --- | --- |
 | MGNN-SPred | [Wang, W., Zhang, W., Liu, S., Liu, Q., Zhang, B., Lin, L., & Zha, H. (2020, April). Beyond clicks: Modeling multi-relational item graph for session-based target behavior prediction. In _Proceedings of The Web Conference 2020_ (pp. 3056-3062).](https://arxiv.org/pdf/2002.07993) | WWW | 2020 | [Python](https://github.com/Autumn945/MGNN-SPred) |
@@ -174,6 +184,7 @@ Gao, C., Zheng, Y., Li, N., Li, Y., Qin, Y., Piao, J., Quan, Y., Chang, J., Jin,
 
 ## Recommendation Objectives
 ### Diversity
+
 | **Name** | **Paper** | **Venue** | **Year** | **Code** |
 | --- | --- | --- | --- | --- |
 | V2HT | [Li, M., Gan, T., Liu, M., Cheng, Z., Yin, J., & Nie, L. (2019, November). Long-tail hashtag recommendation for micro-videos with graph convolutional network. In _Proceedings of the 28th ACM International Conference on Information and Knowledge Management_ (pp. 509-518).](https://dl.acm.org/doi/abs/10.1145/3357384.3357912) | CIKM | 2019 | NA |
@@ -183,6 +194,7 @@ Gao, C., Zheng, Y., Li, N., Li, Y., Qin, Y., Piao, J., Quan, Y., Chang, J., Jin,
 | Isufi _et al._ | [Isufi, E., Pocchiari, M., & Hanjalic, A. (2021). Accuracy-diversity trade-off in recommender systems via graph convolutions. _Information Processing & Management_, _58_(2), 102459.](https://www.sciencedirect.com/science/article/pii/S0306457320309511) | IPM | 2021 | [Python](https://github.com/esilezz/accdiv-via-graphconv) |
 
 ### Explainability
+
 | **Name** | **Paper** | **Venue** | **Year** | **Code** |
 | --- | --- | --- | --- | --- |
 | RippleNet | [Wang, H., Zhang, F., Wang, J., Zhao, M., Li, W., Xie, X., & Guo, M. (2018, October). Ripplenet: Propagating user preferences on the knowledge graph for recommender systems. In _Proceedings of the 27th ACM International Conference on Information and Knowledge Management_ (pp. 417-426).](https://arxiv.org/pdf/1803.03467) | CIKM | 2018 | [Python](https://paperswithcode.com/paper/ripplenet-propagating-user-preferences-on-the) |
@@ -196,6 +208,7 @@ Gao, C., Zheng, Y., Li, N., Li, Y., Qin, Y., Piao, J., Quan, Y., Chang, J., Jin,
 | TMER | [Chen, H., Li, Y., Sun, X., Xu, G., & Yin, H. (2021, March). Temporal meta-path guided explainable recommendation. In _Proceedings of the 14th ACM International Conference on Web Search and Data Mining_ (pp. 1056-1064).](https://arxiv.org/pdf/2101.01433) | WSDM | 2021 | [Python](https://github.com/Abigale001/TMER) |
 
 ### Fairness
+
 | **Name** | **Paper** | **Venue** | **Year** | **Code** |
 | --- | --- | --- | --- | --- |
 | Fairwalk | [Rahman, T., Surma, B., Backes, M., & Zhang, Y. (2019). Fairwalk: Towards fair graph embedding.](https://publications.cispa.saarland/2933/1/IJCAI19.pdf) | IJCAI | 2019 | [Python](https://paperswithcode.com/paper/fairwalk-towards-fair-graph-embedding) |
