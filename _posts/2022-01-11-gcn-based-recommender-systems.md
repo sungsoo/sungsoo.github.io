@@ -1,7 +1,7 @@
 ---
 layout: post
 title: GNN based Recommender Systems
-date: 2022-01-11
+date: 2022-01-12
 categories: [computer science]
 tags: [machine learning, graph mining]
 
