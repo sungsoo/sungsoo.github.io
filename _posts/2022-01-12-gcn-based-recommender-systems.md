@@ -34,24 +34,6 @@ Please cite our survey paper if this index is helpful.
 Gao, C., Zheng, Y., Li, N., Li, Y., Qin, Y., Piao, J., Quan, Y., Chang, J., Jin, D., He, X., & Li, Y. (2021). Graph Neural Networks for Recommender Systems: Challenges, Methods, and Directions. arXiv preprint arXiv:2109.12843.
 ```
 
-# Table of Contents
-
-- [GNN in different recommendation stages](#Recommendation-Stages)
-   - [Matching](#Matching)
-   - [Ranking](#Ranking)
-   - [Re-ranking](#Re-ranking)
-- [GNN in different recommendation scenarios](#Recommendation-Scenarios)
-   - [Social Recommendation](#Social-Recommendation)
-   - [Sequential Recommendation](#Sequential-Recommendation)
-   - [Session Recommendation](#Session-Recommendation)
-   - [Bundle Recommendation](#Bundle-Recommendation)
-   - [Cross Domain Recommendation](#Cross-Domain-Recommendation)
-   - [Multi-behavior Recommendation](#Multi-behavior-Recommendation)
-- [GNN for different recommendation objectives](#Recommendation-Objectives)
-   - [Diversity](#Diversity)
-   - [Explainability](#Explainability)
-   - [Fairness](#Fairness)
-
   
 ## Recommendation Stages
 ### Matching
