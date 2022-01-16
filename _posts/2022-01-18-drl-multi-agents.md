@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Deep Reinforcement Learning for Multi-Agent Interaction
-date: 2022-01-17
+date: 2022-01-18
 categories: [computer science]
 tags: [machine learning, graph mining]
 
