@@ -12,7 +12,6 @@ tags: [machine learning, graph mining]
 * [Deep Reinforcement Learning in Traffic Signal Control](https://www.youtube.com/watch?v=TEMSm1eIjKc)
 
 
-
 ---
 
 # Deep Reinforcement Learning in Traffic Signal Control
