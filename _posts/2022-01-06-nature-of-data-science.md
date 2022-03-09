@@ -1,6 +1,6 @@
 ---
 layout: post
-title:On the Nature of Data Science
+title: On the Nature of Data Science
 date: 2022-01-06
 categories: [computer science]
 tags: [machine learning, graph mining]
