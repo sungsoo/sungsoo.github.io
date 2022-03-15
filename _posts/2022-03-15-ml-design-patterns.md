@@ -29,3 +29,6 @@ We will organize two sessions about this book to help you digest it even better 
 For the first session we are very happy to announce that none other than the author himself (Lak) will be joining to give a presentation about the book and to answer your questions directly.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/7T7bziuviPU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/_Ni6JWdeCew" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
