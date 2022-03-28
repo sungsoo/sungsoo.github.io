@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Learned Query Scheduling
-date: 2022-03-18
+date: 2022-03-28
 categories: [computer science]
 tags: [machine learning, graph mining]
 
