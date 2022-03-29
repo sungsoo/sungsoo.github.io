@@ -47,3 +47,6 @@ Jose Miguel Hernandez Lobato- Lecturer in Machine Learning at the Department of 
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/Usr2JJkMeP0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/4ppFiyXJkiM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
