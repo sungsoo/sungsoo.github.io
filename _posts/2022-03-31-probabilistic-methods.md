@@ -49,4 +49,9 @@ Jose Miguel Hernandez Lobato- Lecturer in Machine Learning at the Department of 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/Usr2JJkMeP0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 
+## Abstract
+
+Most machine learning methods are brittle and their performance degrades catastrophically when the input data distribution changes. In this talk, I will describe two probabilistic approaches to address this problem. First, to obtain methods that degrade gracefully, I will focus on scaling accurate approximate Bayesian inference to large neural networks. I will show that it is enough to perform inference over a small subset of the model weights to obtain accurate predictive posteriors. The resulting method, called subnetwork inference, achieves very significant improvements when making predictions under distribution shift. Second, to avoid performance degradation in specific cases, I will describe invariant Causal Representation Learning (iCaRL), an approach that enables accurate out-of-distribution generalization when there is training data collected under different conditions (environments). iCaRL achieves generalization guarantees by assuming that the latent variables encoding the inputs follow a general exponential family distribution when conditioning on the outputs and the training environment. Experiments on both synthetic and real-world datasets show that iCaRL produces very significant improvements over existing baselines.
+
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/4ppFiyXJkiM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
