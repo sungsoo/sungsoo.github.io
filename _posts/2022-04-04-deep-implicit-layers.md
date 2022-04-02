@@ -9,7 +9,7 @@ tags: [machine learning, graph mining]
 
 ### Article Source
 
-* [Deep Implicit Layers](https://www.youtube.com/watch?v=3zfv4k6Sl0o&list=PL8WsPW41L6l7rviIGvIkY0-jn-tM3YSNi&index=3)
+* [Deep Implicit Layers](https://www.youtube.com/watch?v=MX1RJELWONc)
 
 
 ---
