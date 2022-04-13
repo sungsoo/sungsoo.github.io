@@ -22,6 +22,7 @@ tags: [machine learning, graph mining]
 
 
 
+
 ## Abstract
 
 An introduction to designing and coding models using a procedural reuse design pattern. Learn basics of macro and micro architecture components, configurable attributes,  decomposition into stem, learner and task macro components, and groups, blocks micro  components. Learn modern extensions of pre-stems and multiple output layers for model amalgamation. Show templated code and retrofitting the design pattern to historic SOTA models. Presentation includes a hands-on lab (colab notebook).
