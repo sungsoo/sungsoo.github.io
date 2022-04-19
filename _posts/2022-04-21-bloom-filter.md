@@ -34,3 +34,8 @@ tags: [machine learning, graph mining]
 * 원소를 검사하는 경우, 해당 원소에 대해 *k* 가지의 해시 값을 계산한 다음, 각 해시 값에 대응하는 비트값을 읽는다. 모든 비트가 1인 경우 속한다고 판단하며, 나머지는 속하지 않는다고 판단한다.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/-jiOPKt7avE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
+## Bloom Filters
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/qBTdukbzc78" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
