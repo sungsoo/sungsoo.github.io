@@ -19,6 +19,8 @@ tags: [machine learning, graph mining]
 * Bloom Filter Source Code: [https://gist.github.com/badamczewski/42ec5d3aabd47c32684cdb87851f8a51](https://gist.github.com/badamczewski/42ec5d3aabd47c32684cdb87851f8a51)
 
 
+
+
 ## Abstract
 
 블룸 필터(Bloom filter)는 원소가 집합에 속하는지 여부를 검사하는데 사용되는 확률적 자료 구조이다. 1970년 Burton Howard Bloom에 의해 고안되었다. 블룸 필터에 의해 어떤 원소가 집합에 속한다고 판단된 경우 실제로는 원소가 집합에 속하지 않는 긍정 오류가 발생하는 것이 가능하지만, 반대로 원소가 집합에 속하지 않는 것으로 판단되었는데 실제로는 원소가 집합에 속하는 부정 오류는 절대로 발생하지 않는다는 특성이 있다. 집합에 원소를 추가하는 것은 가능하나, 집합에서 원소를 삭제하는 것은 불가능하다. 집합 내 원소의 숫자가 증가할수록 긍정 오류 발생 확률도 증가한다. 
