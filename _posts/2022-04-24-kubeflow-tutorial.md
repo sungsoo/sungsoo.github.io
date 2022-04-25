@@ -18,6 +18,7 @@ tags: [machine learning, graph mining]
 
 * Tutorial: From Notebook to Kubeflow Pipelines to KFServing
 * the Data Science Odyssey - Karl Weinmeister, Google & Stefano Fioravanzo, Arrikto 
+* [slides](https://static.sched.com/hosted_files/kccncna20/21/Tutorial_%20From%20Notebook%20to%20Kubeflow%20Pipelines%20to%20KFServing_%20the%20Data%20Science%20Odyssey.pdf)
 
 ## Abstract
 
