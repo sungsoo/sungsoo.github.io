@@ -17,6 +17,7 @@ tags: [machine learning, graph mining]
 # Blame the Data, Not the System
 
 
+
 * See more Northwest Database Society talks here:
 [https://db.cs.washington.edu/nwds/nwds.html](https://db.cs.washington.edu/nwds/nwds.html)
 * Author:  Anna Fariha
