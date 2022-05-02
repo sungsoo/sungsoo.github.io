@@ -17,6 +17,7 @@ tags: [machine learning, graph mining]
 # A Learned Spatial Index for Range and kNN Queries
 
 * Authors: Songnian Zhang, Suprio Ray, Rongxing Lu, Yandong Zheng
+* SSTD '21: 17th International Symposium on Spatial and Temporal Databases, August 2021, [Paper](https://dl.acm.org/doi/abs/10.1145/3469830.3470892)
 
 ## Abstract
 
