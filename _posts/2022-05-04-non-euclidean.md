@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Hyperbolic Embeddings in Machine Learning and Deep Learning
-date: 2022-05-03
+date: 2022-05-04
 categories: [computer science]
 tags: [machine learning, graph mining]
 
