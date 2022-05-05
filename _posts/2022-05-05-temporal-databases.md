@@ -17,6 +17,7 @@ tags: [machine learning, graph mining]
 # What are Temporal Databases?
 
 
+
 ## Abstract
 
 A temporal database is one that includes special support for the time dimension, allowing it to store data with history and time as an inherent dimension of the data.  It supports facilities for storing, querying and updating historical and/or future data.  Using libraries like 4DFLib, an open source proof of concept we can easily create and manage time sensitive data stores.  This video focuses on temporal databases conceptually, the next video in this series shows how a library like 4DFLib can be created to manage time sensitive data in any database system.  You can see that video here: [https://youtu.be/AzwVJLV9EWo](https://youtu.be/AzwVJLV9EWo) 
