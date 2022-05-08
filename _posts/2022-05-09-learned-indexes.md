@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Learned Index Structures for Dynamic and Multi-Dimensional Data
-date: 2022-05-02
+date: 2022-05-09
 categories: [computer science]
 tags: [machine learning, graph mining]
 
