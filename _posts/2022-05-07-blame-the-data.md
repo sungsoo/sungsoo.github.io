@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Blame the Data, Not the System
-date: 2022-05-03
+date: 2022-05-07
 categories: [computer science]
 tags: [machine learning, graph mining]
 
