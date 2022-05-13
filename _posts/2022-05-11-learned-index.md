@@ -9,7 +9,7 @@ tags: [machine learning, graph mining]
 
 ### Article Source
 
-* [Deep Learning for Graph Similarity Search](https://www.youtube.com/watch?v=3-RojKPQgDE&list=PLV6fThPld-zMRZVPNY0kZsBHhHLGqozu5)
+* [Stanford Seminar - The Case for Learned Index Structures](https://www.youtube.com/watch?v=NaqJO7rrXy0)
 
 
 ---
