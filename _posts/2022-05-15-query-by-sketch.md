@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Query by Sketch Scaling Shortest Path Graph Queries on Very Large Networks
+title: Scaling Shortest Path Graph Queries on Very Large Networks
 date: 2022-05-15
 categories: [computer science]
 tags: [machine learning, graph mining]
@@ -14,7 +14,7 @@ tags: [machine learning, graph mining]
 
 ---
 
-# Query by Sketch Scaling Shortest Path Graph Queries on Very Large Networks
+# Query by Sketch: Scaling Shortest Path Graph Queries on Very Large Networks
 
 
 * Paper: [https://arxiv.org/abs/2104.09733](https://arxiv.org/abs/2104.09733)
