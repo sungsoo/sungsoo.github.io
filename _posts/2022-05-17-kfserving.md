@@ -9,7 +9,7 @@ tags: [machine learning, graph mining]
 
 ### Article Source
 
-* [PyTorch via SQL commands](https://www.youtube.com/watch?v=WqzAWu0ohbs)
+* [Advanced Model Inferencing Leveraging KNative, Istio & Kubeflow Serving](https://www.youtube.com/watch?v=YaGASyU88dQ)
 
 
 ---
