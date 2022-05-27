@@ -1,7 +1,7 @@
 ---
 layout: post
 title: TensorFlow Distributed Training on Kubeflow
-date: 2022-05-25
+date: 2022-05-26
 categories: [computer science]
 tags: [machine learning, graph mining]
 
