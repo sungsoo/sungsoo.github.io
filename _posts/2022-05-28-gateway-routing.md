@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Gateway Routing Pattern
-date: 2022-05-24
+date: 2022-05-28
 categories: [computer science]
 tags: [machine learning, graph mining]
 
