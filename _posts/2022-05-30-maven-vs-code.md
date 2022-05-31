@@ -22,3 +22,7 @@ tags: [machine learning, graph mining]
 Flow to install the Java and Maven extension. Some setup tricks to get starteday.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/rYaEuDdpMFc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+How to create Maven project using vscode 2021 on windows. How to add jar dependencies to maven project. 
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/zlHXH6maOR0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
