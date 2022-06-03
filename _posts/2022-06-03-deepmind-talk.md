@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Using AI to accelerate scientific discovery
-date: 2022-06-02
+date: 2022-06-03
 categories: [computer science]
 tags: [machine learning, graph mining]
 
