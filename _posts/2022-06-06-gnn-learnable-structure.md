@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Graph Neural Networks with Learnable Structural and Positional Presentations
+title: GNN with Learnable Structural and Positional Presentations
 date: 2022-06-06
 categories: [computer science]
 tags: [machine learning, graph mining]
