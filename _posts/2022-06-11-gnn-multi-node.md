@@ -17,6 +17,7 @@ tags: [machine learning, graph mining]
 # Using Graph Neural Networks for Multi-Node Representation Learning  
 
 
+
 * Paper "Labeling Trick: A Theory of Using Graph Neural Networks for Multi-Node Representation Learning": [https://arxiv.org/abs/2010.16103](https://arxiv.org/abs/2010.16103)
 * Authors: Muhan Zhang, Pan Li, Yinglong Xia, Kai Wang, Long Jin
 
