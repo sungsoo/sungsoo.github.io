@@ -9,7 +9,7 @@ tags: [machine learning, graph mining]
 
 ### Article Source
 
-* [Causality and (Graph) Neural Networks](https://www.youtube.com/watch?v=ysgxI6wFjy8)
+* [Causality and (Graph) Neural Networks](https://www.youtube.com/watch?v=AStrI3FhMWg)
 
 
 ---
