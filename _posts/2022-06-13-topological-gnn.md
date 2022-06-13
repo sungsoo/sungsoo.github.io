@@ -19,6 +19,7 @@ tags: [machine learning, graph mining]
 * Paper [Topological Graph Neural Networks](https://arxiv.org/abs/2102.07835)
 * Authors: Max Horn, Edward De Brouwer, Michael Moor, Yves Moreau, Bastian Rieck, Karsten Borgwardt
 * Github: [https://github.com/BorgwardtLab/TOGL](https://github.com/BorgwardtLab/TOGL)
+* Research Group: [https://hannes-stark.com/logag-reading-group](https://hannes-stark.com/logag-reading-group)
 
 
 
