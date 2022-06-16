@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Representational Power of Graph Nerual Networks
-date: 2022-06-15
+date: 2022-06-17
 categories: [computer science]
 tags: [machine learning, graph mining]
 

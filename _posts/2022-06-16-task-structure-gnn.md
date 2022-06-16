@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Task structure and generalization in graph neural networks
-date: 2022-06-15
+date: 2022-06-16
 categories: [computer science]
 tags: [machine learning, graph mining]
 
