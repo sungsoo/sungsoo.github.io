@@ -17,6 +17,7 @@ tags: [machine learning, graph mining]
 # Representational Power of Graph Nerual Networks
 
 
+
 * Workshop on Theory of Deep Learning: Where next? 
 * Topic: Representational Power of Graph Neural Networks
 * Speaker: Stefanie Jegelka
