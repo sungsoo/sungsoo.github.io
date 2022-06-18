@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Theory of Graph Neural Networks
-date: 2022-06-14
+date: 2022-06-18
 categories: [computer science]
 tags: [machine learning, graph mining]
 
