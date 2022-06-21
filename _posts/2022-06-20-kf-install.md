@@ -390,7 +390,7 @@ kubeflow   Active   8s
 ```
 
 
-### Kubeflow Roles [\#](#kubeflow-roles){.anchor aria-hidden="true"}
+### Kubeflow Roles 
 
 kubeflow-roles 를 설치합니다.
 
@@ -689,7 +689,7 @@ kubectl port-forward svc/katib-ui -n kubeflow 8081:80
 
 ![](https://mlops-for-all.github.io/images/docs/setup/katib-ui.png "katib-ui")
 
-### Central Dashboard [\#](#central-dashboard){.anchor aria-hidden="true"}
+### Central Dashboard 
 
 Dashboard 를 설치합니다.
 
@@ -747,7 +747,7 @@ kubectl port-forward svc/centraldashboard -n kubeflow 8082:80
 
 ![](https://mlops-for-all.github.io/images/docs/setup/central-dashboard.png "central-dashboard")
 
-### Admission Webhook [\#](#admission-webhook){.anchor aria-hidden="true"}
+### Admission Webhook 
 
 
 ``` 
@@ -923,7 +923,7 @@ profiles-deployment-89f7d88b-qsnrd                       2/2     Running   0    
 ```
 
 
-### Volumes Web App [\#](#volumes-web-app){.anchor aria-hidden="true"}
+### Volumes Web App
 
 Volumes Web App 을 설치합니다.
 
