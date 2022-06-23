@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Modern Data Stack
-date: 2022-06-22
+date: 2022-06-23
 categories: [computer science]
 tags: [machine learning, graph mining]
 
