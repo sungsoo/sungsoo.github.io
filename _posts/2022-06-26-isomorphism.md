@@ -20,7 +20,7 @@ tags: [machine learning, graph mining]
 
 ## Abstract
 
-An *isomorphism* from a graph G to a graph H is a bijection from the vertex set of G to the vertex set of H such that adjacency and non-adjacency are preserved.  However, finding such a mapping is also equivalent to find a permutation matrix P such that A = PBP^T where A and B are the adjacency matrices of G and H respectively.  We demonstrate how this works with an example.
+An *isomorphism* from a graph *G* to a graph *H* is a bijection from the vertex set of *G* to the vertex set of *H* such that adjacency and non-adjacency are preserved.  However, finding such a mapping is also equivalent to find a *permutation matrix P* such that *A = PBP^T* where *A* and *B* are the adjacency matrices of *G* and *H* respectively.  We demonstrate how this works with an example.
 
 -- Graph Theory FAQs - by Dr. Sarada Herke.
 
