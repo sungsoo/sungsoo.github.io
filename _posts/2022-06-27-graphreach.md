@@ -1,6 +1,6 @@
 ---
 layout: post
-title: GraphReach; Position-Aware Graph Neural Network using Reachability Estimations
+title: Position-Aware Graph Neural Network using Reachability Estimations
 date: 2022-06-27
 categories: [computer science]
 tags: [machine learning, graph mining]
