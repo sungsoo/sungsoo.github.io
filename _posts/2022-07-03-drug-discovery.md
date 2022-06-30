@@ -9,7 +9,7 @@ tags: [machine learning, graph mining]
 
 ### Article Source
 
-* [Started with AI in Drug Discovery](https://www.youtube.com/watch?v=yq5hJL_Yzgc)
+* [Started with AI in Drug Discovery](https://www.youtube.com/watch?v=kBL3tB6cVlw)
 
 
 ---
