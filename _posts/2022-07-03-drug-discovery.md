@@ -29,5 +29,6 @@ This talk features three open-source projects that are lowering the entrance bar
 * TorchDrug is designed to cover graph machine learning in drug discovery. It includes methods from graph neural networks, geometric deep learning, knowledge graphs, deep generative models, reinforcement learning and more. It provides a comprehensive and flexible interface to support rapid prototyping of drug discovery models in PyTorch.
 
 
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/kBL3tB6cVlw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
