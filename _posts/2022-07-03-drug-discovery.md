@@ -16,6 +16,7 @@ tags: [machine learning, graph mining]
 
 # Started with AI in Drug Discovery
 
+
 * Speakers: Hadrien Mary (Datamol), Chence Shi and Zuobai Zhang (TorchDrug), Kexin Huang (TDC)
 *  Molecular Modeling and Drug Discovery (M2D2) talks: [https://valence-discovery.github.io/M2D2-meetings/](https://valence-discovery.github.io/M2D2-meetings/)
 
