@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Started with AI in Drug Discovery
-date: 2022-07-02
+date: 2022-07-03
 categories: [computer science]
 tags: [machine learning, graph mining]
 
