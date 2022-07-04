@@ -23,6 +23,7 @@ tags: [machine learning, graph mining]
 
 ## Abstract
 
+
 This talk features three open-source projects that are lowering the entrance barriers in AI for drug discovery and improving the speed at which researchers can develop new computational methods for the field.
 
 * Datamol is a python library built on top of RDKit and aims to be as light as possible. The main features are: simple pythonic API, easy manipulation of molecular objects with good default options, built-in efficient parallelization, out-of-the-box support for modern IO operations using fsspec, easy pre-processing of molecular datasets for ML pipelines.
