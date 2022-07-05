@@ -9,7 +9,7 @@ tags: [machine learning, graph mining]
 
 ### Article Source
 
-* [Deep Learning for Scientific Computation](https://www.youtube.com/watch?v=kBL3tB6cVlw)
+* [Deep Learning for Scientific Computation](https://www.youtube.com/watch?v=A7ycVT7NK4c)
 
 
 ---
