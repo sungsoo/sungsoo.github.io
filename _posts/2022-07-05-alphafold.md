@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Protein structure prediction with AlphaFold
-date: 2022-07-04
+date: 2022-07-05
 categories: [computer science]
 tags: [machine learning, graph mining]
 
