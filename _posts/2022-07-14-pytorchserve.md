@@ -1,6 +1,6 @@
 ---
 layout: post
-title: A Novel Data Set for Information Retrieval on the Basis of Subgraph Matching
+title: How to Serve PyTorch Models with TorchServe
 date: 2022-07-14
 categories: [computer science]
 tags: [machine learning, graph mining]
@@ -9,12 +9,12 @@ tags: [machine learning, graph mining]
 
 ### Article Source
 
-* [A Novel Data Set for Information Retrieval on the Basis of Subgraph Matching](https://www.youtube.com/watch?v=-IuIXAxAIlI)
+* [How to Serve PyTorch Models with TorchServe](https://www.youtube.com/watch?v=XlO7iQMV3Ik)
 
 
 ---
 
-# A Novel Data Set for Information Retrieval on the Basis of Subgraph Matching
+# How to Serve PyTorch Models with TorchServe
 
 
 ## Abstract
