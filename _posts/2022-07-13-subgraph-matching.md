@@ -1,7 +1,7 @@
 ---
 layout: post
 title: A Novel Data Set for Information Retrieval on the Basis of Subgraph Matching
-date: 2022-07-12
+date: 2022-07-13
 categories: [computer science]
 tags: [machine learning, graph mining]
 
