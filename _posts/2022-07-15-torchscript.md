@@ -1,7 +1,7 @@
 ---
 layout: post
 title: TorchScript and PyTorch JIT
-date: 2022-07-14
+date: 2022-07-15
 categories: [computer science]
 tags: [machine learning, graph mining]
 
