@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Deploy Model to KServe
-date: 2022-07-14
+date: 2022-07-16
 categories: [computer science]
 tags: [machine learning, graph mining]
 
