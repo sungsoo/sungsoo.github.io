@@ -16,7 +16,7 @@ tags: [machine learning, graph mining]
 
 # On Recoverability of Graph Neural Network Representation
 
-* Paper “On Recoverability of Graph Neural Network Representation | Maxim Fisherman": [https://arxiv.org/abs/2201.12843](https://arxiv.org/abs/2201.12843) 
+* Paper “On Recoverability of Graph Neural Network Representation,  Maxim Fisherman": [https://arxiv.org/abs/2201.12843](https://arxiv.org/abs/2201.12843) 
 * Authors: Maxim Fishman, Chaim Baskin, Evgenii Zheltonozhskii, Almog David, Ron Banner, Avi Mendelson
 
 ## Abstract
