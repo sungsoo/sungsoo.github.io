@@ -10,7 +10,7 @@ tags: [machine learning, graph mining]
 ### Article Source
 
 * [Kubeflow Fairing, Pipelines, Training](https://www.youtube.com/watch?v=diGPUFu7fJw)
-
+* [Kubeflow Fairing](https://www.eksworkshop.com/advanced/420_kubeflow/fairing/)
 
 ---
 
