@@ -19,6 +19,7 @@ tags: [machine learning, graph mining]
 * Lightning talk presented on March 12, 2019 at the Kubeflow Contributor Summit in Sunnyvale, CA. 
 
 
+
 ## Abstract
 
 Let's explore some advanced Kubeflow functionality: Fairing, Pipelines, and Distributed Training!
