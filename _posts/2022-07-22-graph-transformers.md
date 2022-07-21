@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Rethinking Graph Transformers with Spectral Attention
-date: 2022-07-21
+date: 2022-07-22
 categories: [computer science]
 tags: [machine learning, graph mining]
 
