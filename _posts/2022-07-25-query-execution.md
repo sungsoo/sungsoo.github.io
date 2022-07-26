@@ -19,6 +19,7 @@ tags: [machine learning, graph mining]
 
 * Speaker: [Martin Kersten](https://en.wikipedia.org/wiki/Martin_L._Kersten)
 
+
 ## Biography
 
 Biography
