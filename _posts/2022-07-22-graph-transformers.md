@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Rethinking Graph Transformers with Spectral Attention
-date: 2022-07-21
+date: 2022-07-22
 categories: [computer science]
 tags: [machine learning, graph mining]
 
@@ -18,6 +18,7 @@ tags: [machine learning, graph mining]
 
 * Paper: [https://arxiv.org/abs/2106.03893](https://arxiv.org/abs/2106.03893)
 * Authors: Devin Kreuzer, Dominique Beaini, William L. Hamilton, Vincent Létourneau, Prudencio Tossou
+
 
 
 
