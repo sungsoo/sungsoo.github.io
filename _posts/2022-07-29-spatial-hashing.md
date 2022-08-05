@@ -18,6 +18,7 @@ tags: [machine learning, graph mining]
 
 * Github: https://github.com/simondevyoutube/
 
+
 ## Abstract
 
 In this project we're covering spatial hash grids, or spatial hashing, people seem to call it all sorts of different names. Anyway, we'll be covering a spatial hash grid implementation in JavaScript, working through it line by line. We'll walk through the code step by step, explaining it as we go, and as an added bonus, I've implemented a small scene in Three.js with hundreds of moving agents that we can use to visualize what's visible from the perspective of any given agent.
