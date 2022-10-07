@@ -16,7 +16,7 @@ tags: [machine learning, graph mining]
 
 # Geometric Deep Learning for Drug Discovery
 
-* Speakers: Jian Tang - https://jian-tang.com/
+* Speakers: Jian Tang - [https://jian-tang.com/](https://jian-tang.com/)
 
 
 ## Abstract
