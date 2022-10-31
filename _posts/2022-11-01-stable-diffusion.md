@@ -32,3 +32,8 @@ Stable Diffusion is a text-based image generation machine learning model release
 ## How does Stable Diffusion work?
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/J87hffSMB60" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+
+## The Man behind Stable Diffusion
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/YQ2QtKcK2dA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
