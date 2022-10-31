@@ -35,6 +35,12 @@ Diffusion Models are generative models just like GANs. In recent times many stat
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/HoKDTa5jHvg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
+## Diffusion models explained in 4-difficulty levels
+In this video, we will take a close look at diffusion models. Diffusion models are being used in many domains but they are most famous for image generation. You might have seen diffusion models at work through Dall-e 2 and Imagen.
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/yTAMrHVG1ew" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## How does Stable Diffusion work?
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/J87hffSMB60" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
