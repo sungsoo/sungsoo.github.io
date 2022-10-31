@@ -41,6 +41,11 @@ In this video, we will take a close look at diffusion models. Diffusion models a
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/yTAMrHVG1ew" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
+
+## Ultimate Guide to Diffusion Models
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/y7J6sSO1k50" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
 ## How does Stable Diffusion work?
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/J87hffSMB60" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
