@@ -28,3 +28,7 @@ tags: [machine learning, graph mining]
 Stable Diffusion is a text-based image generation machine learning model released by Stability.AI. It's default ability generated image from text, but the model is open source which means that it can also do much more. In this video I explain how Stable Diffusion works at a high level, briefly talk about how it is different from other Diffusion-based models, compare it to DALL-E 2, and mess around with the code.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/ltLNYA3lWAQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+## How does Stable Diffusion work?
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/J87hffSMB60" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
