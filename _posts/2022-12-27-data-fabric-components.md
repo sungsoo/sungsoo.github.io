@@ -9,7 +9,7 @@ tags: [machine learning, graph mining]
 
 ### Article Source
 
-* [Enterprise Data Fabric](https://www.youtube.com/watch?v=dyLMP8ftyBQ)
+* [Enterprise Data Fabric](https://www.youtube.com/watch?v=0E3kxwhlpoo)
 
 
 ---
