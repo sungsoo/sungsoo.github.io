@@ -14,7 +14,7 @@ tags: [machine learning, graph mining, big data]
 
 ---
 
-# Meshing About with Databricks
+# Intro to Databricks Lakehouse Platform Architecture and Security
 
 ## Abstract
 
