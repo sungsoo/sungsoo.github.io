@@ -1,6 +1,6 @@
 ---
 layout: post
-title: How Atlan and Unity Catalog Power Column-Level Lineage and Active Metadata 
+title: Column-Level Lineage and Active Metadata 
 date: 2023-01-02
 categories: [computer science]
 tags: [machine learning, graph mining, big data]
