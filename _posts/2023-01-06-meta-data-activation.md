@@ -31,4 +31,11 @@ With Joseph Chmielewski of MANTA.
 <iframe width="600" height="400" src="https://www.youtube.com/embed/ExdXzzmlCPk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 
+### Key Takeaways
+
+* Is your data environment a huge black box?
+* How to activate your metadata to solve the growing pain and costs caused by increasing pace of changes, growing data landscape, and the need for innovation
+* Data lineage on the horizon for better days
+
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/cJy4EwtATlM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
