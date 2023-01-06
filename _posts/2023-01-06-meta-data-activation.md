@@ -26,3 +26,9 @@ Over the last 20 years, the number of systems companies use has been on the rise
 With Joseph Chmielewski of MANTA.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/FBRqaKZYnf0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/ExdXzzmlCPk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/cJy4EwtATlM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
