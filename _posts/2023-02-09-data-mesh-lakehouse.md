@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Data Mesh and Lakehouse  
-date: 2023-02-06
+date: 2023-02-09
 categories: [computer science]
 tags: [machine learning, graph mining, big data]
 
