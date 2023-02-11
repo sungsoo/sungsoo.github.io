@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Master Data Management  
-date: 2023-02-10
+date: 2023-02-08
 categories: [computer science]
 tags: [machine learning, graph mining, big data]
 
