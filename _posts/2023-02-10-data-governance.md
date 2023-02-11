@@ -14,7 +14,7 @@ tags: [machine learning, graph mining, big data]
 
 ---
 
-# Data Mesh and Lakehouse
+# Data Governance and Sharing on Lakehouse
 
 * Data + AI Summit Keynote talk from Matei Zaharia on Data Governance and Sharing on Lakehouse 
 
