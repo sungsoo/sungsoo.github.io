@@ -9,7 +9,7 @@ tags: [machine learning, graph mining, big data]
 
 ### Article Source
 
-* [Learning to Transfer Knowledge Through Embedding Spaces](https://www.youtube.com/watch?v=yGgO4PAnj6o)
+* [Learning to Transfer Knowledge Through Embedding Spaces](https://www.youtube.com/watch?v=1aJqAuY5yo0)
 
 
 ---
