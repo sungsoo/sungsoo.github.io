@@ -20,6 +20,8 @@ tags: [machine learning, graph mining, big data]
 
 Platform engineering is a methodology and process for designing, building, operating, and managing complex software systems. It involves using various technology stacks, tools, methodologies, infrastructure, and processes to ensure and improve the stability, performance, scalability, security, and resilience of a system. This allows organizations to innovate faster.
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/4N2ywun-wTE" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
 Let's consider an example of a platform engineering in the context of a large-scale e-commerce platform. Here's how a company might use platform engineering to design their system:
 
 1. **Microservices Architecture**: The company might apply microservices architecture to develop and deploy functionality independently.
