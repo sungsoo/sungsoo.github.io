@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Traffic Prediction with Transfer Learning  
-date: 2023-04-18
+date: 2023-04-07
 categories: [computer science]
 tags: [machine learning, graph mining, big data]
 
