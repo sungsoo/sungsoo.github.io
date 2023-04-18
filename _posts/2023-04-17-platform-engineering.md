@@ -32,3 +32,11 @@ By applying platform engineering in this manner, the company can innovate faster
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/C_cDVdnGbzA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+
+## What is a Platform Engineer?
+
+Platform engineering is something we are hearing more and more about. It blends old and new concepts for how we accomplish application delivery as a modern platform team. The first step in understanding this journey is understanding what a platform engineer is, and that's what this video is about.
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/q6vbxk3hq-o" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
