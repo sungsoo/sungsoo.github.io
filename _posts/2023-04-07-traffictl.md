@@ -16,7 +16,7 @@ tags: [machine learning, graph mining, big data]
 
 # Traffic Prediction with Transfer Learning 
 
-본 문서는 테스트를 위한 chatGPT를 활용하여 정리해 봤다.
+본 문서는 테스트를 위해 chatGPT를 활용하여 정리해 봤다.
 
 ## Abstract
 
