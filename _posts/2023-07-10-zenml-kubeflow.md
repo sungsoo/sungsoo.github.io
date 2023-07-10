@@ -30,7 +30,9 @@ Don't miss out on this opportunity to simplify your MLOps journey with an easy-t
 Stay updated with the latest ZenML news and community discussions by joining our Slack community and checking out our GitHub repository.
 
 🔗 MLOps Platform Sandbox: [https://sandbox.zenml.io](https://sandbox.zenml.io)
+
 🔗 Slack community: [https://zenml.io/slack](https://zenml.io/slack)
+
 🔗 ZenML Website: [https://zenml.io](https://zenml.io)
 
 
