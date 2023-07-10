@@ -22,3 +22,5 @@ tags: [machine learning, graph mining, big data]
 <iframe width="600" height="400" src="https://www.youtube.com/embed/m9XecEc9yGw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 ![https://sungsoo.github.io/images/p2p0.png](https://sungsoo.github.io/images/p2p0.png)
+
+People @ SIGMOD 2023
