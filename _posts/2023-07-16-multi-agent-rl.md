@@ -17,6 +17,7 @@ tags: [machine learning, graph mining, big data]
 # Distributed and Multiagent Reinforcement Learning
 
 
+* Intersections between Control, Learning and Optimization 2020
 * "Distributed and Multiagent Reinforcement Learning"
 * Dimitri Bertsekas - Massachusetts Institute of Technology & Arizona State University
 * Institute for Pure and Applied Mathematics, UCLA
