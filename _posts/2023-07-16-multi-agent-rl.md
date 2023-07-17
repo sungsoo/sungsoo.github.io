@@ -29,3 +29,7 @@ We discuss issues of parallelization and distributed asynchronous computation fo
 In a related context, we introduce multiagent on-line schemes, whereby at each stage, each agent's decision is made by executing a local rollout algorithm that uses a base policy, together with some coordinating information from the other agents. The amount of local computation required at every stage by each agent is independent of the number of agents, while the amount of global computation (over all agents) grows linearly with the number of agents. By contrast, with the standard rollout algorithm, the amount of global computation grows exponentially with the number of agents. Despite the drastic reduction in required computation, we show that our algorithm has the fundamental cost improvement property of rollout: an improved performance relative to the base policy.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/nTPuL6iVuwU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+## Coding for Distributed Multi-Agent Reinforcement Learning
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/B8WMjzRHoh0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
