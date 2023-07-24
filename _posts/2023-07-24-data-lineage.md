@@ -20,6 +20,7 @@ tags: [machine learning, graph mining, big data]
 * Here’s more to explore: Data, Analytics, and AI Governance: [https://dbricks.co/44gu3YU](https://dbricks.co/44gu3YU)
 
 
+
 ## Abstract
 
 There are more data tools available than ever before, and it is easier to build a pipeline than it has ever been. These tools and advancements have created an explosion of innovation, resulting in data within today's organizations becoming increasingly distributed and can't be contained within a single brain, a single team, or a single platform. Data lineage can help by tracing the relationships between datasets and providing a map of your entire data universe.
