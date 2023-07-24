@@ -16,6 +16,9 @@ tags: [machine learning, graph mining, big data]
 
 # Continuous Training and Deployment with ZenML and Seldon
 
+* [Related Blog Post](https://blog.zenml.io/ci-ct-cd-with-zenml/)
+* [Code](https://github.com/zenml-io/zenml/tree/main/examples/seldon_deployment)
+* [Seldon Docs](https://docs.seldon.io/projects/seldon-core/en/latest/index.html)
 
 ## Abstract
 
