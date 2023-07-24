@@ -2,8 +2,8 @@
 layout: post
 title: Visual Prompting Livestream With Andrew Ng
 date: 2023-07-25
-categories: [computer science]
-tags: [machine learning, graph mining, big data]
+categories: [artificial intelligence]
+tags: [machine learning]
 
 ---
 
