@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Large Multimodal Models
-date: 2023-07-26
+date: 2023-07-27
 categories: [artificial intelligence]
 tags: [machine learning]
 
