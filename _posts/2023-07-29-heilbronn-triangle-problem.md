@@ -26,6 +26,8 @@ of area less than $n^{-8/7-1/2000}$. This is joint work with Alex Cohen and Dmit
 <iframe width="600" height="400" src="https://www.youtube.com/embed/Py0RunoF7Hk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
 
+## Definition: Heilbronn triangle problem
+
 Heilbronn 삼각형 문제(Heilbronn triangle problem)는 수학의 유명한 미해결 문제 중 하나로, 기하학과 조합론의 요소를 결합하여 형성된 도형에 대한 특정 조건을 만족하는 삼각형을 찾는 문제입니다.
 
 이 문제는 다음과 같이 정의됩니다:
