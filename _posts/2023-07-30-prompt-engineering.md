@@ -22,7 +22,7 @@ A lecture covering the basics of prompt engineering and all the latest prompt en
 
 Due to high interest, I have partnered with Maven to deliver a cohort-based course on Prompt Engineering for LLMs. Enrollment info here: [https://maven.com/dair-ai/prompt-engineering-llms](https://maven.com/dair-ai/prompt-engineering-llms)
 
-* [Website: [https://www.promptingguide.ai/](https://www.promptingguide.ai/)
+* Website: [https://www.promptingguide.ai/](https://www.promptingguide.ai/)
 * Notebook: [https://github.com/dair-ai/Prompt-Engineering-Guide/tree/main/notebooks](https://github.com/dair-ai/Prompt-Engineering-Guide/tree/main/notebooks)
 * Slides: [https://github.com/dair-ai/Prompt-Engineering-Guide/tree/main/lecture](https://github.com/dair-ai/Prompt-Engineering-Guide/tree/main/lecture)
 * GitHub: [https://github.com/dair-ai/Prompt-Engineering-Guide](https://github.com/dair-ai/Prompt-Engineering-Guide)
