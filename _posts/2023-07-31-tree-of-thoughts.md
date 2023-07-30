@@ -32,7 +32,15 @@ Don't forget to try this yourself with your own prompts and scenarios and share 
 5. He leaves the towel at the snack bar, then walks to the diving board.
 6. Later Carlos realises he has has lost his watch. Where is the single most likely location of the watch?
 
+
 Think through each step logically.
+
+1. 카를로스는 수영장에 있습니다.
+2. 그는 수건을 들고 탈의실로 걸어갑니다.
+3. 그는 수건에 시계를 넣고 수건을 꽉 쥐고 수영장 가장자리에 있는 쇼즈 의자로 이동합니다.
+4. 쇼즈 의자에서 그는 수건을 흔들면서 수건을 열고, 그 후 스낵 바로 이동합니다.
+5. 그는 수건을 스낵 바에 두고, 그 다음 다이빙 보드로 걸어갑니다.
+6. 나중에 카를로스는 시계를 잃어버렸다는 것을 깨닫습니다. 시계의 가장 확률적인 위치는 어디인가요?
 
 Imagine three different experts are answering this question.
 They will brainstorm the answer step by step reasoning carefully and taking all facts into consideration
@@ -46,4 +54,18 @@ If at any time they realise that there is a flaw in their logic they will backtr
 If any expert realises they're wrong at any point then they acknowledges this and start another train of thought
 Each expert will assign a likelihood of their current assertion being correct
 Continue until the experts agree on the single most likely location
+The question is...
+
+상상해보세요. 세 명의 다른 전문가들이 이 질문에 답하고 있습니다.
+그들은 조심스럽게 이유를 찾아가며 모든 사실을 고려하여 답을 떠올립니다.
+모든 전문가들은 자신의 생각하는 한 단계를 적습니다.
+그리고 그 단계를 그룹과 공유합니다.
+각 전문가는 자신의 응답과 다른 사람들의 응답을 비평합니다.
+그들은 과학과 물리학의 법칙을 바탕으로 답을 검증합니다.
+그런 다음 모든 전문가들은 다음 단계로 이동하고 이 생각의 단계를 적습니다.
+그들은 상대 전문가들의 생각을 고려하여 결론에 도달할 때까지 계속해서 단계를 진행합니다.
+만약 언제든지 그들이 논리에 결함이 있다는 것을 깨닫는다면, 그 결함이 발생한 곳으로 되돌아갑니다.
+어떤 전문가가 어느 시점에서 틀렸다고 깨닫는다면, 그것을 인정하고 다른 사고의 흐름을 시작합니다.
+각 전문가는 현재 주장이 맞을 가능성을 할당합니다.
+전문가들이 가장 가능성이 높은 위치에 동의할 때까지 계속합니다.
 
