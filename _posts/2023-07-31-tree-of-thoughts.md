@@ -81,3 +81,17 @@ Language models are increasingly being deployed for general problem solving acro
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/ut5kp56wW_4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+
+## Tree of Thoughts - GPT-4 Reasoning is Improved 900%
+
+So a new A.I. paper is released:
+
+Tree of Thoughts: Deliberate Problem Solving with Large Language Models
+
+It’s by researchers at Princeton University and Google DeepMind.
+
+It's shows how increase the ability for GPT-4 to autonomously solve complex problems... but it comes with a warning.
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/BrjAt-wvEXI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
