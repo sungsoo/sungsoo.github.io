@@ -14,6 +14,7 @@ tags: [machine learning, foundation models]
 
 ---
 
+
 # How to write Tree of Thoughts Prompts
 
 Ever wondered how AI could mimic human brainstorming and solve complex problems? Join Richard Walker from Lucidate as we delve into the fascinating world of Large Language Models (LLMs) and Prompt Engineering. This video explains the 'Tree of Thought' prompting technique, designed to emulate human brainstorming and prove beneficial in problem-solving, particularly in mathematical reasoning.
