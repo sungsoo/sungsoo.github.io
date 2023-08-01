@@ -13,6 +13,8 @@ tags: [machine learning]
 
 ---
 
+
+
 # What is a Vector Database? 
 
 We're in the midst of the AI revolution. It's upending any industry it
