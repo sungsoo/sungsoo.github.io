@@ -15,6 +15,8 @@ tags: [machine learning]
 
 # Predictive Whittle Networks for Time Series
 
+* [Github](https://github.com/ml-research/PWN)
+
 ## Abstract
 
 Recent developments have shown that modeling in the spectral domain improves the accuracy in time series forecasting. However, state-of-the-art neural spectral forecasters do not generally yield trustworthy predictions. In particular, they lack the means to gauge predictive likelihoods and provide uncertainty estimates. We propose predictive Whittle networks to bridge this gap, which exploits both the advances of neural forecasting in the spectral domain and leverage tractable likelihoods of probabilistic circuits. For this purpose, we propose a novel Whittle forecasting loss that makes use of these predictive likelihoods to guide the training of the neural forecasting component. We demonstrate how predictive Whittle networks improve real-world forecasting accuracy, while also allowing a transformation back into the time domain, in order to provide the necessary feedback of when the model’s prediction may become erratic.
