@@ -21,4 +21,6 @@ tags: [machine learning]
 * "Keeping AI under control through mechanistic interpretability"
 * Speaker: Prof. Max Tegmark (MIT)* 
 
+
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/RheZlFj3Zp8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
