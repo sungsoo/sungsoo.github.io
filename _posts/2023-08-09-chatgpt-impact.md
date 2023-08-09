@@ -1,6 +1,6 @@
 ---
 layout: post
-title: The Impact of chatGPT Talks
+title: Towards Machines that can Learn, Reason, and Plan
 date: 2023-08-09
 categories: [artificial intelligence]
 tags: [machine learning]
@@ -13,7 +13,7 @@ tags: [machine learning]
 
 ---
 
-# The Impact of chatGPT Talks
+# Towards Machines that can Learn, Reason, and Plan
 
 * The Impact of chatGPT and other large language models on physics research and education (2023)
 * Event organizers:  Kevin Burdge, Joshua Borrow, Mark Vogelsberger
