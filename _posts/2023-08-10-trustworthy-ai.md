@@ -16,7 +16,7 @@ tags: [machine learning]
 # Trustworthy AI - A Computational Perspective
 
 * Presenters: Haochen Liu, Yiqi Wang, Wenqi Fan, Xiaorui Liu, Jamell Dacon, Lingjuan Lyu and Jiliang Tang
-* Web: [https://sites.google.com/msu.edu/trustworthy-ai/)
+* Web: [https://sites.google.com/msu.edu/trustworthy-ai/](https://sites.google.com/msu.edu/trustworthy-ai/)
 * [Slides](https://drive.google.com/file/d/1fD4lIHYZ3VptXNUyoeVI67_NTC6ry6bJ/view?pli=1)
 
 
