@@ -22,6 +22,7 @@ Bayesian optimization is a powerful paradigm for sample-efficient optimization o
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/jjaOWe29krU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
+
 ## Bayesian Optimization
 
 * [Movie Source](https://www.youtube.com/watch?v=_SC5_2vkgbA)
