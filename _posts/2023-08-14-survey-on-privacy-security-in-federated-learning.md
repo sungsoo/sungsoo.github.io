@@ -22,5 +22,4 @@ tags: [machine learning]
 * [https://simons.berkeley.edu/talks/peter-kairouz-google-2023-07-19](https://simons.berkeley.edu/talks/peter-kairouz-google-2023-07-19)
 * Federated and Collaborative Learning
 
-
 <iframe width="600" height="400" src="https://www.youtube.com/embed/DFmL5hIlapA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
