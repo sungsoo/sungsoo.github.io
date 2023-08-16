@@ -26,4 +26,12 @@ tags: [machine learning]
 
 For more background on differential privacy and its applications, we recommend the book chapter For more background on differential privacy and its applications, we recommend the [book chapter](https://admindatahandbook.mit.edu/book/v1.0/diffpriv.html)  by Alexandra Wood, Micah Altman, Kobbi Nissim, and Salil Vadhan, as well as the resources at [https://differentialprivacy.org/resources/](https://differentialprivacy.org/resources/) and [https://privacytools.seas.harvard.edu/courses-educational-materials](https://privacytools.seas.harvard.edu/courses-educational-materials).
 
+## COLT 2020 Keynote: Abstract
+Since it was introduced in 2006 by Dwork, McSherry, Nissim, and Smith, differential privacy has become accepted as a gold standard for ensuring that individual-level information is not leaked through statistical analyses or machine learning on sensitive datasets. It has proved to be extremely rich for theoretical investigation, with deep connections to many other topics in theoretical computer science and mathematics, and has also made the transition to practice, with large-scale deployments by the US Census Bureau and technology companies like Google, Apple, and Microsoft.
+
+In this talk, I will survey some of the recent theoretical advances and challenges in differential privacy, highlighting connections to learning theory. I will also discuss efforts toward wider practical adoption, such as OpenDP, a new community effort to build a suite of trusted, open-source tools for deploying differential privacy.
+
+## Bio
+Salil Vadhan is the Vicky Joseph Professor of Computer Science and Applied Mathematics at the Harvard John A. Paulson School of Engineering & Applied Sciences, and Lead PI on the Harvard Privacy Tools Project. Vadhan's research in theoretical computer science spans computational complexity, cryptography, and data privacy. He is a Simons Investigator, a Harvard College Professor, and an ACM Fellow, and his past honors include a Godel Prize and a Guggenheim Fellowship.
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/4bpFDpT1t7I" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
