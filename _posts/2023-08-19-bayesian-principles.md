@@ -15,7 +15,6 @@ tags: [machine learning]
 
 # Bayesian Principles for Machine Learning
 
-
 ## Abstract
 Humans and animals have a natural ability to autonomously learn and quickly adapt to their surroundings. How can we design machines that do the same? In this talk, I will present Bayesian principles to bridge such gaps between humans and machines. I will show that a wide-variety of
 machine-learning algorithms are instances of a single learning-rule derived from Bayesian principles. The rule unravels a dual perspective yielding new mechanisms for knowledge transfer in learning machines. My hope is to convince the audience that Bayesian principles are indispensable for an AI  that learns as efficiently as we do.
