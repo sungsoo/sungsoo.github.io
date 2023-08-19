@@ -25,7 +25,7 @@ How can you prove math theorems? How do you begin? What are the types of logical
 
 ## Methods of Proof 
 
-* [Methods of Proof | A-level Mathematics](https://www.youtube.com/watch?v=bk5oVtWDwrM)
+* [Methods of Proof, A-level Mathematics](https://www.youtube.com/watch?v=bk5oVtWDwrM)
 
 
 The four main types of proof you need to be familiar with in A-level mathematics:
