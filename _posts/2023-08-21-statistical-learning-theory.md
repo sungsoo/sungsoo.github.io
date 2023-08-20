@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Statistical Learning Theory and Neural Networks
-date: 2023-08-20
+date: 2023-08-21
 categories: [artificial intelligence]
 tags: [machine learning]
 
