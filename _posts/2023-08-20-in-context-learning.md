@@ -20,6 +20,7 @@ tags: [machine learning]
 * Location: Calvin Lab Auditorium
 * Date: Friday, Aug. 18, 2023
 * Time: 9 – 10 a.m. PT
+* [Related Paper](https://arxiv.org/pdf/2208.01066.pdf)
 
 
 ## Abstract
