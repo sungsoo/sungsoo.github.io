@@ -9,7 +9,7 @@ tags: [machine learning]
 
 ### Article Source
 
-* [LangChain "Advanced Retrieval" Webinar](https://www.youtube.com/watch?v=cNMYeW2mpBs)
+* [LlamaIndex Overview & Use cases](https://www.youtube.com/watch?v=cNMYeW2mpBs)
 
 ---
 
