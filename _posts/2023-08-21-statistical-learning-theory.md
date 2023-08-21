@@ -23,6 +23,7 @@ tags: [machine learning]
 * [Slides](https://simons.berkeley.edu/sites/default/files/docs/21924/spencerfreitutorial.pdf)
 
 
+
 ## Abstract
 
 In the first tutorial, we review tools from classical statistical learning theory that are useful for understanding the generalization performance of deep neural networks.  We describe uniform laws of large numbers and how they depend upon the complexity of the class of functions that is of interest.  We focus on one particular complexity measure, Rademacher complexity, and upper bounds for this complexity in deep ReLU networks.  We examine how the behaviors of modern neural networks appear to conflict with the intuition developed in the classical setting.
