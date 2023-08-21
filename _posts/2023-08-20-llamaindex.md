@@ -24,7 +24,7 @@ LlamaIndex, previously known as the GPT Index, is a remarkable data framework ai
 * Ingest from different data sources and data formats using Data connectors (Llama Hub).
 * Enable document operations such as inserting, deleting, updating, and refreshing the document index.
 * Support synthesis over heterogeneous data and multiple documents.
-* Use “Router” to pick between different query engines.
+* Use "Router" to pick between different query engines.
 * Allow for the hypothetical document embeddings to enhance output quality
 * Offer a wide range of integrations with various vector stores, ChatGPT plugins, tracing tools, and LangChain, among others.
 * Support the brand new OpenAI function calling API.
