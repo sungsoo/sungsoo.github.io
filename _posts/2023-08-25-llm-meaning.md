@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Meaning in the age of large language models
-date: 2023-08-23
+date: 2023-08-25
 categories: [artificial intelligence]
 tags: [machine learning]
 

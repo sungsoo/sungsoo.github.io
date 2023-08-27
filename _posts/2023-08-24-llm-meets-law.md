@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Large Language Models Meet Copyright Law
-date: 2023-08-23
+date: 2023-08-24
 categories: [artificial intelligence]
 tags: [machine learning]
 

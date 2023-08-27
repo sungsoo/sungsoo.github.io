@@ -1,7 +1,7 @@
 ---
 layout: post
 title: On Localization in Language Models
-date: 2023-08-23
+date: 2023-08-26
 categories: [artificial intelligence]
 tags: [machine learning]
 
