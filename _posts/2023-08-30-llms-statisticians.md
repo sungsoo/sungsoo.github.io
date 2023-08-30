@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Language Models as Statisticians, and as Adapted Organisms
-date: 2023-08-29
+date: 2023-08-30
 categories: [artificial intelligence]
 tags: [machine learning]
 
