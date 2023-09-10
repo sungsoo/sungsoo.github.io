@@ -20,6 +20,7 @@ tags: [machine learning]
 
 ## Abstract
 
+
 There is an increasing interest and need for artificial intelligence and machine learning systems that are fair, robust, interpretable, and generally trustworthy. In this talk, I will discuss how probabilistic reasoning and learning can provide a unified language and framework under which we can develop trustworthy AI systems. This is motivated by the fact that properties about model behavior often depend on the underlying distribution and that we wish to handle uncertainties that arise when deploying a system in the real world. I will talk about some recent work in algorithmic fairness in this direction, as well as efforts in developing tractable probabilistic models and inference to support it.
 
 
