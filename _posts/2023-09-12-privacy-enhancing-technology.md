@@ -15,8 +15,8 @@ tags: [machine learning]
 
 # Leveraging Privacy-Enhancing Technologies with Large Foundation Models
 
-## Abstract
 
+## Abstract
 
 "We can talk a little about the third privacy principle, which is data anonymization. This is
 about making sure that the released output of any computation, especially when we train these
