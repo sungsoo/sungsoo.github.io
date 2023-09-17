@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Gentle Introduction to Causal Inference
-date: 2023-09-13
+date: 2023-09-15
 categories: [artificial intelligence]
 tags: [machine learning]
 
