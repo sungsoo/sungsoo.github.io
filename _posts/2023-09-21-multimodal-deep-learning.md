@@ -21,6 +21,7 @@ tags: [machine learning]
 * [Youtube](https://www.youtube.com/watch?v=5vfIT5LOkR0)
 
 
+
 ## Bio
 
 Douwe Kiela CEO at Contextual AI. Adjunct Professor in Symbolic Systems at Stanford University. Previously, I was the Head of Research at Hugging Face and before that a Research Scientist at Facebook AI Research. I received my PhD and MPhil from the University of Cambridge. Before that, I did a BSc in Liberal Arts & Sciences at Utrecht University with a double major in Cognitive Artificial Intelligence and Philosophy; and an MSc in Logic at the University of Amsterdam's ILLC.
