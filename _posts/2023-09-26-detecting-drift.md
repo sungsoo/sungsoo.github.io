@@ -17,6 +17,7 @@ tags: [machine learning]
 
 * Track: PyData: Machine Learning & Stats
 
+
 ## Abstract
 
 When your ML model is in production, you might observe input data and prediction drift. In absence of ground truth, drift can serve as a proxy for the model performance. But how exactly to evaluate it? In this talk, I will give an overview of the possible approaches, and how to implement and visualize the results.
