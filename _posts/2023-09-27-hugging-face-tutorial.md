@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Hugging Face Tutorial
-date: 2023-09-26
+date: 2023-09-27
 categories: [artificial intelligence]
 tags: [machine learning]
 
