@@ -1,7 +1,7 @@
 ---
 layout: post
 title: How to evaluate and explore data drift in ML systems
-date: 2023-09-26
+date: 2023-09-28
 categories: [artificial intelligence]
 tags: [machine learning]
 
