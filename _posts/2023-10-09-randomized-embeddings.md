@@ -9,7 +9,7 @@ tags: [machine learning]
 
 ### Article Source
 
-* [Randomized Embeddings and Neural Networks](https://www.youtube.com/watch?v=MsSArXJM_34)
+* [Randomized Embeddings and Neural Networks](https://www.youtube.com/watch?v=xiDdXU-_zWU&list=PLgKuh-lKre10-e2TWPCB0JdacFEnHHS31)
 
 ---
 
