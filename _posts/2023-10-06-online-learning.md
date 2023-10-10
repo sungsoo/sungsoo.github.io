@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Memory-Regret Tradeoff for Online Learning
+title: Fast Attention Requires Bounded Entries
 date: 2023-10-06
 categories: [artificial intelligence]
 tags: [machine learning]
@@ -9,10 +9,19 @@ tags: [machine learning]
 
 ### Article Source
 
-* [Memory-Regret Tradeoff for Online Learning](https://www.youtube.com/watch?v=MsSArXJM_34)
+* [Fast Attention Requires Bounded Entries](https://www.youtube.com/watch?v=S2C57hMO_8U)
 
 ---
 
-# Memory-Regret Tradeoff for Online Learning
+# Fast Attention Requires Bounded Entries
 
-<iframe width="600" height="400" src="https://www.youtube.com/embed/MsSArXJM_34?si=sV-VIH-aT9CfRbHH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+* Josh Alman (Harvard)
+* [https://simons.berkeley.edu/talks/mert-pilanci-stanford-university-2023-10-09](https://simons.berkeley.edu/talks/mert-pilanci-stanford-university-2023-10-09)
+* Sketching and Algorithm Design
+* [https://arxiv.org/abs/2302.13214](https://arxiv.org/abs/2302.13214)
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/S2C57hMO_8U?si=wOmRTYYXBc4zLM-0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+
+
