@@ -15,7 +15,6 @@ tags: [machine learning]
 
 # Open-Source Spotlight - Deepchecks 
 
-
 ## Abstract
 
 Deepchecks: A Python package for comprehensively validating your machine learning models and data with minimal effort.
