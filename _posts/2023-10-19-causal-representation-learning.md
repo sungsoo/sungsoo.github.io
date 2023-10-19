@@ -1,7 +1,7 @@
 ---
 layout: post
 title: A Tutorial on Causal Representation Learning 
-date: 2023-10-18
+date: 2023-10-19
 categories: [artificial intelligence]
 tags: [machine learning]
 
