@@ -21,6 +21,7 @@ tags: [machine learning]
 
 ## Abstract
 
+
 The total variation (TV) distance is a fundamental metric to measure the difference between two distributions. Recently, Bhattacharyya et al. initiated the problem of computing the TV distance between two high-dimensional distributions. They proved that the exact computing of TV distance, even for product distributions over the Boolean domain, is #P-hard.
 
 In this talk, I will discuss some recent progress in approximating the TV distance between two product distributions. I will introduce a randomized approximation algorithm based on the coupling technique and a deterministic algorithm based on the sparsification of distributions.

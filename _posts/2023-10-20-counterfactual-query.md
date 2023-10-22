@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Tractable Bounding of Counterfactual Queries by Knowledge Compilation 
+title: Tractable Bounding of Counterfactual Queries
 date: 2023-10-20
 categories: [artificial intelligence]
 tags: [machine learning]
