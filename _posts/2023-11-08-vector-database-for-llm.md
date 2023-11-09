@@ -17,6 +17,7 @@ tags: [machine learning]
 
 * Speaker: Sam Partee, Principal Applied AI Engineer, Redis 
 
+
 ## Abstract
 
 Large Language Models (LLMs) have lowered the bar for getting a product to market however they are "not (always) large enough" in that they don't always contain all the information they need to solve a certain task.
