@@ -16,6 +16,7 @@ tags: [machine learning, data management]
 # Awesome Vector Database [![Awesome](https://cdn.jsdelivr.net/gh/sindresorhus/awesome@d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/sindresorhus/awesome)
 A curated list of awesome works related to high dimensional structure/vector search &amp; database 
 
+
 # Services
 - [Google Vector Search (Vertex AI)](https://cloud.google.com/vertex-ai/docs/vector-search/overview)
 - [Pinecone](https://www.pinecone.io/)
