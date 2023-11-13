@@ -9,7 +9,7 @@ tags: [machine learning]
 
 ### Article Source
 
-* [OpenAI DevDay, Opening Keynote](https://www.youtube.com/watch?v=U9mJuUkhUzk
+* [OpenAI DevDay, Opening Keynote](https://www.youtube.com/watch?v=U9mJuUkhUzk)
 
 ---
 
