@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Best Practices for Query Performance Testing and Tuning with Pinecone  
+title: Best Practices for Query Performance Testing   
 date: 2023-11-14
 categories: [artificial intelligence]
 tags: [machine learning]
