@@ -16,6 +16,7 @@ tags: [machine learning]
 # Generative AI And Programming 
 
 
+
 ## Abstract
 
 Recently, Large Language Models have shown a strong ability to generate working code. This talk explores what this means for the future of programmers, programming languages, and the software industry.
