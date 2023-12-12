@@ -15,6 +15,10 @@ tags: [machine learning]
 
 # Active Metadata with Data Quality  
 
+
+* GitHub [https://github.com/sodadata/soda-core](https://github.com/sodadata/soda-core)
+* Slack [https://community.soda.io/slack](https://community.soda.io/slack)
+
 ## Abstract
 
 Soda is built for everyone in a modern data team to get involved in finding, analyzing, and resolving data issues.
