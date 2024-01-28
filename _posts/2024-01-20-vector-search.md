@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Intro to Large Language Models
+title: Introduction to Vector Search
 date: 2024-01-20
 categories: [artificial intelligence]
 tags: [machine learning]
