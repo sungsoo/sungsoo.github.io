@@ -1,7 +1,7 @@
 ---
 layout: post
 title: What is a vector database?
-date: 2024-01-29
+date: 2024-01-30
 categories: [artificial intelligence]
 tags: [machine learning]
 
