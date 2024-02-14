@@ -21,7 +21,7 @@ tags: [machine learning]
 
 Join us as KX Data Scientist, Ryan Siegler, gives a presentation diving into Multimodal Retrieval Augmented Generation (RAG). We will explore how the integration of diverse data types like images and text can improve how Large Language Models (LLMs) respond to user queries.
 
-Key Topics:
+### Key Topics
 + Understanding Multimodal AI: how does combining text, images, and other data types help emulate human-like perception in machines?
 
 + The role of Vector Databases: Discover how KDB.AI serves as the backbone for multimodal data retrieval and facilitates coupling this data with LLMs for RAG applications
