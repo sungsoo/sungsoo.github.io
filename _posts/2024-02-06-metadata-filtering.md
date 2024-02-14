@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Enhancing Vector Database Queries with Metadata Filtering
-date: 2024-02-04
+date: 2024-02-06
 categories: [artificial intelligence]
 tags: [machine learning]
 
