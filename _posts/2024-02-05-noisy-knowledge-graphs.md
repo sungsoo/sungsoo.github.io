@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Guiding Graph Embeddings using Path-Ranking Methods
-date: 2024-02-04
+date: 2024-02-05
 categories: [artificial intelligence]
 tags: [machine learning]
 
