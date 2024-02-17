@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Mitigating LLM Hallucinations with a Metrics-First Evaluation Framework
+title: Mitigating LLM Hallucinations 
 date: 2024-02-15
 categories: [artificial intelligence]
 tags: [machine learning]
