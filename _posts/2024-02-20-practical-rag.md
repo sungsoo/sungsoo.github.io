@@ -25,6 +25,4 @@ He discusses the importance of choosing the right embedding model, chunking stra
 
 
 
-
-
 <iframe width="600" height="400" src="https://www.youtube.com/embed/j1XRLh7yzzY?si=oCt0RjaEAq58uiUu" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
