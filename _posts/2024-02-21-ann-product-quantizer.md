@@ -10,7 +10,7 @@ tags: [machine learning]
 ### Article Source
 
 
-* [Approximate Nearest Neighbor and Product Quantizer for k-Nearest Neighbor | Embeddings Search](https://www.youtube.com/watch?v=50PNumB7s3U)
+* [Approximate Nearest Neighbor and Product Quantizer for k-Nearest Neighbor ; Embeddings Search](https://www.youtube.com/watch?v=50PNumB7s3U)
 
 ---
 
