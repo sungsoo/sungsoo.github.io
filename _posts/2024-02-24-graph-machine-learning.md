@@ -19,6 +19,7 @@ tags: [machine learning]
 ## Abstract
 
 
+
 This session will teach you how to leverage modern, relevant, and practical graph machine learning (GML) approaches to solve common data science/ML business problems. Zach will provide a technical overview of GML and walk you through modern techniques for generating embeddings and building supervised learning workflows, including link prediction and node classification tasks. He'll also touch on integrations with Generative AI to enrich/improve AI capabilities with GML. The use cases and applications of GML are fairly broad, including recommendation systems, fraud & anomaly detection, disambiguation, and search.
 
 
