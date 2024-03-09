@@ -14,6 +14,7 @@ tags: [machine learning]
 
 ---
 
+# Machine Unlearning of Features and Labels
 
 * PAPER:[https://www.ndss-symposium.org/wp-content/uploads/2023/02/ndss2023_s87_paper.pdf](https://www.ndss-symposium.org/wp-content/uploads/2023/02/ndss2023_s87_paper.pdf)
 * AUTHORS: Alexander Warnecke (TU Braunschweig), Lukas Pirch (TU Braunschweig), Christian Wressnegger (Karlsruhe Institute of Technology (KIT)), Konrad Rieck (TU Braunschweig)
