@@ -185,6 +185,7 @@ tags: [machine learning]
 | Xiong et al. | [Exact-Fun: An Exact and Efficient Federated Unlearning Approach](https://zuobinxiong.github.io/assets/pdf/ExactFedUnlearning.pdf) | |
 
 ### 2022
+
 | Author(s) | Title | Venue |
 |:--------- | ----- | ----- |
 | Marchant et al. | [Hard to Forget: Poisoning Attacks on Certified Machine Unlearning](https://arxiv.org/abs/2109.08266) | AAAI |
@@ -318,6 +319,7 @@ tags: [machine learning]
 | Zeng et al. | [Learning to Refit for Convex Learning Problems](https://arxiv.org/abs/2111.12545) | arXiv |
 
 ### 2020
+
 | Author(s) | Title | Venue |
 |:--------- | ----- | ----- |
 | Tople te al. | [Analyzing Information Leakage of Updates to Natural Language Models](https://dl.acm.org/doi/abs/10.1145/3372297.3417880) | CCS |
@@ -333,6 +335,7 @@ tags: [machine learning]
 | Sommer et al. | [Towards Probabilistic Verification of Machine Unlearning](https://arxiv.org/abs/2003.04247) | arXiv |
 
 ### 2019
+
 | Author(s) | Title | Venue |
 |:--------- | ----- | ----- |
 | Shintre et al. | [Making Machine Learning Forget](https://link.springer.com/chapter/10.1007/978-3-030-21752-5_6) | APF |
@@ -346,6 +349,7 @@ tags: [machine learning]
 | Schelter | [“Amnesia” – Towards Machine Learning Models That Can Forget User Data Very Fast](http://cidrdb.org/cidr2020/papers/p32-schelter-cidr20.pdf) | AIDB Workshop |
 
 ### 2018
+
 | Author(s) | Title | Venue |
 |:--------- | ----- | ----- |
 | Cao et al. | [Efficient Repair of Polluted Machine Learning Systems via Causal Unlearning](https://dl.acm.org/citation.cfm?id=3196517) | ASIACCS |
@@ -357,12 +361,14 @@ tags: [machine learning]
 | State of California | [California Consumer Privacy Act](https://leginfo.legislature.ca.gov/faces/billTextClient.xhtml?bill_id=201720180AB375) |
 
 ### 2017
+
 | Author(s) | Title | Venue |
 |:--------- | ----- | ----- |
 | Shokri et al. | [Membership Inference Attacks Against Machine Learning Models](https://ieeexplore.ieee.org/abstract/document/7958568) | S&P |
 | Kwak et al. | [Let Machines Unlearn--Machine Unlearning and the Right to be Forgotten](https://aisel.aisnet.org/amcis2017/InformationSystems/Presentations/14/) | SIGSEC |
 
 ### Before 2017
+
 | Author(s) | Title | Venue |
 |:--------- | ----- | ----- |
 | Ganin et al. |  [Domain-Adversarial Training of Neural Networks](https://www.jmlr.org/papers/volume17/15-239/15-239.pdf) | JMLR 2016 |
