@@ -33,6 +33,7 @@ tags: [machine learning]
 ---
 
 ### 2024
+
 | Author(s) | Title | Venue |
 |:--------- | ----- | ----- |
 | Kurmanji et al. | [Machine Unlearning in Learned Databases: An Experimental Analysis](https://arxiv.org/abs/2311.17276) | SIGMOD |
@@ -45,6 +46,7 @@ tags: [machine learning]
 | Romandini et al. | [Federated Unlearning: A Survey on Methods, Design Guidelines, and Evaluation Metrics](https://arxiv.org/pdf/2401.05146.pdf) | arXiv |
 
 ### 2023
+
 | Author(s) | Title | Venue |
 |:--------- | ----- | ----- |
 | Wang et al. | [KGA: A General Machine Unlearning Framework Based on Knowledge Gap Alignment](https://arxiv.org/abs/2305.06535) | ACL |
