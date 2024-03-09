@@ -24,3 +24,7 @@ tags: [machine learning]
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/34Xrv6FZEOQ?si=il7lA-OEi7fKbIgK" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+## Machine Unlearning
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/eiZuQmImxEE?si=oJn_6STsN4mAu-FS" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
