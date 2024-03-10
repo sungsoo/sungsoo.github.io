@@ -1,7 +1,7 @@
 ---
 layout: post
 title: How to Build a Metadata Driven Data Pipelines with Delta Live Tables
-date: 2024-03-14
+date: 2024-03-15
 categories: [artificial intelligence]
 tags: [machine learning]
 
