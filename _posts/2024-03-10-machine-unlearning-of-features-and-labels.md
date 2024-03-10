@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Machine Unlearning of Features and Labels
-date: 2024-03-09
+date: 2024-03-10
 categories: [artificial intelligence]
 tags: [machine learning]
 
