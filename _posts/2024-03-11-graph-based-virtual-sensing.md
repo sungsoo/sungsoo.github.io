@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Graph-based Virtual Sensing from Sparse and Partial Multivariate Observation
+title: Graph-based Virtual Sensing 
 date: 2024-03-11
 categories: [artificial intelligence]
 tags: [machine learning]
