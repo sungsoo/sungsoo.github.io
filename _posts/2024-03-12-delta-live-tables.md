@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Delta Live Tables A to Z; Best Practices for Modern Data Pipelines Observation
+title: Delta Live Tables A to Z; Best Practices for Modern Data
 date: 2024-03-12
 categories: [artificial intelligence]
 tags: [machine learning]
@@ -10,7 +10,7 @@ tags: [machine learning]
 ### Article Source
 
 
-* [Delta Live Tables A to Z; Best Practices for Modern Data ](https://www.youtube.com/watch?v=l_3bv5b3LbM)
+* [Delta Live Tables A to Z; Best Practices for Modern Data](https://www.youtube.com/watch?v=l_3bv5b3LbM)
 
 ---
 

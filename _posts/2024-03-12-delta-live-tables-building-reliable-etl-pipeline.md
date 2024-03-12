@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Building Reliable ETL Pipelines with Azure Databricks Pipelines Observation
+title: Building Reliable ETL Pipelines with Azure Databricks
 date: 2024-03-12
 categories: [artificial intelligence]
 tags: [machine learning]
