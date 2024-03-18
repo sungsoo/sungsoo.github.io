@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Generalization in diffusion models from geometry-adaptive harmonic representation
+title: Generalization in diffusion models 
 date: 2024-03-18
 categories: [artificial intelligence]
 tags: [machine learning]
