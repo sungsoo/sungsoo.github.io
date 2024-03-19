@@ -10,7 +10,7 @@ tags: [machine learning]
 ### Article Source
 
 
-* [Gemini Multimodal RAG Applications with LangChain](https://www.youtube.com/watch?v=V_t6QppPbwQ)
+* [Generalization in diffusion models from geometry-adaptive harmonic representation](https://www.youtube.com/watch?v=V_t6QppPbwQ)
 
 ---
 
