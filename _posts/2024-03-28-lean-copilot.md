@@ -20,6 +20,9 @@ tags: [machine learning]
 # Large Language Models as Copilots for Theorem Proving
 
 
+* [Paper](https://mathai2023.github.io/papers/4.pdf)
+
+
 ## Abstract
 
 ## 대정리 증명을 위한 협업 파트너로서의 대규모 언어 모델
