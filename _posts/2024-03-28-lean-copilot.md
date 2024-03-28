@@ -16,7 +16,6 @@ tags: [machine learning]
 
 
 
-
 # Large Language Models as Copilots for Theorem Proving
 
 
