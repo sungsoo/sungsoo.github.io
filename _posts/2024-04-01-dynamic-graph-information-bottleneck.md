@@ -23,6 +23,7 @@ tags: [machine learning]
 * Speaker: Haonan Yuan
 * Date: March 21, 2024
 
+
 ## Abstract
 
 Dynamic Graphs widely exist in the real world, which carry complicated spatial and temporal feature patterns, challenging their representation learning. Dynamic Graph Neural Networks (DGNNs) have shown impressive predictive abilities by exploiting the intrinsic dynamics. However, DGNNs exhibit limited robustness, prone to adversarial attacks. This paper presents the novel Dynamic Graph Information Bottleneck (DGIB) framework to learn robust and discriminative representations. 
