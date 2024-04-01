@@ -15,7 +15,6 @@ tags: [machine learning]
 ---
 
 
-
 # Why should you care about DuckDB?
 
 * Talk from the DuckDB meetup that happened in Dublin on 23 January 2024!
