@@ -10,7 +10,7 @@ tags: [machine learning]
 ### Article Source
 
 
-* [awesome-graph-explainability-papers](https://www.youtube.com/watch?v=q55UMyQapKA)
+* [awesome-graph-explainability-papers](https://github.com/flyingdoog/awesome-graph-explainability-papers)
 
 ---
 
