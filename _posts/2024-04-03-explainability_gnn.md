@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Explainability of Graph Neural Networks
-date: 2024-04-02
+date: 2024-04-03
 categories: [artificial intelligence]
 tags: [machine learning]
 
@@ -17,6 +17,19 @@ tags: [machine learning]
 
 # Explainability of Graph Neural Networks
 
+## Abstract
+Graph Neural Networks (GNNs) are powerful models to exploit the high-order relationship between entities on graphs. Despite the superior performance, we have little knowledge about the explainability of GNNs. In this talk, we will introduce two themes of explainability, (1) Post-hoc explainability: Using an additional explainer method to explain a black-box model post hoc, but explanations could be unfaithful to the decision-making process of a model; (2) Intrinsic Interpretability: Incorporating a rationalization module into the model design, so as to transform a black-box to a white-box. We find causal theory is one promising solution and we will discuss interpretability and generalization.
+
+## 그래프 신경망의 설명 가능성에 대한 소개
+
+그래프 신경망(GNN)은 그래프 상의 개체들 간의 고차원 관계를 이용하는 강력한 모델입니다. 뛰어난 성능에도 불구하고, GNN의 설명 가능성에 대한 지식은 아직 부족합니다. 이 발표에서는 설명 가능성의 두 가지 주제를 소개합니다.
+
+1. **사후 설명 가능성 (Post-hoc explainability):** 사후 설명 가능성은 흑상자 모델을 설명하기 위해 추가적인 설명 방법을 사용하는 것을 말합니다. 하지만 이러한 방법으로 얻은 설명은 모델의 실제 의사 결정 과정을 정확하게 반영하지 않을 수도 있습니다.
+2. **내재적 해석 가능성 (Intrinsic Interpretability):** 내재적 해석 가능성은 모델 설계에 합리화 모듈을 통합하여 흑상자 모델을 백상자 모델로 변환하는 것을 말합니다. 인과 이론이 해석 가능성을 높이는 유망한 해결책 중 하나이며, 이 발표에서는 이와 관련하여 해석 가능성과 일반화에 대해 논의할 것입니다.
+
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/rNHwyyOG8Lg?si=zSOe_yp1ok3ZJr7i" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ### Surveys
 1. [Proceedings of the IEEE 24] **Trustworthy Graph Neural Networks: Aspects, Methods and Trends** [paper](https://arxiv.org/abs/2205.07424)
