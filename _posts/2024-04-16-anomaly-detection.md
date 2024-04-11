@@ -17,6 +17,7 @@ tags: [machine learning]
 
 # Anomaly Detection in Continuous-Time Temporal Provenance Graphs 
 
+
 * Temporal Graph Learning Reading Group
 * Paper: "Anomaly Detection in Continuous-Time Temporal Provenance Graphs"
 * Speaker: Jakub Reha
