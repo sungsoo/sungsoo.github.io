@@ -15,6 +15,7 @@ tags: [machine learning]
 ---
 
 
+
 # Prof. Chris Bishop's NEW Deep Learning Textbook!  
 
 ## Abstract
