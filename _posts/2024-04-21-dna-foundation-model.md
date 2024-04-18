@@ -20,6 +20,7 @@ tags: [machine learning]
 * Sequence Modeling and Design from Molecular to Genome Scale with EVO
 * Speaker: Eric Nguyen
 
+
 ### Bios:
 Eric Nguyen is a PhD student at Stanford in the BioEngineering department. He's advised by Steve Baccus in neurobiology, Chris Ré in computer science, and Brian Hie in chemical engineering, and is a part of Hazy Research and Evo Design labs.
 
