@@ -15,6 +15,7 @@ tags: [machine learning]
 ---
 
 
+
 # Vector Database Fundamentals
 
 ANNOY stands for Approximate Nearest Neighbors, Oh Yeah. It's a vector search algorithm that came out of Spotify. It is a rougher version of IVF. It uses hyperplanes to divide the space in half between two points, and does this over and over again. When we query, we are essentially querying a binary tree. 
