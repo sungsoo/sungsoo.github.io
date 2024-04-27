@@ -16,6 +16,7 @@ tags: [machine learning]
 
 
 
+
 # Vector Database 101 - A Crash Course
 
 ## Abstract
