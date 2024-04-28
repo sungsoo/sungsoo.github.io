@@ -10,6 +10,7 @@ tags: [machine learning]
 ### Article Source
 
 
+
 * [Complete Tutorial on Vector Database - Learn ChromaDB, Pinecone & Weaviate](https://www.youtube.com/watch?v=8KrTO9bS91s)
 
 ---
