@@ -15,7 +15,6 @@ tags: [machine learning]
 ---
 
 
-
 # Fundamentals of Intelligent Reflecting Surfaces
 
 
