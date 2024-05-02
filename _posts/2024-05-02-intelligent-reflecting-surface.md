@@ -17,7 +17,6 @@ tags: [machine learning]
 
 # Fundamentals of Intelligent Reflecting Surfaces
 
-
 ## Abstract
 
 Associate professor Emil Björnson explains the basic concept of intelligent reflecting surfaces (also known as reconfigurable intelligent surfaces), which can potentially improve 6G wireless networks. In particular, he explains how to model the channel, select the phase shifts, and its connection to holographic beamforming.
