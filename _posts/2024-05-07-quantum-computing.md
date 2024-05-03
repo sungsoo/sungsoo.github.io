@@ -18,6 +18,7 @@ tags: [machine learning]
 # Quantum Computing in Practice
 
 
+
 ## Abstract
 
 Welcome to Quantum Computing in Practice! The aim of this course is to teach a broad audience (yes, that includes you!) how to use quantum processors of over 100 qubits.
