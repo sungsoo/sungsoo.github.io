@@ -14,7 +14,6 @@ tags: [machine learning]
 
 ---
 
-
 # Quantum Computing in Practice
 
 
