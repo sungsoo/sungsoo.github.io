@@ -17,7 +17,6 @@ tags: [machine learning]
 # Score Based Models
 
 
-
 ## Abstract
 
 To follow along with the course, visit the course website: 
