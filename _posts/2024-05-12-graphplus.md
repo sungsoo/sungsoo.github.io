@@ -1,6 +1,6 @@
 ---
 layout: post
-title: GraphPulse; Topological Representations for Temporal Graph Property Prediction 
+title: Topological Representations for Temporal Graph Property Prediction 
 date: 2024-05-12
 categories: [artificial intelligence]
 tags: [machine learning]
