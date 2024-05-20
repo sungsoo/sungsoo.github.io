@@ -14,6 +14,7 @@ tags: [machine learning]
 
 ---
 
+
 # PyTorch on Apple Silicon 
 
 PyTorch finally has Apple Silicon support, and in this video @mrdbourke  and I test it out on a few M1 machines.
