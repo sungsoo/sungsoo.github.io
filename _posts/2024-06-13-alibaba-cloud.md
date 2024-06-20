@@ -1,7 +1,7 @@
 ---
 layout: post
 title: SIGMOD 2024 - Alibaba Cloud PolarDB-MP
-date: 2024-06-19
+date: 2024-06-13
 categories: [artificial intelligence]
 tags: [machine learning]
 
