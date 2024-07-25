@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Large Language Models for Recommendation Progresses and Future Directions 
+title: Large Language Models for Recommendation 
 date: 2024-07-25
 categories: [artificial intelligence]
 tags: [machine learning]
