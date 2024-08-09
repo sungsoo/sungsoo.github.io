@@ -15,6 +15,7 @@ tags: [machine learning]
 ---
 
 
+
 # Energy Based Models
 
 For more information about Stanford's Artificial Intelligence programs visit: [https://stanford.io/ai](https://stanford.io/ai)
