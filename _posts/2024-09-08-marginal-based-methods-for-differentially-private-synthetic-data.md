@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Marginal-based Methods for Differentially Private Synthetic Data
-date: 2024-09-07
+date: 2024-09-08
 categories: [artificial intelligence]
 tags: [machine learning]
 
