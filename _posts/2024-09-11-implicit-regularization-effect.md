@@ -4,6 +4,7 @@ title: Towards Understanding the Implicit Regularization Effect of SGD
 date: 2024-09-11
 categories: [artificial intelligence]
 tags: [machine learning]
+use_math: true
 
 ---
 
