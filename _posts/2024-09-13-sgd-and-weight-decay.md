@@ -1,7 +1,7 @@
 ---
 layout: post
 title: SGD and Weight Decay Secretly Compress Your Neural Network
-date: 2024-09-12
+date: 2024-09-13
 categories: [artificial intelligence]
 tags: [machine learning]
 use_math: true
