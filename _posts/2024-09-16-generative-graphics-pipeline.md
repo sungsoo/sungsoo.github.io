@@ -1,7 +1,7 @@
 ---
 layout: post
 title: A Trip Down the Generative Graphics Pipeline
-date: 2024-09-13
+date: 2024-09-16
 categories: [artificial intelligence]
 tags: [machine learning]
 
