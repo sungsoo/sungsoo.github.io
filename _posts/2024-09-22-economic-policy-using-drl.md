@@ -1,6 +1,6 @@
 ---
 layout: post
-title: The AI Economist Economic Policy Design using DRL and AI Simulations
+title: Economic Policy Design using DRL and AI Simulations
 date: 2024-09-22
 categories: [artificial intelligence]
 tags: [machine learning]
