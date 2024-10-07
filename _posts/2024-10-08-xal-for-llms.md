@@ -18,6 +18,7 @@ tags: [machine learning]
 
 # XAI for LLMs: looking under the hood of Large Language Models
 
+
 * Check out my essays: [https://aisc.substack.com/](https://aisc.substack.com/)
 * OR book me to talk: [https://calendly.com/amirfzpr](https://calendly.com/amirfzpr)
 * OR subscribe to our event calendar: [https://lu.ma/aisc-llm-school](https://lu.ma/aisc-llm-school)
