@@ -19,7 +19,6 @@ tags: [machine learning]
 
 # Unifying Graph Neural Networks
 
-
 ## Abstract
 
 Over recent years, Graph Neural Networks (GNNs) have garnered significant attention. However, the proliferation of diverse GNN models, underpinned by various theoretical approaches, complicates the process of model selection, as they are not readily comprehensible within a uniform framework. Specifically, early GNNs were implemented using spectral theory, while others were developed based on spatial theory . This divergence between spectral and spatial methodologies renders direct comparisons challenging. Moreover, the multitude of models within each domain further complicates the evaluation of their respective strengths and weaknesses.
