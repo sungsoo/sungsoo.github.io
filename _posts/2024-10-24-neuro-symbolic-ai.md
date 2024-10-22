@@ -16,6 +16,7 @@ tags: [machine learning]
 
 # Towards Neuro-Symbolic AI with Knowledge Graphs and Large Language Models
 
+
 ## Abstract
 
 Join Sören Auer in this insightful talk where he delves into the intersection of neuro-symbolic AI, knowledge graphs, and large language models. As he discusses the limitations of current AI models in understanding factual information, Sören proposes a novel approach that combines the strengths of both neuro and symbolic AI.
