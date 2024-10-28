@@ -38,3 +38,10 @@ Yann LeCun is VP & Chief AI Scientist at Meta and a Professor at NYU. He was the
 
 ## ABOUT THE COLUMBIA ENGINEERING LECTURE SERIES IN AI
 Columbia Engineering's Lecture Series in AI explores the most cutting-edge topics in artificial intelligence and brings to campus thinkers and leaders who are shaping tomorrow’s technology landscape in a wide variety of fields. Join us to unravel the complexities and possibilities of AI in today's rapidly evolving world.
+
+
+## Human-Level AI
+
+There are four essential characteristics of human intelligence that current AI systems don’t possess: reasoning, planning, persistent memory, and understanding the physical world. Once we have systems with such capabilities, it will still take a while before we bring them up to human level.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/4DsCtgtQlZU?si=Ga9BEnvXNkSX3P-5" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
