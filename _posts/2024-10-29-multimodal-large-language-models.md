@@ -43,6 +43,7 @@ tags: [machine learning]
 # Awesome Papers
 
 ## Multimodal Instruction Tuning
+
 |  Title  |   Venue  |   Date   |   Code   |   Demo   |
 |:--------|:--------:|:--------:|:--------:|:--------:|
 | ![Star](https://img.shields.io/github/stars/Vision-CAIR/LongVU.svg?style=social&label=Star) <br> [**LongVU: Spatiotemporal Adaptive Compression for Long Video-Language Understanding**](https://arxiv.org/pdf/2410.17434) <br> | arXiv | 2024-10-22 | [Github](https://github.com/Vision-CAIR/LongVU) | [Demo](https://huggingface.co/spaces/Vision-CAIR/LongVU) |
@@ -201,6 +202,7 @@ tags: [machine learning]
 | ![Star](https://img.shields.io/github/stars/VT-NLP/MultiInstruct.svg?style=social&label=Star) <br> [**MultiInstruct: Improving Multi-Modal Zero-Shot Learning via Instruction Tuning**](https://arxiv.org/pdf/2212.10773.pdf) <br> | ACL | 2022-12-21 | [Github](https://github.com/VT-NLP/MultiInstruct) | - | 
 
 ## Multimodal Hallucination
+
 |  Title  |   Venue  |   Date   |   Code   |   Demo   |
 |:--------|:--------:|:--------:|:--------:|:--------:|
 | ![Star](https://img.shields.io/github/stars/1zhou-Wang/MemVR.svg?style=social&label=Star) <br> [**Look Twice Before You Answer: Memory-Space Visual Retracing for Hallucination Mitigation in Multimodal Large Language Models**](https://arxiv.org/pdf/2410.03577) <br> | arXiv | 2024-10-04 | [Github](https://github.com/1zhou-Wang/MemVR) | - |
@@ -250,6 +252,7 @@ tags: [machine learning]
 | ![Star](https://img.shields.io/github/stars/RUCAIBox/POPE.svg?style=social&label=Star) <br> [**Evaluating Object Hallucination in Large Vision-Language Models**](https://arxiv.org/pdf/2305.10355.pdf) <br> | EMNLP | 2023-05-17 | [Github](https://github.com/RUCAIBox/POPE) | - |
 
 ## Multimodal In-Context Learning
+
 |  Title  |   Venue  |   Date   |   Code   |   Demo   |
 |:--------|:--------:|:--------:|:--------:|:--------:|
 | [**Visual In-Context Learning for Large Vision-Language Models**](https://arxiv.org/pdf/2402.11574.pdf) | arXiv | 2024-02-18 | - | - |
@@ -277,6 +280,7 @@ tags: [machine learning]
 
 
 ## Multimodal Chain-of-Thought
+
 |  Title  |   Venue  |   Date   |   Code   |   Demo   |
 |:--------|:--------:|:--------:|:--------:|:--------:|
 | ![Star](https://img.shields.io/github/stars/ggg0919/cantor.svg?style=social&label=Star) <br> [**Cantor: Inspiring Multimodal Chain-of-Thought of MLLM**](https://arxiv.org/pdf/2404.16033.pdf) <br> | arXiv | 2024-04-24 | [Github](https://github.com/ggg0919/cantor) | Local Demo |
@@ -299,6 +303,7 @@ tags: [machine learning]
 
 
 ## LLM-Aided Visual Reasoning
+
 |  Title  |   Venue  |   Date   |   Code   |   Demo   |
 |:--------|:--------:|:--------:|:--------:|:--------:|
 | ![Star](https://img.shields.io/github/stars/LaVi-Lab/Visual-Table.svg?style=social&label=Star) <br> [**Beyond Embeddings: The Promise of Visual Table in Multi-Modal Models**](https://arxiv.org/pdf/2403.18252.pdf) <br> | arXiv | 2024-03-27 | [Github](https://github.com/LaVi-Lab/Visual-Table) | - |
@@ -334,6 +339,7 @@ tags: [machine learning]
 
 
 ## Foundation Models
+
 |  Title  |   Venue  |   Date   |   Code   |   Demo   |
 |:--------|:--------:|:--------:|:--------:|:--------:|
 | [**Llama 3.2: Revolutionizing edge AI and vision with open, customizable models**](https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/) | Meta | 2024-09-25 | - | [Demo](https://huggingface.co/meta-llama/Llama-3.2-11B-Vision-Instruct) | 
@@ -366,6 +372,7 @@ tags: [machine learning]
 | ![Star](https://img.shields.io/github/stars/microsoft/unilm.svg?style=social&label=Star) <br> [**Language Models are General-Purpose Interfaces**](https://arxiv.org/pdf/2206.06336.pdf) <br> | arXiv | 2022-06-13 | [Github](https://github.com/microsoft/unilm) | - |
 
 ## Evaluation
+
 |  Title  |   Venue  |   Date   |   Page   |
 |:--------|:--------:|:--------:|:--------:|
 | ![Stars](https://img.shields.io/github/stars/multimodal-art-projection/OmniBench?style=social&label=Star) <br> [**OmniBench: Towards The Future of Universal Omni-Language Models**](https://arxiv.org/pdf/2409.15272) <br> | arXiv | 2024-09-23 | [Github](https://github.com/multimodal-art-projection/OmniBench) | 
@@ -411,6 +418,7 @@ tags: [machine learning]
 | ![Star](https://img.shields.io/github/stars/Yuliang-Liu/MultimodalOCR.svg?style=social&label=Star) <br> [**On The Hidden Mystery of OCR in Large Multimodal Models**](https://arxiv.org/pdf/2305.07895.pdf) <br> | arXiv | 2023-05-13 | [Github](https://github.com/Yuliang-Liu/MultimodalOCR) | 
 
 ## Multimodal RLHF
+
 |  Title  |   Venue  |   Date   |   Code   |   Demo   |
 |:--------|:--------:|:--------:|:--------:|:--------:|
 | ![Star](https://img.shields.io/github/stars/vlf-silkie/VLFeedback.svg?style=social&label=Star) <br> [**Silkie: Preference Distillation for Large Visual Language Models**](https://arxiv.org/pdf/2312.10665.pdf) <br> | arXiv | 2023-12-17 | [Github](https://github.com/vlf-silkie/VLFeedback) | - |
@@ -418,6 +426,7 @@ tags: [machine learning]
 | ![Star](https://img.shields.io/github/stars/llava-rlhf/LLaVA-RLHF.svg?style=social&label=Star) <br> [**Aligning Large Multimodal Models with Factually Augmented RLHF**](https://arxiv.org/pdf/2309.14525.pdf) <br> | arXiv | 2023-09-25 | [Github](https://github.com/llava-rlhf/LLaVA-RLHF) | [Demo](http://pitt.lti.cs.cmu.edu:7890/) |
 
 ## Others
+
 |  Title  |   Venue  |   Date   |   Code   |   Demo   |
 |:--------|:--------:|:--------:|:--------:|:--------:|
 | ![Star](https://img.shields.io/github/stars/ys-zong/VLGuard.svg?style=social&label=Star) <br> [**Safety Fine-Tuning at (Almost) No Cost: A Baseline for Vision Large Language Models**](https://arxiv.org/pdf/2402.02207.pdf) <br> | arXiv | 2024-02-03 | [Github](https://github.com/ys-zong/VLGuard) | - |
@@ -435,6 +444,7 @@ tags: [machine learning]
 # Awesome Datasets
 
 ## Datasets of Pre-Training for Alignment
+
 | Name | Paper | Type | Modalities |
 |:-----|:-----:|:----:|:----------:|
 | **ShareGPT4Video** | [ShareGPT4Video: Improving Video Understanding and Generation with Better Captions](https://arxiv.org/pdf/2406.04325v1) | Caption | Video-Text |
@@ -461,6 +471,7 @@ tags: [machine learning]
 
 
 ## Datasets of Multimodal Instruction Tuning
+
 | Name | Paper | Link | Notes |
 |:-----|:-----:|:----:|:-----:|
 | **UNK-VQA** | [UNK-VQA: A Dataset and a Probe into the Abstention Ability of Multi-modal Large Models](https://arxiv.org/pdf/2310.10942) | [Link](https://github.com/guoyang9/UNK-VQA) | A dataset designed to teach models to refrain from answering unanswerable questions |
@@ -502,12 +513,14 @@ tags: [machine learning]
 | **MultiInstruct** | [MultiInstruct: Improving Multi-Modal Zero-Shot Learning via Instruction Tuning](https://arxiv.org/pdf/2212.10773.pdf) | [Link](https://github.com/VT-NLP/MultiInstruct) | The first multimodal instruction tuning benchmark dataset |
 
 ## Datasets of In-Context Learning
+
 | Name | Paper | Link | Notes |
 |:-----|:-----:|:----:|:-----:|
 | **MIC** | [MMICL: Empowering Vision-language Model with Multi-Modal In-Context Learning](https://arxiv.org/pdf/2309.07915.pdf) | [Link](https://huggingface.co/datasets/BleachNick/MIC_full) | A manually constructed instruction tuning dataset including interleaved text-image inputs, inter-related multiple image inputs, and multimodal in-context learning inputs. |
 | **MIMIC-IT** | [MIMIC-IT: Multi-Modal In-Context Instruction Tuning](https://arxiv.org/pdf/2306.05425.pdf) | [Link](https://github.com/Luodian/Otter/blob/main/mimic-it/README.md) | Multimodal in-context instruction dataset|
 
 ## Datasets of Multimodal Chain-of-Thought
+
 | Name | Paper | Link | Notes |
 |:-----|:-----:|:----:|:-----:|
 | **EMER** | [Explainable Multimodal Emotion Reasoning](https://arxiv.org/pdf/2306.15401.pdf) | [Coming soon](https://github.com/zeroQiaoba/Explainable-Multimodal-Emotion-Reasoning) | A benchmark dataset for explainable emotion reasoning task |
@@ -516,11 +529,13 @@ tags: [machine learning]
 | **ScienceQA** | [Learn to Explain: Multimodal Reasoning via Thought Chains for Science Question Answering](https://proceedings.neurips.cc/paper_files/paper/2022/file/11332b6b6cf4485b84afadb1352d3a9a-Paper-Conference.pdf) | [Link](https://github.com/lupantech/ScienceQA#ghost-download-the-dataset) | Large-scale multi-choice dataset, featuring multimodal science questions and diverse domains | 
 
 ## Datasets of Multimodal RLHF
+
 | Name | Paper | Link | Notes |
 |:-----|:-----:|:----:|:-----:|
 | **VLFeedback** | [Silkie: Preference Distillation for Large Visual Language Models](https://arxiv.org/pdf/2312.10665.pdf) | [Link](https://huggingface.co/datasets/MMInstruction/VLFeedback) | A vision-language feedback dataset annotated by AI |
 
 ## Benchmarks for Evaluation
+
 | Name | Paper | Link | Notes |
 |:-----|:-----:|:----:|:-----:|
 | **LiveXiv** | [LiveXiv -- A Multi-Modal Live Benchmark Based on Arxiv Papers Content](https://arxiv.org/pdf/2410.10783) | [Link](https://huggingface.co/datasets/LiveXiv/LiveXiv) | A live benchmark based on arXiv papers |
@@ -569,6 +584,7 @@ tags: [machine learning]
 | **OwlEval** | [mPLUG-Owl: Modularization Empowers Large Language Models with Multimodality](https://arxiv.org/pdf/2304.14178.pdf) | [Link](https://github.com/X-PLUG/mPLUG-Owl/tree/main/OwlEval) | Dataset for evaluation on multiple capabilities |
 
 ## Others
+
 | Name | Paper | Link | Notes |
 |:-----|:-----:|:----:|:-----:|
 | **IMAD** | [IMAD: IMage-Augmented multi-modal Dialogue](https://arxiv.org/pdf/2305.10512.pdf) | [Link](https://github.com/VityaVitalich/IMAD) | Multimodal dialogue dataset|
