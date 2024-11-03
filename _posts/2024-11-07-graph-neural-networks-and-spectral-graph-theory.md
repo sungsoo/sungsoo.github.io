@@ -14,6 +14,7 @@ tags: [machine learning]
 
 ---
 
+
 # Graph Neural Networks and Spectral Graph Theory
 
 ## Abstract
