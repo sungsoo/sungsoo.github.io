@@ -8,12 +8,14 @@ tags: [machine learning]
 ---
 
 
-
 # 최대 엔트로피 방법 (Maximum Entropy Method)
 
 ## 최대 엔트로피 방법이란?
 
 최대 엔트로피 방법은 **주어진 정보를 최대한 활용하면서, 동시에 알려지지 않은 정보에 대해서는 최대한의 불확실성을 유지하는** 확률 분포를 찾는 방법입니다. 즉, 우리가 알고 있는 정보를 바탕으로 가장 합리적인 추론을 하되, 알지 못하는 부분에 대해서는 함부로 가정하지 않고 모든 가능성을 열어두는 것입니다.
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/6YEn9QRy3ks?si=6r0jNfwHnOghixUX" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ### 왜 최대 엔트로피 방법을 사용하는가?
 
