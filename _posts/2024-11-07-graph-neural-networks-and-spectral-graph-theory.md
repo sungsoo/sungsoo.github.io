@@ -17,6 +17,7 @@ tags: [machine learning]
 
 # Graph Neural Networks and Spectral Graph Theory
 
+
 ## Abstract
 
 Graphs provide a natural way of describing many everyday systems including social contacts, telecommunication systems, paper citations, road networks and chemical compounds. While the last decade has seen massive improvements in deep learning in areas such as computer vision, natural language processing and game play, the irregular structure of graphs presents many challenges that modern network architectures and frameworks are yet to resolve. In this talk, we discuss applications of graph neural networks in our journey from computer vision to compiler optimization to cyber security. We provide a brief overview of key ideas from spectral graph theory and graph convolutional networks, before outlining our recent attempts to combine these to provide scalable training regimes for massive networks.
