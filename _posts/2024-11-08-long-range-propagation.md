@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  Long Range Propagation on Continuous-Time Dynamic Graphs
-date: 2024-11-05
+date: 2024-11-08
 categories: [artificial intelligence]
 tags: [machine learning]
 
