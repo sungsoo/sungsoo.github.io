@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  Towards Autonomous 6G Networks and the Role of Advanced ML Techniques
+title:  Towards Autonomous 6G Networks and the Role of Advanced ML
 date: 2024-11-15
 categories: [artificial intelligence]
 tags: [machine learning]
