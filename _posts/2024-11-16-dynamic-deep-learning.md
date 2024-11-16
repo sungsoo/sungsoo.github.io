@@ -10,7 +10,7 @@ tags: [machine learning]
 ### Article Source
 
 
-* [Dynamic Deep Learning](https://www.youtube.com/watch?v=sMCK2GAPXbE)
+* [Dynamic Deep Learning](https://www.youtube.com/watch?v=75jr5E4OzEE)
 
 ---
 
