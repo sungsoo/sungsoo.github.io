@@ -17,7 +17,6 @@ tags: [machine learning]
 
 # LangChain vs LangGraph; A Tale of Two Frameworks
 
-
 ## Abstract
 
 Get ready for a showdown between LangChain and LangGraph, two powerful frameworks for building applications with large language models (LLMs.) Master Inventor Martin Keen compares the two, taking a look at their unique features, use cases, and how they can help you create innovative, context-aware solutions.
