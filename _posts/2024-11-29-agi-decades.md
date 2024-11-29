@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  The Man Who Predicted AGI Decades Ago
-date: 2024-11-27
+date: 2024-11-29
 categories: [artificial intelligence]
 tags: [machine learning]
 
