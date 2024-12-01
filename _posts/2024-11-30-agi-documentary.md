@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  We’re Close to Artificial General Intelligence
-date: 2024-11-27
+date: 2024-11-30
 categories: [artificial intelligence]
 tags: [machine learning]
 
@@ -10,12 +10,12 @@ tags: [machine learning]
 ### Article Source
 
 
-* [We’re Close to AGI | Artificial General Intelligence DOCUMENTARY](https://www.youtube.com/watch?v=5xBwglAMScc)
+* [We’re Close to AGI ; Artificial General Intelligence DOCUMENTARY](https://www.youtube.com/watch?v=5xBwglAMScc)
 
 ---
 
 
-# We’re Close to AGI | Artificial General Intelligence DOCUMENTARY
+# We’re Close to AGI ; Artificial General Intelligence DOCUMENTARY
 
 ## Abstract
 
