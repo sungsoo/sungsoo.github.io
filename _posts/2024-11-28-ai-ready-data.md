@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  AI-Ready Data. What Does That Mean!?
-date: 2024-11-27
+date: 2024-11-28
 categories: [artificial intelligence]
 tags: [machine learning]
 
