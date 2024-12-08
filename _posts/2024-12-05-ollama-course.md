@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  Ollama Course – Build AI Apps Locally
-date: 2024-12-04
+date: 2024-12-05
 categories: [artificial intelligence]
 tags: [machine learning]
 

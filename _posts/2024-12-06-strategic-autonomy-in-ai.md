@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  Sutras for Strategic Autonomy in AI
-date: 2024-12-04
+date: 2024-12-06
 categories: [artificial intelligence]
 tags: [machine learning]
 
