@@ -27,6 +27,7 @@ The talk was co-hosted by HypeHype and Aalto University.
 
 This new speaker series from HypeHype features gaming and tech industry leaders, experts and visionaries who inspire everyone and us on our journey building the future of games and gaming.
 
+
 --
 
 Get HypeHype early access and start creating games with no coding on your phone, tablet or desktop! [https://hypehype.com](https://hypehype.com)
