@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  Efficient Fine-tuning
+title:  Efficient Fine-tuning LLMs with PEFT and LoRA
 date: 2024-12-17
 categories: [artificial intelligence]
 tags: [machine learning]
@@ -38,6 +38,16 @@ tags: [machine learning]
 PEFT 기술은 사전 학습된 대규모 모델을 효율적으로 활용하기 위한 중요한 방법입니다. 다양한 PEFT 기술들이 개발되고 있으며, 앞으로 더욱 발전하여 더욱 효율적이고 강력한 모델을 만드는 데 기여할 것으로 기대됩니다.
 
 **핵심 키워드:** 파라미터 효율적인 미세 조정, PEFT, LoRA, LLaMA-Adapter, Soft Prompting, Adapters, Prefix Tuning, LayerNorm Tuning, GaLoRA, REFT, 사전 학습 모델, 미세 조정
+
+## LoRA & QLoRA Fine-tuning Explained In-Depth
+
+In this video, I dive into how LoRA works vs full-parameter fine-tuning, explain why QLoRA is a step up, and provide an in-depth look at the LoRA-specific hyperparameters: Rank, Alpha, and Dropout.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/t1caDsMzWBk?si=ZPgC78SAEx2yxVJe" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+## Fine-tuning LLMs with PEFT and LoRA
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/Us5ZFp16PaU?si=zbp-4aGA3KqBDwDw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 # 분산화와 학습 역학
 
