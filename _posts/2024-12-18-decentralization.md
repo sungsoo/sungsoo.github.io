@@ -7,6 +7,7 @@ tags: [machine learning]
 
 ---
 
+
 # Decentralization, Training Dynamics and Scaling
 
 # 분산화와 학습 역학
