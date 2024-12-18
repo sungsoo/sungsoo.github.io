@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  Artificial Super Intelligence Might be Here Already
-date: 2024-12-28
+> date: 2024-12-29
 categories: [artificial intelligence]
 tags: [machine learning]
 
