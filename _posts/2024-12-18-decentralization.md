@@ -37,3 +37,11 @@ tags: [machine learning]
 
 **핵심 키워드:** 분산 학습, 거대 언어 모델, 학습 역학, CacheGen, CocktailSGD, DiLoCo, Petals, Pythia, OLMO
 
+# Distributed and Decentralized Learning
+
+## Abstract
+
+The rapid progress of machine learning in the last decade has been fueled by the increasing scale of data and compute. Today's training algorithms are often communication heavy, as a result, large-scale models are trained dominantly in a centralized environment such as data centers with fast network connections. This strong dependency on fast interconnections is becoming the limiting factor of further scaling, not only for the data center setting but also for alternative decentralized infrastructures such as spot instances and geo-distributed volunteer computes. In this talk, I will discuss our research in communication-efficient distributed learning and our current effort in training foundation models in a decentralized way.
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/e7o2C0lPrKg?si=-behD52BtWyxMJDz" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
