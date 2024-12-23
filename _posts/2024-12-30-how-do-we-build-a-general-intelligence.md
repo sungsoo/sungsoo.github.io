@@ -16,6 +16,7 @@ tags: [machine learning]
 
 
 
+
 # How Do We Build a General Intelligence?
 
 * [Slides](https://cims.nyu.edu/~andrewgw/andrewiclr2024agi.pdf)
