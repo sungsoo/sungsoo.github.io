@@ -10,7 +10,6 @@ tags: [machine learning]
 
 # Artificial General Intelligence (AGI)-Level Reasoning
 
-
 # AGI 수준 인지 능력
 
 현재 AI 모델들은 비록 인지 능력과 일반화 능력이 향상되고 있지만, 여전히 몇 가지 근본적인 제한점을 가지고 있습니다. 이러한 제한점을 극복하고 진정한 AGI에 도달하기 위해서는 다음과 같은 방향으로 연구가 진행되어야 합니다.
