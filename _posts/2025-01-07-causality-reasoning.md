@@ -16,7 +16,7 @@ tags: [machine learning]
 
 
 
-# Causal inference and LLMs; A New Frontier
+# Causal Inference and LLMs; A New Frontier
 
 
 ## Abstract
@@ -27,3 +27,9 @@ Crucially, LLMs perform these causal tasks while relying on sources of knowledge
 In capturing common sense and domain knowledge about causal mechanisms and supporting translation between natural language and formal methods, LLMs open new frontiers for advancing the research, practice, and adoption of causality.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/Pq_Geda2dww?si=fqQKgo3l7HrphVmT" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+## Metaculus Presents — Causal Inference and LLMs; A New Frontier
+
+Microsoft Research's Amit Sharma and Emre Kiciman presented findings from their paper 'Causal Reasoning and Large Language Models: Opening a New Frontier for Causality' and answered attendee questions. 
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/PT1NoaeYwDs?si=p4J-0FufuGHNm0aJ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
