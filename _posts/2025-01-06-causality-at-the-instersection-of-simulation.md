@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Causality at the Intersection of Simulation, Inference, Science, and Learning 
+title: Causality at the Intersection of Simulation, Inference, Science
 date: 2025-01-06
 categories: [artificial intelligence]
 tags: [machine learning]
