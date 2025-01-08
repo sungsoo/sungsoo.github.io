@@ -17,8 +17,8 @@ tags: [machine learning]
 
 # Large Language Models and Causal AI
 
-
 ## Abstract
+
 
 * Max Sipos, Chief Scientific Officer and Co-Founder, causaLens
 * The Causal AI Conference 2024
@@ -29,3 +29,11 @@ Max is the Chief Scientific Officer and co-founder of causaLens, pioneers of Cau
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/ihc4PXXDjAY?si=mHI4ISvzaLWprRFp" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+## An Introduction to Causal AI
+
+Causal AI is a new category of intelligent machines designed to reason about the world like humans. 
+This webinar with Ben Steiner from causaLens was organized by the Quant Committee from CFA Society VBA Netherlands on 31 March 2022
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/qo3IYpsW9Is?si=chH3R0Npl_7Akl4f" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
