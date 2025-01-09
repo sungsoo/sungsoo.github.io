@@ -19,7 +19,6 @@ tags: [machine learning]
 
 ## Abstract
 
-
 * Max Sipos, Chief Scientific Officer and Co-Founder, causaLens
 * The Causal AI Conference 2024
 
