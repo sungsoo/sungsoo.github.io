@@ -30,3 +30,7 @@ Facilitated by speaker Peter WG Tennant.
 * Appreciate some of the challenges and implications of using directed acyclic graphs in applied research
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/Ts0hnNBRIWg?si=RVK7b8AB7HCFAfa0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+## Lecture 6: Causality
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/wx36E8ItZRE?si=k9yDKEgIcSB6iM5j" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
