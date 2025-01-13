@@ -28,3 +28,12 @@ Visit [https://www.causalaiconference.com](https://www.causalaiconference.com) t
 "Be inspired by the business rationale of how Europe’s largest Outdoor eCommerce Retailer Bergfreunde.de (known in the UK as www.alpinetrek.co.uk/) uses Causal AI to intervene on key operational business metrics and forecast each week’s sales and profit and learn how to decode eCommerce operations algorithmically."
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/bNW_8iU1MRY?si=3uD3_XgntgZf9N9A" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+# Decoding eCommerce; Facing and solving technical challenges implementing Causal Modeling
+
+## Abstract
+
+"“Decoding eCommerce” – Facing and solving technical challenges implementing Causal Modeling at Bergfreunde.de” – Find out about the technical challenges (and solutions) Europe’s largest Outdoor eCommerce Retailer Bergfreunde.de (known in the UK as www.alpinetrek.co.uk/) had to face implementing a Causal Model to inform business steering. The focus of this talk will be on exposing the statistical and technical challenges faced, and some of the learnings and solutions implemented.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/mmIcYRYK1nU?si=d_9r41ba45mBfCmy" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
