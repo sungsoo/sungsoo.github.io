@@ -20,7 +20,6 @@ tags: [machine learning]
 causaLens' Ben Steiner joins NYU Courant Professor Petter Kolm for an online NYU Courant's Mathematical Finance & Financial Data Science Seminar.
 
 
-
 ## Abstract
 
 CausalAI is a new category of intelligent machines designed to reason about the world like humans (according to AI visionaries):
