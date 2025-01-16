@@ -16,7 +16,6 @@ tags: [machine learning]
 
 # Introduction To Causal Inference And Directed Acyclic Graphs 
 
-
 ## Abstract
 
 This is a recording of the UKRN online workshop "Introduction To Causal Inference And Directed Acyclic Graphs" held on Thursday 3 February 2022.
