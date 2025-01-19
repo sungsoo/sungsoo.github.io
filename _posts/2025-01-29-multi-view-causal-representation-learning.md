@@ -31,3 +31,8 @@ tags: [machine learning]
 This is a paper-review video of "Multi-View Causal Representation Learning with Partial Observability. (Yao et al., ICLR 2024)"
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/u9YRxz66cMA?si=ru16oU-6WbP-rMMr" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+## Causal Representation Learning from Multiple Distributions
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/tQq5iAf46zE?si=3OHxGEb69CaUzBtX" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
