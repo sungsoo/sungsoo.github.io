@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Understanding Learning and Computation through Symmetry
-date: 2025-02-02
+date: 2025-02-03
 categories: [artificial intelligence]
 tags: [machine learning]
 
