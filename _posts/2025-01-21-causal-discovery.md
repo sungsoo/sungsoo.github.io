@@ -19,7 +19,6 @@ tags: [machine learning]
 
 ## Meeting: Deep End-to-end Causal Inference
 
-
 Causal inference is essential for data-driven decision-making across domains such as business engagement, medical treatment, or policymaking. Building a framework that can answer real-world causal questions at scale is critical. However, research on deep learning, causal discovery, and inference has evolved separately. In this talk, we will present a Deep End-to-end Causal Inference (DECI) framework, a single flow-based method that takes in observational data and can perform both causal discovery and inference, including conditional average treatment effect estimation (CATE). Moreover, we will talk about how such a framework can be used with different real-world data, including time series or considering latent confounders. In the end, we will cover different application scenarios with the Microsoft causal AI suite. We hope that our work bridges the causality and deep learning communities leading to real-world impact.
 
 
