@@ -21,3 +21,8 @@ tags: [machine learning]
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/MjNHllZiHP8?si=yWjajMcevMuqU-jN" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+## OpenAI Operator
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/H2YqOBrpKQU?si=7-QlJIS2FioxBiSB" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
