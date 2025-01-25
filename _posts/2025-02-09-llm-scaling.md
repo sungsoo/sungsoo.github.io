@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Scaling LLM Test-Time Compute
-date: 2025-02-08
+date: 2025-02-09
 categories: [artificial intelligence]
 tags: [machine learning]
 
