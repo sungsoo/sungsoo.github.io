@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Bayesian symbolic regression and the learnability 
-date: 2025-02-10
+date: 2025-01-25
 categories: [artificial intelligence]
 tags: [machine learning]
 
