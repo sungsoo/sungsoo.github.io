@@ -17,6 +17,8 @@ tags: [machine learning]
 
 # Deep Symbolic Regression
 
+## Recovering Math Expressions from Data via Risk-Seeking Policy Gradients
+
 ## Abstract
 
 
