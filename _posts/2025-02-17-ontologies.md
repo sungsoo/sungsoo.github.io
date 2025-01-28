@@ -14,7 +14,6 @@ tags: [machine learning]
 
 ---
 
-
 # Ontologies, Graph Deep Learning, & AI
 
 ## Abstract
