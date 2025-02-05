@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Advances in Causal Representation Learning Discovery of the Hidden World
+title: Advances in Causal Representation Learning Discovery
 date: 2025-02-05
 categories: [artificial intelligence]
 tags: [machine learning]
