@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Symbolic Regression with Transformers
-date: 2025-02-08
+date: 2025-02-07
 categories: [artificial intelligence]
 tags: [machine learning]
 
