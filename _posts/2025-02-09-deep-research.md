@@ -17,6 +17,10 @@ tags: [machine learning]
 
 # Introduction to Deep Research
 
+## OpenAI deep research in practice
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/zm6F0vo2E64?si=eFeQZ8WCrDJ_eVLA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ## Abstract
 
 Mark Chen, Josh Tobin, Neel Ajjarapu, and Isa Fulford introduce and demo deep research from Tokyo.
@@ -24,3 +28,5 @@ Mark Chen, Josh Tobin, Neel Ajjarapu, and Isa Fulford introduce and demo deep re
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/YkCDVn3_wiw?si=4Nge3BpM6f1H08zI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
