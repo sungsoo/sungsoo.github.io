@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Question Generation using Deep Learning in NLP 
-date: 2025-03-10
+date: 2025-03-01
 categories: [artificial intelligence]
 tags: [machine learning]
 
