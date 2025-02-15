@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Physics-Informed Neural Networks and Verification
+title: Physics-Informed Neural Networks - Limitations and Extensions
 date: 2025-01-15
 categories: [artificial intelligence]
 tags: [machine learning]
