@@ -33,3 +33,8 @@ Lecturers: Ben Moseley and Siddhartha Mishra
 * [https://github.com/jdtoscano94/Learning-Scientific_Machine_Learning_Residual_Based_Attention_PINNs_DeepONets/tree/main/Tutorials/PINNs](https://github.com/jdtoscano94/Learning-Scientific_Machine_Learning_Residual_Based_Attention_PINNs_DeepONets/tree/main/Tutorials/PINNs)
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/AXXnSzmpyoI?si=xmHrce7wjG5bSHOG" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+## Physics-Informed Neural Networks - Introduction
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/Oh1nhCNlqjg?si=PC8mbml1SQmOfeI_" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
