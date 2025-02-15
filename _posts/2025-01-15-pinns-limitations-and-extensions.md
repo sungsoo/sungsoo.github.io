@@ -26,3 +26,10 @@ Course Website (links to slides and tutorials): [https://camlab.ethz.ch/teaching
 Lecturers: Ben Moseley and Siddhartha Mishra
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/FAfVbrufiZM?si=7yPRkii9zlkjBN1c" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+## Learning Physics Informed Machine Learning 
+
+* [https://github.com/jdtoscano94/Learning-Scientific_Machine_Learning_Residual_Based_Attention_PINNs_DeepONets/tree/main/Tutorials/PINNs](https://github.com/jdtoscano94/Learning-Scientific_Machine_Learning_Residual_Based_Attention_PINNs_DeepONets/tree/main/Tutorials/PINNs)
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/AXXnSzmpyoI?si=xmHrce7wjG5bSHOG" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
