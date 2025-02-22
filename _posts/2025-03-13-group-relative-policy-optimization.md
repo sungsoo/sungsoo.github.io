@@ -17,8 +17,6 @@ tags: [machine learning]
 
 # Group Relative Policy Optimization(GRPO)
 
-
-
 ## Abstract
 
 Group Relative Policy Optimization (GRPO)는 강화 학습에서 정책을 업데이트할 때 단순히 절대적인 보상 신호만 고려하는 대신, “그룹 내에서의 상대적인” 성능 개선을 함께 반영하여 보다 안정적이고 효율적으로 학습하도록 하는 방법입니다.
