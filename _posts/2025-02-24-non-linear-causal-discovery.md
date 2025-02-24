@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Non-linear Causal Discovery for Addtive Noise Models
-date: 2025-02-23
+date: 2025-02-24
 categories: [artificial intelligence]
 tags: [machine learning]
 
