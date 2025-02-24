@@ -20,6 +20,8 @@ tags: [machine learning]
 
 텍스트에서 그래프를 생성하는 것은 굉장히 흥미롭지만 확실히 도전적이다. 기본적으로 비정형 텍스트를 구조화된 데이터로 변환하는 작업이다. 이 접근 방식은 오랜 기간 사용되어 왔지만, 대형 언어 모델(LLM)의 등장으로 주류에 진입하게 되었다.
 
+![](https://miro.medium.com/v2/resize:fit:1400/format:webp/0*qgT2hBiA3DA1Y3qu.png)
+
 위 이미지에서는 정보 추출이 원시 텍스트를 지식 그래프로 변환하는 과정을 보여준다. 왼쪽에는 여러 문서가 개인과 그들이 기업과 맺은 관계에 대한 비정형 문장을 나타내고, 오른쪽에는 동일한 정보가 개체와 그 연결관계로 표현되어 누가 어떤 조직에서 근무했거나 창업했는지 나타낸다.
 
 텍스트에서 구조화된 정보를 추출해 그래프로 표현하는 이유는 RAG(retrieval-augmented generation) 애플리케이션을 지원하기 위함이다. 비정형 텍스트에 텍스트 임베딩 모델을 사용하는 방식은 유용하지만, 여러 개체 간 연결 관계를 이해해야 하는 복잡한 다단계 질문이나 필터링, 정렬, 집계 같은 구조적 연산이 필요한 질문에는 한계가 있다. 텍스트에서 구조화된 정보를 추출하고 지식 그래프를 구성하면 데이터를 보다 효과적으로 정리할 뿐 아니라, 개체 간 복잡한 관계를 이해할 수 있는 강력한 프레임워크를 제공한다. 이 구조화된 접근 방식은 특정 정보를 훨씬 쉽게 검색하고 활용할 수 있게 하여, 답변 가능한 질문 유형을 확장하고 정확도를 높인다.
@@ -50,6 +52,8 @@ graph = Neo4jGraph(
 ## LLM 그래프 트랜스포머
 
 LLM 그래프 트랜스포머는 어떤 LLM을 사용하더라도 유연하게 그래프를 구축할 수 있는 프레임워크를 제공하도록 설계되었다. 다양한 제공자와 모델이 존재함에 따라 이 작업은 결코 간단하지 않다. 다행히도 LangChain이 대부분의 표준화 과정을 처리한다. LLM 그래프 트랜스포머 자체는 마치 코트 속에 두 마리의 고양이가 들어있는 것처럼 완전히 독립적인 두 가지 모드로 작동할 수 있다.
+
+![](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*aCSCXuvrOB90jRQ0mNZtSA.png)
 
 LLM 그래프 트랜스포머는 두 가지 뚜렷한 모드로 작동하며, 각각 다른 상황에서 LLM을 사용해 문서로부터 그래프를 생성하도록 설계되었다.
 
@@ -269,6 +273,8 @@ LLM 그래프 트랜스포머의 응답은 다음과 같은 구조를 가진 그
 
 그래프 문서는 추출된 노드와 관계를 설명하며, 원본 문서가 `source` 키 아래에 추가된다. Neo4j 브라우저를 사용해 출력 결과를 시각화하면 데이터를 보다 명확하고 직관적으로 이해할 수 있다.
 
+![](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*KHHOsvYQasd5D_dBogF90A.png)
+
 위 이미지는 Marie Curie에 관한 동일한 단락에서 두 번의 추출 결과를 보여준다. 이 경우 도구 기반 추출을 사용하는 GPT-4를 사용했으며, 이미지에서 보듯 고립된 노드를 허용한다. 그래프 스키마가 정의되지 않았기 때문에 LLM은 실행 시점에 추출할 정보를 결정해, 동일한 단락에서도 출력에 차이가 발생할 수 있다. 그 결과 일부 추출은 다른 것보다 더 상세하며, 동일 정보라도 구조가 다르게 나타날 수 있다. 예를 들어 왼쪽에서는 Marie가 노벨상 수상자로 표현되었고, 오른쪽에서는 그녀가 노벨상을 수상한 것으로 나타난다.
 
 이제 프롬프트 기반 방식을 사용해 동일한 추출을 시도한다. 도구를 지원하는 모델에서는 `ignore_tool_usage` 파라미터를 설정해 프롬프트 기반 추출을 활성화할 수 있다.
@@ -278,7 +284,11 @@ no_schema_prompt = LLMGraphTransformer(llm=llm, ignore_tool_usage=True)
 data = await no_schema.aconvert_to_graph_documents(documents)
 ```
 
-다시 Neo4j 브라우저에서 두 번의 개별 실행 결과를 시각화할 수 있다. 프롬프트 기반 방식에서는 고립된 노드가 생성되지 않으며, 이전 추출과 같이 스키마가 실행 간에 달라져 동일 입력에서도 다른 출력이 발생할 수 있다.
+다시 Neo4j 브라우저에서 두 번의 개별 실행 결과를 시각화할 수 있다. 
+
+![](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*9KdbiplBQepP0Zi-9orn8w.png)
+
+프롬프트 기반 방식에서는 고립된 노드가 생성되지 않으며, 이전 추출과 같이 스키마가 실행 간에 달라져 동일 입력에서도 다른 출력이 발생할 수 있다.
 
 다음으로 그래프 스키마 정의가 보다 일관된 출력 결과 도출에 어떻게 도움이 되는지 살펴본다.
 
@@ -297,6 +307,8 @@ data = await allowed_nodes.aconvert_to_graph_documents(documents)
 ```
 
 여기서는 LLM이 Person, Organization, Location, Award, ResearchField 등 다섯 가지 노드 타입을 추출하도록 정의했다. 비교를 위해 Neo4j 브라우저에서 두 번의 개별 실행 결과를 시각화한다.
+
+![](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*9KdbiplBQepP0Zi-9orn8w.png)
 
 예상 노드 타입을 지정함으로써 보다 일관된 노드 추출을 달성할 수 있다. 다만, 실행 간 일부 변동이 발생할 수 있다. 예를 들어 첫 번째 실행에서는 "radioactivity"가 연구 분야로 추출되었으나 두 번째 실행에서는 그렇지 않았다.
 
@@ -319,7 +331,11 @@ rels_defined = LLMGraphTransformer(
 data = await rels_defined.aconvert_to_graph_documents(documents)
 ```
 
-다시 한 번 두 번의 개별 추출 결과를 살펴본다. 노드와 관계가 모두 정의되면 출력 결과가 훨씬 더 일관된다. 예를 들어, Marie는 항상 상을 수상하고, Pierre의 배우자이며, 파리 대학교에서 근무하는 것으로 나타난다. 다만, 관계가 연결할 수 있는 노드에 대한 제한 없이 일반 목록으로 지정되었기 때문에 여전히 변동이 발생한다. 예를 들어, FIELD_OF_RESEARCH 관계가 Person과 ResearchField 사이에 나타날 수도 있지만, 때로는 Award와 ResearchField를 연결하기도 한다. 또한 관계 방향이 정의되지 않았기 때문에 방향 일관성에 차이가 있을 수 있다.
+다시 한 번 두 번의 개별 추출 결과를 살펴본다. 
+
+![](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*A2WRAshWf46BW3iITdFzKA.png)
+
+노드와 관계가 모두 정의되면 출력 결과가 훨씬 더 일관된다. 예를 들어, Marie는 항상 상을 수상하고, Pierre의 배우자이며, 파리 대학교에서 근무하는 것으로 나타난다. 다만, 관계가 연결할 수 있는 노드에 대한 제한 없이 일반 목록으로 지정되었기 때문에 여전히 변동이 발생한다. 예를 들어, FIELD_OF_RESEARCH 관계가 Person과 ResearchField 사이에 나타날 수도 있지만, 때로는 Award와 ResearchField를 연결하기도 한다. 또한 관계 방향이 정의되지 않았기 때문에 방향 일관성에 차이가 있을 수 있다.
 
 관계가 연결할 수 있는 노드를 지정하고 관계 방향을 강제하기 위해 아래와 같이 세 개의 요소를 가진 튜플 형식으로 관계를 정의하는 새로운 옵션을 도입했다.
 
@@ -341,6 +357,8 @@ data = await rels_defined.aconvert_to_graph_documents(documents)
 ```
 
 이 방식은 관계를 단순한 문자열 목록으로 정의하는 대신, 각 튜플이 소스 노드, 관계 타입, 타깃 노드를 순서대로 나타내게 한다. 결과를 다시 시각화해본다.
+
+![](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*ZyPOatXfYvo14In1bOuX2Q.png)
 
 세 개의 튜플 방식을 사용하면 여러 실행에 걸쳐 추출된 그래프에 대해 훨씬 더 일관된 스키마를 제공한다. 다만, LLM의 특성상 추출된 상세 정보 수준에는 여전히 차이가 있을 수 있다. 예를 들어 오른쪽에서는 Pierre가 노벨상을 수상한 것으로 나타나지만, 왼쪽에서는 해당 정보가 누락될 수 있다.
 
@@ -372,6 +390,8 @@ data = await props_defined.aconvert_to_graph_documents(documents)
 graph.add_graph_documents(data)
 ```
 
+![](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*67pBQnABYi-bhvCfAb6dLA.png)
+
 결과를 살펴보면, LLM이 관련 있다고 판단되는 노드와 관계의 속성을 추가하도록 허용되었다. 예를 들어, Marie Curie의 출생 및 사망 날짜, 파리 대학교 교수로서의 역할, 두 번의 노벨상 수상 사실 등이 포함되었다. 이러한 추가 속성은 추출된 정보를 크게 풍부하게 만든다.
 
 두 번째 옵션은 추출할 노드와 관계의 속성을 직접 리스트로 정의하는 것이다.
@@ -399,6 +419,8 @@ graph.add_graph_documents(data)
 ```
 
 속성은 단순히 두 개의 리스트로 정의된다. LLM이 추출한 결과를 살펴보면, 출생 및 사망 날짜는 이전 추출과 일치하며 이번에는 Marie가 파리 대학교에서 교수로 임용된 시작 날짜도 추출되었다.
+
+![](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*d-Q417ckaKqx7Qi5qc_jGA.png)
 
 속성은 추출된 정보에 가치 있는 깊이를 추가하지만, 현재 구현에는 다음과 같은 한계가 있다:
 
@@ -442,6 +464,9 @@ graph.add_graph_documents(graph_documents)
 
 이 메소드는 제공된 그래프 문서의 모든 노드와 관계를 그대로 가져온다. 이 방식은 본 포스트 전반에 걸쳐 다양한 LLM 및 스키마 구성 결과를 검토하는 데 사용되었다.
 
+
+![](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*7SHr3aIKBRDqtEdPOaQNkQ.png)
+
 ### 기본 엔터티 레이블
 
 대부분의 그래프 데이터베이스는 데이터 가져오기와 검색 최적화를 위해 인덱스를 지원한다. Neo4j에서는 특정 노드 레이블에 대해서만 인덱스를 설정할 수 있다. 모든 노드 레이블을 미리 알 수 없으므로, `baseEntityLabel` 파라미터를 사용해 각 노드에 보조 기본 레이블을 추가하면, 그래프 내 모든 가능한 노드 레이블에 대해 인덱스를 만들지 않고도 인덱싱을 활용해 효율적인 가져오기와 검색이 가능하다.
@@ -452,6 +477,9 @@ graph.add_graph_documents(graph_documents, baseEntityLabel=True)
 
 앞서 언급한 바와 같이, `baseEntityLabel` 파라미터를 사용하면 각 노드에 추가로 __Entity__ 레이블이 부여된다.
 
+![](https://miro.medium.com/v2/resize:fit:2000/format:webp/1*UrplGZXwiRSusr28Iopbpw.png)
+
+
 ### 원본 문서 포함
 
 마지막 옵션은 추출된 노드와 관계의 원본 문서를 함께 가져오는 것이다. 이 방법은 각 개체가 어떤 문서에서 추출되었는지 추적할 수 있게 해준다. `include_source` 파라미터를 사용해 원본 문서를 가져올 수 있다.
@@ -459,6 +487,8 @@ graph.add_graph_documents(graph_documents, baseEntityLabel=True)
 ```python
 graph.add_graph_documents(graph_documents, include_source=True)
 ```
+
+![](https://miro.medium.com/v2/resize:fit:1400/format:webp/1*KfP3JiuNNbClFwYAeSGHSg.png)
 
 가져온 그래프를 확인하면, 원본 문서가 파란색으로 강조되고, 그 문서에서 추출된 모든 개체가 MENTIONS 관계로 연결된 결과를 확인할 수 있다. 이 모드는 구조화된 검색과 비구조화된 검색 방식을 모두 활용하는 검색기를 구축할 수 있게 한다.
 
