@@ -32,3 +32,17 @@ Learn more about the three computers enabling physical AI and the foray into hum
 [https://nvda.ws/40g238M](https://nvda.ws/40g238M)
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/uhLDHA9skFk?si=o2x1KxogORVbkI99" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+## Introducing Generative Physical AI
+
+In Omniverse, robots can learn to be robots – minimizing the sim-to-real gap, and maximizing the transfer of learned behavior.
+
+Building robots with generative physical AI requires three computers:
+ 
+
+* NVIDIA AI supercomputers to train the models.
+* NVIDIA Jetson Orin, and next generation Jetson Thor robotics supercomputer, to run the models.
+* And NVIDIA Omniverse, where robots can learn and refine their skills in simulated worlds.
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/AYSfcgVv9-U?si=DF5fVma2OTHCca8A" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
