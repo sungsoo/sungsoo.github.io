@@ -13,6 +13,8 @@ Potential Outcome Framework(잠재적 결과 프레임워크)는 인과 추론�
 
 ---
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/XklkKuC6S58?si=efyetkDoDQzQL5fP" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ## 1. 기본 개념
 
 각 단위 $$i$$에 대해 처치 $$T$$가 있을 때 나타나는 잠재적 결과를 $$Y_i(1)$$, 처치를 받지 않았을 때의 결과를 $$Y_i(0)$$라고 표기한다. 여기서  
@@ -97,6 +99,8 @@ Potential Outcome Framework는 인과 추론 문제를 명확하게 정의하고
 Structured Causal Models(SCM)은 인과 관계를 수학적 모델로 표현하는 체계로, 변수들 간의 인과적 상호작용을 구조방정식과 인과 그래프(DAG)를 통해 명시적으로 기술한다. SCM은 각 변수의 발생 메커니즘을 함수 형태로 나타내고, 이 함수들은 해당 변수의 직접적 원인(부모 변수)과 외생적 요인(잠재적 오차 또는 교란 변수)을 인자로 취한다.
 
 ---
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/dQeRqb0N6gs?si=Ve94pQVNDrVzThTC" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ## 1. SCM의 기본 구성
 
