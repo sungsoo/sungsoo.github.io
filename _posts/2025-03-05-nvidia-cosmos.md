@@ -23,3 +23,8 @@ Mehran Maghoumi, a developer advocate at NVIDIA, shows you how to get started wi
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/dqP-I59wUwU?si=wSYYT1CCT5FmAiB8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+## NVIDIA Cosmos - A Video AI…For Free!
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/QhA2CH6Z-v4?si=2-srlZhAXXq703_D" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
