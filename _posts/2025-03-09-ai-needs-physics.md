@@ -17,6 +17,7 @@ tags: [machine learning]
 # Father of AI - AI Needs PHYSICS to EVOLVE
 
 
+
 ## Abstract
 Yann LeCun is a French computer scientist regarded as one of the fathers of modern deep learning. In 2018, he received the Turing Award, often called the “Nobel Prize of Computing.” He is currently a professor at New York University and Chief AI Scientist at Meta (formerly Facebook), where he continues his research on machine learning algorithms. His work underpins today’s AI landscape, influencing technologies such as speech recognition, satellite image analysis, and recommendation systems. We invite you to an interview with Matt Kawecki & Yann LeCun.
 
