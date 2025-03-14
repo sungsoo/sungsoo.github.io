@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Causality for NLP Reading List
-date: 2025-03-10
+date: 2025-03-14
 categories: [artificial intelligence]
 tags: [machine learning]
 
