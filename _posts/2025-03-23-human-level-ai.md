@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Mathematical Obstacles on the Way to Human-Level AI
-date: 2025-03-22
+date: 2025-03-23
 categories: [artificial intelligence]
 tags: [machine learning]
 
