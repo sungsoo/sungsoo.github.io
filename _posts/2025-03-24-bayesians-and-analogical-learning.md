@@ -15,7 +15,6 @@ tags: [machine learning]
 ---
 
 
-
 # [Bayesians and Analogical Learning in AI](https://www.youtube.com/watch?v=a_6rmeAK-Mo)
 
 
