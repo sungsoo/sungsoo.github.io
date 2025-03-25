@@ -26,4 +26,6 @@ At CES 2025, NVIDIA CEO Jensen Huang highlighted the rapid advancements in "phys
 
 ## NVIDIA Cosmos
 
+챗GPT가 분석한 엔비디아 Physical AI 전략, 코스모스
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/5AE4Jjvyg9c?si=YlVpGYwBlmK4By7E" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
