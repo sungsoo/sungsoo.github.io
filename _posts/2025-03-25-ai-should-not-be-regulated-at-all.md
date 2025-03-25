@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "AI should NOT be regulated at all!" - Domingos
+title: AI should NOT be regulated at all! - Domingos
 date: 2025-03-25
 categories: [artificial intelligence]
 tags: [machine learning]
