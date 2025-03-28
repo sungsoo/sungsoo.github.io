@@ -15,6 +15,7 @@ tags: [machine learning]
 ---
 
 
+
 # [4o Image Generation in ChatGPT and Sora](https://www.youtube.com/watch?v=2f3K43FHRKo)
 
 
