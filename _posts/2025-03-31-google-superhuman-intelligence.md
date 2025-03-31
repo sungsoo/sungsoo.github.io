@@ -18,6 +18,7 @@ tags: [machine learning]
 # [Google’s New AI Is Recreating the Whole World to Unlock Superhuman Intelligence](https://www.youtube.com/watch?v=VIOXsp2UJ4g)
 
 
+
 ## Abstract
 Google DeepMind is building a groundbreaking AI system capable of simulating the entire physical world to advance toward Artificial General Intelligence (AGI). By combining multimodal data like video, audio, and robotics, this world simulation AI aims to replicate real-world physics for applications in robotics, gaming, and scientific research. This ambitious project highlights Google's focus on scaling AI models to achieve unprecedented levels of intelligence and realism.
 
