@@ -11,6 +11,8 @@ tags: [machine learning]
 
 
 * [NEW VISUAL CoT Reasoning](https://www.youtube.com/watch?v=CxE5LR7_2-8)
+* [Visual Chain-of-Thought Reasoning for Vision-Language-Action Models](https://cot-vla.github.io/)
+* [Paper](https://arxiv.org/abs/2503.22020)
 
 ---
 
@@ -22,6 +24,10 @@ tags: [machine learning]
 ## Abstract
 
 A new Study by NVIDIA, Stanford Univ and MIT uncover new methods for VISUAL Chain-of-Thought reasoning over complex topics. They transpose the "linguistic CoT" to a "visual CoT" by teaching an AI system to generate sub-goal images for VLA models. Robotic AI models. 
+
+
+Vision-language-action models (VLAs) have shown potential in leveraging pre-trained vision-language models and diverse robot demonstrations for learning generalizable sensorimotor control. While this paradigm effectively utilizes large-scale data from both robotic and non-robotic sources, current VLAs primarily focus on direct input-output mappings, lacking the intermediate reasoning steps crucial for complex manipulation tasks. As a result, existing VLAs lack temporal planning or reasoning capability. In this paper, we introduce a method that incorporates explicit visual chain-of-thought (CoT) reasoning into vision-language-action models (VLAs) by predicting future image frames auto-regressively as visual goals before generating a short action sequence to achieve these goals. We introduce CoT-VLA, a state-of-the-art 7B VLA that can understand and generate visual and action tokens. We demonstrates that CoT-VLA achieves strong performance in manipulation tasks in both the real world and simulation benchmarks.
+
 
 ### All rights w/ authors:
 
