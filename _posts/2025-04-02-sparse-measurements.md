@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Learning to Predict Global Atrial Fibrillation Dynamics
-date: 2025-04-01
+date: 2025-04-02
 categories: [artificial intelligence]
 tags: [machine learning]
 
