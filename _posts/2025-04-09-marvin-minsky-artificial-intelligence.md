@@ -15,6 +15,7 @@ tags: [machine learning]
 ---
 
 
+
 # [Marvin Minsky - Artificial Intelligence](https://www.youtube.com/watch?v=CIoddZ1NOVM)
 
 Marvin Minsky, mathematician and computer scientist, is considered one of the fathers of Artificial Intelligence. He was Toshiba Professor of Media Arts and Sciences at the Massachusetts Institute of Technology; cofounder of MIT's Artificial Intelligence Laboratory; and the author of eight books, including The Society of Mind. Recorded: 2002
