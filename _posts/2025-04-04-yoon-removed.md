@@ -15,7 +15,6 @@ tags: [machine learning]
 ---
 
 
-
 # [South Korean President Yoon Suk Yeol removed from office over martial law order](https://www.youtube.com/watch?v=qxd7lxMcg2o)
 
 South Korea's constitutional court has unanimously voted to uphold the impeachment of president Yoon Suk Yeol over his short-lived declaration of martial law last December, which plunged the country into political turmoil.
