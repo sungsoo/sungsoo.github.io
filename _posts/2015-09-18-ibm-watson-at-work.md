@@ -3,7 +3,7 @@ layout: post
 title: IBM Watson at Work
 date: 2015-09-18
 categories: [computer science]
-tags: [analytics, big data]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Scales of Big Data
 date: 2014-02-24
 categories: [computer science]
-tags: [analytics, big data]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Case Studies of Analyzing Data
 date: 2014-02-22
 categories: [computer science]
-tags: [analytics, big data]
+tags: [big data]
 
 ---
 
