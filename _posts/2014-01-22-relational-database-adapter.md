@@ -3,7 +3,7 @@ layout: post
 title: Esper Relational Database Adapter
 date: 2014-01-22
 categories: [computer science]
-tags: [stream computing, developments]
+tags: [big data]
 
 ---
 

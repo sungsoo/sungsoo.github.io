@@ -3,7 +3,7 @@ layout: post
 title: Introduction to Esper for Java 
 date: 2014-01-02
 categories: [computer science]
-tags: [stream computing, developments]
+tags: [big data]
 
 ---
 

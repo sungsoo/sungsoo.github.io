@@ -3,7 +3,7 @@ layout: post
 title: Event Rendering to XML and JSON
 date: 2014-01-21
 categories: [computer science]
-tags: [stream computing, developments]
+tags: [big data]
 
 ---
 
