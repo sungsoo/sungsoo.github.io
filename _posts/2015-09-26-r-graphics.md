@@ -3,7 +3,7 @@ layout: post
 title: R Graphics 
 date: 2015-09-26
 categories: [computer science]
-tags: [big data, analytics]
+tags: [big data]
 
 ---
 

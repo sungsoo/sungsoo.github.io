@@ -3,7 +3,7 @@ layout: post
 title: Google's R Style Guide
 date: 2015-09-25
 categories: [computer science]
-tags: [big data, analytics]
+tags: [big data]
 
 ---
 

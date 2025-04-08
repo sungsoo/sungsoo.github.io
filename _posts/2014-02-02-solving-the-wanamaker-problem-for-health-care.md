@@ -4,7 +4,7 @@ title: Solving the Wanamaker Problem for Healthcare
 date: 2014-02-02
  
 categories: [computer science]
-tags: [big data, analytics]
+tags: [big data]
 
 ---
 

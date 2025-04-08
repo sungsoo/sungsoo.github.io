@@ -3,7 +3,7 @@ layout: post
 title: The evolution of analytics
 date: 2013-12-09 
 categories: [computer science]
-tags: [big data, analytics]
+tags: [big data]
 
 ---
 
