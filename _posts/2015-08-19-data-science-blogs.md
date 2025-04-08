@@ -3,7 +3,7 @@ layout: post
 title: Top 50 Data Science Resources
 date: 2015-08-19
 categories: [computer science]
-tags: [big data, data management, data science]
+tags: [big data]
 
 ---
 

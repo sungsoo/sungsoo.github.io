@@ -3,7 +3,7 @@ layout: post
 title: Five open source Big Data projects to watch
 date: 2015-08-22
 categories: [computer science]
-tags: [big data, data management, data science]
+tags: [big data]
 html header: <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
 ---

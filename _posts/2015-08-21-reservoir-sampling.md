@@ -3,7 +3,7 @@ layout: post
 title: Reservoir Sampling in MapReduce
 date: 2015-08-21
 categories: [computer science]
-tags: [big data, data management, data science]
+tags: [big data]
 html header: <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
 ---

@@ -3,7 +3,7 @@ layout: post
 title: Clinical Data Repository Versus a Data Warehouse
 date: 2015-08-20
 categories: [computer science]
-tags: [big data, data management, data science]
+tags: [big data]
 
 ---
 

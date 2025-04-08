@@ -3,7 +3,7 @@ layout: post
 title: 6 Big Data Analytics Use Cases for Healthcare IT
 date: 2015-08-26
 categories: [computer science]
-tags: [big data, data management, data science]
+tags: [big data]
 
 ---
 

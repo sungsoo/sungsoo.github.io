@@ -3,7 +3,7 @@ layout: post
 title: Four Use Cases for Healthcare Predictive Analytics, Big Data
 date: 2015-08-24
 categories: [computer science]
-tags: [big data, data management, data science]
+tags: [big data]
 
 ---
 

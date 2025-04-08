@@ -3,7 +3,7 @@ layout: post
 title: Using Electronic Health Records for Better Care
 date: 2015-08-31
 categories: [computer science]
-tags: [big data, data management, data science]
+tags: [big data]
 
 ---
 
