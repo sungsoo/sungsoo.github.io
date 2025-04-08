@@ -3,7 +3,7 @@ layout: post
 title: The Virginian Database
 date: 2015-07-08
 categories: [computer science]
-tags: [big data, data management, gpgpu]
+tags: [big data]
 
 ---
 
