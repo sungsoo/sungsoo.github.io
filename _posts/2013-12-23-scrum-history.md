@@ -3,7 +3,7 @@ layout: post
 title: Scrum Agile Development Process
 date: 2013-10-15
 categories: [computer science]
-tags: [software engineering, agile]
+tags: [big data]
 
 ---
 

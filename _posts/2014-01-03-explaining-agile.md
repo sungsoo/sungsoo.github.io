@@ -3,7 +3,7 @@ layout: post
 title: Explaining Agile 
 date: 2014-01-03
 categories: [computer science]
-tags: [software engineering, agile]
+tags: [big data]
 
 ---
 
