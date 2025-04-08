@@ -3,7 +3,7 @@ layout: post
 title: An Introduction To Software Defined Networking
 date: 2015-02-17
 categories: [computer science]
-tags: [computer networks]
+tags: [big data]
 
 ---
 

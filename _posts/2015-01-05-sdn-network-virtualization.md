@@ -3,7 +3,7 @@ layout: post
 title: SDN과 NFV와 네트워크 가상화의 차이점 이해하기
 date: 2015-01-05
 categories: [computer science]
-tags: [computer networks]
+tags: [big data]
 
 ---
 

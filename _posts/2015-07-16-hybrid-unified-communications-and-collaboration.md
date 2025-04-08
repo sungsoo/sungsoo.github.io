@@ -3,7 +3,7 @@ layout: post
 title: Hybrid Unified Communications and Collaboration
 date: 2015-07-16
 categories: [computer science]
-tags: [computer networks]
+tags: [big data]
 
 ---
 

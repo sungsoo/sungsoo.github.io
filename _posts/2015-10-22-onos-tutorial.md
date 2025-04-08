@@ -3,7 +3,7 @@ layout: post
 title: Basic ONOS Tutorial
 date: 2015-10-22
 categories: [computer science]
-tags: [computer networks]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Open Network Operating System
 date: 2015-07-09
 categories: [computer science]
-tags: [computer networks]
+tags: [big data]
 
 ---
 

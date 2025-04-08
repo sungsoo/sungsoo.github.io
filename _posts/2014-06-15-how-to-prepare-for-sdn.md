@@ -3,7 +3,7 @@ layout: post
 title: How to prepare for SDN
 date: 2014-06-15
 categories: [computer science]
-tags: [computer networks]
+tags: [big data]
 
 ---
 

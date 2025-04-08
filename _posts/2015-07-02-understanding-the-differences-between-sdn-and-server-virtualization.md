@@ -3,7 +3,7 @@ layout: post
 title: Understanding the Differences between SDN and Server Virtualization 
 date: 2015-07-02
 categories: [computer science]
-tags: [computer networks]
+tags: [big data]
 
 ---
 

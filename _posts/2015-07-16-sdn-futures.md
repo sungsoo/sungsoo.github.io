@@ -3,7 +3,7 @@ layout: post
 title: Potential Novel Applications of Open SDN
 date: 2015-07-16
 categories: [computer science]
-tags: [computer networks]
+tags: [big data]
 
 ---
 
