@@ -3,7 +3,7 @@ layout: post
 title: Key-Value and Document Data Models
 date: 2014-05-18
 categories: [computer science]
-tags: [nosql]
+tags: [big data]
 
 ---
 

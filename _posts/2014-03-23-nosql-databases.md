@@ -3,7 +3,7 @@ layout: post
 title: NoSQL Databases 
 date: 2014-03-23
 categories: [computer science]
-tags: [nosql]
+tags: [big data]
 
 ---
 

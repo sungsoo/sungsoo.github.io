@@ -3,7 +3,7 @@ layout: post
 title: Google Spanner
 date: 2014-05-20
 categories: [computer science]
-tags: [nosql]
+tags: [big data]
 
 ---
 

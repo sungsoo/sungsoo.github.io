@@ -3,7 +3,7 @@ layout: post
 title: Graph Databases
 date: 2013-06-21
 categories: [computer science]
-tags: [nosql]
+tags: [big data]
 
 ---
 Graph databases are clearly post-relational data stores, because they evolve several database concepts much further while keeping other attributes. They provide the means of stor- ing semistructured but highly connected data efficiently and allow us to query and traverse the *linked data* at a very *high speed*.

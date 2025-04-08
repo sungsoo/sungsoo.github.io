@@ -3,7 +3,7 @@ layout: post
 title: Key Points from NoSQL Distilled
 date: 2014-02-15 
 categories: [computer science]
-tags: [nosql]
+tags: [big data]
 
 ---
 

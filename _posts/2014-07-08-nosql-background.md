@@ -3,7 +3,7 @@ layout: post
 title: Why NoSQL?
 date: 2014-07-08
 categories: [computer science]
-tags: [nosql]
+tags: [big data]
 
 ---
 

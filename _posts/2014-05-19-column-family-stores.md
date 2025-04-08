@@ -3,7 +3,7 @@ layout: post
 title: Column-Family Stores
 date: 2014-05-19
 categories: [computer science]
-tags: [nosql]
+tags: [big data]
 
 ---
 
