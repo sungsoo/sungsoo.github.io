@@ -3,7 +3,7 @@ layout: post
 title: Real-time Operational Intelligence
 date: 2014-01-03
 categories: [computer science]
-tags: [stream computing, analytics, data management]
+tags: [big data]
 
 ---
 ### Real-time Operational Intelligence
