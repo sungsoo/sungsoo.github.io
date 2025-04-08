@@ -3,7 +3,7 @@ layout: post
 title: Introduction to Bug Patterns in Java 
 date: 2013-12-26
 categories: [computer science]
-tags: [design patterns, developments]
+tags: [design patterns]
 
 ---
 
