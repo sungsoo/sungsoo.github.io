@@ -3,7 +3,7 @@ layout: post
 title: Parallel R
 date: 2014-01-27
 categories: [computer science]
-tags: [analytics, parallel computing]
+tags: [big data]
 
 ---
 
