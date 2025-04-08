@@ -3,7 +3,7 @@ layout: post
 title: Big Data in Motion
 date: 2014-02-11
 categories: [computer science]
-tags: [big data, stream computing]
+tags: [big data]
 
 ---
 

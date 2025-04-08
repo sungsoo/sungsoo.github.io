@@ -3,7 +3,7 @@ layout: post
 title: Overview of the Apache Flink 
 date: 2015-06-23
 categories: [computer science]
-tags: [big data, stream computing]
+tags: [big data]
 
 ---
 

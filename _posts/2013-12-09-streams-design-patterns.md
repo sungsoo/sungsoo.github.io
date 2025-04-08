@@ -3,7 +3,7 @@ layout: post
 title: Streams design patterns
 date: 2013-12-09 
 categories: [computer science]
-tags: [big data, stream computing]
+tags: [big data]
 
 ---
 

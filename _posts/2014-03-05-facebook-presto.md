@@ -3,7 +3,7 @@ layout: post
 title: Facebook Presto
 date: 2014-03-05 
 categories: [computer science]
-tags: [big data, stream computing]
+tags: [big data]
 
 ---
 
