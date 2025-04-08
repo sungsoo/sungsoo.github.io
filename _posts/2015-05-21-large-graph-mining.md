@@ -3,7 +3,7 @@ layout: post
 title: Large Graph-Mining - Power Tools and a Practitioner's Guide
 date: 2015-05-21
 categories: [computer science]
-tags: [graph mining]
+tags: [big data]
 
 ---
 

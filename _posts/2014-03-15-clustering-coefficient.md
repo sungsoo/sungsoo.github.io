@@ -3,7 +3,7 @@ layout: post
 title: Community Detection - Clustering Coefficient
 date: 2014-03-15
 categories: [computer science]
-tags: [graph mining]
+tags: [big data]
 
 ---
 

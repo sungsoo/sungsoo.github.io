@@ -3,7 +3,7 @@ layout: post
 title: Organizational Charts
 date: 2015-11-30
 categories: [computer science]
-tags: [graph mining]
+tags: [big data]
 
 ---
 

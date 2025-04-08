@@ -3,7 +3,7 @@ layout: post
 title: Applications using graph representation
 date: 2013-12-14
 categories: [computer science]
-tags: [graph mining]
+tags: [big data]
 
 ---
 
