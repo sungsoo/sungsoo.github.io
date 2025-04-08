@@ -3,7 +3,7 @@ layout: post
 title: Data Science, Engineering, and Data-Driven Decision Making
 date: 2014-02-21
 categories: [computer science]
-tags: [analytics, big data, data science]
+tags: [big data]
 
 ---
 

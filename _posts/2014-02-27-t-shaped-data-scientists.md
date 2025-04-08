@@ -3,7 +3,7 @@ layout: post
 title: T-Shaped Data Scientists
 date: 2014-02-27
 categories: [computer science]
-tags: [analytics, big data, data science]
+tags: [big data]
 
 ---
 

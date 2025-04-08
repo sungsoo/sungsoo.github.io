@@ -3,7 +3,7 @@ layout: post
 title: The Variety of Data Scientists
 date: 2014-02-23
 categories: [computer science]
-tags: [analytics, big data, data science]
+tags: [big data]
 
 ---
 
