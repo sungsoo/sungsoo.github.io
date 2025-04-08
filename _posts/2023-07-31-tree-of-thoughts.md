@@ -3,7 +3,7 @@ layout: post
 title: How to write Tree of Thoughts Prompts
 date: 2023-07-31
 categories: [artificial intelligence]
-tags: [machine learning, foundation models]
+tags: [artificial general intelligence]
 
 ---
 
