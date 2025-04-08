@@ -3,7 +3,7 @@ layout: post
 title: Creating Applications using Spark Streaming
 date: 2015-10-17
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

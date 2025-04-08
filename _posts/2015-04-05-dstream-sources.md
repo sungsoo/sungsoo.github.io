@@ -3,7 +3,7 @@ layout: post
 title: DStream Sources
 date: 2015-04-05
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

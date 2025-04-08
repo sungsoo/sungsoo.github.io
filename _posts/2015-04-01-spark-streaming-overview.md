@@ -3,7 +3,7 @@ layout: post
 title: Spark Streaming Overview
 date: 2015-04-01
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

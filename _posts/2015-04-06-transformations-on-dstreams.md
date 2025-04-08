@@ -3,7 +3,7 @@ layout: post
 title: Transformations on DStreams
 date: 2015-04-06
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

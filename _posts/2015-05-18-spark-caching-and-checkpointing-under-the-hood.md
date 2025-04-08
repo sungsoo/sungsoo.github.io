@@ -3,7 +3,7 @@ layout: post
 title: Apache Spark - Caching and Checkpointing Under the Hood
 date: 2015-05-18
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Spark Streaming Quick Example
 date: 2015-04-02
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Output Operations on DStreams
 date: 2015-04-07
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

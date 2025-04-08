@@ -3,7 +3,7 @@ layout: post
 title: Introduction to the Spark
 date: 2015-04-15
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

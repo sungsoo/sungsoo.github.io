@@ -3,7 +3,7 @@ layout: post
 title: SpatialSpark
 date: 2015-04-13
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

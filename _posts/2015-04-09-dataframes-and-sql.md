@@ -3,7 +3,7 @@ layout: post
 title: DataFrame and SQL Operations
 date: 2015-04-09
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

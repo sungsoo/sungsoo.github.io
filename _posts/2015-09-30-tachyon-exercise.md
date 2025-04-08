@@ -3,7 +3,7 @@ layout: post
 title: Explore In-Memory Data Store Tachyon
 date: 2015-09-30
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

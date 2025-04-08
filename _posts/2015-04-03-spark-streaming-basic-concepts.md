@@ -3,7 +3,7 @@ layout: post
 title: Spark Streaming Basic Concepts
 date: 2015-04-03
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

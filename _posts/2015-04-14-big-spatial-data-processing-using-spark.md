@@ -3,7 +3,7 @@ layout: post
 title: Big Spatial Data Processing using Spark
 date: 2015-04-14
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

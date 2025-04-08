@@ -3,7 +3,7 @@ layout: post
 title: New Directions for Spark in 2015
 date: 2015-04-12
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

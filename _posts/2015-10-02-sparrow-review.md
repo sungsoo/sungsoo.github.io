@@ -3,7 +3,7 @@ layout: post
 title: Sparrow Paper Review
 date: 2015-10-02
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

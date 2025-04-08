@@ -3,7 +3,7 @@ layout: post
 title: AMP Camp 6
 date: 2015-09-24
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

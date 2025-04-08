@@ -3,7 +3,7 @@ layout: post
 title: Building Tachyon Master Branch
 date: 2015-10-18
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Tachyon Overview
 date: 2015-09-29
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

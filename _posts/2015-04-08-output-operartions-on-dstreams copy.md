@@ -3,7 +3,7 @@ layout: post
 title: Design Patterns for using foreachRDD
 date: 2015-04-08
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

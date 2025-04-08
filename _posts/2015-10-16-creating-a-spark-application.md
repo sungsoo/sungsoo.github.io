@@ -3,7 +3,7 @@ layout: post
 title: Creating a Spark Applications
 date: 2015-10-16
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 

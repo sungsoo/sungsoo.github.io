@@ -3,7 +3,7 @@ layout: post
 title: Spark 1.5 DataFrame API Highlights
 date: 2015-09-23
 categories: [computer science]
-tags: [big data, spark]
+tags: [big data]
 
 ---
 
