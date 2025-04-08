@@ -3,7 +3,7 @@ layout: post
 title: Scrum Events
 date: 2014-02-11
 categories: [computer science]
-tags: [agile, software engineering]
+tags: [design patterns]
 
 ---
 

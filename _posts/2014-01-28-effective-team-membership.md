@@ -3,7 +3,7 @@ layout: post
 title: Effective Team Membership
 date: 2014-01-28
 categories: [computer science]
-tags: [agile, software engineering]
+tags: [design patterns]
 
 ---
 
