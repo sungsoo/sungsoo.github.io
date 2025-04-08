@@ -3,7 +3,7 @@ layout: post
 title: Machine Driven, Human Guided Data Curation for Decision Advantage and Action
 date: 2015-12-02
 categories: [computer science]
-tags: [data curation, data management]
+tags: [big data]
 
 ---
 
