@@ -3,7 +3,7 @@ layout: post
 title: Research skills
 date: 2014-08-13
 categories: [computer science]
-tags: [papers, presentation]
+tags: [publications]
 
 ---
 

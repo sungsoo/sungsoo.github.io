@@ -3,7 +3,7 @@ layout: post
 title: How To Read a Scientific Research Paper
 date: 2018-03-22
 categories: [computer science]
-tags: [papers, presentation]
+tags: [publications]
 
 ---
 

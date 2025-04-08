@@ -3,7 +3,7 @@ layout: post
 title: Writing-up Qualitative Research
 date: 2015-11-20
 categories: [computer science]
-tags: [papers, presentation]
+tags: [publications]
 
 ---
 
