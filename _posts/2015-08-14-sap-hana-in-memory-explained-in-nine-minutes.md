@@ -3,7 +3,7 @@ layout: post
 title: SAP Hana In-Memory Explained In Nine Minutes
 date: 2015-08-14
 categories: [computer science]
-tags: [big data, data management, htap]
+tags: [big data]
 
 ---
 

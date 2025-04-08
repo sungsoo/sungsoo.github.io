@@ -3,7 +3,7 @@ layout: post
 title: Hybrid Trasansaction/Analytical Processing (HTAP)
 date: 2015-08-05
 categories: [computer science]
-tags: [big data, data management, htap]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Business unIntelligence
 date: 2015-08-13
 categories: [computer science]
-tags: [big data, data management, htap]
+tags: [big data]
 
 ---
 

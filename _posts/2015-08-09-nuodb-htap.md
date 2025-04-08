@@ -3,7 +3,7 @@ layout: post
 title: Sharing Experiences in Cloud Adoption
 date: 2015-08-09
 categories: [computer science]
-tags: [big data, data management, htap]
+tags: [big data]
 
 ---
 

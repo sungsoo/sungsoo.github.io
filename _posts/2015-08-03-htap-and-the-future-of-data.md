@@ -3,7 +3,7 @@ layout: post
 title: HTAP and The Future of Data
 date: 2015-08-03
 categories: [computer science]
-tags: [big data, data management, htap]
+tags: [big data]
 
 ---
 

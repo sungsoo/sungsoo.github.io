@@ -3,7 +3,7 @@ layout: post
 title: CIOs and the Ongoing Data Persistence Struggle
 date: 2015-08-06
 categories: [computer science]
-tags: [big data, data management, htap]
+tags: [big data]
 
 ---
 

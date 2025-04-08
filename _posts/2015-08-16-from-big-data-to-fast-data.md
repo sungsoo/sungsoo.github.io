@@ -3,7 +3,7 @@ layout: post
 title: From Big Data to Fast Data
 date: 2015-08-16
 categories: [computer science]
-tags: [big data, data management, htap]
+tags: [big data]
 
 ---
 
