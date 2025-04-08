@@ -3,7 +3,7 @@ layout: post
 title: Concurrent Bug Patterns and How to Test Them 
 date: 2013-12-26
 categories: [computer science]
-tags: [design patterns, developments, parallel computing]
+tags: [design patterns]
 
 ---
 
