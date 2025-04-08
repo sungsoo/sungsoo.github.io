@@ -3,7 +3,7 @@ layout: post
 title: Why Functional Programming?
 date: 2014-03-29
 categories: [computer science]
-tags: [big data, developments, parallel computing]
+tags: [design patterns]
 
 ---
 ### Summary
