@@ -3,7 +3,7 @@ layout: post
 title: How to Share a Bread Evenly
 date: 2014-04-11
 categories: [literature]
-tags: [presentation, publications]
+tags: [publications]
 
 ---
 
