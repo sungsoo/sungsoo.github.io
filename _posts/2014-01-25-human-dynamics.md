@@ -3,7 +3,7 @@ layout: post
 title: Understanding Human Dynamics
 date: 2014-01-25
 categories: [mathematical science]
-tags: [stream computing]
+tags: [big data]
 
 ---
 

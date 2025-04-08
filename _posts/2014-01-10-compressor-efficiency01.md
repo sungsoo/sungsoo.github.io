@@ -3,7 +3,7 @@ layout: post
 title: Centrifugal Compressor Efficiency - Part 1
 date: 2014-01-10
 categories: [mathematical science]
-tags: [stream computing]
+tags: [big data]
 
 ---
 

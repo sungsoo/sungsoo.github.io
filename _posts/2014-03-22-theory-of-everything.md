@@ -3,7 +3,7 @@ layout: post
 title: Theory of Everything
 date: 2014-03-22
 categories: [mathematical science]
-tags: [stream computing]
+tags: [big data]
 
 ---
 

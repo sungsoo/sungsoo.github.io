@@ -3,7 +3,7 @@ layout: post
 title: Navier-Stokes Equations
 date: 2014-03-28
 categories: [mathematical science]
-tags: [stream computing]
+tags: [big data]
 
 ---
 

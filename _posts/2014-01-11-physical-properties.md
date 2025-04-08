@@ -3,7 +3,7 @@ layout: post
 title: Physical Properties and selection of thermodynamic models
 date: 2014-01-11
 categories: [mathematical science]
-tags: [stream computing]
+tags: [big data]
 
 ---
 

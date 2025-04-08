@@ -3,7 +3,7 @@ layout: post
 title: Introduction to Stream Computing
 date: 2013-12-11
 categories: [computer science]
-tags: [stream computing]
+tags: [big data]
 
 ---
 ### Stream Computing - Examples

@@ -3,7 +3,7 @@ layout: post
 title: Stream Data Schema Design
 date: 2013-12-11
 categories: [computer science]
-tags: [stream computing]
+tags: [big data]
 
 ---
 ###Stream Data Schema for Real-time Data Stream Manager

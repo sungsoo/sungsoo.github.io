@@ -3,7 +3,7 @@ layout: post
 title: Data Stream Management
 date: 2014-01-12 
 categories: [computer science]
-tags: [stream computing]
+tags: [big data]
 
 ---
 
