@@ -3,7 +3,7 @@ layout: post
 title: The Invention of Stream Computing 
 date: 2014-01-03
 categories: [computer science]
-tags: [stream computing, big data]
+tags: [big data]
 
 ---
 
