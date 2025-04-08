@@ -3,7 +3,7 @@ layout: post
 title: Topological Deep Learning; Going Beyond Graph Data   
 date: 2023-07-19
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

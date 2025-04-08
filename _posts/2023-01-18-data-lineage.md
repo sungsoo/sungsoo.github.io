@@ -3,7 +3,7 @@ layout: post
 title: The Essential Guide to Data Lineage 
 date: 2023-01-18
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

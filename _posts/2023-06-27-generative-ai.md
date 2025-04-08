@@ -3,7 +3,7 @@ layout: post
 title: ChatGPT, LLMs & Generative AI; What Your Business Needs to Know   
 date: 2023-06-27
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

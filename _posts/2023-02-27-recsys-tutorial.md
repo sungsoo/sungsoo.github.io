@@ -3,7 +3,7 @@ layout: post
 title: Hands-on Explainable Recommender Systems with Knowledge Graphs  
 date: 2023-02-27
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

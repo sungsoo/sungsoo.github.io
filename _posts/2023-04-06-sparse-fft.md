@@ -3,7 +3,7 @@ layout: post
 title: Sparse Fourier Transform Algorithm for Real-Time Applications 
 date: 2023-04-06
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

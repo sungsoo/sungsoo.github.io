@@ -3,7 +3,7 @@ layout: post
 title: Self-Supervised Learning; Self-Prediction and Contrastive Learning   
 date: 2023-05-30
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

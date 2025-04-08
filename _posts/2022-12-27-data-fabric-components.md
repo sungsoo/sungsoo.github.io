@@ -3,7 +3,7 @@ layout: post
 title: Enterprise Data Fabric 
 date: 2022-12-27
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

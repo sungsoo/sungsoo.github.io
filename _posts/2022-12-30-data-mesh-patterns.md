@@ -3,7 +3,7 @@ layout: post
 title: Data Mesh Implementation Patterns 
 date: 2022-12-30
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

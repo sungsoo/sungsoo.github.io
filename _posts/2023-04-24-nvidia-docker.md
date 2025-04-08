@@ -3,7 +3,7 @@ layout: post
 title: Installing and Using NVIDIA Docker   
 date: 2023-04-24
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

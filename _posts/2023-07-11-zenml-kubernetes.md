@@ -3,7 +3,7 @@ layout: post
 title: When to use Kubernetes natively over Kubeflow for ML  
 date: 2023-07-11
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Learning to Transfer Knowledge Through Embedding Spaces 
 date: 2023-04-08
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

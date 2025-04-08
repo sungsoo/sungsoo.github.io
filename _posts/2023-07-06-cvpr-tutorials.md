@@ -3,7 +3,7 @@ layout: post
 title: CVPR 2023 Tutorials  
 date: 2023-07-06
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

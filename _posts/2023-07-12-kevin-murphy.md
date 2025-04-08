@@ -3,7 +3,7 @@ layout: post
 title: The Four Pillars of Machine Learning  
 date: 2023-07-12
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

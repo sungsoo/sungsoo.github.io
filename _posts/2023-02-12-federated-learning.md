@@ -3,7 +3,7 @@ layout: post
 title: Open-Source Systems for Federated Learning 
 date: 2023-02-12
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Towards Learned Database Systems  
 date: 2023-06-21
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

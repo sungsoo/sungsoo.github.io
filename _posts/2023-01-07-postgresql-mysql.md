@@ -3,7 +3,7 @@ layout: post
 title: PostgreSQL vs MySQL
 date: 2023-01-07
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

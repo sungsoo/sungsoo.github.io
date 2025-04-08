@@ -3,7 +3,7 @@ layout: post
 title: Deploy ZenML + Kubeflow + MLflow + Minio  
 date: 2023-07-10
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

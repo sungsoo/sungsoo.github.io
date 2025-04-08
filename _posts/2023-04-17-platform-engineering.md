@@ -3,7 +3,7 @@ layout: post
 title: What is Platform Engineering?
 date: 2023-04-17
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

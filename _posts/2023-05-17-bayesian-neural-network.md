@@ -3,7 +3,7 @@ layout: post
 title: Bayesian Neural Network   
 date: 2023-05-17
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Data Science–A Systematic Treatment  
 date: 2023-07-03
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Generative Models for Language and Vision  
 date: 2023-06-28
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

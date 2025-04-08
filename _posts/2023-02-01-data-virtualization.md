@@ -3,7 +3,7 @@ layout: post
 title: Data Virtualization in Data Fabric  
 date: 2023-02-01
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

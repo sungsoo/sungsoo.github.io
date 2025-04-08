@@ -3,7 +3,7 @@ layout: post
 title: Distributed and Multiagent Reinforcement Learning  
 date: 2023-07-16
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

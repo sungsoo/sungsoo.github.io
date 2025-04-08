@@ -3,7 +3,7 @@ layout: post
 title: Continuous Training and Deployment with ZenML and Seldon
 date: 2023-07-24
 categories: [artificial intelligence]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

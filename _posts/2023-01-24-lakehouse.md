@@ -3,7 +3,7 @@ layout: post
 title: Databricks Lakehouse makes payments ingestion and analytics simple 
 date: 2023-01-24
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

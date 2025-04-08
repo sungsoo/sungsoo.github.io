@@ -3,7 +3,7 @@ layout: post
 title: Deep-Dive into Delta Lake
 date: 2023-01-05
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

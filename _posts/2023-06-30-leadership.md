@@ -3,7 +3,7 @@ layout: post
 title: How to Master the Art of Leadership   
 date: 2023-06-30
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

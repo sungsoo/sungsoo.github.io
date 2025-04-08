@@ -3,7 +3,7 @@ layout: post
 title: On Future of the Modern Data Stack   
 date: 2023-02-06
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

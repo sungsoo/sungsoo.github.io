@@ -3,7 +3,7 @@ layout: post
 title: Activate Your Modern MetaData Stack  
 date: 2023-01-26
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Personalized Image Generation 
 date: 2023-04-10
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

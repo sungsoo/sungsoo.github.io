@@ -3,7 +3,7 @@ layout: post
 title: LEARN ENGLISH with STEVE JOBS  
 date: 2023-07-02
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

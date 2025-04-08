@@ -3,7 +3,7 @@ layout: post
 title: Intro to Databricks Lakehouse Platform Architecture and Security 
 date: 2022-12-29
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

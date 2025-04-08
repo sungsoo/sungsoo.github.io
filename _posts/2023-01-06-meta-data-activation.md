@@ -3,7 +3,7 @@ layout: post
 title: Activate Your Metadata to Empower Innovation
 date: 2023-01-06
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

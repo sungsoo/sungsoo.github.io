@@ -3,7 +3,7 @@ layout: post
 title: Recommender Systems using Graph Neural Networks  
 date: 2023-01-31
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

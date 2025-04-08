@@ -3,7 +3,7 @@ layout: post
 title: Data Governance Explained in 5 Minutes 
 date: 2023-01-17
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

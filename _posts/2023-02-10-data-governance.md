@@ -3,7 +3,7 @@ layout: post
 title: Data Governance and Sharing on Lakehouse  
 date: 2023-02-10
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

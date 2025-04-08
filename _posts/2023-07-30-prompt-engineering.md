@@ -3,7 +3,7 @@ layout: post
 title: Prompt Engineering Overview
 date: 2023-07-30
 categories: [artificial intelligence]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

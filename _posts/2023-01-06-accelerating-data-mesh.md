@@ -3,7 +3,7 @@ layout: post
 title: Accelerating Hybrid Data Mesh Implementation
 date: 2023-01-06
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

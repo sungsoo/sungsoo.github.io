@@ -3,7 +3,7 @@ layout: post
 title: Automated Data Lineage with Unity Catalog
 date: 2023-01-16
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

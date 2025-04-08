@@ -3,7 +3,7 @@ layout: post
 title: A Distributional Multi-agent Reinforcement Learning Approach  
 date: 2023-07-15
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

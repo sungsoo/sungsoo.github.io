@@ -3,7 +3,7 @@ layout: post
 title: Study Less Study Smart   
 date: 2023-05-10
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

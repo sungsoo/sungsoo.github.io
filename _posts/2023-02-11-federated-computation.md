@@ -3,7 +3,7 @@ layout: post
 title: An Introduction to Federated Computation 
 date: 2023-02-11
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

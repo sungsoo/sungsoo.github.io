@@ -3,7 +3,7 @@ layout: post
 title: Contrastive Learning in PyTorch   
 date: 2023-05-31
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

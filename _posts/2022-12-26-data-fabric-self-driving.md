@@ -3,7 +3,7 @@ layout: post
 title: Data Fabric for Self-Driving Cars
 date: 2022-12-26
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

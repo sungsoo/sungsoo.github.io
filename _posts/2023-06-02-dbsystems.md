@@ -3,7 +3,7 @@ layout: post
 title: Do We Still Need People To Write Database Systems?   
 date: 2023-06-02
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

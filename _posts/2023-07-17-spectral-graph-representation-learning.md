@@ -3,7 +3,7 @@ layout: post
 title: Sign and Basis Invariant Networks for Spectral Graph Representation Learning  
 date: 2023-07-17
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

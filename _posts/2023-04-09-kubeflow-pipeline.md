@@ -3,7 +3,7 @@ layout: post
 title: Kubeflow Pipelines 2.0 
 date: 2023-04-09
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

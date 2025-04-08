@@ -3,7 +3,7 @@ layout: post
 title: The Frontier of Deep Learning for Robotics 
 date: 2023-04-02
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 

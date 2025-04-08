@@ -3,7 +3,7 @@ layout: post
 title: Recent Advances in Vision Foundation Models
 date: 2023-07-07
 categories: [computer science]
-tags: [machine learning, graph mining, big data]
+tags: [big data]
 
 ---
 
