@@ -3,7 +3,7 @@ layout: post
 title: Persistent Data Structures
 date: 2014-01-17
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Partial Persistence
 date: 2014-01-18
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

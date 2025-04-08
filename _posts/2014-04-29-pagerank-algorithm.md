@@ -3,7 +3,7 @@ layout: post
 title: PageRank Algorithm
 date: 2014-04-29
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

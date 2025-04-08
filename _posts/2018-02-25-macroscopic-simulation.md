@@ -3,7 +3,7 @@ layout: post
 title: Macroscopic Simulation
 date: 2018-02-25
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

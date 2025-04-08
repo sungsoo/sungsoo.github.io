@@ -3,7 +3,7 @@ layout: post
 title: Notes on Graph Theory
 date: 2019-04-18
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

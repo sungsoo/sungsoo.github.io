@@ -3,7 +3,7 @@ layout: post
 title: Confluent and Functional Persistence
 date: 2014-01-20
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

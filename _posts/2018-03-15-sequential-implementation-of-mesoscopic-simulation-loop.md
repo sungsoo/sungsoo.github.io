@@ -3,7 +3,7 @@ layout: post
 title: Sequential Implementation of Mesoscopic Simulation
 date: 2018-03-15
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

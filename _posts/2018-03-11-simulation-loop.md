@@ -3,7 +3,7 @@ layout: post
 title: Simulation Loop
 date: 2018-03-11
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

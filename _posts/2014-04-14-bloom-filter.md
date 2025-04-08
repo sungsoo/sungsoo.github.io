@@ -3,7 +3,7 @@ layout: post
 title: Bloom Filter
 date: 2014-04-14
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

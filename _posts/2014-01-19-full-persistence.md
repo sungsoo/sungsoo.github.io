@@ -3,7 +3,7 @@ layout: post
 title: Full Persistence
 date: 2014-01-19
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

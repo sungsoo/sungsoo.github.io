@@ -3,7 +3,7 @@ layout: post
 title: Traffic Simulation Background
 date: 2018-02-24
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

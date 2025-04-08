@@ -3,7 +3,7 @@ layout: post
 title: Distributed Systems
 date: 2018-02-28
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Cellular Automata
 date: 2018-02-07
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 

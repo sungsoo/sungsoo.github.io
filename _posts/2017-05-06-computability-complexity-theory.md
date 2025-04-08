@@ -3,7 +3,7 @@ layout: post
 title: Computability, Complexity, and Theory - Georgia Tech
 date: 2017-05-06
 categories: [computer science]
-tags: [algorithms]
+tags: [design patterns]
 
 ---
 
