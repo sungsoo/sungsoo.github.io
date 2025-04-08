@@ -3,7 +3,7 @@ layout: post
 title: BlinkDB Review
 date: 2015-10-09
 categories: [computer science]
-tags: [spark, sql on hadoop]
+tags: [big data]
 
 ---
 
