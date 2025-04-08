@@ -3,7 +3,7 @@ layout: post
 title: Elasticity with YARN
 date: 2016-04-20
 categories: [computer science]
-tags: [data management, yarn]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo Backup and Restore
 date: 2014-05-13
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

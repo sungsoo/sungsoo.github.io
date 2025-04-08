@@ -3,7 +3,7 @@ layout: post
 title: Introducing Apache Hadoop YARN
 date: 2014-02-28 
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

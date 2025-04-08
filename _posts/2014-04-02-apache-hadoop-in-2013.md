@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop in 2013 - The State of the Platform
 date: 2014-04-02
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

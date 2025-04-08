@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo RCFile
 date: 2014-05-09
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

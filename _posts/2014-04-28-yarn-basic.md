@@ -3,7 +3,7 @@ layout: post
 title: Simple YARN Application
 date: 2014-04-28
 categories: [computer science]
-tags: [yarn]
+tags: [big data]
 
 ---
 

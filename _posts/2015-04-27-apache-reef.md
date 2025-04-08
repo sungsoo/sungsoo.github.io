@@ -3,7 +3,7 @@ layout: post
 title: Introduction to REEF 
 date: 2015-04-27
 categories: [computer science]
-tags: [yarn]
+tags: [big data]
 
 ---
 

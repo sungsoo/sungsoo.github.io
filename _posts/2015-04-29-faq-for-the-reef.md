@@ -3,7 +3,7 @@ layout: post
 title: FAQ for the REEF 
 date: 2015-04-29
 categories: [computer science]
-tags: [yarn]
+tags: [big data]
 
 ---
 

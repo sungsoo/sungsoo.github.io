@@ -3,7 +3,7 @@ layout: post
 title: Min-cost Flow Network Algorithms
 date: 2016-04-21
 categories: [computer science]
-tags: [data management, yarn]
+tags: [big data]
 
 ---
 

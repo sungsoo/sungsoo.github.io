@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop YARN – Yet Another Resource Negotiator
 date: 2014-03-01 
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

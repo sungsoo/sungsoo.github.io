@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop YARN – Concepts and Applications
 date: 2014-02-28 
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

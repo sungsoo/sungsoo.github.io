@@ -3,7 +3,7 @@ layout: post
 title: Failures in YARN
 date: 2014-04-07
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

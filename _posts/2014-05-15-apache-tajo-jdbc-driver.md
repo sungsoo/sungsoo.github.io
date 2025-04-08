@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo JDBC Driver
 date: 2014-05-15
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

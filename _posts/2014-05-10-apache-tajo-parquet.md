@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo Parquet
 date: 2014-05-10
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

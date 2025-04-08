@@ -3,7 +3,7 @@ layout: post
 title: Application Interaction with the ResourceManager
 date: 2015-02-11
 categories: [computer science]
-tags: [yarn]
+tags: [big data]
 
 ---
 

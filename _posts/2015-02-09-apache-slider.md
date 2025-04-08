@@ -3,7 +3,7 @@ layout: post
 title: Build YARN Apps on Hadoop with Apache Slider
 date: 2015-02-09
 categories: [computer science]
-tags: [yarn]
+tags: [big data]
 
 ---
 

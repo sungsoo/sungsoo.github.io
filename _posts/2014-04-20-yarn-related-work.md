@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop YARN – Related Work
 date: 2014-04-20
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

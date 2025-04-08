@@ -3,7 +3,7 @@ layout: post
 title: How Apache Hadoop YARN HA Works
 date: 2014-05-09
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

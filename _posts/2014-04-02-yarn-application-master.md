@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop YARN – Application Master (AM)
 date: 2014-04-02
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

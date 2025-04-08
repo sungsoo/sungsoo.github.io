@@ -3,7 +3,7 @@ layout: post
 title: Apache Spark Resource Management and YARN App Models
 date: 2014-06-01
 categories: [computer science]
-tags: [data management, yarn]
+tags: [big data]
 
 ---
 

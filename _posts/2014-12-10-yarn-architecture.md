@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop YARN Architecture
 date: 2014-12-10
 categories: [computer science]
-tags: [yarn]
+tags: [big data]
 
 ---
 

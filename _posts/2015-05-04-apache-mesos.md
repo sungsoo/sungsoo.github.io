@@ -3,7 +3,7 @@ layout: post
 title: What is Mesos? 
 date: 2015-05-04
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

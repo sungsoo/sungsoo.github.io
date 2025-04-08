@@ -3,7 +3,7 @@ layout: post
 title: YARN (MapReduce 2)
 date: 2013-12-12
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

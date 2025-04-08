@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo Table Management
 date: 2014-05-08
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

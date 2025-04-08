@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo SQL Language
 date: 2014-05-06
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo™ 0.8.0 Released!
 date: 2014-05-03
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

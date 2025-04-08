@@ -3,7 +3,7 @@ layout: post
 title: Resource Manager
 date: 2015-02-10
 categories: [computer science]
-tags: [yarn]
+tags: [big data]
 
 ---
 

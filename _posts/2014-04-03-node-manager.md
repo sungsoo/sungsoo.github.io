@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop YARN – Node Manager (NM)
 date: 2014-04-04
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

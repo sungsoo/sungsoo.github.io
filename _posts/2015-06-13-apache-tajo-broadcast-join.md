@@ -3,7 +3,7 @@ layout: post
 title: Broadcast Join in Tajo
 date: 2015-06-13
 categories: [computer science]
-tags: [yarn]
+tags: [big data]
 
 ---
 

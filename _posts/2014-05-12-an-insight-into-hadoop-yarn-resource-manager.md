@@ -3,7 +3,7 @@ layout: post
 title: An Insight into Hadoop Yarn Resource Manager
 date: 2014-05-12
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 

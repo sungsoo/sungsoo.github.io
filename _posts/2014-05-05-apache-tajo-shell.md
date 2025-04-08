@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo Shell
 date: 2014-05-05
 categories: [computer science]
-tags: [big data, yarn]
+tags: [big data]
 
 ---
 
