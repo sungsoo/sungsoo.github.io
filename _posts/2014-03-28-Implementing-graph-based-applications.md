@@ -3,7 +3,7 @@ layout: post
 title: Implementing Graph-Based Applications
 date: 2014-03-28
 categories: [computer science]
-tags: [big data, nosql]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Choosing the Right SQL-on-Hadoop
 date: 2014-04-25
 categories: [computer science]
-tags: [big data, nosql]
+tags: [big data]
 
 ---
 

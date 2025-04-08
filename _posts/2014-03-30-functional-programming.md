@@ -3,7 +3,7 @@ layout: post
 title: Functional Programming
 date: 2014-03-30
 categories: [computer science]
-tags: [big data, nosql]
+tags: [big data]
 
 ---
 

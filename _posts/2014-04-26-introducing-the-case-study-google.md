@@ -3,7 +3,7 @@ layout: post
 title: Introducing the case study - Google
 date: 2014-04-26
 categories: [computer science]
-tags: [big data, nosql]
+tags: [big data]
 
 ---
 
