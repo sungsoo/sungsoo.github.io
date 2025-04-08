@@ -3,7 +3,7 @@ layout: post
 title: Using HyPer with PostgreSQL Drivers
 date: 2015-09-18
 categories: [computer science]
-tags: [big data, htap]
+tags: [big data]
 
 ---
 
