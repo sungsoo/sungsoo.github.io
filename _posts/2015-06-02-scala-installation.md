@@ -3,7 +3,7 @@ layout: post
 title: Scala Installation
 date: 2015-06-02
 categories: [computer science]
-tags: [parallel computing, developments]
+tags: [design patterns]
 
 ---
 

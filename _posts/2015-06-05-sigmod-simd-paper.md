@@ -3,7 +3,7 @@ layout: post
 title: Rethinking SIMD Vectorization for In-Memory Databases
 date: 2015-06-05
 categories: [computer science]
-tags: [parallel computing, developments]
+tags: [design patterns]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Scala idiom - Prefer immutable data structures
 date: 2015-06-04
 categories: [computer science]
-tags: [parallel computing, developments]
+tags: [design patterns]
 
 ---
 
