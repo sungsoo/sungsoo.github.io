@@ -3,7 +3,7 @@ layout: post
 title: YARN Framework and Fault Tolerance
 date: 2014-04-06
 categories: [computer science]
-tags: [big data, tez, yarn]
+tags: [big data]
 
 ---
 
