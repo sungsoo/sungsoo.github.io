@@ -3,7 +3,7 @@ layout: post
 title: In-Memory Caches
 date: 2014-01-09
 categories: [computer science]
-tags: [stream computing, data management]
+tags: [big data]
 
 ---
 <script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
