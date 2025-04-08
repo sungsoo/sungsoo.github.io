@@ -3,7 +3,7 @@ layout: post
 title: Building LuxRender on OS X
 date: 2015-12-10
 categories: [computer science]
-tags: [computer graphics, developments]
+tags: [big data]
 
 ---
 
