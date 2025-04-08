@@ -3,7 +3,7 @@ layout: post
 title: Steve Jobs at SIGGRAPH 1995
 date: 2014-03-24
 categories: [computer science]
-tags: [computer graphics, presentation]
+tags: [publications]
 
 ---
 
