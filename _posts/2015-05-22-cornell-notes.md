@@ -3,7 +3,7 @@ layout: post
 title: Cornell Notes
 date: 2015-05-22
 categories: [computer science]
-tags: [presentation]
+tags: [publications]
 
 ---
 

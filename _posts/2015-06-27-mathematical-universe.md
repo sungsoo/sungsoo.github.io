@@ -3,7 +3,7 @@ layout: post
 title: Mathematical Universe?
 date: 2015-06-27
 categories: [mathematical science, liberal arts]
-tags: [presentation]
+tags: [publications]
 
 ---
 

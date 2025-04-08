@@ -3,7 +3,7 @@ layout: post
 title: Camino and Hope
 date: 2014-05-31
 categories: [literature]
-tags: [presentation]
+tags: [publications]
 
 ---
 

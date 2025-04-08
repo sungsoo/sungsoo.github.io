@@ -3,7 +3,7 @@ layout: post
 title: Einstein and Buddhism
 date: 2015-07-13
 categories: [liberal arts]
-tags: [presentation]
+tags: [publications]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: How Google Works
 date: 2015-08-15
 categories: [computer science]
-tags: [presentation]
+tags: [publications]
 
 ---
 

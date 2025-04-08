@@ -3,7 +3,7 @@ layout: post
 title: How to Improve your Clarity of Thought
 date: 2017-03-15
 categories: [computer science]
-tags: [presentation]
+tags: [publications]
 
 ---
 

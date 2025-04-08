@@ -3,7 +3,7 @@ layout: post
 title: Randy Pausch Last Lecture, Achieving Your Childhood Dreams
 date: 2014-02-05
 categories: [arts and music]
-tags: [presentation]
+tags: [publications]
 
 ---
 

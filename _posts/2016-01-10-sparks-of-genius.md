@@ -3,7 +3,7 @@ layout: post
 title: Sparks of Genius
 date: 2016-01-10
 categories: [liberal arts]
-tags: [presentation]
+tags: [publications]
 
 ---
 

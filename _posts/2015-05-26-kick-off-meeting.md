@@ -3,7 +3,7 @@ layout: post
 title: Seven Key Elements for a Successful Kickoff Meeting Agenda
 date: 2015-05-26
 categories: [computer science]
-tags: [presentation]
+tags: [publications]
 
 ---
 

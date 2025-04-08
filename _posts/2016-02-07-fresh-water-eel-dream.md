@@ -3,7 +3,7 @@ layout: post
 title: 민물장어의 꿈 
 date: 2016-02-07
 categories: [arts and music]
-tags: [presentation]
+tags: [publications]
 
 ---
 

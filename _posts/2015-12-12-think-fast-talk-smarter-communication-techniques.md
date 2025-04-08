@@ -3,7 +3,7 @@ layout: post
 title: Think Fast, Talk Smart
 date: 2015-12-12
 categories: [computer science]
-tags: [presentation]
+tags: [publications]
 
 ---
 

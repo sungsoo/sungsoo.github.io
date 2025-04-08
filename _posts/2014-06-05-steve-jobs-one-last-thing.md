@@ -3,7 +3,7 @@ layout: post
 title: Steve Jobs - One Last Thing
 date: 2014-06-05
 categories: [arts and music]
-tags: [presentation]
+tags: [publications]
 
 ---
 

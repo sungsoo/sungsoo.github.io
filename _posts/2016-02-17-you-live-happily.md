@@ -3,7 +3,7 @@ layout: post
 title: 그댄 행복에 살텐데 
 date: 2016-02-17
 categories: [arts and music]
-tags: [presentation]
+tags: [publications]
 
 ---
 

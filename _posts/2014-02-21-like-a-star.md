@@ -3,7 +3,7 @@ layout: post
 title: Like a star
 date: 2014-02-21
 categories: [arts and music]
-tags: [presentation]
+tags: [publications]
 
 ---
 

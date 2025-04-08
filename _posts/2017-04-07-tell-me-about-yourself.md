@@ -3,7 +3,7 @@ layout: post
 title: Tell Me About Yourself - A Good Answer to This Interview Question
 date: 2017-04-07
 categories: [computer science]
-tags: [presentation]
+tags: [publications]
 
 ---
 

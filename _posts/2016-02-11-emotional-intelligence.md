@@ -3,7 +3,7 @@ layout: post
 title: Emotional Intelligence 
 date: 2016-02-11
 categories: [liberal arts]
-tags: [presentation]
+tags: [publications]
 
 ---
 

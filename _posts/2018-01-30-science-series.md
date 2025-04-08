@@ -3,7 +3,7 @@ layout: post
 title: 고대 과학
 date: 2018-01-30
 categories: [liberal arts]
-tags: [presentation]
+tags: [publications]
 
 ---
 

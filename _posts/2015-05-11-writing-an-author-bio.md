@@ -3,7 +3,7 @@ layout: post
 title: Writing An Author Bio
 date: 2015-05-11
 categories: [literature]
-tags: [presentation]
+tags: [publications]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: You've got to find what you love
 date: 2015-07-03
 categories: [liberal arts]
-tags: [presentation]
+tags: [publications]
 
 ---
 

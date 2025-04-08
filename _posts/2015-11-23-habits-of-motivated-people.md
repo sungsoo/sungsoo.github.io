@@ -3,7 +3,7 @@ layout: post
 title: 12 Habits of Extraordinarily Motivated People
 date: 2015-11-23
 categories: [arts and music]
-tags: [presentation]
+tags: [publications]
 
 ---
 

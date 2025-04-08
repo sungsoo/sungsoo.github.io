@@ -3,7 +3,7 @@ layout: post
 title: A More Beautiful Question 
 date: 2015-06-25
 categories: [liberal arts]
-tags: [presentation]
+tags: [publications]
 
 ---
 

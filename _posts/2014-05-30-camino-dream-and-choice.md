@@ -3,7 +3,7 @@ layout: post
 title: Camino, Dream and Choice
 date: 2014-05-30
 categories: [literature]
-tags: [presentation]
+tags: [publications]
 
 ---
 

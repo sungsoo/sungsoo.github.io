@@ -3,7 +3,7 @@ layout: post
 title: How to play the piano in a week
 date: 2013-10-06
 categories: [arts and music]
-tags: [presentation]
+tags: [publications]
 
 ---
 

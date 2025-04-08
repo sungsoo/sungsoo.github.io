@@ -3,7 +3,7 @@ layout: post
 title: Ballad Music Collection 
 date: 2015-06-23
 categories: [arts and music]
-tags: [presentation]
+tags: [publications]
 
 ---
 

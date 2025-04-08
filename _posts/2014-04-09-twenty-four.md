@@ -3,7 +3,7 @@ layout: post
 title: 24 Live Another Day
 date: 2014-04-09
 categories: [arts and music]
-tags: [presentation]
+tags: [publications]
 
 ---
 

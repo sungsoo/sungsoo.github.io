@@ -3,7 +3,7 @@ layout: post
 title: A well-planned kickoff meeting sets the tone for a successful project
 date: 2015-05-27
 categories: [computer science]
-tags: [presentation]
+tags: [publications]
 
 ---
 

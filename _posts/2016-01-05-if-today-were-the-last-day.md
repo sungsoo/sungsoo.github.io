@@ -3,7 +3,7 @@ layout: post
 title: If today were the last day
 date: 2016-01-05
 categories: [liberal arts]
-tags: [presentation]
+tags: [publications]
 
 ---
 

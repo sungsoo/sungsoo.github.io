@@ -3,7 +3,7 @@ layout: post
 title: Korea Summit 2018
 date: 2018-04-27
 categories: [liberal arts]
-tags: [presentation]
+tags: [publications]
 
 ---
 

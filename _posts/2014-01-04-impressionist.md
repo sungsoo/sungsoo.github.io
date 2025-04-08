@@ -3,7 +3,7 @@ layout: post
 title: Impressionist Tutorial
 date: 2014-01-04
 categories: [information technology]
-tags: [presentation]
+tags: [publications]
 
 ---
 

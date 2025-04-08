@@ -3,7 +3,7 @@ layout: post
 title: Bad Boys Blue Collection
 date: 2015-10-29
 categories: [arts and music]
-tags: [presentation]
+tags: [publications]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Folder Management 
 date: 2014-04-17
 categories: [information technology]
-tags: [presentation]
+tags: [publications]
 
 ---
 

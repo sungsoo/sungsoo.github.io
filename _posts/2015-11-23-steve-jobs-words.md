@@ -3,7 +3,7 @@ layout: post
 title: Steve Jobs' Last Words
 date: 2015-11-23
 categories: [arts and music]
-tags: [presentation]
+tags: [publications]
 
 ---
 

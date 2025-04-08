@@ -3,7 +3,7 @@ layout: post
 title:  PhD Interview Questions
 date: 2017-04-01
 categories: [computer science]
-tags: [presentation]
+tags: [publications]
 
 ---
 

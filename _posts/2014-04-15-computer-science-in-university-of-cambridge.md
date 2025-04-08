@@ -3,7 +3,7 @@ layout: post
 title: Computer Science @ University of Cambridge
 date: 2014-04-15
 categories: [computer science]
-tags: [presentation]
+tags: [publications]
 
 ---
 
