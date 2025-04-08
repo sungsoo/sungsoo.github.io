@@ -3,7 +3,7 @@ layout: post
 title: Taking the I out of PaaS with Apache Mesos
 date: 2018-03-04
 categories: [computer science]
-tags: [developments, parallel computing]
+tags: [big data]
 
 ---
 

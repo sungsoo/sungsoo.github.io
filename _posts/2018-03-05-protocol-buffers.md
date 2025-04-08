@@ -3,7 +3,7 @@ layout: post
 title: An Introduction to Protobufs
 date: 2018-03-05
 categories: [computer science]
-tags: [developments, parallel computing]
+tags: [big data]
 
 ---
 

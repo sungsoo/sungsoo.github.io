@@ -3,7 +3,7 @@ layout: post
 title: Mesos Installation
 date: 2018-03-08
 categories: [computer science]
-tags: [developments, parallel computing]
+tags: [big data]
 
 ---
 

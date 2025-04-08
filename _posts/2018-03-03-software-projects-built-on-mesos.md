@@ -3,7 +3,7 @@ layout: post
 title: Software Projects Built on Mesos
 date: 2018-03-03
 categories: [computer science]
-tags: [developments, parallel computing]
+tags: [big data]
 
 ---
 

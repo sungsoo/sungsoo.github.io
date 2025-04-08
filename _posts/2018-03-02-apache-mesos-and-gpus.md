@@ -3,7 +3,7 @@ layout: post
 title: Apache Mesos and GPUs
 date: 2018-03-02
 categories: [computer science]
-tags: [developments, parallel computing]
+tags: [big data]
 
 ---
 

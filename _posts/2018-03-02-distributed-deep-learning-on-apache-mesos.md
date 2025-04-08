@@ -3,7 +3,7 @@ layout: post
 title: Distributed Deep Learning on Mesos
 date: 2018-03-02
 categories: [computer science]
-tags: [developments, parallel computing]
+tags: [big data]
 
 ---
 

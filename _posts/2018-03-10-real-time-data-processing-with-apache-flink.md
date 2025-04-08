@@ -3,7 +3,7 @@ layout: post
 title: Real-Time Data Processing with Apache Flink
 date: 2018-03-10
 categories: [computer science]
-tags: [developments, parallel computing]
+tags: [big data]
 
 ---
 
