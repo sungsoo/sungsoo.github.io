@@ -3,7 +3,7 @@ layout: post
 title: Lambda Architecture
 date: 2015-06-19
 categories: [computer science]
-tags: [stream computing, spark]
+tags: [big data]
 
 ---
 
