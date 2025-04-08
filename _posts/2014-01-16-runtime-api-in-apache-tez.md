@@ -3,7 +3,7 @@ layout: post
 title: Runtime API in Apache Tez
 date: 2014-01-16 
 categories: [computer science]
-tags: [big data, tez]
+tags: [big data]
 
 ---
 

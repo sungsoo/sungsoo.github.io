@@ -3,7 +3,7 @@ layout: post
 title: Introducing Tez Sessions
 date: 2014-01-16 
 categories: [computer science]
-tags: [big data, tez]
+tags: [big data]
 
 ---
 

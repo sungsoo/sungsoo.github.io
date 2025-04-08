@@ -3,7 +3,7 @@ layout: post
 title: Apache Spark and Apache Tez
 date: 2014-04-27
 categories: [computer science]
-tags: [big data, tez]
+tags: [big data]
 
 ---
 

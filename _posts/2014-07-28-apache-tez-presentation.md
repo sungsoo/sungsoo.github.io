@@ -3,7 +3,7 @@ layout: post
 title: Apache Tez Presentation 
 date: 2014-07-28
 categories: [computer science]
-tags: [big data, tez]
+tags: [big data]
 
 ---
 

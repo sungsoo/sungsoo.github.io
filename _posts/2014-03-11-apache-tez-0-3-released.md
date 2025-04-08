@@ -3,7 +3,7 @@ layout: post
 title: Apache Tez 0.3 Released!
 date: 2014-03-11 
 categories: [computer science]
-tags: [big data, tez]
+tags: [big data]
 
 ---
 

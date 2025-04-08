@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo
 date: 2014-04-03 
 categories: [computer science]
-tags: [big data, tez]
+tags: [big data]
 
 ---
 

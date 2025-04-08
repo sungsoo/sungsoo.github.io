@@ -3,7 +3,7 @@ layout: post
 title: Functional Requirements of Hive on Tez Phase I
 date: 2014-03-12 
 categories: [computer science]
-tags: [big data, tez]
+tags: [big data]
 
 ---
 

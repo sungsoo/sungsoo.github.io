@@ -3,7 +3,7 @@ layout: post
 title: Design of Hive on Tez
 date: 2014-03-12 
 categories: [computer science]
-tags: [big data, tez]
+tags: [big data]
 
 ---
 

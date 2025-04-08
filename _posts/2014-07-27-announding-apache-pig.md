@@ -3,7 +3,7 @@ layout: post
 title: Announcing Apache Pig 0.13.0 
 date: 2014-07-27
 categories: [computer science]
-tags: [big data, tez]
+tags: [big data]
 
 ---
 

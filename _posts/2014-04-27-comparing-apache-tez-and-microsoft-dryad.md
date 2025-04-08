@@ -3,7 +3,7 @@ layout: post
 title: Comparing Apache Tez and Microsoft Dryad
 date: 2014-04-27
 categories: [computer science]
-tags: [big data, tez]
+tags: [big data]
 
 ---
 

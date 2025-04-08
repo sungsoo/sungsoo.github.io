@@ -3,7 +3,7 @@ layout: post
 title: Re-Using Containers in Apache Tez
 date: 2014-01-16 
 categories: [computer science]
-tags: [big data, tez]
+tags: [big data]
 
 ---
 
