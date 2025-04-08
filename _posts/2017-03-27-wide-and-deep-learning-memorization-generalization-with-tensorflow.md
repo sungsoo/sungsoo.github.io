@@ -3,7 +3,7 @@ layout: post
 title: Wide & Deep Learning; Memorization + Generalization with TensorFlow
 date: 2017-03-27
 categories: [computer science]
-tags: [big data, machine learning, stream computing]
+tags: [big data]
 
 ---
 

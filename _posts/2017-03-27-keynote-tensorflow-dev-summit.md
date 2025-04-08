@@ -3,7 +3,7 @@ layout: post
 title: Keynote - TensorFlow Dev Summit 2017
 date: 2017-03-27
 categories: [computer science]
-tags: [big data, machine learning, stream computing]
+tags: [big data]
 
 ---
 
