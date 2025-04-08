@@ -3,7 +3,7 @@ layout: post
 title: RAMCloud Overview
 date: 2015-07-10
 categories: [computer science]
-tags: [data management, computer networks]
+tags: [big data]
 
 ---
 
