@@ -3,7 +3,7 @@ layout: post
 title: Regression Analysis
 date: 2014-05-11
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

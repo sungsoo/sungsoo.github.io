@@ -3,7 +3,7 @@ layout: post
 title: Cluster Analysis 
 date: 2015-04-30
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

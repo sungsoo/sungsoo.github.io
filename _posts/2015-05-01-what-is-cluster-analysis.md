@@ -3,7 +3,7 @@ layout: post
 title: What is Cluster Analysis? 
 date: 2015-05-01
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

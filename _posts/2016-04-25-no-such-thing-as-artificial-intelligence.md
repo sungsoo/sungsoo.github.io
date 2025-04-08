@@ -3,7 +3,7 @@ layout: post
 title: No Such Thing As Artificial Intelligence
 date: 2016-04-25
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

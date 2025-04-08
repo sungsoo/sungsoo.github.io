@@ -3,7 +3,7 @@ layout: post
 title: The Data Science Process
 date: 2014-03-19
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

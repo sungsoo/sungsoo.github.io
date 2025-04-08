@@ -3,7 +3,7 @@ layout: post
 title: What is Data Science?
 date: 2014-03-14
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

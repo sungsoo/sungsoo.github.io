@@ -3,7 +3,7 @@ layout: post
 title: A Data Science Profile
 date: 2014-03-16
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Deep Learning for Database Performance Optimization
 date: 2016-04-26
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

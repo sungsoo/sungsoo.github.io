@@ -3,7 +3,7 @@ layout: post
 title: Populations and Samples
 date: 2014-03-18
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

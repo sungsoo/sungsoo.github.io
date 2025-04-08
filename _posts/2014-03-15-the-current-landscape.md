@@ -3,7 +3,7 @@ layout: post
 title: What is Data Science? - The Current Landscape
 date: 2014-03-15
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

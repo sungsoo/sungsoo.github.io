@@ -3,7 +3,7 @@ layout: post
 title: Requirements for Cluster Analysis 
 date: 2015-05-02
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

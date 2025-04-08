@@ -3,7 +3,7 @@ layout: post
 title: What is Zeppelin Interpreter
 date: 2015-11-20
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

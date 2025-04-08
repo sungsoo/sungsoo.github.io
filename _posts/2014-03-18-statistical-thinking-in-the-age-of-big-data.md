@@ -3,7 +3,7 @@ layout: post
 title: Statistical Thinking in the Age of Big Data
 date: 2014-03-18
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

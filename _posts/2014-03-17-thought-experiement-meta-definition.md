@@ -3,7 +3,7 @@ layout: post
 title: Thought Experiment - Meta-Definition
 date: 2014-03-17
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

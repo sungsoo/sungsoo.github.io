@@ -3,7 +3,7 @@ layout: post
 title: The Role of the Social Scientist in Data Science
 date: 2014-03-15
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 

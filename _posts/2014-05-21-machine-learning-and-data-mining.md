@@ -3,7 +3,7 @@ layout: post
 title: Statistics, Data Mining, Machine Learning and Artificial Intelligence
 date: 2014-05-21
 categories: [computer science]
-tags: [data science]
+tags: [machine learning]
 
 ---
 
