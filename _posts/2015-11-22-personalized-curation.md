@@ -3,7 +3,7 @@ layout: post
 title: Machine Learning as the Key to Personalized Curation
 date: 2015-11-22
 categories: [computer science]
-tags: [data curation, data science]
+tags: [big data]
 
 ---
 
