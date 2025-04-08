@@ -3,7 +3,7 @@ layout: post
 title: SDN and Big Data
 date: 2016-01-12
 categories: [computer science]
-tags: [big data, computer networks]
+tags: [big data]
 
 ---
 
