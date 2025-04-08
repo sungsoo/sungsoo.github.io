@@ -3,7 +3,7 @@ layout: post
 title: The Real-Time Big Data Architecture (RTDBA) Stack
 date: 2014-02-22
 categories: [computer science]
-tags: [stream computing, analytics, big data]
+tags: [big data]
 
 ---
 The RTDBA Stack
