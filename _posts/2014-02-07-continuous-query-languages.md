@@ -3,7 +3,7 @@ layout: post
 title: Continuous Quries Languages
 date: 2014-02-07
 categories: [computer science]
-tags: [data management, stream computing]
+tags: [big data]
 
 ---
 

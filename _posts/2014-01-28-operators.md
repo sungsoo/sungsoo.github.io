@@ -3,7 +3,7 @@ layout: post
 title: Continuous Query Semantics and Operators (Part II)
 date: 2014-01-28
 categories: [computer science]
-tags: [data management, stream computing]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Continuous Quries as Views
 date: 2014-02-05
 categories: [computer science]
-tags: [data management, stream computing]
+tags: [big data]
 
 ---
 

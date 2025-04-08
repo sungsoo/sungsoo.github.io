@@ -3,7 +3,7 @@ layout: post
 title: Semantics of Relations in Continuous Queries
 date: 2014-02-06
 categories: [computer science]
-tags: [data management, stream computing]
+tags: [big data]
 
 ---
 

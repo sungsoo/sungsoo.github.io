@@ -3,7 +3,7 @@ layout: post
 title: Writing Input And Output Adapters
 date: 2014-01-26
 categories: [computer science]
-tags: [data management, stream computing]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Stream Windows
 date: 2014-01-27
 categories: [computer science]
-tags: [data management, stream computing]
+tags: [big data]
 
 ---
 

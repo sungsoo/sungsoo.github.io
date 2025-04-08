@@ -3,7 +3,7 @@ layout: post
 title: Stream Models
 date: 2014-01-26
 categories: [computer science]
-tags: [data management, stream computing]
+tags: [big data]
 
 ---
 
