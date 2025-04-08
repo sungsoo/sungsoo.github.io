@@ -3,7 +3,7 @@ layout: post
 title: Advanced Analytics with Spark
 date: 2017-05-12
 categories: [computer science]
-tags: [machine learning, spark]
+tags: [big data]
 
 ---
 
