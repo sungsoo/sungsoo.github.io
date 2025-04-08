@@ -3,7 +3,7 @@ layout: post
 title: Work Breakdown Structure (WBS)
 date: 2016-01-17
 categories: [computer science]
-tags: [software engineering]
+tags: [design patterns]
 
 ---
 

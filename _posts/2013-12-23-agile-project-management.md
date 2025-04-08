@@ -3,7 +3,7 @@ layout: post
 title: Agile Project Management
 date: 2013-09-25
 categories: [computer science]
-tags: [software engineering]
+tags: [design patterns]
 
 ---
 ### Concept

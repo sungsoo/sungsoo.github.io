@@ -3,7 +3,7 @@ layout: post
 title: Google Developer Day Keynote
 date: 2017-03-24
 categories: [computer science]
-tags: [software engineering]
+tags: [design patterns]
 
 ---
 

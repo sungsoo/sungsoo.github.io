@@ -3,7 +3,7 @@ layout: post
 title: Functional Specifications
 date: 2014-05-19
 categories: [computer science]
-tags: [software engineering]
+tags: [design patterns]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Sequence Diagram
 date: 2014-01-08
 categories: [computer science]
-tags: [software engineering]
+tags: [design patterns]
 
 ---
 <script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>

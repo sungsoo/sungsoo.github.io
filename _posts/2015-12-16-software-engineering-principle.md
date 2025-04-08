@@ -3,7 +3,7 @@ layout: post
 title: Software Engineering Principle 1
 date: 2015-12-16
 categories: [computer science]
-tags: [software engineering]
+tags: [design patterns]
 
 ---
 
