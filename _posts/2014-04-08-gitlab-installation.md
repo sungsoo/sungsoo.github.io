@@ -3,7 +3,7 @@ layout: post
 title: Gitlab Installation on Mac OS X
 date: 2014-04-08
 categories: [information technology]
-tags: [developments, software engineering]
+tags: [design patterns]
 
 ---
 

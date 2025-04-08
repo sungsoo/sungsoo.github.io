@@ -3,7 +3,7 @@ layout: post
 title: Using Gitlab on Mac OS X
 date: 2014-04-09
 categories: [information technology]
-tags: [developments, software engineering]
+tags: [design patterns]
 
 ---
 
