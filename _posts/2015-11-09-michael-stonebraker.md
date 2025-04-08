@@ -3,7 +3,7 @@ layout: post
 title: Michael Stonebraker's Talk
 date: 2015-11-09
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

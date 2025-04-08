@@ -3,7 +3,7 @@ layout: post
 title: Pivotal Big Data Suite 
 date: 2014-07-19
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

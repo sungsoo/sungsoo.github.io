@@ -14,8 +14,12 @@ tags: [data management]
 ![](http://sungsoo.github.com/images/dbms-components.png)
 
 We see an outline of a complete DBMS. Single boxes represent system components, while double boxes represent *in-memory* data structures. The solid lines indicate *control* and *data flow*, while dashed lines indicate data flow only. Since the diagram is complicated, we shall consider the details in several stages. First, at the top, we suggest that there are two distinct sources of commands to the DBMS:
-1. Conventional users and application programs that ask for data or modify data.2. A *database administrator*: a person or persons responsible for the structure or schema of the database.
-# Main-Memory Databases
+
+1. Conventional users and application programs that ask for data or modify data.
+2. A *database administrator*: a person or persons responsible for the structure or schema of the database.
+
+
+# Main-Memory Databases
 
 Current database systems were designed assuming that data resides on
 disk. This assumption is no longer valid; *main memories* have become

@@ -42,7 +42,15 @@ tags: [big data]
 * Look beyond the performance of an individual request to the performance of an entire workload
 
 ## ￼Problems Addressed by Workload Management
-* Workload isolation	* Important for multi-tenant systems* Priorities	* How to interpret them?* Admission control and scheduling 
-* Execution control	* Kill, suspend, resume 
-* Resource allocation	* Including sharing and throttling* Monitoring and prediction* Query characterization and classification 
+* Workload isolation
+	* Important for multi-tenant systems
+* Priorities
+	* How to interpret them?
+* Admission control and scheduling 
+* Execution control
+	* Kill, suspend, resume 
+* Resource allocation
+	* Including sharing and throttling
+* Monitoring and prediction
+* Query characterization and classification 
 * Service level agreements

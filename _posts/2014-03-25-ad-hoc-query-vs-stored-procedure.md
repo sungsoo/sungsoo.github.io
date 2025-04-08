@@ -7,7 +7,9 @@ tags: [data management]
 
 ---
 
-# Comparison: Ad-hoc vs Stored Procedure vs Dynamic SQLSometimes when you are creating a SQL query, you wonder if it’s more
+# Comparison: Ad-hoc vs Stored Procedure vs Dynamic SQL
+
+Sometimes when you are creating a SQL query, you wonder if it’s more
 sensible to use a standard T-SQL, or some other possibility. In this
 post I will try to compare the three different possibilities, so that
 you can make your own decision. If you read the comparison below, keep

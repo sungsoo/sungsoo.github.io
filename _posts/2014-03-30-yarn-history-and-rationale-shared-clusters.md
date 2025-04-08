@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop YARN – History and Rationale, Shared Clusters
 date: 2014-03-30
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [big data, yarn]
 
 ---
 
@@ -23,26 +23,49 @@ Requirements' Origin
 
 
 # Shared clusters
-Ultimately, HoD had too little information to make intelligent decisions about its allocations, its resource granularity was too coarse, and its API forced users to provide misleading constraints to the resource layer.
-However, moving to shared clusters was non-trivial. While HDFS had scaled gradually over years, the JobTracker had been insulated from those forces by HoD. When that guard was removed, MapReduce clusters suddenly became significantly larger, job throughput increased dramatically, and many of the features innocently added to the JobTracker became sources of critical bugs. Still worse, instead of losing a single workflow, a JobTracker failure caused an outage that would lose *all* the running jobs in a cluster and require users to manually recover their workflows.
-Downtime created a backlog in processing pipelines that, when restarted, would put significant strain on the JobTracker. Restarts often involved manually killing users’ jobs until the cluster recovered. Due to the complex state stored for each job, an implementation preserving jobs across restarts was never completely debugged.
 
-Reliability/Availability---
+Ultimately, HoD had too little information to make intelligent decisions about its allocations, its resource granularity was too coarse, and its API forced users to provide misleading constraints to the resource layer.
+
+
+However, moving to shared clusters was non-trivial. While HDFS had scaled gradually over years, the JobTracker had been insulated from those forces by HoD. When that guard was removed, MapReduce clusters suddenly became significantly larger, job throughput increased dramatically, and many of the features innocently added to the JobTracker became sources of critical bugs. Still worse, instead of losing a single workflow, a JobTracker failure caused an outage that would lose *all* the running jobs in a cluster and require users to manually recover their workflows.
+
+
+Downtime created a backlog in processing pipelines that, when restarted, would put significant strain on the JobTracker. Restarts often involved manually killing users’ jobs until the cluster recovered. Due to the complex state stored for each job, an implementation preserving jobs across restarts was never completely debugged.
+
+Reliability/Availability
+---
 
 Operating a large, multi-tenant Hadoop cluster is hard. While fault tolerance is a core design principle, the surface exposed to user applications is vast. Given various availability issues exposed by the single point of failure, it is critical to continuously monitor workloads in the cluster for dysfunctional jobs. More subtly, because the JobTracker needs to allocate tracking structures for every job it initializes, its admission control logic includes safeguards to protect its own availability; it may delay allocating fallow cluster resources to jobs because the overhead of tracking them could overwhelm the JobTracker process. All these concerns may be grouped under the need for **[R6:] Reliability/Availability.**
-Secure and Auditable Operation
----As Hadoop managed more tenants, diverse use cases, and raw data, its requirements for isolation became more stringent, but the authorization model lacked strong, scalable authentication—a critical feature for multitenant clusters. This was added and backported to multiple versions. **[R7:] Secure and auditable operation** must be preserved in YARN. Developers gradually hardened the system to accommodate diverse needs for resources, which were at odds with the slot-oriented view of resources.
-Support for Programming Model Diversity
----While MapReduce supports a wide range of use cases, it is not the ideal model for all large-scale computation. For example, many machine learning programs require multiple iterations over a dataset to converge to a result. If one composes this flow as a sequence of MapReduce jobs, the scheduling overhead will significantly delay the result [32]. Similarly, many graph al-gorithms are better expressed using a bulk-synchronous parallel model (BSP) using message passing to communicate between vertices, rather than the heavy, allto-all communication barrier in a fault-tolerant, largescale MapReduce job [22]. This mismatch became an impediment to users’ productivity, but the MapReducecentric resource model in Hadoop admitted no competing application model. Hadoop’s wide deployment inside Yahoo! and the gravity of its data pipelines made these tensions irreconcilable. Undeterred, users would write “MapReduce” programs that would spawn alternative frameworks. To the scheduler they appeared as map-only jobs with radically different resource curves, thwarting the assumptions built into to the platform and causing poor utilization, potential deadlocks, and instability. YARN must declare a truce with its users, and provide explicit **[R8:] Support for Programming Model Diversity.**
+
+
+Secure and Auditable Operation
+---
+
+As Hadoop managed more tenants, diverse use cases, and raw data, its requirements for isolation became more stringent, but the authorization model lacked strong, scalable authentication—a critical feature for multitenant clusters. This was added and backported to multiple versions. **[R7:] Secure and auditable operation** must be preserved in YARN. Developers gradually hardened the system to accommodate diverse needs for resources, which were at odds with the slot-oriented view of resources.
+
+Support for Programming Model Diversity
+---
+
+While MapReduce supports a wide range of use cases, it is not the ideal model for all large-scale computation. For example, many machine learning programs require multiple iterations over a dataset to converge to a result. If one composes this flow as a sequence of MapReduce jobs, the scheduling overhead will significantly delay the result [32]. Similarly, many graph al-gorithms are better expressed using a bulk-synchronous parallel model (BSP) using message passing to communicate between vertices, rather than the heavy, allto-all communication barrier in a fault-tolerant, largescale MapReduce job [22]. This mismatch became an impediment to users’ productivity, but the MapReducecentric resource model in Hadoop admitted no competing application model. Hadoop’s wide deployment inside Yahoo! and the gravity of its data pipelines made these tensions irreconcilable. Undeterred, users would write “MapReduce” programs that would spawn alternative frameworks. To the scheduler they appeared as map-only jobs with radically different resource curves, thwarting the assumptions built into to the platform and causing poor utilization, potential deadlocks, and instability. YARN must declare a truce with its users, and provide explicit **[R8:] Support for Programming Model Diversity.**
 
 ![](http://sungsoo.github.com/images/yarn-architecture.png)
 
 Flexible Resource Model
----Beyond their mismatch with emerging framework requirements, typed slots also harm utilization. While the separation between map and reduce capacity prevents deadlocks, it can also bottleneck resources. In Hadoop, the overlap between the two stages is configured by the user for each submitted job; starting reduce tasks later increases cluster throughput, while starting them early in a job’s execution reduces its latency.3 The number of map and reduce slots are fixed by the cluster operator, so fallow map capacity can’t be used to spawn reduce tasks and vice versa.4 Because the two task types complete at different rates, no configuration will be perfectly balanced; when either slot type becomes saturated, the JobTracker may be required to apply backpressure to job initialization, creating a classic pipeline bubble. Fungible resources complicate scheduling, but they also empower the allocator to pack the cluster more tightly. This highlights the need for a **[R9:] Flexible Resource Model.**
-Backward compatibility
----While the move to shared clusters improved utilization and locality compared to HoD, it also brought concerns for serviceability and availability into sharp relief. Deploying a new version of Apache Hadoop in a shared cluster was a carefully choreographed, and a regrettably common event. To fix a bug in the MapReduce implementation, operators would necessarily schedule downtime, shut down the cluster, deploy the new bits, validate the upgrade, then admit new jobs. By conflating the platform responsible for arbitrating resource usage with the framework expressing that program, one is forced to evolve them simultaneously; when operators improve the allocation efficiency of the platform, users must necessarily incorporate framework changes. Thus, upgrading a cluster requires users to halt, validate, and restore their pipelines for orthogonal changes. While updates typically required no more than recompilation, users’ assumptions about internal framework details—or developers’ assumptions about users’ programs—occasionally created blocking incompatibilities on pipelines running on the grid.
-Building on lessons learned by evolving Apache Hadoop MapReduce, YARN was designed to address requirements (R1-R9). However, the massive install base of MapReduce applications, the ecosystem of related projects, well-worn deployment practice, and a tight schedule would not tolerate a radical redesign. To avoid the trap of a “second system syndrome” [6], the new architecture reused as much code from the existing framework as possible, behaved in familiar patterns, and left many speculative features on the drawing board. This lead to the final requirement for the YARN redesign: **[R10:] Backward compatibility.**
-References
+---
+
+Beyond their mismatch with emerging framework requirements, typed slots also harm utilization. While the separation between map and reduce capacity prevents deadlocks, it can also bottleneck resources. In Hadoop, the overlap between the two stages is configured by the user for each submitted job; starting reduce tasks later increases cluster throughput, while starting them early in a job’s execution reduces its latency.3 The number of map and reduce slots are fixed by the cluster operator, so fallow map capacity can’t be used to spawn reduce tasks and vice versa.4 Because the two task types complete at different rates, no configuration will be perfectly balanced; when either slot type becomes saturated, the JobTracker may be required to apply backpressure to job initialization, creating a classic pipeline bubble. Fungible resources complicate scheduling, but they also empower the allocator to pack the cluster more tightly. This highlights the need for a **[R9:] Flexible Resource Model.**
+
+
+Backward compatibility
+---
+
+While the move to shared clusters improved utilization and locality compared to HoD, it also brought concerns for serviceability and availability into sharp relief. Deploying a new version of Apache Hadoop in a shared cluster was a carefully choreographed, and a regrettably common event. To fix a bug in the MapReduce implementation, operators would necessarily schedule downtime, shut down the cluster, deploy the new bits, validate the upgrade, then admit new jobs. By conflating the platform responsible for arbitrating resource usage with the framework expressing that program, one is forced to evolve them simultaneously; when operators improve the allocation efficiency of the platform, users must necessarily incorporate framework changes. Thus, upgrading a cluster requires users to halt, validate, and restore their pipelines for orthogonal changes. While updates typically required no more than recompilation, users’ assumptions about internal framework details—or developers’ assumptions about users’ programs—occasionally created blocking incompatibilities on pipelines running on the grid.
+
+
+Building on lessons learned by evolving Apache Hadoop MapReduce, YARN was designed to address requirements (R1-R9). However, the massive install base of MapReduce applications, the ecosystem of related projects, well-worn deployment practice, and a tight schedule would not tolerate a radical redesign. To avoid the trap of a “second system syndrome” [6], the new architecture reused as much code from the existing framework as possible, behaved in familiar patterns, and left many speculative features on the drawing board. This lead to the final requirement for the YARN redesign: **[R10:] Backward compatibility.**
+
+
+References
 ---
 [1] [Apache hadoop](http://hadoop.apache.org). http://hadoop.apache.org.  
 [2] [Apache tez](http://incubator.apache.org/projects/tez.html). http://incubator.apache.org/projects/tez.html.   
@@ -77,4 +100,4 @@ Flexible Resource Model
 [31] Y. Yu, M. Isard, D. Fetterly, M. Budiu, U. Erlingsson, P. K. Gunda, and J. Currey. DryadLINQ: a system for general-purpose distributed data-parallel computing using a high-level language. In *Proceedings of the 8th USENIX conference on Operating systems design and implementation, OSDI’08*, pages 1–14, Berkeley, CA, USA, 2008. USENIX Association.  
 [32] M. Zaharia, M. Chowdhury, M. J. Franklin, S. Shenker, and I. Stoica. Spark: cluster computing with working sets. In *Proceedings of the 2nd USENIX conference on Hot topics in cloud computing, HotCloud’10*, pages 10–10, Berkeley, CA, USA, 2010. USENIX Association.  
 [33] Vinod Kumar Vavilapali, et. al, *Apache Hadoop YARN – Yet Another Resource Negotiator*, SoCC'13, 1-3 Oct. 2013, Santa Clara, California, USA.
-
+

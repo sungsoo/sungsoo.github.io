@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop vs. IBM Platform Symphony and Infosphere BigInsights
 date: 2015-06-12
 categories: [computer science]
-tags: [hadoop & mapreduce, parallel computing]
+tags: [big data, parallel computing]
 
 ---
 

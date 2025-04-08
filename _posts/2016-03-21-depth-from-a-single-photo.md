@@ -7,7 +7,9 @@ tags: [computer graphics]
 
 ---
 
-# 3D Depth From a Single PhotographThis piece of work tries to estimate depth information from an input photogaph. This means that it looks at the photo and tries to tell how far away parts of the image are from the camera, and the final goal is that we provide a photograph for which the depth information is completely unknown and we ask the algorithm to provide it for us.
+# 3D Depth From a Single Photograph
+
+This piece of work tries to estimate depth information from an input photogaph. This means that it looks at the photo and tries to tell how far away parts of the image are from the camera, and the final goal is that we provide a photograph for which the depth information is completely unknown and we ask the algorithm to provide it for us.
 
 ---
 

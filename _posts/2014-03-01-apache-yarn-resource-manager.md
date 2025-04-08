@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop YARN – ResourceManager
 date: 2014-03-01 
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [big data, yarn]
 
 ---
 

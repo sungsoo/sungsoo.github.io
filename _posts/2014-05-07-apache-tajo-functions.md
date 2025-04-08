@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo Functions
 date: 2014-05-07
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [big data, yarn]
 
 ---
 

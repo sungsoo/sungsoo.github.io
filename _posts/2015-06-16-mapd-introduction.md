@@ -3,7 +3,7 @@ layout: post
 title: MapD (Massively Parallel Database) Overview
 date: 2015-06-16
 categories: [computer science]
-tags: [gpgpu, big data, hadoop & mapreduce]
+tags: [gpgpu, big data, big data]
 
 ---
 

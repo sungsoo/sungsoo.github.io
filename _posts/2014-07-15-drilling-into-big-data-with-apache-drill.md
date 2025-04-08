@@ -3,7 +3,7 @@ layout: post
 title: Drilling into Big Data with Apache Drill
 date: 2014-07-15
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

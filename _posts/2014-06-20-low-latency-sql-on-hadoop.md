@@ -3,7 +3,7 @@ layout: post
 title: Low Latency SQL on Hadoop
 date: 2014-06-20
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

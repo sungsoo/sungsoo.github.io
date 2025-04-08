@@ -3,7 +3,7 @@ layout: post
 title: How to Run a Simple Apache Spark App in CDH 5
 date: 2014-04-24
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

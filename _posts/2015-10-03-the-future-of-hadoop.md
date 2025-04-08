@@ -3,7 +3,7 @@ layout: post
 title: What is the Future of Hadoop?
 date: 2015-10-03
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

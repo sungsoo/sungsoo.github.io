@@ -3,7 +3,7 @@ layout: post
 title: The Stinger Initiative From HortonWorks With Hadoop
 date: 2014-05-02
 categories: [computer science]
-tags: [hadoop & mapreduce, tez, yarn]
+tags: [big data, tez, yarn]
 
 ---
 

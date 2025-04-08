@@ -11,13 +11,29 @@ tags: [big data, spark]
 
 
 ## Resilient Distributed Datasets (RDD)
-The primary abstraction of Spark is RDD. Remember, there are two types of RDD operations: transformations and actions. Transformations return a pointer to the new RDD. Actions return the value of the operation. RDD transformations are lazy evaluations. This means nothing is processed until an action occurs. Each transformation updates the *direct acyclic graph (DAG)*, which is only executed after an action is called. Due to this inherent behavior, Spark’s applications are fault tolerant. The DAG can be used to rebuild the data within a node.In this lab exercise, you will work with various RDD operations and learn some of the APIs from Scala and Python.
-After completing this hands-on lab, you should be able to:* Create a RDD froman external dataset
-* View the Direct Acyclic Graph(DAG) of an RDD
-* Work with various RDD operations including shared variables and key-value pairsAllow 60 minutes to complete this section of lab.
-## 1.1 Uploading files to the HDFS
-Step 1. Open up a docker terminal. If you closed the terminal from the previous exercise, run the commands to start up the same bdu_spark container:
-```
+
+The primary abstraction of Spark is RDD. Remember, there are two types of RDD operations: transformations and actions. Transformations return a pointer to the new RDD. Actions return the value of the operation. RDD transformations are lazy evaluations. This means nothing is processed until an action occurs. Each transformation updates the *direct acyclic graph (DAG)*, which is only executed after an action is called. Due to this inherent behavior, Spark’s applications are fault tolerant. The DAG can be used to rebuild the data within a node.
+
+In this lab exercise, you will work with various RDD operations and learn some of the APIs from Scala and Python.
+
+
+After completing this hands-on lab, you should be able to:
+
+* Create a RDD froman external dataset
+
+* View the Direct Acyclic Graph(DAG) of an RDD
+
+* Work with various RDD operations including shared variables and key-value pairs
+
+Allow 60 minutes to complete this section of lab.
+
+
+## 1.1 Uploading files to the HDFS
+
+Step 1. Open up a docker terminal. If you closed the terminal from the previous exercise, run the commands to start up the same bdu_spark container:
+
+
+```
 docker start bdu_spark 
 
 docker attach bdu_spark
@@ -104,26 +120,49 @@ info.filter(line => line.contains("spark")).collect()
 Step 7. Remember that we went over the DAG. It is what provides the fault tolerance in Spark. Nodes can re-compute its state by borrowing the DAG from a neighboring node. You can view the graph of an RDD using the toDebugString command.       
 
 ```scala
-info.toDebugString```
-**￼￼￼Note:** Occasionally, it may seem like the shell has not returned back the prompt. In that case, just hit the Enter key and the prompt will show back up. ￼### 1.2.2 Joining RDDs
-Step 8. Next, you are going to create RDDs for the README and the CHANGES file. 
+info.toDebugString
+```
 
-```scalaval readmeFile = sc.textFile("input/tmp/README.md") 
-val changesFile = sc.textFile("input/tmp/CHANGES.txt") 
-```Step 9. How many Spark keywords are in each file? 
-```scalareadmeFile.filter(line => line.contains("Spark")).count() 
-changesFile.filter(line => line.contains("Spark")).count()
+**￼￼￼Note:** Occasionally, it may seem like the shell has not returned back the prompt. In that case, just hit the Enter key and the prompt will show back up. ￼
+
+### 1.2.2 Joining RDDs
+
+Step 8. Next, you are going to create RDDs for the README and the CHANGES file. 
+
+```scala
+val readmeFile = sc.textFile("input/tmp/README.md") 
+
+val changesFile = sc.textFile("input/tmp/CHANGES.txt") 
+```
+
+Step 9. How many Spark keywords are in each file? 
+
+```scala
+readmeFile.filter(line => line.contains("Spark")).count() 
+
+changesFile.filter(line => line.contains("Spark")).count()
 ``` 
 
-Step 10. Now do a WordCount on each RDD so that the results are (K,V) pairs of (word,count)```val readmeCount = readmeFile.flatMap(line => line.split(" ")).map(word => (word, 1)).reduceByKey(_ + _) 
-val changesCount = changesFile.flatMap(line => line.split(" ")).map(word => (word, 1)).reduceByKey(_ + _)
-```Step 11. To see the array for either of them, just call the collect function on it.
+Step 10. Now do a WordCount on each RDD so that the results are (K,V) pairs of (word,count)
 
-```scalareadmeCount.collect()       
-changesCount.collect()
-```Step 12. Now let's join these two RDDs together to get a collective set. The join function combines the two datasets (K,V) and (K,W) together and get (K, (V,W)). Let's join these two counts together       
+```
+val readmeCount = readmeFile.flatMap(line => line.split(" ")).map(word => (word, 1)).reduceByKey(_ + _) 
 
-```scalaval joined = readmeCount.join(changesCount)
+val changesCount = changesFile.flatMap(line => line.split(" ")).map(word => (word, 1)).reduceByKey(_ + _)
+```
+
+Step 11. To see the array for either of them, just call the collect function on it.
+
+```scala
+readmeCount.collect()       
+
+changesCount.collect()
+```
+
+Step 12. Now let's join these two RDDs together to get a collective set. The join function combines the two datasets (K,V) and (K,W) together and get (K, (V,W)). Let's join these two counts together       
+
+```scala
+val joined = readmeCount.join(changesCount)
 ``` 
 
 Step 13. Cache the joined dataset.       
@@ -152,17 +191,31 @@ Step 16. To check if it is correct, print the first five elements from the joine
 joined.take(5).foreach(println)       
 
 joinedSum.take(5).foreach(println)
-```### 1.2.3 Shared variables 
-Broadcast variables are useful for when you have a large dataset that you want to use across all the worker nodes. Instead of having to send out the entire dataset, only the variable is sent out.
-Step 17. In the same shell from the last section, create a broadcast variable. Type in 
-```scalaval broadcastVar = sc.broadcast(Array(1,2,3)) 
-```Step 18. To get the value, type in:       
+```
 
-```scalabroadcastVar.value 
-```Accumulators are variables that can only be added through an associative operation. It is used to implement counters and sum efficiently in parallel. Spark natively supports numeric type accumulators and standard mutable collections. Programmers can extend these for new types. Only the driver can read the values of the accumulators. The workers can only invoke it to increment the value. 
-Step 19. Create the accumulator variable. Type in:       
+### 1.2.3 Shared variables 
 
-```scalaval accum = sc.accumulator(0)
+Broadcast variables are useful for when you have a large dataset that you want to use across all the worker nodes. Instead of having to send out the entire dataset, only the variable is sent out.
+
+
+Step 17. In the same shell from the last section, create a broadcast variable. Type in 
+
+```scala
+val broadcastVar = sc.broadcast(Array(1,2,3)) 
+```
+
+Step 18. To get the value, type in:       
+
+```scala
+broadcastVar.value 
+```
+
+Accumulators are variables that can only be added through an associative operation. It is used to implement counters and sum efficiently in parallel. Spark natively supports numeric type accumulators and standard mutable collections. Programmers can extend these for new types. Only the driver can read the values of the accumulators. The workers can only invoke it to increment the value. 
+
+Step 19. Create the accumulator variable. Type in:       
+
+```scala
+val accum = sc.accumulator(0)
 ``` 
 
 Step 20. Next parallelize an array of four integers and run it through a loop to add each integer value to the accumulator variable. Type in: 

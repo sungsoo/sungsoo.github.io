@@ -3,7 +3,7 @@ layout: post
 title: Why Oracle Big Data SQL Potentially Solves a Big Issue with Hadoop Security 
 date: 2014-07-30
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

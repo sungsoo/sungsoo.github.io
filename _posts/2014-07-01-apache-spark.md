@@ -3,7 +3,7 @@ layout: post
 title: Apache Spark
 date: 2014-07-01
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

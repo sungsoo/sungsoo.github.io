@@ -126,8 +126,20 @@ Version Diagrams
 ---
 Gray means version is read only and blue means version is read-write.
 
-**Patial Persistence** ![](http://sungsoo.github.com/images/partial.png)
-**Full Persistence** ![](http://sungsoo.github.com/images/fullpersistence.png)**Confluent/Functional Persistence** ![](http://sungsoo.github.com/images/confluent.png) 
+**Patial Persistence** 
+
+![](http://sungsoo.github.com/images/partial.png)
+
+
+**Full Persistence** 
+
+![](http://sungsoo.github.com/images/fullpersistence.png)
+
+**Confluent/Functional Persistence** 
+
+![](http://sungsoo.github.com/images/confluent.png)
+
+ 
 
 References
 ---

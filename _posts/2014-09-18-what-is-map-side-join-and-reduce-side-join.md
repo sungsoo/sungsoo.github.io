@@ -3,7 +3,7 @@ layout: post
 title: What is map side join and reduce side join?
 date: 2014-09-18
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

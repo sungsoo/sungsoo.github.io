@@ -3,7 +3,7 @@ layout: post
 title: Hive Architecture
 date: 2014-09-11
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Modern Oil & Gas Architectures Built with Hadoop
 date: 2014-03-24
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

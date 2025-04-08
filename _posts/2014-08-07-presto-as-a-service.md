@@ -3,7 +3,7 @@ layout: post
 title: Presto as a Service
 date: 2014-08-07
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

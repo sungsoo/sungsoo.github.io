@@ -533,4 +533,4 @@ References
     by C. Olston, B. Reed, U. Srivastava, R. Kumar, and A. Tomkins.
     (Presentation at SIGMOD 2008)," 2008
 
-
+

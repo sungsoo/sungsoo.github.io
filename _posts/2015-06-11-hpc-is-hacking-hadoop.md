@@ -3,7 +3,7 @@ layout: post
 title: How HPC is Hacking Hadoop
 date: 2015-06-11
 categories: [computer science]
-tags: [hadoop & mapreduce, parallel computing]
+tags: [big data, parallel computing]
 
 ---
 

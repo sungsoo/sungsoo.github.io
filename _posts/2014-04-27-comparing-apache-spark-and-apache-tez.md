@@ -3,7 +3,7 @@ layout: post
 title: Apache Spark and Apache Tez
 date: 2014-04-27
 categories: [computer science]
-tags: [hadoop & mapreduce, tez]
+tags: [big data, tez]
 
 ---
 
@@ -12,7 +12,8 @@ tags: [hadoop & mapreduce, tez]
 
 
 ![](http://sungsoo.github.com/images/spark-vs-tez.png)
-# Apache Spark and Apache Tez – Near Real-Time Analysis of Data at Rest
+
+# Apache Spark and Apache Tez – Near Real-Time Analysis of Data at Rest
 
 A buzzword for Big Data is “Real-time” and every product is stating they
 are capable of doing it. But “real-time”, just like “Big Data”, is

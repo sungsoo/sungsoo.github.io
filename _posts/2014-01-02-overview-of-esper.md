@@ -19,8 +19,12 @@ tags: [stream computing, developments]
 
 * The code is available at esper.codehaus.org
 * Tutorial(s), code examples  
-* Open source* Can be used in several data stream and CEP applications### Achitecture Overview
-* The main elements in the Esper architecture resemble any DSMS/CEP system  
+* Open source
+* Can be used in several data stream and CEP applications
+
+### Achitecture Overview
+
+* The main elements in the Esper architecture resemble any DSMS/CEP system  
 	- Input data is processed by one or more queries
 
 #### CEP Architecture
@@ -38,7 +42,8 @@ tags: [stream computing, developments]
 	- Represented as Java objects
 
 * **Stream types**
-	- Input stream: `istream`		* All the new events arriving, and entering a data window or aggregation
+	- Input stream: `istream`
+		* All the new events arriving, and entering a data window or aggregation
 		* The default stream type
 	- Remove stream: `rstream`
 		* All the old events leaving a data window or aggregation
@@ -49,20 +54,31 @@ tags: [stream computing, developments]
 
 The event objects can be declared by 
 
-* Schema	* `create schema schema_name [as] (property_name property_type [,property_name property_type [,...]) [inherits inherited_event_type[, inherited_event_type] [,...]]`
-	* XML
+* Schema
+	* `create schema schema_name [as] (property_name property_type [,property_name property_type [,...]) [inherits inherited_event_type[, inherited_event_type] [,...]]`
+
+	
+* XML
 	* Events can be represented as org.w3c.dom.Node instances  
 
 ```
-	<?xml version="1.0" encoding="UTF-8"?> <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">	<xs:element name="Sensor"> 
-		<xs:complexType>			<xs:sequence>				<xs:element name="ID" type="xs:string"/> 
-				<xs:element ref="Observation" />			</xs:sequence> 
-		</xs:complexType>	</xs:element> 
-	...```
+	<?xml version="1.0" encoding="UTF-8"?> <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="Sensor"> 
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="ID" type="xs:string"/> 
+				<xs:element ref="Observation" />
+			</xs:sequence> 
+		</xs:complexType>
+	</xs:element> 
+
+	...
+```
 
 * Code
 
-```	package org.myapp.event;
+```
+	package org.myapp.event;
 	public class OrderEvent {
 		private String itemName;
 		private double price;
@@ -71,52 +87,94 @@ The event objects can be declared by
 			this.itemName = itemName;
 			this.price = price;
 		}
-		       public String getItemName() {
+		
+       public String getItemName() {
           return itemName;
-       }          public double getPrice() {              return price;
+       }
+          public double getPrice() {
+              return price;
        } 
 	}
 ```
-* Many other types	* E.g. `java.util.Map`
-	
-### Creating Events
-* Create a new event object and send the object to the event processor runtime:
-```	OrderEvent event = new OrderEvent("shirt", 74.50);       	epService.getEPRuntime().sendEvent(event);```### Windows
-* In Esper a window is called a view
-* Provides many types of windows/views
-	* some examples:![](http://sungsoo.github.com/images/esper-windows.png)
-![](http://sungsoo.github.com/images/esper-windows-example.png)
-### Timestamps and Time Specficiation
-* Implicit timing
+
+* Many other types
+	* E.g. `java.util.Map`
+
+	
+
+### Creating Events
+
+
+* Create a new event object and send the object to the event processor runtime:
+
+```
+	OrderEvent event = new OrderEvent("shirt", 74.50);       
+	epService.getEPRuntime().sendEvent(event);
+```
+
+### Windows
+
+
+* In Esper a window is called a view
+
+* Provides many types of windows/views
+
+	* some examples:
+
+![](http://sungsoo.github.com/images/esper-windows.png)
+
+![](http://sungsoo.github.com/images/esper-windows-example.png)
+
+
+### Timestamps and Time Specficiation
+
+
+* Implicit timing
 	* Esper uses the system clock 
 * Explicit timing
 	* Can use the timestamps on the data in the data stream
 * Defines time periods in the queries
 
 ```
-	time-period : [day-part] [hour-part] [minute-part] [seconds-part] [milliseconds- part]	day-part : (number|variable_name) ("days" | "day")	hour-part : (number|variable_name) ("hours" | "hour")	minute-part : (number|variable_name) ("minutes" | "minute" | "min") seconds-part : (number|  
+	time-period : [day-part] [hour-part] [minute-part] [seconds-part] [milliseconds- part]
+	day-part : (number|variable_name) ("days" | "day")
+	hour-part : (number|variable_name) ("hours" | "hour")
+	minute-part : (number|variable_name) ("minutes" | "minute" | "min") seconds-part : (number|  
 	variable_name) ("seconds" | "second" | "sec")   
 	milliseconds-part : (number|variable_name)("milliseconds" | "millisecond" | "msec“)
 ```
 
 ### Aggregations
 
-* The aggregate functions are `sum, avg, count, max, min, median, stddev, and avedev`
 
-* For example, to find out the total price for all stock tick events in the last 30 seconds```select sum(price) from StockTickEvent.win:time(30 sec)
-```* Supports group-by and having
+* The aggregate functions are `sum, avg, count, max, min, median, stddev, and avedev`
+
+* For example, to find out the total price for all stock tick events in the last 30 seconds
+
+```
+select sum(price) from StockTickEvent.win:time(30 sec)
+```
+
+* Supports group-by and having
 
 ### Output Defintions
 
-* Optional	* control or stabilize the rate at which events are output and to suppress output events	* Examples
-	```	select sum(price) from OrderEvent.win:time(30 min) output snapshot every 60 seconds	select * from StockTickEvent.win:time(30 sec) output every 5 events	select * from StockTickEvent.win:length(5) output every 1.5 minutes
+* Optional
+	* control or stabilize the rate at which events are output and to suppress output events
+	* Examples
+	
+```
+	select sum(price) from OrderEvent.win:time(30 min) output snapshot every 60 seconds
+	select * from StockTickEvent.win:time(30 sec) output every 5 events
+	select * from StockTickEvent.win:length(5) output every 1.5 minutes
 ```
 
 ### Esper Syntax for Data Stream Management
 
 * Basic SQL-inspired queries for data stream management called EPL
 
-```	[insert into insert_into_def]
+```
+	[insert into insert_into_def]
 	select select_list 
 	from stream_def [as name] [, stream_def [as name]] [,...] [where search_conditions]
 	[group by grouping_expression_list]
@@ -124,11 +182,17 @@ The event objects can be declared by
 	[output output_specification]
 	[order by order_by_expression_list]
 	[limit num_rows]
-```* DBMS support for joins between databases and data streams
-	* Historical queries	* Additional information
+```
+
+* DBMS support for joins between databases and data streams
+	* Historical queries
+	* Additional information
 		* E.g. location of a sensor
-### Patterns for Complex Event Processing
-* Extends Esper beyond windows and aggregations (DSMS features)
+
+
+### Patterns for Complex Event Processing
+
+* Extends Esper beyond windows and aggregations (DSMS features)
 * Uses atoms, e.g. expressions
 * Operators
 	* Control pattern sub-expression repetition: every, every-distinct, [num] and until
@@ -140,9 +204,18 @@ The event objects can be declared by
 * Example of patterns
 
 ```
-	select a.custId, sum(a.price + b.price)	from pattern [every a=ServiceOrder ->	b=ProductOrder(custId = a.custId) where timer:within(1 min)].win:time(2 hour) where a.name in ('Repair', b.name)	group by a.custId	having sum(a.price + b.price) > 100```### Esper Sample Program
-![](http://sungsoo.github.com/images/esper-sample.png)
-#### Event Class: SampleEvent.java
+	select a.custId, sum(a.price + b.price)
+	from pattern [every a=ServiceOrder ->
+	b=ProductOrder(custId = a.custId) where timer:within(1 min)].win:time(2 hour) where a.name in ('Repair', b.name)
+	group by a.custId
+	having sum(a.price + b.price) > 100
+```
+
+### Esper Sample Program
+
+![](http://sungsoo.github.com/images/esper-sample.png)
+
+#### Event Class: SampleEvent.java
 Event를 저장하는 POJO class를 생성
 
 ```
@@ -299,4 +372,6 @@ config = new Configuration();
 config.configure(new File("~/config/esper.default.cfg.xml"));
 service = EPServiceProviderManager.getProvider(ENGINE_URI, config);
 ```
-
+
+
+

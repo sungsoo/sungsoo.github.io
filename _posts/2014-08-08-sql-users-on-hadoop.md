@@ -3,7 +3,7 @@ layout: post
 title: Actian Unleashes SQL Users on Hadoop with Easy Access, Faster Performance
 date: 2014-08-08
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

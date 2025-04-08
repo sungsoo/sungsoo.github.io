@@ -3,7 +3,7 @@ layout: post
 title: Comparing Apache Tez and Microsoft Dryad
 date: 2014-04-27
 categories: [computer science]
-tags: [hadoop & mapreduce, tez]
+tags: [big data, tez]
 
 ---
 
@@ -12,7 +12,8 @@ tags: [hadoop & mapreduce, tez]
 * Authors: [yhemanth](http://yhemanth.wordpress.com/author/yhemanth/ "View all posts by yhemanth")
 
 ![](http://sungsoo.github.com/images/tez-vs-dryad.png)
-Comparing Apache Tez and Microsoft Dryad 
+
+Comparing Apache Tez and Microsoft Dryad 
 ===
 
 [Hortonworks](http://hortonworks.com) has been

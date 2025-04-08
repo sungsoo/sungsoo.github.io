@@ -208,7 +208,8 @@ grid](http://en.wikipedia.org/wiki/Power_grid "Power grid")). Indeed, grid compu
 as exemplified by the AppLogic system from
 [3tera](http://en.wikipedia.org/wiki/3tera "3tera").
 
-References
+
+References
 ---
 
 1.  [What is grid computing? -

@@ -3,7 +3,7 @@ layout: post
 title: Connected Components in MapReduce and Beyond
 date: 2016-01-09
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

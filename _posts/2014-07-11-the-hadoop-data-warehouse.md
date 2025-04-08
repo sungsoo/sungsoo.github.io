@@ -3,7 +3,7 @@ layout: post
 title: Big Data - The Hadoop Data Warehouse
 date: 2014-07-11
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

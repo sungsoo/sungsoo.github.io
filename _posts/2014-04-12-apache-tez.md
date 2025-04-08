@@ -3,7 +3,7 @@ layout: post
 title: Introducing Apache Tez 0.4
 date: 2014-04-12
 categories: [computer science]
-tags: [big data, hadoop & mapreduce, tez]
+tags: [big data, big data, tez]
 
 ---
 

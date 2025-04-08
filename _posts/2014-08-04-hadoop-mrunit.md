@@ -3,7 +3,7 @@ layout: post
 title: MRUnit Tutorial
 date: 2014-08-04
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Cost Based Query Optimization in Hive
 date: 2014-06-21
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

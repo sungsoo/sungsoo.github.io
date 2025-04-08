@@ -7,7 +7,9 @@ tags: [data management]
 
 ---
 
-# OLAP vs. OLTP: what makes the differenceOLTP and OLAP are complementing technologies. You can't live without
+# OLAP vs. OLTP: what makes the difference
+
+OLTP and OLAP are complementing technologies. You can't live without
 OLTP: it runs your business day by day. So, using getting strategic
 information from OLTP is usually first “quick and dirty” approach, but
 can become limiting later.
@@ -204,7 +206,8 @@ The following table summarized main differences between OLPT and OLAP:
 <iframe width="600" height="400" src="//www.youtube.com/embed/Zd4VK3gHYs0" frameborder="0" allowfullscreen></iframe>
 
 <iframe width="600" height="400" src="//www.youtube.com/embed/I-HVEP8xoQo" frameborder="0" allowfullscreen></iframe>
-## Horizon 
+
+## Horizon 
 
 OLTP databases store “live” operational information. An invoice, for
 example, once paid, is possibly moved to some sort of backup store,
@@ -353,5 +356,7 @@ Solutions -
 2nd Edition**](http://eu.wiley.com/WileyCDA/WileyTitle/productCd-0471400300.html) By Erik
 Tomsen,
 also available at
-[Amazon](http://www.amazon.com/OLAP-Solutions-Building-Multidimensional-Information/dp/0471400300/ref=sr_1_1).# References
+[Amazon](http://www.amazon.com/OLAP-Solutions-Building-Multidimensional-Information/dp/0471400300/ref=sr_1_1).
+
+# References
 [1] [*OLAP vs OLTP: what makes the difference*](http://www.cbsolution.net/techniques/ontarget/olap_vs_oltp_what_makes), cbsolution.net, 2011.

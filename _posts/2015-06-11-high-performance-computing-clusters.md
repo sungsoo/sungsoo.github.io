@@ -3,7 +3,7 @@ layout: post
 title: High-Performance Computing Cluster
 date: 2015-06-11
 categories: [computer science]
-tags: [hadoop & mapreduce, parallel computing]
+tags: [big data, parallel computing]
 
 ---
 

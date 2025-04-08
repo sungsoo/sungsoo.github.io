@@ -3,7 +3,7 @@ layout: post
 title: Implementing Drill Math Functions
 date: 2014-07-13
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

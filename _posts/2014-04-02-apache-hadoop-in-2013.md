@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop in 2013 - The State of the Platform
 date: 2014-04-02
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [big data, yarn]
 
 ---
 
@@ -229,6 +229,7 @@ Other Hadoop Indicators
 -   [YARN](http://blog.cloudera.com/blog/category/yarn/ "View all posts in YARN")
 -   [ZooKeeper](http://blog.cloudera.com/blog/category/zookeeper/ "View all posts in ZooKeeper")
 
-# References
+
+# References
 
 [1] Rob Weltman, [*Apache Hadoop in 2013: The State of the Platform*](http://blog.cloudera.com/blog/2013/01/apache-hadoop-in-2013-the-state-of-the-platform/), 2013.

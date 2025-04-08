@@ -3,7 +3,7 @@ layout: post
 title: Hbase Read High Availability Using Eventually Consistent Region Replicas
 date: 2014-06-26
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

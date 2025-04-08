@@ -993,4 +993,4 @@ See also
     Wired*, 12 December 2013.
 57. **[\](#cite_ref-MARCUS_57-0)** G. Marcus., "Is "Deep Learning" a
     Revolution in Artificial Intelligence?" *The New Yorker*, 25
-    November 2012.
+    November 2012.

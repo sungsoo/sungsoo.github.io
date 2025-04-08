@@ -3,7 +3,7 @@ layout: post
 title: M7 - Native Storage for MapR Tables
 date: 2014-06-11
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

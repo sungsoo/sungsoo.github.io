@@ -3,7 +3,7 @@ layout: post
 title: Papers about MapReduce
 date: 2014-02-28 
 categories: [computer science]
-tags: [hadoop & mapreduce, papers]
+tags: [big data, papers]
 
 ---
 
@@ -17,14 +17,16 @@ References
 ---
 
 [1] Andrew Pavlo et al, “A comparison of approaches to large-scale data analysis”, In Proceedings of the 2009 ACM SIGMOD International Conference on Management of data, Pages 165-178, 2009.  
-[2] Jacob Leverich et al, “On the energy (in)efficiency of Hadoop clusters”, ACM SIGOPS Operating Systems Review archive, Volume 44 Issue 1, Pages 61-65, January 2010.[3] Yanpei Chen et al, “To compress or not to compress - compute vs. IO tradeoffs for mapreduce energy efficiency”, In Proceedings of the first ACM SIGCOMM workshop on Green networking, Pages 23- 28, 2010.  
+[2] Jacob Leverich et al, “On the energy (in)efficiency of Hadoop clusters”, ACM SIGOPS Operating Systems Review archive, Volume 44 Issue 1, Pages 61-65, January 2010.
+[3] Yanpei Chen et al, “To compress or not to compress - compute vs. IO tradeoffs for mapreduce energy efficiency”, In Proceedings of the first ACM SIGCOMM workshop on Green networking, Pages 23- 28, 2010.  
 [4] Hung-chih Yang et al, “Map-reduce-merge: simplified relational data processing on large clusters”, In Proceedings of the 2007 ACM SIGMOD international conference on Management of data, Pages 1029-1040, 2007.  
 [5] Grzegorz Malewicz, “Pregel: a system for large- scale graph processing”, In Proceedings of the 2010 ACM SIGMOD International Conference on Management of data, Pages 135-146, 2010.  
 [6] [http://giraph.apache.org/](http://giraph.apache.org/)  
 [7] [http://hama.apache.org/](http://hama.apache.org/)  
 [8] Foto N.Afrati et al, “Optimizing joins in a map- reduce environment”, Proceedings of the 13th International Conference on Extending Database Technology, Pages 99-110, 2010.  
 [9] Rares Vernica et al, “Efficient parallel set-similarity joins using MapReduce”, In Proceedings of the 2010 ACM SIGMOD International Conference on Management of data, Pages 495-506, 2010.  
-[10] Spyros Blanas et al, “A comparison of join algorithms for log processing in MaPreduce”, In Proceedings of the 2010 ACM SIGMOD International Conference on Management of data, Pages 975-986,2010.  
+[10] Spyros Blanas et al, “A comparison of join algorithms for log processing in MaPreduce”, In Proceedings of the 2010 ACM SIGMOD International Conference on Management of data, Pages 975-986,
+2010.  
 [11] Y. Lin et al . Llama, “Leveraging Columnar Storage for Scalable Join Processing in the MapReduce Framework”, In Proceedings of the 2011 ACM SIGMOD, 2011.  
 [12] A. Okcan et al, “Processing Theta-Joins using MapReduce”, In Proceedings of the 2011 ACM SIGMOD International Conference on Management of data Pages 949-960, 2011.  
 [13] Qifa Ke et al, “Optimizing data partitioning for data-parallel computing”, In Proceeding of HotOS'13 Proceedings of the 13th USENIX conference on Hot topics in operating systems, Pages 13-13, 2011.  

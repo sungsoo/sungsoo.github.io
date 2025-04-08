@@ -3,7 +3,7 @@ layout: post
 title: War of the Hadoop SQL engines. And the winner is …? 
 date: 2014-07-23
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

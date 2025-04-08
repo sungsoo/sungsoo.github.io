@@ -17,8 +17,11 @@ tags: [big data]
 
 
 Before selecting, constructing, or deploying an analytic infrastructure, it makes sense to try to understand the basic characteristics and requirements of an analytic workload. Later, in addition to helping us outline an effective analytic infrastructure, these workload criteria can be used to evaluate a specific project or problem, yielding a rough measure of analytic complexity.
-An *analytic workload* will exhibit one or more of the following characteristics, each of which elevates a given workload’s degree of difficulty:
-* Extreme data volume
+
+An *analytic workload* will exhibit one or more of the following characteristics, each of which elevates a given workload’s degree of difficulty:
+
+
+* Extreme data volume
 * Data model complexity
 * Variable and unpredictable traversal paths, patterns, and frequencies
 * Set-oriented processing and bulk operations

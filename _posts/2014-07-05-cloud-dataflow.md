@@ -3,7 +3,7 @@ layout: post
 title: Google Cloud Dataflow, a Cloud-native data processing service
 date: 2014-07-05
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

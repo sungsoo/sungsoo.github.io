@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop YARN – Application Master (AM)
 date: 2014-04-02
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [big data, yarn]
 
 ---
 
@@ -22,10 +22,20 @@ Requirements' Origin
 10. **Backward compatibility**
 
 
-# Application Master (AM)An application may be a *static* set of processes, a *logical* description of work, or even a long-running service. The **ApplicationMaster** is the process that *coordinates* the application’s execution in the cluster, but it itself is run in the cluster just like any other container. A component of the RM *negotiates* for the container to spawn this *bootstrap process*.
-The AM periodically *heartbeats* to the RM to affirm its liveness and to update the record of its demand. After building a model of its requirements, the AM encodes its preferences and constraints in a heartbeat message to the RM. In response to subsequent heartbeats, the AM will receive a *container lease* on bundles of resources bound to a particular node in the cluster. Based on the containers it receives from the RM, the AM may update its execution plan to accommodate perceived abundance or scarcity. In contrast to some resource models, the allocations to an application are *late binding*: the process spawned is not bound to the request, but to the lease. The conditions that caused the AM to issue the request may not remain true when it receives its resources, but the semantics of the container are *fungible* and *framework-specific* [**R3,R8,R10**]. The AM will also update its resource asks to the RM as the containers it receives affect both its present and future requirements.
-By way of illustration, the MapReduce AM optimizes for *locality* among map tasks with identical resource requirements. When running on HDFS, each block of input data is replicated on *k* machines. When the AM receives a container, it matches it against the set of pending map tasks, selecting a task with input data close to the container. If the AM decides to run a map task *m<sub>i</sub>* in the container, then the hosts storing replicas of mi’s input data are less desirable. The AM will update its request to diminish the weight on the other *k − 1* hosts. This relationship between hosts remains opaque to the RM; similarly, if mi fails, the AM is responsible for updating its demand to compensate. In the case of MapReduce, note that some services offered by the **Hadoop JobTracker**— such as job progress over RPC, a web interface to status, access to MapReduce-specific, historical data—are no longer part of the YARN architecture. These services are either provided by **ApplicationMasters** or by *framework daemons*.
-Since the RM does not interpret the container status, the AM determines the *semantics* of the success or failure of the container exit status reported by NMs through the RM. Since the AM is itself a container running in a cluster of unreliable hardware, it should be resilient to failure. YARN provides some support for *recovery*, but because *fault tolerance* and *application semantics* are so closely intertwined, much of the burden falls on the AM.References
+# Application Master (AM)
+An application may be a *static* set of processes, a *logical* description of work, or even a long-running service. The **ApplicationMaster** is the process that *coordinates* the application’s execution in the cluster, but it itself is run in the cluster just like any other container. A component of the RM *negotiates* for the container to spawn this *bootstrap process*.
+
+
+The AM periodically *heartbeats* to the RM to affirm its liveness and to update the record of its demand. After building a model of its requirements, the AM encodes its preferences and constraints in a heartbeat message to the RM. In response to subsequent heartbeats, the AM will receive a *container lease* on bundles of resources bound to a particular node in the cluster. Based on the containers it receives from the RM, the AM may update its execution plan to accommodate perceived abundance or scarcity. In contrast to some resource models, the allocations to an application are *late binding*: the process spawned is not bound to the request, but to the lease. The conditions that caused the AM to issue the request may not remain true when it receives its resources, but the semantics of the container are *fungible* and *framework-specific* [**R3,R8,R10**]. The AM will also update its resource asks to the RM as the containers it receives affect both its present and future requirements.
+
+
+By way of illustration, the MapReduce AM optimizes for *locality* among map tasks with identical resource requirements. When running on HDFS, each block of input data is replicated on *k* machines. When the AM receives a container, it matches it against the set of pending map tasks, selecting a task with input data close to the container. If the AM decides to run a map task *m<sub>i</sub>* in the container, then the hosts storing replicas of mi’s input data are less desirable. The AM will update its request to diminish the weight on the other *k − 1* hosts. This relationship between hosts remains opaque to the RM; similarly, if mi fails, the AM is responsible for updating its demand to compensate. In the case of MapReduce, note that some services offered by the **Hadoop JobTracker**— such as job progress over RPC, a web interface to status, access to MapReduce-specific, historical data—are no longer part of the YARN architecture. These services are either provided by **ApplicationMasters** or by *framework daemons*.
+
+
+Since the RM does not interpret the container status, the AM determines the *semantics* of the success or failure of the container exit status reported by NMs through the RM. Since the AM is itself a container running in a cluster of unreliable hardware, it should be resilient to failure. YARN provides some support for *recovery*, but because *fault tolerance* and *application semantics* are so closely intertwined, much of the burden falls on the AM.
+
+
+References
 ---
 [1] [Apache hadoop](http://hadoop.apache.org). http://hadoop.apache.org.  
 [2] [Apache tez](http://incubator.apache.org/projects/tez.html). http://incubator.apache.org/projects/tez.html.   
@@ -60,4 +70,4 @@ Requirements' Origin
 [31] Y. Yu, M. Isard, D. Fetterly, M. Budiu, U. Erlingsson, P. K. Gunda, and J. Currey. DryadLINQ: a system for general-purpose distributed data-parallel computing using a high-level language. In *Proceedings of the 8th USENIX conference on Operating systems design and implementation, OSDI’08*, pages 1–14, Berkeley, CA, USA, 2008. USENIX Association.  
 [32] M. Zaharia, M. Chowdhury, M. J. Franklin, S. Shenker, and I. Stoica. Spark: cluster computing with working sets. In *Proceedings of the 2nd USENIX conference on Hot topics in cloud computing, HotCloud’10*, pages 10–10, Berkeley, CA, USA, 2010. USENIX Association.  
 [33] Vinod Kumar Vavilapali, et. al, *Apache Hadoop YARN – Yet Another Resource Negotiator*, SoCC'13, 1-3 Oct. 2013, Santa Clara, California, USA.
-
+

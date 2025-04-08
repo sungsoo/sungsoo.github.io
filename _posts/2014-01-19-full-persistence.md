@@ -94,7 +94,8 @@ version back-pointers.
         backward pointers of neighbors.
 	- insert new version to our version tree representation.
 
-#### Figure 3. Splitting a tree-shaped version genealogy into two subtrees 
+#### Figure 3. Splitting a tree-shaped version genealogy into two subtrees
+ 
 ![](http://sungsoo.github.com/images/VersionSplitting.png)
 
 

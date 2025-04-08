@@ -3,7 +3,7 @@ layout: post
 title: Running Hadoop MapReduce on Tachyon
 date: 2015-11-08
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

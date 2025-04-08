@@ -46,7 +46,8 @@ tags: [publications]
 [15] J. C. Kim, **S. S. Kim**, T. W. Heo, J. H. Park, OpenLS Directory Service Architectures and Implementation based on Web-Service, *International Symposium on Remote Sensing (ISRS) 2003*, Nov. 2003.  
 [16] K. H. Kim, **S. S. Kim**, Sung-Ho Lee, K. O. Kim, J. H. Lee, GeoVideo: The Video Geographic Information System as a First Step Toward Media GIS, *ASPRS'2003 Conference*, 2003.  
 [17] **S. S. Kim**, S. H. Lee, K. H. Kim, J. H. Lee, Media GIS Web Service Architecture using Three-Dimensional GIS Database, *ISRS 2002*, Oct. 2002.   
-[18] K. H. Kim, **S. S. Kim**, Sung-Ho Lee, K. O. Kim, J. H. Lee, GeoVideo: A First Step to MediaGIS, *ISRS 2002*, Oct. 2002.[19] S. H. Lee, K. H. Kim, **S. S. Kim**, K. O. Kim, Representing Topological Relationships for 3-Dimensional Spatial Features, *ISRS 2002*, Oct. 2002.  
+[18] K. H. Kim, **S. S. Kim**, Sung-Ho Lee, K. O. Kim, J. H. Lee, GeoVideo: A First Step to MediaGIS, *ISRS 2002*, Oct. 2002.
+[19] S. H. Lee, K. H. Kim, **S. S. Kim**, K. O. Kim, Representing Topological Relationships for 3-Dimensional Spatial Features, *ISRS 2002*, Oct. 2002.  
 [20] **S. S. Kim**, S. H. Lee, J. H. Park, Y. K. Yang, Rule-based Modeling for 3D GIS, In *Proceedings of WSCG'2002*, pp. 21-24, Feb. 2002.  
 [21] **S. S. Kim**, J. H. Park, Space-Efficient Terrain Rendering using Constrained Delaunay Triangulation, *IEEE International Geoscience and Remote Sensing Symposium (IGARSS) 2002*, Toronto, Canada, June 2002.  
 [22] **S. S. Kim**, S. H. Lee, S. K. Choe, J. H. Lee, Component-Based 3D GIS Software Design for the Urban Planning, *MIS'2002 incorporating GIS and Remote Sensing*, pp. 205-214, April 2002.  

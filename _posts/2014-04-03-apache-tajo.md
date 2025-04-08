@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo
 date: 2014-04-03 
 categories: [computer science]
-tags: [hadoop & mapreduce, tez]
+tags: [big data, tez]
 
 ---
 

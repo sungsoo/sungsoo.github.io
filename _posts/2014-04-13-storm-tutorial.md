@@ -3,7 +3,7 @@ layout: post
 title: Processing streaming data in Hadoop with Apache Storm 
 date: 2014-04-13
 categories: [computer science]
-tags: [big data, hadoop & mapreduce, stream computing]
+tags: [big data, big data, stream computing]
 
 ---
 

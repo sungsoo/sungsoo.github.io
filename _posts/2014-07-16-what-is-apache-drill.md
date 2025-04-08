@@ -3,7 +3,7 @@ layout: post
 title: What is Apache Drill?
 date: 2014-07-16
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

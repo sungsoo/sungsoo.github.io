@@ -3,7 +3,7 @@ layout: post
 title: Spark for Data Science; A Case Study 
 date: 2014-05-13
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [big data, yarn]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Using Avro in MapReduce Jobs with Hadoop Streaming
 date: 2014-03-23
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

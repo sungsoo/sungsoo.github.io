@@ -3,7 +3,7 @@ layout: post
 title: Pivotal HD Introduction & Demo
 date: 2014-07-18
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

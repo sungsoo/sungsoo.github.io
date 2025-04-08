@@ -3,7 +3,7 @@ layout: post
 title: 5 Ways to Make Your Hive Queries Run Faster  
 date: 2015-04-23
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Translate from MapReduce to Apache Spark
 date: 2014-09-05
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

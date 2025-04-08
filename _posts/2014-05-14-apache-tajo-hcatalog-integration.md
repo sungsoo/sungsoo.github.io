@@ -3,7 +3,7 @@ layout: post
 title: Apache Tajo HCatalog Integration
 date: 2014-05-14
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [big data, yarn]
 
 ---
 

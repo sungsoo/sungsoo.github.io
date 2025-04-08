@@ -51,6 +51,13 @@ Their efforts have been a large inspiration to the NoSQL community.
 	* Cognos, Hyperion, Microstrategy, Pentaho, Microsoft, Oracle, Business Objects
 	
 There is no standard definition of what NoSQL means. The term began with a workshop organized in 2009, but there is much argument about what databases can truly be called NoSQL.
-But while there is no formal definition, there are some common characteristics of NoSQL databases.
-* they don’t use the relational data model, and thus don’t use the SQL language* they tend to be designed to run on a cluster* they tend to be Open Source* they don’t have a fixed schema, allowing you to store any data in any record
-We should also remember Google’s Bigtable and Amazon’s SimpleDB. While these are tied to their host’s cloud service, they certainly fit the general operating characteristics.
+
+But while there is no formal definition, there are some common characteristics of NoSQL databases.
+
+* they don’t use the relational data model, and thus don’t use the SQL language
+* they tend to be designed to run on a cluster
+* they tend to be Open Source
+* they don’t have a fixed schema, allowing you to store any data in any record
+
+
+We should also remember Google’s Bigtable and Amazon’s SimpleDB. While these are tied to their host’s cloud service, they certainly fit the general operating characteristics.

@@ -3,7 +3,7 @@ layout: post
 title: Use Parquet with Impala, Hive, Pig, and MapReduce
 date: 2014-08-09
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

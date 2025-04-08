@@ -3,7 +3,7 @@ layout: post
 title: Map-Side Join Vs. Join
 date: 2014-09-19
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

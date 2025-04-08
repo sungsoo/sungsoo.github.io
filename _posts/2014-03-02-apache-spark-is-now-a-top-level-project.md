@@ -3,7 +3,7 @@ layout: post
 title: As MapReduce fades, Apache Spark is now a top-level project
 date: 2014-03-02
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

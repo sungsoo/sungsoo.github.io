@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop YARN – Yet Another Resource Negotiator
 date: 2014-03-01 
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [big data, yarn]
 
 ---
 
@@ -14,20 +14,31 @@ tags: [hadoop & mapreduce, yarn]
 Introduction
 ---
 
-Apache Hadoop began as one of many open-source implementations of **MapReduce** [12], focused on tackling the unprecedented scale required to index *web crawls*. Its execution architecture was tuned for this use case, focusing on strong fault tolerance for massive, data-intensive computations. In many large web companies and startups, Hadoop clusters are the common place where operational data are stored and processed.More importantly, it became the place within an organization where engineers and researchers have instantaneous and almost unrestricted access to vast amounts of computational resources and troves of company data. This is both a cause of Hadoop’s success and also its biggest curse, as the public of developers extended the MapReduce programming model beyond the capabilities of the cluster management substrate. A common pattern submits “map-only” jobs to spawn arbitrary processes in the cluster. Examples of (ab)uses include forking web servers and gang-scheduled computation of iterative workloads. Developers, in order to leverage the physical resources, often resorted to clever workarounds to sidestep the limits of the MapReduce API.These limitations and misuses motivated an entire class of papers using Hadoop as a baseline for unrelated environments. While many papers exposed substantial issues with the Hadoop architecture or implementation, some simply denounced (more or less ingeniously) some of the side-effects of these misuses. The limitations of the original Hadoop architecture are, by now, well understood by both the academic and open-source communities.
-In this paper, we present a community-driven effort to move Hadoop past its original incarnation. We present the next generation of Hadoop compute platform known as YARN, which departs from its familiar, monolithic architecture. By separating resource management functions from the programming model, YARN delegates many scheduling-related functions to per-job components. In this new context, MapReduce is just one of the applications running on top of YARN. This separation provides a great deal of flexibility in the choice of programming framework. Examples of alternative programming models that are becoming available on YARN are: Dryad [18], Giraph, Hoya, REEF [10], Spark [32], Storm [4] and Tez [2]. Programming frameworks running on YARN coordinate intra-application communication, execution flow, and dynamic optimizations as they see fit, unlocking dramatic performance improvements. We describe YARN’s inception, design, open-source development, and deployment from our perspective as early architects and implementors.
+Apache Hadoop began as one of many open-source implementations of **MapReduce** [12], focused on tackling the unprecedented scale required to index *web crawls*. Its execution architecture was tuned for this use case, focusing on strong fault tolerance for massive, data-intensive computations. In many large web companies and startups, Hadoop clusters are the common place where operational data are stored and processed.
+More importantly, it became the place within an organization where engineers and researchers have instantaneous and almost unrestricted access to vast amounts of computational resources and troves of company data. This is both a cause of Hadoop’s success and also its biggest curse, as the public of developers extended the MapReduce programming model beyond the capabilities of the cluster management substrate. A common pattern submits “map-only” jobs to spawn arbitrary processes in the cluster. Examples of (ab)uses include forking web servers and gang-scheduled computation of iterative workloads. Developers, in order to leverage the physical resources, often resorted to clever workarounds to sidestep the limits of the MapReduce API.
+These limitations and misuses motivated an entire class of papers using Hadoop as a baseline for unrelated environments. While many papers exposed substantial issues with the Hadoop architecture or implementation, some simply denounced (more or less ingeniously) some of the side-effects of these misuses. The limitations of the original Hadoop architecture are, by now, well understood by both the academic and open-source communities.
+
+
+In this paper, we present a community-driven effort to move Hadoop past its original incarnation. We present the next generation of Hadoop compute platform known as YARN, which departs from its familiar, monolithic architecture. By separating resource management functions from the programming model, YARN delegates many scheduling-related functions to per-job components. In this new context, MapReduce is just one of the applications running on top of YARN. This separation provides a great deal of flexibility in the choice of programming framework. Examples of alternative programming models that are becoming available on YARN are: Dryad [18], Giraph, Hoya, REEF [10], Spark [32], Storm [4] and Tez [2]. Programming frameworks running on YARN coordinate intra-application communication, execution flow, and dynamic optimizations as they see fit, unlocking dramatic performance improvements. We describe YARN’s inception, design, open-source development, and deployment from our perspective as early architects and implementors.
 
 ![](http://sungsoo.github.com/images/yarn-running-time.png)
 
 ![](http://sungsoo.github.com/images/canonical-hadoop-benchmarks.png)
 
-![](http://sungsoo.github.com/images/capacity-scheduler.png)![](http://sungsoo.github.com/images/yarn-jobs.png)
-![](http://sungsoo.github.com/images/job-size-distribution.png)
+![](http://sungsoo.github.com/images/capacity-scheduler.png)
 
----
-Technical Terms
+![](http://sungsoo.github.com/images/yarn-jobs.png)
+
+![](http://sungsoo.github.com/images/job-size-distribution.png)
+
+
 ---
-References
+
+Technical Terms
+---
+
+
+References
 ---
 [1] [Apache hadoop](http://hadoop.apache.org). http://hadoop.apache.org.  
 [2] [Apache tez](http://incubator.apache.org/projects/tez.html). http://incubator.apache.org/projects/tez.html.   

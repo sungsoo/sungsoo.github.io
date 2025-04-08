@@ -3,25 +3,67 @@ layout: post
 title: Failures in Classic MapReduce
 date: 2014-04-07
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [big data, yarn]
 
 ---
 
-# FailuresIn the real world, user code is *buggy*, processes *crash*, and machines *fail*. One of the major benefits of using Hadoop is its ability to handle such *failures* and allow your job to complete.# Failures in Classic MapReduceIn the MapReduce 1 runtime there are three failure modes to consider: failure of the running task, failure of the tastracker, and failure of the jobtracker. Let’s look at each in turn.Task Failure
----Consider first the case of the child task failing. The most common way that this happens is when user code in the map or reduce task throws a runtime exception. If this happens, the child JVM reports the error back to its parent tasktracker, before it exits. The error ultimately makes it into the user logs. The tasktracker marks the task attempt as *failed*, freeing up a slot to run another task.
-For Streaming tasks, if the Streaming process exits with a nonzero exit code, it is marked as failed. This behavior is governed by the <tt class="literal">stream.non.zero.exit.is.failure</tt> property (the default is <tt class="literal">true</tt>).
-Another failure mode is the sudden exit of the child JVM—perhaps there is a JVM bug that causes the JVM to exit for a particular set of circumstances exposed by the MapReduce user code. In this case, the tasktracker notices that the process has exited and marks the attempt as failed.
-Hanging tasks are dealt with differently. The tasktracker notices that it hasn’t received a progress update for a while and proceeds to mark the task as failed. The child JVM process will be automatically killed after this period. The timeout period after which tasks are considered failed is normally 10 minutes and can be configured on a per-job basis (or a cluster basis) by setting the <tt class="literal">mapred.task.timeout</tt> property to a value in milliseconds.
-If a *Streaming* or *Pipes* process hangs, the tasktracker will kill it (along with the JVM that launched it) only in one the following circumstances: either <tt class="literal">mapred.task.tracker.task-controller</tt> is set to <tt class="literal">org.apache.hadoop.mapred.LinuxTaskController</tt>, or the default task controller in being used (<tt class="literal">org.apache.hadoop.mapred.DefaultTaskController</tt>) and the <tt class="literal">setsid</tt> command is available on the system (so that the child JVM and any processes it launches are in the same process group). In any other case orphaned Streaming or Pipes processes will accumulate on the system, which will impact utilization over time.Setting the timeout to a value of zero disables the timeout, so long-running tasks are never marked as failed. In this case, a hanging task will never free up its slot, and over time there may be cluster slowdown as a result. This approach should therefore be avoided, and making sure that a task is reporting progress periodically will suffice.
-When the jobtracker is notified of a task attempt that has failed (by the tasktracker’s heartbeat call), it will reschedule execution of the task. The jobtracker will try to avoid rescheduling the task on a tasktracker where it has previously failed. Furthermore, if a task fails four times (or more), it will not be retried further. This value is configurable: the maximum number of attempts to run a task is controlled by the <tt class="literal">mapred.map.max.attempts</tt> property for map tasks and <tt class="literal">mapred.reduce.max.attempts</tt> for reduce tasks. By default, if any task fails four times (or whatever the maximum number of attempts is configured to), the whole job fails.
-For some applications, it is undesirable to abort the job if a few tasks fail, as it may be possible to use the results of the job despite some failures. In this case, the maximum percentage of tasks that are allowed to fail without triggering job failure can be set for the job. Map tasks and reduce tasks are controlled independently, using the <tt class="literal">mapred.max.map.failures.percent</tt> and <tt class="literal">mapred.max.reduce.failures.percent</tt> properties.
-A task attempt may also be *killed*, which is different from it failing. A task attempt may be killed because it is a speculative duplicate (for more, see “Speculative Execution” on page 213), or because the tasktracker it was running on failed, and the jobtracker marked all the task attempts running on it as killed. Killed task attempts do not count against the number of attempts to run the task (as set by <tt class="literal">mapred.map.max.attempts</tt> and <tt class="literal">mapred.reduce.max.attempts</tt>), since it wasn’t the task’s fault that an attempt was killed.
-Users may also kill or fail task attempts using the web UI or the command line (type hadoop job to see the options). Jobs may also be killed by the same mechanisms.
-Tasktracker Failure
----Failure of a tasktracker is another failure mode. If a tasktracker fails by crashing, or running very slowly, it will stop sending heartbeats to the jobtracker (or send them very infrequently). The jobtracker will notice a tasktracker that has stopped sending heartbeats (if it hasn’t received one for 10 minutes, configured via the <tt class="literal">mapred.task tracker.expiry.interval</tt> property, in milliseconds) and remove it from its pool of tasktrackers to schedule tasks on. The jobtracker arranges for map tasks that were run and completed successfully on that tasktracker to be rerun if they belong to incomplete jobs, since their intermediate output residing on the failed tasktracker’s local filesystem may not be accessible to the reduce task. Any tasks in progress are also rescheduled.
-A tasktracker can also be *blacklisted* by the jobtracker, even if the tasktracker has not failed. If more than four tasks from the same job fail on a particular tasktracker (set by (<tt class="literal">mapred.max.tracker.failures</tt>), then the jobtracker records this as a fault. A tasktracker is blacklisted if the number of faults is over some minimum threshold (four, set by <tt class="literal">mapred.max.tracker.blacklists</tt>) and is significantly higher than the average number of faults for tasktrackers in the cluster cluster.
-Blacklisted tasktrackers are not assigned tasks, but they continue to communicate with the jobtracker. Faults expire over time (at the rate of one per day), so tasktrackers get the chance to run jobs again simply by leaving them running. Alternatively, if there is an underlying fault that can be fixed (by replacing hardware, for example), the tasktracker will be removed from the jobtracker’s blacklist after it restarts and rejoins the cluster.Jobtracker Failure
----Failure of the jobtracker is the most serious failure mode. Hadoop has no mechanism for dealing with failure of the jobtracker—it is a single point of failure—so in this case the job fails. However, this failure mode has a low chance of occurring, since the chance of a particular machine failing is low. The good news is that the situation is improved in YARN, since one of its design goals is to eliminate single points of failure in MapReduce.After restarting a jobtracker, any jobs that were running at the time it was stopped will need to be re-submitted. There is a configuration option that attempts to recover any running jobs (<tt class="literal">mapred.jobtracker.restart.recover</tt>, turned off by default), however it is known not to work reliably, so should not be used.References
+# Failures
+
+In the real world, user code is *buggy*, processes *crash*, and machines *fail*. One of the major benefits of using Hadoop is its ability to handle such *failures* and allow your job to complete.
+
+# Failures in Classic MapReduce
+In the MapReduce 1 runtime there are three failure modes to consider: failure of the running task, failure of the tastracker, and failure of the jobtracker. Let’s look at each in turn.
+
+Task Failure
+---
+
+Consider first the case of the child task failing. The most common way that this happens is when user code in the map or reduce task throws a runtime exception. If this happens, the child JVM reports the error back to its parent tasktracker, before it exits. The error ultimately makes it into the user logs. The tasktracker marks the task attempt as *failed*, freeing up a slot to run another task.
+
+
+For Streaming tasks, if the Streaming process exits with a nonzero exit code, it is marked as failed. This behavior is governed by the <tt class="literal">stream.non.zero.exit.is.failure</tt> property (the default is <tt class="literal">true</tt>).
+
+
+Another failure mode is the sudden exit of the child JVM—perhaps there is a JVM bug that causes the JVM to exit for a particular set of circumstances exposed by the MapReduce user code. In this case, the tasktracker notices that the process has exited and marks the attempt as failed.
+
+
+Hanging tasks are dealt with differently. The tasktracker notices that it hasn’t received a progress update for a while and proceeds to mark the task as failed. The child JVM process will be automatically killed after this period. The timeout period after which tasks are considered failed is normally 10 minutes and can be configured on a per-job basis (or a cluster basis) by setting the <tt class="literal">mapred.task.timeout</tt> property to a value in milliseconds.
+
+If a *Streaming* or *Pipes* process hangs, the tasktracker will kill it (along with the JVM that launched it) only in one the following circumstances: either <tt class="literal">mapred.task.tracker.task-controller</tt> is set to <tt class="literal">org.apache.hadoop.mapred.LinuxTaskController</tt>, or the default task controller in being used (<tt class="literal">org.apache.hadoop.mapred.DefaultTaskController</tt>) and the <tt class="literal">setsid</tt> command is available on the system (so that the child JVM and any processes it launches are in the same process group). In any other case orphaned Streaming or Pipes processes will accumulate on the system, which will impact utilization over time.
+
+Setting the timeout to a value of zero disables the timeout, so long-running tasks are never marked as failed. In this case, a hanging task will never free up its slot, and over time there may be cluster slowdown as a result. This approach should therefore be avoided, and making sure that a task is reporting progress periodically will suffice.
+
+
+When the jobtracker is notified of a task attempt that has failed (by the tasktracker’s heartbeat call), it will reschedule execution of the task. The jobtracker will try to avoid rescheduling the task on a tasktracker where it has previously failed. Furthermore, if a task fails four times (or more), it will not be retried further. This value is configurable: the maximum number of attempts to run a task is controlled by the <tt class="literal">mapred.map.max.attempts</tt> property for map tasks and <tt class="literal">mapred.reduce.max.attempts</tt> for reduce tasks. By default, if any task fails four times (or whatever the maximum number of attempts is configured to), the whole job fails.
+
+
+For some applications, it is undesirable to abort the job if a few tasks fail, as it may be possible to use the results of the job despite some failures. In this case, the maximum percentage of tasks that are allowed to fail without triggering job failure can be set for the job. Map tasks and reduce tasks are controlled independently, using the <tt class="literal">mapred.max.map.failures.percent</tt> and <tt class="literal">mapred.max.reduce.failures.percent</tt> properties.
+
+
+A task attempt may also be *killed*, which is different from it failing. A task attempt may be killed because it is a speculative duplicate (for more, see “Speculative Execution” on page 213), or because the tasktracker it was running on failed, and the jobtracker marked all the task attempts running on it as killed. Killed task attempts do not count against the number of attempts to run the task (as set by <tt class="literal">mapred.map.max.attempts</tt> and <tt class="literal">mapred.reduce.max.attempts</tt>), since it wasn’t the task’s fault that an attempt was killed.
+
+
+Users may also kill or fail task attempts using the web UI or the command line (type hadoop job to see the options). Jobs may also be killed by the same mechanisms.
+
+
+Tasktracker Failure
+---
+
+Failure of a tasktracker is another failure mode. If a tasktracker fails by crashing, or running very slowly, it will stop sending heartbeats to the jobtracker (or send them very infrequently). The jobtracker will notice a tasktracker that has stopped sending heartbeats (if it hasn’t received one for 10 minutes, configured via the <tt class="literal">mapred.task tracker.expiry.interval</tt> property, in milliseconds) and remove it from its pool of tasktrackers to schedule tasks on. The jobtracker arranges for map tasks that were run and completed successfully on that tasktracker to be rerun if they belong to incomplete jobs, since their intermediate output residing on the failed tasktracker’s local filesystem may not be accessible to the reduce task. Any tasks in progress are also rescheduled.
+
+A tasktracker can also be *blacklisted* by the jobtracker, even if the tasktracker has not failed. If more than four tasks from the same job fail on a particular tasktracker (set by (<tt class="literal">mapred.max.tracker.failures</tt>), then the jobtracker records this as a fault. A tasktracker is blacklisted if the number of faults is over some minimum threshold (four, set by <tt class="literal">mapred.max.tracker.blacklists</tt>) and is significantly higher than the average number of faults for tasktrackers in the cluster cluster.
+
+
+Blacklisted tasktrackers are not assigned tasks, but they continue to communicate with the jobtracker. Faults expire over time (at the rate of one per day), so tasktrackers get the chance to run jobs again simply by leaving them running. Alternatively, if there is an underlying fault that can be fixed (by replacing hardware, for example), the tasktracker will be removed from the jobtracker’s blacklist after it restarts and rejoins the cluster.
+
+Jobtracker Failure
+---
+
+Failure of the jobtracker is the most serious failure mode. Hadoop has no mechanism for dealing with failure of the jobtracker—it is a single point of failure—so in this case the job fails. However, this failure mode has a low chance of occurring, since the chance of a particular machine failing is low. The good news is that the situation is improved in YARN, since one of its design goals is to eliminate single points of failure in MapReduce.
+
+After restarting a jobtracker, any jobs that were running at the time it was stopped will need to be re-submitted. There is a configuration option that attempts to recover any running jobs (<tt class="literal">mapred.jobtracker.restart.recover</tt>, turned off by default), however it is known not to work reliably, so should not be used.
+
+
+References
 ---
 [1] [Apache hadoop](http://hadoop.apache.org). http://hadoop.apache.org.  
 [2] [Apache tez](http://incubator.apache.org/projects/tez.html). http://incubator.apache.org/projects/tez.html.   
@@ -56,4 +98,4 @@ tags: [hadoop & mapreduce, yarn]
 [31] Y. Yu, M. Isard, D. Fetterly, M. Budiu, U. Erlingsson, P. K. Gunda, and J. Currey. DryadLINQ: a system for general-purpose distributed data-parallel computing using a high-level language. In *Proceedings of the 8th USENIX conference on Operating systems design and implementation, OSDI’08*, pages 1–14, Berkeley, CA, USA, 2008. USENIX Association.  
 [32] M. Zaharia, M. Chowdhury, M. J. Franklin, S. Shenker, and I. Stoica. Spark: cluster computing with working sets. In *Proceedings of the 2nd USENIX conference on Hot topics in cloud computing, HotCloud’10*, pages 10–10, Berkeley, CA, USA, 2010. USENIX Association.  
 [33] Vinod Kumar Vavilapali, et. al, *Apache Hadoop YARN – Yet Another Resource Negotiator*, SoCC'13, 1-3 Oct. 2013, Santa Clara, California, USA.
-
+

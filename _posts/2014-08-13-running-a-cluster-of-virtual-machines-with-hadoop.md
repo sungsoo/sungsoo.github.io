@@ -3,7 +3,7 @@ layout: post
 title: Running a cluster of virtual machines with Hadoop
 date: 2014-08-13
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

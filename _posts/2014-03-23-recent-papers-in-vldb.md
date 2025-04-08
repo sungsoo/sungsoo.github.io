@@ -3,7 +3,7 @@ layout: post
 title: MapReduce and Hadoop Papers in the VLDB 
 date: 2014-03-23
 categories: [computer science]
-tags: [hadoop & mapreduce, papers]
+tags: [big data, papers]
 
 ---
 

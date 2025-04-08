@@ -3,7 +3,7 @@ layout: post
 title: Building a Data Warehouse with Hadoop
 date: 2014-07-10
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

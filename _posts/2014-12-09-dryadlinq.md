@@ -3,7 +3,7 @@ layout: post
 title: DryadLINQ
 date: 2014-12-09
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 ---
 
 ## Article Source

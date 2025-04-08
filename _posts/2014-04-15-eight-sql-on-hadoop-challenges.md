@@ -3,7 +3,7 @@ layout: post
 title: Eight SQL on Hadoop Challenges
 date: 2014-04-15
 categories: [computer science]
-tags: [big data, hadoop & mapreduce, tez]
+tags: [big data, big data, tez]
 
 ---
 

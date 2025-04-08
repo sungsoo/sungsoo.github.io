@@ -3,7 +3,7 @@ layout: post
 title: Distributed Computing with Spark
 date: 2014-08-02
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

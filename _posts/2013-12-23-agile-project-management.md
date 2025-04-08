@@ -38,8 +38,10 @@ Agile 개발 프로세스란 어느 특정 개발 방법론을 가리키는 말�
 
 이들의 앞선 가치들을 인정하면서도 뒤에 오는 가치들에 보다 큰 무게를 둔다.
 
-### Suitable Agile Projects
-* IT and non-IT  
+
+### Suitable Agile Projects
+
+* IT and non-IT  
 * Facility moves
 * Company reorganizations
 * Changing business processes
@@ -77,4 +79,4 @@ Agile 개발 프로세스란 어느 특정 개발 방법론을 가리키는 말�
 
 
 
-
+

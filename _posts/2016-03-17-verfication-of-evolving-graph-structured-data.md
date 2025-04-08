@@ -15,5 +15,9 @@ tags: [data management]
 
 In this paper, we consider constraints over *graph-structured data* formulated in an expressive Description Logic (DL) that allows for regular expressions over binary relations and their inverses, generalizing many of the well-known path constraint languages proposed for semi-structured data in the last two decades. In this setting, we study the problem of static verification, for operations expressed in a simple yet flexible language built from additions and deletions of complex DL expressions. We establish *undecidability* of the general setting, and identify suitable restricted fragments for which we obtain tight complexity results, building on techniques developed in our previous work for simpler DLs. As a by-product, we obtain new *(un)decidability* results for the implication problem of path constraints, and improve previous upper bounds on the complexity of the problem.
 
-[![](http://sungsoo.github.com/images/definition-zoi.png)](http://sungsoo.github.com/images/definition-zoi.png)## References
-* Diego Calvanese et. al, Verification of Evolving Graph-structured Data under Expressive Path Constraints, *19th International Conference on Database Theory (ICDT 2016)*
+[![](http://sungsoo.github.com/images/definition-zoi.png)](http://sungsoo.github.com/images/definition-zoi.png)
+
+## References
+
+
+* Diego Calvanese et. al, Verification of Evolving Graph-structured Data under Expressive Path Constraints, *19th International Conference on Database Theory (ICDT 2016)*

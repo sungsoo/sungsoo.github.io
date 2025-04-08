@@ -3,7 +3,7 @@ layout: post
 title: An Insight into Hadoop YARN NodeManager
 date: 2014-09-02
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

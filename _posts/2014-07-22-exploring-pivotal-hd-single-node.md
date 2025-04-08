@@ -3,7 +3,7 @@ layout: post
 title: Exploring Pivotal HD Single Node (VM)
 date: 2014-07-22
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

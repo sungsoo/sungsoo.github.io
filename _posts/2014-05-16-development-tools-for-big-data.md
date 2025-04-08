@@ -3,7 +3,7 @@ layout: post
 title: Development Tools for Big Data
 date: 2014-05-16
 categories: [computer science]
-tags: [hadoop & mapreduce, nosql, yarn]
+tags: [big data, nosql, yarn]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Stinger - Interactive Query for Hive
 date: 2014-04-29
 categories: [computer science]
-tags: [hadoop & mapreduce, nosql]
+tags: [big data, nosql]
 
 ---
 

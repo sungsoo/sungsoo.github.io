@@ -3,7 +3,7 @@ layout: post
 title: Building a Unified Data Pipeline in Apache Spark
 date: 2014-06-19
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

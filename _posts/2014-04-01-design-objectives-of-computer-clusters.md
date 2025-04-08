@@ -53,7 +53,8 @@ A *dedicated cluster* is typically installed in a deskside rack in a central com
 An *enterprise cluster* is mainly used to utilize idle resources in the nodes. Each node is usually a full-fledged SMP, workstation, or PC, with all the necessary peripherals attached. The nodes are typically geographically distributed, and are not necessarily in the same room or even in the same building. The nodes are individually owned by multiple owners. The cluster administrator has only limited control over the nodes, as a node can be turned off at any time by its owner. The owner’s “local” jobs have higher priority than enterprise jobs. The cluster is often configured with heterogeneous computer nodes. The nodes are often connected through a low-cost Ethernet network. Most data centers are structured with clusters of low-cost servers. Virtual clusters play a crucial role in upgrading data centers.
 
 
-References
+
+References
 ---
 
 1. Adiga N, et al. In: An overview of the blue gene/L supercomputer. ACM Supercomputing Conference 2002. November 2002; [http://SC-2002.org/paperpdfs/pap.pap207.pdf](http://SC-2002.org/paperpdfs/pap.pap207.pdf).

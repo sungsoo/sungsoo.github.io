@@ -19,7 +19,11 @@ tags: [papers]
 Poster sessions at conferences and university research fairs provide excellent opportunities for students to show off their work and to discuss their research in an informal setting. While it is important to present good work at a poster session, even the most outstanding research projects will receive little attention if they are not presented well. This article provides a guide to creating and presenting an attractive and informative research poster.
 
 ## Drafting the paper
-As with drafting any document, people vary in how to go best about committing their thoughts to paper. Some like to start at the very beginning, and build up the draft to the last line. Others use an approach of committing ideas to paper almost randomly, then putting the paragraphs in the right order, and finally connecting these into a coherent draft. The use of word processors has greatly assisted the latter method, which is very effective in overcoming a writer's block.The poster paper can benefit from being written out in full sentences, even though it may not be presented that way in final form. Once the thoughts are organised, the main ideas can then be lifted out and summarised. Highlighter pens are very useful for emphasising parts that can subsequently be displayed on the poster, using bullet points. Use one bullet or line for each separate item or idea. If you write paragraphs, keep them short. Write punchy sentences.
+
+As with drafting any document, people vary in how to go best about committing their thoughts to paper. Some like to start at the very beginning, and build up the draft to the last line. Others use an approach of committing ideas to paper almost randomly, then putting the paragraphs in the right order, and finally connecting these into a coherent draft. The use of word processors has greatly assisted the latter method, which is very effective in overcoming a writer's block.
+
+The poster paper can benefit from being written out in full sentences, even though it may not be presented that way in final form. Once the thoughts are organised, the main ideas can then be lifted out and summarised. Highlighter pens are very useful for emphasising parts that can subsequently be displayed on the poster, using bullet points. Use one bullet or line for each separate item or idea. If you write paragraphs, keep them short. Write punchy sentences.
+
 
 ## Content
 

@@ -3,7 +3,7 @@ layout: post
 title: In-Stream Big Data Processing
 date: 2014-07-25
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

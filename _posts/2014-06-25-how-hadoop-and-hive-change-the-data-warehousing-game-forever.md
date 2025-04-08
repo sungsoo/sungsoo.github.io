@@ -3,7 +3,7 @@ layout: post
 title: How Hadoop and Hive Change the Data Warehousing Game Forever
 date: 2014-06-25
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Why does MapReduce + GPU Computing?
 date: 2014-07-09
 categories: [computer science]
-tags: [gpgpu, hadoop & mapreduce]
+tags: [gpgpu, big data]
 
 ---
 

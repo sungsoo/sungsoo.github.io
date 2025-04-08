@@ -3,7 +3,7 @@ layout: post
 title: Hadoop-RDMA
 date: 2015-05-20
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

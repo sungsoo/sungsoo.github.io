@@ -32,7 +32,8 @@ The NOW project addresses a whole spectrum of cluster computing issues, includin
 A Unix cluster of SMP servers running VMS/OS with extensions, mainly used in high-availability applications. An AIX server cluster built with Power2 nodes and Omega network and supported by IBM Loadleveler and MPI extensions. A scalable and fault-tolerant cluster for OLTP and database processing built with non-stop operating system support. The Google search engine was built at Google using commodity components. MOSIX is a distributed operating systems for use in Linux clusters, multi-clusters, grids, and the clouds, originally developed by Hebrew University in 1999.
 
 
-References
+
+References
 ---
 
 1. Adiga N, et al. In: An overview of the blue gene/L supercomputer. ACM Supercomputing Conference 2002. November 2002; [http://SC-2002.org/paperpdfs/pap.pap207.pdf](http://SC-2002.org/paperpdfs/pap.pap207.pdf).

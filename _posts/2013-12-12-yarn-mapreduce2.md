@@ -3,7 +3,7 @@ layout: post
 title: YARN (MapReduce 2)
 date: 2013-12-12
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [big data, yarn]
 
 ---
 
@@ -14,46 +14,101 @@ For very large clusters in the region of 4000 nodes and higher, the MapReduce sy
 YARN meets the scalability shortcomings of “classic” MapReduce by splitting the responsibilities of the jobtracker into separate entities. The jobtracker takes care of both job scheduling (matching tasks with tasktrackers) and task progress monitoring (keeping track of tasks and restarting failed or slow tasks, and doing task bookkeeping such as maintaining counter totals).    
 YARN separates these two roles into **two independent daemons**: a *resource manager* to manage the use of resources across the cluster, and an *application master* to manage the lifecycle of applications running on the cluster. The idea is that an application master negotiates with the resource manager for cluster resources—described in terms of a number of *containers* each with a certain memory limit—then runs application-specific processes in those containers. The containers are overseen by *node managers* running on cluster nodes, which ensure that the application does not use more resources than it has been allocated.  
 In contrast to the *jobtracker*, each instance of an application—here a MapReduce job —has a dedicated application master, which runs for the duration of the application. This model is actually closer to the original Google MapReduce paper, which describes how a master process is started to coordinate map and reduce tasks running on a set of workers.
-As described, YARN is more general than MapReduce, and in fact MapReduce is just one type of YARN application. There are a few other YARN applications—such as a distributed shell that can run a script on a set of nodes in the cluster—and others are actively being worked on (some are listed at [PoweredByYarn](http://wiki.apache.org/hadoop/PoweredByYarn)). The beauty of YARN’s design is that different YARN applications can co-exist on the same cluster—so a MapReduce application can run at the same time as an MPI application, for example—which brings great benefits for managability and cluster utilization.
-Furthermore, it is even possible for users to run different versions of MapReduce on the same YARN cluster, which makes the process of upgrading MapReduce more managable. (Note that some parts of MapReduce, like the job history server and the shuffle handler, as well as YARN itself, still need to be upgraded across the cluster.)
-MapReduce on YARN
+
+As described, YARN is more general than MapReduce, and in fact MapReduce is just one type of YARN application. There are a few other YARN applications—such as a distributed shell that can run a script on a set of nodes in the cluster—and others are actively being worked on (some are listed at [PoweredByYarn](http://wiki.apache.org/hadoop/PoweredByYarn)). The beauty of YARN’s design is that different YARN applications can co-exist on the same cluster—so a MapReduce application can run at the same time as an MPI application, for example—which brings great benefits for managability and cluster utilization.
+
+Furthermore, it is even possible for users to run different versions of MapReduce on the same YARN cluster, which makes the process of upgrading MapReduce more managable. (Note that some parts of MapReduce, like the job history server and the shuffle handler, as well as YARN itself, still need to be upgraded across the cluster.)
+
+MapReduce on YARN
 ---
-MapReduce on YARN involves more entities than classic MapReduce. They are:  
+
+MapReduce on YARN involves more entities than classic MapReduce. They are:  
 The client, which submits the *MapReduce job*.  
-* The YARN **resource manager**, which coordinates the allocation of compute resources on the cluster.  
+
+* The YARN **resource manager**, which coordinates the allocation of compute resources on the cluster.  
 * The YARN **node managers**, which launch and monitor the compute containers on machines in the cluster.
 * The MapReduce application master, which coordinates the tasks running the MapReduce job. The application master and the MapReduce tasks run in containers that are scheduled by the resource manager, and managed by the node managers.
 * The *distributed filesystem* (normally HDFS), which is used for sharing job files between the other entities.
-The process of running a job is shown in the below figure, and described in the following sections.
-![http://sungsoo.github.com/images/mr-yarn.png](http://sungsoo.github.com/images/mr-yarn.png)
-Job Submission
+
+The process of running a job is shown in the below figure, and described in the following sections.
+
+![http://sungsoo.github.com/images/mr-yarn.png](http://sungsoo.github.com/images/mr-yarn.png)
+
+
+Job Submission
 ---
-Jobs are submitted in MapReduce 2 using the same user API as MapReduce 1 (step 1). MapReduce 2 has an implementation of ClientProtocol that is activated when `mapreduce.framework.name` is set to yarn. The submission process is very similar to the classic implementation. The new job ID is retrieved from the resource manager (rather than the jobtracker), although in the nomenclature of YARN it is an application ID (step 2). The job client checks the output specification of the job; computes input splits (although there is an option to generate them on the cluster, `yarn.app.mapreduce.am.com pute-splits-in-cluster`, which can be beneficial for jobs with many splits); and copies job resources (including the job JAR, configuration, and split information) to HDFS (step 3). Finally, the job is submitted by calling `submitApplication()` on the resource manager (step 4).Job Initialization
----When the resource manager receives a call to its `submitApplication()`, it hands off the request to the scheduler. The scheduler allocates a container, and the resource manager then launches the application master’s process there, under the node manager’s management (steps 5a and 5b).
-The application master for MapReduce jobs is a Java application whose main class is `MRAppMaster`. It initializes the job by creating a number of bookkeeping objects to keep track of the job’s progress, as it will receive progress and completion reports from the tasks (step 6). Next, it retrieves the input splits computed in the client from the shared filesystem (step 7). It then creates a map task object for each split, and a number of reduce task objects determined by the `mapreduce.job.reduces` property.
-The next thing the application master does is decide how to run the tasks that make up the MapReduce job. If the job is small, the application master may choose to run them in the same JVM as itself, since it judges the overhead of allocating new containers and running tasks in them as outweighing the gain to be had in running them in parallel, compared to running them sequentially on one node. (This is different to MapReduce 1, where small jobs are never run on a single tasktracker.) Such a job is said to be *uberized*, or run as an *uber task*.
-What qualifies as a small job? By default one that has less than 10 mappers, only one reducer, and the input size is less than the size of one HDFS block. (These values may be changed for a job by setting `mapreduce.job.ubertask.maxmaps`, `mapreduce.job.uber task.maxreduces`, and `mapreduce.job.ubertask.maxbytes`.) It’s also possible to disable uber tasks entirely (by setting `mapreduce.job.ubertask.enable` to *false*).
-Before any tasks can be run the job setup method is called (for the job’s `OutputCommitter`), to create the job’s output directory. In contrast to MapReduce 1, where it is called in a special task that is run by the tasktracker, in the YARN implementation the method is called directly by the application master.
-Task Assignment
+
+Jobs are submitted in MapReduce 2 using the same user API as MapReduce 1 (step 1). MapReduce 2 has an implementation of ClientProtocol that is activated when `mapreduce.framework.name` is set to yarn. The submission process is very similar to the classic implementation. The new job ID is retrieved from the resource manager (rather than the jobtracker), although in the nomenclature of YARN it is an application ID (step 2). The job client checks the output specification of the job; computes input splits (although there is an option to generate them on the cluster, `yarn.app.mapreduce.am.com pute-splits-in-cluster`, which can be beneficial for jobs with many splits); and copies job resources (including the job JAR, configuration, and split information) to HDFS (step 3). Finally, the job is submitted by calling `submitApplication()` on the resource manager (step 4).
+
+
+Job Initialization
 ---
-If the job does not qualify for running as an uber task, then the application master requests containers for all the map and reduce tasks in the job from the resource manager (step 8). Each request, which are piggybacked on heartbeat calls, includes information about each map task’s data locality, in particular the hosts and corresponding racks that the input split resides on. The scheduler uses this information to make scheduling decisions (just like a jobtracker’s scheduler does): it attempts to place tasks on data-local nodes in the ideal case, but if this is not possible the scheduler prefers rack-local placement to non-local placement.
-Requests also specify memory requirements for tasks. By default both map and reduce tasks are allocated 1024 MB of memory, but this is configurable by setting mapre duce.map.memory.mb and `mapreduce.reduce.memory.mb`.
-The way memory is allocated is different to MapReduce 1, where tasktrackers have a fixed number of “slots”, set at cluster configuration time, and each task runs in a single slot. Slots have a maximum memory allowance, which again is fixed for a cluster, and which leads both to problems of under utilization when tasks use less memory (since other waiting tasks are not able to take advantage of the unused memory) and problems of job failure when a task can’t complete since it can’t get enough memory to run correctly.
-In YARN, resources are more fine-grained, so both these problems can be avoided. In particular, applications may request a memory capability that is anywhere between the minimum allocation and a maximum allocation, and which must be a multiple of the minimum allocation. Default memory allocations are scheduler-specific, and for the capacity scheduler the default minimum is 1024 MB (set by `yarn.scheduler.capacity.minimum-allocation-mb`), and the default maximum is 10240 MB (set by `yarn.scheduler.capacity.maximum-allocation-mb`). Thus, tasks can request any memory allocation between 1 and 10 GB (inclusive), in multiples of 1 GB (the scheduler will round to the nearest multiple if needed), by setting `mapreduce.map.memory.mb and map reduce.reduce.memory.mb` appropriately.
-Task Execution
+
+When the resource manager receives a call to its `submitApplication()`, it hands off the request to the scheduler. The scheduler allocates a container, and the resource manager then launches the application master’s process there, under the node manager’s management (steps 5a and 5b).
+
+
+The application master for MapReduce jobs is a Java application whose main class is `MRAppMaster`. It initializes the job by creating a number of bookkeeping objects to keep track of the job’s progress, as it will receive progress and completion reports from the tasks (step 6). Next, it retrieves the input splits computed in the client from the shared filesystem (step 7). It then creates a map task object for each split, and a number of reduce task objects determined by the `mapreduce.job.reduces` property.
+
+
+The next thing the application master does is decide how to run the tasks that make up the MapReduce job. If the job is small, the application master may choose to run them in the same JVM as itself, since it judges the overhead of allocating new containers and running tasks in them as outweighing the gain to be had in running them in parallel, compared to running them sequentially on one node. (This is different to MapReduce 1, where small jobs are never run on a single tasktracker.) Such a job is said to be *uberized*, or run as an *uber task*.
+
+
+What qualifies as a small job? By default one that has less than 10 mappers, only one reducer, and the input size is less than the size of one HDFS block. (These values may be changed for a job by setting `mapreduce.job.ubertask.maxmaps`, `mapreduce.job.uber task.maxreduces`, and `mapreduce.job.ubertask.maxbytes`.) It’s also possible to disable uber tasks entirely (by setting `mapreduce.job.ubertask.enable` to *false*).
+
+
+Before any tasks can be run the job setup method is called (for the job’s `OutputCommitter`), to create the job’s output directory. In contrast to MapReduce 1, where it is called in a special task that is run by the tasktracker, in the YARN implementation the method is called directly by the application master.
+
+
+Task Assignment
 ---
-Once a task has been assigned a container by the resource manager’s scheduler, the application master starts the container by contacting the node manager (steps 9a and 9b). The task is executed by a Java application whose main class is YarnChild. Before it can run the task it localizes the resources that the task needs, including the job configuration and JAR file, and any files from the distributed cache (step 10). Finally, it runs the map or reduce task (step 11).
-The YarnChild runs in a dedicated JVM, for the same reason that tasktrackers spawn new JVMs for tasks in MapReduce 1: to isolate user code from long-running system daemons. Unlike MapReduce 1, however, YARN does not support JVM reuse so each task runs in a new JVM.
-Streaming and Pipes programs work in the same way as MapReduce 1. The **Yarn Child** launches the Streaming or Pipes process and communicates with it using standard input/output or a socket (respectively), as shown in Figure 6-2 (except the child and subprocesses run on node managers, not tasktrackers).![http://sungsoo.github.com/images/stream-pipe.png](http://sungsoo.github.com/images/stream-pipe.png)
-Progress and Status Updates
+
+If the job does not qualify for running as an uber task, then the application master requests containers for all the map and reduce tasks in the job from the resource manager (step 8). Each request, which are piggybacked on heartbeat calls, includes information about each map task’s data locality, in particular the hosts and corresponding racks that the input split resides on. The scheduler uses this information to make scheduling decisions (just like a jobtracker’s scheduler does): it attempts to place tasks on data-local nodes in the ideal case, but if this is not possible the scheduler prefers rack-local placement to non-local placement.
+
+
+Requests also specify memory requirements for tasks. By default both map and reduce tasks are allocated 1024 MB of memory, but this is configurable by setting mapre duce.map.memory.mb and `mapreduce.reduce.memory.mb`.
+
+
+The way memory is allocated is different to MapReduce 1, where tasktrackers have a fixed number of “slots”, set at cluster configuration time, and each task runs in a single slot. Slots have a maximum memory allowance, which again is fixed for a cluster, and which leads both to problems of under utilization when tasks use less memory (since other waiting tasks are not able to take advantage of the unused memory) and problems of job failure when a task can’t complete since it can’t get enough memory to run correctly.
+
+
+In YARN, resources are more fine-grained, so both these problems can be avoided. In particular, applications may request a memory capability that is anywhere between the minimum allocation and a maximum allocation, and which must be a multiple of the minimum allocation. Default memory allocations are scheduler-specific, and for the capacity scheduler the default minimum is 1024 MB (set by `yarn.scheduler.capacity.minimum-allocation-mb`), and the default maximum is 10240 MB (set by `yarn.scheduler.capacity.maximum-allocation-mb`). Thus, tasks can request any memory allocation between 1 and 10 GB (inclusive), in multiples of 1 GB (the scheduler will round to the nearest multiple if needed), by setting `mapreduce.map.memory.mb and map reduce.reduce.memory.mb` appropriately.
+
+
+Task Execution
 ---
-When running under YARN, the task reports its progress and status (including counters) back to its application master every three seconds (over the umbilical interface), which has an aggregate view of the job. The process is illustrated in the below figure. Contrast this to MapReduce 1, where progress updates flow from the child through the task-tracker to the jobtracker for aggregation.
-![http://sungsoo.github.com/images/updates-mr-yarn.png](http://sungsoo.github.com/images/updates-mr-yarn.png)
-The client polls the application master every second (set via `mapreduce.client.pro gressmonitor.pollinterval`) to receive progress updates, which are usually displayed to the user.
-Job Completion
----As well as polling the application master for progress, every five seconds the client checks whether the job has completed when using the `waitForCompletion()` method on **Job**. The polling interval can be set via the `mapreduce.client.completion.polli nterval` configuration property.
-Notification of job completion via an HTTP callback is also supported like in MapReduce 1. In MapReduce 2 the application master initiates the callback.
-On job completion the application master and the task containers clean up their working state, and the **OutputCommitter**’s job cleanup method is called. Job information is archived by the job history server to enable later interrogation by users if desired.Studying Hadoop or MapReduce
+
+Once a task has been assigned a container by the resource manager’s scheduler, the application master starts the container by contacting the node manager (steps 9a and 9b). The task is executed by a Java application whose main class is YarnChild. Before it can run the task it localizes the resources that the task needs, including the job configuration and JAR file, and any files from the distributed cache (step 10). Finally, it runs the map or reduce task (step 11).
+
+
+The YarnChild runs in a dedicated JVM, for the same reason that tasktrackers spawn new JVMs for tasks in MapReduce 1: to isolate user code from long-running system daemons. Unlike MapReduce 1, however, YARN does not support JVM reuse so each task runs in a new JVM.
+
+
+Streaming and Pipes programs work in the same way as MapReduce 1. The **Yarn Child** launches the Streaming or Pipes process and communicates with it using standard input/output or a socket (respectively), as shown in Figure 6-2 (except the child and subprocesses run on node managers, not tasktrackers).
+
+![http://sungsoo.github.com/images/stream-pipe.png](http://sungsoo.github.com/images/stream-pipe.png)
+
+
+Progress and Status Updates
+---
+
+When running under YARN, the task reports its progress and status (including counters) back to its application master every three seconds (over the umbilical interface), which has an aggregate view of the job. The process is illustrated in the below figure. Contrast this to MapReduce 1, where progress updates flow from the child through the task-tracker to the jobtracker for aggregation.
+
+![http://sungsoo.github.com/images/updates-mr-yarn.png](http://sungsoo.github.com/images/updates-mr-yarn.png)
+
+
+The client polls the application master every second (set via `mapreduce.client.pro gressmonitor.pollinterval`) to receive progress updates, which are usually displayed to the user.
+
+
+Job Completion
+---
+
+As well as polling the application master for progress, every five seconds the client checks whether the job has completed when using the `waitForCompletion()` method on **Job**. The polling interval can be set via the `mapreduce.client.completion.polli nterval` configuration property.
+
+Notification of job completion via an HTTP callback is also supported like in MapReduce 1. In MapReduce 2 the application master initiates the callback.
+
+On job completion the application master and the task containers clean up their working state, and the **OutputCommitter**’s job cleanup method is called. Job information is archived by the job history server to enable later interrogation by users if desired.
+
+Studying Hadoop or MapReduce
 ---
 Studying Hadoop or MapReduce can be a daunting task if you get your hand dirty at the start.  
 I followed the schedule as follows :
@@ -313,9 +368,12 @@ will help you learn as to how model your problem into a MR solution in order to 
 6. Try the [http://developer.yahoo.com/hadoop/tutorial/module1.html](http://developer.yahoo.com/hadoop/tutorial/module1.html) link for beginners to expert path to Hadoop
 
 For Any Queries ... 
-Contact Apache, Google, Bing, Yahoo!References
+Contact Apache, Google, Bing, Yahoo!
+
+References
 ---
-[1] Tome White, *Hadoop; The Definitive Guide*, pp.194-200, Third Edition, 2012.  
+
+[1] Tome White, *Hadoop; The Definitive Guide*, pp.194-200, Third Edition, 2012.  
 [2] [Apache tez](http://incubator.apache.org/projects/tez.html). http://incubator.apache.org/projects/tez.html.   
 [3] [Netty project](http://netty.io). http://netty.io.  
 [4] [Storm](http://storm-project.net/). http://storm-project.net/.  
@@ -348,4 +406,5 @@ Contact Apache, Google, Bing, Yahoo!References
 [31] Y. Yu, M. Isard, D. Fetterly, M. Budiu, U. Erlingsson, P. K. Gunda, and J. Currey. DryadLINQ: a system for general-purpose distributed data-parallel computing using a high-level language. In *Proceedings of the 8th USENIX conference on Operating systems design and implementation, OSDI’08*, pages 1–14, Berkeley, CA, USA, 2008. USENIX Association.  
 [32] M. Zaharia, M. Chowdhury, M. J. Franklin, S. Shenker, and I. Stoica. Spark: cluster computing with working sets. In *Proceedings of the 2nd USENIX conference on Hot topics in cloud computing, HotCloud’10*, pages 10–10, Berkeley, CA, USA, 2010. USENIX Association.  
 [33] Vinod Kumar Vavilapali, et. al, *Apache Hadoop YARN – Yet Another Resource Negotiator*, SoCC'13, 1-3 Oct. 2013, Santa Clara, California, USA.
-
+
+

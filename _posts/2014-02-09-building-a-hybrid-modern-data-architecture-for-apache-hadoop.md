@@ -3,7 +3,7 @@ layout: post
 title: Building a Hybrid Modern Data Architecture for Apache Hadoop
 date: 2014-02-09
 categories: [computer science]
-tags: [data management, hadoop & mapreduce]
+tags: [data management, big data]
 
 ---
 

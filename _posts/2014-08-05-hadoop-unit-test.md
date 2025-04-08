@@ -3,7 +3,7 @@ layout: post
 title: How to Develop Hadoop Tests
 date: 2014-08-05
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

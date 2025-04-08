@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop YARN – Background and Overview
 date: 2014-02-28 
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [big data, yarn]
 
 ---
 

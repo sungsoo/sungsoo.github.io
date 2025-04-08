@@ -3,7 +3,7 @@ layout: post
 title: Papers to Read
 date: 2014-05-07
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

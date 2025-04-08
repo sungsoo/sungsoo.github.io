@@ -3,7 +3,7 @@ layout: post
 title: Healthcare Does Hadoop
 date: 2014-04-14
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: How Pivotal Works
 date: 2014-07-21
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Tez Design - Introduction
 date: 2014-02-10 
 categories: [computer science]
-tags: [hadoop & mapreduce, tez]
+tags: [big data, tez]
 
 ---
 
@@ -22,21 +22,41 @@ The support for 3rd party AppMasters is the crucial aspect to flexibility in YAR
 
 ### Behavior of a Map-Reduce job under Hadoop 1.x
 
-1. Client-side determination of input pieces2. Job startup3. Map phase, with optional in-process combinerEach mapper reads input from durable storage4. Hash partition with local per-bucket sort.5. Data movement via framework initiated by reduce-side pullmechanism6. Ordered merge7. Reduce phase8. Write to durable storage
+1. Client-side determination of input pieces
+2. Job startup
+3. Map phase, with optional in-process combiner
+Each mapper reads input from durable storage
+4. Hash partition with local per-bucket sort.
+5. Data movement via framework initiated by reduce-side pull
+mechanism
+6. Ordered merge
+7. Reduce phase
+8. Write to durable storage
 
-![](http://sungsoo.github.com/images/hadoopstack.png)
+![](http://sungsoo.github.com/images/hadoopstack.png)
+
 The map-reduce primitive has proved to be very useful as the basis of a *reliable* cluster computation runtime and it is well suited to data processing tasks that involve a small number of jobs that benefit from the standard behavior. However, algorithms that require many *iterations* suffer from the *high overheads* of job startup and from frequent reads and writes to durable storage. **Relation query languages** such as **Hive** suffer from those issues and from the need to massage multiple datasets into homogeneous inputs as a M/R job can only consume one physical dataset (excluding support for side-data channels such as *distributed cache*).
 
 Tez aims to be a general purpose execution runtime that enhances various scenarios that are not well served by classic Map-Reduce. In the short term the major focus is to support **Hive** and **Pig**, specifically to enable performance improvements to batch and ad-hoc interactive queries. Specific support for additional scenarios may be added in the future.
-Systems similar in spirit to Tez have been developed academically and commercially. Some notable examples are Dryad, HTCondor, Clustera, Hyracks, and Nephele-PACTS.Tez pre-requisites
+
+Systems similar in spirit to Tez have been developed academically and commercially. Some notable examples are Dryad, HTCondor, Clustera, Hyracks, and Nephele-PACTS.
+
+Tez pre-requisites
 ---
-For normal operation, Tez assumes:
-* A *cluster* running YARN
+
+For normal operation, Tez assumes:
+
+* A *cluster* running YARN
 * Access to a *durable shared filesystem* accessible through Hadoop Filesystem 
 interface
-Tez can operate in debugging scenarios that do not require a full cluster. This mode uses instantiations of HDFS and YARN running in a *single process*.What services will Tez provide
+
+Tez can operate in debugging scenarios that do not require a full cluster. This mode uses instantiations of HDFS and YARN running in a *single process*.
+
+
+What services will Tez provide
 ---
-Tez provides *runtime components*:  
+
+Tez provides *runtime components*:  
 
 * An execution environment that can handle traditional map-reduce jobs  
 * An execution environment that handles *DAG-based jobs* comprising various built-in and extendable primitives.  
@@ -56,12 +76,17 @@ Tez provides pre-made primitives for use with the **DAG API** (org.apache.tez.en
 * Sorting  
 * Shuffling  
 * Merging  
-* Data transferReferences
+* Data transfer
+
+
+References
 ---
 [1] [http://hortonworks.com/blog/introducing-tez-faster-hadoop-processing/](http://hortonworks.com/blog/introducing-tez-faster-hadoop-processing/)  
 [2] [http://hortonworks.com/blog/45x-performance-increase-for-hive/](http://hortonworks.com/blog/45x-performance-increase-for-hive/)   
 [3] [http://hortonworks.com/blog/moving-hadoop-beyond-batch-with-apache-yarn/](http://hortonworks.com/blog/moving-hadoop-beyond-batch-with-apache-yarn/)  
-[4] [*Clustera: An Integrated ComputationAnd Data Management System*](http://www.vldb.org/pvldb/1/1453865.pdf), PVLDB '08, August 23-28, 2008, Auckland, New ZealandCopyright 2008 VLDB Endowment.  
+[4] [*Clustera: An Integrated Computation
+And Data Management System*](http://www.vldb.org/pvldb/1/1453865.pdf), PVLDB '08, August 23-28, 2008, Auckland, New Zealand
+Copyright 2008 VLDB Endowment.  
 [5] H.Ballani, P.Costa, T.Karagiannis, and A.I.Rowstron. Towards predictable datacenter networks. In *SIGCOMM*, volume 11, pages 242–253, 2011.  
 [6] F.P.Brooks,Jr. *The mythical man-month (anniversary ed.)*. Addison-Wesley Longman Publishing Co., Inc., Boston, MA, USA, 1995.  
 [7] N. Capit, G. Da Costa, Y. Georgiou, G. Huard, C. Martin, G. Mounie, P. Neyron, and O. Richard. A batch scheduler with high level components. In *Cluster Computing and the Grid, 2005. CC-Grid 2005. IEEE International Symposium on*, volume 2, pages 776–783 Vol. 2, 2005.  
@@ -91,4 +116,5 @@ Tez provides pre-made primitives for use with the **DAG API** (org.apache.tez.en
 [31] Y. Yu, M. Isard, D. Fetterly, M. Budiu, U. Erlingsson, P. K. Gunda, and J. Currey. DryadLINQ: a system for general-purpose distributed data-parallel computing using a high-level language. In *Proceedings of the 8th USENIX conference on Operating systems design and implementation, OSDI’08*, pages 1–14, Berkeley, CA, USA, 2008. USENIX Association.  
 [32] M. Zaharia, M. Chowdhury, M. J. Franklin, S. Shenker, and I. Stoica. Spark: cluster computing with working sets. In *Proceedings of the 2nd USENIX conference on Hot topics in cloud computing, HotCloud’10*, pages 10–10, Berkeley, CA, USA, 2010. USENIX Association.  
 [33] Vinod Kumar Vavilapali, et. al, *Apache Hadoop YARN – Yet Another Resource Negotiator*, SoCC'13, 1-3 Oct. 2013, Santa Clara, California, USA.
-
+
+

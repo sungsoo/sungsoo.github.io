@@ -58,5 +58,6 @@ Separately, we have also developed [game theoretic](http://jmlr.org/proceedings/
 From Atari to Labyrinth, from locomotion through manipulation, to poker and even the game of Go, our deep reinforcement learning agents have demonstrated remarkable progress on a wide variety of challenging tasks. Our goal is to continue to improve the capabilities of our agents, and to use them to make a positive impact on society, in important applications such as [healthcare](https://deepmind.com/health).
 
 ## References
-[1] [*Deep Reinforcement Learning*](https://deepmind.com/blog/deep-reinforcement-learning/). DeepMind, Google, 2016.
-
+
+[1] [*Deep Reinforcement Learning*](https://deepmind.com/blog/deep-reinforcement-learning/). DeepMind, Google, 2016.
+

@@ -3,7 +3,7 @@ layout: post
 title: HIVE TPC-DS Benchmark
 date: 2014-08-02
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

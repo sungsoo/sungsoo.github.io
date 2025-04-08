@@ -167,7 +167,8 @@ The survey format is very important because a poorly organized survey may confus
 
 Test the survey on a small sample of individuals that resembles your target sample (but does not include it) to check if the questions are answered as you intended and how long it takes to complete the survey. Revise questions as necessary before administering them to the study sample.
 
-
+
+
 # References
 [1] Babbie, E.R. (1973). *Survey research methods*. Belmont, CA: Wadsworth Publishing Company.  
 [2] Bordens, K.S. and Abbott, B.B. (1996). *Research Design and Methods; A Process Approach*. 3rd ed. Mountain View, CA: Mayfield.  

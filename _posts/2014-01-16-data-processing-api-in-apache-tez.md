@@ -3,7 +3,7 @@ layout: post
 title: Data Processing API in Apache Tez
 date: 2014-01-16 
 categories: [computer science]
-tags: [hadoop & mapreduce, tez]
+tags: [big data, tez]
 
 ---
 

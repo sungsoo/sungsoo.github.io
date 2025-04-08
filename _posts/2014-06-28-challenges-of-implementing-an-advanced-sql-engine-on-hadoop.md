@@ -3,7 +3,7 @@ layout: post
 title: Challenges of Implementing an Advanced SQL Engine on Hadoop
 date: 2014-06-28
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Big Data Management System Smart SQL Processing
 date: 2014-06-24
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

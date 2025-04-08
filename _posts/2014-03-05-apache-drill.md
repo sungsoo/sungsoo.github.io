@@ -3,7 +3,7 @@ layout: post
 title: Apache Drill
 date: 2014-03-05 
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

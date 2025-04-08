@@ -3,7 +3,7 @@ layout: post
 title: Hadoop-GIS Spatial Queries
 date: 2014-08-25
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

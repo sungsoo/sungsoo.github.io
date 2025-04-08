@@ -3,7 +3,7 @@ layout: post
 title: Join Optimization
 date: 2014-09-23
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

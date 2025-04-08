@@ -3,7 +3,7 @@ layout: post
 title: Big Data Benchmark
 date: 2014-07-02
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

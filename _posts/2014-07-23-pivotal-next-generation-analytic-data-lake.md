@@ -3,7 +3,7 @@ layout: post
 title: Introduction To Pivotal's Next Generation Analytic Data Lake
 date: 2014-07-23
 categories: [computer science]
-tags: [big data, hadoop & mapreduce]
+tags: [big data, big data]
 
 ---
 

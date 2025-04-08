@@ -14,9 +14,16 @@ By Dorothy Thompson](http://absolutewrite.com/freelance_writing/bio.htm)
 
 ---
 
-## Sung-Soo Kim**Sung-Soo Kim** is a Senior Research Scientist in the BigData Software Research Department at ETRI, South Korea. Prior to joining ETRI in 2000, he was a researcher at KAIST, South Korea. During the past decade, his main focus has been on topics within parallel and realistic rendering in computer graphics. Recently, Sung-Soo’s research lies at the intersection of data warehousing and parallel computing, with a recent emphasis on scalable algorithms and big data processing. He received his MS from Pusan National University in Computer Science in 1999.---
--# Writing An Author Bio 
-
+## Sung-Soo Kim
+
+**Sung-Soo Kim** is a Senior Research Scientist in the BigData Software Research Department at ETRI, South Korea. Prior to joining ETRI in 2000, he was a researcher at KAIST, South Korea. During the past decade, his main focus has been on topics within parallel and realistic rendering in computer graphics. Recently, Sung-Soo’s research lies at the intersection of data warehousing and parallel computing, with a recent emphasis on scalable algorithms and big data processing. He received his MS from Pusan National University in Computer Science in 1999.
+
+---
+
+-
+# Writing An Author Bio 
+
+
 Never been published? Here are some suggestions on how to write that author's bio that is sure to achieve success!
 
 You have just finished your masterpiece and are about to send it off to that magical world, The Land Of The Publishing Industry. You have done your homework and have edited it with a fine-tooth comb. Now what?

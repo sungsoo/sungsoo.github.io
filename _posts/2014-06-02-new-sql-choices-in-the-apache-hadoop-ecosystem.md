@@ -3,7 +3,7 @@ layout: post
 title: Why Impala Continues to Lead?
 date: 2014-06-02
 categories: [computer science]
-tags: [data management, hadoop & mapreduce]
+tags: [data management, big data]
 
 ---
 

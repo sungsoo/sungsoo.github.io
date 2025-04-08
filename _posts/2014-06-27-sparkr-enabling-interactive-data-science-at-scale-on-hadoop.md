@@ -3,7 +3,7 @@ layout: post
 title: SparkR Enabling Interactive Data Science at Scale on Hadoop
 date: 2014-06-27
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

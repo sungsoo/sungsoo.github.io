@@ -3,7 +3,7 @@ layout: post
 title: HIVE 0.14 Cost Based Optimizer (CBO) Technical Overview  
 date: 2015-04-22
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Selecting the right SQL-on-Hadoop engine to access big data
 date: 2014-07-03
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

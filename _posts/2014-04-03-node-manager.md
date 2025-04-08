@@ -3,7 +3,7 @@ layout: post
 title: Apache Hadoop YARN – Node Manager (NM)
 date: 2014-04-04
 categories: [computer science]
-tags: [hadoop & mapreduce, yarn]
+tags: [big data, yarn]
 
 ---
 
@@ -23,11 +23,24 @@ Requirements' Origin
 
 
 # Node Manager (NM)
-The NodeManager is the “*worker*” daemon in YARN. It authenticates container leases, manages containers’ dependencies, monitors their execution, and provides a set of services to containers. Operators configure it to report memory, CPU, and other resources available at this node and allocated for YARN. After registering with the RM, the NM *heartbeats* its status and receives instructions.
-All containers in YARN– including AMs– are described by a *container launch context* (CLC). This record includes a map of environment variables, dependencies stored in remotely accessible storage, security tokens, payloads for **NM services**, and the command necessary to create the process. After validating the authenticity of the lease [**R7**], the NM configures the environment for the container, including initializing its monitoring subsystem with the resource constraints specified in the lease. *To launch the container, the NM copies all the necessary dependencies– data files, executables, tarballs– to local storage.* If required, the CLC also includes credentials to authenticate the download. Dependencies may be shared between containers in an application, between containers launched by the same tenant, and even between tenants, as specified in the CLC. The NM eventually garbage collects dependencies not in use by running containers.
-The NM will also kill containers as directed by the RM or the AM. Containers may be killed when the RM reports its owning application as completed, when the scheduler decides to evict it for another tenant, or when the *NM detects that the container exceeded the limits of its lease* [**R2,R3,R7**]. AMs may request containers to be killed when the corresponding work isn’t needed any more. Whenever a container exits, the NM will clean up its working directory in local storage. When an application completes, all resources owned by its containers are discarded on all nodes, including any of its processes still running in the cluster.
-*NM also periodically monitors the health of the physical node.* It monitors any issues with the local disks, and runs an admin configured script frequently that in turn can point to any hardware/software issues. When such an issue is discovered, NM changes its state to be unhealthy and reports RM about the same which then makes a scheduler specific decision of killing the containers and/or stopping future allocations on this node till the health issue is addressed.In addition to the above, a NM offers *local services* to containers running on that node. For example, the current implementation includes a *log aggregation* service that will upload data written by the application to <tt class="literal">stdout</tt> and <tt class="literal">stderr</tt> to HDFS once the application completes.
-Finally, an administrator may configure the NM with a set of pluggable, *auxiliary services*. While a container’s local storage will be cleaned up after it exits, it is allowed to promote some output to be preserved until the application exits. In this way, a process may produce data that persist beyond the life of the container, to be managed by the node. One important use case for these services are Hadoop MapReduce applications, for which *intermediate data are transferred between map and reduce tasks using an auxiliary service*. As mentioned earlier, the CLC allows AMs to address a payload to auxiliary services; *MapReduce applications use this channel to pass tokens that authenticate reduce tasks to the shuffle service*.References
+
+The NodeManager is the “*worker*” daemon in YARN. It authenticates container leases, manages containers’ dependencies, monitors their execution, and provides a set of services to containers. Operators configure it to report memory, CPU, and other resources available at this node and allocated for YARN. After registering with the RM, the NM *heartbeats* its status and receives instructions.
+
+
+All containers in YARN– including AMs– are described by a *container launch context* (CLC). This record includes a map of environment variables, dependencies stored in remotely accessible storage, security tokens, payloads for **NM services**, and the command necessary to create the process. After validating the authenticity of the lease [**R7**], the NM configures the environment for the container, including initializing its monitoring subsystem with the resource constraints specified in the lease. *To launch the container, the NM copies all the necessary dependencies– data files, executables, tarballs– to local storage.* If required, the CLC also includes credentials to authenticate the download. Dependencies may be shared between containers in an application, between containers launched by the same tenant, and even between tenants, as specified in the CLC. The NM eventually garbage collects dependencies not in use by running containers.
+
+
+The NM will also kill containers as directed by the RM or the AM. Containers may be killed when the RM reports its owning application as completed, when the scheduler decides to evict it for another tenant, or when the *NM detects that the container exceeded the limits of its lease* [**R2,R3,R7**]. AMs may request containers to be killed when the corresponding work isn’t needed any more. Whenever a container exits, the NM will clean up its working directory in local storage. When an application completes, all resources owned by its containers are discarded on all nodes, including any of its processes still running in the cluster.
+
+
+*NM also periodically monitors the health of the physical node.* It monitors any issues with the local disks, and runs an admin configured script frequently that in turn can point to any hardware/software issues. When such an issue is discovered, NM changes its state to be unhealthy and reports RM about the same which then makes a scheduler specific decision of killing the containers and/or stopping future allocations on this node till the health issue is addressed.
+
+In addition to the above, a NM offers *local services* to containers running on that node. For example, the current implementation includes a *log aggregation* service that will upload data written by the application to <tt class="literal">stdout</tt> and <tt class="literal">stderr</tt> to HDFS once the application completes.
+
+
+Finally, an administrator may configure the NM with a set of pluggable, *auxiliary services*. While a container’s local storage will be cleaned up after it exits, it is allowed to promote some output to be preserved until the application exits. In this way, a process may produce data that persist beyond the life of the container, to be managed by the node. One important use case for these services are Hadoop MapReduce applications, for which *intermediate data are transferred between map and reduce tasks using an auxiliary service*. As mentioned earlier, the CLC allows AMs to address a payload to auxiliary services; *MapReduce applications use this channel to pass tokens that authenticate reduce tasks to the shuffle service*.
+
+References
 ---
 [1] [Apache hadoop](http://hadoop.apache.org). http://hadoop.apache.org.  
 [2] [Apache tez](http://incubator.apache.org/projects/tez.html). http://incubator.apache.org/projects/tez.html.   
@@ -62,4 +75,4 @@ Requirements' Origin
 [31] Y. Yu, M. Isard, D. Fetterly, M. Budiu, U. Erlingsson, P. K. Gunda, and J. Currey. DryadLINQ: a system for general-purpose distributed data-parallel computing using a high-level language. In *Proceedings of the 8th USENIX conference on Operating systems design and implementation, OSDI’08*, pages 1–14, Berkeley, CA, USA, 2008. USENIX Association.  
 [32] M. Zaharia, M. Chowdhury, M. J. Franklin, S. Shenker, and I. Stoica. Spark: cluster computing with working sets. In *Proceedings of the 2nd USENIX conference on Hot topics in cloud computing, HotCloud’10*, pages 10–10, Berkeley, CA, USA, 2010. USENIX Association.  
 [33] Vinod Kumar Vavilapali, et. al, *Apache Hadoop YARN – Yet Another Resource Negotiator*, SoCC'13, 1-3 Oct. 2013, Santa Clara, California, USA.
-
+

@@ -3,7 +3,7 @@ layout: post
 title: Yarn The Key to Overcoming the Challenges of Broad based Hadoop Adoption
 date: 2014-06-29
 categories: [computer science]
-tags: [hadoop & mapreduce]
+tags: [big data]
 
 ---
 

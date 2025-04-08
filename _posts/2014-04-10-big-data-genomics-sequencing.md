@@ -3,7 +3,7 @@ layout: post
 title: Big Data Genomics Sequencing
 date: 2014-04-10
 categories: [computer science]
-tags: [big data, hadoop & mapreduce, tez]
+tags: [big data, big data, tez]
 
 ---
 

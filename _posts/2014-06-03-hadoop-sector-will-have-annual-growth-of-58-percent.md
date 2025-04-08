@@ -3,7 +3,7 @@ layout: post
 title: Hadoop Sector will Have Annual Growth of 58% for 2013-2020
 date: 2014-06-03
 categories: [computer science]
-tags: [data management, hadoop & mapreduce]
+tags: [data management, big data]
 
 ---
 
