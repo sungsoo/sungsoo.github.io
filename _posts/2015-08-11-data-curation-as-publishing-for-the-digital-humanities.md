@@ -3,7 +3,7 @@ layout: post
 title: Data Curation as Publishing for the Digital Humanities
 date: 2015-08-11
 categories: [computer science]
-tags: [big data, data curation, data management]
+tags: [big data]
 
 ---
 
