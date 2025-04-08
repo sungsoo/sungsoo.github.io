@@ -3,7 +3,7 @@ layout: post
 title: Recent performance improvements in Apache Spark
 date: 2015-05-30
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

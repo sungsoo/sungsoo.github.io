@@ -3,7 +3,7 @@ layout: post
 title: Introducing DataFrames in Spark for Large Scale Data Science 
 date: 2015-04-19
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

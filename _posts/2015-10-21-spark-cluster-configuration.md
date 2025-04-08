@@ -3,7 +3,7 @@ layout: post
 title: Spark Cluster Configuration
 date: 2015-10-21
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

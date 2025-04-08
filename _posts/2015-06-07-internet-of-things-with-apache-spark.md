@@ -3,7 +3,7 @@ layout: post
 title: The Internet of Things Transforms Transactions with Apache Spark
 date: 2015-06-07
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

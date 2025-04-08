@@ -3,7 +3,7 @@ layout: post
 title: Running BlinkDB Locally
 date: 2015-05-23
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

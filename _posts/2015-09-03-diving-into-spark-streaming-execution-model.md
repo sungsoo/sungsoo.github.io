@@ -3,7 +3,7 @@ layout: post
 title: Diving into Spark Streaming's Execution Model
 date: 2015-09-03
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

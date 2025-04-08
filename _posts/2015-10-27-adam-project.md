@@ -3,7 +3,7 @@ layout: post
 title: ADAM Project 
 date: 2015-10-27
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

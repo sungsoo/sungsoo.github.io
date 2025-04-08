@@ -3,7 +3,7 @@ layout: post
 title: Twitter Analysis with Apache Spark and IBM Watson
 date: 2015-11-30
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

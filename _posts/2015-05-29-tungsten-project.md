@@ -3,7 +3,7 @@ layout: post
 title: Bringing Spark Closer to Bare Metal
 date: 2015-05-29
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Programming With SampleClean
 date: 2015-05-24
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

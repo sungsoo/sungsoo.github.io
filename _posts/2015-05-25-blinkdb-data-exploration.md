@@ -3,7 +3,7 @@ layout: post
 title: Data Exploration Using BlinkDB
 date: 2015-05-25
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

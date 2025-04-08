@@ -3,7 +3,7 @@ layout: post
 title: Deep Dive into Spark SQL’s Catalyst Optimizer 
 date: 2015-04-20
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

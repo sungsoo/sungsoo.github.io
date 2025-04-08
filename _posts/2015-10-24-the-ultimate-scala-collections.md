@@ -3,7 +3,7 @@ layout: post
 title: Spark - The Ultimate Scala Collections 
 date: 2015-10-24
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

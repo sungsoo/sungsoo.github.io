@@ -3,7 +3,7 @@ layout: post
 title: Queries on Compressed RDDs
 date: 2015-12-31
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

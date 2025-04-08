@@ -3,7 +3,7 @@ layout: post
 title: BDAS Software Stack
 date: 2015-10-23
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Spark Notebook 
 date: 2015-04-24
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: SparkR Setting for RStudio
 date: 2015-09-08
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Improving Spark for Data Pipelines with Native YARN Integration
 date: 2015-06-06
 categories: [computer science]
-tags: [spark, yarn]
+tags: [big data]
 
 ---
 

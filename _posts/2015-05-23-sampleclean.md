@@ -3,7 +3,7 @@ layout: post
 title: SampleClean
 date: 2015-05-23
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

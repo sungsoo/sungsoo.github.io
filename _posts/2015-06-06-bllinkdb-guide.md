@@ -3,7 +3,7 @@ layout: post
 title: BlinkDB User Guide
 date: 2015-06-06
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

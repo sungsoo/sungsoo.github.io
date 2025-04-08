@@ -3,7 +3,7 @@ layout: post
 title: Introduction to Data Science with Apache Spark
 date: 2015-06-09
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 

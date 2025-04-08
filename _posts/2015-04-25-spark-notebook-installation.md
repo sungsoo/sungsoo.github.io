@@ -3,7 +3,7 @@ layout: post
 title: Spark with Python Notebook on Mac 
 date: 2015-04-25
 categories: [computer science]
-tags: [spark]
+tags: [big data]
 
 ---
 
