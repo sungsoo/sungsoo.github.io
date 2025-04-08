@@ -3,7 +3,7 @@ layout: post
 title: Self-Curating Databases 
 date: 2016-03-18
 categories: [computer science]
-tags: [data management, data curation]
+tags: [big data]
 
 ---
 
