@@ -3,7 +3,7 @@ layout: post
 title: Text Mining and Knowledge Graphs in the Cloud
 date: 2015-09-21
 categories: [computer science]
-tags: [big data, data curation]
+tags: [big data]
 
 ---
 

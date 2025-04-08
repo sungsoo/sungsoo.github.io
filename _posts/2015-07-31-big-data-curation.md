@@ -3,7 +3,7 @@ layout: post
 title: Three Approaches to Scalable Data Curation
 date: 2015-07-31
 categories: [computer science]
-tags: [big data, data curation]
+tags: [big data]
 
 ---
 

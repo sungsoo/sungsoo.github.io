@@ -3,7 +3,7 @@ layout: post
 title: Knowledge Graph
 date: 2015-09-17
 categories: [computer science]
-tags: [big data, data curation]
+tags: [big data]
 
 ---
 

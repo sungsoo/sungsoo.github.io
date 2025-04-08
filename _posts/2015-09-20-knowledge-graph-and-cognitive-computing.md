@@ -3,7 +3,7 @@ layout: post
 title: Knowledge Graph and Cognitive Computing
 date: 2015-09-20
 categories: [computer science]
-tags: [big data, data curation]
+tags: [big data]
 
 ---
 

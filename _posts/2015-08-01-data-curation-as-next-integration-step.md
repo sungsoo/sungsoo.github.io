@@ -3,7 +3,7 @@ layout: post
 title: Stonebraker points to data curation as next integration step
 date: 2015-08-01
 categories: [computer science]
-tags: [big data, data curation]
+tags: [big data]
 
 ---
 

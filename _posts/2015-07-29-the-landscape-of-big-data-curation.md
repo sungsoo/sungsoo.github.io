@@ -3,7 +3,7 @@ layout: post
 title: The Landscape of Big Data, Curation
 date: 2015-07-29
 categories: [computer science]
-tags: [big data, data curation]
+tags: [big data]
 
 ---
 

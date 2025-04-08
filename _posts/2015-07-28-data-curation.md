@@ -3,7 +3,7 @@ layout: post
 title: Data Curation
 date: 2015-07-28
 categories: [computer science]
-tags: [big data, data curation]
+tags: [big data]
 
 ---
 

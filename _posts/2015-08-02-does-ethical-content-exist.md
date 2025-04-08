@@ -3,7 +3,7 @@ layout: post
 title: Does ethical content curation exist? A data-driven answer
 date: 2015-08-02
 categories: [computer science]
-tags: [big data, data curation]
+tags: [big data]
 
 ---
 
