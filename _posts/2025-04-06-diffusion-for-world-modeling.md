@@ -3,7 +3,7 @@ layout: post
 title: Diffusion for World Modeling; Visual Details Matter in Atari
 date: 2025-04-06
 categories: [artificial intelligence]
-tags: [machine learning]
+tags: [artificial general intelligence]
 
 ---
 

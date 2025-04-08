@@ -3,7 +3,7 @@ layout: post
 title: Causal-aware machine learning
 date: 2025-04-03
 categories: [artificial intelligence]
-tags: [machine learning]
+tags: [artificial general intelligence]
 
 ---
 

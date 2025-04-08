@@ -3,7 +3,7 @@ layout: post
 title: The Heterophilic Graph Learning Handbook 
 date: 2025-04-01
 categories: [artificial intelligence]
-tags: [machine learning]
+tags: [artificial general intelligence]
 
 ---
 

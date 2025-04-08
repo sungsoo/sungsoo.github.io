@@ -3,7 +3,7 @@ layout: post
 title: OpenAI Surprises Everyone, Superintelligence approaches
 date: 2025-04-05
 categories: [artificial intelligence]
-tags: [machine learning]
+tags: [artificial general intelligence]
 
 ---
 

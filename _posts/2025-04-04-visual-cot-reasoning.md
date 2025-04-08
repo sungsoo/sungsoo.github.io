@@ -3,7 +3,7 @@ layout: post
 title: NEW VISUAL CoT Reasoning
 date: 2025-04-04
 categories: [artificial intelligence]
-tags: [machine learning]
+tags: [artificial general intelligence]
 
 ---
 

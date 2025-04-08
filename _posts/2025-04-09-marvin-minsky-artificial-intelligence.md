@@ -3,7 +3,7 @@ layout: post
 title: Marvin Minsky - Artificial Intelligence 
 date: 2025-04-09
 categories: [artificial intelligence]
-tags: [machine learning]
+tags: [artificial general intelligence]
 
 ---
 

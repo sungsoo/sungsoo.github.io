@@ -3,7 +3,7 @@ layout: post
 title: Marvin Minsky; A Society of Minds 
 date: 2025-04-08
 categories: [artificial intelligence]
-tags: [machine learning]
+tags: [artificial general intelligence]
 
 ---
 

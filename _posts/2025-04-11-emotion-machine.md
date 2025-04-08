@@ -3,7 +3,7 @@ layout: post
 title: Marvin Minsky - The Emotion Machine 
 date: 2025-04-11
 categories: [artificial intelligence]
-tags: [machine learning]
+tags: [artificial general intelligence]
 
 ---
 

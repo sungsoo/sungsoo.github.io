@@ -3,7 +3,7 @@ layout: post
 title: The Society of Mind
 date: 2025-04-07
 categories: [artificial intelligence]
-tags: [machine learning]
+tags: [artificial general intelligence]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Yann LeCun & John Werner on The Next AI Revolution
 date: 2025-04-05
 categories: [artificial intelligence]
-tags: [machine learning]
+tags: [artificial general intelligence]
 
 ---
 
