@@ -3,7 +3,7 @@ layout: post
 title: Predictive Methodologies - Analysis of Space
 date: 2014-03-08
 categories: [computer science]
-tags: [big data, analytics, graph mining]
+tags: [big data]
 
 ---
 

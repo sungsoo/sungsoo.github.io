@@ -3,7 +3,7 @@ layout: post
 title: Prediction-Led Policing Process and Prevention Methods
 date: 2014-03-05
 categories: [computer science]
-tags: [big data, analytics, graph mining]
+tags: [big data]
 
 ---
 

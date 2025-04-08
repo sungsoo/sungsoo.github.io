@@ -3,7 +3,7 @@ layout: post
 title: Predictive Policing
 date: 2014-03-04
 categories: [computer science]
-tags: [big data, analytics, graph mining]
+tags: [big data]
 
 ---
 

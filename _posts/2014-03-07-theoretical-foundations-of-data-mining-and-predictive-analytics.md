@@ -3,7 +3,7 @@ layout: post
 title: Theoretical Foundations of Data Mining and Predictive Analytics
 date: 2014-03-07
 categories: [computer science]
-tags: [big data, analytics, graph mining]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Forecast Vs. Prediction
 date: 2014-03-06
 categories: [computer science]
-tags: [big data, analytics, graph mining]
+tags: [big data]
 
 ---
 
