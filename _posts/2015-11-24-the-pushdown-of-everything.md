@@ -3,7 +3,7 @@ layout: post
 title: The Pushdown of Everything
 date: 2015-11-24
 categories: [computer science]
-tags: [data management, spark]
+tags: [big data]
 
 ---
 
