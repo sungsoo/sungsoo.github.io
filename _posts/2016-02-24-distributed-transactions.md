@@ -3,7 +3,7 @@ layout: post
 title: Distributed Transactions
 date: 2016-02-24
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

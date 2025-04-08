@@ -3,7 +3,7 @@ layout: post
 title: Aggregate Cache
 date: 2016-01-14
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Postgres Modifications
 date: 2016-02-21
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 ## Article Source

@@ -3,7 +3,7 @@ layout: post
 title: What is VoltDB?
 date: 2016-02-16
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

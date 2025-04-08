@@ -3,7 +3,7 @@ layout: post
 title: Hekaton Research
 date: 2016-02-25
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

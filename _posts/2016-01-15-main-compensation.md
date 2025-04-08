@@ -3,7 +3,7 @@ layout: post
 title: Main Compensation and Delta Compensation
 date: 2016-01-15
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

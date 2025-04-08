@@ -3,7 +3,7 @@ layout: post
 title: C++ Arena Allocation Guide
 date: 2016-02-19
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

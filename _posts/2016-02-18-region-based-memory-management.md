@@ -3,7 +3,7 @@ layout: post
 title: Region-based Memory Management
 date: 2016-02-18
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

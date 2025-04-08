@@ -3,7 +3,7 @@ layout: post
 title: A Better B-Tree in Hekaton
 date: 2016-02-27
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

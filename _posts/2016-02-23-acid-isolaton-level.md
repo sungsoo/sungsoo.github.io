@@ -3,7 +3,7 @@ layout: post
 title: ACID Isolation Level
 date: 2016-02-23
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: In-Memory Column Store Architecture Overview 
 date: 2016-02-01
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

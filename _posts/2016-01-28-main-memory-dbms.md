@@ -3,7 +3,7 @@ layout: post
 title: Main Memory DBMS 
 date: 2016-01-28
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

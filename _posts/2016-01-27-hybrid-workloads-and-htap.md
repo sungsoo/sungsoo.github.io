@@ -3,7 +3,7 @@ layout: post
 title: HYBRID WORKLOADS AND HTAP 
 date: 2016-01-27
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

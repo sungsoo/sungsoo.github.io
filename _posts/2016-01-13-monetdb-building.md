@@ -3,7 +3,7 @@ layout: post
 title: MonetDB Source compilation on OS X
 date: 2016-01-13
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

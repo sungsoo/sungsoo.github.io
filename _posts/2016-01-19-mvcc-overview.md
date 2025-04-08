@@ -3,7 +3,7 @@ layout: post
 title: MVCC Overview
 date: 2016-01-19
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

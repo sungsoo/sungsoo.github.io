@@ -3,7 +3,7 @@ layout: post
 title: Hekaton Breaks Through 
 date: 2016-02-04
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 # Hekaton Breaks Through

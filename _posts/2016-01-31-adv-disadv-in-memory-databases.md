@@ -3,7 +3,7 @@ layout: post
 title: Advantages & Disadvantages of an In-Memory Database 
 date: 2016-01-31
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

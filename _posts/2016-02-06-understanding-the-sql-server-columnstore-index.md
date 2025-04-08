@@ -3,7 +3,7 @@ layout: post
 title: Understanding the SQL Server Columnstore Index 
 date: 2016-02-06
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Compensating Transaction 
 date: 2016-02-02
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

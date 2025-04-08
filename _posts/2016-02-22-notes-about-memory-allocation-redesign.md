@@ -3,7 +3,7 @@ layout: post
 title: Notes About Memory Allocation Redesign
 date: 2016-02-22
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Insert-Only Implementation Strategies
 date: 2016-02-15
 categories: [computer science]
-tags: [data management, htap]
+tags: [big data]
 
 ---
 
