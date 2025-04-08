@@ -3,7 +3,7 @@ layout: post
 title: Setup a JavaCL Maven Project 
 date: 2015-04-21
 categories: [computer science]
-tags: [gpgpu]
+tags: [machine learning]
 
 ---
 

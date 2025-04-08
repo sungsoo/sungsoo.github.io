@@ -3,7 +3,7 @@ layout: post
 title: Some Common Parallel Patterns
 date: 2014-09-03
 categories: [computer science]
-tags: [gpgpu]
+tags: [machine learning]
 
 ---
 
