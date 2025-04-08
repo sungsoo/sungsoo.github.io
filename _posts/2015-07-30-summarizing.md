@@ -3,7 +3,7 @@ layout: post
 title: Summarizing
 date: 2015-07-30
 categories: [computer science]
-tags: [papers]
+tags: [publications]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Research Posters 101
 date: 2015-12-03
 categories: [computer science]
-tags: [papers]
+tags: [publications]
 
 ---
 

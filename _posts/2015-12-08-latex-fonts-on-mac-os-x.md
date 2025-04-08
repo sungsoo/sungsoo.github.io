@@ -3,7 +3,7 @@ layout: post
 title: LaTeX Fonts on Mac OS X
 date: 2015-12-08
 categories: [computer science]
-tags: [papers]
+tags: [publications]
 
 ---
 

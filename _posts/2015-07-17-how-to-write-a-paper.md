@@ -3,7 +3,7 @@ layout: post
 title: How to Write a Good Paper
 date: 2015-07-17
 categories: [liberal arts]
-tags: [papers]
+tags: [publications]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Logical Communication-based Middleware for Collaboration among Smart Apps in P2P Network Environments
 date: 2013-09-15
 categories: [computer science]
-tags: [papers]
+tags: [publications]
 
 ---
 ### ABSTRACT
