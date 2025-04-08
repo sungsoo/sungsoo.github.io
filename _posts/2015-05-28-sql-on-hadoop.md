@@ -3,7 +3,7 @@ layout: post
 title: Best SQL-on-hadoop Tool
 date: 2015-05-28
 categories: [computer science]
-tags: [sql on hadoop]
+tags: [big data]
 
 ---
 

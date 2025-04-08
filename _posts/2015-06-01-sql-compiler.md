@@ -3,7 +3,7 @@ layout: post
 title: A SQL Query Compiler
 date: 2015-06-01
 categories: [computer science]
-tags: [sql on hadoop]
+tags: [big data]
 
 ---
 

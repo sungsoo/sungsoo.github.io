@@ -3,7 +3,7 @@ layout: post
 title: Release Notes - Tajo - Version 0.11.1
 date: 2016-02-16
 categories: [computer science]
-tags: [data management, sql on hadoop]
+tags: [big data]
 
 ---
 

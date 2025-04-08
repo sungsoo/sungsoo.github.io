@@ -3,7 +3,7 @@ layout: post
 title: Statistics-Driven OLAP Acceleration using Query Column Sets
 date: 2016-03-10
 categories: [computer science]
-tags: [data management, sql on hadoop]
+tags: [big data]
 
 ---
 

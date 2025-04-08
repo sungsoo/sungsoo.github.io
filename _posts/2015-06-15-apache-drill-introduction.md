@@ -3,7 +3,7 @@ layout: post
 title: Apache Drill Introduction
 date: 2015-06-15
 categories: [computer science]
-tags: [sql on hadoop]
+tags: [big data]
 
 ---
 

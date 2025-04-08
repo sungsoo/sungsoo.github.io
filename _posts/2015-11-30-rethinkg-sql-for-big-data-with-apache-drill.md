@@ -3,7 +3,7 @@ layout: post
 title: Rethinking SQL for Big Data with Apache Drill
 date: 2015-11-30
 categories: [computer science]
-tags: [sql on hadoop]
+tags: [big data]
 
 ---
 

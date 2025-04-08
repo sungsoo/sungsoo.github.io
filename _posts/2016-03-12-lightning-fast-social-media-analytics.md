@@ -3,7 +3,7 @@ layout: post
 title: Lightning Fast Social Media Analytics
 date: 2016-03-12
 categories: [computer science]
-tags: [data management, sql on hadoop]
+tags: [big data]
 
 ---
 

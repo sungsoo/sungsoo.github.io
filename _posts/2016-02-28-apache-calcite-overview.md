@@ -3,7 +3,7 @@ layout: post
 title: Apache Calcite Overview
 date: 2016-02-28
 categories: [computer science]
-tags: [data management, sql on hadoop]
+tags: [big data]
 
 ---
 

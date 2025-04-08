@@ -3,7 +3,7 @@ layout: post
 title: Apache MRQL Installation Instructions
 date: 2015-06-19
 categories: [computer science]
-tags: [sql on hadoop]
+tags: [big data]
 
 ---
 

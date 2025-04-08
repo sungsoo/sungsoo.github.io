@@ -3,7 +3,7 @@ layout: post
 title: Apache MRQL
 date: 2015-06-18
 categories: [computer science]
-tags: [sql on hadoop]
+tags: [big data]
 
 ---
 

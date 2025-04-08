@@ -3,7 +3,7 @@ layout: post
 title: Zeppelin Tajo Interpreter
 date: 2016-02-17
 categories: [computer science]
-tags: [sql on hadoop]
+tags: [big data]
 
 ---
 
