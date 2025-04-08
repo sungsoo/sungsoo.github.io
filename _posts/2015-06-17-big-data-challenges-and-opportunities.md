@@ -3,7 +3,7 @@ layout: post
 title: Big Data Challenges and Opportunities 
 date: 2015-06-17
 categories: [computer science]
-tags: [developments, presentation]
+tags: [publications]
 
 ---
 
