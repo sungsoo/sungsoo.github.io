@@ -3,7 +3,7 @@ layout: post
 title: Graphs in Machine Learning
 date: 2017-05-02
 categories: [computer science]
-tags: [analytics, data science, graph mining, machine learning]
+tags: [big data]
 
 ---
 

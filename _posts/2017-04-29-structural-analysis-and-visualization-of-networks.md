@@ -3,7 +3,7 @@ layout: post
 title: Structural Analysis and Visualization of Networks
 date: 2017-04-29
 categories: [computer science]
-tags: [analytics, data science, graph mining, machine learning]
+tags: [big data]
 
 ---
 

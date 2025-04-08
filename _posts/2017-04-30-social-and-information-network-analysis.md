@@ -3,7 +3,7 @@ layout: post
 title: Social and Information Network Analysis
 date: 2017-04-30
 categories: [computer science]
-tags: [analytics, data science, graph mining, machine learning]
+tags: [big data]
 
 ---
 
