@@ -3,7 +3,7 @@ layout: post
 title: Maven Support in IntelliJ IDEA
 date: 2015-11-26
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

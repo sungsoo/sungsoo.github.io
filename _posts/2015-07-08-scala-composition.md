@@ -3,7 +3,7 @@ layout: post
 title: Function Composition
 date: 2015-07-08
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

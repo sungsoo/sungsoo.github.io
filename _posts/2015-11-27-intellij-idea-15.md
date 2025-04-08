@@ -3,7 +3,7 @@ layout: post
 title: IntelliJ IDEA 15
 date: 2015-11-27
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

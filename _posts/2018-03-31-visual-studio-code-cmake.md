@@ -3,7 +3,7 @@ layout: post
 title: Visual Studio Code, CMake and LLDB
 date: 2018-03-31
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

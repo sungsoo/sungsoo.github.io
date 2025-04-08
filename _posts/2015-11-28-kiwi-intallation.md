@@ -3,7 +3,7 @@ layout: post
 title: KIWI Installation
 date: 2015-11-28
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Extreme Team
 date: 2018-03-30
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

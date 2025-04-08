@@ -3,7 +3,7 @@ layout: post
 title: Native C/C++ Like Performance For Java Object Serialization
 date: 2014-02-04
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Privacy as a Practice in Mobile App Development 
 date: 2015-10-26
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

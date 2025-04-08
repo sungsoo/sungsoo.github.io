@@ -3,7 +3,7 @@ layout: post
 title: Unit Test using specs
 date: 2015-11-05
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

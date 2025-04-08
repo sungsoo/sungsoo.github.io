@@ -3,7 +3,7 @@ layout: post
 title: Git Commands
 date: 2012-05-10
 categories: [information technology]
-tags: [developments]
+tags: [design patterns]
 
 ---
 ### Git 사용

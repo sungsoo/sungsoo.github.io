@@ -3,7 +3,7 @@ layout: post
 title: Android WebView Application using Naver Open API
 date: 2013-12-12
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

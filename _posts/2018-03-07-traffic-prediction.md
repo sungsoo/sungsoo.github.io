@@ -3,7 +3,7 @@ layout: post
 title: Traffic Prediction
 date: 2018-03-07
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

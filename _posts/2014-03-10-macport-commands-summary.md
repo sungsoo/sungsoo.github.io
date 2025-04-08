@@ -3,7 +3,7 @@ layout: post
 title: Macport Commands Summary
 date: 2014-03-10 
 categories: [information technology]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

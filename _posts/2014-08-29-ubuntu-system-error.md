@@ -3,7 +3,7 @@ layout: post
 title: How to fix “System program problem detected” error on Ubuntu
 date: 2014-08-29
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

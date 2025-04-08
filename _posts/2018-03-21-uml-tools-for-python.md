@@ -3,7 +3,7 @@ layout: post
 title: UML Tools for Python
 date: 2018-03-21
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: In-core computation with HyperBall
 date: 2016-10-20
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

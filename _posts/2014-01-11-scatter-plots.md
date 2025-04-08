@@ -3,7 +3,7 @@ layout: post
 title: Scatter plots in Python
 date: 2014-01-11
 categories: [information technology]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

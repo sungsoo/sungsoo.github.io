@@ -3,7 +3,7 @@ layout: post
 title: Samsung Developer Day 2014 at MWC - Samsung MultiScreen SDK 
 date: 2014-07-29
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: "Syntax highlighting tools for github page"
 date: 2014-01-11
 categories: [information technology]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

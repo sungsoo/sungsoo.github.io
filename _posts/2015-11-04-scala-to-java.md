@@ -3,7 +3,7 @@ layout: post
 title: Scala to Java
 date: 2015-11-04
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: N-Screen Application Development Manual
 date: 2013-12-13
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

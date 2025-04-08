@@ -3,7 +3,7 @@ layout: post
 title: Stanford Compilers Course
 date: 2015-11-07
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

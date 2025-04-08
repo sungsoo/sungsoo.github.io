@@ -3,7 +3,7 @@ layout: post
 title: Apache Mesos
 date: 2018-03-01
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

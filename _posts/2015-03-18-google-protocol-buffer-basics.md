@@ -3,7 +3,7 @@ layout: post
 title: Google Protocol Buffer Basics - Java
 date: 2015-03-18
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

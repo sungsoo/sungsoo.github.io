@@ -3,7 +3,7 @@ layout: post
 title: Pair Programming Tips
 date: 2018-01-29
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

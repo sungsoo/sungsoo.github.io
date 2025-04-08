@@ -3,7 +3,7 @@ layout: post
 title: 소프트웨어 개발의 이해를 돕기 위한 비유
 date: 2016-07-07
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

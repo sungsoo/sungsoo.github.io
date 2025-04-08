@@ -3,7 +3,7 @@ layout: post
 title: Scala Collection
 date: 2015-07-07
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

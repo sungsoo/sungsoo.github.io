@@ -3,7 +3,7 @@ layout: post
 title: Using ByteBuffer in Java
 date: 2014-02-03
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

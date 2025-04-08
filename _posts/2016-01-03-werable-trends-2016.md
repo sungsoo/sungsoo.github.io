@@ -3,7 +3,7 @@ layout: post
 title: Wearable Technology Trends in 2016
 date: 2016-01-03
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

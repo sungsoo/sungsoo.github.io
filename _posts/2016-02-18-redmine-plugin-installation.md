@@ -3,7 +3,7 @@ layout: post
 title: Redmine Plugin Installation
 date: 2016-02-18
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

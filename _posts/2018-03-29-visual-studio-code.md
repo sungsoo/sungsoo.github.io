@@ -3,7 +3,7 @@ layout: post
 title: Visual Studio Code - C++ Development
 date: 2018-03-29
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

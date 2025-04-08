@@ -3,7 +3,7 @@ layout: post
 title: "Adding a post to github page"
 date: 2012-03-08
 categories: [information technology]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

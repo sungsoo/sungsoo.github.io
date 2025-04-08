@@ -3,7 +3,7 @@ layout: post
 title: Design Patterns in Python
 date: 2018-03-19
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Introduction to the Maven
 date: 2014-02-10
 categories: [computer science]
-tags: [developments]
+tags: [design patterns]
 
 ---
 
