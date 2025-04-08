@@ -3,7 +3,7 @@ layout: post
 title: NewSQL Vs. SQL on Hadoop
 date: 2014-04-22
 categories: [computer science]
-tags: [big data, big data, nosql]
+tags: [big data]
 
 ---
 
