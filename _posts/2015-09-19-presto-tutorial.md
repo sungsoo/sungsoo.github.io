@@ -3,7 +3,7 @@ layout: post
 title: Using Presto to combine data from Hive and MySQL
 date: 2015-09-19
 categories: [computer science]
-tags: [big data, sql on hadoop]
+tags: [big data]
 
 ---
 

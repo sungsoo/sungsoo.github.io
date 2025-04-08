@@ -3,7 +3,7 @@ layout: post
 title: Approximate Aggregation Queries in Presto
 date: 2015-09-24
 categories: [computer science]
-tags: [big data, sql on hadoop]
+tags: [big data]
 
 ---
 
