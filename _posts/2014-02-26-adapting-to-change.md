@@ -3,7 +3,7 @@ layout: post
 title: Adapting to Change
 date: 2014-02-26
 categories: [computer science]
-tags: [agile, analytics, big data]
+tags: [big data]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Agile Big Data
 date: 2014-02-25
 categories: [computer science]
-tags: [agile, analytics, big data]
+tags: [big data]
 
 ---
 
