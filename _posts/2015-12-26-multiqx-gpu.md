@@ -3,7 +3,7 @@ layout: post
 title: MultiQx-GPU
 date: 2015-12-26
 categories: [computer science]
-tags: [big data, gpgpu]
+tags: [big data]
 
 ---
 

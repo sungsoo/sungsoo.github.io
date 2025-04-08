@@ -3,7 +3,7 @@ layout: post
 title: Distributed Computing Conferences
 date: 2015-09-14
 categories: [computer science]
-tags: [big data, papers]
+tags: [publications]
 
 ---
 

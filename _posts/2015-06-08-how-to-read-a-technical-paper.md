@@ -3,7 +3,7 @@ layout: post
 title: How to Read a Technical Paper
 date: 2015-06-08
 categories: [computer science]
-tags: [papers, publications]
+tags: [publications]
 
 ---
 

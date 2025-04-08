@@ -3,7 +3,7 @@ layout: post
 title: How to overcome common obstacles to publishing in English
 date: 2013-12-24
 categories: [literature]
-tags: [publications, papers]
+tags: [publications]
 
 ---
 **Article source:** [How to overcome common obstacles to publishing in English](http://www.researchtrends.com/issue-35-december-2013/how-to-overcome-common-obstacles-to-publishing-in-english/)

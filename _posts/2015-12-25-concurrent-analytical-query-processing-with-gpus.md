@@ -3,7 +3,7 @@ layout: post
 title: Concurrent Analytical Query Processing with GPUs
 date: 2015-12-25
 categories: [computer science]
-tags: [big data, gpgpu]
+tags: [big data]
 
 ---
 

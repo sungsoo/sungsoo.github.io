@@ -3,7 +3,7 @@ layout: post
 title: Fundamentals of Parallel Computing with the GPU
 date: 2015-09-22
 categories: [computer science]
-tags: [big data, gpgpu]
+tags: [big data]
 
 ---
 

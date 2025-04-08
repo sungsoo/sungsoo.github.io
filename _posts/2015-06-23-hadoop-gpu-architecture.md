@@ -3,7 +3,7 @@ layout: post
 title: Hadoop + GPU Architecture
 date: 2015-06-23
 categories: [computer science]
-tags: [gpgpu, big data]
+tags: [big data]
 
 ---
 

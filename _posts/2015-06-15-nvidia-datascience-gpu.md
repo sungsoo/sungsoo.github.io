@@ -3,7 +3,7 @@ layout: post
 title: Data Science using GPUs
 date: 2015-06-15
 categories: [computer science]
-tags: [gpgpu, big data, big data]
+tags: [big data]
 
 ---
 

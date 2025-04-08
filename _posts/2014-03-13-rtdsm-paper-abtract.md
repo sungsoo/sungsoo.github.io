@@ -3,7 +3,7 @@ layout: post
 title: Stream Data Processing for Performance Evaluation of the Equipment in an Offshore Plant
 date: 2014-03-13 
 categories: [computer science]
-tags: [papers, publications]
+tags: [publications]
 
 ---
 

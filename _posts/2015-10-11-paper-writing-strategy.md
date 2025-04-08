@@ -3,7 +3,7 @@ layout: post
 title: Paper Writing Strategy
 date: 2015-10-11
 categories: [computer science]
-tags: [papers, publications]
+tags: [publications]
 
 ---
 
