@@ -3,7 +3,7 @@ layout: post
 title: Rethinking the Role of CPUs in Modern Computers
 date: 2015-12-27
 categories: [computer science]
-tags: [gpgpu, parallel computing]
+tags: [machine learning]
 
 ---
 

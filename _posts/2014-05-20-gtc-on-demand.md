@@ -3,7 +3,7 @@ layout: post
 title: GTC On-Demand
 date: 2014-05-20
 categories: [computer science]
-tags: [gpgpu, parallel computing]
+tags: [machine learning]
 
 ---
 

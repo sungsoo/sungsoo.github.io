@@ -3,7 +3,7 @@ layout: post
 title: Computational Thinking
 date: 2014-01-05
 categories: [computer science]
-tags: [gpgpu, parallel computing]
+tags: [machine learning]
 
 ---
 <script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
