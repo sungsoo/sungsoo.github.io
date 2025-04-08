@@ -3,7 +3,7 @@ layout: post
 title: NoSQL History
 date: 2013-06-09 
 categories: [computer science]
-tags: [big data, data management, nosql]
+tags: [big data]
 
 ---
 
