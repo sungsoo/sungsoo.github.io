@@ -3,7 +3,7 @@ layout: post
 title: Apache Storm Basics
 date: 2014-06-13
 categories: [computer science]
-tags: [big data, big data, stream computing]
+tags: [big data]
 
 ---
 
