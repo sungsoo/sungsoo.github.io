@@ -3,7 +3,7 @@ layout: post
 title: High-throughput, low-latency, and exactly-once stream processing with Apache Flink
 date: 2015-08-18
 categories: [computer science]
-tags: [big data, data management, stream computing]
+tags: [big data]
 
 ---
 
