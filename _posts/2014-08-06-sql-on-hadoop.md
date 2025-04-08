@@ -3,7 +3,7 @@ layout: post
 title: Understanding the world of SQL on Hadoop.
 date: 2014-08-06
 categories: [computer science]
-tags: [big data, big data, tez]
+tags: [big data]
 
 ---
 

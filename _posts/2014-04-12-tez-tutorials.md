@@ -3,7 +3,7 @@ layout: post
 title: Interactive Query for Hadoop with Apache Hive on Apache Tez
 date: 2014-04-12
 categories: [computer science]
-tags: [big data, big data, tez]
+tags: [big data]
 
 ---
 

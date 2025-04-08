@@ -3,7 +3,7 @@ layout: post
 title: Big Data & Brews - Ari Zilka, CTO of Hortonworks' Talk
 date: 2014-04-30
 categories: [computer science]
-tags: [big data, big data, tez]
+tags: [big data]
 
 ---
 
