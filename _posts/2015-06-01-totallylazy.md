@@ -3,7 +3,7 @@ layout: post
 title: Totally Lazy
 date: 2015-06-01
 categories: [computer science]
-tags: [parallel computing, sql on hadoop]
+tags: [big data]
 
 ---
 
