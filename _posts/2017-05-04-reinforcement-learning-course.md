@@ -3,7 +3,7 @@ layout: post
 title: Reinforcement Learning Course - Georgia Tech
 date: 2017-05-04
 categories: [computer science]
-tags: [data science, graph mining, machine learning]
+tags: [big data]
 
 ---
 

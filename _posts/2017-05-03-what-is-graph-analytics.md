@@ -3,7 +3,7 @@ layout: post
 title: What is Graph Analytics?
 date: 2017-05-03
 categories: [computer science]
-tags: [data science, graph mining, machine learning]
+tags: [big data]
 
 ---
 
