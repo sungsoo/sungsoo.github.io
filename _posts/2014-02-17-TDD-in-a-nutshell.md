@@ -3,7 +3,7 @@ layout: post
 title: Test-Driven Development in a nutshell
 date: 2014-02-17 
 categories: [computer science]
-tags: [agile, developments]
+tags: [publications]
 
 ---
 

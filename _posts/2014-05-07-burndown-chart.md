@@ -3,7 +3,7 @@ layout: post
 title: Burndown Chart
 date: 2014-05-07
 categories: [computer science]
-tags: [agile]
+tags: [design patterns]
 
 ---
 

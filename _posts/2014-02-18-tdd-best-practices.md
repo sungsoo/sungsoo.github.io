@@ -3,7 +3,7 @@ layout: post
 title: TDD Best practices
 date: 2014-02-18 
 categories: [computer science]
-tags: [agile, developments]
+tags: [publications]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Wiki Tutorial
 date: 2014-03-05 
 categories: [information technology]
-tags: [agile]
+tags: [design patterns]
 
 ---
 
