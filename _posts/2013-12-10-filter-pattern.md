@@ -3,7 +3,7 @@ layout: post
 title: Filter pattern
 date: 2013-12-10
 categories: [computer science]
-tags: [design patterns, stream computing]
+tags: [design patterns]
 
 ---
 
