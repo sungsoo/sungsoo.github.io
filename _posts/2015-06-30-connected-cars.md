@@ -3,7 +3,7 @@ layout: post
 title: Future of big data analytics  
 date: 2015-06-30
 categories: [computer science]
-tags: [big data, data science]
+tags: [big data]
 
 ---
 

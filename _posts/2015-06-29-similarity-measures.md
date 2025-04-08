@@ -3,7 +3,7 @@ layout: post
 title: Five most popular similarity measures implementation in python  
 date: 2015-06-29
 categories: [computer science]
-tags: [big data, data science]
+tags: [big data]
 
 ---
 
