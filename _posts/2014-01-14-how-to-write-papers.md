@@ -3,7 +3,7 @@ layout: post
 title: How to write a good research paper
 date: 2014-01-14
 categories: [literature]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

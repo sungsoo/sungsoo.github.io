@@ -3,7 +3,7 @@ layout: post
 title: Telling a Story
 date: 2016-01-02
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: The Power of Inquiry to Spark Breakthrough Ideas 
 date: 2015-06-26
 categories: [liberal arts]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

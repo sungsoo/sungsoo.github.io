@@ -3,7 +3,7 @@ layout: post
 title: MapReduce and Hadoop Algorithmic in Academic Papers
 date: 2014-03-23
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

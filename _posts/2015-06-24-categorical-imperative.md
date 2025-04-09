@@ -3,7 +3,7 @@ layout: post
 title: Categorical Imperative
 date: 2015-06-24
 categories: [liberal arts]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

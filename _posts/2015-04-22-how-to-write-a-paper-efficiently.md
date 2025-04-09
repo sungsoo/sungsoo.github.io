@@ -3,7 +3,7 @@ layout: post
 title: How to Write a Paper Efficiently  
 date: 2015-04-22
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

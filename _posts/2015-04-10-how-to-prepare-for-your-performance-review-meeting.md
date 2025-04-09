@@ -3,7 +3,7 @@ layout: post
 title: How to Prepare for Your Performance Review Meeting
 date: 2015-04-10
 categories: [my profile]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

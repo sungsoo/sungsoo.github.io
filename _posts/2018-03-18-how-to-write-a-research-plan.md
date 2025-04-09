@@ -3,7 +3,7 @@ layout: post
 title: How to Write a Research Plan
 date: 2018-03-18
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

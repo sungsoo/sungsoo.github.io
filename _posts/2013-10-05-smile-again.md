@@ -3,7 +3,7 @@ layout: post
 title: Smile Again
 date: 2013-10-05
 categories: [arts and music]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

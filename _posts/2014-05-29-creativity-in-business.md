@@ -3,7 +3,7 @@ layout: post
 title: Creativity in Business
 date: 2014-05-29
 categories: [literature]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

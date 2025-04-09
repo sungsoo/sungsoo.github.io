@@ -3,7 +3,7 @@ layout: post
 title: Paper Writing
 date: 2015-10-10
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

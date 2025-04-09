@@ -3,7 +3,7 @@ layout: post
 title: Calendar of Computer Graphics Events
 date: 2015-12-09
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

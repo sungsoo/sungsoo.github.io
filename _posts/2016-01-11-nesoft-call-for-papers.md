@@ -3,7 +3,7 @@ layout: post
 title: IEEE NetSoft 2016 Call for Demonstrations
 date: 2016-01-11
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

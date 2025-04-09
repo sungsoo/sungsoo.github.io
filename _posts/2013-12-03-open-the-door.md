@@ -3,7 +3,7 @@ layout: post
 title: Open The Door
 date: 2013-12-03
 categories: [arts and music]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: What You're Really Meant to Do
 date: 2015-07-02
 categories: [liberal arts]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

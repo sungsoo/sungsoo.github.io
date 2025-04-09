@@ -3,7 +3,7 @@ layout: post
 title: Conduct Research Survey
 date: 2014-03-21
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

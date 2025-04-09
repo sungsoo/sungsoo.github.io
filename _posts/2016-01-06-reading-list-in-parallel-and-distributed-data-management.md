@@ -3,7 +3,7 @@ layout: post
 title: Papers in Parallel and Distributed Data Management
 date: 2016-01-06
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

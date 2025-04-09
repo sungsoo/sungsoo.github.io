@@ -3,7 +3,7 @@ layout: post
 title: A Flying Butterfly
 date: 2014-01-25
 categories: [arts and music]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

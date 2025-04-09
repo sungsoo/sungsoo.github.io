@@ -3,7 +3,7 @@ layout: post
 title: Characteristics of the Smart Devices
 date: 2013-11-15
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

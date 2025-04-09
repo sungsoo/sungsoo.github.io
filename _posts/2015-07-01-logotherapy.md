@@ -3,7 +3,7 @@ layout: post
 title: Logotherapy
 date: 2015-07-01
 categories: [liberal arts]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

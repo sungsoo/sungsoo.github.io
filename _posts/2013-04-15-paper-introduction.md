@@ -3,7 +3,7 @@ layout: post
 title: Paper Organization
 date: 2013-04-15
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

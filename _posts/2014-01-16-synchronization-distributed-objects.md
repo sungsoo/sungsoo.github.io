@@ -3,7 +3,7 @@ layout: post
 title: Synchronization among Heterogeneous Distributed Objects
 date: 2014-01-16
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

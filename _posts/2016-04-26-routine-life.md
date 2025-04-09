@@ -3,7 +3,7 @@ layout: post
 title: 일상으로의 초대
 date: 2016-04-26
 categories: [arts and music]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

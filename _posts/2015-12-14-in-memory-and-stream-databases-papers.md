@@ -3,7 +3,7 @@ layout: post
 title: Main Memory and Streaming Databases
 date: 2015-12-14
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

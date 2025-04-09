@@ -3,7 +3,7 @@ layout: post
 title: IEEE Transactions on Knowledge and Data Engineering
 date: 2015-09-13
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: The School of Athens
 date: 2015-06-20
 categories: [liberal arts]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

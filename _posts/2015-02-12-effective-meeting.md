@@ -3,7 +3,7 @@ layout: post
 title: Effective Meeting Strategy
 date: 2015-02-12
 categories: [literature]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

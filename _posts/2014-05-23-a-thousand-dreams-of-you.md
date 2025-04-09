@@ -3,7 +3,7 @@ layout: post
 title: A Thousand Dreams of You
 date: 2014-05-23
 categories: [arts and music]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: CV vs. Resume
 date: 2015-07-06
 categories: [liberal arts]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

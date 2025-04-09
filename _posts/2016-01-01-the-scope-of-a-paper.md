@@ -3,7 +3,7 @@ layout: post
 title: The Scope of a Paper
 date: 2016-01-01
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title: Sunflower
 date: 2014-02-03
 categories: [arts and music]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

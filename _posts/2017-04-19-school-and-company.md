@@ -3,7 +3,7 @@ layout: post
 title:  학교와 직장의 차이점
 date: 2017-04-19
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

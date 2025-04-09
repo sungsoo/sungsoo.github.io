@@ -3,7 +3,7 @@ layout: post
 title: 우리는 왜 우리가 되지 못하는가?
 date: 2015-09-15
 categories: [liberal arts]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

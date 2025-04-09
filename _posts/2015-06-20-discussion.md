@@ -3,7 +3,7 @@ layout: post
 title: Discussion
 date: 2015-06-21
 categories: [liberal arts]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

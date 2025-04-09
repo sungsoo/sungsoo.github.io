@@ -3,7 +3,7 @@ layout: post
 title: A GPU Parallelized Database Accelerator
 date: 2015-12-01
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

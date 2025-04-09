@@ -3,7 +3,7 @@ layout: post
 title: 중세 과학
 date: 2018-01-31
 categories: [liberal arts]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

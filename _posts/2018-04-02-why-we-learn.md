@@ -3,7 +3,7 @@ layout: post
 title: Why we learn?
 date: 2018-04-02
 categories: [liberal arts]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

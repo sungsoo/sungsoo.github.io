@@ -3,7 +3,7 @@ layout: post
 title: How To Read A Paper
 date: 2015-10-14
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

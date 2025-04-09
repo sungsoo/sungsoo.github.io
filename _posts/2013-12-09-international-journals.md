@@ -3,7 +3,7 @@ layout: post
 title: Publications
 date: 2013-12-09 
 categories: [my profile]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

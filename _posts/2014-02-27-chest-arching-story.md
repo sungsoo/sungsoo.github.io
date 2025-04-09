@@ -3,7 +3,7 @@ layout: post
 title: Chest aching Story
 date: 2014-02-27
 categories: [arts and music]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 

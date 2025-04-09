@@ -3,7 +3,7 @@ layout: post
 title: Research Topics in Database Management 
 date: 2016-01-29
 categories: [computer science]
-tags: [publications]
+tags: [liberal arts]
 
 ---
 
