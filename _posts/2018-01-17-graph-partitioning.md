@@ -3,7 +3,7 @@ layout: post
 title: Graph Partitioning
 date: 2018-01-17
 categories: [computer science]
-tags: [algorithms, parallel computing]
+tags: [parallel computing]
 
 ---
 
