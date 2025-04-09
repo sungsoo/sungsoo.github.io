@@ -3,7 +3,7 @@ layout: post
 title: Evolutionary Generative Adversarial Networks
 date: 2018-04-14
 categories: [computer science]
-tags: [algorithms, machine learning]
+tags: [machine learning]
 
 ---
 

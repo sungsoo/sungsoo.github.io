@@ -3,7 +3,7 @@ layout: post
 title: Predicting Car Prices - Linear Regression
 date: 2018-04-11
 categories: [computer science]
-tags: [algorithms, machine learning]
+tags: [machine learning]
 
 ---
 

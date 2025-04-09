@@ -3,7 +3,7 @@ layout: post
 title: Brains, Minds and Machines Summer Course
 date: 2018-04-09
 categories: [computer science]
-tags: [algorithms, machine learning]
+tags: [machine learning]
 
 ---
 

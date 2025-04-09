@@ -3,7 +3,7 @@ layout: post
 title: Deep Reinforcement Learning
 date: 2018-04-10
 categories: [computer science]
-tags: [algorithms, machine learning]
+tags: [machine learning]
 
 ---
 

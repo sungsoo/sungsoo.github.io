@@ -3,7 +3,7 @@ layout: post
 title: Predicting congestion on London's roads with TensorFlow
 date: 2018-03-14
 categories: [computer science]
-tags: [algorithms, machine learning]
+tags: [machine learning]
 
 ---
 

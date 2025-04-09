@@ -3,7 +3,7 @@ layout: post
 title: Time Series Generation with Recurrent Conditional GANs
 date: 2018-04-13
 categories: [computer science]
-tags: [algorithms, machine learning]
+tags: [machine learning]
 
 ---
 

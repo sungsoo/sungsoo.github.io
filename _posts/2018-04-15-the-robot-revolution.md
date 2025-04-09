@@ -3,7 +3,7 @@ layout: post
 title: The Robot Revolution - The New Age of Manufacturing
 date: 2018-04-15
 categories: [computer science]
-tags: [algorithms, machine learning]
+tags: [machine learning]
 
 ---
 

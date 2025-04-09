@@ -3,7 +3,7 @@ layout: post
 title: OpenAI Meta Learning and Self Play
 date: 2018-04-08
 categories: [computer science]
-tags: [algorithms, machine learning]
+tags: [machine learning]
 
 ---
 

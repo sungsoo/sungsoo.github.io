@@ -3,7 +3,7 @@ layout: post
 title: Improving Traffic Prediction Using Weather Data
 date: 2018-03-13
 categories: [computer science]
-tags: [algorithms, machine learning]
+tags: [machine learning]
 
 ---
 
