@@ -15,7 +15,6 @@ tags: [machine learning]
 ---
 
 
-
 # [Inference Scaling; A New Frontier for AI Capability](https://www.youtube.com/watch?v=-pi4lI6FnT4)
 
 ## Abstract
