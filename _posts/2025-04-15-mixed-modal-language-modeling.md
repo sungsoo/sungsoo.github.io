@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Mixed-modal Language Modeling; Chameleon, Transfusion, and Mixture of Transformers 
+title: Mixed-modal Language Modeling 
 date: 2025-04-15
 categories: [artificial intelligence]
 tags: [machine learning]
