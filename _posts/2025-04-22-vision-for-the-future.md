@@ -15,6 +15,7 @@ tags: [artificial general intelligence]
 ---
 
 
+
 # [NVIDIA CEO Jensen Huang's Vision for the Future](https://www.youtube.com/watch?v=7ARBJQn6QkM)
 
 What NVIDIA is trying to build next…
