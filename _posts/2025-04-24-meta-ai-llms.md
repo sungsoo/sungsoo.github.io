@@ -71,3 +71,7 @@ WFM을 구현하기 위해서는 다음과 같은 핵심 구성 요소 기술들
     * 객체 인식: 사전 학습된 이미지 기반 WFM을 특정 물체(예: 자동차, 보행자)가 포함된 데이터셋으로 파인튜닝하여 해당 물체를 정확하게 인식하고 위치를 파악하는 모델을 개발한다.
 
 이러한 핵심 기술들의 발전과 융합을 통해 WFM은 다양한 분야에서 혁신적인 가능성을 제시하고 있으며, 앞으로 더욱 강력하고 범용적인 인공지능 시스템으로 발전해 나갈 것으로 기대된다.
+
+## Frontiers of AI and Computing: A Conversation With Yann LeCun and Bill Dally
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/eyrDM3A_YFc?si=0kg7vNM8Ewe4O-fj" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
