@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Inference Scaling; A New Frontier for AI Capability 
+title: Distilling Foundation Models via Energy Hessians 
 date: 2025-04-17
 categories: [artificial intelligence]
 tags: [machine learning]
