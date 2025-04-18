@@ -17,6 +17,7 @@ tags: [machine learning]
 
 # [Deep Learning for Protein Engineering Primer](https://www.youtube.com/watch?v=NN_uRCH7mrQ)
 
+
 ## Abstract
 
 The talk will give an overview of AlphaFold2, RFDiffusion, and ProteinMPNN, three deep learning models that have been instrumental in the areas of protein structure prediction, protein design, and protein sequence prediction respectively. We’ll talk a little bit about the architectures of these models, what set them apart from their predecessors, and their applications to biological research.
