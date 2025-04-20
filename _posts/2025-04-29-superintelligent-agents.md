@@ -17,7 +17,6 @@ tags: [artificial general intelligence]
 
 # [Superintelligent Agents Pose Catastrophic Risks](https://www.youtube.com/watch?v=g0ljOgBo5uY)
 
-
 * Yoshua Bengio (IVADO - Mila - Université de Montréal)
 * [https://simons.berkeley.edu/events/superintelligent-agents-pose-catastrophic-risks-can-scientist-ai-offer-safer-path-richard-m](https://simons.berkeley.edu/events/superintelligent-agents-pose-catastrophic-risks-can-scientist-ai-offer-safer-path-richard-m)
 * Safety-Guaranteed LLMs
