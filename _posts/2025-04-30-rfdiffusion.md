@@ -14,7 +14,6 @@ tags: [artificial general intelligence]
 
 ---
 
-
 # [Design of Protein Structure with RFdiffusion](https://www.youtube.com/watch?v=agiHi6hOE3Q)
 
 This week we discuss RFDiffusion[1] a diffusion denoising model based on RoseTTAFold to generate realistic protein protein backbones. Nick Randolf gives an overview of the method and we discuss the method details.
