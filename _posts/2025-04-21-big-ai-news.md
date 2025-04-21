@@ -3,7 +3,7 @@ layout: post
 title: Major OpenAI Employee Leaves, Google Prepares For AGI... 
 date: 2025-04-21
 categories: [artificial intelligence]
-tags: [artificial general ßsintelligence]
+tags: [artificial general intelligence]
 
 ---
 
