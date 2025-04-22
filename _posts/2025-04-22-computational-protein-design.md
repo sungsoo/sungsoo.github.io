@@ -26,3 +26,13 @@ Discover the strategies that created the field and shape its progress today.
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/BuJGTn7OhxQ?si=XXMb4NbfzDNxmQwO" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+## 단백질 구조 파악
+
+단백질의 구조를 파악하는 것은 **단백질이 어떻게 기능하는지를 이해**하는 데 핵심적인 역할을 한다. 단백질은 아미노산으로 이루어진 고분자 물질인데, 단순히 아미노산 서열만 알아서는 그 기능을 정확히 예측할 수 없다. 단백질이 세포 안에서 특정한 일을 하려면 **3차원적인 입체 구조**를 가져야 하고, 이 구조에 따라 상호작용하는 분자들이 달라지기 때문이다.
+
+구조를 알면 단백질이 어떤 기질과 결합하는지, 어떤 화학 반응을 촉진하는지, 혹은 어떤 신호를 전달하는지 예측할 수 있다. 예를 들어, 효소의 경우 활성 부위가 특정 모양으로 접혀 있어야만 기질과 맞물려 화학반응을 촉진할 수 있다. 구조를 모르면 효소의 메커니즘을 설명하거나, 이를 바탕으로 약물을 설계하는 것도 불가능하다.
+
+또한 단백질 구조 정보는 질병 연구와 신약 개발에도 매우 중요하다. 암, 알츠하이머, 감염병 같은 질환들은 종종 단백질의 구조 변화나 오작동과 관련이 있다. 단백질의 구조를 알면 이 구조를 표적으로 삼아 약물을 설계할 수 있고, 단백질 기능을 조절하거나 차단하는 치료법을 만들 수 있다.
+
+마지막으로, 단백질 구조를 이해하는 것은 **진화적 관계를 추적**하는 데도 도움이 된다. 서열은 달라도 비슷한 구조를 가진 단백질들은 공통 조상에서 유래했을 가능성이 크기 때문이다. 따라서 단백질 구조 연구는 **생명현상의 근본을 이해**하고, 의학적·공학적으로 응용하는 데 필수적인 과정이다.
