@@ -3,7 +3,7 @@ layout: post
 title: This Former OpenAI Employee Just Revealed Everything...  
 date: 2025-04-24
 categories: [artificial intelligence]
-tags: [artificial genearl intelligence]
+tags: [artificial general intelligence]
 
 ---
 
