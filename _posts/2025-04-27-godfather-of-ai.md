@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 'Godfather of AI' on hopes, fears and predictions for future of AI  
+title: Hopes, fears and predictions for future of AI  
 date: 2025-04-27
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
