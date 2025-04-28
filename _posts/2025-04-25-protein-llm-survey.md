@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Large Language Models in Protein; A Comprehensive Survey
-date: 2025-04-24
+date: 2025-04-25
 categories: [artificial intelligence]
 tags: [protein engineering]
 
@@ -197,5 +197,6 @@ tags: [protein engineering]
 |-------|:------------:|:---------:|
 | [Accurate structure prediction of biomolecular interactions with AlphaFold 3](https://www.nature.com/articles/s41586-024-07487-w) | *Nature, 8 May 2024* | [Code](https://github.com/google-deepmind/alphafold3) |
 | [ProLLM: Protein Chain-of-Thoughts Enhanced LLM for Protein-Protein Interaction Prediction](https://arxiv.org/abs/2405.06649) | *COLM* | [Code](https://github.com/MingyuJ666/ProLLM) |
-| [Protein-Protein Interaction Networks Derived from Classical and Machine Learning-Based Natural Language Processing Tools](https://pubs.acs.org/doi/10.1021/acs.jproteome.4c00535) | *Journal of Proteome Research* | N/A | 
+| [Protein-Protein Interaction Networks Derived from Classical and Machine Learning-Based Natural Language Processing Tools](https://pubs.acs.org/doi/10.1021/acs.jproteome.4c00535) | *Journal of Proteome Research* | N/A |
+
 

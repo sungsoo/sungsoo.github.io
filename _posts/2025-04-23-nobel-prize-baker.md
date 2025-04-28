@@ -37,3 +37,12 @@ Nobel lecture with the Nobel Laureate in Chemistry 2024 David Baker, University 
 단백질 없이는 생명이 존재할 수 없다. 우리가 이제 단백질 구조를 예측하고 우리 자신의 단백질을 설계할 수 있다는 것은 인류에게 가장 큰 혜택을 준다.
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/PLrY9DrbOkQ?si=m0U3owutf_wGBFZp" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+## [2023 UCR SOM Haider Biomedical Breakthrough Lecture](https://www.youtube.com/watch?v=BfEqDeWDxm4)
+
+The Thomas & Salma Haider Biomedical Breakthrough Lecture brings the best and brightest researchers in the biomedical field to Riverside to present their research. The 2023 lecture featured David Baker, PhD, director of the Institute for Protein Design and the Henrietta and Aubrey Davis Endowed Professor in Biochemistry at the University of Washington. The title of the lecture is "Protein design using artificial intelligence."
+
+More information here: [https://medschool.ucr.edu/haider-lecture](https://medschool.ucr.edu/haider-lecture)
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/BfEqDeWDxm4?si=sAxSF4fcNBIG1xyv" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
