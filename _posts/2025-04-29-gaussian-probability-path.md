@@ -33,9 +33,9 @@ Gaussian probability path는 **가우시안 과정(Gaussian Process, GP)**의 �
 - 임의의 유한한 시점 집합 $$ t_1, t_2, \dots, t_n \in T $$에 대해, 확률 변수 $$ (X(t_1), X(t_2), \dots, X(t_n)) $$의 결합 분포가 **다변량 가우시안 분포**를 따릅니다.
 
 가우시안 과정은 다음과 같이 정의됩니다:
-\[
+$$
 X(t) \sim \mathcal{GP}(m(t), k(t, t')),
-\]
+$$
 여기서:
 - $$ m(t) = \mathbb{E}[X(t)] $$: 시간 $$ t $$에서의 평균 함수(mean function).
 - $$ k(t, t') = \text{Cov}(X(t), X(t')) $$: 시간 $$ t $$와 $$ t' $$ 사이의 공분산 함수(covariance function, 또는 커널).
@@ -43,9 +43,9 @@ X(t) \sim \mathcal{GP}(m(t), k(t, t')),
 #### (2) Gaussian Probability Path
 가우시안 과정의 **경로(path)**는 특정 실현, 즉 $$ t \in T $$에 대해 $$ X(t) $$의 값을 연결하여 형성된 함수 $$ x(t) $$입니다. 가우시안 과정의 경우, 이 경로는 다음과 같은 특징을 가집니다:
 - 임의의 시점 $$ t_1, t_2, \dots, t_n $$에서의 값 $$ (x(t_1), x(t_2), \dots, x(t_n)) $$는 다변량 가우시안 분포를 따릅니다:
-\[
+$$
 (x(t_1), \dots, x(t_n)) \sim \mathcal{N}(\mathbf{m}, \mathbf{K}),
-\]
+$$
 여기서:
 - $$ \mathbf{m} = (m(t_1), \dots, m(t_n)) $$: 평균 벡터.
 - $$ \mathbf{K} $$: 공분산 행렬로, $$ \mathbf{K}_{ij} = k(t_i, t_j) $$.
@@ -72,18 +72,18 @@ Gaussian probability path와 가우시안 과정은 다음과 같은 중요한 �
 #### (2) **유연한 공분산 구조**
 공분산 함수 $$ k(t, t') $$는 경로의 매끄러움, 주기성, 상관관계 등을 결정합니다. 일반적인 커널의 예:
 - **제곱 지수 커널(Squared Exponential Kernel)**:
-\[
+$$
 k(t, t') = \sigma^2 \exp\left(-\frac{(t - t')^2}{2\ell^2}\right),
-\]
+$$
 매끄러운 경로를 생성.
 - **마테른 커널(Matern Kernel)**: 경로의 거칠기(roughness)를 조절.
 - **주기 커널(Periodic Kernel)**: 주기적인 패턴을 모델링.
 
 #### (3) **조건부 분포**
 가우시안 과정은 조건부 분포도 가우시안입니다. 예를 들어, 일부 시점 $$ t_1, \dots, t_n $$에서 관측값 $$ (x(t_1), \dots, x(t_n)) $$이 주어졌을 때, 다른 시점 $$ t_* $$에서의 값 $$ x(t_*) $$는 조건부 가우시안 분포를 따릅니다:
-\[
+$$
 p(x(t_*) | x(t_1), \dots, x(t_n)) \sim \mathcal{N}(\mu_*, \sigma_*^2),
-\]
+$$
 여기서 $$ \mu_* $$와 $$ \sigma_*^2 $$는 공분산 행렬을 이용해 계산됩니다.
 
 #### (4) **비모수적 모델**
@@ -122,19 +122,19 @@ Gaussian probability path는 다양한 분야에서 활용됩니다:
 1. 공분산 함수 $$ k(t, t') $$ (예: 제곱 지수 커널)를 선택.
 2. 관측 데이터로 공분산 행렬 $$ \mathbf{K} $$를 구성.
 3. 조건부 가우시안 분포를 계산:
-\[
+$$
 \mu_* = \mathbf{k}_*^T (\mathbf{K} + \sigma^2 \mathbf{I})^{-1} \mathbf{y},
-\]
-\[
+$$
+$$
 \sigma_*^2 = k(t_*, t_*) - \mathbf{k}_*^T (\mathbf{K} + \sigma^2 \mathbf{I})^{-1} \mathbf{k}_*,
-\]
+$$
 여기서 $$ \mathbf{k}_* = (k(t_*, t_1), \dots, k(t_*, t_n)) $$.
 
 #### 예시 2: 브라운 운동
 브라운 운동은 가우시안 과정의 일종으로, 공분산 함수는:
-\[
+$$
 k(t, t') = \min(t, t').
-\]
+$$
 이 경우, 경로 $$ x(t) $$는 연속적이지만 비미분 가능하며, 가우시안 분포를 따릅니다.
 
 ---
