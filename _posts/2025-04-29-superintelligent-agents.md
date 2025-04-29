@@ -340,3 +340,4 @@ Given the profound implications of superintelligent AI, a cautious and collabora
 
 우메시 바지라니: 알겠습니다. 요슈아, 우리를 정신없이 놀라게 해주셔서 정말 감사합니다.
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/luJxOyryJ0o?si=K_dcbY3XGbayOpdV" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
