@@ -17,7 +17,6 @@ tags: [artificial general intelligence]
 
 # [Shaping the Future of AI Innovations](https://www.youtube.com/watch?v=m3H2q6MXAzs)
 
-
 ## 주요 내용: 자율 기계 지능(AMI)을 향한 길
 
 얀 르쿤 교수는 현재 AI 기술의 한계를 지적하며, 미래의 AI는 인간 수준의 지능 증폭을 목표로 해야 한다고 강조했습니다. 그는 현재 LLM(대규모 언어 모델) 중심의 연구 방향에 대한 비판적인 시각을 제시하며, 진정한 지능을 갖춘 시스템 구축을 위한 새로운 접근 방식을 제안했습니다.
