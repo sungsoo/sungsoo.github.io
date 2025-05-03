@@ -13,4 +13,5 @@ tags: [protein engineering]
 
 For this meeting I'll give an update of some of the new techniques and protocols added to the ColabDesign framework. The pros and cons. From hallucination to diffusion, including a short tutorial on how to use them.
 
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/smjYJSudwr0?si=03oWPSgRoc3P3nCg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
