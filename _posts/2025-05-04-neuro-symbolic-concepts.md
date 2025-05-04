@@ -278,4 +278,17 @@ MIT에서 방문하신 지아위안 마오 박사님을 모시게 되어 매우 
 
 지아위안 마오: 감사합니다.
 
+
+## Computer Science Seminar Series
+March 27, 2025
+
+* "Learning, Reasoning, and Planning with Neuro-Symbolic Concepts"
+* Jiayuan Mao, Massachusetts Institute of Technology
+
+## Abstract
+
+Jiayuan Mao aims to build complete intelligent agents that can continually learn, reason, and plan—that is, answer queries, infer human intentions, and make long-horizon plans spanning hours to days. In this talk, Mao will describe a general learning and reasoning framework based on neuro-symbolic concepts. Drawing inspiration from theories and studies in cognitive science, neuro-symbolic concepts serve as compositional abstractions of the physical world, representing object properties, relations, and actions. These concepts can be combinatorially reused in flexible and novel ways. Technically, each neuro-symbolic concept is represented as a combination of symbolic programs, which define how concepts can be structurally combined (similar to the ways that words form sentences in human language), and modular neural networks, which ground concept names in sensory inputs and agent actions. Mao shows that systems that leverage neuro-symbolic concepts demonstrate superior data efficiency, enable agents to reason and plan more quickly, and achieve strong generalization in novel situations and for novel goals. This is illustrated in visual reasoning in 2D, 3D, motion, and video data, as well as in diverse decision-making tasks spanning virtual agents and real-world robotic manipulation.
+
+Jiayuan Mao is a PhD student at the Massachusetts Institute of Technology, where she is advised by Professors Josh Tenenbaum and Leslie Kaelbling. Mao's research agenda is to build machines that can continually learn concepts (e.g., properties, relations, rules, and skills) from their experiences and apply them for reasoning and planning in the physical world. Her research topics include visual reasoning, robotic manipulation, scene and activity understanding, and language acquisition. She was named a 2024 Rising Star in Electrical Engineering and Computer Science and in Generative AI. Her research has received Best Paper Awards at the 2024 Meeting of the Cognitive Science Society, the 2024 Southern California Natural Language Processing Symposium, and the 2024 Workshop on Language and Robot Learning at the Conference on Robot Learning, as well as a best paper nomination at the 2019 Meeting of the Association for Computational Linguistics.
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/lhTTdpTzDcs?si=WNSmIvDP4b5_YbrV" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
