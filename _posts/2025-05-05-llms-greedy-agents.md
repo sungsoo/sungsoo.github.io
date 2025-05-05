@@ -21,6 +21,7 @@ tags: [artificial general intelligence]
 
 본 연구는 대규모 언어 모델(LLM)이 의사 결정 시나리오에서 종종 차선책을 수행하는 이유를 체계적으로 조사하고, 주요 실패 모드를 식별하며, 자체 생성된 사고 사슬(CoT) 추론에 대한 강화 학습 미세 조정(RLFT)을 완화 전략으로 제안한다. 다중 무장 강도(MAB), 컨텍스트 강도(CB) 및 틱택토 환경에서 Gemma2 모델(2B, 9B, 27B)을 사용하여 실험을 수행했다.
 
+## LLMs are Greedy Agents: Effects of RL (Apr 2025)
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/NCrg8kuBpQU?si=mUeEBPlBrzn9vNoZ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
