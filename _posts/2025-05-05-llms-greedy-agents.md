@@ -3,7 +3,7 @@ layout: post
 title: LLMs are Greedy Agents 
 date: 2025-05-05
 categories: [artificial intelligence]
-tags: [protein engineering]
+tags: [artificial general intelligence]
 
 ---
 
