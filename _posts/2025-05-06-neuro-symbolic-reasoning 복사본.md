@@ -14,7 +14,7 @@ tags: [artificial general intelligence]
 
 ---
 
-# Decision Intelligence Reshaping the Future of Decision-Making
+# [Decision Intelligence Reshaping the Future of Decision-Making](https://www.youtube.com/watch?v=YGSnjH6fmz4)
 
 * Course Project for DeVry Keller Graduate School of Management.  BIAM500 Applications of Business Analytics I
 
@@ -35,3 +35,8 @@ Decision Intelligence의 장점은 다음과 같다. 첫째, 데이터와 분석
 Decision Intelligence는 다양한 응용 분야에서 활용된다. 비즈니스에서는 마케팅 전략, 가격 책정, 고객 경험 최적화에 사용된다. 예를 들어, 소매업체는 고객 데이터를 분석하여 개인화된 프로모션을 설계할 수 있다. 공공 정책에서는 자원 할당, 재난 대응, 도시 계획 등에 활용된다. 의료에서는 환자 데이터를 기반으로 진단, 치료 계획, 자원 관리 등을 최적화한다. 금융에서는 리스크 평가, 투자 포트폴리오 관리, 사기 탐지에 사용된다.
 
 결론적으로, Decision Intelligence는 데이터, 기술, 인간의 판단을 체계적으로 통합하여 복잡한 환경에서 최적의 의사결정을 지원하는 강력한 프레임워크다. 이는 조직의 효율성을 높이고, 불확실성을 관리하며, 더 나은 결과를 도출하는 데 기여한다. 그러나 성공적인 구현을 위해서는 데이터 품질, 기술과 인간의 균형, 윤리적 고려가 필수적이다.
+
+## [Decision Intelligence Q&A](https://www.youtube.com/watch?v=pRtGqfYLCFk)
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/pRtGqfYLCFk?si=R1XRedIZIHU49OF8" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
