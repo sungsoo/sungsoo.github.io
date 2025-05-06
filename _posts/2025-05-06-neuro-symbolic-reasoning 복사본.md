@@ -10,7 +10,7 @@ tags: [artificial general intelligence]
 ### Article Source
 
 
-* [Decision Intelligence Reshaping the Future of Decision-Making](https://www.youtube.com/watch?v=4PuuziOgSU4&list=PLFVVASQZhO17FtSsbyG0wLYz8JMgNQ7Ov)
+* [Decision Intelligence Reshaping the Future of Decision-Making](https://www.youtube.com/watch?v=YGSnjH6fmz4)
 
 ---
 
