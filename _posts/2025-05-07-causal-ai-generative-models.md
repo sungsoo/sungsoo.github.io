@@ -1,13 +1,13 @@
 ---
 layout: post
-title: Causal AI & Generative Models: The Future of Decision Making  
+title: Causal AI & Generative Models  
 date: 2025-05-07
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
 
 ---
 
-# [Causal AI & Generative Models: The Future of Decision Making](https://www.youtube.com/watch?v=xQpzrw7hzQ8)
+# [Causal AI & Generative Models - The Future of Decision Making](https://www.youtube.com/watch?v=xQpzrw7hzQ8)
 
 ## Abstract
 
