@@ -9,7 +9,6 @@ tags: [artificial general intelligence]
 
 # Continuity Equation	 and Fokker-Planck Equations
 
-## Continuity Equation과 Fokker-Planck Equation 비교 설명
 
 ## 핵심 요약
 - 연구는 Continuity Equation이 보존 법칙을 일반적으로 표현하며, Fokker-Planck Equation은 확률 밀도의 시간적 변화를 다룬다는 데 동의합니다.  
