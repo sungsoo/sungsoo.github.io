@@ -7,7 +7,7 @@ tags: [artificial general intelligence]
 
 ---
 
-# Navigating Artificial General Intelligence Development
+# [Navigating Artificial General Intelligence Development](https://www.nature.com/articles/s41598-025-92190-7)
 
 
 ## 주요 핵심 내용 정리
