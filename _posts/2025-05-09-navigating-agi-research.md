@@ -7,6 +7,7 @@ tags: [artificial general intelligence]
 
 ---
 
+
 # [Navigating Artificial General Intelligence Development](https://www.nature.com/articles/s41598-025-92190-7)
 
 
