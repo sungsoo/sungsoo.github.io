@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Frisch-Waugh-Lovell Theorem and Orthogonalization  
-date: 2025-05-10
+date: 2025-05-11
 categories: [artificial intelligence]
 tags: [machine learning]
 
