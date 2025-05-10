@@ -8,7 +8,7 @@ tags: [machine learning]
 ---
 
 
-# Frisch-Waugh-Lovell Theorem and Orthogonalization
+# [Frisch-Waugh-Lovell Theorem](https://www.youtube.com/watch?v=u3NeKofbRIw) and Orthogonalization
 
 
 ## Frisch-Waugh-Lovell Theorem과 Orthogonalization
@@ -17,6 +17,8 @@ tags: [machine learning]
 - **FWL Theorem**: 연구에 따르면, 다중 회귀분석에서 특정 설명변수의 효과를 추정할 때 다른 변수의 영향을 제거한 잔차를 사용하는 것이 유용할 수 있습니다.  
 - **Orthogonalization**: 증거는 설명변수 간의 상관관계를 제거하여 각 변수의 독립적인 기여도를 명확히 하는 과정을 지지하는 것으로 보입니다.  
 - 이 주제는 통계 및 경제학에서 논쟁의 여지가 있으며, 다양한 방법론에 따라 해석이 달라질 수 있습니다.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/u3NeKofbRIw?si=Kf0h9Ze8_8RTHIop" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ### FWL Theorem이란?
 Frisch-Waugh-Lovell Theorem(FWL Theorem)은 다중 회귀분석에서 각 설명변수의 고유한 영향을 추정하는 방법을 제공합니다. 예를 들어, $$ Y = X_1 \beta_1 + X_2 \beta_2 + \epsilon $$라는 모형에서 $$ X_2 $$의 효과를 추정하려면, 먼저 $$ X_1 $$의 영향을 $$ Y $$와 $$ X_2 $$에서 제거한 후 잔차를 회귀분석하면 됩니다. 이는 계산을 단순화하고 변수 간 상관관계를 관리하는 데 도움을 줍니다.
