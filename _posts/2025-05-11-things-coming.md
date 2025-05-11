@@ -10,9 +10,10 @@ tags: [artificial general intelligence]
 
 # [2026 AI : 10 Things Coming In 2026 (A.I In 2026 Major Predictions)](https://www.youtube.com/watch?v=RfA2Ug4FuaY)
 
-## Abstract
+## [Abstract](https://notebooklm.google.com/notebook/3284cbc8-b9ba-4062-b2f8-b4aaa0c421d9/audio)
 
 유튜브 영상은 **2026년 AI 기술 발전**에 대한 여러 **AI 업계 리더들의 예측**을 제시합니다. 여기에는 Dario Amodei와 Elon Musk와 같은 인물들의 **AGI 도달 시점**에 대한 전망과, Sam Altman의 **개인 비서 및 튜터 AI**에 대한 아이디어, Demis Hassabis의 **멀티모달 AI** 개발 계획이 포함됩니다. 또한, Mark Zuckerberg는 Meta의 **코딩 업무 절반을 AI로 대체**하는 목표를, Eric Schmidt는 **프로그래머와 수학자의 AI 대체** 및 3~5년 내 AGI 출현 가능성을 언급합니다. 마지막으로, Jensen Huang은 Nvidia의 차세대 AI 플랫폼 **Rubin 출시**를 발표하며, Aiden Gomez는 **지속적으로 학습하는 모델**, Imad Khan은 **저전력 AI 모델**의 등장을 예측하는 반면, Yann LeCun은 **AGI 도달 시점을 보다 보수적으로 전망**합니다.
+
 
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/RfA2Ug4FuaY?si=r-PZxAjdE24qz3jY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
