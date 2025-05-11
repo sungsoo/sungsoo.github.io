@@ -10,7 +10,7 @@ tags: [artificial general intelligence]
 # [A Survey on Causal Generative Modeling](https://github.com/Akomand/Causal-Generative-Modeling-Survey)
 
 
-## Overview
+## [Overview](https://notebooklm.google.com/notebook/a8a514a5-ef22-45a9-afc3-31b39a048a22/audio)
 
 인과 생성 모델링 분야는 전통적인 심층 생성 모델(예: VAE, GAN, Normalizing Flows, Diffusion Models)의 한계를 극복하기 위해 부상했습니다. 전통적인 모델은 복잡한 데이터 분포를 근사화하여 새로운 데이터를 생성하는 데는 능숙하지만, 생성 과정에 영향을 미치는 기저 요인들이 무엇인지, 그리고 그 요인들이 어떻게 영향을 미치는지(인과 메커니즘)는 포착하지 못합니다.
 
