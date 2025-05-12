@@ -17,6 +17,8 @@ tags: [protein engineering]
 
 이 논문은 **인공지능 기반의 재료 역설계** 분야에 대한 **포괄적인 개요**를 제공합니다. 전통적인 **실험 기반 및 계산 기반 재료 발견 방법**의 발전 과정과 한계점을 살펴보고, **그래프 신경망(GNNs) 및 생성 모델**을 비롯한 **최신 AI 기술**이 어떻게 재료 구조와 특성 간의 숨겨진 연관성을 효율적으로 밝혀내고 **기능성 재료의 역설계**를 가속화하는지 논의합니다. 특히, **초전도체, 자기, 열전, 탄소 기반 나노, 2차원, 광전, 촉매, 고엔트로피 합금 및 다공성 재료**와 같은 다양한 재료 범주에서의 **AI 응용**을 자세히 설명합니다. 또한, **대규모 언어 모델(LLMs)**의 잠재력과 **미래 연구 방향 및 남은 과제**에 대해서도 논의합니다.
 
+## [Multimodal LLM for Inverse Molecular Design with Retrosynthetic Planning](https://notebooklm.google.com/notebook/ed46fbda-0626-40ea-ae48-df3cf6b8004c/audio)
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/3PsSplE2SrY?si=TXBz5EXCv5Hffjga" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 
