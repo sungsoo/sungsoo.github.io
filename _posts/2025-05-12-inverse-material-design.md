@@ -17,6 +17,9 @@ tags: [protein engineering]
 
 이 논문은 **인공지능 기반의 재료 역설계** 분야에 대한 **포괄적인 개요**를 제공합니다. 전통적인 **실험 기반 및 계산 기반 재료 발견 방법**의 발전 과정과 한계점을 살펴보고, **그래프 신경망(GNNs) 및 생성 모델**을 비롯한 **최신 AI 기술**이 어떻게 재료 구조와 특성 간의 숨겨진 연관성을 효율적으로 밝혀내고 **기능성 재료의 역설계**를 가속화하는지 논의합니다. 특히, **초전도체, 자기, 열전, 탄소 기반 나노, 2차원, 광전, 촉매, 고엔트로피 합금 및 다공성 재료**와 같은 다양한 재료 범주에서의 **AI 응용**을 자세히 설명합니다. 또한, **대규모 언어 모델(LLMs)**의 잠재력과 **미래 연구 방향 및 남은 과제**에 대해서도 논의합니다.
 
+<iframe width="600" height="400" src="https://www.youtube.com/embed/3PsSplE2SrY?si=TXBz5EXCv5Hffjga" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
 ## 신소재 발견 및 설계 가속화
 
 인공지능(AI)은 신소재의 발견 및 설계를 혁신적으로 가속화하고 있습니다. 첨단 소재는 현대 정보 사회의 초석이며 기술 발전과 산업 확장의 핵심 촉매 역할을 합니다. 전통적인 소재 발견 방법은 종종 너무 느리고 노동 집약적이어서 기술 혁신 속도를 따라잡기 어렵습니다.
