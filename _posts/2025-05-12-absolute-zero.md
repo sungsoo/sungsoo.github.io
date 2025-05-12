@@ -8,6 +8,7 @@ tags: [artificial general intelligence]
 ---
 
 
+
 # [New "Absolute Zero" Model Learns with NO DATA](https://www.youtube.com/watch?v=CqdqZNqljdI)
 
 * Paper: [Absolute Zero: Reinforced Self-play Reasoning with Zero Data](https://arxiv.org/abs/2505.03335)
