@@ -24,6 +24,10 @@ The article introduces a concept-centric framework for agents that learn continu
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/qpCDPLYTvAU?si=zjCQlwzZfjSJVzUL" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
+## [The Neuro-Symbolic Concept Learner: Interpreting Scenes, Words & Sentences From Natural Supervision](https://www.youtube.com/watch?v=Y8ZJmPRxCms)
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/Y8ZJmPRxCms?si=ZggDbChy_b7A9zsd" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 
 ## NS-CL의 세부 요소기술
 
