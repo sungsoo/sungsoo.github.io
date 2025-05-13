@@ -10,7 +10,7 @@ tags: [artificial general intelligence]
 
 # [Lisa Feldman Barrett: How the Brain Creates Emotions | MIT Artificial General Intelligence (AGI)](https://www.youtube.com/watch?v=qwsft6tmvBA)
 
-## [Abstract](https://notebooklm.google.com/notebook/3284cbc8-b9ba-4062-b2f8-b4aaa0c421d9/audio)
+## [Abstract](https://notebooklm.google.com/notebook/338eedfa-5b97-4c6d-9d6a-3a0f52b87520/audio)
 
 강연자인 리사 펠드먼 바렛은 인간의 감정에 대한 **신경과학적 이해**와 **인공지능 개발에 대한 시사점**을 논합니다. 그녀는 감정이 얼굴 표정과 보편적으로 연결되어 있다는 **오해**를 바로잡고, 감정은 문화적, 개인적 경험에 의해 **구성되는 것**이라고 설명합니다. 바렛은 뇌의 주요 기능이 **신체 시스템 조절**이며, 인공지능 시스템에도 **몸과 유사한 조절 시스템**이 필요하다고 주장합니다. 또한, 인간의 사회적 관계는 **신경 시스템 조절**에 중요한 역할을 하며, 이는 **사랑과 같은 감정의 근간**이 된다고 강조합니다.
 
