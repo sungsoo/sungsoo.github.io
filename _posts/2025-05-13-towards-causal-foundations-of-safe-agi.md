@@ -10,7 +10,7 @@ tags: [artificial general intelligence]
 
 # [TAIS 2024 | Towards Causal Foundations of Safe AGI — James Fox, Matt MacDermott](https://www.youtube.com/watch?v=oVzPLLdlCQc)
 
-## Abstract
+## [Abstract](https://notebooklm.google.com/notebook/d5287aa8-0e56-454f-8cb1-a30ae7dfa7b1/audio)
 
 Causality has captivated philosophers for centuries, not merely to grapple with the exact relationship between a cause and an effect, but also because it underpins so many other concepts of interest. In this talk, we will start by exploring how causality is linked to several fundamental issues in AI safety, including incentives, misspecification, generalisation, deception, and corrigibility. Next, we will posit that agency – central to many AGI threat models – is itself a causal concept. We will then bridge our theoretical foundations with practical applications by showcasing our approaches towards developing ‘agency detectors’.
 
