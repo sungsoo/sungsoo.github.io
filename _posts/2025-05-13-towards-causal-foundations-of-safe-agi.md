@@ -28,6 +28,10 @@ AI 안전 분야에서는 에이전시(agency), 속임수(deception), 의도(int
 
 *   **인과 그래프 사용:** 인과성은 종종 **방향 그래프(directed graph)**를 사용하여 명시화될 수 있습니다. 이 그래프는 어떤 변수가 다른 변수에 영향을 미치는지 나타내며, 화살표는 인과 관계를 나타냅니다. 인과 관계의 정확한 관계는 조건부 확률 분포를 사용하여 지정됩니다. 에이전트를 모델링할 때는 의사 결정 노드(사각형), 목표 노드(마름모), 정보 엣지(점선) 등을 추가하여 **인과 영향 다이어그램(causal influence diagram)**으로 확장될 수 있습니다.
 *   **개입주의적 설명(interventionist accounts) 채택:** 어떤 이벤트가 다른 이벤트에 인과적으로 영향을 미친다는 것은 첫 번째 이벤트에 대한 외부 **개입(intervention)**이 두 번째 이벤트를 변화시키는 경우를 의미합니다. 이러한 관점은 형식화의 기초를 형성합니다.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/SvK-bV5NWhg?si=iasHaSpz1WY_eDMe" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
 *   **핵심 AI 안전 개념 형식화:**
     *   **에이전시:** 에이전시는 **목표가 행동을 이끄는 것**에 관한 것이므로 **인과적 개념**이라고 주장됩니다. 에이전시를 형식화하는 한 가지 방법은 시스템이 **일관되게 장기 목표를 추구**하는 것으로 정의하고, 의사 결정 노드와 목표 노드를 포함하는 인과 그래프를 사용하는 것입니다. 더 나아가, 에이전시를 **결과가 행동을 유발하는 일종의 역 인과성**으로 모델링하는 아이디어가 제시되었습니다. 이는 한 변수의 메커니즘이 다른 변수의 메커니즘 변화에 반응하고, 그들 간의 인과적 연결이 차단될 때 반응을 멈추는 상황으로 포착될 수 있습니다.
     *   **일반화(Generalization):** 특히 분포 외 일반화(out-of-distribution generalization)는 AI 시스템이 **인과 모델을 학습했는지 여부**와 관련이 있습니다. 데이터 생성 프로세스를 인과 베이지안 네트워크로 모델링함으로써 일반화 문제를 인과적인 방식으로 생각할 수 있습니다. 분포 이동(distributional shift)은 이 인과 모델에 대한 개입을 통해 모델링될 수 있습니다. 어떤 시스템이 모든 분포 이동에 걸쳐 성공적으로 일반화한다면, 그 정책으로부터 데이터 생성 프로세스에 대한 인과 베이지안 네트워크를 추론할 수 있다는 결과가 있습니다. 이는 시스템이 명시적으로 구축되지 않았더라도 암묵적으로 인과 모델을 학습해야 함을 시사합니다.
