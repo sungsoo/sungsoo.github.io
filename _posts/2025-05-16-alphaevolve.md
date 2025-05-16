@@ -41,6 +41,14 @@ tags: [artificial general intelligence]
 
 이러한 조합을 통해 알파 이볼브는 초기 솔루션에서 시작하여 자동화된 평가의 피드백을 지속적으로 받으며 코드를 직접 변경함으로써 알고리즘을 반복적으로 개선할 수 있습니다. 이전 연구인 FunSearch와 달리, 알파 이볼브는 **전체 코드베이스를 진화**시킬 수 있고, **최첨단 LLM과 풍부한 자연어 컨텍스트 및 피드백을 활용**합니다. 이를 통해 이전 시스템보다 규모와 일반성 면에서 훨씬 뛰어나며, 복잡한 알고리즘을 구현하는 대규모 코드를 진화시킬 수 있습니다.
 
+## Google’s Production Agent & 5 Takeaways for Enterprise-Grade AI
+
+Google's AlphaEvolve: The Future of Scientific Research and AI Deployment
+
+In this episode, we look into Google's impressive announcement of AlphaEvolve, a cutting-edge AI agent that has revolutionized coding and optimization. We discuss its transformative performance, such as rewriting a 1960s algorithm, improving data center efficiency, and the broader implications for scientific research. The episode breaks down key takeaways for enterprise audiences, including the importance of verifiable metrics, hybrid model serving, and the evolving landscape of intelligent agents. Join us as we explore how AlphaEvolve is setting new standards in AI-driven solutions and deployment.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/G5n13JjaINg?si=98DenjaBYrfqpAcZ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ## Major Models
 
 알파 이볼브(AlphaEvolve)에서 사용되는 두 가지 주요 모델은 **Gemini 2.0 Flash와 Gemini 2.0 Pro**입니다. 알파 이볼브는 이러한 대규모 언어 모델(LLM)의 조합 또는 앙상블을 활용합니다.
