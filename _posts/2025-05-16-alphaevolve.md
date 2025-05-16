@@ -14,6 +14,8 @@ tags: [artificial general intelligence]
 
 알파 이볼브(AlphaEvolve)가 복잡한 알고리즘을 스스로 진화시키는 핵심 메커니즘은 **대규모 언어 모델(LLM)의 코드 생성 능력, 자동화된 평가 시스템, 그리고 진화 연산의 조합**에 있습니다. 이 세 가지 요소가 자율적인 파이프라인을 구성하여 알고리즘을 반복적으로 개선합니다.
 
+![](https://lh3.googleusercontent.com/0arf1iMoZrNmKp9wHT5nU5Qp1D834jAUD2mlSA2k8dG3lzW81deaxqBXVuYOLlUiu-R1Luz4Kr2j8wosjdRlJeGZK_pRwiedtQR5qtIneDETuljkpMg=w1232-rw)
+
 핵심 메커니즘은 다음과 같습니다:
 
 1.  **LLM 기반 코드 생성 및 변형:** 알파 이볼브는 **최첨단 LLM, 특히 Gemini 2.0 Flash와 Gemini 2.0 Pro를 활용**하여 알고리즘을 구현하는 컴퓨터 프로그램을 생성하고 변형합니다.
@@ -100,6 +102,8 @@ tags: [artificial general intelligence]
 *   **AI 훈련 및 추론 효율성 향상:**
     *   알파 이볼브는 Gemini 훈련에 사용되는 중요한 행렬 곱셈 커널의 **최적화된 타일링 휴리스틱**을 발견했습니다. 이로 인해 커널 속도가 평균 **23% 빨라졌으며**, Gemini의 전체 훈련 시간이 **1% 감소**했습니다.
     *   컴파일러가 생성한 저수준 코드(FlashAttention 커널)를 직접 최적화하여 **최대 32.5%의 속도 향상**을 달성했습니다. 이러한 최적화는 GPU에서 대규모 추론에 사용되는 변환기 모델에 적용되었습니다.
+
+![](https://lh3.googleusercontent.com/oHcnMJlXBKxmgAq2PkcUOoYpLJ3rOx7-WlSl2sEUtTaxKjuyAzW0Wpl7EX08Rzx54EaA0LFvp27Azm1jM3h1uSDwQD-oX7gXUhtmOdoSnPqfZ-16hg=w1232-rw)
 
 **수학 및 알고리즘 발견:**
 
