@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Google AlphaEvolve 
-date: 2025-05-16
+date: 2025-05-17
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
 
