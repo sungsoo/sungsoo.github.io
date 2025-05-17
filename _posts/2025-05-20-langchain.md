@@ -10,7 +10,7 @@ tags: [artificial general intelligence]
 
 # [LangChain Mastery in 2025](https://www.youtube.com/watch?v=Cyv-dgv80kE) 
 
-## [Abstract](https://notebooklm.google.com/notebook/fc62732e-c058-4e1a-b281-d902407268bb/audio)
+## [Abstract](https://notebooklm.google.com/notebook/eeb932e3-17db-452d-a0ae-dd6afa4cdd77/audio)
 
 The Langchain library is a powerful tool for AI engineering, acting as the foundation of the broader LangChain-ecosystem (that is, LangGraph, LangSmith, LangServe, etc). In this course, you'll learn the fundamentals of building with LLMs and the essentials of LangChain — allowing you to build modern agentic systems and potentially move onto other components in the ecosystem such as LangGraph.
 
