@@ -16,6 +16,11 @@ tags: [artificial general intelligence]
 
 ![](https://lh3.googleusercontent.com/0arf1iMoZrNmKp9wHT5nU5Qp1D834jAUD2mlSA2k8dG3lzW81deaxqBXVuYOLlUiu-R1Luz4Kr2j8wosjdRlJeGZK_pRwiedtQR5qtIneDETuljkpMg=w1232-rw)
 
+
+## [DeepMind’s AlphaEvolve AI: History In The Making!](https://www.youtube.com/watch?v=T0eWBlFhFzc)
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/T0eWBlFhFzc?si=WO_9IhLsmTN2R8xB" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 핵심 메커니즘은 다음과 같습니다:
 
 1.  **LLM 기반 코드 생성 및 변형:** 알파 이볼브는 **최첨단 LLM, 특히 Gemini 2.0 Flash와 Gemini 2.0 Pro를 활용**하여 알고리즘을 구현하는 컴퓨터 프로그램을 생성하고 변형합니다.
