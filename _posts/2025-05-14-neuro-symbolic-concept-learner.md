@@ -105,3 +105,7 @@ NS-CL의 작동 방식을 시각적 개념 학습 태스크를 통해 설명하�
 
 ## 결론
 Neuro-Symbolic Concept Learner는 신경망의 데이터 처리 능력과 상징적 시스템의 논리적 추론 능력을 결합하여, 데이터 효율적이고 해석 가능하며 일반화된 개념 학습을 구현하는 강력한 프레임워크이다. 신경망 기반 인식, 상징적 지식 표현, 통합 인터페이스, 개념 학습 및 추론, 피드백 최적화 등의 요소기술이 유기적으로 작동하여 복잡한 실세계 문제를 해결한다. 그러나 기술적 복잡성과 스케일링 문제는 여전히 해결해야 할 과제이다. NS-CL은 인공지능이 인간처럼 사고하고 학습하는 방향으로 나아가는 중요한 단계로, 다양한 응용 가능성을 가지고 있다.
+
+## More-Neural Symbolic Concept Learning
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/m78qYOdK4Tg?si=tA6W_vtiRxPZOU2b" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
