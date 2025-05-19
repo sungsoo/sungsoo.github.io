@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Logical Neural Networks; Towards Unifying Statistical and Symbolic AI
+title: Neurosymbolic Programming
 date: 2025-05-19
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
