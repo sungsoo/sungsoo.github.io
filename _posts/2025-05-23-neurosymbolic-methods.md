@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Reasoning with PyReason 
+title: Neuro-Symbolic Methods for Open-Ended Cooperative AI 
 date: 2025-05-23
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
