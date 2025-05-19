@@ -10,7 +10,7 @@ tags: [artificial general intelligence]
 
 # [Symbolic AGI: How the Natural Will Build the Formal](https://www.youtube.com/watch?v=mQEpPNu_pW8) 
 
-## Abstract
+## [Abstract](https://notebooklm.google.com/notebook/5c4a871c-f422-43fc-88ef-5e4f0467b04b/audio)
 
 True AGI will combine formal and informal methods.  People are already combining these tools in this way.  M-x Jarvis in our time, but evolving Open Source is critical to delivering real value.
 
