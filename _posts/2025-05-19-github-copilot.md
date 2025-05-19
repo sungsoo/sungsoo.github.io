@@ -13,6 +13,10 @@ tags: [artificial general intelligence]
 ## Abstract
 Visual Studio Code(이하 VS Code)에서 GitHub Copilot을 효과적으로 활용하려면 기본적인 사용법과 단축키를 숙지하는 것이 중요합니다. 아래에 주요 기능과 단축키를 정리해 드리겠습니다.
 
+## [GitHub Copilot for Python Development](https://www.youtube.com/watch?v=wNsiJWewyjU)
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/wNsiJWewyjU?si=wtSK0dEpfXsX5U7L" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ---
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/vdBxfFVXnc0?si=hO2oWSxS_3tIO1X4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
