@@ -7,7 +7,6 @@ tags: [artificial general intelligence]
 
 ---
 
-
 # [Symbolic AGI: How the Natural Will Build the Formal](https://www.youtube.com/watch?v=mQEpPNu_pW8) 
 
 ## [Abstract](https://notebooklm.google.com/notebook/5c4a871c-f422-43fc-88ef-5e4f0467b04b/audio)
