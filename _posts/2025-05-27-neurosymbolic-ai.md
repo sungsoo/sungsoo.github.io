@@ -245,7 +245,7 @@ He pioneered work on Neurosymbolic AI as a means to integrate sound symnbolic re
 
 ---
 
-## AI Agents as Neuro-Symbolic Systems?
+## [AI Agents as Neuro-Symbolic Systems?](https://www.youtube.com/watch?v=JaHfCrVTYF4)
 
 Thinking through AI agents and the neuro-symbolic definition from an early LLM agent paper called MRKL. I'm sharing my reasoning behind using the "neuro-symbolic system" definition for AI agents.
 
