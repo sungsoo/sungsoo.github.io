@@ -243,3 +243,10 @@ He pioneered work on Neurosymbolic AI as a means to integrate sound symnbolic re
 
 요약하자면, 심볼릭 시스템의 가장 큰 이점은 모델의 **검증 및 확인 가능성**을 통해 **안전하고 신뢰할 수 있는 AI 시스템**을 구축할 수 있다는 점이며, 더 나아가 **엄밀한 이론적 기반**을 제공하고, 신경망의 **해석 가능성을 돕고**, 인간의 고차원적 **인지 및 추론(시스템 2)을 모델링**하며, 복잡한 시스템의 **형식화 및 안정적인 상호작용**에 기여할 수 있습니다. 이러한 이점들은 뉴로 심볼릭 AI 연구가 현재 AI 시스템의 한계를 극복하기 위해 주목받는 이유 중 하나입니다.
 
+---
+
+## AI Agents as Neuro-Symbolic Systems?
+
+Thinking through AI agents and the neuro-symbolic definition from an early LLM agent paper called MRKL. I'm sharing my reasoning behind using the "neuro-symbolic system" definition for AI agents.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/JaHfCrVTYF4?si=TgLIhTKNAxOns1Oa" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
