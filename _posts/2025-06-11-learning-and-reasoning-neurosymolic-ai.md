@@ -20,6 +20,7 @@ In this video, Luis Lamb's invited talk at Argentine Symposium on Artificial Int
 * Viviana Cotik (Universidad de Buenos Aires & CONICET)
 
 
+
 Used with permission.
 
 About the channel:
