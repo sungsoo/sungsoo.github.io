@@ -11,6 +11,7 @@ tags: [artificial general intelligence]
 
 ## Abstract
 
+
 In this video, Luis Lamb's invited talk at Argentine Symposium on Artificial Intelligence (2022)
 
 [https://51jaiio.sadio.org.ar/](https://51jaiio.sadio.org.ar/)
