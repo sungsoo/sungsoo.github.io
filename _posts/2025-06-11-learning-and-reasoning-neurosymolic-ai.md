@@ -9,6 +9,7 @@ tags: [artificial general intelligence]
 
 # [Luis Lamb's full talk on Learning and Reasoning in Neurosymbolic AI (JAIIO)](https://www.youtube.com/watch?v=2XB62g7Vw44) 
 
+
 ## Abstract
 
 
