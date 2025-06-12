@@ -9,6 +9,7 @@ tags: [artificial general intelligence]
 
 # Limitations of Vision-Language Models
 
+
 기존의 **비전-언어 모델(VLM) 기반 접근 방식**이나 **End-to-End 신경망 방식**이 가진 한계를 여러 차례 지적하며, 이를 극복하기 위한 대안으로 신경-심볼릭 개념 중심 패러다임을 제시하고 있습니다.
 
 기존 비전-언어 모델(VLM) 및 End-to-End 접근 방식의 주요 한계점은 다음과 같습니다.
