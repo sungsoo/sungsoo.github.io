@@ -11,6 +11,7 @@ tags: [artificial general intelligence]
 
 
 
+
 Guest lecture by Denny Zhou, Principal Scientist & Research Director, Google DeepMind, in Prof. Naik's course CIS 7000: Large Language Models (Fall 2024) on October 9, 2024.
 
 * [Slides](https://llm-class.github.io/slides/Denny_Zhou.pdf)
