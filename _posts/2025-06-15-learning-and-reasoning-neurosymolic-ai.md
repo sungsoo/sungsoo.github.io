@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Learning and Reasoning in Neurosymbolic AI 
-date: 2025-06-11
+date: 2025-06-15
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
 
