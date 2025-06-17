@@ -71,7 +71,7 @@ $$
 
 where $$L(\theta)$$ is the likelihood function. This function measures how sensitive the likelihood is to changes in $$\theta$$, and setting it to zero helps find the maximum likelihood estimate.
 
-A conditional score function extends this idea to scenarios where the likelihood is conditioned on certain variables or events. For instance, if we have data $$X$$ and condition on another variable $$Y$$, we compute the score function for the conditional likelihood $$P(X|Y; \theta)$$. This is particularly useful in regression analysis, where we estimate parameters given covariates, or in partial likelihood methods, as seen in survival analysis.
+A conditional score function extends this idea to scenarios where the likelihood is conditioned on certain variables or events. For instance, if we have data $$X$$ and condition on another variable $$Y$$, we compute the score function for the conditional likelihood $$P(X | Y; \theta)$$. This is particularly useful in regression analysis, where we estimate parameters given covariates, or in partial likelihood methods, as seen in survival analysis.
 
 Research, such as the article "Conditional score functions: Some optimality results" in [Biometrika](https://academic.oup.com/biomet/article-abstract/69/3/503/220843), suggests that conditional score functions are optimal for estimating parameters of interest when conditioning on sufficient statistics for nuisance parameters. This is evident in scenarios where we want to isolate the effect of $$\theta$$ while accounting for other variables, such as in generalized linear models or causal inference, as discussed in [PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6123020/).
 
