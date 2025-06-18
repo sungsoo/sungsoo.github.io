@@ -25,9 +25,9 @@ Denoising Score Matching for Gaussian Probability Path는 확산 모델에서 �
 
 ### Denoising Score Matching이란?  
 Denoising Score Matching(DSM)은 데이터 분포의 스코어 함수(로그 확률 밀도 함수의 그라디언트)를 추정하는 방법입니다. 여기서 스코어 함수는 데이터가 더 가능성이 높은 방향으로 이동해야 하는 방향을 나타냅니다. DSM은 원래 데이터 $$\mathbf{x}$$에 가우시안 잡음 $$\epsilon \sim \mathcal{N}(0, \sigma^2 \cdot \mathbf{I})$$를 추가하여 잡음이 포함된 데이터 $$\tilde{\mathbf{x}} = \mathbf{x} + \epsilon$$를 생성합니다.  
-이렇게 생성된 데이터의 분포 $$q_\sigma(\tilde{\mathbf{x}} | \mathbf{x})$$는 $$\mathbf{x}$$를 중심으로 분산 $$\sigma^2$$를 가진 가우시안 분포입니다. 모델 $$s_\theta$$는 이 잡음이 포함된 데이터의 스코어 함수를 추정하며, 목적 함수는 다음과 같습니다:  
-$$ J_{DSM_\sigma}(\theta) = \mathbb{E}_{q_\sigma (\tilde{\mathbf{x}}, \mathbf{x})}[ \frac{1}{2} \lVert s_\theta (\tilde{\mathbf{x}}) - \triangledown_{\tilde{\mathbf{x}}} \log q_\sigma (\tilde{\mathbf{x}} | \mathbf{x})\rVert^2_2] $$  
-여기서 $$\triangledown_{\tilde{\mathbf{x}}} \log q_\sigma (\tilde{\mathbf{x}} | \mathbf{x}) = \frac{(\mathbf{x} - \tilde{\mathbf{x}})}{\sigma^2}$$로, 모델은 잡음을 제거하는 방향을 학습합니다.
+이렇게 생성된 데이터의 분포 $$q_\sigma(\tilde{\mathbf{x}} \| \mathbf{x})$$는 $$\mathbf{x}$$를 중심으로 분산 $$\sigma^2$$를 가진 가우시안 분포입니다. 모델 $$s_\theta$$는 이 잡음이 포함된 데이터의 스코어 함수를 추정하며, 목적 함수는 다음과 같습니다:  
+$$ J_{DSM_\sigma}(\theta) = \mathbb{E}_{q_\sigma (\tilde{\mathbf{x}}, \mathbf{x})}[ \frac{1}{2} \lVert s_\theta (\tilde{\mathbf{x}}) - \triangledown_{\tilde{\mathbf{x}}} \log q_\sigma (\tilde{\mathbf{x}} \| \mathbf{x})\rVert^2_2] $$  
+여기서 $$\triangledown_{\tilde{\mathbf{x}}} \log q_\sigma (\tilde{\mathbf{x}} \| \mathbf{x}) = \frac{(\mathbf{x} - \tilde{\mathbf{x}})}{\sigma^2}$$로, 모델은 잡음을 제거하는 방향을 학습합니다.
 
 ### Gaussian Probability Path란?  
 Gaussian Probability Path는 확산 모델에서 데이터가 지나가는 확률 분포의 경로를 의미합니다. 확산 과정은 데이터에 점진적으로 가우시안 잡음을 추가하여 데이터 분포를 순수한 가우시안 잡음 분포로 변환합니다. 예를 들어, 각 단계 $$t$$에서 데이터 $$\mathbf{x}_t = \sqrt{\alpha_t} \mathbf{x}_{t-1} + \sqrt{1 - \alpha_t} \epsilon_t$$ (여기서 $$\epsilon_t \sim \mathcal{N}(0, \mathbf{I})$$)로 업데이트됩니다.  
@@ -52,10 +52,10 @@ The "Gaussian Probability Path" likely refers to the sequence of probability dis
 Research suggests that DSM is particularly effective when the noise added is Gaussian, as seen in the blog post by Johannes Schusterbauer ([Denoising Score Matching Explained](https://johfischer.com/2022/09/18/denoising-score-matching/)), which details how DSM links to denoising autoencoders and uses Gaussian noise perturbations. The DSM objective is formalized as:
 
 $$
-J_{DSM_\sigma}(\theta) = \mathbb{E}_{q_\sigma (\tilde{\mathbf{x}}, \mathbf{x})}[ \frac{1}{2} \lVert s_\theta (\tilde{\mathbf{x}}) - \triangledown_{\tilde{\mathbf{x}}} \log q_\sigma (\tilde{\mathbf{x}} | \mathbf{x})\rVert^2_2],
+J_{DSM_\sigma}(\theta) = \mathbb{E}_{q_\sigma (\tilde{\mathbf{x}}, \mathbf{x})}[ \frac{1}{2} \lVert s_\theta (\tilde{\mathbf{x}}) - \triangledown_{\tilde{\mathbf{x}}} \log q_\sigma (\tilde{\mathbf{x}} \| \mathbf{x})\rVert^2_2],
 $$
 
-where $$q_\sigma(\tilde{\mathbf{x}} | \mathbf{x}) \sim \mathcal{N}(\mathbf{x}, \sigma^2 \cdot \mathbf{I})$$, and the gradient is derived as $$\triangledown_{\tilde{\mathbf{x}}} \log q_\sigma (\tilde{\mathbf{x}} | \mathbf{x}) = \frac{(\mathbf{x} - \tilde{\mathbf{x}})}{\sigma^2}$$. This formulation aligns with the Gaussian nature of the noise, supporting the idea that the probability path is composed of Gaussian distributions.
+where $$q_\sigma(\tilde{\mathbf{x}} \| \mathbf{x}) \sim \mathcal{N}(\mathbf{x}, \sigma^2 \cdot \mathbf{I})$$, and the gradient is derived as $$\triangledown_{\tilde{\mathbf{x}}} \log q_\sigma (\tilde{\mathbf{x}} \| \mathbf{x}) = \frac{(\mathbf{x} - \tilde{\mathbf{x}})}{\sigma^2}$$. This formulation aligns with the Gaussian nature of the noise, supporting the idea that the probability path is composed of Gaussian distributions.
 
 ### 2. Diffusion Models and Gaussian Probability Path
 
@@ -71,7 +71,7 @@ The evidence leans toward this interpretation, as seen in resources like [What i
 
 ### 3. Connection Between DSM and Gaussian Probability Path
 
-DSM is integral to the reverse process in diffusion models, where the model learns to estimate the score function at each timestep $$t$$ to move $$\mathbf{x}_t$$ back toward $$\mathbf{x}_{t-1}$$. This is achieved by minimizing the DSM objective, which, as shown in Schusterbauer's blog, involves matching the estimated score $$s_\theta(\tilde{\mathbf{x}})$$ to the true score $$\triangledown_{\tilde{\mathbf{x}}} \log q_\sigma (\tilde{\mathbf{x}} | \mathbf{x})$$. Given that the noise is Gaussian, the path through which the data evolves is naturally Gaussian, reinforcing the concept of a Gaussian Probability Path.
+DSM is integral to the reverse process in diffusion models, where the model learns to estimate the score function at each timestep $$t$$ to move $$\mathbf{x}_t$$ back toward $$\mathbf{x}_{t-1}$$. This is achieved by minimizing the DSM objective, which, as shown in Schusterbauer's blog, involves matching the estimated score $$s_\theta(\tilde{\mathbf{x}})$$ to the true score $$\triangledown_{\tilde{\mathbf{x}}} \log q_\sigma (\tilde{\mathbf{x}} \| \mathbf{x})$$. Given that the noise is Gaussian, the path through which the data evolves is naturally Gaussian, reinforcing the concept of a Gaussian Probability Path.
 
 Practical implementations, such as those discussed in [Generative Modeling by Estimating Gradients of the Data Distribution](https://yang-song.net/blog/2021/score/), highlight that DSM allows for flexible model architectures and exact log-likelihood computation, particularly when dealing with continuous data distributions perturbed by Gaussian noise. The blog also notes challenges, such as slow sampling speed due to Langevin-type iterations, but these are mitigated by numerical ODE solvers in modern approaches.
 
@@ -89,10 +89,10 @@ The main challenge is the lack of a standardized definition for "Gaussian Probab
 
 To organize the concepts, let's compare DSM and Gaussian Probability Path based on their definitions, applications, and level of standardization:
 
-| **Concept**               | **Definition**                                                                 | **Applications**                              | **Standardization**       |
-|---------------------------|-------------------------------------------------------------------------------|----------------------------------------------|---------------------------|
-| Denoising Score Matching  | Estimates score function of noised data distribution, typically with Gaussian noise | Image generation, audio synthesis, representation learning | Standard in diffusion models |
-| Gaussian Probability Path | Sequence of Gaussian distributions in diffusion process, from data to noise | Data generation in diffusion models          | Not standard, interpretive |
+\| **Concept**               \| **Definition**                                                                 \| **Applications**                              \| **Standardization**       \|
+\|---------------------------\|-------------------------------------------------------------------------------\|----------------------------------------------\|---------------------------\|
+\| Denoising Score Matching  \| Estimates score function of noised data distribution, typically with Gaussian noise \| Image generation, audio synthesis, representation learning \| Standard in diffusion models \|
+\| Gaussian Probability Path \| Sequence of Gaussian distributions in diffusion process, from data to noise \| Data generation in diffusion models          \| Not standard, interpretive \|
 
 This table highlights the varying levels of standardization, with DSM being well-established, while Gaussian Probability Path requires contextual interpretation.
 
