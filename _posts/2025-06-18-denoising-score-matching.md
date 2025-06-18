@@ -71,7 +71,7 @@ The evidence leans toward this interpretation, as seen in resources like [What i
 
 ### 3. Connection Between DSM and Gaussian Probability Path
 
-DSM is integral to the reverse process in diffusion models, where the model learns to estimate the score function at each timestep $$t$$ to move $$\mathbf{x}_t$$ back toward $$\mathbf{x}_{t-1}$$. This is achieved by minimizing the DSM objective, which, as shown in Schusterbauer's blog, involves matching the estimated score $$s_\theta(\tilde{\mathbf{x}})$$ to the true score $$\triangledown_{\tilde{\mathbf{x}}} \log q_\sigma (\tilde{\mathbf{x}} \| \mathbf{x})$$. Given that the noise is Gaussian, the path through which the data evolves is naturally Gaussian, reinforcing the concept of a Gaussian Probability Path.
+DSM is integral to the reverse process in diffusion models, where the model learns to estimate the score function at each timestep $$t$$ to move $$\mathbf{x}_t$$ back toward $$\mathbf{x}_{t-1}$$. This is achieved by minimizing the DSM objective, which, as shown in Schusterbauer's blog, involves matching the estimated score $$s_\theta(\tilde{\mathbf{x}})$$ to the true score $$\triangledown_{\tilde{\mathbf{x}}} \log q_\sigma (\tilde{\mathbf{x}} | \mathbf{x})$$. Given that the noise is Gaussian, the path through which the data evolves is naturally Gaussian, reinforcing the concept of a Gaussian Probability Path.
 
 Practical implementations, such as those discussed in [Generative Modeling by Estimating Gradients of the Data Distribution](https://yang-song.net/blog/2021/score/), highlight that DSM allows for flexible model architectures and exact log-likelihood computation, particularly when dealing with continuous data distributions perturbed by Gaussian noise. The blog also notes challenges, such as slow sampling speed due to Langevin-type iterations, but these are mitigated by numerical ODE solvers in modern approaches.
 
@@ -89,10 +89,10 @@ The main challenge is the lack of a standardized definition for "Gaussian Probab
 
 To organize the concepts, let's compare DSM and Gaussian Probability Path based on their definitions, applications, and level of standardization:
 
-\| **Concept**               \| **Definition**                                                                 \| **Applications**                              \| **Standardization**       \|
-\|---------------------------\|-------------------------------------------------------------------------------\|----------------------------------------------\|---------------------------\|
-\| Denoising Score Matching  \| Estimates score function of noised data distribution, typically with Gaussian noise \| Image generation, audio synthesis, representation learning \| Standard in diffusion models \|
-\| Gaussian Probability Path \| Sequence of Gaussian distributions in diffusion process, from data to noise \| Data generation in diffusion models          \| Not standard, interpretive \|
+| **Concept**               | **Definition**                                                                 | **Applications**                              | **Standardization**       |
+|---------------------------|-------------------------------------------------------------------------------|----------------------------------------------|---------------------------|
+| Denoising Score Matching  | Estimates score function of noised data distribution, typically with Gaussian noise | Image generation, audio synthesis, representation learning | Standard in diffusion models |
+| Gaussian Probability Path | Sequence of Gaussian distributions in diffusion process, from data to noise | Data generation in diffusion models          | Not standard, interpretive |
 
 This table highlights the varying levels of standardization, with DSM being well-established, while Gaussian Probability Path requires contextual interpretation.
 
