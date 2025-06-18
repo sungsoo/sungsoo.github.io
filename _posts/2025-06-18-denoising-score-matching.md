@@ -10,6 +10,7 @@ tags: [artificial general intelligence]
 # Denoising Score Matching for Gaussian Probability Path 
 
 
+
 ### Key Points
 - 연구에 따르면, Denoising Score Matching은 확산 모델에서 가우시안 잡음이 포함된 데이터의 스코어 함수를 추정하는 기법으로 보입니다.  
 - Gaussian Probability Path는 데이터가 점진적으로 가우시안 잡음으로 변하는 경로로, 확산 과정의 각 단계가 가우시안 분포로 구성될 가능성이 높습니다.  
