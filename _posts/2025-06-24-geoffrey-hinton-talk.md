@@ -1,6 +1,6 @@
 ---
 layout: post
-title: NVIDIA CEO Jensen Huang Live GTC Paris Keynote
+title: What Leaders Need to Understand About AI
 date: 2025-06-24
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
