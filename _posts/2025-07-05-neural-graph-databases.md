@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Reachability in Voice Phishing Detection
+title: Neural Graph Databases
 date: 2025-07-05
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
