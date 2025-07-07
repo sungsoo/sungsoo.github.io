@@ -7,7 +7,7 @@ tags: [artificial general intelligence]
 
 ---
 
-# [Exploring Multi-Agent Risks from Advanced AI](https://www.youtube.com/watch?v=OZBLgKKU7IY)
+# [Exploring Multi-Agent Risks from Advanced AI](https://www.youtube.com/watch?v=RJJCFQdli5U)
 
 
 * Title: Exploring Multi-Agent Risks from Advanced AI
