@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Towards multimodal foundation models in molecular cell biology
+title: Robust Link Prediction over Noisy Hyper Relational Knowledge Graphs via Active Learning
 date: 2025-07-17
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
