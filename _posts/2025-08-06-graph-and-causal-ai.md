@@ -10,7 +10,7 @@ tags: [artificial general intelligence]
 # [Graphs for Causal AI](https://notebooklm.google.com/notebook/036594e3-13f8-46df-b6d0-417f259a054d?artifactId=c869ede0-b647-40dc-9659-1d7636702e31)
 
 
-## 브리핑 문서: 그래프 및 네트워크를 활용한 인과 AI
+## 그래프 및 네트워크를 활용한 인과 AI
 
 ### 1. 네트워크 과학의 실제 적용 사례: 교황 예측
 
