@@ -12,6 +12,7 @@ tags: [artificial general intelligence]
 ## Abstract
 
 
+
 Mechanisms help humans to coordinate in society (e.g. auctions, elections, tax codes, pay scales, author orders) and good mechanisms can alleviate strategic conflict between humans. In this talk, Google DeepMind Research Scientist Raphael Köster will show examples of how to leverage AI, specifically a Deep Reinforcement Learning (RL) agent to serve as a resource allocation mechanism that can promote sustainable human behaviour in a common-pool resource problem. Importantly, this requires modelling humans in neural networks models, to create a rich and authentic simulation for the RL agent to learn in. The RL agents discover novel policies that lead to more equal outcomes and larger surpluses by skillfully dealing with free-riders and motivating all players to contribute.
 
 ## Bio 
