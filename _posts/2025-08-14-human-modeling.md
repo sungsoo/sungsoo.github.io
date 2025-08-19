@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Modelling Humans with Neural Networks for Behavioural Mechanism Design
+title: Modelling Humans with Neural Networks for Behavioural Mechanism
 date: 2025-08-14
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
