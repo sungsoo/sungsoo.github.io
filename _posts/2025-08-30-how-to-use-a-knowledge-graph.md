@@ -13,6 +13,7 @@ tags: [artificial general intelligence]
 * [https://www.falkordb.com/blog/how-to-build-a-knowledge-graph/](https://www.falkordb.com/blog/how-to-build-a-knowledge-graph/)
 
 
+
 ## Abstract
 
 This technical workshop demonstrates knowledge graph implementation through two live build examples: Fractal KG and Yohei Nakajima's VCPedia project. Participants will see real-world graph database architectures, integration patterns, and automated data processing workflows.
