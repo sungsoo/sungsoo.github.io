@@ -1,6 +1,6 @@
 ---
 layout: post
-title: GraphRAG vs. Traditional RAG: Higher Accuracy & Insight with LLM
+title: GraphRAG vs. Traditional RAG - Higher Accuracy & Insight with LLM
 date: 2025-08-29
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
