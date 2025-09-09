@@ -9,7 +9,6 @@ tags: [artificial general intelligence]
 
 # [GraphRAG methods to create optimized LLM context windows for Retrieval — Jonathan Larson, Microsoft](https://www.youtube.com/watch?v=WQ1xTTdPlQg)
 
-
 ## Abstract
 
 Jonathan Larson is a Senior Principal Data Architect at Microsoft Research working in Special Projects.  He currently leads a research team focused on the intersection of graph machine learning, LLM memory representations, and LLM orchestration. 
