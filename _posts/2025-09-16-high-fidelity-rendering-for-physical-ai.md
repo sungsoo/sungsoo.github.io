@@ -1,7 +1,7 @@
 ---
 layout: post
 title: High-Fidelity Rendering for Physical AI 
-date: 2025-09-15
+date: 2025-09-16
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
 
