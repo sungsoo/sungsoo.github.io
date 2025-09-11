@@ -7,6 +7,7 @@ tags: [artificial general intelligence]
 
 ---
 
+
 # [Awesome-Scientific-Datasets-and-LLMs](https://github.com/open-sciencelab/Awesome-Scientific-Datasets-and-LLMs)
 
 A curated collection of papers, datasets, and resources on Scientific Datasets and Large Language Models (LLMs), organized in reference to our survey: [**"A Survey of Scientific Large Language Models: From Data Foundations to Agent Frontiers"**](https://arxiv.org/abs/2508.21148)
