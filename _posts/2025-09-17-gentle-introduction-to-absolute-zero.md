@@ -10,6 +10,7 @@ tags: [artificial general intelligence]
 # [Gentle Introduction to Absolute Zero: Reinforced Self-play Reasoning with Zero Data](https://www.youtube.com/watch?v=jhL3cL51RII)
 
 
+
 ## Abstract
 
 인간의 감독 없이도 인공지능이 스스로 추론 능력을 향상시키는 과정은 **Absolute Zero(AZ) 패러다임**과 그 구현체인 **Absolute Zero Reasoner(AZR)**를 통해 이루어집니다. 이 과정은 외부 데이터나 인간의 감독에 의존하지 않고, 모델 스스로가 학습 작업을 제안하고 해결함으로써 추론 능력을 자율적으로 진화시키는 방식으로 진행됩니다.
