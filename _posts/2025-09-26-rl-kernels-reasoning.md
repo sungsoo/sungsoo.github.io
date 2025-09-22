@@ -8,6 +8,7 @@ tags: [artificial general intelligence]
 ---
 
 
+
 # [Reinforcement Learning, Kernels, Reasoning, Quantization & Agents](https://www.youtube.com/watch?v=OkEGJ5G3foU)
 
 
