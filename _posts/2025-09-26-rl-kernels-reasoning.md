@@ -12,6 +12,7 @@ tags: [artificial general intelligence]
 # [Reinforcement Learning, Kernels, Reasoning, Quantization & Agents](https://www.youtube.com/watch?v=OkEGJ5G3foU)
 
 
+
 ## Abstract
 
 Why is Reinforcement Learning (RL) suddenly everywhere, and is it truly effective? Have LLMs hit a plateau in terms of intelligence and capabilities, or is RL the breakthrough they need?
