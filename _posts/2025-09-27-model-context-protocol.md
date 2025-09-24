@@ -23,3 +23,12 @@ This is the 5th video in a series on AI agents. Here, I discuss the model contex
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/N3vHJcHBS-w?si=bw9lOR4vidd1PsBH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
+
+
+## Model Context Protocol (MCP) explained (with code examples)
+
+This crash course will teach you the essentials of the Model Context Protocol (MCP), a standardized interface developed by Anthropic that's transforming how AI agents interact with external resources.
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/D1dpqlaKll8?si=xdAwlDPucNh3t7IH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
