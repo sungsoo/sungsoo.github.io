@@ -8,7 +8,6 @@ tags: [artificial general intelligence]
 ---
 
 
-
 # [Agent to Agent Interactions with NLIP](https://www.youtube.com/watch?v=lvZQW3I4FyI)
 
 
