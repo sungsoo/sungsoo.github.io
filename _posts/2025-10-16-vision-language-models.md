@@ -11,6 +11,7 @@ tags: [artificial general intelligence]
 # [What Are Vision Language Models? How AI Sees & Understands Images](https://www.youtube.com/watch?v=lOD_EE96jhM)
 
 
+
 ## Abstract
 
 Ready to become a certified watsonx AI Assistant Engineer? Register now and use code IBMTechYT20 for 20% off of your exam → [https://ibm.biz/Bdnah9](https://ibm.biz/Bdnah9)
