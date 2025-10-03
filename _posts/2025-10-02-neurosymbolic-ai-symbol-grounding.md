@@ -1,6 +1,6 @@
 ---
 layout: post
-title: The Hardest Challenge in Neurosymbolic AI: Symbol Grounding
+title: The Hardest Challenge in Neurosymbolic AI - Symbol Grounding
 date: 2025-10-02
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
