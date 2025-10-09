@@ -8,6 +8,7 @@ tags: [artificial general intelligence]
 ---
 
 
+
 # [Yann LeCun at Duke's Responsible AI Symposium](https://www.youtube.com/watch?v=ddUPj3N3A-Y)
 
 
