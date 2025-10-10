@@ -11,7 +11,6 @@ tags: [artificial general intelligence]
 # [Self-Supervised Learning, JEPA, World Models, and the future of AI](https://www.youtube.com/watch?v=yUmDRxV0krg)
 
 
-
 ## Abstract
 
 * Geometry of Machine Learning Special Lecture 9/16/2025
