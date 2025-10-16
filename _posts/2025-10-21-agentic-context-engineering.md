@@ -12,6 +12,7 @@ tags: [artificial general intelligence]
 
 
 
+
 ## Abstract
 
 The synergy between Early Experience and Agentic Context Engineering (ACE) creates a powerful, two-loop architecture for autonomous AI self-improvement. The Early Experience paradigm acts as the agent's tactical sensory system, generating a continuous stream of raw, grounded learning signals by exploring alternative actions and observing their immediate, reward-free consequences. 
