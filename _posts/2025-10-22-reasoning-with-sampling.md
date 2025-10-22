@@ -7,7 +7,6 @@ tags: [artificial general intelligence]
 
 ---
 
-
 # [Reasoning with Sampling: Your Base Model is Smarter Than You Think (Oct 2025)](https://www.youtube.com/watch?v=lhODD2XAHk8)
 
 
