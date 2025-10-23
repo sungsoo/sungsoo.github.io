@@ -10,7 +10,6 @@ tags: [artificial general intelligence]
 # [Graph Learning Meets Theoretical Computer Science](https://www.youtube.com/live/ENW8T59-_eE)
 
 
-
 ## Abstract
 
 * Ameya Velingker, Haggai Maron (Technion Israel Institute of Technology and NVidia),
