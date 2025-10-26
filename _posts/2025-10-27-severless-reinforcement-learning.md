@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Introducing serverless reinforcement learning:
+title: Introducing serverless reinforcement learning
 date: 2025-10-27
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
