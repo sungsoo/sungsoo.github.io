@@ -10,6 +10,7 @@ tags: [artificial general intelligence]
 # [Jason Wei, AI Researcher, OpenAI: Some intuitions About Large Language Models](https://www.youtube.com/watch?v=l898fqkjdFc)
 
 
+
 ## Abstract
 
 Jason Wei, AI Researcher, OpenAI
