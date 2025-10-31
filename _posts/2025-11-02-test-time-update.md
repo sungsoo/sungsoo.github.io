@@ -10,6 +10,7 @@ tags: [artificial general intelligence]
 # [AI Seminar 2025: Test-Time Updates: Next Steps for Robust and Efficient Vision, Evan Shelhamer](https://www.youtube.com/watch?v=QbI6OlI-Wy8)
 
 
+
 ## Abstract
 
 The AI Seminar is a weekly meeting at the University of Alberta where researchers interested in artificial intelligence (AI) can share their research. Presenters include both local speakers from the University of Alberta and visitors from other institutions. Topics can be related in any way to artificial intelligence, from foundational theoretical work to innovative applications of AI techniques to new fields and problems.
