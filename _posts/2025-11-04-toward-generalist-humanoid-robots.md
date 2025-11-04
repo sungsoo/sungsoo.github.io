@@ -7,6 +7,8 @@ tags: [artificial general intelligence]
 
 ---
 
+
+
 # [RI Seminar: Yuke Zhu : Toward Generalist Humanoid Robots](https://www.youtube.com/watch?v=49LnlfM9DBU)
 
 * Yuke Zhu
