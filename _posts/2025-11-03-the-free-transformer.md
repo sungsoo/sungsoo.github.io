@@ -67,3 +67,7 @@ Free Transformer는 **조건부 변이형 오토인코더(Conditional Variationa
 표준 트랜스포머가 마치 강물 위를 흐르는 뗏목과 같다면, 매 순간 현재 위치(이전 토큰)만을 보고 다음 행동(다음 토큰)을 결정하는 것과 같습니다. 큰 구조(예: '긍정 리뷰'라는 개념)는 수많은 작은 결정들의 결과로 *자연스럽게* 발생하기를 기대해야 합니다.
 
 반면, **Free Transformer는 배의 키(rudder) 역할**을 하는 $Z$를 탑재합니다. 글을 쓰기 시작하기 전에 **$Z$라는 '의도'나 '고차원적 구조'를 무작위로 뽑아두고**, 이 의도($Z$)가 모델의 생성 과정 전체를 일관되게 조절합니다. 이로 인해 모델은 매 토큰을 생성할 때마다 복잡하게 의도를 추론할 필요 없이, 이미 결정된 '의도'에 따라 더 명확하고 효율적으로 생성할 수 있게 됩니다.
+
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/N4k3bOA9BjY?si=2yZzcFFniWigHfhA" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
