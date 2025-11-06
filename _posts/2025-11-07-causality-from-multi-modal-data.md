@@ -9,7 +9,6 @@ tags: [artificial general intelligence]
 
 # [KDD 2025 - Keynote Speakers: Caroline Uhler / Causality from Multi-Modal Data](https://www.youtube.com/watch?v=38H-GfiVHvg&list=PLn0nrSd4xjja0nWsK2vccU39DhBOLY5Pu)
 
-
 ## Abstract
 
 Caroline Uhler is a core institute member of the Broad Institute of MIT and Harvard, where she directs the Eric and Wendy Schmidt Center and is a member of the Scientific Leadership Team. She is also the Andrew (1956) and Erna Viterbi Professor of Engineering in the Department of Electrical Engineering and Computer Science and the Institute for Data, Systems, and Society at MIT.
