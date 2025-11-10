@@ -18,4 +18,5 @@ On 6 November, Jensen Huang, Yoshua Bengio, Geoffrey Hinton, Fei-Fei Li, Yann Le
 All six, along with Professor John Hopfield, are recipients of the 2025 Queen Elizabeth Prize for Engineering for their foundational contributions to machine learning and AI.
 
 
+
 <iframe width="600" height="400" src="https://www.youtube.com/embed/0zXSrsKlm5A?si=Ah2qB4clWVXtzhcN" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
