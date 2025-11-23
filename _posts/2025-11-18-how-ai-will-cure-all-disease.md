@@ -9,6 +9,7 @@ tags: [artificial general intelligence]
 
 # [Mark Zuckerberg & Priscilla Chan: How AI Will Cure All Disease](https://www.youtube.com/watch?v=YnV8pgHtO5Y)
 
+
 ## Abstract
 
 Priscilla Chan and Mark Zuckerberg join a16z’s Ben Horowitz, Erik Torenberg, and Vineeta Agarwala to share how the Chan Zuckerberg Initiative is building the computational tools that will accelerate the cure, prevention, and management of all disease by century's end.
