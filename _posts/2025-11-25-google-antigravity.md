@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Google Antigravity - Hands on with our new agentic development platform
+title: Hands on with our new agentic development platform
 date: 2025-11-25
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
