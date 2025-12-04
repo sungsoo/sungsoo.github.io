@@ -7,7 +7,7 @@ tags: [artificial general intelligence]
 
 ---
 
-# [Defying Gravity - Kevin Hou, Google DeepMind](https://www.youtube.com/watch?v=6mQwHqK1I5w)
+# [Defying Gravity - Kevin Hou, Google DeepMind](https://www.youtube.com/watch?v=HN-F-OQe6j0)
 
 ## Abstract
 
