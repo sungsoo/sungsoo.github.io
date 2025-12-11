@@ -9,6 +9,7 @@ tags: [artificial general intelligence]
 
 # [Gartner's Top Tech Trends for 2026 | Live from IT Symposium/Xpo](https://www.youtube.com/watch?v=5dgpcQXq1eo)
 
+
 ## Abstract
 
 In 2026, disruption is accelerating and AI is no longer optional.
