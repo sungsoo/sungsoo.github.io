@@ -7,7 +7,7 @@ tags: [artificial general intelligence]
 
 ---
 
-# [The future of intelligence | Demis Hassabis (Co-founder and CEO of DeepMind)](https://www.youtube.com/watch?v=PqVbypvxDto)
+# [The future of intelligence - Demis Hassabis (Co-founder and CEO of DeepMind)](https://www.youtube.com/watch?v=PqVbypvxDto)
 
 
 ## Abstract
