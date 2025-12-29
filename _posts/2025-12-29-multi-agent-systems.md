@@ -9,7 +9,6 @@ tags: [artificial general intelligence]
 
 # [Multi Agent Systems Explained: How AI Agents & LLMs Work Together](https://www.youtube.com/watch?v=sWH0T4Zez6I)
 
-
 ## Abstract
 
 Ready to become a certified watsonx AI Assistant Engineer? Register now and use code IBMTechYT20 for 20% off of your exam → [https://ibm.biz/BdbhXE](https://ibm.biz/BdbhXE)
