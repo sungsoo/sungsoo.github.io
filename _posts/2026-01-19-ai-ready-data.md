@@ -14,6 +14,11 @@ An unparalleled level of interest in generative AI and agentic AI is driving org
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/c6Z-Q8Wy0ks?si=Vrzrcnkb9J6b7XKP" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
+
+## [AI-Ready Data Foundations in Asset Management: From Strategy to Action](https://www.youtube.com/watch?v=TiPp_aDObpA)
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/TiPp_aDObpA?si=SPTZmv53gZ6iG6jZ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
 ## 1. AI 지원 데이터(AI-Ready Data) 시장의 정의 및 범위 (AI 공동 과학자용)
 
 * **AI 지원 데이터**란 특정 AI 유즈케이스에 맞게 정제되고, 구조화되었으며, 포괄적이고 맥락화된 데이터를 의미합니다. 데이터의 적합성은 '완벽한 데이터'라는 추상적인 이상향보다는 유즈케이스의 요구사항과 선택된 AI 기술(예: 생성형 AI 또는 에이전틱 AI)에 의해 정의됩니다.
