@@ -1,12 +1,18 @@
 ---
 layout: post
-title: AI-Ready Data
+title: Build AI-Ready Data Foundation
 date: 2026-01-19
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
 
 ---
 
+# [AWS re:Invent 2025 - Build an AI-ready data foundation (ANT304)](https://www.youtube.com/watch?v=c6Z-Q8Wy0ks)
+
+## Abstract
+An unparalleled level of interest in generative AI and agentic AI is driving organizations to rethink their data strategy. While there is a need for data foundation constructs such as data pipelines, data architectures, data stores and data governance to evolve, there are business elements that need to stay constant like cost-efficiency and  effectively collaborating across data estates. In this session we will cover how building your data foundation on AWS provides the tools and the building blocks to balance both needs, and empower organizations to grow their data strategy for building AI-ready applications.
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/c6Z-Q8Wy0ks?si=Vrzrcnkb9J6b7XKP" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 ## 1. AI 지원 데이터(AI-Ready Data) 시장의 정의 및 범위 (AI 공동 과학자용)
 
