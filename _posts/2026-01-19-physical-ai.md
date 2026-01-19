@@ -7,7 +7,6 @@ tags: [artificial general intelligence]
 
 ---
 
-
 # [Awesome Physical AI](https://github.com/keon/awesome-physical-ai)
 
 # Awesome Physical AI [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
