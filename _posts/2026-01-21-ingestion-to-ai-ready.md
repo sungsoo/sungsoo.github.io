@@ -7,7 +7,6 @@ tags: [artificial general intelligence]
 
 ---
 
-
 # [Data Engineering from Ingestion to AI-Ready](https://www.youtube.com/watch?v=XwCnOsZMhyI)
 
 ## Abstract
