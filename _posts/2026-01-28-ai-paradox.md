@@ -8,6 +8,7 @@ tags: [artificial general intelligence]
 ---
 
 
+
 # [Google DeepMind’s Demis Hassabis & The Paradox of AI Progress - Semafor Tech](https://www.youtube.com/watch?v=6aXpIloAg2I)
 
 ## Abstract
