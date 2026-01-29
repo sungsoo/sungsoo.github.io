@@ -21,3 +21,8 @@ Following its world premiere at the Tribeca Festival and a successful internatio
 Interested in hosting a screening of The Thinking Game for your classroom, community, or workplace?
 
 <iframe width="600" height="400" src="https://www.youtube.com/embed/d95J8yzvjbQ?si=7BopCUuasOp1ez4p" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+## The Thinking Game | Documentary Trailer
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/J5XFYMsczy8?si=NpyUhOfV4x3B9IpW" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
