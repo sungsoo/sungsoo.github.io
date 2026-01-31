@@ -8,7 +8,6 @@ tags: [artificial general intelligence]
 
 ---
 
-
 # [Beyond LLMs: The Rise of World Models and Spatial Intelligence](https://www.youtube.com/watch?v=8WqNFDJFXxk)
 
 ## Abstract
