@@ -1,7 +1,6 @@
 ---
 layout: post
-title: 
-The Rise of World Models and Spatial Intelligence
+title: The Rise of World Models and Spatial Intelligence
 date: 2026-01-31
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
