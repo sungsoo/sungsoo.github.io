@@ -7,6 +7,7 @@ tags: [artificial general intelligence]
 
 ---
 
+
 # Gaussian World Models
 
 **Gaussian World Models**는 2025~2026년 로보틱스·Embodied AI 분야에서 가장 빠르게 부상하고 있는 **3D 기반 World Model**입니다. 3D Gaussian Splatting(3DGS)의 폭발적 효율성을 World Model에 그대로 이식해, "로봇이 3D 공간을 진짜 이해하고 미래를 상상하며 행동"하게 만듭니다.
