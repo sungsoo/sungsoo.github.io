@@ -1,7 +1,7 @@
 ---
 layout: post
 title: LLMs Can Learn to Reason Via Off-Policy RL
-date: 2026-03-01
+date: 2026-03-02
 categories: [artificial intelligence]
 tags: [artificial general intelligence]
 
