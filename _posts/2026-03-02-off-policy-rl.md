@@ -10,6 +10,7 @@ tags: [artificial general intelligence]
 # LLMs Can Learn to Reason Via Off-Policy RL
 
 
+
 ## 1. 서론: 왜 LLM 학습 방식에 주목해야 하는가?
 
 최근 LLM의 비약적인 '추론 능력' 향상 뒤에는 강화학습(Reinforcement Learning, RL)이라는 강력한 최적화 도구가 자리 잡고 있습니다. 하지만 이 도구를 다루는 방식, 즉 모델이 데이터를 소화하는 방식에 따라 학습의 성패가 갈립니다. 본 가이드에서는 기존 강화학습의 주류였던 '온-폴리시' 방식의 태생적 한계를 파헤치고, 이를 혁신적으로 돌파한 OAPL(Optimal Advantage-based Policy Optimization) 알고리즘의 매커니즘을 상세히 분석합니다.
