@@ -1,0 +1,301 @@
+---
+layout: null
+title: "DeepSeek-V4 Architecture: 1M Token Context and Reasoning Scaling"
+date: 2024-05-24
+categories: [artificial intelligence]
+tags: [artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeek-V4 아키텍처 분석</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      TeX: { equationNumbers: { autoNumber: "AMS" } },
+      tex2jax: {
+        inlineMath: [ ['$','$'] ],
+        displayMath: [ ['$$','$$'] ],
+        processEscapes: true,
+      }
+    });
+    MathJax.Hub.Register.MessageHook("Math Processing Error",function (message) { console.error("Math Processing Error: "+message[1]); });
+    MathJax.Hub.Register.MessageHook("TeX Jax - parse error",function (message) { console.error("Math Processing Error: "+message[1]); });
+    </script>
+    <script type="text/javascript" async src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        },
+                        surface: '#f8fafc',
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.7;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+        .prose h2 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-top: 2.5rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+        }
+        .prose h3 {
+            font-weight: 700;
+            color: #334155;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+        .prose p {
+            margin-bottom: 1.25rem;
+        }
+        .prose ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .prose li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .prose li::before {
+            content: "•";
+            color: #2563eb;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        .video-container { width: 100%; max-width: 1600px; margin: 2rem auto; border-radius: 1rem; overflow: hidden; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        .video-container iframe { width: 100%; height: auto; aspect-ratio: 16 / 9; border: none; }
+        
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .header-blur {
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.85);
+        }
+        .highlight-box {
+            border-left: 4px solid #2563eb;
+            background: #f1f5f9;
+            padding: 1.5rem;
+            border-radius: 0 0.75rem 0.75rem 0;
+        }
+    </style>
+</head>
+<body class="font-sans">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 header-blur border-b border-slate-200">
+        <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="https://sungsoo.github.io`로" class="flex items-center justify-center w-10 h-10 rounded-xl bg-brand-600 text-white font-display font-bold text-xl shadow-lg hover:bg-brand-700 transition-colors">S</a>
+                <span class="text-slate-500 font-medium tracking-tight">연구 동향</span>
+            </div>
+            <nav class="hidden md:flex gap-6 text-sm font-medium text-slate-600">
+                <span class="px-3 py-1 bg-brand-50 text-brand-700 rounded-full">DeepSeek Series</span>
+            </nav>
+        </div>
+    </header>
+
+    <main class="pt-32 pb-20 px-6 max-w-4xl mx-auto">
+        <!-- Hero Section -->
+        <div class="mb-16">
+            <div class="inline-block px-4 py-1.5 mb-6 text-xs font-bold tracking-widest text-brand-600 uppercase bg-brand-50 rounded-full">
+                Architecture Deep Dive
+            </div>
+            <h1 class="text-4xl md:text-5xl font-display font-bold text-slate-900 leading-tight mb-8">
+                DeepSeek-V4 아키텍처: <br/><span class="text-brand-600">100만 토큰 컨텍스트 및 추론 확장</span>을 위한 혁신
+            </h1>
+            <p class="text-xl text-slate-600 font-light leading-relaxed">
+                지능의 효율적 확장을 위한 새로운 표준을 제시하는 차세대 Mixture-of-Experts(MoE) 모델 시리즈를 분석합니다.
+            </p>
+        </div>
+
+        <center>
+            <div class="video-container">
+                <iframe  src="https://www.youtube.com/embed/32U-J5qodoQ?si=lc6RAXW2RfB7HhIl" frameborder="0" allowfullscreen></iframe>
+            </div>        
+        </center>
+
+        <!-- Article Content -->
+        <article class="prose max-w-none">
+            
+            <section id="introduction">
+                <h2>1. 서론: 백만 토큰 지능을 향한 도약</h2>
+                <div class="bento-grid">
+                    <div class="glass-card p-6 rounded-2xl">
+                        <h4 class="font-bold text-brand-700 mb-2">현대 AI 워크플로우</h4>
+                        <p class="text-sm text-slate-600">복잡한 에이전트 환경 및 대규모 문서 분석(Long-horizon) 태스크의 급증으로 인한 진화.</p>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl border-orange-100">
+                        <h4 class="font-bold text-orange-700 mb-2">기존 기술의 한계</h4>
+                        <p class="text-sm text-slate-600">바닐라 어텐션의 $O(n^2)$ 복잡도로 인한 초장기 컨텍스트 처리의 물리적·경제적 병목.</p>
+                    </div>
+                </div>
+                <div class="highlight-box">
+                    <h3 class="mt-0">DeepSeek-V4의 솔루션</h3>
+                    <ul>
+                        <li>차세대 <strong>Mixture-of-Experts(MoE)</strong> 모델 시리즈 설계</li>
+                        <li>하이브리드 어텐션(CSA/HCA) 및 mHC 구조 도입으로 지능 확장 장벽 제거</li>
+                        <li>100만 토큰 컨텍스트 수용 및 '테스트 타임 스케일링' 기술적 토대 완성</li>
+                        <li><strong>DeepSeek-V4-Pro</strong>(1.6T/49B Activated) 및 <strong>Flash</strong>(284B/13B Activated)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="mhc">
+                <h2>2. mHC (Manifold-Constrained Hyper-Connections)</h2>
+                <p>수치적 안정성 및 신호 전파 최적화를 위한 설계로, 확장 계수 $n_{hc} = 4$를 적용합니다.</p>
+                
+                <h3>핵심 메커니즘</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                        <div class="text-brand-600 font-bold mb-2">Birkhoff Polytope 제약</div>
+                        <p class="text-sm">잔차 매핑 행렬 $B_l$을 이중 확률 행렬 매니폴드로 제약하여 스펙트럴 노름을 1 이하로 유지, 그래디언트의 일관된 전파 보장.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                        <div class="text-brand-600 font-bold mb-2">Sinkhorn-Knopp 알고리즘</div>
+                        <p class="text-sm">반복적 정규화($t_{max}=20$)를 통해 매핑 행렬을 이중 확률 행렬로 정밀 투영하여 수치적 신뢰도 확보.</p>
+                    </div>
+                </div>
+
+                <p><strong>동적 파라미터화:</strong> 입력/출력 매핑에 RMSNorm과 Sigmoid를 적용하여 MoE 구조의 신호 상쇄 리스크를 원천 차단했습니다. 연산 오버헤드는 전체 파이프라인의 단 6.7% 수준으로 억제되었습니다.</p>
+            </section>
+
+            <section id="hybrid-attention">
+                <h2>3. 하이브리드 어텐션 아키텍처: CSA & HCA</h2>
+                <p>어텐션 병목을 상수 시간 검색 태스크로 전환하며 압축(Compression)과 희소성(Sparsity)을 결합했습니다.</p>
+
+                <div class="space-y-6 my-8">
+                    <div class="glass-card p-8 rounded-3xl">
+                        <h3 class="text-brand-600 !mt-0">CSA (Compressed Sparse Attention)</h3>
+                        <p><strong>오버랩 압축:</strong> $m=4$ 비율로 KV 캐시 압축. <strong>Lightning Indexer</strong>를 통한 FP4 정밀도 연산으로 관련성 높은 $k$개의 엔트리(Flash 512, Pro 1024)를 정밀하게 선택합니다.</p>
+                    </div>
+
+                    <div class="glass-card p-8 rounded-3xl border-brand-100">
+                        <h3 class="text-brand-600 !mt-0">HCA (Heavily Compressed Attention)</h3>
+                        <p><strong>공격적 압축:</strong> $m'=128$ 압축률 적용. CSA와 달리 비오버랩 Dense Attention을 유지하여 극단적인 메모리 절감과 전역적 맥락(Global Context) 가시성을 확보합니다.</p>
+                    </div>
+                </div>
+
+                <p><strong>보완 기술:</strong> Sliding Window Attention(SWA, $n_{win}=128$) 및 Attention Sink를 통해 미세 의존성 손실을 방지하고 인과관계 모델링의 정밀도를 보존합니다.</p>
+            </section>
+
+            <section id="efficiency">
+                <h2>4. 연산 효율성 및 추론 최적화</h2>
+                <p>V3.2 대비 동일 지능 수준에서 10배 이상의 KV 캐시 효율성을 입증했습니다.</p>
+                
+                <div class="overflow-x-auto my-6">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100">
+                                <th class="p-4 rounded-tl-lg">모델 모델</th>
+                                <th class="p-4">추론 FLOPs</th>
+                                <th class="p-4 rounded-tr-lg">KV 캐시 점유율</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-slate-100">
+                                <td class="p-4 font-bold text-brand-700">DeepSeek-V4-Pro (49B)</td>
+                                <td class="p-4">27% 감소</td>
+                                <td class="p-4">10% 수준 감축</td>
+                            </tr>
+                            <tr class="border-b border-slate-100">
+                                <td class="p-4 font-bold text-brand-700">DeepSeek-V4-Flash (13B)</td>
+                                <td class="p-4">10% 감소</td>
+                                <td class="p-4">7% 수준 최적화</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p><strong>FP4 양자화:</strong> MXFP4 QAT를 적용하여 메모리 대역폭 점유를 낮추고 계산 시 FP8로 무손실 변환하여 정밀도 저하를 차단했습니다.</p>
+            </section>
+
+            <section id="optimizer">
+                <h2>5. Muon 옵티마이저 및 학습 가속</h2>
+                <p>Newton-Schulz 반복을 통한 그래디언트 직교화로 AdamW 대비 압도적인 수렴 속도를 제공합니다.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+                    <div class="p-5 bg-slate-50 rounded-xl">
+                        <div class="font-bold text-sm uppercase text-slate-400 mb-2">Stage 1: 빠른 수렴</div>
+                        <p class="text-sm">8회 반복, 특잇값을 1에 가깝게 유도.</p>
+                    </div>
+                    <div class="p-5 bg-slate-50 rounded-xl">
+                        <div class="font-bold text-sm uppercase text-slate-400 mb-2">Stage 2: 안정화</div>
+                        <p class="text-sm">2회 반복, 특잇값을 정밀하게 1로 고정.</p>
+                    </div>
+                </div>
+
+                <h3>학습 안정화 및 이상치 제어</h3>
+                <ul>
+                    <li><strong>Anticipatory Routing:</strong> 백본과 라우팅 네트워크 업데이트 분리</li>
+                    <li><strong>SwiGLU Clamping:</strong> MoE 전문가 계층의 이상치 증폭을 제어하기 위해 $[-10, 10]$ 범위 클램핑 적용</li>
+                </ul>
+            </section>
+
+            <section id="conclusion" class="mt-16 pt-8 border-t-4 border-brand-600">
+                <h2 class="!mt-0">6. 결론: 지능의 효율적 확장을 위한 새로운 표준</h2>
+                <p class="text-lg leading-relaxed">
+                    CSA/HCA 하이브리드 어텐션과 mHC 아키텍처를 통해 <strong>'지능의 밀도'</strong>와 <strong>'연산의 효율성'</strong>을 완벽하게 통합했습니다. 
+                    10배 이상의 KV 캐시 절감은 백만 토큰 단위의 추론을 경제적으로 가능하게 하는 핵심 임계점이며, 이는 향후 온라인 학습 및 자가 진화 모델을 향한 구조적 해법을 제공합니다.
+                </p>
+            </section>
+
+        </article>
+    </main>
+
+    <script>
+        // Smooth hover interactions for cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+                card.style.transition = 'transform 0.3s ease';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>
