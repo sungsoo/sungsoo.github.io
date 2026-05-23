@@ -3,7 +3,7 @@ layout: post
 title: The Magic of 3D Spatial Intelligence
 date: 2026-02-08
 categories: [artificial intelligence]
-tags: [artificial general intelligence]
+tags: [artificial general intelligence, world models]
 
 ---
 

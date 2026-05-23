@@ -3,7 +3,7 @@ layout: post
 title: Gaussian World Models
 date: 2026-02-08
 categories: [artificial intelligence]
-tags: [artificial general intelligence]
+tags: [artificial general intelligence, world models]
 
 ---
 

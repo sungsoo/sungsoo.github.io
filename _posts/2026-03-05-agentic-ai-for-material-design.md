@@ -3,7 +3,7 @@ layout: post
 title: Agentic AI for Materials Design
 date: 2026-03-05
 categories: [artificial intelligence]
-tags: [artificial general intelligence]
+tags: [agentic ai, ai for science, artificial general intelligence]
 
 ---
 
