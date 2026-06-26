@@ -1,0 +1,659 @@
+---
+layout: null
+title: "Reversal Q-Learning" 
+date: 2026-06-24 
+categories: [artificial intelligence]
+tags: [agentic ai, ai for science, artificial general intelligence, world models]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RQL · 확장된 MDP로의 도약</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#10131a;
+    --slate:#1c2230;
+    --fog:#5a6276;
+    --mist:#8b93a7;
+    --paper:#f3f1ec;
+    --paper-2:#e9e6de;
+    --line:rgba(16,19,26,.12);
+    --chisel:#c8542e;        /* terracotta — the chisel mark */
+    --chisel-soft:rgba(200,84,46,.12);
+    --flow-1:#2b6f8f;        /* current */
+    --flow-2:#3f9bb8;
+    --flow-3:#6fc3cf;
+    --gold:#b8862f;
+    --maxw:1180px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans KR',sans-serif;
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--chisel);color:#fff}
+
+  /* ---------- grain + texture ---------- */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:1;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    mix-blend-mode:multiply;
+  }
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px;position:relative;z-index:2}
+
+  /* ---------- nav ---------- */
+  nav{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 28px;
+    backdrop-filter:blur(10px);
+    background:rgba(243,241,236,.78);
+    border-bottom:1px solid transparent;
+    transition:border-color .3s;
+  }
+  nav.scrolled{border-bottom:1px solid var(--line)}
+  nav .brand{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.18em;font-size:13px}
+  nav .brand b{color:var(--chisel)}
+  nav .menu{display:flex;gap:26px;font-size:13px;font-weight:500}
+  nav .menu a{color:var(--fog);text-decoration:none;transition:color .2s;position:relative}
+  nav .menu a:hover{color:var(--ink)}
+  nav .menu a::after{content:"";position:absolute;left:0;bottom:-5px;height:1.5px;width:0;background:var(--chisel);transition:width .25s}
+  nav .menu a:hover::after{width:100%}
+  @media(max-width:780px){nav .menu{display:none}}
+
+  /* ---------- hero ---------- */
+  header{
+    min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+    position:relative;padding-top:90px;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.34em;
+    text-transform:uppercase;color:var(--chisel);font-weight:500;
+    display:flex;align-items:center;gap:14px;margin-bottom:30px;
+  }
+  .eyebrow::before{content:"";width:42px;height:1.5px;background:var(--chisel)}
+  h1.title{
+    font-family:'Gowun Batang',serif;font-weight:700;
+    font-size:clamp(2.7rem,7vw,5.6rem);line-height:1.04;letter-spacing:-.01em;
+    max-width:16ch;
+  }
+  h1.title .accent{
+    color:var(--chisel);font-style:italic;position:relative;
+  }
+  .lede{
+    margin-top:34px;max-width:60ch;font-size:clamp(1.02rem,1.6vw,1.22rem);
+    color:var(--slate);font-weight:300;line-height:1.85;
+  }
+  .lede b{font-weight:600;color:var(--ink)}
+  .hero-meta{
+    margin-top:54px;display:flex;gap:40px;flex-wrap:wrap;
+    font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--fog);
+  }
+  .hero-meta div span{display:block;color:var(--ink);font-size:22px;font-weight:700;margin-top:6px}
+  .hero-meta div span em{color:var(--chisel);font-style:normal}
+
+  /* animated chisel/flow strip in hero */
+  .flowstrip{
+    position:absolute;right:-2%;top:50%;transform:translateY(-50%);
+    width:min(38vw,440px);aspect-ratio:1;opacity:.9;pointer-events:none;
+  }
+  @media(max-width:980px){.flowstrip{opacity:.18;right:-10%}}
+
+  /* ---------- section scaffolding ---------- */
+  section{padding:96px 0;position:relative}
+  .sec-head{display:flex;align-items:flex-start;gap:22px;margin-bottom:48px}
+  .sec-num{
+    font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;
+    color:var(--chisel);padding-top:10px;letter-spacing:.1em;flex-shrink:0;
+  }
+  .sec-title{font-family:'Gowun Batang',serif;font-weight:700;font-size:clamp(1.7rem,3.6vw,2.7rem);line-height:1.18;letter-spacing:-.01em}
+  .sec-sub{color:var(--fog);font-size:1rem;font-weight:300;margin-top:14px;max-width:62ch}
+
+  .prose p{font-weight:300;color:var(--slate);font-size:1.06rem;margin-bottom:18px;max-width:70ch}
+  .prose p b,.prose b{font-weight:600;color:var(--ink)}
+  .term{color:var(--chisel);font-weight:600}
+  code,.mono{font-family:'JetBrains Mono',monospace;font-size:.88em;background:var(--paper-2);padding:.12em .42em;border-radius:4px;color:var(--slate)}
+
+  hr.rule{border:0;height:1px;background:var(--line);margin:0}
+
+  /* ---------- the metaphor callout ---------- */
+  .metaphor{
+    border-left:3px solid var(--chisel);
+    padding:22px 26px;background:var(--chisel-soft);
+    border-radius:0 10px 10px 0;margin:34px 0;
+    max-width:72ch;
+  }
+  .metaphor .tag{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--chisel);font-weight:700;margin-bottom:10px;display:block}
+  .metaphor p{margin:0;font-style:italic;color:var(--slate);font-weight:400}
+
+  /* ---------- comparison table ---------- */
+  .cmp{
+    background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    box-shadow:0 1px 0 rgba(16,19,26,.04),0 24px 48px -34px rgba(16,19,26,.4);
+  }
+  .cmp-row{display:grid;grid-template-columns:1.1fr 1.4fr 1.7fr;border-top:1px solid var(--line)}
+  .cmp-row:first-child{border-top:0}
+  .cmp-row > div{padding:18px 22px;font-size:.95rem}
+  .cmp-row.head > div{
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.12em;
+    text-transform:uppercase;font-weight:700;background:var(--ink);color:var(--paper);
+  }
+  .cmp-row.head > div:nth-child(3){background:var(--chisel);color:#fff}
+  .cmp-row .label{font-weight:600;color:var(--ink);background:var(--paper-2)}
+  .cmp-row .std{color:var(--fog);font-weight:300}
+  .cmp-row .ext{color:var(--slate);font-weight:400;border-left:1px solid var(--chisel-soft);background:rgba(200,84,46,.025)}
+  .cmp-row .ext b{color:var(--chisel)}
+  @media(max-width:760px){
+    .cmp-row{grid-template-columns:1fr}
+    .cmp-row > div{padding:14px 18px}
+    .cmp-row .label{position:sticky}
+    .cmp-row.head{display:none}
+    .cmp-row .std::before{content:"표준 MDP · ";font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mist)}
+    .cmp-row .ext::before{content:"확장 MDP · ";font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--chisel);font-weight:700}
+  }
+  .insight{
+    margin-top:24px;display:flex;gap:14px;align-items:flex-start;
+    font-size:.98rem;color:var(--slate);background:var(--ink);color:var(--paper);
+    padding:20px 24px;border-radius:12px;
+  }
+  .insight .k{font-family:'JetBrains Mono',monospace;color:var(--flow-3);font-weight:700;font-size:12px;letter-spacing:.14em;flex-shrink:0;padding-top:3px}
+  .insight b{color:#fff}
+
+  /* ---------- flow steps (sculptor) ---------- */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:14px}
+  @media(max-width:880px){.steps{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:480px){.steps{grid-template-columns:1fr}}
+  .step{
+    background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px 22px 26px;
+    position:relative;overflow:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s;
+  }
+  .step:hover{transform:translateY(-6px);box-shadow:0 28px 46px -30px rgba(16,19,26,.45)}
+  .step .f{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--mist);letter-spacing:.16em;font-weight:700}
+  .step .f b{color:var(--chisel)}
+  .step h4{font-family:'Gowun Batang',serif;font-size:1.2rem;font-weight:700;margin:12px 0 8px}
+  .step p{font-size:.9rem;color:var(--fog);font-weight:300;line-height:1.65}
+  .step .formula{margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--flow-1);background:rgba(43,111,143,.07);padding:8px 11px;border-radius:7px;display:inline-block}
+  .step .barbg{position:absolute;left:0;bottom:0;height:4px;width:100%;background:var(--paper-2)}
+  .step .bar{position:absolute;left:0;bottom:0;height:4px;background:var(--chisel)}
+
+  /* reversal block */
+  .reversal{
+    background:linear-gradient(135deg,#10131a,#1c2230);color:var(--paper);
+    border-radius:20px;padding:clamp(30px,5vw,56px);margin-top:10px;
+    position:relative;overflow:hidden;
+  }
+  .reversal .quote{font-family:'Gowun Batang',serif;font-style:italic;font-size:clamp(1.5rem,3.2vw,2.2rem);line-height:1.3;color:#fff;max-width:18ch;position:relative;z-index:2}
+  .reversal .quote .ar{color:var(--flow-3)}
+  .reversal .body{margin-top:26px;max-width:64ch;position:relative;z-index:2}
+  .reversal .body p{color:#c4cad8;font-weight:300}
+  .reversal .body p b{color:#fff}
+  .rev-formula{
+    display:inline-flex;gap:14px;align-items:center;margin:18px 0;
+    font-family:'JetBrains Mono',monospace;font-size:15px;
+    background:rgba(255,255,255,.06);padding:12px 18px;border-radius:10px;
+    border:1px solid rgba(255,255,255,.1);
+  }
+  .rev-formula .minus{color:var(--chisel);font-weight:700}
+  .benefits{list-style:none;margin-top:26px;display:grid;gap:14px;position:relative;z-index:2}
+  .benefits li{display:flex;gap:16px;align-items:flex-start;color:#c4cad8;font-weight:300}
+  .benefits li .n{font-family:'JetBrains Mono',monospace;color:var(--flow-3);font-weight:700;font-size:13px;flex-shrink:0;padding-top:2px}
+  .benefits li b{color:#fff;font-weight:600}
+  .rev-arrows{position:absolute;inset:0;opacity:.5;z-index:1}
+
+  /* horizon reduction */
+  .horizon-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+  @media(max-width:840px){.horizon-grid{grid-template-columns:1fr}}
+  .check{list-style:none;display:grid;gap:18px}
+  .check li{display:flex;gap:16px;align-items:flex-start}
+  .check .box{
+    width:24px;height:24px;border-radius:7px;background:var(--chisel);flex-shrink:0;
+    display:grid;place-items:center;color:#fff;font-size:13px;margin-top:3px;
+  }
+  .check .t b{display:block;font-weight:600;color:var(--ink);margin-bottom:3px}
+  .check .t span{font-size:.94rem;color:var(--fog);font-weight:300}
+  .check .t code{font-size:.85em}
+
+  /* summary / success factors */
+  .factors{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:14px}
+  @media(max-width:780px){.factors{grid-template-columns:1fr}}
+  .factor{
+    border-top:3px solid var(--chisel);background:#fff;border:1px solid var(--line);
+    border-top:3px solid var(--chisel);border-radius:0 0 14px 14px;padding:26px 24px;
+  }
+  .factor .num{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--chisel);font-weight:700;letter-spacing:.1em}
+  .factor h4{font-family:'Gowun Batang',serif;font-size:1.25rem;margin:10px 0 8px;font-weight:700}
+  .factor p{font-size:.92rem;color:var(--fog);font-weight:300}
+
+  .twolearn{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:40px}
+  @media(max-width:680px){.twolearn{grid-template-columns:1fr}}
+  .learn{background:var(--paper-2);border-radius:14px;padding:26px 26px}
+  .learn .k{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--chisel);font-weight:700}
+  .learn h4{font-family:'Gowun Batang',serif;font-size:1.3rem;margin:8px 0 10px;font-weight:700}
+  .learn p{font-size:.95rem;color:var(--fog);font-weight:300}
+
+  /* quiz */
+  .quiz{background:var(--ink);border-radius:20px;padding:clamp(28px,4vw,46px);color:var(--paper)}
+  .quiz .k{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--flow-3);font-weight:700;display:flex;align-items:center;gap:12px}
+  .quiz .k::before{content:"";width:30px;height:1.5px;background:var(--flow-3)}
+  .qrow{border-top:1px solid rgba(255,255,255,.12);padding:26px 0}
+  .qrow:last-child{padding-bottom:0}
+  .qrow .qn{font-family:'JetBrains Mono',monospace;color:var(--chisel);font-weight:700;font-size:14px}
+  .qrow .q{font-family:'Gowun Batang',serif;font-size:1.25rem;color:#fff;margin:8px 0 16px;font-weight:700;line-height:1.4}
+  .qrow details{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden}
+  .qrow summary{cursor:pointer;padding:14px 18px;font-size:.9rem;font-weight:500;color:var(--flow-3);list-style:none;display:flex;align-items:center;gap:10px;transition:background .2s}
+  .qrow summary:hover{background:rgba(255,255,255,.04)}
+  .qrow summary::-webkit-details-marker{display:none}
+  .qrow summary .icn{font-family:'JetBrains Mono',monospace;transition:transform .25s}
+  .qrow details[open] summary .icn{transform:rotate(45deg)}
+  .qrow .ans{padding:0 18px 18px;font-size:.96rem;color:#c4cad8;font-weight:300;line-height:1.7}
+
+  /* footer */
+  footer{padding:60px 0 70px;border-top:1px solid var(--line);margin-top:40px}
+  footer .frow{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px}
+  footer .brand{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.18em;font-size:13px}
+  footer .brand b{color:var(--chisel)}
+  footer small{color:var(--mist);font-size:12.5px;font-weight:300;font-family:'JetBrains Mono',monospace}
+
+  /* reveal animation */
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+  @media(prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none}
+    *{scroll-behavior:auto!important}
+  }
+  :focus-visible{outline:2.5px solid var(--chisel);outline-offset:3px;border-radius:3px}
+          .video-container {
+          width: 100%; /* 부모 요소의 너비에 맞춤 */
+          max-width: 1600px; /* 최대 너비 설정 (옵션) */
+          margin: 0 auto;
+        }
+
+        .video-container iframe {
+          width: 100%;
+          height: auto;
+          aspect-ratio: 16 / 9; /* 16:9 비율 유지 */
+        }  
+</style>
+    <!-- MathJax for LaTeX -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="brand"><b>RQL</b> · REVERSAL Q-LEARNING</div>
+  <div class="menu">
+    <a href="#why">도입</a>
+    <a href="#mdp">확장된 MDP</a>
+    <a href="#flow">흐름 정책</a>
+    <a href="#reversal">역방향 흐름</a>
+    <a href="#horizon">지평선 단축</a>
+    <a href="#quiz">확인 질문</a>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <svg class="flowstrip" viewBox="0 0 400 400" aria-hidden="true">
+      <defs>
+        <linearGradient id="fg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#6fc3cf"/><stop offset=".5" stop-color="#3f9bb8"/><stop offset="1" stop-color="#c8542e"/>
+        </linearGradient>
+      </defs>
+      <g fill="none" stroke="url(#fg)" stroke-width="1.4" opacity=".85">
+        <path id="fp1" d="M40,360 C120,300 90,180 200,150 C310,120 280,60 360,40"/>
+        <path d="M40,372 C130,316 100,196 210,166 C320,136 290,76 360,54" opacity=".5"/>
+        <path d="M40,348 C110,284 80,164 190,134 C300,104 270,44 360,26" opacity=".5"/>
+      </g>
+      <g>
+        <circle r="6" fill="#c8542e"><animateMotion dur="5s" repeatCount="indefinite" rotate="auto"><mpath href="#fp1"/></animateMotion></circle>
+      </g>
+      <g fill="#10131a" font-family="JetBrains Mono,monospace" font-size="11" opacity=".7">
+        <circle cx="40" cy="360" r="3" fill="#8b93a7"/><text x="14" y="364">x₀</text>
+        <circle cx="360" cy="40" r="4" fill="#c8542e"/><text x="358" y="30">a=x_F</text>
+      </g>
+    </svg>
+
+    <div class="eyebrow">핵심 개념 해설서 · 강화학습</div>
+    <h1 class="title">표준 MDP에서<br><span class="accent">확장된 MDP</span>로의 도약</h1>
+    <p class="lede">기존의 강화학습이 <b>무엇</b>을 할지 결정했다면, RQL은 그 행동이 <b>어떻게</b> 만들어지는지의 과정에 집중합니다. 무작위 노이즈에서 출발해 여러 단계를 거쳐 행동을 완성하는 <b>흐름 정책</b>을, 복잡한 역전파 없이 안정적으로 학습시키는 방법입니다.</p>
+    <div class="hero-meta">
+      <div>핵심 아이디어<span>확장된 <em>M̃</em></span></div>
+      <div>학습 안정성<span><em>No</em> BPTT</span></div>
+      <div>효율 극대화<span>지평선 <em>단축</em></span></div>
+    </div>
+  </div>
+</header>
+
+<hr class="rule">
+
+<!-- 1. WHY -->
+<section id="why">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">01</div>
+      <div>
+        <h2 class="sec-title">왜 우리는 '확장된 MDP'를 배우는가?</h2>
+        <p class="sec-sub">생성형 모델은 행동을 한 번에 내뱉지 않습니다. 무작위 노이즈에서 시작해 여러 단계의 정교화를 거치죠. 이 '과정'을 통째로 미분하려는 순간, 학습은 불안정해집니다.</p>
+      </div>
+    </div>
+    <div class="prose reveal">
+      <p>강화학습의 핵심은 에이전트가 최적의 <b>행동(Action)</b>을 선택하도록 가르치는 것입니다. 표준 방식은 상태 <code>s</code>가 주어지면 행동 <code>a</code>를 단번에 결정합니다. 하지만 최근 각광받는 <span class="term">흐름 정책(Flow Policies)</span>은 무작위 노이즈에서 시작해 여러 단계의 정교화를 거쳐 최종 행동을 완성합니다.</p>
+      <p>이처럼 과정이 복잡해지면 생성 단계를 통째로 미분하여 학습시키려 할 때 계산이 불안정해지는 <span class="term">역전파의 저주(BPTT instability)</span>에 빠집니다. RQL은 이를 해결하기 위해 <b>행동 생성의 매 순간을 별도의 RL 단계로 취급하는</b> '확장된 MDP' 개념을 도입했습니다.</p>
+    </div>
+    <div class="metaphor reveal">
+      <span class="tag">조각가의 비유</span>
+      <p>거대한 바위를 한 번의 망치질로 조각상으로 만드는 것이 아니라, 수천 번의 섬세한 정질로 나누어 완성하되 — 그 정질 하나하나가 올바른 방향인지 가르치는 것과 같습니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2. COMPARISON -->
+<section id="mdp" style="background:var(--paper-2)">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">02</div>
+      <div>
+        <h2 class="sec-title">표준 MDP <span style="color:var(--mist)">vs.</span> 확장된 MDP (M̃)</h2>
+        <p class="sec-sub">RQL은 기존 MDP의 지평을 행동 생성 내부로 확장합니다. 구조적 차이를 비교해 보세요.</p>
+      </div>
+    </div>
+    <div class="cmp reveal">
+      <div class="cmp-row head">
+        <div>구분</div><div>표준 MDP (M)</div><div>확장된 MDP (M̃)</div>
+      </div>
+      <div class="cmp-row">
+        <div class="label">상태 (State)</div>
+        <div class="std">현재 상태 <code>s</code></div>
+        <div class="ext"><b>(s, x, f)</b> — 상태, 부분 생성 행동, 흐름 단계</div>
+      </div>
+      <div class="cmp-row">
+        <div class="label">행동 (Action)</div>
+        <div class="std">환경에 가하는 직접적인 힘</div>
+        <div class="ext">속도 벡터 <b>v</b> — 현재 형태(x)를 변화시킬 방향과 속도</div>
+      </div>
+      <div class="cmp-row">
+        <div class="label">보상 (Reward)</div>
+        <div class="std">매 단계 발생 가능</div>
+        <div class="ext">마지막 흐름 단계 <b>(f = F−1)</b>에서만 환경 보상 r 발생</div>
+      </div>
+      <div class="cmp-row">
+        <div class="label">종료 지점</div>
+        <div class="std">다음 상태(s′)로 전이될 때</div>
+        <div class="ext">행동 생성 프로세스 <b>(F 단계)</b>가 완전히 끝날 때</div>
+      </div>
+      <div class="cmp-row">
+        <div class="label">시간 지평 (Horizon)</div>
+        <div class="std">원래 시간 단계 <code>T</code></div>
+        <div class="ext">생성 단계가 추가되어 <b>F배로 확장 (T × F)</b></div>
+      </div>
+    </div>
+    <div class="insight reveal">
+      <span class="k">KEY INSIGHT</span>
+      <div>확장된 MDP는 시간적 지평을 <b>F배로 늘리는 대신</b>, 복잡한 '행동 생성'이라는 블랙박스를 단순한 <b>'단계별 속도 결정'</b> 문제로 치환합니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. FLOW POLICIES -->
+<section id="flow">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">03</div>
+      <div>
+        <h2 class="sec-title">흐름 정책과 오일러 통합의 마법</h2>
+        <p class="sec-sub">RQL에서 행동은 고정된 점이 아니라, 목적지로 나아가는 <b>흐름(Flow)</b>입니다. 조각가의 4단계 과정으로 살펴봅니다.</p>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="f">STEP <b>f=0</b></div>
+        <h4>가공되지 않은 원석</h4>
+        <p>아무런 의미가 없는 무작위 노이즈에서 시작합니다. 조각을 시작하기 전의 커다란 돌덩이입니다.</p>
+        <span class="formula">x₀ ~ 𝒩(0, I)</span>
+        <span class="barbg"></span><span class="bar" style="width:8%"></span>
+      </div>
+      <div class="step reveal">
+        <div class="f">FIELD <b>v</b></div>
+        <h4>조각가의 설계도</h4>
+        <p>상태·현재 모양·단계에 따라 어디를 깎을지 결정하는 속도장. 조각가의 의도가 담긴 설계도입니다.</p>
+        <span class="formula">v(s, x, f)</span>
+        <span class="barbg"></span><span class="bar" style="width:38%"></span>
+      </div>
+      <div class="step reveal">
+        <div class="f">EULER <b>step</b></div>
+        <h4>섬세한 정질</h4>
+        <p>설계도에 따라 아주 조금씩 모양을 바꿉니다. 한 번의 정질이 하나의 오일러 단계입니다.</p>
+        <span class="formula">x_{f+1} ← x_f + v</span>
+        <span class="barbg"></span><span class="bar" style="width:70%"></span>
+      </div>
+      <div class="step reveal">
+        <div class="f">DONE <b>f=F</b></div>
+        <h4>작품의 완성</h4>
+        <p>F번의 단계를 거치면 노이즈는 비로소 환경에 전달될 유효한 행동 a가 됩니다.</p>
+        <span class="formula">x_F = a</span>
+        <span class="barbg"></span><span class="bar" style="width:100%;background:var(--gold)"></span>
+      </div>
+    </div>
+    <div class="metaphor reveal" style="margin-top:36px">
+      <span class="tag">전문가의 한마디</span>
+      <p>가장 중요한 점은 “흐름의 각 단계가 하나의 독립적인 RL 행동이 된다”는 것입니다. 조각가가 정을 한 번 때릴 때마다, 가치 함수가 그 방향의 옳고 그름을 평가할 수 있게 됩니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. REVERSAL -->
+<section id="reversal" style="background:var(--paper-2)">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">04</div>
+      <div>
+        <h2 class="sec-title">RQL의 핵심 — 역방향 흐름으로<br>가상 궤적 생성하기</h2>
+        <p class="sec-sub">기존 데이터셋에는 완성된 조각상(행동 a)만 있을 뿐, 그 과정은 기록되어 있지 않습니다. RQL은 결과값에서 거꾸로 노이즈를 찾아갑니다.</p>
+      </div>
+    </div>
+    <div class="reversal reveal">
+      <svg class="rev-arrows" viewBox="0 0 800 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <g fill="none" stroke="#3f9bb8" stroke-width="1">
+          <path d="M760,60 C600,90 500,40 360,90 C220,140 140,80 40,130"/>
+          <path d="M760,160 C600,190 500,140 360,190 C220,240 140,180 40,230" opacity=".6"/>
+        </g>
+        <polygon points="40,130 56,123 56,137" fill="#c8542e"/>
+        <polygon points="40,230 56,223 56,237" fill="#c8542e" opacity=".6"/>
+      </svg>
+      <div class="quote">거꾸로 흐르는 <span class="ar">강물</span></div>
+      <div class="body">
+        <p>RQL은 수학적 기교를 통해 <b>결과값에서 시작해 거꾸로 노이즈를 찾아가는 역연산</b>을 수행합니다. 이미 알고 있는 행동 a에서 속도 v를 거꾸로 빼나가면, 이 행동이 어떤 노이즈 x₀에서 출발했어야 하는지를 역추적할 수 있습니다.</p>
+        <div class="rev-formula">역방향 오일러 &nbsp;·&nbsp; x_{f−1} <span class="minus">←</span> x_f <span class="minus">−</span> v</div>
+        <p>이렇게 생성된 <b>가상 궤적(Virtual Trajectories)</b>은 세 가지 결정적 이점을 제공합니다.</p>
+        <ul class="benefits">
+          <li><span class="n">01</span><div><b>가상 데이터 생성</b> — 실제 데이터셋에 없던 행동 생성 중간 단계를 스스로 만들어 학습 자료로 활용합니다.</div></li>
+          <li><span class="n">02</span><div><b>BPTT 불안정성 해소</b> — 전체 생성 과정을 통째로 미분하지 않고 각 단계를 끊어서 학습하므로 수렴이 빠르고 안정적입니다.</div></li>
+          <li><span class="n">03</span><div><b>최신 정책 반영 (On-policy 효과)</b> — 현재 정책으로 데이터를 재해석하므로, 과거 데이터라도 현재 정책에 맞춰 효율적으로 학습합니다.</div></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. HORIZON -->
+<section id="horizon">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">05</div>
+      <div>
+        <h2 class="sec-title">지평선 단축 — 학습 효율 극대화</h2>
+        <p class="sec-sub">시간 지평이 F배로 늘어나면 TD 오차가 F배 누적되는 '지평선의 저주'가 발생합니다. RQL은 중간 단계를 건너뛰어 가치 함수의 목표를 직접 타격합니다.</p>
+      </div>
+    </div>
+    <div class="horizon-grid">
+      <ul class="check reveal">
+        <li>
+          <span class="box">✓</span>
+          <div class="t"><b>중간 업데이트 생략</b><span>f 단계에서 f+1 단계를 예측하는 대신, 최종 보상 지점을 직접 바라봅니다.</span></div>
+        </li>
+        <li>
+          <span class="box">✓</span>
+          <div class="t"><b>지평선 단축 타겟</b><span>현재 단계의 목표값으로 <code>r + γ·V(s′, x′₀, 0)</code>을 직접 사용합니다. 여기서 x′₀은 다음 상태 s′의 새 초기 노이즈입니다.</span></div>
+        </li>
+        <li>
+          <span class="box">✓</span>
+          <div class="t"><b>결정론적 특성의 마법</b><span>RQL의 행동 생성은 순수하게 수학적으로 정의된 결정론적 경로입니다. 운이나 노이즈가 끼어들 여지가 없으므로, 편향·분산 없이 100% 확신을 가지고 지평선을 단축할 수 있습니다.</span></div>
+        </li>
+      </ul>
+      <div class="reveal">
+        <svg viewBox="0 0 360 280" aria-hidden="true" style="width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:14px">
+          <!-- long horizon (faded) -->
+          <g font-family="JetBrains Mono,monospace" font-size="11" fill="#8b93a7">
+            <text x="24" y="40">길어진 지평선 (T × F)</text>
+          </g>
+          <g stroke="#c8d0dd" stroke-width="1.4" fill="none">
+            <path d="M30,70 H330"/>
+          </g>
+          <g fill="#c8d0dd">
+            <circle cx="30" cy="70" r="5"/><circle cx="90" cy="70" r="5"/><circle cx="150" cy="70" r="5"/><circle cx="210" cy="70" r="5"/><circle cx="270" cy="70" r="5"/><circle cx="330" cy="70" r="5"/>
+          </g>
+          <!-- shortcut -->
+          <g font-family="JetBrains Mono,monospace" font-size="11" fill="#c8542e" font-weight="700">
+            <text x="24" y="150">지평선 단축 — 직접 타격</text>
+          </g>
+          <path d="M30,180 Q180,120 330,180" stroke="#c8542e" stroke-width="2.5" fill="none" stroke-dasharray="6 5"/>
+          <circle cx="30" cy="180" r="7" fill="#2b6f8f"/>
+          <circle cx="330" cy="180" r="7" fill="#c8542e"/>
+          <polygon points="330,180 316,172 320,188" fill="#c8542e"/>
+          <g font-family="JetBrains Mono,monospace" font-size="11" fill="#10131a">
+            <text x="16" y="210">x_f</text>
+            <text x="296" y="210">r + γV(s′)</text>
+          </g>
+          <g font-family="JetBrains Mono,monospace" font-size="10" fill="#5a6276">
+            <text x="120" y="252">결정론적 경로 → 편향·분산 0</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="insight reveal" style="margin-top:36px">
+      <span class="k">가교 역할</span>
+      <div>이 기법은 늘어난 지평선을 <b>물리적으로 가로질러</b>, 현재의 흐름 단계를 다음 상태의 보상과 직접 연결합니다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. SUMMARY -->
+<section id="summary" style="background:var(--paper-2)">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">06</div>
+      <div>
+        <h2 class="sec-title">마무리 — RQL 학습자 가이드 요약</h2>
+        <p class="sec-sub">RQL은 생성형 모델의 강력한 표현력과 강화학습의 효율적 최적화를 결합한 알고리즘입니다.</p>
+      </div>
+    </div>
+    <div class="twolearn">
+      <div class="learn reveal">
+        <span class="k">Value Learning</span>
+        <h4>가치 학습 · Expectile Regression</h4>
+        <p>행동들 사이의 우열을 가려내어, 최선의 가치를 암묵적으로 학습합니다.</p>
+      </div>
+      <div class="learn reveal">
+        <span class="k">Policy Learning</span>
+        <h4>정책 학습 · DDPG-style</h4>
+        <p>학습된 가치 함수의 기울기를 따라 속도 벡터 v를 업데이트하여, 더 높은 가치를 향해 '흐르도록' 정책을 깎아나갑니다.</p>
+      </div>
+    </div>
+    <h3 style="font-family:'Gowun Batang',serif;font-weight:700;font-size:1.4rem;margin-bottom:20px" class="reveal">RQL의 3대 성공 요인</h3>
+    <div class="factors">
+      <div class="factor reveal">
+        <span class="num">01</span>
+        <h4>BPTT 없음</h4>
+        <p>생성 과정을 통째로 미분하지 않아 학습이 안정적입니다.</p>
+      </div>
+      <div class="factor reveal">
+        <span class="num">02</span>
+        <h4>가치 기울기 활용</h4>
+        <p>단순 모방을 넘어, 가치 함수가 가리키는 최적의 방향으로 개선합니다.</p>
+      </div>
+      <div class="factor reveal">
+        <span class="num">03</span>
+        <h4>지평선 단축</h4>
+        <p>결정론적 경로의 특성을 이용해 늘어난 학습 단계를 효율적으로 압축합니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+        <center>
+          <div class="video-container">
+            <iframe src="https://www.youtube.com/embed/4PYsUeSlOFE?si=u10-e2cp0Jzx1UIb" frameborder="0" allowfullscreen></iframe>
+          </div>        
+        </center>
+
+<!-- QUIZ -->
+<section id="quiz">
+  <div class="wrap">
+    <div class="quiz reveal">
+      <div class="k">학습 확인 질문</div>
+      <div class="qrow">
+        <div class="qn">Q1</div>
+        <div class="q">확장된 MDP(M̃)에서 보상이 오직 마지막 흐름 단계(f = F−1)에서만 발생하는 이유는?</div>
+        <details>
+          <summary><span class="icn">+</span> 정답 가이드 보기</summary>
+          <div class="ans">생성 프로세스와 실제 환경 상호작용의 <b>경계</b>를 생각해 보세요. 중간 흐름 단계(x를 깎는 과정)는 아직 환경에 아무것도 가하지 않은 '내부 계산'일 뿐입니다. 노이즈가 완전한 행동 a로 완성된 마지막 단계에서야 비로소 환경과 상호작용하므로, 환경 보상 r은 그 지점에서만 발생합니다.</div>
+        </details>
+      </div>
+      <div class="qrow">
+        <div class="qn">Q2</div>
+        <div class="q">행동 생성 과정의 '결정론적 특성'이 지평선 단축을 안전하게 만드는 이유는?</div>
+        <details>
+          <summary><span class="icn">+</span> 정답 가이드 보기</summary>
+          <div class="ans">불확실성 없는 <b>수학적 경로</b>의 장점을 생각해 보세요. 일반적인 RL에서 단계를 건너뛰는 것은 환경의 불확실성 때문에 위험합니다. 그러나 RQL의 흐름 단계는 순수하게 수학으로 정의된 결정론적 경로라, 중간에 운이나 노이즈가 끼어들 여지가 없습니다. 따라서 편향이나 분산 없이 중간 단계를 건너뛰어 목표를 직접 타격할 수 있습니다.</div>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap frow">
+    <div class="brand"><b>RQL</b> · REVERSAL Q-LEARNING</div>
+    <small>핵심 개념 해설서 · 표준 MDP → 확장된 MDP (M̃)</small>
+  </div>
+</footer>
+
+<script>
+  // nav border on scroll
+  const nav=document.getElementById('nav');
+  addEventListener('scroll',()=>nav.classList.toggle('scrolled',scrollY>20));
+
+  // reveal on scroll
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:.12,rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal').forEach((el,i)=>{
+    el.style.transitionDelay=(i%4*60)+'ms';
+    io.observe(el);
+  });
+</script>
+</body>
+</html>
