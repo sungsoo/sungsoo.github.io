@@ -1,0 +1,979 @@
+---
+layout: null
+title: "How Transparent is DiffusionGemma?" 
+date: 2026-06-27
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiffusionGemma는 얼마나 투명한가</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a0e14;
+    --ink-2:#111722;
+    --panel:#141b27;
+    --panel-edge:#1e2838;
+    --fog:#2a3850;          /* 자기조건화 벡터의 불투명함 */
+    --mist:#3d5170;
+    --cyan:#39d4d4;         /* 수렴: 확정된 토큰 */
+    --cyan-dim:#1c7a7a;
+    --amber:#f0883e;        /* 인접/유사 토큰 */
+    --amber-dim:#a85a26;
+    --violet:#8b7ff0;
+    --text:#e8edf4;
+    --text-2:#9fb0c6;
+    --text-3:#62748e;
+    --line:#202a3a;
+    --maxw:1140px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--ink);
+    color:var(--text);
+    font-family:"Noto Sans KR",system-ui,sans-serif;
+    font-weight:300;
+    line-height:1.85;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .mono{font-family:"IBM Plex Mono",monospace}
+  .grotesk{font-family:"Space Grotesk",sans-serif}
+
+  /* ---------- 배경 격자: 캔버스 토큰 그리드 ---------- */
+  .grid-bg{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:44px 44px;
+    opacity:.18;
+    mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);
+  }
+
+  .wrap{position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;padding:0 28px}
+
+  /* ---------- 상단 메타 바 ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:50;
+    background:rgba(10,14,20,.82);
+    backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar-inner{
+    max-width:var(--maxw);margin:0 auto;padding:12px 28px;
+    display:flex;align-items:center;justify-content:space-between;gap:20px;
+  }
+  .brand{display:flex;align-items:center;gap:12px;font-family:"Space Grotesk";font-weight:600;letter-spacing:-.01em;font-size:15px}
+  .brand .dot{width:10px;height:10px;border-radius:2px;background:var(--fog);box-shadow:0 0 0 0 var(--cyan);animation:converge 3.2s infinite}
+  @keyframes converge{0%,100%{background:var(--fog);box-shadow:0 0 18px 1px transparent}55%{background:var(--cyan);box-shadow:0 0 18px 2px rgba(57,212,212,.55)}}
+  .topnav{display:flex;gap:6px;font-family:"IBM Plex Mono";font-size:12.5px}
+  .topnav a{color:var(--text-3);text-decoration:none;padding:6px 11px;border-radius:6px;transition:.2s;white-space:nowrap}
+  .topnav a:hover{color:var(--cyan);background:var(--panel)}
+  @media(max-width:780px){.topnav{display:none}}
+
+  /* ---------- HERO ---------- */
+  .hero{padding:84px 0 64px;position:relative}
+  .eyebrow{
+    font-family:"IBM Plex Mono";font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--cyan);margin-bottom:26px;display:flex;align-items:center;gap:14px;
+  }
+  .eyebrow::before{content:"";width:38px;height:1px;background:linear-gradient(90deg,var(--cyan),transparent)}
+  h1.title{
+    font-family:"Space Grotesk";font-weight:700;letter-spacing:-.03em;
+    font-size:clamp(2.6rem,7vw,5.4rem);line-height:.98;color:var(--text);margin-bottom:8px;
+  }
+  h1.title .q{color:var(--cyan);font-weight:500}
+  .subtitle-en{font-family:"IBM Plex Mono";color:var(--text-3);font-size:14px;letter-spacing:.04em;margin-top:18px}
+  .lede{
+    font-size:clamp(1.05rem,2vw,1.25rem);color:var(--text-2);font-weight:300;
+    max-width:760px;margin:34px 0 0;line-height:1.95;
+  }
+  .lede b{color:var(--text);font-weight:500}
+  .authors{
+    margin-top:42px;padding-top:26px;border-top:1px solid var(--line);
+    display:flex;flex-wrap:wrap;gap:32px 48px;font-size:13.5px;color:var(--text-3);
+  }
+  .authors .grp-label{font-family:"IBM Plex Mono";font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);display:block;margin-bottom:7px}
+  .authors .names{color:var(--text-2)}
+
+  /* ---------- 수렴 비주얼 (hero 옆) ---------- */
+  .converge-viz{
+    margin-top:54px;border:1px solid var(--panel-edge);border-radius:14px;
+    background:linear-gradient(180deg,var(--ink-2),var(--panel));
+    padding:26px 28px 30px;overflow:hidden;
+  }
+  .cv-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+  .cv-head .t{font-family:"IBM Plex Mono";font-size:12px;letter-spacing:.06em;color:var(--text-2)}
+  .cv-head .step{font-family:"IBM Plex Mono";font-size:12px;color:var(--cyan)}
+  .canvas-row{display:flex;flex-wrap:wrap;gap:5px}
+  .tok{
+    font-family:"IBM Plex Mono";font-size:12.5px;padding:5px 9px;border-radius:5px;
+    background:var(--fog);color:var(--text-3);transition:all .5s cubic-bezier(.4,0,.2,1);
+    border:1px solid transparent;filter:blur(.4px);opacity:.6;
+  }
+  .tok.resolved{background:rgba(57,212,212,.13);color:var(--cyan);border-color:rgba(57,212,212,.35);filter:none;opacity:1}
+  .tok.adjacent{background:rgba(240,136,62,.1);color:var(--amber);border-color:rgba(240,136,62,.28);filter:none;opacity:1}
+  .cv-legend{display:flex;gap:20px;margin-top:18px;font-family:"IBM Plex Mono";font-size:11px;color:var(--text-3);flex-wrap:wrap}
+  .cv-legend span{display:flex;align-items:center;gap:7px}
+  .swatch{width:11px;height:11px;border-radius:3px}
+
+  /* ---------- 섹션 골격 ---------- */
+  section.block{padding:72px 0;border-top:1px solid var(--line)}
+  .sec-num{font-family:"IBM Plex Mono";font-size:13px;color:var(--cyan-dim);letter-spacing:.1em}
+  h2{
+    font-family:"Space Grotesk";font-weight:600;letter-spacing:-.02em;
+    font-size:clamp(1.7rem,3.6vw,2.6rem);line-height:1.1;color:var(--text);
+    margin:10px 0 8px;
+  }
+  h2 .en{display:block;font-family:"IBM Plex Mono";font-size:13px;font-weight:400;color:var(--text-3);letter-spacing:.04em;margin-top:12px}
+  h3{font-family:"Space Grotesk";font-weight:600;font-size:1.3rem;color:var(--text);margin:42px 0 14px;letter-spacing:-.01em;display:flex;align-items:center;gap:12px}
+  h3 .idx{font-family:"IBM Plex Mono";font-size:13px;color:var(--cyan);font-weight:500;background:rgba(57,212,212,.1);padding:3px 9px;border-radius:5px;border:1px solid rgba(57,212,212,.25)}
+  h4{font-family:"Space Grotesk";font-weight:600;font-size:1.08rem;color:var(--text);margin:30px 0 10px}
+  p{margin:0 0 18px;color:var(--text-2)}
+  p strong, li strong{color:var(--text);font-weight:500}
+  .accent{color:var(--cyan)}
+  .lead-p{font-size:1.12rem;color:var(--text);font-weight:300;max-width:780px;line-height:1.95;margin-bottom:28px}
+
+  /* ---------- 본문 컬럼 폭 ---------- */
+  .col{max-width:820px}
+
+  /* ---------- 카드 / 패널 ---------- */
+  .panel{
+    background:var(--panel);border:1px solid var(--panel-edge);border-radius:12px;
+    padding:26px 28px;margin:26px 0;
+  }
+  .panel-title{font-family:"Space Grotesk";font-weight:600;font-size:1.02rem;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .panel-title::before{content:"";width:6px;height:18px;border-radius:2px;background:var(--cyan)}
+
+  /* 강조 콜아웃 */
+  .callout{
+    border-left:3px solid var(--cyan);background:linear-gradient(90deg,rgba(57,212,212,.06),transparent);
+    padding:18px 24px;margin:26px 0;border-radius:0 10px 10px 0;
+  }
+  .callout p{margin:0;color:var(--text-2)}
+  .callout.amber{border-left-color:var(--amber);background:linear-gradient(90deg,rgba(240,136,62,.07),transparent)}
+
+  /* ---------- 핵심 수치 스트립 ---------- */
+  .stat-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:40px 0}
+  .stat{
+    background:var(--panel);border:1px solid var(--panel-edge);border-radius:12px;padding:26px 22px;
+    position:relative;overflow:hidden;
+  }
+  .stat::after{content:"";position:absolute;right:-30px;bottom:-30px;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle,rgba(57,212,212,.12),transparent 70%)}
+  .stat .big{font-family:"Space Grotesk";font-weight:700;font-size:2.7rem;line-height:1;color:var(--cyan);letter-spacing:-.03em}
+  .stat .big.amber{color:var(--amber)}
+  .stat .big small{font-size:1.1rem;color:var(--text-3);font-weight:400}
+  .stat .cap{margin-top:12px;font-size:13px;color:var(--text-2);line-height:1.6}
+  @media(max-width:720px){.stat-strip{grid-template-columns:1fr}}
+
+  /* ---------- 표 ---------- */
+  .tbl-wrap{overflow-x:auto;margin:26px 0;border:1px solid var(--panel-edge);border-radius:12px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+  caption{caption-side:bottom;text-align:left;font-size:12.5px;color:var(--text-3);padding:14px 18px;font-family:"IBM Plex Mono";line-height:1.6}
+  th,td{padding:13px 18px;text-align:left;border-bottom:1px solid var(--line)}
+  thead th{font-family:"IBM Plex Mono";font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);background:var(--ink-2)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(57,212,212,.03)}
+  td .mono{color:var(--text)}
+  .hl-cyan{color:var(--cyan);font-family:"IBM Plex Mono"}
+  .hl-amber{color:var(--amber);font-family:"IBM Plex Mono"}
+
+  /* ---------- 수식 블록 ---------- */
+  .eq{
+    font-family:"IBM Plex Mono";font-size:14.5px;color:var(--text);
+    background:var(--ink-2);border:1px solid var(--panel-edge);border-radius:10px;
+    padding:18px 24px;margin:22px 0;overflow-x:auto;text-align:center;letter-spacing:.02em;
+  }
+  .eq .lbl{float:right;color:var(--text-3);font-size:12px}
+
+  /* ---------- 케이스 스터디 그리드 ---------- */
+  .phenom-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin:30px 0}
+  @media(max-width:720px){.phenom-grid{grid-template-columns:1fr}}
+  .phenom{
+    background:var(--panel);border:1px solid var(--panel-edge);border-radius:12px;padding:22px 24px;transition:.25s;
+  }
+  .phenom:hover{border-color:var(--cyan-dim);transform:translateY(-2px)}
+  .phenom .tag{font-family:"IBM Plex Mono";font-size:11px;color:var(--cyan);letter-spacing:.08em}
+  .phenom h4{margin:8px 0 8px}
+  .phenom p{font-size:14px;margin:0;color:var(--text-2);line-height:1.7}
+
+  /* ---------- denoising step 시각화 (재사용) ---------- */
+  .step-demo{background:var(--ink-2);border:1px solid var(--panel-edge);border-radius:12px;padding:24px 26px;margin:26px 0}
+  .step-line{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-bottom:1px dashed var(--line)}
+  .step-line:last-child{border-bottom:none}
+  .step-line .sl{font-family:"IBM Plex Mono";font-size:12px;color:var(--text-3);min-width:64px;padding-top:3px}
+  .step-line .sl b{color:var(--cyan);font-weight:600}
+  .step-line .seq{font-family:"IBM Plex Mono";font-size:13.5px;color:var(--text);line-height:1.8;flex:1}
+  .gold{color:var(--amber);font-weight:600;background:rgba(240,136,62,.12);padding:1px 6px;border-radius:4px}
+  .strike{color:var(--text-3);text-decoration:line-through;opacity:.6}
+  .pick{color:var(--cyan);font-weight:600}
+
+  /* ---------- 리스트 ---------- */
+  ul.clean{list-style:none;margin:18px 0;padding:0}
+  ul.clean li{position:relative;padding:8px 0 8px 28px;color:var(--text-2);border-bottom:1px solid var(--line)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li::before{content:"›";position:absolute;left:6px;color:var(--cyan);font-family:"IBM Plex Mono";font-weight:600}
+
+  ol.steps{counter-reset:s;list-style:none;margin:20px 0;padding:0}
+  ol.steps>li{counter-increment:s;position:relative;padding:14px 0 14px 52px;border-bottom:1px solid var(--line);color:var(--text-2)}
+  ol.steps>li:last-child{border-bottom:none}
+  ol.steps>li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:14px;font-family:"IBM Plex Mono";font-size:13px;color:var(--cyan);background:rgba(57,212,212,.08);border:1px solid rgba(57,212,212,.25);border-radius:6px;width:34px;height:28px;display:flex;align-items:center;justify-content:center}
+  ol.steps>li b{color:var(--text);font-weight:500}
+
+  /* ---------- 모니터링 막대 ---------- */
+  .bars{margin:28px 0}
+  .bar-row{display:grid;grid-template-columns:170px 1fr;gap:18px;align-items:center;padding:9px 0}
+  .bar-row .lbl{font-family:"IBM Plex Mono";font-size:12.5px;color:var(--text-2);text-align:right}
+  .bar-track{position:relative;height:30px}
+  .bar-pair{display:flex;flex-direction:column;gap:5px}
+  .b{height:11px;border-radius:3px;position:relative}
+  .b.g{background:linear-gradient(90deg,var(--mist),#5a7299)}
+  .b.d{background:linear-gradient(90deg,var(--cyan-dim),var(--cyan))}
+  .b span{position:absolute;right:8px;top:-4px;font-family:"IBM Plex Mono";font-size:10px;color:var(--text)}
+  .bars-legend{display:flex;gap:24px;margin:6px 0 0 188px;font-family:"IBM Plex Mono";font-size:11.5px;color:var(--text-3)}
+  .bars-legend span{display:flex;align-items:center;gap:7px}
+  @media(max-width:640px){.bar-row{grid-template-columns:1fr}.bar-row .lbl{text-align:left}.bars-legend{margin-left:0}}
+
+  /* ---------- 알고리즘 코드 블록 ---------- */
+  pre.algo{
+    background:var(--ink-2);border:1px solid var(--panel-edge);border-radius:12px;
+    padding:22px 24px;overflow-x:auto;font-family:"IBM Plex Mono";font-size:12.5px;
+    color:var(--text-2);line-height:1.75;margin:24px 0;
+  }
+  pre.algo .kw{color:var(--violet)}
+  pre.algo .cm{color:var(--text-3);font-style:italic}
+  pre.algo .fn{color:var(--cyan)}
+
+  /* ---------- 미래/한계 ---------- */
+  .future-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:28px 0}
+  @media(max-width:720px){.future-grid{grid-template-columns:1fr}}
+  .future-card{background:var(--panel);border:1px solid var(--panel-edge);border-radius:12px;padding:22px 24px}
+  .future-card .num{font-family:"IBM Plex Mono";color:var(--cyan);font-size:12px;letter-spacing:.1em}
+  .future-card h4{margin:8px 0 10px;font-size:1.05rem}
+  .future-card p{font-size:13.5px;margin:0;line-height:1.7}
+
+  /* ---------- 푸터 ---------- */
+  footer{border-top:1px solid var(--line);padding:54px 0 70px;color:var(--text-3);font-size:13px}
+  footer .ft-grid{display:flex;justify-content:space-between;flex-wrap:wrap;gap:30px}
+  footer .ft-note{max-width:520px;line-height:1.8}
+  footer a{color:var(--cyan);text-decoration:none}
+  footer a:hover{text-decoration:underline}
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+  @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.brand .dot{animation:none}}
+  .video-container {
+    width: 100%; /* 부모 요소의 너비에 맞춤 */
+    max-width: 1600px; /* 최대 너비 설정 (옵션) */
+    margin: 0 auto;
+  }
+
+  .video-container iframe {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9; /* 16:9 비율 유지 */
+  }      
+</style>
+<!-- MathJax for LaTeX -->
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        svg: {
+            fontCache: 'global'
+        }
+    };
+</script>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- 상단 바 -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="dot"></span>DiffusionGemma · 투명성 감사</div>
+    <nav class="topnav">
+      <a href="#serial">불투명 직렬 깊이</a>
+      <a href="#bottleneck">병목 해석</a>
+      <a href="#monitor">모니터 가능성</a>
+      <a href="#reason">추론 방식</a>
+      <a href="#open">미해결 과제</a>
+    </nav>
+  </div>
+</div>
+
+<!-- HERO -->
+<header class="hero wrap">
+  <div class="reveal in">
+    <div class="eyebrow grotesk">Google DeepMind · 2026-06 · arXiv:2606.20560</div>
+    <h1 class="title grotesk">DiffusionGemma는<br>얼마나 <span class="q">투명한가?</span></h1>
+    <div class="subtitle-en mono">How Transparent is DiffusionGemma?</div>
+    <p class="lede">
+      LLM 추론의 투명성은 모델의 결정을 이해하고 오남용과 정렬 실패를 완화하며 의외의 동작을 디버깅하기 위한 핵심 조건이다.
+      그런데 <b>DiffusionGemma는 연산의 상당 부분을 연속적인 잠재 공간에서 수행한다.</b>
+      이 구조는 추론을 덜 투명하게 만드는가. 본 연구는 투명성을
+      <b class="accent">변수 투명성</b>과 <b class="accent">알고리즘 투명성</b>이라는 두 축으로 분해해 이 질문에 답한다.
+    </p>
+  </div>
+
+  <!-- 수렴 비주얼 -->
+  <div class="converge-viz reveal">
+    <div class="cv-head">
+      <span class="t mono">캔버스 토큰 수렴 — "Explain photosynthesis."</span>
+      <span class="step mono" id="cvStep">denoising step 0 / 15</span>
+    </div>
+    <div class="canvas-row" id="canvasRow"></div>
+    <div class="cv-legend">
+      <span><span class="swatch" style="background:var(--fog)"></span>미수렴 (불투명)</span>
+      <span><span class="swatch" style="background:rgba(57,212,212,.4)"></span>최종 토큰으로 수렴</span>
+      <span><span class="swatch" style="background:rgba(240,136,62,.4)"></span>인접 위치 후보</span>
+    </div>
+  </div>
+
+  <div class="authors reveal">
+    <div>
+      <span class="grp-label mono">Primary Contributors</span>
+      <span class="names">Joshua Engels · Callum McDougall · Bilal Chughtai</span>
+    </div>
+    <div>
+      <span class="grp-label mono">Contributors</span>
+      <span class="names">Janos Kramar · Senthoran Rajamanoharan · Cindy Wu · Arthur Conmy · Asic Q Chen · Jean Tarbouriech · Min Ma</span>
+    </div>
+    <div>
+      <span class="grp-label mono">Advising</span>
+      <span class="names">Brendan O'Donoghue · João Gabriel Lopes de Oliveira · Rohin Shah · Neel Nanda</span>
+    </div>
+  </div>
+</header>
+
+<center>
+  <div class="video-container">
+    <iframe src="https://www.youtube.com/embed/bi6X-rMED-E?si=Uh7Rs_oYYplZtL5H" frameborder="0" allowfullscreen></iframe>
+  </div>        
+</center>
+
+<!-- 서론 / 핵심 요약 -->
+<section class="block wrap" id="intro">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 1 · INTRODUCTION</div>
+    <h2>왜 추론의 투명성이 중요한가<span class="en mono">Chain of thought as a safety affordance</span></h2>
+    <p class="lead-p">
+      현재 대부분의 프런티어 AI 시스템은 자연어 사고연쇄(CoT)를 통해 추론하는 자기회귀 모델이다.
+      사람이 이해할 수 있는 사고연쇄를 유지하는 일은 여러 이유에서 중요하다.
+    </p>
+    <p>
+      보상 해킹이나 프롬프트 주입 같은 모델의 오작동은 흔히 CoT에서만 드러난다.
+      CoT에 접근하는 모니터는 그렇지 않은 모니터보다 모니터 가능성 평가에서 뚜렷이 앞서며,
+      CoT를 재추출하면 모델 추론 과정의 구조를 파악할 수 있다.
+      사고연쇄의 투명성은 특히 AI 안전에서 핵심이다.
+      CoT를 다른 모델에 넘겨 오남용과 정렬 실패의 징후를 탐지하도록 시킬 수 있기 때문이다.
+      장차 강력한 AI 시스템의 배포 안전성을 판단할 때 CoT 투명성이 결정적 근거가 될 가능성도 있으며,
+      AI 통제(control) 안전성 논증의 기존 제안들은 배포를 효과적으로 모니터링할 수 있다는 전제에 크게 의존한다.
+    </p>
+
+    <div class="panel reveal">
+      <div class="panel-title">DiffusionGemma는 "영어로 사고"하지 않을 수 있다</div>
+      <p style="margin:0">
+        DiffusionGemma는 새로 공개된 텍스트 확산(text diffusion) 모델이다.
+        텍스트 확산 모델은 다수의 토큰으로 이루어진 큰 <b>캔버스</b>에 denoising 연산을 반복 적용해 점진적으로 다듬는다.
+        중요한 점은, denoising step 사이의 중간 상태가 순수한 자연어가 아니라는 것이다.
+        그 상태는 일부가 <b class="accent">밀집된 자기조건화(self-conditioning) 벡터</b>로 구성되며 기본적으로 사람이 해석할 수 없다.
+        따라서 DiffusionGemma는 하나의 토큰에 대해 여러 후보를 동시에 고려하거나, denoising 도중 토큰에 대해 "마음을 바꾸거나",
+        뒤쪽 토큰이 앞쪽 토큰에 인과적으로 영향을 주는 일을 자연어에 전혀 드러내지 않고 수행할 수 있다.
+      </p>
+    </div>
+  </div>
+
+  <!-- 네 축 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">분해</span>투명성을 가르는 네 축</h3>
+    <ol class="steps">
+      <li><b>불투명 직렬 깊이.</b> 해석 가능한 병목을 통과하지 않고 수행되는 가장 긴 직렬 연산의 길이다. 병목을 해석 가능하다고 가정하면 깊이는 Gemma의 1.1배로 떨어진다.</li>
+      <li><b>변수 투명성.</b> denoising step 사이 병목의 정보 흐름을 O(c)개 자연어 토큰으로 줄일 수 있는지, 그리고 그 토큰들이 실제로 해석 가능한지를 따진다.</li>
+      <li><b>모니터 가능성.</b> 모델의 사고연쇄가 다운스트림 작업에 얼마나 유용한지를, 모니터가 그 정보를 추출하는 능력으로 측정한다.</li>
+      <li><b>알고리즘 투명성.</b> 중간 스냅샷을 이용해 모델이 출력에 도달한 과정을 재구성할 수 있는지를 본다. 확산 고유 현상의 사례 연구로 접근한다.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 핵심 수치 -->
+<section class="block wrap" id="headline">
+  <div class="col reveal" style="max-width:none">
+    <div class="sec-num mono">KEY FINDINGS</div>
+    <h2 style="margin-bottom:6px">한눈에 보는 결론</h2>
+  </div>
+  <div class="stat-strip reveal">
+    <div class="stat">
+      <div class="big">28.6<small>×</small></div>
+      <div class="cap">병목을 <b>해석 불가능</b>하다고 가정할 때, DiffusionGemma의 불투명 직렬 깊이는 대응되는 Gemma 4 모델의 28.6배에 달한다.</div>
+    </div>
+    <div class="stat">
+      <div class="big">1.1<small>×</small></div>
+      <div class="cap">반면 병목을 <b>해석 가능</b>하다고 가정하면, 그 깊이는 Gemma 4의 1.1배로 떨어진다. 추가 가정 하나가 격차를 거의 없앤다.</div>
+    </div>
+    <div class="stat">
+      <div class="big amber">≈ 0.80</div>
+      <div class="cap">평균 모니터 가능성 점수(G-mean²)에서 DiffusionGemma(0.78)는 Gemma 4(0.82)와 <b>유사한 수준</b>으로 나타난다.</div>
+    </div>
+  </div>
+  <div class="col reveal">
+    <div class="callout">
+      <p>
+        병목을 흐르는 정보를 <b class="accent">해석 가능한 토큰 병목</b>으로 사상(mapping)할 수 있으며, 그 과정에서 다운스트림 성능 저하는 없다.
+        중간 상태를 해석 가능하다고 취급하면 불투명 직렬 깊이가 1.1배까지 줄어든다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 불투명 직렬 깊이 -->
+<section class="block wrap" id="serial">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 2 · OPAQUE SERIAL DEPTH</div>
+    <h2>불투명 직렬 깊이<span class="en mono">The longest serial path with no interpretable bottleneck</span></h2>
+    <p class="lead-p">
+      잠재 추론 구조에 대한 근본적 우려는, 현행 구조보다 더 많은 비투명 추론을 잠재 공간에서 수행하게 할 수 있다는 점이다.
+      해석 가능한 텍스트 병목을 통과하지 않고 모델이 수행할 수 있는 직렬 연산의 양은 <b>불투명 직렬 깊이</b>로 형식화된다.
+    </p>
+    <p>
+      신경망(샘플링 절차 포함)과 동일한 함수를 계산하는 불리언 회로를 생각하고, 그중 해석 가능한 노드를 표시한다.
+      모델의 불투명 직렬 깊이는 대략 이 회로에서 해석 가능한 노드를 하나도 포함하지 않는 가장 긴 경로로 정의된다.
+      이 깊이는 구조의 함수이므로, 먼저 DiffusionGemma의 구조를 기술한 뒤 깊이의 상한을 경험적·점근적으로 계산한다.
+    </p>
+  </div>
+
+  <div class="col reveal">
+    <h3><span class="idx mono">2.1</span>DiffusionGemma의 구조</h3>
+    <p>
+      DiffusionGemma는 Gemma 4 26B A4B 모델의 구조를 변형한다.
+      추론은 셋업 단계에 이어 <b>T번의 denoising 루프</b> 반복으로 구성되며, 각 step은 순전파와 샘플링 단계로 이루어진다.
+      한 번에 한 토큰을 생성하는 Gemma 계열과 달리, DiffusionGemma는 프롬프트를 입력받아 C개 토큰으로 이루어진 출력 캔버스를 만든다.
+    </p>
+    <ul class="clean">
+      <li><b>셋업.</b> 프롬프트를 한 번 통과시켜 키–값 활성을 얻는다. 이 활성은 루프 동안 고정되며 매 샘플링의 순전파에서 다시 참조된다. 캔버스는 균일 무작위로 C개 토큰을 뽑아 초기화하고, 자기조건화 행렬 S⁰는 영행렬로 둔다.</li>
+      <li><b>denoising 루프.</b> 각 step에서 직전 캔버스 oᵗ⁻¹와 자기조건화 행렬 Sᵗ⁻¹를 입력받아 갱신된 캔버스 oᵗ와 행렬 Sᵗ를 만든다. 별도 언급이 없으면 적응적 정지(adaptive stopping)를 쓴다.</li>
+      <li><b>순전파.</b> Sᵗ⁻¹를 게이트 MLP에 통과시켜 캔버스 토큰 임베딩에 더한 뒤, (양방향 어텐션을 쓰는) 트랜스포머의 나머지를 거쳐 최종 로짓에 도달한다.</li>
+      <li><b>샘플링.</b> step에 따라 τ_max=0.8과 τ_min=0.4 사이를 선형 보간한 온도 τᵗ를 로짓에 적용한다. 새로운 자기조건화 행렬은 형태가 조정된 로짓을 임베딩 공간에 소프트 임베딩으로 되돌려 계산한다.</li>
+    </ul>
+    <div class="eq mono">Sᵗ = softmax(ℓ̂ᵗ) · W_E ∈ ℝ<sup>C×d_model</sup><span class="lbl">(1)</span></div>
+    <p>
+      따라서 자기조건화 행렬은 직전 denoising step의 마지막 활성을 변형한 것이되, 더 가능성 높은 토큰에 대응하는 활성 공간 방향으로 가중된 형태다.
+      후보 토큰은 각 위치에서 형태 조정된 로짓으로부터 독립적으로 샘플링되고, 이후 <b>엔트로피 한정(EB) 샘플링</b>으로 낮은 엔트로피 토큰은 유지하고 높은 엔트로피 토큰은 다시 노이즈화한다.
+      캔버스 길이 C가 고정이므로, C보다 긴 출력은 출력 토큰을 프롬프트에 이어 붙여 새 캔버스를 뽑는 <b>다중 캔버스 샘플링</b>으로 생성한다.
+    </p>
+  </div>
+
+  <div class="col reveal">
+    <h3><span class="idx mono">2.2</span>직렬 깊이 계산</h3>
+    <p>
+      모든 모델을 256k 시퀀스 길이에서 계산한다. DiffusionGemma는 해석 불가능 병목의 경우 T=48 step, 해석 가능 병목의 경우 T=1 step으로 본다.
+      자연어 입력과 출력은 해석 가능하다고 가정한다. DiffusionGemma의 사고연쇄와 응답이 자기회귀 모델과 질적으로 유사하고 난독화될 가능성이 낮기 때문이다.
+      다만 T=48은 DiffusionGemma의 최악 경우이며, 적응적 정지를 쓰면 실제로는 12~16 step만 사용하므로 통상적인 불투명 직렬 깊이는 표의 약 1/3 수준일 수 있다.
+    </p>
+
+    <div class="tbl-wrap reveal">
+      <table>
+        <thead>
+          <tr><th>모델</th><th>경험적 불투명 직렬 깊이 (상한)</th><th>점근적 불투명 직렬 깊이</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Gemma 4 E2B</td><td class="mono">8,978</td><td class="mono">O(L·(log N + log D))</td></tr>
+          <tr><td>Gemma 4 E4B</td><td class="mono">10,886</td><td class="mono">O(L·(log N + log D))</td></tr>
+          <tr><td>Gemma 4 26B A4B</td><td class="mono">21,235</td><td class="mono">O(L·(log N + log D))</td></tr>
+          <tr><td>Gemma 4 31B</td><td class="mono">13,750</td><td class="mono">O(L·(log N + log D))</td></tr>
+          <tr><td>DiffusionGemma 26B A4B<br><span style="color:var(--cyan);font-size:12px">해석 가능 병목</span></td><td class="hl-cyan">23,571</td><td class="mono">O(L·(log N + log D + log C))</td></tr>
+          <tr><td>DiffusionGemma 26B A4B<br><span style="color:var(--amber);font-size:12px">해석 불가능 병목</span></td><td class="hl-amber">608,016</td><td class="mono">O(T·L·(log N + log D + log C))</td></tr>
+        </tbody>
+        <caption>표 1 · 256k 문맥 시퀀스에서 평가한 Gemma 4와 DiffusionGemma의 불투명 직렬 깊이. T는 denoising step 수, L은 층 수, C는 캔버스 크기, N은 문맥 토큰 수, D는 활성 차원이다.</caption>
+      </table>
+    </div>
+
+    <div class="callout amber">
+      <p>
+        해석 불가능 병목의 경험적 상한은 <b>608,016 / 21,235 = 28.6배</b>다. 점근적으로는 대략 T배 더 크다.
+        반면 병목을 해석 가능하다고 가정하면 상한은 <b>23,571 / 21,235 = 1.1배</b>로 떨어지고, 점근적 깊이는 O(L·log C)만큼만 더 크다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 병목 해석 가능성 -->
+<section class="block wrap" id="bottleneck">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 3 · IS THE BOTTLENECK INTERPRETABLE?</div>
+    <h2>병목은 해석 가능한가<span class="en mono">Mapping self-conditioning vectors back to tokens</span></h2>
+    <p class="lead-p">
+      현행 자기회귀 모델에서 긴 인지의 직렬 사슬은 반드시 해석 가능한 토큰으로 구성된 사고연쇄를 통과해야 한다.
+      텍스트 확산 모델의 중간 상태에도 같은 성질이 성립하기를 기대할 수 있다.
+    </p>
+    <p>
+      DiffusionGemma의 denoising step 사이 병목은 토큰 캔버스 o와 자기조건화 행렬 Sᵗ로 이루어진다.
+      토큰은 자기회귀 토큰처럼 그냥 읽을 수 있어 해석 가능하지만, Sᵗ는 그렇지 않다.
+      식 (1)에서 임베딩 행렬을 곱하고 소프트맥스를 취하는 연산이 Sᵗ의 정보를 해석 가능한 토큰에 대응하는 임베딩 방향으로 편향시키므로,
+      Sᵗ를 해석 가능한 토큰으로 변환하는 일이 다룰 만하리라 기대할 수 있다.
+    </p>
+  </div>
+
+  <div class="col reveal">
+    <h3><span class="idx mono">3.1</span>병목에 대한 절제(ablation) 실험</h3>
+    <p>
+      <b>로짓 렌즈(Logit Lens)</b>를 사용해 Sᵗ의 정보를 시퀀스 위치마다 소수의 토큰으로 제한한다. 로짓 수정 함수 f를 적용해 다음과 같이 제한된 Sᵗ′를 얻는다.
+    </p>
+    <div class="eq mono">Sᵗ′ = W_E · Softmax( f[ ℓ̂ᵗ ] )<span class="lbl">(3)</span></div>
+    <p>
+      f_p는 확률이 p 미만인 모든 로짓을 상수로 만들되 소프트맥스 후 유지 토큰의 확률이 그대로이도록 한다. f_k는 상위 k개를 제외한 모든 로짓을 같은 방식으로 상수로 만든다.
+      Natural2Code, LiveCodeBench, AMC/AIME/IMO 변형, GPQA 등 대표 능력 벤치마크에서 비교한 결과,
+      <b>k와 p를 조정하면 k=8, p=0.03에서 기준선과 동일한 성능에 도달</b>한다.
+    </p>
+    <div class="callout">
+      <p>투영된 토큰이 이 개입 하에서 해석 가능하다면, 직렬 깊이를 <b class="accent">26배만큼</b> 줄인 셈이 된다. 따라서 다음 질문은 이 상위 k 토큰이 실제로 해석 가능한가이다.</p>
+    </div>
+  </div>
+
+  <div class="col reveal">
+    <h3><span class="idx mono">3.2</span>상위 토큰은 무엇인가</h3>
+    <p>
+      WildChat 데이터셋의 800개 프롬프트로 롤아웃을 생성(최대 1024 토큰, 조기 정지 없음, T=48)하고, 각 denoising step과 위치에서 식 (1)의 소프트맥스 결과로부터
+      상위 8개(f_{k=8}) 또는 확률 0.03 초과(f_{p=0.03}) 토큰을 추출한다. 추출된 토큰은 다음 다섯 범주로 분류한다(우선순위 순).
+    </p>
+    <ul class="clean">
+      <li><b>최종 토큰.</b> 현재 위치 i에서 생성될 최종 토큰과 정확히 일치한다.</li>
+      <li><b>인접 토큰.</b> 근방(±10 위치)의 최종 토큰과 일치한다. 모델이 토큰을 고려하나 정확한 배치를 아직 정하지 못한 경우를 포착한다.</li>
+      <li><b>최종과 유사.</b> 위치 i의 최종 토큰과 의미상 유사하다(임베딩 코사인 유사도 상위 50개 이웃).</li>
+      <li><b>인접과 유사.</b> 근방 최종 토큰과 의미상 유사하다.</li>
+      <li><b>기타.</b> 위 어디에도 속하지 않으며 해석 불가능으로 간주한다.</li>
+    </ul>
+    <p>
+      Top K=8 필터는 후반 denoising step에서 "기타" 범주의 해석 불가능 토큰을 많이 낳는다.
+      확산이 진행되며 모델이 단일 고확률 토큰으로 확신을 좁히면, 상위 8개 중 나머지 7개가 저확률 노이즈가 되기 때문이다.
+      반면 <b class="accent">p&gt;0.03 임계</b>를 적용하면 해석 불가능 토큰 비율이 급격히 줄어, 첫 denoising step부터 85% 이상이 분류된다.
+    </p>
+    <div class="callout">
+      <p>
+        결론적으로 DiffusionGemma의 <b>부하를 지는(load-bearing) 중간 상태</b>는 주로 현재 및 이웃 토큰에 대한 추측이며, 따라서 대체로 해석 가능하다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. 모니터 가능성 -->
+<section class="block wrap" id="monitor">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 4 · MONITORABILITY</div>
+    <h2>모니터 가능성<span class="en mono">Can a monitor extract what the model is doing?</span></h2>
+    <p class="lead-p">
+      모니터 가능성 평가는 모델 출력에 접근하는 모니터가 에이전트 행동의 특정 속성(예: 해로움 여부)을 예측하는 정도를 근사한다.
+      DiffusionGemma와 Gemma를 같은 평가에 통과시켜 비교한다.
+    </p>
+    <div class="phenom-grid reveal">
+      <div class="phenom">
+        <span class="tag mono">CATEGORY 01</span>
+        <h4>개입(Intervention)</h4>
+        <p>에이전트 입력에 통제된 개입을 가해 행동이 반응하는지 측정하고, 모니터가 그 행동 변화에 대응하는 추론 변화를 추론할 수 있는지 본다.</p>
+      </div>
+      <div class="phenom">
+        <span class="tag mono">CATEGORY 02</span>
+        <h4>과정(Process)</h4>
+        <p>모든 풀이가 유한한 해법 경로(예: 특정 정리 사용)를 거쳐야 하는 문제를 풀게 한 뒤, 모니터가 그 해법 경로의 증거를 찾는지 검증한다.</p>
+      </div>
+      <div class="phenom">
+        <span class="tag mono">CATEGORY 03</span>
+        <h4>결과 속성(Outcome)</h4>
+        <p>설계상 출력 속성을 아는 문제를 주고, 모델의 의사결정이 그 속성을 활용한 증거를 찾게 한다. 공개 데이터셋에서는 DiffusionGemma가 오작동하지 않아 사례가 없다.</p>
+      </div>
+      <div class="phenom">
+        <span class="tag mono">RESULT</span>
+        <h4>핵심 결과</h4>
+        <p>DiffusionGemma의 모니터 가능성은 Gemma와 <b style="color:var(--cyan)">유사</b>하다. 이는 이 평가의 롤아웃이 다수 캔버스에 걸쳐 있고, 캔버스 사이 추론이 자기회귀적이기 때문일 수 있다.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 막대: 모니터 가능성 점수 -->
+  <div class="col reveal">
+    <h4>전체 응답(CoT + 출력) 모니터 가능성 점수 · G-mean²</h4>
+    <div class="bars">
+      <div class="bars-legend"><span><span class="swatch b g" style="width:14px"></span>Gemma 4 26B A4B</span><span><span class="swatch b d" style="width:14px"></span>DiffusionGemma 26B 4B</span></div>
+      <div class="bar-row"><div class="lbl">Average</div><div class="bar-pair"><div class="b g" style="width:82%"><span>0.82</span></div><div class="b d" style="width:78%"><span>0.78</span></div></div></div>
+      <div class="bar-row"><div class="lbl">DAFT</div><div class="bar-pair"><div class="b g" style="width:85%"><span>0.85</span></div><div class="b d" style="width:88%"><span>0.88</span></div></div></div>
+      <div class="bar-row"><div class="lbl">GPQA</div><div class="bar-pair"><div class="b g" style="width:94%"><span>0.94</span></div><div class="b d" style="width:80%"><span>0.80</span></div></div></div>
+      <div class="bar-row"><div class="lbl">GPQA Encoded</div><div class="bar-pair"><div class="b g" style="width:97%"><span>0.97</span></div><div class="b d" style="width:94%"><span>0.94</span></div></div></div>
+      <div class="bar-row"><div class="lbl">Scruples (오답 유도)</div><div class="bar-pair"><div class="b g" style="width:25%"><span>0.25</span></div><div class="b d" style="width:21%"><span>0.21</span></div></div></div>
+      <div class="bar-row"><div class="lbl">Process AIME Math</div><div class="bar-pair"><div class="b g" style="width:96%"><span>0.96</span></div><div class="b d" style="width:94%"><span>0.94</span></div></div></div>
+      <div class="bar-row"><div class="lbl">Process GPQA Physics</div><div class="bar-pair"><div class="b g" style="width:96%"><span>0.96</span></div><div class="b d" style="width:92%"><span>0.92</span></div></div></div>
+    </div>
+    <p style="font-size:13px;color:var(--text-3)">
+      그림 4 · 두 모델은 유사하게 모니터 가능하다. 비교가 불가능한 데이터셋(개입 데이터셋 일부, 결과 데이터셋 flaky_tools_charxiv)은 제외했다. 오차 막대는 95% 부트스트랩이며 G-mean²의 0과 1로 제한했다.
+    </p>
+    <div class="callout amber">
+      <p>
+        한 가지 잠재적 교란 요인은 DiffusionGemma의 사고연쇄가 더 짧다는 점이다(평균 8,447자 대 Gemma 24,392자).
+        일반적으로 긴 사고연쇄가 더 모니터 가능하므로, 이 요인은 오히려 DiffusionGemma의 모니터 가능성을 낮추는 방향으로 작용할 것으로 보인다.
+        그럼에도 두 모델이 유사하게 모니터 가능하다는 결과가 나온다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 5. 추론 방식 -->
+<section class="block wrap" id="reason">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 5 · HOW DOES IT REASON?</div>
+    <h2>DiffusionGemma는 어떻게 추론하는가<span class="en mono">Diffusion-specific algorithmic phenomena</span></h2>
+    <p class="lead-p">
+      자기회귀 모델은 토큰을 엄격히 좌→우로 생성하며 앞 토큰이 뒤 토큰에 조건이 되지만 그 역은 불가능하다.
+      텍스트 확산 모델은 이런 제약이 없어, 매 denoising step에서 다른 모든 토큰의 현재 상태에 기반해 캔버스의 어떤 토큰이든 수정할 수 있다.
+      이 자유를 실제로 활용하는, 확산 고유의 현상들을 사례로 살핀다.
+    </p>
+  </div>
+
+  <!-- 5.1 비연대순 추론 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">5.1</span>비연대순(non-chronological) 추론</h3>
+
+    <h4>5.1.1 · 이른 응답 길이 예측</h4>
+    <p>
+      가장 단순한 비연대순 동작 중 하나는, 모델이 무엇을 말할지 정하기도 전에 자신의 응답 길이를 먼저 예측한다는 것이다.
+      "광합성을 2문장으로 설명하라"는 프롬프트에서, 첫 denoising step 직후 모델은 55번 위치 이후 전부에 대해 패딩(문장 종료) 토큰을 거의 100% 확률로 예측한다.
+      최종 응답은 50 토큰으로 수렴해, 초기 추측이 상당히 정확했음이 드러난다.
+    </p>
+    <p>
+      모델이 위치에 따라 패딩 토큰에 단조 증가하는 확률을 부여하므로, step t에서 i번째 토큰이 패딩일 확률을 누적분포함수의 추정으로 해석할 수 있고, 이로부터 시퀀스 길이의 기댓값을 구성할 수 있다.
+    </p>
+    <div class="eq mono">𝔼ₜ[L] = Σ<sub>i=0</sub><sup>L_canvas</sup> ( 1 − pₜ⁽ⁱ⁾ )<span class="lbl">(4)</span></div>
+    <p>요청 문장 수를 바꿔 가며 확인하면, 단 한 번의 denoising step 후 길이 추정이 실제 길이를 가깝게 추적하고, step 2에 이르면 거의 완벽한 예측이 된다.</p>
+
+    <h4>5.1.2 · 소급적 자기교정</h4>
+    <p>
+      답을 먼저 말한 뒤 근거를 대도록 시키면, 모델은 뒤쪽 추론 토큰을 생성하기 전까지 앞쪽 토큰을 불확실한 상태로 둔다.
+      "400과 800 사이 제곱수는 몇 개인가? 답을 먼저 말하고 근거를 대라"는 질문에서, 다음 진행이 관찰된다.
+    </p>
+    <div class="step-demo reveal">
+      <div class="step-line"><span class="sl mono">step <b>4</b></span><span class="seq mono">There are ** <span class="strike">9</span> ** perfect squares between 400 and 800.  <span style="color:var(--text-3)">### 근거: 범위에서 제곱수를 찾으려면, we we we …</span></span></div>
+      <div class="step-line"><span class="sl mono">step <b>7</b></span><span class="seq mono">There are ** <span class="pick">8</span> ** perfect squares between 400 and 800.  <span style="color:var(--text-3)">### 근거: 하·상한의 제곱근을 구한다. √400 = 20 …</span></span></div>
+    </div>
+    <p>
+      step 4의 최상위 예측은 틀린 값 9였으나, 이후 세 step에서 근거(양 끝점의 제곱근 계산)를 완성한 뒤 답을 8로 교정하고 훨씬 높은 확신으로 채운다.
+      다만 자기교정이 항상 보장되지는 않으며, 근거가 수렴하기 전에 모델이 이른 답에 "고착(lock-in)"되어 시퀀스를 바꾸기 어려운 경우도 관찰된다.
+    </p>
+
+    <h4>5.1.3 · 비자기회귀적 코드 생성</h4>
+    <p>
+      코드를 생성할 때 DiffusionGemma는 흔히 연대순으로 추론하지 않고 문제를 이산적 덩어리로 접근한다.
+      먼저 <b>구조적 골격</b>(함수 이름, 코드 블록 구분자)을 쓰고, 그다음 핵심 논리 루프를 채우며, 마지막에 코드 본문 앞쪽에 나타나는 추적 변수와 주석·docstring을 채워 넣는 "골격 우선(skeleton-first)" 패턴이 여러 코드 프롬프트에서 반복된다.
+      모델은 보조 세부사항을 정하기 전에 알고리즘적 접근(핵심 논리)에 먼저 전념한다.
+    </p>
+    <div class="callout">
+      <p>
+        이는 모니터 가능성에 함의가 있다. 향후 텍스트 확산 모델이 비자기회귀적으로 광범위하게 추론하면, 사고연쇄가 자연어의 자기회귀 순서에서 벗어나 어떤 토큰이 어떤 토큰을 생성했는지 알아내는 데 더 많은 노력이 든다.
+        그럼에도 <b>예측의 순서</b>를 관찰해 모델이 답을 어떻게 조립하는지 통찰을 얻을 수 있다.
+      </p>
+    </div>
+  </div>
+
+  <!-- 5.2 번짐 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">5.2</span>토큰 번짐과 시퀀스 번짐</h3>
+
+    <h4>5.2.1 · 토큰 번짐(token smearing)</h4>
+    <p>
+      모델이 어떤 토큰을 만들지는 알지만 그것을 어디에 둘지 아직 모르는 경우, <b>토큰 번짐</b>이 관찰된다.
+      모델이 단일 토큰의 확률 질량을 여러 인접 위치에 동시에 펼쳐 둔다.
+      이는 줄바꿈·쉼표 같은 기본 문법이나, 답안 중 특정 키워드에서 자주 일어난다.
+      예컨대 균형 괄호 분류 함수를 쓰게 하면 "bracket", "opening/closing" 같은 docstring 단어가 확정되기 전에 여러 토큰 군집에 걸쳐 예측된다.
+    </p>
+    <p>
+      응답이 순수하게 자기회귀적일 때는 토큰 번짐이 드물다. 각 토큰이 직전 토큰 값에 직접 의존하면 미리 펼칠 예측이 없기 때문이다.
+      예컨대 Collatz 수열을 채우게 하면 모델은 한 칸 이상 앞을 추측할 수 없어 토큰 번짐이 나타나지 않는다.
+    </p>
+
+    <h4>5.2.2 · 시퀀스 번짐(sequence smearing)</h4>
+    <p>
+      더 극적인 형태는 <b>시퀀스 번짐</b>이다. 모델이 의미상 구별되는 둘 이상의 후보 시퀀스를 동시에 유지하며 확률 질량을 양쪽에 분산했다가 결국 하나로 수렴하는 상황이다.
+    </p>
+    <div class="step-demo reveal">
+      <div class="step-line"><span class="sl mono">step <b>3</b></span><span class="seq mono">There are ** <span style="color:var(--amber)">1 2</span> ** perfect squares between 400 and 800.  <span style="color:var(--text-3)">← 두 자리 수 예측</span></span></div>
+      <div class="step-line"><span class="sl mono">step <b>4</b></span><span class="seq mono">There are ** <span class="pick">9</span> ** perfect squares between 400 and 800.  <span style="color:var(--text-3)">← 한 자리 수로, 이후 토큰 전체를 한 칸 당김</span></span></div>
+    </div>
+    <p>
+      "400과 800 사이 제곱수" 예제의 이른 step에서, 답이 9라고 추측하기 전 모델은 두 자리 수일 확률에 높은 질량을 둔다.
+      한 자리 수로 추정을 바꾸면 뒤따르는 토큰 전부를 한 칸씩 당겨야 한다.
+      step 3의 예측은 한 자리·두 자리 시퀀스가 거의 균등하게 섞인 혼합이며(두 자리 쪽의 최빈 예측은 12), step 4에 한 자리 답으로 수렴하면서 번짐이 붕괴한다.
+    </p>
+    <div class="callout amber">
+      <p>
+        이 사례의 함의는 다소 우려스럽다. 텍스트 확산 모델은 일종의 "빔 서치"를 수행해, 여러 다중 토큰 덩어리를 예측 공간에 동시에 보유하다 하나로 수렴할 수 있는 듯하다.
+        중간 예측을 보아 모델이 고려한 대안을 모니터할 수 있으나, 이를 일관된 대안 시퀀스로 연결하기는 실무상 어려울 수 있다.
+        다만 지금까지의 결과는 모델이 번짐을 <b>간격 맞춤</b>에 쓸 뿐, 의미상 다른 선택지를 동시에 저장하는 데 쓴다는 증거는 아니다.
+      </p>
+    </div>
+  </div>
+
+  <!-- 5.3 중간 문맥 추론 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">5.3</span>중간 문맥 추론(intermediate context reasoning)</h3>
+    <p>
+      앞의 사례들은 최종 상태가 알고리즘 이해에 대체로 충분한 경우였다.
+      여기서는 중간 상태에 모델의 인과적 추론 사슬을 이해하는 데 <b>필요하지만 최종 출력에는 전혀 나타나지 않는</b> 토큰이 담긴 사례를 제시한다.
+    </p>
+    <p>
+      피보나치류 점화식을 완성하되 일의 자리에 나타나는 숫자 3을 토큰 "Gold"로 치환하라고 지시한다.
+      각 수로 다음 항을 계산해야 하면서도 특정 숫자를 변환해야 하는 까다로운 과제로, Gemini 2.5 Pro는 사고연쇄 없이 이 과제를 수행하지 못한다.
+    </p>
+    <div class="step-demo reveal">
+      <div class="step-line"><span class="sl mono">step <b>2</b></span><span class="seq mono">2 , 1 , <span style="color:var(--text)">3</span> , _ , _ , _  <span style="color:var(--text-3)">← 먼저 숫자 3을 생성해 다음 항 계산에 사용</span></span></div>
+      <div class="step-line"><span class="sl mono">step <b>3</b></span><span class="seq mono">2 , 1 , <span class="gold">Gold</span> , 4 , 7 ,  <span style="color:var(--text-3)">← 이후 항이 안정된 뒤 3을 Gold로 치환</span></span></div>
+    </div>
+    <p>
+      모델은 종종 먼저 숫자 3을 생성해 후속 항 계산에 쓰고, 그 항들이 안정된 뒤에야 "Gold"로 치환해 과제를 푼다.
+      이때 숫자 3은 <b class="accent">중간 추론 토큰</b>으로 기능한다. 올바른 후속 항 생성에 인과적으로 필요하지만 최종 출력에는 결코 나타나지 않는다.
+      치환이 항상 성공하지는 않으며, 치환 토큰이 2·3순위 예측에 머물고 최상위로 올라오지 못하는 경우도 있다(이른 고확률 예측의 고착 때문으로 추정된다).
+    </p>
+    <div class="callout">
+      <p>
+        §4에서 최종 출력 토큰만 보아도 DiffusionGemma가 Gemma와 유사하게 모니터 가능함을 확인했으나,
+        중간 문맥 추론은 원리상 모니터 가능성이 <b>denoising step 사이 중간 상태에 대한 접근</b>을 요구할 수 있음을 보여준다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 관련 연구 -->
+<section class="block wrap" id="related">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 6 · RELATED WORK</div>
+    <h2>관련 연구<span class="en mono">Latent reasoning, interpretability, monitorability</span></h2>
+    <div class="future-grid reveal">
+      <div class="future-card">
+        <div class="num mono">06.1</div>
+        <h4>언어 모델의 잠재 추론</h4>
+        <p>잠재 추론은 자연어 토큰이 아니라 불투명한 연속 벡터에서 일어나는 추론을 가리킨다. 모델이 커질수록 자연히 늘며, 수직 순환(층 반복)·수평 순환(시간축 압축)·텍스트 확산이 각기 다른 잠재 구조 계열을 이룬다.</p>
+      </div>
+      <div class="future-card">
+        <div class="num mono">06.2</div>
+        <h4>잠재 추론 해석 가능성</h4>
+        <p>로짓 렌즈를 중간 추론 단계에 적용하고 활성 패칭이 기대한 행동 변화를 유도함을 보인 선행 연구가 있다. 향후 로짓 렌즈가 통하지 않을 때 자연어 오토인코더(NLA)나 활성 오라클이 쓰일 수 있다.</p>
+      </div>
+      <div class="future-card">
+        <div class="num mono">06.3</div>
+        <h4>사고연쇄 모니터 가능성</h4>
+        <p>잠재 추론으로의 이동은 자연어 CoT가 주는 투명성을 위협한다. CoT 모니터링으로 보상 해킹·평가 인지·계략을 탐지할 수 있으나, CoT에 대한 최적화 압력이나 잠재 구조로의 전환이 이 가시성을 약화할 수 있다.</p>
+      </div>
+      <div class="future-card">
+        <div class="num mono">06.4</div>
+        <h4>잠재 추론은 얼마나 일어날까</h4>
+        <p>자기회귀 텍스트 병목은 막대한 정보를 버려 연속 표현으로의 이동을 유인한다. 한편 자연어 추론은 사전학습에서 확립된 강한 국소 최적이어서, 순수 잠재 추론으로 빠져나오려면 상당한 최적화 압력이 필요하다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. 미해결 과제 -->
+<section class="block wrap" id="open">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 7 · OPEN PROBLEMS</div>
+    <h2>미해결 과제<span class="en mono">An agenda for the interpretability community</span></h2>
+    <p class="lead-p">단일 캔버스 환경으로 한정할 때 가장 흥미로운, 향후 연구 방향들을 정리한다. 다수 캔버스에서는 DiffusionGemma가 자기회귀 트랜스포머에 더 가까운 성질을 보이기 때문이다.</p>
+
+    <h4>7.1 · DiffusionGemma의 동작 추가 이해</h4>
+    <ul class="clean">
+      <li>§5의 동작들이 얼마나 자주 일어나며 어떤 문맥 특징이 그것을 유발하는가.</li>
+      <li>주어진 캔버스에서 확산 모델이 쓰는 알고리즘의 고수준 설명을 자동 생성할 수 있는가.</li>
+      <li>DiffusionGemma가 코딩 문제를 푸는 모티프 집합을 특징지을 수 있는가.</li>
+      <li>의미상 구별되는 시퀀스 번짐 등, 놓친 비자기회귀 동작은 무엇인가.</li>
+    </ul>
+
+    <h4>7.2 · 표준 기계론적 해석 도구의 적용</h4>
+    <ul class="clean">
+      <li>로짓 렌즈가 denoising step 사이 중간 층에서 잘 작동하지 않는 이유는 무엇이며, 튜닝 렌즈나 패치스코프가 더 나은가.</li>
+      <li>확산 축을 가로지르는 활성 패칭으로 그 축의 알고리즘을 이해할 수 있는가.</li>
+      <li>중간 벡터에 NLA를 적용해 토큰 수렴 전 추론을 이해할 수 있는가.</li>
+      <li>이른·늦은 denoising step에 특화된 모델 구성요소가 존재하는가. 토큰 번짐을 구현하는 단순 회로가 있는가.</li>
+    </ul>
+
+    <h4>7.3 · 사고연쇄 연구의 복제·확장</h4>
+    <ul class="clean">
+      <li>제어 가능성 평가를 수행해, DiffusionGemma의 출력 제어 가능성이 표준 모델보다 큰지 본다.</li>
+      <li>확산 모델 특유의 불충실성(unfaithfulness)이 있는지 식별한다.</li>
+      <li>높은 직렬 깊이가 필요한 데이터셋에서 DiffusionGemma가 훨씬 잘하는지 본다.</li>
+      <li><b>단일 캔버스 모니터 가능성</b>을 평가한다. 현재 평가가 다수 캔버스에 걸쳐 있어 단일 캔버스에서의 모니터 가능성이 더 낮을 가능성을 놓칠 수 있다.</li>
+      <li>상위 중간 토큰을 모니터에 제공하는 것이 모니터 가능성에 도움이 되는지, 사고 앵커(thought anchor)를 denoising step 재추출에 적용할 수 있는지 본다.</li>
+    </ul>
+
+    <h4>7.4 · 모델 유기체(model organism) 연구</h4>
+    <p>
+      모델 유기체 연구는 정렬 실패·전략적 추론 은폐 같은 위험한 속성의 통제된 사례를 만든다.
+      DiffusionGemma는 유망한 기반 모델로, 예컨대 denoising step 동안 전략적으로 추론하되 그것을 최종 답에서 숨기도록, 또는 CoT 모니터 가능성을 낮추도록 미세조정하는 방향이 흥미롭다.
+    </p>
+  </div>
+</section>
+
+<!-- 8. 결론 -->
+<section class="block wrap" id="conclusion">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 8 · CONCLUSION</div>
+    <h2>결론과 한계<span class="en mono">A template for auditing future latent reasoning models</span></h2>
+    <p class="lead-p">
+      액면 그대로 보면 결과는 고무적이다. DiffusionGemma는 자기회귀 짝인 Gemma 4와 유사하게 모니터 가능하고,
+      단순한 해석 기법만으로 불투명 직렬 깊이를 Gemma 수준에 맞출 수 있으며, 약간의 노력으로 비자기회귀 알고리즘 상당수를 이해할 수 있다.
+    </p>
+    <p>
+      그러나 이 결과가 현행의 비교적 초기 단계인 텍스트 확산 학습 패러다임의 산물인지, 잠재 추론 구조의 지속적 속성인지는 불분명하다.
+      향후 텍스트 확산 모델은 훨씬 큰 캔버스 길이로 확장되고 덜 해석 가능한 중간 상태를 가질 수 있다.
+      따라서 본 연구가 미래 잠재 추론 모델 평가의 <b>본보기(template)</b>가 되기를 바란다.
+      새로운 잠재 추론 모델이 공개될 때마다 개발자와 연구 공동체가 유사한 투명성 감사를 수행하기를 기대한다.
+    </p>
+    <div class="panel reveal">
+      <div class="panel-title">주요 한계</div>
+      <ul class="clean" style="margin:0">
+        <li>모니터 가능성 평가가 다수 캔버스 롤아웃에 걸쳐 있어 단일 캔버스 모니터 가능성의 회귀를 놓칠 수 있다.</li>
+        <li>관찰된 투명성이 구조 고유의 속성인지, DiffusionGemma 특유의 학습 절차·구조의 산물인지 불분명하다.</li>
+        <li>토큰 정체성 분석이 중간 상태가 대체로 최종 토큰 추측임을 시사하나, 사상된 잠재 벡터에 "해석 가능"이라는 표지를 붙이는 일은 기만적·불투명 추론을 양성으로 오인할 위험이 더 크다.</li>
+        <li>실제 운영 모니터를 배포하지 않았다. 매 denoising step의 중간 로짓을 추출·분석하는 제안 방법은 실무에서 더 길고 비싼 모니터 프롬프트를 낳는다.</li>
+      </ul>
+    </div>
+    <div class="callout">
+      <p>
+        미래의 잠재 추론 모델이 이 지표들에서 후퇴하더라도 투명성을 유지하려면, 잠재 추론을 사람이 이해할 수 있는 자연어 추론으로 번역하는 새로운 기법이 필요하다.
+        이에 활성을 자연어로 옮기는 <b class="accent">NLA와 활성 오라클</b> 같은 기법의 발전을 특히 기대한다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 부록 요약: EB 샘플링 + 시각화 도구 -->
+<section class="block wrap" id="appendix">
+  <div class="col reveal">
+    <div class="sec-num mono">APPENDIX · 보충</div>
+    <h2>보충: 샘플링과 시각화<span class="en mono">EB sampling · the three dashboard views</span></h2>
+
+    <h4>A · 엔트로피 한정(EB) 샘플링</h4>
+    <p>
+      각 위치 i에서 출력 분포의 엔트로피 H_i를 계산하고, 위치를 엔트로피 오름차순으로 정렬한다.
+      "선택된 엔트로피 합에서 최대값을 뺀 값"이 임계 γ=0.1 이하가 되는 가장 큰 집합 S를 고른다.
+      S에 속한 저엔트로피 위치의 후보 토큰은 채택하고, 속하지 않은 위치는 무작위 토큰으로 다시 노이즈화한다.
+    </p>
+    <pre class="algo"><span class="cm"># Algorithm 1 · 로짓 수정 함수 f_p (정보 병목 제한)</span>
+<span class="kw">입력</span>: 스케일된 로짓 Z ∈ ℝ^(C×|V|), 확률 임계 p
+<span class="fn">Q</span> ← Softmax(Z)                      <span class="cm"># 원래 확률 (어휘 차원 독립 적용)</span>
+<span class="kw">for</span> k <span class="kw">in</span> {1, …, C}:
+    P_k   ← { i | Q[k,i] ≥ p }         <span class="cm"># 임계 이상 인덱스 집합</span>
+    S_rest ← Σ_{j∉P_k} exp(Z[k,j])     <span class="cm"># 버려진 토큰의 비정규 질량</span>
+    <span class="kw">if</span> |V| &gt; |P_k|: c ← ln( S_rest / (|V| − |P_k|) )
+    <span class="kw">else</span>:           c ← 0
+    <span class="kw">for</span> i <span class="kw">in</span> {1, …, |V|}:
+        Z'[k,i] ← Z[k,i]  <span class="kw">if</span> i ∈ P_k  <span class="kw">else</span>  c   <span class="cm"># 임계 미만은 균일 상수로</span>
+<span class="kw">반환</span>: 수정된 로짓 Z'</pre>
+    <p style="font-size:13px;color:var(--text-3)">토큰 확정은 비단조적이다. 선택 집합 S는 위치를 영구히 잠그는 대신 매 step마다 처음부터 다시 평가된다.</p>
+
+    <h4>E · 세 가지 대시보드 뷰</h4>
+    <div class="phenom-grid reveal">
+      <div class="phenom">
+        <span class="tag mono">VIEW 01</span>
+        <h4>요약 뷰(Summary)</h4>
+        <p>각 위치의 최상위 토큰을 확신도에 따라 강조 표시한다. 옆 히트맵은 행=위치, 열=denoising step으로 수렴 시점을 색으로 보여, 생성의 전체 구조(자기회귀 편향 정도)를 한눈에 파악하게 한다.</p>
+      </div>
+      <div class="phenom">
+        <span class="tag mono">VIEW 02</span>
+        <h4>라인 그래프(Line Graph)</h4>
+        <p>단일 denoising step에서 시퀀스 위치별 토큰 확률을 그린다. 슬라이더로 step을 훑는다. 토큰 번짐과 응답 길이 예측 관찰에 특히 유용하다.</p>
+      </div>
+      <div class="phenom">
+        <span class="tag mono">VIEW 03</span>
+        <h4>샘플링 테이블(Sampling Table)</h4>
+        <p>행=step, 열=위치인 표에서 각 칸이 top-k 토큰을 확신도 강조와 함께 보인다. 후보 토큰 간 미세 경쟁을 살피는 가장 상세한 뷰다.</p>
+      </div>
+      <div class="phenom">
+        <span class="tag mono">DATA</span>
+        <h4>모니터 가능성 데이터셋</h4>
+        <p>개입(AIME·DAFT·GPQA·GPQA Encoded·Memory Advice·Scruples 계열·WMDP Sandbagging), 과정(Process AIME Math·GPQA Physics), 결과(Flaky Tools CharXiv)로 구성된다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <div class="ft-grid">
+    <div class="ft-note">
+      <div class="grotesk" style="font-weight:600;color:var(--text);font-size:16px;margin-bottom:10px">How Transparent is DiffusionGemma?</div>
+      Joshua Engels · Callum McDougall · Bilal Chughtai 외, Google DeepMind (2026).
+      arXiv:2606.20560v1 [cs.LG], 2026-06-18.
+      <br><br>
+      이 페이지는 원 논문의 내용을 한국어 기술 문서 형식으로 정리한 요약본이다. 정확한 인용과 수식·도표는 원문을 참조한다.
+    </div>
+    <div style="font-family:'IBM Plex Mono';font-size:12.5px;line-height:2.1">
+      <div style="color:var(--text-2);margin-bottom:8px">SECTIONS</div>
+      <a href="#serial">불투명 직렬 깊이</a><br>
+      <a href="#bottleneck">병목 해석 가능성</a><br>
+      <a href="#monitor">모니터 가능성</a><br>
+      <a href="#reason">추론 방식</a><br>
+      <a href="#open">미해결 과제</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// 스크롤 리빌
+const io = new IntersectionObserver((es)=>{
+  es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// hero 토큰 수렴 애니메이션
+const tokens = [
+  {t:"Photosynthesis",f:0},{t:"is",f:1},{t:"the",f:1},{t:"process",f:0},
+  {t:"by",f:2},{t:"which",f:1},{t:"green",f:0},{t:"plants",f:0},{t:",",f:1},
+  {t:"algae",f:2},{t:"use",f:0},{t:"sunlight",f:0},{t:"to",f:1},
+  {t:"transform",f:0},{t:"energy",f:0},{t:"into",f:1},{t:"glucose",f:0},
+  {t:"·",f:2},{t:"·",f:2},{t:"·",f:2},{t:"·",f:2},{t:"·",f:2},{t:"·",f:2}
+];
+const row = document.getElementById('canvasRow');
+const stepEl = document.getElementById('cvStep');
+tokens.forEach((tk,i)=>{
+  const s=document.createElement('span');
+  s.className='tok'; s.textContent=tk.t; s.dataset.f=tk.f; s.dataset.i=i;
+  row.appendChild(s);
+});
+const nodes=[...row.children];
+let step=0; const maxStep=15;
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function resolveOrder(){ // 비연대순으로 수렴: 골격 먼저, 콘텐츠 나중
+  return [...nodes].sort((a,b)=> (Number(a.dataset.f)-Number(b.dataset.f)) || (Math.random()-.5));
+}
+let order=resolveOrder();
+function tick(){
+  step++;
+  const reveal = Math.floor(nodes.length * step / maxStep);
+  order.forEach((n,idx)=>{
+    if(idx < reveal){
+      n.classList.remove('adjacent');
+      n.classList.add(n.dataset.f==="2" ? 'adjacent':'resolved');
+    }
+  });
+  stepEl.textContent = `denoising step ${step} / ${maxStep}`;
+  if(step>=maxStep){
+    setTimeout(()=>{ // 리셋해 반복
+      nodes.forEach(n=>n.classList.remove('resolved','adjacent'));
+      step=0; order=resolveOrder();
+    }, 2600);
+  }
+}
+if(!reduce){
+  setInterval(tick, 360);
+} else {
+  nodes.forEach(n=> n.classList.add(n.dataset.f==="2"?'adjacent':'resolved'));
+  stepEl.textContent = `denoising step 15 / 15`;
+}
+</script>
+</body>
+</html>
