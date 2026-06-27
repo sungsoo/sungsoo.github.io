@@ -1,0 +1,748 @@
+---
+layout: null
+title: "Agent-as-a-Router: Agentic Model Routing for Coding Tasks" 
+date: 2026-06-27
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent-as-a-Router · 코딩 작업을 위한 에이전트형 모델 라우팅</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0f17;
+    --bg-2:#0f1521;
+    --panel:#131b2a;
+    --panel-2:#172234;
+    --edge:#1f2c42;
+    --edge-2:#2a3a56;
+    --signal:#4ee0c8;     /* 라우팅 신호 (청록) */
+    --signal-dim:#1f8c7d;
+    --ctx:#5b9dff;        /* Context */
+    --act:#c08bff;        /* Action */
+    --fb:#ffb454;         /* Feedback */
+    --regret:#ff6b6b;     /* regret / 실패 */
+    --gold:#ffd479;
+    --text:#e6edf6;
+    --text-2:#9eb1ca;
+    --text-3:#5f718c;
+    --line:#1c2740;
+    --maxw:1160px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:"Noto Sans KR",system-ui,sans-serif;font-weight:300;line-height:1.85;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  .mono{font-family:"JetBrains Mono",monospace}
+  .sora{font-family:"Sora",sans-serif}
+
+  /* 배경: 라우팅 노드 그리드 + 글로우 */
+  .bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .bg-fx::before{
+    content:"";position:absolute;inset:0;
+    background-image:radial-gradient(circle at 1px 1px,var(--edge) 1px,transparent 0);
+    background-size:38px 38px;opacity:.35;
+    mask-image:radial-gradient(ellipse 90% 55% at 50% 0%,#000 25%,transparent 70%);
+  }
+  .bg-fx::after{
+    content:"";position:absolute;top:-10%;left:50%;transform:translateX(-50%);
+    width:900px;height:520px;border-radius:50%;
+    background:radial-gradient(circle,rgba(78,224,200,.10),transparent 65%);filter:blur(20px);
+  }
+
+  .wrap{position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;padding:0 28px}
+
+  /* 상단 바 */
+  .topbar{position:sticky;top:0;z-index:60;background:rgba(11,15,23,.82);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:var(--maxw);margin:0 auto;padding:13px 28px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+  .brand{display:flex;align-items:center;gap:11px;font-family:"Sora";font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .brand .ico{width:24px;height:24px;position:relative;flex:none}
+  .brand .ico svg{width:100%;height:100%}
+  .topnav{display:flex;gap:4px;font-family:"JetBrains Mono";font-size:12.5px}
+  .topnav a{color:var(--text-3);text-decoration:none;padding:6px 11px;border-radius:7px;transition:.18s;white-space:nowrap}
+  .topnav a:hover{color:var(--signal);background:var(--panel)}
+  @media(max-width:860px){.topnav{display:none}}
+
+  /* HERO */
+  .hero{padding:78px 0 56px}
+  .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:54px;align-items:center}
+  @media(max-width:920px){.hero-grid{grid-template-columns:1fr;gap:40px}}
+  .eyebrow{font-family:"JetBrains Mono";font-size:12.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--signal);margin-bottom:24px;display:flex;align-items:center;gap:13px}
+  .eyebrow::before{content:"";width:34px;height:1px;background:linear-gradient(90deg,var(--signal),transparent)}
+  h1.title{font-family:"Sora";font-weight:800;letter-spacing:-.03em;font-size:clamp(2.4rem,5.6vw,4rem);line-height:1.02;margin-bottom:6px}
+  h1.title .r{background:linear-gradient(120deg,var(--signal),var(--ctx));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub-en{font-family:"JetBrains Mono";color:var(--text-3);font-size:13.5px;letter-spacing:.03em;margin-top:14px}
+  .lede{font-size:clamp(1rem,1.7vw,1.16rem);color:var(--text-2);max-width:600px;margin-top:28px;line-height:1.95}
+  .lede b{color:var(--text);font-weight:500}
+  .hero-cta{margin-top:32px;display:flex;gap:12px;flex-wrap:wrap}
+  .pill{font-family:"JetBrains Mono";font-size:12px;color:var(--text-2);border:1px solid var(--edge-2);border-radius:999px;padding:7px 15px;display:flex;align-items:center;gap:8px}
+  .pill b{color:var(--signal);font-weight:600}
+
+  /* C-A-F 루프 다이어그램 */
+  .loop-card{background:linear-gradient(160deg,var(--bg-2),var(--panel));border:1px solid var(--edge);border-radius:18px;padding:30px 26px 24px;position:relative}
+  .loop-card .lc-t{font-family:"JetBrains Mono";font-size:11.5px;letter-spacing:.14em;color:var(--text-3);text-transform:uppercase;text-align:center;margin-bottom:6px}
+  .loop-svg{width:100%;height:auto;display:block}
+  @keyframes dash{to{stroke-dashoffset:-1000}}
+  .flow{stroke-dasharray:7 9;animation:dash 14s linear infinite}
+  @media(prefers-reduced-motion:reduce){.flow{animation:none}}
+  .loop-legend{display:flex;justify-content:center;gap:18px;margin-top:14px;font-family:"JetBrains Mono";font-size:11px;color:var(--text-3);flex-wrap:wrap}
+  .loop-legend span{display:flex;align-items:center;gap:6px}
+  .dot{width:9px;height:9px;border-radius:50%}
+
+  /* 섹션 */
+  section.block{padding:74px 0;border-top:1px solid var(--line)}
+  .sec-num{font-family:"JetBrains Mono";font-size:13px;color:var(--signal-dim);letter-spacing:.1em}
+  h2{font-family:"Sora";font-weight:700;letter-spacing:-.02em;font-size:clamp(1.7rem,3.4vw,2.5rem);line-height:1.1;margin:10px 0 6px}
+  h2 .en{display:block;font-family:"JetBrains Mono";font-size:13px;font-weight:400;color:var(--text-3);letter-spacing:.03em;margin-top:12px}
+  h3{font-family:"Sora";font-weight:600;font-size:1.32rem;margin:42px 0 14px;letter-spacing:-.01em;display:flex;align-items:center;gap:12px}
+  h3 .idx{font-family:"JetBrains Mono";font-size:13px;color:var(--signal);font-weight:600;background:rgba(78,224,200,.1);padding:3px 9px;border-radius:6px;border:1px solid rgba(78,224,200,.25)}
+  h4{font-family:"Sora";font-weight:600;font-size:1.08rem;margin:30px 0 10px}
+  p{margin:0 0 18px;color:var(--text-2)}
+  p strong,li strong{color:var(--text);font-weight:500}
+  .accent{color:var(--signal)}
+  .lead-p{font-size:1.12rem;color:var(--text);font-weight:300;max-width:800px;line-height:1.95;margin-bottom:26px}
+  .col{max-width:840px}
+
+  /* 콜아웃 */
+  .callout{border-left:3px solid var(--signal);background:linear-gradient(90deg,rgba(78,224,200,.06),transparent);padding:18px 24px;margin:26px 0;border-radius:0 10px 10px 0}
+  .callout p{margin:0;color:var(--text-2)}
+  .callout.fb{border-left-color:var(--fb);background:linear-gradient(90deg,rgba(255,180,84,.07),transparent)}
+  .callout.regret{border-left-color:var(--regret);background:linear-gradient(90deg,rgba(255,107,107,.07),transparent)}
+
+  /* 패널 */
+  .panel{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:26px 28px;margin:26px 0}
+  .panel-title{font-family:"Sora";font-weight:600;font-size:1.05rem;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .panel-title::before{content:"";width:6px;height:18px;border-radius:2px;background:var(--signal)}
+
+  /* 진단 핵심 수치 */
+  .diag{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:36px 0}
+  @media(max-width:760px){.diag{grid-template-columns:1fr}}
+  .dcard{background:linear-gradient(160deg,var(--panel),var(--bg-2));border:1px solid var(--edge);border-radius:14px;padding:24px 22px;position:relative;overflow:hidden}
+  .dcard::after{content:"";position:absolute;right:-26px;top:-26px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(78,224,200,.13),transparent 70%)}
+  .dcard .big{font-family:"Sora";font-weight:800;font-size:2.6rem;line-height:1;letter-spacing:-.03em;color:var(--signal)}
+  .dcard .big.fb{color:var(--fb)} .dcard .big.ctx{color:var(--ctx)}
+  .dcard .big small{font-size:1rem;color:var(--text-3);font-weight:500}
+  .dcard .cap{margin-top:11px;font-size:13px;color:var(--text-2);line-height:1.6}
+
+  /* 표 */
+  .tbl-wrap{overflow-x:auto;margin:26px 0;border:1px solid var(--edge);border-radius:14px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px}
+  caption{caption-side:bottom;text-align:left;font-size:12.5px;color:var(--text-3);padding:14px 18px;font-family:"JetBrains Mono";line-height:1.6}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line)}
+  thead th{font-family:"JetBrains Mono";font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3);background:var(--bg-2)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(78,224,200,.03)}
+  td.num,th.num{text-align:right;font-family:"JetBrains Mono"}
+  .row-best{background:rgba(78,224,200,.07)!important}
+  .row-best td:first-child{color:var(--signal);font-weight:500}
+  .row-oracle td{color:var(--gold)}
+  .tag-fam{font-family:"JetBrains Mono";font-size:11px;color:var(--text-3)}
+  .v-up{color:var(--signal)} .v-down{color:var(--regret)}
+
+  /* 수식 */
+  .eq{font-family:"JetBrains Mono";font-size:14px;color:var(--text);background:var(--bg-2);border:1px solid var(--edge);border-radius:10px;padding:16px 22px;margin:20px 0;overflow-x:auto;text-align:center;letter-spacing:.02em}
+  .eq .lbl{float:right;color:var(--text-3);font-size:12px}
+
+  /* 모듈 3분할 */
+  .mods{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:30px 0}
+  @media(max-width:820px){.mods{grid-template-columns:1fr}}
+  .mod{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:24px;transition:.22s;position:relative;overflow:hidden}
+  .mod:hover{transform:translateY(-3px);border-color:var(--signal-dim)}
+  .mod .mtag{font-family:"JetBrains Mono";font-size:11px;letter-spacing:.1em;color:var(--signal)}
+  .mod h4{margin:8px 0 6px;font-size:1.18rem}
+  .mod .role{font-family:"JetBrains Mono";font-size:12px;color:var(--text-3);margin-bottom:12px}
+  .mod p{font-size:13.5px;margin:0;line-height:1.72;color:var(--text-2)}
+  .mod .bar{position:absolute;left:0;top:0;height:100%;width:4px}
+
+  /* 라우팅 시각화 위젯 */
+  .route-demo{background:linear-gradient(160deg,var(--bg-2),var(--panel));border:1px solid var(--edge);border-radius:16px;padding:26px;margin:28px 0}
+  .rd-head{font-family:"JetBrains Mono";font-size:12px;color:var(--text-2);margin-bottom:6px}
+  .rd-task{font-family:"JetBrains Mono";font-size:13px;color:var(--text);background:var(--bg);border:1px solid var(--edge);border-left:3px solid var(--ctx);border-radius:0 8px 8px 0;padding:11px 16px;margin-bottom:20px}
+  .voters{display:flex;flex-direction:column;gap:9px}
+  .voter{display:grid;grid-template-columns:190px 1fr 78px;gap:14px;align-items:center;font-family:"JetBrains Mono";font-size:12.5px}
+  .voter .vn{color:var(--text-2)}
+  .voter .vn b{color:var(--text)}
+  .vbar{height:22px;background:var(--bg);border-radius:5px;overflow:hidden;position:relative}
+  .vbar i{position:absolute;left:0;top:0;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--signal-dim),var(--signal));display:block}
+  .voter .vs{text-align:right;color:var(--signal)}
+  .rd-arrow{text-align:center;font-family:"JetBrains Mono";color:var(--text-3);margin:16px 0 6px;font-size:12px}
+  .rd-pick{text-align:center;font-family:"Sora";font-weight:700;font-size:1.15rem;color:var(--signal)}
+  .rd-pick span{color:var(--text-3);font-weight:400;font-size:.85rem}
+
+  /* 리스트 */
+  ul.clean{list-style:none;margin:18px 0;padding:0}
+  ul.clean li{position:relative;padding:9px 0 9px 28px;color:var(--text-2);border-bottom:1px solid var(--line)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li::before{content:"▸";position:absolute;left:4px;color:var(--signal);font-family:"JetBrains Mono"}
+  ol.steps{counter-reset:s;list-style:none;margin:20px 0;padding:0}
+  ol.steps>li{counter-increment:s;position:relative;padding:14px 0 14px 54px;border-bottom:1px solid var(--line);color:var(--text-2)}
+  ol.steps>li:last-child{border-bottom:none}
+  ol.steps>li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:14px;font-family:"JetBrains Mono";font-size:13px;color:var(--signal);background:rgba(78,224,200,.08);border:1px solid rgba(78,224,200,.25);border-radius:7px;width:36px;height:28px;display:flex;align-items:center;justify-content:center}
+  ol.steps>li b{color:var(--text);font-weight:500}
+
+  /* 모델 풀 히트맵 */
+  .heat{margin:30px 0;overflow-x:auto}
+  .heat table{min-width:680px;font-size:12px}
+  .heat td.cell{text-align:center;font-family:"JetBrains Mono";color:#0b0f17;font-weight:600;border:2px solid var(--bg);border-radius:4px}
+  .heat th.rot{font-family:"JetBrains Mono";font-size:10.5px;color:var(--text-3);text-transform:none;letter-spacing:0;padding:8px 6px}
+  .heat td.mname{font-family:"JetBrains Mono";color:var(--text-2);white-space:nowrap;font-size:12px}
+  .heat td.best{box-shadow:inset 0 0 0 2px var(--gold)}
+
+  /* takeaway */
+  .takeaways{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:30px 0}
+  @media(max-width:760px){.takeaways{grid-template-columns:1fr}}
+  .tk{background:var(--panel);border:1px solid var(--edge);border-radius:13px;padding:22px 24px}
+  .tk .n{font-family:"JetBrains Mono";color:var(--signal);font-size:12px;letter-spacing:.08em}
+  .tk h4{margin:8px 0 8px;font-size:1.05rem}
+  .tk p{font-size:13.5px;margin:0;line-height:1.7}
+
+  /* 실전 가이드 */
+  ol.guide{counter-reset:g;list-style:none;margin:24px 0;padding:0}
+  ol.guide>li{counter-increment:g;position:relative;padding:16px 0 16px 56px;border-bottom:1px solid var(--line)}
+  ol.guide>li:last-child{border-bottom:none}
+  ol.guide>li::before{content:"0"counter(g);position:absolute;left:0;top:16px;font-family:"Sora";font-weight:800;font-size:1.1rem;color:var(--signal);opacity:.9}
+  ol.guide>li b{color:var(--text);font-weight:600;display:block;margin-bottom:3px}
+  ol.guide>li span{color:var(--text-2);font-size:14px}
+
+  /* 푸터 */
+  footer{border-top:1px solid var(--line);padding:52px 0 70px;color:var(--text-3);font-size:13px}
+  footer .ft-grid{display:flex;justify-content:space-between;flex-wrap:wrap;gap:30px}
+  footer .ft-note{max-width:540px;line-height:1.8}
+  footer a{color:var(--signal);text-decoration:none} footer a:hover{text-decoration:underline}
+
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+  @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+  .video-container {
+    width: 100%; /* 부모 요소의 너비에 맞춤 */
+    max-width: 1600px; /* 최대 너비 설정 (옵션) */
+    margin: 0 auto;
+  }
+
+  .video-container iframe {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9; /* 16:9 비율 유지 */
+  }      
+</style>
+<!-- MathJax for LaTeX -->
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        svg: {
+            fontCache: 'global'
+        }
+    };
+</script>
+</head>
+<body>
+<div class="bg-fx"></div>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#4ee0c8" stroke-width="1.6"/><path class="flow" d="M12 5 A7 7 0 0 1 18 15" stroke="#4ee0c8" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="2.4" fill="#4ee0c8"/></svg></span>
+      Agent-as-a-Router
+    </div>
+    <nav class="topnav">
+      <a href="#diagnosis">진단</a>
+      <a href="#caf">C-A-F 루프</a>
+      <a href="#acrouter">ACRouter</a>
+      <a href="#bench">CodeRouterBench</a>
+      <a href="#results">실험 결과</a>
+      <a href="#guide">실전 가이드</a>
+    </nav>
+  </div>
+</div>
+
+<!-- HERO -->
+<header class="hero wrap">
+  <div class="hero-grid">
+    <div class="reveal in">
+      <div class="eyebrow">2026-06 · arXiv:2606.22902 · NUS · DAMO · HKUST</div>
+      <h1 class="title sora">코딩 작업을 위한<br><span class="r">에이전트형 모델 라우팅</span></h1>
+      <div class="sub-en mono">Agent-as-a-Router: Agentic Model Routing for Coding Tasks</div>
+      <p class="lede">
+        현실의 사용자는 여러 제공자의 LLM에 접근할 수 있고, 각 모델은 서로 다른 영역에서 강하되 모든 영역을 지배하는 모델은 없다.
+        따라서 각 작업을 가장 적합한 모델로 보내는 <b>라우팅</b>이 성능과 비용 모두에서 중요해진다.
+        기존 라우터는 이를 정적 일회성 분류로 다루지만, 진짜 병목은 추론 능력이 아니라
+        <b class="accent">정보 결핍</b>이다.
+      </p>
+      <div class="hero-cta">
+        <span class="pill"><b>+15.3%</b> 차원별 성능 통계 부여 시</span>
+        <span class="pill"><b>~10K</b> 작업 · 8개 모델</span>
+        <span class="pill"><b>최저</b> 누적 후회(regret)</span>
+      </div>
+    </div>
+
+    <div class="loop-card reveal">
+      <div class="lc-t">C-A-F LOOP</div>
+      <svg class="loop-svg" viewBox="0 0 320 300" xmlns="http://www.w3.org/2000/svg">
+        <!-- 순환 화살표 -->
+        <defs>
+          <marker id="ah" markerWidth="9" markerHeight="9" refX="5" refY="3" orient="auto">
+            <path d="M0 0 L6 3 L0 6 Z" fill="#5f718c"/>
+          </marker>
+        </defs>
+        <circle cx="160" cy="150" r="104" fill="none" stroke="#1f2c42" stroke-width="1.5"/>
+        <circle class="flow" cx="160" cy="150" r="104" fill="none" stroke="#4ee0c8" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+
+        <!-- Context 노드 (상단) -->
+        <g>
+          <circle cx="160" cy="46" r="30" fill="#0f1521" stroke="#5b9dff" stroke-width="1.8"/>
+          <text x="160" y="44" text-anchor="middle" fill="#5b9dff" font-family="JetBrains Mono" font-size="13" font-weight="700">C</text>
+          <text x="160" y="60" text-anchor="middle" fill="#9eb1ca" font-family="JetBrains Mono" font-size="8">Context</text>
+        </g>
+        <!-- Action 노드 (우하단) -->
+        <g>
+          <circle cx="250" cy="202" r="30" fill="#0f1521" stroke="#c08bff" stroke-width="1.8"/>
+          <text x="250" y="200" text-anchor="middle" fill="#c08bff" font-family="JetBrains Mono" font-size="13" font-weight="700">A</text>
+          <text x="250" y="216" text-anchor="middle" fill="#9eb1ca" font-family="JetBrains Mono" font-size="8">Action</text>
+        </g>
+        <!-- Feedback 노드 (좌하단) -->
+        <g>
+          <circle cx="70" cy="202" r="30" fill="#0f1521" stroke="#ffb454" stroke-width="1.8"/>
+          <text x="70" y="200" text-anchor="middle" fill="#ffb454" font-family="JetBrains Mono" font-size="13" font-weight="700">F</text>
+          <text x="70" y="216" text-anchor="middle" fill="#9eb1ca" font-family="JetBrains Mono" font-size="8">Feedback</text>
+        </g>
+        <!-- 라벨 호 -->
+        <text x="222" y="120" text-anchor="middle" fill="#5f718c" font-family="JetBrains Mono" font-size="8.5">decide</text>
+        <text x="160" y="262" text-anchor="middle" fill="#5f718c" font-family="JetBrains Mono" font-size="8.5">execute</text>
+        <text x="96" y="120" text-anchor="middle" fill="#5f718c" font-family="JetBrains Mono" font-size="8.5">memorize</text>
+        <!-- 중앙 라우터 -->
+        <circle cx="160" cy="150" r="16" fill="#131b2a" stroke="#4ee0c8" stroke-width="1.5"/>
+        <text x="160" y="154" text-anchor="middle" fill="#4ee0c8" font-family="JetBrains Mono" font-size="9" font-weight="700">↻</text>
+      </svg>
+      <div class="loop-legend">
+        <span><span class="dot" style="background:var(--ctx)"></span>맥락</span>
+        <span><span class="dot" style="background:var(--act)"></span>행동(모델 선택)</span>
+        <span><span class="dot" style="background:var(--fb)"></span>검증 피드백</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+
+<center>
+  <div class="video-container">
+    <iframe src="https://www.youtube.com/embed/4GWTkR0qp3k?si=48dca_9Fco_GKgvf" frameborder="0" allowfullscreen></iframe>
+  </div>        
+</center>
+
+<!-- 서론 -->
+<section class="block wrap" id="intro">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 1 · INTRODUCTION</div>
+    <h2>어떤 모델이 각 작업을 처리해야 하는가<span class="en mono">From provider-centric serving to user-centric routing</span></h2>
+    <p class="lead-p">
+      Claude Code, Codex 같은 현대 코딩 에이전트는 LLM을 코딩·디버깅·저장소 단위 프로그래밍의 상호작용 시스템으로 바꾸며 소프트웨어 개발에 큰 영향을 미쳤다.
+      그러나 대부분의 에이전트는 모든 작업을 동일한 단일 LLM으로 푼다.
+    </p>
+    <p>
+      이는 제공자 중심(provider-centric) 서빙 관점에서는 합리적이다. 제공자는 자사 모델과 예측 가능한 서빙 비용을 우선하기 때문이다.
+      그러나 작업 단위의 품질과 비용 효율이 우선인 <b>사용자 중심(user-centric)</b> 시나리오의 실제 요구는 간과한다.
+      8개 프런티어 모델을 여러 코딩 차원에서 실험하면 최적 모델은 작업마다 달라지며, 항상 전역 최강 모델을 고르는 전략조차
+      각 작업마다 최적 모델을 고르는 <b class="accent">작업별 오라클(per-task oracle)</b>에 뒤처진다.
+      작업마다 수동으로 최적 모델을 고르는 일은 대규모에서 불가능하므로, 자동 모델 라우팅이 핵심 기제로 떠오른다.
+    </p>
+  </div>
+</section>
+
+<!-- 3.1 진단 -->
+<section class="block wrap" id="diagnosis">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 3.1 · DIAGNOSIS</div>
+    <h2>병목은 추론이 아니라 정보 결핍이다<span class="en mono">Information deficit, not reasoning failure</span></h2>
+    <p class="lead-p">
+      무엇이 라우터를 제약하는가. 추론 능력인가, 정보 접근인가.
+      이를 가리기 위해 LLM 라우터(Claude Sonnet 4.6)가 접근하는 정보만 바꾸는 절제 실험을 수행한다.
+    </p>
+  </div>
+
+  <div class="diag reveal">
+    <div class="dcard">
+      <div class="big ctx">41.4<small>%</small></div>
+      <div class="cap"><b>Vanilla.</b> 표준 제로샷 LLM 라우터. 작업 프롬프트만 보고 후보 풀에서 모델을 고른다.</div>
+    </div>
+    <div class="dcard">
+      <div class="big">47.7<small>%</small></div>
+      <div class="cap"><b>+Perf stats.</b> 탐침(probing) 집합의 차원별 성능 통계를 추가하면 Vanilla 대비 <b class="accent">상대 +15.3%</b>.</div>
+    </div>
+    <div class="dcard">
+      <div class="big fb">47.5<small>%</small></div>
+      <div class="cap"><b>DimensionBest.</b> 동일 통계를 인코딩한 최고 휴리스틱. +Perf stats가 이를 근소하게 능가한다.</div>
+    </div>
+  </div>
+
+  <div class="col reveal">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>절제(Ablation)</th><th>해석</th><th class="num">AvgPerf%</th><th class="num">Perf/$</th></tr></thead>
+        <tbody>
+          <tr class="row-oracle"><td>Oracle</td><td>작업마다 최적 모델을 쓰는 이론적 상한</td><td class="num">57.00</td><td class="num">8.20</td></tr>
+          <tr><td>DimensionBest</td><td>사전지식으로 차원별 최적 모델 선택</td><td class="num">47.50</td><td class="num">3.69</td></tr>
+          <tr><td>Vanilla</td><td>표준 제로샷 LLM 라우터</td><td class="num">41.41</td><td class="num">1.97</td></tr>
+          <tr><td>+Dimension</td><td>+작업 차원 설명 추가</td><td class="num">41.18</td><td class="num">1.81</td></tr>
+          <tr class="row-best"><td>+Perf stats</td><td>+탐침 집합의 사전 성능 통계 추가</td><td class="num">47.74</td><td class="num">1.71</td></tr>
+        </tbody>
+        <caption>표 1 · LLM-as-a-Router의 성능 병목 진단(Claude Sonnet 4.6, 2,919 작업). 사전 성능 통계 제공이 라우팅 성능을 크게 끌어올린다.</caption>
+      </table>
+    </div>
+    <div class="callout">
+      <p>
+        DimensionBest가 인코딩한 것과 동일한 통계를 받으면 LLM 라우터는 이를 넘어선다(47.74 대 47.50).
+        즉 라우터와 오라클 상한 사이 성능 격차의 큰 원천은 <b class="accent">추론 능력 부족이 아니라 정보 결핍</b>이다.
+      </p>
+    </div>
+    <p>이 진단에서 두 가지 설계 통찰이 따라온다. 첫째, 라우터는 매 결정마다 새로운 <b>실행 기반(execution-grounded) 정보</b>를 획득해야 한다. 정적 사전지식이나 모델의 자기평가가 아니라, 선택한 모델의 출력을 실제로 샌드박스에서 실행해 얻은 성능 신호다(검증). 둘째, 라우터는 그 정보를 작업 스트림 전반에 <b>축적</b>해야 미래 결정이 과거 결과에 조건화될 수 있다(기억).</p>
+  </div>
+</section>
+
+<!-- 3.2 C-A-F 루프 -->
+<section class="block wrap" id="caf">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 3.2 · THE C-A-F LOOP</div>
+    <h2>라우팅을 순환 루프로 형식화하다<span class="en mono">Context → Action → Feedback → Context</span></h2>
+    <p class="lead-p">
+      Agent-as-a-Router는 작업 스트림 위에서 동작하며 매 루프의 검증된 결과로 내부 상태를 갱신한다.
+      라우터는 인덱싱된 모델 풀 M에 접근하고, N개 작업 스트림을 하나씩 처리한다.
+      각 라우팅 결정 뒤 검증된 결과가 다음 결정의 맥락으로 되먹임된다.
+    </p>
+    <div class="eq mono">c<sub>i</sub> &nbsp;—decide→&nbsp; a<sub>i</sub> &nbsp;—execute→&nbsp; f<sub>i</sub> &nbsp;—memorize→&nbsp; c<sub>i+1</sub><span class="lbl">(1)</span></div>
+    <p>완료된 각 루프가 다음 루프를 더 정보에 밝게 만든다. C→A→F→C 순환은 작업 스트림이 진행됨에 따라 반복된다.</p>
+
+    <div class="mods reveal">
+      <div class="mod"><div class="bar" style="background:var(--ctx)"></div><div class="mtag">CONTEXT</div><h4>맥락 c<sub>i</sub></h4><div class="role mono">(p_i, d_i, H&lt;i)</div><p>입력 프롬프트 p_i, 선택적 메타데이터 d_i(설명·난이도·언어), 그리고 이전 모든 루프에서 축적된 메모리 상태 H&lt;i로 구성된다.</p></div>
+      <div class="mod"><div class="bar" style="background:var(--act)"></div><div class="mtag">ACTION</div><h4>행동 a<sub>i</sub></h4><div class="role mono">a_i ∈ [M]</div><p>모델 풀 M에서 선택된 모델 m_{a_i}의 인덱스. 이번 작업에 어떤 모델을 호출할지를 결정한다.</p></div>
+      <div class="mod"><div class="bar" style="background:var(--fb)"></div><div class="mtag">FEEDBACK</div><h4>피드백 f<sub>i</sub></h4><div class="role mono">(ŝ_i, κ̂_i)</div><p>검증기가 관측한 성능 점수 ŝ_i ∈ [0,1]과, 토큰 소비·공식 단가로 계산한 금전 비용 κ̂_i. 메모리가 축적하는 실행 기반 피드백이다.</p></div>
+    </div>
+
+    <h3><span class="idx mono">동치</span>맥락적 멀티암드 밴딧</h3>
+    <p>
+      C-A-F 형식화는 c_i를 부가 정보, a_i를 암(arm) 당김, f_i를 피드백으로 보는 <b>맥락적 멀티암드 밴딧</b> 문제와 연결된다.
+      라우팅 정책은 모델 풀 위의 다항 분포 π(·|h_i)를 유도한다. 작업별 보상은 사용자가 정한 가중치 ε₁&gt;0(성능 보상), ε₂&lt;0(비용 벌점)로 결합된다.
+    </p>
+    <div class="eq mono">r<sub>i</sub>(a<sub>i</sub>) = ε₁·s<sub>i</sub>(a<sub>i</sub>) + ε₂·κ<sub>i</sub>(a<sub>i</sub>)<span class="lbl">(2)</span></div>
+    <p>
+      작업별 오라클은 보상 행렬 R을 완전히 안다는 가정 하에 각 작업에서 보상을 최대화하는 모델을 독립적으로 고른다.
+      이 작업별 오라클은 단일 전역 최적 모델에 전념하는 정책과는 일반적으로 같지 않다.
+      정책 π에 대해 <b class="accent">누적 후회(cumulative regret)</b>를 보고한다.
+    </p>
+    <div class="eq mono">CumReg<sub>N</sub>(π) = Σ<sub>i=1</sub><sup>N</sup> δ<sub>i</sub> = N·(V* − V(π))<span class="lbl">(7)</span></div>
+    <p>여기서 δ_i = r*_i − r_i(a_i) ≥ 0은 단일 작업 후회다. 누적 후회는 작업 스트림 전반의 누적 보상 격차를 측정하며, 낮을수록 최적에 가까운 라우팅이다.</p>
+  </div>
+
+  <!-- 세 가지 라우팅 전략 비교 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">대비</span>세 가지 라우팅 전략</h3>
+    <div class="mods">
+      <div class="mod"><div class="mtag" style="color:var(--regret)">① STATIC MAPPING</div><h4>휴리스틱 라우터</h4><p>사전 설정 키워드와 엄격 매칭으로 룩업 테이블을 통해 직접 디스패치한다(예: DimensionBest). 정적 규칙이며 메모리·피드백이 없다.</p></div>
+      <div class="mod"><div class="mtag" style="color:var(--fb)">② STATIC POLICY</div><h4>학습 정책 라우터</h4><p>학습된 정책 모델이 작업 특징을 모델 선택으로 사상한다. 의미 추론·분류는 하나 메모리가 없어 스트림 동안 적응하지 못한다.</p></div>
+      <div class="mod"><div class="bar" style="background:var(--signal)"></div><div class="mtag">③ AGENT-AS-A-ROUTER</div><h4>자기진화 라우터</h4><p>루프·메모리·도구·피드백을 모두 갖춘 반복 자기진화 라우터. 작업 스트림 안에서 검증 경험을 축적하며 진화한다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3.3 ACRouter -->
+<section class="block wrap" id="acrouter">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 3.3 · ACROUTER</div>
+    <h2>ACRouter: C-A-F의 구체화<span class="en mono">Orchestrator · Verifier · Memory</span></h2>
+    <p class="lead-p">
+      ACRouter(Agentic Coding Router)는 진단의 세 요구—결정 시점의 정보 통합, 매 루프의 새 실행 기반 정보 생산, 루프 간 축적—를
+      각각 <b>오케스트레이터·검증기·메모리</b>로 실현하고, 세 모듈이 모두 활성인 채 작업 스트림 위에서 진화한다.
+    </p>
+
+    <h4>오케스트레이터 — 정보 통합</h4>
+    <p>동적 맥락에 기반해 라우팅 결정을 내린다. DimensionBest 사전지식, 메모리에서 kNN으로 검색한 상위 10개 과거 이웃, 작업 메타데이터를 종합한다. 핵심 정책은 CodeRouterBench 탐침 집합으로 미세조정한 비용 효율적 Qwen3.5-0.8B 모델이며, 가중 투표(weighted voting)로 휴리스틱 규칙과 결합한다.</p>
+
+    <h4>검증기 — 정보 생산</h4>
+    <p>모델 출력을 샌드박스에서 평가하고 여러 신호를 단일 성능 점수 u_i ∈ [0,1]로 집계한다.</p>
+    <div class="eq mono">u<sub>i</sub> = Σ<sub>k∈K_d(t_i)</sub> w<sub>d(t_i),k</sub> · ŝ<sub>k</sub>(a<sub>i</sub>, t<sub>i</sub>)<span class="lbl">(8)</span></div>
+    <p>d(t_i)는 작업 유형(실행 가능 여부 결정), K_d는 검증 도구 집합(AST 파싱, 샌드박스 실행 등), w는 유형별 가중치로 합이 1이다.</p>
+
+    <h4>메모리 — 정보 축적</h4>
+    <p>작업 임베딩(voyage-code-3 / BGE-large)으로 키를 잡는 온라인 벡터 저장소다. 값에는 선택 모델·성능·비용·검증 추적이 기록된다. 검색은 코사인 kNN으로 상위 10개 이웃을 가져와 오케스트레이터에 전달한다. 저장소는 2만 항목으로 FIFO 제한되고 매 시도 후 제자리에서 커밋된다. 정적 차원 해시 라우팅과 달리, 임베딩 기반 저장소는 세밀하고 <b class="accent">맥락 인지적인</b> 의사결정을 가능케 하며, 유사 작업에서 후보의 과거 성공과 최근 실패를 모두 오케스트레이터에 노출한다.</p>
+  </div>
+
+  <!-- 라이브 라우팅 데모 -->
+  <div class="col reveal">
+    <div class="route-demo">
+      <div class="rd-head mono">▷ 예시 작업 — 런타임 오류 수정</div>
+      <div class="rd-task mono">"제공된 클래스가 오류 메시지를 보인다… AttributeError: 'User' object has no attribute '_name'. 고쳐라."</div>
+      <div class="voters">
+        <div class="voter"><span class="vn mono">api_llm <b>(Qwen3.5-0.8B)</b></span><span class="vbar"><i style="width:44%"></i></span><span class="vs">→ MiniMax</span></div>
+        <div class="voter"><span class="vn mono">logreg</span><span class="vbar"><i style="width:30%"></i></span><span class="vs">→ GLM-5</span></div>
+        <div class="voter"><span class="vn mono">memory_KNN</span><span class="vbar"><i style="width:88%;background:linear-gradient(90deg,var(--signal-dim),var(--signal))"></i></span><span class="vs">→ Kimi-K2.5</span></div>
+        <div class="voter"><span class="vn mono">dim_best</span><span class="vbar"><i style="width:88%;background:linear-gradient(90deg,var(--signal-dim),var(--signal))"></i></span><span class="vs">→ Kimi-K2.5</span></div>
+      </div>
+      <div class="rd-arrow mono">─ 가중 투표 점수: Kimi-K2.5 = 1.47 · MiniMax = 0.64 · GLM-5 = 0.43 ─</div>
+      <div class="rd-pick">Argmax → Kimi-K2.5 &nbsp;<span>→ 버그 수정 · 코드 재실행 · 성공 반환</span></div>
+    </div>
+  </div>
+
+  <!-- 구성 분류 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">3.4</span>C-A-F 구성으로 분해한 라우팅 정책</h3>
+    <p>C-A-F 루프는 기존 전략을 점검하는 통합 관점을 제공한다. 구성요소(오케스트레이터·검증기·메모리)를 각각 제한하거나 제거해 베이스라인을 정리하면 자연스럽게 절제 연구가 설계된다.</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>방법 계열</th><th>오케스트레이터</th><th>검증기</th><th>메모리</th></tr></thead>
+        <tbody>
+          <tr><td>Single-Model (Always-m)</td><td>직접 디스패치</td><td>—</td><td>—</td></tr>
+          <tr><td>Static: 휴리스틱 (DimensionBest, kNN)</td><td>정적 룩업</td><td>—</td><td>동결된 탐침 사전지식</td></tr>
+          <tr><td>Static: 학습 정책 (LogReg, RouteLLM, Qwen3.5-FT)</td><td>학습 모델</td><td>—</td><td>—</td></tr>
+          <tr><td>Dynamic: 온라인 밴딧 (LinUCB, LinTS)</td><td>argmax 규칙</td><td>보상만</td><td>암별 모수 사후분포</td></tr>
+          <tr class="row-best"><td>ACRouter (루프 완성)</td><td>LLM 정책 + 도구</td><td>샌드박스 네이티브</td><td>온라인 작업 임베딩 kNN</td></tr>
+        </tbody>
+        <caption>표 4 · C-A-F 구성으로 정리한 라우팅 방법. 루프가 끊긴 방법은 메모리를 비우거나 동결하며, 루프가 완성된 ACRouter는 세 핵심 모듈을 모두 활성화한다.</caption>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 4. CodeRouterBench -->
+<section class="block wrap" id="bench">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 4 · CODEROUTERBENCH</div>
+    <h2>스트리밍 라우팅을 위한 평가 환경<span class="en mono">~10K tasks · 10 dimensions · 8 frontier LLMs</span></h2>
+    <p class="lead-p">
+      스트리밍 라우팅에서 누적 후회를 평가하려면 작업별·모델별 결과가 미리 수집된 통제 환경이 필요하다.
+      기존 라우팅 벤치마크는 일회성 정확도만 측정해 이를 지원하지 못한다.
+      이에 10개 차원에 걸친 약 1만 코딩 작업으로 구성된 통합 테스트베드 CodeRouterBench를 도입한다.
+    </p>
+    <div class="diag">
+      <div class="dcard"><div class="big">10</div><div class="cap">코딩 차원 (9개 단일턴 ID + 1개 에이전트형 OOD)</div></div>
+      <div class="dcard"><div class="big ctx">7,080</div><div class="cap">탐침(probing) 집합 작업 — 라우터 개발용</div></div>
+      <div class="dcard"><div class="big fb">2,919</div><div class="cap">분포 내(ID) 테스트 작업 · OOD 테스트 176</div></div>
+    </div>
+    <p>전체 작업은 널리 쓰이는 고품질 벤치마크 15종 이상에서 용도 변경했다. 7개 차원은 샌드박스 실행 기반 채점(pass@1)을, 3개 차원은 프록시 지표를 LLM-as-Judge로 보완해 쓴다. 3단계 파이프라인은 데이터 수집(15개 출처 → 약 1만 작업) → 모델 평가(8개 LLM의 관측 행렬 생성, 샌드박스·심사 채점) → 라우팅 평가(여러 라우팅 방법을 성능·비용 지표와 파레토 분석으로 비교)로 진행된다.</p>
+    <div class="callout fb">
+      <p>
+        <b>실세계 테스트 — 에이전트형 프로그래밍.</b> 에이전트형 프로그래밍 차원은 C-A-F 형식화의 첫 OOD 검증으로 설정된다.
+        다단계 계획·파일 탐색·반복 디버깅이 필요해 9개 단일턴 차원과 질적으로 다르며,
+        SWE-bench Verified·LongCLI-Bench·FeatureBench·SWE-CI에서 176개 작업을 추출하고 Docker 기반 샌드박스(mini-swe-agent + SWE-Bench harness, 40 step 제한)로 평가한다.
+      </p>
+    </div>
+  </div>
+
+  <!-- 모델 풀 히트맵 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">4.2</span>모델 풀: 모든 차원을 지배하는 단일 모델은 없다</h3>
+    <p>8개 프런티어 LLM(Claude Opus 4.6, Sonnet 4.6, GPT-5.4, Qwen3-Max, Qwen3.5-Plus, GLM-5, Kimi-K2.5, MiniMax-M2.7)을 평가한다. Claude Opus 4.6이 평균 최고(42.9%)지만, 알고리즘 설계는 GLM-5에(47.2 대 25.4, 상대 +86%), 테스트 생성은 Qwen3-Max에(82.7 대 39.2, 상대 +111%), 데이터 과학은 Kimi-K2.5에(18.4 대 14.2, +30%) 뒤진다. <b class="accent">9개 차원에서 5개의 서로 다른 모델</b>이 차원별 최강으로 등장하며, 강한 모델일수록 비용이 높은 경향이 있어 라우팅의 가치를 성능·비용 양면에서 확인한다.</p>
+    <div class="heat">
+      <table>
+        <thead><tr><th class="rot">모델 / 차원</th><th class="rot">생성</th><th class="rot">알고</th><th class="rot">버그</th><th class="rot">완성</th><th class="rot">리팩</th><th class="rot">DS</th><th class="rot">다언어</th><th class="rot">이해</th><th class="rot">테스트</th><th class="rot">AVG</th></tr></thead>
+        <tbody id="heatBody"></tbody>
+        <caption>그림 4(a) · 탐침 집합에서 8개 모델 × 9개 차원 성능 히트맵(0–1 정규화). 금색 테두리는 차원별 최강. 최적 모델이 작업 영역마다 크게 달라진다.</caption>
+      </table>
+    </div>
+    <div class="callout">
+      <p>비용도 극적으로 다르다. 풀에서 가장 비싼 모델(Claude Opus 4.6 출력 $25/M)은 가장 싼 모델(MiniMax-M2.7 출력 $1.20/M)의 20배가 넘는다. Claude Opus 4.6의 총비용은 Kimi-K2.5의 약 12배다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5. 실험 결과 -->
+<section class="block wrap" id="results">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 5 · EMPIRICAL VALIDATION</div>
+    <h2>실험 결과<span class="en mono">ACRouter attains the lowest cumulative regret</span></h2>
+    <p class="lead-p">
+      ACRouter는 맥락을 동적으로 축적해 ID·OOD 양쪽에서 라우터 중 최고 AvgPerf를 달성하며,
+      최강 단일 모델 Opus-4.6을 항상 고르는 것보다 비용이 낮다.
+    </p>
+    <p style="font-size:13px;color:var(--text-3);margin-bottom:8px">지표 — AvgPerf: 전 작업 평균 성능. CumReg: 식 (7)의 종단 누적 후회(ε₁,ε₂ = 1, −0.1). Perf/$: AvgPerf%/비용. 값↑은 클수록, ↓은 작을수록 좋음.</p>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th rowspan="2">라우터</th>
+            <th colspan="3" style="text-align:center;border-bottom:1px solid var(--edge-2)">분포 내 (n=2,919)</th>
+            <th colspan="3" style="text-align:center;border-bottom:1px solid var(--edge-2)">OOD 테스트 (n=176)</th>
+          </tr>
+          <tr><th class="num">AvgPerf↑</th><th class="num">CumReg↓</th><th class="num">Perf/$↑</th><th class="num">AvgPerf↑</th><th class="num">CumReg↓</th><th class="num">Perf/$↑</th></tr>
+        </thead>
+        <tbody>
+          <tr class="row-oracle"><td>Oracle</td><td class="num">57.00</td><td class="num">0</td><td class="num">8.20</td><td class="num">75.89</td><td class="num">0</td><td class="num">2.32</td></tr>
+          <tr class="row-best"><td>ACRouter (ours)</td><td class="num">49.98</td><td class="num">205.5</td><td class="num">3.79</td><td class="num">62.50</td><td class="num">17.0</td><td class="num">1.18</td></tr>
+          <tr><td>LinTS</td><td class="num">46.48</td><td class="num">307.4</td><td class="num">4.49</td><td class="num">46.43</td><td class="num">35.9</td><td class="num">0.75</td></tr>
+          <tr><td>LinUCB</td><td class="num">46.84</td><td class="num">296.9</td><td class="num">4.38</td><td class="num">49.82</td><td class="num">31.1</td><td class="num">0.96</td></tr>
+          <tr><td>DimensionBest</td><td class="num">47.50</td><td class="num">277.4</td><td class="num">3.69</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
+          <tr><td>kNN Retrieval</td><td class="num">47.18</td><td class="num">286.7</td><td class="num">6.07</td><td class="num">14.29</td><td class="num">66.7</td><td class="num">1.45</td></tr>
+          <tr><td>LogReg</td><td class="num">47.26</td><td class="num">284.4</td><td class="num">6.27</td><td class="num">19.64</td><td class="num">61.8</td><td class="num">1.17</td></tr>
+          <tr><td>RouteLLM-BERT</td><td class="num">47.22</td><td class="num">285.5</td><td class="num">6.22</td><td class="num">21.43</td><td class="num">59.4</td><td class="num">1.30</td></tr>
+          <tr><td>TF-IDF+MLP</td><td class="num">46.97</td><td class="num">292.8</td><td class="num">6.11</td><td class="num">13.39</td><td class="num">67.9</td><td class="num">1.17</td></tr>
+          <tr><td>Qwen3.5-0.8B-FT</td><td class="num">46.41</td><td class="num">309.1</td><td class="num">6.82</td><td class="num">55.36</td><td class="num">27.2</td><td class="num">0.74</td></tr>
+          <tr><td>RouteLLM-MF</td><td class="num">46.16</td><td class="num">316.5</td><td class="num">6.19</td><td class="num">8.93</td><td class="num">72.7</td><td class="num">0.94</td></tr>
+          <tr><td>Always-Opus 4.6</td><td class="num">43.83</td><td class="num">387.1</td><td class="num">1.29</td><td class="num">57.14</td><td class="num">26.7</td><td class="num">0.64</td></tr>
+          <tr><td>Always-Kimi-K2.5</td><td class="num">36.66</td><td class="num">593.3</td><td class="num">12.62</td><td class="num">18.75</td><td class="num">62.3</td><td class="num">1.22</td></tr>
+          <tr><td>Random</td><td class="num">38.75</td><td class="num">533.6</td><td class="num">2.48</td><td class="num">31.25</td><td class="num">50.4</td><td class="num">0.85</td></tr>
+        </tbody>
+        <caption>표 3 · 구성 분류별 라우팅 결과. 왼쪽: 9개 단일턴 차원의 분포 내 테스트. 오른쪽: 에이전트형 프로그래밍 실세계 OOD 테스트. DimensionBest는 사전 정의된 차원→모델 매핑이 필요해 OOD에 적용 불가.</caption>
+      </table>
+    </div>
+  </div>
+
+  <!-- 관찰 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">5.2</span>주요 관찰</h3>
+    <div class="takeaways">
+      <div class="tk"><div class="n mono">ID</div><h4>ACRouter가 분포 내에서 최고</h4><p>AvgPerf 49.98%, 누적 후회 205.5로 전 계열을 압도한다. 완전한 차원별 사전지식을 가진 DimensionBest를 AvgPerf 2.48점 앞선다.</p></div>
+      <div class="tk"><div class="n mono">OOD</div><h4>분포 이동에도 일반화</h4><p>OOD에서 62.50% AvgPerf로 최강 단일 모델 Always-Opus(57.14%)와 미세조정 Qwen3.5-0.8B(55.36%)를 모두 앞선다.</p></div>
+      <div class="tk"><div class="n mono" style="color:var(--regret)">FRAGILE</div><h4>정적 학습기는 OOD에서 붕괴</h4><p>경량 분류기(LogReg, TF-IDF+MLP, RouteLLM-MF/BERT)는 ID에서 DimensionBest와 1.3% 이내지만, OOD AvgPerf는 8.93~21.43%로 급락해 Random(31.25%)보다도 낮다.</p></div>
+      <div class="tk"><div class="n mono">$$$</div><h4>비용 효율도 우위</h4><p>ACRouter의 Perf/$는 ID 3.79, OOD 1.18로 Always-Opus(1.29 / 0.64)를 모두 능가한다. Opus는 ID에서 $34.02를 쓰고도 ACRouter($13.21)에 6.15점 뒤진다.</p></div>
+    </div>
+    <p>맥락적 밴딧(LinUCB, LinTS)은 온라인 갱신을 계속해 OOD에서 49.82 / 46.43%로 더 잘 버티지만, 암별 선형 모델이 오케스트레이터·메모리가 주는 맥락 인지 추론을 결여해 AvgPerf와 CumReg 모두에서 ACRouter에 뒤진다. 정적 방법은 후회를 더 빨리 누적(경량 분류기 284–317)하고 밴딧이 약간 뒤따르며(297–307), 배포 중 메모리가 정보 격차를 메우는 ACRouter(205.5)만이 낮은 후회를 보인다.</p>
+    <div class="callout regret">
+      <p>
+        <b>왜 정적 베이스라인은 OOD에서 붕괴하는가.</b> 9개 단일턴 탐침 차원은 짧은 단일 파일 작업이 지배하지만, OOD 집합은 다단계 계획·파일 탐색·반복 디버깅을 요구한다.
+        학습된 분류기는 OOD 분포에서 더는 같은 신호를 담지 않는 프롬프트 특징에 조건화되고, 평가 중 새 피드백을 획득할 수 없다.
+        반면 ACRouter와 온라인 밴딧은 OOD 스트림 동안 메모리나 암별 사후분포를 축적해 더 많은 신호를 회복한다.
+      </p>
+    </div>
+  </div>
+
+  <!-- 변량 분해 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">D.3</span>차원이 설명하는 신호는 27%뿐</h3>
+    <p>작업별 오라클 결정이 값싼 구조 신호에서 얼마나 회복되는지 정량화하기 위해, 오라클이 할당한 모델 y_t와 작업 차원 d(t) 사이 상호정보 I(y_t; d(t))를 계산한다. 차원 정체성은 y_t 엔트로피의 약 <b class="accent">27%</b>만 포착한다. 이는 DimensionBest가 약 0.475 AvgPerf에 도달하는 이유를 설명하지만 0.570 작업별 오라클에는 한참 못 미친다. 나머지 라우팅 신호는 작업별 내용(알고리즘 선택, API 패턴, 경계 사례 처리)에 있으며, 이것이 바로 ACRouter의 작업 임베딩 메모리가 키로 잡는 대상이다. DimensionBest의 낮은 해상도 차원 해시가 아니다.</p>
+  </div>
+</section>
+
+<!-- 실전 가이드 -->
+<section class="block wrap" id="guide">
+  <div class="col reveal">
+    <div class="sec-num mono">§ E.2 · PRACTITIONER'S GUIDE</div>
+    <h2>직접 에이전트 라우터를 만드는 법<span class="en mono">This work's core output is a construction kit, not a leaderboard</span></h2>
+    <p class="lead-p">이 연구의 핵심 산출물은 리더보드가 아니라 <b>조립 키트</b>다. 다음 순서로 자신의 라우터를 구축한다.</p>
+    <ol class="guide">
+      <li><b>도구 계층 설정</b><span>후보 모델을 연결하고 실행 샌드박스를 구성한다.</span></li>
+      <li><b>탐침 집합으로 프로파일링</b><span>CodeRouterBench(또는 C-A-F로 자체 작업)로 차원×모델 성능 행렬을 구축한다.</span></li>
+      <li><b>DimensionBest로 시작</b><span>정적 메모리 + 룩업만으로 오라클 AvgPerf의 약 83%를 거의 무비용으로 달성한다. 이것이 베이스라인이다.</span></li>
+      <li><b>분류기 추가</b><span>라우팅 도구를 학습 분류기(LogReg, RouteLLM)로 바꿔 더 싼 배포로 DimensionBest 수준 AvgPerf를 낸다(Perf/$ 6.11–6.82).</span></li>
+      <li><b>C-A-F 루프 완성 (ACRouter)</b><span>새 분포에 배포할 때 세 모듈을 모두 활성화해 피드백 루프를 닫는다. 가진 사전지식으로 메모리를 초기화하면 루프가 수렴을 보장한다.</span></li>
+      <li><b>도구 맞춤화</b><span>검증기의 평가 도구를 교체(예: 도메인 특화 테스트)하고, 맞춤 라우팅 도구를 추가한다.</span></li>
+      <li><b>벤치마크 확장</b><span>C-A-F로 작업을 추가한다. 새 모델은 응답+채점이, 새 차원은 작업 집합+채점 함수가 필요하다.</span></li>
+    </ol>
+    <div class="callout">
+      <p>
+        <b>모델 라우팅을 넘어서.</b> C-A-F 루프(맥락 관찰 → 행동 → 피드백 수신 → 맥락 갱신)는 모델 라우팅에 국한되지 않는다.
+        도구 선택, API 엔드포인트 선택, 프롬프트 전략 선택, 사고 노력 배분에도 동일한 패러다임이 적용된다.
+        코딩 라우팅은 더 넓은 에이전트 의사결정 패러다임의 구체적 첫 사례다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 결론 / 한계 -->
+<section class="block wrap" id="conclusion">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 5.3 · 6 · TAKEAWAYS & CONCLUSION</div>
+    <h2>핵심 요약과 결론<span class="en mono">Actively closing the information gap as a general principle</span></h2>
+    <ol class="steps">
+      <li>LLM 라우터의 주된 성능 병목은 <b>추론 실패가 아니라 정보 결핍</b>이다.</li>
+      <li>모든 코딩 차원을 지배하는 <b>단일 모델은 없다</b>.</li>
+      <li>완전한 Agent-as-a-Router는 ID·OOD 양쪽에서 최고 성능을 내며, Opus-4.6 고정 선택보다 비용이 낮다.</li>
+      <li>정적 학습기는 ID에서 준수하나 OOD에서 크게 실패한다. 예컨대 RouteLLM-BERT는 ID Perf/$는 준수하지만 OOD를 거의 처리하지 못한다.</li>
+    </ol>
+    <p>
+      Agent-as-a-Router는 Context-Action-Feedback 루프로 실행 기반 정보를 획득하는 라우팅 프레임워크이며, 누적 후회를 스트리밍 지표로 하는 맥락적 밴딧으로 자연스럽게 형식화된다.
+      이를 오케스트레이터·검증기·메모리로 구성된 ACRouter로 구체화하고, 후회 기반 비교를 위해 설계된 CodeRouterBench에서 평가한다.
+      ACRouter는 분포 내 스트림에서 최저 누적 후회를 달성하고, OOD 에이전트형 프로그래밍에서 강한 성능을 유지하는 유일한 라우터다.
+      더 넓게 보면, <b class="accent">실행 기반 피드백으로 정보 격차를 능동적으로 메우는 것</b>이 이종 도구·모델을 라우팅해야 하는 에이전트 시스템 구축의 일반 원리로 떠오른다.
+    </p>
+    <div class="panel reveal">
+      <div class="panel-title">한계</div>
+      <ul class="clean" style="margin:0">
+        <li>제공자 측 캐시 적중률은 관측 불가하므로 금전 비용 추정은 공개 토큰 단가와 측정 토큰 사용량에 기반한다. 따라서 금전 비용은 상대 비교용 보조 지표일 뿐 1차 지표가 아니다.</li>
+        <li>에이전트형 프로그래밍 평가는 예산 통제를 위해 표준 250 step 대신 40 step 제한을 쓴다(상대 비교는 영향받지 않음).</li>
+        <li>본 C-A-F 구체화는 LLM 정책 + 메모리-kNN 앙상블을 쓴다. 고급 모수 수준 메모리 기법 같은 대안 구체화는 향후 과제로 남는다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <div class="ft-grid">
+    <div class="ft-note">
+      <div class="sora" style="font-weight:700;color:var(--text);font-size:16px;margin-bottom:10px">Agent-as-a-Router: Agentic Model Routing for Coding Tasks</div>
+      Pengfei Zhou, Zhiwei Tang, Yixing Ma 외, National University of Singapore · DAMO Academy · HKUST 등 (2026).
+      arXiv:2606.22902v2 [cs.AI], 2026-06-24.
+      <br><br>
+      코드·벤치마크: github.com/LanceZPF/agent-as-a-router · 이 페이지는 원 논문의 내용을 한국어 기술 문서 형식으로 정리한 요약본이다. 정확한 수식·도표는 원문을 참조한다.
+    </div>
+    <div style="font-family:'JetBrains Mono';font-size:12.5px;line-height:2.1">
+      <div style="color:var(--text-2);margin-bottom:8px">SECTIONS</div>
+      <a href="#diagnosis">정보 결핍 진단</a><br>
+      <a href="#caf">C-A-F 루프</a><br>
+      <a href="#acrouter">ACRouter</a><br>
+      <a href="#bench">CodeRouterBench</a><br>
+      <a href="#results">실험 결과</a><br>
+      <a href="#guide">실전 가이드</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// 히트맵 데이터 (탐침 집합, 표 10 기반 / 0-1 정규화는 dimension별 min-max)
+const models = [
+  {n:"Opus 4.6",   v:[.315,.254,.717,.860,.607,.142,.408,.193,.392], avg:.429},
+  {n:"GPT-5.4",    v:[.282,.257,.567,.639,.644,.063,.346,.150,.764], avg:.412},
+  {n:"Sonnet 4.6", v:[.275,.258,.698,.751,.615,.068,.407,.180,.395], avg:.402},
+  {n:"GLM-5",      v:[.298,.472,.728,.537,.516,.079,.362,.174,.592], avg:.399},
+  {n:"Qwen3-Max",  v:[.262,.310,.660,.591,.336,.111,.350,.123,.827], avg:.392},
+  {n:"Qwen3.5-Plus",v:[.282,.397,.666,.538,.296,.114,.355,.149,.714],avg:.371},
+  {n:"Kimi-K2.5",  v:[.269,.254,.653,.590,.386,.184,.372,.195,.430], avg:.370},
+  {n:"MiniMax-M2.7",v:[.239,.073,.528,.563,.603,.145,.331,.184,.494],avg:.360},
+];
+const dims = 9;
+// dimension별 min/max + best index
+const dmin=Array(dims).fill(1), dmax=Array(dims).fill(0), dbest=Array(dims).fill(0);
+for(let j=0;j<dims;j++){
+  let bv=-1;
+  models.forEach((m,mi)=>{
+    dmin[j]=Math.min(dmin[j],m.v[j]); dmax[j]=Math.max(dmax[j],m.v[j]);
+    if(m.v[j]>bv){bv=m.v[j];dbest[j]=mi;}
+  });
+}
+function heatColor(t){ // t in [0,1] -> dark teal to bright signal
+  // 보간: 낮음 #16314a → 높음 #4ee0c8
+  const a=[22,49,74], b=[78,224,200];
+  const r=Math.round(a[0]+(b[0]-a[0])*t), g=Math.round(a[1]+(b[1]-a[1])*t), bl=Math.round(a[2]+(b[2]-a[2])*t);
+  return `rgb(${r},${g},${bl})`;
+}
+const body=document.getElementById('heatBody');
+models.forEach((m,mi)=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td class="mname">${m.n}</td>`;
+  for(let j=0;j<dims;j++){
+    const t=(m.v[j]-dmin[j])/((dmax[j]-dmin[j])||1);
+    const isBest=dbest[j]===mi;
+    const txtColor = t>0.5 ? "#0b0f17" : "#cfe0f0";
+    tr.innerHTML+=`<td class="cell${isBest?' best':''}" style="background:${heatColor(t)};color:${txtColor}">${(m.v[j]*100).toFixed(0)}</td>`;
+  }
+  tr.innerHTML+=`<td class="cell" style="background:#1a2740;color:var(--text);font-weight:700">${(m.avg*100).toFixed(0)}</td>`;
+  body.appendChild(tr);
+});
+
+// 스크롤 리빌
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
