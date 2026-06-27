@@ -1,0 +1,657 @@
+---
+layout: null
+title: "Unlimited OCR Works" 
+date: 2026-06-27
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unlimited OCR · 원샷 장기 파싱 시대를 열다</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Spline+Sans+Mono:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0d12;
+    --bg-2:#111319;
+    --panel:#161922;
+    --panel-2:#1c202b;
+    --edge:#232836;
+    --edge-2:#313a4f;
+    --ink:#e9edf4;
+    --ink-2:#a4b1c6;
+    --ink-3:#65728a;
+    --ref:#6fb4ff;       /* 참조/시각 토큰 (전부 본다) */
+    --mem:#ff9d5c;       /* 작업 기억 (최근 n개) */
+    --hl:#7df0c4;        /* 강조/현재 토큰 */
+    --hl-dim:#2e9b78;
+    --warn:#ff6b6b;      /* MHA 증가 */
+    --line:#1d222e;
+    --maxw:1140px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",system-ui,sans-serif;font-weight:300;line-height:1.85;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  .mono{font-family:"Spline Sans Mono",monospace}
+  .outfit{font-family:"Outfit",sans-serif}
+
+  /* 배경: 스캔 라인 + 토큰 격자 */
+  .bg-fx{position:fixed;inset:0;z-index:0;pointer-events:none}
+  .bg-fx::before{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:30px 30px;opacity:.16;mask-image:radial-gradient(ellipse 85% 50% at 50% 0%,#000 25%,transparent 72%)}
+  .bg-fx::after{content:"";position:absolute;top:-8%;left:50%;transform:translateX(-50%);width:880px;height:480px;border-radius:50%;background:radial-gradient(circle,rgba(125,240,196,.09),transparent 65%);filter:blur(22px)}
+
+  .wrap{position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;padding:0 28px}
+
+  /* 상단바 */
+  .topbar{position:sticky;top:0;z-index:60;background:rgba(12,13,18,.82);backdrop-filter:blur(15px);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:var(--maxw);margin:0 auto;padding:13px 28px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+  .brand{display:flex;align-items:center;gap:11px;font-family:"Outfit";font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .brand .lens{width:22px;height:22px;border-radius:50%;border:2px solid var(--hl);position:relative;flex:none}
+  .brand .lens::after{content:"";position:absolute;width:6px;height:6px;border-radius:50%;background:var(--hl);top:50%;left:50%;transform:translate(-50%,-50%);box-shadow:0 0 8px var(--hl)}
+  .topnav{display:flex;gap:4px;font-family:"Spline Sans Mono";font-size:12.5px}
+  .topnav a{color:var(--ink-3);text-decoration:none;padding:6px 11px;border-radius:7px;transition:.18s;white-space:nowrap}
+  .topnav a:hover{color:var(--hl);background:var(--panel)}
+  @media(max-width:880px){.topnav{display:none}}
+
+  /* HERO */
+  .hero{padding:80px 0 54px}
+  .eyebrow{font-family:"Spline Sans Mono";font-size:12.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--hl);margin-bottom:24px;display:flex;align-items:center;gap:13px}
+  .eyebrow::before{content:"";width:34px;height:1px;background:linear-gradient(90deg,var(--hl),transparent)}
+  h1.title{font-family:"Outfit";font-weight:800;letter-spacing:-.03em;font-size:clamp(2.5rem,6.2vw,4.6rem);line-height:.98}
+  h1.title .u{background:linear-gradient(120deg,var(--hl),var(--ref));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub-en{font-family:"Spline Sans Mono";color:var(--ink-3);font-size:14px;letter-spacing:.03em;margin-top:16px}
+  .lede{font-size:clamp(1.02rem,1.8vw,1.2rem);color:var(--ink-2);max-width:780px;margin-top:30px;line-height:1.95}
+  .lede b{color:var(--ink);font-weight:500}
+  .lede .k{color:var(--hl);font-weight:500}
+
+  /* 슬라이딩 윈도우 비주얼 */
+  .swa-viz{margin-top:48px;border:1px solid var(--edge);border-radius:16px;background:linear-gradient(160deg,var(--bg-2),var(--panel));padding:26px 26px 22px;overflow:hidden}
+  .swa-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+  .swa-head .t{font-family:"Spline Sans Mono";font-size:12px;color:var(--ink-2)}
+  .swa-head .s{font-family:"Spline Sans Mono";font-size:12px;color:var(--hl)}
+  .seg-label{font-family:"Spline Sans Mono";font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:0 0 7px}
+  .tokrow{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px}
+  .tk{width:22px;height:22px;border-radius:4px;background:var(--edge);transition:all .4s cubic-bezier(.4,0,.2,1)}
+  .tk.ref{background:rgba(111,180,255,.28);box-shadow:inset 0 0 0 1px rgba(111,180,255,.5)}
+  .tk.mem{background:rgba(255,157,92,.35);box-shadow:inset 0 0 0 1px rgba(255,157,92,.6)}
+  .tk.cur{background:var(--hl);box-shadow:0 0 10px rgba(125,240,196,.6)}
+  .tk.faded{background:var(--panel-2);opacity:.4}
+  .swa-legend{display:flex;gap:18px;flex-wrap:wrap;font-family:"Spline Sans Mono";font-size:11px;color:var(--ink-3);margin-top:4px}
+  .swa-legend span{display:flex;align-items:center;gap:7px}
+  .sw{width:11px;height:11px;border-radius:3px}
+
+  .authors{margin-top:40px;padding-top:24px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-3)}
+  .authors b{color:var(--ink-2);font-weight:500}
+
+  /* 섹션 */
+  section.block{padding:74px 0;border-top:1px solid var(--line)}
+  .sec-num{font-family:"Spline Sans Mono";font-size:13px;color:var(--hl-dim);letter-spacing:.1em}
+  h2{font-family:"Outfit";font-weight:700;letter-spacing:-.02em;font-size:clamp(1.7rem,3.5vw,2.5rem);line-height:1.1;margin:10px 0 6px}
+  h2 .en{display:block;font-family:"Spline Sans Mono";font-size:13px;font-weight:400;color:var(--ink-3);letter-spacing:.03em;margin-top:12px}
+  h3{font-family:"Outfit";font-weight:600;font-size:1.32rem;margin:42px 0 14px;letter-spacing:-.01em;display:flex;align-items:center;gap:12px}
+  h3 .idx{font-family:"Spline Sans Mono";font-size:13px;color:var(--hl);font-weight:600;background:rgba(125,240,196,.1);padding:3px 9px;border-radius:6px;border:1px solid rgba(125,240,196,.25)}
+  h4{font-family:"Outfit";font-weight:600;font-size:1.08rem;margin:30px 0 10px}
+  p{margin:0 0 18px;color:var(--ink-2)}
+  p strong,li strong{color:var(--ink);font-weight:500}
+  .accent{color:var(--hl)}
+  .lead-p{font-size:1.12rem;color:var(--ink);font-weight:300;max-width:800px;line-height:1.95;margin-bottom:26px}
+  .col{max-width:840px}
+
+  /* 콜아웃 */
+  .callout{border-left:3px solid var(--hl);background:linear-gradient(90deg,rgba(125,240,196,.06),transparent);padding:18px 24px;margin:26px 0;border-radius:0 10px 10px 0}
+  .callout p{margin:0;color:var(--ink-2)}
+  .callout.mem{border-left-color:var(--mem);background:linear-gradient(90deg,rgba(255,157,92,.07),transparent)}
+  .callout.warn{border-left-color:var(--warn);background:linear-gradient(90deg,rgba(255,107,107,.07),transparent)}
+
+  /* 패널 */
+  .panel{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:26px 28px;margin:26px 0}
+  .panel-title{font-family:"Outfit";font-weight:600;font-size:1.05rem;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+  .panel-title::before{content:"";width:6px;height:18px;border-radius:2px;background:var(--hl)}
+
+  /* 핵심 수치 */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:36px 0}
+  @media(max-width:820px){.stats{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:460px){.stats{grid-template-columns:1fr}}
+  .stat{background:linear-gradient(160deg,var(--panel),var(--bg-2));border:1px solid var(--edge);border-radius:14px;padding:22px 20px;position:relative;overflow:hidden}
+  .stat::after{content:"";position:absolute;right:-24px;top:-24px;width:74px;height:74px;border-radius:50%;background:radial-gradient(circle,rgba(125,240,196,.12),transparent 70%)}
+  .stat .big{font-family:"Outfit";font-weight:800;font-size:2.3rem;line-height:1;letter-spacing:-.03em;color:var(--hl)}
+  .stat .big.ref{color:var(--ref)} .stat .big.mem{color:var(--mem)}
+  .stat .big small{font-size:.95rem;color:var(--ink-3);font-weight:500}
+  .stat .cap{margin-top:10px;font-size:12.5px;color:var(--ink-2);line-height:1.55}
+
+  /* 어텐션 비교 2분할 */
+  .attn-cmp{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:30px 0}
+  @media(max-width:760px){.attn-cmp{grid-template-columns:1fr}}
+  .attn-card{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:24px}
+  .attn-card h4{margin:0 0 4px;display:flex;align-items:center;gap:9px}
+  .attn-card .badge{font-family:"Spline Sans Mono";font-size:10.5px;padding:2px 8px;border-radius:5px}
+  .attn-card.full .badge{background:rgba(255,107,107,.14);color:var(--warn)}
+  .attn-card.rswa .badge{background:rgba(125,240,196,.14);color:var(--hl)}
+  .attn-card .desc{font-size:13.5px;color:var(--ink-2);margin:6px 0 16px;line-height:1.65}
+  .attn-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
+  .cellbox{aspect-ratio:1;border-radius:2px;background:var(--edge)}
+  .cellbox.ref{background:rgba(111,180,255,.32)}
+  .cellbox.mem{background:rgba(255,157,92,.4)}
+  .cellbox.none{background:var(--panel-2)}
+  .cache-tag{margin-top:14px;font-family:"Spline Sans Mono";font-size:12px;display:flex;align-items:center;gap:8px}
+  .cache-tag .v{font-weight:600}
+  .attn-card.full .cache-tag .v{color:var(--warn)}
+  .attn-card.rswa .cache-tag .v{color:var(--hl)}
+
+  /* 수식 */
+  .eq{font-family:"Spline Sans Mono";font-size:14px;color:var(--ink);background:var(--bg-2);border:1px solid var(--edge);border-radius:10px;padding:16px 22px;margin:20px 0;overflow-x:auto;text-align:center;letter-spacing:.02em}
+  .eq .lbl{float:right;color:var(--ink-3);font-size:12px}
+
+  /* 세 초점 (사람의 필사) */
+  .focus{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:30px 0}
+  @media(max-width:760px){.focus{grid-template-columns:1fr}}
+  .fcard{background:var(--panel);border:1px solid var(--edge);border-radius:14px;padding:24px;position:relative;overflow:hidden}
+  .fcard .bar{position:absolute;left:0;top:0;width:100%;height:4px}
+  .fcard .ft{font-family:"Spline Sans Mono";font-size:11px;letter-spacing:.08em}
+  .fcard h4{margin:10px 0 6px;font-size:1.1rem}
+  .fcard p{font-size:13.5px;margin:0;line-height:1.7;color:var(--ink-2)}
+
+  /* 표 */
+  .tbl-wrap{overflow-x:auto;margin:26px 0;border:1px solid var(--edge);border-radius:14px}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:620px}
+  caption{caption-side:bottom;text-align:left;font-size:12.5px;color:var(--ink-3);padding:14px 18px;font-family:"Spline Sans Mono";line-height:1.6}
+  th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line)}
+  thead th{font-family:"Spline Sans Mono";font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);background:var(--bg-2)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:rgba(125,240,196,.03)}
+  td.num,th.num{text-align:right;font-family:"Spline Sans Mono"}
+  .row-ours{background:rgba(125,240,196,.08)!important}
+  .row-ours td:first-child{color:var(--hl);font-weight:600}
+  .row-base td:first-child{color:var(--ink-3)}
+  .delta{color:var(--hl);font-family:"Spline Sans Mono";font-size:12px}
+
+  /* TPS 막대 */
+  .tps{margin:28px 0}
+  .tps-row{display:grid;grid-template-columns:60px 1fr 1fr;gap:12px;align-items:center;padding:6px 0;font-family:"Spline Sans Mono";font-size:12px}
+  .tps-row.head{color:var(--ink-3);border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:6px}
+  .tps-bar{height:20px;background:var(--bg-2);border-radius:5px;position:relative;overflow:hidden}
+  .tps-bar i{position:absolute;left:0;top:0;height:100%;border-radius:5px}
+  .tps-bar.ds i{background:linear-gradient(90deg,#6b3a3a,var(--warn))}
+  .tps-bar.uow i{background:linear-gradient(90deg,var(--hl-dim),var(--hl))}
+  .tps-bar span{position:absolute;right:7px;top:1px;font-size:10px;color:var(--ink)}
+
+  /* 리스트 */
+  ul.clean{list-style:none;margin:18px 0;padding:0}
+  ul.clean li{position:relative;padding:9px 0 9px 28px;color:var(--ink-2);border-bottom:1px solid var(--line)}
+  ul.clean li:last-child{border-bottom:none}
+  ul.clean li::before{content:"›";position:absolute;left:6px;color:var(--hl);font-family:"Spline Sans Mono";font-weight:700}
+  ol.steps{counter-reset:s;list-style:none;margin:20px 0;padding:0}
+  ol.steps>li{counter-increment:s;position:relative;padding:14px 0 14px 54px;border-bottom:1px solid var(--line);color:var(--ink-2)}
+  ol.steps>li:last-child{border-bottom:none}
+  ol.steps>li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:14px;font-family:"Spline Sans Mono";font-size:13px;color:var(--hl);background:rgba(125,240,196,.08);border:1px solid rgba(125,240,196,.25);border-radius:7px;width:36px;height:28px;display:flex;align-items:center;justify-content:center}
+  ol.steps>li b{color:var(--ink);font-weight:500}
+
+  /* 푸터 */
+  footer{border-top:1px solid var(--line);padding:52px 0 70px;color:var(--ink-3);font-size:13px}
+  footer .ft-grid{display:flex;justify-content:space-between;flex-wrap:wrap;gap:30px}
+  footer .ft-note{max-width:560px;line-height:1.8}
+  footer a{color:var(--hl);text-decoration:none} footer a:hover{text-decoration:underline}
+
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+  @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+  .video-container {
+    width: 100%; /* 부모 요소의 너비에 맞춤 */
+    max-width: 1600px; /* 최대 너비 설정 (옵션) */
+    margin: 0 auto;
+  }
+
+  .video-container iframe {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9; /* 16:9 비율 유지 */
+  }      
+</style>
+<!-- MathJax for LaTeX -->
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        svg: {
+            fontCache: 'global'
+        }
+    };
+</script>
+</head>
+<body>
+<div class="bg-fx"></div>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand"><span class="lens"></span>Unlimited OCR</div>
+    <nav class="topnav">
+      <a href="#intro">서론</a>
+      <a href="#method">R-SWA</a>
+      <a href="#kvcache">KV 캐시</a>
+      <a href="#results">평가</a>
+      <a href="#longhorizon">장기 파싱</a>
+      <a href="#efficiency">효율</a>
+    </nav>
+  </div>
+</div>
+
+<!-- HERO -->
+<header class="hero wrap">
+  <div class="reveal in">
+    <div class="eyebrow">Baidu Inc. · 2026-06 · arXiv:2606.23050</div>
+    <h1 class="title outfit"><span class="u">Unlimited OCR</span><br>원샷 장기 파싱의 시대</h1>
+    <div class="sub-en mono">Unlimited OCR Works — Welcome the Era of One-shot Long-horizon Parsing</div>
+    <p class="lede">
+      LLM을 디코더로 쓰는 종단간(end-to-end) OCR 모델은 언어의 사전 분포를 활용해 정확도를 높인다.
+      그러나 출력 시퀀스가 길어질수록 누적된 <b>KV 캐시</b>가 메모리를 끌어올리고 생성을 점점 느리게 만든다.
+      장기 필사에서 효율이 떨어지지 않는 사람과는 정반대다.
+      Unlimited OCR은 사람의 <b class="k">파싱 작업 기억</b>을 모방해, 디코더의 모든 어텐션을
+      <b class="k">참조 슬라이딩 윈도우 어텐션(R-SWA)</b>으로 교체하고 디코딩 내내 KV 캐시를 일정하게 유지한다.
+    </p>
+  </div>
+
+  <!-- 슬라이딩 윈도우 애니메이션 -->
+  <div class="swa-viz reveal">
+    <div class="swa-head">
+      <span class="t mono">한 번의 forward pass — 책을 베껴 쓰는 시선</span>
+      <span class="s mono" id="swaStep">decode step ·</span>
+    </div>
+    <div class="seg-label mono">REFERENCE — 시각 토큰 + 프롬프트 (항상 전부 본다, 상태 전이 없음)</div>
+    <div class="tokrow" id="refRow"></div>
+    <div class="seg-label mono">OUTPUT — 생성 토큰 (최근 n개만 보는 인과적 슬라이딩 윈도우)</div>
+    <div class="tokrow" id="outRow"></div>
+    <div class="swa-legend">
+      <span><span class="sw" style="background:rgba(111,180,255,.5)"></span>참조 (전부 attend)</span>
+      <span><span class="sw" style="background:rgba(255,157,92,.6)"></span>작업 기억 (최근 n)</span>
+      <span><span class="sw" style="background:var(--hl)"></span>현재 토큰</span>
+      <span><span class="sw" style="background:var(--panel-2)"></span>부드러운 망각 (no attend)</span>
+    </div>
+  </div>
+
+  <div class="authors reveal">
+    <b>Core Contributors</b> · Youyang Yin, Huanhuan Liu, YY &nbsp;|&nbsp; 코드·가중치: github.com/baidu/Unlimited-OCR
+  </div>
+</header>
+
+<!-- 핵심 수치 -->
+<section class="block wrap" id="headline">
+  <div class="col reveal" style="max-width:none">
+    <div class="sec-num mono">KEY RESULTS</div>
+    <h2 style="margin-bottom:4px">한눈에 보는 결과</h2>
+  </div>
+  <div class="stats reveal">
+    <div class="stat"><div class="big">93.23<small>%</small></div><div class="cap">OmniDocBench v1.5 종합 점수. DeepSeek OCR 베이스라인을 <b>+6.22</b> 앞선 종단간 SOTA</div></div>
+    <div class="stat"><div class="big ref">상수</div><div class="cap">디코딩 전 구간에서 <b>일정한 KV 캐시</b>. 길이 T에 무관하게 L<sub>m</sub>+n으로 상한</div></div>
+    <div class="stat"><div class="big mem">40+</div><div class="cap">단일 forward pass로 처리하는 문서 페이지 수. 40+ 페이지에서도 편집거리 0.11 미만</div></div>
+    <div class="stat"><div class="big">+35<small>%</small></div><div class="cap">6,000 토큰 출력 시 DeepSeek OCR 대비 처리량(TPS) 우위. 길수록 격차 확대</div></div>
+  </div>
+</section>
+
+<center>
+  <div class="video-container">
+    <iframe src="https://www.youtube.com/embed/MyXVm4TjTLw?si=o4AFYkL9vqpd4Fps" frameborder="0" allowfullscreen></iframe>
+  </div>        
+</center>
+
+<!-- 1. 서론 -->
+<section class="block wrap" id="intro">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 1 · INTRODUCTION</div>
+    <h2>사람은 장기 작업에서 느려지지 않는다<span class="en mono">The for-loop paradigm is an engineering workaround, not intelligence</span></h2>
+    <p class="lead-p">
+      사람은 수백 페이지의 책을 옮겨 적고, 몇 시간짜리 음성을 번역하는 장기(long-horizon) 작업에 놀랍도록 능하다.
+      그런데 바로 이런 작업에서 현재 모델은 무너진다. OCR을 예로 들면, 어떤 기존 모델도 한 번의 forward pass로 열 페이지조차 파싱하지 못한다.
+    </p>
+    <p>
+      대신 모델은 페이지마다 메모리를 초기화하는 for-loop 방식으로 한 페이지씩 처리한다.
+      이 차이는 단순한 문맥 부족의 문제가 아니다. 사람은 먼 출력은 기억에서 부드럽게 흐려지되 가까운 문맥으로 진행 상황을 추적하는 <b>연속적 인지 상태</b>를 유지한다.
+      반면 for-loop는 매 페이지에서 메모리를 완전히 지워, 일관된 장기 과정을 외부 스케줄러가 관리하는 고립된 단기 작업으로 파편화한다.
+      어느 정도 작동하지만 이는 공학적 우회일 뿐 AGI를 향한 한 걸음이 아니다.
+    </p>
+    <p>
+      문서를 옮겨 적는 행위를 떠올려 보면, 글자 하나를 베낄 때 이미 쓴 전체 텍스트를 훑지 않는다. 방향을 유지하려고 바로 주변 문맥만 흘긋 본다.
+      이 일상적 행동은 현재 모델과 근본적으로 다른 어텐션 패턴을 가리킨다. 전체 이력을 다 참조하지 않으니 <b>표준 풀 어텐션</b>이 아니고,
+      시각·참조 토큰이 순환적 상태 갱신을 겪지 않으니 <b>선형 어텐션</b>도 아니다. 그런 갱신은 시각 특징을 점점 흐리게 해 인식 정확도를 떨어뜨릴 것이다.
+    </p>
+  </div>
+
+  <!-- 사람의 세 초점 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">관찰</span>책을 베끼는 사람의 세 초점</h3>
+    <p>사람이 손으로 책을 베낄 때 주의는 보통 세 지점에 모인다. 이미 옮긴 모든 것을 완전히 기억하기보다 일종의 <b class="accent">부드러운 망각(soft forgetting)</b>에 의존하며, 이것이 낮은 인지 부하로 장기 파싱을 지속하는 열쇠일 수 있다.</p>
+    <div class="focus">
+      <div class="fcard"><div class="bar" style="background:var(--ref)"></div><div class="ft mono" style="color:var(--ref)">REFERENCE</div><h4>원본 책에 집중</h4><p>옮겨 적을 원본 소스. OCR에서는 시각 토큰 전체에 해당한다. 어디를 읽는지(know-what) 안다.</p></div>
+      <div class="fcard"><div class="bar" style="background:var(--mem)"></div><div class="ft mono" style="color:var(--mem)">WORKING MEMORY</div><h4>방금 쓴 부분에 집중</h4><p>막 쓴 소량(보통 몇 글자)의 최근 문맥. 어디까지 진행했는지(know-where)를 추적한다.</p></div>
+      <div class="fcard"><div class="bar" style="background:var(--hl)"></div><div class="ft mono" style="color:var(--hl)">NEXT TOKEN</div><h4>다음 글자에 집중</h4><p>이제 막 쓸 다음 글자. 인과적 슬라이딩 윈도우 안의 상태 전이로 진행을 이어 간다.</p></div>
+    </div>
+  </div>
+
+  <!-- 기여 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">기여</span>이 보고서의 세 가지 기여</h3>
+    <ol class="steps">
+      <li><b>R-SWA 제안.</b> 각 토큰이 모든 참조 토큰(시각 토큰 + 프롬프트)에 attend하되, 출력 어텐션은 직전 n개 토큰(기본 128)으로 제한한다. 각 토큰은 이미지 전체를 보면서 인과적 슬라이딩 윈도우 안의 상태 전이로 OCR 진행을 자율적으로 추적한다. 추론 내내 KV 캐시가 일정해 메모리 압력과 연산 비용이 줄어든다.</li>
+      <li><b>Unlimited OCR 제안.</b> DeepSeek OCR을 베이스라인으로, 높은 이미지 압축률의 DeepEncoder는 유지하고 디코더 LLM의 모든 어텐션을 R-SWA로 바꾼다. 이로써 한 번의 forward pass로 수십 페이지 논문을 파싱하며, 일반 OCR 정확도도 소폭 향상된다. OmniDocBench v1.5에서 93%로 베이스라인을 6% 앞선다.</li>
+      <li><b>선형 복잡도 어텐션의 OCR 예비 검증.</b> 학습 문맥을 무차별로 키우는 대신, 우아한 방식으로 장기 OCR을 달성한다. R-SWA를 ASR·번역 등 장기 의존성이 필요한 참조 기반 작업으로 확장할 가능성을 본다.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 3. 방법론 -->
+<section class="block wrap" id="method">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 3 · METHODOLOGY</div>
+    <h2>아키텍처와 R-SWA<span class="en mono">DeepEncoder + MoE-LLM, all attention replaced by R-SWA</span></h2>
+    <p class="lead-p">
+      Unlimited OCR은 DeepSeek OCR을 베이스라인으로 채택한다. DeepEncoder와, 총 3B·활성 500M 파라미터의 혼합전문가(MoE) 구조로 이루어진다.
+      원본 DeepSeek OCR과 달리 표준 다중헤드 어텐션(MHA)을 R-SWA로 교체한다.
+    </p>
+
+    <h3><span class="idx mono">3.3</span>DeepEncoder — 16× 시각 토큰 압축</h3>
+    <p>
+      DeepEncoder는 SAM-ViT와 CLIP-ViT를 직렬 연결하고 다리(bridge)에서 16× 토큰 압축을 적용한다.
+      앞 절반은 윈도우 어텐션으로 원본 이미지 토큰을 처리하고, 전역 어텐션은 압축된 토큰에만 쓴다. 이 설계는 고해상도 이미지를 인코딩할 때 활성값을 낮게 유지해 GPU 메모리를 아낀다.
+      DeepEncoder는 다섯 해상도 모드를 지원하나 두 가지를 쓴다. 다중 페이지용 "Base" 모드(1024×1024)와 단일 페이지용 "Gundam"(동적 해상도)이다.
+      구체적으로 1024×1024 PDF 이미지를 단 256 토큰으로 압축한다.
+    </p>
+    <div class="callout">
+      <p>이 높은 압축률이 Unlimited OCR에 결정적인 이유는, <b class="accent">시각 토큰이 출력과 함께 상태 전이를 겪지 않기 때문</b>이다. 시각 토큰은 한 번 인코딩되면 장기 파싱 전 과정 동안 정적으로 유지된다.</p>
+    </div>
+
+    <h3><span class="idx mono">3.4.1</span>R-SWA의 어텐션 계산</h3>
+    <p>
+      R-SWA는 본질적으로 어텐션을 크기 m+n의 두 구간 윈도우로 제한한다. m은 접두(prefix) 토큰의 윈도우로 시각 토큰과 프롬프트를 모두 포함하며, 한 번의 추론 동안 고정된다. 페이지 수나 문서 해상도에만 의존할 뿐 디코딩 길이에 따라 변하지 않는다. 디코드 영역의 윈도우 n도 크기가 고정이며 인과적으로 미끄러진다.
+    </p>
+    <div class="eq mono">N(t) = P ∪ D<sub>n</sub>(t),&nbsp;&nbsp; P = {1, …, L<sub>m</sub>}<span class="lbl">(1)</span></div>
+    <div class="eq mono">D<sub>n</sub>(t) = { j | max(L<sub>m</sub>+1, L<sub>m</sub>+t−n) ≤ j ≤ L<sub>m</sub>+t−1 }<span class="lbl">(2)</span></div>
+    <p>P는 길이 L<sub>m</sub>의 접두 구간으로 이후 모든 토큰에 전역적으로 보이고, D<sub>n</sub>(t)는 디코드 영역 위의 너비 n 인과적 슬라이딩 윈도우다. 토큰 t에서 위치 j로의 어텐션 가중치와 출력 표현은 다음과 같다.</p>
+    <div class="eq mono">α<sub>tj</sub> = exp(q<sub>t</sub>ᵀk<sub>j</sub>/√d<sub>k</sub>) / Σ<sub>i∈N(t)</sub> exp(q<sub>t</sub>ᵀk<sub>i</sub>/√d<sub>k</sub>)<span class="lbl">(3)</span></div>
+    <div class="eq mono">o<sub>t</sub> = Σ<sub>j∈N(t)</sub> α<sub>tj</sub> v<sub>j</sub><span class="lbl">(4)</span></div>
+    <p>각 디코딩 토큰은 모든 접두 토큰을 지속적 전역 문맥으로 attend하되, 이미 생성된 토큰에 대해서는 경계 지어진 인과 윈도우 안에서만 국소적으로 attend한다. 그 결과 전체 접두 정보 접근을 유지하면서도 늘어나는 디코드 시퀀스의 어텐션 비용을 줄인다.</p>
+  </div>
+
+  <!-- 어텐션 비교 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">대비</span>풀 어텐션 vs R-SWA</h3>
+    <div class="attn-cmp">
+      <div class="attn-card full">
+        <h4><span class="badge mono">VANILLA MHA</span>표준 풀 어텐션</h4>
+        <div class="desc">생성 토큰이 전체 이력을 attend한다. KV 캐시가 T에 따라 무한히 커지고, 시각 토큰이 출력과 섞이며 점진적으로 흐려질 수 있다.</div>
+        <div class="attn-grid" id="gridFull"></div>
+        <div class="cache-tag mono">KV cache → <span class="v">C(T) = L<sub>m</sub> + T &nbsp;(선형 증가)</span></div>
+      </div>
+      <div class="attn-card rswa">
+        <h4><span class="badge mono">R-SWA</span>참조 슬라이딩 윈도우</h4>
+        <div class="desc">참조 토큰은 전부 보되 출력은 최근 n개만. 시각 토큰을 상태 전이에서 제외해 충실도를 보존하고, 점진적 흐려짐을 피한다.</div>
+        <div class="attn-grid" id="gridRswa"></div>
+        <div class="cache-tag mono">KV cache → <span class="v">C(T) = L<sub>m</sub> + min(n,T) ≤ L<sub>m</sub>+n</span></div>
+      </div>
+    </div>
+    <p style="font-size:12.5px;color:var(--ink-3)">파랑 = 참조(시각+프롬프트) attend · 주황 = 작업 기억(최근 n) attend · 어두움 = no attend. R-SWA는 바닐라 SWA와 달리 시각 토큰을 상태 전이에서 배제해 시각 토큰 충실도를 보존한다.</p>
+  </div>
+</section>
+
+<!-- KV 캐시 관리 -->
+<section class="block wrap" id="kvcache">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 3.4.2 · KV CACHE MANAGEMENT</div>
+    <h2>KV 캐시를 상수로 묶다<span class="en mono">From linear growth in T to a bounded L_m + n</span></h2>
+    <p class="lead-p">
+      DeepSeek OCR 베이스라인은 표현력은 강하나 KV 캐시 압력이 막대한 표준 MHA를 쓴다.
+      R-SWA는 항상 크기 L<sub>m</sub>의 전체 접두 캐시를 유지하되, 생성된 연속분에 대해서는 최근 n개 토큰만 보관한다.
+    </p>
+    <div class="eq mono">C<sub>MHA</sub>(T) = L<sub>m</sub> + T<span class="lbl">(5)</span></div>
+    <div class="eq mono">C<sub>R-SWA</sub>(T) = L<sub>m</sub> + min(n, T) ≤ L<sub>m</sub> + n<span class="lbl">(6)</span></div>
+    <p>표준 MHA의 캐시는 T에 따라 무한히 커지지만, R-SWA의 디코드 측 캐시는 상수 윈도우 크기로 상한된다. 감소를 정량화하기 위해 캐시 비율 ρ(T)를 정의한다.</p>
+    <div class="eq mono">ρ(T) = C<sub>R-SWA</sub>(T) / C<sub>MHA</sub>(T) = (L<sub>m</sub>+min(n,T)) / (L<sub>m</sub>+T)<span class="lbl">(7)</span></div>
+    <p>생성 길이가 충분히 길어 T ≫ n이면 ρ(T) = (L<sub>m</sub>+n)/(L<sub>m</sub>+T)로 T가 커질수록 감소하고, 디코드 길이가 접두 길이와 윈도우 크기를 압도하면 ρ(T) ≈ (L<sub>m</sub>+n)/T → 0이 된다.</p>
+    <div class="callout">
+      <p>따라서 장기 시퀀스 디코딩에서 R-SWA는 KV 캐시 요구를 T에 대한 선형 증가에서 경계 지어진 양 L<sub>m</sub>+n으로 낮춰, 표준 MHA 대비 상당한 메모리 절약을 낳는다. R-SWA가 제한된 자원에서 <b class="accent">거의 무제한에 가까운 파싱</b>을 가능케 하는 초석이다.</p>
+    </div>
+
+    <h3><span class="idx mono">3.4.3</span>커널 연구 — Flash Attention v3 지연</h3>
+    <p>
+      디코딩 길이가 늘어남에 따라 Flash Attention v3 커널의 호출당 시간을 측정하면, DeepSeek OCR의 표준 MHA 커널은 매 디코딩 step마다 지연이 커진다.
+      반면 Unlimited OCR(UOW)에서는 LLM 디코더 모든 층에 R-SWA를 적용한 직접적 효과로 시간이 일정하게 유지된다.
+      DeepSeek OCR에서 KV 캐시 길이가 특정 정렬 경계를 넘을 때 데이터 전송 효율이 급락하며 발생하는 스파이크도 R-SWA에서는 나타나지 않는다.
+      추론 중 GPU 메모리 사용 패턴도 동일하다. 원본은 선형으로 증가하지만 Unlimited OCR은 고정이다.
+      연산 비용과 메모리 사용량의 이 <b class="accent">동시 안정성</b>이 바로 장기 파싱을 가능케 하는 요소다.
+    </p>
+  </div>
+</section>
+
+<!-- 4. 실험 설정 -->
+<section class="block wrap" id="setup">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 4 · EXPERIMENTAL SETTINGS</div>
+    <h2>데이터 엔진과 구현<span class="en mono">~2M samples · continue-training from DeepSeek OCR</span></h2>
+    <p>
+      Unlimited OCR 학습을 위해 약 <b>200만 개</b> 문서 OCR 샘플을 구성하며, 단일 페이지와 다중 페이지 비율은 9:1이다.
+      단일 페이지 PDF는 Paddle OCR로 주석을 달아 각 블록의 좌표와 내용을 이어 붙여 종단간 검출·파싱 정답을 만든다. 각 요소 좌표는 0–1000 범위로 정규화한다.
+      다중 페이지 데이터는 단일 페이지를 이어 붙여 합성하며, 2–50 페이지로 이루어진 약 20만 샘플을 무작위 생성하고 페이지 구분자로 <page>를 쓴다. 모든 데이터는 32K 토큰 길이로 패킹한다.
+    </p>
+    <div class="panel reveal">
+      <div class="panel-title">구현 세부</div>
+      <ul class="clean" style="margin:0">
+        <li>DeepSeek OCR 체크포인트에서 출발해 글로벌 배치 256, 최대 길이 32K로 <b>4,000 step</b> 추가 학습. 8×16 A800 GPU에서 무작위 패킹 사용.</li>
+        <li>DeepEncoder는 동결하고 LLM 파라미터만 학습한다. DeepEncoder는 DeepSeek OCR에서 이미 충분히 최적화되어 있다.</li>
+        <li>AdamW 옵티마이저와 코사인 어닐링 스케줄러(초기 학습률 1e-4). 32K 학습을 위해 DeepEP를 쓰며 전문가 병렬(EP)은 4. 전체 파이프라인은 Megatron-LM 기반.</li>
+        <li>추론은 Transformers에 R-SWA용 KV 캐시 관리를 구현하고 SGLang 엔진에 지원·최적화를 더했다. 두 프레임워크 모두 <b>상수 TPS·GPU 메모리</b>로 동작한다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 5. 평가 -->
+<section class="block wrap" id="results">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 5 · EVALUATION</div>
+    <h2>주요 결과<span class="en mono">End-to-end SOTA on OmniDocBench</span></h2>
+    <p class="lead-p">
+      DeepSeek OCR을 기반으로 단 200만 PDF 문서 데이터에 추가 학습한 것만으로 Unlimited OCR은 종단간 SOTA를 달성한다.
+      이는 파싱 작업에서 R-SWA의 유효성을 입증한다.
+    </p>
+    <p>
+      OmniDocBench v1.5에서 DeepSeek OCR 대비 텍스트 편집거리가 0.035 줄고 표 TEDS가 5.96% 향상된다.
+      이는 이력 정보가 인과적·연속적으로 슬라이딩 윈도우에 공급되어, 모델이 단 몇 개 토큰만 보고도 OCR 진행 위치를 명확히 파악함을 보여 준다.
+      v1.6에서도 종합 93.92%로 다시 종단간 SOTA에 도달해, 단일 페이지 PDF 수준 OCR에서는 모든 표준 어텐션을 너비 128의 R-SWA로 완전히 대체하는 것이 효과적이고 무손실임을 증명한다.
+    </p>
+
+    <div class="tbl-wrap reveal">
+      <table>
+        <thead>
+          <tr><th>모델</th><th>크기</th><th class="num">종합↑</th><th class="num">텍스트<sub>Edit</sub>↓</th><th class="num">수식<sub>CDM</sub>↑</th><th class="num">표<sub>TEDS</sub>↑</th><th class="num">표<sub>TEDS-S</sub>↑</th><th class="num">읽기순서<sub>Edit</sub>↓</th></tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="8" style="font-family:'Spline Sans Mono';font-size:11px;color:var(--ink-3);background:var(--bg-2)">▸ 종단간 모델 (v1.5)</td></tr>
+          <tr><td>Gemini-2.5 Pro</td><td>—</td><td class="num">88.03</td><td class="num">0.075</td><td class="num">85.82</td><td class="num">85.71</td><td class="num">90.29</td><td class="num">0.097</td></tr>
+          <tr><td>dots.ocr</td><td>3B</td><td class="num">88.41</td><td class="num">0.048</td><td class="num">83.22</td><td class="num">86.78</td><td class="num">90.62</td><td class="num">0.053</td></tr>
+          <tr><td>Qwen3-VL</td><td>235B</td><td class="num">89.15</td><td class="num">0.069</td><td class="num">88.14</td><td class="num">86.21</td><td class="num">90.55</td><td class="num">0.068</td></tr>
+          <tr><td>DeepSeek-OCR 2</td><td>3B-A0.5B</td><td class="num">89.17</td><td class="num">0.049</td><td class="num">86.85</td><td class="num">85.60</td><td class="num">90.06</td><td class="num">0.060</td></tr>
+          <tr class="row-base"><td>DeepSeek-OCR (베이스라인)</td><td>3B-A0.5B</td><td class="num">87.01</td><td class="num">0.073</td><td class="num">83.37</td><td class="num">84.97</td><td class="num">88.80</td><td class="num">0.086</td></tr>
+          <tr class="row-ours"><td>Unlimited-OCR</td><td>3B-A0.5B</td><td class="num">93.23</td><td class="num">0.038</td><td class="num">92.61</td><td class="num">90.93</td><td class="num">94.07</td><td class="num">0.045</td></tr>
+          <tr><td style="color:var(--hl-dim)">↑ 베이스 대비 Δ</td><td></td><td class="num delta">+6.22</td><td class="num delta">−0.035</td><td class="num delta">+9.24</td><td class="num delta">+5.96</td><td class="num delta">+5.27</td><td class="num delta">−0.041</td></tr>
+          <tr><td colspan="8" style="font-family:'Spline Sans Mono';font-size:11px;color:var(--ink-3);background:var(--bg-2)">▸ 종단간 모델 (v1.6)</td></tr>
+          <tr><td>FireRed-OCR</td><td>2B</td><td class="num">93.26</td><td class="num">0.037</td><td class="num">95.44</td><td class="num">88.04</td><td class="num">91.06</td><td class="num">0.131</td></tr>
+          <tr><td>Logics-Parsing-v2</td><td>4B</td><td class="num">93.33</td><td class="num">0.041</td><td class="num">95.65</td><td class="num">88.42</td><td class="num">91.98</td><td class="num">0.137</td></tr>
+          <tr><td>Qianfan-OCR</td><td>4B</td><td class="num">93.90</td><td class="num">0.040</td><td class="num">95.08</td><td class="num">90.53</td><td class="num">93.31</td><td class="num">0.13</td></tr>
+          <tr class="row-ours"><td>Unlimited-OCR</td><td>3B-A0.5B</td><td class="num">93.92</td><td class="num">0.042</td><td class="num">95.79</td><td class="num">90.16</td><td class="num">93.32</td><td class="num">0.129</td></tr>
+        </tbody>
+        <caption>표 1 · OmniDocBench(v1.5/v1.6) 비교. 모두 종단간 VLM 기반. v1.5는 고전 알고리즘·베이스라인과의 비교, v1.6은 현행 SOTA와의 비교용. Unlimited OCR 외에는 OmniDocBench 저장소에서 선택.</caption>
+      </table>
+    </div>
+
+    <div class="callout">
+      <p>
+        나아가 Unlimited OCR은 DeepSeek OCR의 이점을 모두 누린다. 활성 0.5B 파라미터만의 MoE 구조로 추론 효율이 매우 높다.
+        OmniDocBench "Base" 모드에서 <b class="accent">5,580 TPS</b>(512 동시성)로 DeepSeek OCR의 4,951 TPS 대비 12.7% 빠르다. 출력이 길수록 이 이점은 더 뚜렷해진다.
+      </p>
+    </div>
+  </div>
+
+  <!-- 하위범주 -->
+  <div class="col reveal">
+    <h3><span class="idx mono">5.3</span>하위범주 분석 — 진정한 "공짜 점심"</h3>
+    <p>
+      OmniDocBench v1.5의 9개 문서 유형 비교에서, Unlimited OCR은 DeepSeek OCR 대비 모든 지표에서 명확하고 일관된 향상을 보인다.
+      디코더 측 최적화인 R-SWA가 타협 없는 개선, 즉 진정한 <b class="accent">"공짜 점심"</b>을 제공함을 보여 준다.
+      DeepSeek OCR 2와 비교해도 텍스트 편집거리·읽기순서 모두 9개 중 7개에서 앞선다.
+      PPT·신문·잡지·노트 같은 복잡한 레이아웃에서도 불리하지 않아, LLM 디코더의 모든 표준 어텐션을 R-SWA로 대체하는 것이 파싱 작업에 완결적이고 건전함을 거듭 확인한다.
+    </p>
+  </div>
+</section>
+
+<!-- 장기 파싱 -->
+<section class="block wrap" id="longhorizon">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 5.4 · LONG-HORIZON PARSING</div>
+    <h2>한 번에 책 한 권을 파싱하다<span class="en mono">Constant latency from the first page to the last</span></h2>
+    <p class="lead-p">
+      장기 파싱은 Unlimited OCR의 새로운 능력이다. 이전 모델을 가로막은 두 장애물은, 첫째 지나치게 긴 출력이 최대 토큰 한도를 쉽게 넘는다는 점, 둘째 출력 지연이 시퀀스 길이에 따라 커져 수십 페이지 OCR이 점점 느려진다는 점이다.
+    </p>
+    <p>
+      R-SWA를 갖춘 Unlimited OCR은 수십~수백 페이지를 한 번에 prefill하고 첫 페이지부터 마지막까지 연속 파싱한다.
+      이 과정 내내 KV 캐시가 고정되어 출력 지연이 일정하게 유지된다. 20 페이지를 동시 입력해도 강한 결과를 유지하며, 40+ 페이지에서도 편집거리는 0.11 미만, Distinct-35는 97%다.
+      반복 오류 사례를 살펴보면 대부분 PDF의 작은 글자가 식별하기 어려운 곳에서 발생하는데, 이는 다중 페이지 조건에서 DeepEncoder "Base" 모드(1024×1024)를 쓴 탓이지 R-SWA가 장기 파싱에서 방향을 잃은 것이 아니다.
+    </p>
+    <div class="tbl-wrap reveal">
+      <table>
+        <thead><tr><th>지표 \ 페이지</th><th class="num">2</th><th class="num">5</th><th class="num">10</th><th class="num">15</th><th class="num">20</th><th class="num">40+</th></tr></thead>
+        <tbody>
+          <tr><td>Distinct-20 ↑</td><td class="num">99.76%</td><td class="num">99.78%</td><td class="num">97.49%</td><td class="num">99.92%</td><td class="num">98.73%</td><td class="num">96.08%</td></tr>
+          <tr><td>Distinct-35 ↑</td><td class="num">99.87%</td><td class="num">99.98%</td><td class="num">99.83%</td><td class="num">99.99%</td><td class="num">99.89%</td><td class="num">96.90%</td></tr>
+          <tr><td>편집거리 ↓</td><td class="num">0.0362</td><td class="num">0.0452</td><td class="num">0.0526</td><td class="num">0.0787</td><td class="num">0.0572</td><td class="num">0.1069</td></tr>
+        </tbody>
+        <caption>표 3 · 장기 OCR 성능. 페이지 수별 Distinct-n(높을수록 좋음)과 편집거리(낮을수록 좋음).</caption>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 효율 분석 -->
+<section class="block wrap" id="efficiency">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 6 · EFFICIENCY ANALYSIS</div>
+    <h2>출력이 길수록 벌어지는 격차<span class="en mono">Theoretical TPS ceiling across output lengths</span></h2>
+    <p class="lead-p">
+      이상적 동시성 조건에서 두 모델의 초당 출력 토큰(TPS)을 비교한다. prefill 길이는 10으로 고정하고 나머지 설정은 동일하다.
+      256 토큰에서는 두 모델 속도가 사실상 같지만, 출력이 길어질수록 DeepSeek OCR의 TPS는 꾸준히 하락하고 6,000 토큰에서 R-SWA를 쓰는 Unlimited OCR에 <b class="accent">35% 뒤진다</b>.
+    </p>
+    <div class="tps reveal">
+      <div class="tps-row head"><span>길이</span><span>DeepSeek OCR</span><span>Unlimited OCR</span></div>
+      <div class="tps-row"><span>256</span><div class="tps-bar ds"><i style="width:91.5%"></i><span>7229</span></div><div class="tps-bar uow"><i style="width:91.5%"></i><span>7230</span></div></div>
+      <div class="tps-row"><span>1024</span><div class="tps-bar ds"><i style="width:93.9%"></i><span>7423</span></div><div class="tps-bar uow"><i style="width:99.2%"></i><span>7841</span></div></div>
+      <div class="tps-row"><span>2048</span><div class="tps-bar ds"><i style="width:90.7%"></i><span>7167</span></div><div class="tps-bar uow"><i style="width:99.8%"></i><span>7881</span></div></div>
+      <div class="tps-row"><span>4096</span><div class="tps-bar ds"><i style="width:81.4%"></i><span>6430</span></div><div class="tps-bar uow"><i style="width:100%"></i><span>7905</span></div></div>
+      <div class="tps-row"><span>6144</span><div class="tps-bar ds"><i style="width:73.7%"></i><span>5823</span></div><div class="tps-bar uow"><i style="width:99.3%"></i><span>7848</span></div></div>
+    </div>
+    <p style="font-size:12.5px;color:var(--ink-3)">표 4 · 이론적 추론 성능 상한 비교(TPS). DeepSeek OCR은 길이가 늘수록 하락하나 Unlimited OCR은 일정하게 유지된다. 일관된 생성 속도가 장기 OCR의 결정적 요건임을 뒷받침한다.</p>
+  </div>
+</section>
+
+<!-- 한계 / 결론 -->
+<section class="block wrap" id="conclusion">
+  <div class="col reveal">
+    <div class="sec-num mono">§ 7 · 8 · LIMITATION & CONCLUSION</div>
+    <h2>한계와 결론<span class="en mono">Toward truly unlimited OCR</span></h2>
+    <div class="panel reveal">
+      <div class="panel-title">한계와 향후 과제</div>
+      <ul class="clean" style="margin:0">
+        <li>유한 문맥 길이(예: 32K)에서는 prefill 길이의 제약을 받아 진정한 무제한 파싱에 이르지 못한다. DeepEncoder가 높은 압축률을 달성해도 페이지가 쌓이면 prefill이 매우 길어진다.</li>
+        <li><b>단기.</b> 128K 등 더 긴 문맥 길이의 모델을 학습해 더 많은 페이지의 prefill을 지원한다.</li>
+        <li><b>장기.</b> prefill 풀을 구축하고 모델이 prefill KV 청크를 자동으로 가져오도록 학습시켜, 사람이 페이지를 넘기는 효과를 모사함으로써 진정한 무제한 OCR을 달성한다.</li>
+        <li>R-SWA를 ASR·번역 같은 참조 기반 작업으로 이전한다.</li>
+      </ul>
+    </div>
+    <p>
+      이 보고서는 Unlimited OCR 모델과 그 장기 파싱 능력을 떠받치는 R-SWA 알고리즘을 제안한다.
+      종단간 모델 디코더의 모든 표준 어텐션을 인과적 참조 기반 SWA로 대체해도 파싱 작업 성능이 <b class="accent">무손실</b>임을 검증한다.
+      이는 모델이 이력 출력의 유용한 정보를 윈도우로 연속적으로 넘기도록 학습함을 뜻하며, 이 부드러운 형태의 망각은 사람이 책을 베껴 쓰는 방식과 일치한다.
+      R-SWA가 향후 더 많은 작업에 적용되어, 어텐션 연산과 메모리 사용량이 더는 장기 파싱 분야의 병목이 되지 않게 하리라 본다.
+    </p>
+  </div>
+</section>
+
+<footer class="wrap">
+  <div class="ft-grid">
+    <div class="ft-note">
+      <div class="outfit" style="font-weight:700;color:var(--ink);font-size:16px;margin-bottom:10px">Unlimited OCR Works — Welcome the Era of One-shot Long-horizon Parsing</div>
+      Baidu Inc. (2026). arXiv:2606.23050v1 [cs.CV], 2026-06-22. · 코드·가중치: github.com/baidu/Unlimited-OCR
+      <br><br>
+      이 페이지는 원 기술 보고서의 내용을 한국어 기술 문서 형식으로 정리한 요약본이다. 정확한 수식·도표는 원문을 참조한다.
+    </div>
+    <div style="font-family:'Spline Sans Mono';font-size:12.5px;line-height:2.1">
+      <div style="color:var(--ink-2);margin-bottom:8px">SECTIONS</div>
+      <a href="#intro">서론</a><br>
+      <a href="#method">R-SWA 방법론</a><br>
+      <a href="#kvcache">KV 캐시 관리</a><br>
+      <a href="#results">평가</a><br>
+      <a href="#longhorizon">장기 파싱</a><br>
+      <a href="#efficiency">효율 분석</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// hero 슬라이딩 윈도우 애니메이션
+const REF=8, OUT=22, N_WIN=5; // 참조 8칸, 출력 22칸, 윈도우 폭 5(시각용 축소)
+const refRow=document.getElementById('refRow'), outRow=document.getElementById('outRow');
+const refTk=[], outTk=[];
+for(let i=0;i<REF;i++){const e=document.createElement('div');e.className='tk ref';refRow.appendChild(e);refTk.push(e);}
+for(let i=0;i<OUT;i++){const e=document.createElement('div');e.className='tk faded';outRow.appendChild(e);outTk.push(e);}
+const stepEl=document.getElementById('swaStep');
+let cur=0;
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame(){
+  outTk.forEach((e,i)=>{
+    e.className='tk';
+    if(i<cur){ // 이미 생성됨
+      if(i>=cur-N_WIN && i<cur) e.classList.add('mem');        // 작업 기억 윈도우
+      else e.classList.add('faded');                            // 부드러운 망각
+    } else if(i===cur){ e.classList.add('cur'); }              // 현재 토큰
+    else { e.classList.add('faded'); }                          // 아직 미생성
+  });
+  // 참조는 항상 켜짐
+  refTk.forEach(e=>e.className='tk ref');
+  stepEl.textContent='decode step '+(cur+1)+' / '+OUT;
+  cur=(cur+1)%(OUT+3);
+  if(cur>OUT-1) cur=cur%(OUT); // wrap
+}
+if(!reduce){ frame(); setInterval(frame, 520); }
+else { outTk.forEach((e,i)=>{e.className='tk';e.classList.add(i>=OUT-N_WIN?'mem':'faded');}); stepEl.textContent='decode step '+OUT+' / '+OUT; }
+
+// 어텐션 그리드 (12x12 모식)
+function buildGrid(el, mode){
+  for(let r=0;r<12;r++){
+    for(let c=0;c<12;c++){
+      const d=document.createElement('div'); d.className='cellbox';
+      const isRefCol = c<4;                    // 앞 4열 = 참조 토큰
+      if(c>r){ d.classList.add('none'); }      // 인과 마스크 (미래)
+      else if(isRefCol){ d.classList.add('ref'); } // 참조: 항상 본다
+      else {
+        // 출력 영역
+        if(mode==='full'){ d.classList.add('mem'); }       // 풀: 전부 본다
+        else { // R-SWA: 최근 4개만
+          if(c>=r-3) d.classList.add('mem'); else d.classList.add('none');
+        }
+      }
+      el.appendChild(d);
+    }
+  }
+}
+buildGrid(document.getElementById('gridFull'),'full');
+buildGrid(document.getElementById('gridRswa'),'rswa');
+
+// 스크롤 리빌
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
