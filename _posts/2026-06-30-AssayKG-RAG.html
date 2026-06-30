@@ -1,0 +1,782 @@
+---
+layout: null
+title: "Provenance-Aware Agent: Judging Assay Context with Graph RAG" 
+date: 2026-06-30
+categories: [artificial intelligence]
+tags: [agentic ai, ai co-scientist, ai for science, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>출처 인지 에이전트 · AssayKG-RAG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f0e;
+  --bg-2:#0f1614;
+  --panel:#121b18;
+  --panel-2:#16211d;
+  --line:#243430;
+  --line-soft:#1b2723;
+  --text:#cfe0da;
+  --text-hi:#f1f8f5;
+  --mute:#7e958d;
+  --mute-2:#566860;
+  /* three agent roles */
+  --plan:#5ec8e8;    /* 계획자 */
+  --crit:#ffb454;    /* 비평가 */
+  --veri:#7ce29a;    /* 검증자 */
+  --pos:#7ce29a;     /* POSITIVE */
+  --neg:#ff7a6b;     /* NEGATIVE */
+  --prov:#c79bff;    /* provenance */
+  --maxw:1060px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans KR',sans-serif;font-weight:400;line-height:1.85;font-size:16px;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+.disp{font-family:'Fraunces',serif;}
+
+.field{position:fixed;inset:0;z-index:-1;background:
+  radial-gradient(820px 540px at 80% -6%, rgba(124,226,154,.06), transparent 60%),
+  radial-gradient(720px 520px at 6% 8%, rgba(94,200,232,.05), transparent 58%),
+  var(--bg);}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 30px;}
+section{padding:84px 0;border-top:1px solid var(--line-soft);}
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:60;background:rgba(10,15,14,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--line-soft);}
+.topbar .row{max-width:var(--maxw);margin:0 auto;padding:13px 30px;display:flex;justify-content:space-between;align-items:center;gap:16px;}
+.brand{display:flex;align-items:center;gap:11px;font-family:'Fraunces';font-weight:600;font-size:16px;color:var(--text-hi);}
+.brand .loop{display:flex;gap:4px;align-items:center;}
+.brand .loop i{width:8px;height:8px;border-radius:50%;display:block;}
+.navlinks{display:flex;gap:20px;font-family:'IBM Plex Mono';font-size:12px;}
+.navlinks a{color:var(--mute);text-decoration:none;transition:color .2s;}
+.navlinks a:hover{color:var(--veri);}
+@media(max-width:880px){.navlinks{display:none;}}
+
+/* hero */
+.hero{padding:74px 0 40px;}
+.kick{font-family:'IBM Plex Mono';font-size:12px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mute-2);display:flex;align-items:center;gap:14px;margin-bottom:28px;}
+.kick::before{content:"";width:36px;height:1px;background:var(--veri);}
+h1{font-family:'Fraunces';font-weight:600;font-size:clamp(2.5rem,6vw,4.4rem);line-height:1.04;color:var(--text-hi);letter-spacing:-.5px;}
+h1 .en{display:block;font-family:'IBM Plex Mono';font-size:clamp(.9rem,2.1vw,1.25rem);font-weight:400;color:var(--mute);letter-spacing:.5px;margin-top:20px;text-transform:none;}
+.dek{max-width:680px;margin:30px 0 0;font-size:1.06rem;font-weight:300;line-height:1.95;}
+.dek b{color:var(--text-hi);font-weight:500;}
+.dek .frag{color:var(--neg);font-weight:500;}
+.byline{margin-top:34px;font-family:'IBM Plex Mono';font-size:12.5px;color:var(--mute-2);line-height:1.95;}
+.byline .nm{color:var(--mute);}
+.byline a{color:var(--plan);text-decoration:none;}
+
+/* metrics strip */
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:40px;background:var(--panel);}
+@media(max-width:680px){.metrics{grid-template-columns:1fr;}}
+.metric{padding:26px 24px;border-right:1px solid var(--line-soft);}
+.metric:last-child{border-right:none;}
+.metric .v{font-family:'Fraunces';font-weight:600;font-size:2.3rem;color:var(--text-hi);line-height:1;letter-spacing:-1px;}
+.metric .v .u{font-size:1rem;color:var(--mute);}
+.metric.good .v{color:var(--veri);}
+.metric .k{font-family:'IBM Plex Mono';font-size:11.5px;color:var(--mute);margin-top:10px;letter-spacing:.3px;}
+
+/* loop pillars */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px;}
+@media(max-width:760px){.pillars{grid-template-columns:1fr;}}
+.pillar{border:1px solid var(--line);border-radius:10px;padding:22px 20px;background:var(--panel);position:relative;overflow:hidden;}
+.pillar::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;}
+.pillar.p::before{background:var(--plan);} .pillar.c::before{background:var(--crit);} .pillar.v::before{background:var(--veri);}
+.pillar .ph{font-family:'IBM Plex Mono';font-size:11px;letter-spacing:1.5px;text-transform:uppercase;}
+.pillar.p .ph{color:var(--plan);} .pillar.c .ph{color:var(--crit);} .pillar.v .ph{color:var(--veri);}
+.pillar .nm{font-size:1.05rem;font-weight:600;color:var(--text-hi);margin:8px 0 6px;}
+.pillar p{font-size:.9rem;color:var(--text);margin:0;line-height:1.6;}
+
+/* section heads */
+.snum{font-family:'IBM Plex Mono';font-size:13px;color:var(--veri);letter-spacing:1px;}
+h2{font-family:'Fraunces';font-weight:600;font-size:clamp(1.7rem,3.8vw,2.6rem);color:var(--text-hi);letter-spacing:-.3px;margin:8px 0 6px;line-height:1.14;}
+h2 .en{display:block;font-family:'IBM Plex Mono';font-size:.8rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--mute-2);margin-top:12px;font-weight:400;}
+h3{font-family:'IBM Plex Sans KR';font-weight:600;font-size:1.22rem;color:var(--text-hi);margin:42px 0 12px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+h3 .tag{font-family:'IBM Plex Mono';font-size:.72rem;border-radius:4px;padding:2px 9px;letter-spacing:.5px;flex-shrink:0;border:1px solid var(--line);color:var(--mute);}
+h3 .tag.p{color:var(--plan);border-color:rgba(94,200,232,.35);}
+h3 .tag.c{color:var(--crit);border-color:rgba(255,180,84,.35);}
+h3 .tag.v{color:var(--veri);border-color:rgba(124,226,154,.35);}
+h4{font-family:'IBM Plex Sans KR';font-weight:600;font-size:1.04rem;color:var(--text-hi);margin:26px 0 8px;}
+p{margin:14px 0;}
+.lead{font-size:1.05rem;}
+strong{color:var(--text-hi);font-weight:600;}
+em.p{font-style:normal;color:var(--plan);font-weight:500;}
+em.c{font-style:normal;color:var(--crit);font-weight:500;}
+em.v{font-style:normal;color:var(--veri);font-weight:500;}
+em.pr{font-style:normal;color:var(--prov);font-weight:500;}
+a.ref{color:var(--plan);text-decoration:none;border-bottom:1px dotted var(--mute-2);font-size:.92em;}
+code{font-family:'IBM Plex Mono';font-size:.85em;background:var(--bg-2);padding:1px 6px;border-radius:4px;color:var(--crit);border:1px solid var(--line-soft);}
+
+/* abstract */
+.abstract{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--veri);border-radius:10px;padding:30px 34px;}
+.abstract p{font-weight:300;color:var(--text);}
+.abstract p:first-child{margin-top:0;}
+
+/* research questions */
+.rqs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:28px 0;}
+@media(max-width:760px){.rqs{grid-template-columns:1fr;}}
+.rq{border:1px solid var(--line);border-radius:10px;padding:20px 20px;background:var(--panel);}
+.rq .t{font-family:'IBM Plex Mono';font-size:11px;color:var(--veri);letter-spacing:1px;}
+.rq .h{font-weight:600;color:var(--text-hi);margin:8px 0 4px;font-size:.98rem;}
+.rq p{margin:0;font-size:.88rem;color:var(--text);line-height:1.55;}
+
+/* context-flip signature figure */
+.flip{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:26px;margin:28px 0;}
+.flip svg{display:block;width:100%;height:auto;}
+
+/* generic figbox */
+.figbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin:28px 0;}
+.figbox svg{display:block;width:100%;height:auto;}
+figcaption{font-family:'IBM Plex Mono';font-size:12px;color:var(--mute-2);margin-top:14px;line-height:1.7;padding:0 6px 4px;}
+figcaption b{color:var(--mute);font-weight:500;}
+
+/* seven typed fields */
+.fields{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0;}
+@media(max-width:760px){.fields{grid-template-columns:1fr 1fr;}}
+.fld{border:1px solid var(--line);border-radius:8px;padding:14px 16px;background:var(--bg-2);}
+.fld .fn{font-family:'IBM Plex Mono';font-size:11px;color:var(--prov);letter-spacing:.5px;}
+.fld .fd{font-size:.84rem;color:var(--mute);margin-top:4px;line-height:1.4;}
+.fld .ex{font-family:'IBM Plex Mono';font-size:11px;color:var(--text);margin-top:6px;}
+
+/* equation box */
+.eqbox{border:1px solid var(--line);border-radius:10px;background:var(--bg-2);padding:20px 24px;margin:18px 0;font-family:'IBM Plex Mono';font-size:.92rem;color:var(--text);overflow-x:auto;display:flex;align-items:center;gap:18px;}
+.eqbox .tagn{color:var(--mute-2);margin-left:auto;font-size:.8rem;flex-shrink:0;}
+.eqbox .vv{color:var(--veri);} .eqbox .vp{color:var(--prov);}
+
+/* algorithm block */
+.algo{border:1px solid var(--line);border-radius:10px;background:var(--bg-2);overflow:hidden;margin:24px 0;font-family:'IBM Plex Mono';font-size:13px;}
+.algo .ah{padding:12px 20px;border-bottom:1px solid var(--line);color:var(--text-hi);background:var(--panel);font-weight:600;letter-spacing:.3px;}
+.algo ol{list-style:none;counter-reset:a;padding:14px 0;}
+.algo li{counter-increment:a;padding:6px 20px 6px 54px;position:relative;color:var(--text);}
+.algo li::before{content:counter(a);position:absolute;left:20px;color:var(--mute-2);}
+.algo .role{float:right;font-size:11px;padding:1px 8px;border-radius:4px;border:1px solid var(--line);}
+.algo .role.p{color:var(--plan);} .algo .role.c{color:var(--crit);} .algo .role.v{color:var(--veri);}
+.algo .kw{color:var(--veri);}
+
+/* tables */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin:24px 0;background:var(--panel);}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:480px;}
+caption{caption-side:top;text-align:left;font-family:'IBM Plex Mono';font-size:11.5px;color:var(--mute);padding:16px 18px 10px;line-height:1.6;}
+caption b{color:var(--text-hi);}
+th,td{padding:9px 15px;text-align:right;border-bottom:1px solid var(--line-soft);}
+th:first-child,td:first-child{text-align:left;}
+thead th{font-family:'IBM Plex Mono';font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--mute);font-weight:500;background:var(--bg-2);}
+.num{font-family:'IBM Plex Mono';}
+tbody tr:hover{background:var(--panel-2);}
+.rowband{background:rgba(124,226,154,.06);}
+td.hi{color:var(--veri);font-weight:600;}
+.lead-cell{color:var(--text-hi);font-weight:600;}
+.dpos{color:var(--veri);} .dneg{color:var(--neg);}
+
+/* contributions */
+.contrib{list-style:none;display:grid;gap:12px;margin:24px 0;}
+.contrib li{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;border:1px solid var(--line-soft);border-radius:10px;padding:18px 22px;background:var(--panel);}
+.contrib .n{font-family:'Fraunces';font-weight:600;font-size:1.4rem;color:var(--veri);line-height:1;}
+.contrib p{margin:0;font-size:.96rem;}
+
+/* note */
+.note{background:var(--bg-2);border:1px solid var(--line);border-left:3px solid var(--crit);border-radius:10px;padding:20px 24px;margin:24px 0;}
+.note .nh{font-family:'IBM Plex Mono';font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--crit);margin-bottom:8px;}
+.note p{margin:6px 0;font-size:.96rem;}
+
+/* limitations duo */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0;}
+@media(max-width:680px){.duo{grid-template-columns:1fr;}}
+.duo .col{border:1px solid var(--line);border-radius:10px;padding:22px 24px;background:var(--panel);}
+.duo .lbl{font-family:'IBM Plex Mono';font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mute);margin-bottom:10px;}
+.duo h4{margin-top:0;}
+.duo p{font-size:.93rem;margin:6px 0;}
+
+/* refs */
+.refs{columns:2;column-gap:38px;font-family:'IBM Plex Mono';font-size:11px;color:var(--mute-2);line-height:1.72;}
+@media(max-width:720px){.refs{columns:1;}}
+.refs div{break-inside:avoid;margin-bottom:8px;}
+.refs .rn{color:var(--veri);}
+
+/* footer */
+footer{border-top:1px solid var(--line);padding:48px 0 70px;}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:24px;align-items:flex-end;}
+footer .big{font-family:'Fraunces';font-weight:600;font-size:1.4rem;color:var(--text-hi);}
+footer .meta{font-family:'IBM Plex Mono';font-size:12px;color:var(--mute-2);line-height:2;}
+
+.ack{font-size:.9rem;color:var(--mute);background:var(--bg-2);border:1px solid var(--line);border-radius:10px;padding:18px 22px;margin:24px 0;}
+
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .7s ease,transform .7s ease;}
+.reveal.in{opacity:1;transform:none;}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none;}html{scroll-behavior:auto;}}
+</style>
+</head>
+<body>
+<div class="field"></div>
+
+<div class="topbar">
+  <div class="row">
+    <div class="brand">
+      <span class="loop"><i style="background:var(--plan)"></i><i style="background:var(--crit)"></i><i style="background:var(--veri)"></i></span>
+      AssayKG-RAG
+    </div>
+    <nav class="navlinks">
+      <a href="#intro">서론</a>
+      <a href="#related">관련 연구</a>
+      <a href="#arch">아키텍처</a>
+      <a href="#exp">실험</a>
+      <a href="#conclusion">결론</a>
+      <a href="#refs">참고문헌</a>
+    </nav>
+  </div>
+</div>
+
+<header class="hero wrap">
+  <div class="kick mono">2026 대한전자공학회 하계학술대회 · GEP-0061</div>
+  <h1 class="disp">출처 인지 에이전트:<br>어세이 컨텍스트 판단과 그래프 RAG
+    <span class="en">Provenance-Aware Agent · Judging Assay Context with Graph RAG</span>
+  </h1>
+  <p class="dek">
+    대규모 언어 모델과 검색 증강 생성(RAG)이 치료용 AI 지형에 빠르게 스며들고 있으나, 결정적 장벽이 남아 있다 —
+    <span class="frag">컨텍스트 취약성(context fragility)</span>. 동일한 분자라도 어세이 의미론, 종말점 정의, 결정 임계값,
+    또는 데이터 출처가 바뀌면 분자 라벨의 의미 자체가 변하는 현상이다. 본 연구는 이 문제를 <b>에이전틱 AI</b>의 관점으로
+    재구성하고, 출처 인지 타입 지식 그래프 검색 프레임워크 <b>AssayKG-RAG</b>를 제안한다.
+  </p>
+
+  <div class="byline mono">
+    <div><span class="nm">김성수 (Sungsoo Kim)</span> · 한국전자통신연구원 (ETRI)</div>
+    <div>e-mail · <a href="mailto:sungsoo@etri.re.kr">sungsoo@etri.re.kr</a></div>
+  </div>
+
+  <div class="metrics reveal">
+    <div class="metric good"><div class="v">1.000</div><div class="k mono">DCC · 방향 정확도 계수 (Directional Correctness)</div></div>
+    <div class="metric"><div class="v">0.777</div><div class="k mono">AUROC_err · 오류 탐지 성능</div></div>
+    <div class="metric good"><div class="v">0.000</div><div class="k mono">LeakageRate · 정보 누출률 (Zero leakage)</div></div>
+  </div>
+
+  <div class="pillars reveal">
+    <div class="pillar p"><div class="ph mono">Plan</div><div class="nm">계획자</div><p>어떤 증거를 허용할지 계획하고, 분할-안전 검색 제약을 고정한다.</p></div>
+    <div class="pillar c"><div class="ph mono">Criticize</div><div class="nm">비평가</div><p>질의 컨텍스트와 검색된 항목의 부합도를 비판적으로 평가한다.</p></div>
+    <div class="pillar v"><div class="ph mono">Verify</div><div class="nm">검증자</div><p>예측의 방향 타당성을 검증하고, 감사 가능한 신호를 산출한다.</p></div>
+  </div>
+</header>
+
+<main>
+
+<!-- ABSTRACT -->
+<section class="wrap reveal" style="padding-top:58px">
+  <div class="abstract">
+    <p>시스템은 세 기둥 위에 세워진다 — (i) 어세이 컨텍스트를 7개의 타입 필드로 정규화, (ii) 모든 증거 엣지에 출처 태그 부착, (iii) 예측값과 검사 가능한 감사 신호를 함께 출력하는 결정론적 계획자–비평가–검증자 루프.</p>
+    <p>학습-테스트 간 출처가 분리된 합성 벤치마크와 실제 분자 개념 충돌 스트레스 테스트에서, AssayKG-RAG는 완벽한 방향 정확도 계수(DCC = 1.000), 오류 탐지 AUROC_err = 0.777, 그리고 제로 누출률(LeakageRate = 0.000)을 달성한다. 핵심 기여는 리더보드 갱신이 아니라, 명시적으로 분리된 계획–비판–검증 루프를 출처 게이트 감사 가능성과 함께 재현 가능하고 실행 가능한 계약으로 형식화한 데 있다.</p>
+  </div>
+</section>
+
+<!-- ================= INTRO ================= -->
+<section id="intro" class="wrap reveal">
+  <div class="snum mono">§ I</div>
+  <h2 class="disp">서론<span class="en">Introduction</span></h2>
+
+  <p class="lead">
+    신약 개발 과정에서 컴퓨터 기반 예측 모델은 화합물의 흡수·분포·대사·배설·독성(ADMET) 특성을 사전 선별하는 핵심
+    도구로 자리 잡았다. 최근에는 도메인 특화 대규모 언어 모델(LLM)을 이러한 예측 작업에 적극 도입하려는 시도가 급속히
+    늘고 있다 <a class="ref" href="#refs">[1,2]</a>. 그러나 모델의 규모와 사전학습 데이터를 확장하는 것만으로는 해결되지
+    않는 근본적 문제가 존재한다. <strong>동일한 화합물이라도 실험 조건이 달라지면 정답 라벨의 의미 자체가 바뀐다.</strong>
+  </p>
+
+  <p>
+    Parrondo-Pizarro 등 <a class="ref" href="#refs">[3]</a>은 공개 ADME 데이터셋 사이의 주석 불일치와 분포 불균형을
+    실증적으로 보고하며, 이러한 어세이 수준의 데이터 이질성이 모델의 예측 정확도를 결정적으로 훼손할 수 있음을 보였다.
+    구체적으로 어세이 종류, 실험실 간 용어 차이, 양성 판정 임계값, 메타데이터 누락 등의 변화는 동일한 예측 점수의 해석을
+    근본적으로 변화시킨다. 이 조건들은 단순한 부가 정보가 아니라 <em class="pr">예측값이 무엇을 의미하는지</em>를 정의하는
+    라벨 의미론의 일부다 <a class="ref" href="#refs">[4]</a>.
+  </p>
+
+  <h4>기존 두 접근법의 한계</h4>
+  <p>
+    분자 구조 기반 모델 <a class="ref" href="#refs">[5,6]</a>은 분자-특성 관계 학습에서는 뛰어나지만, 어세이 조건 변화에
+    따른 예측의 동적 조정이 불가능하다. 검색 증강 생성(RAG) 방식 <a class="ref" href="#refs">[7]</a>은 과거 실험 기록을
+    활용할 수 있다는 장점이 있으나, 검색된 증거가 현재의 어세이 의미론과 실제로 부합하는지 검증하지 않으며, 학습-테스트 간
+    정보 누출을 방지하는 구조적 장치도 부재하다 <a class="ref" href="#refs">[8]</a>.
+  </p>
+
+  <div class="note">
+    <div class="nh mono">핵심 관점 전환</div>
+    <p>본 논문은 이 문제를 에이전틱 AI의 관점으로 접근한다. 치료용 예측 시스템은 단순한 입출력 변환기가 아니라, <em class="p">(i) 어느 증거를 허용할지 계획하고</em>, <em class="c">(ii) 검색 증거의 질의 부합도를 비판적으로 평가하며</em>, <em class="v">(iii) 조건 변화에 대한 예측의 방향 타당성을 검증하는</em> 에이전트여야 한다. 중요한 것은 "더 큰 예측기"가 아니라 <strong>"감사 가능한 의사결정 절차"의 설계</strong>다. 약물 개발 현장에서 의사결정자는 예측값뿐 아니라 그 근거와 신뢰 조건을 함께 요구하기 때문이다.</p>
+  </div>
+
+  <h4>연구 질문</h4>
+  <div class="rqs">
+    <div class="rq"><div class="t mono">RQ1</div><div class="h">검색 안전성</div><p>학습-테스트 간 정보 누출 없이 의미론적으로 허용 가능한 증거만 검색할 수 있는가?</p></div>
+    <div class="rq"><div class="t mono">RQ2</div><div class="h">방향 정확성</div><p>어세이 조건 변화(예: 임계값 강화)에 대해 예측 확률이 생물학적으로 올바른 방향으로 조정되는가?</p></div>
+    <div class="rq"><div class="t mono">RQ3</div><div class="h">실패 진단 가능성</div><p>에이전트가 출력하는 정합성 감사 신호는 예측 실패를 사전 탐지할 수 있는가?</p></div>
+  </div>
+
+  <h4>주요 기여</h4>
+  <ul class="contrib">
+    <li><span class="n disp">01</span><p>에이전틱 AI의 계획-비판-검증 원칙을 치료용 어세이 검색에 적용해, <em class="p">검색</em>·<em class="c">추론</em>·<em class="v">감사</em>를 하나의 결정론적 실행 계약 문제로 정의한다.</p></li>
+    <li><span class="n disp">02</span><p>출처 인지, 결측 메타데이터의 명시적 처리(UNK), 임계값 제약, 분할 안전성을 단일 파이프라인으로 통합한 타입 지식 그래프 구조를 제안한다.</p></li>
+    <li><span class="n disp">03</span><p>합성 벤치마크에서 DCC = 1.000, 오류 탐지 AUROC_err = 0.777을 달성하여, 평균 AUROC가 가려 온 방향 정확도와 실패 진단 가능성을 별도의 평가 축으로 제시한다.</p></li>
+  </ul>
+</section>
+
+<!-- ================= RELATED ================= -->
+<section id="related" class="wrap reveal">
+  <div class="snum mono">§ II</div>
+  <h2 class="disp">관련 연구<span class="en">Related Work</span></h2>
+
+  <h4>치료용 파운데이션 모델</h4>
+  <p>
+    TxGemma <a class="ref" href="#refs">[1]</a>, Biomni <a class="ref" href="#refs">[9]</a>, GP-MoLFormer
+    <a class="ref" href="#refs">[10]</a>로 대표되는 치료용 파운데이션 모델 연구는 생물의학 지식과 분자 표현의 통합
+    가능성을 보여 준다. ChemBench <a class="ref" href="#refs">[4]</a>와 Delile 등 <a class="ref" href="#refs">[11]</a>은
+    과제 정의, 라벨 구성 방식, 평가 프로토콜의 실제 측정 대상을 결정하는 점을 강조한다. Science Advances에 게재된 광범위한
+    벤치마크 연구 <a class="ref" href="#refs">[12]</a>는 현재 RAG 기반 생물의학 LLM이 반사실적 강건성(counterfactual
+    robustness)과 자기 인식(self-awareness) 측면에서 여전히 심각한 한계를 지니며, 검색된 증거의 신뢰도를 모델 스스로
+    판단하지 못한다는 점을 체계적으로 실증했다. 본 논문은 이 평가 중심 흐름에 위치하며, 어세이 조건의 의미론을 모델 외부의
+    부가 변수가 아닌 평가와 검색의 핵심 대상으로 격상시킨다.
+  </p>
+
+  <h4>그래프 분자 모델과의 상보성</h4>
+  <p>
+    Chemprop <a class="ref" href="#refs">[5]</a>, GROVER <a class="ref" href="#refs">[13]</a>, Graphormer
+    <a class="ref" href="#refs">[14]</a>, Uni-Mol <a class="ref" href="#refs">[6]</a>은 분자 구조 표현 학습의 강력한
+    기준선을 제공하지만, 대체로 과제가 고정된 환경을 가정한다. 본 논문이 다루는 문제는 이와 직교한다 — 어세이 종류·종말점·임계값·출처가
+    달라질 때 핵심 과제는 분자 표현을 더 정교하게 만드는 것이 아니라 <em class="pr">변경된 의미론에서 허용 가능한 증거를
+    결정하는 절차</em>다. 따라서 AssayKG-RAG는 그래프 분자 모델과 경쟁하기보다, 그 위에서 검색 기준과 감사 신호를
+    통제하는 정책 계층으로 볼 수 있다.
+  </p>
+
+  <h4>에이전틱 RAG 및 그래프 RAG</h4>
+  <p>
+    에이전틱 RAG <a class="ref" href="#refs">[7]</a>와 그래프 RAG <a class="ref" href="#refs">[15]</a>는 타입 인터페이스,
+    그래프 구조화 검색, 반복 검증 루프가 고위험 의사결정에서 중요함을 보고한다. MAIN-RAG <a class="ref" href="#refs">[16]</a>는
+    멀티 에이전트 필터링을 통해 검색 결과를 무비판적으로 생성기에 주입하는 방식의 한계를 보인다. 분자 예측 분야에서는 CMRL
+    <a class="ref" href="#refs">[17]</a>과 ADMEOOD <a class="ref" href="#refs">[18]</a>가 출처와 개념 이동을 무시할 경우
+    희망적 무작위 분할이 과적합을 은폐할 수 있음을 지적한다. 그러나 타입 인터페이스, 결정론적 제어, 출처 태그, 분할-인식 검색,
+    치료용 어세이 의미론을 하나의 실행 계약으로 통합한 프레임워크는 아직 제한적이다. AssayKG-RAG의 기여는 이 요소들을 하나의
+    작고 재현 가능한 에이전트 파이프라인으로 결합한 데 있다.
+  </p>
+</section>
+
+<!-- ================= ARCHITECTURE ================= -->
+<section id="arch" class="wrap reveal">
+  <div class="snum mono">§ III</div>
+  <h2 class="disp">AssayKG-RAG 에이전틱 아키텍처<span class="en">Agentic Architecture</span></h2>
+
+  <h3><span class="tag">3.1</span>문제 정의 — 컨텍스트 취약성</h3>
+  <p>
+    어세이 조건에 따라 동일 분자의 라벨이 달라지는 이유는 간결한 예로 분명해진다. 화합물 X의 분자 구조는 변하지 않으나,
+    완화된 컨텍스트 c₁(임계값 &gt; 0.50)에서는 활성 점수 0.65가 임계값을 초과하여 <strong style="color:var(--pos)">양성</strong>으로,
+    엄격한 컨텍스트 c₂(임계값 &gt; 0.70)에서는 동일한 0.65가 임계값에 미치지 못하여 <strong style="color:var(--neg)">음성</strong>으로
+    판정된다.
+  </p>
+
+  <!-- CONTEXT-FLIP SIGNATURE FIGURE -->
+  <figure class="flip reveal">
+    <svg viewBox="0 0 900 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="동일 분자가 컨텍스트에 따라 양성·음성으로 갈리는 컨텍스트 취약성 예시">
+      <!-- center molecule -->
+      <rect x="370" y="30" width="160" height="62" rx="10" fill="#16211d" stroke="#243430"/>
+      <text x="450" y="56" text-anchor="middle" font-family="Fraunces" font-weight="600" font-size="18" fill="#f1f8f5">Molecule X</text>
+      <text x="450" y="80" text-anchor="middle" font-family="IBM Plex Mono" font-size="14" fill="#7e958d">Score: 0.65</text>
+
+      <!-- left branch: relaxed -> positive -->
+      <line x1="370" y1="70" x2="200" y2="135" stroke="#566860" stroke-width="1.4"/>
+      <rect x="60" y="135" width="240" height="56" rx="10" fill="#16211d" stroke="#5ec8e8" stroke-opacity=".4"/>
+      <text x="180" y="160" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#5ec8e8">Relaxed Context (c₁)</text>
+      <text x="180" y="180" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#7e958d">Threshold &gt; 0.50</text>
+      <text x="180" y="222" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#7ce29a">0.65 &gt; 0.50</text>
+      <rect x="120" y="236" width="120" height="30" rx="15" fill="#7ce29a" fill-opacity=".12" stroke="#7ce29a" stroke-opacity=".5"/>
+      <text x="180" y="256" text-anchor="middle" font-family="IBM Plex Mono" font-weight="600" font-size="13" fill="#7ce29a">POSITIVE</text>
+
+      <!-- right branch: strict -> negative -->
+      <line x1="530" y1="70" x2="700" y2="135" stroke="#566860" stroke-width="1.4"/>
+      <rect x="600" y="135" width="240" height="56" rx="10" fill="#16211d" stroke="#ff7a6b" stroke-opacity=".4"/>
+      <text x="720" y="160" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#ff7a6b">Strict Context (c₂)</text>
+      <text x="720" y="180" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#7e958d">Threshold &gt; 0.70</text>
+      <text x="720" y="222" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#ff7a6b">0.65 &lt; 0.70</text>
+      <rect x="660" y="236" width="120" height="30" rx="15" fill="#ff7a6b" fill-opacity=".12" stroke="#ff7a6b" stroke-opacity=".5"/>
+      <text x="720" y="256" text-anchor="middle" font-family="IBM Plex Mono" font-weight="600" font-size="13" fill="#ff7a6b">NEGATIVE</text>
+    </svg>
+    <figcaption><b>그림 1.</b> 컨텍스트 조건부 예측의 예시. 동일한 분자 X(점수 0.65)도 완화된 임계값(&gt; 0.50)에서는 양성, 엄격한 임계값(&gt; 0.70)에서는 음성으로 판정된다. 컨텍스트를 무시하는 예측기는 두 시나리오 중 하나에서 반드시 오답을 낸다.</figcaption>
+  </figure>
+
+  <div class="eqbox">
+    <span><strong>정의 · 컨텍스트 조건부 예측</strong> &nbsp; f : M × C → [0,1] &nbsp; 예측 f(m,c)의 방향이 c 변화가 지시하는 생물학적 방향과 일치</span>
+  </div>
+
+  <h4>어세이 컨텍스트의 7개 타입 필드</h4>
+  <p>
+    어세이 컨텍스트 c는 다음 7개의 정규 필드로 구성된 순서 있는 레코드다. 앞의 여섯 필드는 스칼라 문자열이고,
+    <code>protocol_tokens</code>는 정규화된 다중 집합 T(c)로 처리된다. 모든 필드는 명시적 <em class="pr">UNK</em>를 포함한
+    유한 어휘에서 값을 취하며, 임계값 규칙은 <code>positive_if_score_gt_0.55</code>와 같은 정규화 문자열로 저장되어 전 영역에서
+    일관된 의미론적 해석을 보장한다.
+  </p>
+  <div class="fields">
+    <div class="fld"><div class="fn mono">task</div><div class="fd">예측 과제</div><div class="ex mono">hERG</div></div>
+    <div class="fld"><div class="fn mono">endpoint</div><div class="fd">종말점</div><div class="ex mono">IC50</div></div>
+    <div class="fld"><div class="fn mono">assay_family</div><div class="fd">어세이 계열</div><div class="ex mono">cardiotoxicity</div></div>
+    <div class="fld"><div class="fn mono">source</div><div class="fd">출처 실험실</div><div class="ex mono">lab_alpha</div></div>
+    <div class="fld"><div class="fn mono">threshold_rule</div><div class="fd">임계값 규칙</div><div class="ex mono">IC50_lt_1uM</div></div>
+    <div class="fld"><div class="fn mono">unit</div><div class="fd">단위</div><div class="ex mono">uM</div></div>
+    <div class="fld"><div class="fn mono">protocol_tokens</div><div class="fd">프로토콜 토큰 집합</div><div class="ex mono">{patch_clamp, HEK293}</div></div>
+    <div class="fld" style="border-color:rgba(199,155,255,.4)"><div class="fn mono">UNK</div><div class="fd">명시적 결측 처리</div><div class="ex mono">감사 로그 기록</div></div>
+  </div>
+
+  <h4>출처-태그 타입 지식 그래프</h4>
+  <p>
+    타입 지식 그래프 G = (V, E, τ)의 노드는 molecule, scaffold, task, endpoint, assay_family, source, threshold_rule,
+    protocol_token 중 하나의 타입을 갖는다. 각 엣지 e ∈ E는 어세이 카드 ID 또는 분할 풀 ID에 해당하는 <em class="pr">출처
+    태그 τ(e)</em>를 갖는다. 주어진 분자 m, 컨텍스트 c, 그래프 G로부터 검색되는 증거 번들은 다음과 같이 정의된다.
+  </p>
+  <div class="eqbox">
+    <span>𝓔(m, c; G) = { (e<sub>j</sub>, s<sub>j</sub>, <span class="vp">ε<sub>j</sub></span>) }<sub>j=1</sub><sup>k</sup></span>
+    <span class="tagn">식 (1)</span>
+  </div>
+  <div class="eqbox">
+    <span>ŷ ∼ p<sub>θ</sub>( y | m, c, 𝓔(m, c; G) )</span>
+    <span class="tagn">식 (2)</span>
+  </div>
+  <p>
+    e<sub>j</sub>는 정규 증거 레코드, s<sub>j</sub> ∈ [0,1]은 검색 점수, <em class="pr">ε<sub>j</sub></em>는 출처 태그다.
+    현재 아키텍처에서 p<sub>θ</sub>는 학습된 신경망이 아닌 <strong>결정론적 대리 예측기</strong>로 구현되며, 이는 검색 계약과
+    감사 신호가 예측기 종류와 독립적으로 검증될 수 있음을 확인하기 위한 설계다.
+  </p>
+
+  <h3><span class="tag p">Plan</span><span class="tag c">Criticize</span><span class="tag v">Verify</span>3.2 에이전트 제어 루프</h3>
+
+  <!-- ARCHITECTURE FLOW -->
+  <figure class="figbox reveal">
+    <svg viewBox="0 0 1040 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="AssayKG-RAG 아키텍처 데이터 흐름도">
+      <defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="#566860"/></marker></defs>
+      <g font-family="IBM Plex Mono">
+        <!-- top row -->
+        <rect x="20" y="60" width="120" height="50" rx="8" fill="#16211d" stroke="#243430"/>
+        <text x="80" y="82" text-anchor="middle" font-size="11" fill="#cfe0da">Raw Query</text>
+        <text x="80" y="98" text-anchor="middle" font-size="9.5" fill="#7e958d">(mol., context)</text>
+
+        <rect x="170" y="60" width="130" height="50" rx="8" fill="#16211d" stroke="#5ec8e8" stroke-opacity=".4"/>
+        <text x="235" y="82" text-anchor="middle" font-size="11" fill="#cfe0da">Canonicalize</text>
+        <text x="235" y="98" text-anchor="middle" font-size="9.5" fill="#7e958d">𝓕 (7 fields)</text>
+
+        <rect x="330" y="60" width="140" height="50" rx="8" fill="#16211d" stroke="#5ec8e8" stroke-opacity=".5"/>
+        <text x="400" y="80" text-anchor="middle" font-size="11" fill="#5ec8e8">Planner</text>
+        <text x="400" y="98" text-anchor="middle" font-size="9.5" fill="#7e958d">split-aware retrieval</text>
+
+        <rect x="500" y="60" width="110" height="50" rx="8" fill="#16211d" stroke="#243430"/>
+        <text x="555" y="82" text-anchor="middle" font-size="11" fill="#cfe0da">Predictor</text>
+        <text x="555" y="98" text-anchor="middle" font-size="11" fill="#7e958d">p_θ</text>
+
+        <rect x="640" y="60" width="150" height="50" rx="8" fill="#16211d" stroke="#243430"/>
+        <text x="715" y="80" text-anchor="middle" font-size="11" fill="#cfe0da">Structured JSON</text>
+        <text x="715" y="98" text-anchor="middle" font-size="9.5" fill="#7e958d">(ŷ, u, v, 𝓔)</text>
+
+        <!-- typed KG -->
+        <rect x="330" y="0" width="140" height="38" rx="8" fill="#1a1320" stroke="#c79bff" stroke-opacity=".45"/>
+        <text x="400" y="17" text-anchor="middle" font-size="10.5" fill="#c79bff">Typed KG G</text>
+        <text x="400" y="31" text-anchor="middle" font-size="9" fill="#9a7bc7">+ provenance tags</text>
+        <line x1="400" y1="38" x2="400" y2="58" stroke="#c79bff" stroke-opacity=".4" stroke-dasharray="3 3" marker-end="url(#a)"/>
+
+        <!-- critic / verifier -->
+        <rect x="500" y="160" width="150" height="46" rx="8" fill="#16211d" stroke="#ffb454" stroke-opacity=".45"/>
+        <text x="575" y="180" text-anchor="middle" font-size="11" fill="#ffb454">Critic</text>
+        <text x="575" y="197" text-anchor="middle" font-size="9.5" fill="#7e958d">Coherence CC</text>
+
+        <rect x="500" y="225" width="150" height="46" rx="8" fill="#16211d" stroke="#7ce29a" stroke-opacity=".45"/>
+        <text x="575" y="245" text-anchor="middle" font-size="11" fill="#7ce29a">Verifier</text>
+        <text x="575" y="262" text-anchor="middle" font-size="9.5" fill="#7e958d">DCC / Nuis.Inv.</text>
+
+        <!-- score badges -->
+        <rect x="700" y="160" width="150" height="46" rx="8" fill="#1a2420" stroke="#243430"/>
+        <text x="775" y="188" text-anchor="middle" font-size="12" fill="#7ce29a">DCC = 1.000</text>
+        <rect x="700" y="225" width="150" height="46" rx="8" fill="#1a2420" stroke="#243430"/>
+        <text x="775" y="253" text-anchor="middle" font-size="11.5" fill="#7ce29a">Nuis.Inv. = 1.000</text>
+
+        <!-- arrows -->
+        <line x1="140" y1="85" x2="168" y2="85" stroke="#566860" marker-end="url(#a)"/>
+        <line x1="300" y1="85" x2="328" y2="85" stroke="#566860" marker-end="url(#a)"/>
+        <line x1="470" y1="85" x2="498" y2="85" stroke="#566860" marker-end="url(#a)"/>
+        <text x="485" y="78" font-size="9" fill="#566860">𝓔</text>
+        <line x1="610" y1="85" x2="638" y2="85" stroke="#566860" marker-end="url(#a)"/>
+        <line x1="555" y1="110" x2="555" y2="158" stroke="#566860" stroke-dasharray="3 3" marker-end="url(#a)"/>
+        <text x="565" y="135" font-size="9" fill="#566860">audit</text>
+        <line x1="575" y1="206" x2="575" y2="223" stroke="#566860" stroke-dasharray="3 3" marker-end="url(#a)"/>
+        <text x="588" y="218" font-size="9" fill="#566860">flag</text>
+        <line x1="650" y1="183" x2="698" y2="183" stroke="#566860" marker-end="url(#a)"/>
+        <line x1="650" y1="248" x2="698" y2="248" stroke="#566860" marker-end="url(#a)"/>
+        <text x="345" y="135" font-size="10" fill="#566860">LeakageRate = 0.000</text>
+        <text x="40" y="250" font-family="Fraunces" font-size="16" fill="#7e958d">Agentic Control Loop</text>
+      </g>
+    </svg>
+    <figcaption><b>그림 2.</b> AssayKG-RAG 아키텍처. 계획자가 질의를 정규화하고 출처 기반 검색 제약을 고정한 뒤, 타입 지식 그래프가 분할-안전 증거 번들을 구성한다. 예측자·비평가·검증자는 각각 예측, 정합성 점수, 유효성 플래그를 산출하고 최종적으로 감사 가능한 구조화 JSON을 출력한다.</figcaption>
+  </figure>
+
+  <p>
+    계획자(Planner)는 질의를 정규화하고 검색 가능한 출처를 제한한다. 비평가(Critic)는 검색된 증거와 질의의 스키마 간
+    정합성을 정량화한다. 검증자(Verifier)는 예측의 방향 타당성과 스키마 유효성을 반사실 교란 아래에서 확인한다. 이 분리는
+    고위험 치료용 추론에서 <em class="c">어떤 판단이 어느 단계에서 발생했는지</em>를 추적하기 위한 설계이며, 임의의 자율성을
+    늘리기 위한 것이 아니다.
+  </p>
+
+  <div class="algo">
+    <div class="ah mono">알고리즘 1 · AssayKG-RAG 에이전트의 결정론적 실행 계약</div>
+    <ol>
+      <li><span class="role p">Planner</span>c ← <span class="kw">Canonicalize</span>(c_raw)</li>
+      <li><span class="role p">Planner</span>𝓔 ← <span class="kw">Retrieve</span>(m, c, G, Π)</li>
+      <li>ŷ ← <span class="kw">Predict</span>(m, c, 𝓔)</li>
+      <li><span class="role c">Critic</span>u ← <span class="kw">Critic</span>(c, 𝓔)</li>
+      <li><span class="role v">Verifier</span>v ← <span class="kw">ValidityChecks</span>(c, 𝓔, ŷ)</li>
+      <li>emit <span class="kw">JSON</span>(ŷ, u, v, 𝓔)</li>
+    </ol>
+  </div>
+  <p>
+    알고리즘 1은 동일 입력에 대해 항상 동일한 감사 산출물을 생성하도록 고정된다. 각 단계는 결정론적이며 — 정규화는 O(1),
+    검색은 증거 개수 k에 대해 O(k), 예측과 비평은 각각 O(k), 검증은 O(1)이다. 전체 복잡도는 O(k)이며, k가 통상 수 수십 건으로
+    제한되므로 서브 밀리초(sub-millisecond) 수준에서 수행된다. 이러한 경량성은 계획-비판-검증 루프를 실시간 감사 계층으로
+    통합할 수 있음을 시사한다.
+  </p>
+
+  <h3><span class="tag p">3.3</span>UNK 인식 정규화 및 분할 안전성</h3>
+  <p>
+    결측 메타데이터는 삭제하지 않고 명시적 토큰 UNK로 유지한다. 질의 q에 대해 필드 존재 지시자를 δ<sub>f</sub>(q) =
+    𝟙[q<sub>f</sub> ≠ UNK], 이용 가능 필드 수를 Ω(q) = Σ<sub>f</sub> δ<sub>f</sub>(q)로 정의한다. 정합성 합산 시
+    δ<sub>f</sub>(q)=0인 필드는 분모에서 제외되며, 이를 통해 결측값을 자동 불일치로 취급하는 과잉 벌칙을 방지하면서
+    어떤 정보가 부족하여 판단이 약화되었는지를 감사 로그에 기록한다.
+  </p>
+  <p>
+    분할-인식 출처 보호는 테스트 풀 P<sub>test</sub>를 사전 정의하고, 검색된 모든 증거의 출처 태그 ε<sub>j</sub>가 해당
+    풀에 속하지 않을 때만 증거를 허용한다.
+  </p>
+  <div class="eqbox">
+    <span>LeakageRate = (1/N<sub>test</sub>) · Σ<sub>i=1</sub><sup>N_test</sup> 𝟙[ ∃j : <span class="vp">ε<sub>ij</sub></span> ∈ P<sub>test</sub> ]</span>
+    <span class="tagn">식 (3)</span>
+  </div>
+  <p>
+    수행된 합성 그래프에서 <strong>LeakageRate = 0.000</strong>은 계획자의 출처 필터가 의도한 대로 작동하여 학습-테스트
+    누출이 일어나지 않았음을 확인한다.
+  </p>
+
+  <h3><span class="tag c">3.3</span>비평가 정합성 점수</h3>
+  <p>
+    비평가의 핵심 산출물인 정합성 점수 CC(q, 𝓔)는 증거가 질의 스키마와 일치하는 정도와 검색 점수의 질의 정렬 정도를
+    가중 결합한다.
+  </p>
+  <div class="eqbox">
+    <span>CC(q, 𝓔) = α · SchemaMatch(q, 𝓔) + (1−α) · RetrievalAlign(𝓔)</span>
+    <span class="tagn">식 (4)</span>
+  </div>
+  <p>
+    <code>protocol_tokens</code>의 경우 부분 문자열 휴리스틱 대신 정규 다중 집합 겹침(자카드 유사도)으로 비교한다.
+    가중치 <strong>α = 0.6</strong>은 사전 등록된 기본 시드에서 내적 검증으로 선택되었으며, 5개 시드 민감도 분석에서 큰
+    영향을 받지 않았다. 중요한 점은 정합성 점수가 보정된 확률이 아닌 <em class="c">감사 신호(audit signal)</em> — 예측
+    근거와 신뢰도를 외부에서 검토할 수 있게 하는 진단적 지표 — 라는 사실이다.
+  </p>
+
+  <div class="eqbox">
+    <span>µ<sub>f</sub>(q, e<sub>j</sub>) = 𝟙[q<sub>f</sub> = e<sub>j,f</sub>] &nbsp;(스칼라 필드) &nbsp; | &nbsp; |T(q) ∩ T(e<sub>j</sub>)| / max(|T(q)|, 1) &nbsp;(protocol_tokens)</span>
+    <span class="tagn">식 (5)</span>
+  </div>
+
+  <h3><span class="tag v">3.3</span>검증자 신호 및 방향 정확도</h3>
+  <p>
+    검증자는 유효성 게이트 V<sub>⊕</sub>(c, c′) ∈ {0,1}을 통해 반사실 평가가 의미 있는 조건 변화에 대해서만 수행되도록 한다.
+    의미 있는 스왑, 잡음 보존 의역, 임계값 시프트는 각각 다른 유효성 술어로 판정되며, 임계값 시프트는 |Δτ| ≤ κ = 0.1인 제한적
+    교란만 허용함으로써 CSS 인플레이션을 방지한다.
+  </p>
+
+  <div class="eqbox">
+    <span><strong>DCC</strong> = (1/2N) · Σ<sub>i=1</sub><sup>N</sup> [ 𝟙[p′<sub>i</sub> − p<sub>i</sub> ≥ τ] + 𝟙[p<sub>i</sub> − p′<sub>i</sub> ≥ τ] ]</span>
+    <span class="tagn">식 (6)</span>
+  </div>
+  <p>
+    방향 정확도 계수 DCC는 유효한 임계값 변화 N쌍 (c<sub>i</sub>, c′<sub>i</sub>)에서 예측 확률이 기대 방향으로
+    이동하였는지를 측정한다. τ = 0.01은 수치적으로 미미한 변화를 무시하기 위한 허용도다. 임계값 규칙을 변경한 각 쌍에서
+    원래 예측 확률 p<sub>i</sub>와 변경 후 확률 p′<sub>i</sub>의 차이가 τ를 초과할 때 "방향 이동이 발생하였다"고 판단하며,
+    방향 이동 쌍의 비율을 [0,1]로 집계한다.
+  </p>
+
+  <div class="note">
+    <div class="nh mono">명제 · 실행된 대리 예측기의 국소 임계값 단조성</div>
+    <p>분자 m과 모든 비임계값 필드가 고정되고, 증거 번들 𝓔가 유효한 임계값 교란 아래에서 불변할 때, 실행된 대리 예측기는 ∂p<sub>θ</sub>/∂τ &lt; 0을 만족한다. 즉, 더 엄격한 임계값 규칙은 예측 확률을 단조 감소시킨다. 이 명제는 <strong>DCC = 1.000이 우연한 포화가 아니라 설계된 검증 계약의 구조적 결과</strong>임을 보장한다.</p>
+  </div>
+</section>
+
+<!-- ================= EXPERIMENTS ================= -->
+<section id="exp" class="wrap reveal">
+  <div class="snum mono">§ IV</div>
+  <h2 class="disp">평가 설계 및 실험 결과<span class="en">Evaluation &amp; Results</span></h2>
+
+  <p class="lead">
+    실험은 Apple M3 Max CPU, 128GB RAM, Python 3.12 / PyTorch 환경에서 합성 어세이 시프트 벤치마크와 실제 분자
+    개념 충돌 스트레스 테스트를 수행했다.
+  </p>
+
+  <h3><span class="tag">4.1</span>합성 어세이 시프트 벤치마크</h3>
+  <p>
+    실험 조건 변화가 예측에 미치는 영향을 통제된 환경에서 측정하기 위해, 생물학적 변동성을 배제한 합성 데이터를 설계했다.
+    분자는 6개의 가상 프래그먼트로 구성되며, 태스크와 출처에 따라 서로 다른 점수가 부여되고 임계값 0.60을 기준으로 이진 라벨이
+    생성된다. 훈련 데이터는 출처 A/B, 테스트 데이터는 출처 C로 구분해 모델이 미지의 실험실 데이터에 대한 일반화 능력을
+    평가한다. 이 벤치마크의 목적은 신약 물성 예측의 최종 정확도가 아니라, 통제된 분포 이동 아래에서 세 진단 질문 — <em class="p">검색
+    안전성</em>, <em class="v">방향 정확성</em>, <em class="c">실패 진단 가능성</em> — 에 답하는 것이다.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <caption><b>표 1.</b> 합성 어세이 시프트 벤치마크 주요 결과.</caption>
+      <thead><tr><th>모델</th><th>AUROC</th><th>ECE</th><th>DCC</th><th>Err. AUROC</th></tr></thead>
+      <tbody>
+        <tr><td>Graph-only vote</td><td class="num">0.993</td><td class="num">0.099</td><td class="num hi">1.000</td><td class="num">–</td></tr>
+        <tr><td>Non-graph RAG</td><td class="num">0.931</td><td class="num">0.199</td><td class="num">0.999</td><td class="num">0.762</td></tr>
+        <tr class="rowband"><td class="lead-cell">AssayKG-RAG</td><td class="num">0.968</td><td class="num">0.124</td><td class="num hi">1.000</td><td class="num hi">0.777</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    그래프 검색 기반 단순 투표 모델이 AUROC 0.993으로 가장 높은 판별 성능을 보이지만, 이 기준선은 컨텍스트 조건에 부합하는
+    레이블을 직접 집계하는 강력한 방식이기 때문이다. AssayKG-RAG는 AUROC 0.968로 이보다 낮으나, <strong>동시에 완벽한
+    방향 정확도 DCC = 1.000과 오류 탐지 AUROC_err = 0.777을 제공</strong>한다. 이는 단순히 "예측을 잘하는" 시스템을 넘어
+    <em class="v">언제 예측이 실패하는지를 스스로 인지하는</em> 시스템의 가능성을 실증한다.
+  </p>
+
+  <h3><span class="tag">4.2</span>실제 분자 개념 충돌 스트레스 테스트</h3>
+  <p>
+    합성 데이터의 한계를 보완하기 위해, 공개 AMES 데이터셋을 이용한 소규모 실제 분자 파일럿을 실행했다. 개념 충돌 실험은
+    동일한 분자 집합에 대해 실험실 용어 별칭(alias)을 부여한 뒤 두 가지 검색 방식을 비교한다. <strong>평면 어휘 투표</strong>는
+    어세이 조건을 평문 텍스트로 변환한 뒤 단어 빈도 또는 임베딩 유사도로 증거를 검색해 라벨을 투표 집계하는 기준 방식이다.
+    <strong>타입 그래프 투표</strong>는 어세이 조건을 7개 타입 필드로 정규화한 뒤 타입 지식 그래프에서 출처 제약을 만족하는
+    증거만 검색해 라벨을 집계하는 방식이다.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <caption><b>표 2.</b> 실제 분자 개념 충돌 스트레스 테스트. CAS(컨텍스트 인식 점수)와 평균 Δp 비교.</caption>
+      <thead><tr><th>검색기</th><th>Top-1 Admissible</th><th>CAS</th><th>Mean Δp</th></tr></thead>
+      <tbody>
+        <tr><td>Flat lexical vote</td><td class="num">0.875</td><td class="num">0.500</td><td class="num dneg">−0.051</td></tr>
+        <tr class="rowband"><td class="lead-cell">Typed graph vote</td><td class="num hi">1.000</td><td class="num hi">0.750</td><td class="num dpos">+0.044</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    표 2는 타입 그래프 검색이 평면 검색 대비 허용 가능한 top-1 검색률을 0.875 → 1.000으로, 출처 스왑 CAS를 0.500 →
+    0.750으로 향상시킴을 보인다. 어휘적으로 유사한 증거가 항상 의미론적으로 허용 가능하지는 않으며, 출처와 타입 제약을 갖춘
+    계획자가 개념 충돌을 효과적으로 저감할 수 있음을 시사한다.
+  </p>
+
+  <h3><span class="tag c">4.2</span>감사 신호의 진단적 가치 — UNK 민감도</h3>
+  <p>
+    AssayKG-RAG의 정합성 점수는 오답을 선별하는 데 유의미한 진단 신호를 제공한다. 어세이 컨텍스트 필드에 결측(UNK) 비율을
+    인위적으로 증가시키면 평균 정합성 점수와 오류 탐지 성능이 함께 하락한다. 이는 에이전트가 가용 정보가 부족할 때 스스로 확신을
+    낮추고 그 사실을 감사 신호로 보고할 수 있음을 보여 주는 중요한 특성이다.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <caption><b>표 3.</b> UNK 비율 증가에 따른 민감도 (시드 7). 결측이 늘수록 정합성 점수와 진단 성능이 함께 저하된다.</caption>
+      <thead><tr><th>UNK 비율</th><th>AUROC</th><th>Brier</th><th>평균 CC</th><th>Err. AUROC</th></tr></thead>
+      <tbody>
+        <tr><td class="num">0.0</td><td class="num">0.968</td><td class="num">0.087</td><td class="num hi">0.818</td><td class="num hi">0.777</td></tr>
+        <tr><td class="num">0.4</td><td class="num">0.969</td><td class="num">0.083</td><td class="num">0.728</td><td class="num">0.626</td></tr>
+        <tr><td class="num">0.8</td><td class="num">0.873</td><td class="num">0.153</td><td class="num">0.575</td><td class="num">0.705</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    다만 정합성 신호는 5개 시드 평균 0.557±0.132로 변동성이 커, 보정된 확률적 불확실성 추정치로 해석해서는 안 된다.
+    현재 단계에서 정합성은 <em class="c">확률적 신뢰도가 아닌 진단 감사 신호</em> — 에이전트가 "검색 근거가 질의와 얼마나 잘
+    맞는지"를 외부에 보고하기 위한 지표 — 다. 안정적인 불확실성 지표로 활용하려면 추가적인 보정 연구가 필요하다.
+  </p>
+
+  <h3><span class="tag">4.3</span>한계 및 논의</h3>
+  <div class="duo">
+    <div class="col">
+      <div class="lbl mono">한계 ①</div>
+      <h4>합성 벤치마크의 범위</h4>
+      <p>주 벤치마크는 합성 데이터 기반이어서 실제 생물학적 변동성과 실험실 배치 효과를 포함하지 않는다. 향후 연구는 공개 ADMET 자원(ChEMBL, TDC)에서의 검증으로 확장된다.</p>
+    </div>
+    <div class="col">
+      <div class="lbl mono">한계 ②</div>
+      <h4>기준선과의 직접 비교 부재</h4>
+      <p>예측기가 학습된 신경망이 아닌 결정론적 대리 예측기이므로, Chemprop·Graphormer·Uni-Mol 등 강력한 공개 기준선과의 직접 성능 비교는 수행하지 않았다. 본 논문은 예측 성능 우위가 아닌 감사 가능성과 방향 정확도라는 설계 원칙을 주장한다.</p>
+    </div>
+  </div>
+  <p>
+    이 두 한계를 넘어서기 위한 향후 연구는 학습된 치료용 모델과의 결합으로 이어진다. 계획자-비판가-검증자의 역할 분리는
+    최종 예측이 틀렸을 때 실패 원인을 검색·정합성·예측기 중 어느 단계에서 기인하는지 체계적으로 진단할 수 있는 프레임워크를
+    제공한다는 점에서 독자적 가치를 갖는다.
+  </p>
+</section>
+
+<!-- ================= CONCLUSION ================= -->
+<section id="conclusion" class="wrap reveal">
+  <div class="snum mono">§ V</div>
+  <h2 class="disp">결론<span class="en">Conclusion</span></h2>
+  <p class="lead">
+    본 논문은 어세이 컨텍스트를 예측 대상의 부가 정보가 아닌 <em class="pr">라벨 의미론의 일부</em>로 간주하고, 에이전트가
+    이를 계획-비판-검증의 명시적 절차로 다루는 AssayKG-RAG 프레임워크를 제안했다. 합성 어세이 시프트 벤치마크에서 DCC = 1.000,
+    오류 탐지 AUROC_err = 0.777, 누출률 LeakageRate = 0.000을 달성하고, 실제 분자 스트레스 테스트에서 타입 기반 검색이
+    개념 충돌을 효과적으로 저감함을 보임으로써, 평균 AUROC에 가려져 있던 맥락 의존적 실패 모드를 가시화했다.
+  </p>
+  <div class="note">
+    <div class="nh mono">핵심 주장</div>
+    <p>치료용 AI가 신뢰 가능한 의사결정 지원 도구로 성숙하려면 더 높은 평균 예측 성능만으로는 부족하다. <em class="p">어떤 증거를 사용하였는지</em>, <em class="c">그 증거가 왜 허용 가능한지</em>, <em class="v">예측이 의미론적으로 타당한 방향으로 변화하였는지</em>를 설명할 수 있는 에이전틱 감사 구조가 함께 갖추어져야 한다.</p>
+  </div>
+  <p>
+    AssayKG-RAG는 이 방향으로 나아가는 작고 재현 가능한 첫 단계로서, 향후 ChEMBL·TDC 등 실제 대규모 데이터 검증과
+    학습된 치료용 기초 모델과의 결합을 통해 그 유효성을 확장할 것이다.
+  </p>
+
+  <div class="ack">
+    <strong>감사의 글</strong> — 이 논문은 2026년도 정부(과학기술정보통신부)의 재원으로 국가과학기술연구회(NST)의 지원을 받아 수행된 연구다 (No. 26CB1200, 과학특화 멀티모달 파운데이션 모델 개발 및 적용).
+  </div>
+</section>
+
+<!-- ================= REFERENCES ================= -->
+<section id="refs" class="wrap reveal">
+  <div class="snum mono">§ REFERENCES</div>
+  <h2 class="disp">참고문헌<span class="en">References</span></h2>
+  <div class="refs">
+    <div><span class="rn">[1]</span> Wang, Schmidgall, Jaeger et al. TxGemma: Efficient and agentic LLMs for therapeutics. arXiv:2504.06196, 2025.</div>
+    <div><span class="rn">[2]</span> Google Developers Blog. Introducing TxGemma: Open models to improve therapeutics development. 2025.</div>
+    <div><span class="rn">[3]</span> Parrondo-Pizarro et al. Enhancing molecular property prediction through data integration and consistency assessment. J. Cheminformatics 17(1):163, 2025.</div>
+    <div><span class="rn">[4]</span> Mirza et al. A framework for evaluating the chemical knowledge and reasoning abilities of LLMs (ChemBench). Nature Chemistry, 2025.</div>
+    <div><span class="rn">[5]</span> McGill, Greenman et al. Chemprop: A machine learning package for chemical property prediction. JCIM, 2023.</div>
+    <div><span class="rn">[6]</span> Zhou et al. Uni-Mol: A universal 3D molecular representation learning framework. ChemRxiv, 2023.</div>
+    <div><span class="rn">[7]</span> Singh, Ehtesham, Kumar, Khoei. Agentic retrieval-augmented generation: A survey on agentic RAG. arXiv:2501.09136, 2025.</div>
+    <div><span class="rn">[8]</span> Lee et al. RAG-Enhanced Collaborative LLM Agents for Drug Discovery. arXiv:2502.17506v3, 2025.</div>
+    <div><span class="rn">[9]</span> Huang et al. Biomni: A general-purpose biomedical AI agent. bioRxiv, 2025.</div>
+    <div><span class="rn">[10]</span> Ross et al. GP-MoLFormer: a foundation model for molecular generation. Digital Discovery 4:2684–2696, 2025.</div>
+    <div><span class="rn">[11]</span> Delile et al. Foundation models in drug discovery. Drug Discovery Today 30(12):104518, 2025.</div>
+    <div><span class="rn">[12]</span> Science Advances. Benchmarking retrieval-augmented LLMs in biomedical NLP. Science Advances 11(47), 2025.</div>
+    <div><span class="rn">[13]</span> Rong et al. Self-supervised graph transformer on large-scale molecular data (GROVER). NeurIPS, 2020.</div>
+    <div><span class="rn">[14]</span> Ying et al. Do transformers really perform bad for graph representation? (Graphormer). NeurIPS, 2021.</div>
+    <div><span class="rn">[15]</span> Han et al. Retrieval-augmented generation with graphs (GraphRAG). arXiv:2501.00309, 2025.</div>
+    <div><span class="rn">[16]</span> Chang et al. MAIN-RAG: Multi-agent filtering retrieval-augmented generation. ACL, 2025.</div>
+    <div><span class="rn">[17]</span> Lee, Yoon, Na, Kim, Park. Shift-robust molecular relational learning with causal substructure (CMRL). KDD, 2023.</div>
+    <div><span class="rn">[18]</span> Wei et al. ADMEOOD: Out-of-distribution benchmark for drug property prediction. IEEE BIBM, 2023.</div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <div class="big disp">AssayKG-RAG</div>
+      <div class="meta mono">출처 인지 에이전트 · 어세이 컨텍스트 판단과 그래프 RAG<br>한국전자통신연구원 (ETRI) · 김성수</div>
+    </div>
+    <div class="meta mono">
+      2026 대한전자공학회 하계학술대회 · GEP-0061<br>
+      sungsoo@etri.re.kr<br>
+      <span style="color:var(--mute-2)">본 문서는 원 논문 내용을 한글 기술문서로 재구성한 자료다.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.08});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
