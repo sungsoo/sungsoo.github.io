@@ -1,0 +1,621 @@
+---
+layout: null
+title: "AdaJEPA: An Adaptive Latent World Model" 
+date: 2026-07-05
+categories: [artificial intelligence]
+tags: [agentic ai, ai co-scientist, ai for science, artificial general intelligence, world models]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdaJEPA · 적응형 잠재 세계 모델</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#0a0f12;         /* deep slate-teal */
+  --deep:#0e161a;
+  --panel:#121e23;
+  --panel-2:#17262c;
+  --line:#233840;
+  --line-soft:#1a2c33;
+  --ink:#eaf2f2;
+  --ink-dim:#9db3b6;
+  --ink-faint:#5f767b;
+  --live:#5ff2a8;         /* adapt / live signal */
+  --live-deep:#1fb673;
+  --signal:#3ad4e0;       /* prediction / cyan */
+  --frozen:#7b8a90;       /* frozen model = desaturated */
+  --alert:#ff8a5c;        /* prediction error */
+  --amber:#ffc24d;
+  --grid:rgba(95,242,168,.045);
+  --mono:'JetBrains Mono',monospace;
+  --disp:'Space Grotesk',sans-serif;
+  --kr:'Noto Sans KR',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--void);color:var(--ink);font-family:var(--kr);font-weight:400;line-height:1.78;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--live);color:var(--void)}
+
+/* ambient */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bg .grid{position:absolute;inset:0;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:60px 60px;mask-image:radial-gradient(ellipse 95% 55% at 50% 0%,#000 22%,transparent 80%)}
+.bg .g1{position:absolute;top:-18%;left:52%;transform:translateX(-50%);width:120vw;height:70vh;background:radial-gradient(ellipse at center,rgba(58,212,224,.10),transparent 62%)}
+.bg .g2{position:absolute;bottom:-15%;left:-8%;width:60vw;height:60vh;background:radial-gradient(ellipse at center,rgba(95,242,168,.08),transparent 65%)}
+canvas#loop{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.85}
+
+.wrap{position:relative;z-index:3;max-width:1120px;margin:0 auto;padding:0 30px}
+
+/* rail */
+.rail{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;
+  padding:15px 30px;background:linear-gradient(180deg,rgba(10,15,18,.94),rgba(10,15,18,0));backdrop-filter:blur(7px)}
+.brand{display:flex;align-items:center;gap:11px;font-family:var(--disp);font-weight:700;letter-spacing:-.01em;font-size:15px}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--live);box-shadow:0 0 10px var(--live);animation:beat 1.8s infinite}
+@keyframes beat{0%,100%{opacity:.4;transform:scale(.9)}50%{opacity:1;transform:scale(1.15)}}
+.brand .v{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--ink-faint);font-weight:500}
+.rail-nav{display:flex;gap:24px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.rail-nav a{color:var(--ink-dim);text-decoration:none;transition:color .2s}
+.rail-nav a:hover{color:var(--live)}
+@media(max-width:780px){.rail-nav{display:none}}
+
+/* hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:130px 0 90px;position:relative}
+.hero .kick{font-family:var(--mono);font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--live);display:flex;align-items:center;gap:14px;margin-bottom:30px}
+.hero .kick::before{content:"";width:46px;height:1px;background:var(--live)}
+.hero h1{font-family:var(--disp);font-weight:700;font-size:clamp(2.7rem,8vw,6rem);line-height:1.0;letter-spacing:-.035em}
+.hero h1 .live{background:linear-gradient(100deg,var(--live),var(--signal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero h1 .strike{color:var(--frozen);position:relative}
+.hero h1 .strike::after{content:"";position:absolute;left:-2%;right:-2%;top:52%;height:4px;background:var(--alert);transform:rotate(-3deg);border-radius:2px}
+.hero .tagline{font-family:var(--disp);font-weight:400;font-size:clamp(1.15rem,2.8vw,1.85rem);color:var(--ink-dim);margin-top:24px;letter-spacing:-.015em;line-height:1.35}
+.hero .abs-kr{margin-top:32px;max-width:730px;font-size:1.06rem;font-weight:300;color:var(--ink-dim);line-height:1.85}
+.hero .abs-kr b{color:var(--live);font-weight:500}
+.hero-meta{margin-top:50px;display:flex;flex-wrap:wrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.hero-meta .c{padding:20px 30px 20px 0;margin-right:30px;border-right:1px solid var(--line-soft)}
+.hero-meta .c:last-child{border-right:none;margin-right:0}
+.hero-meta .k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:7px}
+.hero-meta .val{font-size:14.5px;color:var(--ink);font-weight:600;font-family:var(--disp)}
+.hero-meta .val.g{color:var(--live)}
+.hint{margin-top:54px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);display:flex;gap:10px;align-items:center}
+.hint .d{width:6px;height:6px;border-radius:50%;background:var(--live);animation:beat 2s infinite}
+
+/* section */
+section.blk{padding:100px 0;position:relative}
+.sechead{margin-bottom:52px;max-width:880px}
+.sectag{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--live);display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.sectag .n{color:var(--ink-faint)}
+.sechead h2{font-family:var(--disp);font-weight:700;font-size:clamp(2rem,4.6vw,3.2rem);line-height:1.08;letter-spacing:-.03em}
+.sechead h2 .g{background:linear-gradient(100deg,var(--live),var(--signal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sechead .lead{margin-top:20px;font-size:1.1rem;color:var(--ink-dim);font-weight:300;line-height:1.85}
+
+/* prose */
+p.body{color:var(--ink-dim);margin-bottom:18px;font-weight:300;font-size:1.03rem}
+.hl{color:var(--live);font-weight:500}
+.hls{color:var(--signal);font-weight:500}
+.hlf{color:var(--frozen);font-weight:500}
+.hla{color:var(--alert);font-weight:500}
+.eng{font-family:var(--mono);font-size:.85em;color:var(--ink-faint)}
+
+.subhead{font-family:var(--disp);font-weight:600;font-size:1.42rem;margin:48px 0 20px;display:flex;align-items:center;gap:14px;letter-spacing:-.02em}
+.subhead .bar{width:22px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--live),var(--signal));flex:none}
+.minitag{font-family:var(--mono);font-size:11px;color:var(--live);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
+
+/* panels */
+.panel{background:linear-gradient(162deg,var(--panel),var(--deep));border:1px solid var(--line);border-radius:16px;padding:32px;position:relative;overflow:hidden}
+.panel::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--live),transparent);opacity:.5}
+.panel.signal::before{background:linear-gradient(90deg,transparent,var(--signal),transparent)}
+.g2c{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.g3c{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:840px){.g2c,.g3c{grid-template-columns:1fr}}
+
+/* stat */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:16px;overflow:hidden;background:linear-gradient(162deg,var(--panel),var(--deep))}
+.stats .s{padding:32px 24px;border-right:1px solid var(--line-soft)}
+.stats .s:last-child{border-right:none}
+.stats .big{font-family:var(--disp);font-weight:700;font-size:clamp(1.9rem,4.4vw,2.9rem);line-height:1;letter-spacing:-.03em}
+.stats .big.l{color:var(--live)}.stats .big.s{color:var(--signal)}.stats .big.a{color:var(--amber)}.stats .big.f{color:var(--ink)}
+.stats .lab{margin-top:11px;font-size:.85rem;color:var(--ink-dim);font-weight:300;line-height:1.5}
+.stats .delta{font-family:var(--mono);font-size:.78rem;color:var(--live);margin-top:6px;font-weight:500}
+@media(max-width:840px){.stats{grid-template-columns:1fr 1fr}.stats .s:nth-child(2){border-right:none}}
+@media(max-width:520px){.stats{grid-template-columns:1fr}.stats .s{border-right:none;border-bottom:1px solid var(--line-soft)}}
+
+/* feature list */
+.flist{list-style:none;display:flex;flex-direction:column}
+.flist li{display:flex;gap:20px;padding:20px 0;border-bottom:1px solid var(--line-soft);align-items:flex-start}
+.flist li:last-child{border-bottom:none}
+.flist .idx{font-family:var(--mono);font-size:12px;color:var(--live);padding-top:5px;min-width:40px;font-weight:600}
+.flist .t{color:var(--ink-dim);font-weight:300;font-size:1.02rem}
+.flist .t strong{color:var(--ink);font-weight:600}
+
+/* loop steps (the closed loop) */
+.loop{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;position:relative}
+.loop .step{padding:26px 22px;border-right:1px solid var(--line-soft);background:linear-gradient(162deg,var(--panel),var(--deep));position:relative}
+.loop .step:last-child{border-right:none}
+.loop .step .sn{font-family:var(--mono);font-size:11px;color:var(--live);letter-spacing:.13em;font-weight:600}
+.loop .step .st{font-family:var(--disp);font-weight:700;margin:10px 0 7px;font-size:1.12rem}
+.loop .step .sd{font-size:.87rem;color:var(--ink-dim);font-weight:300;line-height:1.55}
+.loop .step::after{content:"→";position:absolute;right:-9px;top:50%;transform:translateY(-50%);color:var(--live);font-family:var(--mono);z-index:5;background:var(--void)}
+.loop .step:last-child::after{content:"↻";right:-11px;color:var(--signal)}
+@media(max-width:840px){.loop{grid-template-columns:1fr}.loop .step{border-right:1px solid var(--line)!important;border-bottom:1px solid var(--line-soft)}.loop .step::after{content:"↓";right:auto;left:50%;top:auto;bottom:-9px;transform:translateX(-50%)}.loop .step:last-child::after{content:"↻";bottom:-11px}}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:linear-gradient(162deg,var(--panel),var(--deep))}
+table.rt{width:100%;border-collapse:collapse;font-size:.9rem;min-width:620px}
+table.rt th,table.rt td{text-align:right;padding:12px 15px;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+table.rt th:first-child,table.rt td:first-child{text-align:left}
+table.rt thead th{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;background:var(--panel-2)}
+table.rt td{color:var(--ink-dim);font-weight:400;font-family:var(--mono)}
+table.rt td:first-child{font-family:var(--disp);color:var(--ink);font-weight:500}
+table.rt tbody tr:hover td{background:rgba(95,242,168,.03)}
+table.rt .frozen td:first-child{color:var(--frozen)}
+table.rt .adapt td{background:rgba(95,242,168,.06)}
+table.rt .adapt td:first-child{color:var(--live);font-weight:700}
+table.rt .up{color:var(--live);font-weight:600}
+.tblcap{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:14px;line-height:1.6}
+
+/* interlude */
+.interlude{padding:94px 0;text-align:center}
+.interlude p{font-family:var(--disp);font-weight:600;font-size:clamp(1.5rem,3.8vw,2.5rem);line-height:1.32;letter-spacing:-.025em;max-width:920px;margin:0 auto}
+.interlude .g{background:linear-gradient(100deg,var(--live),var(--signal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+.figcap{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:14px;line-height:1.6}
+.fig{margin:16px 0}
+svg{display:block;max-width:100%;height:auto}
+
+/* equation card */
+.eq{background:linear-gradient(162deg,var(--panel),var(--deep));border:1px solid var(--line);border-radius:14px;padding:30px;text-align:center;position:relative;overflow:hidden}
+.eq .expr{font-family:var(--mono);font-size:clamp(.9rem,2.3vw,1.2rem);color:var(--ink);letter-spacing:.01em}
+.eq .note{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:16px;line-height:1.7}
+
+/* compare frozen vs adapt */
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:840px){.vs{grid-template-columns:1fr}}
+.vs .card{border:1px solid var(--line);border-radius:16px;padding:30px;background:linear-gradient(162deg,var(--panel),var(--deep));position:relative;overflow:hidden}
+.vs .frz{border-top:3px solid var(--frozen)}
+.vs .frz .tag{color:var(--frozen)}
+.vs .adp{border-top:3px solid var(--live)}
+.vs .adp .tag{color:var(--live)}
+.vs .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px;font-weight:600}
+.vs .card h5{font-family:var(--disp);font-weight:700;font-size:1.15rem;margin-bottom:10px}
+.vs .card p{font-size:.95rem;color:var(--ink-dim);font-weight:300}
+
+/* pills */
+.pills{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.pill{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;color:var(--ink-dim);border:1px solid var(--line);border-radius:100px;padding:6px 15px;background:rgba(23,38,44,.5)}
+.pill.on{border-color:var(--live);color:var(--live)}
+.pill.s{border-color:var(--signal);color:var(--signal)}
+
+/* footer */
+footer{border-top:1px solid var(--line);padding:66px 0 88px;margin-top:44px}
+.fgrid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:34px}
+@media(max-width:840px){.fgrid{grid-template-columns:1fr}}
+.fgrid h4{font-family:var(--mono);font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px}
+.fgrid p{font-size:.92rem;color:var(--ink-dim);font-weight:300}
+.fgrid a{color:var(--live);text-decoration:none}
+.ftitle{font-family:var(--disp);font-weight:700;font-size:1.4rem;margin-bottom:12px;letter-spacing:-.02em}
+.authors{font-family:var(--mono);font-size:11px;color:var(--ink-faint);line-height:1.9;margin-top:8px}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}.hint .d,.brand .dot{animation:none}canvas#loop{display:none}}
+:focus-visible{outline:2px solid var(--live);outline-offset:3px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="bg"><div class="grid"></div><div class="g1"></div><div class="g2"></div></div>
+<canvas id="loop"></canvas>
+
+<div class="rail">
+  <div class="brand"><span class="dot"></span>AdaJEPA <span class="v">arXiv:2606.32026</span></div>
+  <nav class="rail-nav">
+    <a href="#problem">문제</a>
+    <a href="#method">방법</a>
+    <a href="#results">결과</a>
+    <a href="#ablation">분석</a>
+  </nav>
+</div>
+
+<div class="wrap">
+<header class="hero">
+  <div class="kick rv">Adaptive Latent World Model · NYU</div>
+  <h1 class="rv">세계 모델은<br><span class="strike">얼어붙어</span> 있으면<br><span class="live">안 된다</span></h1>
+  <p class="tagline rv">AdaJEPA — 계획하며 배우고, 행동하며 재보정하는 적응형 잠재 세계 모델.</p>
+  <p class="abs-kr rv">잠재 세계 모델은 미래 상태를 압축된 잠재 공간에서 예측하여 고차원 관측으로부터 계획을 세운다. 그러나 이런 모델은 보통 테스트 시점에 얼어붙어 있어, 예측이 부정확해지면 특히 분포 이동 아래에서 계획이 실패한다. AdaJEPA는 <b>모델 예측 제어(MPC)의 폐루프 안에서 테스트타임 적응</b>을 수행하여, 관측된 전이를 자기지도 신호로 삼아 모델을 지속적으로 재보정한다.</p>
+  <div class="hero-meta rv">
+    <div class="c"><div class="k">Paradigm</div><div class="val">JEPA World Model</div></div>
+    <div class="c"><div class="k">Loop</div><div class="val g">Plan · Execute · Adapt · Replan</div></div>
+    <div class="c"><div class="k">Update</div><div class="val">1 gradient step / replan</div></div>
+    <div class="c"><div class="k">Gain</div><div class="val g">최대 2× 성공률</div></div>
+  </div>
+  <div class="hint rv"><span class="d"></span>SCROLL — 폐루프로 들어가기</div>
+</header>
+
+<!-- ===== PROBLEM ===== -->
+<section class="blk" id="problem">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">00</span> — 문제 정의</div>
+    <h2>얼어붙은 모델은<br><span class="g">잘못된 목표</span>를 최적화한다</h2>
+    <p class="lead">계획에 쓰이는 세계 모델은 보통 학습 후 얼어붙는다. 예측이 부정확하면 MPC는 잘못된 목표를 최적화한다 — 잠재 롤아웃에서 효과적으로 보이는 행동이 실제 시스템 동역학에서는 실패한다. 작은 한 스텝 오차조차 계획 지평 전체에 걸쳐 복리로 누적된다.</p>
+  </div>
+
+  <p class="body rv">이 문제는 <span class="hla">테스트타임 분포 이동</span> 아래에서 증폭된다. 노이즈·조명·배경 방해물 같은 시각 변화는 인코더를 어긋나게 하고, 마찰·질량·접촉 동역학의 변화는 잠재 예측기를 어긋나게 한다. 그 결과 고용량 세계 모델조차 테스트 환경의 작은 변화에서 상당한 성능 저하를 겪으며, 이는 세계 모델의 실세계 적용을 가로막는다.</p>
+
+  <div class="vs rv">
+    <div class="card frz">
+      <div class="tag">✕ Frozen Model</div>
+      <h5>학습 후 고정</h5>
+      <p>예측이 부정확해도 모델은 바뀌지 않는다. MPC는 잠재 상상 속에서만 효과적인 행동을 골라 실환경에서 실패하고, 오차는 지평을 따라 복리로 커진다.</p>
+    </div>
+    <div class="card adp">
+      <div class="tag">✓ AdaJEPA</div>
+      <h5>배포 중에도 계속 학습</h5>
+      <p>실행한 행동이 낳은 전이를 자기지도 신호로 삼아 다음 재계획 전에 모델을 갱신한다. 학습과 계획이 긴밀히 결합되어 예측이, 따라서 계획이 반복마다 개선된다.</p>
+    </div>
+  </div>
+
+  <p class="body rv" style="margin-top:26px">이 직관은 생물학적 시스템에 근거한다. 감각운동 적응은 소뇌(cerebellum) 기전에 의존하여 변화하는 입력과 동역학 아래에서 행동을 조정한다. 인간도 새로운 경험으로 내부 세계 모델을 끊임없이 갱신하며, 그 갱신이 이후 결정을 형성한다. <span class="hl">세계 모델은 학습 후 고정될 것이 아니라 배포 중 마주친 경험으로부터 계속 개선되어야 한다.</span></p>
+
+  <div class="subhead rv"><span class="bar"></span>선행 연구와의 차이</div>
+  <p class="body rv">JEPA 세계 모델들은 고차원 관측을 압축 잠재 공간으로 인코딩하고 그 안에서 동역학을 학습하지만, 모두 테스트 시점에 얼어붙어 분포 이동 아래 성능 저하 가능성이 있다. 테스트타임 학습·적응(TTT/TTA)은 이미지 분류 등에서 탐구되어 왔고, 적응 제어·온라인 모델 기반 RL도 예측 모델을 갱신하지만 보통 정책·가치 학습에 결합되거나 타깃 도메인 미세조정 데이터·추가 온라인 롤아웃·외부 자기개선 루프를 요구한다. AdaJEPA는 <span class="hl">보상 라벨·전문가 라벨·별도 데이터 수집 없이</span> MPC 폐루프 안에서 사전학습된 세계 모델을 적응시키며, 저자들의 지식으로는 계획 중 JEPA 세계 모델을 적응시킨 첫 사례다.</p>
+</section>
+
+<!-- ===== BACKGROUND ===== -->
+<section class="blk" id="bg" style="padding-top:0">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">01</span> — 배경</div>
+    <h2>JEPA <span class="g">세계 모델</span></h2>
+    <p class="lead">잠재 세계 모델은 감각 인코더, 행동 인코더, 예측기로 구성된다. 픽셀을 재구성하는 대신 미래 잠재 타깃을 예측하도록 보상 없는(reward-free) 오프라인 전이 데이터로 인코더와 예측기를 공동 학습한다.</p>
+  </div>
+
+  <div class="g2c rv">
+    <div class="eq">
+      <div class="minitag">인코딩 · 예측</div>
+      <div class="expr">z<sub>t</sub> = ℰ<sup>s</sup><sub>φ</sub>(o<sub>t</sub>)&nbsp;&nbsp; u<sub>t</sub> = ℰ<sup>a</sup><sub>ψ</sub>(a<sub>t</sub>)<br><br>ẑ<sub>t+1</sub> = f<sub>θ</sub>(z<sub>t</sub>, u<sub>t</sub>)</div>
+      <div class="note">감각 인코더 ℰ<sup>s</sup>, 행동 인코더 ℰ<sup>a</sup>, 예측기 f · 예측기는 잠재 상태·행동 임베딩의 짧은 이력에 조건화될 수 있다</div>
+    </div>
+    <div class="eq">
+      <div class="minitag">JEPA 예측 목표</div>
+      <div class="expr">ℒ<sub>pred</sub> = (1/K) Σ<sub>k=1..K</sub> ℓ( ẑ<sub>t+k</sub>, z<sub>t+k</sub> )</div>
+      <div class="note">z<sub>t+k</sub> 는 o<sub>t+k</sub> 의 타깃 표현, ℓ 은 MSE 같은 잠재 예측 손실 · 붕괴 방지를 위해 정지 경사(stop-gradient) 또는 정규화 항을 사용</div>
+    </div>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>목표 조건 잠재 계획 · MPC</div>
+  <p class="body rv">학습 후 세계 모델은 목표 조건 잠재 계획에 쓰인다. 목표 관측 <span class="eng">o_g</span>의 잠재 표현 <span class="eng">z_g</span>가 주어지면, MPC는 예측기 <span class="eng">f_θ</span>를 롤아웃하여 잠재 목표 도달 비용을 최소화하는 행동 시퀀스를 최적화한다.</p>
+  <div class="eq rv">
+    <div class="expr">a*<sub>t:t+H−1</sub> = arg min<sub>a</sub> Σ<sub>k=1..H</sub> α<sub>k</sub> · d( ẑ<sub>t+k</sub>, z<sub>g</sub> )</div>
+    <div class="note">H 계획 지평, α<sub>k</sub> 시간 가중치, d 보통 제곱 유클리드 거리 · 경사 기반 또는 CEM 같은 샘플링 기반 플래너로 풀며, 첫 행동 a<sub>t</sub> 실행 후 다음 관측에서 재계획한다</div>
+  </div>
+  <div class="pills rv" style="margin-top:24px">
+    <span class="pill on">Encoder ℰ<sup>s</sup></span><span class="pill on">Action Encoder ℰ<sup>a</sup></span><span class="pill on">Predictor f<sub>θ</sub></span><span class="pill s">MPC</span><span class="pill s">GD / CEM Planner</span><span class="pill">Reward-free Offline Data</span>
+  </div>
+</section>
+
+<!-- ===== interlude ===== -->
+<div class="interlude">
+  <p class="rv">예측하고, 실행하고, <span class="g">그 결과로 배우고,</span> 다시 예측한다.</p>
+</div>
+
+<!-- ===== METHOD ===== -->
+<section class="blk" id="method">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">02</span> — 방법</div>
+    <h2>Plan · Execute<br>· Adapt · <span class="g">Replan</span></h2>
+    <p class="lead">각 MPC 재계획 단계에서 현재 모델로 계획하고, 첫 행동을 실행하고, 그 결과 전이를 관측하고, 소수의 자기지도 갱신을 수행한 뒤 갱신된 모델로 재계획한다. 각 에피소드는 같은 사전학습 모델에서 시작하며 자신만의 사본과 버퍼를 유지한다.</p>
+  </div>
+
+  <div class="fig rv">
+    <svg viewBox="0 0 1040 340" role="img" aria-label="AdaJEPA plan-execute-adapt-replan 폐루프">
+      <defs>
+        <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1fb673"/><stop offset="1" stop-color="#5ff2a8"/></linearGradient>
+        <marker id="ar" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 Z" fill="#5ff2a8"/></marker>
+      </defs>
+      <!-- circle path guide -->
+      <g font-family="'Space Grotesk',sans-serif">
+        <!-- center WM -->
+        <circle cx="520" cy="170" r="62" fill="#121e23" stroke="url(#lg)" stroke-width="2"/>
+        <text x="520" y="164" text-anchor="middle" fill="#5ff2a8" font-size="18" font-weight="700">World</text>
+        <text x="520" y="186" text-anchor="middle" fill="#5ff2a8" font-size="18" font-weight="700">Model</text>
+        <!-- 4 nodes around -->
+        <!-- 1 Plan (top-left) -->
+        <rect x="150" y="55" width="200" height="66" rx="12" fill="#121e23" stroke="#233840"/>
+        <text x="250" y="82" text-anchor="middle" fill="#eaf2f2" font-size="14" font-weight="700">① Plan · 계획</text>
+        <text x="250" y="103" text-anchor="middle" fill="#9db3b6" font-size="10.5">잠재 목표 비용 최소화 (eq 3)</text>
+        <!-- 2 Execute (top-right) -->
+        <rect x="690" y="55" width="200" height="66" rx="12" fill="#121e23" stroke="#233840"/>
+        <text x="790" y="82" text-anchor="middle" fill="#eaf2f2" font-size="14" font-weight="700">② Execute · 실행</text>
+        <text x="790" y="103" text-anchor="middle" fill="#9db3b6" font-size="10.5">첫 행동 aₜ 실행 → oₜ₊₁ 관측</text>
+        <!-- 3 Adapt (bottom-right) -->
+        <rect x="690" y="220" width="200" height="66" rx="12" fill="#121e23" stroke="#5ff2a8"/>
+        <text x="790" y="247" text-anchor="middle" fill="#5ff2a8" font-size="14" font-weight="700">③ Adapt · 적응</text>
+        <text x="790" y="268" text-anchor="middle" fill="#9db3b6" font-size="10.5">예측 오차로 자기지도 갱신</text>
+        <!-- 4 Replan (bottom-left) -->
+        <rect x="150" y="220" width="200" height="66" rx="12" fill="#121e23" stroke="#3ad4e0"/>
+        <text x="250" y="247" text-anchor="middle" fill="#3ad4e0" font-size="14" font-weight="700">④ Replan · 재계획</text>
+        <text x="250" y="268" text-anchor="middle" fill="#9db3b6" font-size="10.5">갱신된 모델 즉시 재사용</text>
+        <!-- circular arrows -->
+        <path d="M350 78 Q460 60 500 112" fill="none" stroke="#5ff2a8" stroke-width="1.6" marker-end="url(#ar)"/>
+        <path d="M690 88 Q560 100 578 130" fill="none" stroke="#5ff2a8" stroke-width="1.6" marker-end="url(#ar)"/>
+        <path d="M790 121 L790 216" fill="none" stroke="#5ff2a8" stroke-width="1.6" marker-end="url(#ar)"/>
+        <path d="M690 253 Q560 240 578 210" fill="none" stroke="#5ff2a8" stroke-width="1.6" marker-end="url(#ar)"/>
+        <path d="M350 253 Q460 270 500 226" fill="none" stroke="#3ad4e0" stroke-width="1.6" marker-end="url(#ar)"/>
+        <path d="M250 220 L250 123" fill="none" stroke="#3ad4e0" stroke-width="1.6" marker-end="url(#ar)"/>
+        <!-- alert on adapt-> WM -->
+        <text x="640" y="205" fill="#ff8a5c" font-family="'JetBrains Mono',monospace" font-size="10">pred error ↓</text>
+      </g>
+    </svg>
+    <p class="figcap">FIG 1a. 매 MPC 스텝마다 계획→실행→적응→재계획을 순환한다. 실행한 전이 {oₜ, aₜ, oₜ₊₁}의 예측 오차를 최소화하도록 모델을 갱신한 뒤 재계획하여, 현재 환경에서 마주친 전이에 모델을 지속적으로 재보정한다. 出處: Figure 1, AdaJEPA (2026)</p>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>온라인 버퍼</div>
+  <p class="body rv">버퍼 <span class="eng">ℬ</span>는 MPC 중 수집한 최근 전이를 저장한다. <span class="eng">a_t</span> 실행 후 <span class="eng">o_{t+1}</span>을 관측하면 <span class="eng">(o_t, a_t, o_{t+1})</span>을 ℬ에 추가한다. 버퍼가 무한정 커질 수 있으므로 매 반복마다 고정 크기 <span class="eng">N</span>으로 제한한다.</p>
+  <div class="g2c rv">
+    <div class="panel">
+      <div class="minitag">recent-N</div>
+      <p class="body" style="margin:0;font-size:.96rem">가장 최근 N개 전이만 유지한다. 현재 마주친 국소 관측·동역학에 적응을 집중시킨다. 주 실험의 기본값(최근 5개)이며 가장 안정적인 이득을 준다.</p>
+    </div>
+    <div class="panel">
+      <div class="minitag">hard-N</div>
+      <p class="body" style="margin:0;font-size:.96rem">예측 오차가 가장 큰 N개 전이만 유지한다. 어려운 전이에 적응을 집중시킨다.</p>
+    </div>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>적응 손실 · 사전학습과 동일한 자기지도 신호</div>
+  <p class="body rv">AdaJEPA는 사전학습과 동일한 자기지도 예측 신호를 테스트 시점에 사용한다. 정지 경사 <span class="eng">sg(·)</span>를 온라인 적응의 기본 붕괴 방지 안정화기로 쓰되, 사전학습 모델에 따라 다른 방법으로 대체할 수 있다.</p>
+  <div class="eq rv">
+    <div class="expr">ℒ<sub>ada</sub>(ℬ) = (1/|ℬ|) Σ<sub>(oᵢ,aᵢ,oᵢ₊₁)∈ℬ</sub> ℓ( f<sub>θ</sub>(z<sub>i</sub>, ℰ<sup>a</sup><sub>ψ</sub>(a<sub>i</sub>)), sg(z<sub>i+1</sub>) )</div>
+    <div class="note">z<sub>i</sub> = ℰ<sup>s</sup><sub>φ</sub>(o<sub>i</sub>), ℓ 잠재 예측 손실, sg 정지 경사 · 인코더·예측기의 마지막 층만 한 스텝 갱신하면 정지 경사를 제거해도 유사한 성능 — 제한된 온라인 갱신 자체가 붕괴를 억제</div>
+  </div>
+  <p class="body rv" style="margin-top:24px">테스트 시점에 갱신되는 파라미터를 <span class="eng">Ω ⊆ {φ, ψ, θ}</span>라 하면, 매 MPC 스텝 후 <span class="hl">U회 경사 갱신</span> <span class="eng">Ω ← Ω − η∇ℒ_ada(ℬ)</span>을 수행한다. 실험에서 Ω는 인코더·예측기의 작은 부분집합으로 제한되어 적응이 가볍다.</p>
+
+  <div class="subhead rv"><span class="bar"></span>Algorithm 1 · 폐루프 계획-적응</div>
+  <div class="panel signal rv" style="font-family:var(--mono);font-size:.86rem;line-height:1.9;color:var(--ink-dim)">
+    <div style="color:var(--ink-faint);margin-bottom:8px">// 입력: 사전학습 세계 모델, 학습 파라미터 Ω, 목표 o_g, 지평 H, 적응 스텝 U, 버퍼 크기 N</div>
+    <div>ℬ ← ∅ ; &nbsp;o₀ 관측</div>
+    <div><span class="hl">for</span> t = 0 … T−1:</div>
+    <div>&nbsp;&nbsp;① 현재 모델로 계획 — 잠재 목표 비용 최소화 (eq 3)</div>
+    <div>&nbsp;&nbsp;② 첫 행동 a<sub>t</sub> 실행, o<sub>t+1</sub> 관측</div>
+    <div>&nbsp;&nbsp;③ (o<sub>t</sub>, a<sub>t</sub>, o<sub>t+1</sub>) → ℬ 추가, 최대 N개로 정리</div>
+    <div>&nbsp;&nbsp;<span class="hl">for</span> u = 1 … U: &nbsp;Ω ← Ω − η∇<sub>Ω</sub>ℒ<sub>ada</sub>(ℬ)&nbsp;&nbsp;<span style="color:var(--ink-faint)">// 적응</span></div>
+    <div style="color:var(--ink-faint)">// 갱신된 모델을 다음 계획에 즉시 재사용 (④ Replan)</div>
+  </div>
+</section>
+
+<!-- ===== RESULTS ===== -->
+<section class="blk" id="results">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">03</span> — 실험</div>
+    <h2>단 <span class="g">한 스텝</span>이면<br>충분하다</h2>
+    <p class="lead">PushT·PointMaze 벤치마크에서 다양한 학습–테스트 분포 이동과 적응 모드·설계 선택 아래 계획 성능을 평가한다. 각 MPC 재계획 스텝에서 단 한 번의 경사 하강 갱신만으로 모든 설정에서 강력하고 견고한 성능 향상이 나타난다.</p>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>네 가지 분포 이동</div>
+  <div class="g2c rv">
+    <div class="panel">
+      <div class="minitag">Shape Shift · 형태 이동</div>
+      <p class="body" style="margin:0;font-size:.95rem">PushT 블록을 T에서 다른 형태로 변경. 학습 {T, L, Z, +} → 테스트에 미지의 {I, smallT, square} 추가. 같은 접촉 동역학, 미지의 기하.</p>
+    </div>
+    <div class="panel">
+      <div class="minitag">Visual Shift · 시각 이동</div>
+      <p class="body" style="margin:0;font-size:.95rem">프레임별 손상 — 가우시안 블러, 소금-후추(snp) 노이즈, 어두운 조명. 색 변화 — T·앵커·에이전트를 빨강으로.</p>
+    </div>
+    <div class="panel">
+      <div class="minitag">Dynamics Shift · 동역학 이동</div>
+      <p class="body" style="margin:0;font-size:.95rem">PointMaze-Medium 물리 변경 — 저질량(×0.2, 같은 힘에 더 빠른 이동), 고감쇠(×20, 속도 더 빨리 감소).</p>
+    </div>
+    <div class="panel">
+      <div class="minitag">Layout Shift · 배치 이동</div>
+      <p class="body" style="margin:0;font-size:.95rem">PointMaze 미로 배치 변경. 8×8 격자에 학습 25개 배치 → 미지의 5개 배치 평가. 최단 경로 3–5셀 목표.</p>
+    </div>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>분포 내 · 분포 이동 성능</div>
+  <p class="body rv">분포 내에서 테스트타임 적응은 안전하다 — 얼어붙은 모델이 차선일 때 큰 이득을 주고, 이미 최적에 가까울 때 해를 끼치지 않는다. PushObj 학습 형태에서 GD·CEM 플래너 모두 얼어붙은 모델을 크게 능가하며(형태 특화로 <span class="hl">20% 이상 향상</span>), 분포 이동에서는 재계획 스텝을 따라 성공률이 계속 증가하는 반면 얼어붙은 모델은 일찍 포화된다. 미지 형태에서 얼어붙은 모델의 성능이 크게 떨어지는 반면 <span class="hl">AdaJEPA는 계획 성공률을 거의 두 배로</span> 높인다.</p>
+
+  <div class="subhead rv"><span class="bar"></span>PointMaze · 동역학·배치 이동 (Table 1)</div>
+  <div class="tbl-wrap rv">
+    <table class="rt">
+      <thead>
+        <tr><th>Adapt</th><th>default GD</th><th>default CEM</th><th>low mass GD</th><th>low mass CEM</th><th>high damp GD</th><th>Unseen Layout GD</th><th>CEM</th></tr>
+      </thead>
+      <tbody>
+        <tr class="frozen"><td>Frozen</td><td>82.7</td><td>84.0</td><td>77.3</td><td>82.0</td><td>77.3</td><td>53.3</td><td>49.3</td></tr>
+        <tr><td>pred_last + enc_last</td><td>83.3 <span class="up">↑0.7</span></td><td>83.3</td><td>80.0 <span class="up">↑2.7</span></td><td>86.7 <span class="up">↑4.7</span></td><td>77.3</td><td>66.0 <span class="up">↑12.7</span></td><td>55.3 <span class="up">↑6.0</span></td></tr>
+        <tr class="adapt"><td>pred_first + enc_last</td><td>84.0 <span class="up">↑1.3</span></td><td>84.0</td><td>82.0 <span class="up">↑4.7</span></td><td>82.7</td><td>78.7 <span class="up">↑1.3</span></td><td>78.7 <span class="up">↑25.3</span></td><td>70.7 <span class="up">↑21.3</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tblcap">TABLE 1. 저질량은 같은 힘에 더 빠른 이동, 고감쇠는 속도 감소 가속을 유발. 흥미롭게도 얼어붙은 모델도 세 프레임 이력의 문맥 내 학습(ICL) 덕에 새 동역학에 강하지만, AdaJEPA는 그 위에 일관된 추가 이득을 낸다. 배치 이동에서 예측기 첫 층 적응이 특히 효과적(+21~25).</p>
+
+  <div class="subhead rv"><span class="bar"></span>지연 시간 · 무시할 만한 비용</div>
+  <p class="body rv">적응 스텝은 계획 성공률을 크게 높이면서도, 작은 부분집합만 한 스텝 갱신하므로 증가 시간이 거의 무시할 만하다(스텝당 0.01–0.03초). 게다가 적응은 에이전트가 같거나 더 적은 재계획으로 목표에 도달하게 하여 전체 시간을 오히려 줄인다.</p>
+
+  <div class="subhead rv"><span class="bar"></span>다양한 구현체 전반의 향상 (Table 2)</div>
+  <p class="body rv">AdaJEPA는 기저 세계 모델 구현에 <span class="hl">불가지론적(agnostic)</span>이다. 전역·공간 표현, 모델 아키텍처, GD·CEM 플래너, 서로 다른 학습 목표 전반에서 계획 성공을 향상시키며, 잘 학습되어 분포 내 평가되는 모델에도 스텝당 0.01–0.03초만 더하며 일관된 이득을 낸다.</p>
+  <div class="tbl-wrap rv">
+    <table class="rt">
+      <thead><tr><th>구현체</th><th>Setting</th><th>GD (%)</th><th>Time (s)</th><th>CEM (%)</th><th>Time (s)</th></tr></thead>
+      <tbody>
+        <tr class="frozen"><td>WM · Temporal Straightening (global)</td><td>Frozen</td><td>84.0</td><td>3.14</td><td>74.0</td><td>0.24</td></tr>
+        <tr class="adapt"><td>WM · Temporal Straightening (global)</td><td>Adapt</td><td>85.3 <span class="up">↑1.3</span></td><td>3.17</td><td>81.3 <span class="up">↑7.3</span></td><td>0.27</td></tr>
+        <tr class="frozen"><td>WM · Temporal Straightening (spatial)</td><td>Frozen</td><td>91.3</td><td>3.37</td><td>89.3</td><td>5.37</td></tr>
+        <tr class="adapt"><td>WM · Temporal Straightening (spatial)</td><td>Adapt</td><td>92.0 <span class="up">↑0.7</span></td><td>3.38</td><td>93.3 <span class="up">↑4.0</span></td><td>5.39</td></tr>
+        <tr class="frozen"><td>DINO-WM (patch, spatial)</td><td>Frozen</td><td>68.0</td><td>3.66</td><td>86.7</td><td>9.53</td></tr>
+        <tr class="adapt"><td>DINO-WM (patch, spatial)</td><td>Adapt</td><td>70.0 <span class="up">↑2.0</span></td><td>3.68</td><td>90.0 <span class="up">↑3.3</span></td><td>9.56</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tblcap">TABLE 2. PushT 검증 궤적, H200 1대 기준 평균 MPC 성공률(%)과 재계획당 시간. 테스트타임 적응이 일관되게 향상시키며 지연은 거의 없다.</p>
+
+  <div class="subhead rv"><span class="bar"></span>시각화 · 무엇이 바뀌는가</div>
+  <p class="body rv">사전학습 잠재 공간에 디코더를 학습하면 경량 적응 후에도 시각 롤아웃을 재구성할 수 있다. 시각 손상이나 미지 PushObj 형태 아래에서 디코딩된 롤아웃은 학습 도메인 구조를 유지한다 — 미지의 빨간 PushT 블록이 회색 블록(학습 색)으로, 미지 물체가 시각적으로 유사한 학습 형태로 디코딩된다. <span class="hl">AdaJEPA는 학습된 잠재 다양체에 가까이 머문 채 공유 잠재 구조를 활용하고 예측을 재보정</span>하여 계획을 개선한다.</p>
+</section>
+
+<!-- ===== interlude ===== -->
+<div class="interlude">
+  <p class="rv">데이터가 부족할수록 <span class="g">적응의 가치</span>는 커진다.</p>
+</div>
+
+<!-- ===== ABLATION ===== -->
+<section class="blk" id="ablation">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">04</span> — 분석</div>
+    <h2>무엇을, 어떻게<br><span class="g">적응할 것인가</span></h2>
+    <p class="lead">어떤 파라미터를 갱신할지, 학습률·경사 스텝 수·재생 버퍼 설계를 절제 실험한다. 전반적으로 AdaJEPA는 적응 대상 선택에 견고하다 — 모든 변형이 얼어붙은 모델을 능가하며, 우월한 성능이 특정 적응 대상에 묶여 있지 않다.</p>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>어떤 파라미터를 적응하는가</div>
+  <ul class="flist rv">
+    <li><span class="idx">形</span><span class="t"><strong>형태 이동.</strong> 인코더를 얼려도 모든 변형이 비슷하게 작동한다. 사전학습 표현이 물체 기하 전반에 일반화되며, 필요한 보정 대부분이 <span class="hl">예측기에 있음</span>을 시사한다.</span></li>
+    <li><span class="idx">視</span><span class="t"><strong>시각·배치 이동.</strong> 예측기만 갱신하는 것은 덜 효과적이다. 불일치가 관측 표현을 통해 들어오므로 예측기만으로는 완전히 보정할 수 없다.</span></li>
+    <li><span class="idx">配</span><span class="t"><strong>배치 이동.</strong> 예측기 <span class="hl">첫 층</span> 적응이 특히 효과적이다. 이 층이 잠재·행동 입력에 가장 가까워 새 미로 연결성 아래 국소 전이 구조를 더 잘 재보정한다.</span></li>
+    <li><span class="idx">LoRA</span><span class="t"><strong>LoRA.</strong> 전체 모델에 랭크 8·α=16 저랭크 어댑터를 삽입하는 방식도 얼어붙은 모델을 능가하지만, 선택 층 직접 갱신을 일관되게 능가하지는 않는다.</span></li>
+  </ul>
+  <p class="body rv" style="margin-top:8px">최적 적응 대상은 환경 의존적이지만 성능은 매우 민감하지 않다. <span class="hl">예측기의 첫 또는 마지막 블록을 마지막 인코더 단계와 함께 갱신</span>하는 단순한 선택 층 갱신이 이미 모든 설정에서 강력하다.</p>
+
+  <div class="subhead rv"><span class="bar"></span>하이퍼파라미터 · 학습률과 스텝은 결합되어 있다</div>
+  <p class="body rv">MPC 루프 안에서 적응하므로 갱신은 최소 튜닝·최소 지연으로 효과적이어야 한다. 학습률과 경사 스텝 수는 긴밀히 결합된다 — 큰 학습률(학습률의 5배)은 단일 스텝에 매우 효과적이나 여러 스텝과 결합하면 과잉 조정될 수 있고, 작은 학습률(0.2배)은 안정적이나 더 많은 갱신을 요구해 재계획 비용을 늘린다. <span class="hl">학습률 그대로, 재계획당 한 스텝</span>이 강력한 실용 기본값이다. 재생 버퍼 설계는 영향이 작으며 — 버퍼 없음을 포함한 모든 변형이 얼어붙은 모델을 능가하고 최근 전이 버퍼가 가장 안정적인 이득을 준다.</p>
+  <div class="stats rv">
+    <div class="s"><div class="big l">50→88%</div><div class="lab">seen 형태 T · 적응 전후 성공률</div></div>
+    <div class="s"><div class="big s">20→51%</div><div class="lab">unseen 형태 square · 적응 전후</div></div>
+    <div class="s"><div class="big a">1 step</div><div class="lab">기본 경사 갱신 (학습률 = 학습 시)</div></div>
+    <div class="s"><div class="big f">recent-5</div><div class="lab">기본 재생 버퍼 (가장 안정적)</div></div>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>학습 데이터 스케일 · 다양성이 개수보다 중요하다</div>
+  <p class="body rv">PushObj를 시험대로 형태 다양성 <span class="eng">K</span>와 형태당 궤적 수 <span class="eng">N</span> 두 축을 분석한다. 더 많은 궤적과 더 높은 형태 다양성 모두 유익하지만, <span class="hl">다양성이 형태당 개수보다 중요</span>하다 — 16k 총 궤적을 네 형태에 분배(K=4, N=4k)하는 것이 한 형태에 집중(K=1, N=16k)하는 것보다 seen·unseen 모두에서 우수하다.</p>
+  <p class="body rv">테스트타임 적응은 모든 스케일에서 일관된 이득을 주며 <span class="hl">특히 저데이터 영역에서 학습 데이터의 큰 감소를 상쇄</span>한다. seen 형태 K=1, N=1k에서 성공률을 28.1%에서 60.8%로 두 배 이상 높이며, 형태당 16배 많은 궤적으로 학습한 얼어붙은 모델(43.5%)을 능가한다. 더 많은 학습 데이터가 일반화를 개선하지만, 테스트타임 적응은 배포 중 모델을 정제하여 제한된 학습 커버리지를 보완하는, 데이터 스케일링과 상보적인 더 표본 효율적인 경로를 제공한다.</p>
+  <div class="fig rv">
+    <svg viewBox="0 0 1040 260" role="img" aria-label="데이터 스케일 vs 성공률: frozen vs adapt">
+      <g font-family="'JetBrains Mono',monospace" font-size="11" fill="#5f767b">
+        <line x1="70" y1="30" x2="70" y2="210" stroke="#233840"/>
+        <line x1="70" y1="210" x2="960" y2="210" stroke="#233840"/>
+        <text x="20" y="40" fill="#9db3b6">성공률</text>
+        <text x="820" y="232" fill="#9db3b6">N (궤적/형태) →</text>
+        <line x1="70" y1="70" x2="960" y2="70" stroke="#1a2c33"/><text x="42" y="74">80</text>
+        <line x1="70" y1="130" x2="960" y2="130" stroke="#1a2c33"/><text x="42" y="134">50</text>
+        <line x1="70" y1="190" x2="960" y2="190" stroke="#1a2c33"/><text x="42" y="194">20</text>
+        <!-- adapt K=4 seen (top) -->
+        <polyline points="120,116 320,100 520,92 720,90 920,86" fill="none" stroke="#5ff2a8" stroke-width="2.5"/>
+        <circle cx="920" cy="86" r="4" fill="#5ff2a8"/><text x="810" y="80" fill="#5ff2a8">adapt · seen</text>
+        <!-- frozen K=4 seen -->
+        <polyline points="120,158 320,140 520,128 720,120 920,102" fill="none" stroke="#7b8a90" stroke-width="2.5" stroke-dasharray="5 4"/>
+        <circle cx="920" cy="102" r="4" fill="#7b8a90"/><text x="810" y="118" fill="#7b8a90">frozen · seen</text>
+        <!-- adapt unseen -->
+        <polyline points="120,168 320,158 520,150 720,146 920,140" fill="none" stroke="#3ad4e0" stroke-width="2.5"/>
+        <circle cx="920" cy="140" r="4" fill="#3ad4e0"/><text x="800" y="156" fill="#3ad4e0">adapt · unseen</text>
+        <!-- frozen unseen -->
+        <polyline points="120,192 320,182 520,176 720,172 920,168" fill="none" stroke="#7b8a90" stroke-width="2" stroke-dasharray="3 3"/>
+        <circle cx="920" cy="168" r="3.5" fill="#7b8a90"/>
+        <text x="118" y="228">1k</text><text x="316" y="228">2k</text><text x="516" y="228">4k</text><text x="716" y="228">8k</text><text x="914" y="228">16k</text>
+      </g>
+    </svg>
+    <p class="figcap">FIG 6. PushObj 학습 데이터 스케일이 계획 성공에 미치는 효과. 적응(실선)이 모든 스케일에서 얼어붙은 모델(점선)을 상회하며, 저데이터에서 격차가 가장 크다. 出處: Figure 6·10, AdaJEPA (2026)</p>
+  </div>
+</section>
+
+<!-- ===== CONCLUSION ===== -->
+<section class="blk" style="padding-top:0">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">05</span> — 결론</div>
+    <h2>변화하는 세계에서<br><span class="g">계속 배우는</span> 모델</h2>
+  </div>
+  <p class="body rv">AdaJEPA는 MPC 폐루프 중 테스트타임 적응을 수행하는 적응형 세계 모델이다. 모델이 예측으로 행동을 고르고, 행동이 환경에서 새 관측을 낳고, 새 관측이 모델을 갱신하고, 갱신된 모델이 다음 계획 스텝에 즉시 재사용되는 단순한 <span class="hl">계획–실행–적응–재계획</span> 루프를 만든다. 실험은 전이당 단 한 번의 경사 스텝이 시각·동역학 이동 아래 상당한 계획 성능을 회복하기에 충분함을 보인다.</p>
+  <div class="panel rv">
+    <div class="minitag">한계와 다음 단계</div>
+    <p class="body" style="margin:0">경량 보정만 수행하므로 효과는 사전학습 표현의 커버리지에 의해 제한된다 — 테스트 환경이 학습에 없던 특징을 요구하면 적응이 계획을 개선하되 격차를 완전히 메우지 못할 수 있다. 자연스러운 다음 단계는 <span class="hl">경량 테스트타임 적응을 지속 학습·능동 학습과 결합</span>하여 시간에 따라 세계 모델의 커버리지를 확장하는 것이다. 더 넓게는, 잠재 세계 모델은 얼어붙어 있지 말고 배포 중에도 계속 학습되어야 한다.</p>
+  </div>
+</section>
+
+</div><!-- /wrap -->
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div>
+        <div class="ftitle">AdaJEPA</div>
+        <p>MPC 폐루프 안에서 테스트타임 적응을 수행하는 적응형 잠재 세계 모델. 실행한 전이를 자기지도 신호로 삼아 재계획 전에 모델을 재보정하며, 추가 전문가 시연 없이 분포 이동 아래 계획 성공률을 크게 높인다.</p>
+        <p class="authors">Ying Wang, Oumayma Bounou, Yann LeCun, Mengye Ren · New York University · AMI Labs</p>
+      </div>
+      <div>
+        <h4>Paper</h4>
+        <p>arXiv:2606.32026v1 [cs.LG]<br>2026년 6월 30일<br><br><a href="https://agenticlearning.ai/adajepa">agenticlearning.ai/adajepa</a></p>
+      </div>
+      <div>
+        <h4>At a Glance</h4>
+        <p>JEPA World Model · MPC<br>Test-time Adaptation<br>Plan · Execute · Adapt · Replan<br>1 gradient step / replan</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* reveal */
+(function(){
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{threshold:0.1,rootMargin:'0px 0px -7% 0px'});
+  document.querySelectorAll('.rv').forEach(function(el,i){ el.style.transitionDelay=(Math.min(i%5,4)*45)+'ms'; io.observe(el); });
+})();
+
+/* SIGNATURE: closed-loop trajectory — an imagined prediction line drifting, then
+   converging onto the true executed line as adaptation reduces prediction error.
+   Echoes the frozen(gray, diverging) vs adapt(live, converging) contrast. */
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce) return;
+  var c=document.getElementById('loop'), x=c.getContext('2d'), w,h,raf,t0=performance.now();
+  function size(){ w=c.width=innerWidth; h=c.height=innerHeight; }
+  size();
+  var N=64; // path samples
+  function draw(now){
+    var el=(now-t0)/1000;
+    x.clearRect(0,0,w,h);
+    // a slow-moving "true" trajectory across the screen
+    var cx=w*0.5, cy=h*0.5;
+    x.lineWidth=1.4;
+    // TRUE path (live) — a smooth lissajous
+    x.beginPath();
+    for(var i=0;i<=N;i++){
+      var p=i/N, a=p*6.283;
+      var tx=cx + Math.cos(a*1)*w*0.34 + Math.sin(a*2)*40;
+      var ty=cy + Math.sin(a*1.5)*h*0.30;
+      if(i===0)x.moveTo(tx,ty); else x.lineTo(tx,ty);
+    }
+    x.strokeStyle='rgba(95,242,168,0.10)'; x.stroke();
+    // PREDICTED path — starts offset (error), converges over time then re-diverges (new shift)
+    var conv=(Math.sin(el*0.4)+1)/2; // 0 = big error, 1 = converged
+    x.beginPath();
+    for(var j=0;j<=N;j++){
+      var q=j/N, b=q*6.283;
+      var bx=cx + Math.cos(b*1)*w*0.34 + Math.sin(b*2)*40;
+      var by=cy + Math.sin(b*1.5)*h*0.30;
+      // offset that shrinks with convergence
+      var off=(1-conv)*70*Math.sin(b*3+el);
+      bx+=off; by+=off*0.6;
+      if(j===0)x.moveTo(bx,by); else x.lineTo(bx,by);
+    }
+    // color blends from alert(error) -> signal(converged)
+    var g = conv;
+    var r=Math.round(255*(1-g)+58*g), gg=Math.round(138*(1-g)+212*g), bb=Math.round(92*(1-g)+224*g);
+    x.strokeStyle='rgba('+r+','+gg+','+bb+',0.16)';
+    x.lineWidth=1.6; x.stroke();
+    // a moving marker (the agent) on the true path
+    var mp=(el*0.06)%1, ma=mp*6.283;
+    var mx=cx + Math.cos(ma)*w*0.34 + Math.sin(ma*2)*40;
+    var my=cy + Math.sin(ma*1.5)*h*0.30;
+    x.beginPath(); x.arc(mx,my,3.5,0,6.283); x.fillStyle='rgba(95,242,168,0.5)'; x.fill();
+    raf=requestAnimationFrame(draw);
+  }
+  raf=requestAnimationFrame(draw);
+  var tm; addEventListener('resize',function(){ clearTimeout(tm); tm=setTimeout(function(){ size(); },200); });
+})();
+</script>
+</body>
+</html>
