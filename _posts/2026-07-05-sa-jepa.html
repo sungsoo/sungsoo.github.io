@@ -1,0 +1,727 @@
+---
+layout: null
+title: "Latent Representation for Discovery in Multiscale Physical Fields" 
+date: 2026-07-05
+categories: [artificial intelligence]
+tags: [agentic ai, ai co-scientist, ai for science, artificial general intelligence, world models]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScaleAware-JEPA · 멀티스케일 물리장의 잠재 표현</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* 스케일 계층을 색층으로: 미세(fine)→중간(mid)→거친(coarse)→헤일로(halo) */
+    --void:#05060c;
+    --void2:#0a0d1a;
+    --panel:#10142a;
+    --panel-line:#1c2242;
+    --ink:#e8eaf5;
+    --ink-dim:#9aa0c4;
+    --ink-faint:#5f6690;
+    /* 확산 스케일 팔레트 */
+    --s-fine:#4ee5c9;   /* λ=2 */
+    --s-mid:#5b8dff;    /* λ=8 */
+    --s-coarse:#a56bff; /* λ=32 */
+    --s-halo:#ff6ba9;   /* residual */
+    --amber:#ffcf5c;
+    --glow:rgba(91,141,255,.35);
+    --mono:'JetBrains Mono',monospace;
+    --disp:'Space Grotesk',sans-serif;
+    --body:'Noto Sans KR',sans-serif;
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--void);
+    color:var(--ink);
+    font-family:var(--body);
+    font-weight:300;
+    line-height:1.85;
+    letter-spacing:.01em;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- 배경 확산장 ---------- */
+  .field-bg{position:fixed;inset:0;z-index:-2;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 5%,rgba(78,229,201,.10),transparent 55%),
+      radial-gradient(ellipse 70% 70% at 85% 25%,rgba(165,107,255,.12),transparent 55%),
+      radial-gradient(ellipse 90% 80% at 50% 100%,rgba(91,141,255,.10),transparent 60%),
+      var(--void);
+  }
+  .grain{position:fixed;inset:0;z-index:-1;opacity:.035;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+  /* ---------- 컨테이너 ---------- */
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+
+  /* ---------- 상단 진행 바 ---------- */
+  .progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:100;
+    background:linear-gradient(90deg,var(--s-fine),var(--s-mid),var(--s-coarse),var(--s-halo));
+    box-shadow:0 0 12px var(--glow);}
+
+  /* ---------- HERO ---------- */
+  header.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;
+    justify-content:center;padding:120px 0 80px;overflow:hidden}
+  .hero-eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.42em;
+    text-transform:uppercase;color:var(--s-fine);margin-bottom:26px;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .hero-eyebrow::before{content:"";width:34px;height:1px;background:var(--s-fine);display:inline-block}
+  .hero h1{font-family:var(--disp);font-weight:700;line-height:1.02;letter-spacing:-.02em;
+    font-size:clamp(2.8rem,8vw,6.2rem);margin-bottom:8px;color:#fff}
+  .hero h1 .accent{
+    background:linear-gradient(120deg,var(--s-fine),var(--s-mid) 40%,var(--s-coarse) 70%,var(--s-halo));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .hero .sub{font-family:var(--disp);font-weight:400;font-size:clamp(1.05rem,2.4vw,1.5rem);
+    color:var(--ink-dim);letter-spacing:.01em;margin-top:18px;max-width:720px;line-height:1.5}
+  .hero .lede{max-width:640px;margin-top:34px;font-size:1.02rem;color:var(--ink-dim);font-weight:300}
+  .hero-meta{margin-top:48px;display:flex;gap:36px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:.78rem;color:var(--ink-faint)}
+  .hero-meta b{color:var(--ink);font-weight:500;display:block;margin-top:4px;font-size:.9rem}
+
+  /* HERO SVG 다이어그램 */
+  .hero-svg{width:100%;max-width:560px;margin-top:56px}
+
+  /* ---------- 섹션 ---------- */
+  section{padding:96px 0;position:relative}
+  .sec-head{margin-bottom:52px;max-width:760px}
+  .sec-num{font-family:var(--mono);font-size:.72rem;letter-spacing:.3em;color:var(--s-mid);
+    display:block;margin-bottom:14px}
+  .sec-head h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.8rem,4vw,2.9rem);
+    letter-spacing:-.015em;line-height:1.1;color:#fff}
+  .sec-head p.dek{margin-top:18px;color:var(--ink-dim);font-size:1.05rem;font-weight:300}
+
+  p{margin-bottom:1.25em;color:var(--ink);font-size:1.02rem}
+  p.body-dim{color:var(--ink-dim)}
+  strong{font-weight:500;color:#fff}
+  em{font-style:normal;color:var(--s-fine);font-weight:400}
+  .hl{color:var(--amber);font-weight:400}
+
+  a{color:var(--s-fine);text-decoration:none;border-bottom:1px solid rgba(78,229,201,.3);
+    transition:border-color .2s,color .2s}
+  a:hover{color:#fff;border-color:#fff}
+
+  /* 리드 문단 */
+  .prose{max-width:760px}
+  .prose h3{font-family:var(--disp);font-weight:600;font-size:1.35rem;color:#fff;
+    margin:44px 0 16px;letter-spacing:-.01em}
+
+  /* ---------- 카드/패널 ---------- */
+  .panel{background:linear-gradient(160deg,rgba(28,34,66,.5),rgba(16,20,42,.5));
+    border:1px solid var(--panel-line);border-radius:16px;padding:34px 32px;
+    backdrop-filter:blur(6px)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  @media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+
+  /* 스케일 계층 카드 */
+  .scale-card{border-radius:14px;padding:26px 24px;position:relative;overflow:hidden;
+    border:1px solid var(--panel-line);background:var(--panel)}
+  .scale-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px}
+  .scale-card.fine::before{background:var(--s-fine)}
+  .scale-card.mid::before{background:var(--s-mid)}
+  .scale-card.coarse::before{background:var(--s-coarse)}
+  .scale-card.halo::before{background:var(--s-halo)}
+  .scale-card .tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
+  .scale-card h4{font-family:var(--disp);font-size:1.15rem;font-weight:600;color:#fff;margin-bottom:10px}
+  .scale-card p{font-size:.92rem;color:var(--ink-dim);margin:0}
+  .scale-card .lam{font-family:var(--mono);font-size:.8rem;position:absolute;top:22px;right:22px;color:var(--ink-faint)}
+
+  /* ---------- 방정식 ---------- */
+  .eq{background:var(--void2);border:1px solid var(--panel-line);border-left:3px solid var(--s-mid);
+    border-radius:10px;padding:22px 26px;margin:26px 0;font-family:var(--mono);
+    font-size:1.05rem;color:var(--ink);overflow-x:auto;position:relative}
+  .eq .num{position:absolute;right:20px;top:50%;transform:translateY(-50%);
+    color:var(--ink-faint);font-size:.8rem}
+  .eq .cap{display:block;font-family:var(--body);font-size:.85rem;color:var(--ink-dim);
+    margin-top:12px;font-weight:300}
+
+  /* ---------- 통계 스트립 ---------- */
+  .stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+    background:var(--panel-line);border:1px solid var(--panel-line);border-radius:14px;overflow:hidden;margin:8px 0}
+  .stat-strip .cell{background:var(--panel);padding:28px 22px}
+  .stat-strip .val{font-family:var(--disp);font-size:2rem;font-weight:700;color:#fff;line-height:1}
+  .stat-strip .val small{font-size:1rem;color:var(--ink-faint);font-weight:400}
+  .stat-strip .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--s-fine);margin-top:12px}
+  @media(max-width:760px){.stat-strip{grid-template-columns:1fr 1fr}}
+
+  /* ---------- 데이터셋 블록 ---------- */
+  .regime{display:grid;grid-template-columns:180px 1fr;gap:32px;align-items:start;
+    padding:36px 0;border-top:1px solid var(--panel-line)}
+  .regime .rlabel{font-family:var(--disp);font-weight:600}
+  .regime .rlabel .rtag{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--s-coarse);display:block;margin-bottom:8px}
+  .regime .rlabel h4{font-size:1.35rem;color:#fff;line-height:1.15}
+  .regime .rlabel .src{font-size:.82rem;color:var(--ink-faint);font-weight:300;margin-top:10px;font-family:var(--body)}
+  .regime p{margin-bottom:0;color:var(--ink-dim);font-size:.98rem}
+  @media(max-width:760px){.regime{grid-template-columns:1fr;gap:16px}}
+
+  /* ---------- 테이블 ---------- */
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--panel-line);border-radius:14px;margin:8px 0}
+  table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:560px}
+  th,td{padding:13px 18px;text-align:right;border-bottom:1px solid var(--panel-line)}
+  th:first-child,td:first-child{text-align:left}
+  thead th{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--s-mid);font-weight:500;background:var(--void2)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody td{font-family:var(--mono);color:var(--ink-dim)}
+  tbody td:first-child{font-family:var(--body);color:var(--ink)}
+  tr.sel td{background:rgba(255,207,92,.06)}
+  tr.sel td:first-child{color:var(--amber)}
+  .star{color:var(--amber)}
+
+  /* ---------- 파이프라인 스텝 ---------- */
+  .flow{display:flex;flex-direction:column;gap:2px;margin:8px 0}
+  .flow-step{display:grid;grid-template-columns:56px 1fr;gap:20px;align-items:start;
+    padding:22px 24px;background:var(--panel);border:1px solid var(--panel-line);
+    border-radius:12px;position:relative}
+  .flow-step .idx{font-family:var(--mono);font-size:1.1rem;font-weight:700;
+    color:var(--s-fine);opacity:.7}
+  .flow-step h4{font-family:var(--disp);font-size:1.08rem;font-weight:600;color:#fff;margin-bottom:6px}
+  .flow-step p{font-size:.92rem;color:var(--ink-dim);margin:0}
+  .flow .connector{height:20px;width:1px;background:var(--panel-line);margin-left:52px}
+
+  /* ---------- 인용/노트 ---------- */
+  .note{border-left:3px solid var(--s-halo);background:rgba(255,107,169,.05);
+    padding:20px 26px;border-radius:0 10px 10px 0;margin:26px 0}
+  .note .nt{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--s-halo);margin-bottom:8px}
+  .note p{margin:0;font-size:.95rem;color:var(--ink-dim)}
+
+  /* ---------- 스크롤 리빌 ---------- */
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.2,.6,.2,1),transform .8s cubic-bezier(.2,.6,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ---------- 푸터 ---------- */
+  footer{padding:80px 0 60px;border-top:1px solid var(--panel-line);margin-top:40px}
+  .foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px}
+  @media(max-width:760px){.foot-grid{grid-template-columns:1fr;gap:28px}}
+  footer h5{font-family:var(--mono);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:16px}
+  footer p{font-size:.9rem;color:var(--ink-dim);margin-bottom:.6em}
+  footer a{font-size:.9rem}
+  .foot-title{font-family:var(--disp);font-weight:700;font-size:1.4rem;color:#fff;margin-bottom:14px}
+
+  ::selection{background:rgba(78,229,201,.3);color:#fff}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    .reveal{opacity:1;transform:none}
+    html{scroll-behavior:auto}
+  }
+  .video-container {
+    width: 100%; /* 부모 요소의 너비에 맞춤 */
+    max-width: 1600px; /* 최대 너비 설정 (옵션) */
+    margin: 0 auto;
+  }
+
+  .video-container iframe {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9; /* 16:9 비율 유지 */
+  }      
+</style>
+<!-- MathJax for LaTeX -->
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        svg: {
+            fontCache: 'global'
+        }
+    };
+</script>
+</head>
+<body>
+<div class="field-bg"></div>
+<div class="grain"></div>
+<div class="progress" id="prog"></div>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-eyebrow reveal">arXiv:2606.29723 · cs.LG · 멀티스케일 물리장 표현학습</div>
+    <h1 class="reveal">Scale<span class="accent">Aware</span>-JEPA</h1>
+    <div class="sub reveal">필드의 스케일 계층에 잠재 예측을 결속시켜, 구조가 규정되기 전에 복잡한 물리 패턴을 들여다보는 잠재 좌표를 구성한다.</div>
+    <p class="lede reveal">연속 물리장은 과학 탐구 데이터의 큰 부분을 차지하며, 그 멀티스케일 구조는 발견의 핵심이다. 그러나 유용한 좌표는 미리 알려져 있지 않다. ScaleAware-JEPA는 라벨 없이 연속 스칼라장에 대한 조밀한 잠재 좌표를 구성하는 프레임워크다.</p>
+    <div class="hero-meta reveal">
+      <div>저자<b>Guang-Xing Li</b></div>
+      <div>제출<b>2026년 6월 29일</b></div>
+      <div>코드<b>github.com/gxli/SA-JEPA</b></div>
+      <div>검증 영역<b>MHD · 성간가스 · 도시 야간광</b></div>
+    </div>
+
+    <!-- HERO 다이어그램: CDD 스케일 분해 -->
+    <svg class="hero-svg reveal" viewBox="0 0 560 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CDD 스케일 분해 개념도">
+      <defs>
+        <linearGradient id="gfine" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#4ee5c9"/><stop offset="1" stop-color="#4ee5c9" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="gmid" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#5b8dff"/><stop offset="1" stop-color="#5b8dff" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="gcoarse" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#a56bff"/><stop offset="1" stop-color="#a56bff" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="ghalo" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#ff6ba9"/><stop offset="1" stop-color="#ff6ba9" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <!-- 스케일 층 -->
+      <g font-family="JetBrains Mono, monospace" font-size="11">
+        <g class="hslab" transform="translate(0,10)">
+          <rect x="40" y="0" width="360" height="52" rx="8" fill="url(#gfine)" opacity="0.5"/>
+          <rect x="40" y="0" width="360" height="52" rx="8" fill="none" stroke="#4ee5c9" stroke-opacity="0.5"/>
+          <text x="56" y="24" fill="#e8eaf5">x⁽¹⁾ · fine</text>
+          <text x="56" y="42" fill="#9aa0c4">λ ≈ 2 px</text>
+        </g>
+        <g class="hslab" transform="translate(0,72)">
+          <rect x="40" y="0" width="360" height="52" rx="8" fill="url(#gmid)" opacity="0.5"/>
+          <rect x="40" y="0" width="360" height="52" rx="8" fill="none" stroke="#5b8dff" stroke-opacity="0.5"/>
+          <text x="56" y="24" fill="#e8eaf5">x⁽²⁾ · mid</text>
+          <text x="56" y="42" fill="#9aa0c4">λ ≈ 8 px</text>
+        </g>
+        <g class="hslab" transform="translate(0,134)">
+          <rect x="40" y="0" width="360" height="52" rx="8" fill="url(#gcoarse)" opacity="0.5"/>
+          <rect x="40" y="0" width="360" height="52" rx="8" fill="none" stroke="#a56bff" stroke-opacity="0.5"/>
+          <text x="56" y="24" fill="#e8eaf5">x⁽³⁾ · coarse</text>
+          <text x="56" y="42" fill="#9aa0c4">λ ≈ 32 px</text>
+        </g>
+        <g class="hslab" transform="translate(0,196)">
+          <rect x="40" y="0" width="360" height="52" rx="8" fill="url(#ghalo)" opacity="0.5"/>
+          <rect x="40" y="0" width="360" height="52" rx="8" fill="none" stroke="#ff6ba9" stroke-opacity="0.5"/>
+          <text x="56" y="24" fill="#e8eaf5">x⁽⁴⁾ · halo</text>
+          <text x="56" y="42" fill="#9aa0c4">residual</text>
+        </g>
+        <!-- 융합 화살표 -->
+        <path d="M400 62 C 460 62, 460 148, 490 148" fill="none" stroke="#5f6690" stroke-width="1"/>
+        <path d="M400 124 C 450 124, 460 148, 490 148" fill="none" stroke="#5f6690" stroke-width="1"/>
+        <path d="M400 186 C 450 186, 460 148, 490 148" fill="none" stroke="#5f6690" stroke-width="1"/>
+        <path d="M400 248 C 460 248, 460 148, 490 148" fill="none" stroke="#5f6690" stroke-width="1"/>
+        <circle cx="500" cy="148" r="18" fill="#10142a" stroke="#ffcf5c" stroke-width="1.5"/>
+        <text x="500" y="153" text-anchor="middle" fill="#ffcf5c" font-size="16">⊕</text>
+        <text x="500" y="196" text-anchor="middle" fill="#9aa0c4" font-size="9">잠재장 z</text>
+      </g>
+    </svg>
+  </div>
+</header>
+
+<center>
+  <div class="video-container">
+    <iframe src="https://www.youtube.com/embed/IZsV4mgW6uA?si=cD5H5TnLyvWCYpBe" frameborder="0" allowfullscreen></iframe>
+  </div>        
+</center>
+
+<!-- ============ 문제 정의 ============ -->
+<section id="problem">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">01 / 문제</span>
+      <h2>표준 자기지도학습은 물리장의 스케일 계층과 어긋나 있다</h2>
+      <p class="dek">고전 난류의 소산 소용돌이관, MHD 흐름의 자기 재결합층, 우주 거미줄의 비등방 물질 분포는 모두 필드가 공간과 스케일에 걸쳐 조직되는 방식에 그 과학적 의미가 있다.</p>
+    </div>
+    <div class="prose reveal">
+      <p>기존 표현 방법은 두 갈래로 나뉜다. 하나는 필드를 스펙트럼·확률분포·상관함수 같은 전역 통계로 압축해, 물리적 의미를 담은 공간적·조직적 구조를 버린다. 다른 하나는 헤시안 필라멘트, 덴드로그램 구름, 워터셰드 보이드처럼 손으로 만든 구조 정의를 부과해 <strong>무엇을 발견할 수 있는지를 미리 결정</strong>한다.</p>
+      <p class="body-dim">고전 물리에서 계의 위상공간은 이론이 지정하는 경우가 많아, 동역학을 분석하기 전에 관련 변수를 이미 안다. 그러나 평형에서 멀리 벗어난 복잡계에서는 이 가정이 무너진다. Kauffman은 이를 근본적 난제로 규정했다. 즉, 관련 거시 변수와 유효 위상공간 자체가 사전에 특정되지 않을 수 있다.</p>
+      <p>표준 마스킹 전략은 비전 모델에서 물려받은 것으로, 고정 크기 패치를 가리고 단일 이미지 스케일에서 예측을 제기한다. 그러나 물리장에서 가려진 영역을 예측하는 데 필요한 맥락은 스케일 계층 전반에 분포한다. <span class="hl">따라서 물리장을 위한 프레임워크는 그 계층을 예측 과제 자체의 일부로 만들어야 한다.</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 핵심 아이디어 ============ -->
+<section id="idea">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">02 / 핵심 원리</span>
+      <h2>표현과 예측 과제를 동일한 물리 스케일 계층이 지배한다</h2>
+      <p class="dek">ScaleAware-JEPA는 임의의 이미지 패치가 아니라 필드의 고유한 물리 스케일 계층으로 표현과 예측 과제를 명시적으로 통제한다. 두 가지 설계 선택이 이 원리를 구현하며, 둘 다 제약확산분해(CDD)에 근거한다.</p>
+    </div>
+    <div class="grid2">
+      <div class="panel reveal">
+        <div class="scale-card fine" style="border:none;padding:0;background:none">
+          <div class="tag">설계 선택 1</div>
+        </div>
+        <h3 style="font-family:var(--disp);color:#fff;font-size:1.3rem;margin:6px 0 12px">인코딩 이전 스케일 분해</h3>
+        <p class="body-dim">필드를 인코딩하기 전에 픽셀 정합된 스케일 성분으로 분해한다. 대규모 상관을 합성곱 인코더의 국소 귀납 편향을 통해서만 창발하도록 남겨두지 않고, 직접 활용 가능하게 만든다.</p>
+      </div>
+      <div class="panel reveal">
+        <div class="scale-card mid" style="border:none;padding:0;background:none">
+          <div class="tag">설계 선택 2</div>
+        </div>
+        <h3 style="font-family:var(--disp);color:#fff;font-size:1.3rem;margin:6px 0 12px">확산 스케일에 결속된 마스크</h3>
+        <p class="body-dim">마스크 발자국을 각 성분의 확산 스케일에 결속한다. 맥락–타깃 예측 과제가 단일한 임의의 패치 크기가 아니라 필드의 미세·중간·거친 수준에서 제기된다.</p>
+      </div>
+    </div>
+
+    <div class="prose reveal" style="margin-top:44px">
+      <h3>JEPA 패러다임의 계승</h3>
+      <p>프레임워크는 핵심 JEPA 패러다임을 따른다. 온라인 분기는 마스킹된 입력을 받아, EMA 타깃 분기가 대응하는 비마스킹 필드로부터 산출한 잠재 표현을 예측한다. 예측은 엄격히 숨겨진 타깃 위치에서만 평가하며, 약한 확산 정규화가 표현 붕괴를 방지한다. 목표는 자연 이미지 표현학습을 개선하는 것이 아니라, <strong>물리계를 들여다볼 수 있게 하는 잠재 좌표를 구성하는 것</strong>이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CDD 스케일 좌표 ============ -->
+<section id="cdd">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">03 / CDD 스케일 좌표</span>
+      <h2>제약확산분해가 조직화를 위한 스케일 좌표를 정의한다</h2>
+      <p class="dek">물리장은 이산 격자에서 관측되지만 연속 물리 스케일에 걸쳐 조직된다. CDD는 이 조직화를 위한 스케일 좌표를 정의한다.</p>
+    </div>
+
+    <div class="eq reveal">
+      ∂I / ∂t = − ReLU( − ∇²I )
+      <span class="num">(1)</span>
+      <span class="cap">확산 시간은 특성 스케일 λ ∝ √t 에 대응한다. 보고된 스케일 [2, 4, 8, …]은 실험 전반에서 마스킹 계층을 일관되게 매개하는 확산 스케일 인덱스다. 확산 상태 간 차분이 구조적으로 분리된 필드 성분의 픽셀 정합 피라미드를 산출한다.</span>
+    </div>
+
+    <p class="prose reveal">CDD는 프레임워크 안에서 두 역할을 결합한다. 첫째, 네트워크가 단일 평면 이미지에서 복잡한 계층을 맹목적으로 추론하도록 강요하는 대신, 미세·중간·거친 형태를 물리적으로 정렬된 스케일 성분으로 인코더에 제시한다. 둘째, 마스킹 과제를 생성하는 데 쓰이는 명시적 좌표계를 공급한다. <span class="hl">표현 공간과 예측 질문이 정확히 동일한 물리 기하에 결속된다.</span></p>
+
+    <h3 class="prose" style="font-family:var(--disp);color:#fff;font-size:1.35rem;margin:44px 0 24px">확산 스케일 계층 [2, 4, 8, 16, 32]</h3>
+    <div class="grid2 reveal">
+      <div class="scale-card fine">
+        <span class="lam">λ = 2</span>
+        <div class="tag">x⁽¹⁾ · 미세</div>
+        <h4>Fine</h4>
+        <p>매끄러운 필라멘트 사이 영역에서 거의 0에 가까운 응답. 예리한 국소 구조를 희소하게 포착한다.</p>
+      </div>
+      <div class="scale-card mid">
+        <span class="lam">λ = 8</span>
+        <div class="tag">x⁽²⁾ · 중간</div>
+        <h4>Mid</h4>
+        <p>필라멘트 구조를 희소하고 공간적으로 밀집된 특징으로 분리한다.</p>
+      </div>
+      <div class="scale-card coarse">
+        <span class="lam">λ = 32</span>
+        <div class="tag">x⁽³⁾ · 거침</div>
+        <h4>Coarse</h4>
+        <p>대규모 위상을 복원한다. 확산 기반 원시요소는 국소적이고 픽셀 정합되어 있다.</p>
+      </div>
+      <div class="scale-card halo">
+        <span class="lam">residual</span>
+        <div class="tag">x⁽⁴⁾ · 잔차</div>
+        <h4>Halo</h4>
+        <p>마지막 CDD 채널은 가장 거친 스케일과 미해상 잔차를 함께 담는다.</p>
+      </div>
+    </div>
+
+    <div class="note reveal">
+      <div class="nt">왜 웨이블릿이 아닌 CDD인가</div>
+      <p>웨이블릿 분해는 예리한 구조 근처에서 링잉과 부호 변화 로브를 도입해, 예측기가 지름길로 악용할 수 있는 국소·고대비·스케일 상관 인공물을 만든다. CDD의 확산 기반 원시요소는 국소적이고 픽셀 정합되어 이 교란을 줄이고, 잠재 예측을 필드 형태에 결속한 채 유지한다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 아키텍처 파이프라인 ============ -->
+<section id="arch">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">04 / 아키텍처</span>
+      <h2>스케일 인식 인코딩과 마스킹</h2>
+      <p class="dek">스케일 인식 조밀 ConvNeXt 인코더가 멀티스케일 입력을 전해상도 잠재장으로 사상해, 모든 공간 위치에 잠재 좌표를 배정한다.</p>
+    </div>
+
+    <div class="flow reveal">
+      <div class="flow-step">
+        <div class="idx">01</div>
+        <div>
+          <h4>스칼라장 입력 → CDD 분해</h4>
+          <p>원시 필드 x를 스케일 분리 성분으로 분해한다. 각 스케일 레벨에서 인코더는 마스킹된 CDD 성분 x⁽ˢ⁾, 이진 마스크 지시 채널 M⁽ˢ⁾, 확산 스케일을 식별하는 스칼라 스케일 코드 세 채널을 받는다.</p>
+        </div>
+      </div>
+      <div class="connector"></div>
+      <div class="flow-step">
+        <div class="idx">02</div>
+        <div>
+          <h4>스케일별 어댑터</h4>
+          <p>각 CDD 성분을 공유 어댑터 구조가 공통 특징 폭으로 사상한다. 어댑터는 CDD 값뿐 아니라 어느 픽셀이 가려졌고 어느 확산 스케일인지도 본다. 마스크 지시자는 학습 파라미터가 아니다.</p>
+        </div>
+      </div>
+      <div class="connector"></div>
+      <div class="flow-step">
+        <div class="idx">03</div>
+        <div>
+          <h4>지연 스케일 융합</h4>
+          <p>거친 특징을 순차적으로 더 미세한 스케일에 더하는 하향식 잔차 경로로 융합한다. 각 융합 스케일은 자체 1×1 투영을 거쳐 연결된다. 계층이 신경망 다운샘플링이 아니라 학습 이전 CDD로 공급된다는 점에서 표준 특징 피라미드와 다르다.</p>
+        </div>
+      </div>
+      <div class="connector"></div>
+      <div class="flow-step">
+        <div class="idx">04</div>
+        <div>
+          <h4>조밀 ConvNeXt V2 백본</h4>
+          <p>전역 응답 정규화(GRN)를 갖춘 조밀 ConvNeXt 백본이 필드 해상도를 줄이지 않고 공간 혼합을 수행해, 역사상에 필요한 공간 대응을 보존하면서 전해상도 잠재 지도를 산출한다.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="prose" style="font-family:var(--disp);color:#fff;font-size:1.35rem;margin:52px 0 20px">마스크 발자국 구성</h3>
+    <div class="eq reveal">
+      b = max( n_target , round( σₛ · f_mask + B₀ ) )<br>
+      Bₛ = oddceil(b) &nbsp;if b ≤ B_cap , &nbsp; oddfloor(B_cap) &nbsp;if b &gt; B_cap
+      <span class="num">(2)</span>
+      <span class="cap">n_target = 3 은 타깃 패치 폭, f_mask 는 스케일 배수, B₀ 는 고정 오프셋, B_cap = 48 px(MHD·청두) 또는 35 px(NGC). f_mask = 0 이면 고정 박스 마스크, B₀ = 0 이면 순수 스케일 결속 피라미드 마스크가 된다. 하드 캡이 활성이면 박스를 하향 반올림해 B_cap을 넘지 않게 한다.</span>
+    </div>
+    <p class="prose reveal body-dim">MHD 마스킹 스윕은 마스크 기하가 잠재 사용 진단에 직접적이고 측정 가능한 효과를 줌을 보인다. 고정 박스 마스크와 매우 큰 피라미드 발자국은 높은 유효 랭크에 도달하는 동안 힌지 비율이 고원에 접근해, 폐색을 더 늘려도 잠재 사용이 통제된 방식으로 개선되지 않음을 나타낸다. 스케일 인식 피라미드 마스킹은 스케일 의존 맥락 발자국에 걸친 구조화된 진행을 제공한다. 선택된 <span class="hl">1.2 × σₛ</span> 설정은 대형 마스크 고원 영역 이전에 위치한다.</p>
+  </div>
+</section>
+
+<!-- ============ 학습 목적함수 ============ -->
+<section id="loss">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">05 / 학습과 잠재 아틀라스</span>
+      <h2>두 항으로 구성된 목적함수와 역사상 아틀라스</h2>
+      <p class="dek">온라인 인코더, EMA 타깃 인코더, 경량 공간 예측기를 두 항 목적함수로 학습한다.</p>
+    </div>
+
+    <div class="eq reveal">
+      L = λ_pred · L_pred + λ_spread · L_spread
+      <span class="num">(11)</span>
+      <span class="cap">지배 항 L_pred (λ_pred = 50)은 예측과 타깃 투영 표현 사이의 MSE 손실로, 마스킹된 타깃 위치에서만 평가한다. 표준편차 힌지 확산 정규화 L_spread (λ_spread = 5, τ = 1)은 배치 표준편차가 임계 τ 아래로 떨어지는 잠재 채널을 벌해 표현 붕괴를 방지한다.</span>
+    </div>
+
+    <div class="grid2 reveal" style="margin-top:8px">
+      <div class="panel">
+        <h3 style="font-family:var(--disp);color:#fff;font-size:1.2rem;margin-bottom:12px">예측 손실 L_pred</h3>
+        <p class="body-dim" style="font-size:.95rem">EMA 타깃은 θ̄ ← m·θ̄ + (1−m)·θ 로 갱신한다. 유효 타깃 패치를 공간 풀링한 뒤 예측 임베딩과 타깃 임베딩 사이 제곱오차를 마스킹 위치에서만 계산한다. 3D 패치의 경우 P³ 복셀에 걸쳐 풀링한다.</p>
+      </div>
+      <div class="panel">
+        <h3 style="font-family:var(--disp);color:#fff;font-size:1.2rem;margin-bottom:12px">확산 정규화 L_spread</h3>
+        <p class="body-dim" style="font-size:.95rem">투영된 맥락 토큰을 평균 중심화한 뒤 채널별 모집단 표준편차 σ_c 를 구하고, 힌지 max(0, τ − σ_c)를 채널 평균한다. 이는 붕괴를 막되 예측 신호를 지배하지 않는 약한 정규화다.</p>
+      </div>
+    </div>
+
+    <div class="prose reveal" style="margin-top:44px">
+      <h3>추론 시 아틀라스 구성</h3>
+      <p>추론에서는 마스킹을 비활성화하고 EMA 타깃 인코더가 전체 필드에 대한 조밀 투영 잠재 지도를 산출한다. 잠재 벡터를 PCA와 UMAP으로 투영해 시각화하고, 원래 공간 위치로 되돌린다. 이렇게 <strong>역사상 가능한 아틀라스</strong>가 형성된다. 잠재 공간의 이웃, 분기, 극단 영역을 원래 좌표로 추적해, 네트워크가 표현하는 필드 형태를 식별할 수 있다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 세 가지 영역 ============ -->
+<section id="regimes">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">06 / 검증</span>
+      <h2>서로 다른 필드 생성계 전반의 잠재 아틀라스</h2>
+      <p class="dek">기원·동역학·해석이 모두 다르지만 동일한 표현 문제를 공유하는 세 영역에서 평가한다. 의미 있는 형태가 공간과 스케일에 분포하며, 완전한 사전 라벨 집합이 없다.</p>
+    </div>
+
+    <div class="regime reveal">
+      <div class="rlabel">
+        <span class="rtag">Regime 01</span>
+        <h4>MHD 난류</h4>
+        <div class="src">Collins et al. 2012 밀도 슬라이스 · CATS 포털 접근</div>
+      </div>
+      <div>
+        <p>고레이놀즈수 압축성 자기유체역학 난류의 2차원 가스 밀도 슬라이스만 입력받는다. 확산 물질, 전단 계면, 필라멘트 능선, 충격 압축 구조를 담는다. 밀도 하나만으로 학습한 자기지도 표현이 라벨·수제 진단·보조 속도장·자기장 입력 없이 이 구조들을 조직할 수 있는지 묻는다. 역사상된 UMAP 이웃은 필라멘트 계면, 능선형 구조, 조밀 고대비 영역, 확산 물질에 대응한다. Li &amp; Zhao(2025)의 알프벤 마하수 기반 자기·전이·운동 영역 분리와 정합하는 형태 구분을 <span class="hl">밀도 단독</span>에서 복원한다.</p>
+      </div>
+    </div>
+
+    <div class="regime reveal">
+      <div class="rlabel">
+        <span class="rtag">Regime 02</span>
+        <h4>청두 야간광</h4>
+        <div class="src">NASA Black Marble VIIRS · Román et al. 2018</div>
+      </div>
+      <div>
+        <p>유체나 중력 동역학이 아니라 도시 활동의 공간 조직을 기록하는 필드다. 잠재 아틀라스 구성이 특정 물리 메커니즘에 의존하는지 검증한다. 학습된 임베딩은 조밀한 밝은 도시 영역, 길게 뻗은 광 회랑, 얼룩진 교외 구조, 저강도 배경을 각각 별개의 국소 이웃으로 조직하며, 모두 원래 필드의 일관된 형태로 역사상된다.</p>
+      </div>
+    </div>
+
+    <div class="regime reveal">
+      <div class="rlabel">
+        <span class="rtag">Regime 03</span>
+        <h4>NGC 3627 분자가스</h4>
+        <div class="src">PHANGS–ALMA CO(2–1) · Leroy et al. 2021</div>
+      </div>
+      <div>
+        <p>라벨·나선팔 마스크·강도 임계 없이 CO 필드를 지배 환경 구조에 따라 조직한다. PCA 역사상은 집중된 중심·나선팔 분자원반과 흐릿한 확산 팔간 성분 사이의 넓은 대비를 포착하고, UMAP 역사상은 그 연속체 안에서 더 미세한 국소 차이를 해상한다. 밝은 팔 구름, 팔간 분자운, 확산 확장 방출, 좁고 길쭉한 콘트레일형 특징이 잠재 공간의 서로 다른 영역을 점유한다. Zhao &amp; Li(2025)가 보고한 은하 규모 분자 콘트레일과 관련해, 킬로파섹 규모 전체를 단일 전역 객체로 완전히 분리하는 것은 국소 ConvNeXt 블록 발자국에 의해 제한되며, 복원되는 것은 주변과 구별짓는 국소 형태 성격이다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MHD 스윕 진단 ============ -->
+<section id="sweep">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">07 / 진단</span>
+      <h2>마스킹 전략이 잠재 사용에 주는 측정 가능한 효과</h2>
+      <p class="dek">붕괴와 잠재 공간 사용을 공분산 스펙트럼 고유값에서 계산한 유효 랭크와 참여수로 평가한다. 힌지 비율은 후기·초기 학습 창의 확산 손실 평균 비로, 0에 가까우면 힌지 감쇠, 1에 가까우면 고원을 뜻한다.</p>
+    </div>
+
+    <div class="stat-strip reveal">
+      <div class="cell">
+        <div class="val">1.2<small>×σₛ</small></div>
+        <div class="lbl">MHD 선택 발자국</div>
+      </div>
+      <div class="cell">
+        <div class="val">2.15<small>/rank</small></div>
+        <div class="lbl">타깃 유효 랭크</div>
+      </div>
+      <div class="cell">
+        <div class="val">0.35<small>/hinge</small></div>
+        <div class="lbl">힌지 비율</div>
+      </div>
+      <div class="cell">
+        <div class="val">1.44<small>/part</small></div>
+        <div class="lbl">타깃 참여수</div>
+      </div>
+    </div>
+
+    <p class="prose reveal" style="margin-top:32px">MHD 피라미드 스윕은 1.2 × σₛ 까지 두 진단이 점진적으로 상승한 뒤, 1.6 × σₛ 에서 타깃 유효 랭크가 급등하고 2.0 × σₛ 에서 힌지가 거의 완전히 포화한다. 선택된 1.2 × σₛ 설정은 대형 발자국 전이 이전의 중간 타깃 랭크와 힌지 응답을 유지한다. 고정 박스 마스크는 7 px 에서 이미 힌지가 높고 11 px 에서 포화하며, 유효 랭크는 약간 감소한 뒤 거의 일정하게 유지된다.</p>
+
+    <h3 class="prose" style="font-family:var(--disp);color:#fff;font-size:1.3rem;margin:44px 0 20px">최종 풀링 마스킹 스윕 (선택 실행 ★)</h3>
+    <div class="tbl-wrap reveal">
+      <table>
+        <thead>
+          <tr><th>데이터셋 · 전략</th><th>발자국</th><th>타깃 랭크</th><th>예측 랭크</th><th>참여수</th><th>힌지</th></tr>
+        </thead>
+        <tbody>
+          <tr class="sel"><td>Chengdu · pyramid <span class="star">★</span></td><td>0.8 × σₛ</td><td>2.306</td><td>1.452</td><td>1.62</td><td>0.000</td></tr>
+          <tr><td>Chengdu · pyramid</td><td>1.6 × σₛ</td><td>1.166</td><td>1.163</td><td>1.06</td><td>0.005</td></tr>
+          <tr class="sel"><td>MHD · pyramid <span class="star">★</span></td><td>1.2 × σₛ</td><td>2.152</td><td>2.044</td><td>1.44</td><td>0.354</td></tr>
+          <tr><td>MHD · pyramid</td><td>1.6 × σₛ</td><td>3.183</td><td>4.013</td><td>2.01</td><td>0.544</td></tr>
+          <tr><td>MHD · pyramid</td><td>2.0 × σₛ</td><td>2.980</td><td>3.277</td><td>1.82</td><td>0.999</td></tr>
+          <tr><td>MHD · box</td><td>11 px</td><td>2.918</td><td>3.076</td><td>1.78</td><td>1.000</td></tr>
+          <tr class="sel"><td>NGC · pyramid <span class="star">★</span></td><td>1.6 × σₛ</td><td>1.311</td><td>1.417</td><td>1.13</td><td>0.006</td></tr>
+          <tr><td>NGC · pyramid</td><td>2.0 × σₛ</td><td>1.286</td><td>1.561</td><td>1.11</td><td>0.003</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="prose reveal body-dim" style="margin-top:20px;font-size:.9rem">선택 시각화 실행은 청두 0.8 × σₛ, MHD 1.2 × σₛ, NGC 1.6 × σₛ 다. 진단은 붕괴와 잠재 공간 사용을 선별하는 데 쓰이며, 최종 선택은 전역 시각 위상과 역사상된 공간 해석 가능성도 함께 고려한다. 더 높은 유효 랭크가 항상 더 깨끗하거나 물리적으로 해석 가능한 임베딩에 대응하지는 않는다.</p>
+  </div>
+</section>
+
+<!-- ============ 애블레이션 ============ -->
+<section id="ablation">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">08 / 애블레이션</span>
+      <h2>스케일 계층 없는 순수 ConvNeXt는 이 조직화를 복원하지 못한다</h2>
+      <p class="dek">CDD 피라미드와 모든 스케일 인식 처리를 제거한 순수 조밀 ConvNeXt 대조군을 둔다. 마스킹된 스칼라장과 이진 마스크 지시 지도 두 채널만 받는, 멀티스케일 조직을 원시 픽셀 강도에서 직접 추론해야 하는 정합된 JEPA 백본이다.</p>
+    </div>
+
+    <div class="tbl-wrap reveal">
+      <table>
+        <thead>
+          <tr><th>마스크 발자국</th><th>타깃 랭크</th><th>예측 랭크</th><th>힌지 비율</th></tr>
+        </thead>
+        <tbody>
+          <tr class="sel"><td>7 px <span class="star">★</span></td><td>3.866</td><td>5.752</td><td>1.000</td></tr>
+          <tr><td>11 px</td><td>3.914</td><td>5.771</td><td>1.000</td></tr>
+          <tr><td>15 px</td><td>3.906</td><td>5.920</td><td>1.000</td></tr>
+          <tr><td>19 px</td><td>3.906</td><td>5.920</td><td>1.000</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note reveal" style="border-left-color:var(--s-fine);background:rgba(78,229,201,.05)">
+      <div class="nt" style="color:var(--s-fine)">결론</div>
+      <p>모든 발자국에서 진단이 거의 동일하고 힌지가 포화한다. 박스 발자국을 바꿔도 잠재 기하에 의미 있는 변화가 없으며, 소규모 구조가 과도하게 선명해진다. 이는 본 모델이 복원하는 멀티스케일 조직화가 일반적인 마스킹 이미지 ConvNeXt 용량만으로 설명되지 않고, <strong>인코더와 마스킹 연산자에 명시적 물리 스케일 좌표를 제공하는 데 의존</strong>함을 시사한다.</p>
+    </div>
+
+    <div class="prose reveal">
+      <h3>웨이블릿 프론트엔드 대조</h3>
+      <p class="body-dim">로그정규 웨이블릿 분해로 CDD 피라미드를 대체한 정합 MHD 실행도 붕괴하지 않고 중간~높은 유효 랭크를 낸다. 그러나 힌지 동역학이 덜 조건화되어, 0.8 × σₛ 에서 1.6 × σₛ 로 갈수록 힌지 비율이 0.330 에서 0.993 으로 상승하며 큰 마스크 스케일에서 포화한다. 반면 제약 CDD는 스윕 전반에서 여유를 유지한다. 역사상된 RGB 필드는 고대비 구조 주위에 넓은 헤일로형 띠를 보이는데, 이는 웨이블릿 분해의 진동성 교차 스케일 누설 및 예리한 전이 근처의 링잉과 일관된 국소성 저하 신호다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 기본 설정 ============ -->
+<section id="config">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">09 / 구성</span>
+      <h2>스케일 인식 ConvNeXt 인코더 기본값</h2>
+      <p class="dek">보고된 실험에 사용한 저장소 기본 구성. 모든 설정은 구성 시스템으로 재정의 가능하다.</p>
+    </div>
+    <div class="grid3 reveal">
+      <div class="scale-card fine"><div class="tag">입력 표현</div><h4 style="font-size:1rem">CDD 피라미드</h4><p style="font-family:var(--mono);font-size:.85rem;color:var(--ink)">scales [2,4,8,16,32]</p></div>
+      <div class="scale-card mid"><div class="tag">어댑터</div><h4 style="font-size:1rem">공유 3×3</h4><p style="font-family:var(--mono);font-size:.85rem;color:var(--ink)">8 ch / scale</p></div>
+      <div class="scale-card coarse"><div class="tag">융합</div><h4 style="font-size:1rem">하향식 잔차</h4><p style="font-family:var(--mono);font-size:.85rem;color:var(--ink)">1×1 projection · no downsample</p></div>
+      <div class="scale-card halo"><div class="tag">백본</div><h4 style="font-size:1rem">조밀 ConvNeXt</h4><p style="font-family:var(--mono);font-size:.85rem;color:var(--ink)">width 64 · depth 4 · k 7×7</p></div>
+      <div class="scale-card fine"><div class="tag">잠재 출력</div><h4 style="font-size:1rem">32 채널</h4><p style="font-family:var(--mono);font-size:.85rem;color:var(--ink)">z ∈ ℝ³²ˣᴴˣᵂ · LayerNorm</p></div>
+      <div class="scale-card mid"><div class="tag">최적화</div><h4 style="font-size:1rem">AdamW</h4><p style="font-family:var(--mono);font-size:.85rem;color:var(--ink)">lr 1e-4 · wd 1e-5 · 10 epochs</p></div>
+      <div class="scale-card coarse"><div class="tag">EMA 모멘텀</div><h4 style="font-size:1rem">0.99 → 0.9999</h4><p style="font-family:var(--mono);font-size:.85rem;color:var(--ink)">warmup fraction 0.25</p></div>
+      <div class="scale-card halo"><div class="tag">손실 가중</div><h4 style="font-size:1rem">pred 50 · spread 5</h4><p style="font-family:var(--mono);font-size:.85rem;color:var(--ink)">τ = 1 · pooled</p></div>
+      <div class="scale-card fine"><div class="tag">확장 채널</div><h4 style="font-size:1rem">Dilations</h4><p style="font-family:var(--mono);font-size:.85rem;color:var(--ink)">[1,1,1,1] MHD·청두 · [1,1,2,4] NGC</p></div>
+    </div>
+    <p class="prose reveal body-dim" style="margin-top:32px;font-size:.92rem">UMAP은 표준화 입력, 유클리드 거리, min_dist = 0.2, n_neighbors = 50, L2 정규화 없음으로 투영한다. MHD 학습은 통계적 등방성을 보존하는 D4 증강(회전·플립), 청두·NGC는 플립 증강만 사용한다. 인코더 국소 수용장은 25 px(NGC는 확장 블록으로 49 px)이며, 필드 경계에서 이 폭의 절반 이내 픽셀은 완전한 맥락이 없어 학습 시 타깃 배치와 추론 시 잠재 평가에서 제외한다. NGC는 필드 픽셀의 50% 이상이 잡음 지배적이므로 RMS 잡음의 3.5배를 넘는 영역으로 타깃 중심을 제한한다.</p>
+  </div>
+</section>
+
+<!-- ============ 결론 ============ -->
+<section id="conclusion">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">10 / 결론</span>
+      <h2>표현과 예측 과제를 동일한 물리 스케일 계층으로 조직하라</h2>
+    </div>
+    <div class="prose reveal">
+      <p>과학의 필드는 본질적으로 멀티스케일이며, 그 조직화를 포착하려는 표현은 고정 이미지 격자의 임의 기하가 아니라 물리 계층에 의해 지배되어야 한다. CDD는 미세·중간·거친 형태를 정렬된 입력 구조로 노출하는 국소·픽셀 정합 성분을 조밀 인코더에 공급하고, 동일한 계층이 마스킹 발자국을 결정한다. <strong>CDD가 표현과 예측 모두의 공통 기하를 제공</strong>하면서, 예측 네트워크에 지름길을 줄 수 있는 기존 멀티스케일 기저의 진동성 응답 영향을 줄인다.</p>
+      <p>입력 표현과 예측 과제가 도메인 특정 객체 정의·라벨 집합·목록·분할 규칙이 아니라 필드의 스케일 계층으로 정의되므로, ScaleAware-JEPA는 조직화가 스케일에 걸쳐 중첩된 계 전반에 적용된다. MHD 난류, 도시 야간광 구조, NGC 3627 분자가스 방출은 의도적으로 이질적인 시연이다. 각 설정에서 확산 영역, 필라멘트 계면, 조밀 덩어리, 흐릿한 확장 구조가 일관된 이웃을 점유하는 조밀하고 공간적으로 역사상 가능한 잠재 아틀라스를 산출한다.</p>
+      <p class="body-dim">이 방법은 도메인 과학자가 물리 지식을 주입하는 직접 경로도 제공한다. CDD 스케일 개수와 마스크 발자국 배수는 연구 대상 필드의 스케일 구조에 대한 가정을 표현하는 해석 가능한 파라미터다. 이는 JEPA를 고정 패치 시각 학습을 넘어, 복잡한 멀티스케일 계의 잠재 추출을 위한 일반 아키텍처로 이끈다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="foot-title">ScaleAware-JEPA</div>
+        <p class="body-dim">멀티스케일 물리장의 발견을 위한 잠재 표현. 제약확산분해(CDD)로 표현과 예측 과제를 동일한 물리 스케일 계층에 결속한다.</p>
+        <p style="font-family:var(--mono);font-size:.78rem;color:var(--ink-faint);margin-top:16px">Guang-Xing Li · gxli.ai@proton.me</p>
+      </div>
+      <div>
+        <h5>자원</h5>
+        <p><a href="https://github.com/gxli/SA-JEPA" target="_blank" rel="noopener">github.com/gxli/SA-JEPA</a></p>
+        <p><a href="https://arxiv.org/abs/2606.29723" target="_blank" rel="noopener">arXiv:2606.29723</a></p>
+      </div>
+      <div>
+        <h5>실험 하드웨어</h5>
+        <p class="body-dim">Apple MacBook Pro M3 Pro</p>
+        <p class="body-dim">NVIDIA RTX 3090 (headless)</p>
+        <p style="font-family:var(--mono);font-size:.72rem;color:var(--ink-faint);margin-top:10px">자체 자금 · 소비자급 하드웨어</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // 진행 바
+  const prog=document.getElementById('prog');
+  const onScroll=()=>{
+    const h=document.documentElement.scrollHeight-window.innerHeight;
+    prog.style.width=(window.scrollY/h*100)+'%';
+  };
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+  // 스크롤 리빌
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:0.12,rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.reveal').forEach((el,i)=>{
+    el.style.transitionDelay=(Math.min(i%4,3)*70)+'ms';
+    io.observe(el);
+  });
+</script>
+</body>
+</html>
