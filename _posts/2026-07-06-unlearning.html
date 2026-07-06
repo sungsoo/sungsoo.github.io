@@ -1,0 +1,673 @@
+---
+layout: null
+title: "Unlearning Data at Scale" 
+date: 2026-07-06
+categories: [artificial intelligence]
+tags: [artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unlearning Data at Scale · 대규모 데이터 언러닝</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#eceae4;
+    --paper2:#e4e1d8;
+    --card:#f5f3ee;
+    --line:#cfcabb;
+    --line2:#b8b2a0;
+    --ink:#1c1b18;
+    --ink-soft:#4a4740;
+    --ink-faint:#8a857a;
+    --erase:#c0362c;        /* 소거 스트라이크 */
+    --erase-dim:#d97a72;
+    --retain:#2f6b5e;       /* 유지(retain) */
+    --retain-soft:#5a9184;
+    --accent:#1c1b18;
+    --disp:'Fraunces',serif;
+    --body:'Noto Sans KR',sans-serif;
+    --mono:'IBM Plex Mono',monospace;
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--body);
+    font-weight:300;
+    line-height:1.85;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  /* 배경 격자(데이터 좌표) */
+  body::before{content:"";position:fixed;inset:0;z-index:-2;
+    background:
+      linear-gradient(var(--paper2),var(--paper));
+  }
+  body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
+    background-image:
+      linear-gradient(rgba(180,178,160,.18) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(180,178,160,.18) 1px,transparent 1px);
+    background-size:34px 34px;
+    -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 30%,#000,transparent 85%);
+    mask-image:radial-gradient(ellipse 70% 60% at 50% 30%,#000,transparent 85%);
+  }
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 30px}
+
+  .progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:100;
+    background:var(--erase);}
+
+  /* ---------- HERO ---------- */
+  header.hero{position:relative;padding:130px 0 90px;overflow:hidden}
+  .kicker{font-family:var(--mono);font-size:.72rem;letter-spacing:.34em;text-transform:uppercase;
+    color:var(--erase);margin-bottom:30px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .kicker::before{content:"";width:40px;height:2px;background:var(--erase)}
+  .hero h1{font-family:var(--disp);font-weight:600;line-height:.98;letter-spacing:-.02em;
+    font-size:clamp(3rem,9vw,7rem);color:var(--ink)}
+  /* 소거되는 단어 시그니처 */
+  .strike{position:relative;display:inline-block}
+  .strike::after{content:"";position:absolute;left:-2%;right:-2%;top:52%;height:.09em;
+    background:var(--erase);transform:scaleX(0);transform-origin:left;
+    animation:strike 1.4s cubic-bezier(.6,0,.2,1) .8s forwards}
+  @keyframes strike{to{transform:scaleX(1)}}
+  .hero .ital{font-family:var(--disp);font-style:italic;font-weight:400;color:var(--ink-soft)}
+  .hero .lede{max-width:660px;margin-top:34px;font-size:1.08rem;color:var(--ink-soft);font-weight:300}
+  .hero .lede b{font-weight:500;color:var(--ink)}
+  .hero-meta{margin-top:46px;display:flex;gap:0;flex-wrap:wrap;border-top:1px solid var(--line2)}
+  .hero-meta div{padding:20px 26px 20px 0;margin-right:26px;border-right:1px solid var(--line);
+    font-family:var(--mono);font-size:.72rem;color:var(--ink-faint);letter-spacing:.06em}
+  .hero-meta div:last-child{border-right:none}
+  .hero-meta b{display:block;color:var(--ink);font-size:.92rem;font-weight:500;margin-top:6px;
+    font-family:var(--body)}
+
+  /* 방정식 히어로 카드 */
+  .eq-hero{margin-top:56px;background:var(--ink);color:var(--paper);border-radius:6px;
+    padding:40px 42px;position:relative;overflow:hidden}
+  .eq-hero .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--erase-dim);margin-bottom:18px}
+  .eq-hero .expr{font-family:var(--mono);font-size:clamp(1.1rem,3vw,1.7rem);color:#fff;line-height:1.6}
+  .eq-hero .expr .neg{color:var(--erase-dim)}
+  .eq-hero .expr .pos{color:var(--retain-soft)}
+  .eq-hero .legend{display:flex;gap:28px;margin-top:24px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:.74rem;color:#b9b6ac}
+  .eq-hero .legend span::before{content:"";display:inline-block;width:10px;height:10px;
+    border-radius:2px;margin-right:8px;vertical-align:middle}
+  .eq-hero .legend .lf::before{background:var(--erase-dim)}
+  .eq-hero .legend .lr::before{background:var(--retain-soft)}
+
+  /* ---------- 섹션 ---------- */
+  section{padding:88px 0;position:relative}
+  section + section{border-top:1px solid var(--line)}
+  .sec-head{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:baseline;margin-bottom:46px}
+  .sec-num{font-family:var(--mono);font-size:.9rem;color:var(--erase);font-weight:500;
+    border:1px solid var(--line2);border-radius:50%;width:48px;height:48px;display:flex;
+    align-items:center;justify-content:center;flex-shrink:0}
+  .sec-head h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.7rem,4vw,2.7rem);
+    letter-spacing:-.015em;line-height:1.08;color:var(--ink)}
+  .sec-head .dek{grid-column:2;margin-top:10px;color:var(--ink-soft);font-size:1.04rem;font-weight:300}
+  @media(max-width:640px){.sec-head{grid-template-columns:1fr;gap:14px}.sec-head .dek{grid-column:1}}
+
+  .prose{max-width:740px}
+  p{margin-bottom:1.2em;font-size:1.03rem;color:var(--ink-soft)}
+  .prose p{color:var(--ink-soft)}
+  strong{font-weight:500;color:var(--ink)}
+  em{font-style:italic;font-family:var(--disp);color:var(--erase);font-weight:500}
+  .term{font-family:var(--mono);font-size:.92em;background:var(--paper2);padding:1px 7px;
+    border-radius:3px;color:var(--ink);border:1px solid var(--line)}
+  a{color:var(--erase);text-decoration:none;border-bottom:1px solid var(--erase-dim);transition:.2s}
+  a:hover{background:var(--erase);color:#fff;border-color:var(--erase)}
+
+  /* ---------- 카드 ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:30px 30px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  @media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+
+  .card h4{font-family:var(--disp);font-weight:600;font-size:1.22rem;color:var(--ink);margin-bottom:10px}
+  .card .ct{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:14px}
+  .card p{font-size:.94rem;margin-bottom:0;color:var(--ink-soft)}
+  .card.erase{border-left:3px solid var(--erase)}
+  .card.retain{border-left:3px solid var(--retain)}
+
+  /* 대비 블록 (exact vs approx 등) */
+  .versus{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;
+    border:1px solid var(--line2);border-radius:6px;overflow:hidden}
+  .versus .side{padding:28px 28px}
+  .versus .side.a{background:var(--card)}
+  .versus .side.b{background:var(--paper2)}
+  .versus .vs{display:flex;align-items:center;justify-content:center;padding:0 18px;
+    background:var(--ink);color:var(--paper);font-family:var(--disp);font-style:italic;font-size:1.1rem}
+  .versus h4{font-family:var(--disp);font-size:1.15rem;font-weight:600;margin-bottom:6px}
+  .versus .tag{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--erase);margin-bottom:12px}
+  .versus.retn .tag{color:var(--retain)}
+  .versus p{font-size:.92rem;margin:0;color:var(--ink-soft)}
+  @media(max-width:640px){.versus{grid-template-columns:1fr}.versus .vs{padding:12px}}
+
+  /* 순번 리스트 (개념/도전과제) */
+  .stack{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+  .row{display:grid;grid-template-columns:150px 1fr;gap:28px;padding:24px 0;
+    border-bottom:1px solid var(--line);align-items:start}
+  .row .rk{font-family:var(--disp);font-weight:600;font-size:1.12rem;color:var(--ink)}
+  .row .rk .sub{display:block;font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--erase);margin-top:6px;font-weight:400}
+  .row p{margin:0;font-size:.97rem;color:var(--ink-soft)}
+  @media(max-width:640px){.row{grid-template-columns:1fr;gap:8px}}
+
+  /* 벤치마크 태그 */
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  .chip{font-family:var(--mono);font-size:.76rem;padding:6px 13px;border:1px solid var(--line2);
+    border-radius:20px;color:var(--ink);background:var(--card)}
+  .chip.hot{border-color:var(--erase);color:var(--erase)}
+
+  /* 방법론 매트릭스 */
+  .method{border:1px solid var(--line);border-radius:6px;padding:24px 26px;background:var(--card);
+    margin-bottom:16px}
+  .method .mh{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+  .method h4{font-family:var(--disp);font-size:1.18rem;font-weight:600;color:var(--ink)}
+  .method .badge{font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;
+    padding:4px 10px;border-radius:3px;background:var(--paper2);color:var(--ink-faint);border:1px solid var(--line)}
+  .method .badge.new{background:var(--erase);color:#fff;border-color:var(--erase)}
+  .method ul{list-style:none;margin:0}
+  .method li{padding-left:20px;position:relative;font-size:.95rem;color:var(--ink-soft);margin-bottom:8px}
+  .method li:last-child{margin-bottom:0}
+  .method li::before{content:"—";position:absolute;left:0;color:var(--erase)}
+  .method li b{color:var(--ink);font-weight:500}
+
+  /* 인용 */
+  .pull{border-left:3px solid var(--erase);padding:6px 0 6px 28px;margin:32px 0;
+    font-family:var(--disp);font-style:italic;font-size:1.35rem;line-height:1.5;color:var(--ink);
+    max-width:720px;font-weight:400}
+
+  /* 응용 그리드 */
+  .apps{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  @media(max-width:640px){.apps{grid-template-columns:1fr}}
+  .app{background:var(--card);padding:26px 26px}
+  .app .an{font-family:var(--mono);font-size:.7rem;color:var(--erase);letter-spacing:.1em;margin-bottom:10px}
+  .app h4{font-family:var(--disp);font-size:1.1rem;font-weight:600;margin-bottom:8px;color:var(--ink)}
+  .app p{font-size:.9rem;margin:0;color:var(--ink-soft)}
+
+  /* 미래방향 타임라인 */
+  .future{display:flex;flex-direction:column;gap:0;position:relative;padding-left:26px}
+  .future::before{content:"";position:absolute;left:5px;top:8px;bottom:8px;width:1px;background:var(--line2)}
+  .fut{position:relative;padding:0 0 30px 26px}
+  .fut:last-child{padding-bottom:0}
+  .fut::before{content:"";position:absolute;left:-25px;top:7px;width:11px;height:11px;border-radius:50%;
+    background:var(--paper);border:2px solid var(--erase)}
+  .fut h4{font-family:var(--disp);font-size:1.15rem;font-weight:600;color:var(--ink);margin-bottom:6px}
+  .fut p{font-size:.96rem;margin:0;color:var(--ink-soft)}
+
+  /* 참고문헌 */
+  .refs{display:grid;gap:12px}
+  .ref{display:grid;grid-template-columns:auto 1fr;gap:18px;padding:18px 22px;background:var(--card);
+    border:1px solid var(--line);border-radius:6px;align-items:center}
+  .ref .rc{font-family:var(--mono);font-size:.72rem;color:var(--erase);font-weight:500}
+  .ref .rt{font-size:.94rem;color:var(--ink)}
+  .ref .ru{display:block;font-family:var(--mono);font-size:.76rem;color:var(--ink-faint);margin-top:4px;
+    word-break:break-all}
+
+  /* 리빌 */
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.2,.6,.2,1),transform .7s cubic-bezier(.2,.6,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  footer{padding:70px 0 60px;background:var(--ink);color:var(--paper);margin-top:0}
+  footer .wrap{max-width:var(--maxw)}
+  .foot-t{font-family:var(--disp);font-weight:600;font-size:1.6rem;margin-bottom:14px;color:#fff}
+  footer p{color:#b9b6ac;font-size:.92rem;max-width:560px}
+  footer .fmeta{margin-top:28px;font-family:var(--mono);font-size:.74rem;color:#8a857a;letter-spacing:.06em}
+
+  ::selection{background:var(--erase);color:#fff}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    .reveal{opacity:1;transform:none}
+    .strike::after{transform:scaleX(1)}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Machine Unlearning · Foundation Model 시대의 데이터 소거</div>
+    <h1>학습한 것을<br><span class="strike">잊는다</span> <span class="ital">at scale</span></h1>
+    <p class="lede"><b>대규모 데이터 언러닝</b>은 LLM과 기초 모델이 학습한 방대한 데이터에서 특정 부분 — 민감 정보, 저작권 콘텐츠, 유해 지식 — 을 효율적으로 제거하면서 모델의 전체 유틸리티를 유지하는 기술 패러다임이다. GDPR의 잊힐 권리, AI 안전성, 프라이버시 보호를 위한 핵심 솔루션으로 자리 잡았다.</p>
+    <div class="hero-meta">
+      <div>패러다임<b>Selective Forgetting</b></div>
+      <div>대상 규모<b>10⁹–10¹² params</b></div>
+      <div>준거<b>GDPR · EU AI Act</b></div>
+      <div>기준 연구<b>2025–2026</b></div>
+    </div>
+
+    <div class="eq-hero">
+      <div class="lbl">문제 정의 · 목적함수</div>
+      <div class="expr">
+        min<sub>θ</sub> &nbsp;L(θ) = <span class="neg">−L<sub>f</sub>(θ)</span> &nbsp;+&nbsp; λ&nbsp;<span class="pos">L<sub>r</sub>(θ)</span>
+      </div>
+      <div class="legend">
+        <span class="lf">L<sub>f</sub> · Forget Set 손실 (최대화하여 잊기)</span>
+        <span class="lr">L<sub>r</sub> · Retain Set 손실 (최소화하여 유지)</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 01 정의 ============ -->
+<section id="def">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">01</span>
+      <h2>정의</h2>
+      <p class="dek">훈련된 모델에서 특정 데이터 포인트의 영향을 선택적으로 제거해, 모델이 그 데이터를 전혀 보지 않은 것처럼 작동하게 만드는 과정.</p>
+    </div>
+    <div class="prose reveal">
+      <p><strong>Machine Unlearning</strong>은 훈련된 모델에서 Forget Set <span class="term">D_f</span>의 영향을 선택적으로 제거하는 과정이다. 이상적으로는 Retain Set <span class="term">D \ D_f</span>로 처음부터 재훈련한 모델과 기능적으로 동등해야 한다.</p>
+      <p>대규모 맥락에서는 수십억~조 파라미터 LLM의 방대한 pretraining 데이터에서 개인정보나 해로운 콘텐츠 같은 특정 지식을 제거하는 것을 뜻한다. 보장 수준에 따라 <span class="term">exact unlearning</span>(완전 제거)과 <span class="term">approximate unlearning</span>(효율적 근사 제거)이 구분된다.</p>
+      <p class="pull">책에서 특정 장을 지우개로 지우되, 나머지 이야기의 흐름과 일관성을 해치지 않는 예술이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 문제 정의 ============ -->
+<section id="problem">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">02</span>
+      <h2>문제 정의</h2>
+      <p class="dek">D = D_r ∪ D_f 에서 D_f 를 제거한 모델 θ_unl 을, 이상적 재훈련 모델과 근사시키는 것이 목표다.</p>
+    </div>
+    <div class="prose reveal">
+      <p>주어진 훈련 데이터에서 Forget Set을 제거한 모델 <span class="term">θ_unl</span>을 얻되, <span class="term">θ_unl ≈ argmin_θ L(θ; D \ D_f)</span> 즉 이상적 재훈련 모델에 가깝게 만든다. 목적함수는 Forget 손실을 최대화(잊기)하고 Retain 손실을 최소화(유지)하며, trade-off 파라미터 λ로 둘을 조율한다.</p>
+      <p>대규모의 본질적 난점은 두 가지다. 하나는 전체 재훈련이 불가능한 <strong>연산 비용</strong>이고, 다른 하나는 유틸리티 저하와 파국적 망각 같은 <strong>부작용</strong>이다. <em>데이터를 지웠는데 모델 전체가 망가지는</em> 딜레마다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 핵심 개념 ============ -->
+<section id="concepts">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">03</span>
+      <h2>핵심 개념</h2>
+      <p class="dek">언러닝을 분류하고 검증하는 축들. 보장 수준, 제거 단위, 편집 방식, 검증 수단으로 나뉜다.</p>
+    </div>
+
+    <div class="versus reveal" style="margin-bottom:22px">
+      <div class="side a">
+        <div class="tag">Exact Unlearning</div>
+        <h4>완전 제거 · 보장</h4>
+        <p>SISA(Sharded-Isolated-Sliced-Aggregation)처럼 shard별 재훈련으로 제거를 형식적으로 보장한다.</p>
+      </div>
+      <div class="vs">vs</div>
+      <div class="side b">
+        <div class="tag">Approximate Unlearning</div>
+        <h4>효율적 근사</h4>
+        <p>Gradient ascent, parameter editing, model merging 등으로 효율적 근사 제거를 수행한다.</p>
+      </div>
+    </div>
+
+    <div class="versus retn reveal" style="margin-bottom:28px">
+      <div class="side a">
+        <div class="tag">Data-level</div>
+        <h4>데이터 포인트 제거</h4>
+        <p>특정 datapoint의 영향을 지운다.</p>
+      </div>
+      <div class="vs">vs</div>
+      <div class="side b">
+        <div class="tag">Concept-level</div>
+        <h4>개념 지식 제거</h4>
+        <p>'Harry Potter' 같은 개념 단위 지식을 지운다.</p>
+      </div>
+    </div>
+
+    <div class="grid3 reveal">
+      <div class="card erase">
+        <div class="ct">Model State Arithmetic</div>
+        <h4>MSA</h4>
+        <p>Checkpoint history를 활용해 forget vector를 계산·적용한다. (2026 ICLR)</p>
+      </div>
+      <div class="card retain">
+        <div class="ct">Subspace Isolation</div>
+        <h4>Task Vector</h4>
+        <p>특정 지식 subspace를 동결·편집해 대상 지식만 겨냥한다.</p>
+      </div>
+      <div class="card">
+        <div class="ct">Verification</div>
+        <h4>검증</h4>
+        <p>Membership Inference Attack(MIA), Logit 기반 평가, 적대적 재학습 견고성으로 확인한다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 서론 ============ -->
+<section id="intro">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">04</span>
+      <h2>서론</h2>
+      <p class="dek">LLM 배포 확대와 함께 프라이버시·저작권·bias 문제가 부각되면서 언러닝이 부상했다.</p>
+    </div>
+    <div class="prose reveal">
+      <p>기존 재훈련은 trillions of tokens 규모에서 비현실적이다. Approximate 방법들이 효율성을 제공하지만, 견고한 망각(적대적 재학습 방어)과 유틸리티 보존 사이의 trade-off가 핵심 도전으로 남는다. 최근 설문조사들은 taxonomy, benchmark, LLM 특화 기법을 체계화한다.</p>
+      <div class="chips">
+        <span class="chip hot">TOFU</span>
+        <span class="chip hot">MUSE-Books</span>
+        <span class="chip hot">WMDP</span>
+        <span class="chip">MIA</span>
+        <span class="chip">Adversarial Relearning</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 동기와 배경 ============ -->
+<section id="motivation">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">05</span>
+      <h2>동기와 배경</h2>
+      <p class="dek">규제 준수부터 정렬(alignment)까지, 한 번 학습된 지식을 효율적으로 잊는 능력이 신뢰 가능한 AI의 필수 요소가 되었다.</p>
+    </div>
+    <div class="grid2 reveal">
+      <div class="card">
+        <div class="ct">동기 · Motivation</div>
+        <h4>왜 잊어야 하는가</h4>
+        <p>GDPR·EU AI Act 준수, 저작권 침해 대응(예: Harry Potter 지식 제거), 유해 콘텐츠 제거, 오염 데이터에 대한 모델 유지보수, AI alignment.</p>
+      </div>
+      <div class="card">
+        <div class="ct">배경 · Background</div>
+        <h4>계보</h4>
+        <p>Continual learning, differential privacy, model editing(ROME, MEMIT)에서 발전했다. 대규모에서는 지식을 효율적으로 잊는 능력 자체가 신뢰성의 조건이 된다.</p>
+      </div>
+    </div>
+    <p class="pull reveal">모델을 살아있는 유기체로 보면, 언러닝은 선택적 기억 상실을 통해 지속적 적응을 가능케 한다.</p>
+  </div>
+</section>
+
+<!-- ============ 06 도전 과제 ============ -->
+<section id="challenges">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">06</span>
+      <h2>도전 과제</h2>
+      <p class="dek">효율성, trade-off, 견고성, 보장, 확장성, 실세계 동역학이 서로 얽힌다.</p>
+    </div>
+    <div class="stack reveal">
+      <div class="row">
+        <div class="rk">확장성 · 효율<span class="sub">Scalability</span></div>
+        <p>Billion-parameter 모델에서 full retraining은 불가능하며, approximate 방법도 연산 부담이 크다.</p>
+      </div>
+      <div class="row">
+        <div class="rk">유틸리티 균형<span class="sub">Trade-off</span></div>
+        <p>과도한 언러닝은 파국적 망각으로, 부족한 언러닝은 MIA 성공 같은 프라이버시 누출로 이어진다.</p>
+      </div>
+      <div class="row">
+        <div class="rk">견고성<span class="sub">Robustness</span></div>
+        <p>적대적 재학습·파인튜닝으로 '잊힌' 지식이 쉽게 회복될 수 있다.</p>
+      </div>
+      <div class="row">
+        <div class="rk">보장 · 검증<span class="sub">Guarantees</span></div>
+        <p>형식적 인증(certification)이 부족하고, LLM의 블랙박스성이 검증을 어렵게 한다.</p>
+      </div>
+      <div class="row">
+        <div class="rk">멀티모달<span class="sub">Cross-modal</span></div>
+        <p>이미지·다국어로의 확장이 어렵다.</p>
+      </div>
+      <div class="row">
+        <div class="rk">실세계 동역학<span class="sub">Dynamics</span></div>
+        <p>Non-IID 데이터, 빈번한 요청, checkpoint 저장 오버헤드가 겹친다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 07 연구 질문 ============ -->
+<section id="rq">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">07</span>
+      <h2>연구 질문</h2>
+      <p class="dek">확장성, 정밀 역전, 진정한 망각의 평가, LLM 특유의 성질이 열린 질문으로 남는다.</p>
+    </div>
+    <div class="grid2 reveal">
+      <div class="card erase">
+        <div class="ct">Scalability</div>
+        <p>유틸리티 손실 없이 확장 가능한 exact/approximate 언러닝을 어떻게 달성하는가.</p>
+      </div>
+      <div class="card erase">
+        <div class="ct">Reversal</div>
+        <p>Checkpoint history나 model merging으로 데이터 영향을 정밀하게 역전할 수 있는가.</p>
+      </div>
+      <div class="card erase">
+        <div class="ct">Evaluation</div>
+        <p>적대적 견고성을 포함해 진정한 망각을 어떻게 평가하는가.</p>
+      </div>
+      <div class="card erase">
+        <div class="ct">LLM-specific</div>
+        <p>자기회귀적 성질과 거대 규모를 어떻게 다루는가. 나아가 설계 단계의 사전적 언러닝(MUNKEY)과 연합 언러닝은 어떻게 구현하는가.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 08 접근법 ============ -->
+<section id="methods">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">08</span>
+      <h2>접근법 · 방법론</h2>
+      <p class="dek">직접 파인튜닝부터 국소 파라미터 수정, 보조 모델, 입출력 기반, 그리고 2025–26년의 혁신 기법까지.</p>
+    </div>
+
+    <div class="reveal">
+      <div class="method">
+        <div class="mh"><h4>직접 파인튜닝</h4><span class="badge">Direct Fine-Tuning</span></div>
+        <ul>
+          <li><b>Gradient Ascent (GA)</b> + 정규화(KL, retain loss)</li>
+          <li><b>Preference Optimization (DPO)</b></li>
+          <li><b>Relabeling</b> — 중립 응답으로 대체</li>
+        </ul>
+      </div>
+      <div class="method">
+        <div class="mh"><h4>국소 파라미터 수정</h4><span class="badge">Localized Modification</span></div>
+        <ul>
+          <li><b>Task vectors</b> 로 지식 방향 편집</li>
+          <li><b>LoRA-based editing</b></li>
+          <li><b>Subspace isolation</b> (UNLEARN)</li>
+        </ul>
+      </div>
+      <div class="method">
+        <div class="mh"><h4>보조 모델 · 증류</h4><span class="badge">Auxiliary / Distillation</span></div>
+        <ul>
+          <li><b>Knowledge distillation</b></li>
+          <li><b>RMU</b> (Randomized Model Unlearning)</li>
+        </ul>
+      </div>
+      <div class="method">
+        <div class="mh"><h4>입출력 기반</h4><span class="badge">Input/Output-based</span></div>
+        <ul>
+          <li><b>Prompting · guardrails</b></li>
+          <li><b>In-context unlearning</b></li>
+        </ul>
+      </div>
+      <div class="method">
+        <div class="mh"><h4>혁신 기법 (2025–26)</h4><span class="badge new">Innovative</span></div>
+        <ul>
+          <li><b>MSA</b> — 과거 checkpoint로 forget vector 계산</li>
+          <li><b>SIFT-Masks</b> — 대규모 model merging</li>
+          <li><b>MUNKEY</b> — key deletion 기반 설계 단계 망각(forgetting-by-design)</li>
+        </ul>
+      </div>
+    </div>
+    <p class="prose reveal body-dim" style="color:var(--ink-faint);font-size:.95rem">이 방법들은 효율성과 견고성의 Pareto frontier를 탐색한다.</p>
+  </div>
+</section>
+
+<!-- ============ 09 주요 응용 ============ -->
+<section id="apps">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">09</span>
+      <h2>주요 응용</h2>
+      <p class="dek">프라이버시·저작권에서 AI 안전, 연합 학습, 도메인 특화, 모델 유지보수까지.</p>
+    </div>
+    <div class="apps reveal">
+      <div class="app">
+        <div class="an">01 · Privacy &amp; Copyright</div>
+        <h4>프라이버시 · 저작권</h4>
+        <p>민감 데이터와 저작물을 제거한다. TOFU 벤치마크로 평가한다.</p>
+      </div>
+      <div class="app">
+        <div class="an">02 · Safety &amp; Alignment</div>
+        <h4>AI 안전 · 정렬</h4>
+        <p>유해 지식(WMDP)과 bias를 완화한다.</p>
+      </div>
+      <div class="app">
+        <div class="an">03 · Federated</div>
+        <h4>연합 학습</h4>
+        <p>클라이언트 단위 언러닝(ASG-FU 등)을 수행한다.</p>
+      </div>
+      <div class="app">
+        <div class="an">04 · Domain-specific</div>
+        <h4>도메인 특화</h4>
+        <p>그래프 언러닝, 추천 시스템, 전력 시스템, 멀티모달 LLM에 적용한다.</p>
+      </div>
+      <div class="app">
+        <div class="an">05 · Maintenance</div>
+        <h4>모델 유지보수</h4>
+        <p>낡거나 오염된 데이터, 롱테일 데이터를 제거한다.</p>
+      </div>
+      <div class="app">
+        <div class="an">06 · Benchmark</div>
+        <h4>표준 검증</h4>
+        <p>TOFU · MUSE-Books · WMDP로 forget 품질과 유틸리티를 함께 측정한다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10 미해결 문제 ============ -->
+<section id="open">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">10</span>
+      <h2>미해결 문제</h2>
+      <p class="dek">형식적 보장, 정교한 공격에 대한 견고성, 벤치마크 표준화가 여전히 열려 있다.</p>
+    </div>
+    <div class="stack reveal">
+      <div class="row"><div class="rk">인증 언러닝<span class="sub">Certified</span></div><p>대규모에서 형식적 보장(certified unlearning)을 확보하기 어렵다.</p></div>
+      <div class="row"><div class="rk">공격 견고성<span class="sub">Robustness</span></div><p>재학습·추출 등 정교한 공격에 취약하다.</p></div>
+      <div class="row"><div class="rk">표준화<span class="sub">Standard</span></div><p>벤치마크와 메트릭의 표준화가 미비하다.</p></div>
+      <div class="row"><div class="rk">조 단위 효율<span class="sub">Trillion-era</span></div><p>trillion-parameter 시대의 효율성이 관건이다.</p></div>
+      <div class="row"><div class="rk">멀티모달 통합<span class="sub">Continual</span></div><p>멀티모달·연속 언러닝의 통합이 미완이다.</p></div>
+      <div class="row"><div class="rk">과정의 위험<span class="sub">Meta-risk</span></div><p>언러닝 과정 자체가 새로운 프라이버시 위험(unlearning attack)을 낳는다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11 미래 방향 ============ -->
+<section id="future">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">11</span>
+      <h2>미래 방향</h2>
+      <p class="dek">설계 단계의 언러닝, 확장 가능한 하이브리드 기법, 더 나은 평가, 그리고 이론적 진전.</p>
+    </div>
+    <div class="future reveal">
+      <div class="fut">
+        <h4>Unlearning-by-Design</h4>
+        <p>모델 아키텍처부터 망각을 지원한다. Memory-augmented, key deletion 방식.</p>
+      </div>
+      <div class="fut">
+        <h4>하이브리드 · 확장 기법</h4>
+        <p>Checkpoint 활용, 효율적 merging, 노이즈를 더한 증류(UNDO)를 결합한다.</p>
+      </div>
+      <div class="fut">
+        <h4>더 나은 평가</h4>
+        <p>적대적·멀티모달 벤치마크와 통합 메트릭(forget 품질 + 유틸리티 + 효율 + 견고성)을 확립한다.</p>
+      </div>
+      <div class="fut">
+        <h4>사전적 · 윤리적 AI</h4>
+        <p>프라이버시 통합 훈련, 연합·다중 에이전트 언러닝으로 나아간다.</p>
+      </div>
+      <div class="fut">
+        <h4>이론적 진전</h4>
+        <p>고차원 통계와 인증된 제거(certified removal)를 발전시킨다.</p>
+      </div>
+    </div>
+    <p class="pull reveal">언러닝을 모델의 면역 체계로 발전시켜, 동적이고 자율적인 AI 생태계를 구축한다.</p>
+  </div>
+</section>
+
+<!-- ============ 참고문헌 ============ -->
+<section id="refs">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">↗</span>
+      <h2>주요 출처</h2>
+      <p class="dek">2025–2026년 설문조사·ICLR·JMLR 등 기반.</p>
+    </div>
+    <div class="refs reveal">
+      <div class="ref">
+        <span class="rc">[1]</span>
+        <span class="rt">A Comprehensive Survey of Machine Unlearning for LLMs
+          <a class="ru" href="https://arxiv.org/abs/2503.01854" target="_blank" rel="noopener">arxiv.org/abs/2503.01854</a>
+        </span>
+      </div>
+      <div class="ref">
+        <span class="rc">[2]</span>
+        <span class="rt">Revisiting the Past: Data Unlearning with Model State History (ICLR 2026)
+          <a class="ru" href="https://arxiv.org/abs/2506.20941" target="_blank" rel="noopener">arxiv.org/abs/2506.20941</a>
+        </span>
+      </div>
+      <div class="ref">
+        <span class="rc">[3]</span>
+        <span class="rt">Machine Unlearning for Trustworthy AI
+          <a class="ru" href="https://link.springer.com/article/10.1007/s11831-025-10436-z" target="_blank" rel="noopener">link.springer.com/article/10.1007/s11831-025-10436-z</a>
+        </span>
+      </div>
+      <div class="ref">
+        <span class="rc">[4]</span>
+        <span class="rt">Certified Machine Unlearning (JMLR 2025)
+          <a class="ru" href="http://jmlr.org/papers/volume26/25-1751/25-1751.pdf" target="_blank" rel="noopener">jmlr.org/papers/volume26/25-1751/25-1751.pdf</a>
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-t">Unlearning Data at Scale</div>
+    <p>표현과 유틸리티를 지키면서 특정 지식을 효율적으로 소거하는 기술. 확장성과 견고성의 균형이 성공의 열쇠다.</p>
+    <div class="fmeta">Selective Forgetting · Right to be Forgotten · Trustworthy AI · 2025–2026</div>
+  </div>
+</footer>
+
+<script>
+  const prog=document.getElementById('prog');
+  const onScroll=()=>{
+    const h=document.documentElement.scrollHeight-window.innerHeight;
+    prog.style.width=(h>0?window.scrollY/h*100:0)+'%';
+  };
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:0.1,rootMargin:'0px 0px -6% 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
