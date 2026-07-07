@@ -1,0 +1,721 @@
+---
+layout: null
+title: "Learning Human-Robot Collaboration via Heterogeneous-Agent Lyapunov Policy Optimization" 
+date: 2026-07-07
+categories: [artificial intelligence]
+tags: [artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HALO — Heterogeneous-Agent Lyapunov Policy Optimization</title>
+<style>
+:root{
+  --void:#080a12;
+  --deep:#0d1220;
+  --panel:#121a2e;
+  --panel-2:#0f1626;
+  --line:#26314d;
+  --ink:#e8ecf6;
+  --ink-2:#9aa6c4;
+  --ink-3:#5f6d90;
+  --field:#3d6bff;       /* independent rationality field */
+  --team:#2ee6a6;        /* team rationality field */
+  --contract:#ffcf5c;    /* lyapunov contraction */
+  --danger:#ff5e78;      /* divergence / limit cycle */
+  --serif:"Iowan Old Style","Palatino Linotype","Palatino",Georgia,serif;
+  --mono:"SFMono-Regular","JetBrains Mono","Consolas",ui-monospace,monospace;
+  --sans:"Helvetica Neue",-apple-system,"Segoe UI",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--void);
+  color:var(--ink);
+  font-family:var(--sans);
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--field);color:#fff}
+
+/* ---------- layout scaffolding ---------- */
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+section{position:relative}
+.eyebrow{
+  font-family:var(--mono);
+  font-size:.72rem;
+  letter-spacing:.32em;
+  text-transform:uppercase;
+  color:var(--ink-3);
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:22px;
+}
+.eyebrow::before{
+  content:"";width:34px;height:1px;background:var(--line);
+}
+h2{
+  font-family:var(--serif);
+  font-weight:500;
+  font-size:clamp(1.9rem,4vw,3rem);
+  line-height:1.1;
+  letter-spacing:-.01em;
+  margin-bottom:26px;
+}
+h3{
+  font-family:var(--sans);
+  font-weight:600;
+  font-size:1.12rem;
+  letter-spacing:-.005em;
+  margin-bottom:12px;
+}
+p{color:var(--ink-2);font-size:1.02rem}
+p.lead{color:var(--ink);font-size:1.14rem;max-width:62ch}
+strong{color:var(--ink);font-weight:600}
+em{color:var(--contract);font-style:normal;font-family:var(--mono);font-size:.94em}
+
+/* ---------- hero ---------- */
+#hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;justify-content:center;
+  position:relative;overflow:hidden;
+  border-bottom:1px solid var(--line);
+}
+#fieldCanvas{
+  position:absolute;inset:0;width:100%;height:100%;
+  z-index:0;opacity:.85;
+}
+#hero .wrap{position:relative;z-index:2}
+.hero-grad{
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse 70% 60% at 70% 40%,transparent 0%,var(--void) 78%);
+}
+.tag-row{
+  display:flex;flex-wrap:wrap;gap:10px;margin-bottom:34px;
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;
+}
+.tag{
+  border:1px solid var(--line);padding:6px 12px;border-radius:2px;
+  color:var(--ink-2);text-transform:uppercase;
+  background:rgba(13,18,32,.55);backdrop-filter:blur(4px);
+}
+.acro{
+  font-family:var(--serif);
+  font-size:clamp(4.2rem,15vw,11rem);
+  line-height:.86;font-weight:500;letter-spacing:-.03em;
+  margin-bottom:8px;
+}
+.acro span{
+  background:linear-gradient(120deg,var(--field),var(--team) 55%,var(--contract));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero-sub{
+  font-family:var(--serif);font-size:clamp(1.2rem,2.6vw,1.75rem);
+  color:var(--ink);font-weight:400;max-width:44ch;margin-bottom:30px;
+  line-height:1.35;
+}
+.hero-meta{
+  font-family:var(--mono);font-size:.78rem;color:var(--ink-3);
+  letter-spacing:.05em;line-height:2;
+}
+.hero-meta b{color:var(--ink-2);font-weight:400}
+.scroll-hint{
+  position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+  z-index:2;font-family:var(--mono);font-size:.66rem;letter-spacing:.28em;
+  color:var(--ink-3);text-transform:uppercase;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+}
+.scroll-hint .bar{width:1px;height:40px;background:linear-gradient(var(--ink-3),transparent);animation:drop 2.2s infinite}
+@keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}50.1%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* ---------- generic section spacing ---------- */
+.block{padding:120px 0}
+.block-tight{padding:80px 0}
+
+/* ---------- problem: two competing fields ---------- */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin-top:40px}
+.duo>div{background:var(--panel);padding:34px 30px}
+.duo .fld-label{font-family:var(--mono);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.dot{width:9px;height:9px;border-radius:50%}
+.dot.ind{background:var(--field);box-shadow:0 0 12px var(--field)}
+.dot.tm{background:var(--team);box-shadow:0 0 12px var(--team)}
+.duo h3{color:var(--ink)}
+.duo p{font-size:.94rem}
+.eq{
+  font-family:var(--mono);font-size:.9rem;color:var(--ink);
+  background:var(--panel-2);border:1px solid var(--line);
+  padding:14px 16px;border-radius:3px;margin:16px 0;overflow-x:auto;
+  white-space:nowrap;
+}
+.eq .op{color:var(--contract)}
+.eq .v1{color:var(--field)}
+.eq .v2{color:var(--team)}
+
+/* the gap callout */
+.gap-callout{
+  margin-top:1px;background:var(--panel);border:1px solid var(--line);border-top:none;
+  padding:34px 30px;text-align:center;position:relative;
+}
+.gap-callout .rg{
+  font-family:var(--serif);font-size:clamp(1.4rem,3vw,2rem);color:var(--ink);
+}
+.gap-callout .rg b{color:var(--danger)}
+.gap-eq{font-family:var(--mono);color:var(--ink-2);font-size:1rem;margin-top:14px}
+
+/* ---------- pipeline / mechanism ---------- */
+.pipe{display:flex;flex-direction:column;gap:1px;margin-top:44px;border:1px solid var(--line);background:var(--line)}
+.step{
+  background:var(--panel);padding:28px 30px;display:grid;
+  grid-template-columns:52px 1fr;gap:24px;align-items:start;
+  transition:background .3s;
+}
+.step:hover{background:var(--panel-2)}
+.step .num{
+  font-family:var(--mono);font-size:1.5rem;color:var(--field);
+  font-weight:500;line-height:1;padding-top:4px;
+}
+.step:nth-child(2) .num{color:var(--field)}
+.step:nth-child(3) .num{color:var(--team)}
+.step:nth-child(4) .num{color:var(--contract)}
+.step:nth-child(5) .num{color:var(--contract)}
+.step h3{margin-bottom:8px}
+.step p{font-size:.94rem}
+.step .code{font-family:var(--mono);font-size:.82rem;color:var(--ink-3);margin-top:10px;display:block}
+
+/* projection hero equation */
+.proj-eq{
+  margin:56px 0 0;background:linear-gradient(180deg,var(--panel),var(--panel-2));
+  border:1px solid var(--line);border-radius:6px;padding:40px 34px;text-align:center;
+}
+.proj-eq .lbl{font-family:var(--mono);font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-3);margin-bottom:22px}
+.proj-eq .formula{font-family:var(--mono);font-size:clamp(.95rem,2.4vw,1.4rem);color:var(--ink);letter-spacing:.02em;line-height:1.9}
+.proj-eq .formula .hi{color:var(--contract)}
+.proj-eq .formula .b{color:var(--field)}
+.proj-eq .formula .g{color:var(--team)}
+.proj-eq .cap{margin-top:20px;font-size:.88rem;color:var(--ink-3);max-width:52ch;margin-left:auto;margin-right:auto}
+
+/* ---------- theorem cards ---------- */
+.thm-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:44px}
+.thm{
+  border:1px solid var(--line);border-radius:5px;padding:32px 28px;
+  background:var(--panel);position:relative;overflow:hidden;
+}
+.thm::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--contract)}
+.thm .t-tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--contract);margin-bottom:14px}
+.thm h3{font-family:var(--serif);font-weight:500;font-size:1.35rem;margin-bottom:14px}
+.thm p{font-size:.92rem}
+.thm .tf{font-family:var(--mono);font-size:.86rem;color:var(--ink);background:var(--panel-2);border:1px solid var(--line);padding:12px 14px;border-radius:3px;margin-top:16px;overflow-x:auto;white-space:nowrap}
+
+/* ---------- results table ---------- */
+.tbl-scroll{overflow-x:auto;margin-top:40px;border:1px solid var(--line);border-radius:5px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:640px}
+thead th{
+  background:var(--panel-2);font-family:var(--mono);font-size:.72rem;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);
+  padding:16px 18px;text-align:left;border-bottom:1px solid var(--line);font-weight:400;
+}
+tbody td{padding:14px 18px;border-bottom:1px solid var(--line);color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:none}
+tbody tr.halo td{background:rgba(46,230,166,.06);color:var(--ink)}
+tbody tr.halo td:first-child{color:var(--team);font-weight:600}
+td.best{color:var(--team);font-weight:600}
+.metric-name{font-family:var(--mono);font-size:.82rem}
+
+/* metric bars */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:44px}
+.metric{border:1px solid var(--line);border-radius:5px;padding:26px 22px;background:var(--panel);text-align:left}
+.metric .mv{font-family:var(--serif);font-size:2.4rem;line-height:1;color:var(--team);margin-bottom:6px}
+.metric .mv.warn{color:var(--danger)}
+.metric .ml{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px}
+.metric .cmp{font-size:.82rem;color:var(--ink-3)}
+.metric .cmp b{color:var(--ink-2);font-family:var(--mono)}
+
+/* ---------- real world ---------- */
+.rw{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:44px}
+.rw-card{border:1px solid var(--line);border-radius:5px;padding:30px 28px;background:var(--panel)}
+.rw-card .rw-t{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--field);margin-bottom:16px}
+.rw-card h3{font-family:var(--serif);font-weight:500;font-size:1.3rem;margin-bottom:12px}
+.rw-card p{font-size:.92rem}
+.rw-list{list-style:none;margin-top:18px;font-family:var(--mono);font-size:.82rem}
+.rw-list li{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);color:var(--ink-3)}
+.rw-list li:last-child{border-bottom:none}
+.rw-list li b{color:var(--team);font-weight:600}
+
+/* ---------- arch spec ---------- */
+.arch{display:flex;flex-direction:column;gap:1px;margin-top:40px;border:1px solid var(--line);background:var(--line)}
+.arch-row{background:var(--panel);padding:24px 28px;display:grid;grid-template-columns:120px 90px 1fr;gap:20px;align-items:center}
+.arch-row .lv{font-family:var(--serif);font-size:1.15rem;color:var(--ink)}
+.arch-row .fq{font-family:var(--mono);font-size:.9rem;color:var(--contract)}
+.arch-row .sc{font-size:.9rem;color:var(--ink-2)}
+.arch-row.head{background:var(--panel-2)}
+.arch-row.head span{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--line);padding:70px 0 60px;background:var(--deep)}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:30px}
+footer .f-title{font-family:var(--serif);font-size:1.5rem;margin-bottom:10px}
+footer .f-authors{font-size:.9rem;color:var(--ink-2);line-height:1.8}
+footer .f-meta{font-family:var(--mono);font-size:.76rem;color:var(--ink-3);line-height:2;text-align:right}
+footer a{color:var(--team);text-decoration:none;border-bottom:1px solid transparent;transition:border .2s}
+footer a:hover{border-bottom-color:var(--team)}
+
+/* reveal animation */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
+.reveal.in{opacity:1;transform:none}
+
+/* section divider label */
+.sec-idx{
+  position:absolute;top:60px;right:28px;font-family:var(--mono);
+  font-size:.72rem;color:var(--line);letter-spacing:.1em;
+}
+
+@media(max-width:760px){
+  .duo,.thm-grid,.metrics,.rw{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .arch-row{grid-template-columns:1fr;gap:6px}
+  .arch-row.head{display:none}
+  .step{grid-template-columns:40px 1fr;gap:16px}
+  .block{padding:80px 0}
+  .sec-idx{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .reveal{transition:none;opacity:1;transform:none}
+  .scroll-hint .bar{animation:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ HERO ============ -->
+<section id="hero">
+  <canvas id="fieldCanvas"></canvas>
+  <div class="hero-grad"></div>
+  <div class="wrap">
+    <div class="tag-row">
+      <span class="tag">ICML 2026</span>
+      <span class="tag">Multi-Agent RL</span>
+      <span class="tag">Human–Robot Collaboration</span>
+      <span class="tag">Lyapunov Certificate</span>
+    </div>
+    <div class="acro"><span>HALO</span></div>
+    <p class="hero-sub">이질적 에이전트의 발산하는 학습 동역학을, 정책 파라미터 공간의 리아푸노프 인증으로 수렴 매니폴드에 수축시킨다.</p>
+    <div class="hero-meta">
+      <b>Heterogeneous-Agent Lyapunov Policy Optimization</b><br>
+      Hao Zhang · Yaru Niu · Yikai Wang · Ding Zhao · H. Eric Tseng<br>
+      UT Arlington · Carnegie Mellon University — PMLR 306, 2026
+    </div>
+  </div>
+  <div class="scroll-hint"><span>Scroll</span><span class="bar"></span></div>
+</section>
+
+<!-- ============ CONTEXT ============ -->
+<section class="block">
+  <span class="sec-idx">§ 01 / 문제 정의</span>
+  <div class="wrap reveal">
+    <div class="eyebrow">The Rationality Gap</div>
+    <h2>스크립트화된 인간 모델은<br>협업의 조합적 다양성을 담지 못한다.</h2>
+    <p class="lead">전통적 인간-로봇 협업(HRC)은 인간을 정적이거나 교란된 환경 요소로 취급한다. 이런 로봇-스크립트·로그-리플레이 패러다임은 사전 정의된 인간 입력에 의존하며, 인간 행동의 확률적 풍부함을 포착하지 못한다. 그 결과 로봇은 특정 상호작용 궤적에 과적합되고, 분포 밖(OOD) 행동을 만나면 성능이 붕괴한다.</p>
+    <p style="margin-top:22px;max-width:62ch">본 연구는 이 한계를 넘어서기 위해 이질적 다중 에이전트 강화학습(MARL)을 채택한다. 정적 스크립트를 학습 가능한 휴머노이드 프록시로 대체하여, 로봇이 무한한 상호작용 매니폴드를 탐색하도록 만든다. 그러나 이질적 학습은 <strong>합리성 격차(Rationality Gap, RG)</strong>라는 구조적 병리를 도입한다 — 분산 정책 업데이트가 협력적 공동 최적화에서 이탈하는 현상이다.</p>
+  </div>
+</section>
+
+<!-- ============ TWO FIELDS ============ -->
+<section class="block-tight">
+  <span class="sec-idx">§ 02 / 두 개의 벡터장</span>
+  <div class="wrap reveal">
+    <div class="eyebrow">Competing Vector Fields</div>
+    <h2>격차는 두 벡터장의<br>변분적 불일치로 정의된다.</h2>
+    <p class="lead">CTDE 패러다임에서 각 에이전트는 파트너 정책을 고정된 환경 요소로 가정하고 독립적으로 파라미터를 갱신한다. 이 가정이 개별 그래디언트를 팀 최적 방향에서 이탈시킨다.</p>
+
+    <div class="duo">
+      <div>
+        <div class="fld-label"><span class="dot ind"></span>독립 합리성 장 · u<sub>ind</sub></div>
+        <h3>개별 액터 그래디언트의 연접</h3>
+        <p>각 에이전트가 국소 대리 목적함수를 따라 갱신한 방향의 연접이다. 파트너 정책이 순간적으로 정지해 있다고 암묵적으로 가정한다. 결합 야코비안이 비대칭이므로 이 장은 일반적으로 비보존적이며, 솔레노이드 성분이 극한 순환과 진동을 유발한다.</p>
+        <div class="eq"><span class="v1">u_ind</span>(θ) = [∇θ₁J₁ᵀ, …, ∇θ_N J_Nᵀ]ᵀ</div>
+      </div>
+      <div>
+        <div class="fld-label"><span class="dot tm"></span>팀 합리성 장 · u<sub>team</sub></div>
+        <h3>전역 팀 보상의 진짜 상승 방향</h3>
+        <p>결합 파라미터 공간에서 연쇄 법칙으로 유도되는 전역 팀 보상함수의 참 상승 방향이다. 모든 에이전트가 공유하는 팀-수준 목적에 완전히 정렬된 이상적 방향으로, 실제 분산 업데이트가 지향해야 하는 목표에 해당한다.</p>
+        <div class="eq"><span class="v2">u_team</span>(θ) = ∇θ J(θ) = [∂J/∂θ₁ᵀ, …, ∂J/∂θ_Nᵀ]ᵀ</div>
+      </div>
+    </div>
+    <div class="gap-callout">
+      <div class="rg">합리성 격차는 두 장의 <b>L2 불일치</b>를 재는 리아푸노프 후보 함수다.</div>
+      <div class="gap-eq"><span style="color:var(--danger)">V(θ)</span> = ½ ‖ <span style="color:var(--field)">u_ind</span>(θ) − <span style="color:var(--team)">u_team</span>(θ) ‖²₂</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MECHANISM / PIPELINE ============ -->
+<section class="block">
+  <span class="sec-idx">§ 03 / HALO 메커니즘</span>
+  <div class="wrap reveal">
+    <div class="eyebrow">The HALO Kernel</div>
+    <h2>안정성 인증을 만족하도록<br>분산 그래디언트를 정정한다.</h2>
+    <p class="lead">HALO는 안정 반공간으로의 최소 노름 투영을 통해, 정책 파라미터 공간에서 형식적 안정성 인증서를 확립한다. 이 투영은 매 갱신마다 리아푸노프 소산 조건 ⟨∇V, d⟩ ≤ −σV 를 강제한다.</p>
+
+    <div class="pipe">
+      <div class="step">
+        <div class="num">01</div>
+        <div>
+          <h3>미분 가능 그래디언트 장 계산</h3>
+          <p>미니배치에서 독립 합리성 장 u<sub>ind</sub> 와 팀 합리성 장 u<sub>team</sub> 을 계산 그래프를 유지한 채 산출한다.</p>
+          <span class="code">u_ind ← ∇θ L_ind ;  u_team ← ∇θ L_team  (create_graph=True)</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">02</div>
+        <div>
+          <h3>안정성 법선 벡터 h — HVP로</h3>
+          <p>격차 V 에 대한 이중 역전파 한 번이 필요한 헤시안-벡터 곱을 산출한다. 전체 O(D²) 헤시안을 명시적으로 구성하지 않아 메모리 오버헤드가 미미하다(&lt; 21.1%).</p>
+          <span class="code">h = ∇θ V = (H_ind − H_team)ᵀ (u_ind − u_team)</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">03</div>
+        <div>
+          <h3>안정성 제약 이차 계획</h3>
+          <p>u<sub>ind</sub> 를 안정 반공간 H<sub>stable</sub> 위로 최소 노름 투영한다. KKT 조건이 정확한 해석적 해를 허용한다.</p>
+          <span class="code">min ½‖d − u_ind‖²  s.t.  ⟨∇V, d⟩ ≤ −σV</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">04</div>
+        <div>
+          <h3>파라미터 및 크리틱 갱신</h3>
+          <p>정류자 함수로 두 작동 영역을 통합한 최적 승수 λ* 로 방향을 정정하고, 학습률 η 로 결합 파라미터를 전진시킨다.</p>
+          <span class="code">d* ← u_ind − λ*·h ;  θ_{k+1} ← θ_k + η·d*</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="proj-eq">
+      <div class="lbl">HALO Projection Operator — 닫힌 형태 해</div>
+      <div class="formula">
+        <span class="b">d*</span> = <span class="b">u_ind</span> − max ( 0 , <span class="hi">(⟨h, u_ind⟩ + σV)</span> / (‖h‖²₂ + ε) ) · h
+      </div>
+      <div class="cap">비활성 영역에서는 λ*=0 이 되어 표준 그래디언트를 그대로 통과시키고, 제약이 활성화될 때만 격차를 수축시키는 방향으로 투영이 개입한다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ THEORY ============ -->
+<section class="block-tight">
+  <span class="sec-idx">§ 04 / 이론적 보장</span>
+  <div class="wrap reveal">
+    <div class="eyebrow">Nonlinear Stability Analysis</div>
+    <h2>학습 과정을 소산 동역학계로<br>재정식화한다.</h2>
+    <p class="lead">비선형 안정성 분석을 통해 HALO 하에서 합리성 격차가 단조 수축함을 증명한다. 잠재적으로 진동하던 분산 학습이 소산 동역학계로 변환된다.</p>
+
+    <div class="thm-grid">
+      <div class="thm">
+        <div class="t-tag">Theorem 5.2</div>
+        <h3>포텐셜 감쇠의 단조성</h3>
+        <p>학습률이 안정성 경계 η ≤ 2σV/(L‖d*‖²) 를 만족하면, 합리성 격차 V(θ) 는 단조 비증가한다. 증명은 L-평활 함수에 대한 하강 보조정리를 사용하며, KKT 해를 통해 갱신 방향이 항상 안정성 그래디언트와 소산적 내적을 유지함을 보인다.</p>
+        <div class="tf">V(θ_{k+1}) − V(θ_k) ≤ −ησV(θ_k) + (Lη²/2)‖d*‖²</div>
+      </div>
+      <div class="thm">
+        <div class="t-tag">Theorem 5.3</div>
+        <h3>시너지 매니폴드로의 수렴</h3>
+        <p>V(θ) 가 0 이상으로 하계를 갖고 학습률이 로빈스-먼로 조건을 만족하면, 불일치 에너지 수열이 0으로 수렴한다. 극한점은 분산 선호도 ∇θᵢJᵢ 가 전역 팀 상승 방향과 정렬되는 정류점이 된다.</p>
+        <div class="tf">lim_{k→∞} ‖u_ind(θ_k) − u_team(θ_k)‖₂ = 0</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESULTS TABLE ============ -->
+<section class="block">
+  <span class="sec-idx">§ 05 / 시뮬레이션 성능</span>
+  <div class="wrap reveal">
+    <div class="eyebrow">Benchmark · Isaac Lab · 2B Steps</div>
+    <h2>세 협응 과제, 아홉 시나리오에서<br>일관된 우위를 보인다.</h2>
+    <p class="lead">방향 민감 밀기(OSP), 공간 제약 운반(SCT), 초장물 취급(SLH) 과제에서 HALO를 최신 이질적 MARL 방법과 비교한다. 정상 상태(2B 스텝)의 최적화 지표가 구조적 병리 분석과 일치한다.</p>
+
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Algorithm</th>
+            <th>Overall SR ↑</th>
+            <th>Conv. step ↓</th>
+            <th>Final return ↑</th>
+            <th>Align cos ϕ ↑</th>
+            <th>Gap V ↓</th>
+            <th>GCR ↓</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>HAPPO</td><td>77.1%</td><td>1.8B</td><td>3.44</td><td>0.67</td><td>4.89</td><td>72.5%</td></tr>
+          <tr><td>HATRPO</td><td>80.8%</td><td>1.3B</td><td>3.60</td><td>0.68</td><td>1.53</td><td>54.2%</td></tr>
+          <tr><td>PCGrad</td><td>82.1%</td><td>1.2B</td><td>3.76</td><td>0.84</td><td>0.20</td><td>25.0%</td></tr>
+          <tr class="halo"><td>HALO</td><td>86.0%</td><td>1.3B</td><td>4.02</td><td>0.91</td><td>0.09</td><td>4.2%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="mv">0.09</div>
+        <div class="ml">Rationality Gap V</div>
+        <div class="cmp">HAPPO <b>4.89</b> 대비 <br>단조 소산으로 수축</div>
+      </div>
+      <div class="metric">
+        <div class="mv">0.91</div>
+        <div class="ml">Gradient Alignment</div>
+        <div class="cmp">u<sub>ind</sub> 투영으로<br>회전 불안정 제거</div>
+      </div>
+      <div class="metric">
+        <div class="mv">4.2%</div>
+        <div class="ml">Gradient Conflict Rate</div>
+        <div class="cmp">HAPPO <b>72.5%</b> 대비<br>충돌률 대폭 감소</div>
+      </div>
+      <div class="metric">
+        <div class="mv">−13.1%</div>
+        <div class="ml">Wall-clock Time</div>
+        <div class="cmp">HAPPO 대비 총<br>학습 시간 단축</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ABLATION ============ -->
+<section class="block-tight">
+  <span class="sec-idx">§ 06 / 절제 연구</span>
+  <div class="wrap reveal">
+    <div class="eyebrow">Ablation · SLH-Extreme (Pivoting)</div>
+    <h2>하드 투영만이 갱신 방향을<br>수축 집합으로 정정한다.</h2>
+    <p class="lead">V(θ) 를 라그랑주 페널티로 넣은 Soft-V 변형은 그래디언트 크기만 조절할 뿐 방향을 정정하지 못해 미미한 개선(76.5%)에 그친다. 안정 반공간으로의 하드 해석적 투영(P)만이 정책 갱신을 엄격히 수축 집합으로 진입시킨다.</p>
+
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Variant</th>
+            <th>P (투영)</th>
+            <th>η (적응 스케줄)</th>
+            <th>cos ϕ (정렬)</th>
+            <th>SR (%) ↑</th>
+            <th>Gap V ↓</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>HAPPO baseline</td><td>×</td><td>×</td><td>×</td><td>74.9 ± 6.0</td><td>4.89</td></tr>
+          <tr><td>Soft-V penalty</td><td>×</td><td>×</td><td>×</td><td>76.5 ± 5.8</td><td>3.21</td></tr>
+          <tr><td>Static projection</td><td>✓</td><td>×</td><td>×</td><td>79.5 ± 4.8</td><td>0.85</td></tr>
+          <tr><td>HALO w/o align</td><td>✓</td><td>✓</td><td>×</td><td>80.8 ± 4.2</td><td>0.24</td></tr>
+          <tr class="halo"><td>HALO (full)</td><td>✓</td><td>✓</td><td>✓</td><td>82.3 ± 3.8</td><td>0.09</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REAL WORLD ============ -->
+<section class="block">
+  <span class="sec-idx">§ 07 / 실세계 배치</span>
+  <div class="wrap reveal">
+    <div class="eyebrow">Unitree G1 · MoCap · Sim-to-Real</div>
+    <h2>비정상성 파트너 아래에서<br>협응 회복력을 검증한다.</h2>
+    <p class="lead">실세계 평가는 파트너 비정상성에 대한 협응 회복력에 초점을 둔다. 인간 파트너와 협력하는 Unitree G1 휴머노이드에 배치하여, 스크립트 없는 상황에서의 반응적 적응을 확인한다.</p>
+
+    <div class="rw">
+      <div class="rw-card">
+        <div class="rw-t">Micro-view · 수직 동기화</div>
+        <h3>적응적 스쿼팅</h3>
+        <p>파트너의 높이가 변할 때 G1 이 자율적으로 수평 하중면을 유지한다. 사전 스크립트 없이 반응적 높이 조절이 창발한다.</p>
+      </div>
+      <div class="rw-card">
+        <div class="rw-t">Micro-view · 이동 동기화</div>
+        <h3>장애 회복력</h3>
+        <p>20초간의 스크립트 없는 장애 상황에서 제자리 스테핑과 속도 재동기화를 통해 안정성을 유지한다. 잔여 운동량을 능동적으로 소산시킨다.</p>
+      </div>
+    </div>
+
+    <div class="rw" style="margin-top:26px">
+      <div class="rw-card">
+        <div class="rw-t">Task · OSP / SCT</div>
+        <h3>도달 시간과 기울기 억제</h3>
+        <p style="margin-bottom:6px">5회 시행 평균 기준. 목적지 도달 시간을 유의미하게 단축하고 기울기율을 최소화한다.</p>
+        <ul class="rw-list">
+          <li>SCT 도달 시간 (T)<b>76.2 s</b></li>
+          <li>SCT 낙하율 (DR)<b>0%</b></li>
+          <li>기울기율 (Ang)<b>2.2°/s</b></li>
+        </ul>
+      </div>
+      <div class="rw-card">
+        <div class="rw-t">Task · SLH — Stability Under Halting</div>
+        <h3>정지 시 안정성</h3>
+        <p style="margin-bottom:6px">스크립트 없는 인간 정지 상황에서 예외적 안정성을 유지한다. 로봇-스크립트 기준선과 달리 잔여 운동량을 능동 소산한다.</p>
+        <ul class="rw-list">
+          <li>정지 후 드리프트 (v<sub>d</sub>)<b>1.22 cm/s</b></li>
+          <li>기울기율 (Ang)<b>2.4°/s</b></li>
+          <li>파트너 동기 대기<b>능동 수행</b></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ARCHITECTURE ============ -->
+<section class="block-tight">
+  <span class="sec-idx">§ 08 / 제어 계층</span>
+  <div class="wrap reveal">
+    <div class="eyebrow">Tri-level Control Hierarchy</div>
+    <h2>장기 임무 유도와 고주파<br>물리 안정화를 분리한다.</h2>
+    <p class="lead">협응 프레임워크는 각기 다른 시간 척도와 기능 범위를 갖는 3계층 제어 위계로 작동한다. 중간 계층 MARL(2 Hz)과 하위 전신 제어기(50 Hz) 사이의 주파수 간극은 영차 유지 기구로 연결된다.</p>
+
+    <div class="arch">
+      <div class="arch-row head">
+        <span>Layer</span><span>Frequency</span><span>Functional scope</span>
+      </div>
+      <div class="arch-row">
+        <div class="lv">Top-level</div>
+        <div class="fq">에피소드 초기화</div>
+        <div class="sc">객체 CoM 에 대한 전역 경로 계획 — A* 또는 VLM 이 정적 환경 맵 기반 무충돌 경로를 생성한다.</div>
+      </div>
+      <div class="arch-row">
+        <div class="lv">Mid-level</div>
+        <div class="fq">2 Hz</div>
+        <div class="sc">전술적 MARL 정책 — 전역 경로의 웨이포인트를 받아 전신 제어기용 11차원 동작 명령을 생성한다.</div>
+      </div>
+      <div class="arch-row">
+        <div class="lv">Bottom-level</div>
+        <div class="fq">50 Hz</div>
+        <div class="sc">전신 제어기(WBC) 실행 — G1 휴머노이드의 동적 안정성을 보장하며 상위 명령을 추종한다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div>
+      <div class="f-title">HALO</div>
+      <div class="f-authors">
+        Hao Zhang · Yaru Niu · Yikai Wang · Ding Zhao · H. Eric Tseng<br>
+        ETAIC Lab, UT Arlington · Safe AI Lab, Carnegie Mellon University
+      </div>
+    </div>
+    <div class="f-meta">
+      Proceedings of the 43rd ICML, Seoul<br>
+      PMLR 306, 2026 · arXiv:2603.03741v2 [cs.RO]<br>
+      <a href="https://HaoZhang-THU.github.io/HALO/" target="_blank" rel="noopener">project website ↗</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ---------- Hero: vector-field flow → contraction signature ---------- */
+(function(){
+  const canvas = document.getElementById('fieldCanvas');
+  const ctx = canvas.getContext('2d');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W,H,DPR,particles=[],t=0;
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio||1, 2);
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    canvas.width = W*DPR; canvas.height = H*DPR;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    init();
+  }
+
+  // convergence target roughly at right portion of hero
+  function attractor(){ return {x:W*0.68, y:H*0.42}; }
+
+  // field = solenoidal (rotational) component + contracting pull toward attractor
+  function field(x,y){
+    const a = attractor();
+    const dx = x-a.x, dy = y-a.y;
+    const r = Math.hypot(dx,dy)+1e-3;
+    // rotational (limit-cycle) component
+    const rot = 1.15;
+    let vx = -dy/r * rot;
+    let vy =  dx/r * rot;
+    // contraction pull, strength grows over time (Lyapunov certificate engaging)
+    const pull = 0.28 + 0.5*Math.min(1, t/600);
+    vx += -dx/r * pull;
+    vy += -dy/r * pull;
+    return {vx,vy,r};
+  }
+
+  function init(){
+    const n = Math.min(180, Math.floor(W*H/9000));
+    particles = [];
+    for(let i=0;i<n;i++){
+      particles.push({
+        x:Math.random()*W, y:Math.random()*H,
+        px:0, py:0, life:Math.random()*200
+      });
+    }
+  }
+
+  function step(){
+    t++;
+    ctx.fillStyle='rgba(8,10,18,0.14)';
+    ctx.fillRect(0,0,W,H);
+    for(const p of particles){
+      const f = field(p.x,p.y);
+      p.px=p.x; p.py=p.y;
+      const spd = 0.9;
+      p.x += f.vx*spd; p.y += f.vy*spd;
+      p.life--;
+      // colour by distance to attractor: far = blue(divergent), near = green(aligned)
+      const near = Math.max(0, 1 - f.r/(Math.hypot(W,H)*0.42));
+      const R = Math.round(61 + (46-61)*near);
+      const G = Math.round(107 + (230-107)*near);
+      const B = Math.round(255 + (166-255)*near);
+      const alpha = 0.22 + 0.35*near;
+      ctx.strokeStyle = `rgba(${R},${G},${B},${alpha})`;
+      ctx.lineWidth = 0.8 + near*0.9;
+      ctx.beginPath();
+      ctx.moveTo(p.px,p.py);
+      ctx.lineTo(p.x,p.y);
+      ctx.stroke();
+      // respawn
+      if(p.life<0 || p.x<-20||p.x>W+20||p.y<-20||p.y>H+20 || f.r<8){
+        p.x=Math.random()*W; p.y=Math.random()*H; p.life=140+Math.random()*160;
+      }
+    }
+    // glowing attractor core
+    const a=attractor();
+    const grd=ctx.createRadialGradient(a.x,a.y,0,a.x,a.y,60);
+    grd.addColorStop(0,'rgba(255,207,92,0.55)');
+    grd.addColorStop(0.4,'rgba(46,230,166,0.18)');
+    grd.addColorStop(1,'rgba(46,230,166,0)');
+    ctx.fillStyle=grd;
+    ctx.beginPath();ctx.arc(a.x,a.y,60,0,Math.PI*2);ctx.fill();
+    requestAnimationFrame(step);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  if(reduce){
+    // static single frame
+    ctx.fillStyle='rgba(8,10,18,1)';ctx.fillRect(0,0,W,H);
+    for(let i=0;i<6;i++) step();
+  } else {
+    ctx.fillStyle='rgba(8,10,18,1)';ctx.fillRect(0,0,W,H);
+    requestAnimationFrame(step);
+  }
+})();
+
+/* ---------- Scroll reveal ---------- */
+(function(){
+  const io = new IntersectionObserver((entries)=>{
+    for(const e of entries){
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    }
+  }, {threshold:0.12, rootMargin:'0px 0px -60px 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+})();
+</script>
+</body>
+</html>
