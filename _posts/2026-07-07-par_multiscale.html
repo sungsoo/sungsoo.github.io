@@ -1,0 +1,815 @@
+---
+layout: null
+title: "Protein Autoregressive Modeling via Multiscale Structure Generation" 
+date: 2026-07-07
+categories: [artificial intelligence]
+tags: [artificial general intelligence, protein engineering]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAR — 멀티스케일 구조 생성을 통한 단백질 자기회귀 모델링</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Archivo:wght@400;500;600;700&family=Archivo+Expanded:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 조각 재료(석회석/대리석) + 리본 스펙트럼 */
+  --stone:#EDE8DE;        /* 밝은 대리석 배경 */
+  --stone-2:#E3DCCE;
+  --stone-3:#D6CDBB;      /* 라인 */
+  --ink:#1C1A17;          /* 조각 그림자 / 텍스트 */
+  --ink-soft:#3A362F;
+  --slate:#5C574C;
+  --dim:#847E71;
+  /* 단백질 리본 스펙트럼 (Figure 색) */
+  --n-blue:#2E4C8A;       /* N말단 (파랑) */
+  --mid:#E8E2D6;          /* 중간 */
+  --c-red:#C23B2E;        /* C말단 (빨강) */
+  --gold:#C9922E;         /* 강조 */
+  --teal:#2F7D74;         /* 보조 (attention) */
+  --deep:#141310;         /* 다크 섹션 배경 */
+  --deep-2:#1E1C18;
+  --deep-3:#2C2822;
+  --deep-fg:#E8E2D4;
+  --deep-dim:#A69E8C;
+  --serif:"Fraunces",Georgia,serif;
+  --serif-kr:"Noto Serif KR",serif;
+  --sans:"Archivo","Noto Sans KR",sans-serif;
+  --exp:"Archivo Expanded","Archivo",sans-serif;
+  --kr:"Noto Sans KR",sans-serif;
+  --mono:"IBM Plex Mono",monospace;
+  --maxw:1140px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--stone);
+  color:var(--ink-soft);
+  font-family:var(--kr);
+  font-weight:300;
+  line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--c-red);color:var(--stone)}
+
+/* 대리석 결 배경 텍스처 */
+.marble{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background:
+    radial-gradient(ellipse 120% 80% at 10% -10%,rgba(46,76,138,.05),transparent 50%),
+    radial-gradient(ellipse 100% 70% at 100% 10%,rgba(194,59,46,.04),transparent 55%),
+    repeating-linear-gradient(102deg,transparent 0 60px,rgba(28,26,23,.012) 60px 61px);
+}
+.progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--n-blue),var(--gold),var(--c-red));z-index:200;width:0}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 30px;position:relative;z-index:2}
+section{position:relative;z-index:2}
+
+/* ============ HERO ============ */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+#sculpt{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+.hero-veil{position:absolute;inset:0;z-index:1;background:
+  radial-gradient(ellipse 55% 60% at 78% 45%,transparent 0%,var(--stone) 78%),
+  linear-gradient(180deg,rgba(237,232,222,.35),var(--stone) 90%)}
+.hero-inner{position:relative;z-index:3}
+.brandbar{position:absolute;top:34px;left:0;right:0;z-index:5}
+.brandbar .wrap{display:flex;justify-content:space-between;align-items:center}
+.brand{font-family:var(--mono);font-size:.74rem;letter-spacing:.24em;color:var(--slate);text-transform:uppercase}
+.brand b{color:var(--c-red);font-weight:500}
+.arxiv{font-family:var(--mono);font-size:.72rem;color:var(--dim);letter-spacing:.1em}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.3em;text-transform:uppercase;color:var(--c-red);display:flex;align-items:center;gap:14px;margin-bottom:30px}
+.eyebrow::before{content:"";width:42px;height:1px;background:var(--c-red)}
+.hero h1{font-family:var(--serif-kr);font-weight:600;color:var(--ink);font-size:clamp(2.3rem,5.6vw,4.4rem);line-height:1.14;letter-spacing:-.015em;max-width:17ch}
+.hero h1 em{font-family:var(--serif);font-style:italic;font-weight:500;color:var(--c-red)}
+.hero-sub{margin-top:34px;max-width:54ch;font-size:1.1rem;color:var(--slate);font-weight:300;line-height:1.95}
+.hero-sub b{color:var(--ink);font-weight:500}
+.hero-stats{margin-top:48px;display:flex;flex-wrap:wrap;gap:40px}
+.hero-stats .st b{font-family:var(--exp);font-weight:700;font-size:2rem;color:var(--ink);letter-spacing:-.02em;line-height:1;display:block}
+.hero-stats .st b .u{font-size:.9rem;color:var(--c-red);font-weight:600}
+.hero-stats .st span{font-family:var(--mono);font-size:.72rem;color:var(--dim);letter-spacing:.08em;display:block;margin-top:8px}
+.scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:3;font-family:var(--mono);font-size:.66rem;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:10px;animation:bob 2.4s ease-in-out infinite}
+.scroll-hint span{width:1px;height:32px;background:linear-gradient(var(--c-red),transparent)}
+@keyframes bob{50%{transform:translateX(-50%) translateY(8px)}}
+
+/* 저자 스트립 */
+.authors{border-top:1px solid var(--stone-3);border-bottom:1px solid var(--stone-3);background:var(--stone-2)}
+.authors .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:18px;padding:22px 30px}
+.authors .names{font-family:var(--sans);font-size:.96rem;color:var(--ink);font-weight:500}
+.authors .names small{display:block;color:var(--dim);font-family:var(--mono);font-size:.7rem;margin-top:5px;font-weight:400;letter-spacing:.04em}
+.authors .lab{font-family:var(--mono);font-size:.74rem;color:var(--c-red);letter-spacing:.16em;text-transform:uppercase}
+
+/* ============ 섹션 공통 ============ */
+.sec{padding:120px 0}
+.sec-head{margin-bottom:60px;max-width:66ch}
+.sec-num{font-family:var(--mono);font-size:.74rem;letter-spacing:.26em;color:var(--c-red);text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:12px}
+.sec-num::before{content:"";width:26px;height:1px;background:var(--c-red)}
+.sec h2{font-family:var(--serif-kr);font-weight:600;font-size:clamp(1.85rem,3.5vw,2.8rem);color:var(--ink);line-height:1.3;letter-spacing:-.01em}
+.sec h2 em{font-family:var(--serif);font-style:italic;color:var(--c-red);font-weight:500}
+.lead{font-size:1.12rem;color:var(--slate);margin-top:22px;font-weight:300;line-height:1.95}
+p{margin-bottom:1.2em}
+.body-p{color:var(--slate);font-weight:300;max-width:72ch}
+.body-p b,.hl{color:var(--ink);font-weight:500}
+.mono-em{font-family:var(--mono);color:var(--c-red);font-size:.9em}
+
+/* ============ 1. 두 개의 벽 (문제) ============ */
+.walls{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--stone-3);border:1px solid var(--stone-3);border-radius:4px;overflow:hidden}
+.wall{background:var(--stone-2);padding:40px 34px}
+.wall .idx{font-family:var(--exp);font-weight:700;font-size:2.4rem;color:var(--stone-3);line-height:1;margin-bottom:18px;-webkit-text-stroke:1px var(--dim)}
+.wall h3{font-family:var(--sans);font-size:1.18rem;font-weight:600;color:var(--ink);margin-bottom:12px;letter-spacing:-.01em}
+.wall p{font-size:.95rem;color:var(--slate);font-weight:300;margin:0}
+.wall .fix{margin-top:20px;padding-top:18px;border-top:1px solid var(--stone-3);font-size:.9rem;color:var(--c-red);font-weight:400}
+.wall .fix b{color:var(--ink);font-weight:600}
+
+/* ============ 2. 조각 시뮬레이터 (시그니처) ============ */
+.sculpt-lab{background:var(--deep);color:var(--deep-fg);border-radius:8px;padding:52px 48px;position:relative;overflow:hidden}
+.sculpt-lab::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(100deg,transparent 0 50px,rgba(255,255,255,.014) 50px 51px);pointer-events:none}
+.sculpt-lab .lab-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px;margin-bottom:38px;position:relative;z-index:2}
+.sculpt-lab .lab-head h3{font-family:var(--serif);font-style:italic;font-size:1.5rem;font-weight:500;color:#fff}
+.sculpt-lab .lab-head p{font-size:.86rem;color:var(--deep-dim);margin-top:8px;font-weight:300}
+.scale-readout{text-align:right}
+.scale-readout b{font-family:var(--exp);font-weight:700;font-size:2.6rem;color:var(--c-red);line-height:1;letter-spacing:-.02em}
+.scale-readout span{display:block;font-family:var(--mono);font-size:.68rem;color:var(--deep-dim);letter-spacing:.14em;text-transform:uppercase;margin-top:4px}
+#scaleCanvas{width:100%;height:340px;display:block;position:relative;z-index:2;border-radius:6px;background:radial-gradient(ellipse at center,rgba(46,76,138,.08),transparent 70%)}
+.scale-track{display:flex;gap:10px;margin-top:30px;position:relative;z-index:2}
+.scale-step{flex:1;padding:16px 14px;border:1px solid var(--deep-3);border-radius:5px;cursor:pointer;transition:all .35s;background:var(--deep-2)}
+.scale-step:hover{border-color:var(--slate)}
+.scale-step.active{border-color:var(--c-red);background:linear-gradient(180deg,rgba(194,59,46,.14),transparent)}
+.scale-step .sid{font-family:var(--mono);font-size:.66rem;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.scale-step .snm{font-family:var(--sans);font-size:.88rem;color:var(--deep-fg);font-weight:500}
+.scale-step .sdesc{font-size:.74rem;color:var(--deep-dim);margin-top:4px;font-weight:300;line-height:1.5}
+.lab-note{margin-top:30px;font-size:.86rem;color:var(--deep-dim);font-weight:300;border-top:1px solid var(--deep-3);padding-top:22px;position:relative;z-index:2;max-width:80ch}
+.lab-note b{color:var(--deep-fg);font-weight:500}
+
+/* ============ 3. 아키텍처 흐름 ============ */
+.arch{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--stone-3);border:1px solid var(--stone-3);border-radius:4px;overflow:hidden;margin-top:14px}
+.arch-node{background:var(--stone-2);padding:36px 30px;position:relative}
+.arch-node .tag{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;color:var(--c-red);text-transform:uppercase;margin-bottom:16px;display:block}
+.arch-node .ico{height:56px;display:flex;align-items:center;margin-bottom:18px}
+.arch-node h4{font-family:var(--sans);font-size:1.1rem;color:var(--ink);font-weight:600;margin-bottom:10px}
+.arch-node p{font-size:.9rem;color:var(--slate);font-weight:300;margin:0;line-height:1.7}
+.formula{background:var(--deep);color:var(--deep-fg);border-radius:6px;padding:36px 40px;margin-top:36px;font-family:var(--mono);font-size:.92rem;line-height:2.2;overflow-x:auto}
+.formula .cm{color:var(--deep-dim)}
+.formula .op{color:var(--gold)}
+.formula .var{color:var(--c-red)}
+.formula-cap{font-size:.86rem;color:var(--slate);margin-top:18px;font-weight:300;max-width:74ch}
+
+/* ============ 4. exposure bias (다크) ============ */
+.dark-sec{background:var(--deep);color:var(--deep-fg)}
+.dark-sec .sec-num{color:var(--gold)}
+.dark-sec .sec-num::before{background:var(--gold)}
+.dark-sec h2{color:#fff}
+.dark-sec h2 em{color:var(--gold)}
+.dark-sec .lead{color:var(--deep-dim)}
+.bias-ladder{margin-top:16px;border:1px solid var(--deep-3);border-radius:6px;overflow:hidden}
+.rung{display:grid;grid-template-columns:1.4fr repeat(4,1fr);gap:1px;background:var(--deep-3)}
+.rung>div{background:var(--deep-2);padding:18px 22px;display:flex;flex-direction:column;justify-content:center}
+.rung.head>div{background:var(--deep);font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;color:var(--gold);text-transform:uppercase}
+.rung .method{font-family:var(--sans);font-weight:500;color:var(--deep-fg);font-size:.95rem}
+.rung .val{font-family:var(--exp);font-weight:600;font-size:1.15rem;color:var(--deep-fg);font-variant-numeric:tabular-nums}
+.rung.best .val{color:var(--c-red)}
+.rung .val small{display:block;font-family:var(--mono);font-size:.6rem;color:var(--deep-dim);font-weight:400;letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+.bias-note{margin-top:26px;font-size:.9rem;color:var(--deep-dim);font-weight:300;max-width:78ch}
+.bias-note b{color:var(--deep-fg);font-weight:500}
+
+/* ============ 5. 결과 테이블 ============ */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--stone-3);border-radius:6px;background:#faf7f0}
+table{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:.88rem;min-width:640px}
+caption{text-align:left;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--c-red);padding:18px 20px 4px;font-weight:500}
+thead th{text-align:right;padding:14px 16px;font-weight:600;color:var(--ink-soft);border-bottom:2px solid var(--ink);font-size:.8rem}
+thead th:first-child{text-align:left}
+tbody td{padding:11px 16px;text-align:right;border-bottom:1px solid var(--stone-3);color:var(--ink-soft);font-variant-numeric:tabular-nums}
+tbody td:first-child{text-align:left;font-weight:500}
+tbody tr:hover{background:var(--stone-2)}
+.grp td{background:var(--stone-2);font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--slate);text-align:left;padding:9px 16px;font-weight:500}
+.ours td:first-child{color:var(--c-red);font-weight:700}
+.ours{background:#f7ede8}
+.best{color:var(--c-red);font-weight:700}
+.tbl-note{font-size:.84rem;color:var(--dim);margin-top:16px;font-weight:300}
+
+/* 지표 카드 */
+.metric-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:24px;margin-top:60px}
+.metric{border:1px solid var(--stone-3);border-radius:6px;padding:30px;background:#faf7f0;position:relative;overflow:hidden}
+.metric .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
+.metric .big{font-family:var(--exp);font-size:2.7rem;font-weight:700;color:var(--ink);letter-spacing:-.03em;line-height:1}
+.metric .big .u{font-size:1rem;color:var(--c-red);font-weight:600}
+.metric .sub{font-size:.86rem;color:var(--slate);margin-top:10px;font-weight:300}
+.metric.hero-m{background:var(--deep);border-color:var(--deep-3)}
+.metric.hero-m .lbl{color:var(--gold)}
+.metric.hero-m .big{color:#fff}
+.metric.hero-m .sub{color:var(--deep-dim)}
+
+/* ============ 6. zero-shot: PAR 프롬프트 ============ */
+.par-letters{display:flex;gap:20px;justify-content:center;margin:40px 0 10px;flex-wrap:wrap}
+.par-letter{text-align:center}
+.par-letter svg{display:block}
+.par-letter .cap{font-family:var(--mono);font-size:.66rem;color:var(--dim);letter-spacing:.14em;text-transform:uppercase;margin-top:14px}
+.zero-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--stone-3);border:1px solid var(--stone-3);border-radius:4px;overflow:hidden;margin-top:44px}
+.zero-card{background:var(--stone-2);padding:38px 34px}
+.zero-card h3{font-family:var(--sans);font-size:1.15rem;color:var(--ink);font-weight:600;margin-bottom:12px}
+.zero-card p{font-size:.94rem;color:var(--slate);font-weight:300;margin:0}
+.zero-card .badge{display:inline-block;font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);border:1px solid var(--teal);border-radius:20px;padding:4px 12px;margin-bottom:18px}
+
+/* ============ 7. 효율 / 샘플링 ============ */
+.speed-hero{background:var(--deep);color:var(--deep-fg);border-radius:8px;padding:48px;display:grid;grid-template-columns:1fr 1.2fr;gap:48px;align-items:center}
+.speed-hero .big-num{font-family:var(--exp);font-weight:700;font-size:clamp(3.5rem,8vw,5.5rem);color:var(--c-red);line-height:.9;letter-spacing:-.03em}
+.speed-hero .big-num .u{font-size:1.4rem;color:var(--gold)}
+.speed-hero .big-lbl{font-family:var(--mono);font-size:.76rem;color:var(--deep-dim);letter-spacing:.12em;text-transform:uppercase;margin-top:16px}
+.speed-hero .desc{color:var(--deep-dim);font-weight:300;font-size:.98rem;line-height:1.9}
+.speed-hero .desc b{color:var(--deep-fg);font-weight:500}
+.bars{margin-top:24px}
+.bar-row{display:flex;align-items:center;gap:16px;margin-bottom:14px;font-family:var(--mono);font-size:.78rem}
+.bar-row .bl{width:120px;color:var(--deep-dim);flex-shrink:0}
+.bar-row .bt{flex:1;height:22px;background:var(--deep-3);border-radius:3px;overflow:hidden;position:relative}
+.bar-row .bf{height:100%;border-radius:3px;width:0;transition:width 1.2s cubic-bezier(.2,.7,.2,1)}
+.bar-row .bf.slow{background:var(--slate)}
+.bar-row .bf.fast{background:linear-gradient(90deg,var(--n-blue),var(--c-red))}
+.bar-row .bv{width:56px;text-align:right;color:var(--deep-fg);font-weight:500}
+
+/* ============ 8. 마무리 ============ */
+.future-list{list-style:none;margin-top:30px;display:grid;gap:18px}
+.future-list li{padding-left:34px;position:relative;color:var(--slate);font-weight:300;max-width:74ch}
+.future-list li::before{content:"→";position:absolute;left:0;color:var(--c-red);font-weight:600;font-family:var(--sans)}
+.future-list li b{color:var(--ink);font-weight:600}
+
+footer{background:var(--deep);color:var(--deep-dim);padding:52px 0}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px;align-items:center}
+footer .repo{font-family:var(--mono);font-size:.8rem;color:var(--deep-fg)}
+footer .repo a{color:var(--c-red);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .3s}
+footer .repo a:hover{border-color:var(--c-red)}
+footer .fine{font-family:var(--mono);font-size:.68rem;color:var(--deep-dim);letter-spacing:.06em}
+
+/* 스크롤 리빌 */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}.reveal.d4{transition-delay:.32s}
+
+/* 반응형 */
+@media(max-width:860px){
+  .walls,.arch,.zero-grid{grid-template-columns:1fr}
+  .arch{gap:14px;background:transparent;border:none}
+  .arch-node{border:1px solid var(--stone-3);border-radius:6px}
+  .se3-box,.speed-hero{grid-template-columns:1fr;gap:30px}
+  .rung{grid-template-columns:1fr 1fr}
+  .rung.head{display:none}
+  .rung .method{grid-column:1/-1;border-bottom:1px solid var(--deep-3);padding-bottom:8px}
+  .sculpt-lab{padding:32px 24px}
+  .par-letters{gap:12px}
+}
+@media(max-width:520px){
+  .sec{padding:80px 0}
+  .metric-row{grid-template-columns:1fr}
+  .authors .wrap{flex-direction:column;align-items:flex-start}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="marble"></div>
+<div class="progress" id="progress"></div>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <canvas id="sculpt"></canvas>
+  <div class="hero-veil"></div>
+  <div class="brandbar"><div class="wrap">
+    <div class="brand"><b>ByteDance Seed</b> · UIUC</div>
+    <div class="arxiv">arXiv:2602.04883</div>
+  </div></div>
+  <div class="wrap hero-inner">
+    <div class="eyebrow">단백질 구조 생성 · 자기회귀 프레임워크</div>
+    <h1>멀티스케일 구조 생성을 통한 <em>단백질 자기회귀</em> 모델링</h1>
+    <p class="hero-sub">
+      <b>PAR</b>은 거친 형태에서 세밀한 디테일로 나아가는 다음-스케일 예측(next-scale prediction)을 통해 단백질 백본을
+      생성하는 <b>최초의 멀티스케일 자기회귀 프레임워크</b>다. 단백질의 계층적 본성을 활용해, 마치 조각상을 깎듯이
+      거친 위상을 먼저 세우고 스케일을 거치며 구조를 정교하게 다듬는다.
+    </p>
+    <div class="hero-stats">
+      <div class="st"><b>161.0</b><span>FPSD vs. PDB — 확산 모델 능가</span></div>
+      <div class="st"><b>2.5<span class="u">×</span></b><span>단일 스케일 대비 샘플링 가속</span></div>
+      <div class="st"><b>96.6<span class="u">%</span></b><span>설계 가능성 (Designability)</span></div>
+      <div class="st"><b>ZERO</b><span>미세조정 없는 제로샷 일반화</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint">깎아 내려가기<span></span></div>
+</header>
+
+<!-- 저자 -->
+<div class="authors">
+  <div class="wrap">
+    <div class="names">
+      Yanru Qu · Cheng-Yen Hsieh · Zaixiang Zheng · Ge Liu · Quanquan Gu
+      <small>ByteDance Seed · University of Illinois Urbana-Champaign · 2026년 5월</small>
+    </div>
+    <div class="lab">Coarse → Fine</div>
+  </div>
+</div>
+
+<!-- ============ 1. 두 개의 벽 ============ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">01 — 문제</div>
+      <h2>자기회귀 모델은 왜 단백질 구조를 <em>피해 왔는가</em></h2>
+      <p class="lead">
+        자기회귀(AR) 모델링은 언어와 이미지 생성을 이끌어 온 강력한 패러다임이지만, 백본 모델링에는 거의 적용되지
+        못했다. 두 개의 벽이 가로막고 있었다.
+      </p>
+    </div>
+    <div class="walls">
+      <div class="wall reveal d1">
+        <div class="idx">01</div>
+        <h3>이산화 손실</h3>
+        <p>AR 모델을 3차원 원자 좌표 같은 연속 데이터로 확장하려면 흔히 데이터 이산화(discretization)에 의존한다.
+        이는 단백질의 구조적 충실도와 세밀한 디테일을 훼손하고 생성 성능을 제한한다.</p>
+        <div class="fix"><b>PAR의 해법.</b> 흐름 기반(flow) 디코더로 Cα 원자를 연속 공간에서 직접 모델링해 이산화를 회피한다.</div>
+      </div>
+      <div class="wall reveal d2">
+        <div class="idx">02</div>
+        <h3>양방향 의존성</h3>
+        <p>단백질 잔기는 강한 양방향 의존성을 지닌다. 서열상 멀리 떨어진 잔기가 공간적으로 가까워 수소 결합이나
+        소수성 접촉을 형성한다. 이는 표준 AR 모델의 단방향 가정과 충돌한다.</p>
+        <div class="fix"><b>PAR의 해법.</b> 잔기 단위가 아닌 스케일 단위로 자기회귀해, 각 스케일 안에서 양방향 관계를 보존한다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. 조각 시뮬레이터 (시그니처) ============ -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">02 — 핵심 아이디어</div>
+      <h2>조각상을 깎듯이, <em>거친 형태에서 디테일로</em></h2>
+      <p class="body-p" style="margin-top:22px">
+        단백질 구조는 거친 3D 위상과 3차 폴드 배열, 국소 2차 구조, 가장 미세한 원자 좌표까지 여러 세밀도의 스케일에
+        걸쳐 있다. PAR은 이 계층성을 이용해, 이전의 더 거친 스케일을 조건으로 각 스케일을 예측한다. 아래 시뮬레이터에서
+        스케일을 거칠수록 백본이 어떻게 정교해지는지 확인할 수 있다.
+      </p>
+    </div>
+
+    <div class="sculpt-lab reveal">
+      <div class="lab-head">
+        <div>
+          <h3>Sculpting over scales</h3>
+          <p>스케일 단계를 눌러 거친 위상이 완성된 구조로 다듬어지는 과정을 본다. (L = 250 예시)</p>
+        </div>
+        <div class="scale-readout">
+          <b id="scNum">1</b><span id="scRmsd">Scale 1 · 위상 형성</span>
+        </div>
+      </div>
+      <canvas id="scaleCanvas"></canvas>
+      <div class="scale-track" id="scaleTrack"></div>
+      <p class="lab-note">
+        다섯 스케일 예시는 <b>S = {L/16, L/8, L/4, L/2, L}</b>로 정의된다. 거친 스케일은 대략적인 전역 배치를 세우고,
+        이후 스케일이 국소 디테일을 점진적으로 더한다. 이 멀티스케일 정식화는 명확하고 해석 가능한 생성 과정을 낳는다.
+        최종 구조의 scRMSD는 길이에 따라 <b>0.51</b>(L=50)에서 <b>1.55</b>(L=250) 수준이다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. 아키텍처 ============ -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">03 — 세 가지 구성요소</div>
+      <h2>다운샘플링 · <em>AR 트랜스포머</em> · 흐름 디코더</h2>
+    </div>
+    <div class="arch">
+      <div class="arch-node reveal d1">
+        <span class="tag">① 다운샘플링</span>
+        <div class="ico">
+          <svg width="120" height="46" viewBox="0 0 120 46">
+            <path d="M4 30 Q14 8 24 24 T44 22 T64 12 T84 26 T104 18 T116 30" stroke="var(--dim)" stroke-width="1.5" fill="none" opacity=".5"/>
+            <circle cx="14" cy="18" r="5" fill="var(--n-blue)"/><circle cx="54" cy="22" r="5" fill="var(--gold)"/><circle cx="94" cy="20" r="5" fill="var(--c-red)"/>
+          </svg>
+        </div>
+        <h4>멀티스케일 다운샘플링</h4>
+        <p>구조 <span class="mono-em">x ∈ ℝ<sup>L×3</sup></span>를 서열 차원에서 보간해 거친→세밀 스케일 계층 {x¹,…,xⁿ}으로 분해한다. 결정적 매핑이므로 우도 계산에서 주변화가 불필요하다.</p>
+      </div>
+      <div class="arch-node reveal d2">
+        <span class="tag">② AR 트랜스포머</span>
+        <div class="ico">
+          <svg width="120" height="46" viewBox="0 0 120 46">
+            <rect x="6" y="10" width="26" height="26" rx="4" fill="none" stroke="var(--teal)" stroke-width="2"/>
+            <rect x="47" y="10" width="26" height="26" rx="4" fill="none" stroke="var(--teal)" stroke-width="2"/>
+            <rect x="88" y="10" width="26" height="26" rx="4" fill="var(--teal)" opacity=".2" stroke="var(--teal)" stroke-width="2"/>
+            <path d="M32 23 H47 M73 23 H88" stroke="var(--c-red)" stroke-width="2" marker-end="url(#a)"/>
+            <defs><marker id="a" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto"><path d="M0 0 L5 3 L0 6" fill="var(--c-red)"/></marker></defs>
+          </svg>
+        </div>
+        <h4>자기회귀 트랜스포머 Tθ</h4>
+        <p>비등변(non-equivariant) 어텐션 층을 쌓아 앞선 모든 스케일을 인코딩하고, 스케일별 조건 임베딩 <span class="mono-em">zⁱ</span>를 산출해 생성을 유도한다. 60M 규모로도 충분하다.</p>
+      </div>
+      <div class="arch-node reveal d3">
+        <span class="tag">③ 흐름 디코더</span>
+        <div class="ico">
+          <svg width="120" height="46" viewBox="0 0 120 46">
+            <circle cx="16" cy="23" r="7" fill="var(--slate)" opacity=".4"/>
+            <path d="M28 23 H92" stroke="var(--gold)" stroke-width="2" stroke-dasharray="4 3"/>
+            <path d="M96 12 Q104 6 112 14 T116 30" stroke="var(--c-red)" stroke-width="2.5" fill="none"/>
+            <circle cx="104" cy="12" r="4" fill="var(--n-blue)"/>
+          </svg>
+        </div>
+        <h4>흐름 기반 백본 디코더 vθ</h4>
+        <p>조건 임베딩 <span class="mono-em">zⁱ</span>에 조건화되어 흐름 매칭(flow matching)으로 Cα 좌표를 직접 노이즈 제거한다. 단일 스케일로 제한하면 흐름 기반 모델의 특수 사례가 된다.</p>
+      </div>
+    </div>
+
+    <div class="formula reveal">
+<span class="cm"># 스케일 단위 자기회귀 우도 (Eqn. 3)</span>
+p<sub>θ</sub>(<span class="var">x</span>) = ∏<sub>i=1..n</sub> p<sub>θ</sub>(<span class="var">xⁱ</span> | <span class="op">zⁱ</span> = T<sub>θ</sub>(X<sub>&lt;i</sub>))
+
+<span class="cm"># 흐름 매칭 목적함수 (Eqn. 5)</span>
+L(θ) = 𝔼 ‖ <span class="op">v<sub>θ</sub></span>(xⁱ<sub>t</sub>, tⁱ, <span class="op">zⁱ</span>) − (<span class="var">xⁱ</span> − εⁱ) ‖²
+    </div>
+    <p class="formula-cap reveal">
+      AR 트랜스포머 <span class="mono-em">Tθ</span>가 스케일별 조건 <span class="mono-em">zⁱ</span>를 만들고, 원자 디코더 <span class="mono-em">vθ</span>가 흐름 매칭으로 이를 최적화한다.
+      단백질 구조를 토큰으로 이산화하지 않으므로 구조 디테일과 생성 충실도를 보존한다. 추론 시 KV 캐시로 자기회귀 과정을 가속한다.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 4. exposure bias ============ -->
+<section class="sec dark-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">04 — 노출 편향 완화</div>
+      <h2>학습과 추론의 <em>어긋남</em>을 바로잡는다</h2>
+      <p class="lead">
+        AR 모델은 학습 시 실제 데이터를 문맥으로 받지만(teacher forcing), 추론 시에는 자기 예측에 조건화된다.
+        이 불일치가 노출 편향(exposure bias)이며, 오차가 스케일을 거치며 누적되어 생성 품질을 크게 떨어뜨린다.
+        PAR은 두 기법으로 이를 완화한다.
+      </p>
+    </div>
+
+    <div class="bias-ladder reveal">
+      <div class="rung head">
+        <div>학습 전략</div><div>sc-RMSD ↓</div><div>FPSD vs. PDB ↓</div><div>FPSD vs. AFDB ↓</div><div>개선</div>
+      </div>
+      <div class="rung">
+        <div class="method">Teacher Forcing</div>
+        <div class="val">2.20<small>기준선</small></div>
+        <div class="val">99.66</div>
+        <div class="val">37.64</div>
+        <div class="val" style="color:var(--deep-dim)">—</div>
+      </div>
+      <div class="rung">
+        <div class="method">+ 노이즈 문맥 학습 (NCL)</div>
+        <div class="val">1.58</div>
+        <div class="val">89.70</div>
+        <div class="val">23.69</div>
+        <div class="val" style="color:var(--teal)">↓ 28%</div>
+      </div>
+      <div class="rung best">
+        <div class="method">+ NCL & 스케줄 샘플링 (SS)</div>
+        <div class="val">1.48<small>최고</small></div>
+        <div class="val">90.66</div>
+        <div class="val">24.59</div>
+        <div class="val">↓ 33%</div>
+      </div>
+    </div>
+    <p class="bias-note reveal">
+      <b>노이즈 문맥 학습(NCL)</b>은 학습 시 실제 이전-스케일 입력에 노이즈를 더해, 완벽하지 않은 문맥으로부터 구조적
+      지침을 추론하도록 유도한다. <b>스케줄 샘플링(SS)</b>은 0.5 확률로 실제 문맥을 모델 자신의 예측으로 대체해 학습을
+      추론 시나리오에 정렬한다. 두 기법은 결합 가능하며, sc-RMSD를 2.20에서 1.48까지 일관되게 개선한다.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 5. 무조건 생성 결과 ============ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">05 — 무조건 백본 생성</div>
+      <h2>확산 모델을 능가하는 <em>분포 충실도</em></h2>
+      <p class="lead">
+        FPSD는 이미지 생성의 FID처럼 생성 분포와 참조 분포를 비교해 품질과 다양성을 함께 측정한다.
+        PDB 부분집합에 미세조정한 PARpdb는 FPSD 161.0, 설계 가능성 96.6%를 달성해, 순수 확산 기반 기준선 대비
+        우월한 분포 충실도를 보인다.
+      </p>
+    </div>
+
+    <div class="tbl-wrap reveal">
+      <table>
+        <caption>표 1 — 무조건 백본 생성 성능 (굵게 = 최고)</caption>
+        <thead>
+          <tr><th>방법</th><th>Design. %↑</th><th>sc-RMSD↓</th><th>FPSD/PDB↓</th><th>FPSD/AFDB↓</th><th>Novelty↓</th></tr>
+        </thead>
+        <tbody>
+          <tr class="grp"><td colspan="6">기준선 (Baselines)</td></tr>
+          <tr><td>FrameDiff (17M)</td><td>65.4</td><td>—</td><td>194.2</td><td>258.1</td><td>0.82</td></tr>
+          <tr><td>RFDiffusion (60M)</td><td>94.4</td><td>—</td><td>253.7</td><td>252.4</td><td>0.85</td></tr>
+          <tr><td>ESM3 (1.4B)</td><td>22.0</td><td>—</td><td>933.9</td><td>855.4</td><td>0.90</td></tr>
+          <tr><td>Genie2 (16M)</td><td>95.2</td><td>—</td><td>350.0</td><td>313.8</td><td>0.80</td></tr>
+          <tr><td>Proteina (400M)</td><td>92.6</td><td>1.09</td><td>271.3</td><td>272.6</td><td>0.84</td></tr>
+          <tr class="grp"><td colspan="6">PAR (본 연구)</td></tr>
+          <tr class="ours"><td>PAR (200M)</td><td>87.0</td><td>1.33</td><td>252.0</td><td>237.9</td><td>0.83</td></tr>
+          <tr class="ours"><td>PAR (400M)</td><td>96.0</td><td>1.01</td><td>313.9</td><td>296.4</td><td>0.85</td></tr>
+          <tr class="ours"><td>PAR (400M, γ=0.45)</td><td>88.0</td><td>1.28</td><td>231.5</td><td>211.8</td><td>0.84</td></tr>
+          <tr class="ours"><td>PARpdb (미세조정)</td><td class="best">96.6</td><td class="best">1.04</td><td class="best">161.0</td><td>228.4</td><td>0.85</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tbl-note reveal">
+      SDE 샘플링의 노이즈 스케일 <span class="mono-em">γ</span>를 0.45에서 0.30으로 낮추면 확률성을 줄여 표본 품질이 향상되고, 설계 가능성이 88.0%에서
+      96.0%로 오른다. PAR은 단일 스케일 설정으로 제한하면 Proteina로 환원되며, 동일 조건에서 재학습한 Proteina 대비 유사하거나 더 나은 성능을 낸다.
+    </p>
+
+    <div class="metric-row">
+      <div class="metric hero-m reveal d1">
+        <div class="lbl">스케일링 — FPSD vs. PDB</div>
+        <div class="big">187</div>
+        <div class="sub">모델 크기·학습량 확대 시 분포 포착 능력이 지속 향상. 학습 시간만 늘리는 것은 효과가 미미하나 모델 크기 확대는 설계 가능성을 크게 높인다.</div>
+      </div>
+      <div class="metric reveal d2">
+        <div class="lbl">AR 모듈 크기</div>
+        <div class="big">60<span class="u">M</span></div>
+        <div class="sub">중간 규모 AR 트랜스포머로 충분. 60M→400M 확대는 개선이 없으며, 오히려 노출 편향을 심화시킨다.</div>
+      </div>
+      <div class="metric reveal d3">
+        <div class="lbl">디코더 크기</div>
+        <div class="big">400<span class="u">M</span></div>
+        <div class="sub">계산 비용을 디코더 용량에 집중. 큰 디코더가 생성 품질을 효과적으로 끌어올린다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. 제로샷 일반화 ============ -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">06 — 제로샷 일반화</div>
+      <h2>미세조정 없이 <em>사람의 프롬프트</em>를 따른다</h2>
+      <p class="body-p" style="margin-top:22px">
+        단일 스케일에서 작동하는 확산 모델과 달리, PAR은 다양한 세밀도의 입력을 유연하게 다룬다. 16개의 점만으로도
+        단백질의 거친 배치를 지정할 수 있으며, 모델은 여기서 완전한 구조를 생성한다. 아래는 논문 Figure 3의 P·A·R
+        형상 프롬프트를 재현한 것이다.
+      </p>
+    </div>
+
+    <div class="par-letters reveal">
+      <div class="par-letter">
+        <svg width="96" height="120" viewBox="0 0 96 120" id="letP"></svg>
+        <div class="cap">shape P</div>
+      </div>
+      <div class="par-letter">
+        <svg width="96" height="120" viewBox="0 0 96 120" id="letA"></svg>
+        <div class="cap">shape A</div>
+      </div>
+      <div class="par-letter">
+        <svg width="96" height="120" viewBox="0 0 96 120" id="letR"></svg>
+        <div class="cap">shape R</div>
+      </div>
+    </div>
+
+    <div class="zero-grid">
+      <div class="zero-card reveal d1">
+        <span class="badge">Zero-shot</span>
+        <h3>프롬프트 기반 생성</h3>
+        <p>5-스케일 PAR(S={16,32,64,128,256})에서 첫 스케일을 16-점 프롬프트로 초기화하고 자기회귀로 업샘플링한다.
+        지정된 거친 배치를 보존한 새 구조를 만들거나, 완전히 새로운 구조를 탐색한다. 더 긴 프롬프트(예: 32점)로 더 세밀한
+        제어도 가능하다.</p>
+      </div>
+      <div class="zero-card reveal d2">
+        <span class="badge">Zero-shot</span>
+        <h3>모티프 스캐폴딩</h3>
+        <p>원자 좌표 수준의 프롬프트도 보존한다. 각 스케일에서 실제 모티프 좌표를 teacher-forcing한 뒤 다음 스케일로
+        전파해, 조건화나 미세조정 없이 모티프를 높은 충실도로 유지하는 다양한 스캐폴드를 생성한다. 이는 마스크·모티프
+        조건 미세조정이 필요한 확산/흐름 기반 방식과 대비된다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. 샘플링 효율 ============ -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">07 — 샘플링 효율</div>
+      <h2>멀티스케일이 여는 <em>SDE/ODE 조율</em></h2>
+    </div>
+    <div class="speed-hero reveal">
+      <div>
+        <div class="big-num">2.5<span class="u">×</span></div>
+        <div class="big-lbl">길이 200 · 단일 스케일 400-step 대비 가속</div>
+        <div class="bars" id="speedBars"></div>
+      </div>
+      <div class="desc">
+        거친 첫 스케일은 서열이 짧아 샘플링이 효율적이며, 세밀한 스케일일수록 더 적은 스텝으로 충분하다.
+        <b>첫 스케일만 SDE로 샘플링하고 나머지를 ODE로 전환</b>하면, 마지막 두 스케일의 확산 스텝을 400에서 2로
+        극적으로 줄이면서도 설계 가능성 97%를 유지한다.
+        <br><br>
+        고품질의 거친 위상이 모델을 고밀도 영역 근처에 위치시키므로, 이후 ODE 샘플링으로 효율적인 정제가 가능하다.
+        다만 <b>첫 스케일의 SDE 샘플링은 신뢰할 만한 전역 위상 확립에 필수적</b>이며, ODE만 사용하면 설계 가능성이
+        크게 저하된다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. 결론 / 미래 ============ -->
+<section class="sec dark-sec" style="padding:110px 0">
+  <div class="wrap">
+    <div class="sec-head reveal" style="margin-bottom:34px">
+      <div class="sec-num">08 — 논의와 전망</div>
+      <h2>자기회귀 모델링으로 여는 <em>단백질 설계</em>의 잠재력</h2>
+      <p class="lead">
+        PAR은 흐름 기반 방법을 특수 사례로 포함하는 일반적 프레임워크로서, 표준 AR 모델의 단방향 의존성·이산화·노출
+        편향 한계를 해소한다. 여러 세밀도에 걸쳐 구조를 견고하게 모델링해, 강력한 제로샷 일반화를 가능케 한다.
+      </p>
+    </div>
+    <ul class="future-list reveal">
+      <li><b>구조 앙상블 모델링.</b> 구조를 다운샘플한 뒤 PAR로 업샘플링하는 일대다 매핑으로, 국소 분자 동역학을 모사해 단백질 앙상블을 제로샷으로 생성할 수 있다.</li>
+      <li><b>전원자(all-atom) 설계.</b> 현재의 Cα 백본 위에 백본-원자 스케일과 전원자 스케일 두 개를 더해, 곁사슬까지 포함한 완전한 구조로 확장 가능하다.</li>
+      <li><b>멀티 사슬·타 생체분자.</b> AlphaFold 방식의 사슬 식별자를 도입하거나, DNA/RNA·리간드에 맞는 거친 표현을 설계해 상호작용 모델링과 결합체 설계로 확장한다.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="repo">Project Page — <a href="https://par-protein.github.io" target="_blank" rel="noopener">par-protein.github.io</a></div>
+    <div class="fine">Protein Autoregressive Modeling via Multiscale Structure Generation · arXiv:2602.04883v2 · 요약 웹페이지</div>
+  </div>
+</footer>
+
+<script>
+/* 진행 바 */
+const progress=document.getElementById('progress');
+addEventListener('scroll',()=>{const h=document.documentElement;progress.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});
+
+/* 스크롤 리빌 */
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.14});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* 속도 막대 (애니메이션) */
+const speedData=[
+  {l:'Proteina 400-step',w:100,v:'170s',c:'slow'},
+  {l:'PAR (S/O/O 400)',w:40,v:'—',c:'slow'},
+  {l:'PAR (S/O/O 400/2/2)',w:40,v:'68s',c:'fast'},
+];
+const sb=document.getElementById('speedBars');
+speedData.forEach(d=>{
+  const row=document.createElement('div');row.className='bar-row';
+  row.innerHTML=`<div class="bl">${d.l}</div><div class="bt"><div class="bf ${d.c}" data-w="${d.w}"></div></div><div class="bv">${d.v}</div>`;
+  sb.appendChild(row);
+});
+const sbIo=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.querySelectorAll('.bf').forEach(b=>b.style.width=b.dataset.w+'%');sbIo.unobserve(e.target);}});},{threshold:.3});
+sbIo.observe(sb);
+
+/* ===== 스케일 시뮬레이터 ===== */
+const SC=document.getElementById('scaleCanvas');
+const sctx=SC.getContext('2d');
+const scaleInfo=[
+  {id:1,nm:'위상 형성',desc:'거친 전역 배치',pts:6,jit:0,detail:0},
+  {id:2,nm:'폴드 배열',desc:'3차 구조 윤곽',pts:14,jit:.5,detail:.25},
+  {id:3,nm:'2차 구조',desc:'헬릭스·시트 등장',pts:28,jit:.3,detail:.55},
+  {id:4,nm:'국소 정제',desc:'세부 곡률 다듬기',pts:60,jit:.15,detail:.8},
+  {id:5,nm:'원자 좌표',desc:'완성된 백본',pts:120,jit:.05,detail:1},
+];
+let curScale=4; // index (0-based) → 기본 마지막
+
+// 기준 백본 경로 생성 (결정적)
+function rand(s){const x=Math.sin(s*127.1+311.7)*43758.5453;return x-Math.floor(x);}
+function buildBackbone(n){
+  const pts=[];let a=0,x=0,y=0;
+  for(let i=0;i<n;i++){
+    a+=1.9+Math.sin(i*0.35)*0.9+ (rand(i)*0.6-0.3);
+    const step=1;
+    x+=Math.cos(a)*step;y+=Math.sin(a)*step;
+    pts.push({x,y});
+  }
+  // 정규화
+  let minx=1e9,maxx=-1e9,miny=1e9,maxy=-1e9;
+  pts.forEach(p=>{minx=Math.min(minx,p.x);maxx=Math.max(maxx,p.x);miny=Math.min(miny,p.y);maxy=Math.max(maxy,p.y);});
+  const w=maxx-minx,h=maxy-miny,sc=Math.max(w,h);
+  return pts.map(p=>({x:(p.x-minx)/sc,y:(p.y-miny)/sc}));
+}
+const FULL=buildBackbone(120);
+function resample(pts,n){
+  const out=[];for(let i=0;i<n;i++){const t=i/(n-1)*(pts.length-1);const i0=Math.floor(t),i1=Math.min(i0+1,pts.length-1),f=t-i0;out.push({x:pts[i0].x*(1-f)+pts[i1].x*f,y:pts[i0].y*(1-f)+pts[i1].y*f});}return out;}
+
+function ribbonColor(t){
+  // N(blue) → mid → C(red)
+  const n=[46,76,138],m=[210,200,180],c=[194,59,46];
+  let r,g,b;
+  if(t<0.5){const f=t/0.5;r=n[0]+(m[0]-n[0])*f;g=n[1]+(m[1]-n[1])*f;b=n[2]+(m[2]-n[2])*f;}
+  else{const f=(t-0.5)/0.5;r=m[0]+(c[0]-m[0])*f;g=m[1]+(c[1]-m[1])*f;b=m[2]+(c[2]-m[2])*f;}
+  return `rgb(${r|0},${g|0},${b|0})`;
+}
+let scW,scH,scDPR;
+function scResize(){
+  scDPR=Math.min(devicePixelRatio||1,2);
+  scW=SC.clientWidth;scH=SC.clientHeight;
+  SC.width=scW*scDPR;SC.height=scH*scDPR;sctx.setTransform(scDPR,0,0,scDPR,0,0);
+}
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let animT=0;
+function drawScale(){
+  scResize?null:0;
+  sctx.clearRect(0,0,scW,scH);
+  const info=scaleInfo[curScale];
+  const pts=resample(FULL,info.pts);
+  const pad=48;const size=Math.min(scW,scH)-pad*2;
+  const ox=(scW-size)/2, oy=(scH-size)/2;
+  animT+=reduceMotion?0:0.015;
+  // 라인
+  sctx.lineWidth=info.id<=2?6:(info.id===3?4:2.6);
+  sctx.lineCap='round';sctx.lineJoin='round';
+  for(let i=1;i<pts.length;i++){
+    const p0=pts[i-1],p1=pts[i];
+    const jit0=info.jit*Math.sin(i*3.1+animT)*0.012;
+    const jit1=info.jit*Math.cos(i*2.7+animT)*0.012;
+    const x0=ox+(p0.x+jit0)*size, y0=oy+(p0.y+jit1)*size;
+    const x1=ox+(p1.x+jit0)*size, y1=oy+(p1.y+jit1)*size;
+    sctx.strokeStyle=ribbonColor(i/pts.length);
+    sctx.globalAlpha=0.55+info.detail*0.45;
+    sctx.beginPath();sctx.moveTo(x0,y0);sctx.lineTo(x1,y1);sctx.stroke();
+  }
+  sctx.globalAlpha=1;
+  // 노드 (거친 스케일에서만 강조)
+  if(info.id<=3){
+    for(let i=0;i<pts.length;i++){
+      const p=pts[i];
+      sctx.beginPath();
+      sctx.arc(ox+p.x*size,oy+p.y*size,info.id===1?6:(info.id===2?4:2.5),0,Math.PI*2);
+      sctx.fillStyle=ribbonColor(i/pts.length);sctx.fill();
+    }
+  }
+  requestAnimationFrame(drawScale);
+}
+addEventListener('resize',scResize);
+scResize();drawScale();
+
+// 스케일 트랙 버튼
+const track=document.getElementById('scaleTrack');
+scaleInfo.forEach((s,i)=>{
+  const el=document.createElement('div');el.className='scale-step'+(i===curScale?' active':'');
+  el.innerHTML=`<div class="sid">Scale ${s.id}</div><div class="snm">${s.nm}</div><div class="sdesc">${s.desc}</div>`;
+  el.addEventListener('click',()=>{
+    curScale=i;
+    document.querySelectorAll('.scale-step').forEach(x=>x.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('scNum').textContent=s.id;
+    document.getElementById('scRmsd').textContent='Scale '+s.id+' · '+s.nm;
+  });
+  track.appendChild(el);
+});
+// 자동 순환 (감속 모션이 아닐 때)
+if(!reduceMotion){
+  let auto=setInterval(()=>{
+    curScale=(curScale+1)%scaleInfo.length;
+    const steps=document.querySelectorAll('.scale-step');
+    steps.forEach(x=>x.classList.remove('active'));
+    steps[curScale].classList.add('active');
+    document.getElementById('scNum').textContent=scaleInfo[curScale].id;
+    document.getElementById('scRmsd').textContent='Scale '+scaleInfo[curScale].id+' · '+scaleInfo[curScale].nm;
+  },2600);
+  track.addEventListener('click',()=>clearInterval(auto));
+}
+
+/* ===== P·A·R 형상 프롬프트 (16점 백본 스타일) ===== */
+function drawLetter(svgId,points){
+  const svg=document.getElementById(svgId);
+  const ns='http://www.w3.org/2000/svg';
+  // 리본 폴리라인
+  let d='M'+points.map(p=>`${p[0]} ${p[1]}`).join(' L');
+  const path=document.createElementNS(ns,'path');
+  path.setAttribute('d',d);
+  path.setAttribute('fill','none');
+  path.setAttribute('stroke-width','5');
+  path.setAttribute('stroke-linecap','round');
+  path.setAttribute('stroke-linejoin','round');
+  path.setAttribute('stroke','url(#grad'+svgId+')');
+  // 그라디언트
+  const defs=document.createElementNS(ns,'defs');
+  const lg=document.createElementNS(ns,'linearGradient');
+  lg.setAttribute('id','grad'+svgId);lg.setAttribute('x1','0');lg.setAttribute('y1','0');lg.setAttribute('x2','0');lg.setAttribute('y2','1');
+  [['0%','#2E4C8A'],['50%','#C9922E'],['100%','#C23B2E']].forEach(([o,c])=>{const s=document.createElementNS(ns,'stop');s.setAttribute('offset',o);s.setAttribute('stop-color',c);lg.appendChild(s);});
+  defs.appendChild(lg);svg.appendChild(defs);svg.appendChild(path);
+  // 점(16-point 프롬프트)
+  points.forEach((p,i)=>{
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',p[0]);c.setAttribute('cy',p[1]);c.setAttribute('r','4');
+    const t=i/(points.length-1);
+    c.setAttribute('fill',t<0.5?'#2E4C8A':'#C23B2E');
+    svg.appendChild(c);
+  });
+}
+// P 형상
+drawLetter('letP',[[20,110],[20,80],[20,50],[20,20],[50,15],[72,25],[72,48],[50,58],[22,58],[22,72],[22,90]]);
+// A 형상
+drawLetter('letA',[[16,112],[28,78],[40,44],[50,14],[62,44],[74,78],[84,112],[70,88],[56,88],[42,88],[30,88]]);
+// R 형상
+drawLetter('letR',[[22,112],[22,80],[22,48],[22,16],[52,18],[72,32],[66,54],[44,60],[24,60],[50,84],[74,110]]);
+</script>
+</body>
+</html>
