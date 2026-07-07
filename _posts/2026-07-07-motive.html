@@ -1,0 +1,568 @@
+---
+layout: null
+title: "Motion Attribution for Video Generation" 
+date: 2026-07-07
+categories: [artificial intelligence]
+tags: [artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MOTIVE — 영상 생성을 위한 모션 귀속</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e1a;          /* 딥 인디고 */
+  --bg-2:#0f1526;
+  --panel:#141b30;
+  --panel-2:#1a2340;
+  --line:#26304f;
+  --lime:#b6ff3c;        /* 전자 라임 (모션 벡터) */
+  --lime-dim:#8fd220;
+  --cyan:#4fd8ff;        /* 보조 시안 */
+  --violet:#8b7cff;      /* 보조 바이올렛 */
+  --text:#e6ebfa;
+  --muted:#8b96b8;
+  --faint:#5a6690;
+  --white:#f6f8ff;
+  --pos:#b6ff3c;
+  --neg:#ff6b8a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:"Pretendard",sans-serif;line-height:1.75;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+::selection{background:var(--lime);color:var(--bg)}
+.mono{font-family:"IBM Plex Mono",monospace}
+.wrap{max-width:1120px;margin:0 auto;padding:0 30px}
+
+/* 진행 표시줄 */
+#progress{position:fixed;top:0;left:0;height:2px;width:0;
+  background:linear-gradient(90deg,var(--cyan),var(--lime));z-index:10000;box-shadow:0 0 10px var(--lime)}
+
+/* ===== HERO ===== */
+.hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden;
+  background:radial-gradient(900px 500px at 20% 30%,rgba(139,124,255,.10),transparent 60%),
+             radial-gradient(700px 500px at 85% 70%,rgba(79,216,255,.08),transparent 60%),var(--bg);}
+#flowfield{position:absolute;inset:0;z-index:0;opacity:.55}
+.hero .wrap{position:relative;z-index:2;padding-top:100px;padding-bottom:80px}
+.badge-row{display:flex;gap:12px;align-items:center;margin-bottom:30px;flex-wrap:wrap}
+.pill{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  border:1px solid var(--line);padding:6px 13px;border-radius:40px;color:var(--muted);background:rgba(20,27,48,.5)}
+.pill.hi{border-color:var(--lime-dim);color:var(--lime)}
+.hero h1{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:clamp(54px,11vw,132px);
+  line-height:.92;letter-spacing:-.03em;color:var(--white)}
+.hero h1 .vec{color:var(--lime);position:relative}
+.hero .tag{font-family:"IBM Plex Mono",monospace;font-size:clamp(13px,1.6vw,16px);color:var(--cyan);
+  letter-spacing:.06em;margin-top:14px}
+.hero .lead{margin-top:26px;font-size:clamp(17px,2.2vw,21px);max-width:600px;color:var(--text);line-height:1.6;font-weight:500}
+.hero .lead b{color:var(--lime);font-weight:600}
+.hero .authors{margin-top:30px;font-size:13.5px;color:var(--faint);line-height:1.9}
+.hero .authors a{color:var(--cyan);text-decoration:none;border-bottom:1px solid var(--line)}
+.scrollhint{margin-top:44px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--faint);letter-spacing:.2em}
+.scrollhint span{display:inline-block;animation:bob 1.8s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+
+/* ===== 지표 스트립 ===== */
+.metrics{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--bg-2)}
+.metrics .grid{display:grid;grid-template-columns:repeat(4,1fr)}
+.metrics .m{padding:40px 26px;border-right:1px solid var(--line)}
+.metrics .m:last-child{border-right:none}
+.metrics .v{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:clamp(30px,5vw,50px);
+  color:var(--lime);letter-spacing:-.02em;line-height:1}
+.metrics .v small{font-size:.42em;color:var(--muted);font-weight:500;margin-left:2px}
+.metrics .k{margin-top:12px;font-size:13px;color:var(--muted);line-height:1.45}
+
+/* ===== 섹션 ===== */
+section.block{padding:104px 0;border-bottom:1px solid var(--line)}
+.eyebrow{display:flex;align-items:center;gap:14px;font-family:"IBM Plex Mono",monospace;font-size:12px;
+  letter-spacing:.22em;color:var(--lime);text-transform:uppercase;margin-bottom:18px}
+.eyebrow::before{content:"→";color:var(--lime);font-size:15px}
+.title{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:clamp(28px,4.4vw,46px);
+  letter-spacing:-.02em;color:var(--white);line-height:1.08}
+.lead{max-width:780px;color:var(--muted);font-size:17px;margin:24px 0 44px;line-height:1.8}
+p{font-size:16.5px;line-height:1.85;margin-bottom:18px;color:var(--text)}
+p .k{color:var(--lime);font-weight:600}p .c{color:var(--cyan)}p .v{color:var(--violet)}
+
+/* ===== 문제 정의 3가지 도전 ===== */
+.challenges{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:26px}
+.ch{border:1px solid var(--line);border-radius:8px;padding:28px;background:var(--panel);position:relative;overflow:hidden}
+.ch .idx{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--lime);letter-spacing:.15em;margin-bottom:14px}
+.ch .arrow{position:absolute;top:20px;right:22px;color:var(--line);font-size:26px}
+.ch h4{font-size:17px;color:var(--white);margin-bottom:9px;font-weight:600}
+.ch p{font-size:14.5px;color:var(--muted);margin:0;line-height:1.7}
+
+/* ===== 파이프라인 단계 ===== */
+.pipe{display:flex;flex-direction:column;gap:16px;margin-top:24px;counter-reset:step}
+.pstep{display:grid;grid-template-columns:64px 1fr;gap:22px;border:1px solid var(--line);border-radius:8px;
+  background:var(--panel);padding:26px 28px;align-items:start;transition:border-color .3s,background .3s}
+.pstep:hover{border-color:var(--lime-dim);background:var(--panel-2)}
+.pstep .no{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:34px;color:var(--lime);line-height:1}
+.pstep .body h4{font-size:18px;color:var(--white);margin-bottom:8px;font-weight:600}
+.pstep .body p{font-size:14.5px;color:var(--muted);margin:0;line-height:1.7}
+.pstep .body .eq{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--cyan);margin-top:10px;
+  background:var(--bg-2);border:1px solid var(--line);padding:8px 12px;border-radius:5px;display:inline-block;overflow-x:auto;max-width:100%}
+
+/* ===== 수식 카드 ===== */
+.formulacard{border-left:3px solid var(--lime);background:var(--bg-2);padding:22px 26px;margin:26px 0;border-radius:0 8px 8px 0}
+.formulacard .f{font-family:"IBM Plex Mono",monospace;font-size:15px;color:var(--white);overflow-x:auto;white-space:nowrap;padding-bottom:4px}
+.formulacard .cap{margin-top:11px;font-size:13.5px;color:var(--muted);white-space:normal;line-height:1.65}
+
+/* ===== 세 가지 스케일링 트릭 ===== */
+.tricks{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:20px}
+.trick{border:1px solid var(--line);border-radius:8px;padding:24px;background:var(--panel)}
+.trick .n{font-family:"IBM Plex Mono",monospace;color:var(--cyan);font-size:12px;letter-spacing:.12em;margin-bottom:10px}
+.trick h4{font-size:16.5px;color:var(--white);margin-bottom:8px;font-weight:600}
+.trick p{font-size:14px;color:var(--muted);margin:0;line-height:1.65}
+
+/* ===== 결과 테이블 ===== */
+.tablewrap{overflow-x:auto;margin-top:14px;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:660px}
+th,td{padding:13px 15px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left;font-weight:500}
+thead th{background:var(--bg-2);color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase}
+tbody tr:last-child td{border-bottom:none}
+tbody tr.ours{background:linear-gradient(90deg,rgba(182,255,60,.09),transparent)}
+tbody tr.ours td{color:var(--white);font-weight:600}
+tbody tr.ours td:first-child{color:var(--lime)}
+.tblnote{font-size:12.5px;color:var(--faint);margin-top:12px;font-family:"IBM Plex Mono",monospace;line-height:1.6}
+
+/* ===== 인간 평가 막대 ===== */
+.hbars{display:flex;flex-direction:column;gap:16px;margin-top:22px}
+.hbar .top{display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px}
+.hbar .top .name{color:var(--text)}
+.hbar .top .win{font-family:"IBM Plex Mono",monospace;color:var(--lime);font-weight:600}
+.stack{display:flex;height:26px;border-radius:5px;overflow:hidden;border:1px solid var(--line);background:var(--bg-2)}
+.stack .seg{transition:width 1.2s cubic-bezier(.4,0,.2,1);width:0}
+.stack .w{background:linear-gradient(90deg,var(--lime-dim),var(--lime))}
+.stack .t{background:var(--panel-2)}
+.stack .l{background:rgba(255,107,138,.5)}
+.hlegend{display:flex;gap:20px;margin-top:14px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+.hlegend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:middle}
+
+/* ===== 히트맵 ===== */
+.heat-intro{margin-top:8px}
+.heatwrap{margin-top:24px;overflow-x:auto}
+#heatmap{border-collapse:collapse;min-width:560px;margin:0 auto}
+#heatmap td,#heatmap th{border:1px solid var(--bg);padding:0;text-align:center}
+#heatmap th{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);padding:5px;font-weight:500}
+#heatmap th.row{text-align:right;padding-right:9px;white-space:nowrap}
+#heatmap td .cell{width:100%;height:38px;min-width:38px;display:flex;align-items:center;justify-content:center;
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:#0a0e1a;font-weight:600}
+.heatcap{font-size:13px;color:var(--faint);margin-top:16px;line-height:1.7;max-width:760px}
+
+/* ===== 시그니처: 모션 vs 겉모습 데모 ===== */
+.attn-demo{margin-top:26px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.attn-demo .head{display:flex;border-bottom:1px solid var(--line)}
+.attn-demo .head button{flex:1;padding:15px;background:none;border:none;color:var(--muted);
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;letter-spacing:.08em;cursor:pointer;transition:all .25s}
+.attn-demo .head button.active{color:var(--bg);background:var(--lime);font-weight:600}
+.attn-demo .head button:first-child{border-right:1px solid var(--line)}
+.attn-demo .stage{position:relative;aspect-ratio:2.6/1;background:
+  repeating-linear-gradient(90deg,#0d1424 0 20px,#101a30 20px 40px);overflow:hidden}
+.attn-demo canvas{position:absolute;inset:0;width:100%;height:100%}
+.attn-demo .cap{padding:16px 20px;font-size:13.5px;color:var(--muted);border-top:1px solid var(--line);line-height:1.6}
+.attn-demo .cap b{color:var(--lime)}
+
+/* ===== 효율 분석 ===== */
+.effgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:22px}
+.eff{border:1px solid var(--line);border-radius:8px;padding:24px;background:var(--panel)}
+.eff .big{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:30px;color:var(--lime);line-height:1}
+.eff .lbl{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);margin-top:9px;letter-spacing:.08em}
+.eff .d{font-size:13.5px;color:var(--muted);margin-top:12px;line-height:1.6}
+
+/* ===== 한계/향후 ===== */
+.limits{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:22px}
+.lim{border:1px solid var(--line);border-radius:8px;padding:24px;background:var(--panel)}
+.lim h4{font-size:15px;color:var(--white);margin-bottom:8px;font-weight:600;display:flex;align-items:center;gap:8px}
+.lim h4::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--neg)}
+.lim.future h4::before{background:var(--lime)}
+.lim p{font-size:13.5px;color:var(--muted);margin:0;line-height:1.65}
+
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s ease}
+.reveal.in{opacity:1;transform:none}
+
+footer{padding:72px 0 96px;background:var(--bg-2)}
+footer .fnote{color:var(--muted);font-size:14.5px;line-height:1.85;max-width:760px}
+footer .cite{margin-top:28px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--faint);
+  border-left:2px solid var(--line);padding-left:18px;line-height:1.9}
+footer a{color:var(--cyan);text-decoration:none;border-bottom:1px solid var(--line)}
+
+@media(max-width:860px){
+  .metrics .grid{grid-template-columns:repeat(2,1fr)}
+  .metrics .m:nth-child(2){border-right:none}
+  .challenges,.effgrid{grid-template-columns:1fr}
+  .tricks,.limits{grid-template-columns:1fr}
+  .pstep{grid-template-columns:1fr;gap:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <canvas id="flowfield"></canvas>
+  <div class="wrap">
+    <div class="badge-row">
+      <span class="pill hi">NVIDIA Research</span>
+      <span class="pill">Data Attribution</span>
+      <span class="pill">Video Diffusion</span>
+    </div>
+    <h1>MO<span class="vec">TI</span>VE</h1>
+    <div class="tag">MOTIon attribution for Video gEneration</div>
+    <p class="lead">생성된 영상의 <b>모션</b>이 어떤 학습 클립에서 비롯되는가. 겉모습이 아니라 시간적 동역학을 데이터로 귀속하는 최초의 그래디언트 기반 프레임워크다.</p>
+    <div class="authors">
+      Xindi Wu · Despoina Paschalidou · Jun Gao · Antonio Torralba · Laura Leal-Taixé<br>
+      Olga Russakovsky · Sanja Fidler · Jonathan Lorraine<br>
+      NVIDIA · Princeton · MIT · U-Michigan · U-Toronto · Vector Institute &nbsp;|&nbsp;
+      <a href="https://research.nvidia.com/labs/sil/projects/MOTIVE/" target="_blank" rel="noopener">프로젝트 페이지</a>
+    </div>
+    <div class="scrollhint"><span>▼ 아래로 흐른다</span></div>
+  </div>
+</header>
+
+<!-- ================= 지표 ================= -->
+<div class="metrics">
+  <div class="wrap">
+    <div class="grid">
+      <div class="m reveal"><div class="v">74.1<small>%</small></div><div class="k">기반 모델 대비 인간 선호 승률</div></div>
+      <div class="m reveal"><div class="v">10<small>%</small></div><div class="k">전체 대비 사용 데이터로 전량 미세조정 성능 도달·초과</div></div>
+      <div class="m reveal"><div class="v">47.6<small>%</small></div><div class="k">Wan2.1 동적 정도(Dynamic Degree) — 최고 기록</div></div>
+      <div class="m reveal"><div class="v">512<small>d</small></div><div class="k">14억 차원 그래디언트를 투영해 저장</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 문제 정의 ================= -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow reveal">문제 정의</div>
+    <h2 class="title reveal">모션은 왜 귀속하기 어려운가</h2>
+    <p class="lead reveal">모션은 영상을 정의하는 요소다. 확산 모델은 데이터 주도적이며 그 진보는 데이터 규모를 따라왔다. 그러나 생성된 영상의 모션이 어떤 학습 데이터에서 비롯되는지는 아직 이해가 부족하다. 기존 확산 데이터 귀속은 이미지와 정적 콘텐츠에 집중해 왔고, 이를 영상에 순진하게 확장하면 모션이 겉모습으로 붕괴되어 시간적 구조를 놓친다.</p>
+    <div class="challenges">
+      <div class="ch reveal"><span class="arrow">↗</span><div class="idx">CHALLENGE i</div><h4>모션 국소화</h4><p>귀속이 정적 배경이 아니라 동적 영역에 집중하도록 모션을 국소화해야 한다. 겉모습과 얽힌 모션을 분리하지 못하면 배경·객체 공유만으로 클립이 높게 순위된다.</p></div>
+      <div class="ch reveal"><span class="arrow">↗</span><div class="idx">CHALLENGE ii</div><h4>시퀀스 확장</h4><p>그래디언트를 시간에 걸쳐 적분해야 하므로 시퀀스로 확장이 필요하다. 클립 길이·샘플링 타임스텝·노이즈 추출·그래디언트 차원이 커질수록 순진한 방법은 현대 규모에서 비현실적이다.</p></div>
+      <div class="ch reveal"><span class="arrow">↗</span><div class="idx">CHALLENGE iii</div><h4>시간 관계 포착</h4><p>속도·가속도·궤적 일관성 같은 시간 관계는 단일 프레임 귀속으로 측정할 수 없다. 시간을 또 하나의 공간 축으로 취급하지 않고 시간 구조를 명시적으로 모델링해야 한다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 시그니처 데모 ================= -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow reveal">핵심 아이디어</div>
+    <h2 class="title reveal">겉모습이 아니라 움직임에 무게를 둔다</h2>
+    <p class="lead reveal">Motive는 그래디언트를 모션 인식 마스킹으로 계산한다. 손실 공간에서 모션 크기 마스크를 곱해 동적 영역의 그래디언트를 강조하고 정적 배경을 약화한다. 아래에서 두 방식이 같은 장면에 대해 어디에 주목하는지 비교한다.</p>
+    <div class="attn-demo reveal">
+      <div class="head">
+        <button id="btnVideo" class="active">영상 단위 귀속 (겉모습 편향)</button>
+        <button id="btnMotion">모션 마스킹 귀속 (Motive)</button>
+      </div>
+      <div class="stage"><canvas id="attnCanvas"></canvas></div>
+      <div class="cap" id="attnCap">영상 단위 귀속은 배경·객체 전반에 그래디언트가 고르게 퍼져 <b>정적 겉모습</b>에 과도하게 반응한다.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 방법: 파이프라인 ================= -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow reveal">방법 · 모션 그래디언트</div>
+    <h2 class="title reveal">모션 귀속 3단계</h2>
+    <p class="lead reveal">미세조정 코퍼스 D<sub>ft</sub>와 질의 영상 (v̂, ĉ)가 주어지면, 각 학습 클립에 모션 인식 영향력 점수 I<sub>mot</sub>(v<sub>n</sub>, v̂)를 부여한다. 이 점수는 예측성(순위가 미세조정 변화와 상관)과 효율성(현대 영상 생성기로 확장)을 만족해야 한다.</p>
+    <div class="pipe">
+      <div class="pstep reveal"><div class="no">1</div><div class="body"><h4>모션 검출</h4><p>AllTracker로 픽셀 공간의 옵티컬 플로우를 추출한다. 첫 두 채널은 프레임 간 변위, 나머지는 가시성·신뢰도 점수를 담는다. 변위 벡터에서 모션 크기를 얻는다.</p><div class="eq">A = 𝒜(v) ∈ ℝ^(F×H×W×4),  D_f(h,w) = (d_w, d_h)</div></div></div>
+      <div class="pstep reveal"><div class="no">2</div><div class="body"><h4>모션 크기 패치</h4><p>각 위치의 모션 크기를 프레임·픽셀 전체에 대해 min–max 정규화해 [0,1]로 만든다. 절대 크기 편향을 완화하고 상대적 모션 현저성을 강조한다. 이후 잠재 격자로 이중선형 다운샘플해 그래디언트가 계산되는 공간에 정렬한다.</p><div class="eq">W(f,h,w) = (M_f(h,w) − m_min) / (m_max − m_min + ζ)</div></div></div>
+      <div class="pstep reveal"><div class="no">3</div><div class="body"><h4>모션 마스킹</h4><p>손실 공간에서 위치별 제곱 오차에 모션 가중치를 곱해 평균한다. W가 모두 1이면 표준 목적함수로 환원된다. 순전파 노이즈 주입과 생성은 그대로 두고 귀속만 재가중하므로, 모션 가중과 노이즈 주입 간 상호작용을 피한다.</p><div class="eq">ℒ_mot(θ;v,c) = (1/F_v) · mean[ W̃ · ℒ̃_θ,v,c ]</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 확장 트릭 + 수식 ================= -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow reveal">확장성</div>
+    <h2 class="title reveal">14억 차원을 다루는 법</h2>
+    <p class="lead reveal">영향력은 역헤시안-벡터곱 대신 그래디언트 유사도로 근사한다. 정확한 역헤시안 계산은 현대 신경망에서 비현실적이므로, 항등 전처리기를 쓰고 네 가지 기법으로 대규모 영상 데이터·모델에 맞게 확장한다.</p>
+    <div class="tricks">
+      <div class="trick reveal"><div class="n">TRICK 01 · 공통 무작위성</div><h4>안정적 순위를 위한 페어링</h4><p>학습·시험 그래디언트를 동일한 (t, ε) 쌍에서 평가하고 작은 집합 𝒯에 대해 평균한다. 독립 추출 대비 순위를 안정화한다.</p></div>
+      <div class="trick reveal"><div class="n">TRICK 02 · 단일 샘플</div><h4>계산 절감</h4><p>모든 학습–시험 쌍에 단일 t_fix와 공유 ε_fix를 고정한다. 상대 순서를 유지할 만큼 분산이 낮아 |𝒟||𝒯|B 비용을 |𝒟|B로 줄인다.</p></div>
+      <div class="trick reveal"><div class="n">TRICK 03 · 구조적 투영</div><h4>저장 절감 (Fastfood)</h4><p>Johnson–Lindenstrauss 투영을 Fastfood로 구현해 정규화한다. 투영은 O(D′log D′), 내적은 O(D′)로 전체 그래디언트 코사인 유사도 순위에 근접한다.</p></div>
+      <div class="trick reveal"><div class="n">TRICK 04 · 프레임 길이 보정</div><h4>영상 특유 편향 수정</h4><p>원 그래디언트 크기가 프레임 수 F에 의존해 긴 영상으로 점수가 편향된다. 투영·정규화 전에 1/F로 정규화해 서로 다른 길이 클립 간 공정성을 확보한다.</p></div>
+    </div>
+    <div class="formulacard reveal">
+      <div class="f">I_mot(v_n, v̂) = g̃_mot(θ, v̂)ᵀ · g̃_mot(θ, v_n),   g̃_mot = P·g_mot / ‖P·g_mot‖</div>
+      <div class="cap">모션 가중 그래디언트 g_mot = ∇_θ ℒ_mot을 투영·정규화한 뒤 코사인 유사도로 영향력을 매긴다. 이 과정은 확산·흐름 정합 목적함수 모두에 적용되며 생성기 구조와 무관하다.</div>
+    </div>
+    <p class="reveal">다중 질의는 ICONS의 다수결 투표로 집계한다. 질의별 백분위 절단 τ를 넘으면 표를 얻고, 총 득표수로 순위를 매겨 상위 K를 미세조정 부분집합으로 삼는다. 이는 원점수의 교차 질의 보정 없이 여러 질의에서 일관되게 영향력 있는 표본을 강조한다.</p>
+  </div>
+</section>
+
+<!-- ================= 결과 ================= -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow reveal">실험 · VBench</div>
+    <h2 class="title reveal">10%의 데이터로 전량을 넘는다</h2>
+    <p class="lead reveal">VIDGEN-1M과 4DNeX-10M에서 각 10k 영상을 사용하고, 10개 모션 범주(compress, bounce, roll, explode, float, free fall, slide, spin, stretch, swing)에 걸친 50개 질의로 평가한다. 모든 선택 방법은 학습 데이터의 10%만 쓴다. Motive는 두 모델 모두에서 동적 정도를 최고로 끌어올리며, 특히 전량 미세조정을 넘어선다.</p>
+    <div class="tablewrap reveal">
+      <table>
+        <thead>
+          <tr><th>방법 (Wan2.1-T2V-1.3B)</th><th>Subj.</th><th>Bg.</th><th>Mot.</th><th>Dyn.</th><th>Aesth.</th><th>Img.</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Base</td><td>95.3</td><td>96.4</td><td>96.3</td><td>39.6</td><td>45.3</td><td>65.7</td></tr>
+          <tr><td>Full FT (전량)</td><td>95.9</td><td>96.6</td><td>96.3</td><td>42.0</td><td>45.0</td><td>63.9</td></tr>
+          <tr><td>Random</td><td>95.3</td><td>96.6</td><td>96.3</td><td>41.3</td><td>45.7</td><td>65.1</td></tr>
+          <tr><td>Motion magnitude</td><td>95.6</td><td>96.2</td><td>95.7</td><td>40.1</td><td>45.1</td><td>63.2</td></tr>
+          <tr><td>V-JEPA</td><td>95.7</td><td>96.0</td><td>95.6</td><td>41.6</td><td>44.9</td><td>62.7</td></tr>
+          <tr><td>Ours w/o 모션 마스킹</td><td>95.4</td><td>96.1</td><td>96.3</td><td>43.8</td><td>45.7</td><td>63.2</td></tr>
+          <tr class="ours"><td>Ours (Motive)</td><td>96.3</td><td>96.1</td><td>96.3</td><td>47.6</td><td>46.0</td><td>64.6</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tblnote reveal">Subj.: 주체 일관성 · Bg.: 배경 일관성 · Mot.: 모션 매끄러움 · Dyn.: 동적 정도 · Aesth.: 미적 품질 · Img.: 이미징 품질. Wan2.2-TI2V-5B에서도 동적 정도 48.3%로 전량 미세조정(45.3%)을 능가한다.</p>
+  </div>
+</section>
+
+<!-- ================= 인간 평가 ================= -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow reveal">인간 평가</div>
+    <h2 class="title reveal">지각적으로도 앞선다</h2>
+    <p class="lead reveal">자동 지표는 지각적 모션 품질을 놓칠 수 있어, 17명의 평가자가 50개 영상에 대해 쌍대 비교를 수행했다(총 850건). 두 영상 중 더 나은 모션을 고르는 방식이며 무승부를 허용했다.</p>
+    <div class="hbars reveal" id="hbars">
+      <div class="hbar"><div class="top"><span class="name">Ours vs. Base</span><span class="win">승 74.1%</span></div><div class="stack"><div class="seg w" data-w="74.1"></div><div class="seg t" data-w="12.3"></div><div class="seg l" data-w="13.6"></div></div></div>
+      <div class="hbar"><div class="top"><span class="name">Ours vs. Random</span><span class="win">승 58.9%</span></div><div class="stack"><div class="seg w" data-w="58.9"></div><div class="seg t" data-w="12.1"></div><div class="seg l" data-w="29.0"></div></div></div>
+      <div class="hbar"><div class="top"><span class="name">Ours vs. Full FT</span><span class="win">승 53.1%</span></div><div class="stack"><div class="seg w" data-w="53.1"></div><div class="seg t" data-w="14.8"></div><div class="seg l" data-w="32.1"></div></div></div>
+      <div class="hbar"><div class="top"><span class="name">Ours vs. w/o 모션 마스킹</span><span class="win">승 46.9%</span></div><div class="stack"><div class="seg w" data-w="46.9"></div><div class="seg t" data-w="20.0"></div><div class="seg l" data-w="33.1"></div></div></div>
+    </div>
+    <div class="hlegend reveal"><span><i style="background:var(--lime)"></i>승리</span><span><i style="background:var(--panel-2)"></i>무승부</span><span><i style="background:rgba(255,107,138,.5)"></i>패배</span></div>
+  </div>
+</section>
+
+<!-- ================= 교차 모션 히트맵 ================= -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow reveal">분석 · 교차 모션 영향력</div>
+    <h2 class="title reveal">움직임끼리 통한다</h2>
+    <p class="lead heat-intro reveal">범주별 상위 100개 영향력 학습 표본이 다른 범주와 얼마나 겹치는지를 본다. 아래는 VIDGEN 데이터셋의 겹침 비율(%)이다. bounce–float처럼 역학이 유사한 쌍은 높게, free fall–stretch처럼 기계적으로 다른 쌍은 낮게 나타난다. 이 패턴은 4DNeX에서도 동일해, 영향력 관계가 모션 표현의 근본적 측면을 반영함을 시사한다.</p>
+    <div class="heatwrap reveal"><div id="heatmap"></div></div>
+    <p class="heatcap reveal">행렬은 비대칭이다. 범주마다 5개 질의가 공유하는 고유 영향력 표본 수가 달라 방향성 겹침 비율이 생긴다. 두 데이터셋 평균 겹침은 각각 24.0%, 24.3%로 중간 정도의 공유를 보인다.</p>
+  </div>
+</section>
+
+<!-- ================= 효율 ================= -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow reveal">효율 분석</div>
+    <h2 class="title reveal">비용은 한 번, 질의는 초 단위</h2>
+    <p class="lead reveal">파이프라인의 지배적 비용은 학습 표본별 그래디언트 계산이다. 이는 한 번만 수행하면 이후 모든 질의에 재사용된다. 각 클립 그래디언트는 512차원 벡터로 투영·저장되며, 새 질의를 더하는 데는 단일 역전파와 코사인 유사도 계산만 필요하다.</p>
+    <div class="effgrid">
+      <div class="eff reveal"><div class="big">~150h</div><div class="lbl">10K 학습 그래디언트 · 1×A100</div><div class="d">일회성 지배 비용이나 모든 질의에 상각된다. 완전 병렬로 64 GPU 사용 시 약 2.3시간까지 단축된다.</div></div>
+      <div class="eff reveal"><div class="big">~54s</div><div class="lbl">질의 1건 추가 비용</div><div class="d">그래디언트 계산 54초 + 영향력 계산 46ms. 계산 부담은 질의 수가 아니라 학습셋 크기에만 비례한다.</div></div>
+      <div class="eff reveal"><div class="big">ρ=74.7%</div><div class="lbl">투영 차원 512의 순위 보존</div><div class="d">128차원은 46.9%에 그치나 512에서 74.7%에 도달한다. 그 이상은 이득이 미미해 512가 정확도·효율 최적점이다.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 한계와 향후 ================= -->
+<section class="block">
+  <div class="wrap">
+    <div class="eyebrow reveal">한계와 향후</div>
+    <h2 class="title reveal">남은 문제</h2>
+    <p class="lead reveal">Motive는 각 영상을 하나의 단위로 다뤄 모션의 프레임 단위 겉모습 붕괴는 피하지만, 특정 구간만 모션 정보를 담을 수 있다는 점을 놓칠 위험이 있다.</p>
+    <div class="limits">
+      <div class="lim reveal"><h4>세그먼트 희석</h4><p>정보성 높은 구간이 같은 클립의 정적·중복 부분과 평균되면 희석된다. 모션 세그먼트·이벤트 수준의 더 세밀한 귀속이 열린 방향이다.</p></div>
+      <div class="lim reveal"><h4>카메라 모션 과대평가</h4><p>모션 마스크가 카메라 단독 모션을 과대평가할 수 있다. W의 공간 균일성으로 이를 검출해 하향 가중하나, 자아·객체 모션의 완전한 분리는 향후 과제다.</p></div>
+      <div class="lim reveal"><h4>CFG 미반영</h4><p>널리 쓰이는 분류자 없는 안내(CFG)를 명시적으로 다루지 않아, 학습 시 귀속과 추론 시 동역학 사이에 불일치가 생긴다.</p></div>
+      <div class="lim future reveal"><h4>폐루프 데이터 큐레이션</h4><p>일회성 순위를 넘어 귀속–미세조정–재귀속을 반복하는 능동 선택, 학습된 질의 가중치, 안전성을 위한 음의 영향력 필터링으로 확장한다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 결론 ================= -->
+<footer>
+  <div class="wrap">
+    <div class="eyebrow reveal">결론</div>
+    <h2 class="title reveal" style="margin-bottom:26px">움직임을 데이터로 되짚다</h2>
+    <p class="fnote reveal">Motive는 영상 확산의 핵심이면서 덜 탐구된 질문 — 어떤 학습 클립이 생성 영상의 모션에 영향을 주는가 — 에 답한다. 모션 인식 데이터 귀속으로 시간적 동역학을 정적 겉모습에서 분리하고, 생성된 모션을 영향력 있는 학습 클립으로 되짚어 소량 데이터만으로 모션 품질을 높이는 표적 큐레이션을 가능하게 한다. 영상 모델이 커질수록 이런 데이터 수준의 이해가 실패 모드 진단과 더 제어 가능한 생성 시스템 구축의 열쇠가 된다.</p>
+    <div class="cite reveal">
+      Wu, X., Paschalidou, D., Gao, J., Torralba, A., Leal-Taixé, L.,<br>
+      Russakovsky, O., Fidler, S., &amp; Lorraine, J. (2026).<br>
+      Motion Attribution for Video Generation. <em>arXiv:2601.08828.</em><br>
+      <a href="https://research.nvidia.com/labs/sil/projects/MOTIVE/" target="_blank" rel="noopener">research.nvidia.com/labs/sil/projects/MOTIVE</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ===== 진행 표시줄 =====
+const prog=document.getElementById('progress');
+addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  prog.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+},{passive:true});
+
+// ===== 진입 애니메이션 =====
+const io=new IntersectionObserver((es)=>{
+  es.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('in');
+      if(e.target.id==='hbars'){
+        e.target.querySelectorAll('.seg').forEach(s=>{s.style.width=s.dataset.w+'%';});
+      }
+      io.unobserve(e.target);
+    }
+  });
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// ===== HERO 옵티컬 플로우 벡터 필드 =====
+(function(){
+  const c=document.getElementById('flowfield');
+  const ctx=c.getContext('2d');
+  let W,H,mx=-999,my=-999,t=0;
+  const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function size(){W=c.width=c.offsetWidth*devicePixelRatio;H=c.height=c.offsetHeight*devicePixelRatio;}
+  size();addEventListener('resize',size);
+  c.parentElement.addEventListener('mousemove',e=>{
+    const r=c.getBoundingClientRect();mx=(e.clientX-r.left)*devicePixelRatio;my=(e.clientY-r.top)*devicePixelRatio;
+  });
+  c.parentElement.addEventListener('mouseleave',()=>{mx=my=-999;});
+  const gap=46*devicePixelRatio, len=16*devicePixelRatio;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(let x=gap/2;x<W;x+=gap){
+      for(let y=gap/2;y<H;y+=gap){
+        // 기본 흐름: 완만한 소용돌이 + 시간 변화
+        let ang=Math.sin(x*0.004+t)*0.9 + Math.cos(y*0.005 - t*0.7)*0.9;
+        let em=0.45;
+        // 마우스 근처는 방사형으로 밀려남
+        const dx=x-mx, dy=y-my, d=Math.hypot(dx,dy);
+        if(d<200*devicePixelRatio){
+          const infl=1-d/(200*devicePixelRatio);
+          ang=Math.atan2(dy,dx);
+          em=0.45+infl*0.55;
+        }
+        const ex=Math.cos(ang)*len*em, ey=Math.sin(ang)*len*em;
+        ctx.strokeStyle=`rgba(182,255,60,${0.10+em*0.22})`;
+        ctx.lineWidth=1*devicePixelRatio;
+        ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+ex,y+ey);ctx.stroke();
+        // 화살촉
+        ctx.fillStyle=`rgba(182,255,60,${0.14+em*0.3})`;
+        ctx.beginPath();ctx.arc(x+ex,y+ey,1.6*devicePixelRatio,0,7);ctx.fill();
+      }
+    }
+    if(!reduce)t+=0.006;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ===== 겉모습 vs 모션 데모 =====
+(function(){
+  const cv=document.getElementById('attnCanvas');
+  const cx=cv.getContext('2d');
+  const cap=document.getElementById('attnCap');
+  const bV=document.getElementById('btnVideo'), bM=document.getElementById('btnMotion');
+  let mode='video';
+  function size(){cv.width=cv.offsetWidth*devicePixelRatio;cv.height=cv.offsetHeight*devicePixelRatio;}
+  size();addEventListener('resize',()=>{size();paint();});
+  // 움직이는 대상(공)의 궤적 = 동적 영역
+  const path=[];const N=60;
+  for(let i=0;i<N;i++){const p=i/N;path.push({x:0.12+p*0.76, y:0.5+Math.sin(p*Math.PI*2)*0.28});}
+  function paint(){
+    const W=cv.width,H=cv.height;cx.clearRect(0,0,W,H);
+    if(mode==='video'){
+      // 전면에 고르게 퍼진 그래디언트(겉모습 편향) — 격자 히트
+      for(let x=0;x<W;x+=26*devicePixelRatio){
+        for(let y=0;y<H;y+=26*devicePixelRatio){
+          const a=0.06+Math.random()*0.10;
+          cx.fillStyle=`rgba(139,124,255,${a})`;
+          cx.fillRect(x,y,24*devicePixelRatio,24*devicePixelRatio);
+        }
+      }
+    }else{
+      // 궤적 주변에만 집중된 라임 가중
+      path.forEach((p,i)=>{
+        const gx=p.x*W, gy=p.y*H;
+        const r=34*devicePixelRatio;
+        const g=cx.createRadialGradient(gx,gy,0,gx,gy,r);
+        g.addColorStop(0,'rgba(182,255,60,0.55)');
+        g.addColorStop(1,'rgba(182,255,60,0)');
+        cx.fillStyle=g;cx.beginPath();cx.arc(gx,gy,r,0,7);cx.fill();
+      });
+    }
+    // 공(대상) 그리기 — 두 모드 공통
+    const head=path[path.length-1];
+    cx.fillStyle=mode==='motion'?'#b6ff3c':'#8b7cff';
+    cx.beginPath();cx.arc(head.x*W,head.y*H,10*devicePixelRatio,0,7);cx.fill();
+    // 궤적 선
+    cx.strokeStyle='rgba(230,235,250,0.25)';cx.lineWidth=1.5*devicePixelRatio;
+    cx.beginPath();path.forEach((p,i)=>{i?cx.lineTo(p.x*W,p.y*H):cx.moveTo(p.x*W,p.y*H);});cx.stroke();
+  }
+  function set(m){
+    mode=m;
+    bV.classList.toggle('active',m==='video');
+    bM.classList.toggle('active',m==='motion');
+    cap.innerHTML = m==='video'
+      ? '영상 단위 귀속은 배경·객체 전반에 그래디언트가 고르게 퍼져 <b>정적 겉모습</b>에 과도하게 반응한다.'
+      : '모션 마스킹 귀속은 <b>움직이는 궤적</b>에만 그래디언트를 집중해, 모션을 형성한 학습 클립을 식별한다.';
+    paint();
+  }
+  bV.onclick=()=>set('video');bM.onclick=()=>set('motion');
+  paint();
+})();
+
+// ===== 교차 모션 히트맵 (VIDGEN, 논문 Fig.7b) =====
+(function(){
+  const labels=['roll','bounce','float','free_fall','compress','spin','swing','slide','stretch','explode'];
+  const data=[
+    [100.0,21.8,20.3,16.5,19.8,20.9,19.6,16.3,17.8,15.6],
+    [27.1,100.0,46.3,36.0,34.3,39.1,33.2,15.5,18.0,16.9],
+    [27.6,50.6,100.0,40.0,40.6,40.9,33.6,13.9,15.5,19.7],
+    [16.3,28.6,29.0,100.0,25.3,27.3,20.9,14.3,12.7,13.0],
+    [22.6,31.5,34.0,29.2,100.0,39.6,30.7,18.8,16.2,18.8],
+    [21.1,31.7,30.3,27.9,35.1,100.0,27.6,19.3,18.9,19.6],
+    [25.4,34.7,32.1,27.5,35.0,35.5,100.0,28.0,26.9,21.4],
+    [17.3,13.3,10.9,15.4,17.5,20.4,23.0,100.0,28.9,26.3],
+    [19.6,15.9,12.5,14.2,15.6,20.5,22.7,29.8,100.0,35.9],
+    [17.1,14.9,15.9,14.4,18.1,21.3,18.1,27.1,35.9,100.0]
+  ];
+  function color(v){
+    // 라임(높음) → 인디고(낮음) 스케일
+    const t=Math.max(0,Math.min(1,(v-10)/90));
+    const r=Math.round(26+(182-26)*t);
+    const g=Math.round(48+(255-48)*t);
+    const b=Math.round(80+(60-80)*t);
+    return `rgb(${r},${g},${b})`;
+  }
+  let html='<tr><th></th>';
+  labels.forEach(l=>html+=`<th>${l}</th>`);
+  html+='</tr>';
+  data.forEach((row,i)=>{
+    html+=`<tr><th class="row">${labels[i]}</th>`;
+    row.forEach(v=>{
+      const light=v>55;
+      html+=`<td><div class="cell" style="background:${color(v)};color:${light?'#0a0e1a':'#c9d2ee'}">${v.toFixed(0)}</div></td>`;
+    });
+    html+='</tr>';
+  });
+  document.getElementById('heatmap').innerHTML=html;
+})();
+</script>
+</body>
+</html>
