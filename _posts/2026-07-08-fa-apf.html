@@ -1,0 +1,514 @@
+---
+layout: null
+title: "Bayesian filtering based on generative emulators without training" 
+date: 2026-07-08
+categories: [artificial intelligence]
+tags: [ai for science, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>학습 없는 생성 에뮬레이터 기반 베이지안 필터링 · FA-APF</title>
+<style>
+  :root{
+    --ink:#0B1929;
+    --ink-2:#122438;
+    --mist:#E8ECEF;
+    --mist-dim:#9FB0BE;
+    --cyan:#4DD0E1;
+    --amber:#F2A65A;
+    --vred:#D64550;
+    --vblue:#3A6EA5;
+    --line:rgba(159,176,190,0.18);
+    --serif:Georgia,'Times New Roman',serif;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--ink);
+    color:var(--mist);
+    font-family:var(--sans);
+    line-height:1.75;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--cyan);color:var(--ink)}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:0 8vw;
+    overflow:hidden;
+  }
+  #particles{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+  }
+  .hero-inner{position:relative;z-index:2;max-width:1000px}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:0.72rem;
+    letter-spacing:0.32em;
+    text-transform:uppercase;
+    color:var(--cyan);
+    margin-bottom:2rem;
+    display:flex;
+    align-items:center;
+    gap:1rem;
+  }
+  .eyebrow::before{content:"";width:42px;height:1px;background:var(--cyan);display:inline-block}
+  .hero h1{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(2.4rem,6.2vw,5rem);
+    line-height:1.05;
+    letter-spacing:-0.02em;
+    margin-bottom:1.8rem;
+  }
+  .hero h1 em{font-style:italic;color:var(--amber)}
+  .hero .lede{
+    font-size:clamp(1rem,1.6vw,1.28rem);
+    color:var(--mist-dim);
+    max-width:640px;
+    line-height:1.85;
+  }
+  .hero .authors{
+    margin-top:2.6rem;
+    font-family:var(--mono);
+    font-size:0.8rem;
+    color:var(--mist-dim);
+    letter-spacing:0.04em;
+  }
+  .hero .authors span{color:var(--mist)}
+  .scroll-cue{
+    position:absolute;
+    bottom:2.4rem;left:50%;
+    transform:translateX(-50%);
+    z-index:2;
+    font-family:var(--mono);
+    font-size:0.65rem;
+    letter-spacing:0.3em;
+    color:var(--mist-dim);
+    text-transform:uppercase;
+    animation:bob 2.4s ease-in-out infinite;
+  }
+  @keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,8px)}}
+
+  /* ---------- LAYOUT ---------- */
+  section{padding:7rem 8vw;position:relative}
+  .band{border-top:1px solid var(--line)}
+  .sec-head{margin-bottom:3.4rem;max-width:900px}
+  .sec-num{
+    font-family:var(--mono);
+    font-size:0.72rem;
+    letter-spacing:0.3em;
+    color:var(--amber);
+    display:block;
+    margin-bottom:1rem;
+  }
+  .sec-head h2{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(1.8rem,3.6vw,2.9rem);
+    line-height:1.15;
+    letter-spacing:-0.01em;
+    color:var(--mist);
+  }
+  p.body{
+    max-width:760px;
+    color:var(--mist-dim);
+    font-size:1.02rem;
+    margin-bottom:1.3rem;
+  }
+  p.body strong{color:var(--mist);font-weight:600}
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ---------- PROBLEM CARDS ---------- */
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem;margin-top:2.4rem}
+  .card{
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:2.2rem;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{content:"";position:absolute;top:0;left:0;width:3px;height:100%;background:var(--cyan)}
+  .card.amber::before{background:var(--amber)}
+  .card.red::before{background:var(--vred)}
+  .card h3{font-family:var(--serif);font-weight:400;font-size:1.3rem;margin-bottom:0.9rem;color:var(--mist)}
+  .card p{color:var(--mist-dim);font-size:0.95rem}
+  .card .k{font-family:var(--mono);font-size:0.72rem;letter-spacing:0.2em;color:var(--mist-dim);text-transform:uppercase;display:block;margin-bottom:1rem}
+
+  /* ---------- EQUATION BLOCK ---------- */
+  .eq{
+    font-family:var(--mono);
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:1.5rem 1.8rem;
+    margin:1.8rem 0;
+    max-width:760px;
+    color:var(--cyan);
+    font-size:0.92rem;
+    overflow-x:auto;
+    line-height:2;
+  }
+  .eq .lbl{float:right;color:var(--mist-dim)}
+  .eq .cmt{color:var(--mist-dim)}
+
+  /* ---------- METHOD STEPS ---------- */
+  .steps{margin-top:2.4rem;max-width:820px}
+  .step{
+    display:grid;grid-template-columns:64px 1fr;gap:1.6rem;
+    padding:1.8rem 0;border-bottom:1px solid var(--line);
+  }
+  .step:last-child{border-bottom:none}
+  .step .idx{font-family:var(--mono);font-size:1.5rem;color:var(--amber);line-height:1.2}
+  .step h4{font-family:var(--serif);font-weight:400;font-size:1.28rem;margin-bottom:0.6rem;color:var(--mist)}
+  .step p{color:var(--mist-dim);font-size:0.96rem}
+  .step code{font-family:var(--mono);font-size:0.85em;color:var(--cyan);background:rgba(77,208,225,0.08);padding:1px 6px;border-radius:3px}
+
+  /* ---------- RESULTS TABLES ---------- */
+  .tblwrap{overflow-x:auto;margin-top:2.2rem}
+  table{border-collapse:collapse;width:100%;max-width:820px;font-size:0.92rem}
+  caption{text-align:left;font-family:var(--mono);font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--mist-dim);margin-bottom:1rem}
+  th,td{padding:0.75rem 1rem;text-align:right;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  thead th{color:var(--amber);font-family:var(--mono);font-size:0.74rem;letter-spacing:0.08em;text-transform:uppercase;font-weight:400}
+  tbody tr:hover{background:rgba(77,208,225,0.04)}
+  td.best{color:var(--cyan);font-weight:700}
+  .rowlabel{color:var(--mist);font-weight:600}
+  .grouphead td{color:var(--mist-dim);font-family:var(--mono);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;padding-top:1.4rem}
+
+  /* ---------- SCALE VISUAL ---------- */
+  .scale{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.4rem;margin-top:2.6rem}
+  .scalecell{background:var(--ink-2);border:1px solid var(--line);border-radius:4px;padding:2rem;text-align:center}
+  .scalecell .big{font-family:var(--serif);font-size:clamp(2rem,4vw,3.2rem);color:var(--cyan);line-height:1}
+  .scalecell .big.a{color:var(--amber)}
+  .scalecell .cap{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--mist-dim);margin-top:1rem}
+
+  /* ---------- LIMITATION LIST ---------- */
+  .lim{max-width:760px;margin-top:2rem}
+  .lim li{list-style:none;padding:1.2rem 0 1.2rem 2rem;border-bottom:1px solid var(--line);position:relative;color:var(--mist-dim)}
+  .lim li::before{content:"↳";position:absolute;left:0;color:var(--vred);font-family:var(--mono)}
+  .lim li b{color:var(--mist);font-weight:600}
+
+  /* ---------- FOOTER ---------- */
+  footer{padding:5rem 8vw;border-top:1px solid var(--line);background:var(--ink-2)}
+  footer .flink{font-family:var(--mono);font-size:0.85rem;color:var(--cyan);text-decoration:none;letter-spacing:0.04em}
+  footer .flink:hover{color:var(--amber)}
+  footer p{color:var(--mist-dim);font-size:0.82rem;margin-top:1rem;font-family:var(--mono)}
+
+  a{color:var(--cyan)}
+  @media (max-width:640px){
+    section{padding:4.5rem 7vw}
+    .hero{padding:0 7vw}
+    .step{grid-template-columns:44px 1fr;gap:1rem}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .reveal{transition:none;opacity:1;transform:none}
+    .scroll-cue{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <canvas id="particles"></canvas>
+  <div class="hero-inner">
+    <div class="eyebrow">ICML 2026 · Data Assimilation · Diffusion Emulators</div>
+    <h1>학습 없이,<br>생성 에뮬레이터로<br><em>베이지안 필터링</em>을 풀다</h1>
+    <p class="lede">확산 기반 에뮬레이터를 추가 학습 없이 재사용하여, 오랫동안 구현이 어려워 방치되었던 <strong style="color:var(--mist)">완전 적응 보조 입자 필터(FA-APF)</strong>를 구현한다. 이를 통해 입자 필터를 고차원 대기 역학에까지 확장한다.</p>
+    <div class="authors">Thomas Savary · François Rozet · Gilles Louppe &nbsp;—&nbsp; <span>SAIL, University of Liège</span></div>
+  </div>
+  <div class="scroll-cue">Scroll</div>
+</header>
+
+<!-- ================= 1. 문제 ================= -->
+<section class="band">
+  <div class="sec-head reveal">
+    <span class="sec-num">01 — 문제 정의</span>
+    <h2>관측으로부터 카오스 시스템의 상태를 추정한다</h2>
+  </div>
+  <p class="body reveal">동역학 시스템의 상태 <code>x_k</code>는 직접 관측할 수 없다. 베이지안 필터링은 과거와 현재 관측 <code>y_{1:k}</code>만으로 사후 분포 <code>p(x_k | y_{1:k})</code>를 추정하는 문제다. 기상 예보에서 <code>x_k</code>는 대기 상태이고, 관측은 지상 기상 관측소와 위성에서 온다.</p>
+  <p class="body reveal">카오스 시스템에서는 초기 상태의 작은 편차가 시간에 따라 지수적으로 증폭된다. 따라서 초기 조건을 정확히 잡는 자료 동화(data assimilation)가 결정적으로 중요하다. 이 논문은 관측만으로 가장 그럴듯한 상태를 추론하는 문제에 생성 모델을 결합한다.</p>
+
+  <div class="grid2">
+    <div class="card reveal">
+      <span class="k">전이 모델</span>
+      <h3>x<sub>k+1</sub> = M(x<sub>k</sub>, λ) + η</h3>
+      <p>전이 연산자 M과 확률적 오차항 η가 다음 상태를 만든다. 이 논문은 M 대신 <code>p(x_{k+1}|x_k)</code>에서 직접 표본을 뽑는 확산 에뮬레이터를 가정한다.</p>
+    </div>
+    <div class="card amber reveal">
+      <span class="k">관측 모델</span>
+      <h3>y<sub>k</sub> ~ N(H(x<sub>k</sub>), Σ<sub>y</sub>)</h3>
+      <p>관측 연산자 H는 상태 공간을 관측 공간으로 사상한다. 관측 잡음은 평균 0의 가우시안으로 모델링한다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2. 입자 필터의 저주 ================= -->
+<section class="band">
+  <div class="sec-head reveal">
+    <span class="sec-num">02 — 배경</span>
+    <h2>입자 필터는 정확하지만, 차원의 저주에 무너진다</h2>
+  </div>
+  <p class="body reveal">입자 필터는 비선형 전이·관측 모델을 다룰 수 있다는 이론적 장점을 지닌다. 필터링 분포를 가중치가 부여된 입자들의 이산 측도로 근사하며, 입자 수가 늘수록 참 사후 분포로 약수렴한다.</p>
+  <p class="body reveal">그러나 고차원에서는 <strong>퇴화(degeneracy)</strong>가 발생한다. 관측 공간의 차원이 높을수록 우도가 뾰족해지고, 대다수 입자가 관측에서 멀어져 극소수 입자만 유의미한 가중치를 갖는다. 이것이 입자 필터가 고차원에서 쓸모없다는 통념의 근거였다.</p>
+
+  <div class="eq reveal">
+    ŵ<sup>k+1</sup><sub>i</sub> = [ p(y<sub>k+1</sub>|x<sub>k+1</sub>) · p(x<sub>k+1</sub>|x<sub>k</sub>) / q(x<sub>k+1</sub>|x<sub>k</sub>,y<sub>k+1</sub>) ] · w<sup>k</sup><sub>i</sub> <span class="lbl">(7)</span><br>
+    <span class="cmt"># 최적 제안분포 q = p(x_{k+1}|x_k, y_{k+1}) 를 쓰면 가중치 분산이 최소가 된다</span>
+  </div>
+  <p class="body reveal">핵심은 <strong>최적 제안분포</strong>다. 제안분포를 사후 전이분포와 일치시키면 가중치 분산이 최소화되어 퇴화가 완화된다. 문제는 이 최적 제안분포가 일반적인 수치 시뮬레이터에서는 표본 추출이 거의 불가능하다는 점이다. 이 지점이 논문의 진입로다.</p>
+</section>
+
+<!-- ================= 3. 방법 ================= -->
+<section class="band">
+  <div class="sec-head reveal">
+    <span class="sec-num">03 — 방법</span>
+    <h2>확산 에뮬레이터가 최적 제안분포를 열어준다</h2>
+  </div>
+  <p class="body reveal">이 논문은 확산 에뮬레이터를 추가 학습 없이 사용해 <strong>완전 적응 보조 입자 필터(FA-APF)</strong>를 구현한다. FA-APF는 일반적인 입자 필터와 순서가 다르다. 먼저 가중치를 계산하고, 그 가중치로 입자를 선택한 뒤, 최적 제안분포로 다음 시점에 전파한다.</p>
+
+  <div class="steps">
+    <div class="step reveal">
+      <div class="idx">01</div>
+      <div>
+        <h4>사후 점수를 분해한다</h4>
+        <p>베이즈 규칙에 따라 사후 점수는 <em style="color:var(--cyan)">사전 점수 + 우도 점수</em>로 분해된다. 사전 점수는 에뮬레이터의 학습된 denoiser에서 이미 얻을 수 있으므로, 남는 미지수는 우도 점수뿐이다.</p>
+      </div>
+    </div>
+    <div class="step reveal">
+      <div class="idx">02</div>
+      <div>
+        <h4>MMPS로 우도 점수를 근사한다</h4>
+        <p>모멘트 정합 사후 표본 추출(MMPS)은 국소 확산 분포를 가우시안으로 근사하고, 그 모멘트를 <code>Tweedie 공식</code>으로 추정한다. 공분산 V는 명시적으로 저장하지 않고 자동 미분으로 암시적으로 접근하며, 선형계는 GMRES 같은 반복 해법으로 푼다.</p>
+      </div>
+    </div>
+    <div class="step reveal">
+      <div class="idx">03</div>
+      <div>
+        <h4>Dirac 근사로 가중치를 계산한다</h4>
+        <p>최적 제안분포를 쓰면 가중치가 <code>p(y_{k+1}|x_k)·w_k</code>로 단순화된다. 전이분포를 조건부 평균 <code>E[x_{k+1}|x_k]</code>에서의 Dirac 질량으로 근사하며, 이 평균은 denoiser 한 번 호출로 얻는다.</p>
+      </div>
+    </div>
+    <div class="step reveal">
+      <div class="idx">04</div>
+      <div>
+        <h4>인플레이션으로 퇴화를 통제한다</h4>
+        <p>유효 표본 크기가 구간 <code>[N_min, N_max]</code>를 벗어나면 인플레이션 계수 α를 조정한다. 근사에 편향을 도입하지만, 매 시점 입자 분산이 0이 되지 않도록 보장한다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="eq reveal">
+    s<sup>x,y</sup><sub>t</sub> = s<sup>x</sup><sub>t</sub>(x<sub>t</sub>,x<sub>k</sub>) + s<sup>y</sup><sub>t</sub>(x<sub>t</sub>,x<sub>k</sub>,y<sub>k+1</sub>) <span class="lbl">(15)</span><br>
+    <span class="cmt"># 사후 점수 = 사전 점수(에뮬레이터에서 확보) + 우도 점수(MMPS로 추정)</span>
+  </div>
+</section>
+
+<!-- ================= 4. 실험 L63 ================= -->
+<section class="band">
+  <div class="sec-head reveal">
+    <span class="sec-num">04 — 실험 · Lorenz&rsquo;63</span>
+    <h2>적은 입자로도 경쟁 기법을 앞선다</h2>
+  </div>
+  <p class="body reveal">먼저 카오스 체제의 확률적 Lorenz&rsquo;63 시스템에서 필터링 성능을 앙상블 크기의 함수로 평가한다. 첫째·마지막 성분을 잡음과 함께 관측하며, 각 기법마다 32회 실행하여 평균 skill(앙상블 평균과 참값 사이의 RMSE)을 보고한다.</p>
+  <p class="body reveal">FA-APF는 주어진 앙상블 크기에서 일관되게 낮은 오차를 낸다. 특히 최적 제안분포를 쓰지 않는 고전 입자 필터(BPF)를 크게 앞선다. 소수 입자에서 강한 성능을 보이는 EnKF의 우수함도 함께 확인되는데, 이는 운영 기상 센터에서 EnKF가 널리 쓰이는 이유를 설명한다.</p>
+
+  <div class="tblwrap reveal">
+    <table>
+      <caption>표 1 · N=256, 32회 실행 평균 (Skill↓ / SSR≈1 / CRPS↓)</caption>
+      <thead>
+        <tr><th>기법</th><th>Skill ↓</th><th>SSR ≈ 1</th><th>CRPS ↓</th></tr>
+      </thead>
+      <tbody>
+        <tr class="grouphead"><td colspan="4">첫째·마지막 성분 관측</td></tr>
+        <tr><td class="rowlabel">BPF</td><td>1.25</td><td>0.32</td><td>2.88</td></tr>
+        <tr><td class="rowlabel">EnKF</td><td>0.72</td><td>1.25</td><td>1.10</td></tr>
+        <tr><td class="rowlabel">EnSF</td><td>2.18</td><td>0.78</td><td>4.23</td></tr>
+        <tr><td class="rowlabel">EnFF</td><td>1.67</td><td>1.25</td><td>2.51</td></tr>
+        <tr><td class="rowlabel">FA-APF</td><td class="best">0.60</td><td>1.49</td><td class="best">0.98</td></tr>
+        <tr class="grouphead"><td colspan="4">첫째 성분만 관측</td></tr>
+        <tr><td class="rowlabel">BPF</td><td>2.38</td><td>0.85</td><td>4.35</td></tr>
+        <tr><td class="rowlabel">EnKF</td><td>2.79</td><td>1.21</td><td>4.35</td></tr>
+        <tr><td class="rowlabel">EnSF</td><td>3.76</td><td>1.19</td><td>6.32</td></tr>
+        <tr><td class="rowlabel">EnFF</td><td>3.67</td><td>1.39</td><td>5.96</td></tr>
+        <tr><td class="rowlabel">FA-APF</td><td class="best">1.87</td><td>1.25</td><td class="best">3.05</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= 5. 실험 NS ================= -->
+<section class="band">
+  <div class="sec-head reveal">
+    <span class="sec-num">05 — 실험 · Navier-Stokes</span>
+    <h2>희소 관측 아래 고차원에서 견고하다</h2>
+  </div>
+  <p class="body reveal">실무에서 중요한 국면은 관측 공간이 상태 공간보다 훨씬 저차원인 <strong>희소 관측</strong> 상황이다. EnSF·EnFF 같은 기법은 이론적으로 우아하지만 이 국면에서 성능이 크게 떨어진다. 이를 검증하기 위해 128×128 격자의 2D 비압축성 Navier-Stokes 와도장을 대상으로, 픽셀화(coarse)와 부분 표집(sparse) 두 관측 연산자를 적용한다.</p>
+  <p class="body reveal">FA-APF는 128개 입자로 BPF와 FlowDAS를 모두 앞선다. BPF는 고차원에서 완전히 붕괴하여 실제 지구물리 시스템에서 사용 불가능함이 확인된다. FlowDAS는 단일 입자를 최적 제안분포로 전파하는 <em style="color:var(--amber)">퇴화된 완전 적응 필터</em>에 해당하며, FA-APF는 이를 입자 필터 형식론 위에서 엄밀하게 앙상블로 일반화한 것으로 볼 수 있다.</p>
+
+  <div class="tblwrap reveal">
+    <table>
+      <caption>표 2 · 평균 Skill↓, 128 입자, 10회 실험</caption>
+      <thead>
+        <tr><th>관측 (H, d)</th><th>BPF</th><th>FlowDAS</th><th>FA-APF</th></tr>
+      </thead>
+      <tbody>
+        <tr class="grouphead"><td colspan="4">Coarse (픽셀화)</td></tr>
+        <tr><td class="rowlabel">(8, 8)</td><td>3.02</td><td>2.78</td><td class="best">2.39</td></tr>
+        <tr><td class="rowlabel">(16, 16)</td><td>2.88</td><td>0.74</td><td class="best">0.63</td></tr>
+        <tr><td class="rowlabel">(32, 32)</td><td>2.80</td><td>0.19</td><td class="best">0.14</td></tr>
+        <tr class="grouphead"><td colspan="4">Sparse (부분 표집)</td></tr>
+        <tr><td class="rowlabel">(8, 8)</td><td>2.96</td><td>3.08</td><td class="best">2.30</td></tr>
+        <tr><td class="rowlabel">(16, 16)</td><td>2.91</td><td>1.90</td><td class="best">1.12</td></tr>
+        <tr><td class="rowlabel">(32, 32)</td><td>2.88</td><td>0.20</td><td class="best">0.13</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= 6. GenCast ================= -->
+<section class="band">
+  <div class="sec-head reveal">
+    <span class="sec-num">06 — 실험 · GenCast</span>
+    <h2>백만 차원 대기 상태로 확장한다</h2>
+  </div>
+  <p class="body reveal">마지막으로 ERA5 재분석 데이터로 학습된 전지구 확산 에뮬레이터 <strong>GenCast</strong>의 denoiser를 그대로 활용한다. 상태 <code>x_k</code>는 1° 위경도 격자 위 83개 지표·대기 변수로 구성되어 O(10⁶) 차원에 이른다. N=256 입자로 15일(30 시점, 12시간 해상도) 동안 필터링한다.</p>
+  <p class="body reveal">희소 온도 관측(전체 상태의 약 1%)만으로도, 7일 이후에는 관측하지 않은 변수(예: 바람)까지 포함해 안정적인 상태 근사에 도달하며 앙상블 분산도 0이 아닌 채 유지된다. 더 어려운 현실적 관측 설정에서는 관측의 강한 공간 불균질성(특히 극지방) 때문에 15일 이후에도 완전히 수렴하지는 않지만, 앙상블 평균은 참 상태에 정성적으로 근접한다.</p>
+
+  <div class="scale">
+    <div class="scalecell reveal"><div class="big">O(10⁶)</div><div class="cap">상태 변수 차원</div></div>
+    <div class="scalecell reveal"><div class="big a">256</div><div class="cap">입자 수</div></div>
+    <div class="scalecell reveal"><div class="big">~1%</div><div class="cap">관측 비율 (희소 온도)</div></div>
+    <div class="scalecell reveal"><div class="big a">15</div><div class="cap">필터링 일수</div></div>
+  </div>
+</section>
+
+<!-- ================= 7. 한계 ================= -->
+<section class="band">
+  <div class="sec-head reveal">
+    <span class="sec-num">07 — 한계와 향후 연구</span>
+    <h2>정직하게 남는 것들</h2>
+  </div>
+  <p class="body reveal">이 방법의 근본적 제약은 동역학의 생성 에뮬레이터에 의존한다는 점이다. 그리고 최적 제안분포 표본 추출은 매 확산 단계마다 denoiser를 미분해야 하므로 계산 비용이 크다.</p>
+  <ul class="lim">
+    <li class="reveal"><b>메모리 비용.</b> GenCast 규모에서 사후 점수 추정은 상당한 VRAM 오버헤드를 유발한다. 1° denoiser는 80GB H100에서 실행되었다.</li>
+    <li class="reveal"><b>MMPS의 근사.</b> 국소 분포를 가우시안으로 근사하므로, 잡음이 큰 초기 단계(다봉·비가우시안)에서는 정확도가 떨어진다.</li>
+    <li class="reveal"><b>가중치 근사.</b> 전이분포를 Dirac로 근사한 가중치는 부정확하다. 고차원에서 입자 수가 적을 때 개선이 필요하다.</li>
+    <li class="reveal"><b>인플레이션 편향.</b> 가중치 붕괴를 막기 위한 공분산 인플레이션은 우도를 수정하여 필터링 분포 근사에 편향을 준다.</li>
+  </ul>
+  <p class="body reveal" style="margin-top:2rem">결합 분포 <code>p(x_k, x_{k+1})</code>를 직접 표집하는 생성 모델이 있다면, 이 틀을 학습 없는 <strong>베이지안 스무딩</strong>으로 확장하는 것이 자연스러운 다음 단계다.</p>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <a class="flink" href="https://github.com/ThomasSavary08/FA-APF" target="_blank" rel="noopener">github.com/ThomasSavary08/FA-APF ↗</a>
+  <p>Savary, Rozet, Louppe · Training-Free Bayesian Filtering with Generative Emulators · ICML 2026, PMLR 306 · arXiv:2605.20028</p>
+</footer>
+
+<script>
+/* ---------- Scroll reveal ---------- */
+const io=new IntersectionObserver((es)=>{
+  es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+},{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ---------- Hero: particle-filter animation ----------
+   노이즈 입자들이 최적 제안분포를 따라 참 궤적(사인 곡선)으로 수렴하고,
+   저가중치 입자는 리샘플링되어 사라지는 FA-APF 개념의 시각화 */
+(function(){
+  const c=document.getElementById('particles');
+  const ctx=c.getContext('2d');
+  let W,H,DPR;
+  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function resize(){
+    DPR=Math.min(window.devicePixelRatio||1,2);
+    W=c.clientWidth;H=c.clientHeight;
+    c.width=W*DPR;c.height=H*DPR;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener('resize',resize);resize();
+
+  // 참 궤적: 완만한 대기 파동
+  function truth(x,t){
+    return H*0.5
+      + Math.sin(x*0.006 + t*0.0004)*H*0.16
+      + Math.sin(x*0.013 - t*0.0006)*H*0.07;
+  }
+
+  const N=reduce?70:160;
+  const parts=[];
+  for(let i=0;i<N;i++){
+    parts.push({
+      x:Math.random()*W,
+      y:Math.random()*H,
+      w:Math.random(),          // 가중치
+      vy:0
+    });
+  }
+
+  function step(t){
+    ctx.clearRect(0,0,W,H);
+
+    // 참 궤적 그리기
+    ctx.beginPath();
+    for(let x=0;x<=W;x+=6){
+      const y=truth(x,t);
+      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle='rgba(242,166,90,0.28)';
+    ctx.lineWidth=1.4;ctx.stroke();
+
+    for(const p of parts){
+      const target=truth(p.x,t);
+      // 최적 제안분포: 참 궤적으로 끌어당김 + 확산 잡음
+      const pull=(target-p.y)*0.045;
+      const noise=(Math.random()-0.5)*(reduce?1.2:3.4);
+      p.vy=p.vy*0.82+pull+noise;
+      p.y+=p.vy;
+      p.x+=reduce?0.15:0.5;
+      if(p.x>W){p.x=0;p.y=Math.random()*H;p.vy=0;}
+
+      // 가중치 = 참 궤적 근접도
+      const d=Math.abs(p.y-target);
+      p.w=Math.exp(-d*d/(2*40*40));
+
+      // 저가중치 입자 리샘플링 (퇴화 방지)
+      if(p.w<0.02 && Math.random()<0.02){
+        p.y=target+(Math.random()-0.5)*30;p.vy=0;
+      }
+
+      const r=1.1+p.w*2.6;
+      const a=0.15+p.w*0.6;
+      // 고가중치=시안, 저가중치=흐릿한 회색
+      const col=p.w>0.35
+        ? `rgba(77,208,225,${a})`
+        : `rgba(159,176,190,${a*0.7})`;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,r,0,Math.PI*2);
+      ctx.fillStyle=col;ctx.fill();
+    }
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+})();
+</script>
+</body>
+</html>
