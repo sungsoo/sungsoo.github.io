@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Tajo Cluster Architecture</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Tajo Cluster Architecture</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">12 June 2015</p></h4>
+<hr>
+
+<div class="post">
+<h1 id="tajo-cluster-architecture">Tajo Cluster Architecture</h1>
+<h2 id="terminology">Terminology</h2>
+
+<ul>
+  <li><em>Execution Block</em> - A distributed query plan consists of a tree of
+execution blocks. In other words, a logical plan of a query
+statement is broken into multiple parts, each of which is included
+in an execution block. Each execution block is a distributed
+processing phase which is similar to map or reduce phase in
+MapReduce. A number of tasks are created with the logical plan and
+control flags of an execution block.</li>
+  <li><em>SubQuery</em> - It is a control instance and a state machine for an
+execution block.</li>
+  <li><em>QueryUnit (Task)</em> - QueryUnit indicates a Task. In the design stage,
+we named QueryUnit to indicate a task. Recently, we are changing
+QueryUnit to Task.</li>
+  <li><em>QueryUnitAttempt</em> - Like MapReduce, each running query unit (task)
+has an attempt instance and an attempt id. A task can be restarted
+if it is failed. So, we need a way to identify failed or succeeded
+tasks.</li>
+</ul>
+
+<h2 id="taskrunnerlaunchimpl-class">TaskRunnerLaunchImpl class</h2>
+
+<p>The main objective of <em>TaskRunnerLaunchImpl</em> is to launch <em>TaskRunner</em>
+through Yarn’s ContainerManager.</p>
+
+<p>The TaskRunnerLaunchImpl class handles two events
+CONTAINER_REMOTE_LAUNCH and CONTAINER_REMOTE_CLEANUP, which lead to
+launching a TaskRunner and killing a running TaskRunner respectively.
+These events come from SubQuery::allocateContainers(SubQuery) method.</p>
+
+<h2 id="task">Task</h2>
+
+<p>In <em>TaskRunner</em>, a Task is created from the response (QueryUnitRequest) of
+‘getTask()’ rpc call. Task contains three main attributes as follows:</p>
+
+<ul>
+  <li>A logical plan of an execution block which created the task.</li>
+  <li>A fragment - an input path, an offset range, and schema. This is
+available only if the execution is leaf.</li>
+  <li>Fetch URIs - HTTP URIs to fetch the results processed by TaskRunners
+of the previous execution block. This is available only if the
+execution is non-leaf.</li>
+</ul>
+
+<p>Initially, a Task registers fetch URIs to fetchLauncher
+(ExecutorService) in order to pull data, and it restore a logical plan.</p>
+
+<p>Then, a physical operator tree is created from the logical plan via
+PhysicalPlannerImpl. Finally, Task::run() method is called, and then
+Task’s status is changed to RUNNING.</p>
+
+<p>Also, a running Task periodically sends a statusUpdate report to
+TaskRunnerListener via RPC. A StatusUpdate report includes a status and
+some statistics of the running task. 
+If the running task is failed, TaskRunner sends a message ‘fatal’ to
+TaskRunnerListenerImpl. 
+If the task is completed, TaskRunner sends a message ‘done’ to
+TaskRunnerListenerImpl.</p>
+
+<h2 id="taskrunner">TaskRunner</h2>
+
+<p>For each execution block, TaskRunner is launched by Yarn’s
+ContainerManager. TaskRunner processes a Task at a time. If TaskRunner
+has an available slot, it sends ‘getTask’ to TaskRunnerListner. If
+TaskRunner receives the response (QueryUnitRequest) of ‘getTask’
+message, TaskRunner creates an instance of Task from the response.</p>
+
+<h2 id="tasklistenerimpl">TaskListenerImpl</h2>
+
+<p>It receives messages sent from a number of TaskRunners. It passes the
+received message as events to some event handlers, such as
+QueryUnitAttempt and TaskScheduler.</p>
+
+<p>In the current implementation, there are four messages as follows:</p>
+
+<ul>
+  <li>getTask
+    <ul>
+      <li>When a TaskRunner has an empty slot, the TaskRunner sends this
+message to the TaskListenerImpl. This message is transformed to
+a TaskRequestEvent which is passed to the
+TaskSchedulerImpl$TaskRequests instance.</li>
+    </ul>
+  </li>
+  <li>statusUpdate
+    <ul>
+      <li>a Task periodically sends this message to TaskRunnerListener via
+RPC. This message is transformed to a
+TaskAttemptStatusUpdateEvent which is passed to the
+QueryUnitAttempt instance corresponding to the identifier
+included in the statusUpdate message.</li>
+    </ul>
+  </li>
+  <li>done
+    <ul>
+      <li>When a task attempt is completed, a Task sends this message to
+the TaskListenerImpl via RPC. This message is transformed to a
+TaskCompletionEvent which is passed to the QueryUnitAttempt
+instance corresponding to the identifier included in the done
+message.</li>
+    </ul>
+  </li>
+  <li>fatal
+    <ul>
+      <li>When a task is failed, the task sends this message to the
+TaskRunnerListenerImpl via RPC. This message is transformed to a
+TaskFatalErrorEvent which is also passed to the QueryUnitAttempt
+instance corresponding to the identifier included in the fatal
+message.</li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="a-sequence-diagram-of-statusupdate-done-and-fatal-messages">A sequence diagram of statusUpdate, done, and fatal messages</h3>
+
+<p><img src="http://diveintodata.files.wordpress.com/2013/06/statusupdate_done_fatal1.png" alt="" /></p>
+
+<h3 id="a-sequence-diagram-of-gettask-message">A sequence diagram of getTask message</h3>
+
+<p><img src="http://diveintodata.files.wordpress.com/2013/06/gettask.png" alt="" /></p>
+
+<h2 id="tajo-cluster-architecture-1">Tajo Cluster Architecture</h2>
+
+<p>A single Tajo cluster consists of the main components as follows:</p>
+
+<ul>
+  <li>TajoMaster (1 &lt;= N)</li>
+  <li>TajoWorker (1 &lt;= N)</li>
+</ul>
+
+<p>TajoMaster is responsible for coordinating a number of TajoWorkers and
+provides a client services. <span style="line-height: 1.4285715;background-color: transparent;">TajoWorker
+actually processes data. As the number of TajoWorkers increases, the
+processing capacity will increase linearly. The detailed description are
+as follows:</span></p>
+
+<h2 id="tajomaster">TajoMaster</h2>
+
+<p><span style="line-height: 1.4285715;background-color: transparent;">TajoMaster
+has three sub components:</span></p>
+
+<p><strong>QueryCoordinator</strong>: decides whether each query should be executed in a
+distributed way or be executed immediately in TajoMaster. If a query
+needs distributed execution, QueryCooordinator enqueues the query into
+query scheduler. If required cluster resources become available, the
+query scheduler will start queries. QueryCoordinator forwards a starting
+query to an arbitrary worker, and then the worker creates a
+QueryMasterTask instance which will controls and coordinates multiple
+stages and lots of tasks which will be executed across a number of
+nodes.</p>
+
+<p><strong>Resource Tracker</strong>: manages membership of cluster nodes. It detects a
+joining node to a Tajo cluster and leaving a node from a Tajo cluster.
+Resource Tracker receives heartbeat messages of them periodically, and
+maintains resources and healthy status of nodes via heartbeat messages.
+If some node is outage, Resource Tracker is responsible for notifying
+its node failure to QueryCoordinator. Then, QueryCoordinator will decide
+how to deal with the failure depending on the failure cases.</p>
+
+<p><strong>Client Service Provider</strong>: provides a set of remote APIs. Client
+Service Provider routes client API calls to proper QueryCoordinator
+or ResourceTracker.</p>
+
+<p>Basically, one TajoMaster runs in a Tajo cluster, but in HA mode, two or
+more TajoMaster can run in a single Tajo cluster. </p>
+
+<h2 id="tajoworker">TajoWorker</h2>
+
+<p>TajoWorker has two sub components:</p>
+
+<p><strong>NodeResourceManager</strong>:<span style="line-height: 1.4285715;background-color: transparent;"> manages
+resource of worker node. It decides allocating requests to the node. if
+available resources is not enough, part of request can be rejected, and
+sends an accepted tasks to TaskManager</span></p>
+
+<p><strong>TaskManager</strong>: <span style="line-height: 1.4285715;background-color: transparent;">launches
+task to the TaskExecutor and It uses multiple threads equal to the
+number of cpu-cores. </span><span style="line-height: 1.4285715;background-color: transparent;">When a
+task is completed, TaskManager releases the allocated resource and
+NodeStatusUpdater sends node status with latest resource status to the
+ResourceTracker in TajoMaster</span></p>
+
+<p><img src="http://sungsoo.github.com/images/TajoWorker.001.png" alt="" /></p>
+
+<h2 id="catalogserver">CatalogServer</h2>
+
+<h1 id="tajo-system-directory-hierarchy">Tajo System Directory Hierarchy</h1>
+
+<p>The default system directory hierarchy is as follows:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    [HDFS ROOT]
+         |
+         |-- tajo
+         |     |
+         |     |-- system
+         |     |     |-- resource
+         |     |             |-- system_conf.xml
+         |     |-- warehouse
+         |           |- [database  A]
+         |           |        |- [table a]
+         |           |        |- [table b]
+         |           |
+         |           |- [database ..]
+         |           |
+         |           |- [database  N]
+         |                    |- [table x]
+         |                    |- [table z]
+         |
+         |-- tmp
+              |-- staging
+                     |- q_1378468137418_0001
+                     |           |- RESULT
+                     |
+                     |- q_1378468137418_0002
+                     |           |- RESULT
+                     |
+                     |- q_1378468137418_000N
+</code></pre></div></div>
+
+<h2 id="root-directory">root directory</h2>
+
+<ul>
+  <li> Tajo has a root directory (config key - ‘tajo.rootdir’)</li>
+  <li> tajo.rootdir is configurable.</li>
+  <li> tajo.rootdir contains a subdirectory ‘system’.</li>
+</ul>
+
+<h2 id="system-directory">System directory</h2>
+
+<ul>
+  <li>system directory location is not configurable.</li>
+  <li>system/resource directory contains ‘system_conf.xml’ which contains
+a global configuration used across a number of workers.</li>
+</ul>
+
+<h2 id="warehouse-directory">Warehouse directory</h2>
+
+<ul>
+  <li>It contains a subdirectory per table.</li>
+  <li>If you execute CREATE TABLE statement, the table is stored in here
+as a subdirectory.</li>
+</ul>
+
+<h2 id="staging-directory">staging directory</h2>
+
+<ul>
+  <li>It contains a temporary directory for each query.</li>
+  <li>Each temporary directory has a query id as a directory name.</li>
+  <li>For each query, query results are stored temporarily in here. But
+these results will be removed after a while.</li>
+  <li>If a query is either CREATE TABLE or INSERT TABLE, the query result
+is moved to the warehouse directory.               </li>
+</ul>
+
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Agentic Researcher · 자율 연구 프레임워크</title>
+<style>
+  :root{
+    --ink:#0E1116;
+    --ink-2:#151A21;
+    --ink-3:#1C2530;
+    --line:#28323F;
+    --fog:#8A97A6;
+    --paper:#E6EBF0;
+    --paper-dim:#B8C2CD;
+    --teal:#4FD1C5;
+    --teal-dim:#2E9E93;
+    --amber:#F0A868;
+    --amber-dim:#C77F3E;
+    --violet:#A78BFA;
+    --red:#F0736A;
+    --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+    --sans:"Inter","Pretendard","Helvetica Neue",-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--sans);
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--teal);color:var(--ink)}
+
+  /* ---------- 배경 그리드 ---------- */
+  .bg-grid{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:
+      linear-gradient(var(--line) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:64px 64px;
+    opacity:.12;
+    mask-image:radial-gradient(ellipse 90% 60% at 50% 0%,#000 20%,transparent 75%);
+  }
+
+  .wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding:0 28px}
+
+  /* ---------- 상단 바 ---------- */
+  header.topbar{
+    position:sticky;top:0;z-index:50;
+    backdrop-filter:blur(14px);
+    background:rgba(14,17,22,.72);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar .row{display:flex;align-items:center;justify-content:space-between;height:58px}
+  .brand{display:flex;align-items:center;gap:11px;font-family:var(--mono);font-size:13px;letter-spacing:.02em}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 12px var(--teal)}
+  .brand b{font-weight:600;color:var(--paper)}
+  .brand span{color:var(--fog)}
+  nav.tnav{display:flex;gap:26px}
+  nav.tnav a{
+    font-family:var(--mono);font-size:12px;color:var(--fog);text-decoration:none;
+    letter-spacing:.03em;transition:color .2s;
+  }
+  nav.tnav a:hover{color:var(--teal)}
+  @media(max-width:760px){nav.tnav{display:none}}
+
+  /* ---------- 히어로 ---------- */
+  .hero{position:relative;padding:88px 0 40px}
+  .kicker{
+    font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--teal);margin-bottom:26px;display:flex;align-items:center;gap:14px;
+  }
+  .kicker::before{content:"";width:34px;height:1px;background:var(--teal)}
+  h1.title{
+    font-size:clamp(38px,6.4vw,74px);
+    line-height:1.02;
+    font-weight:800;
+    letter-spacing:-.025em;
+    margin-bottom:26px;
+  }
+  h1.title .em{
+    color:transparent;
+    background:linear-gradient(100deg,var(--teal),var(--amber));
+    -webkit-background-clip:text;background-clip:text;
+  }
+  .lede{
+    font-size:clamp(16px,2vw,20px);color:var(--paper-dim);max-width:760px;
+    line-height:1.66;
+  }
+  .lede b{color:var(--paper);font-weight:600}
+  .authors{
+    margin-top:30px;font-family:var(--mono);font-size:12.5px;color:var(--fog);
+    display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;
+  }
+  .authors .tag{
+    border:1px solid var(--line);border-radius:100px;padding:4px 12px;color:var(--paper-dim);
+  }
+
+  /* ---------- 히어로 캔버스 (실험 루프) ---------- */
+  .loopstage{
+    margin-top:56px;
+    position:relative;
+    border:1px solid var(--line);
+    border-radius:16px;
+    background:linear-gradient(180deg,var(--ink-2),var(--ink));
+    overflow:hidden;
+  }
+  .loopstage .hdr{
+    display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:11.5px;color:var(--fog);
+  }
+  .loopstage .hdr .c{width:11px;height:11px;border-radius:50%;background:var(--line)}
+  .loopstage .hdr .c.a{background:var(--red)}
+  .loopstage .hdr .c.b{background:var(--amber)}
+  .loopstage .hdr .c.g{background:var(--teal)}
+  .loopstage .hdr .path{margin-left:10px}
+  #loopCanvas{display:block;width:100%;height:auto}
+
+  /* ---------- 통계 스트립 ---------- */
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+    background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    margin-top:40px;
+  }
+  .stat{background:var(--ink-2);padding:26px 22px}
+  .stat .n{font-family:var(--mono);font-size:clamp(26px,4vw,40px);font-weight:700;color:var(--teal);line-height:1}
+  .stat .n.amb{color:var(--amber)}
+  .stat .l{margin-top:10px;font-size:13px;color:var(--fog);line-height:1.45}
+  @media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+  /* ---------- 섹션 공통 ---------- */
+  section{padding:88px 0;position:relative}
+  .eyebrow{
+    font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--amber);margin-bottom:16px;display:flex;align-items:center;gap:12px;
+  }
+  .eyebrow .idx{color:var(--teal)}
+  h2.sec{font-size:clamp(27px,3.8vw,42px);font-weight:800;letter-spacing:-.02em;line-height:1.1;margin-bottom:18px}
+  .sec-intro{font-size:16.5px;color:var(--paper-dim);max-width:720px;line-height:1.7;margin-bottom:44px}
+  .sec-intro b{color:var(--paper)}
+
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ---------- 다섯 단계 타임라인 ---------- */
+  .levels{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line);margin-left:8px}
+  .lvl{position:relative;padding:22px 0 22px 34px}
+  .lvl::before{
+    content:"";position:absolute;left:-9px;top:28px;width:16px;height:16px;border-radius:50%;
+    background:var(--ink);border:2px solid var(--fog);transition:all .3s;
+  }
+  .lvl:hover::before{border-color:var(--teal);box-shadow:0 0 14px var(--teal)}
+  .lvl .num{font-family:var(--mono);font-size:12px;color:var(--teal);letter-spacing:.1em}
+  .lvl h3{font-size:20px;font-weight:700;margin:3px 0 6px}
+  .lvl .desc{color:var(--paper-dim);font-size:15px;max-width:640px}
+  .lvl .role{
+    display:inline-block;margin-top:12px;font-family:var(--mono);font-size:11.5px;
+    color:var(--amber);border:1px solid var(--amber-dim);border-radius:6px;padding:3px 10px;
+  }
+  .lvl.hl::before{border-color:var(--amber);background:var(--amber);box-shadow:0 0 16px var(--amber)}
+  .lvl.hl h3{color:var(--amber)}
+
+  /* ---------- 십계명 격자 ---------- */
+  .cmd-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  @media(max-width:760px){.cmd-grid{grid-template-columns:1fr}}
+  .cmd{
+    background:var(--ink-2);border:1px solid var(--line);border-radius:12px;padding:22px 22px 20px;
+    cursor:pointer;transition:border-color .25s,transform .25s,background .25s;position:relative;overflow:hidden;
+  }
+  .cmd::after{
+    content:"";position:absolute;left:0;top:0;height:100%;width:3px;background:var(--teal);
+    transform:scaleY(0);transform-origin:top;transition:transform .3s;
+  }
+  .cmd:hover{border-color:var(--teal-dim);transform:translateY(-3px)}
+  .cmd:hover::after{transform:scaleY(1)}
+  .cmd .rn{font-family:var(--mono);font-size:12px;color:var(--teal);letter-spacing:.08em}
+  .cmd h4{font-size:17px;font-weight:700;margin:6px 0 8px}
+  .cmd .rule{font-size:14px;color:var(--paper-dim);line-height:1.55}
+  .cmd .fail{
+    margin-top:0;max-height:0;overflow:hidden;opacity:0;
+    transition:max-height .4s ease,opacity .3s ease,margin-top .3s;
+    font-size:13px;color:var(--fog);border-top:1px dashed var(--line);
+  }
+  .cmd.open .fail{max-height:220px;opacity:1;margin-top:14px;padding-top:12px}
+  .cmd .fail .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--red);display:block;margin-bottom:5px}
+  .cmd .hint{position:absolute;top:20px;right:20px;font-family:var(--mono);font-size:11px;color:var(--fog);transition:transform .3s}
+  .cmd.open .hint{transform:rotate(45deg);color:var(--teal)}
+  .cat-tag{
+    grid-column:1/-1;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--fog);margin:18px 0 -2px;display:flex;align-items:center;gap:12px;
+  }
+  .cat-tag::after{content:"";flex:1;height:1px;background:var(--line)}
+  .cat-tag:first-child{margin-top:0}
+
+  /* ---------- 도메인 모듈 ---------- */
+  .dom-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:760px){.dom-grid{grid-template-columns:1fr}}
+  .dom{background:var(--ink-2);border:1px solid var(--line);border-radius:14px;padding:26px}
+  .dom .head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .dom .glyph{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ink);background:var(--teal);border-radius:7px;padding:5px 9px}
+  .dom.amb .glyph{background:var(--amber)}
+  .dom h3{font-size:19px;font-weight:700}
+  .dom ul{list-style:none}
+  .dom li{position:relative;padding:9px 0 9px 22px;font-size:14.5px;color:var(--paper-dim);border-top:1px solid var(--line)}
+  .dom li:first-child{border-top:none}
+  .dom li::before{content:"›";position:absolute;left:0;top:9px;color:var(--teal);font-family:var(--mono)}
+  .dom.amb li::before{color:var(--amber)}
+  .dom li code{font-family:var(--mono);font-size:12.5px;color:var(--teal);background:var(--ink);padding:1px 6px;border-radius:4px}
+  .dom.amb li code{color:var(--amber)}
+
+  /* ---------- 케이스 스터디 ---------- */
+  .case{
+    border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:22px;
+    background:var(--ink-2);transition:border-color .25s;
+  }
+  .case:hover{border-color:var(--teal-dim)}
+  .case .top{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;padding:24px 26px 8px}
+  .case .badge{font-family:var(--mono);font-size:11px;color:var(--ink);background:var(--teal);border-radius:6px;padding:3px 9px;letter-spacing:.06em}
+  .case.math .badge{background:var(--amber)}
+  .case .field{font-family:var(--mono);font-size:12px;color:var(--fog);letter-spacing:.08em}
+  .case h3{padding:0 26px 6px;font-size:21px;font-weight:700;letter-spacing:-.01em}
+  .case .body{padding:0 26px 24px}
+  .case .q{color:var(--paper-dim);font-size:15px;margin-bottom:16px;line-height:1.65}
+  .case .find{
+    background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+    font-size:14.5px;line-height:1.62;color:var(--paper);
+  }
+  .case .find .fl{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:7px}
+  .case.math .find .fl{color:var(--amber)}
+  .case .metrics{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .case .metric{font-family:var(--mono);font-size:12px;color:var(--paper-dim);border:1px solid var(--line);border-radius:100px;padding:5px 13px}
+  .case .metric b{color:var(--teal);font-weight:600}
+  .case.math .metric b{color:var(--amber)}
+  .case .cmds{margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--fog)}
+  .case .cmds span{color:var(--teal)}
+  .case.math .cmds span{color:var(--amber)}
+
+  /* ---------- 리포트 구조 (터미널) ---------- */
+  .report{
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--ink-2);
+    font-family:var(--mono);font-size:13px;
+  }
+  .report .rh{display:flex;align-items:center;gap:7px;padding:11px 16px;border-bottom:1px solid var(--line);color:var(--fog)}
+  .report .rh .c{width:11px;height:11px;border-radius:50%;background:var(--line)}
+  .report .rh .c.a{background:var(--red)}.report .rh .c.b{background:var(--amber)}.report .rh .c.g{background:var(--teal)}
+  .report .rh .fn{margin-left:8px}
+  .report .rb{padding:20px 22px;line-height:1.9;overflow-x:auto}
+  .report .k{color:var(--teal)}
+  .report .cm{color:var(--fog)}
+  .report .st{color:var(--amber)}
+  .report .field{color:var(--paper)}
+  .report .field b{color:var(--violet);font-weight:600}
+  .report .commit{color:var(--paper-dim)}
+  .report .commit .m{color:var(--teal)}
+
+  /* ---------- 인프라 3열 ---------- */
+  .infra{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:760px){.infra{grid-template-columns:1fr}}
+  .card{background:var(--ink-2);border:1px solid var(--line);border-radius:13px;padding:24px;transition:transform .25s,border-color .25s}
+  .card:hover{transform:translateY(-4px);border-color:var(--teal-dim)}
+  .card .ic{font-family:var(--mono);font-size:12px;color:var(--teal);letter-spacing:.1em;margin-bottom:12px}
+  .card h4{font-size:17px;font-weight:700;margin-bottom:8px}
+  .card p{font-size:14px;color:var(--paper-dim);line-height:1.6}
+  .card p code{font-family:var(--mono);font-size:12px;color:var(--amber);background:var(--ink);padding:1px 5px;border-radius:4px}
+
+  /* ---------- 한계 & 방향 ---------- */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+  @media(max-width:760px){.split{grid-template-columns:1fr}}
+  .lim{list-style:none}
+  .lim li{padding:16px 0;border-top:1px solid var(--line)}
+  .lim li:first-child{border-top:none}
+  .lim h4{font-size:16px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:9px}
+  .lim h4::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--red)}
+  .fut li h4::before{background:var(--teal)}
+  .lim p{font-size:14px;color:var(--paper-dim);line-height:1.6}
+  .col-h{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--fog);margin-bottom:20px}
+
+  /* ---------- 마무리 ---------- */
+  .closer{
+    border:1px solid var(--line);border-radius:18px;padding:52px 44px;
+    background:linear-gradient(140deg,var(--ink-2),var(--ink-3));text-align:center;position:relative;overflow:hidden;
+  }
+  .closer::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(circle at 50% -20%,rgba(79,209,197,.16),transparent 60%);
+  }
+  .closer .qt{font-size:clamp(20px,3vw,30px);font-weight:700;line-height:1.35;max-width:720px;margin:0 auto;letter-spacing:-.015em;position:relative}
+  .closer .qt .em{color:var(--teal)}
+  .closer .sub{margin-top:20px;color:var(--paper-dim);font-size:15px;position:relative}
+  .repo{
+    display:inline-flex;align-items:center;gap:10px;margin-top:30px;position:relative;
+    font-family:var(--mono);font-size:13px;color:var(--ink);background:var(--teal);
+    text-decoration:none;padding:12px 22px;border-radius:9px;font-weight:600;transition:transform .2s,box-shadow .2s;
+  }
+  .repo:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(79,209,197,.25)}
+
+  footer{border-top:1px solid var(--line);padding:34px 0;margin-top:80px}
+  footer .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:12px;color:var(--fog)}
+  footer a{color:var(--fog);text-decoration:none}
+  footer a:hover{color:var(--teal)}
+
+  @media(prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+
+<header class="topbar">
+  <div class="wrap row">
+    <div class="brand"><span class="dot"></span><b>The Agentic Researcher</b><span>· ICML 2026</span></div>
+    <nav class="tnav">
+      <a href="#framework">프레임워크</a>
+      <a href="#levels">5단계</a>
+      <a href="#commandments">십계명</a>
+      <a href="#cases">사례연구</a>
+      <a href="#limits">한계</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="kicker reveal">수학 · 기계학습 연구를 위한 AI 실무 가이드</div>
+    <h1 class="title reveal">
+      연구자를 대체하지 않고<br><span class="em">증강</span>하는 자율 연구 에이전트
+    </h1>
+    <p class="lede reveal">
+      이 논문은 최신 CLI 코딩 에이전트를 <b>자율 연구 조수</b>로 전환하는 오픈소스 프레임워크를 제시한다.
+      샌드박스 컨테이너 안에서 동작하며, <b>십계명</b>이라 부르는 방법론적 규칙과 구조화된 리포트 관례를 통해
+      프론티어 LLM이 실험을 스스로 설계·실행·기록·검증하도록 한다. 최장 자율 세션은
+      사람 개입 없이 <b>20시간 이상</b> 지속되었다.
+    </p>
+    <div class="authors reveal">
+      <span class="tag">Max Zimmer</span>
+      <span class="tag">Nico Pelleriti</span>
+      <span class="tag">Christophe Roux</span>
+      <span class="tag">Sebastian Pokutta</span>
+      <span>· Zuse Institute Berlin / TU Berlin</span>
+    </div>
+
+    <!-- 실험 루프 캔버스 -->
+    <div class="loopstage reveal">
+      <div class="hdr">
+        <span class="c a"></span><span class="c b"></span><span class="c g"></span>
+        <span class="path">experiment_loop.run — 8단계 자율 실험 루프</span>
+      </div>
+      <canvas id="loopCanvas" width="1040" height="420"></canvas>
+    </div>
+
+    <!-- 통계 -->
+    <div class="stats reveal">
+      <div class="stat"><div class="n">20h+</div><div class="l">사람 개입 없는<br>최장 자율 세션</div></div>
+      <div class="stat"><div class="n amb">10</div><div class="l">도메인 무관하게 적용되는<br>핵심 계명</div></div>
+      <div class="stat"><div class="n">6</div><div class="l">딥러닝 · 수학<br>사례 연구</div></div>
+      <div class="stat"><div class="n amb">&lt;1min</div><div class="l">신규 시스템<br>설치 시간</div></div>
+    </div>
+  </div>
+
+
+  <!-- FRAMEWORK -->
+  <section id="framework">
+    <div class="eyebrow reveal"><span class="idx">01</span> 프레임워크 개요</div>
+    <h2 class="sec reveal">전용 시스템은 필요 없다. 규율 있는 워크플로가 필요하다</h2>
+    <p class="sec-intro reveal">
+      효과적인 에이전트 연구는 처음부터 새로 만든 특수 시스템을 요구하지 않는다.
+      기존 범용 CLI 코딩 에이전트(Claude Code, Codex CLI, OpenCode, Gemini CLI)를
+      <b>지속적 지시 파일 · 샌드박스 · 서면 리포트 · TODO 체크리스트 · 소수의 방법론 규칙</b>이라는
+      점검 가능한 워크플로에 얹으면 된다. 연구자는 시작 시 세 가지를 제공한다.
+    </p>
+
+    <div class="infra reveal">
+      <div class="card">
+        <div class="ic">INPUT · 01</div>
+        <h4>연구 질문</h4>
+        <p>문제 정의, 가설, 목표, 평가 기준을 명시한다. 방향은 고정되지 않고 반복 과정에서 재구성된다.</p>
+      </div>
+      <div class="card">
+        <div class="ic">INPUT · 02</div>
+        <h4>도구 · 방법 · 데이터</h4>
+        <p>소프트웨어 스택과 패키지, 데이터셋, 컴퓨트 자원, 커스텀 스크립트를 함께 넣는다. <code>uv</code> 기반 재현 환경을 권장한다.</p>
+      </div>
+      <div class="card">
+        <div class="ic">INPUT · 03</div>
+        <h4>선행 연구 · 도메인 지식</h4>
+        <p>기존 코드베이스, LaTeX 유도 노트, 참고문헌, 예비 결과를 제공한다. 상세할수록 결과가 좋아진다.</p>
+      </div>
+    </div>
+
+    <p class="sec-intro reveal" style="margin-top:44px;margin-bottom:22px">
+      세션은 다음 순서로 진행된다. 에이전트가 범위·제약·지표에 관해 명확화 질문을 던지고,
+      프로젝트별 지시를 <code style="font-family:var(--mono);color:var(--amber)">INSTRUCTIONS.md</code>에 기록하며,
+      <code style="font-family:var(--mono);color:var(--amber)">report.tex</code>와
+      <code style="font-family:var(--mono);color:var(--amber)">TODO.md</code>를 초기화한 뒤 승인을 받아 자율 실행에 들어간다.
+      별도 실험 추적 시스템 대신 Git 커밋 메시지 자체를 실험 기록으로 쓴다.
+    </p>
+
+    <!-- 리포트 터미널 -->
+    <div class="report reveal">
+      <div class="rh"><span class="c a"></span><span class="c b"></span><span class="c g"></span><span class="fn">report.tex — 실험 서브섹션 규격</span></div>
+      <div class="rb">
+        <span class="cm"># 모든 실험은 아래 필드를 반드시 포함한다 (계명 IX)</span><br><br>
+        <span class="k">\paragraph{</span><span class="field"><b>Goal</b></span><span class="k">}</span> 무슨 문제를 푸는가<br>
+        <span class="k">\paragraph{</span><span class="field"><b>Hypothesis</b></span><span class="k">}</span> 왜 이 접근이 통할 것인가<br>
+        <span class="k">\paragraph{</span><span class="field"><b>Method</b></span><span class="k">}</span> 정확한 표기의 수학적 정식화<br>
+        <span class="k">\paragraph{</span><span class="field"><b>Implementation</b></span><span class="k">}</span> 변경된 파일과 줄<br>
+        <span class="k">\paragraph{</span><span class="field"><b>Results</b></span><span class="k">}</span> 방법·모델·지표·델타 표<br>
+        <span class="k">\paragraph{</span><span class="field"><b>Analysis</b></span><span class="k">}</span> 왜 됐는가 또는 왜 안 됐는가<br>
+        <span class="k">\paragraph{</span><span class="field"><b>Next Steps</b></span><span class="k">}</span> 다음에 시도할 것<br><br>
+        <span class="cm"># Git 커밋이 곧 실험 로그다</span><br>
+        <span class="commit">$ git commit -m <span class="m">"exp(E017): pre-NS 정규화 + wd=0.05 -- ppl=33.35"</span></span><br>
+        <span class="st">→ 세션 시작·컨텍스트 리셋 시 report.tex · TODO.md · git log 재독해로 연속성 복원</span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- LEVELS -->
+  <section id="levels">
+    <div class="eyebrow reveal"><span class="idx">02</span> AI 통합의 5단계 분류</div>
+    <h2 class="sec reveal">도구에서 연구 동료까지</h2>
+    <p class="sec-intro reveal">
+      AI가 연구 과정에 얼마나 깊이 통합되는지를 다섯 단계로 나눈다. 단계는 상호 배타적이지 않으며,
+      한 프로젝트 안에서도 작업마다 다른 단계를 쓸 수 있다. 자율 시스템조차 하위 작업은
+      덜 자율적인 구성 요소에 위임한다. 핵심은 <b>어떤 작업에 어떤 단계가 적절한지 판별하는 것</b>이다.
+    </p>
+
+    <div class="levels reveal">
+      <div class="lvl">
+        <div class="num">LEVEL 0</div>
+        <h3>고전 (Classical)</h3>
+        <p class="desc">LaTeX, Mathematica, MATLAB, Python/Julia 같은 전통 도구만 쓴다. AI 통합은 없다. 여전히 지배적이고 완전히 타당한 방식이다.</p>
+        <span class="role">사람 역할 · 전부</span>
+      </div>
+      <div class="lvl">
+        <div class="num">LEVEL 1</div>
+        <h3>상담자 (Consultant)</h3>
+        <p class="desc">LLM 챗봇에 개념 설명, 문헌 검색, 브레인스토밍, 증명 디버깅을 질의한다. 지적 핵심 작업은 사람에게 남는다. 세션 간 상태가 유지되지 않는 한계가 있다.</p>
+        <span class="role">사람 역할 · 질문하고 평가한다</span>
+      </div>
+      <div class="lvl">
+        <div class="num">LEVEL 2</div>
+        <h3>타이피스트 (Typist)</h3>
+        <p class="desc">에디터 플러그인(Copilot, Cursor)으로 코드·텍스트를 생성한다. 모든 출력을 사람이 검토·수정·거부한다. AI는 실행하거나 반복하지 않는다.</p>
+        <span class="role">사람 역할 · 사고·검토·결정한다</span>
+      </div>
+      <div class="lvl">
+        <div class="num">LEVEL 3</div>
+        <h3>협력자 (Collaborator)</h3>
+        <p class="desc">CLI 코딩 에이전트가 구현과 실행을 위임받는다. 파일을 읽고 편집하며 결과에 따라 반복한다. 그러나 매 작업마다 사람의 지시를 기다린다. 방향은 사람이 정한다.</p>
+        <span class="role">사람 역할 · 매 출력 검토, 다음 작업 지정</span>
+      </div>
+      <div class="lvl hl">
+        <div class="num">LEVEL 4 · 이 프레임워크</div>
+        <h3>연구 동료 (Research Associate)</h3>
+        <p class="desc">에이전트가 상세 계획을 세우고 실험 루프를 자율 실행한다. 아이디어 형식화, 구현, 평가, 기록, 분석, 리포트·TODO 갱신을 스스로 반복한다. Level 3과의 결정적 차이는 <b>실험 사이에 사람 입력을 기다리지 않는다</b>는 점이다. 탐색 공간이 클 때 가장 적합하다.</p>
+        <span class="role">사람 역할 · 방향을 잡고 감사한다</span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- COMMANDMENTS -->
+  <section id="commandments">
+    <div class="eyebrow reveal"><span class="idx">03</span> 십계명 · 카드를 눌러 실패 사례 확인</div>
+    <h2 class="sec reveal">관찰된 실패로부터 증류한 열 가지 규칙</h2>
+    <p class="sec-intro reveal">
+      각 계명은 세 원칙을 따른다. <b>명시성</b>(암묵적 기대는 반드시 위반된다),
+      <b>반증 가능성</b>("엄밀하라"가 아니라 "실험당 변수 하나만 바꿔라"),
+      <b>실패 주도</b>(모든 계명은 실제 관찰된 실패 모드에서 나왔다). 카드를 누르면 그 규칙이
+      해결하려 한 실패 사례가 펼쳐진다.
+    </p>
+
+    <div class="cmd-grid reveal">
+      <div class="cat-tag">무결성과 신뢰</div>
+      <div class="cmd">
+        <span class="hint">+</span><span class="rn">I</span>
+        <h4>약속을 깨지 마라</h4>
+        <p class="rule">"X를 하겠다"고 말했으면 한다. 적게 약속하고 많이 이행한다.</p>
+        <div class="fail"><span class="lbl">실패 모드</span>에이전트가 "이제 전체 평가를 돌리겠다"고 선언한 뒤 단계를 건너뛰거나 다른 작업으로 넘어갔다.</div>
+      </div>
+      <div class="cmd">
+        <span class="hint">+</span><span class="rn">II</span>
+        <h4>평가를 조작하지 마라</h4>
+        <p class="rule">지표·테스트셋·고정 하이퍼파라미터·문제 정의를 바꾸지 않는다. 결과를 하드코딩하거나 시드를 체리피킹하지 않는다.</p>
+        <div class="fail"><span class="lbl">실패 모드</span>"평가 속도를 높이려" 샘플 수를 바꿨는데, 우연히 더 좋은 지표가 나와 베이스라인 대비 부당한 이점이 생겼다.</div>
+      </div>
+      <div class="cmd">
+        <span class="hint">+</span><span class="rn">III</span>
+        <h4>인용을 날조하지 마라</h4>
+        <p class="rule">모든 참고문헌은 추가 전 실제 출처와 대조해 검증한다. 웹 검색으로 제목·저자·연도·게재처를 확인한다. 못 찾으면 추측하지 않는다.</p>
+        <div class="fail"><span class="lbl">실패 모드</span>그럴듯하지만 틀린 서지 정보를 환각으로 만들어냈다. LLM의 잘 알려진 한계다.</div>
+      </div>
+
+      <div class="cat-tag">자율성과 효율</div>
+      <div class="cmd">
+        <span class="hint">+</span><span class="rn">IV</span>
+        <h4>보고 전에 자율 작업을 완수하라</h4>
+        <p class="rule">사람 입력이 필요 없는 모든 작업을 끝낸다. 결과를 모아 한 번에 보고한다. "구현이 오래 걸린다"는 이유로 건너뛰지 않는다.</p>
+        <div class="fail"><span class="lbl">실패 모드</span>계획에 실험이 많이 남았는데도 계속 "계속할까요?"라고 물었다. 에이전트는 자기 코딩 속도를 크게 과소평가한다. 실제 구현은 대개 1분 미만이다.</div>
+      </div>
+      <div class="cmd">
+        <span class="hint">+</span><span class="rn">V</span>
+        <h4>넘어가기 전에 일단 작동시켜라</h4>
+        <p class="rule">실험 크래시는 나쁜 아이디어가 아니라 버그다. 구현 실패를 이유로 방법을 버리지 않는다. 조사하고 고쳐 재실행한다.</p>
+        <div class="fail"><span class="lbl">실패 모드</span>OOM 오류에 "확장성이 없다"고 결론지었다. 조사해 보니 불필요한 행렬 물질화가 원인이었고, 이를 고치자 베이스라인 대비 큰 개선을 얻었다.</div>
+      </div>
+
+      <div class="cat-tag">과학적 엄밀성</div>
+      <div class="cmd">
+        <span class="hint">+</span><span class="rn">VI</span>
+        <h4>실험당 변수 하나</h4>
+        <p class="rule">실험마다 정확히 한 가지만 바꾼다. 두 가지를 바꿔 지표가 좋아지면 무엇이 도왔는지 알 수 없다.</p>
+        <div class="fail"><span class="lbl">실패 모드</span>한 실험이 성공하면 성공한 변경과 새 아이디어를 동시에 결합하려 했고, 그 결과 원인 규명이 불가능해졌다.</div>
+      </div>
+      <div class="cmd">
+        <span class="hint">+</span><span class="rn">VII</span>
+        <h4>계층적으로 평가하라</h4>
+        <p class="rule">Tier 1(초): 크래시 없이 도는가. Tier 2(분): 소규모 부분집합에서 신호가 있는가. Tier 3: 리포트에 들어갈 실제 지표. 소규모 결과로 결론 내리지 않는다.</p>
+        <div class="fail"><span class="lbl">실패 모드</span>사소한 코드 변경마다 값비싼 전체 평가를 돌리거나, 장난감 인스턴스의 소규모 실패로 아이디어를 폐기했다.</div>
+      </div>
+      <div class="cmd">
+        <span class="hint">+</span><span class="rn">VIII</span>
+        <h4>기대치를 경계 지어라</h4>
+        <p class="rule">휴리스틱 구현 전에 실현 불가능하더라도 이론적 최선을 먼저 파악한다. "교정"하려면 얼마나 교정 가능한지 측정한다.</p>
+        <div class="fail"><span class="lbl">실패 모드</span>작은 개선을 관찰하고 이론적 최대치와의 근접도를 평가하지 않은 채 성공으로 보고했다.</div>
+      </div>
+
+      <div class="cat-tag">문서화와 재현성</div>
+      <div class="cmd">
+        <span class="hint">+</span><span class="rn">IX</span>
+        <h4>모든 것을 기록하라</h4>
+        <p class="rule">모든 실험은 리포트에 서브섹션을 갖는다. 실패도 포함한다. 리포트에 없으면 일어나지 않은 것이다. 서술 대신 시각화하고 TODO.md를 살아있는 체크리스트로 유지한다.</p>
+        <div class="fail"><span class="lbl">실패 모드</span>결과를 컨텍스트 창에만 담아뒀다. 컨텍스트가 압축·초기화되는 순간 정보가 소실됐다.</div>
+      </div>
+      <div class="cmd">
+        <span class="hint">+</span><span class="rn">X</span>
+        <h4>주장 전에 검증하라</h4>
+        <p class="rule">검증되기 전까지 틀렸다고 가정한다. 설명이 아니라 검증 스크립트를 쓴다. 자기 주장을 적극적으로 반증하려 시도한다. 주장을 검증됨·부분 검증·미검증으로 등급 매긴다.</p>
+        <div class="fail"><span class="lbl">실패 모드</span>유도 중 2배 인수 누락 같은 오류가 있었지만 결과가 그럴듯했다. 소규모 무차별 계산 대조 스크립트가 즉시 이를 잡아 잘못된 전제 위 논증을 막았다.</div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- DOMAIN MODULES -->
+  <section id="domains">
+    <div class="eyebrow reveal"><span class="idx">04</span> 도메인별 부가 계명</div>
+    <h2 class="sec reveal">보편 규칙 위에 얹는 도메인 규율</h2>
+    <p class="sec-intro reveal">
+      열 가지 계명은 보편적이다. 그 위에 연구 스타일에 맞춘 도메인별 규칙을 더한다.
+      계산 집약 연구와 수학 연구는 실패 양상이 다르므로 서로 다른 규율이 필요하다.
+    </p>
+
+    <div class="dom-grid reveal">
+      <div class="dom">
+        <div class="head"><span class="glyph">GPU</span><h3>계산 집약 연구</h3></div>
+        <ul>
+          <li><b>C1</b> · GPU당 실험 하나, 전부 사용. <code>nvidia-smi</code>를 매 배치 전 확인하고 독립 실험을 각 GPU에 배정한다.</li>
+          <li><b>C2</b> · 컨텍스트 위생. 긴 출력은 로그 파일로 보내 <code>tail</code>로 모니터링하고, 이상 신호가 있을 때만 상세히 조사한다.</li>
+          <li><b>C3</b> · 메모리 관리. OOM 시 "확장 불가"로 결론짓지 말고 캐시 비우기·그래디언트 체크포인팅·순차 처리로 체계적으로 줄인다.</li>
+          <li><b>C4</b> · 노드 먼저 탐색, 독립 실험 분배. Slurm 다중 노드에서 <code>remote-run</code>으로 완전 독립 실험만 원격 노드에 던진다.</li>
+        </ul>
+      </div>
+      <div class="dom amb">
+        <div class="head"><span class="glyph">∑</span><h3>수학 연구</h3></div>
+        <ul>
+          <li><b>M1</b> · 코드보다 유도 먼저. 구현 전 단계별 유도를 쓰고 논문 수식과 교차 참조하며 선행 연구로 재발견을 점검한다.</li>
+          <li><b>M2</b> · 정확한 표기. 대각 원소는 <code>Gjj</code>로 쓴다. 모든 표기를 첫 사용 전 정의하고 차원·범위·스칼라/벡터/행렬을 명시한다.</li>
+          <li><b>M3</b> · 반례 우선 추론. 증명 시도 전 입력을 무작위화하고 경계 사례를 검사하며 작은 인스턴스를 전수 열거해 반례를 먼저 찾는다.</li>
+          <li>반례가 살아남지 못하면, 그 탐색이 오히려 증명을 가능케 하는 구조적 성질을 드러낸다.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- CASE STUDIES -->
+  <section id="cases">
+    <div class="eyebrow reveal"><span class="idx">05</span> 여섯 개 사례 연구</div>
+    <h2 class="sec reveal">딥러닝 셋 · 수학 셋</h2>
+    <p class="sec-intro reveal">
+      본문은 옵티마이저 탐색(A)과 Frank–Wolfe 하한(D)을 다루고, 부록이 나머지 넷을 더한다.
+      각 사례는 도메인·에이전트 행동·결과·교훈으로 구성되며, 에이전트가 생산한 리포트가
+      그대로 재현된다.
+    </p>
+
+    <div class="reveal">
+      <!-- A -->
+      <div class="case">
+        <div class="top"><span class="badge">CASE A</span><span class="field">DEEP LEARNING · LLM 사전학습</span></div>
+        <h3>Muon 옵티마이저의 체계적 탐색</h3>
+        <div class="body">
+          <p class="q">AdamW는 파라미터당 버퍼 2개(2N 메모리)를 쓰고, Muon은 모멘텀을 Newton–Schulz 직교화해 N 메모리만 쓴다. 질문: <b>남는 N 메모리 예산으로 Muon을 더 좋게 만들 수 있는가?</b></p>
+          <div class="find">
+            <span class="fl">발견</span>
+            직교화 대상 벡터가 잘 조건화될수록 Muon이 빠르게 수렴한다. 최선 구성은 (i) 직교화 전 정규화와 (ii) Muon 행렬 파라미터 가중치 감쇠를 결합한다. 두 개선은 거의 가법적이다(≈3% + ≈2% ≈ 5%). 추가 버퍼가 필요 없는 무오버헤드 변형도 전체 방법에 근접했다.
+          </div>
+          <div class="metrics">
+            <span class="metric">Muon 대비 <b>≈5%</b> PPL 감소</span>
+            <span class="metric">AdamW 대비 <b>≈8%</b></span>
+            <span class="metric">실험 <b>40+</b>건 기록</span>
+            <span class="metric">GPU당 1실험 · <b>20h+</b> 무개입</span>
+          </div>
+          <div class="cmds">준수 계명 · <span>VI</span> 실험당 변수 하나 · <span>V</span> 일단 작동 · <span>C1</span> GPU당 실험 · <span>III</span> 인용 검증(동시 연구 NorMuon·AdaMuon·Muon+ 발견·구현)</div>
+        </div>
+      </div>
+
+      <!-- B -->
+      <div class="case">
+        <div class="top"><span class="badge">CASE B</span><span class="field">DEEP LEARNING · LLM 프루닝</span></div>
+        <h3>가중치 재구성 — 우연한 발견의 사례</h3>
+        <div class="body">
+          <p class="q">과제는 결함 있는 프루닝 마스크 방법을 고치는 것이었다. 그러나 에이전트는 실패 원인을 분석하다 <b>다른, 더 효과적인 기법</b>을 발견했다(세렌디피티).</p>
+          <div class="find">
+            <span class="fl">발견</span>
+            프루닝이 행별 활성화 출력을 심하게 불균형하게 만든다는 것을 관찰하고, 행·열 활성화 균형을 복원하는 단순 사후 보정을 제안했다. 최소제곱 재구성 오라클(계명 VIII)로 이론적 한계를 먼저 계산했다.
+          </div>
+          <div class="metrics">
+            <span class="metric">PPL <b>18–50%</b> 감소</span>
+            <span class="metric">5개 규모(125M–9B) · 3 아키텍처</span>
+            <span class="metric">코드 <b>10줄</b> · 오버헤드 &lt;1%</span>
+            <span class="metric">오라클 최적의 <b>92%</b> 포착</span>
+          </div>
+          <div class="cmds">준수 계명 · <span>VIII</span> 오라클 경계 · <span>VII</span> 계층 평가 · <span>V</span> 실패 분석</div>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="case">
+        <div class="top"><span class="badge">CASE C</span><span class="field">DEEP LEARNING · LLM 양자화</span></div>
+        <h3>GPTQ 열 정렬 — "언제·왜"가 답이었다</h3>
+        <div class="body">
+          <p class="q">GPTQ는 가중치 행렬을 열 단위로 처리하며 열 순서가 최종 품질에 영향을 준다. 더 나은 정렬이 존재하는가, 그 효과는 아키텍처에 어떻게 의존하는가?</p>
+          <div class="find">
+            <span class="fl">발견</span>
+            열 정렬은 GPTQ의 단일 최대 개선이지만 그 크기는 전적으로 아키텍처 의존적이다. 같은 4비트에서 Llama-3.1-8B는 74% 감소, Gemma-2-9B는 0.1%에 불과했다 — 두 자릿수 넘는 차이. 다중 아키텍처 검증 없이는 놓쳤을 발견이다.
+          </div>
+          <div class="metrics">
+            <span class="metric">아키텍처 간 <b>2자릿수↑</b> 편차</span>
+            <span class="metric">실험 <b>24</b>건 중 <b>9</b>건 음성 기록</span>
+            <span class="metric">그룹 양자화 버그 <b>437→9.22</b></span>
+          </div>
+          <div class="cmds">준수 계명 · <span>X</span> 벤치 전 검증 스크립트 · <span>VII</span> 교차 아키텍처 검증 · <span>IX</span> 음성 결과 기록 · <span>V</span> 버그 규명</div>
+        </div>
+      </div>
+
+      <!-- D -->
+      <div class="case math">
+        <div class="top"><span class="badge">CASE D</span><span class="field">MATHEMATICS · 볼록 최적화</span></div>
+        <h3>균등 볼록 집합 위 Frank–Wolfe의 타이트 하한</h3>
+        <div class="body">
+          <p class="q">차수 p&gt;2의 균등 볼록 집합(ℓp-볼)에서 상한 O(1/T^(p/(p-1)))은 알려졌으나 대응하는 하한은 없었다. 에이전트는 기존 기법을 적응해 대응 하한을 증명하도록 요청받았다.</p>
+          <div class="find">
+            <span class="fl">발견</span>
+            고차원 정보이론 구성의 일반화는 실패했고 이를 음성 결과로 기록한 뒤(계명 IX) 최악 반복 접근으로 선회했다. 반복이 부호를 교번하며 저차원 곡선에 정착함을 관찰했고, 상수를 먼저 수치 추정한 뒤 닫힌 형태로 유도해 <b>p≥3에서 Ω(1/T^(p/(p-1))) 하한을 확립</b>, 미해결 문제를 해결했다.
+          </div>
+          <div class="metrics">
+            <span class="metric">p≥3 미해결 문제 <b>해결</b></span>
+            <span class="metric">BigFloat 검증 <b>30+</b>건</span>
+            <span class="metric">상수 수치 일치 오차 <b>&lt;0.2%</b></span>
+            <span class="metric">p∈(2,3) 구간 <b>미해결</b></span>
+          </div>
+          <div class="cmds">준수 계명 · <span>IX</span> 음성 결과 기록 · <span>X</span> 수치 검증 · <span>M1</span> 코드보다 유도 먼저</div>
+        </div>
+      </div>
+
+      <!-- E -->
+      <div class="case math">
+        <div class="top"><span class="badge">CASE E</span><span class="field">MATHEMATICS · 조합 최적화</span></div>
+        <h3>혼합 정수 최적화의 다변수 쌍대 강화</h3>
+        <div class="body">
+          <p class="q">Boscia 솔버의 단일 변수 쌍대 강화를 부분집합으로 확장할 수 있는가? 변수 집합의 결합 그래디언트 기여가 예산을 넘으면 충돌 제약이 동시 이탈을 막는다.</p>
+          <div class="find">
+            <span class="fl">발견</span>
+            볼록성 부등식으로 다변수 쌍대 강화 정리를 정식화·증명하고 충돌 그래프를 Boscia에 콜백으로 통합했다. 기호 검증 2,387건과 소규모 전수 열거 487건이 초기 유도의 부등호 반전 오류를 실험 단계 전에 잡았다.
+          </div>
+          <div class="metrics">
+            <span class="metric">33 인스턴스 · 6 문제군</span>
+            <span class="metric">분할 제약서 노드 <b>18.9%</b> 감소</span>
+            <span class="metric">기호 검증 <b>2,387</b> + 수치 <b>487</b>건</span>
+            <span class="metric">전 인스턴스 <b>동일 최적값</b> 보장</span>
+          </div>
+          <div class="cmds">준수 계명 · <span>X</span> 검증 우선 · <span>IX</span> 음성 결과 기록</div>
+        </div>
+      </div>
+
+      <!-- F -->
+      <div class="case math">
+        <div class="top"><span class="badge">CASE F</span><span class="field">MATHEMATICS · 대수기하 · 전력망</span></div>
+        <h3>K7 전력망의 최대 실해 탐색</h3>
+        <div class="body">
+          <p class="q">고정된 망 위상에서 전력 흐름 방정식의 실해 개수는 파라미터에 따라 몇 개까지 가능한가? 기존 연구는 분포만 특성화했을 뿐 극단 인스턴스를 표적하지 않았다.</p>
+          <div class="find">
+            <span class="fl">발견</span>
+            에이전트가 기존 파이프라인을 비자명한 재구성 끝에 재현한 뒤 표본추출을 극단 탐색으로 전환했다. 언덕 오르기·모의 담금질·웜스타트를 결합해 <b>192 실해를 갖는 파라미터를 발견</b>, 무작위 표본(최대 120)을 크게 상회하는 계산적 하한을 세웠다.</p>
+          </div>
+          <div class="metrics">
+            <span class="metric">무작위 표본 최대 <b>120</b>해</span>
+            <span class="metric">표적 탐색 <b>192</b>해 발견</span>
+            <span class="metric">표본 <b>1.4M</b> 벡터</span>
+            <span class="metric">K7 최대 실해 <b>미해결</b></span>
+          </div>
+          <div class="cmds">준수 계명 · <span>X</span> 검증 가능한 중간 산물 · <span>VII</span> 단계적 평가</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- LIMITS -->
+  <section id="limits">
+    <div class="eyebrow reveal"><span class="idx">06</span> 한계와 향후 방향</div>
+    <h2 class="sec reveal">사람은 여전히 책임 있는 검증자다</h2>
+    <p class="sec-intro reveal">
+      이 접근은 전문가 감독이나 최종 검증의 필요를 없애지 않는다. 다만 감독이 과정 끝에만
+      있지 않고 워크플로 안에 내장된다. 사례 연구와 리포트는 완성된 출판 논문이 아니라
+      <b>의미 있는 연구 진전의 기록</b>이다.
+    </p>
+
+    <div class="split reveal">
+      <div>
+        <div class="col-h">한계</div>
+        <ul class="lim">
+          <li><h4>검증</h4><p>자연어 증명은 여전히 수동 검토가 필요하다. 코드는 상대적으로 쉬우나 미묘한 구현 오류가 결론을 무효화할 수 있다. 인용도 신중히 검증해야 한다.</p></li>
+          <li><h4>컨텍스트</h4><p>긴 세션은 컨텍스트 창을 초과해 압축을 유발한다. 압축은 본질적으로 손실적이라 에이전트가 세부를 잊거나 실패한 접근을 재방문한다. 자율 압축은 긍정적 효과가 없었다.</p></li>
+          <li><h4>비용</h4><p>프론티어 모델의 장시간 세션은 비자명한 API 비용을 낸다. 다만 Level 4에서는 대부분의 벽시계 시간이 토큰 생성이 아니라 실험 대기에 쓰이므로 비용이 상대적으로 작은 경우가 많다.</p></li>
+        </ul>
+      </div>
+      <div>
+        <div class="col-h">향후 방향</div>
+        <ul class="lim fut">
+          <li><h4>타 도메인 확장</h4><p>물리·화학·경제·사회과학으로 확장 가능하다. 도메인별 도구·평가 프로토콜·안전 점검이 필요하지만 반복 실험·산물 관리·사람 검증이라는 일반 패러다임은 잘 전이될 수 있다.</p></li>
+          <li><h4>더 견고한 메모리</h4><p>긴 세션에서 정보를 저장·검색·갱신하는 방식을 개선해 연속성 유지, 실패 재방문 회피, 사전 관찰의 효과적 활용을 돕는다.</p></li>
+          <li><h4>다중 사용자 협업</h4><p>단일 사용자·단일 에이전트 설정을 다중 사용자·다중 에이전트로 확장한다. 조율·통신·출처 추적·충돌 해소의 새 과제가 따른다.</p></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- CLOSER -->
+  <section style="padding-top:20px">
+    <div class="closer reveal">
+      <p class="qt">"모델 능력도 중요하지만, <span class="em">워크플로 설계가 그만큼 중요하다.</span> 출력을 점검하고 중간 단계를 되짚을 수 있을 때에만 이 시스템은 유용하다."</p>
+      <p class="sub">전체 워크플로 — 보편 계명 · 컨테이너 정의 · 다중 노드 디스패처 · 리포팅 헬퍼 — 는 공개 배포된다. 신규 프로젝트 적용은 저장소를 클론하고 자료를 넣은 뒤 샌드박스에서 CLI 에이전트를 실행하면 된다.</p>
+      <a class="repo" href="https://github.com/ZIB-IOL/The-Agentic-Researcher" target="_blank" rel="noopener">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--ink)"></span>
+        github.com/ZIB-IOL/The-Agentic-Researcher
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap row">
+    <span>The Agentic Researcher · ICML 2026 · PMLR 306</span>
+    <span>Zuse Institute Berlin · TU Berlin</span>
+    <span>이 페이지는 논문 내용을 한글로 요약·재구성한 것이다</span>
+  </div>
+</footer>
+
+<script>
+/* ===== 스크롤 리빌 ===== */
+(function(){
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(function(el,i){
+    el.style.transitionDelay = (Math.min(i,3)*0.06)+'s';
+    io.observe(el);
+  });
+})();
+
+/* ===== 십계명 카드 토글 ===== */
+document.querySelectorAll('.cmd').forEach(function(c){
+  c.addEventListener('click',function(){ c.classList.toggle('open'); });
+});
+
+/* ===== 히어로 실험 루프 캔버스 ===== */
+(function(){
+  var cv = document.getElementById('loopCanvas');
+  if(!cv) return;
+  var ctx = cv.getContext('2d');
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var steps = ["Explore","Plan","Implement","Evaluate","Analyze","Record","Commit","Iterate"];
+  var teal = "#4FD1C5", amber = "#F0A868", fog = "#8A97A6", line = "#28323F", paper="#E6EBF0";
+
+  function fit(){
+    var w = cv.parentElement.clientWidth;
+    var dpr = Math.min(window.devicePixelRatio||1, 2);
+    var h = Math.max(340, Math.min(420, w*0.40));
+    cv.width = w*dpr; cv.height = h*dpr;
+    cv.style.height = h+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {w:w,h:h};
+  }
+  var dim = fit();
+  window.addEventListener('resize', function(){ dim = fit(); });
+
+  var t = 0;
+  function draw(){
+    var w = dim.w, h = dim.h;
+    ctx.clearRect(0,0,w,h);
+    var cx = w/2, cy = h/2, R = Math.min(w,h)*0.34;
+
+    // 궤도
+    ctx.beginPath();
+    ctx.arc(cx,cy,R,0,Math.PI*2);
+    ctx.strokeStyle = line; ctx.lineWidth = 1.2; ctx.stroke();
+
+    // 진행 아크
+    var prog = (t*0.006) % (Math.PI*2);
+    ctx.beginPath();
+    ctx.arc(cx,cy,R,-Math.PI/2, -Math.PI/2 + prog);
+    ctx.strokeStyle = teal; ctx.lineWidth = 2.2; ctx.stroke();
+
+    // 중심 코어
+    var pulse = 1 + Math.sin(t*0.04)*0.08;
+    var g = ctx.createRadialGradient(cx,cy,0,cx,cy,44*pulse);
+    g.addColorStop(0,"rgba(79,209,197,0.30)");
+    g.addColorStop(1,"rgba(79,209,197,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(cx,cy,44*pulse,0,Math.PI*2); ctx.fill();
+
+    ctx.fillStyle = paper;
+    ctx.font = '600 13px ui-monospace, monospace';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText("EXPERIMENT", cx, cy-8);
+    ctx.fillStyle = teal;
+    ctx.fillText("LOOP", cx, cy+9);
+
+    // 8 노드
+    var active = Math.floor((t*0.006 % (Math.PI*2)) / (Math.PI*2/8)) % 8;
+    for(var i=0;i<8;i++){
+      var ang = -Math.PI/2 + i*(Math.PI*2/8);
+      var nx = cx + Math.cos(ang)*R;
+      var ny = cy + Math.sin(ang)*R;
+      var isA = (i===active);
+      ctx.beginPath();
+      ctx.arc(nx,ny, isA?9:5, 0, Math.PI*2);
+      ctx.fillStyle = isA ? amber : fog;
+      if(isA){ ctx.shadowColor = amber; ctx.shadowBlur = 16; } else { ctx.shadowBlur = 0; }
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // 번호
+      ctx.fillStyle = isA ? amber : fog;
+      ctx.font = '600 11px ui-monospace, monospace';
+      var lx = cx + Math.cos(ang)*(R+26);
+      var ly = cy + Math.sin(ang)*(R+26);
+      ctx.textAlign = Math.abs(Math.cos(ang))<0.3 ? 'center' : (Math.cos(ang)>0?'left':'right');
+      ctx.fillText((i+1)+" "+steps[i], lx, ly);
+    }
+
+    if(!reduced) t += 1;
+    requestAnimationFrame(draw);
+  }
+  if(reduced){ t = 120; draw(); } else { draw(); }
+})();
+</script>
+</body>
+</html>

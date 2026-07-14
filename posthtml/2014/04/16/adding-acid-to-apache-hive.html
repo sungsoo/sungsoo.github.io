@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Adding ACID to Apache Hive</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Adding ACID to Apache Hive</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">16 April 2014</p></h4>
+<hr>
+
+<div class="post">
+<h1 id="article-source">Article Source</h1>
+<ul>
+  <li>Title: <a href="http://hortonworks.com/blog/adding-acid-to-apache-hive/">Adding ACID to Apache Hive</a></li>
+  <li>Authors: <a href="http://hortonworks.com/blog/author/owen_omalley/" title="Posts by Owen O'Malley">Owen
+O’Malley</a></li>
+</ul>
+
+<h1 id="adding-acid-to-apache-hive">Adding ACID to Apache Hive</h1>
+
+<p>I’ve been working on MapReduce frameworks since mid 2005 (Hadoop’s since
+the start of 2006) and a fundamental feature has always been incredible
+throughput to access data, but no ACID transactions. That is changing.</p>
+
+<p>Recently, while working with a customer that is using <a href="http://hortonworks.com/hadoop/hive">Apache
+Hive</a> to process terabytes (and
+growing quickly) of sales data, they asked how to handle a business
+requirement to update millions of records in their sales table each day.
+Hive doesn’t provide the right features to satisfy that requirement,
+however it is extensible, which enabled the customer create a custom
+InputFormat and OutputFormat that did.  So, rather than building a new
+SQL engine on Hadoop, they solved the problem by customizing Hive.</p>
+
+<h2 id="hive-5317--implement-insert-update-and-delete-in-hive-with-full-acid-support"><strong>HIVE-5317 - </strong>Implement insert, update, and delete in Hive with full ACID support</h2>
+
+<p>We want to provide that generalized UPDATE capability to the rest of the
+Hive community without creating a new SQL engine on top of Hadoop.</p>
+
+<p>The material below represents a general approach for incorporating ACID
+transactions in Hive.  It represents our thoughts  with the feedback of
+the broad Hive community.  A jira ticket has been entered
+(<a href="https://issues.apache.org/jira/browse/HIVE-5317">HIVE-5317</a>), that
+outlines the requirements and general approach and we are excited that
+the broad community has taken part in the discussion of how to complete
+this important project.</p>
+
+<h2 id="the-requirements-and-use-cases">The Requirements and Use Cases</h2>
+
+<p>It’s clear that there is a desire for update or delete records at less
+than partition granularity. Furthermore, although Hive can insert to a
+partition, such additions are visible immediately when written instead
+of when the transaction completes. Typical relevant use cases are:</p>
+
+<ul>
+  <li>Once an hour, a set of inserts and updates (up to 500k rows) for
+various dimension tables (eg. customer, inventory, stores) needs to
+be processed. The dimension tables have primary keys and are
+typically bucketed and sorted on those keys.</li>
+  <li>Once a day a small set (up to 100k rows) of records need to be
+deleted for regulatory compliance.</li>
+  <li>Once an hour a log of transactions is exported from a RDBS and the
+fact tables need to be updated (up to 1m rows) to reflect the new
+data. The transactions are a combination of inserts, updates, and
+deletes. The table is partitioned and bucketed.</li>
+  <li>Streaming inserts coming from Flume or Storm applications into a
+Hive table, which are available to be read by Hive queries in less
+than 15 seconds.</li>
+</ul>
+
+<p>It is critical that we integrate this functionality into Hive using
+standard SQL syntax. In particular, over the course of the project,
+we’ll add the following standard SQL statements to Hive:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">tbl</span> <span class="k">SELECT</span> <span class="p">...</span>
+<span class="k">INSERT</span> <span class="k">INTO</span> <span class="n">tbl</span> <span class="k">VALUES</span> <span class="p">...</span>
+<span class="k">UPDATE</span> <span class="n">tbl</span> <span class="k">SET</span> <span class="p">...</span> <span class="k">WHERE</span> <span class="p">...</span>
+<span class="k">DELETE</span> <span class="k">FROM</span> <span class="n">tbl</span> <span class="k">WHERE</span> <span class="p">...</span>
+<span class="n">MERGE</span> <span class="k">INTO</span> <span class="n">tbl</span> <span class="k">USING</span> <span class="n">src</span> <span class="k">ON</span> <span class="p">...</span> <span class="k">WHEN</span> <span class="n">MATCHED</span> <span class="k">THEN</span> <span class="p">...</span> <span class="k">WHEN</span> <span class="k">NOT</span> <span class="n">MATCHED</span> <span class="k">THEN</span> <span class="err">…</span>
+<span class="k">SET</span> <span class="n">TRANSACTION</span> <span class="k">LEVEL</span> <span class="p">...</span>
+<span class="k">BEGIN</span><span class="o">/</span><span class="k">END</span> <span class="n">TRANSACTION</span>
+</code></pre></div></div>
+
+<h2 id="transaction-model">Transaction Model</h2>
+
+<p>It is easy to overlook the fact that adding insert, update, and delete
+commands will exacerbate Hive’s lack of transaction model. Therefore, a
+critical part of the work will be adding a transaction model to Hive.
+Hive’s metastore will track the read and write transactions and assign a
+globally unique transaction id to each write transaction. Read
+operations will be given the list of completed transaction ids and will
+ignore the output of all other transactions, providing a consistent view
+of all of the tables, even if some of their tasks are re-executed after
+a node failure.</p>
+
+<p>When a read operation starts, it provides the tables it is reading and
+requests the current set of committed transaction ids. This set will be
+represented as the maximum committed transaction</p>
+
+<p>id and the list of transaction ids that are still in flight. Each
+MapReduce job launched as part of the query will have exactly the same
+set of valid transaction ids provided in the JobConf and thus the reader
+will present a consistent snapshot view of the input tables from the
+time at the start of the command.</p>
+
+<p>Write operations will provide the list of tables being read and the list
+of tables being written and get a list of valid transaction ids to read
+from and a write transaction id. Any data that is read will only include
+the valid transaction ids or their write transaction id. All data that
+is written will be tagged with the write transaction id.</p>
+
+<p>In both cases, when the command is finished, it must notify the
+metastore. Since the metastore must identify (and abort) abandoned
+transactions, the Hive client must notify the metastore that the command
+is still running every 10 minutes or the transaction will be aborted.
+The metastore will maintain the list of tables being read and the
+corresponding transaction ids so that it can schedule compacted data to
+be deleted after the last reader finishes.</p>
+
+<p>Before a write transaction is committed in the metastore, all of the
+HDFS files for that transaction must be in their final location.
+Similarly, before a write transaction is aborted in the metastore all of
+the files must have been deleted from HDFS. This ensures that any valid
+transaction id that is given to a reader will only have correct HDFS
+files associated with it.</p>
+
+<h2 id="inputformat">InputFormat</h2>
+
+<p>The heart of the approach is merging the HDFS in the tasks. Hive’s
+warehouse layout will remain the same and look like
+<em>$database/$table/$partition</em>. Inside of each partition (or the table
+directory, if the table isn’t partitioned), instead of a set of files
+named with the bucket id (eg. <em>000000_0</em>) there will be a directories
+with the base rows and the deltas that have modified that base. The base
+files will be stored in a directory named <em>base_$etid</em>and the deltas
+will be stored in directories named <em>delta_$btid_$etid</em>, where
+$btid is the first transaction id included in the file and $etid is
+the first transaction id not included in the file. This naming scheme
+will enable us to leave both the pre and post compaction files while the
+clients using the pre compaction files finish. Within each directory,
+the rows must be consistently bucketed so that each bucket can be
+processed independently.</p>
+
+<p>In theory the base files can be in any format, but ORC will be required
+for the first version. Every row in the table is uniquely identified by
+the transaction id of the transaction that inserted it (or 0 for the
+base file), the row id, and the implicit bucket number. The
+implementation of delta files will be ORC files with a row format of:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">create</span> <span class="k">table</span> <span class="n">deltaFile</span> <span class="p">(</span>
+ <span class="k">operation</span> <span class="nb">int</span><span class="p">,</span><span class="err">     </span> <span class="c1">-- 0 = insert, 1 = delete, 2 = update</span>
+ <span class="n">transactionId</span> <span class="n">long</span><span class="p">,</span> <span class="c1">-- transaction that inserted the row</span>
+ <span class="n">rowId</span> <span class="n">long</span><span class="p">,</span><span class="err">        </span> <span class="c1">-- row id</span>
+ <span class="n">rowData</span> <span class="n">struct</span><span class="p">(...)</span> <span class="c1">-- for insert and update, the columns</span>
+ <span class="p">);</span>
+</code></pre></div></div>
+
+<p>For sorted tables, the base and delta files will be sorted by the sort
+columns, while unsorted tables will be sorted by descending transaction
+id and ascending row id. Since the base and delta files are sorted
+identically, it is a simple merge sort to combine them. ORC’s integer
+run length encoding will compress the delta files very effectively.</p>
+
+<p>The RecordReader will open the base file and each of the delta files and
+do a merge sort to provide a single view to the reading operator.<a href="#_msocom_1"><br />
+</a></p>
+
+<p>When the read query is done, it will inform the metastore that it is no
+longer reading the tables so that obsolete versions of the tables can be
+garbage collected.</p>
+
+<h2 id="outputformat">OutputFormat</h2>
+
+<p>When one of the insert, update, or delete commands starts, it gets the
+valid transaction ids for reading and a transaction id to write to. The
+first version of the project will do auto-commit of the transaction when
+each query finishes. Because each of the delta files is labeled with the
+transaction ids, none of the data associated with a transaction is read
+before the transaction is committed.</p>
+
+<p>The delta files are written as ORC files with a smaller stripe size
+(32MB), a smaller buffer size (32K), and no compression. This is because
+many of the files will be very small and lowering the sizes will reduce
+the resource requirements for reading the files.</p>
+
+<p>For the insert command, the tasks will write the delta file with the
+insert rows. Meanwhile, updates and deletes will read the current table
+with the record reader and will write a new delta file with the delete
+and update commands.</p>
+
+<p>While any query is running, the client will heartbeat to the metastore
+every N minutes to ensure the transaction isn’t removed for inactivity.
+After the command finishes, the transaction will be committed by the
+Hive metastore or be aborted.</p>
+
+<h2 id="compaction">Compaction</h2>
+
+<p>Periodically the system must rewrite the smaller delta files into larger
+ones (minor compaction) and rewriting the delta files into the base file
+(major compaction). Since the compactions may take relatively large
+amount of time, they should not block other updates. This is possible
+because although they are rewriting the data, they are semantically
+equivalent of the previous data.</p>
+
+<p>To preserve read throughput over time, compactions must happen regularly
+and therefore automatically. In particular, since reading the table
+involves doing a N-­way merge sort, we must bound the size of N to a
+relatively small number. Minor compactions should be automatically
+scheduled for a table when we have more than 10 committed deltas. The
+minor compaction</p>
+
+<p>asks the metastore for the smallest in­flight transaction id and will
+compact all transactions that are strictly less than it. Once the minor
+compaction is done, the directory with the output is moved into the
+partition’s directory with the name <em>delta_$bid_$eid.</em>The previous
+delta directories will be scheduled for garbage collection once the
+transactions using the previous version have finished.</p>
+
+<p>When more than 10% of the records are coming from delta files instead of
+the base, a major compaction should be triggered. We will also need a
+time based trigger to do major compactions during times when the cluster
+is less busy. The major compaction will request the lowest in­flight
+transaction id and re­write the base with the merged transaction that
+are less than it. When the compaction is done, the output is moved to
+<em>base_$etid</em>and the old base is scheduled for garbage collection.
+Because compaction will change the row ids, the major compaction will
+also output a set of files that translate from the previous major
+compaction to the new one. The translation files will be stored in the
+base directory and be named <em>base_$etid/_translation_$bucketid</em>. To
+keep the translation files small, it is sufficient to write the old
+transaction id, row id, and the number of sequential rows. With this
+encoding, the translation files should be proportional to the size of
+the deltas rather than the size of the base. After the major compaction
+is finished, if there are deltas using the old base file the system
+should schedule a minor compaction to be run. When the minor compaction
+is done, the translation files can be scheduled for garbage collection.
+Until the minor compaction finishes, the record reader will need to
+merge the translation files together with the old delta files to find
+the updated or deleted records.</p>
+
+<h2 id="why-not-hbase">Why Not HBase?</h2>
+
+<p>One of the questions that comes up when we discuss this project is why
+don’t we just use Hive over HBase, since HBase already supports updates
+to values. There are several different issues that we’ve observed:</p>
+
+<ul>
+  <li>HBase doesn’t support consistency at any level other than a single
+row update. A transaction model to support distributed transactions
+would need to be added.</li>
+  <li>Many Hive users don’t have HBase installed and requiring it imposes
+a significant operational overhead.</li>
+  <li>HBase is designed to support low latency point lookups rather than
+high throughput scans over large ranges of the table.</li>
+  <li>HBase has a single sort key that is partitioned by range and doesn’t
+support Hive’s richer partition, sort order, and bucketing
+strategies. This limits the ability of the user to layout the table
+for various varieties of queries.</li>
+  <li>HBase’s storage format is row-major instead of columnar, which means
+that if your query only needs two out of a hundred columns, the
+query must read and deserialize all of the data for the row’s
+hundred columns.</li>
+</ul>
+
+<h1 id="conclusion">Conclusion</h1>
+
+<p>Since we’ve filed the Jira on <a href="https://issues.apache.org/jira/browse/HIVE-5317">Hive
+Updates</a> there has been
+a great discussion on the proposal from the community at large and drawn
+an audience of 41 watchers. The approach is validated by the active use
+at the original customer. We are in the process of pushing the design to
+the next level and starting development.</p>
+
+<p>As always, we do all of our development in the open at Apache to gain
+strength from discussions with the community rather than dump a huge
+patch on the open source project just before the project’s next release.</p>
+
+<h1 id="references">References</h1>
+<p>[1] <a href="http://hortonworks.com/blog/author/owen_omalley/" title="Posts by Owen O'Malley">Owen O’Malley</a>, <a href="http://hortonworks.com/blog/adding-acid-to-apache-hive/"><em>Adding ACID to Apache Hive</em></a>, HortonWorks Blog, October 11th, 2013.</p>
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

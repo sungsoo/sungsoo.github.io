@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Deploy Custom Python Model Server</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Deploy Custom Python Model Server</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#machine learning-ref">machine learning <span><sup>1509</sup></span></a></li>
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#graph mining-ref">graph mining <span><sup>390</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">4 October 2022</p></h4>
+<hr>
+
+<div class="post">
+<h3 id="article-source">Article Source</h3>
+
+<ul>
+  <li><a href="https://kserve.github.io/website/0.9/modelserving/v1beta1/custom/custom_model/">Deploy Custom Python Model Server with InferenceService</a></li>
+</ul>
+
+<hr />
+
+<h1 id="deploy-custom-python-model-server-with-inferenceservice">Deploy Custom Python Model Server with InferenceService</h1>
+<p>When out of the box model server does not fit your need, you can build your own model server using KFServer API and use the
+following source to serving workflow to deploy your custom models to KServe.</p>
+
+<h2 id="setup">Setup</h2>
+<ol>
+  <li>Your ~/.kube/config should point to a cluster with <a href="https://github.com/kserve/kserve#installation">KServe installed</a>.</li>
+  <li>Your cluster’s Istio Ingress gateway must be <a href="https://istio.io/latest/docs/tasks/traffic-management/ingress/ingress-control/">network accessible</a>.</li>
+  <li>Install <a href="https://buildpacks.io/docs/tools/pack/">pack CLI</a> to build your custom model server image.</li>
+</ol>
+
+<h2 id="create-your-custom-model-server-by-extending-model">Create your custom Model Server by extending Model</h2>
+<p><code class="language-plaintext highlighter-rouge">KServe.Model</code> base class mainly defines three handlers <code class="language-plaintext highlighter-rouge">preprocess</code>, <code class="language-plaintext highlighter-rouge">predict</code> and <code class="language-plaintext highlighter-rouge">postprocess</code>, these handlers are executed
+in sequence, the output of the <code class="language-plaintext highlighter-rouge">preprocess</code> is passed to <code class="language-plaintext highlighter-rouge">predict</code> as the input, the <code class="language-plaintext highlighter-rouge">predictor</code> handler should execute the
+inference for your model, the <code class="language-plaintext highlighter-rouge">postprocess</code> handler then turns the raw prediction result into user-friendly inference response. There
+is an additional <code class="language-plaintext highlighter-rouge">load</code> handler which is used for writing custom code to load your model into the memory from local file system or
+remote model storage, a general good practice is to call the <code class="language-plaintext highlighter-rouge">load</code> handler in the model server class <code class="language-plaintext highlighter-rouge">__init__</code> function, so your model
+is loaded on startup and ready to serve when user is making the prediction calls.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">kserve</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
+
+<span class="k">class</span> <span class="nc">AlexNetModel</span><span class="p">(</span><span class="n">kserve</span><span class="p">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+       <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+       <span class="bp">self</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+       <span class="bp">self</span><span class="p">.</span><span class="n">load</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">AlexNetModel</span><span class="p">(</span><span class="s">"custom-model"</span><span class="p">)</span>
+    <span class="n">kserve</span><span class="p">.</span><span class="n">ModelServer</span><span class="p">().</span><span class="n">start</span><span class="p">([</span><span class="n">model</span><span class="p">])</span>
+</code></pre></div></div>
+
+<h2 id="build-the-custom-image-with-buildpacks">Build the custom image with Buildpacks</h2>
+<p><a href="https://buildpacks.io/">Buildpacks</a> allows you to transform your inference code into images that can be deployed on KServe without
+needing to define the <code class="language-plaintext highlighter-rouge">Dockerfile</code>. Buildpacks automatically determines the python application and then install the dependencies from the
+<code class="language-plaintext highlighter-rouge">requirements.txt</code> file, it looks at the <code class="language-plaintext highlighter-rouge">Procfile</code> to determine how to start the model server. Here we are showing how to build the serving
+image manually with <code class="language-plaintext highlighter-rouge">pack</code>, you can also choose to use <a href="https://github.com/pivotal/kpack">kpack</a>
+to run the image build on the cloud and continuously build/deploy new versions from your source git repository.</p>
+
+<h3 id="use-pack-to-build-and-push-the-custom-model-server-image">Use pack to build and push the custom model server image</h3>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pack build <span class="nt">--builder</span><span class="o">=</span>heroku/buildpacks:20 <span class="k">${</span><span class="nv">DOCKER_USER</span><span class="k">}</span>/custom-model:v1
+docker push <span class="k">${</span><span class="nv">DOCKER_USER</span><span class="k">}</span>/custom-model:v1
+</code></pre></div></div>
+
+<h2 id="parallel-inference">Parallel Inference</h2>
+<p>By default the model is loaded and inference is ran in the same process as tornado http server, if you are hosting multiple models
+the inference can only be run for one model at a time which limits the concurrency when you share the container for the models.
+KServe integrates <a href="https://docs.ray.io/en/master/serve/index.html">RayServe</a> which provides a programmable API to deploy models
+as separate python workers so the inference can be ran in parallel.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="nn">kserve</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span>
+<span class="kn">from</span> <span class="nn">ray</span> <span class="kn">import</span> <span class="n">serve</span>
+
+<span class="o">@</span><span class="n">serve</span><span class="p">.</span><span class="n">deployment</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">"custom-model"</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{</span><span class="s">"num_replicas"</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span>
+<span class="k">class</span> <span class="nc">AlexNetModel</span><span class="p">(</span><span class="n">kserve</span><span class="p">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+       <span class="bp">self</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">"custom-model"</span>
+       <span class="nb">super</span><span class="p">().</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">.</span><span class="n">name</span><span class="p">)</span>
+       <span class="bp">self</span><span class="p">.</span><span class="n">load</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">"__main__"</span><span class="p">:</span>
+    <span class="n">kserve</span><span class="p">.</span><span class="n">ModelServer</span><span class="p">().</span><span class="n">start</span><span class="p">({</span><span class="s">"custom-model"</span><span class="p">:</span> <span class="n">AlexNetModel</span><span class="p">})</span>
+</code></pre></div></div>
+
+<p>Modify the <code class="language-plaintext highlighter-rouge">Procfile</code> to <code class="language-plaintext highlighter-rouge">web: python -m model_remote</code> and then run the above <code class="language-plaintext highlighter-rouge">pack</code> command, it builds the serving image which launches
+each model as separate python worker and tornado webserver routes to the model workers by name.</p>
+
+<p><img src="https://kserve.github.io/website/0.9/modelserving/v1beta1/custom/custom_model/parallel_inference.png" alt="parallel_inference" /></p>
+
+<h2 id="deploy-locally-and-test">Deploy Locally and Test</h2>
+<p>Launch the docker image built from last step with <code class="language-plaintext highlighter-rouge">buildpack</code>.</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run <span class="nt">-ePORT</span><span class="o">=</span>8080 <span class="nt">-p8080</span>:8080 <span class="k">${</span><span class="nv">DOCKER_USER</span><span class="k">}</span>/custom-model:v1
+</code></pre></div></div>
+
+<p>Send a test inference request locally</p>
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl localhost:8080/v1/models/custom-model:predict <span class="nt">-d</span> @./input.json
+
+<span class="o">{</span><span class="s2">"predictions"</span>: <span class="o">[[</span>14.861763000488281, 13.94291877746582, 13.924378395080566, 12.182709693908691, 12.00634765625]]<span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="deploy-to-kserve">Deploy to KServe</h2>
+<h3 id="create-the-inferenceservice">Create the InferenceService</h3>
+
+<p>In the <code class="language-plaintext highlighter-rouge">custom.yaml</code> file edit the container image and replace {username} with your Docker Hub username.</p>
+
+<p>Apply the CRD</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl apply -f custom.yaml
+</code></pre></div></div>
+
+<p>Expected Output</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ inferenceservice.serving.kubeflow.org/custom-model created
+</code></pre></div></div>
+
+<h3 id="arguments-and-environment-variables">Arguments and Environment Variables</h3>
+<p>You can supply additional command arguments on the container spec to configure the model server.</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">--workers</code>: fork the specified number of model server workers(multi-processing), the default value is 1. If you start the server after model is loaded
+you need to make sure model object is fork friendly for multi-processing to work. Alternatively you can decorate your model server
+class with replicas and in this case each model server is created as a python worker independent of the server.</li>
+  <li><code class="language-plaintext highlighter-rouge">--http_port</code>: the http port model server is listening on, the default port is 8080</li>
+  <li><code class="language-plaintext highlighter-rouge">--max_buffer_size</code>: Max socker buffer size for tornado http client, the default limit is 10Mi.</li>
+  <li><code class="language-plaintext highlighter-rouge">--max_asyncio_workers</code>: Max number of workers to spawn for python async io loop, by default it is <code class="language-plaintext highlighter-rouge">min(32,cpu.limit + 4)</code></li>
+</ul>
+
+<h3 id="run-a-prediction">Run a prediction</h3>
+<p>The first step is to <a href="../../../../../README.md#determine-the-ingress-ip-and-ports">determine the ingress IP and ports</a> and set <code class="language-plaintext highlighter-rouge">INGRESS_HOST</code> and <code class="language-plaintext highlighter-rouge">INGRESS_PORT</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>MODEL_NAME=custom-model
+INPUT_PATH=@./input.json
+SERVICE_HOSTNAME=$(kubectl get inferenceservice ${MODEL_NAME} -o jsonpath='{.status.url}' | cut -d "/" -f 3)
+
+curl -v -H "Host: ${SERVICE_HOSTNAME}" http://${INGRESS_HOST}:${INGRESS_PORT}/v1/models/${MODEL_NAME}:predict -d $INPUT_PATH
+</code></pre></div></div>
+
+<p>Expected Output:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>*   Trying 169.47.250.204...
+* TCP_NODELAY set
+* Connected to 169.47.250.204 (169.47.250.204) port 80 (#0)
+&gt; POST /v1/models/custom-model:predict HTTP/1.1
+&gt; Host: custom-model.default.example.com
+&gt; User-Agent: curl/7.64.1
+&gt; Accept: */*
+&gt; Content-Length: 105339
+&gt; Content-Type: application/x-www-form-urlencoded
+&gt; Expect: 100-continue
+&gt;
+&lt; HTTP/1.1 100 Continue
+* We are completely uploaded and fine
+&lt; HTTP/1.1 200 OK
+&lt; content-length: 232
+&lt; content-type: text/html; charset=UTF-8
+&lt; date: Wed, 26 Feb 2020 15:19:15 GMT
+&lt; server: istio-envoy
+&lt; x-envoy-upstream-service-time: 213
+&lt;
+* Connection #0 to host 169.47.250.204 left intact
+{"predictions": [[14.861762046813965, 13.942917823791504, 13.9243803024292, 12.182711601257324, 12.00634765625]]}
+</code></pre></div></div>
+
+<h3 id="delete-the-inferenceservice">Delete the InferenceService</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>kubectl delete -f custom.yaml
+</code></pre></div></div>
+
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

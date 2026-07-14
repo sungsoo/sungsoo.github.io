@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qwen-Image-2.0-RL · 이미지 생성 모델의 강화학습 후처리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f5f4f0;      /* cool studio paper */
+  --paper-2:#eeece6;
+  --card:#ffffff;
+  --ink:#16141c;         /* near-black ink */
+  --ink-2:#3a3646;
+  --ink-dim:#6b6577;
+  --ink-faint:#9c96a6;
+  --line:#e0ddd5;
+  --line-2:#d3cfc6;
+  --violet:#6d3bef;      /* reward accent */
+  --violet-deep:#4c1fc9;
+  --magenta:#e0359e;     /* reward gradient end */
+  --cyan:#12b5c9;        /* flow / denoise */
+  --amber:#e8890c;       /* edit task */
+  --grid:rgba(109,59,239,.05);
+  --mono:'IBM Plex Mono',monospace;
+  --disp:'Sora',sans-serif;
+  --kr:'Noto Sans KR',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:var(--kr);font-weight:400;line-height:1.78;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--violet);color:#fff}
+
+/* ambient */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bg .grid{position:absolute;inset:0;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:56px 56px;mask-image:radial-gradient(ellipse 90% 55% at 50% 0%,#000 20%,transparent 78%)}
+.bg .g1{position:absolute;top:-15%;right:-8%;width:60vw;height:55vh;background:radial-gradient(ellipse at center,rgba(224,53,158,.10),transparent 62%)}
+.bg .g2{position:absolute;top:8%;left:-10%;width:55vw;height:55vh;background:radial-gradient(ellipse at center,rgba(109,59,239,.10),transparent 65%)}
+canvas#flow{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.9}
+
+.wrap{position:relative;z-index:3;max-width:1120px;margin:0 auto;padding:0 30px}
+
+/* rail */
+.rail{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:space-between;
+  padding:15px 30px;background:linear-gradient(180deg,rgba(245,244,240,.94),rgba(245,244,240,0));backdrop-filter:blur(7px)}
+.brand{display:flex;align-items:center;gap:11px;font-family:var(--disp);font-weight:700;letter-spacing:-.01em;font-size:15px}
+.brand .qb{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--violet),var(--magenta));display:grid;place-items:center;color:#fff;font-family:var(--disp);font-weight:800;font-size:14px}
+.brand .v{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;color:var(--ink-faint);font-weight:500}
+.rail-nav{display:flex;gap:24px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.rail-nav a{color:var(--ink-dim);text-decoration:none;transition:color .2s}
+.rail-nav a:hover{color:var(--violet)}
+@media(max-width:780px){.rail-nav{display:none}}
+
+/* hero */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:130px 0 90px;position:relative}
+.hero .kick{font-family:var(--mono);font-size:12.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--violet);display:flex;align-items:center;gap:14px;margin-bottom:30px}
+.hero .kick::before{content:"";width:46px;height:1px;background:var(--violet)}
+.hero h1{font-family:var(--disp);font-weight:700;font-size:clamp(2.7rem,8vw,6rem);line-height:.98;letter-spacing:-.035em}
+.hero h1 .grad{background:linear-gradient(100deg,var(--violet),var(--magenta));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero .tagline{font-family:var(--disp);font-weight:400;font-size:clamp(1.15rem,2.8vw,1.85rem);color:var(--ink-2);margin-top:24px;letter-spacing:-.015em;line-height:1.35}
+.hero .abs-kr{margin-top:32px;max-width:730px;font-size:1.06rem;font-weight:300;color:var(--ink-dim);line-height:1.85}
+.hero .abs-kr b{color:var(--violet);font-weight:500}
+.hero-meta{margin-top:50px;display:flex;flex-wrap:wrap;border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2)}
+.hero-meta .c{padding:20px 30px 20px 0;margin-right:30px;border-right:1px solid var(--line)}
+.hero-meta .c:last-child{border-right:none;margin-right:0}
+.hero-meta .k{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:7px}
+.hero-meta .val{font-size:14.5px;color:var(--ink);font-weight:600;font-family:var(--disp)}
+.hero-meta .val.g{background:linear-gradient(100deg,var(--violet),var(--magenta));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hint{margin-top:54px;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);display:flex;gap:10px;align-items:center}
+.hint .d{width:6px;height:6px;border-radius:50%;background:var(--violet);animation:pl 2s infinite}
+@keyframes pl{0%,100%{opacity:.25}50%{opacity:1}}
+
+/* section */
+section.blk{padding:100px 0;position:relative}
+.sechead{margin-bottom:52px;max-width:880px}
+.sectag{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--violet);display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.sectag .n{color:var(--ink-faint)}
+.sechead h2{font-family:var(--disp);font-weight:700;font-size:clamp(2rem,4.6vw,3.2rem);line-height:1.06;letter-spacing:-.03em}
+.sechead h2 .g{background:linear-gradient(100deg,var(--violet),var(--magenta));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sechead .lead{margin-top:20px;font-size:1.1rem;color:var(--ink-dim);font-weight:300;line-height:1.85}
+
+/* prose */
+p.body{color:var(--ink-2);margin-bottom:18px;font-weight:300;font-size:1.03rem}
+.hl{color:var(--violet);font-weight:500}
+.hlm{color:var(--magenta);font-weight:500}
+.hlc{color:var(--cyan);font-weight:600}
+.hla{color:var(--amber);font-weight:600}
+.eng{font-family:var(--mono);font-size:.85em;color:var(--ink-faint)}
+
+.subhead{font-family:var(--disp);font-weight:600;font-size:1.42rem;margin:48px 0 20px;display:flex;align-items:center;gap:14px;letter-spacing:-.02em}
+.subhead .bar{width:22px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--violet),var(--magenta));flex:none}
+.minitag{font-family:var(--mono);font-size:11px;color:var(--violet);letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
+
+/* panels */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:32px;position:relative;overflow:hidden;box-shadow:0 1px 0 rgba(22,20,28,.02)}
+.panel::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--violet),var(--magenta))}
+.panel.cyan::before{background:linear-gradient(90deg,var(--cyan),#0891b2)}
+.panel.amber::before{background:linear-gradient(90deg,var(--amber),#f0a500)}
+.g2c{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.g3c{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+@media(max-width:840px){.g2c,.g3c{grid-template-columns:1fr}}
+
+/* stat */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line-2);border-radius:16px;overflow:hidden;background:var(--card)}
+.stats .s{padding:32px 24px;border-right:1px solid var(--line)}
+.stats .s:last-child{border-right:none}
+.stats .big{font-family:var(--disp);font-weight:800;font-size:clamp(1.9rem,4.4vw,2.9rem);line-height:1;letter-spacing:-.03em}
+.stats .big.v{color:var(--violet)}.stats .big.m{color:var(--magenta)}.stats .big.c{color:var(--cyan)}.stats .big.a{color:var(--amber)}
+.stats .lab{margin-top:11px;font-size:.85rem;color:var(--ink-dim);font-weight:300;line-height:1.5}
+.stats .delta{font-family:var(--mono);font-size:.78rem;color:var(--violet);margin-top:6px;font-weight:500}
+@media(max-width:840px){.stats{grid-template-columns:1fr 1fr}.stats .s:nth-child(2){border-right:none}}
+@media(max-width:520px){.stats{grid-template-columns:1fr}.stats .s{border-right:none;border-bottom:1px solid var(--line)}}
+
+/* feature list */
+.flist{list-style:none;display:flex;flex-direction:column}
+.flist li{display:flex;gap:20px;padding:20px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.flist li:last-child{border-bottom:none}
+.flist .idx{font-family:var(--mono);font-size:12px;color:var(--violet);padding-top:5px;min-width:36px;font-weight:500}
+.flist .t{color:var(--ink-2);font-weight:300;font-size:1.02rem}
+.flist .t strong{color:var(--ink);font-weight:600}
+
+/* pipeline */
+.pipe{display:flex;flex-wrap:wrap}
+.pipe .step{flex:1;min-width:150px;background:var(--card);border:1px solid var(--line);padding:24px 20px;position:relative}
+.pipe .step:not(:last-child){border-right:none}
+.pipe .step .sn{font-family:var(--mono);font-size:11px;color:var(--violet);letter-spacing:.13em}
+.pipe .step .st{font-family:var(--disp);font-weight:600;margin:9px 0 7px;font-size:1.02rem}
+.pipe .step .sd{font-size:.86rem;color:var(--ink-dim);font-weight:300;line-height:1.55}
+.pipe .step::after{content:"→";position:absolute;right:-10px;top:50%;transform:translateY(-50%);color:var(--violet);font-family:var(--mono);background:var(--paper);z-index:5}
+.pipe .step:last-child::after{display:none}
+@media(max-width:840px){.pipe{flex-direction:column}.pipe .step{border-right:1px solid var(--line)!important}.pipe .step::after{content:"↓";right:auto;left:50%;top:auto;bottom:-10px;transform:translateX(-50%)}}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line-2);border-radius:16px;background:var(--card)}
+table.rt{width:100%;border-collapse:collapse;font-size:.9rem;min-width:640px}
+table.rt th,table.rt td{text-align:right;padding:12px 15px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.rt th:first-child,table.rt td:first-child{text-align:left}
+table.rt thead th{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;background:var(--paper-2)}
+table.rt td{color:var(--ink-dim);font-weight:400;font-family:var(--mono)}
+table.rt td:first-child{font-family:var(--disp);color:var(--ink-2);font-weight:500}
+table.rt tbody tr:hover td{background:rgba(109,59,239,.03)}
+table.rt .base td{background:rgba(109,59,239,.04)}
+table.rt .base td:first-child{color:var(--ink-dim)}
+table.rt .rl td{background:linear-gradient(90deg,rgba(109,59,239,.09),rgba(224,53,158,.06))}
+table.rt .rl td:first-child{color:var(--violet);font-weight:700}
+table.rt .best{color:var(--magenta);font-weight:700}
+.tblcap{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:14px;line-height:1.6}
+
+/* interlude */
+.interlude{padding:94px 0;text-align:center}
+.interlude p{font-family:var(--disp);font-weight:600;font-size:clamp(1.5rem,3.8vw,2.5rem);line-height:1.3;letter-spacing:-.025em;max-width:920px;margin:0 auto}
+.interlude .g{background:linear-gradient(100deg,var(--violet),var(--magenta));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+.figcap{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:14px;line-height:1.6}
+.fig{margin:16px 0}
+svg{display:block;max-width:100%;height:auto}
+
+/* equation card */
+.eq{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:30px;text-align:center;position:relative;overflow:hidden}
+.eq .expr{font-family:var(--mono);font-size:clamp(.9rem,2.3vw,1.25rem);color:var(--ink);letter-spacing:.01em}
+.eq .note{font-family:var(--mono);font-size:11px;color:var(--ink-faint);margin-top:16px;line-height:1.7}
+
+/* pills */
+.pills{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.pill{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;color:var(--ink-dim);border:1px solid var(--line-2);border-radius:100px;padding:6px 15px;background:var(--card)}
+.pill.on{border-color:var(--violet);color:var(--violet)}
+.pill.c{border-color:var(--cyan);color:var(--cyan)}
+.pill.a{border-color:var(--amber);color:var(--amber)}
+
+/* strategy compare */
+.strat{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:840px){.strat{grid-template-columns:1fr}}
+.strat .s{border:1px solid var(--line);border-radius:14px;padding:26px;background:var(--card)}
+.strat .s .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;font-weight:600}
+.strat .s h5{font-family:var(--disp);font-weight:600;font-size:1.08rem;margin-bottom:10px}
+.strat .s p{font-size:.92rem;color:var(--ink-dim);font-weight:300}
+.strat .bad{border-top:3px solid #d64545}.strat .bad .tag{color:#d64545}
+.strat .good{border-top:3px solid var(--violet)}.strat .good .tag{color:var(--violet)}
+
+/* footer */
+footer{border-top:1px solid var(--line-2);padding:66px 0 88px;margin-top:44px}
+.fgrid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:34px}
+@media(max-width:840px){.fgrid{grid-template-columns:1fr}}
+.fgrid h4{font-family:var(--mono);font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:16px}
+.fgrid p{font-size:.92rem;color:var(--ink-dim);font-weight:300}
+.fgrid a{color:var(--violet);text-decoration:none}
+.ftitle{font-family:var(--disp);font-weight:700;font-size:1.4rem;margin-bottom:12px;letter-spacing:-.02em}
+.authors{font-family:var(--mono);font-size:11px;color:var(--ink-faint);line-height:1.9;margin-top:8px}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}.hint .d{animation:none}canvas#flow{display:none}}
+:focus-visible{outline:2px solid var(--violet);outline-offset:3px;border-radius:4px}
+  .video-container {
+    width: 100%; /* 부모 요소의 너비에 맞춤 */
+    max-width: 1600px; /* 최대 너비 설정 (옵션) */
+    margin: 0 auto;
+  }
+
+  .video-container iframe {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9; /* 16:9 비율 유지 */
+  }      
+</style>
+<!-- MathJax for LaTeX -->
+<script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        svg: {
+            fontCache: 'global'
+        }
+    };
+</script>
+</head>
+<body>
+<div class="bg"><div class="grid"></div><div class="g1"></div><div class="g2"></div></div>
+<canvas id="flow"></canvas>
+
+<div class="rail">
+  <div class="brand"><span class="qb">Q</span>Qwen-Image-2.0-RL <span class="v">arXiv:2606.27608</span></div>
+  <nav class="rail-nav">
+    <a href="#reward">보상</a>
+    <a href="#train">학습</a>
+    <a href="#opd">증류</a>
+    <a href="#eval">평가</a>
+  </nav>
+</div>
+
+<div class="wrap">
+<header class="hero">
+  <div class="kick rv">Technical Report · Qwen Team</div>
+  <h1 class="rv">이미지에<br><span class="grad">사람의 취향</span>을<br>강화학습으로 새기다</h1>
+  <p class="tagline rv">Qwen-Image-2.0-RL — 디퓨전 이미지 생성 모델의 RLHF·온폴리시 증류 후처리 파이프라인.</p>
+  <p class="abs-kr rv">지도학습으로 사전학습된 디퓨전 모델의 출력과 인간의 미적 기대 사이에는 지속적인 간극이 존재한다. Qwen-Image-2.0-RL은 <b>인간 피드백 기반 강화학습(RLHF)</b>과 <b>온폴리시 증류(OPD)</b>를 적용하여 Qwen-Image-2.0 모델의 시각 품질과 지시 수행 능력을 동시에 끌어올리는 후처리 파이프라인이다.</p>
+  <div class="hero-meta rv">
+    <div class="c"><div class="k">Base</div><div class="val">Qwen-Image-2.0</div></div>
+    <div class="c"><div class="k">Method</div><div class="val">RLHF · GRPO · OPD</div></div>
+    <div class="c"><div class="k">Bench Overall</div><div class="val g">57.84 · +2.61</div></div>
+    <div class="c"><div class="k">Edit Arena Elo</div><div class="val g">1349 · +93</div></div>
+  </div>
+  <div class="hint rv"><span class="d"></span>SCROLL — 노이즈에서 이미지로</div>
+</header>
+
+<center>
+  <div class="video-container">
+    <iframe src="https://www.youtube.com/embed/7e7bmRMRaKc?si=yRSQGmv4K87yJamN" frameborder="0" allowfullscreen></iframe>
+  </div>        
+</center>
+
+<!-- ===== INTRO / CHALLENGE ===== -->
+<section class="blk" id="intro">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">00</span> — 문제 정의</div>
+    <h2>지도학습은 <span class="g">"좋아 보이는"</span>을<br>직접 배우지 못한다</h2>
+    <p class="lead">지도학습은 노이즈 제거 점수 정합(denoising score matching) 목표를 최적화할 뿐, 구성적 조화·질감·프롬프트 충실도·양식적 일관성 같은 인간의 선호를 직접 포착하지 못한다. 대규모 언어모델 정렬에서 성공한 RLHF는 이 간극을 원리적으로 메우는 접근을 제공한다.</p>
+  </div>
+
+  <p class="body rv">그러나 RLHF를 디퓨전 모델로 확장하는 데는 세 가지 뚜렷한 난제가 있다. 신뢰할 수 있는 보상 신호가 텍스트-투-이미지(T2I) 생성과 이미지 편집처럼 근본적으로 다른 과제의 다양한 품질 차원을 포착해야 하고, 기존 RL 프레임워크가 주로 LoRA 미세조정 설정에서만 검증되어 전체 파라미터·대규모 학습이 미탐색 상태이며, 실제 배포에는 과제별 특화 정책을 품질 손실 없이 단일 모델로 통합하는 일이 요구된다.</p>
+
+  <div class="subhead rv"><span class="bar"></span>세 가지 핵심 기여</div>
+  <div class="g3c rv">
+    <div class="panel">
+      <div class="minitag">01 · Reward</div>
+      <h3 style="font-family:var(--disp);font-weight:600;font-size:1.12rem;margin-bottom:10px">VLM 기반 복합 보상</h3>
+      <p class="body" style="margin:0;font-size:.95rem">Qwen 계열 VLM을 CoT 추론과 함께 미세조정하고, 페어와이즈보다 우수한 <span class="hl">포인트와이즈 채점</span>을 채택한다. T2I는 정렬·미학·인물의 계층적 보상, 편집은 지시 수행·얼굴 정체성 일관성.</p>
+    </div>
+    <div class="panel cyan">
+      <div class="minitag" style="color:var(--cyan)">02 · Training</div>
+      <h3 style="font-family:var(--disp);font-weight:600;font-size:1.12rem;margin-bottom:10px">확장형 GRPO 프레임워크</h3>
+      <p class="body" style="margin:0;font-size:.95rem">다중 보상 어드밴티지를 갖춘 GRPO에 <span class="hlc">하이브리드 CFG 전략</span>, 그룹 내 보상 범위 필터링을 통한 프롬프트 선별, 카테고리별 보상 가중치 보정을 결합한다.</p>
+    </div>
+    <div class="panel amber">
+      <div class="minitag" style="color:var(--amber)">03 · Distillation</div>
+      <h3 style="font-family:var(--disp);font-weight:600;font-size:1.12rem;margin-bottom:10px">온폴리시 증류(OPD)</h3>
+      <p class="body" style="margin:0;font-size:.95rem">T2I·편집 전문 교사를 <span class="hla">궤적 수준 속도 정합</span>으로 단일 학생 모델에 통합한다. 과제 간 최적화 충돌을 피하고 보상 모델 의존을 제거한다.</p>
+    </div>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>파이프라인 개요</div>
+  <p class="body rv">공유 베이스 모델에서 출발하여 전용 보상 조합으로 두 과제 특화 RL 정책을 학습한다. T2I는 프롬프트 충실도 → 질감 품질 → 인물 특화 최적화로 이어지는 계층 설계를, 편집은 지시 정확도와 정체성 보존에 집중한다. 그 결과 나온 두 교사를 온폴리시 증류로 하나의 통합 모델로 병합한다.</p>
+  <div class="fig rv">
+    <svg viewBox="0 0 1040 300" role="img" aria-label="Qwen-Image-2.0-RL 학습 파이프라인">
+      <defs>
+        <linearGradient id="rg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6d3bef"/><stop offset="1" stop-color="#e0359e"/></linearGradient>
+        <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 Z" fill="#9c96a6"/></marker>
+      </defs>
+      <g font-family="'Sora',sans-serif" font-size="13">
+        <!-- base -->
+        <rect x="20" y="118" width="120" height="64" rx="12" fill="#fff" stroke="#d3cfc6"/>
+        <text x="80" y="147" text-anchor="middle" fill="#16141c" font-weight="600" font-size="12">Base Model</text>
+        <text x="80" y="166" text-anchor="middle" fill="#9c96a6" font-size="10">Qwen-Image-2.0</text>
+        <!-- T2I RL -->
+        <rect x="220" y="40" width="220" height="72" rx="12" fill="#fff" stroke="#6d3bef"/>
+        <text x="330" y="66" text-anchor="middle" fill="#6d3bef" font-weight="600" font-size="12">T2I RL Training</text>
+        <text x="330" y="85" text-anchor="middle" fill="#6b6577" font-size="10">정렬 · 미학 · 인물 보상</text>
+        <text x="330" y="100" text-anchor="middle" fill="#9c96a6" font-size="9.5">alignment / aesthetic / portrait</text>
+        <!-- Edit RL -->
+        <rect x="220" y="188" width="220" height="72" rx="12" fill="#fff" stroke="#e8890c"/>
+        <text x="330" y="214" text-anchor="middle" fill="#e8890c" font-weight="600" font-size="12">Edit RL Training</text>
+        <text x="330" y="233" text-anchor="middle" fill="#6b6577" font-size="10">지시 정확도 · 정체성 보존</text>
+        <text x="330" y="248" text-anchor="middle" fill="#9c96a6" font-size="9.5">instruction / face ID</text>
+        <line x1="140" y1="140" x2="216" y2="82" stroke="#9c96a6" marker-end="url(#ah)"/>
+        <line x1="140" y1="160" x2="216" y2="220" stroke="#9c96a6" marker-end="url(#ah)"/>
+        <!-- teachers -->
+        <rect x="500" y="55" width="130" height="52" rx="10" fill="#faf3ff" stroke="#6d3bef"/>
+        <text x="565" y="86" text-anchor="middle" fill="#6d3bef" font-size="12" font-weight="600">T2I Teacher</text>
+        <rect x="500" y="193" width="130" height="52" rx="10" fill="#fff7ec" stroke="#e8890c"/>
+        <text x="565" y="224" text-anchor="middle" fill="#e8890c" font-size="12" font-weight="600">Edit Teacher</text>
+        <line x1="440" y1="76" x2="496" y2="81" stroke="#9c96a6" marker-end="url(#ah)"/>
+        <line x1="440" y1="224" x2="496" y2="219" stroke="#9c96a6" marker-end="url(#ah)"/>
+        <!-- OPD -->
+        <rect x="690" y="118" width="140" height="64" rx="12" fill="#fff" stroke="url(#rg)" stroke-width="2"/>
+        <text x="760" y="147" text-anchor="middle" fill="#16141c" font-size="12" font-weight="600">On-Policy</text>
+        <text x="760" y="166" text-anchor="middle" fill="#16141c" font-size="12" font-weight="600">Distillation</text>
+        <line x1="630" y1="81" x2="686" y2="130" stroke="#9c96a6" marker-end="url(#ah)"/>
+        <line x1="630" y1="219" x2="686" y2="170" stroke="#9c96a6" marker-end="url(#ah)"/>
+        <!-- unified -->
+        <rect x="890" y="118" width="130" height="64" rx="12" fill="url(#rg)"/>
+        <text x="955" y="147" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Unified</text>
+        <text x="955" y="166" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Model</text>
+        <line x1="830" y1="150" x2="886" y2="150" stroke="#9c96a6" marker-end="url(#ah)"/>
+      </g>
+    </svg>
+    <p class="figcap">FIG 1. 베이스 → 두 과제 특화 RL 교사 → 온폴리시 증류 → 배포용 통합 모델.</p>
+  </div>
+</section>
+
+<!-- ===== BACKGROUND ===== -->
+<section class="blk" id="bg" style="padding-top:0">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">01</span> — 배경</div>
+    <h2>Flow Matching과<br><span class="g">Flow-GRPO</span></h2>
+    <p class="lead">디퓨전 모델은 고해상도 이미지 생성의 지배적 패러다임이다. Flow Matching 프레임워크에서 전방 경로는 깨끗한 샘플과 가우시안 노이즈의 선형 보간으로 정의되며, 신경망은 속도장(velocity field)을 근사하도록 학습된다.</p>
+  </div>
+
+  <div class="g2c rv">
+    <div class="eq">
+      <div class="minitag">전방 경로 · Forward Path</div>
+      <div class="expr">x<sub>t</sub> = (1−t)·x<sub>0</sub> + t·ε,&nbsp;&nbsp; t ∈ [0,1]</div>
+      <div class="note">x₀ ~ p<sub>data</sub> 깨끗한 샘플, ε ~ 𝒩(0,I) 표준 가우시안 노이즈<br>조건부 속도장 v := ε − x₀</div>
+    </div>
+    <div class="eq">
+      <div class="minitag">생성 · Reverse ODE</div>
+      <div class="expr">dx<sub>t</sub>/dt = v<sub>θ</sub>(x<sub>t</sub>, t, c),&nbsp;&nbsp; x<sub>1</sub> ~ 𝒩(0,I)</div>
+      <div class="note">학습 후, t=1에서 t=0으로 확률 흐름 ODE를 역방향으로 풀어 샘플을 생성한다.</div>
+    </div>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>Flow-GRPO · 결정론적 ODE를 확률 샘플러로</div>
+  <p class="body rv">Flow-GRPO는 그룹 상대 정책 최적화(GRPO)를 flow matching으로 확장하여, 다단계 노이즈 제거 궤적을 마르코프 결정 과정(MDP)으로 정식화한다. 프롬프트 <span class="eng">c</span>에 대해 정책이 <span class="eng">G</span>개 이미지 그룹을 생성하고, 보상 모델이 각 샘플을 평가한다. i번째 샘플의 어드밴티지는 그룹 수준 정규화로 계산된다.</p>
+  <div class="eq rv">
+    <div class="expr">A(x<sub>0</sub><sup>(i)</sup>, c) = ( R(x<sub>0</sub><sup>(i)</sup>, c) − μ<sub>c</sub> ) / σ<sub>c</sub></div>
+    <div class="note">μ<sub>c</sub>, σ<sub>c</sub> 는 그룹 내 보상의 평균과 표준편차 · 결정론적 ODE는 등가 확률 샘플러로 대체되어 중요도 샘플링 비율 계산과 클리핑 대리 목표 최적화를 가능하게 한다.</div>
+  </div>
+  <p class="body rv" style="margin-top:24px">한편 <span class="hl">DiffusionNFT</span>는 전방 디퓨전 과정을 정책 최적화에 사용하는 대안적 정식화를 제안한다. 현재·이전·참조 정책의 속도 예측으로 양·음 속도 예측을 구성하고, 재조정된 그룹 상대 어드밴티지 <span class="eng">r ∈ [0,1]</span>로 가중한다. 사전학습 참조에서 정책이 지나치게 벗어나지 않도록 KL 페널티를 더한다.</p>
+</section>
+
+<!-- ===== interlude ===== -->
+<div class="interlude">
+  <p class="rv">보상 신호는 <span class="g">인간의 선호를 포착하는</span><br>강화학습의 심장이다.</p>
+</div>
+
+<!-- ===== REWARD ===== -->
+<section class="blk" id="reward">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">02</span> — 보상 모델링</div>
+    <h2>과제별 <span class="g">복합 보상</span> 시스템</h2>
+    <p class="lead">사전학습된 생성 모델을 인간 선호에 정렬하기 위해, 평가 차원별로 과제 특화 복합 보상 모델을 구성한다. 의미·미학 평가는 VLM 기반 채점기가, 세밀한 정체성 보존은 모델 기반 채점기가 담당하며 T2I와 편집 과제 모두에 맞춰진다.</p>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>포인트와이즈 vs 페어와이즈</div>
+  <p class="body rv">보상 모델 미세조정에 두 가지 학습 패러다임을 탐색한다. <span class="hlm">페어와이즈</span>는 같은 프롬프트에서 생성된 이미지 쌍 (x<sub>w</sub>, x<sub>l</sub>)에 Bradley-Terry 순위 손실을 적용하고, <span class="hl">포인트와이즈</span>는 각 이미지에 절대 점수 <span class="eng">y</span>를 부여해 직접 회귀한다. 실무에서 보상 모델은 이산 점수 집합 <span class="eng">S = {1,2,3,4,5}</span> 토큰을 출력하며, VLM 확률 분포의 기댓값으로 보상 점수를 산출한다.</p>
+  <div class="g2c rv">
+    <div class="eq" style="border-top:3px solid var(--magenta)">
+      <div class="minitag" style="color:var(--magenta)">Pairwise · Bradley-Terry</div>
+      <div class="expr" style="font-size:clamp(.85rem,2vw,1.05rem)">ℒ<sub>pair</sub> = − Σ log σ( R<sub>φ</sub>(x<sub>w</sub>,c) − R<sub>φ</sub>(x<sub>l</sub>,c) )</div>
+      <div class="note">어느 쪽이 더 나은지(which is better)만 포착한다</div>
+    </div>
+    <div class="eq" style="border-top:3px solid var(--violet)">
+      <div class="minitag">Pointwise · 회귀 (채택)</div>
+      <div class="expr" style="font-size:clamp(.85rem,2vw,1.05rem)">ℒ<sub>point</sub> = Σ ( R<sub>φ</sub>(x,c) − y )²</div>
+      <div class="note">얼마나 좋은지(how good)를 보정된 척도로 인코딩한다</div>
+    </div>
+  </div>
+  <p class="body rv" style="margin-top:24px">동일한 평가 초점(미적 품질·시각 질감)과 동일한 모델 풀을 공유하되 주석 형식만 다른 두 데이터셋으로 비교한 결과, <span class="hl">포인트와이즈로 학습한 보상 모델이 일관되게 더 나은 시각 품질과 더 적은 아티팩트</span>를 만든다. 절대 점수의 더 풍부한 지도 신호 덕분으로 해석되며, 최종 시스템의 모든 VLM 기반 보상 모델은 포인트와이즈를 기본 목표로 채택한다.</p>
+
+  <div class="subhead rv"><span class="bar"></span>T2I 생성 보상 · 계층 설계</div>
+  <p class="body rv">T2I 보상 설계는 계층 논리를 따른다. 가장 근본적인 요구는 프롬프트 충실도다 — 지정 내용을 무시한 아름다운 이미지는 실패한 생성이다. 따라서 미학을 배제한 이미지-텍스트 정렬 보상에서 시작하고, 프롬프트 준수가 확립되면 미학 보상을 얹으며, 인물 이미지에는 전용 인물 보상을 추가한다.</p>
+  <ul class="flist rv">
+    <li><span class="idx">L1</span><span class="t"><strong>이미지-텍스트 정렬 보상.</strong> 가장 근본적. 미학을 고려하지 않고 의미 대응을 측정한다. 우선순위 계층 — (1)객체 존재·개수, (2)속성 정확도(색·크기·형태·재질), (3)공간 관계 충실도, (4)행동·포즈 정확도. 최상위 기준을 통과하지 못하면 다른 품질과 무관하게 낮은 점수로 제한된다.</span></li>
+    <li><span class="idx">L2</span><span class="t"><strong>미학 보상.</strong> 프롬프트 충실 생성 위에서, 구성적 균형·사실적 조명·질감 충실도·전반적 예술적 일관성을 평가한다. 포인트와이즈 주석 데이터셋으로 학습한다.</span></li>
+    <li><span class="idx">L3</span><span class="t"><strong>인물 보상.</strong> 얼굴 비율 정확도·정체성 보존 세부·피부와 모발 질감 사실성을 개선하는 특화 신호. 잘못된 손가락 개수·왜곡된 얼굴 특징·부자연스러운 신체 비율 같은 흔한 실패 모드를 명시적으로 점검한다. 별도의 인물 특화 데이터셋으로 학습한다.</span></li>
+  </ul>
+
+  <div class="subhead rv"><span class="bar"></span>이미지 편집 보상</div>
+  <p class="body rv">T2I에서 확립한 포인트와이즈 방법론을 편집 과제로 이전하고, VLM의 한계를 넘는 세밀한 정체성 보존을 위해 모델 기반 얼굴 정체성 일관성 채점기를 추가한다.</p>
+  <div class="g2c rv">
+    <div class="panel amber">
+      <div class="minitag" style="color:var(--amber)">Instruction-following</div>
+      <p class="body" style="margin:0;font-size:.96rem">원본 이미지·편집 지시·출력 이미지를 삼중항으로 받아, 지시를 핵심·비핵심 요구로 분해한다. (1)핵심 편집 지시 이행, (2)비핵심 요구 처리, (3)전반적 시각 일관성을 구조화 루브릭으로 평가한다. 객체 교체·속성 수정·양식 전이 등을 포괄한다.</p>
+    </div>
+    <div class="panel amber">
+      <div class="minitag" style="color:var(--amber)">Face ID Consistency</div>
+      <p class="body" style="margin:0;font-size:.96rem">VLM 기반 시각 일관성 보상은 전역 구조 보존을 포착하지만 미묘한 얼굴 정체성 변화 검출에는 불충분하다. 전용 모델 기반 얼굴 정체성 채점기가 <span class="hla">임베딩 수준의 정밀한 정체성 보존 신호</span>를 제공하여 VLM의 상위 의미 일관성 평가를 보완한다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TRAINING ===== -->
+<section class="blk" id="train">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">03</span> — 학습</div>
+    <h2>안정성과 <span class="g">사전지식</span>을<br>동시에 지키는 법</h2>
+    <p class="lead">확립된 보상 모델과 GRPO 기반 프레임워크로 T2I·편집 정책을 각각 학습한 뒤, 두 과제 특화 모델을 온폴리시 증류로 배포 가능한 모델로 병합한다.</p>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>하이브리드 CFG 전략</div>
+  <p class="body rv">디퓨전 기반 RL의 핵심 설계는 분류자 없는 안내(CFG)를 롤아웃 샘플링과 정책 최적화 중 어디에 쓸지다. 세 전략을 체계적으로 평가한다.</p>
+  <div class="strat rv">
+    <div class="s bad">
+      <div class="tag">✕ 양쪽 모두 CFG</div>
+      <h5>학습 붕괴</h5>
+      <p>롤아웃·학습 양쪽에 CFG를 적용하면 심각한 학습 불안정이 발생한다. 학습이 진행될수록 이미지가 완전히 열화되어 결국 일관성 없는 출력으로 붕괴한다.</p>
+    </div>
+    <div class="s bad">
+      <div class="tag">✕ 양쪽 모두 미사용</div>
+      <h5>지식 소실</h5>
+      <p>보상 점수는 꾸준히 오르지만, 모델이 양식화 능력과 세계 지식을 점진적으로 상실한다. 유명인 외모를 재현하지 못하고 양식 특화 생성 능력을 잃는다.</p>
+    </div>
+    <div class="s good">
+      <div class="tag">✓ 롤아웃만 CFG (채택)</div>
+      <h5>안정 + 지식 보존</h5>
+      <p>CFG로 안내된 롤아웃이 신뢰할 보상 신호를 낼 고품질 후보를 만들고, CFG 없는 학습 목표가 조건·무조건 분기 동시 최적화의 어려움을 피해 안정적 경사 갱신과 연산 절감을 유지한다.</p>
+    </div>
+  </div>
+  <p class="body rv" style="margin-top:24px">하이브리드 전략을 채택한다. 베이스 모델은 추론 시 사전학습 지식을 완전히 표현하기 위해 CFG에 의존하므로, 롤아웃에서만 CFG를 써 구조적으로 일관된 이미지를 생성하고 정책 최적화 목표에서는 무조건 분기를 배제한다.</p>
+
+  <div class="subhead rv"><span class="bar"></span>비동기 보상 파이프라인</div>
+  <p class="body rv">보상 모델은 학습 과정과 분리된 원격 API 서비스로 배포된다. 보상 채점은 원격 VLM 엔드포인트로의 네트워크 I/O를 수반하므로 동기 평가는 학습 루프의 병목이 된다. 정책이 GPU 추론으로 이미지 배치를 생성·수집하면 백그라운드 스레드가 원격 보상 API로 비동기 제출하고, 응답이 돌아오면 모든 랭크가 동기화하여 원점수 수집·프롬프트 그룹별 정규화·어드밴티지 계산을 수행한다. 이 설계는 보상 지연을 추론 연산 뒤에 거의 완전히 숨겨 <span class="hl">학습 시간의 비례 증가 없이 다중 보상 모델로의 효율적 확장</span>을 가능하게 한다.</p>
+
+  <div class="subhead rv"><span class="bar"></span>다중 보상 어드밴티지 계산</div>
+  <p class="body rv">T2I와 편집 각각에 여러 보상 모델을 사용한다. 그룹 상대 어드밴티지는 프롬프트 그룹별 정규화를 거친 가중 합으로 계산된다.</p>
+  <div class="eq rv">
+    <div class="expr">A(x<sub>0</sub><sup>(i)</sup>, c) = Σ<sub>k=1..K</sub> w<sub>k</sub> · ( R<sub>k</sub>(x<sub>0</sub><sup>(i)</sup>, c) − μ<sub>k</sub> ) / σ<sub>k</sub></div>
+    <div class="note">R<sub>k</sub> 는 k번째 보상 모델, w<sub>k</sub> 는 Σw<sub>k</sub>=1 을 만족하는 가중치 · 프롬프트 그룹별 정규화가 핵심 — 보상 모델 간 절대 스케일 차이에 불변이 되어 특정 보상 차원이 수치 범위 때문에 어드밴티지 신호를 지배하는 것을 막는다.</div>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>과제별 최적화</div>
+  <ul class="flist rv">
+    <li><span class="idx">A.</span><span class="t"><strong>타임스텝 샘플링.</strong> 롤아웃은 40스텝 ODE 솔버로 생성한다. 40스텝 전부에 RL 목표를 적용하면 빠른 <span class="hlm">보상 해킹(reward hacking)</span>으로 몇 번의 반복 만에 열화된다. 전역 구조·의미 배치를 관장하는 고노이즈 타임스텝(t=1에 가까운)에 집중한 부분집합만 학습하여 보상 착취를 늦추고 품질 차원 전반의 개선을 보장한다.</span></li>
+    <li><span class="idx">B.</span><span class="t"><strong>프롬프트 선별.</strong> 모든 프롬프트가 정책 개선에 동등하게 기여하지 않는다. 각 후보 프롬프트에 대해 베이스 모델이 G회 롤아웃하고 그룹 내 <span class="hl">보상 범위(최댓값−최솟값)</span>가 임계값을 넘는 프롬프트만 남긴다. 모든 샘플에서 보상이 균일하게 높거나 낮은 프롬프트는 약한 신호만 제공하므로, 정책이 개선할 여지가 있는 프롬프트에 연산을 집중해 학습 효율을 크게 높인다.</span></li>
+    <li><span class="idx">C.</span><span class="t"><strong>카테고리별 보상 보정.</strong> 남은 프롬프트를 의미 카테고리(인물·풍경·타이포그래피·일반)로 조직하고 카테고리별 보상 가중치 벡터를 배정한다. 인물 프롬프트는 인물 충실도 보상에, 타이포그래피는 정렬 정확도에 높은 가중을 준다. 최적화가 단일 지배 양식으로 수렴하는 것을 막는다.</span></li>
+  </ul>
+</section>
+
+<!-- ===== interlude ===== -->
+<div class="interlude">
+  <p class="rv">두 전문가를 하나로. 그러나 <span class="g">서로 다투게 하지 않고.</span></p>
+</div>
+
+<!-- ===== OPD ===== -->
+<section class="blk" id="opd">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">04</span> — 온폴리시 증류</div>
+    <h2>궤적 위에서<br><span class="g">속도를 맞추다</span></h2>
+    <p class="lead">RL 최적화는 각 과제에서 뛰어난 품질의 모델을 만들지만 그 정책은 과제 특화되어 있다 — T2I 최적 모델은 편집 성능이 떨어지고 그 반대도 마찬가지다. 온폴리시 증류(OPD)는 여러 과제 특화 교사를 궤적 수준 속도 정합으로 단일 학생 모델에 통합한다.</p>
+  </div>
+
+  <p class="body rv">학생 모델 <span class="eng">v<sub>θ</sub></span>(베이스 모델로 초기화)는 t=1에서 t=0으로 역방향 ODE를 N스텝으로 풀어 이미지를 생성하고, 자신의 전체 궤적 <span class="eng">{x<sub>t0</sub>, …, x<sub>tN</sub>}</span>을 저장한다. 학생은 자신의 추론 궤적 위 각 지점에서 과제에 맞는 교사의 속도를 맞추도록 학습한다 — 즉 <span class="hl">자신의 예측 오류를 자신의 궤적에서 스스로 교정</span>한다.</p>
+  <div class="eq rv">
+    <div class="expr">ℒ<sub>OPD</sub> = 𝔼<sub>c, x[1:N]~π<sub>θ</sub></sub> [ Σ<sub>n=1..N</sub> ‖ v<sub>θ</sub>(x<sub>tn</sub>, t<sub>n</sub>, c) − v<sub>θ*</sub>(x<sub>tn</sub>, t<sub>n</sub>, c) ‖² ]</div>
+    <div class="note">v<sub>θ*</sub> 는 과제 관련 교사 모델 · 학생이 자기 생성 궤적 위에서 교사 속도장을 정합한다</div>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>다중 교사 증류</div>
+  <p class="body rv">OPD의 핵심 장점은 여러 과제 특화 교사를 단일 학생으로 증류하는 능력이다. 미학·정렬·인물 보상으로 최적화한 T2I 교사와, 지시 수행·얼굴 정체성 보상으로 최적화한 편집 교사를 유지한다. 각 배치마다 현재 샘플의 과제 유형에 따라 적절한 교사를 선택하고, GPU 메모리 관리를 위해 활성 교사만 GPU에 올리고 비활성 교사는 CPU로 오프로드한다. 교사가 CFG로 학습되었으므로 OPD의 교사 속도 예측에는 CFG를 적용하되 학생은 CFG 없이 유지하며, OPD 이후 학생에도 CFG를 통합한다.</p>
+
+  <div class="subhead rv"><span class="bar"></span>혼합 RL 학습과의 비교</div>
+  <p class="body rv">자연스러운 대안은 T2I·편집 혼합 데이터에 단일 모델을 RL 학습하며 모든 과제별 보상을 공동 최적화하는 <span class="hlm">Mix-RL</span>이다. 단순하지만 서로 경쟁하는 최적화 목표를 동시에 만족시키도록 강제하여 차선의 절충으로 이어진다. Mix-RL도 베이스 대비 질감 충실도·구성 일관성·사실성을 개선하지만, <span class="hl">Qwen-Image-2.0-RL(OPD)이 일관되게 Mix-RL을 능가</span>하여 더 선명한 세부·더 정확한 프롬프트 준수·더 나은 미학을 만든다. 편집에서도 Mix-RL은 복잡한 지시 아래 정체성 표류나 불완전 편집을 겪는 반면 OPD는 우월한 얼굴 정체성 보존과 지시 수행을 달성한다.</p>
+
+  <div class="panel rv" style="margin-top:8px">
+    <div class="minitag">W2 상계로부터의 유도</div>
+    <p class="body" style="margin:0;font-size:.96rem">OPD 목표는 분포 거리 최소화 관점에서 유도된다. 연속 공간 디퓨전에서 경로 측도 간 KL은 일반적으로 다루기 어렵고, 2-바서슈타인(Wasserstein-2) 거리의 직접 계산은 최적 수송 문제를 요구해 고차원에서 다루기 어렵다. Benton et al.(2023)의 정리를 통해 속도장 근사 오차와 흐름의 분포 거리를 연결하면, <span class="hl">W2 상계의 최소화가 궤적 수준 속도 정합 목표의 최소화로 환원</span>된다. 연속 적분을 학생의 이산 궤적 지점 합으로 근사하면 실용 OPD 손실이 정확히 복원된다.</p>
+  </div>
+</section>
+
+<!-- ===== EVALUATION ===== -->
+<section class="blk" id="eval">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">05</span> — 평가</div>
+    <h2>벤치마크와 <span class="g">아레나</span>에서</h2>
+    <p class="lead">자동 품질 지표부터 경쟁 아레나의 인간 선호 순위까지 평가한다. T2I는 Q-Judger(80명 전문 아티스트가 주석한 13만+ 이미지-프롬프트 쌍으로 학습한 통합 심판 모델)로 채점되는 Qwen-Image-Bench에서 평가한다.</p>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>다섯 축의 일관된 향상</div>
+  <p class="body rv">RL 학습은 다섯 평가 축 전반에서 일관된 개선을 낸다. 전체 점수를 <span class="hl">55.23 → 57.84</span>로 끌어올렸으며, 가장 큰 향상은 창의 생성(+6.72)과 실세계 충실도(+4.29)에서 나타난다.</p>
+  <div class="stats rv">
+    <div class="s"><div class="big v">57.84</div><div class="lab">Overall · 전체 점수</div><div class="delta">+2.61 vs Base</div></div>
+    <div class="s"><div class="big m">64.94</div><div class="lab">Creative Gen. · 창의 생성</div><div class="delta">+6.72</div></div>
+    <div class="s"><div class="big c">51.83</div><div class="lab">Real-world Fidelity · 실세계 충실도</div><div class="delta">+4.29</div></div>
+    <div class="s"><div class="big a">54.39</div><div class="lab">Quality · 품질</div><div class="delta">+2.10</div></div>
+  </div>
+
+  <div class="subhead rv"><span class="bar"></span>Qwen-Image-Bench 성능 비교</div>
+  <div class="tbl-wrap rv">
+    <table class="rt">
+      <thead><tr><th>Model</th><th>Quality</th><th>Aesthetics</th><th>Alignment</th><th>Real-world</th><th>Creative</th><th>Overall</th></tr></thead>
+      <tbody>
+        <tr><td>Qwen Image</td><td>48.44</td><td>52.25</td><td>50.72</td><td>43.16</td><td>47.30</td><td>49.23</td></tr>
+        <tr><td>Imagen 4.0 Ultra</td><td>50.90</td><td>54.25</td><td>54.02</td><td>45.59</td><td>51.14</td><td>51.99</td></tr>
+        <tr><td>GPT Image 1</td><td>52.34</td><td>55.09</td><td>56.28</td><td>48.14</td><td>55.78</td><td>54.07</td></tr>
+        <tr><td>FLUX 2 Max</td><td>53.64</td><td>56.85</td><td>57.35</td><td>49.35</td><td>56.50</td><td>55.33</td></tr>
+        <tr><td>Seedream 5.0</td><td>52.55</td><td>58.40</td><td>58.90</td><td>51.92</td><td>65.29</td><td>57.22</td></tr>
+        <tr><td>Nano Banana 2.0</td><td>54.77</td><td>61.08</td><td>62.40</td><td>54.28</td><td>67.05</td><td>59.82</td></tr>
+        <tr><td>GPT Image 2</td><td class="best">58.65</td><td class="best">67.53</td><td class="best">65.85</td><td class="best">57.38</td><td class="best">75.23</td><td class="best">64.69</td></tr>
+        <tr class="base"><td>Qwen-Image-2.0-Base</td><td>52.29</td><td>57.10</td><td>57.64</td><td>47.54</td><td>58.22</td><td>55.23</td></tr>
+        <tr class="rl"><td>Qwen-Image-2.0-RL</td><td>54.39</td><td>58.67</td><td>59.28</td><td>51.83</td><td>64.94</td><td>57.84</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tblcap">TABLE 1. [0,100] 척도, 56개 3단계 facet에서 상향 집계. RL 학습이 베이스 대비 전 축에서 개선을 냈다(강조: 표 내 최고값 GPT Image 2, 하단 비교: Base → RL).</p>
+
+  <div class="subhead rv"><span class="bar"></span>인간 선호 · 아레나 Elo</div>
+  <p class="body rv">익명 이미지 쌍에 사용자가 투표하는 T2I·편집 아레나에서, RL 학습은 여덟 하위 카테고리 전반에서 상당한 Elo 향상을 낸다. T2I 전체는 <span class="hl">1115 → 1193 (+78)</span>, 가장 두드러진 향상은 3D 모델링(+93)과 포토리얼리즘(+91)으로 구조 일관성과 세밀한 세부 렌더링 개선을 반영한다. 편집 아레나도 <span class="hlm">1256 → 1349 (+93)</span>로 향상되어 편집 특화 RL 학습의 효과를 재확인한다.</p>
+  <div class="fig rv">
+    <svg viewBox="0 0 1040 300" role="img" aria-label="아레나 Elo 카테고리별 비교">
+      <defs><linearGradient id="eg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6d3bef"/><stop offset="1" stop-color="#e0359e"/></linearGradient></defs>
+      <g font-family="'IBM Plex Mono',monospace" font-size="11">
+        <!-- categories: label, base, rl (scaled 1050-1400 => x 200..980) -->
+        <!-- helper scale: val -> x : 200 + (val-1050)/(1400-1050)*780 -->
+        <!-- Overall 1115/1193 -->
+        <text x="0" y="34" fill="#6b6577">Overall</text>
+        <rect x="200" y="24" width="145" height="9" rx="2" fill="#d3cfc6"/><rect x="200" y="35" width="319" height="9" rx="2" fill="url(#eg)"/>
+        <text x="527" y="42" fill="#6d3bef">1193 · +78</text>
+        <!-- Photorealism 1130/1221 -->
+        <text x="0" y="66" fill="#6b6577">Photorealism</text>
+        <rect x="200" y="56" width="178" height="9" rx="2" fill="#d3cfc6"/><rect x="200" y="67" width="381" height="9" rx="2" fill="url(#eg)"/>
+        <text x="589" y="74" fill="#6d3bef">+91</text>
+        <!-- 3D 1108/1201 -->
+        <text x="0" y="98" fill="#6b6577">3D Modeling</text>
+        <rect x="200" y="88" width="129" height="9" rx="2" fill="#d3cfc6"/><rect x="200" y="99" width="336" height="9" rx="2" fill="url(#eg)"/>
+        <text x="544" y="106" fill="#6d3bef">+93</text>
+        <!-- Portraits -->
+        <text x="0" y="130" fill="#6b6577">Portraits</text>
+        <rect x="200" y="120" width="160" height="9" rx="2" fill="#d3cfc6"/><rect x="200" y="131" width="300" height="9" rx="2" fill="url(#eg)"/>
+        <!-- Art -->
+        <text x="0" y="162" fill="#6b6577">Art</text>
+        <rect x="200" y="152" width="150" height="9" rx="2" fill="#d3cfc6"/><rect x="200" y="163" width="280" height="9" rx="2" fill="url(#eg)"/>
+        <!-- Text Rendering -->
+        <text x="0" y="194" fill="#6b6577">Text Rendering</text>
+        <rect x="200" y="184" width="140" height="9" rx="2" fill="#d3cfc6"/><rect x="200" y="195" width="255" height="9" rx="2" fill="url(#eg)"/>
+        <!-- Edit 1256/1349 -->
+        <text x="0" y="226" fill="#6b6577">Edit</text>
+        <rect x="200" y="216" width="459" height="9" rx="2" fill="#d3cfc6"/><rect x="200" y="227" width="666" height="9" rx="2" fill="url(#eg)"/>
+        <text x="874" y="234" fill="#e0359e">1349 · +93</text>
+        <!-- legend -->
+        <rect x="200" y="262" width="20" height="9" rx="2" fill="#d3cfc6"/><text x="228" y="270" fill="#9c96a6">Base</text>
+        <rect x="300" y="262" width="20" height="9" rx="2" fill="url(#eg)"/><text x="328" y="270" fill="#6d3bef">RL</text>
+      </g>
+    </svg>
+    <p class="figcap">FIG 4. RL 학습이 여덟 하위 카테고리와 전체 점수 전반에서 Elo를 일관되게 향상시킨다. 막대 길이는 상대 비교용.</p>
+  </div>
+</section>
+
+<!-- ===== CONCLUSION ===== -->
+<section class="blk" style="padding-top:0">
+  <div class="sechead rv">
+    <div class="sectag"><span class="n">06</span> — 결론</div>
+    <h2>정리</h2>
+  </div>
+  <p class="body rv">Qwen-Image-2.0-RL은 RLHF와 OPD를 결합하여 시각 품질과 지시 수행 능력을 실질적으로 개선한 이미지 생성 시스템이다. 정성·정량 평가 모두 OPD가 모든 과제 보상을 공동 최적화하는 혼합 RL 기준선을 단지 따라잡을 뿐 아니라 능가함을 확인하여, 분해된 학습 전략의 타당성을 검증한다.</p>
+  <ul class="flist rv">
+    <li><span class="idx">1)</span><span class="t"><strong>VLM 기반 복합 보상 시스템.</strong> T2I·편집 과제 모두에 맞춰 미적 품질·프롬프트 준수·인물 충실도·지시 수행·시각 일관성을 포괄하는 구조화 평가 루브릭.</span></li>
+    <li><span class="idx">2)</span><span class="t"><strong>적응형 GRPO 학습 프레임워크.</strong> 하이브리드 CFG 전략과 비동기 보상 파이프라인으로 flow matching 모델의 효율적 대규모 RL 학습을 가능하게 한다.</span></li>
+    <li><span class="idx">3)</span><span class="t"><strong>OPD 통합 메커니즘.</strong> 과제 특화 RL 교사를 궤적 수준 속도 정합으로 단일 배포 모델에 통합하여, 각 전문 교사의 품질 이득을 보존하면서 보상 모델 의존을 제거한다.</span></li>
+  </ul>
+  <div class="stats rv" style="margin-top:12px">
+    <div class="s"><div class="big v">57.84</div><div class="lab">Qwen-Image-Bench Overall</div><div class="delta">+2.61</div></div>
+    <div class="s"><div class="big m">1193</div><div class="lab">T2I Arena Elo</div><div class="delta">+78</div></div>
+    <div class="s"><div class="big c">1349</div><div class="lab">Image Edit Arena Elo</div><div class="delta">+93</div></div>
+    <div class="s"><div class="big a">2</div><div class="lab">교사 → 1 통합 학생 (OPD)</div><div class="delta">no reward dep.</div></div>
+  </div>
+</section>
+
+</div><!-- /wrap -->
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div>
+        <div class="ftitle">Qwen-Image-2.0-RL</div>
+        <p>디퓨전 이미지 생성 모델의 시각 품질과 지시 수행을 RLHF·온폴리시 증류로 정렬하는 후처리 파이프라인. VLM 기반 복합 보상, 하이브리드 CFG, 궤적 수준 속도 정합 증류를 통해 T2I와 이미지 편집을 단일 모델에서 함께 개선한다.</p>
+        <p class="authors">Yixian Xu, Kaiyuan Gao, Yuxiang Chen 외 · Corresponding: Chenfei Wu · Qwen Team</p>
+      </div>
+      <div>
+        <h4>Paper</h4>
+        <p>arXiv:2606.27608v1 [cs.CV]<br>2026년 6월 25일<br><br><a href="https://qwen.ai">qwen.ai</a></p>
+      </div>
+      <div>
+        <h4>At a Glance</h4>
+        <p>RLHF · GRPO · OPD<br>Pointwise reward · Hybrid CFG<br>T2I · Image Editing<br>Trajectory velocity matching</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* reveal */
+(function(){
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{threshold:0.1,rootMargin:'0px 0px -7% 0px'});
+  document.querySelectorAll('.rv').forEach(function(el,i){ el.style.transitionDelay=(Math.min(i%5,4)*45)+'ms'; io.observe(el); });
+})();
+
+/* SIGNATURE: noise -> image denoising flow.
+   Particles start scattered (noise) on the left and resolve into an ordered grid (image) on the right,
+   echoing the reverse-ODE trajectory from t=1 (noise) to t=0 (clean image). */
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce) return;
+  var c=document.getElementById('flow'), x=c.getContext('2d'), w,h,pts,raf,t0=performance.now();
+  function size(){ w=c.width=innerWidth; h=c.height=innerHeight; }
+  function init(){
+    size();
+    var n=Math.min(120, Math.floor(w*h/18000));
+    pts=[];
+    for(var i=0;i<n;i++){
+      // ordered target = faint grid position (the "image")
+      var gx = (i%12)/11, gy = Math.floor(i/12)/Math.max(1,Math.floor(n/12));
+      pts.push({
+        nx:Math.random(), ny:Math.random(),           // noise position (normalized)
+        tx:gx*0.9+0.05,   ty:gy*0.9+0.05,              // target position
+        phase:Math.random()*6.28,
+        hue: Math.random()>.5
+      });
+    }
+  }
+  function draw(now){
+    var el=(now-t0)/1000;
+    // cycle 0..1..0 : denoise then re-noise, slow
+    var cyc=(Math.sin(el*0.35)+1)/2; // 0=noise, 1=image
+    x.clearRect(0,0,w,h);
+    for(var i=0;i<pts.length;i++){
+      var p=pts[i];
+      var px=(p.nx*(1-cyc)+p.tx*cyc)*w;
+      var py=(p.ny*(1-cyc)+p.ty*cyc)*h;
+      // subtle drift
+      px+=Math.sin(el+p.phase)*(1-cyc)*8;
+      py+=Math.cos(el*0.9+p.phase)*(1-cyc)*8;
+      var r=1.1+cyc*1.4;
+      x.beginPath(); x.arc(px,py,r,0,6.283);
+      var a=0.10+cyc*0.28;
+      x.fillStyle = p.hue ? 'rgba(109,59,239,'+a+')' : 'rgba(224,53,158,'+a+')';
+      x.fill();
+    }
+    raf=requestAnimationFrame(draw);
+  }
+  init(); raf=requestAnimationFrame(draw);
+  var tm; addEventListener('resize',function(){ clearTimeout(tm); tm=setTimeout(function(){ cancelAnimationFrame(raf); init(); raf=requestAnimationFrame(draw); },200); });
+})();
+</script>
+</body>
+</html>

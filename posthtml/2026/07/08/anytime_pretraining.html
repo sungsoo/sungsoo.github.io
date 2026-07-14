@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anytime Pretraining — 지평선 없는 학습률 스케줄</title>
+<style>
+  :root{
+    /* Horizon 팔레트: 밤하늘의 지평선을 은유 */
+    --ink:#0a0e1a;          /* 배경 */
+    --ink-2:#10162a;        /* 카드 */
+    --ink-3:#161d35;        /* 상승면 */
+    --line:#26304f;         /* 격자/구분선 */
+    --line-soft:#1b2440;
+    --fog:#8b96b8;          /* 보조 텍스트 */
+    --paper:#e6e9f2;        /* 본문 텍스트 */
+    --white:#f6f8ff;        /* 강조 텍스트 */
+    /* 스케줄 색: 그래프 범례와 통일 */
+    --cosine:#c0392b;       /* 코사인 (기준선, 붉은 별) */
+    --const:#4a86e8;        /* 상수 + 평균 */
+    --sqrt:#e06a8a;         /* 1/√t */
+    --wsd:#e0a13a;          /* WSD */
+    --glow:#5fd0c8;         /* 시그니처 청록 */
+    --serif:"Iowan Old Style","Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;
+    --sans:"Helvetica Neue",Helvetica,"Segoe UI",Roboto,-apple-system,sans-serif;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:var(--serif);
+    font-size:18px;
+    line-height:1.72;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  /* 배경 격자: 시간(가로) × 학습률(세로) 좌표계를 암시 */
+  body::before{
+    content:"";
+    position:fixed;inset:0;
+    background-image:
+      linear-gradient(var(--line-soft) 1px,transparent 1px),
+      linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(ellipse 120% 90% at 50% 0%,#000 20%,transparent 75%);
+    -webkit-mask-image:radial-gradient(ellipse 120% 90% at 50% 0%,#000 20%,transparent 75%);
+    opacity:.5;
+    z-index:0;pointer-events:none;
+  }
+  ::selection{background:var(--glow);color:var(--ink)}
+
+  .wrap{position:relative;z-index:1;max-width:940px;margin:0 auto;padding:0 28px}
+
+  /* ── 히어로 ─────────────────────────────────────────── */
+  header.hero{
+    position:relative;
+    min-height:100vh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:120px 0 80px;
+  }
+  #hero-canvas{
+    position:absolute;inset:0;width:100%;height:100%;
+    z-index:0;pointer-events:none;
+  }
+  .hero .inner{position:relative;z-index:2}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:13px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--glow);
+    margin-bottom:26px;
+  }
+  .eyebrow .arx{color:var(--fog)}
+  h1.title{
+    font-weight:400;
+    font-size:clamp(46px,8.5vw,92px);
+    line-height:.98;
+    letter-spacing:-.02em;
+    color:var(--white);
+    margin-bottom:8px;
+  }
+  h1.title em{
+    font-style:italic;
+    color:var(--glow);
+  }
+  .subtitle{
+    font-family:var(--sans);
+    font-weight:300;
+    font-size:clamp(17px,2.4vw,23px);
+    color:var(--fog);
+    max-width:640px;
+    margin-top:28px;
+    line-height:1.5;
+  }
+  .byline{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--fog);
+    margin-top:40px;
+    line-height:1.9;
+    letter-spacing:.02em;
+  }
+  .byline b{color:var(--paper);font-weight:400}
+  .scroll-cue{
+    position:absolute;bottom:34px;left:50%;transform:translateX(-50%);
+    z-index:2;
+    font-family:var(--mono);font-size:11px;letter-spacing:.3em;
+    color:var(--fog);text-transform:uppercase;
+    display:flex;flex-direction:column;align-items:center;gap:10px;
+  }
+  .scroll-cue .bar{width:1px;height:40px;background:linear-gradient(var(--glow),transparent);animation:drop 2.2s ease-in-out infinite}
+  @keyframes drop{0%,100%{opacity:.25;transform:scaleY(.6)}50%{opacity:1;transform:scaleY(1)}}
+
+  /* ── 섹션 골격 ──────────────────────────────────────── */
+  section{padding:88px 0}
+  .sec-head{margin-bottom:44px}
+  .sec-num{
+    font-family:var(--mono);font-size:13px;letter-spacing:.2em;
+    color:var(--glow);display:block;margin-bottom:14px;
+  }
+  h2{
+    font-weight:400;
+    font-size:clamp(30px,5vw,46px);
+    line-height:1.08;letter-spacing:-.015em;
+    color:var(--white);
+  }
+  h2 em{font-style:italic;color:var(--glow)}
+  h3{
+    font-family:var(--sans);
+    font-weight:500;font-size:21px;letter-spacing:.01em;
+    color:var(--white);
+    margin:44px 0 16px;
+  }
+  p{margin-bottom:20px;color:var(--paper)}
+  p.lead{font-size:21px;color:var(--white);line-height:1.6}
+  .fog{color:var(--fog)}
+  strong{color:var(--white);font-weight:400;border-bottom:1px solid var(--line)}
+  a{color:var(--glow);text-decoration:none;border-bottom:1px solid rgba(95,208,200,.35)}
+
+  .divider{
+    height:1px;border:0;
+    background:linear-gradient(90deg,transparent,var(--line) 20%,var(--line) 80%,transparent);
+    margin:0;
+  }
+
+  /* ── 정의/핵심 카드 ─────────────────────────────────── */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:34px 0}
+  .card{
+    background:linear-gradient(180deg,var(--ink-2),var(--ink));
+    border:1px solid var(--line-soft);
+    border-radius:3px;
+    padding:28px 26px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card::before{
+    content:"";position:absolute;top:0;left:0;width:100%;height:2px;
+    background:var(--accent,var(--glow));opacity:.8;
+  }
+  .card .k{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--fog);margin-bottom:12px;
+  }
+  .card .v{font-family:var(--sans);font-size:18px;color:var(--white);line-height:1.45}
+  .card p{font-size:16px;margin:10px 0 0;color:var(--paper)}
+
+  /* ── 두 요건 리스트 ─────────────────────────────────── */
+  .req{list-style:none;counter-reset:r;margin:26px 0}
+  .req li{
+    counter-increment:r;
+    position:relative;
+    padding:20px 0 20px 62px;
+    border-top:1px solid var(--line-soft);
+  }
+  .req li::before{
+    content:"(" counter(r,lower-roman) ")";
+    position:absolute;left:0;top:20px;
+    font-family:var(--mono);font-size:15px;color:var(--glow);
+  }
+  .req b{color:var(--white);font-weight:400}
+
+  /* ── 인터랙티브 스케줄 데모 ─────────────────────────── */
+  .demo{
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:26px;
+    margin:20px 0;
+  }
+  .demo canvas{width:100%;height:auto;display:block;border-radius:2px}
+  .controls{
+    display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;
+    font-family:var(--mono);font-size:13px;
+  }
+  .controls button{
+    background:var(--ink-3);
+    border:1px solid var(--line);
+    color:var(--fog);
+    padding:9px 15px;border-radius:2px;cursor:pointer;
+    font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;
+    transition:all .18s ease;
+  }
+  .controls button:hover{border-color:var(--fog);color:var(--paper)}
+  .controls button[aria-pressed="true"]{
+    background:var(--btn,var(--glow));
+    color:var(--ink);border-color:transparent;
+  }
+  .legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:16px;font-family:var(--mono);font-size:12.5px;color:var(--fog)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+  .cap{font-family:var(--sans);font-size:14px;color:var(--fog);line-height:1.55;margin-top:14px}
+
+  /* ── 정리(Theorem) 블록 ────────────────────────────── */
+  .thm{
+    border-left:2px solid var(--glow);
+    background:linear-gradient(90deg,rgba(95,208,200,.06),transparent);
+    padding:22px 26px;margin:30px 0;border-radius:0 3px 3px 0;
+  }
+  .thm .tag{
+    font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--glow);margin-bottom:10px;display:block;
+  }
+  .thm p{font-style:italic;color:var(--paper);margin:0}
+  .formula{
+    font-family:var(--mono);
+    background:var(--ink);
+    border:1px solid var(--line-soft);
+    padding:14px 18px;border-radius:2px;
+    margin:16px 0;
+    color:var(--white);font-size:15px;
+    overflow-x:auto;white-space:nowrap;
+  }
+  .formula .var{color:var(--glow)}
+
+  /* ── 결과 수치 스트립 ───────────────────────────────── */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:32px 0;border-radius:3px;overflow:hidden}
+  .stat{background:var(--ink-2);padding:26px 22px}
+  .stat .n{font-family:var(--sans);font-weight:200;font-size:clamp(30px,5vw,44px);color:var(--white);line-height:1;letter-spacing:-.02em}
+  .stat .n small{font-size:.5em;color:var(--glow);font-weight:400}
+  .stat .l{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--fog);margin-top:12px;line-height:1.5}
+
+  /* ── 지배영역 표 (b vs a) ──────────────────────────── */
+  .regime{margin:28px 0;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+  .regime .row{display:grid;grid-template-columns:180px 1fr;border-top:1px solid var(--line-soft)}
+  .regime .row:first-child{border-top:0}
+  .regime .cell-h{background:var(--ink-3);padding:20px 22px;font-family:var(--mono);font-size:14px;color:var(--glow)}
+  .regime .cell-b{background:var(--ink-2);padding:20px 22px;font-size:16px}
+  .regime .cell-b b{color:var(--white);font-weight:400;border:0}
+
+  /* ── 기여 요약 ─────────────────────────────────────── */
+  ul.plain{list-style:none;margin:20px 0}
+  ul.plain li{position:relative;padding:14px 0 14px 30px;border-top:1px solid var(--line-soft);color:var(--paper)}
+  ul.plain li::before{content:"—";position:absolute;left:0;top:14px;color:var(--glow)}
+
+  /* ── 푸터 ──────────────────────────────────────────── */
+  footer{padding:70px 0 90px;border-top:1px solid var(--line);margin-top:40px}
+  footer .fnote{font-family:var(--mono);font-size:12.5px;color:var(--fog);line-height:1.9}
+  footer .big{font-family:var(--serif);font-size:clamp(24px,4vw,34px);color:var(--white);margin-bottom:24px;line-height:1.25;font-style:italic}
+
+  /* ── 진입 애니메이션 ───────────────────────────────── */
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  @media (max-width:720px){
+    body{font-size:16px}
+    .grid2{grid-template-columns:1fr}
+    .stats{grid-template-columns:1fr}
+    .regime .row{grid-template-columns:1fr}
+    .req li{padding-left:52px}
+    .formula{font-size:13px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none}
+    .scroll-cue .bar{animation:none}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ 히어로 ══════════ -->
+<header class="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="wrap inner">
+    <div class="eyebrow">사전학습 최적화 · <span class="arx">arXiv:2602.03702</span></div>
+    <h1 class="title">지평선 없는<br><em>학습률 스케줄</em></h1>
+    <p class="subtitle">언제 멈출지 모른 채 학습하는 시대를 위한 이론과 실험. 코사인 감쇠를 대체하는 열쇠는 스케줄이 아니라 <b style="color:var(--glow)">가중치 평균</b>에 있다.</p>
+    <div class="byline">
+      <b>Anytime Pretraining: Horizon-Free Learning-Rate Schedules with Weight Averaging</b><br>
+      Alexandru Meterez · Pranav Ajit Nair · Depen Morwani · Cengiz Pehlevan · Sham Kakade<br>
+      Harvard University · Kempner Institute
+    </div>
+  </div>
+  <div class="scroll-cue"><span>Scroll</span><span class="bar"></span></div>
+</header>
+
+<hr class="divider">
+
+<!-- ══════════ 01 문제 ══════════ -->
+<section id="problem">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">01 — 문제 정의</span>
+      <h2>코사인 감쇠는 <em>지평선에 묶여</em> 있다</h2>
+    </div>
+    <p class="lead reveal">대규모 언어모델은 점점 더 연속적이고 개방된 환경에서 학습된다. 전체 학습 길이를 미리 알 수 없는 상황이 일반적이 되었다.</p>
+    <p class="reveal">그럼에도 대부분의 사전학습 레시피는 <strong>anytime이 아니다</strong>. Loshchilov와 Hutter가 2016년에 제안한 이래 사실상의 표준이 된 코사인 감쇠는 학습 종료 시점을 미리 알아야 스케줄을 정할 수 있다. 학습 길이가 정해지면 손실 곡선의 전체 궤적이 그 시점에 의해 암묵적으로 결정된다. 데이터가 계속 유입되고 섞이는 연속 학습 환경에는 근본적으로 맞지 않는다.</p>
+    <p class="reveal">이 논문은 스케줄러에 두 가지 요건을 부과한다.</p>
+    <ol class="req reveal">
+      <li>스케줄은 계획된 학습 스텝 수에 <b>의존하지 않아야 한다</b>.</li>
+      <li>임의의 중간 지속시간 <span class="mono">T</span>에 대해, <span class="mono">T</span> 스텝으로 잘 조율된 코사인 스케줄과 <b>대등해야 한다</b>. 즉 긴 학습 안의 각 체크포인트에서 조율된 코사인들이 그리는 <b>코사인 포락선(envelope)</b>을 따라가야 한다.</li>
+    </ol>
+    <p class="reveal">이 포락선 관점이 핵심이다. 하나의 종료 지평선에 맞춰 조율한 코사인 스케줄은 중간 체크포인트에서 평가하면 최적에서 크게 벗어난다. 저자들이 아는 한, 이 포락선을 명시적 평가 기준으로 삼은 선행 연구는 없다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 02 인터랙티브 스케줄 데모 (시그니처) ══════════ -->
+<section id="schedules">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">02 — 스케줄 지형</span>
+      <h2>네 가지 스케줄, <em>하나의 시간축</em></h2>
+    </div>
+    <p class="reveal">아래는 각 스케줄이 시간에 따라 학습률을 어떻게 정하는지 직접 그린 것이다. 코사인은 종료 시점을 알아야 곡선이 닫히지만, 상수와 <span class="mono">1/√t</span>는 어느 시점에서 멈추든 같은 궤적을 유지한다.</p>
+    <div class="demo reveal">
+      <canvas id="lr-canvas" width="860" height="380"></canvas>
+      <div class="controls" id="lr-controls">
+        <button data-k="cosine" aria-pressed="true" style="--btn:var(--cosine)">코사인 감쇠</button>
+        <button data-k="const" aria-pressed="true" style="--btn:var(--const)">상수 + 평균</button>
+        <button data-k="sqrt" aria-pressed="true" style="--btn:var(--sqrt)">1/√t + 평균</button>
+        <button data-k="wsd" aria-pressed="true" style="--btn:var(--wsd)">WSD</button>
+        <button id="horizon-toggle" aria-pressed="false" style="--btn:var(--glow)">종료 지평선 이동 →</button>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--cosine)"></i>코사인: 지평선 의존</span>
+        <span><i style="background:var(--const)"></i>상수: 완전 horizon-free</span>
+        <span><i style="background:var(--sqrt)"></i>1/√t: 다항 감쇠</span>
+        <span><i style="background:var(--wsd)"></i>WSD: 90% 지점서 감쇠</span>
+      </div>
+      <p class="cap">가로축은 학습 스텝, 세로축은 학습률이다. “종료 지평선 이동” 버튼을 누르면 코사인 곡선만 종료 시점을 따라 통째로 다시 그려진다. 코사인이 지평선에 묶여 있다는 뜻이다. 나머지 스케줄은 그대로다.</p>
+    </div>
+
+    <h3 class="reveal">WSD: 거의-anytime 대안</h3>
+    <p class="reveal">Warmup-Stable-Decay(WSD)는 선형 워밍업, 일정 구간 상수 유지, 마지막 10%에서 학습률을 원래의 10%까지 선형 감쇠하는 3단계로 구성된다. 엄밀히 horizon-free는 아니다. 감쇠를 언제 시작할지 결정하려면 체크포인트 저장과 판단이 필요하기 때문이다. 다만 그 오버헤드가 작고 성능은 코사인에 필적한다.</p>
+
+    <h3 class="reveal">가중치 평균: 진짜 열쇠</h3>
+    <p class="reveal">학습률 감쇠의 대안은 <strong>가중치 평균</strong>(모델 병합)이다. 최근 반복들의 평균을 유지하거나 EMA로 근사하며, 학습에는 마지막 반복만 쓰되 평가에는 평균 모델을 쓴다. 파라미터 <span class="mono">β ≈ 1 − 1/N</span>로 제어한다. 실험에서는 EMA의 반감기가 현재 시점의 일정 비율 <span class="mono">f</span>가 되도록 <span class="mono">τ<sub>t</sub> = 1/2<sup>f/t</sup></span>를 쓰고, <span class="mono">f ∈ {0, 6.25, 12.5, 25, 50, 100}</span>의 여러 EMA를 동시에 유지한다. <span class="mono">1/t<sup>γ</sup></span> 스케줄이 SGD의 미니맥스 최적률에 도달하려면 이 평균이 반드시 필요하다.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════ 03 이론 ══════════ -->
+<section id="theory">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">03 — 이론 분석</span>
+      <h2>다항 감쇠는 <em>미니맥스 최적률</em>에 도달한다</h2>
+    </div>
+    <p class="reveal">저자들은 과매개변수 선형 회귀에서 anytime 스케줄이 실제로 존재함을 증명한다. 가우시안 데이터, 배치 크기 1, 독립 가법 잡음 <span class="mono">σ²</span>를 가정한다.</p>
+
+    <div class="thm reveal">
+      <span class="tag">Theorem 1 (비공식)</span>
+      <p>N개의 표본에 대해 실행한 SGD에서, 꼬리 평균과 결합된 <span style="font-style:normal" class="mono">η<sub>t</sub> = 1/t<sup>γ</sup></span> 형태의 다항 감쇠 학습률은 (0 &lt; γ &lt; 1) 잘 조율된 SGD의 수렴률에 도달한다. 지수 γ는 데이터의 스펙트럼 특성으로 결정된다.</p>
+    </div>
+
+    <p class="reveal">이 결과가 상수 학습률과 대비되는 지점이 핵심이다. Zhang 등(2024a)은 상수 학습률 + 가중치 평균도 같은 최적률에 도달할 수 있음을 보였으나, 특정 source·capacity 지수에서는 학습률을 학습 지평선의 함수로 <span class="mono">1/√N</span>처럼 조정해야 한다. 그러면 종료 시점에 의존하므로 <strong>더 이상 anytime이 아니다</strong>. 반면 <span class="mono">1/t<sup>γ</sup></span>는 그 의존성 없이 최적률을 얻는다.</p>
+
+    <h3 class="reveal">최적 지수 γ*는 스펙트럼이 정한다</h3>
+    <p class="reveal">Corollary 1은 데이터 공분산이 멱법칙을 따를 때를 다룬다. capacity 지수 <span class="mono">a</span>와 source 지수 <span class="mono">b</span>를 <span class="mono">λ<sub>i</sub> ≂ i<sup>−a</sup></span>, <span class="mono">𝔼λ<sub>i</sub>(w*<sub>i</sub>)² ≂ i<sup>−b</sup></span>로 정의하면 최적 지수는 다음과 같다.</p>
+    <div class="formula reveal"><span class="var">γ*</span> = max{ 1 − <span class="var">a</span>/<span class="var">b</span> , 0 }　　⟹　　R(w) − σ² ≲ (σ²/N)<sup>1 − 1/b</sup></div>
+    <p class="reveal fog">여기서 <span class="mono">b</span>는 신호가 공분산 <span class="mono">H</span>의 상위 고유방향에 얼마나 집중되는지를 나타낸다. 이 최적 γ가 실현되려면 <span class="mono">a &lt; b</span>가 필요하다.</p>
+
+    <div class="regime reveal">
+      <div class="row">
+        <div class="cell-h">b ≫ a &gt; 1</div>
+        <div class="cell-b">유효 차원이 낮아 강볼록에 가깝다. 최적 스케줄은 <b>1/t + 평균</b>이며, 기존 문헌(Defazio 등, Shamir–Zhang)과 일치한다.</div>
+      </div>
+      <div class="row">
+        <div class="cell-h">b ≤ a</div>
+        <div class="cell-b">신호가 꼬리 방향에 있어 편향을 없애려면 큰 학습률이 필요하다. 최적 스케줄은 <b>상수 학습률 + 평균</b>이며, Zou 등과 Zhang 등의 결과를 되찾는다.</div>
+      </div>
+      <div class="row">
+        <div class="cell-h">b ≥ a</div>
+        <div class="cell-b">Zhang 등(2024b)이 세운 무한차원 미니맥스 최적률을 달성한다.</div>
+      </div>
+    </div>
+
+    <h3 class="reveal">WSD도 이론에 편입된다</h3>
+    <p class="reveal">Theorem 2는 상수 구간 + 선형 감쇠로 이뤄진 WSD를 멱법칙 스펙트럼(<span class="mono">a ∈ (1,2)</span>, <span class="mono">b &gt; 1</span>)에서 분석한다. <span class="mono">b = a</span>일 때 두 항 모두 지수 <span class="mono">1 − 1/b</span>로 감쇠하며, 이는 Corollary 1의 결과와 일치한다. 결국 WSD는 상수 학습률 + 가중치 평균과 <strong>점근적으로 같은 수렴률</strong>을 가지며, 두 스케줄을 교체해도 무방하되 상수 쪽이 anytime이라는 이점을 얻는다.</p>
+    <p class="reveal fog">1차원 평균 추정 예시가 이 등가성을 명료하게 드러낸다. 상수 학습률 + 반복 평균과, 평균 없이 감쇠하는 학습률은 같은 암묵적 표본 가중을 서로 다른 방식으로 구현할 뿐 수학적으로 동일하다.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════ 04 실험 ══════════ -->
+<section id="experiments">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">04 — 실험 결과</span>
+      <h2>anytime 스케줄이 <em>코사인 포락선을 따라간다</em></h2>
+    </div>
+    <p class="reveal">OLMo 코드베이스 기반의 150M·300M 모델을 C4 데이터셋으로 학습한다. AdamW, 시퀀스 길이 1024, 데이터 반복 없는 완전 온라인 설정이다. Chinchilla 규모(20 TPP)를 기준으로 150M은 1×–32×(3.3B~), 300M은 1×–16×(6.6B~)까지 학습한다.</p>
+
+    <div class="stats reveal">
+      <div class="stat"><div class="n">32<small>×</small></div><div class="l">150M 모델 최대 Chinchilla 배수. 단일 학습으로 중간 지점 평가</div></div>
+      <div class="stat"><div class="n">1<small>회</small></div><div class="l">anytime 스케줄은 한 번만 학습. 코사인은 배수마다 별도 학습</div></div>
+      <div class="stat"><div class="n">~0<small>gap</small></div><div class="l">전 구간에서 코사인 대비 손실 차 무시할 수준</div></div>
+    </div>
+
+    <p class="reveal">실험 설계의 공정성이 중요하다. 코사인은 각 종료 배수마다 독립적으로 조율해 별도 학습한다. 반면 <span class="mono">1/√t</span>와 상수 + 평균은 최대 배수까지 <strong>한 번만</strong> 학습하고 중간 체크포인트에서 평가한다. WSD는 각 배수의 90% 지점에서 저장한 체크포인트로부터 선형 감쇠해 구현한다.</p>
+    <p class="reveal">그 결과, anytime 스케줄들은 전 구간에서 코사인 감쇠에 근접하게 일치한다. 학습 초반과 종료 부근에서만 미미한 성능 손실이 있을 뿐이다.</p>
+
+    <h3 class="reveal">임계 배치 크기(CBS) 설정</h3>
+    <p class="reveal">150M은 배치 256, 300M은 <span class="mono">√N</span> 스케일링으로 512를 임계 배치로 근사한다. 이 설정에서 <span class="mono">1/√t</span>는 스케줄러를 <span class="mono">η√(α/(t+α))</span>로 매개변수화하고 <span class="mono">α</span>를 조율한다. <span class="mono">α</span>가 총 스텝에 약하게 의존하지만, 1×–32× 포락선 전체에 걸쳐 거의 최적인 단일 <span class="mono">α</span>를 찾을 수 있다.</p>
+
+    <h3 class="reveal">대형 배치 설정 (배치 4096)</h3>
+    <p class="reveal">임계 배치를 크게 넘는 배치 4096에서는 다른 양상이 나타난다. 큰 배치는 경사 잡음을 억제하므로 분산 항을 제어할 학습률 감쇠의 필요가 줄어든다. 실제로 <strong>상수 학습률 + 평균이 1× 이후 모든 지평선에서 코사인을 확연히 능가한다</strong>. 긴 학습에 거의 최적인 학습률이 학습 내내 거의 최적으로 유지된다. <span class="mono">1/√t</span>는 여전히 경쟁력이 있고 코사인을 개선하지만, 이 영역에서는 불필요한 감쇠 탓에 상수보다는 뒤진다.</p>
+
+    <div class="grid2 reveal">
+      <div class="card" style="--accent:var(--const)">
+        <div class="k">CBS 설정</div>
+        <div class="v">코사인 포락선과 대등</div>
+        <p>anytime 스케줄이 코사인을 근사하게 추종한다. 짧은·긴 구간 성능을 절충하는 선택이 필요하다.</p>
+      </div>
+      <div class="card" style="--accent:var(--glow)">
+        <div class="k">대형 배치 (4096)</div>
+        <div class="v">상수 + 평균이 코사인을 능가</div>
+        <p>학습률 감쇠가 사실상 불필요하다. 긴 학습 최적 학습률이 전 구간에서 유지된다.</p>
+      </div>
+    </div>
+
+    <h3 class="reveal">합성 선형 회귀 검증</h3>
+    <p class="reveal">차원 <span class="mono">d = 5×10⁵</span>, 최대 <span class="mono">N = 5×10⁴</span> 표본의 정확한 위험 점화식으로 이론을 뒷받침한다. source 지수 <span class="mono">a ∈ {1.1, 1.5, 1.9}</span>, capacity <span class="mono">b = a</span> 및 <span class="mono">b = 2a</span> 조합에서 <span class="mono">1/√t</span>가 다양한 스펙트럼에 걸쳐 anytime을 유지하며 거의 최적 성능을 낸다. <span class="mono">√(α/(t+α))</span>의 <span class="mono">α</span>를 조율하면 <span class="mono">α* = Θ(T)</span>일 때 상수 학습률을 모사할 수 있어, <span class="mono">b = a</span> 영역의 최고 성능을 맞추고 <span class="mono">b = 2a</span> 영역에서는 개선된 수렴률을 얻는다.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ══════════ 05 기여 ══════════ -->
+<section id="contrib">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">05 — 종합</span>
+      <h2>결론: <em>평균이 스케줄을 대신한다</em></h2>
+    </div>
+    <p class="lead reveal">이 연구는 지평선을 모르고도 잘 조율된 코사인에 필적하는 학습이 가능함을 이론과 실험 양쪽에서 보인다.</p>
+    <ul class="plain reveal">
+      <li>과매개변수 선형 회귀에서 anytime 학습 스케줄의 존재를 증명한다. <span class="mono">1/t<sup>γ</sup></span>는 임의의 스펙트럼 지수에 대해 로그·상수 인자를 제외하고 최적률을 달성하며, <span class="mono">1/√t</span>가 그 대표 사례다.</li>
+      <li>미니맥스 최적률 달성에서 <strong>가중치 평균</strong>이 차지하는 중심적 역할을 규명한다. 평균 없이는 다항 감쇠 스케줄이 일반적으로 최적률에 이르지 못한다.</li>
+      <li>150M·300M 모델을 1×–32× Chinchilla 규모로 학습해, 상수 + 평균과 <span class="mono">1/√t</span> + 평균이 지평선 지식 없이도 코사인 포락선을 근사하게 추종함을 확인한다.</li>
+      <li>WSD를 이론에 편입해, 특정 멱법칙 스펙트럼에서 상수 학습률 + 가중치 평균과 점근적으로 등가임을 보인다.</li>
+      <li>대형 배치 영역에서는 상수 + 평균이 코사인을 능가하여, 학습률 감쇠가 불필요해지는 조건을 드러낸다.</li>
+    </ul>
+    <p class="reveal">종합하면, 가중치 평균과 단순하고 horizon-free한 스텝 크기의 결합은 대규모 언어모델 사전학습에서 코사인 학습률 스케줄을 대체할 실용적이고 효과적인 anytime 대안을 제공한다. anytime 사전학습은 연속 학습으로 가는 필수적인 디딤돌이다.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p class="big reveal">언제 멈출지 정하는 대신,<br>언제 멈춰도 좋은 학습을 설계한다.</p>
+    <p class="fnote reveal">
+      원논문 · Anytime Pretraining: Horizon-Free Learning-Rate Schedules with Weight Averaging<br>
+      Alexandru Meterez, Pranav Ajit Nair, Depen Morwani, Cengiz Pehlevan, Sham Kakade<br>
+      Harvard University · Kempner Institute at Harvard University · arXiv:2602.03702v1 [cs.LG] · 2026-02-03<br>
+      <span style="color:var(--glow)">이 페이지는 논문 내용을 한국어 기술문서로 정리한 것이다. 수치와 정의는 원문을 따른다.</span>
+    </p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ── 스크롤 진입 애니메이션 ── */
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target);} });
+  },{threshold:0.12});
+  document.querySelectorAll(".reveal").forEach(function(el){ io.observe(el); });
+
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ── 히어로 배경: 학습률 궤적들이 지평선으로 수렴 ── */
+  (function(){
+    var c = document.getElementById("hero-canvas");
+    var ctx = c.getContext("2d");
+    var W,H,DPR;
+    function size(){
+      DPR = Math.min(window.devicePixelRatio||1,2);
+      W = c.clientWidth; H = c.clientHeight;
+      c.width = W*DPR; c.height = H*DPR;
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+    }
+    size();
+    var curves = [];
+    var cols = ["#c0392b","#4a86e8","#e06a8a","#e0a13a","#5fd0c8"];
+    for(var i=0;i<26;i++){
+      curves.push({
+        y0: Math.random(),
+        amp: 0.12+Math.random()*0.5,
+        gamma: 0.3+Math.random()*0.9,
+        col: cols[i%cols.length],
+        phase: Math.random()*6.28,
+        speed: 0.15+Math.random()*0.35
+      });
+    }
+    var t0 = performance.now();
+    function draw(now){
+      var t = (now-t0)/1000;
+      ctx.clearRect(0,0,W,H);
+      var horizon = H*0.9;
+      for(var i=0;i<curves.length;i++){
+        var cv = curves[i];
+        ctx.beginPath();
+        for(var px=0;px<=W;px+=6){
+          var x = px/W;
+          // 다항 감쇠 궤적, 우측(지평선)으로 수렴
+          var decay = Math.pow(1-x*0.98, cv.gamma);
+          var wobble = Math.sin(x*7+cv.phase+t*cv.speed)*0.015*(1-x);
+          var y = horizon - (cv.y0*0.15 + cv.amp*decay + wobble)*H*0.62;
+          if(px===0) ctx.moveTo(px,y); else ctx.lineTo(px,y);
+        }
+        ctx.strokeStyle = cv.col;
+        ctx.globalAlpha = 0.13 + 0.05*Math.sin(t*cv.speed+cv.phase);
+        ctx.lineWidth = 1.1;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      if(!reduce) requestAnimationFrame(draw);
+    }
+    if(reduce){ draw(performance.now()); } else { requestAnimationFrame(draw); }
+    window.addEventListener("resize", function(){ size(); if(reduce) draw(performance.now()); });
+  })();
+
+  /* ── 인터랙티브 학습률 스케줄 그래프 ── */
+  (function(){
+    var c = document.getElementById("lr-canvas");
+    var ctx = c.getContext("2d");
+    var VW = 860, VH = 380;
+    function fit(){
+      var DPR = Math.min(window.devicePixelRatio||1,2);
+      var cssW = c.clientWidth;
+      var cssH = cssW * (VH/VW);
+      c.style.height = cssH+"px";
+      c.width = cssW*DPR; c.height = cssH*DPR;
+      ctx.setTransform((cssW*DPR)/VW,0,0,(cssH*DPR)/VH,0,0);
+    }
+    var pad = {l:56,r:24,t:24,b:44};
+    var gw = VW-pad.l-pad.r, gh = VH-pad.t-pad.b;
+
+    var state = { cosine:true, const:true, sqrt:true, wsd:true };
+    var horizon = 0.62;            // 코사인 종료 지평선 (0..1)
+    var horizonTarget = 0.62;
+    var sweeping = false, sweepDir = 1;
+
+    var COL = {cosine:"#c0392b",const:"#4a86e8",sqrt:"#e06a8a",wsd:"#e0a13a"};
+    var etaMax = 1.0, warm = 0.06;
+
+    function warmup(x){ return x < warm ? x/warm : null; }
+
+    // 각 스케줄의 학습률(0..1). x는 0..1 시간, hz는 코사인 종료 지평선
+    function lr(kind,x,hz){
+      var w = warmup(x); if(w!==null) return w*etaMax;
+      if(kind==="const") return etaMax;
+      if(kind==="sqrt"){ return etaMax*Math.sqrt(0.08/(x+0.08)); }
+      if(kind==="cosine"){
+        if(x>hz) return null;
+        var p=(x-warm)/(hz-warm);
+        return etaMax*0.5*(1+Math.cos(Math.PI*p));
+      }
+      if(kind==="wsd"){
+        var dstart=0.9*hz;
+        if(x<=dstart) return etaMax;
+        if(x>hz) return null;
+        var p=(x-dstart)/(hz-dstart);
+        return etaMax*(1-0.9*p);
+      }
+      return null;
+    }
+
+    function X(x){ return pad.l + x*gw; }
+    function Y(v){ return pad.t + (1-v)*gh; }
+
+    function drawGrid(){
+      ctx.clearRect(0,0,VW,VH);
+      ctx.strokeStyle="#1b2440"; ctx.lineWidth=1;
+      ctx.fillStyle="#8b96b8"; ctx.font="11px monospace";
+      for(var i=0;i<=5;i++){
+        var gx=pad.l+gw*i/5;
+        ctx.beginPath();ctx.moveTo(gx,pad.t);ctx.lineTo(gx,pad.t+gh);ctx.stroke();
+      }
+      for(var j=0;j<=4;j++){
+        var gy=pad.t+gh*j/4;
+        ctx.beginPath();ctx.moveTo(pad.l,gy);ctx.lineTo(pad.l+gw,gy);ctx.stroke();
+      }
+      // 축 라벨
+      ctx.fillStyle="#8b96b8"; ctx.font="12px monospace";
+      ctx.textAlign="center";
+      ctx.fillText("학습 스텝  t  →", pad.l+gw/2, VH-14);
+      ctx.save();
+      ctx.translate(16,pad.t+gh/2); ctx.rotate(-Math.PI/2);
+      ctx.fillText("학습률  η", 0,0);
+      ctx.restore();
+      ctx.textAlign="start";
+    }
+
+    function drawCurve(kind,hz){
+      ctx.beginPath();
+      var started=false;
+      for(var px=0;px<=gw;px+=2){
+        var x=px/gw;
+        var v=lr(kind,x,hz);
+        if(v===null){ started=false; continue; }
+        var cx=X(x), cy=Y(v);
+        if(!started){ ctx.moveTo(cx,cy); started=true; } else ctx.lineTo(cx,cy);
+      }
+      ctx.strokeStyle=COL[kind];
+      ctx.lineWidth = kind==="cosine"?2.6:2;
+      ctx.globalAlpha = kind==="cosine"?1:0.92;
+      if(kind==="sqrt"){ ctx.setLineDash([6,4]); } else ctx.setLineDash([]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha=1;
+    }
+
+    function drawHorizon(hz){
+      var hx=X(hz);
+      ctx.setLineDash([3,4]);
+      ctx.strokeStyle="#5fd0c8"; ctx.globalAlpha=0.7; ctx.lineWidth=1.4;
+      ctx.beginPath();ctx.moveTo(hx,pad.t-4);ctx.lineTo(hx,pad.t+gh);ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha=1;
+      ctx.fillStyle="#5fd0c8"; ctx.font="11px monospace"; ctx.textAlign="center";
+      ctx.fillText("종료 T", hx, pad.t-8);
+      ctx.textAlign="start";
+    }
+
+    function render(){
+      fit();
+      drawGrid();
+      if(state.const) drawCurve("const",horizon);
+      if(state.wsd) drawCurve("wsd",horizon);
+      if(state.sqrt) drawCurve("sqrt",horizon);
+      if(state.cosine){ drawCurve("cosine",horizon); drawHorizon(horizon); }
+    }
+
+    function animate(){
+      if(sweeping){
+        horizon += 0.006*sweepDir;
+        if(horizon>0.96){ horizon=0.96; sweepDir=-1; }
+        if(horizon<0.4){ horizon=0.4; sweepDir=1; }
+        render();
+        requestAnimationFrame(animate);
+      }
+    }
+
+    // 컨트롤
+    document.querySelectorAll("#lr-controls button[data-k]").forEach(function(b){
+      b.addEventListener("click",function(){
+        var k=b.getAttribute("data-k");
+        state[k]=!state[k];
+        b.setAttribute("aria-pressed", state[k]?"true":"false");
+        render();
+      });
+    });
+    var ht=document.getElementById("horizon-toggle");
+    ht.addEventListener("click",function(){
+      sweeping=!sweeping;
+      ht.setAttribute("aria-pressed", sweeping?"true":"false");
+      ht.textContent = sweeping ? "지평선 이동 멈춤 ■" : "종료 지평선 이동 →";
+      if(sweeping && !reduce) requestAnimationFrame(animate);
+    });
+
+    window.addEventListener("resize",render);
+    // 최초 렌더는 뷰포트 진입 시
+    var once=new IntersectionObserver(function(en){
+      en.forEach(function(e){ if(e.isIntersecting){ render(); once.disconnect(); } });
+    },{threshold:0.15});
+    once.observe(c);
+    render();
+  })();
+})();
+</script>
+</body>
+</html>

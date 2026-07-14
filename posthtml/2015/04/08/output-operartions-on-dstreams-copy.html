@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Design Patterns for using foreachRDD</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Design Patterns for using foreachRDD</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">8 April 2015</p></h4>
+<hr>
+
+<div class="post">
+<h2 id="design-patterns-for-using-foreachrdd">Design Patterns for using foreachRDD</h2>
+
+<p><code class="language-plaintext highlighter-rouge">dstream.foreachRDD</code> is a powerful primitive that allows data to sent
+out to external systems. However, it is important to understand how to
+use this primitive correctly and efficiently. Some of the common
+mistakes to avoid are as follows.</p>
+
+<p>Often writing data to external system requires creating a connection
+object (e.g. TCP connection to a remote server) and using it to send
+data to a remote system. For this purpose, a developer may inadvertently
+try creating a connection object at the Spark driver, but try to use it
+in a Spark worker to save records in the RDDs. For example (in Scala),</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nv">dstream</span><span class="o">.</span><span class="py">foreachRDD</span> <span class="o">{</span> <span class="n">rdd</span> <span class="k">=&gt;</span>
+      <span class="k">val</span> <span class="nv">connection</span> <span class="k">=</span> <span class="nf">createNewConnection</span><span class="o">()</span>  <span class="c1">// executed at the driver</span>
+      <span class="nv">rdd</span><span class="o">.</span><span class="py">foreach</span> <span class="o">{</span> <span class="n">record</span> <span class="k">=&gt;</span>
+        <span class="nv">connection</span><span class="o">.</span><span class="py">send</span><span class="o">(</span><span class="n">record</span><span class="o">)</span> <span class="c1">// executed at the worker</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="k">def</span> <span class="nf">sendRecord</span><span class="o">(</span><span class="n">rdd</span><span class="o">)</span><span class="k">:</span>
+        <span class="kt">connection</span> <span class="o">=</span> <span class="nf">createNewConnection</span><span class="o">()</span>  <span class="k">#</span> <span class="n">executed</span> <span class="n">at</span> <span class="n">the</span> <span class="n">driver</span>
+        <span class="nv">rdd</span><span class="o">.</span><span class="py">foreach</span><span class="o">(</span><span class="n">lambda</span> <span class="n">record</span><span class="k">:</span> <span class="kt">connection.send</span><span class="o">(</span><span class="kt">record</span><span class="o">))</span>
+        <span class="nv">connection</span><span class="o">.</span><span class="py">close</span><span class="o">()</span>
+
+    <span class="nv">dstream</span><span class="o">.</span><span class="py">foreachRDD</span><span class="o">(</span><span class="n">sendRecord</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p>This is incorrect as this requires the connection object to be
+serialized and sent from the driver to the worker. Such connection
+objects are rarely transferrable across machines. This error may
+manifest as serialization errors (connection object not serializable),
+initialization errors (connection object needs to be initialized at the
+workers), etc. The correct solution is to create the connection object
+at the worker.</p>
+
+<p>However, this can lead to another common mistake - creating a new
+connection for every record. For example,</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nv">dstream</span><span class="o">.</span><span class="py">foreachRDD</span> <span class="o">{</span> <span class="n">rdd</span> <span class="k">=&gt;</span>
+      <span class="nv">rdd</span><span class="o">.</span><span class="py">foreach</span> <span class="o">{</span> <span class="n">record</span> <span class="k">=&gt;</span>
+        <span class="k">val</span> <span class="nv">connection</span> <span class="k">=</span> <span class="nf">createNewConnection</span><span class="o">()</span>
+        <span class="nv">connection</span><span class="o">.</span><span class="py">send</span><span class="o">(</span><span class="n">record</span><span class="o">)</span>
+        <span class="nv">connection</span><span class="o">.</span><span class="py">close</span><span class="o">()</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="k">def</span> <span class="nf">sendRecord</span><span class="o">(</span><span class="n">record</span><span class="o">)</span><span class="k">:</span>
+        <span class="kt">connection</span> <span class="o">=</span> <span class="nf">createNewConnection</span><span class="o">()</span>
+        <span class="nv">connection</span><span class="o">.</span><span class="py">send</span><span class="o">(</span><span class="n">record</span><span class="o">)</span>
+        <span class="nv">connection</span><span class="o">.</span><span class="py">close</span><span class="o">()</span>
+
+    <span class="nv">dstream</span><span class="o">.</span><span class="py">foreachRDD</span><span class="o">(</span><span class="n">lambda</span> <span class="n">rdd</span><span class="k">:</span> <span class="kt">rdd.foreach</span><span class="o">(</span><span class="kt">sendRecord</span><span class="o">))</span>
+</code></pre></div></div>
+
+<p>Typically, creating a connection object has time and resource overheads.
+Therefore, creating and destroying a connection object for each record
+can incur unnecessarily high overheads and can significantly reduce the
+overall throughput of the system. A better solution is to use
+<code class="language-plaintext highlighter-rouge">rdd.foreachPartition</code> - create a single connection object and send all
+the records in a RDD partition using that connection.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nv">dstream</span><span class="o">.</span><span class="py">foreachRDD</span> <span class="o">{</span> <span class="n">rdd</span> <span class="k">=&gt;</span>
+      <span class="nv">rdd</span><span class="o">.</span><span class="py">foreachPartition</span> <span class="o">{</span> <span class="n">partitionOfRecords</span> <span class="k">=&gt;</span>
+        <span class="k">val</span> <span class="nv">connection</span> <span class="k">=</span> <span class="nf">createNewConnection</span><span class="o">()</span>
+        <span class="nv">partitionOfRecords</span><span class="o">.</span><span class="py">foreach</span><span class="o">(</span><span class="n">record</span> <span class="k">=&gt;</span> <span class="nv">connection</span><span class="o">.</span><span class="py">send</span><span class="o">(</span><span class="n">record</span><span class="o">))</span>
+        <span class="nv">connection</span><span class="o">.</span><span class="py">close</span><span class="o">()</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="k">def</span> <span class="nf">sendPartition</span><span class="o">(</span><span class="n">iter</span><span class="o">)</span><span class="k">:</span>
+        <span class="kt">connection</span> <span class="o">=</span> <span class="nf">createNewConnection</span><span class="o">()</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="n">in</span> <span class="n">iter</span><span class="k">:</span>
+            <span class="kt">connection.send</span><span class="o">(</span><span class="kt">record</span><span class="o">)</span>
+        <span class="kt">connection.close</span><span class="o">()</span>
+
+    <span class="kt">dstream.foreachRDD</span><span class="o">(</span><span class="kt">lambda</span> <span class="kt">rdd:</span> <span class="kt">rdd.foreachPartition</span><span class="o">(</span><span class="kt">sendPartition</span><span class="o">))</span>
+</code></pre></div></div>
+
+<p>This amortizes the connection creation overheads over many records.</p>
+
+<p>Finally, this can be further optimized by reusing connection objects
+across multiple RDDs/batches. One can maintain a static pool of
+connection objects than can be reused as RDDs of multiple batches are
+pushed to the external system, thus further reducing the overheads.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nv">dstream</span><span class="o">.</span><span class="py">foreachRDD</span> <span class="o">{</span> <span class="n">rdd</span> <span class="k">=&gt;</span>
+      <span class="nv">rdd</span><span class="o">.</span><span class="py">foreachPartition</span> <span class="o">{</span> <span class="n">partitionOfRecords</span> <span class="k">=&gt;</span>
+        <span class="c1">// ConnectionPool is a static, lazily initialized pool of connections</span>
+        <span class="k">val</span> <span class="nv">connection</span> <span class="k">=</span> <span class="nv">ConnectionPool</span><span class="o">.</span><span class="py">getConnection</span><span class="o">()</span>
+        <span class="nv">partitionOfRecords</span><span class="o">.</span><span class="py">foreach</span><span class="o">(</span><span class="n">record</span> <span class="k">=&gt;</span> <span class="nv">connection</span><span class="o">.</span><span class="py">send</span><span class="o">(</span><span class="n">record</span><span class="o">))</span>
+        <span class="nv">ConnectionPool</span><span class="o">.</span><span class="py">returnConnection</span><span class="o">(</span><span class="n">connection</span><span class="o">)</span>  <span class="c1">// return to the pool for future reuse</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="k">def</span> <span class="nf">sendPartition</span><span class="o">(</span><span class="n">iter</span><span class="o">)</span><span class="k">:</span>
+        <span class="k">#</span> <span class="kt">ConnectionPool</span> <span class="kt">is</span> <span class="kt">a</span> <span class="kt">static</span><span class="o">,</span> <span class="n">lazily</span> <span class="n">initialized</span> <span class="n">pool</span> <span class="n">of</span> <span class="n">connections</span>
+        <span class="n">connection</span> <span class="k">=</span> <span class="nv">ConnectionPool</span><span class="o">.</span><span class="py">getConnection</span><span class="o">()</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="n">in</span> <span class="n">iter</span><span class="k">:</span>
+            <span class="kt">connection.send</span><span class="o">(</span><span class="kt">record</span><span class="o">)</span>
+        <span class="k">#</span> <span class="kt">return</span> <span class="kt">to</span> <span class="kt">the</span> <span class="kt">pool</span> <span class="kt">for</span> <span class="kt">future</span> <span class="kt">reuse</span>
+        <span class="nv">ConnectionPool</span><span class="o">.</span><span class="py">returnConnection</span><span class="o">(</span><span class="n">connection</span><span class="o">)</span>
+
+    <span class="nv">dstream</span><span class="o">.</span><span class="py">foreachRDD</span><span class="o">(</span><span class="n">lambda</span> <span class="n">rdd</span><span class="k">:</span> <span class="kt">rdd.foreachPartition</span><span class="o">(</span><span class="kt">sendPartition</span><span class="o">))</span>
+</code></pre></div></div>
+
+<p>Note that the connections in the pool should be lazily created on demand
+and timed out if not used for a while. This achieves the most efficient
+sending of data to external systems.</p>
+
+<h3 id="other-points-to-remember">Other points to remember:</h3>
+
+<ul>
+  <li>
+    <p>DStreams are executed lazily by the output operations, just like
+RDDs are lazily executed by RDD actions. Specifically, RDD actions
+inside the DStream output operations force the processing of the
+received data. Hence, if your application does not have any output
+operation, or has output operations like <code class="language-plaintext highlighter-rouge">dstream.foreachRDD()</code>
+without any RDD action inside them, then nothing will get executed.
+The system will simply receive the data and discard it.</p>
+  </li>
+  <li>
+    <p>By default, output operations are executed one-at-a-time. And they
+are executed in the order they are defined in the application.</p>
+  </li>
+</ul>
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

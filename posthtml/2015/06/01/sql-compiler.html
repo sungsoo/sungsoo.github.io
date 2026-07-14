@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>A SQL Query Compiler</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>A SQL Query Compiler</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">1 June 2015</p></h4>
+<hr>
+
+<div class="post">
+<h1 id="a-sql-query-compiler">A SQL Query Compiler</h1>
+
+<p>Commercial and open source database systems consist of millions of lines
+of highly 
+optimized C code. Yet, their performance on individual queries falls 10x
+or 100x 
+short of what a hand-written, specialized, implementation of the same
+query can 
+achieve.</p>
+
+<p>In this tutorial, we will build a small SQL processing engine that
+consists of 
+just about 500 lines of high-level Scala code. Whereas other systems
+interpret query 
+plans, operator by operator, we will use LMS to generate and compile
+low-level C 
+code for entire queries.</p>
+
+<p>We keep the query functionality intentionally simple. A more complete
+engine 
+that handles the full TPCH benchmark suite and consists of about 3000
+lines of 
+code has been developed in the <a href="http://data.epfl.ch/legobase">LegoBase</a>
+project, which recently received 
+a best paper award at VLDB’14.</p>
+
+<p>See also:</p>
+
+<ul>
+  <li>
+    <p>Building Efficient Query Engines in a High-Level Language
+(<a href="http://infoscience.epfl.ch/record/198693/files/801-klonatos.pdf">PDF</a>)</p>
+
+    <p>Yannis Klonatos, Christoph Koch, Tiark Rompf, Hassan Chafi. VLDB’14</p>
+  </li>
+</ul>
+
+<p>Outline:</p>
+
+<h2 id="setting-the-stage">Setting the Stage</h2>
+
+<p>Let us run a few quick benchmarks to get an idea of the relative
+performance of different 
+data processing systems. We take a data sample from <a href="https://books.google.com/ngrams">the Google Books
+NGram Viewer</a> project. 
+The 2GB file that contains statistics for words starting with the letter
+‘A’ is a good candidate to run 
+some simple queries. We might be interested in all occurrences of the
+word ‘Auswanderung’:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">select</span> <span class="o">*</span> <span class="k">from</span> <span class="mi">1</span><span class="n">gram_a</span> <span class="k">where</span> <span class="n">n_gram</span> <span class="o">=</span> <span class="s1">'Auswanderung'</span>
+</code></pre></div></div>
+
+<p>Here are some timings:</p>
+
+<ul>
+  <li>
+    <p>Loading the CSV file into a MySQL database takes &gt; 5 minutes,
+running the query about 50 seconds.</p>
+  </li>
+  <li>
+    <p>PostgreSQL takes 3 minutes to load, the first query run takes 46
+seconds, but subsequent runs get faster over time (down to 7
+seconds).</p>
+  </li>
+  <li>
+    <p>An <a href="https://github.com/scala-lms/tutorials/blob/master/src/out/query_t1gram2.hand.awk">AWK
+script</a>
+that processes the CSV file directly takes 45 seconds.</p>
+  </li>
+  <li>
+    <p>A <a href="https://github.com/scala-lms/tutorials/blob/master/src/test/scala/lms/tutorial/query_unstaged.scala">query
+interpreter</a>
+written in Scala takes 39 sec.</p>
+  </li>
+  <li>
+    <p>A hand-written specialized <a href="https://github.com/scala-lms/tutorials/blob/master/src/out/query_t1gram2.hand0.scala/">Scala
+program</a>
+takes 13 sec.</p>
+  </li>
+  <li>
+    <p>A similar hand-written <a href="https://github.com/scala-lms/tutorials/blob/master/src/out/query_t1gram2.hand.c/">C
+program</a>
+performs marginally faster, 
+but with <a href="https://github.com/scala-lms/tutorials/blob/master/src/out/query_t1gram2.hand2.c/">more
+optimizations</a>
+we can get as good as 3.2 seconds.</p>
+  </li>
+</ul>
+
+<p>The query processor we will develop in this tutorial matches the
+performance of the handwritten Scala and C queries (13s and 3s,
+respectively).</p>
+
+<p>More details on running the benchmarks are available
+<a href="https://github.com/scala-lms/tutorials/blob/master/src/data/README.md">here</a>.
+We now turn to our actual implementation.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">package</span> <span class="nn">scala.lms.tutorial</span>
+
+    <span class="k">import</span> <span class="nn">scala.virtualization.lms.common._</span>
+    <span class="k">import</span> <span class="nn">org.scalatest.FunSuite</span>
+</code></pre></div></div>
+
+<h2 id="relational-algebra-ast">Relational Algebra AST</h2>
+
+<p>The core of any query processing engine is an AST representation of 
+relational algebra operators.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">trait</span> <span class="nc">QueryAST</span> <span class="o">{</span>
+      <span class="k">type</span> <span class="kt">Table</span>
+      <span class="k">type</span> <span class="kt">Schema</span> <span class="o">=</span> <span class="nc">Vector</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span>
+
+      <span class="c1">// relational algebra ops</span>
+      <span class="k">sealed</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">Operator</span>
+      <span class="k">case</span> <span class="k">class</span> <span class="nc">Scan</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">Table</span><span class="o">,</span> <span class="n">schema</span><span class="k">:</span> <span class="kt">Schema</span><span class="o">,</span> <span class="n">delim</span><span class="k">:</span> <span class="kt">Char</span><span class="o">,</span> <span class="n">extSchema</span><span class="k">:</span> <span class="kt">Boolean</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Operator</span>
+      <span class="k">case</span> <span class="k">class</span> <span class="nc">PrintCSV</span><span class="o">(</span><span class="n">parent</span><span class="k">:</span> <span class="kt">Operator</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Operator</span>
+      <span class="k">case</span> <span class="k">class</span> <span class="nc">Project</span><span class="o">(</span><span class="n">outSchema</span><span class="k">:</span> <span class="kt">Schema</span><span class="o">,</span> <span class="n">inSchema</span><span class="k">:</span> <span class="kt">Schema</span><span class="o">,</span> <span class="n">parent</span><span class="k">:</span> <span class="kt">Operator</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Operator</span>
+      <span class="k">case</span> <span class="k">class</span> <span class="nc">Filter</span><span class="o">(</span><span class="n">pred</span><span class="k">:</span> <span class="kt">Predicate</span><span class="o">,</span> <span class="n">parent</span><span class="k">:</span> <span class="kt">Operator</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Operator</span>
+      <span class="k">case</span> <span class="k">class</span> <span class="nc">Join</span><span class="o">(</span><span class="n">parent1</span><span class="k">:</span> <span class="kt">Operator</span><span class="o">,</span> <span class="n">parent2</span><span class="k">:</span> <span class="kt">Operator</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Operator</span>
+      <span class="k">case</span> <span class="k">class</span> <span class="nc">Group</span><span class="o">(</span><span class="n">keys</span><span class="k">:</span> <span class="kt">Schema</span><span class="o">,</span> <span class="n">agg</span><span class="k">:</span> <span class="kt">Schema</span><span class="o">,</span> <span class="n">parent</span><span class="k">:</span> <span class="kt">Operator</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Operator</span>
+      <span class="k">case</span> <span class="k">class</span> <span class="nc">HashJoin</span><span class="o">(</span><span class="n">parent1</span><span class="k">:</span> <span class="kt">Operator</span><span class="o">,</span> <span class="n">parent2</span><span class="k">:</span> <span class="kt">Operator</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Operator</span>
+
+      <span class="c1">// filter predicates</span>
+      <span class="k">sealed</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">Predicate</span>
+      <span class="k">case</span> <span class="k">class</span> <span class="nc">Eq</span><span class="o">(</span><span class="n">a</span><span class="k">:</span> <span class="kt">Ref</span><span class="o">,</span> <span class="n">b</span><span class="k">:</span> <span class="kt">Ref</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Predicate</span>
+
+      <span class="k">sealed</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">Ref</span>
+      <span class="k">case</span> <span class="k">class</span> <span class="nc">Field</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Ref</span>
+      <span class="k">case</span> <span class="k">class</span> <span class="nc">Value</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">Any</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">Ref</span>
+
+      <span class="c1">// some smart constructors</span>
+      <span class="k">def</span> <span class="nf">Schema</span><span class="o">(</span><span class="n">schema</span><span class="k">:</span> <span class="kt">String*</span><span class="o">)</span><span class="k">:</span> <span class="kt">Schema</span> <span class="o">=</span> <span class="nv">schema</span><span class="o">.</span><span class="py">toVector</span>
+      <span class="k">def</span> <span class="nf">Scan</span><span class="o">(</span><span class="n">tableName</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Scan</span> <span class="o">=</span> <span class="nc">Scan</span><span class="o">(</span><span class="n">tableName</span><span class="o">,</span> <span class="nc">None</span><span class="o">,</span> <span class="nc">None</span><span class="o">)</span>
+      <span class="k">def</span> <span class="nf">Scan</span><span class="o">(</span><span class="n">tableName</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">schema</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Schema</span><span class="o">],</span> <span class="n">delim</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Char</span><span class="o">])</span><span class="k">:</span> <span class="kt">Scan</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="sql-parser">SQL Parser</h2>
+
+<p>We add a parser that takes a SQL(-like) string and converts it to tree
+of operators.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">trait</span> <span class="nc">SQLParser</span> <span class="k">extends</span> <span class="nc">QueryAST</span> <span class="o">{</span>
+      <span class="k">import</span> <span class="nn">scala.util.parsing.combinator._</span>
+
+      <span class="k">def</span> <span class="nf">parseSql</span><span class="o">(</span><span class="n">input</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nv">Grammar</span><span class="o">.</span><span class="py">parseAll</span><span class="o">(</span><span class="n">input</span><span class="o">)</span>
+
+      <span class="k">object</span> <span class="nc">Grammar</span> <span class="k">extends</span> <span class="nc">JavaTokenParsers</span> <span class="k">with</span> <span class="nc">PackratParsers</span> <span class="o">{</span>
+
+        <span class="k">def</span> <span class="nf">stm</span><span class="k">:</span> <span class="kt">Parser</span><span class="o">[</span><span class="kt">Operator</span><span class="o">]</span> <span class="k">=</span> 
+          <span class="n">selectClause</span> <span class="o">~</span> <span class="n">fromClause</span> <span class="o">~</span> <span class="n">whereClause</span> <span class="o">~</span> <span class="n">groupClause</span> <span class="o">^^</span> <span class="o">{</span>
+            <span class="k">case</span> <span class="n">p</span> <span class="o">~</span> <span class="n">s</span> <span class="o">~</span> <span class="n">f</span> <span class="o">~</span> <span class="n">g</span> <span class="k">=&gt;</span> <span class="nf">g</span><span class="o">(</span><span class="nf">p</span><span class="o">(</span><span class="nf">f</span><span class="o">(</span><span class="n">s</span><span class="o">)))</span> <span class="o">}</span>
+        <span class="k">def</span> <span class="nf">selectClause</span><span class="k">:</span> <span class="kt">Parser</span><span class="o">[</span><span class="kt">Operator</span><span class="k">=&gt;</span><span class="kt">Operator</span><span class="o">]</span> <span class="k">=</span>
+          <span class="s">"select"</span> <span class="o">~&gt;</span> <span class="o">(</span><span class="s">"*"</span> <span class="o">^^</span> <span class="o">{</span> <span class="k">_</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="n">op</span><span class="k">:</span><span class="kt">Operator</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="n">op</span> <span class="o">}</span> <span class="o">|</span> <span class="n">fieldList</span> <span class="o">^^</span> <span class="o">{</span> 
+            <span class="nf">case</span> <span class="o">(</span><span class="n">fs</span><span class="o">,</span><span class="n">fs1</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Project</span><span class="o">(</span><span class="n">fs</span><span class="o">,</span><span class="n">fs1</span><span class="o">,</span><span class="k">_:</span><span class="kt">Operator</span><span class="o">)</span> <span class="o">})</span>
+        <span class="k">def</span> <span class="nf">fromClause</span><span class="k">:</span> <span class="kt">Parser</span><span class="o">[</span><span class="kt">Operator</span><span class="o">]</span> <span class="k">=</span>
+          <span class="s">"from"</span> <span class="o">~&gt;</span> <span class="n">joinClause</span>
+        <span class="k">def</span> <span class="nf">whereClause</span><span class="k">:</span> <span class="kt">Parser</span><span class="o">[</span><span class="kt">Operator</span><span class="k">=&gt;</span><span class="kt">Operator</span><span class="o">]</span> <span class="k">=</span>
+          <span class="nf">opt</span><span class="o">(</span><span class="s">"where"</span> <span class="o">~&gt;</span> <span class="n">predicate</span> <span class="o">^^</span> <span class="o">{</span> <span class="n">p</span> <span class="k">=&gt;</span> <span class="nc">Filter</span><span class="o">(</span><span class="n">p</span><span class="o">,</span> <span class="k">_:</span><span class="kt">Operator</span><span class="o">)</span> <span class="o">})</span> <span class="o">^^</span> <span class="o">{</span> <span class="nv">_</span><span class="o">.</span><span class="py">getOrElse</span><span class="o">(</span><span class="n">op</span> <span class="k">=&gt;</span> <span class="n">op</span><span class="o">)}</span>
+        <span class="k">def</span> <span class="nf">groupClause</span><span class="k">:</span> <span class="kt">Parser</span><span class="o">[</span><span class="kt">Operator</span><span class="k">=&gt;</span><span class="kt">Operator</span><span class="o">]</span> <span class="k">=</span>
+          <span class="nf">opt</span><span class="o">(</span><span class="s">"group"</span> <span class="o">~&gt;</span> <span class="s">"by"</span> <span class="o">~&gt;</span> <span class="n">fieldIdList</span> <span class="o">~</span> <span class="o">(</span><span class="s">"sum"</span> <span class="o">~&gt;</span> <span class="n">fieldIdList</span><span class="o">)</span> <span class="o">^^</span> <span class="o">{</span> 
+            <span class="k">case</span> <span class="n">p1</span> <span class="o">~</span> <span class="n">p2</span> <span class="k">=&gt;</span> <span class="nc">Group</span><span class="o">(</span><span class="n">p1</span><span class="o">,</span><span class="n">p2</span><span class="o">,</span> <span class="k">_:</span><span class="kt">Operator</span><span class="o">)</span> <span class="o">})</span> <span class="o">^^</span> <span class="o">{</span> <span class="nv">_</span><span class="o">.</span><span class="py">getOrElse</span><span class="o">(</span><span class="n">op</span> <span class="k">=&gt;</span> <span class="n">op</span><span class="o">)}</span>
+
+        <span class="k">def</span> <span class="nf">joinClause</span><span class="k">:</span> <span class="kt">Parser</span><span class="o">[</span><span class="kt">Operator</span><span class="o">]</span> <span class="k">=</span>
+          <span class="o">(</span><span class="s">"nestedloops"</span> <span class="o">~&gt;</span> <span class="nf">repsep</span><span class="o">(</span><span class="n">tableClause</span><span class="o">,</span> <span class="s">"join"</span><span class="o">)</span> <span class="o">^^</span> <span class="o">{</span> <span class="nv">_</span><span class="o">.</span><span class="py">reduceLeft</span><span class="o">((</span><span class="n">a</span><span class="o">,</span><span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">Join</span><span class="o">(</span><span class="n">a</span><span class="o">,</span><span class="n">b</span><span class="o">))</span> <span class="o">})</span> <span class="o">|</span>
+          <span class="o">(</span><span class="nf">repsep</span><span class="o">(</span><span class="n">tableClause</span><span class="o">,</span> <span class="s">"join"</span><span class="o">)</span> <span class="o">^^</span> <span class="o">{</span> <span class="nv">_</span><span class="o">.</span><span class="py">reduceLeft</span><span class="o">((</span><span class="n">a</span><span class="o">,</span><span class="n">b</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">HashJoin</span><span class="o">(</span><span class="n">a</span><span class="o">,</span><span class="n">b</span><span class="o">))</span> <span class="o">})</span>
+        <span class="k">def</span> <span class="nf">tableClause</span><span class="k">:</span> <span class="kt">Parser</span><span class="o">[</span><span class="kt">Operator</span><span class="o">]</span> <span class="k">=</span>
+          <span class="n">tableIdent</span> <span class="o">~</span> <span class="nf">opt</span><span class="o">(</span><span class="s">"schema"</span> <span class="o">~&gt;</span> <span class="n">fieldIdList</span><span class="o">)</span> <span class="o">~</span> 
+            <span class="nf">opt</span><span class="o">(</span><span class="s">"delim"</span> <span class="o">~&gt;</span> <span class="o">(</span><span class="s">"""t"""</span> <span class="o">^^</span> <span class="o">(</span><span class="k">_</span> <span class="k">=&gt;</span> <span class="sc">'t'</span><span class="o">)</span> <span class="o">|</span> <span class="s">"""."""</span><span class="o">.</span><span class="py">r</span> <span class="o">^^</span> <span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">head</span><span class="o">)))</span> <span class="o">^^</span> <span class="o">{</span>
+              <span class="k">case</span> <span class="n">table</span> <span class="o">~</span> <span class="n">schema</span> <span class="o">~</span> <span class="n">delim</span> <span class="k">=&gt;</span> <span class="nc">Scan</span><span class="o">(</span><span class="n">table</span><span class="o">,</span> <span class="n">schema</span><span class="o">,</span> <span class="n">delim</span><span class="o">)</span> <span class="o">}</span> <span class="o">|</span>
+          <span class="o">(</span><span class="s">"("</span> <span class="o">~&gt;</span> <span class="n">stm</span> <span class="o">&lt;~</span> <span class="s">")"</span><span class="o">)</span>
+
+        <span class="k">def</span> <span class="nf">fieldIdent</span><span class="k">:</span> <span class="kt">Parser</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="s">"""[w#]+"""</span><span class="o">.</span><span class="py">r</span>
+        <span class="k">def</span> <span class="nf">tableIdent</span><span class="k">:</span> <span class="kt">Parser</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="k">=</span> <span class="s">"""[w_-/.]+"""</span><span class="o">.</span><span class="py">r</span> <span class="o">|</span> <span class="s">"?"</span>
+        <span class="k">def</span> <span class="nf">fieldList</span><span class="k">:</span>  <span class="kt">Parser</span><span class="o">[(</span><span class="kt">Schema</span>,<span class="kt">Schema</span><span class="o">)]</span> <span class="k">=</span>
+          <span class="nf">repsep</span><span class="o">(</span><span class="n">fieldIdent</span> <span class="o">~</span> <span class="nf">opt</span><span class="o">(</span><span class="s">"as"</span> <span class="o">~&gt;</span> <span class="n">fieldIdent</span><span class="o">),</span> <span class="s">","</span><span class="o">)</span> <span class="o">^^</span> <span class="o">{</span> <span class="n">fs2s</span> <span class="k">=&gt;</span>
+            <span class="nf">val</span> <span class="o">(</span><span class="n">fs</span><span class="o">,</span><span class="n">fs1</span><span class="o">)</span> <span class="k">=</span> <span class="nv">fs2s</span><span class="o">.</span><span class="py">map</span> <span class="o">{</span> <span class="k">case</span> <span class="n">a</span><span class="o">~</span><span class="n">b</span> <span class="k">=&gt;</span> <span class="o">(</span><span class="nv">b</span><span class="o">.</span><span class="py">getOrElse</span><span class="o">(</span><span class="n">a</span><span class="o">),</span><span class="n">a</span><span class="o">)</span> <span class="o">}.</span><span class="py">unzip</span>
+            <span class="o">(</span><span class="nc">Schema</span><span class="o">(</span><span class="n">fs</span><span class="k">:_</span><span class="kt">*</span><span class="o">),</span><span class="nc">Schema</span><span class="o">(</span><span class="n">fs1</span><span class="k">:_</span><span class="kt">*</span><span class="o">))</span> <span class="o">}</span>
+        <span class="k">def</span> <span class="nf">fieldIdList</span><span class="k">:</span>  <span class="kt">Parser</span><span class="o">[</span><span class="kt">Schema</span><span class="o">]</span> <span class="k">=</span> 
+          <span class="nf">repsep</span><span class="o">(</span><span class="n">fieldIdent</span><span class="o">,</span><span class="s">","</span><span class="o">)</span> <span class="o">^^</span> <span class="o">(</span><span class="n">fs</span> <span class="k">=&gt;</span> <span class="nc">Schema</span><span class="o">(</span><span class="n">fs</span><span class="k">:_</span><span class="kt">*</span><span class="o">))</span>
+
+        <span class="k">def</span> <span class="nf">predicate</span><span class="k">:</span> <span class="kt">Parser</span><span class="o">[</span><span class="kt">Predicate</span><span class="o">]</span> <span class="k">=</span> 
+          <span class="n">ref</span> <span class="o">~</span> <span class="s">"="</span> <span class="o">~</span> <span class="n">ref</span> <span class="o">^^</span> <span class="o">{</span> <span class="k">case</span> <span class="n">a</span> <span class="o">~</span> <span class="k">_</span> <span class="o">~</span> <span class="n">b</span> <span class="k">=&gt;</span> <span class="nc">Eq</span><span class="o">(</span><span class="n">a</span><span class="o">,</span><span class="n">b</span><span class="o">)</span> <span class="o">}</span>
+        <span class="k">def</span> <span class="nf">ref</span><span class="k">:</span> <span class="kt">Parser</span><span class="o">[</span><span class="kt">Ref</span><span class="o">]</span> <span class="k">=</span> 
+          <span class="n">fieldIdent</span> <span class="o">^^</span> <span class="nc">Field</span> <span class="o">|</span> 
+          <span class="s">"""'[^']*'"""</span><span class="o">.</span><span class="py">r</span> <span class="o">^^</span> <span class="o">(</span><span class="n">s</span> <span class="k">=&gt;</span> <span class="nc">Value</span><span class="o">(</span><span class="nv">s</span><span class="o">.</span><span class="py">drop</span><span class="o">(</span><span class="mi">1</span><span class="o">).</span><span class="py">dropRight</span><span class="o">(</span><span class="mi">1</span><span class="o">)))</span> <span class="o">|</span>
+          <span class="s">"""[0-9]+"""</span><span class="o">.</span><span class="py">r</span> <span class="o">^^</span> <span class="o">(</span><span class="n">s</span> <span class="k">=&gt;</span> <span class="nc">Value</span><span class="o">(</span><span class="nv">s</span><span class="o">.</span><span class="py">toInt</span><span class="o">))</span>
+      
+        <span class="k">def</span> <span class="nf">parseAll</span><span class="o">(</span><span class="n">input</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Operator</span> <span class="o">=</span> <span class="nf">parseAll</span><span class="o">(</span><span class="n">stm</span><span class="o">,</span><span class="n">input</span><span class="o">)</span> <span class="k">match</span> <span class="o">{</span>
+          <span class="k">case</span> <span class="nc">Success</span><span class="o">(</span><span class="n">res</span><span class="o">,</span><span class="k">_</span><span class="o">)</span>  <span class="k">=&gt;</span> <span class="n">res</span>
+          <span class="k">case</span> <span class="n">res</span> <span class="k">=&gt;</span> <span class="k">throw</span> <span class="k">new</span> <span class="nc">Exception</span><span class="o">(</span><span class="nv">res</span><span class="o">.</span><span class="py">toString</span><span class="o">)</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="iterative-development-of-a-query-processor">Iterative Development of a Query Processor</h2>
+
+<p>We develop our SQL engine in multiple steps. Each steps leads to a 
+working processor, and each successive step either adds a feature or 
+optimization.</p>
+
+<h3 id="step-1-a-plain-query-interpreter">Step 1: A (Plain) Query Interpreter</h3>
+
+<p>We start with a plain query processor: an interpreter.</p>
+
+<ul>
+  <li><a href="query_unstaged.html">query_unstaged.scala</a></li>
+</ul>
+
+<h3 id="step-2-a-staged-query-interpreter--compiler">Step 2: A Staged Query Interpreter (= Compiler)</h3>
+
+<p>Staging our query interpreter yields a query compiler. 
+In the first iteration we generate Scala code but we disregard 
+operators that require internal data structures:</p>
+
+<ul>
+  <li><a href="query_staged0.html">query_staged0</a></li>
+</ul>
+
+<h3 id="step-3-specializing-data-structures">Step 3: Specializing Data Structures</h3>
+
+<p>The next iteration adds optimized data structure implementations 
+that follow a column-store layout. This includes specialized hash 
+tables for groupBy and join operators:</p>
+
+<ul>
+  <li><a href="query_staged.html">query_staged</a></li>
+</ul>
+
+<h3 id="step-4-switching-to-c-and-optimizing-io">Step 4: Switching to C and Optimizing IO</h3>
+
+<p>For additional low-level optimizations we switch to generating C 
+code:</p>
+
+<ul>
+  <li><a href="query_optc.html">query_optc</a></li>
+</ul>
+
+<p>On the C level, we optimize the IO layer by mapping files directly 
+into memory and we further specialize internal data structures 
+to minimize data conversions and to enable representing string objects 
+directly as pointers into the memory-mapped input file.</p>
+
+<h2 id="plumbing">Plumbing</h2>
+
+<p>To actually run queries and test the different implementations side 
+by side, a little bit of plumbing is necessary. We define a common 
+interface for all query processors (plain or staged, Scala or C).</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">trait</span> <span class="nc">QueryProcessor</span> <span class="k">extends</span> <span class="nc">QueryAST</span> <span class="o">{</span>
+      <span class="k">def</span> <span class="nf">version</span><span class="k">:</span> <span class="kt">String</span>
+      <span class="k">val</span> <span class="nv">defaultFieldDelimiter</span> <span class="k">=</span> <span class="sc">','</span>
+
+      <span class="k">def</span> <span class="nf">filePath</span><span class="o">(</span><span class="n">table</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="n">table</span>
+      <span class="k">def</span> <span class="nf">dynamicFilePath</span><span class="o">(</span><span class="n">table</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Table</span>
+
+      <span class="k">def</span> <span class="nf">Scan</span><span class="o">(</span><span class="n">tableName</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">schema</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Schema</span><span class="o">],</span> <span class="n">delim</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Char</span><span class="o">])</span><span class="k">:</span> <span class="kt">Scan</span> <span class="o">=</span> <span class="o">{</span>
+        <span class="k">val</span> <span class="nv">dfile</span> <span class="k">=</span> <span class="nf">dynamicFilePath</span><span class="o">(</span><span class="n">tableName</span><span class="o">)</span>
+        <span class="nf">val</span> <span class="o">(</span><span class="n">schema1</span><span class="o">,</span> <span class="n">externalSchema</span><span class="o">)</span> <span class="k">=</span> <span class="nv">schema</span><span class="o">.</span><span class="py">map</span><span class="o">(</span><span class="n">s</span><span class="o">=&gt;(</span><span class="n">s</span><span class="o">,</span><span class="kc">true</span><span class="o">)).</span><span class="py">getOrElse</span><span class="o">((</span><span class="nf">loadSchema</span><span class="o">(</span><span class="nf">filePath</span><span class="o">(</span><span class="n">tableName</span><span class="o">)),</span><span class="kc">false</span><span class="o">))</span>
+        <span class="nc">Scan</span><span class="o">(</span><span class="n">dfile</span><span class="o">,</span> <span class="n">schema1</span><span class="o">,</span> <span class="nv">delim</span><span class="o">.</span><span class="py">getOrElse</span><span class="o">(</span><span class="n">defaultFieldDelimiter</span><span class="o">),</span> <span class="n">externalSchema</span><span class="o">)</span>
+      <span class="o">}</span>
+
+      <span class="k">def</span> <span class="nf">loadSchema</span><span class="o">(</span><span class="n">filename</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Schema</span> <span class="o">=</span> <span class="o">{</span>
+        <span class="k">val</span> <span class="nv">s</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">Scanner</span><span class="o">(</span><span class="n">filename</span><span class="o">)</span>
+        <span class="k">val</span> <span class="nv">schema</span> <span class="k">=</span> <span class="nc">Schema</span><span class="o">(</span><span class="nv">s</span><span class="o">.</span><span class="py">next</span><span class="o">(</span><span class="sc">'n'</span><span class="o">).</span><span class="py">split</span><span class="o">(</span><span class="n">defaultFieldDelimiter</span><span class="o">)</span><span class="k">:</span> <span class="k">_</span><span class="kt">*</span><span class="o">)</span>
+        <span class="nv">s</span><span class="o">.</span><span class="py">close</span>
+        <span class="n">schema</span>
+      <span class="o">}</span>
+
+      <span class="k">def</span> <span class="nf">execQuery</span><span class="o">(</span><span class="n">q</span><span class="k">:</span> <span class="kt">Operator</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span>
+    <span class="o">}</span>
+
+    <span class="k">trait</span> <span class="nc">PlainQueryProcessor</span> <span class="k">extends</span> <span class="nc">QueryProcessor</span> <span class="o">{</span>
+      <span class="k">type</span> <span class="kt">Table</span> <span class="o">=</span> <span class="nc">String</span>
+    <span class="o">}</span>
+
+    <span class="k">trait</span> <span class="nc">StagedQueryProcessor</span> <span class="k">extends</span> <span class="nc">QueryProcessor</span> <span class="k">with</span> <span class="nc">Dsl</span> <span class="o">{</span>
+      <span class="k">type</span> <span class="kt">Table</span> <span class="o">=</span> <span class="nc">Rep</span><span class="o">[</span><span class="kt">String</span><span class="o">]</span> <span class="c1">// dynamic filename</span>
+      <span class="k">override</span> <span class="k">def</span> <span class="nf">filePath</span><span class="o">(</span><span class="n">table</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nf">if</span> <span class="o">(</span><span class="n">table</span> <span class="o">==</span> <span class="s">"?"</span><span class="o">)</span> <span class="k">throw</span> <span class="k">new</span> <span class="nc">Exception</span><span class="o">(</span><span class="s">"file path for table ? not available"</span><span class="o">)</span> <span class="k">else</span> <span class="nv">super</span><span class="o">.</span><span class="py">filePath</span><span class="o">(</span><span class="n">table</span><span class="o">)</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="interactive-mode">Interactive Mode</h2>
+
+<p>Examples:</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">test</span><span class="k">:</span><span class="kt">run</span> <span class="kt">unstaged</span> <span class="err">"</span><span class="kt">select</span> <span class="kt">*</span> <span class="kt">from</span> <span class="kt">?</span> <span class="kt">schema</span> <span class="kt">Phrase</span><span class="o">,</span> <span class="nc">Year</span><span class="o">,</span> <span class="nc">MatchCount</span><span class="o">,</span> <span class="nc">VolumeCount</span> <span class="n">delim</span> <span class="n">t</span> <span class="n">where</span> <span class="nc">Phrase</span><span class="o">='</span><span class="nc">Auswanderung</span><span class="o">'</span><span class="s">" src/data/t1gram.csv
+    test:run c        "</span><span class="n">select</span> <span class="o">*</span> <span class="n">from</span> <span class="o">?</span> <span class="n">schema</span> <span class="nc">Phrase</span><span class="o">,</span> <span class="nc">Year</span><span class="o">,</span> <span class="nc">MatchCount</span><span class="o">,</span> <span class="nc">VolumeCount</span> <span class="n">delim</span> <span class="n">t</span> <span class="n">where</span> <span class="nc">Phrase</span><span class="o">='</span><span class="nc">Auswanderung</span><span class="o">'</span><span class="s">" src/data/t1gram.csv
+
+    trait Engine extends QueryProcessor with SQLParser {
+      def query: String
+      def filename: String
+      def liftTable(n: String): Table
+      def eval: Unit
+      def prepare: Unit = {}
+      def run: Unit = execQuery(PrintCSV(parseSql(query)))
+      override def dynamicFilePath(table: String): Table =
+        liftTable(if (table == "</span><span class="o">?</span><span class="s">") filename else filePath(table))
+      def evalString = {
+        val source = new java.io.ByteArrayOutputStream()
+        utils.withOutputFull(new java.io.PrintStream(source)) {
+          eval
+        }
+        source.toString
+      }
+    }
+    trait StagedEngine extends Engine with StagedQueryProcessor {
+      override def liftTable(n: String) = unit(n)
+    }
+
+    object Run {
+      var qu: String = _
+      var fn: String = _
+
+      trait MainEngine extends Engine {
+        override def query = qu
+        override def filename =  fn
+      }
+
+      def unstaged_engine: Engine =
+        new Engine with MainEngine with query_unstaged.QueryInterpreter {
+          override def liftTable(n: Table) = n
+          override def eval = run
+        }
+      def scala_engine =
+        new DslDriver[String,Unit] with ScannerExp
+        with StagedEngine with MainEngine with query_staged.QueryCompiler { q =&gt;
+          override val codegen = new DslGen with ScalaGenScanner {
+            val IR: q.type = q
+          }
+          override def snippet(fn: Table): Rep[Unit] = run
+          override def prepare: Unit = precompile
+          override def eval: Unit = eval(filename)
+        }
+      def c_engine =
+        new DslDriverC[String,Unit] with ScannerLowerExp
+        with StagedEngine with MainEngine with query_optc.QueryCompiler { q =&gt;
+          override val codegen = new DslGenC with CGenScannerLower {
+            val IR: q.type = q
+          }
+          override def snippet(fn: Table): Rep[Unit] = run
+          override def prepare: Unit = {}
+          override def eval: Unit = eval(filename)
+        }
+
+      def main(args: Array[String]) {
+        if (args.length &lt; 2) {
+          println("</span><span class="n">syntax</span><span class="k">:</span><span class="err">"</span><span class="o">)</span>
+          <span class="nf">println</span><span class="o">(</span><span class="s">"   test:run (unstaged|scala|c) sql [file]"</span><span class="o">)</span>
+          <span class="nf">println</span><span class="o">()</span>
+          <span class="nf">println</span><span class="o">(</span><span class="s">"example usage:"</span><span class="o">)</span>
+          <span class="nf">println</span><span class="o">(</span><span class="s">"   test:run c "</span><span class="n">select</span> <span class="o">*</span> <span class="n">from</span> <span class="o">?</span> <span class="n">schema</span> <span class="nc">Phrase</span><span class="o">,</span> <span class="nc">Year</span><span class="o">,</span> <span class="nc">MatchCount</span><span class="o">,</span> <span class="nc">VolumeCount</span> <span class="n">delim</span> <span class="n">t</span> <span class="n">where</span> <span class="nc">Phrase</span><span class="o">='</span><span class="nc">Auswanderung</span><span class="o">'</span><span class="s">" src/data/t1gram.csv"</span><span class="o">)</span>
+          <span class="k">return</span>
+        <span class="o">}</span>
+        <span class="k">val</span> <span class="nv">version</span> <span class="k">=</span> <span class="nf">args</span><span class="o">(</span><span class="mi">0</span><span class="o">)</span>
+        <span class="k">val</span> <span class="nv">engine</span> <span class="k">=</span> <span class="n">version</span> <span class="k">match</span> <span class="o">{</span>
+          <span class="k">case</span> <span class="s">"c"</span> <span class="k">=&gt;</span> <span class="n">c_engine</span>
+          <span class="k">case</span> <span class="s">"scala"</span> <span class="k">=&gt;</span> <span class="n">scala_engine</span>
+          <span class="k">case</span> <span class="s">"unstaged"</span> <span class="k">=&gt;</span> <span class="n">unstaged_engine</span>
+          <span class="k">case</span> <span class="k">_</span> <span class="k">=&gt;</span> <span class="nf">println</span><span class="o">(</span><span class="s">"warning: unexpected engine, using 'unstaged' by default"</span><span class="o">)</span>
+            <span class="n">unstaged_engine</span>
+        <span class="o">}</span>
+        <span class="n">qu</span> <span class="k">=</span> <span class="nf">args</span><span class="o">(</span><span class="mi">1</span><span class="o">)</span>
+        <span class="nf">if</span> <span class="o">(</span><span class="nv">args</span><span class="o">.</span><span class="py">length</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="o">)</span>
+          <span class="n">fn</span> <span class="k">=</span> <span class="nf">args</span><span class="o">(</span><span class="mi">2</span><span class="o">)</span>
+
+        <span class="k">try</span> <span class="o">{</span>
+          <span class="nv">engine</span><span class="o">.</span><span class="py">prepare</span>
+          <span class="nv">utils</span><span class="o">.</span><span class="py">time</span><span class="o">(</span><span class="nv">engine</span><span class="o">.</span><span class="py">eval</span><span class="o">)</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">{</span>
+          <span class="k">case</span> <span class="n">ex</span><span class="k">:</span> <span class="kt">Exception</span> <span class="o">=&gt;</span>
+            <span class="nf">println</span><span class="o">(</span><span class="s">"ERROR: "</span> <span class="o">+</span> <span class="n">ex</span><span class="o">)</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="unit-tests">Unit Tests</h2>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">QueryTest</span> <span class="k">extends</span> <span class="nc">TutorialFunSuite</span> <span class="o">{</span>
+      <span class="k">val</span> <span class="nv">under</span> <span class="k">=</span> <span class="s">"query_"</span>
+
+      <span class="k">trait</span> <span class="nc">TestDriver</span> <span class="k">extends</span> <span class="nc">SQLParser</span> <span class="k">with</span> <span class="nc">QueryProcessor</span> <span class="k">with</span> <span class="nc">ExpectedASTs</span> <span class="o">{</span>
+        <span class="k">def</span> <span class="nf">runtest</span><span class="k">:</span> <span class="kt">Unit</span>
+        <span class="k">override</span> <span class="k">def</span> <span class="nf">filePath</span><span class="o">(</span><span class="n">table</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="nf">dataFilePath</span><span class="o">(</span><span class="n">table</span><span class="o">)</span>
+
+        <span class="k">def</span> <span class="nf">name</span><span class="k">:</span> <span class="kt">String</span>
+        <span class="k">def</span> <span class="nf">query</span><span class="k">:</span> <span class="kt">String</span>
+        <span class="k">def</span> <span class="nf">parsedQuery</span><span class="k">:</span> <span class="kt">Operator</span> <span class="o">=</span> <span class="nf">if</span> <span class="o">(</span><span class="nv">query</span><span class="o">.</span><span class="py">isEmpty</span><span class="o">)</span> <span class="nf">expectedAstForTest</span><span class="o">(</span><span class="n">name</span><span class="o">)</span> <span class="k">else</span> <span class="nf">parseSql</span><span class="o">(</span><span class="n">query</span><span class="o">)</span>
+      <span class="o">}</span>
+
+      <span class="k">trait</span> <span class="nc">PlainTestDriver</span> <span class="k">extends</span> <span class="nc">TestDriver</span> <span class="k">with</span> <span class="nc">PlainQueryProcessor</span> <span class="o">{</span>
+        <span class="k">override</span> <span class="k">def</span> <span class="nf">dynamicFilePath</span><span class="o">(</span><span class="n">table</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Table</span> <span class="o">=</span> <span class="nf">if</span> <span class="o">(</span><span class="n">table</span> <span class="o">==</span> <span class="s">"?"</span><span class="o">)</span> <span class="n">defaultEvalTable</span> <span class="k">else</span> <span class="nf">filePath</span><span class="o">(</span><span class="n">table</span><span class="o">)</span>
+        <span class="k">def</span> <span class="nf">eval</span><span class="o">(</span><span class="n">fn</span><span class="k">:</span> <span class="kt">Table</span><span class="o">)</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+          <span class="nf">execQuery</span><span class="o">(</span><span class="nc">PrintCSV</span><span class="o">(</span><span class="n">parsedQuery</span><span class="o">))</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+
+      <span class="k">trait</span> <span class="nc">StagedTestDriver</span> <span class="k">extends</span> <span class="nc">TestDriver</span> <span class="k">with</span> <span class="nc">StagedQueryProcessor</span> <span class="o">{</span>
+        <span class="k">var</span> <span class="n">dynamicFileName</span><span class="k">:</span> <span class="kt">Table</span> <span class="o">=</span> <span class="k">_</span>
+        <span class="k">override</span> <span class="k">def</span> <span class="nf">dynamicFilePath</span><span class="o">(</span><span class="n">table</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">Table</span> <span class="o">=</span> <span class="nf">if</span> <span class="o">(</span><span class="n">table</span> <span class="o">==</span> <span class="s">"?"</span><span class="o">)</span> <span class="n">dynamicFileName</span> <span class="k">else</span> <span class="nf">unit</span><span class="o">(</span><span class="nf">filePath</span><span class="o">(</span><span class="n">table</span><span class="o">))</span>
+        <span class="k">def</span> <span class="nf">snippet</span><span class="o">(</span><span class="n">fn</span><span class="k">:</span> <span class="kt">Table</span><span class="o">)</span><span class="k">:</span> <span class="kt">Rep</span><span class="o">[</span><span class="kt">Unit</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+          <span class="n">dynamicFileName</span> <span class="k">=</span> <span class="n">fn</span>
+          <span class="nf">execQuery</span><span class="o">(</span><span class="nc">PrintCSV</span><span class="o">(</span><span class="n">parsedQuery</span><span class="o">))</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+
+      <span class="k">abstract</span> <span class="k">class</span> <span class="nc">ScalaPlainQueryDriver</span><span class="o">(</span><span class="k">val</span> <span class="nv">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="k">val</span> <span class="nv">query</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">PlainTestDriver</span> <span class="k">with</span> <span class="nc">QueryProcessor</span> <span class="o">{</span> <span class="n">q</span> <span class="k">=&gt;</span>
+        <span class="k">override</span> <span class="k">def</span> <span class="nf">runtest</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+          <span class="nf">test</span><span class="o">(</span><span class="n">version</span><span class="o">+</span><span class="s">" "</span><span class="o">+</span><span class="n">name</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nf">for</span> <span class="o">(</span><span class="n">expectedParsedQuery</span> <span class="k">&lt;-</span> <span class="nv">expectedAstForTest</span><span class="o">.</span><span class="py">get</span><span class="o">(</span><span class="n">name</span><span class="o">))</span> <span class="o">{</span>
+              <span class="nf">assert</span><span class="o">(</span><span class="n">expectedParsedQuery</span><span class="o">==</span><span class="n">parsedQuery</span><span class="o">)</span>
+            <span class="o">}</span>
+            <span class="nf">checkOut</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="s">"csv"</span><span class="o">,</span> <span class="nf">eval</span><span class="o">(</span><span class="n">defaultEvalTable</span><span class="o">))</span>
+          <span class="o">}</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+
+      <span class="k">abstract</span> <span class="k">class</span> <span class="nc">ScalaStagedQueryDriver</span><span class="o">(</span><span class="k">val</span> <span class="nv">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="k">val</span> <span class="nv">query</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">DslDriver</span><span class="o">[</span><span class="kt">String</span>,<span class="kt">Unit</span><span class="o">]</span> <span class="k">with</span> <span class="nc">StagedTestDriver</span> <span class="k">with</span> <span class="nc">StagedQueryProcessor</span> <span class="k">with</span> <span class="nc">ScannerExp</span> <span class="o">{</span> <span class="n">q</span> <span class="k">=&gt;</span>
+        <span class="k">override</span> <span class="k">val</span> <span class="nv">codegen</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">DslGen</span> <span class="k">with</span> <span class="nc">ScalaGenScanner</span> <span class="o">{</span>
+          <span class="k">val</span> <span class="nv">IR</span><span class="k">:</span> <span class="kt">q.</span><span class="k">type</span> <span class="o">=</span> <span class="n">q</span>
+        <span class="o">}</span>
+
+        <span class="k">override</span> <span class="k">def</span> <span class="nf">runtest</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+          <span class="nf">if</span> <span class="o">(</span><span class="n">version</span> <span class="o">==</span> <span class="s">"query_staged0"</span> <span class="o">&amp;&amp;</span> <span class="nc">List</span><span class="o">(</span><span class="s">"Group"</span><span class="o">,</span><span class="s">"HashJoin"</span><span class="o">).</span><span class="py">exists</span><span class="o">(</span><span class="nv">parsedQuery</span><span class="o">.</span><span class="py">toString</span> <span class="n">contains</span> <span class="k">_</span><span class="o">))</span> <span class="nf">return</span> <span class="o">()</span>
+          <span class="nf">test</span><span class="o">(</span><span class="n">version</span><span class="o">+</span><span class="s">" "</span><span class="o">+</span><span class="n">name</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nf">for</span> <span class="o">(</span><span class="n">expectedParsedQuery</span> <span class="k">&lt;-</span> <span class="nv">expectedAstForTest</span><span class="o">.</span><span class="py">get</span><span class="o">(</span><span class="n">name</span><span class="o">))</span> <span class="o">{</span>
+              <span class="nf">assert</span><span class="o">(</span><span class="n">expectedParsedQuery</span><span class="o">==</span><span class="n">parsedQuery</span><span class="o">)</span>
+            <span class="o">}</span>
+            <span class="nf">check</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">code</span><span class="o">)</span>
+            <span class="n">precompile</span>
+            <span class="nf">checkOut</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="s">"csv"</span><span class="o">,</span> <span class="nf">eval</span><span class="o">(</span><span class="n">defaultEvalTable</span><span class="o">))</span>
+          <span class="o">}</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+
+      <span class="k">abstract</span> <span class="k">class</span> <span class="nc">CStagedQueryDriver</span><span class="o">(</span><span class="k">val</span> <span class="nv">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="k">val</span> <span class="nv">query</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">extends</span> <span class="nc">DslDriverC</span><span class="o">[</span><span class="kt">String</span>,<span class="kt">Unit</span><span class="o">]</span> <span class="k">with</span> <span class="nc">StagedTestDriver</span> <span class="k">with</span> <span class="nc">StagedQueryProcessor</span> <span class="k">with</span> <span class="nc">ScannerLowerExp</span> <span class="o">{</span> <span class="n">q</span> <span class="k">=&gt;</span>
+        <span class="k">override</span> <span class="k">val</span> <span class="nv">codegen</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">DslGenC</span> <span class="k">with</span> <span class="nc">CGenScannerLower</span> <span class="o">{</span>
+          <span class="k">val</span> <span class="nv">IR</span><span class="k">:</span> <span class="kt">q.</span><span class="k">type</span> <span class="o">=</span> <span class="n">q</span>
+        <span class="o">}</span>
+        <span class="k">override</span> <span class="k">def</span> <span class="nf">runtest</span><span class="k">:</span> <span class="kt">Unit</span> <span class="o">=</span> <span class="o">{</span>
+          <span class="nf">test</span><span class="o">(</span><span class="n">version</span><span class="o">+</span><span class="s">" "</span><span class="o">+</span><span class="n">name</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nf">for</span> <span class="o">(</span><span class="n">expectedParsedQuery</span> <span class="k">&lt;-</span> <span class="nv">expectedAstForTest</span><span class="o">.</span><span class="py">get</span><span class="o">(</span><span class="n">name</span><span class="o">))</span> <span class="o">{</span>
+              <span class="nf">assert</span><span class="o">(</span><span class="n">expectedParsedQuery</span><span class="o">==</span><span class="n">parsedQuery</span><span class="o">)</span>
+            <span class="o">}</span>
+            <span class="nf">check</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">code</span><span class="o">,</span> <span class="s">"c"</span><span class="o">)</span>
+            <span class="c1">//precompile</span>
+            <span class="nf">checkOut</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="s">"csv"</span><span class="o">,</span> <span class="nf">eval</span><span class="o">(</span><span class="n">defaultEvalTable</span><span class="o">))</span>
+          <span class="o">}</span>
+        <span class="o">}</span>
+      <span class="o">}</span>
+
+      <span class="k">def</span> <span class="nf">testquery</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">query</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">""</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">val</span> <span class="nv">drivers</span><span class="k">:</span> <span class="kt">List</span><span class="o">[</span><span class="kt">TestDriver</span><span class="o">]</span> <span class="k">=</span>
+          <span class="nc">List</span><span class="o">(</span>
+            <span class="k">new</span> <span class="nc">ScalaPlainQueryDriver</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">query</span><span class="o">)</span> <span class="k">with</span> <span class="nv">query_unstaged</span><span class="o">.</span><span class="py">QueryInterpreter</span><span class="o">,</span>
+            <span class="k">new</span> <span class="nc">ScalaStagedQueryDriver</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">query</span><span class="o">)</span> <span class="k">with</span> <span class="nv">query_staged0</span><span class="o">.</span><span class="py">QueryCompiler</span><span class="o">,</span>
+            <span class="k">new</span> <span class="nc">ScalaStagedQueryDriver</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">query</span><span class="o">)</span> <span class="k">with</span> <span class="nv">query_staged</span><span class="o">.</span><span class="py">QueryCompiler</span><span class="o">,</span>
+            <span class="k">new</span> <span class="nc">CStagedQueryDriver</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">query</span><span class="o">)</span> <span class="k">with</span> <span class="nv">query_optc</span><span class="o">.</span><span class="py">QueryCompiler</span> <span class="o">{</span>
+              <span class="c1">// FIXME: hack so i don't need to replace Value -&gt; #Value in all the files right now</span>
+              <span class="k">override</span> <span class="k">def</span> <span class="nf">isNumericCol</span><span class="o">(</span><span class="n">s</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="n">s</span> <span class="o">==</span> <span class="s">"Value"</span> <span class="o">||</span> <span class="nv">super</span><span class="o">.</span><span class="py">isNumericCol</span><span class="o">(</span><span class="n">s</span><span class="o">)</span>
+            <span class="o">}</span>
+          <span class="o">)</span>
+        <span class="nv">drivers</span><span class="o">.</span><span class="py">foreach</span><span class="o">(</span><span class="nv">_</span><span class="o">.</span><span class="py">runtest</span><span class="o">)</span>
+      <span class="o">}</span>
+
+      <span class="c1">// NOTE: we can use "select * from ?" to use dynamic file names (not used here right now)</span>
+
+      <span class="k">trait</span> <span class="nc">ExpectedASTs</span> <span class="k">extends</span> <span class="nc">QueryAST</span> <span class="o">{</span>
+        <span class="k">val</span> <span class="nv">scan_t</span> <span class="k">=</span> <span class="nc">Scan</span><span class="o">(</span><span class="s">"t.csv"</span><span class="o">)</span>
+        <span class="k">val</span> <span class="nv">scan_t1gram</span> <span class="k">=</span> <span class="nc">Scan</span><span class="o">(</span><span class="s">"?"</span><span class="o">,</span><span class="nc">Some</span><span class="o">(</span><span class="nc">Schema</span><span class="o">(</span><span class="s">"Phrase"</span><span class="o">,</span> <span class="s">"Year"</span><span class="o">,</span> <span class="s">"MatchCount"</span><span class="o">,</span> <span class="s">"VolumeCount"</span><span class="o">)),</span><span class="nc">Some</span><span class="o">(</span><span class="sc">'t'</span><span class="o">))</span>
+
+        <span class="k">val</span> <span class="nv">expectedAstForTest</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">(</span>
+          <span class="s">"t1"</span> <span class="o">-&gt;</span> <span class="n">scan_t</span><span class="o">,</span>
+          <span class="s">"t2"</span> <span class="o">-&gt;</span> <span class="nc">Project</span><span class="o">(</span><span class="nc">Schema</span><span class="o">(</span><span class="s">"Name"</span><span class="o">),</span> <span class="nc">Schema</span><span class="o">(</span><span class="s">"Name"</span><span class="o">),</span> <span class="n">scan_t</span><span class="o">),</span>
+          <span class="s">"t3"</span> <span class="o">-&gt;</span> <span class="nc">Project</span><span class="o">(</span><span class="nc">Schema</span><span class="o">(</span><span class="s">"Name"</span><span class="o">),</span> <span class="nc">Schema</span><span class="o">(</span><span class="s">"Name"</span><span class="o">),</span>
+                          <span class="nc">Filter</span><span class="o">(</span><span class="nc">Eq</span><span class="o">(</span><span class="nc">Field</span><span class="o">(</span><span class="s">"Flag"</span><span class="o">),</span> <span class="nc">Value</span><span class="o">(</span><span class="s">"yes"</span><span class="o">)),</span>
+                                 <span class="n">scan_t</span><span class="o">)),</span>
+          <span class="s">"t4"</span> <span class="o">-&gt;</span> <span class="nc">Join</span><span class="o">(</span><span class="n">scan_t</span><span class="o">,</span>
+                       <span class="nc">Project</span><span class="o">(</span><span class="nc">Schema</span><span class="o">(</span><span class="s">"Name1"</span><span class="o">),</span> <span class="nc">Schema</span><span class="o">(</span><span class="s">"Name"</span><span class="o">),</span> <span class="n">scan_t</span><span class="o">)),</span>
+          <span class="s">"t5"</span> <span class="o">-&gt;</span> <span class="nc">Join</span><span class="o">(</span><span class="n">scan_t</span><span class="o">,</span>
+                       <span class="nc">Project</span><span class="o">(</span><span class="nc">Schema</span><span class="o">(</span><span class="s">"Name"</span><span class="o">),</span> <span class="nc">Schema</span><span class="o">(</span><span class="s">"Name"</span><span class="o">),</span> <span class="n">scan_t</span><span class="o">)),</span>
+          <span class="s">"t4h"</span> <span class="o">-&gt;</span> <span class="nc">HashJoin</span><span class="o">(</span><span class="n">scan_t</span><span class="o">,</span>
+                       <span class="nc">Project</span><span class="o">(</span><span class="nc">Schema</span><span class="o">(</span><span class="s">"Name1"</span><span class="o">),</span> <span class="nc">Schema</span><span class="o">(</span><span class="s">"Name"</span><span class="o">),</span> <span class="n">scan_t</span><span class="o">)),</span>
+          <span class="s">"t5h"</span> <span class="o">-&gt;</span> <span class="nc">HashJoin</span><span class="o">(</span><span class="n">scan_t</span><span class="o">,</span>
+                       <span class="nc">Project</span><span class="o">(</span><span class="nc">Schema</span><span class="o">(</span><span class="s">"Name"</span><span class="o">),</span> <span class="nc">Schema</span><span class="o">(</span><span class="s">"Name"</span><span class="o">),</span> <span class="n">scan_t</span><span class="o">)),</span>
+          <span class="s">"t6"</span>  <span class="o">-&gt;</span> <span class="nc">Group</span><span class="o">(</span><span class="nc">Schema</span><span class="o">(</span><span class="s">"Name"</span><span class="o">),</span><span class="nc">Schema</span><span class="o">(</span><span class="s">"Value"</span><span class="o">),</span> <span class="n">scan_t</span><span class="o">),</span>
+
+          <span class="s">"t1gram1"</span> <span class="o">-&gt;</span> <span class="n">scan_t1gram</span><span class="o">,</span>
+          <span class="s">"t1gram2"</span> <span class="o">-&gt;</span> <span class="nc">Filter</span><span class="o">(</span><span class="nc">Eq</span><span class="o">(</span><span class="nc">Field</span><span class="o">(</span><span class="s">"Phrase"</span><span class="o">),</span> <span class="nc">Value</span><span class="o">(</span><span class="s">"Auswanderung"</span><span class="o">)),</span> <span class="n">scan_t1gram</span><span class="o">)</span>
+        <span class="o">)</span>
+      <span class="o">}</span>
+
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t1"</span><span class="o">,</span> <span class="s">"select * from t.csv"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t2"</span><span class="o">,</span> <span class="s">"select Name from t.csv"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t3"</span><span class="o">,</span> <span class="s">"select Name from t.csv where Flag='yes'"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t4"</span><span class="o">,</span> <span class="s">"select * from nestedloops t.csv join (select Name as Name1 from t.csv)"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t5"</span><span class="o">,</span> <span class="s">"select * from nestedloops t.csv join (select Name from t.csv)"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t4h"</span><span class="o">,</span><span class="s">"select * from t.csv join (select Name as Name1 from t.csv)"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t5h"</span><span class="o">,</span><span class="s">"select * from t.csv join (select Name from t.csv)"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t6"</span><span class="o">,</span> <span class="s">"select * from t.csv group by Name sum Value"</span><span class="o">)</span> <span class="c1">// not 100% right syntax, but hey ...</span>
+
+      <span class="k">val</span> <span class="nv">defaultEvalTable</span> <span class="k">=</span> <span class="nf">dataFilePath</span><span class="o">(</span><span class="s">"t1gram.csv"</span><span class="o">)</span>
+      <span class="k">val</span> <span class="nv">t1gram</span> <span class="k">=</span> <span class="s">"? schema Phrase, Year, MatchCount, VolumeCount delim t"</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t1gram1"</span><span class="o">,</span> <span class="n">s</span><span class="s">"select * from $t1gram"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t1gram2"</span><span class="o">,</span> <span class="n">s</span><span class="s">"select * from $t1gram where Phrase='Auswanderung'"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t1gram2n"</span><span class="o">,</span> <span class="n">s</span><span class="s">"select * from nestedloops words.csv join (select Phrase as Word, Year, MatchCount, VolumeCount from $t1gram)"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t1gram2h"</span><span class="o">,</span> <span class="n">s</span><span class="s">"select * from words.csv join (select Phrase as Word, Year, MatchCount, VolumeCount from $t1gram)"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t1gram3"</span><span class="o">,</span> <span class="n">s</span><span class="s">"select * from nestedloops words.csv join (select * from $t1gram)"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t1gram3h"</span><span class="o">,</span> <span class="n">s</span><span class="s">"select * from words.csv join (select * from $t1gram)"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t1gram4"</span><span class="o">,</span> <span class="n">s</span><span class="s">"select * from nestedloops words.csv join (select Phrase as Word, Year, MatchCount, VolumeCount from $t1gram)"</span><span class="o">)</span>
+      <span class="nf">testquery</span><span class="o">(</span><span class="s">"t1gram4h"</span><span class="o">,</span> <span class="n">s</span><span class="s">"select * from words.csv join (select Phrase as Word, Year, MatchCount, VolumeCount from $t1gram)"</span><span class="o">)</span>
+    <span class="o">}</span>
+</code></pre></div></div>
+
+<h2 id="suggestions-for-exercises">Suggestions for Exercises</h2>
+
+<p>The query engine we presented is decidedly simple, so as to present an 
+end-to-end system that can be understood in total. Below are a few 
+suggestions for interesting extensions.</p>
+
+<ul>
+  <li>
+    <p>Implement a scanner that reads on demand from a URL.</p>
+
+    <p>(Cool with: a new operator that only prints the first N results.)</p>
+  </li>
+  <li>
+    <p>(easy) Implement a typed schema in the Scala version, so that the 
+types of columns are statically known, while the values are not.</p>
+
+    <p>(Hint: the C version already does this, but is also more involved 
+because of the custom type representations.)</p>
+  </li>
+  <li>
+    <p>Implement more predicates (e.g. <code class="language-plaintext highlighter-rouge">LessThan</code>) and predicate 
+combinators (e.g. <code class="language-plaintext highlighter-rouge">And</code>, <code class="language-plaintext highlighter-rouge">Or</code>) in order to run more interesting 
+queries.</p>
+  </li>
+  <li>
+    <p>(medium) Implement a real column-oriented database, where each
+column has its 
+own file so that it can be read independently.</p>
+  </li>
+  <li>
+    <p>Implement an optimizer on the relational algebra before generating
+code. 
+(Hint: smart constructors might help.)</p>
+  </li>
+</ul>
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

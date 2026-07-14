@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>대규모 단백질 폴드 분류 — TEDBench & MiAE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A0F1A;          /* 심층 배경 */
+  --ink-2:#0F1626;        /* 카드 배경 */
+  --ink-3:#161F33;        /* 라인/보더 */
+  --paper:#F4F2EC;        /* 밝은 섹션 */
+  --paper-2:#EAE7DD;
+  --coral:#E8503A;        /* 단백질 백본 색 */
+  --coral-soft:#F07A5F;
+  --amber:#E8A33D;        /* 알파 헬릭스 강조 */
+  --cyan:#5FD3D6;         /* 마스크 토큰 / 잠재 표현 */
+  --violet:#8B7FE8;       /* 베타 시트 */
+  --mask:#5A6577;         /* 마스킹된 잔기 */
+  --fg:#E8EAEF;
+  --fg-dim:#9AA3B4;
+  --fg-mute:#6B7488;
+  --serif:"Newsreader",Georgia,serif;
+  --serif-kr:"Noto Serif KR",serif;
+  --sans:"Space Grotesk","Noto Sans KR",sans-serif;
+  --kr:"Noto Sans KR",sans-serif;
+  --mono:"JetBrains Mono",monospace;
+  --maxw:1120px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--ink);
+  color:var(--fg);
+  font-family:var(--kr);
+  font-weight:300;
+  line-height:1.85;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+::selection{background:var(--coral);color:#fff}
+
+/* ---------- 배경 격자 노이즈 ---------- */
+.bg-grid{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(232,80,58,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(232,80,58,.03) 1px,transparent 1px);
+  background-size:44px 44px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 80%);
+}
+
+/* ---------- 진행 바 ---------- */
+.progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--coral),var(--amber));z-index:100;width:0;transition:width .1s linear}
+
+/* ---------- 레이아웃 ---------- */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px;position:relative;z-index:2}
+section{position:relative;z-index:2}
+
+/* ---------- 헤더 / HERO ---------- */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+#backbone-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;opacity:.9}
+.hero-veil{position:absolute;inset:0;z-index:1;background:
+   radial-gradient(ellipse 60% 50% at 75% 40%,transparent,var(--ink) 78%),
+   linear-gradient(180deg,rgba(10,15,26,.4),var(--ink) 92%)}
+.hero-inner{position:relative;z-index:3}
+.eyebrow{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;
+  color:var(--coral);display:flex;align-items:center;gap:14px;margin-bottom:26px;
+}
+.eyebrow::before{content:"";width:38px;height:1px;background:var(--coral)}
+.hero h1{
+  font-family:var(--serif-kr);font-weight:600;color:#fff;
+  font-size:clamp(2.4rem,6vw,4.6rem);line-height:1.12;letter-spacing:-.01em;
+  max-width:15ch;
+}
+.hero h1 .en{font-family:var(--serif);font-style:italic;font-weight:500;color:var(--coral-soft)}
+.hero-sub{
+  margin-top:32px;max-width:52ch;font-size:1.08rem;color:var(--fg-dim);font-weight:300;line-height:1.9;
+}
+.hero-meta{
+  margin-top:44px;display:flex;flex-wrap:wrap;gap:34px;font-family:var(--mono);font-size:.78rem;color:var(--fg-mute);
+}
+.hero-meta b{color:var(--fg);font-weight:500;display:block;font-size:1.5rem;font-family:var(--sans);letter-spacing:-.02em}
+.hero-meta b .u{font-size:.85rem;color:var(--coral);font-weight:400}
+.scroll-hint{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);z-index:3;
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;color:var(--fg-mute);text-transform:uppercase;
+  display:flex;flex-direction:column;align-items:center;gap:10px;animation:bob 2.4s ease-in-out infinite}
+.scroll-hint span{width:1px;height:34px;background:linear-gradient(var(--coral),transparent)}
+@keyframes bob{50%{transform:translateX(-50%) translateY(8px)}}
+
+/* ---------- 저자 스트립 ---------- */
+.authors{border-top:1px solid var(--ink-3);border-bottom:1px solid var(--ink-3);background:var(--ink-2)}
+.authors .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:20px;padding-top:22px;padding-bottom:22px}
+.authors .names{font-family:var(--sans);font-size:.98rem;color:var(--fg);letter-spacing:.01em}
+.authors .names small{color:var(--fg-mute);font-family:var(--mono);font-size:.72rem;display:block;margin-top:4px}
+.authors .venue{font-family:var(--mono);font-size:.74rem;color:var(--coral);letter-spacing:.14em;text-transform:uppercase;text-align:right}
+
+/* ---------- 섹션 공통 ---------- */
+.sec{padding:118px 0}
+.sec-head{margin-bottom:60px;max-width:64ch}
+.sec-num{font-family:var(--mono);font-size:.74rem;letter-spacing:.28em;color:var(--coral);text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:12px}
+.sec-num::before{content:"";display:inline-block;width:8px;height:8px;background:var(--coral);border-radius:50%}
+.sec h2{font-family:var(--serif-kr);font-weight:600;font-size:clamp(1.9rem,3.6vw,2.9rem);color:#fff;line-height:1.28;letter-spacing:-.01em}
+.sec h2 .en{font-family:var(--serif);font-style:italic;color:var(--fg-dim);font-weight:400}
+.lead{font-size:1.12rem;color:var(--fg-dim);margin-top:22px;font-weight:300;line-height:1.95}
+p{margin-bottom:1.2em}
+.body-p{color:var(--fg-dim);font-weight:300;max-width:70ch}
+strong,.hl{color:var(--fg);font-weight:500}
+.mono-accent{font-family:var(--mono);color:var(--coral-soft);font-size:.92em}
+
+/* ---------- 문제 정의 카드 ---------- */
+.problem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1px;background:var(--ink-3);border:1px solid var(--ink-3);border-radius:4px;overflow:hidden}
+.problem-card{background:var(--ink-2);padding:38px 32px;position:relative;transition:background .4s}
+.problem-card:hover{background:#131C30}
+.problem-card .k{font-family:var(--mono);font-size:.7rem;letter-spacing:.2em;color:var(--coral);text-transform:uppercase;margin-bottom:16px}
+.problem-card h3{font-family:var(--sans);font-size:1.15rem;font-weight:600;color:#fff;margin-bottom:12px;letter-spacing:-.01em}
+.problem-card p{font-size:.94rem;color:var(--fg-dim);font-weight:300;margin:0}
+
+/* ---------- 마스킹 인터랙티브 ---------- */
+.masking-lab{background:var(--ink-2);border:1px solid var(--ink-3);border-radius:6px;padding:44px;margin-top:10px}
+.masking-lab .lab-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px;margin-bottom:34px}
+.masking-lab .lab-head h3{font-family:var(--sans);font-size:1.2rem;font-weight:600;color:#fff}
+.masking-lab .lab-head p{font-size:.86rem;color:var(--fg-mute);margin:6px 0 0;font-weight:300}
+.frame-grid{display:grid;grid-template-columns:repeat(24,1fr);gap:5px;margin-bottom:30px}
+.frame{aspect-ratio:1;border-radius:2px;background:var(--coral);transition:background .35s ease,transform .35s ease,opacity .35s ease}
+.frame.masked{background:var(--mask);opacity:.35;transform:scale(.82)}
+.frame.visible{box-shadow:0 0 0 1px rgba(232,80,58,.4)}
+.slider-row{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.slider-row label{font-family:var(--mono);font-size:.76rem;color:var(--fg-dim);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;min-width:180px;height:3px;background:var(--ink-3);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--coral);cursor:pointer;border:3px solid var(--ink);box-shadow:0 0 0 1px var(--coral)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--coral);cursor:pointer;border:3px solid var(--ink)}
+.mask-readout{display:flex;gap:36px;font-family:var(--mono);font-size:.8rem;color:var(--fg-mute)}
+.mask-readout b{display:block;font-family:var(--sans);font-size:1.9rem;color:var(--coral);font-weight:600;letter-spacing:-.02em}
+.mask-readout .rmsd b{color:var(--cyan)}
+.lab-note{margin-top:26px;font-size:.85rem;color:var(--fg-mute);font-weight:300;border-top:1px solid var(--ink-3);padding-top:20px}
+
+/* ---------- 아키텍처 파이프라인 ---------- */
+.pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:0;align-items:stretch;margin-top:14px}
+.pipe-node{background:var(--ink-2);border:1px solid var(--ink-3);padding:26px 20px;text-align:center;position:relative}
+.pipe-node .icon{height:64px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.pipe-node .icon svg{overflow:visible}
+.pipe-node h4{font-family:var(--sans);font-size:.98rem;color:#fff;font-weight:600;margin-bottom:8px}
+.pipe-node p{font-size:.8rem;color:var(--fg-mute);font-weight:300;margin:0;line-height:1.6}
+.pipe-arrow{position:absolute;right:-11px;top:50%;transform:translateY(-50%);z-index:5;color:var(--coral);font-size:1.1rem}
+.pipe-tag{font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;color:var(--coral);text-transform:uppercase;margin-bottom:14px;display:block}
+
+/* ---------- 프레임 수식 박스 ---------- */
+.se3-box{background:var(--ink-2);border:1px solid var(--ink-3);border-radius:6px;padding:40px;margin-top:40px;display:grid;grid-template-columns:1.3fr 1fr;gap:44px;align-items:center}
+.se3-box .math{font-family:var(--mono);color:var(--cyan);font-size:.95rem;background:var(--ink);border:1px solid var(--ink-3);border-radius:4px;padding:22px 26px;line-height:2.1;overflow-x:auto}
+.se3-box .math .op{color:var(--coral)}
+.se3-box .math .cm{color:var(--fg-mute)}
+.se3-box .exp h4{font-family:var(--sans);color:#fff;font-size:1.05rem;margin-bottom:10px;font-weight:600}
+.se3-box .exp p{font-size:.92rem;color:var(--fg-dim);font-weight:300;margin-bottom:1em}
+.se3-box .exp p:last-child{margin-bottom:0}
+
+/* ---------- 결과 테이블 ---------- */
+.results{background:var(--paper);color:var(--ink)}
+.results .sec-num{color:var(--coral)}
+.results .sec-num::before{background:var(--coral)}
+.results h2{color:var(--ink)}
+.results h2 .en{color:#8a8577}
+.results .lead{color:#4a4a44}
+.tbl-wrap{overflow-x:auto;border:1px solid #d8d4c8;border-radius:6px;background:#fbfaf6}
+table{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:.9rem;min-width:560px}
+caption{text-align:left;font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--coral);padding:18px 20px 4px;font-weight:500}
+thead th{text-align:right;padding:14px 18px;font-weight:600;color:#3a3a34;border-bottom:2px solid var(--ink);font-size:.82rem}
+thead th:first-child{text-align:left}
+tbody td{padding:12px 18px;text-align:right;border-bottom:1px solid #e6e2d6;color:#33332e;font-variant-numeric:tabular-nums}
+tbody td:first-child{text-align:left;font-weight:500}
+tbody tr:hover{background:#f2efe4}
+.grp-row td{background:#ece8dc;font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:#7a7568;text-align:left;padding:9px 18px;font-weight:500}
+.best{color:var(--coral);font-weight:700}
+.second{text-decoration:underline;text-decoration-color:#c9a86a;text-underline-offset:3px}
+.ours td:first-child{color:var(--coral);font-weight:700}
+.ours{background:#fbf1ec}
+.tbl-note{font-size:.82rem;color:#6b6b60;margin-top:16px;font-weight:300}
+
+/* ---------- 비교 하이라이트 (계산 비용) ---------- */
+.compute-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;margin-top:14px}
+.compute-card{border:1px solid #d8d4c8;border-radius:6px;padding:30px;background:#fbfaf6}
+.compute-card .lbl{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:#8a8577;margin-bottom:14px}
+.compute-card .big{font-family:var(--sans);font-size:2.6rem;font-weight:700;color:var(--ink);letter-spacing:-.03em;line-height:1}
+.compute-card .big .u{font-size:1rem;color:var(--coral);font-weight:500}
+.compute-card .sub{font-size:.86rem;color:#6b6b60;margin-top:10px;font-weight:300}
+.compute-card.win{border-color:var(--coral);background:#fbf1ec}
+.compute-card.win .big{color:var(--coral)}
+.bar-track{height:8px;background:#e6e2d6;border-radius:4px;margin-top:16px;overflow:hidden}
+.bar-fill{height:100%;background:var(--coral);border-radius:4px;width:0;transition:width 1.2s cubic-bezier(.2,.7,.2,1)}
+.bar-fill.dim{background:#b8b3a4}
+
+/* ---------- 어블레이션 강조 라인 ---------- */
+.findings{display:grid;gap:1px;background:var(--ink-3);border:1px solid var(--ink-3);border-radius:4px;overflow:hidden;margin-top:14px}
+.finding{background:var(--ink-2);padding:30px 34px;display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center;transition:background .35s}
+.finding:hover{background:#131C30}
+.finding .fnum{font-family:var(--mono);font-size:.9rem;color:var(--coral);letter-spacing:.1em}
+.finding .ftext h4{font-family:var(--sans);font-size:1.05rem;color:#fff;font-weight:600;margin-bottom:6px}
+.finding .ftext p{font-size:.9rem;color:var(--fg-dim);font-weight:300;margin:0}
+.finding .fval{font-family:var(--sans);font-size:1.7rem;font-weight:700;color:var(--cyan);white-space:nowrap;letter-spacing:-.02em;text-align:right}
+.finding .fval small{display:block;font-family:var(--mono);font-size:.62rem;color:var(--fg-mute);letter-spacing:.14em;text-transform:uppercase;font-weight:400}
+
+/* ---------- 마무리 ---------- */
+.closing{background:var(--ink-2);border-top:1px solid var(--ink-3)}
+.closing h2{color:#fff}
+.limit-list{list-style:none;margin-top:30px;display:grid;gap:16px}
+.limit-list li{padding-left:30px;position:relative;color:var(--fg-dim);font-weight:300;max-width:72ch}
+.limit-list li::before{content:"—";position:absolute;left:0;color:var(--coral);font-weight:500}
+
+footer{border-top:1px solid var(--ink-3);padding:50px 0;background:var(--ink)}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px;align-items:center}
+footer .repo{font-family:var(--mono);font-size:.8rem;color:var(--fg-dim)}
+footer .repo a{color:var(--coral);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .3s}
+footer .repo a:hover{border-color:var(--coral)}
+footer .fine{font-family:var(--mono);font-size:.7rem;color:var(--fg-mute);letter-spacing:.06em}
+
+/* ---------- 스크롤 리빌 ---------- */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}.reveal.d4{transition-delay:.32s}
+
+/* ---------- 반응형 ---------- */
+@media(max-width:860px){
+  .pipe{grid-template-columns:1fr;gap:14px}
+  .pipe-arrow{display:none}
+  .se3-box{grid-template-columns:1fr;gap:28px}
+  .finding{grid-template-columns:auto 1fr;gap:16px}
+  .finding .fval{grid-column:1/-1;text-align:left}
+  .frame-grid{grid-template-columns:repeat(16,1fr)}
+  .masking-lab{padding:28px}
+}
+@media(max-width:520px){
+  .frame-grid{grid-template-columns:repeat(12,1fr)}
+  .sec{padding:80px 0}
+  .authors .wrap{flex-direction:column;align-items:flex-start}
+  .authors .venue{text-align:left}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="progress" id="progress"></div>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <canvas id="backbone-canvas"></canvas>
+  <div class="hero-veil"></div>
+  <div class="wrap hero-inner">
+    <div class="eyebrow">ICML 2026 · 구조 표현 학습</div>
+    <h1>대규모 <span class="en">단백질 폴드</span> 분류: 벤치마크와 사전학습</h1>
+    <p class="hero-sub">
+      예측 단백질 구조가 수억 개 규모에 도달한 지금, 구조생물학은 컴퓨터 비전의 "ImageNet 순간"을 맞이할 수 있다.
+      이 연구는 중복을 제거한 대규모 폴드 분류 벤치마크 <strong>TEDBench</strong>와, 최대 90% 마스킹으로 구조 표현을 학습하는
+      자기지도 프레임워크 <strong>MiAE</strong>를 제안한다.
+    </p>
+    <div class="hero-meta">
+      <div><b>490<span class="u">K</span></b>단백질 구조 — 기존 대비 30배</div>
+      <div><b>965</b>CATH 토폴로지 클래스</div>
+      <div><b>90<span class="u">%</span></b>마스킹 비율</div>
+      <div><b>180<span class="u">×</span></b>사전학습 비용 절감</div>
+    </div>
+  </div>
+  <div class="scroll-hint">스크롤<span></span></div>
+</header>
+
+<!-- ============ 저자 ============ -->
+<div class="authors">
+  <div class="wrap">
+    <div class="names">
+      Dexiong Chen · Andrei Manolache · Mathias Niepert · Karsten Borgwardt
+      <small>Max Planck Institute of Biochemistry · University of Stuttgart · Bitdefender</small>
+    </div>
+    <div class="venue">PMLR 306 · 2026</div>
+  </div>
+</div>
+
+<!-- ============ 1. 문제 정의 ============ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">01 — 왜 대규모 벤치마크인가</div>
+      <h2>구조 분류에는 <span class="en">ImageNet</span>이 없었다</h2>
+      <p class="lead">
+        AlphaFold 데이터베이스는 수억 개의 예측 구조를 제공한다. 그러나 구조생물학에는 중복을 제거한 대규모 지도학습
+        과제가 부재했고, 이것이 컴퓨터 비전이나 자연어 처리에서 나타난 빠른 반복 개발을 가로막는 병목이었다.
+      </p>
+    </div>
+    <div class="problem-grid">
+      <div class="problem-card reveal d1">
+        <div class="k">단위 / Unit</div>
+        <h3>단백질 도메인</h3>
+        <p>단백질 도메인은 여러 단백질에 반복적으로 나타나는 모듈형 하부 구조이며, 기능적·진화적 단위에 대응한다.
+        CATH 계층은 이 도메인을 거친 형태 클래스부터 세밀한 진화 관계까지 중첩 범주로 배열한다.</p>
+      </div>
+      <div class="problem-card reveal d2">
+        <div class="k">자원 / Resource</div>
+        <h3>TED 백과사전</h3>
+        <p>Encyclopedia of Domains(TED)는 AFDB를 도메인 단위로 분해하고 구조 기반 매칭으로 CATH 범주에 대응시킨다.
+        전체 AFDB에서 약 3억 6,500만 개 도메인을 식별하고 군집화한다.</p>
+      </div>
+      <div class="problem-card reveal d3">
+        <div class="k">과제 / Task</div>
+        <h3>토폴로지 예측</h3>
+        <p>주어진 단백질 구조에서 가장 큰 도메인의 CATH 토폴로지(T-level) 라벨을 예측한다. 구조당 하나의 명확한
+        타깃을 정의하는 표준 다중 클래스 분류 문제로 정식화된다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. TEDBench 구성 ============ -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">02 — 벤치마크 구성</div>
+      <h2>중복을 제거한 <span class="en">490K</span> 규모의 데이터셋</h2>
+      <p class="body-p" style="margin-top:22px">
+        3억 6,500만 개 도메인에는 상당한 구조적 중복이 존재한다. TEDBench는 이를 Foldseek로 군집화한 AFDB의
+        대표 단백질(약 227만 개)로 제한하고, 평균 <span class="mono-accent">pLDDT &gt; 80</span>의 고신뢰 예측만 남긴다.
+        각 단백질에는 가장 큰 도메인의 CATH 라벨을 부여해 구조당 하나의 타깃을 확정한다.
+      </p>
+    </div>
+
+    <div class="findings">
+      <div class="finding reveal d1">
+        <div class="fnum">A</div>
+        <div class="ftext"><h4>롱테일 라벨 재편성</h4><p>표본 10개 미만의 희소 T-level 클래스를 동일 A-level 내에서 <span class="mono-accent">C.A.x</span> 라벨로 병합해 최소 클래스 크기를 보장한다. 재편성 후 최종 라벨 공간은 965개 클래스로 구성된다.</p></div>
+        <div class="fval">965<small>클래스</small></div>
+      </div>
+      <div class="finding reveal d2">
+        <div class="fnum">B</div>
+        <div class="ftext"><h4>계층적 층화 분할</h4><p>비중복 구성이므로 단순 무작위 층화 분할을 채택한다. 학습·검증·시험을 8:1:1 비율로 나누고 클래스 비율을 각 분할에서 보존한다.</p></div>
+        <div class="fval">462,175<small>예측 구조</small></div>
+      </div>
+      <div class="finding reveal d3">
+        <div class="fnum">C</div>
+        <div class="ftext"><h4>외부 실험 구조 시험셋</h4><p>CATH v4.4의 40% 비중복 집합에서 실험적으로 결정된 27K 단백질을 별도로 구성한다. TEDBench와 완전히 분리되어, 예측 구조에서 실험 구조로의 도메인 전이를 엄격하게 평가한다.</p></div>
+        <div class="fval">27,638<small>실험 구조</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. 마스킹 실험실 (시그니처) ============ -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">03 — MiAE 핵심 아이디어</div>
+      <h2>백본 프레임의 <span class="en">90%</span>를 지운다</h2>
+      <p class="body-p" style="margin-top:22px">
+        MiAE는 이미지용 마스킹 오토인코더(MAE)의 원리를 3차원 단백질 기하로 확장한다. 각 잔기를 국소 좌표 프레임으로
+        표현한 뒤, 프레임의 극단적으로 높은 비율(최대 90%)을 무작위로 제거하고 마스킹된 좌표를 복원하도록 학습한다.
+        공격적 마스킹은 국소 중복을 줄이고, 이웃 잔기로부터의 단순 보간을 통한 자명한 복원을 막는다.
+      </p>
+    </div>
+
+    <div class="masking-lab reveal">
+      <div class="lab-head">
+        <div>
+          <h3>마스킹 비율 시뮬레이터</h3>
+          <p>슬라이더를 움직여 잔기 프레임이 제거되는 정도와 그에 따른 복원 오차(RMSD)를 확인한다.</p>
+        </div>
+        <div class="mask-readout">
+          <div><span>마스킹 비율</span><b id="mr-pct">90%</b></div>
+          <div class="rmsd"><span>복원 RMSD (Å)</span><b id="mr-rmsd">2.88</b></div>
+        </div>
+      </div>
+      <div class="frame-grid" id="frameGrid"></div>
+      <div class="slider-row">
+        <label>낮음 · 50%</label>
+        <input type="range" id="maskSlider" min="50" max="95" value="90" step="5">
+        <label>높음 · 95%</label>
+      </div>
+      <p class="lab-note">
+        마스킹 비율이 70%일 때도 백본 복원 RMSD는 <span class="mono-accent">0.57Å</span>로 낮게 유지된다. 이는 국소 구조 조각이
+        고도로 상관되어 신뢰성 있게 보간될 수 있음을 뜻한다. 90%를 초과하면 RMSD가 급격히 증가하며, 모델은 더 전역적인
+        구조 추론에 의존하게 되어 결과적으로 더 유익한 표현을 학습한다. 이는 단백질 백본의 "3차 알파벳"과 재사용 가능한
+        구조 모티프에 관한 생물학적 관찰과 일치한다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. 아키텍처 ============ -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">04 — 비대칭 인코더·디코더</div>
+      <h2>무거운 인코더는 <span class="en">10%</span>만 본다</h2>
+      <p class="body-p" style="margin-top:22px">
+        MiAE는 비대칭 구조를 채택한다. 무거운 SE(3)-불변 인코더는 보이는 프레임(예: 잔기의 10%)만 처리하고, 가벼운
+        디코더가 잠재 표현과 마스크 토큰으로부터 전체 백본을 복원한다. 마스킹된 프레임은 인코더 단계에서 완전히
+        제거되므로, 인코더는 전체 서열의 일부만 다루면서 대규모로 확장될 수 있다.
+      </p>
+    </div>
+
+    <div class="pipe">
+      <div class="pipe-node reveal d1">
+        <span class="pipe-tag">입력</span>
+        <div class="icon">
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+            <path d="M6 40 Q12 10 20 26 T34 26 T48 12" stroke="var(--coral)" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <circle cx="20" cy="26" r="3.5" fill="var(--amber)"/><circle cx="34" cy="26" r="3.5" fill="var(--amber)"/>
+          </svg>
+        </div>
+        <h4>입력 좌표</h4>
+        <p>백본 원자 (N, Cα, C)로부터 잔기별 SE(3) 프레임 구성</p>
+        <span class="pipe-arrow">→</span>
+      </div>
+      <div class="pipe-node reveal d2">
+        <span class="pipe-tag">마스킹</span>
+        <div class="icon">
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+            <rect x="6" y="6" width="12" height="12" rx="2" fill="var(--coral)"/>
+            <rect x="20" y="6" width="12" height="12" rx="2" fill="var(--mask)" opacity=".4"/>
+            <rect x="34" y="6" width="12" height="12" rx="2" fill="var(--mask)" opacity=".4"/>
+            <rect x="6" y="20" width="12" height="12" rx="2" fill="var(--mask)" opacity=".4"/>
+            <rect x="20" y="20" width="12" height="12" rx="2" fill="var(--mask)" opacity=".4"/>
+            <rect x="34" y="20" width="12" height="12" rx="2" fill="var(--coral)"/>
+            <rect x="6" y="34" width="12" height="12" rx="2" fill="var(--mask)" opacity=".4"/>
+            <rect x="20" y="34" width="12" height="12" rx="2" fill="var(--mask)" opacity=".4"/>
+            <rect x="34" y="34" width="12" height="12" rx="2" fill="var(--mask)" opacity=".4"/>
+          </svg>
+        </div>
+        <h4>프레임 마스킹</h4>
+        <p>최대 90% 프레임을 무작위 제거, 보이는 프레임만 유지</p>
+        <span class="pipe-arrow">→</span>
+      </div>
+      <div class="pipe-node reveal d3">
+        <span class="pipe-tag">인코더</span>
+        <div class="icon">
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+            <rect x="8" y="8" width="36" height="36" rx="4" fill="none" stroke="var(--cyan)" stroke-width="3"/>
+            <path d="M16 26 L26 18 L36 26 L26 34 Z" fill="var(--cyan)" opacity=".3"/>
+            <circle cx="26" cy="26" r="4" fill="var(--cyan)"/>
+          </svg>
+        </div>
+        <h4>기하 인코더</h4>
+        <p>ESM3 기반 전역 기하 어텐션 · SE(3)-불변 잠재 표현</p>
+        <span class="pipe-arrow">→</span>
+      </div>
+      <div class="pipe-node reveal d4">
+        <span class="pipe-tag">디코더</span>
+        <div class="icon">
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+            <rect x="12" y="14" width="28" height="10" rx="2" fill="var(--violet)" opacity=".5"/>
+            <rect x="12" y="28" width="28" height="10" rx="2" fill="var(--violet)" opacity=".8"/>
+          </svg>
+        </div>
+        <h4>경량 디코더</h4>
+        <p>잠재 표현 + 마스크 토큰으로 전체 백본 복원 · 토큰당 비용 &lt;10%</p>
+        <span class="pipe-arrow">→</span>
+      </div>
+      <div class="pipe-node reveal d4">
+        <span class="pipe-tag">출력</span>
+        <div class="icon">
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+            <path d="M6 40 Q12 10 20 26 T34 26 T48 12" stroke="var(--coral-soft)" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <path d="M6 42 Q12 14 20 28 T34 28 T48 16" stroke="var(--fg-mute)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-dasharray="3 3"/>
+          </svg>
+        </div>
+        <h4>복원 좌표</h4>
+        <p>사전학습 후 디코더는 폐기, 인코더만 다운스트림에 사용</p>
+      </div>
+    </div>
+
+    <!-- SE(3) 프레임 수식 -->
+    <div class="se3-box reveal">
+      <div class="math">
+<span class="cm"># 잔기 i의 SE(3) 변환</span>
+T<sub>i</sub> = [ <span class="op">R<sub>i</sub></span>   t<sub>i</sub> ]   ∈ SE(3)
+     [ 0    1  ]
+
+<span class="cm"># 국소 → 전역</span>
+p<sub>global</sub> = <span class="op">R<sub>i</sub></span> · p<sub>local</sub> + t<sub>i</sub>
+
+<span class="cm"># 전역 → 국소</span>
+p<sub>local</sub>  = <span class="op">R<sub>i</sub><sup>⊤</sup></span> · (p<sub>global</sub> − t<sub>i</sub>)
+      </div>
+      <div class="exp">
+        <h4>프레임 표현</h4>
+        <p>각 잔기는 3차원 공간의 강체 위치와 방향을 인코딩하는 국소 좌표 프레임으로 모델링된다.
+        병진 <span class="mono-accent">t<sub>i</sub></span>는 Cα의 전역 좌표에, 회전 <span class="mono-accent">R<sub>i</sub></span>는 백본 원자 (N, Cα, C)에서 유도한 정규직교 기저에 대응한다.</p>
+        <p>이 구성은 잔기의 국소 좌표계를 백본에 정렬시켜, 전역 강체 변환에 불변인 표현을 산출한다. 단백질 구조는
+        결국 잔기 프레임의 서열로 표현되어 MiAE의 기본 입력 토큰이 된다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. 결과 (밝은 배경) ============ -->
+<section class="sec results">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">05 — 벤치마크 결과</div>
+      <h2>더 적은 파라미터로 <span class="en">SOTA</span>를 넘어선다</h2>
+      <p class="lead">
+        TEDBench는 어려운 과제다. 가장 강력한 범용 등변(equivariant) 모델(GotenNet)조차 외부 시험셋에서
+        macro-F1 65.44에 그친다. MiAE는 처음부터 학습해도 등변 기준선을 10점 이상 앞서며,
+        사전학습 후에는 더 큰 ESM2·SaProt를 능가한다.
+      </p>
+    </div>
+
+    <div class="tbl-wrap reveal">
+      <table>
+        <caption>표 2 — TEDBench 벤치마크 결과 (macro-F1 기준, 굵게=최고 · 밑줄=차선)</caption>
+        <thead>
+          <tr><th>모델</th><th>크기</th><th>test acc</th><th>test F1</th><th>ext acc</th><th>ext F1</th></tr>
+        </thead>
+        <tbody>
+          <tr class="grp-row"><td colspan="6">처음부터 지도학습 (Supervised from scratch)</td></tr>
+          <tr><td>GotenNet</td><td>1.9M</td><td>73.33</td><td>64.02</td><td>82.61</td><td>65.44</td></tr>
+          <tr><td>E3NN</td><td>1.9M</td><td>71.87</td><td>57.63</td><td>71.15</td><td>42.40</td></tr>
+          <tr><td>MACE</td><td>1.5M</td><td>66.89</td><td>50.58</td><td>69.73</td><td>44.73</td></tr>
+          <tr class="ours"><td>MiAE-S</td><td>29M</td><td>78.05</td><td>70.03</td><td>88.87</td><td>74.38</td></tr>
+          <tr class="ours"><td>MiAE-B</td><td>102M</td><td>78.36</td><td>71.60</td><td>89.06</td><td>75.02</td></tr>
+          <tr class="ours"><td>MiAE-B+seq</td><td>102M</td><td>78.23</td><td>71.64</td><td>89.40</td><td>75.67</td></tr>
+          <tr class="ours"><td>MiAE-L</td><td>339M</td><td>78.34</td><td>70.95</td><td>89.17</td><td>75.03</td></tr>
+          <tr class="grp-row"><td colspan="6">사전학습 + 파인튜닝 (Pretrained + finetuned)</td></tr>
+          <tr><td>ESM2-35M</td><td>35M</td><td>68.14</td><td>46.47</td><td>83.01</td><td>58.65</td></tr>
+          <tr><td>ESM2-150M</td><td>150M</td><td>73.26</td><td>57.07</td><td>86.21</td><td>65.85</td></tr>
+          <tr><td>ESM2-650M</td><td>650M</td><td>76.63</td><td>66.19</td><td>88.59</td><td>72.29</td></tr>
+          <tr><td>SaProt-35M</td><td>35M</td><td>79.46</td><td>71.75</td><td>89.22</td><td>74.75</td></tr>
+          <tr><td>SaProt-650M</td><td>650M</td><td class="best">80.31</td><td class="second">73.48</td><td class="best">90.22</td><td class="second">76.78</td></tr>
+          <tr class="ours"><td>MiAE-S</td><td>29M</td><td>79.15</td><td>72.28</td><td>89.60</td><td>76.08</td></tr>
+          <tr class="ours"><td>MiAE-B</td><td>102M</td><td>79.90</td><td>73.71</td><td>89.84</td><td>75.72</td></tr>
+          <tr class="ours"><td>MiAE-B+seq</td><td>102M</td><td class="best">80.31</td><td class="best">74.56</td><td class="second">90.08</td><td class="best">77.34</td></tr>
+          <tr class="ours"><td>MiAE-L</td><td>339M</td><td>80.10</td><td>73.47</td><td>90.01</td><td>76.46</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tbl-note reveal">
+      MiAE-B+seq는 102M 파라미터로 test·external 양쪽에서 최고 F1을 기록해 더 큰 ESM2·SaProt(650M)를 앞선다.
+      파인튜닝은 모든 MiAE 변형에서 처음부터 학습 대비 약 4% 일관된 향상을 가져온다. 서열 전용 모델(ESM2)은 CATH
+      토폴로지 라벨이 3차원 구조로 정의되는 만큼, 구조 기반·하이브리드 방식보다 대체로 열세다.
+    </p>
+
+    <!-- 계산 비용 비교 -->
+    <div class="sec-head reveal" style="margin-top:90px;margin-bottom:40px">
+      <div class="sec-num">05·1 — 계산 효율</div>
+      <h2>사전학습 <span class="en">180×</span>, 파인튜닝 <span class="en">3×</span> 절감</h2>
+    </div>
+    <div class="compute-grid">
+      <div class="compute-card reveal d1">
+        <div class="lbl">사전학습 — GPU 시간</div>
+        <div class="big">138,240</div>
+        <div class="sub">ESM2-650M / SaProt-650M</div>
+        <div class="bar-track"><div class="bar-fill dim" data-w="100"></div></div>
+      </div>
+      <div class="compute-card win reveal d2">
+        <div class="lbl">사전학습 — GPU 시간</div>
+        <div class="big">768</div>
+        <div class="sub">MiAE — 공격적 마스킹으로 인코더가 10%만 처리</div>
+        <div class="bar-track"><div class="bar-fill" data-w="6"></div></div>
+      </div>
+      <div class="compute-card reveal d3">
+        <div class="lbl">파인튜닝 — GPU 시간</div>
+        <div class="big">132</div>
+        <div class="sub">ESM2-650M / SaProt-650M</div>
+        <div class="bar-track"><div class="bar-fill dim" data-w="100"></div></div>
+      </div>
+      <div class="compute-card win reveal d4">
+        <div class="lbl">파인튜닝 — GPU 시간</div>
+        <div class="big">43</div>
+        <div class="sub">MiAE — 유사하거나 더 나은 성능을 훨씬 적은 자원으로 달성</div>
+        <div class="bar-track"><div class="bar-fill" data-w="33"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. 어블레이션 핵심 발견 ============ -->
+<section class="sec" style="padding-top:118px">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">06 — 설계 선택의 검증</div>
+      <h2>어떤 선택이 <span class="en">결정적</span>인가</h2>
+      <p class="body-p" style="margin-top:22px">
+        선형 프로빙(linear probing) 기준으로 MiAE의 핵심 설계 요소를 어블레이션한다. 각 결과는 무엇이 성능을
+        좌우하는지를 명확히 드러낸다.
+      </p>
+    </div>
+
+    <div class="findings">
+      <div class="finding reveal d1">
+        <div class="fnum">01</div>
+        <div class="ftext"><h4>극단적 마스킹이 핵심이다</h4><p>마스킹 비율 0.0(일반 오토인코더)에서 선형 프로빙 F1은 23.90까지 급락한다. 희소 입력으로부터의 복원이라는 도전이 없으면 전역 구조 특징을 학습하지 못한다.</p></div>
+        <div class="fval">58.5 → 23.9<small>F1 · 0.9 vs 0.0 마스킹</small></div>
+      </div>
+      <div class="finding reveal d2">
+        <div class="fnum">02</div>
+        <div class="ftext"><h4>모델 크기로 확장된다</h4><p>선형 프로빙에서 MiAE-S에서 MiAE-L로 확장하면 macro-F1이 15점 이상 증가한다. 표현이 이미 폴드 클래스를 효과적으로 분리함을 뜻한다.</p></div>
+        <div class="fval">49.4 → 63.5<small>F1 · S → L</small></div>
+      </div>
+      <div class="finding reveal d3">
+        <div class="fnum">03</div>
+        <div class="ftext"><h4>역폴딩 손실이 유익하다</h4><p>서열 수준 감독을 제공하는 역폴딩(inverse folding) 손실 항을 제거하면 성능이 뚜렷이 하락한다. 잠재 표현이 다운스트림에 유용한 정보를 보유하도록 유도한다.</p></div>
+        <div class="fval">58.5 → 52.6<small>F1 · invf 제거 시</small></div>
+      </div>
+      <div class="finding reveal d4">
+        <div class="fnum">04</div>
+        <div class="ftext"><h4>사전학습 데이터가 많을수록 좋다</h4><p>MiAE-B는 사전학습 데이터가 증가할수록 선형 프로빙·파인튜닝 양쪽에서 다운스트림 성능이 향상된다. 평균 풀링이 [CLS] 토큰보다 일관되게 우수하다.</p></div>
+        <div class="fval">74.6 / 77.3<small>MiAE-B+seq 최고 F1</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. 결론 / 한계 ============ -->
+<section class="sec closing" style="padding:110px 0">
+  <div class="wrap">
+    <div class="sec-head reveal" style="margin-bottom:34px">
+      <div class="sec-num">07 — 결론과 한계</div>
+      <h2>확장 가능한 자기지도 <span class="en">기하 학습</span>의 토대</h2>
+      <p class="lead">
+        TEDBench는 대규모 구조 기반 표현 학습을 평가하는 도전적이면서 잘 정의된 설정을 제공한다. MiAE는 컴퓨터
+        비전의 마스킹 오토인코더 원리가 단백질 기하로 성공적으로 확장될 수 있음을 보이며, 향후 구조생물학 과제 전반의
+        확장 가능한 자기지도 학습을 위한 길을 연다.
+      </p>
+    </div>
+    <ul class="limit-list reveal">
+      <li>TEDBench는 거친 단백질 수준 폴드 인식에 초점을 맞춘다. 컴퓨터 비전처럼 도메인을 동시에 분할·분류하는 검출 문제로 재정식화할 수 있다.</li>
+      <li>가장 큰 도메인의 라벨만 부여하므로 생물학적으로 중요할 수 있는 작은 도메인을 놓칠 수 있다. 도메인 수준 분할과 개별 분류가 후속 방향이다.</li>
+      <li>MiAE의 전이 가능성은 구조 분류를 넘어선 기능 예측·상호작용 모델링에는 아직 탐구되지 않았다.</li>
+      <li>공격적 마스킹으로 사전학습은 효율적이지만, 대규모 모델 학습은 여전히 상당한 자원을 요구해 접근성을 제한할 수 있다.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="repo">
+      TEDBench 공개 — <a href="https://github.com/BorgwardtLab/TEDBench" target="_blank" rel="noopener">github.com/BorgwardtLab/TEDBench</a>
+    </div>
+    <div class="fine">Protein Fold Classification at Scale · ICML 2026 · arXiv:2605.18552 · 요약 웹페이지</div>
+  </div>
+</footer>
+
+<script>
+/* ===== 진행 바 ===== */
+const progress=document.getElementById('progress');
+addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  const sc=h.scrollTop/(h.scrollHeight-h.clientHeight);
+  progress.style.width=(sc*100)+'%';
+},{passive:true});
+
+/* ===== 스크롤 리빌 ===== */
+const io=new IntersectionObserver((es)=>{
+  es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');
+    e.target.querySelectorAll('.bar-fill').forEach(b=>b.style.width=b.dataset.w+'%');
+    io.unobserve(e.target);}});
+},{threshold:.15});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* ===== 마스킹 시뮬레이터 ===== */
+const grid=document.getElementById('frameGrid');
+const slider=document.getElementById('maskSlider');
+const pctOut=document.getElementById('mr-pct');
+const rmsdOut=document.getElementById('mr-rmsd');
+const TOTAL=72;
+const rmsdMap={50:0.24,55:0.28,60:0.31,65:0.42,70:0.57,75:0.78,80:1.09,85:1.86,90:2.88,95:6.34};
+let cells=[];
+for(let i=0;i<TOTAL;i++){const d=document.createElement('div');d.className='frame';grid.appendChild(d);cells.push(d);}
+function applyMask(pct){
+  const nMask=Math.round(TOTAL*pct/100);
+  // 결정적 의사난수 순서로 마스킹 (재현성)
+  const order=[...Array(TOTAL).keys()].sort((a,b)=>{
+    const ha=Math.sin(a*12.9898)*43758.5453; const hb=Math.sin(b*12.9898)*43758.5453;
+    return (ha-Math.floor(ha))-(hb-Math.floor(hb));
+  });
+  cells.forEach(c=>{c.className='frame';});
+  for(let i=0;i<nMask;i++)cells[order[i]].classList.add('masked');
+  for(let i=nMask;i<TOTAL;i++)cells[order[i]].classList.add('visible');
+}
+function nearestRmsd(v){
+  const keys=Object.keys(rmsdMap).map(Number);
+  let best=keys[0];keys.forEach(k=>{if(Math.abs(k-v)<Math.abs(best-v))best=k;});
+  return rmsdMap[best];
+}
+function update(){
+  const v=+slider.value;
+  pctOut.textContent=v+'%';
+  rmsdOut.textContent=nearestRmsd(v).toFixed(2);
+  applyMask(v);
+}
+slider.addEventListener('input',update);
+update();
+
+/* ===== HERO 단백질 백본 애니메이션 (Canvas) ===== */
+const canvas=document.getElementById('backbone-canvas');
+const ctx=canvas.getContext('2d');
+let W,H,DPR;
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function resize(){
+  DPR=Math.min(devicePixelRatio||1,2);
+  W=canvas.clientWidth;H=canvas.clientHeight;
+  canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+resize();addEventListener('resize',resize);
+
+// 여러 개의 백본 체인(알파헬릭스/베타시트 느낌) 생성
+function makeChain(cx,cy,len,seed){
+  const pts=[];let a=seed;
+  let x=cx,y=cy;
+  for(let i=0;i<len;i++){
+    a+=0.55+Math.sin(i*0.4+seed)*0.25;
+    const step=9+Math.sin(i*0.2)*3;
+    x+=Math.cos(a)*step; y+=Math.sin(a)*step*0.6;
+    pts.push({x,y,masked:false});
+  }
+  return pts;
+}
+const chains=[];
+const CHAIN_N=window.innerWidth<720?3:5;
+for(let c=0;c<CHAIN_N;c++){
+  const cx=W*(0.55+Math.random()*0.4);
+  const cy=H*(0.15+Math.random()*0.7);
+  chains.push(makeChain(cx,cy,26+Math.floor(Math.random()*14),c*1.7+1));
+}
+let t=0;
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  t+=reduceMotion?0:0.006;
+  chains.forEach((pts,ci)=>{
+    // 마스킹 패턴: 시간에 따라 흐르는 파동
+    for(let i=0;i<pts.length;i++){
+      const wave=Math.sin(i*0.5 - t*2 + ci)*0.5+0.5;
+      pts[i].masked = wave < 0.28; // 약 90% 근처가 보이지 않게 흐르는 마스크
+    }
+    // 백본 라인
+    ctx.lineWidth=2.2;
+    for(let i=1;i<pts.length;i++){
+      const p0=pts[i-1],p1=pts[i];
+      const drift=reduceMotion?0:Math.sin(t*1.3+i*0.3+ci)*2.2;
+      ctx.beginPath();
+      ctx.moveTo(p0.x,p0.y+drift);
+      ctx.lineTo(p1.x,p1.y+drift);
+      if(p1.masked){
+        ctx.strokeStyle='rgba(90,101,119,0.25)';
+      }else{
+        ctx.strokeStyle='rgba(232,80,58,0.55)';
+      }
+      ctx.stroke();
+    }
+    // Cα 노드
+    for(let i=0;i<pts.length;i++){
+      const p=pts[i];
+      const drift=reduceMotion?0:Math.sin(t*1.3+i*0.3+ci)*2.2;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y+drift,p.masked?1.5:2.6,0,Math.PI*2);
+      ctx.fillStyle=p.masked?'rgba(90,101,119,0.4)':'rgba(232,163,61,0.9)';
+      ctx.fill();
+    }
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

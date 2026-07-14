@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>A Better B-Tree in Hekaton</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>A Better B-Tree in Hekaton</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">27 February 2016</p></h4>
+<hr>
+
+<div class="post">
+<h1 id="a-better-b-tree-in-hekaton">A Better B-Tree in Hekaton</h1>
+
+<p>Microsoft Research has been releasing details of how <strong>Hekaton</strong>, the <em>in-memory database</em> that will ship with the next version of SQL Server, is achieving up to <strong>100x performance</strong> increases.</p>
+
+<p>Hekaton was first revealed at PASS 2012 in November, where Ted Kummert, Corporate Vice President of Microsoft’s Business Platform Division, described it as “a fully in-memory transactional engine delivered as a part of SQL Server.” For a fuller description, check out <a href="http://www.i-programmer.info/news/84-database/5076-hekaton-adds-in-memory-transaction-support-to-sql.html">our report</a>. Now we can begin understand the mechanisms that give Hekaton its advantages.</p>
+
+<p>According to Paul Larson, who is part of the Hekaton team:</p>
+<blockquote>
+  <p>“In traditional models, the assumption is that data lives on disk and is stored on disk pages. This creates a lot of overhead when you try to access records. When data lives totally in memory, we can use much, much simpler data structures. Hekaton’s index data structures and storage structures are optimized on the basis that when a table is declared memory-optimized, all of its records live in memory.”</p>
+</blockquote>
+
+<p>Part of the improvement in Hekaton comes from the move away from a traditional partitioned approach that essentially treats a multicore processor as a distributed system, to a latch-free, also called lock-free, design. Latches are used to synchronize transactions to avoid data corruption when multiple users try to modify the same data. This has the side effect of creating bottlenecks for high-performance software systems running on multicore processors. Latch-free techniques instead update in an “optimistic” way, never locking records or data structures. This is much more efficient in avoiding bottlenecks, but does risk data corruption.</p>
+
+<p>The approach used by the Hekaton team is to use <em>multi-version concurrency control</em> (MVCC). When updates are made, the old data is marked as obsolete, and a newer version is added. At any time, there could be multiple versions of the data, but only one is the latest. The big benefit is that update transactions can add new versions without interfering with concurrent read activity. The way this is handled in Hekaton is described in <a href="http://vldb.org/pvldb/vol5/p298_per-akelarson_vldb2012.pdf"><em>High-Performance Concurrency Control Mechanisms for Main-Memory Databases</em></a>, a paper that was presented in August to the International Conference on Very Large Databases.
+Alongside the change in <em>transaction locking</em>, Hekaton also has a new indexing system that is designed to be faster than the traditional B-tree index. The new <strong>Bw-tree</strong> has improved <em>processor-cache performance</em>. The Bw-tree is based on the idea that a table mapping page identifiers to page locations would enable both <em>latch-free</em> page updating and <em>log-structured</em> page storage on flash memory.</p>
+
+<p>The problem the bw-tree addresses is two-fold. By using multi-core CPUs, you can achieve <em>high concurrency</em>, but this brings the problem of blocking as one process attempts to change data locked by another process. In addition, achieving a good <em>multi-core processor performance</em> depends on high CPU cache hit ratios, but updating memory in place results in cache invalidations.</p>
+
+<p>The Bw-tree is latch-free, which means that a thread is not affected by conflicts. It overcomes the problem of cache misses by avoiding updating pages in place.</p>
+
+<p>In addition, the Bw-tree is organized around a mapping table that virtualizes both the location and the size of pages. Bw-tree nodes are updated by adding update deltas as prefixes to the prior page state. The new node state is stored at a new storage location, so atomic compare and swap instructions can be used to update the state. This means the Bw-tree is <em>latch-free</em> in the classic sense of <em>allowing concurrent access</em> to pages by multiple threads.</p>
+
+<p>In tests, the Bw-tree was faster by several factors than an alternative latch-free technology based on <em>skiplists</em>. The Bw-tree also performed significantly better than the <em>BerkeleyDB latch-based B-tree implementation</em>. When tested in a high contention scenario that usually causes severe performance degradation, where all the threads continually attempt to update the last page of a B-tree index, the Bw-tree performed better by a <strong>factor of 24</strong> over another, well-engineered latch-based implementation.</p>
+
+<h2 id="more-information">More Information</h2>
+<ul>
+  <li><a href="http://vldb.org/pvldb/vol5/p298_per-akelarson_vldb2012.pdf"><em>High-Performance Concurrency Control Mechanisms for Main-Memory Databases</em></a></li>
+  <li><a href="http://research.microsoft.com/pubs/178758/bw-tree-icde2013-cr.pdf"><em>Bw-tree: A B-tree for New Hardware Platforms</em></a></li>
+</ul>
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dnaHNet — 유전체 서열 학습을 위한 확장 가능한 계층적 기반 모델</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 시퀀서 / 분자생물학 다크 미학 */
+  --bg:#0A0E0D;           /* 심층 배경 (거의 검정, 녹빛) */
+  --bg-2:#0F1614;         /* 카드 */
+  --bg-3:#16211E;         /* 라인 */
+  --panel:#101917;
+  --fg:#E6EDE9;
+  --fg-dim:#8FA39B;
+  --fg-mute:#5D6E67;
+  /* DNA 염기 색 코딩 */
+  --A:#E85D5D;            /* Adenine — 빨강 */
+  --C:#4A9DE8;            /* Cytosine — 파랑 */
+  --G:#F0A93B;            /* Guanine — 노랑/주황 */
+  --T:#3FBFA0;            /* Thymine — 청록 */
+  --lime:#9FE870;         /* 강조 / 새 토큰 */
+  --stage1:#C77DFF;       /* Stage 1 (코돈) 보라 */
+  --stage2:#3FBFA0;       /* Stage 2 (기능) 청록 */
+  /* 밝은 섹션 (데이터) */
+  --paper:#F2F0E9;
+  --paper-2:#E7E4D8;
+  --ink:#141917;
+  --serif:"Fraunces",Georgia,serif;
+  --serif-kr:"Noto Serif KR",serif;
+  --sans:"Space Grotesk","Noto Sans KR",sans-serif;
+  --kr:"Noto Sans KR",sans-serif;
+  --mono:"Spline Sans Mono",monospace;
+  --maxw:1140px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font-family:var(--kr);font-weight:300;line-height:1.85;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--lime);color:var(--bg)}
+
+.helix-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55;
+  background:
+    radial-gradient(ellipse 70% 50% at 85% 0%,rgba(63,191,160,.06),transparent 55%),
+    radial-gradient(ellipse 60% 50% at 0% 30%,rgba(74,157,232,.05),transparent 55%);
+}
+.progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--A),var(--G),var(--T),var(--C));z-index:200;width:0}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 30px;position:relative;z-index:2}
+section{position:relative;z-index:2}
+
+/* ============ HERO ============ */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;overflow:hidden;padding:100px 0 60px}
+#seqCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;opacity:.85}
+.hero-veil{position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse 60% 70% at 30% 50%,transparent,var(--bg) 80%),linear-gradient(180deg,transparent,var(--bg) 94%)}
+.hero-inner{position:relative;z-index:3}
+.topbar{position:absolute;top:0;left:0;right:0;z-index:5;padding:32px 0}
+.topbar .wrap{display:flex;justify-content:space-between;align-items:center}
+.mark{font-family:var(--mono);font-size:.8rem;letter-spacing:.02em;color:var(--fg-dim)}
+.mark b{color:var(--lime);font-weight:600}
+.mark .bases{letter-spacing:.15em}
+.mark .bases .a{color:var(--A)}.mark .bases .c{color:var(--C)}.mark .bases .g{color:var(--G)}.mark .bases .t{color:var(--T)}
+.topbar .meta{font-family:var(--mono);font-size:.72rem;color:var(--fg-mute)}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;color:var(--lime);display:flex;align-items:center;gap:14px;margin-bottom:28px}
+.eyebrow::before{content:"";width:36px;height:1px;background:var(--lime)}
+.hero h1{font-family:var(--serif-kr);font-weight:600;color:#fff;font-size:clamp(2.2rem,5.4vw,4.2rem);line-height:1.18;letter-spacing:-.01em;max-width:19ch}
+.hero h1 .en{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--lime)}
+.hero-sub{margin-top:32px;max-width:56ch;font-size:1.08rem;color:var(--fg-dim);line-height:1.95}
+.hero-sub b{color:var(--fg);font-weight:500}
+.hero-stats{margin-top:46px;display:flex;flex-wrap:wrap;gap:38px}
+.hero-stats .st b{font-family:var(--sans);font-weight:700;font-size:2rem;color:#fff;letter-spacing:-.02em;line-height:1;display:block}
+.hero-stats .st b .u{font-size:.9rem;color:var(--lime);font-weight:600}
+.hero-stats .st span{font-family:var(--mono);font-size:.7rem;color:var(--fg-mute);display:block;margin-top:8px;letter-spacing:.04em}
+.scroll-hint{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:3;font-family:var(--mono);font-size:.66rem;letter-spacing:.2em;color:var(--fg-mute);text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:10px;animation:bob 2.4s ease-in-out infinite}
+.scroll-hint span{width:1px;height:30px;background:linear-gradient(var(--lime),transparent)}
+@keyframes bob{50%{transform:translateX(-50%) translateY(8px)}}
+
+/* 저자 */
+.authors{border-top:1px solid var(--bg-3);border-bottom:1px solid var(--bg-3);background:var(--bg-2)}
+.authors .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:18px;padding:22px 30px}
+.authors .names{font-family:var(--sans);font-size:.94rem;color:var(--fg);font-weight:500}
+.authors .names small{display:block;color:var(--fg-mute);font-family:var(--mono);font-size:.68rem;margin-top:5px;font-weight:400;letter-spacing:.02em}
+.authors .tag{font-family:var(--mono);font-size:.72rem;color:var(--lime);letter-spacing:.14em;text-transform:uppercase}
+
+/* 섹션 공통 */
+.sec{padding:118px 0}
+.sec-head{margin-bottom:58px;max-width:66ch}
+.sec-num{font-family:var(--mono);font-size:.72rem;letter-spacing:.24em;color:var(--lime);text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:12px}
+.sec-num::before{content:"";width:24px;height:1px;background:var(--lime)}
+.sec h2{font-family:var(--serif-kr);font-weight:600;font-size:clamp(1.8rem,3.4vw,2.7rem);color:#fff;line-height:1.3;letter-spacing:-.01em}
+.sec h2 .en{font-family:var(--serif);font-style:italic;color:var(--lime);font-weight:400}
+.lead{font-size:1.1rem;color:var(--fg-dim);margin-top:22px;line-height:1.95}
+p{margin-bottom:1.2em}
+.body-p{color:var(--fg-dim);max-width:72ch}
+.body-p b,.hl{color:var(--fg);font-weight:500}
+.mono-em{font-family:var(--mono);color:var(--lime);font-size:.9em}
+
+/* ============ 1. 딜레마 ============ */
+.dilemma{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin-top:14px;border:1px solid var(--bg-3);border-radius:6px;overflow:hidden}
+.dil-side{background:var(--bg-2);padding:40px 34px}
+.dil-side .k{font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-mute);margin-bottom:14px}
+.dil-side h3{font-family:var(--sans);font-size:1.15rem;font-weight:600;color:#fff;margin-bottom:12px}
+.dil-side p{font-size:.94rem;color:var(--fg-dim);margin:0}
+.dil-side .cost{margin-top:18px;font-family:var(--mono);font-size:.78rem;color:var(--A)}
+.dil-side.right .cost{color:var(--G)}
+.dil-vs{background:var(--bg-3);display:flex;align-items:center;justify-content:center;padding:0 24px;font-family:var(--serif);font-style:italic;color:var(--fg-mute);font-size:1.2rem;min-width:80px}
+.dil-resolve{margin-top:26px;background:var(--panel);border:1px solid var(--bg-3);border-left:3px solid var(--lime);border-radius:0 6px 6px 0;padding:26px 30px}
+.dil-resolve h4{font-family:var(--sans);color:var(--lime);font-size:1rem;font-weight:600;margin-bottom:8px}
+.dil-resolve p{font-size:.96rem;color:var(--fg-dim);margin:0}
+.dil-resolve b{color:var(--fg);font-weight:500}
+
+/* ============ 2. 청킹 시뮬레이터 (시그니처) ============ */
+.chunk-lab{background:var(--bg-2);border:1px solid var(--bg-3);border-radius:8px;padding:44px;position:relative}
+.chunk-lab .lab-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:18px;margin-bottom:34px}
+.chunk-lab .lab-head h3{font-family:var(--serif);font-style:italic;font-size:1.4rem;font-weight:600;color:#fff}
+.chunk-lab .lab-head p{font-size:.85rem;color:var(--fg-mute);margin-top:6px}
+.stage-toggle{display:flex;gap:0;border:1px solid var(--bg-3);border-radius:6px;overflow:hidden}
+.stage-toggle button{background:var(--panel);border:none;color:var(--fg-dim);font-family:var(--mono);font-size:.76rem;padding:10px 18px;cursor:pointer;transition:all .3s;letter-spacing:.04em}
+.stage-toggle button.on{background:var(--stage1);color:var(--bg);font-weight:600}
+.stage-toggle button:last-child.on{background:var(--stage2)}
+#chunkCanvas{width:100%;height:200px;display:block;border-radius:6px;background:var(--bg)}
+.chunk-legend{display:flex;flex-wrap:wrap;gap:22px;margin-top:24px;font-family:var(--mono);font-size:.74rem;color:var(--fg-dim)}
+.chunk-legend .lg{display:flex;align-items:center;gap:8px}
+.chunk-legend .sw{width:14px;height:14px;border-radius:3px}
+.chunk-legend .a{background:var(--A)}.chunk-legend .c{background:var(--C)}.chunk-legend .g{background:var(--G)}.chunk-legend .t{background:var(--T)}
+.chunk-legend .bnd{width:3px;height:16px;background:var(--lime);border-radius:2px}
+.lab-note{margin-top:28px;font-size:.86rem;color:var(--fg-mute);border-top:1px solid var(--bg-3);padding-top:22px;max-width:82ch}
+.lab-note b{color:var(--fg);font-weight:500}
+
+/* ============ 3. 아키텍처 (E-M-D) ============ */
+.emd{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--bg-3);border:1px solid var(--bg-3);border-radius:6px;overflow:hidden;margin-top:14px}
+.emd-node{background:var(--bg-2);padding:38px 30px;position:relative}
+.emd-node .letter{font-family:var(--serif);font-style:italic;font-size:2.6rem;color:var(--bg-3);position:absolute;top:24px;right:28px;font-weight:600;-webkit-text-stroke:1px var(--fg-mute)}
+.emd-node .tag{font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;color:var(--lime);text-transform:uppercase;margin-bottom:16px;display:block}
+.emd-node h4{font-family:var(--sans);font-size:1.12rem;color:#fff;font-weight:600;margin-bottom:12px}
+.emd-node p{font-size:.9rem;color:var(--fg-dim);margin:0;line-height:1.7}
+.emd-node .spec{margin-top:16px;font-family:var(--mono);font-size:.74rem;color:var(--T)}
+.formula{background:var(--bg);border:1px solid var(--bg-3);border-radius:6px;padding:34px 40px;margin-top:34px;font-family:var(--mono);font-size:.9rem;line-height:2.1;overflow-x:auto;color:var(--fg-dim)}
+.formula .cm{color:var(--fg-mute)}
+.formula .op{color:var(--lime)}
+.formula .var{color:var(--A)}
+.formula-cap{font-size:.86rem;color:var(--fg-mute);margin-top:16px;max-width:76ch}
+
+/* ============ 4. 개선 기법 ============ */
+.tweaks{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--bg-3);border:1px solid var(--bg-3);border-radius:6px;overflow:hidden;margin-top:14px}
+.tweak{background:var(--bg-2);padding:32px 30px;transition:background .35s}
+.tweak:hover{background:var(--panel)}
+.tweak .num{font-family:var(--mono);font-size:.72rem;color:var(--lime);letter-spacing:.12em;margin-bottom:12px}
+.tweak h4{font-family:var(--sans);font-size:1.05rem;color:#fff;font-weight:600;margin-bottom:10px}
+.tweak p{font-size:.9rem;color:var(--fg-dim);margin:0;line-height:1.7}
+.tweak .val{margin-top:14px;font-family:var(--mono);font-size:.82rem;color:var(--T)}
+
+/* ============ 5. 결과 (밝은 배경) ============ */
+.data-sec{background:var(--paper);color:var(--ink)}
+.data-sec .sec-num{color:#2b8a6a}
+.data-sec .sec-num::before{background:#2b8a6a}
+.data-sec h2{color:var(--ink)}
+.data-sec h2 .en{color:#7a8578;font-style:italic;font-family:var(--serif)}
+.data-sec .lead{color:#4a4a44}
+.eff-hero{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--paper-2);border:1px solid var(--paper-2);border-radius:8px;overflow:hidden;margin-top:14px}
+.eff-card{background:#fbfaf5;padding:42px 36px}
+.eff-card .lbl{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:#8a8577;margin-bottom:16px}
+.eff-card .big{font-family:var(--sans);font-size:3.4rem;font-weight:700;color:var(--ink);letter-spacing:-.03em;line-height:1}
+.eff-card .big .u{font-size:1.2rem;color:#c23b2e;font-weight:600}
+.eff-card .sub{font-size:.9rem;color:#5a5a50;margin-top:12px}
+.eff-card .sub b{color:var(--ink);font-weight:600}
+
+/* 스케일링 지수 시각화 */
+.alpha-row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:56px}
+.alpha-card{border:1px solid var(--paper-2);border-radius:6px;padding:28px;background:#fbfaf5;position:relative;overflow:hidden}
+.alpha-card .name{font-family:var(--sans);font-weight:600;font-size:1rem;color:var(--ink);margin-bottom:6px}
+.alpha-card .a-val{font-family:var(--sans);font-size:2.4rem;font-weight:700;letter-spacing:-.03em;line-height:1}
+.alpha-card.win .a-val{color:#2b8a6a}
+.alpha-card .a-lbl{font-family:var(--mono);font-size:.68rem;color:#8a8577;text-transform:uppercase;letter-spacing:.1em;margin-top:4px}
+.alpha-bar{height:6px;background:var(--paper-2);border-radius:3px;margin-top:18px;overflow:hidden}
+.alpha-fill{height:100%;border-radius:3px;width:0;transition:width 1.2s cubic-bezier(.2,.7,.2,1)}
+.alpha-card.win .alpha-fill{background:#2b8a6a}
+.alpha-fill{background:#b0a89a}
+
+/* 다운스트림 테이블 */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--paper-2);border-radius:6px;background:#fbfaf5;margin-top:56px}
+table{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:.88rem;min-width:520px}
+caption{text-align:left;font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#2b8a6a;padding:18px 20px 4px;font-weight:500}
+thead th{text-align:right;padding:14px 18px;font-weight:600;color:#3a3a34;border-bottom:2px solid var(--ink);font-size:.8rem}
+thead th:first-child{text-align:left}
+tbody td{padding:11px 18px;text-align:right;border-bottom:1px solid #e4e0d2;color:#33332e;font-variant-numeric:tabular-nums}
+tbody td:first-child{text-align:left;font-weight:500}
+tbody tr:hover{background:#f0ede2}
+.grp td{background:#eae6d8;font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:#7a7568;text-align:left;padding:9px 18px}
+.ours td:first-child{color:#2b8a6a;font-weight:700}
+.ours{background:#eef5ef}
+.best{color:#2b8a6a;font-weight:700}
+.tbl-note{font-size:.82rem;color:#6b6b60;margin-top:14px}
+
+/* ============ 6. 생물학적 발견 (다크) ============ */
+.discovery{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:14px}
+.disc-card{background:var(--bg-2);border:1px solid var(--bg-3);border-radius:8px;padding:38px 34px;position:relative;overflow:hidden}
+.disc-card.s1{border-top:3px solid var(--stage1)}
+.disc-card.s2{border-top:3px solid var(--stage2)}
+.disc-card .stg{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px}
+.disc-card.s1 .stg{color:var(--stage1)}
+.disc-card.s2 .stg{color:var(--stage2)}
+.disc-card h3{font-family:var(--sans);font-size:1.2rem;color:#fff;font-weight:600;margin-bottom:12px}
+.disc-card p{font-size:.92rem;color:var(--fg-dim);margin-bottom:20px}
+/* 코돈 주기성 막대 */
+.codon-bars{display:flex;gap:10px;align-items:flex-end;height:120px;margin-top:8px}
+.codon-bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px}
+.codon-bar .cb-track{width:100%;height:100px;background:var(--bg);border-radius:4px;display:flex;align-items:flex-end;overflow:hidden}
+.codon-bar .cb-fill{width:100%;border-radius:4px 4px 0 0;transition:height 1s cubic-bezier(.2,.7,.2,1);height:0}
+.codon-bar .cb-lbl{font-family:var(--mono);font-size:.68rem;color:var(--fg-mute)}
+.codon-bar .cb-val{font-family:var(--sans);font-size:.82rem;color:var(--fg);font-weight:600}
+/* 기능 영역 막대 */
+.region-list{display:grid;gap:12px;margin-top:8px}
+.region-row{display:grid;grid-template-columns:110px 1fr 48px;gap:14px;align-items:center;font-family:var(--mono);font-size:.78rem}
+.region-row .rn{color:var(--fg-dim)}
+.region-row .rt{height:14px;background:var(--bg);border-radius:3px;overflow:hidden}
+.region-row .rf{height:100%;background:var(--stage2);border-radius:3px;width:0;transition:width 1s cubic-bezier(.2,.7,.2,1)}
+.region-row .rv{color:var(--fg);text-align:right;font-weight:600}
+
+/* ============ 7. 마무리 ============ */
+.close-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;margin-top:14px}
+.close-col h3{font-family:var(--sans);font-size:1.05rem;color:var(--lime);font-weight:600;margin-bottom:18px;font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase}
+.close-col ul{list-style:none;display:grid;gap:16px}
+.close-col li{padding-left:28px;position:relative;color:var(--fg-dim);max-width:52ch}
+.close-col.future li::before{content:"→";position:absolute;left:0;color:var(--lime);font-weight:600;font-family:var(--sans)}
+.close-col.limit li::before{content:"—";position:absolute;left:0;color:var(--fg-mute)}
+.close-col li b{color:var(--fg);font-weight:500}
+
+footer{border-top:1px solid var(--bg-3);background:var(--bg);padding:50px 0}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:18px;align-items:center}
+footer .repo{font-family:var(--mono);font-size:.8rem;color:var(--fg-dim)}
+footer .repo a{color:var(--lime);text-decoration:none;border-bottom:1px solid transparent;transition:border-color .3s}
+footer .repo a:hover{border-color:var(--lime)}
+footer .fine{font-family:var(--mono);font-size:.68rem;color:var(--fg-mute);letter-spacing:.04em}
+
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}.reveal.d4{transition-delay:.32s}
+
+@media(max-width:880px){
+  .dilemma{grid-template-columns:1fr}
+  .dil-vs{padding:14px;min-width:0}
+  .emd,.tweaks,.eff-hero,.discovery,.close-grid,.alpha-row{grid-template-columns:1fr}
+  .alpha-row{gap:14px}
+  .chunk-lab{padding:28px 22px}
+}
+@media(max-width:520px){
+  .sec{padding:80px 0}
+  .hero-stats{gap:26px}
+  .authors .wrap{flex-direction:column;align-items:flex-start}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="helix-bg"></div>
+<div class="progress" id="progress"></div>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <canvas id="seqCanvas"></canvas>
+  <div class="hero-veil"></div>
+  <div class="topbar"><div class="wrap">
+    <div class="mark"><b>dnaHNet</b> · <span class="bases"><span class="a">A</span><span class="c">C</span><span class="g">G</span><span class="t">T</span></span></div>
+    <div class="meta">arXiv:2602.10603v3</div>
+  </div></div>
+  <div class="wrap hero-inner">
+    <div class="eyebrow">유전체 기반 모델 · 토크나이저 프리</div>
+    <h1>유전체 서열 학습을 위한 확장 가능한 <span class="en">계층적</span> 기반 모델</h1>
+    <p class="hero-sub">
+      <b>dnaHNet</b>은 고정 어휘 토크나이저 없이 원시 뉴클레오티드를 끝에서 끝까지 분절하고 모델링하는
+      최첨단 자기회귀 모델이다. 미분 가능한 동적 청킹(dynamic chunking)으로 A·C·G·T를 잠재 토큰으로
+      적응적으로 압축하며, <b>감독 없이 코돈과 프로모터 같은 계층적 생물학적 구조를 자발적으로 발견한다.</b>
+    </p>
+    <div class="hero-stats">
+      <div class="st"><b>3.89<span class="u">×</span></b><span>StripedHyena2 대비 FLOP 절감</span></div>
+      <div class="st"><b>&gt;3<span class="u">×</span></b><span>트랜스포머 대비 추론 가속</span></div>
+      <div class="st"><b>α=0.06</b><span>스케일링 지수 (SH2=0.04)</span></div>
+      <div class="st"><b>144<span class="u">B</span></b><span>원핵생물 학습 뉴클레오티드</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint">서열 따라가기<span></span></div>
+</header>
+
+<!-- 저자 -->
+<div class="authors">
+  <div class="wrap">
+    <div class="names">
+      Arnav Shah · Junzhe Li · Parsa Idehpour · Adibvafa Fallahpour · Sukjun Hwang · Bo Wang · Patrick D. Hsu · Hani Goodarzi · Albert Gu 외
+      <small>University of Toronto · Vector Institute · Arc Institute · Cartesia AI · CMU · UC Berkeley · UCSF · 2026년 4월</small>
+    </div>
+    <div class="tag">Tokenizer-free</div>
+  </div>
+</div>
+
+<!-- ============ 1. 딜레마 ============ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">01 — 근본적 딜레마</div>
+      <h2>DNA에는 <span class="en">띄어쓰기</span>가 없다</h2>
+      <p class="lead">
+        영어와 달리 DNA는 명시적 경계 없이 이어지는 뉴클레오티드 문자열이다. 유전체 기반 모델은 입력 표현에서
+        근본적 상충에 직면한다.
+      </p>
+    </div>
+    <div class="dilemma">
+      <div class="dil-side left reveal d1">
+        <div class="k">접근 A</div>
+        <h3>고정 토크나이저 (k-mer, BPE)</h3>
+        <p>계산은 효율적이지만, 임의의 분절 경계가 코돈·전사인자 결합부위·스플라이스 신호 같은 생물학적으로 의미 있는
+        단위를 조각낸다.</p>
+        <div class="cost">✗ 생물학적 충실도 손실</div>
+      </div>
+      <div class="dil-vs reveal d2">vs</div>
+      <div class="dil-side right reveal d3">
+        <div class="k">접근 B</div>
+        <h3>뉴클레오티드 단위 (단일 염기)</h3>
+        <p>생물학적 일관성은 보존하지만, 유전체 문맥이 수백만 염기쌍에 이르기 때문에 감당하기 어려운 계산 비용을
+        초래한다.</p>
+        <div class="cost">✗ 긴 문맥 확장 불가</div>
+      </div>
+    </div>
+    <div class="dil-resolve reveal">
+      <h4>dnaHNet의 해소</h4>
+      <p>학습으로 분절을 익히는 <b>미분 가능한 동적 청킹</b>으로 두 접근의 한계를 동시에 넘어선다. 압축된 표현의 효율성과
+      뉴클레오티드 해상도 입력의 생물학적 충실도를 모두 얻는다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2. 청킹 시뮬레이터 (시그니처) ============ -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">02 — 핵심 메커니즘</div>
+      <h2>서열이 스스로 <span class="en">경계</span>를 긋는다</h2>
+      <p class="body-p" style="margin-top:22px">
+        인코더의 경계 예측 모듈은 인접 뉴클레오티드 표현의 코사인 비유사도로 경계 확률 <span class="mono-em">p<sub>t</sub></span>를 계산한다.
+        표현이 크게 달라지는 지점 — 코돈 경계나 조절 요소 전환부 — 에서 경계가 그어지고, 그 지점에서 서열이 압축된다.
+        아래에서 두 단계 청킹이 어떻게 다르게 작동하는지 확인할 수 있다.
+      </p>
+    </div>
+
+    <div class="chunk-lab reveal">
+      <div class="lab-head">
+        <div>
+          <h3>Dynamic chunking</h3>
+          <p>단계를 전환해 경계 선택 패턴의 차이를 본다. Stage 1은 코돈 주기성, Stage 2는 기능 경계에 반응한다.</p>
+        </div>
+        <div class="stage-toggle">
+          <button id="btnS1" class="on">Stage 1 · 코돈</button>
+          <button id="btnS2">Stage 2 · 기능</button>
+        </div>
+      </div>
+      <canvas id="chunkCanvas"></canvas>
+      <div class="chunk-legend">
+        <div class="lg"><span class="sw a"></span>A</div>
+        <div class="lg"><span class="sw c"></span>C</div>
+        <div class="lg"><span class="sw g"></span>G</div>
+        <div class="lg"><span class="sw t"></span>T</div>
+        <div class="lg"><span class="bnd"></span>청킹 경계 (boundary)</div>
+      </div>
+      <p class="lab-note">
+        경계 확률은 <span class="mono-em">p<sub>t</sub> = ½(1 − CosineSim(W<sub>q</sub>h<sub>t</sub>, W<sub>k</sub>h<sub>t−1</sub>))</span>로 정의된다.
+        추론 시 임계값 <b>τ = 0.5</b>로 이산화해, <b>b<sub>t</sub>=0</b>이면 현재 염기를 인코더 상태에 누적하고 <b>b<sub>t</sub>=1</b>이면
+        누적된 청크를 메인 네트워크로 전달한다. 이로써 문맥 의존적 세밀도로 임의 길이 서열을 생성할 수 있다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. 아키텍처 E-M-D ============ -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">03 — 재귀적 계층 구조</div>
+      <h2>인코더 · <span class="en">메인 네트워크</span> · 디코더</h2>
+      <p class="body-p" style="margin-top:22px">
+        각 모듈은 세 개의 미분 가능한 구성요소로 이뤄진다. 이 구조는 재귀적으로 적용되어 유전체 정보의 중첩된 조직을
+        자연스럽게 반영하는 다단계 압축을 가능케 한다.
+      </p>
+    </div>
+    <div class="emd">
+      <div class="emd-node reveal d1">
+        <span class="letter">E</span>
+        <span class="tag">인코더 · 압축</span>
+        <h4>Encoder (E)</h4>
+        <p>4개 Mamba 층 + 1개 트랜스포머 층의 하이브리드 백본으로 정보 밀도가 높은 전환점을 식별하고, 예측된 경계에서 표현을 선택해 서열 <span class="mono-em">L → L′</span>로 다운샘플링한다.</p>
+        <div class="spec">4× Mamba + 1× Transformer</div>
+      </div>
+      <div class="emd-node reveal d2">
+        <span class="letter">M</span>
+        <span class="tag">메인 · 모델링</span>
+        <h4>Main Network (M)</h4>
+        <p>압축된 잠재 서열을 처리한다. 표준 트랜스포머이거나 또 다른 H-Net 모듈이 되어 재귀적 청킹을 이룬다. 파라미터의 70%가 여기 배분된다.</p>
+        <div class="spec">쿼드러틱 비용 Θ((L/R)²)</div>
+      </div>
+      <div class="emd-node reveal d3">
+        <span class="letter">D</span>
+        <span class="tag">디코더 · 복원</span>
+        <h4>Decoder (D)</h4>
+        <p>평활화 재귀 <span class="mono-em">ē<sub>j</sub>=P<sub>j</sub>ê<sub>j</sub>+(1−P<sub>j</sub>)ē<sub>j−1</sub></span>로 잠재를 다듬고 원래 길이로 업샘플링한 뒤, 4× Mamba + 1× 트랜스포머로 다음-뉴클레오티드 분포를 출력한다.</p>
+        <div class="spec">→ 4개 어휘 {A,C,G,T} 로짓</div>
+      </div>
+    </div>
+
+    <div class="formula reveal">
+<span class="cm"># 자기회귀 목적함수 (Eqn. 3)</span>
+L<sub>NLL</sub> = − Σ<sub>t=1..L</sub> log P<sub>θ</sub>(<span class="var">x<sub>t</sub></span> | x<sub>&lt;t</sub>)
+
+<span class="cm"># 비율 손실로 동적 청킹 정규화 (Eqn. 4) — 목표 압축비 R<sub>s</sub></span>
+전체 손실  L = L<sub>NLL</sub> + <span class="op">α</span> · Σ<sub>s</sub> L<sub>rate</sub><sup>(s)</sup>       (<span class="op">α ≈ 0.01</span>)
+    </div>
+    <p class="formula-cap reveal">
+      <span class="mono-em">L<sub>NLL</sub></span>만 최소화하면 경계 예측기가 모든 위치를 선택하거나 아무것도 선택하지 않는 퇴화 해로 빠진다. 비율 손실이
+      실제 선택 비율과 연속 확률 추정을 정렬시키며 목표 압축비 <span class="mono-em">R<sub>s</sub></span>를 향하게 한다. 자연어의 계수(α≥0.03)는 다음-뉴클레오티드 예측에 지나치게 공격적이어서 더 작은 값(α≈0.01)이 필요하다.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 4. 개선 기법 ============ -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">04 — 유전체 특화 개선</div>
+      <h2>안정적 계층 학습을 위한 <span class="en">설계 결정</span></h2>
+      <p class="body-p" style="margin-top:22px">
+        유전체 서열에 계층적 동적 청킹을 적용하면 자연어에 없는 문제가 생긴다. 체계적 어블레이션으로 안정적 학습에
+        결정적인 여러 수정을 식별했다.
+      </p>
+    </div>
+    <div class="tweaks">
+      <div class="tweak reveal d1">
+        <div class="num">A · 용량 배분</div>
+        <h4>인코더-디코더에 30%</h4>
+        <p>텍스트 H-Net은 인코더-디코더에 15%만 배분하지만, 코돈·스플라이스 신호 같은 복잡한 국소 의존성을 담으려면
+        더 큰 인코더 용량이 필요하다. 상대 비중을 두 배로 늘려 30%를 배분한다.</p>
+        <div class="val">인코더-디코더 30% / 메인 70%</div>
+      </div>
+      <div class="tweak reveal d2">
+        <div class="num">B · 압축비</div>
+        <h4>생물학적 사전지식 기반</h4>
+        <p>1단계는 삼중 코돈 구조에 맞춰 <span class="mono-em">R₁=3</span>, 2단계는 코돈 쌍 편향에 착안해 <span class="mono-em">R₂=2</span>로 설정한다.
+        유효 압축비 6배로, 최내부 메인 네트워크의 FLOP을 36배 줄인다.</p>
+        <div class="val">R₁×R₂ = 6× 압축 → 36× FLOP 절감</div>
+      </div>
+      <div class="tweak reveal d3">
+        <div class="num">C · 계층 깊이</div>
+        <h4>2단계가 최적</h4>
+        <p>1~4단계 계층을 탐색한 결과, 더 깊은 계층은 압축을 늘리지만 최적화 난이도를 높이고 2단계 이후 수확 체감이
+        나타난다. 기본값으로 2단계를 채택한다.</p>
+        <div class="val">2-Stage, 6× 압축 · 안정적 학습</div>
+      </div>
+      <div class="tweak reveal d4">
+        <div class="num">D · 데이터-파라미터 비</div>
+        <h4>Chinchilla를 벗어난다</h4>
+        <p>압축이 메인 네트워크의 유효 토큰 길이를 바꾸므로 표준 스케일링 법칙이 그대로 적용되지 않는다. 8×10¹⁹ FLOP에서
+        최적 dnaHNet은 140B 토큰으로 학습하며, 이는 SH2의 68B보다 크게 많다.</p>
+        <div class="val">140B 토큰 vs. SH2 68B (동일 FLOP)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. 결과 (밝은 배경) ============ -->
+<section class="sec data-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">05 — 스케일링과 효율</div>
+      <h2>계산이 커질수록 <span class="en">벌어지는</span> 격차</h2>
+      <p class="lead">
+        10M에서 1B까지 100개 이상의 모델로 스케일링 법칙을 분석했다. dnaHNet은 동일 FLOP에서 StripedHyena2·트랜스포머보다
+        일관되게 낮은 perplexity를 달성하며, 격차는 계산이 늘수록 넓어진다.
+      </p>
+    </div>
+
+    <div class="eff-hero">
+      <div class="eff-card reveal d1">
+        <div class="lbl">10⁶ 뉴클레오티드 · 추론 FLOP</div>
+        <div class="big">3.89<span class="u">×</span></div>
+        <div class="sub">dnaHNet(218M)이 StripedHyena2(166M)보다 <b>적은 FLOP</b>으로 처리. 재귀적 압축이 쿼드러틱 비용을 Θ((L/R)²)로 낮춘다.</div>
+      </div>
+      <div class="eff-card reveal d2">
+        <div class="lbl">동일 perplexity 달성 비용</div>
+        <div class="big">3.75<span class="u">×</span></div>
+        <div class="sub">SH2가 dnaHNet의 8×10¹⁹ FLOP 성능에 도달하려면 <b>3×10²⁰ FLOP</b>이 필요. 즉 3.75배 덜 효율적이다.</div>
+      </div>
+    </div>
+
+    <div class="alpha-row">
+      <div class="alpha-card win reveal d1">
+        <div class="name">dnaHNet</div>
+        <div class="a-val">0.06</div>
+        <div class="a-lbl">스케일링 지수 α</div>
+        <div class="alpha-bar"><div class="alpha-fill" data-w="100"></div></div>
+      </div>
+      <div class="alpha-card reveal d2">
+        <div class="name">StripedHyena2</div>
+        <div class="a-val">0.04</div>
+        <div class="a-lbl">스케일링 지수 α</div>
+        <div class="alpha-bar"><div class="alpha-fill" data-w="67"></div></div>
+      </div>
+      <div class="alpha-card reveal d3">
+        <div class="name">Transformer</div>
+        <div class="a-val">0.01</div>
+        <div class="a-lbl">스케일링 지수 α</div>
+        <div class="alpha-bar"><div class="alpha-fill" data-w="17"></div></div>
+      </div>
+    </div>
+
+    <div class="tbl-wrap reveal">
+      <table>
+        <caption>표 5·6 — 제로샷 다운스트림 (계산 규모별, 굵게 = 최고)</caption>
+        <thead>
+          <tr><th>모델 · 과제</th><th>학습 FLOP</th><th>성능</th></tr>
+        </thead>
+        <tbody>
+          <tr class="grp"><td colspan="3">단백질 변이 효과 예측 — MaveDB (Spearman ρ ↑)</td></tr>
+          <tr class="ours"><td>dnaHNet</td><td>6.40 × 10¹⁹</td><td class="best">0.3266</td></tr>
+          <tr><td>StripedHyena2</td><td>7.11 × 10¹⁹</td><td>0.3110</td></tr>
+          <tr><td>Transformer</td><td>8.00 × 10¹⁹</td><td>0.1555</td></tr>
+          <tr class="grp"><td colspan="3">유전자 필수성 예측 — DEG (AUROC ↑)</td></tr>
+          <tr class="ours"><td>dnaHNet (3,2) 계층</td><td>6.40 × 10¹⁹</td><td class="best">0.6050</td></tr>
+          <tr class="ours"><td>dnaHNet (2,2) 계층</td><td>6.40 × 10¹⁹</td><td>0.5900</td></tr>
+          <tr><td>StripedHyena2</td><td>7.10 × 10¹⁹</td><td>0.5759</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tbl-note reveal">
+      두 제로샷 과제 모두에서 dnaHNet은 계산 정합 조건에서 StripedHyena2를 능가하며, 이득이 계산 예산에 따라 단조 증가한다.
+      필수성 예측에서 (3,2) 계층이 가장 강한 스케일링을 보이는데, 첫 층이 코돈의 생물학적 구조와 일치하기 때문으로 추정된다.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 6. 생물학적 발견 ============ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">06 — 감독 없는 발견</div>
+      <h2>모델이 스스로 찾은 <span class="en">생물학적 문법</span></h2>
+      <p class="lead">
+        B. subtilis 유전체를 (3,2) 2단계 모델로 처리해 기능 영역·코돈 위치별 토큰 선택률을 분석했다. 두 단계는 서로 다른
+        수준의 생물학적 구조를 자발적으로 발견한다.
+      </p>
+    </div>
+    <div class="discovery">
+      <div class="disc-card s1 reveal d1">
+        <div class="stg">Stage 1 · 코돈 인식</div>
+        <h3>삼중 주기성의 발견</h3>
+        <p>코딩 영역에서 코돈 위치에 정렬된 강한 주기성이 나타난다. 첫 위치는 거의 선택되지 않고(6.5%), 둘째·셋째 위치가
+        높은 선택률을 보여 서열을 코돈에 대응하는 3-뉴클레오티드 토큰으로 묶는다.</p>
+        <div class="codon-bars" id="codonBars"></div>
+      </div>
+      <div class="disc-card s2 reveal d2">
+        <div class="stg">Stage 2 · 기능 인식</div>
+        <h3>기능 지도의 발견</h3>
+        <p>둘째 단계는 국소 문법에서 넓은 유전체 조직으로 이동한다. 프로모터·개시 코돈·유전자 간 영역의 선택률이
+        코딩 영역(48.4%)보다 훨씬 높게 나타나, 유전체의 기능 지도를 인식한다.</p>
+        <div class="region-list" id="regionList"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. 마무리 ============ -->
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-num">07 — 한계와 전망</div>
+      <h2>유전형에서 <span class="en">표현형</span>까지</h2>
+    </div>
+    <div class="close-grid">
+      <div class="close-col limit reveal d1">
+        <h3>한계</h3>
+        <ul>
+          <li>원핵생물 유전체로만 사전학습해, 인트론·장거리 크로마틴 상호작용 등 진핵생물의 복잡한 조절 구조를 다루지 않았다.</li>
+          <li>평가는 제로샷 과제에 집중했으며, <b>미세조정 하의 거동은 미탐구</b>로 남았다.</li>
+          <li>고정된 목표 압축비는 생물학적 근거가 있으나, 비코딩·진핵 서열에는 최적이 아닐 수 있다.</li>
+          <li>스케일링 분석이 1B 파라미터까지만 이르러, 대규모 거동은 확정되지 않았다.</li>
+        </ul>
+      </div>
+      <div class="close-col future reveal d2">
+        <h3>전망</h3>
+        <ul>
+          <li><b>진핵 유전체 확장.</b> 동적 청킹이 스플라이스 부위·인핸서 같은 구조를 발견하는지 검증한다.</li>
+          <li><b>새 기능 요소 발견.</b> 학습된 경계의 해석 가능성을 활용해 신규 기능 요소를 탐색한다.</li>
+          <li><b>통합 생물학 모델링.</b> 단백질 언어 모델과 통합해 유전형에서 표현형까지 하나의 틀로 잇는다.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="repo">학습 데이터 — GTDB (Genome Taxonomy Database) · <a href="https://arxiv.org/abs/2602.10603" target="_blank" rel="noopener">arXiv:2602.10603</a></div>
+    <div class="fine">dnaHNet: A Scalable and Hierarchical Foundation Model for Genomic Sequence Learning · 요약 웹페이지</div>
+  </div>
+</footer>
+
+<script>
+/* 진행 바 */
+const progress=document.getElementById('progress');
+addEventListener('scroll',()=>{const h=document.documentElement;progress.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});
+
+/* 스크롤 리빌 + 막대 애니메이션 */
+const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){
+  e.target.classList.add('in');
+  e.target.querySelectorAll('.alpha-fill,.rf').forEach(b=>b.style.width=b.dataset.w+'%');
+  e.target.querySelectorAll('.cb-fill').forEach(b=>b.style.height=b.dataset.h+'%');
+  io.unobserve(e.target);}});},{threshold:.14});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+/* 코돈 주기성 막대 (Stage 1, coding region) */
+const codonData=[{p:'Pos 1',v:6.5},{p:'Pos 2',v:42.6},{p:'Pos 3',v:58.4}];
+const cbWrap=document.getElementById('codonBars');
+codonData.forEach(d=>{
+  const el=document.createElement('div');el.className='codon-bar';
+  el.innerHTML=`<div class="cb-val">${d.v}%</div><div class="cb-track"><div class="cb-fill" data-h="${d.v/58.4*100}" style="background:var(--stage1)"></div></div><div class="cb-lbl">${d.p}</div>`;
+  cbWrap.appendChild(el);
+});
+
+/* 기능 영역 선택률 (Stage 2) */
+const regionData=[
+  {n:'개시 코돈',v:81.3},{n:'유전자 간',v:74.6},{n:'프로모터',v:71.5},
+  {n:'종결 코돈',v:51.7},{n:'코딩 영역',v:48.4},
+];
+const rl=document.getElementById('regionList');
+regionData.forEach(d=>{
+  const el=document.createElement('div');el.className='region-row';
+  el.innerHTML=`<div class="rn">${d.n}</div><div class="rt"><div class="rf" data-w="${d.v}"></div></div><div class="rv">${d.v}%</div>`;
+  rl.appendChild(el);
+});
+
+/* ===== 청킹 시뮬레이터 ===== */
+const CC=document.getElementById('chunkCanvas');
+const cctx=CC.getContext('2d');
+const baseColors={A:'#E85D5D',C:'#4A9DE8',G:'#F0A93B',T:'#3FBFA0'};
+// 코딩 서열 예시 (코돈 구조 뚜렷)
+const SEQ="ATGGCTAAGCTTGACGCTATCGGTAAACTGCATGCCTGATAAGTCAGCTAACGGTATCAAAGCTGATCTGACGGCT";
+let chunkStage=1;
+let ccW,ccH,ccDPR;
+function ccResize(){ccDPR=Math.min(devicePixelRatio||1,2);ccW=CC.clientWidth;ccH=CC.clientHeight;CC.width=ccW*ccDPR;CC.height=ccH*ccDPR;cctx.setTransform(ccDPR,0,0,ccDPR,0,0);}
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let ccT=0;
+
+// 기능 영역 지정 (예시): 프로모터-개시-코딩-종결-간
+function regionOf(i,n){
+  const f=i/n;
+  if(f<0.16)return'promoter';
+  if(f<0.20)return'start';
+  if(f<0.82)return'coding';
+  if(f<0.88)return'stop';
+  return'intergenic';
+}
+function boundaryProb(i){
+  const base=SEQ[i%SEQ.length];
+  if(chunkStage===1){
+    // 코돈 주기성: 위치 3에서 높음, 위치 1 낮음
+    const pos=i%3;
+    if(pos===2)return 0.9;      // position 3 (0-index 2)
+    if(pos===1)return 0.55;     // position 2
+    return 0.08;                // position 1
+  }else{
+    // 기능 경계에서 높음
+    const r=regionOf(i,SEQ.length);
+    const rates={promoter:.72,start:.81,coding:.48,stop:.52,intergenic:.75};
+    // 경계 근처 강조
+    const r0=regionOf((i-1+SEQ.length)%SEQ.length,SEQ.length);
+    if(r!==r0)return 0.95;
+    return rates[r];
+  }
+}
+function drawChunk(){
+  cctx.clearRect(0,0,ccW,ccH);
+  const n=SEQ.length;
+  const pad=24;
+  const bw=(ccW-pad*2)/n;
+  const y=ccH/2-16;
+  const bh=32;
+  ccT+=reduceMotion?0:0.02;
+  for(let i=0;i<n;i++){
+    const base=SEQ[i];
+    const x=pad+i*bw;
+    const p=boundaryProb(i);
+    const isBoundary=p>0.5;
+    // 염기 블록
+    cctx.fillStyle=baseColors[base];
+    cctx.globalAlpha=0.85;
+    cctx.beginPath();
+    const rr=Math.min(2,bw*0.3);
+    cctx.roundRect(x+bw*0.12,y,bw*0.76,bh,rr);
+    cctx.fill();
+    cctx.globalAlpha=1;
+    // 염기 문자
+    if(bw>9){
+      cctx.fillStyle='rgba(10,14,13,0.85)';
+      cctx.font=`600 ${Math.min(bw*0.7,13)}px "Spline Sans Mono",monospace`;
+      cctx.textAlign='center';cctx.textBaseline='middle';
+      cctx.fillText(base,x+bw*0.5,y+bh/2);
+    }
+    // 경계 마커
+    if(isBoundary){
+      const pulse=reduceMotion?1:(0.7+0.3*Math.sin(ccT*3+i));
+      cctx.strokeStyle=`rgba(159,232,112,${pulse})`;
+      cctx.lineWidth=2.5;
+      cctx.beginPath();
+      cctx.moveTo(x+bw*0.94,y-8);
+      cctx.lineTo(x+bw*0.94,y+bh+8);
+      cctx.stroke();
+      // 경계 확률 도트
+      cctx.fillStyle=`rgba(159,232,112,${pulse})`;
+      cctx.beginPath();cctx.arc(x+bw*0.94,y-14,2.5,0,Math.PI*2);cctx.fill();
+    }
+    // 경계 확률 미니 바 (하단)
+    cctx.fillStyle=isBoundary?'rgba(159,232,112,0.55)':'rgba(93,110,103,0.4)';
+    const barH=p*22;
+    cctx.fillRect(x+bw*0.25,y+bh+16+(22-barH),bw*0.5,barH);
+  }
+  // 하단 라벨
+  cctx.fillStyle='rgba(93,110,103,0.7)';
+  cctx.font='400 9px "Spline Sans Mono",monospace';
+  cctx.textAlign='left';
+  cctx.fillText('boundary prob. p_t',pad,y+bh+52);
+  requestAnimationFrame(drawChunk);
+}
+// roundRect 폴리필
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){this.beginPath();this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);this.closePath();return this;};
+}
+addEventListener('resize',ccResize);
+ccResize();drawChunk();
+
+const btnS1=document.getElementById('btnS1'),btnS2=document.getElementById('btnS2');
+btnS1.addEventListener('click',()=>{chunkStage=1;btnS1.classList.add('on');btnS2.classList.remove('on');});
+btnS2.addEventListener('click',()=>{chunkStage=2;btnS2.classList.add('on');btnS1.classList.remove('on');});
+
+/* ===== HERO 서열 애니메이션 ===== */
+const HC=document.getElementById('seqCanvas');
+const hctx=HC.getContext('2d');
+let hW,hH,hDPR;
+function hResize(){hDPR=Math.min(devicePixelRatio||1,2);hW=HC.clientWidth;hH=HC.clientHeight;HC.width=hW*hDPR;HC.height=hH*hDPR;hctx.setTransform(hDPR,0,0,hDPR,0,0);}
+hResize();addEventListener('resize',hResize);
+const bases=['A','C','G','T'];
+// 흐르는 서열 스트림 생성
+const streams=[];
+const STREAM_N=window.innerWidth<720?5:8;
+function rnd(s){const x=Math.sin(s*91.7+13.1)*43758.5;return x-Math.floor(x);}
+for(let s=0;s<STREAM_N;s++){
+  const seq=[];for(let i=0;i<80;i++)seq.push(bases[Math.floor(rnd(s*100+i)*4)]);
+  streams.push({y:hH*(0.1+0.8*(s/STREAM_N))+ (rnd(s)*20-10),seq,speed:0.3+rnd(s+7)*0.5,off:rnd(s+3)*1000});
+}
+let hT=0;
+function drawHero(){
+  hctx.clearRect(0,0,hW,hH);
+  hT+=reduceMotion?0:1;
+  const cw=15,fs=13;
+  hctx.font=`500 ${fs}px "Spline Sans Mono",monospace`;
+  hctx.textBaseline='middle';
+  streams.forEach((st,si)=>{
+    const baseX=hW-((hT*st.speed+st.off)%(st.seq.length*cw+hW));
+    for(let i=0;i<st.seq.length;i++){
+      const x=baseX+i*cw;
+      if(x<-cw||x>hW)continue;
+      const b=st.seq[i];
+      // 3-nt 그룹핑 강조 (코돈)
+      const inCodon=Math.floor(i/3);
+      const grpAlpha=0.3+0.5*(1-Math.abs(((x/hW)-0.35)))*0.7;
+      hctx.fillStyle=baseColors[b];
+      hctx.globalAlpha=Math.max(0.12,Math.min(0.75,grpAlpha));
+      hctx.fillText(b,x,st.y);
+      // 코돈 경계마다 얇은 마커
+      if(i%3===2 && x>0 && x<hW){
+        hctx.strokeStyle='rgba(159,232,112,0.14)';
+        hctx.lineWidth=1;
+        hctx.beginPath();hctx.moveTo(x+cw*0.7,st.y-9);hctx.lineTo(x+cw*0.7,st.y+9);hctx.stroke();
+      }
+    }
+  });
+  hctx.globalAlpha=1;
+  requestAnimationFrame(drawHero);
+}
+drawHero();
+</script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Understanding the SQL Server Columnstore Index</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Understanding the SQL Server Columnstore Index</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">6 February 2016</p></h4>
+<hr>
+
+<div class="post">
+<h2 id="article-source">Article Source</h2>
+<ul>
+  <li>Title: <a href="http://logicalread.solarwinds.com/sql-server-columnstore-index-w02/#.VrvzXRjnJVo">Understanding the SQL Server Columnstore Index</a></li>
+  <li>Authors: Adam Jorgensen, Steven Wort, Ross LoForte, Brian Knight</li>
+</ul>
+
+<hr />
+
+<h1 id="understanding-the-sql-server-columnstore-index">Understanding the SQL Server Columnstore Index</h1>
+
+<p><em>Columnstore index</em> is a new type of index introduced in SQL Server 2012.
+It is a <em>column-based non-clustered index</em> geared toward increasing query
+performance for workloads that involve large amounts of data, typically
+found in data warehouse fact tables.</p>
+
+<p>This new type of index stores data column-wise instead of row-wise, as
+indexes currently do. For example, consider an Employee table containing
+employee data, as shown in Table 1.</p>
+
+<p><strong>Table 1: Sample Employee Table</strong>&lt;/p&gt;</p>
+<table border="0">
+<tbody>
+<tr>
+<td>FirstName</td>
+<td>LastName</td>
+<td>HireDate</td>
+<td>Gender</td>
+</tr>
+<tr>
+<td>Adam</td>
+<td>Jorgensen</td>
+<td>5/9/2008</td>
+<td>Male</td>
+</tr>
+<tr>
+<td>Sherri</td>
+<td>McDonald</td>
+<td>7/1/2009</td>
+<td>Female</td>
+</tr>
+<tr>
+<td>Brian</td>
+<td>McDonald</td>
+<td>09/15/2009</td>
+<td>Male</td>
+</tr>
+<tr>
+<td>Jose</td>
+<td>Chinchilla</td>
+<td>1/10/2010</td>
+<td>Male</td>
+</tr>
+<tr>
+<td>Tim</td>
+<td>Murphy</td>
+<td>7/1/2009</td>
+<td>Male</td>
+</tr>
+<tr>
+<td>Tim</td>
+<td>Moolic</td>
+<td>6/1/2008</td>
+<td>Male</td>
+</tr>
+</tbody>
+</table>
+
+<p>In a <em>row-based index</em>, the data in the Employee table is stored in one or more data pages, as shown in Figure 1.</p>
+
+<p><img src="http://logicalread.solarwinds.com/media/402767/nw0001-y.jpg" alt="Nw 0001-y" height="217" width="396" /></p>
+
+<p>In a <em>column-based index</em>, the data in the Employee table is stored in separate pages for each of the columns, as shown in Figure 2.</p>
+
+<p><img src="http://logicalread.solarwinds.com/media/402772/nw0002-y.jpg" alt="Nw 0002-y" height="158" width="397" /></p>
+
+<p>Performance advantages in columnstore indexes are possible by leveraging the VertiPaq compression technology, which enables large amounts of data to be compressed in-memory. This in-memory compressed store reduces the number of disk reads and increases buffer cache hit ratios because only the smaller column-based data pages that need to satisfy a query are moved into memory.&lt;/p&gt;</p>
+<p>For wide tables, such as those commonly found in data warehouses, columnstore indexes come in handy as you essentially reduce the amount and size of data needed to be accessed for any given query. For example, consider the following query:
+
+```sql
+SELECT FirstName, LastName,
+FROM EmployeeTable
+WHERE HireDate &gt;= '1/1/2010'
+```
+
+A *column-store index* is more efficient for this example because only one smaller-sized (*compressed*) data page is needed to satisfy the query. In this case, the columnstore index for the HireDate column satisfies the WHERE clause. A row-based index is not as efficient because it may need to load one or more larger-sized data pages into memory and read the entire rows, including columns not needed to satisfy the query. A larger-sized data page and additional unnecessary columns increases data size, memory usage, disk reads, and overall query time. Imagine if this table had 20 or more columns!
+
+Columnstore indexes have some requirements and limitations, as shown in Table 2.
+
+<p><strong>Table 2: Requirements and Limitations of Columnstore Index</strong></p>
+<table border="0">
+<tbody>
+<tr>
+<td>Description</td>
+<td>Requirement/Limitation</td>
+</tr>
+<tr>
+<td>No. of columnstore indexes per table</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Index record size limit of 900 bytes</td>
+<td>No limit/Not applicable</td>
+</tr>
+<tr>
+<td>Index limit of 16 key columns</td>
+<td>No limit/Not applicable</td>
+</tr>
+<tr>
+<td>Table partitioning support</td>
+<td>Yes, as a partition aligned index.</td>
+</tr>
+<tr>
+<td>Can be combined with row-based indexes?</td>
+<td>Yes, if clustered index, all columns must be present in columnstore index.</td>
+</tr>
+<tr>
+<td>Update, Delete, Insert, Merge supported?</td>
+<td>No, columnstore indexes are read-only but workarounds exist. Refer to Books Online: Best Practices: Updating Data in a Columnstore Index.</td>
+</tr>
+<tr>
+<td>Data types that can be included in a columnstore index</td>
+<td>Char, varchar except varchar(max), nchar, nvarchar except nvarchar(max), decimal and numeric except with precision greater than 18 digits, int, bigint, smallint, tinyint, float, real, bit, money, smallmoney, all date and time data types except datetimeoffset with scale greater than 2.</td>
+</tr>
+<tr>
+<td>Data types that cannot be included in a columnstore index</td>
+<td>Binary, varbinary, ntext, text, image, varchar(max), nvarchar(max), uniqueidentifier, rowversion, timestamp, sql_variant, decimal and numeric with precision greater than 18 digits, datetimeoffset with scale greater than 2, CLR types including hierarchyid and spatial types, xml.</td>
+</tr>
+</tbody>
+</table>
+
+Following is the basic syntax to create a columnstore index:
+
+```sql
+CREATE COLUMNSTORE INDEX idx_cs1
+ON EmployeeTable (FirstName, LastName, HireDate, Gender)&lt;/textarea&gt;&lt;/div&gt;
+```
+
+You can also create columnstore indexes using SQL Server Management Studio. Simply navigate to the Indexes section of the table, and select New Index &gt; Non-clustered Columnstore Index.
+</p>
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

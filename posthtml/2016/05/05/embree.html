@@ -1,0 +1,2520 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Embree; High Performance Ray Tracing Kernels</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Embree; High Performance Ray Tracing Kernels</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#computer graphics-ref">computer graphics <span><sup>69</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">5 May 2016</p></h4>
+<hr>
+
+<div class="post">
+<h1 id="embree-overview">Embree Overview</h1>
+
+<p>Embree is a collection of high-performance ray tracing kernels,
+developed at Intel. The target user of Embree are graphics application
+engineers that want to improve the performance of their application by
+leveraging the optimized ray tracing kernels of Embree. The kernels are
+optimized for photo-realistic rendering on the latest Intel® processors
+with support for SSE, AVX, AVX2, AVX512, and the 16-wide Intel® Xeon Phi™
+coprocessor vector instructions. Embree supports runtime code selection
+to choose the traversal and build algorithms that best matches the
+instruction set of your CPU. We recommend using Embree through its API
+to get the highest benefit from future improvements. Embree is released
+as Open Source under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache 2.0
+license</a>.</p>
+
+<p>Embree supports applications written with the Intel SPMD Program
+Compiler (ISPC, <a href="https://ispc.github.io/">https://ispc.github.io/</a>) by also providing an ISPC
+interface to the core ray tracing algorithms. This makes it possible to
+write a renderer in ISPC that leverages SSE, AVX, AVX2, AVX512, and Xeon Phi
+instructions without any code change. ISPC also supports runtime code
+selection, thus ISPC will select the best code path for your
+application, while Embree selects the optimal code path for the ray
+tracing algorithms.</p>
+
+<p>Embree contains algorithms optimized for incoherent workloads (e.g.
+Monte Carlo ray tracing algorithms) and coherent workloads (e.g. primary
+visibility and hard shadow rays). For standard CPUs, the single-ray
+traversal kernels in Embree provide the best performance for incoherent
+workloads and are very easy to integrate into existing rendering
+applications. For Xeon Phi, a renderer written in ISPC using the
+default hybrid ray/packet traversal algorithms have shown to perform
+best, but requires writing the renderer in ISPC. In general for coherent
+workloads, ISPC outperforms the single ray mode on each platform. Embree
+also supports dynamic scenes by implementing high performance two-level
+spatial index structure construction algorithms.</p>
+
+<p>In addition to the ray tracing kernels, Embree provides some tutorials
+to demonstrate how to use the <a href="#embree-api">Embree API</a>. The example photorealistic
+renderer that was originally included in the Embree kernel package is
+now available in a separate GIT repository (see <a href="https://embree.github.io/renderer.html">Embree Example
+Renderer</a>).</p>
+
+<h2 id="supported-platforms">Supported Platforms</h2>
+
+<p>Embree supports Windows (32 bit and 64 bit), Linux (64 bit) and Mac
+OS X (64 bit). The code compiles with the Intel Compiler, GCC, Clang
+and the Microsoft Compiler. Embree is tested with Intel
+Compiler 15.0.2, Clang 3.4.2, GCC 4.8.2, and Visual Studio
+12 2013. Using the Intel Compiler improves performance by
+approximately 10%.</p>
+
+<p>Performance also varies across different operating systems. Embree is
+optimized for Intel CPUs supporting SSE, AVX, and AVX2 instructions,
+and requires at least a CPU with support for SSE2.</p>
+
+<p>The Xeon Phi version of Embree only works under Linux in 64 bit mode.
+For compilation of the the Xeon Phi code the Intel Compiler is required.
+The host side code compiles with GCC, Clang, and the Intel Compiler.</p>
+
+<h2 id="contributing-to-embree">Contributing to Embree</h2>
+
+<p>To contribute code to the Embree repository you need to sign a
+Contributor License Agreement (CLA). Individuals need to fill out the
+<a href="https://embree.github.io/data/Embree-ICLA.pdf">Individual Contributor License Agreement (ICLA)</a>. Corporations need to
+fill out the <a href="https://embree.github.io/data/Embree-CCLA.pdf">Corporate Contributor License Agreement (CCLA)</a> and each
+employee that wants to contribute has to fill out an <a href="https://embree.github.io/data/Embree-ICLA.pdf">Individual
+Contributor License Agreement (ICLA)</a>. Please follow the instructions of
+the CLA forms to send them.</p>
+
+<h2 id="embree-support-and-contact">Embree Support and Contact</h2>
+
+<p>If you encounter bugs please report them via <a href="https://github.com/embree/embree/issues">Embree’s GitHub Issue
+Tracker</a>.</p>
+
+<p>For questions please write us at <a href="mailto:embree_support@intel.com">embree_support@intel.com</a>.</p>
+
+<p>To receive notifications of updates and new features of Embree please
+subscribe to the <a href="https://groups.google.com/d/forum/embree/">Embree mailing
+list</a>.
+Installation of Embree
+======================</p>
+
+<h2 id="windows-installer">Windows Installer</h2>
+
+<p>You can install the 64 bit version of the Embree library using the
+Windows installer application
+<a href="https://github.com/embree/embree/releases/download/v2.9.0/embree-2.9.0.x64.exe">embree-2.9.0-x64.exe</a>. This
+will install the 64 bit Embree version by default in <code class="language-plaintext highlighter-rouge">Program
+Files\Intel\Embree v2.9.0 x64</code>. To install the 32 bit
+Embree library use the
+<a href="https://github.com/embree/embree/releases/download/v2.9.0/embree-2.9.0.win32.exe">embree-2.9.0-win32.exe</a>
+installer. This will install the 32 bit Embree version by default in
+<code class="language-plaintext highlighter-rouge">Program Files\Intel\Embree v2.9.0 win32</code> on 32 bit
+systems and <code class="language-plaintext highlighter-rouge">Program Files (x86)\Intel\Embree v2.9.0 win32</code>
+on 64 bit systems.</p>
+
+<p>You have to set the path to the <code class="language-plaintext highlighter-rouge">lib</code> folder manually to your <code class="language-plaintext highlighter-rouge">PATH</code>
+environment variable for applications to find Embree. To compile
+applications with Embree you also have to set the <code class="language-plaintext highlighter-rouge">Include
+Directories</code> path in Visual Studio to the <code class="language-plaintext highlighter-rouge">include</code> folder of the
+Embree installation.</p>
+
+<p>To uninstall Embree again open <code class="language-plaintext highlighter-rouge">Programs and Features</code> by clicking the
+<code class="language-plaintext highlighter-rouge">Start button</code>, clicking <code class="language-plaintext highlighter-rouge">Control Panel</code>, clicking <code class="language-plaintext highlighter-rouge">Programs</code>, and
+then clicking <code class="language-plaintext highlighter-rouge">Programs and Features</code>. Select <code class="language-plaintext highlighter-rouge">Embree
+2.9.0</code> and uninstall it.</p>
+
+<h2 id="windows-zip-file">Windows ZIP File</h2>
+
+<p>Embree is also delivered as a ZIP file for 64 bit
+<a href="https://github.com/embree/embree/releases/download/v2.9.0/embree-2.9.0.x64.windows.zip">embree-2.9.0.x64.windows.zip</a>
+and 32 bit
+<a href="https://github.com/embree/embree/releases/download/v2.9.0/embree-2.9.0.win32.windows.zip">embree-2.9.0.win32.windows.zip</a>. After
+unpacking this ZIP file you should set the path to the <code class="language-plaintext highlighter-rouge">lib</code> folder
+manually to your <code class="language-plaintext highlighter-rouge">PATH</code> environment variable for applications to find
+Embree. To compile applications with Embree you also have to set the
+<code class="language-plaintext highlighter-rouge">Include Directories</code> path in Visual Studio to the <code class="language-plaintext highlighter-rouge">include</code> folder of
+the Embree installation.</p>
+
+<p>If you plan to ship Embree with your application, best use the Embree
+version from this ZIP file.</p>
+
+<h2 id="linux-rpms">Linux RPMs</h2>
+
+<p>Uncompress the ‘tar.gz’ file
+<a href="https://github.com/embree/embree/releases/download/v2.9.0/embree-2.9.0.x86_64.rpm.tar.gz">embree-2.9.0.x86_64.rpm.tar.gz</a>
+to
+obtain the individual RPM files:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tar xzf embree-2.9.0.x86_64.rpm.tar.gz
+</code></pre></div></div>
+
+<p>To install the Embree using the RPM packages on your Linux system type
+the following:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo rpm --install embree-lib-2.9.0-1.x86_64.rpm
+sudo rpm --install embree-devel-2.9.0-1.x86_64.rpm
+sudo rpm --install embree-examples-2.9.0-1.x86_64.rpm
+</code></pre></div></div>
+
+<p>To also install the Intel® Xeon Phi™ version of Embree additionally
+install the following Xeon Phi™ RPMs:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo rpm --install --nodeps embree-lib_xeonphi-2.9.0-1.x86_64.rpm
+sudo rpm --install --nodeps embree-examples_xeonphi-2.9.0-1.x86_64.rpm
+</code></pre></div></div>
+
+<p>To use the Xeon Phi™ version of Embree you additionally have configure your
+<code class="language-plaintext highlighter-rouge">SINK_LD_LIBRARY_PATH</code> to point to <code class="language-plaintext highlighter-rouge">/usr/lib</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>export SINK_LD_LIBRARY_PATH=/usr/local:${SINK_LD_LIBRARY_PATH}
+</code></pre></div></div>
+
+<p>You also have to install the Intel® Threading Building Blocks (TBB)
+using <code class="language-plaintext highlighter-rouge">yum</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo yum install tbb.x86_64 tbb-devel.x86_64
+</code></pre></div></div>
+
+<p>or via <code class="language-plaintext highlighter-rouge">apt-get</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt-get install libtbb-dev
+</code></pre></div></div>
+
+<p>Alternatively you can download the latest TBB version from
+<a href="https://www.threadingbuildingblocks.org/download">https://www.threadingbuildingblocks.org/download</a>
+and set the <code class="language-plaintext highlighter-rouge">LD_LIBRARY_PATH</code> environment variable to point
+to the TBB library.</p>
+
+<p>Note that the Embree RPMs are linked against the TBB version coming
+with CentOS. This older TBB version is missing some features required
+to get optimal build performance and does not support building of
+scenes lazily during rendering. To get a full featured Embree please
+install using the tar.gz files, which always ship with the latest TBB version.</p>
+
+<p>Under Linux Embree is installed by default in the <code class="language-plaintext highlighter-rouge">/usr/lib</code> and
+<code class="language-plaintext highlighter-rouge">/usr/include</code> directories. This way applications will find Embree
+automatically. The Embree tutorials are installed into the
+<code class="language-plaintext highlighter-rouge">/usr/bin/embree2</code> folder. Specify the full path to
+the tutorials to start them.</p>
+
+<p>To uninstall Embree again just execute the following:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo rpm --erase embree-lib-2.9.0-1.x86_64
+sudo rpm --erase embree-devel-2.9.0-1.x86_64
+sudo rpm --erase embree-examples-2.9.0-1.x86_64
+</code></pre></div></div>
+
+<p>If you also installed the Xeon Phi™ RPMs you have to uninstall them
+too:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo rpm --erase embree-lib_xeonphi-2.9.0-1.x86_64
+sudo rpm --erase embree-examples_xeonphi-2.9.0-1.x86_64
+</code></pre></div></div>
+
+<h2 id="linux-targz-files">Linux tar.gz files</h2>
+
+<p>The Linux version of Embree is also delivered as a tar.gz file
+<a href="https://github.com/embree/embree/releases/download/v2.9.0/embree-2.9.0.x86_64.linux.tar.gz">embree-2.9.0.x86_64.linux.tar.gz</a>. Unpack
+this file using <code class="language-plaintext highlighter-rouge">tar</code> and source the provided <code class="language-plaintext highlighter-rouge">embree-vars.sh</code> (if you
+are using the bash shell) or <code class="language-plaintext highlighter-rouge">embree-vars.csh</code> (if you are using the
+C shell) to setup the environment properly:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tar xzf embree-2.9.0.x64.linux.tar.gz
+source embree-2.9.0.x64.linux/embree-vars.sh
+</code></pre></div></div>
+
+<p>If you want to ship Embree with your application best use the Embree
+version provided through the tar.gz file.</p>
+
+<h2 id="mac-osx-pkg-installer">Mac OS X PKG Installer</h2>
+
+<p>To install the Embree library on your Mac OS X system use the
+provided package installer inside
+<a href="https://github.com/embree/embree/releases/download/v2.9.0/embree-2.9.0.x86_64.dmg">embree-2.9.0.x86_64.dmg</a>. This
+will install Embree by default into <code class="language-plaintext highlighter-rouge">/opt/local/lib</code> and
+<code class="language-plaintext highlighter-rouge">/opt/local/include</code> directories. The Embree tutorials are installed
+into the <code class="language-plaintext highlighter-rouge">/Applications/Embree2</code> folder.</p>
+
+<p>You also have to install the Intel® Threading Building Blocks (TBB)
+using <a href="http://www.macports.org/">MacPorts</a>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo port install tbb
+</code></pre></div></div>
+
+<p>Alternatively you can download the latest TBB version from
+<a href="https://www.threadingbuildingblocks.org/download">https://www.threadingbuildingblocks.org/download</a>
+and set the <code class="language-plaintext highlighter-rouge">DYLD_LIBRARY_PATH</code> environment variable to point
+to the TBB library.</p>
+
+<p>To uninstall Embree again execute the uninstaller script
+<code class="language-plaintext highlighter-rouge">/Applications/Embree2/uninstall.command</code>.</p>
+
+<h2 id="mac-osx-targz-file">Mac OS X tar.gz file</h2>
+
+<p>The Mac OS X version of Embree is also delivered as a tar.gz file
+<a href="https://github.com/embree/embree/releases/download/v2.9.0/embree-2.9.0.x86_64.macosx.tar.gz">embree-2.9.0.x86_64.macosx.tar.gz</a>. Unpack
+this file using <code class="language-plaintext highlighter-rouge">tar</code> and and source the provided <code class="language-plaintext highlighter-rouge">embree-vars.sh</code> (if you
+are using the bash shell) or <code class="language-plaintext highlighter-rouge">embree-vars.csh</code> (if you are using the
+C shell) to setup the environment properly:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tar xzf embree-2.9.0.x64.macosx.tar.gz
+source embree-2.9.0.x64.macosx/embree-vars.sh
+</code></pre></div></div>
+
+<p>If you want to ship Embree with your application please use the Embree
+library of the provided tar.gz file. The library name of that Embree
+library does not contain any global path and also links against TBB
+without global path. This ensures that the Embree (and TBB) library
+that you put next to your application executable is used.</p>
+
+<h2 id="linking-ispc-applications-with-embree">Linking ISPC applications with Embree</h2>
+
+<p>The precompiled Embree library uses the multi-target mode of ISPC. For
+your ISPC application to properly link against Embree you also have to
+enable this mode. You can do this by specifying multiple targets when
+compiling your application with ISPC, e.g.:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ispc --target sse2,sse4,avx,avx2 -o code.o code.ispc
+</code></pre></div></div>
+
+<h1 id="compiling-embree">Compiling Embree</h1>
+
+<h2 id="linux-and-mac-osx">Linux and Mac OS X</h2>
+
+<p>To compile Embree you need a modern C++ compiler that supports C++11.
+Embree is tested with Intel® Compiler 16.0.1, Clang 3.4.2, and GCC
+4.8.3. If the GCC that comes with your Fedora/Red Hat/CentOS
+distribution is too old then you can run the provided script
+<code class="language-plaintext highlighter-rouge">scripts/install_linux_gcc.sh</code> to locally install a recent GCC into
+<code class="language-plaintext highlighter-rouge">$HOME/devtools-2</code>.</p>
+
+<p>Embree supports to use the Intel® Threading Building Blocks (TBB) as
+tasking system. For performance and flexibility reasons we recommend
+to use Embree with the Intel® Threading Building Blocks (TBB) and best
+also use TBB inside your application. Optionally you can disable TBB
+in Embree through the <code class="language-plaintext highlighter-rouge">RTCORE_TASKING_SYSTEM</code> CMake variable.</p>
+
+<p>Embree supported the Intel® SPMD Program Compiler (ISPC), which allows
+straight forward parallelization of an entire renderer. If you do not
+want to use ISPC then you can disable <code class="language-plaintext highlighter-rouge">ENABLE_ISPC_SUPPORT</code> in
+CMake. Otherwise, download and install the ISPC binaries (we have
+tested ISPC version 1.9.0) from
+<a href="https://ispc.github.io/downloads.html">ispc.github.io</a>. After
+installation, put the path to <code class="language-plaintext highlighter-rouge">ispc</code> permanently into your <code class="language-plaintext highlighter-rouge">PATH</code>
+environment variable or you need to correctly set the
+<code class="language-plaintext highlighter-rouge">ISPC_EXECUTABLE</code> variable during CMake configuration.</p>
+
+<p>You additionally have to install CMake 2.8.11 or higher and the developer
+version of GLUT.</p>
+
+<p>Under Mac OS X, all these dependencies can be installed
+using <a href="http://www.macports.org/">MacPorts</a>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo port install cmake tbb freeglut
+</code></pre></div></div>
+
+<p>Depending on your Linux distribution you can install these dependencies
+using <code class="language-plaintext highlighter-rouge">yum</code> or <code class="language-plaintext highlighter-rouge">apt-get</code>.  Some of these packages might already be
+installed or might have slightly different names.</p>
+
+<p>Type the following to install the dependencies using <code class="language-plaintext highlighter-rouge">yum</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo yum install cmake.x86_64
+sudo yum install tbb.x86_64 tbb-devel.x86_64
+sudo yum install freeglut.x86_64 freeglut-devel.x86_64
+sudo yum install libXmu.x86_64 libXi.x86_64
+sudo yum install libXmu-devel.x86_64 libXi-devel.x86_64
+</code></pre></div></div>
+
+<p>Type the following to install the dependencies using <code class="language-plaintext highlighter-rouge">apt-get</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo apt-get install cmake-curses-gui
+sudo apt-get install libtbb-dev
+sudo apt-get install freeglut3-dev
+sudo apt-get install libxmu-dev libxi-dev
+</code></pre></div></div>
+
+<p>Finally you can compile Embree using CMake. Create a build directory
+inside the Embree root directory and execute <code class="language-plaintext highlighter-rouge">ccmake ..</code> inside this
+build directory.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mkdir build
+cd build
+ccmake ..
+</code></pre></div></div>
+
+<p>Per default CMake will use the compilers specified with the <code class="language-plaintext highlighter-rouge">CC</code> and
+<code class="language-plaintext highlighter-rouge">CXX</code> environment variables. Should you want to use a different
+compiler, run <code class="language-plaintext highlighter-rouge">cmake</code> first and set the <code class="language-plaintext highlighter-rouge">CMAKE_CXX_COMPILER</code> and
+<code class="language-plaintext highlighter-rouge">CMAKE_C_COMPILER</code> variables to the desired compiler. For example, to
+use the Intel Compiler instead of the default GCC on most Linux machines
+(<code class="language-plaintext highlighter-rouge">g++</code> and <code class="language-plaintext highlighter-rouge">gcc</code>) execute</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmake -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc ..
+</code></pre></div></div>
+
+<p>Similarly, to use Clang set the variables to <code class="language-plaintext highlighter-rouge">clang++</code> and <code class="language-plaintext highlighter-rouge">clang</code>,
+respectively. Note that the compiler variables cannot be changed anymore
+after the first run of <code class="language-plaintext highlighter-rouge">cmake</code> or <code class="language-plaintext highlighter-rouge">ccmake</code>.</p>
+
+<p>Running <code class="language-plaintext highlighter-rouge">ccmake</code> will open a dialog where you can perform various
+configurations as described below. After having configured Embree, press
+c (for configure) and g (for generate) to generate a Makefile and leave
+the configuration. The code can be compiled by executing make.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>make
+</code></pre></div></div>
+
+<p>The executables will be generated inside the build folder. We recommend
+to finally install the Embree library and header files on your
+system. Therefore set the <code class="language-plaintext highlighter-rouge">CMAKE_INSTALL_PREFIX</code> to <code class="language-plaintext highlighter-rouge">/usr</code> in cmake
+and type:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo make install
+</code></pre></div></div>
+
+<p>If you keep the default <code class="language-plaintext highlighter-rouge">CMAKE_INSTALL_PREFIX</code> of <code class="language-plaintext highlighter-rouge">/usr/local</code> then
+you have to make sure the path <code class="language-plaintext highlighter-rouge">/usr/local/lib</code> is in your
+<code class="language-plaintext highlighter-rouge">LD_LIBRARY_PATH</code>.</p>
+
+<p>You can also uninstall Embree again by executing:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo make uninstall
+</code></pre></div></div>
+
+<p>If you cannot install Embree on your system (e.g. when you don’t have
+administrator rights) you need to add embree_root_directory/build to
+your <code class="language-plaintext highlighter-rouge">LD_LIBRARY_PATH</code> (and <code class="language-plaintext highlighter-rouge">SINK_LD_LIBRARY_PATH</code> in case you want to
+use Embree on Intel® Xeon Phi™ coprocessors).</p>
+
+<h2 id="intel-xeon-phi-coprocessor">Intel® Xeon Phi™ coprocessor</h2>
+
+<p>Embree supports the Intel® Xeon Phi™ coprocessor under Linux. To compile
+Embree for Xeon Phi you need to enable the <code class="language-plaintext highlighter-rouge">XEON_PHI_ISA</code> option in
+CMake and have the Intel Compiler and the Intel® <a href="https://software.intel.com/en-us/articles/intel-manycore-platform-software-stack-mpss">Manycore Platform Software
+Stack</a>
+(Intel® MPSS) installed.</p>
+
+<p>Enabling the buffer stride feature reduces performance for building
+spatial hierarchies on Xeon Phi. Under Xeon Phi the Intel® Threading
+Building Blocks (TBB) tasking system is not supported, and the
+implementation will always use some internal tasking system.</p>
+
+<h2 id="windows">Windows</h2>
+
+<p>To compile Embree under Windows you need Visual Studio 2013 or Visual
+Studio 2012. Under Visual Studio 2013 you can enable AVX2 in CMake,
+however, Visual Studio 2012 supports at most AVX.</p>
+
+<p>Embree supports to use the Intel® Threading Building Blocks (TBB) as
+tasking system. For performance and flexibility reasons we recommend
+to use Embree with the Intel® Threading Building Blocks (TBB) and best
+also use TBB inside your application. Optionally you can disable TBB
+in Embree through the <code class="language-plaintext highlighter-rouge">RTCORE_TASKING_SYSTEM</code> CMake variable.</p>
+
+<p>Embree will either find the Intel® Threading Building Blocks (TBB)
+installation that comes with the Intel® Compiler, or you can install the
+binary distribution of TBB directly from
+<a href="https://www.threadingbuildingblocks.org/download">www.threadingbuildingblocks.org</a>
+into a folder named tbb into your Embree root directory. You also have
+to make sure that the libraries tbb.dll and tbb_malloc.dll can be found when
+executing your Embree applications, e.g. by putting the path to these
+libraries into your <code class="language-plaintext highlighter-rouge">PATH</code> environment variable.</p>
+
+<p>Embree supported the Intel® SPMD Program Compiler (ISPC), which allows
+straight forward parallelization of an entire renderer. If you do not
+want to use ISPC then you can disable <code class="language-plaintext highlighter-rouge">ENABLE_ISPC_SUPPORT</code> in
+CMake. Otherwise, download and install the ISPC binaries (we have
+tested ISPC version 1.9.0) from
+<a href="https://ispc.github.io/downloads.html">ispc.github.io</a>. After
+installation, put the path to <code class="language-plaintext highlighter-rouge">ispc.exe</code> permanently into your <code class="language-plaintext highlighter-rouge">PATH</code>
+environment variable or you need to correctly set the
+<code class="language-plaintext highlighter-rouge">ISPC_EXECUTABLE</code> variable during CMake configuration.</p>
+
+<p>You additionally have to install <a href="http://www.cmake.org/download/">CMake</a>
+(version 2.8.11 or higher). Note that you need a native Windows CMake
+installation, because CMake under Cygwin cannot generate solution files
+for Visual Studio.</p>
+
+<h2 id="using-the-ide">Using the IDE</h2>
+
+<p>Run <code class="language-plaintext highlighter-rouge">cmake-gui</code>, browse to the Embree sources, set the build directory
+and click Configure. Now you can select the Generator, e.g. “Visual
+Studio 12 2013” for a 32 bit build or “Visual Studio 12 2013 Win64” for
+a 64 bit build. Most configuration parameters described for the <a href="#linux-and-mac-osx">Linux
+build</a> can be set under Windows as well. Finally,
+click “Generate” to create the Visual Studio solution files.</p>
+
+<hr />
+<p>Option                    Description        Default
+  ————————- —————— —————————-
+  CMAKE_CONFIGURATION_TYPE  List of generated  Debug;Release;RelWithDebInfo
+                            configurations.</p>
+
+<dl>
+  <dt>USE_STATIC_RUNTIME        Use the static     OFF</dt>
+  <dt>                            version of the</dt>
+  <dt>                            C/C++ runtime</dt>
+  <dt>                            library.</dt>
+  <dt>  ————————- —————— —————————-</dt>
+  <dd>Windows-specific CMake build options for Embree.</dd>
+</dl>
+
+<p>For compilation of Embree under Windows use the generated Visual Studio
+solution file <code class="language-plaintext highlighter-rouge">embree2.sln</code>. The solution is by default setup to use the
+Microsoft Compiler. You can switch to the Intel Compiler by right
+clicking onto the solution in the Solution Explorer and then selecting
+the Intel Compiler. We recommend using 64 bit mode and the Intel
+Compiler for best performance.</p>
+
+<p>To build Embree with support for the AVX2 instruction set you need at
+least Visual Studio 2013 Update 4. When switching to the Intel Compiler
+to build with AVX2 you currently need to manually <em>remove</em> the switch
+<code class="language-plaintext highlighter-rouge">/arch:AVX2</code> from the <code class="language-plaintext highlighter-rouge">embree_avx2</code> project, which can be found under
+Properties ⇒ C/C++ ⇒ All Options ⇒ Additional Options.</p>
+
+<p>To build all projects of the solution it is recommend to build the CMake
+utility project <code class="language-plaintext highlighter-rouge">ALL_BUILD</code>, which depends on all projects. Using “Build
+Solution” would also build all other CMake utility projects (such as
+<code class="language-plaintext highlighter-rouge">INSTALL</code>), which is usually not wanted.</p>
+
+<p>We recommend enabling syntax highlighting for the <code class="language-plaintext highlighter-rouge">.ispc</code> source and
+<code class="language-plaintext highlighter-rouge">.isph</code> header files. To do so open Visual Studio, go to Tools ⇒
+Options ⇒ Text Editor ⇒ File Extension and add the isph and ispc
+extension for the “Microsoft Visual C++” editor.</p>
+
+<h2 id="using-the-command-line">Using the Command Line</h2>
+
+<p>Embree can also be configured and built without the IDE using the Visual
+Studio command prompt:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd path\to\embree
+mkdir build
+cd build
+cmake -G "Visual Studio 12 2013 Win64" ..
+cmake --build . --config Release
+</code></pre></div></div>
+
+<p>To switch to the Intel Compiler use</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ICProjConvert150 embree2.sln /IC /s /f
+</code></pre></div></div>
+
+<p>You can also build only some projects with the <code class="language-plaintext highlighter-rouge">--target</code> switch.
+Additional parameters after “<code class="language-plaintext highlighter-rouge">--</code>” will be passed to <code class="language-plaintext highlighter-rouge">msbuild</code>. For
+example, to build the Embree library in parallel use</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmake --build . --config Release --target embree -- /m
+</code></pre></div></div>
+
+<h2 id="cmake-configuration">CMake configuration</h2>
+
+<p>The default CMake configuration in the configuration dialog should be
+appropriate for most usages. The following table describes all
+parameters that can be configured in CMake:</p>
+
+<hr />
+<p>Option                       Description                      Default
+  —————————- ——————————– ——–
+  CMAKE_BUILD_TYPE             Can be used to switch between    Release
+                               Debug mode (Debug), Release
+                               mode (Release), and Release
+                               mode with enabled assertions
+                               and debug symbols
+                               (RelWithDebInfo).</p>
+
+<p>ENABLE_ISPC_SUPPORT          Enables ISPC support of Embree.  ON</p>
+
+<p>ENABLE_STATIC_LIB            Builds Embree as a static        OFF
+                               library. When using the
+                               statically compiled Embree
+                               library, you have to define
+                               ENABLE_STATIC_LIB before
+                               including rtcore.h in your
+                               application.</p>
+
+<p>ENABLE_TUTORIALS             Enables build of Embree          ON
+                               tutorials.</p>
+
+<p>ENABLE_XEON_PHI_SUPPORT      Enables generation of the        OFF
+                               Xeon Phi version of Embree.</p>
+
+<p>RTCORE_BACKFACE_CULLING      Enables backface culling, i.e.   OFF
+                               only surfaces facing a ray can
+                               be hit.</p>
+
+<p>RTCORE_BUFFER_STRIDE         Enables the buffer stride        ON
+                               feature.</p>
+
+<p>RTCORE_INTERSECTION_FILTER   Enables the intersection filter  ON
+                               feature.</p>
+
+<p>RTCORE_INTERSECTION_FILTER   Restore previous hit when        ON
+  _RESTORE                     ignoring hits.</p>
+
+<p>RTCORE_RAY_MASK              Enables the ray masking feature. OFF</p>
+
+<p>RTCORE_RAY_PACKETS           Enables ray packet support.      ON</p>
+
+<p>RTCORE_IGNORE_INVALID_RAYS   Makes code robust against the    OFF
+                               risk of full-tree traversals
+                               caused by invalid rays (e.g.
+                               rays containing INF/NaN as
+                               origins).</p>
+
+<p>RTCORE_TASKING_SYSTEM        Chooses between Intel® Threading TBB
+                               Building Blocks (TBB) or an
+                               internal tasking system
+                               (INTERNAL).</p>
+
+<dl>
+  <dt>XEON_ISA                     Select highest supported ISA on  AVX2</dt>
+  <dt>                               Intel® Xeon® CPUs (SSE2, SSE3,</dt>
+  <dt>                               SSSE3, SSE4.1, SSE4.2, AVX,</dt>
+  <dt>                               AVX-I, AVX2, or AVX512KNL).</dt>
+  <dt>  —————————- ——————————– ——–</dt>
+  <dd>CMake build options for Embree.</dd>
+</dl>
+
+<h1 id="embree-api">Embree API</h1>
+
+<p>The Embree API is a low level ray tracing API that supports defining and
+committing of geometry and performing ray queries of different types.
+Static and dynamic scenes are supported, that may contain triangular
+geometry (including linear motions for motion blur), instanced geometry,
+and user defined geometry. Supported ray queries are, finding the
+closest scene intersection along a ray, and testing a ray segment for
+any intersection with the scene. Single rays, as well as packets of rays
+in a struct of array layout can be used for packet sizes of 1, 4, 8, and
+16 rays. Filter callback functions are supported, that get invoked for every
+intersection encountered during traversal.</p>
+
+<p>The Embree API exists in a C++ and ISPC version. This document describes
+the C++ version of the API, the ISPC version is almost identical. The
+only differences are that the ISPC version needs some ISPC specific
+uniform type modifiers, and limits the ray packets to the native SIMD
+size the ISPC code is compiled for.</p>
+
+<p>The user is supposed to include the <code class="language-plaintext highlighter-rouge">embree2/rtcore.h</code>, and the
+<code class="language-plaintext highlighter-rouge">embree2/rtcore_ray.h</code> file, but none of the other header files. If
+using the ISPC version of the API, the user should include
+<code class="language-plaintext highlighter-rouge">embree2/rtcore.isph</code> and <code class="language-plaintext highlighter-rouge">embree2/rtcore_ray.isph</code>.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;embree2/rtcore.h&gt;
+#include &lt;embree2/rtcore_ray.h&gt;
+</code></pre></div></div>
+
+<p>All API calls carry the prefix <code class="language-plaintext highlighter-rouge">rtc</code> which stands for <strong>r</strong>ay
+<strong>t</strong>racing <strong>c</strong>ore. Embree supports a device concept, which allows
+different components of the application to use the API without
+interfering with each other. You have to create at least one Embree
+device through the <code class="language-plaintext highlighter-rouge">rtcNewDevice</code> call. Before the application exits
+it should delete all devices by invoking
+<code class="language-plaintext highlighter-rouge">rtcDeleteDevice</code>. An application typically creates a single device
+only, and should create only a small number of devices.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RTCDevice device = rtcNewDevice(NULL);
+...
+rtcDeleteDevice(device);
+</code></pre></div></div>
+
+<p>It is strongly recommended to have the <code class="language-plaintext highlighter-rouge">Flush to Zero</code> and <code class="language-plaintext highlighter-rouge">Denormals
+are Zero</code> mode of the MXCSR control and status register enabled for
+each thread before calling the <code class="language-plaintext highlighter-rouge">rtcIntersect</code> and <code class="language-plaintext highlighter-rouge">rtcOccluded</code>
+functions. Otherwise, under some circumstances special handling of
+denormalized floating point numbers can significantly reduce
+application and Embree performance. When using Embree together with
+the Intel® Threading Building Blocks, it is sufficient to execute the
+following code at the beginning of the application main thread (before
+the creation of the tbb::task_scheduler_init object):</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;xmmintrin.h&gt;
+#include &lt;pmmintrin.h&gt;
+...
+_MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+_MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+</code></pre></div></div>
+
+<p>Embree processes some implementation specific configuration from the
+following locations in the specified order:</p>
+
+<p>1) configuration string passed to the <code class="language-plaintext highlighter-rouge">rtcNewDevice</code> function
+2) <code class="language-plaintext highlighter-rouge">.embree2</code> file in the application folder
+3) <code class="language-plaintext highlighter-rouge">.embree2</code> file in the home folder</p>
+
+<p>This way the configuration for the application can be changed globally
+(either through the <code class="language-plaintext highlighter-rouge">rtcNewDevice</code> call or through the <code class="language-plaintext highlighter-rouge">.embree2</code> file in
+the application folder) and each user has the option to modify the
+configuration to fit its needs.</p>
+
+<p>API calls that access geometries are only thread safe as long as
+different geometries are accessed. Accesses to one geometry have to
+get sequenced by the application. All other API calls are thread
+safe. The API calls are re-entrant, it is thus safe to trace new rays
+and create new geometry when intersecting a user defined object.</p>
+
+<p>Each user thread has its own error flag per device. If an error occurs
+when invoking some API function, this flag is set to an error code if it
+stores no previous error. The <code class="language-plaintext highlighter-rouge">rtcDeviceGetError</code> function reads and returns
+the currently stored error and clears the error flag again.</p>
+
+<p>Possible error codes returned by <code class="language-plaintext highlighter-rouge">rtcDeviceGetError</code> are:</p>
+
+<hr />
+<p>Error Code              Description
+  ———————– ———————————————
+  RTC_NO_ERROR            No error occurred.</p>
+
+<p>RTC_UNKNOWN_ERROR       An unknown error has occurred.</p>
+
+<p>RTC_INVALID_ARGUMENT    An invalid argument was specified.</p>
+
+<p>RTC_INVALID_OPERATION   The operation is not allowed for the
+                          specified object.</p>
+
+<p>RTC_OUT_OF_MEMORY       There is not enough memory left to complete
+                          the operation.</p>
+
+<p>RTC_UNSUPPORTED_CPU     The CPU is not supported as it does not
+                          support SSE2.</p>
+
+<dl>
+  <dt>RTC_CANCELLED           The operation got cancelled</dt>
+  <dt>                          by an Memory Monitor Callback or</dt>
+  <dt>                          Progress Monitor Callback function.</dt>
+  <dt>  ———————– ———————————————</dt>
+  <dd>Return values of <code class="language-plaintext highlighter-rouge">rtcDeviceGetError</code>.</dd>
+</dl>
+
+<p>When the device construction fails <code class="language-plaintext highlighter-rouge">rtcNewDevice</code> returns NULL as
+device. To detect the error code of a such a failed device
+construction pass NULL as device to the <code class="language-plaintext highlighter-rouge">rtcDeviceGetError</code>
+function. For all other invokations of <code class="language-plaintext highlighter-rouge">rtcDeviceGetError</code> a proper
+device pointer has to get specified.</p>
+
+<p>Using the <code class="language-plaintext highlighter-rouge">rtcDeviceSetErrorFunction</code> call, it is also possible to set
+a callback function that is called whenever an error occurs for a
+device. The callback function gets passed the error code, as well as
+some string that describes the error further. Passing <code class="language-plaintext highlighter-rouge">NULL</code> to
+<code class="language-plaintext highlighter-rouge">rtcDeviceSetErrorFunction</code> disables the set callback function again. The
+previously described error flags are also set if an error callback
+function is present.</p>
+
+<h2 id="scene">Scene</h2>
+
+<p>A scene is a container for a set of geometries of potentially different
+types. A scene is created using the <code class="language-plaintext highlighter-rouge">rtcDeviceNewScene</code> function call, and
+destroyed using the <code class="language-plaintext highlighter-rouge">rtcDeleteScene</code> function call. Two types of scenes
+are supported, dynamic and static scenes. Different flags specify the
+type of scene to create and the type of ray query operations that can
+later be performed on the scene. The following example creates a scene
+that supports dynamic updates and the single ray <code class="language-plaintext highlighter-rouge">rtcIntersect</code> and
+<code class="language-plaintext highlighter-rouge">rtcOccluded</code> calls.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RTCScene scene = rtcDeviceNewScene(device, RTC_SCENE_DYNAMIC, RTC_INTERSECT1);
+...
+rtcDeleteScene(scene);
+</code></pre></div></div>
+
+<p>Using the following scene flags the user can select between creating a
+static or dynamic scene.</p>
+
+<dl>
+  <dt>Scene Flag          Description</dt>
+  <dt>  ——————- ——————————————</dt>
+  <dt>  RTC_SCENE_STATIC    Scene is optimized for static geometry.</dt>
+  <dt>  RTC_SCENE_DYNAMIC   Scene is optimized for dynamic geometry.</dt>
+  <dt>  ——————- ——————————————</dt>
+  <dd>Dynamic type flags for <code class="language-plaintext highlighter-rouge">rtcDeviceNewScene</code>.</dd>
+</dl>
+
+<p>A dynamic scene is created by invoking <code class="language-plaintext highlighter-rouge">rtcDeviceNewScene</code> with the
+<code class="language-plaintext highlighter-rouge">RTC_SCENE_DYNAMIC</code> flag. Different geometries can now be created
+inside that scene. Geometries are enabled by default. Once the scene
+geometry is specified, an <code class="language-plaintext highlighter-rouge">rtcCommit</code> call will finish the scene
+description and trigger building of internal data structures. After
+the <code class="language-plaintext highlighter-rouge">rtcCommit</code> call it is safe to perform ray queries of the type
+specified at scene construction time. Geometries can get disabled
+(<code class="language-plaintext highlighter-rouge">rtcDisable</code> call), enabled again (<code class="language-plaintext highlighter-rouge">rtcEnable</code> call), and deleted
+(<code class="language-plaintext highlighter-rouge">rtcDeleteGeometry</code> call). Geometries can also get modified,
+including their vertex and index arrays. After the modification of
+some geometry, <code class="language-plaintext highlighter-rouge">rtcUpdate</code> or <code class="language-plaintext highlighter-rouge">rtcUpdateBuffer</code> has to get called for
+that geometry to specify which buffers got modified. Each modified
+buffer can specified separately using the <code class="language-plaintext highlighter-rouge">rtcUpdateBuffer</code>
+function. In contrast the <code class="language-plaintext highlighter-rouge">rtcUpdate</code> function simply tags each buffer
+of some geometry as modified. If geometries got enabled, disabled,
+deleted, or modified an <code class="language-plaintext highlighter-rouge">rtcCommit</code> call has to get invoked before
+performing any ray queries for the scene, otherwise the effect of the
+ray query is undefined. During in <code class="language-plaintext highlighter-rouge">rtcCommit</code> call modifications to
+the scene are not allowed.</p>
+
+<p>A static scene is created by the <code class="language-plaintext highlighter-rouge">rtcDeviceNewScene</code> call with the
+<code class="language-plaintext highlighter-rouge">RTC_SCENE_STATIC</code> flag. Geometries can only get created, enabled,
+disabled and modified until the first <code class="language-plaintext highlighter-rouge">rtcCommit</code> call. After the
+<code class="language-plaintext highlighter-rouge">rtcCommit</code> call, each access to any geometry of that static scene is
+invalid. Geometries that got created inside a static scene can only
+get deleted by deleting the entire scene.</p>
+
+<p>The modification of geometry, building of hierarchies using
+<code class="language-plaintext highlighter-rouge">rtcCommit</code>, and tracing of rays have always to happen separately,
+never at the same time.</p>
+
+<p>Embree silently ignores primitives that would cause numerical issues,
+e.g. primitives containing NaNs, INFs, or values greater
+than 1.844E18f.</p>
+
+<p>The following flags can be used to tune the used acceleration structure.
+These flags are only hints and may be ignored by the implementation.</p>
+
+<hr />
+<p>Scene Flag               Description
+  ———————— ———————————————
+  RTC_SCENE_COMPACT        Creates a compact data structure and avoids
+                           algorithms that consume much memory.</p>
+
+<p>RTC_SCENE_COHERENT       Optimize for coherent rays (e.g. primary
+                           rays).</p>
+
+<p>RTC_SCENE_INCOHERENT     Optimize for in-coherent rays (e.g. diffuse
+                           reflection rays).</p>
+
+<dl>
+  <dt>RTC_SCENE_HIGH_QUALITY   Build higher quality spatial data structures.</dt>
+  <dt>  ———————— ———————————————</dt>
+  <dd>Acceleration structure flags for <code class="language-plaintext highlighter-rouge">rtcDeviceNewScene</code>.</dd>
+</dl>
+
+<p>The following flags can be used to tune the traversal algorithm that is
+used by Embree. These flags are only hints and may be ignored by the
+implementation.</p>
+
+<dl>
+  <dt>Scene Flag         Description</dt>
+  <dt>  —————— —————————————————-</dt>
+  <dt>  RTC_SCENE_ROBUST   Avoid optimizations that reduce arithmetic accuracy.</dt>
+  <dt>  —————— —————————————————-</dt>
+  <dd>Traversal algorithm flags for <code class="language-plaintext highlighter-rouge">rtcDeviceNewScene</code>.</dd>
+</dl>
+
+<p>The second argument of the <code class="language-plaintext highlighter-rouge">rtcDeviceNewScene</code> function are algorithm flags,
+that allow to specify which ray queries are required by the application.
+Calling for a scene a ray query API function that is different to the
+ones specified at scene creation time is not allowed. Further, the
+application should only pass ray query requirements that are really
+needed, to give Embree most freedom in choosing the best algorithm. E.g.
+in case Embree implements no packet traversers for some highly optimized
+data structure for single rays, then this data structure cannot be used
+if the user enables any ray packet query.</p>
+
+<hr />
+<p>Algorithm Flag    Description
+  —————– —————————————————-
+  RTC_INTERSECT1    Enables the <code class="language-plaintext highlighter-rouge">rtcIntersect</code> and <code class="language-plaintext highlighter-rouge">rtcOccluded</code>
+                    functions (single ray interface) for this scene.</p>
+
+<p>RTC_INTERSECT4    Enables the <code class="language-plaintext highlighter-rouge">rtcIntersect4</code> and <code class="language-plaintext highlighter-rouge">rtcOccluded4</code>
+                    functions (4-wide packet interface) for this scene.</p>
+
+<p>RTC_INTERSECT8    Enables the <code class="language-plaintext highlighter-rouge">rtcIntersect8</code> and <code class="language-plaintext highlighter-rouge">rtcOccluded8</code>
+                    functions (8-wide packet interface) for this scene.</p>
+
+<p>RTC_INTERSECT16   Enables the <code class="language-plaintext highlighter-rouge">rtcIntersect16</code> and <code class="language-plaintext highlighter-rouge">rtcOccluded16</code>
+                    functions (16-wide packet interface) for this
+                    scene.</p>
+
+<p>RTC_INTERSECTN    Enables the <code class="language-plaintext highlighter-rouge">rtcIntersectN</code>, <code class="language-plaintext highlighter-rouge">rtcOccludedN</code>, 
+                    <code class="language-plaintext highlighter-rouge">rtcIntersectN_SOA</code>, and <code class="language-plaintext highlighter-rouge">rtcOccludedN_SOA</code>
+                    functions for this scene.</p>
+
+<p>RTC_INTERPOLATE   Enables the <code class="language-plaintext highlighter-rouge">rtcInterpolate</code> and <code class="language-plaintext highlighter-rouge">rtcInterpolateN</code>
+                    interpolation functions.</p>
+
+<hr />
+<p>: Enabled algorithm flags for <code class="language-plaintext highlighter-rouge">rtcDeviceNewScene</code>.</p>
+
+<h2 id="geometries">Geometries</h2>
+
+<p>Geometries are always contained in the scene they are created in. Each
+geometry is assigned an integer ID at creation time, which is unique
+for that scene. The current version of the API supports triangle
+meshes (<code class="language-plaintext highlighter-rouge">rtcNewTriangleMesh</code>), Catmull-Clark subdivision surfaces
+(<code class="language-plaintext highlighter-rouge">rtcNewSubdivisionMesh</code>), hair geometries (<code class="language-plaintext highlighter-rouge">rtcNewHairGeometry</code>),
+single level instances of other scenes (<code class="language-plaintext highlighter-rouge">rtcNewInstance2</code>), and user
+defined geometries (<code class="language-plaintext highlighter-rouge">rtcNewUserGeometry</code>). The API is designed in a
+way that easily allows adding new geometry types in later releases.</p>
+
+<p>For dynamic scenes, the assigned geometry IDs fulfill the following
+properties. As long as no geometry got deleted, all IDs are assigned
+sequentially, starting from 0. If geometries got deleted, the
+implementation will reuse IDs later on in an implementation dependent
+way. Consequently sequential assignment is no longer guaranteed, but a
+compact range of IDs. These rules allow the application to manage a
+dynamic array to efficiently map from geometry IDs to its own geometry
+representation.</p>
+
+<p>For static scenes, geometry IDs are assigned sequentially starting at 0.
+This allows the application to use a fixed size array to map from
+geometry IDs to its own geometry representation.</p>
+
+<p>Alternatively the application can also use the <code class="language-plaintext highlighter-rouge">void rtcSetUserData
+(RTCScene scene, unsigned geomID, void* ptr)</code> function to set a
+pointer <code class="language-plaintext highlighter-rouge">ptr</code> to its own geometry representation, and later read out
+this pointer again using the <code class="language-plaintext highlighter-rouge">void* rtcGetUserData (RTCScene scene,
+unsigned geomID)</code> function.</p>
+
+<p>The following geometry flags can be specified at construction time of
+most geometries:</p>
+
+<hr />
+<p>Geometry Flag            Description
+  ———————— ———————————————
+  RTC_GEOMETRY_STATIC      The geometry is considered static and should get
+                           modified rarely by the application. This
+                           flag has to get used in static scenes.</p>
+
+<p>RTC_GEOMETRY_DEFORMABLE  The geometry is considered to deform in a
+                           coherent way, e.g. a skinned character. The
+                           connectivity of the geometry has to stay
+                           constant, thus modifying the index array is
+                           not allowed. The implementation is free to
+                           choose a BVH refitting approach for handling
+                           meshes tagged with that flag.</p>
+
+<dl>
+  <dt>RTC_GEOMETRY_DYNAMIC     The geometry is considered highly dynamic and</dt>
+  <dt>                           changes frequently, possibly in an</dt>
+  <dt>                           unstructured way. Embree will rebuild data</dt>
+  <dt>                           structures from scratch for this type of</dt>
+  <dt>                           mesh.</dt>
+  <dt>  ———————— ———————————————</dt>
+  <dd>Flags for the creation of new geometries.</dd>
+</dl>
+
+<h2 id="triangle-meshes">Triangle Meshes</h2>
+
+<p>Triangle meshes are created using the <code class="language-plaintext highlighter-rouge">rtcNewTriangleMesh</code> function
+call, and potentially deleted using the <code class="language-plaintext highlighter-rouge">rtcDeleteGeometry</code> function
+call.</p>
+
+<p>The number of triangles, number of vertices, and optionally the
+number of time steps (1 for normal meshes, and 2 for linear motion
+blur) have to get specified at construction time of the mesh. The user
+can also specify additional flags that choose the strategy to handle
+that mesh in dynamic scenes. The following example demonstrates how to
+create a triangle mesh without motion blur:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>unsigned geomID = rtcNewTriangleMesh(scene, geomFlags,
+   numTriangles, numVertices, 1);
+</code></pre></div></div>
+
+<p>The triangle indices can be set by mapping and writing to the index
+buffer (<code class="language-plaintext highlighter-rouge">RTC_INDEX_BUFFER</code>) and the triangle vertices can be set by
+mapping and writing into the vertex buffer (<code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER</code>). The
+index buffer contains an array of three 32 bit indices, while the
+vertex buffer contains an array of three float values aligned to 16
+bytes. The 4th component of the aligned vertices can be arbitrary. All
+buffers have to get unmapped before an <code class="language-plaintext highlighter-rouge">rtcCommit</code> call to the scene.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>struct Vertex   { float x, y, z, a; };
+struct Triangle { int v0, v1, v2; };
+
+Vertex* vertices = (Vertex*) rtcMapBuffer(scene, geomID, RTC_VERTEX_BUFFER);
+// fill vertices here
+rtcUnmapBuffer(scene, geomID, RTC_VERTEX_BUFFER);
+
+Triangle* triangles = (Triangle*) rtcMapBuffer(scene, geomID, RTC_INDEX_BUFFER);
+// fill triangle indices here
+rtcUnmapBuffer(scene, geomID, RTC_INDEX_BUFFER);
+</code></pre></div></div>
+
+<p>Also see tutorial <a href="#triangle-geometry">Triangle Geometry</a> for an example of how to create
+triangle meshes.</p>
+
+<p>The parametrization of a triangle uses the first vertex <code class="language-plaintext highlighter-rouge">p0</code> as base
+point, and the vector <code class="language-plaintext highlighter-rouge">p1 - p0</code> as u-direction and <code class="language-plaintext highlighter-rouge">p2 - p0</code> as
+v-direction. The following picture additionally illustrates the
+direction the geometry normal is pointing into.</p>
+
+<p><img src="https://embree.github.io/images/triangle_uv.png" alt="" /></p>
+
+<p>Some texture coordinates <code class="language-plaintext highlighter-rouge">t0,t1,t2</code> can be linearly interpolated over
+the triangle the following way:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>t_uv = (1-u-v)*t0 + u*(t1-t0) + v*(t2-t0)
+</code></pre></div></div>
+
+<h2 id="quad-meshes">Quad Meshes</h2>
+
+<p>Quad meshes are created using the <code class="language-plaintext highlighter-rouge">rtcNewQuadMesh</code> function
+call, and potentially deleted using the <code class="language-plaintext highlighter-rouge">rtcDeleteGeometry</code> function
+call.</p>
+
+<p>The number of quads, number of vertices, and optionally the
+number of time steps (1 for normal meshes, and 2 for linear motion
+blur) have to get specified at construction time of the mesh. The user
+can also specify additional flags that choose the strategy to handle
+that mesh in dynamic scenes. The following example demonstrates how to
+create a quad mesh without motion blur:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>unsigned geomID = rtcNewQuadMesh(scene, geomFlags,
+   numTriangles, numVertices, 1);
+</code></pre></div></div>
+
+<p>The quad indices can be set by mapping and writing to the index
+buffer (<code class="language-plaintext highlighter-rouge">RTC_INDEX_BUFFER</code>) and the quad vertices can be set by
+mapping and writing into the vertex buffer (<code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER</code>). The
+index buffer contains an array of four 32 bit indices, while the
+vertex buffer contains an array of three float values aligned to 16
+bytes. The 4th component of the aligned vertices can be arbitrary. All
+buffers have to get unmapped before an <code class="language-plaintext highlighter-rouge">rtcCommit</code> call to the scene.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>struct Vertex { float x, y, z, a; };
+struct Quad   { int v0, v1, v2, v3; };
+
+Vertex* vertices = (Vertex*) rtcMapBuffer(scene, geomID, RTC_VERTEX_BUFFER);
+// fill vertices here
+rtcUnmapBuffer(scene, geomID, RTC_VERTEX_BUFFER);
+
+Quad* quads = (Quad*) rtcMapBuffer(scene, geomID, RTC_INDEX_BUFFER);
+// fill quad indices here
+rtcUnmapBuffer(scene, geomID, RTC_INDEX_BUFFER);
+</code></pre></div></div>
+
+<p>The quad is internally handled as a pair of two triangles <code class="language-plaintext highlighter-rouge">v0,v1,v3</code>
+and <code class="language-plaintext highlighter-rouge">v2,v3,v1</code>, with the u’/v’ coordinates of the second triangle
+corrected by <code class="language-plaintext highlighter-rouge">u = 1-u'</code> and <code class="language-plaintext highlighter-rouge">v = 1-v'</code> to make a parametrization where
+u and v go from 0 to 1.</p>
+
+<p>Te encode a triangle as quad just replicate the last triangle
+vertex (<code class="language-plaintext highlighter-rouge">v0,v1,v2</code> -&gt; <code class="language-plaintext highlighter-rouge">v0,v1,v2,v2</code>). This way the quad mesh can be
+used to represent a mesh with triangles and quads.</p>
+
+<h2 id="subdivision-surfaces">Subdivision Surfaces</h2>
+
+<p>Catmull-Clark subdivision surfaces for meshes consisting of triangle
+and quad primitives (even mixed inside one mesh) are supported,
+including support for edge creases, vertex creases, holes, and
+non-manifold geometry.</p>
+
+<p>A subdivision surface is created using the <code class="language-plaintext highlighter-rouge">rtcNewSubdivisionMesh</code>
+function call, and deleted again using the <code class="language-plaintext highlighter-rouge">rtcDeleteGeometry</code>
+function call.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> unsigned rtcNewSubdivisionMesh(RTCScene scene, 
+                                RTCGeometryFlags flags,
+                                size_t numFaces,
+                                size_t numEdges,
+                                size_t numVertices,
+                                size_t numEdgeCreases,
+                                size_t numVertexCreases,
+                                size_t numCorners,
+                                size_t numHoles,
+                                size_t numTimeSteps);
+</code></pre></div></div>
+
+<p>The number of faces (<code class="language-plaintext highlighter-rouge">numFaces</code>), edges/indices (<code class="language-plaintext highlighter-rouge">numEdges</code>), vertices
+(<code class="language-plaintext highlighter-rouge">numVertices</code>), edge creases (<code class="language-plaintext highlighter-rouge">numEdgeCreases</code>), vertex creases
+(<code class="language-plaintext highlighter-rouge">numVertexCreases</code>), holes (<code class="language-plaintext highlighter-rouge">numHoles</code>), and time steps
+(<code class="language-plaintext highlighter-rouge">numTimeSteps</code>) have to get specified at construction time.</p>
+
+<p>The following buffers have to get setup by the application: the face
+buffer (<code class="language-plaintext highlighter-rouge">RTC_FACE_BUFFER</code>) contains the number edges/indices (3 or 4) of
+each of the <code class="language-plaintext highlighter-rouge">numFaces</code> faces, the index buffer (<code class="language-plaintext highlighter-rouge">RTC_INDEX_BUFFER</code>)
+contains multiple (3 or 4) 32 bit vertex indices for each face and
+<code class="language-plaintext highlighter-rouge">numEdges</code> indices in total, the vertex buffer (<code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER</code>)
+stores <code class="language-plaintext highlighter-rouge">numVertices</code> vertices as single precision <code class="language-plaintext highlighter-rouge">x</code>, <code class="language-plaintext highlighter-rouge">y</code>, <code class="language-plaintext highlighter-rouge">z</code> floating
+point coordinates aligned to 16 bytes. The value of the 4th float used
+for alignment can be arbitrary.</p>
+
+<p>Optionally, the application can setup the hole buffer (<code class="language-plaintext highlighter-rouge">RTC_HOLE_BUFFER</code>)
+with <code class="language-plaintext highlighter-rouge">numHoles</code> many 32 bit indices of faces that should be considered
+non-existing.</p>
+
+<p>Optionally, the application can fill the level buffer
+(<code class="language-plaintext highlighter-rouge">RTC_LEVEL_BUFFER</code>) with a tessellation rate for each or the edges of
+each face, making a total of <code class="language-plaintext highlighter-rouge">numEdges</code> values. The tessellation level
+is a positive floating point value, that specifies how many quads
+along the edge should get generated during tessellation. The
+tessellation level is a lower bound, thus the implementation is free
+to choose a larger level. If no level buffer is specified a level of 1
+is used. Note that some edge may be shared between (typically 2)
+faces. To guarantee a watertight tessellation, the level of these
+shared edges has to be exactly identical. A uniform tessellation rate
+for an entire subdivision mesh can be set by using the
+<code class="language-plaintext highlighter-rouge">rtcSetTessellationRate(RTCScene scene, unsigned geomID, float rate)</code>
+function. The existance of a level buffer has preference over the
+uniform tessellation rate.</p>
+
+<p>Optionally, the application can fill the sparse edge crease buffers to
+make some edges appear sharper. The edge crease index buffer
+(<code class="language-plaintext highlighter-rouge">RTC_EDGE_CREASE_INDEX_BUFFER</code>) contains <code class="language-plaintext highlighter-rouge">numEdgeCreases</code> many pairs of
+32 bit vertex indices that specify unoriented edges. The edge crease
+weight buffer (<code class="language-plaintext highlighter-rouge">RTC_EDGE_CREASE_WEIGHT_BUFFER</code>) stores for each of
+theses crease edges a positive floating point weight. The larger this
+weight, the sharper the edge. Specifying a weight of infinity is
+supported and marks an edge as infinitely sharp. Storing an edge
+multiple times with the same crease weight is allowed, but has lower
+performance. Storing an edge multiple times with different crease
+weights results in undefined behavior. For a stored edge (i,j), the
+reverse direction edges (j,i) does not have to get stored, as both are
+considered the same edge.</p>
+
+<p>Optionally, the application can fill the sparse vertex crease buffers
+to make some vertices appear sharper. The vertex crease index buffer
+(<code class="language-plaintext highlighter-rouge">RTC_VERTEX_CREASE_INDEX_BUFFER</code>), contains <code class="language-plaintext highlighter-rouge">numVertexCreases</code> many
+32 bit vertex indices to specify a set of vertices. The vertex crease
+weight buffer (<code class="language-plaintext highlighter-rouge">RTC_VERTEX_CREASE_WEIGHT_BUFFER</code>) specifies for each of
+these vertices a positive floating point weight. The larger this
+weight, the sharper the vertex. Specifying a weight of infinity is
+supported and makes the vertex infinitely sharp. Storing a vertex
+multiple times with the same crease weight is allowed, but has lower
+performance. Storing a vertex multiple times with different crease
+weights results in undefined behavior.</p>
+
+<p>Faces with 3 to 15 vertices are supported (triangles, quadrilateral,
+pentagons, etc).</p>
+
+<p>The parametrization of a regular quadrilateral uses the first vertex <code class="language-plaintext highlighter-rouge">p0</code> as
+base point, and the vector <code class="language-plaintext highlighter-rouge">p1 - p0</code> as u-direction and <code class="language-plaintext highlighter-rouge">p3 - p0</code> as
+v-direction. The following picture additionally illustrates the
+direction the geometry normal is pointing into.</p>
+
+<p><img src="https://embree.github.io/images/quad_uv.png" alt="" /></p>
+
+<p>Some texture coordinates <code class="language-plaintext highlighter-rouge">t0,t1,t2,t3</code> can be bi-linearly
+interpolated over the quadrilateral the following way:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>t_uv = (1-v)((1-u)*t0 + u*t1) + v*((1-u)*t3 + u*t2) 
+</code></pre></div></div>
+
+<p>The parametrization for all other face types where the number of
+vertices is not equal to 4, have a special parametrization where the
+n’th quadrilateral (that would be obtained by a single subdivision
+step) is encoded in the higher order bits of the UV coordinates and
+the local hit location inside this quadrilateral in the lower order
+bits. The following piece of code extracts the sub-patch ID i and UVs
+of this subpatch:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>const unsigned l = floorf(4.0f*U); 
+const unsigned h = floorf(4.0f*V); 
+const unsigned i = 4*h+l;
+const float u = 2.0f*fracf(4.0f*U);
+const float v = 2.0f*fracf(4.0f*V);
+</code></pre></div></div>
+
+<p>To smoothly interpolate texture coordinates over the subdivision
+surface we recommend using the <code class="language-plaintext highlighter-rouge">rtcInterpolate2</code> function, which will
+apply the standard subdivision rules for interpolation and
+automatically take care of the special UV encoding for
+non-quadrilaterals.</p>
+
+<p>Using the <code class="language-plaintext highlighter-rouge">rtcSetBoundaryMode</code> API call one can specify how corner
+vertices are handled. Specifying <code class="language-plaintext highlighter-rouge">RTC_BOUNDARY_NONE</code> ignores all
+boundary patches, <code class="language-plaintext highlighter-rouge">RTC_BOUNDARY_EDGE_ONLY</code> makes all boundaries soft,
+while <code class="language-plaintext highlighter-rouge">RTC_BOUNDARY_EDGE_AND_CORNER</code> makes corner vertices sharp.</p>
+
+<p>The user can also specify a geometry mask and additional flags that
+choose the strategy to handle that subdivision mesh in dynamic scenes.</p>
+
+<p>The implementation of subdivision surfaces uses an internal software cache,
+which can get configured to some desired size (see [Configuring Embree]).</p>
+
+<p>Also see tutorial <a href="#subdivision-geometry">Subdivision Geometry</a> for an example of how to create
+subdivision surfaces.</p>
+
+<h2 id="line-segment-hair-geometry">Line Segment Hair Geometry</h2>
+
+<p>Line segments are supported to render hair geometry. A line segment
+consists of a start and and point, and start and end
+radius. Individual line segments are considered to be subpixel sized which
+allows the implementation to approximate the intersection
+calculation. This in particular means that zooming onto one line segment might
+show geometric artifacts.</p>
+
+<p>Line segments are created using the <code class="language-plaintext highlighter-rouge">rtcNewLineSegments</code> function
+call, and potentially deleted using the <code class="language-plaintext highlighter-rouge">rtcDeleteGeometry</code> function
+call.</p>
+
+<p>The number of line segments, the number of vertices, and optionally the
+number of time steps (1 for normal curves, and 2 for linear motion blur)
+have to get specified at construction time of the line segment geometry.</p>
+
+<p>The segment indices can be set by mapping and writing to the index buffer
+(<code class="language-plaintext highlighter-rouge">RTC_INDEX_BUFFER</code>) and the vertices can be set by mapping and
+writing into the vertex buffer (<code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER</code>). In case of linear
+motion blur, two vertex buffers (<code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER0</code> and
+<code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER1</code>) have to get filled, one for each time step.</p>
+
+<p>The index buffer contains an array of 32 bit indices pointing to the
+ID of the first of two vertices, while the vertex buffer
+stores all control points in the form of a single precision position
+and radius stored in <code class="language-plaintext highlighter-rouge">x</code>, <code class="language-plaintext highlighter-rouge">y</code>, <code class="language-plaintext highlighter-rouge">z</code>, <code class="language-plaintext highlighter-rouge">r</code> order in memory. The
+radii have to be greater or equal zero. All buffers have to get
+unmapped before an <code class="language-plaintext highlighter-rouge">rtcCommit</code> call to the scene.</p>
+
+<p>Like for triangle meshes, the user can also specify a geometry mask and
+additional flags that choose the strategy to handle that mesh in dynamic
+scenes.</p>
+
+<p>The following example demonstrates how to create some line segment geometry:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>unsigned geomID = rtcNewLineSegments(scene, geomFlags, numCurves,
+  numVertices, 1);
+
+struct Vertex { float x, y, z, r; };
+
+Vertex* vertices = (Vertex*) rtcMapBuffer(scene, geomID, RTC_VERTEX_BUFFER);
+// fill vertices here
+rtcUnmapBuffer(scene, geomID, RTC_VERTEX_BUFFER);
+
+int* curves = (int*) rtcMapBuffer(scene, geomID, RTC_INDEX_BUFFER);
+// fill indices here
+rtcUnmapBuffer(scene, geomID, RTC_INDEX_BUFFER);
+</code></pre></div></div>
+
+<h2 id="bezier-curve-hair-geometry">Bezier Curve Hair Geometry</h2>
+
+<p>Hair geometries are supported, which consist of multiple hairs
+represented as cubic Bézier curves with varying radius per control
+point. Individual hairs are considered to be subpixel sized which allows
+the implementation to approximate the intersection calculation. This in
+particular means that zooming onto one hair might show geometric
+artifacts.</p>
+
+<p>Hair geometries are created using the <code class="language-plaintext highlighter-rouge">rtcNewHairGeometry</code> function
+call, and potentially deleted using the <code class="language-plaintext highlighter-rouge">rtcDeleteGeometry</code> function
+call.</p>
+
+<p>The number of hair curves, the number of vertices, and optionally the
+number of time steps (1 for normal curves, and 2 for linear motion blur)
+have to get specified at construction time of the hair geometry.</p>
+
+<p>The curve indices can be set by mapping and writing to the index buffer
+(<code class="language-plaintext highlighter-rouge">RTC_INDEX_BUFFER</code>) and the control vertices can be set by mapping and
+writing into the vertex buffer (<code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER</code>). In case of linear
+motion blur, two vertex buffers (<code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER0</code> and
+<code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER1</code>) have to get filled, one for each time step.</p>
+
+<p>The index buffer contains an array of 32 bit indices pointing to the
+ID of the first of four control vertices, while the vertex buffer
+stores all control points in the form of a single precision position
+and radius stored in <code class="language-plaintext highlighter-rouge">x</code>, <code class="language-plaintext highlighter-rouge">y</code>, <code class="language-plaintext highlighter-rouge">z</code>, <code class="language-plaintext highlighter-rouge">r</code> order in memory. The hair
+radii have to be greater or equal zero. All buffers have to get
+unmapped before an <code class="language-plaintext highlighter-rouge">rtcCommit</code> call to the scene.</p>
+
+<p>The implementation may choose to subdivide the bezier curve into
+multiple cylinders-like primitives. The number of cylinders the curve
+gets subdivided into can be specified per hair geometry through the
+<code class="language-plaintext highlighter-rouge">rtcSetTessellationRate(RTCScene scene, unsigned geomID, float rate)</code>
+function. By default the tessellation rate for hair curves is 4.</p>
+
+<p>Like for triangle meshes, the user can also specify a geometry mask and
+additional flags that choose the strategy to handle that mesh in dynamic
+scenes.</p>
+
+<p>The following example demonstrates how to create some hair geometry:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>unsigned geomID = rtcNewHairGeometry(scene, geomFlags, numCurves, numVertices);
+
+struct Vertex { float x, y, z, r; };
+
+Vertex* vertices = (Vertex*) rtcMapBuffer(scene, geomID, RTC_VERTEX_BUFFER);
+// fill vertices here
+rtcUnmapBuffer(scene, geomID, RTC_VERTEX_BUFFER);
+
+int* curves = (int*) rtcMapBuffer(scene, geomID, RTC_INDEX_BUFFER);
+// fill indices here
+rtcUnmapBuffer(scene, geomID, RTC_INDEX_BUFFER);
+</code></pre></div></div>
+
+<p>Also see tutorial <a href="#hair">Hair</a> for an example of how to create and use hair
+geometry.</p>
+
+<h2 id="user-defined-geometry">User Defined Geometry</h2>
+
+<p>User defined geometries make it possible to extend Embree with arbitrary
+types of geometry. This is achieved by introducing arrays of user
+geometries as a special geometry type. These objects do not contain a
+single user geometry, but a set of such geometries, each specified by an
+index. The user has to provide a data pointer per user geometry, a
+bounding function closure (function and user pointer) as
+well as user defined intersect and occluded functions to create a set of
+user geometries. The user geometry to process is specified by passing
+its geometry user data pointer and index to each invocation of the bounding,
+intersect, and occluded function. The bounding function is used to query
+the bounds of all timesteps of each user geometry. When performing ray
+queries, Embree will invoke the user intersect (and occluded) functions
+to test rays for intersection (and occlusion) with the specified user
+defined geometry.</p>
+
+<p>As Embree supports different ray packet sizes, one potentially has to
+provide different versions of user intersect and occluded function
+pointers for these packet sizes. However, the ray packet size of the
+called user function always matches the packet size of the originally
+invoked ray query function. Consequently, an application only operating
+on single rays only has to provide single ray intersect and occluded
+function pointers.</p>
+
+<p>User geometries are created using the <code class="language-plaintext highlighter-rouge">rtcNewUserGeometry</code> function
+call, and potentially deleted using the <code class="language-plaintext highlighter-rouge">rtcDeleteGeometry</code> function
+call. The the <code class="language-plaintext highlighter-rouge">rtcNewUserGeometry2</code> function additionally gets a
+numTimeSteps paramter, which specifies the number of timesteps for
+motion blur. The following example illustrates creating an array with
+two user geometries:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int numTimeSteps = 2;
+struct UserObject { ... };
+
+void userBoundsFunction(void* userPtr, UserObject* userGeomPtr, size_t i, RTCBounds* bounds)
+{
+  for (size_t i=0; i&lt;numTimeSteps; i++)
+    bounds[i] = &lt;bounds of userGeomPtr[i] at time i&gt;;
+}
+
+void userIntersectFunction(UserObject* userGeomPtr, RTCRay&amp; ray, size_t i)
+{
+  if (&lt;ray misses userGeomPtr[i] at time ray.time&gt;)
+    return;
+  &lt;update ray hit information&gt;;
+}
+
+void userOccludedFunction(UserObject* userGeomPtr, RTCRay&amp; ray, size_t i)
+{
+  if (&lt;ray misses userGeomPtr[i] at time ray.time&gt;)
+    return;
+  geomID = 0;
+}
+
+...
+
+UserObject* userGeomPtr = new UserObject[2];
+userGeomPtr[0] = ...
+userGeomPtr[1] = ...
+unsigned geomID = rtcNewUserGeometry2(scene, 2, numTimeSteps);
+rtcSetUserData(scene, geomID, userGeomPtr);
+rtcSetBoundsFunction2(scene, geomID, userBoundsFunction, userPtr);
+rtcSetIntersectFunction(scene, geomID, userIntersectFunction);
+rtcSetOccludedFunction(scene, geomID, userOccludedFunction);
+</code></pre></div></div>
+
+<p>The user bounds function (<code class="language-plaintext highlighter-rouge">userBoundsFunction</code>) get as input the
+pointer provided at the <code class="language-plaintext highlighter-rouge">rtcSetBoundsFunction2</code> function call, the
+geometry user pointer provided through the <code class="language-plaintext highlighter-rouge">rtcSetUserData</code> function
+call, the i’th geometry to calculate the bounds for, and a pointer to
+an array of bounds to fill (one bound for each timestep specified when
+creating the user geometry).</p>
+
+<p>The user intersect function (<code class="language-plaintext highlighter-rouge">userIntersectFunction</code>) and user occluded
+function (<code class="language-plaintext highlighter-rouge">userOccludedFunction</code>) get as input the pointer provided
+through the <code class="language-plaintext highlighter-rouge">rtcSetUserData</code> function call, a ray, and the index of the
+geometry to process. For ray packets, the user intersect and occluded
+functions also get a pointer to a valid mask as input. The user provided
+functions should not modify any ray that is disabled by that valid mask.</p>
+
+<p>The user intersect function should return without modifying the ray
+structure if the user geometry is missed. Whereas, if an intersection
+of the geometry with the ray segment was found, the intersect function
+has to update the hit information of the ray (<code class="language-plaintext highlighter-rouge">tfar</code>, <code class="language-plaintext highlighter-rouge">u</code>, <code class="language-plaintext highlighter-rouge">v</code>, <code class="language-plaintext highlighter-rouge">Ng</code>,
+<code class="language-plaintext highlighter-rouge">geomID</code>, <code class="language-plaintext highlighter-rouge">primID</code>).</p>
+
+<p>The user occluded function should also return without modifying the ray
+structure if the user geometry is missed. If the geometry is hit, it
+should set the <code class="language-plaintext highlighter-rouge">geomID</code> member of the ray to 0.</p>
+
+<p>See tutorial <a href="#user-geometry">User Geometry</a> for an example of how to use the user
+defined geometries.</p>
+
+<h2 id="instances">Instances</h2>
+
+<p>Embree supports instancing of scenes inside another scene by some
+transformation. As the instanced scene is stored only a single time,
+even if instanced to multiple locations, this feature can be used to
+create extremely large scenes. Only single level instancing is supported
+by Embree natively, however, multi-level instancing can principally be
+implemented through user geometries.</p>
+
+<p>Instances are created using the <code class="language-plaintext highlighter-rouge">rtcNewInstance2
+(RTCScene target, RTCScene source, size_t numTimeSteps)</code> function call, and
+potentially deleted using the <code class="language-plaintext highlighter-rouge">rtcDeleteGeometry</code> function call. To
+instantiate a scene, one first has to generate the scene B to
+instantiate. Now one can add an instance of this scene inside a scene A
+the following way:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>unsigned instID = rtcNewInstance2(sceneA, sceneB, 1);
+rtcSetTransform2(sceneA, instID, RTC_MATRIX_COLUMN_MAJOR, &amp;column_matrix_3x4, 0);
+</code></pre></div></div>
+
+<p>To create some motion blurred instance just pass 2 as the number of
+timesteps and specify two matrices:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>unsigned instID = rtcNewInstance2(sceneA, sceneB, 2);
+rtcSetTransform2(sceneA, instID, RTC_MATRIX_COLUMN_MAJOR, &amp;column_matrix_t0_3x4, 0);
+rtcSetTransform2(sceneA, instID, RTC_MATRIX_COLUMN_MAJOR, &amp;column_matrix_t1_3x4, 1);
+</code></pre></div></div>
+
+<p>Both scenes have to belong to the same device. One has to call
+<code class="language-plaintext highlighter-rouge">rtcCommit</code> on scene B before one calls <code class="language-plaintext highlighter-rouge">rtcCommit</code> on scene A. When
+modifying scene B one has to call <code class="language-plaintext highlighter-rouge">rtcUpdate</code> for all instances of
+that scene. If a ray hits the instance, then the <code class="language-plaintext highlighter-rouge">geomID</code> and <code class="language-plaintext highlighter-rouge">primID</code>
+members of the ray are set to the geometry ID and primitive ID of the
+primitive hit in scene B, and the <code class="language-plaintext highlighter-rouge">instID</code> member of the ray is set to
+the instance ID returned from the <code class="language-plaintext highlighter-rouge">rtcNewInstance2</code> function.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">rtcSetTransform2</code> call can be passed an affine transformation matrix
+with different data layouts:</p>
+
+<hr />
+<p>Layout                              Description
+  ———————————– ———————————-
+  RTC_MATRIX_ROW_MAJOR                The 3×4 float matrix is laid out
+                                      in row major form.</p>
+
+<p>RTC_MATRIX_COLUMN_MAJOR             The 3×4 float matrix is laid out
+                                      in column major form.</p>
+
+<dl>
+  <dt>RTC_MATRIX_COLUMN_MAJOR_ALIGNED16   The 3×4 float matrix is laid out</dt>
+  <dt>                                      in column major form, with each</dt>
+  <dt>                                      column padded by an additional 4th</dt>
+  <dt>                                      component.</dt>
+  <dt>  ———————————– ———————————-</dt>
+  <dd>Matrix layouts for <code class="language-plaintext highlighter-rouge">rtcSetTransform2</code>.</dd>
+</dl>
+
+<p>Passing homogeneous 4×4 matrices is possible as long as the last row is
+(0, 0, 0, 1). If this homogeneous matrix is laid out in row major form,
+use the <code class="language-plaintext highlighter-rouge">RTC_MATRIX_ROW_MAJOR</code> layout. If this homogeneous matrix is
+laid out in column major form, use the
+<code class="language-plaintext highlighter-rouge">RTC_MATRIX_COLUMN_MAJOR_ALIGNED16</code> mode. In both cases, Embree will
+ignore the last row of the matrix.</p>
+
+<p>The transformation passed to <code class="language-plaintext highlighter-rouge">rtcSetTransform2</code> transforms from the local
+space of the instantiated scene to world space.</p>
+
+<p>See tutorial <a href="#instanced-geometry">Instanced Geometry</a> for an example of how to use
+instances.</p>
+
+<h2 id="ray-queries">Ray Queries</h2>
+
+<p>The API supports finding the closest hit of a ray segment with the scene
+(<code class="language-plaintext highlighter-rouge">rtcIntersect</code> functions), and determining if any hit between a ray
+segment and the scene exists (<code class="language-plaintext highlighter-rouge">rtcOccluded</code> functions).</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void rtcIntersect      (                   RTCScene scene, RTCRay&amp;    ray);
+void rtcIntersect4     (const void* valid, RTCScene scene, RTCRay4&amp;   ray);
+void rtcIntersect8     (const void* valid, RTCScene scene, RTCRay8&amp;   ray);
+void rtcIntersect16    (const void* valid, RTCScene scene, RTCRay16&amp;  ray);
+void rtcIntersectN     (                   RTCScene scene, RTCRay*    rayN, size_t N, size_t stride, size_t flags);
+void rtcIntersectN_SOA (                   RTCScene scene, RTCRaySOA&amp; rayN, size_t N, size_t streams, size_t stride, size_t flags);
+void rtcOccluded       (                   RTCScene scene, RTCRay&amp;    ray);
+void rtcOccluded4      (const void* valid, RTCScene scene, RTCRay4&amp;   ray);
+void rtcOccluded8      (const void* valid, RTCScene scene, RTCRay8&amp;   ray);
+void rtcOccluded16     (const void* valid, RTCScene scene, RTCRay16&amp;  ray);
+void rtcOccludedN      (                   RTCScene scene, RTCRay*    rayN, size_t N, size_t stride, size_t flags);
+void rtcOccludedN_SOA  (                   RTCScene scene, RTCRaySOA&amp; rayN, size_t N, size_t streams, size_t stride, size_t flags);
+</code></pre></div></div>
+
+<p>The ray layout to be passed to the ray tracing core is defined in the
+<code class="language-plaintext highlighter-rouge">embree2/rtcore_ray.h</code> header file. It is up to the user if he wants
+to use the ray structures defined in that file, or resemble the exact
+same binary data layout with their own vector classes. The ray layout
+might change with new Embree releases as new features get added,
+however, will stay constant as long as the major Embree release number
+does not change. The ray contains the following data members:</p>
+
+<dl>
+  <dt>Member  In/Out  Description</dt>
+  <dt>  ——- ——- ———————————————————-</dt>
+  <dt>  org     in      ray origin</dt>
+  <dt>  dir     in      ray direction (can be unnormalized)</dt>
+  <dt>  tnear   in      start of ray segment</dt>
+  <dt>  tfar    in/out  end of ray segment, set to hit distance after intersection</dt>
+  <dt>  time    in      time used for motion blur</dt>
+  <dt>  mask    in      ray mask to mask out geometries</dt>
+  <dt>  Ng      out     unnormalized geometry normal</dt>
+  <dt>  u       out     barycentric u-coordinate of hit</dt>
+  <dt>  v       out     barycentric v-coordinate of hit</dt>
+  <dt>  geomID  out     geometry ID of hit geometry</dt>
+  <dt>  primID  out     primitive ID of hit primitive</dt>
+  <dt>  instID  out     instance ID of hit instance</dt>
+  <dt>  ——- ——- ———————————————————-</dt>
+  <dd>Data fields of a ray.</dd>
+</dl>
+
+<p>This structure is in struct of array layout (SOA) for ray packets. Note
+that the <code class="language-plaintext highlighter-rouge">tfar</code> member functions as an input and output.</p>
+
+<p>For the ray packet mode (with packet size of N), the user has to provide
+a pointer to N 32 bit integers that act as a ray activity mask. If one
+of these integers is set to <code class="language-plaintext highlighter-rouge">0x00000000</code> the corresponding ray is
+considered inactive and if the integer is set to <code class="language-plaintext highlighter-rouge">0xFFFFFFFF</code>, the ray
+is considered active. Rays that are inactive will not update any hit
+information. Data alignment requirements for ray query functions
+operating on single rays is 16 bytes for the ray.</p>
+
+<p>Data alignment requirements for query functions operating on AOS
+packets of 4, 8, or 16 rays, is 16, 32, and 64 bytes respectively, for
+the valid mask and the ray. To operate on packets of 4 rays, the CPU
+has to support SSE, to operate on packets of 8 rays, the CPU has to
+support AVX-256, and to operate on packets of 16 rays, the CPU has to
+support the Intel® Xeon Phi™ coprocessor or AVX512
+instructions. Additionally, the required ISA has to be enabled in
+Embree at compile time to use the desired packet size.</p>
+
+<p>The ray streams functions <code class="language-plaintext highlighter-rouge">rtcIntersectN</code> and <code class="language-plaintext highlighter-rouge">rtcOccludedN</code> operate
+on an arbitrary sized array of rays. The offset in bytes between
+consecutive RTCRay elements can be specified by the <code class="language-plaintext highlighter-rouge">stride</code>
+parameter. For ray stream input data given in SOA layout (e.g. as used
+by the ISPC interface) the ray stream functions <code class="language-plaintext highlighter-rouge">rtcIntersectN_SOA</code>
+and <code class="language-plaintext highlighter-rouge">rtcOccludedN_SOA</code> have to be used, together with the setup of the
+RTCRaySOA structure. These functions support either a single large ray
+stream in SOA layout or multiple SOA streams. Tracing for example a
+SOA ray stream consisting of 8 times 8-wide SOA ray packets just
+requires to set the parameters <code class="language-plaintext highlighter-rouge">N</code> and <code class="language-plaintext highlighter-rouge">streams</code> both to 8 and the
+<code class="language-plaintext highlighter-rouge">stride</code> to sizeof(RTCRay8). Regardless of the input layout a single
+ray in a ray stream is considered <code class="language-plaintext highlighter-rouge">inactive</code> during
+traversal/intersection if its <code class="language-plaintext highlighter-rouge">tnear</code> value is larger than its <code class="language-plaintext highlighter-rouge">tfar</code>
+value.</p>
+
+<p>Finding the closest hit distance is done through the <code class="language-plaintext highlighter-rouge">rtcIntersect</code>
+functions. These get the activity mask, the scene, and a ray as input.
+The user has to initialize the ray origin (<code class="language-plaintext highlighter-rouge">org</code>), ray direction
+(<code class="language-plaintext highlighter-rouge">dir</code>), and ray segment (<code class="language-plaintext highlighter-rouge">tnear</code>, <code class="language-plaintext highlighter-rouge">tfar</code>). The ray segment has to be in
+the range $[0, ∞)$, thus ranges that start behind the ray origin are
+not valid, but ranges can reach to infinity. The geometry ID (<code class="language-plaintext highlighter-rouge">geomID</code>
+member) has to get initialized to <code class="language-plaintext highlighter-rouge">RTC_INVALID_GEOMETRY_ID</code> (-1). If the
+scene contains instances, also the instance ID (<code class="language-plaintext highlighter-rouge">instID</code>) has to get
+initialized to <code class="language-plaintext highlighter-rouge">RTC_INVALID_GEOMETRY_ID</code> (-1). If the scene contains
+linear motion blur, also the ray time (<code class="language-plaintext highlighter-rouge">time</code>) has to get initialized to
+a value in the range $[0, 1]$. If ray masks are enabled at compile time,
+also the ray mask (<code class="language-plaintext highlighter-rouge">mask</code>) has to get initialized. After tracing the
+ray, the hit distance (<code class="language-plaintext highlighter-rouge">tfar</code>), geometry normal (<code class="language-plaintext highlighter-rouge">Ng</code>), local hit
+coordinates (<code class="language-plaintext highlighter-rouge">u</code>, <code class="language-plaintext highlighter-rouge">v</code>), geometry ID (<code class="language-plaintext highlighter-rouge">geomID</code>), and primitive ID
+(<code class="language-plaintext highlighter-rouge">primID</code>) are set. If the scene contains instances, also the instance
+ID (<code class="language-plaintext highlighter-rouge">instID</code>) is set, if an instance is hit. The geometry ID corresponds
+to the ID returned at creation time of the hit geometry, and the
+primitive ID corresponds to the $n$th primitive of that geometry, e.g.
+$n$th triangle. The instance ID corresponds to the ID returned at
+creation time of the instance.</p>
+
+<p>The following code properly sets up a ray and traces it through the
+scene:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>RTCRay ray;
+ray.org = ray_origin;
+ray.dir = ray_direction;
+ray.tnear = 0.f;
+ray.tfar = inf;
+ray.geomID = RTC_INVALID_GEOMETRY_ID;
+ray.primID = RTC_INVALID_GEOMETRY_ID;
+ray.instID = RTC_INVALID_GEOMETRY_ID;
+ray.mask = 0xFFFFFFFF;
+ray.time = 0.f;
+rtcIntersect(scene, ray);
+</code></pre></div></div>
+
+<p>Testing if any geometry intersects with the ray segment is done through
+the <code class="language-plaintext highlighter-rouge">rtcOccluded</code> functions. Initialization has to be done as for
+<code class="language-plaintext highlighter-rouge">rtcIntersect</code>. If some geometry got found along the ray segment, the
+geometry ID (<code class="language-plaintext highlighter-rouge">geomID</code>) will get set to 0. Other hit information of the
+ray is undefined after calling <code class="language-plaintext highlighter-rouge">rtcOccluded</code>.</p>
+
+<p>See tutorial <a href="#triangle-geometry">Triangle Geometry</a> for an example of how to trace rays.</p>
+
+<h2 id="interpolation-of-vertex-data">Interpolation of Vertex Data</h2>
+
+<p>Smooth interpolation of per-vertex data is supported for triangle
+meshes, quad meshs, hair geometry, line segment geometry, and
+subdivision geometry using the <code class="language-plaintext highlighter-rouge">rtcInterpolate2</code> API call. This
+interpolation function does ignore displacements and always
+interpolates the underlying base surface.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void rtcInterpolate2(RTCScene scene,
+                     unsigned geomID, unsigned primID,
+                     float u, float v,
+                     RTCBufferType buffer, 
+                     float* P,
+                     float* dPdu, float* dPdv,
+                     float* ddPdudu, float* ddPdvdv, float* ddPdudv,
+                     size_t numFloats);
+</code></pre></div></div>
+
+<p>This call smoothly interpolates the per-vertex data stored in the
+specified geometry buffer (<code class="language-plaintext highlighter-rouge">buffer</code> parameter) to the u/v location
+(<code class="language-plaintext highlighter-rouge">u</code> and <code class="language-plaintext highlighter-rouge">v</code> parameters) of the primitive (<code class="language-plaintext highlighter-rouge">primID</code> parameter) of the
+geometry (<code class="language-plaintext highlighter-rouge">geomID</code> parameter) of the specified scene (<code class="language-plaintext highlighter-rouge">scene</code>
+parameter). The interpolation buffer (<code class="language-plaintext highlighter-rouge">buffer</code> parameter) has to
+contain (at least) <code class="language-plaintext highlighter-rouge">numFloats</code> floating point values per vertex to
+interpolate. As interpolation buffer one can specify the
+<code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER0</code> and <code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER1</code> as well as one of two
+special user vertex buffers <code class="language-plaintext highlighter-rouge">RTC_USER_VERTEX_BUFFER0</code> and
+<code class="language-plaintext highlighter-rouge">RTC_USER_VERTEX_BUFFER1</code>. These user vertex buffers can only get set
+using the <code class="language-plaintext highlighter-rouge">rtcSetBuffer</code> call, they cannot get managed internally by
+Embree as they have no default layout. The last element of the buffer
+has to be padded to 16 bytes, such that it can be read safely using
+SSE instructions.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">rtcInterpolate</code> call stores <code class="language-plaintext highlighter-rouge">numFloats</code> interpolated floating
+point values to the memory location pointed to by <code class="language-plaintext highlighter-rouge">P</code>. One can avoid
+storing the interpolated value by setting <code class="language-plaintext highlighter-rouge">P</code> to NULL.</p>
+
+<p>The first order derivative of the interpolation by u and v are stored
+at the <code class="language-plaintext highlighter-rouge">dPdu</code> and <code class="language-plaintext highlighter-rouge">dPdv</code> memory locations. One can avoid storing first
+order derivatives by setting both <code class="language-plaintext highlighter-rouge">dPdu</code> and <code class="language-plaintext highlighter-rouge">dPdv</code> to NULL.</p>
+
+<p>The second order derivatives are stored at the <code class="language-plaintext highlighter-rouge">ddPdudu</code>, <code class="language-plaintext highlighter-rouge">ddPdvdv</code>,
+and <code class="language-plaintext highlighter-rouge">ddPdudv</code> memory locations. One can avoid storing second order
+derivatives by setting these three pointers to NULL.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">RTC_INTERPOLATE</code> algorithm flag of a scene has to be enabled to
+perform interpolations.</p>
+
+<p>It is explicitly allowed to call this function on disabled
+geometries. This makes it possible to use a separate subdivision mesh
+with different vertex creases, edge creases, and boundary handling for
+interpolation of texture coordinates if that is necessary.</p>
+
+<p>The applied interpolation will do linear interpolation for triangle
+and quad meshes, linear interpolation for line segments, cubic Bézier
+interpolation for hair, and apply the full subdivision rules for
+subdivision geometry.</p>
+
+<p>There is also a second interpolate call <code class="language-plaintext highlighter-rouge">rtcInterpolateN2</code> that can be
+used for ray packets.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void rtcInterpolateN2(RTCScene scene, unsigned geomID, 
+                     const void* valid, const unsigned* primIDs,
+                     const float* u, const float* v, size_t numUVs, 
+                     RTCBufferType buffer, 
+                     float* dP,
+                     float* dPdu, float* dPdv,
+                     float* ddPdudu, float* ddPdvdv, float* ddPdudv,
+                     size_t numFloats);
+</code></pre></div></div>
+
+<p>This call is similar to the first version, but gets passed <code class="language-plaintext highlighter-rouge">numUVs</code>
+many u/v coordinates and a valid mask (<code class="language-plaintext highlighter-rouge">valid</code> parameter) that
+specifies which of these coordinates are valid. The valid mask points
+to <code class="language-plaintext highlighter-rouge">numUVs</code> integers and a value of -1 denotes valid and 0 invalid. If
+the valid pointer is NULL all elements are considers valid. The
+destination arrays are filled in structure of array (SoA) layout.</p>
+
+<p>See tutorial <a href="#interpolation">Interpolation</a> for an example of using the
+<code class="language-plaintext highlighter-rouge">rtcInterpolate2</code> function.</p>
+
+<h2 id="buffer-sharing">Buffer Sharing</h2>
+
+<p>Embree supports sharing of buffers with the application. Each buffer
+that can be mapped for a specific geometry can also be shared with the
+application, by pass a pointer, offset, and stride of the application
+side buffer using the <code class="language-plaintext highlighter-rouge">rtcSetBuffer</code> API function.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void rtcSetBuffer(RTCScene scene, unsigned geomID, RTCBufferType type,
+                  void* ptr, size_t offset, size_t stride);
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">rtcSetBuffer</code> function has to get called before any call to
+<code class="language-plaintext highlighter-rouge">rtcMapBuffer</code> for that buffer, otherwise the buffer will get allocated
+internally and the call to <code class="language-plaintext highlighter-rouge">rtcSetBuffer</code> will fail. The buffer has to
+remain valid as long as the geometry exists, and the user is responsible
+to free the buffer when the geometry gets deleted. When a buffer is
+shared, it is safe to modify that buffer without mapping and unmapping
+it. However, for dynamic scenes one still has to call <code class="language-plaintext highlighter-rouge">rtcUpdate</code> for
+modified geometries and the buffer data has to stay constant from the
+<code class="language-plaintext highlighter-rouge">rtcCommit</code> call to after the last ray query invocation.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">offset</code> parameter specifies a byte offset to the start of the first
+element and the <code class="language-plaintext highlighter-rouge">stride</code> parameter specifies a byte stride between the
+different elements of the shared buffer. This support for offset and
+stride allows the application quite some freedom in the data layout of
+these buffers, however, some restrictions apply. Index buffers always
+store 32 bit indices and vertex buffers always store single precision
+floating point data. The start address ptr+offset and stride always have
+to be aligned to 4 bytes on Intel® Xeon® CPUs and 16 bytes on Xeon Phi
+accelerators, otherwise the <code class="language-plaintext highlighter-rouge">rtcSetBuffer</code> function will fail.</p>
+
+<p>For vertex buffers (<code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER</code> and <code class="language-plaintext highlighter-rouge">RTC_USER_VERTEX_BUFFER</code>),
+the last element must be readable using SSE instructions, thus padding
+the last element to 16 bytes size is required for some layouts.</p>
+
+<p>The following is an example of how to create a mesh with shared index
+and vertex buffers:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>unsigned geomID = rtcNewTriangleMesh(scene, geomFlags, numTriangles, numVertices);
+rtcSetBuffer(scene, geomID, RTC_VERTEX_BUFFER, vertexPtr, 0, 3*sizeof(float));
+rtcSetBuffer(scene, geomID, RTC_INDEX_BUFFER, indexPtr, 0, 3*sizeof(int));
+</code></pre></div></div>
+
+<p>Sharing buffers can significantly reduce the memory required by the
+application, thus we recommend using this feature. When enabling the
+<code class="language-plaintext highlighter-rouge">RTC_COMPACT</code> scene flag, the spatial index structures of Embree might
+also share the vertex buffer, resulting in even higher memory savings.</p>
+
+<p>The support for offset and stride is enabled by default, but can get
+disabled at compile time using the <code class="language-plaintext highlighter-rouge">RTCORE_BUFFER_STRIDE</code> parameter in
+CMake. Disabling this feature enables the default offset and stride
+which increases performance of spatial index structure build, thus can
+be useful for dynamic content.</p>
+
+<h2 id="linear-motion-blur">Linear Motion Blur</h2>
+
+<p>Triangle meshes and hair geometries with linear motion blur support are
+created by setting the number of time steps to 2 at geometry
+construction time. Specifying a number of time steps of 0 or larger than
+2 is invalid. For a triangle mesh or hair geometry with linear motion
+blur, the user has to set the <code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER0</code> and
+<code class="language-plaintext highlighter-rouge">RTC_VERTEX_BUFFER1</code> vertex arrays, one for each time step.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>unsigned geomID = rtcNewTriangleMesh(scene, geomFlags, numTris, numVertices, 2);
+rtcSetBuffer(scene, geomID, RTC_VERTEX_BUFFER0, vertex0Ptr, 0, sizeof(Vertex));
+rtcSetBuffer(scene, geomID, RTC_VERTEX_BUFFER1, vertex1Ptr, 0, sizeof(Vertex));
+rtcSetBuffer(scene, geomID, RTC_INDEX_BUFFER, indexPtr, 0, sizeof(Triangle));
+</code></pre></div></div>
+
+<p>If a scene contains geometries with linear motion blur, the user has to
+set the <code class="language-plaintext highlighter-rouge">time</code> member of the ray to a value in the range $[0, 1]$. The ray
+will intersect the scene with the vertices of the two time steps
+linearly interpolated to this specified time. Each ray can specify a
+different time, even inside a ray packet.</p>
+
+<h2 id="user-data-pointer">User Data Pointer</h2>
+
+<p>A user data pointer can be specified and queried per geometry, to
+efficiently map from the geometry ID returned by ray queries to the
+application representation for that geometry.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void  rtcSetUserData (RTCScene scene, unsigned geomID, void* ptr);
+void* rtcGetUserData (RTCScene scene, unsigned geomID);
+</code></pre></div></div>
+
+<p>The user data pointer of some user defined geometry get additionally
+passed to the intersect and occluded callback functions of that user
+geometry. Further, the user data pointer is also passed to
+intersection filter callback functions attached to some geometry.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">rtcGetUserData</code> function is on purpose not thread safe with
+respect to other API calls that modify the scene. Consequently, this
+function can be used to efficiently query the user data pointer during
+rendering (also by multiple threads), but should not get called
+while modifying the scene with other threads.</p>
+
+<h2 id="geometry-mask">Geometry Mask</h2>
+
+<p>A 32 bit geometry mask can be assigned to triangle meshes and hair
+geometries using the <code class="language-plaintext highlighter-rouge">rtcSetMask</code> call.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rtcSetMask(scene, geomID, mask);
+</code></pre></div></div>
+
+<p>Only if the bitwise <code class="language-plaintext highlighter-rouge">and</code> operation of this mask with the mask stored
+inside the ray is not 0, primitives of this geometry are hit by a ray.
+This feature can be used to disable selected triangle mesh or hair
+geometries for specifically tagged rays, e.g. to disable shadow casting
+for some geometry. This API feature is disabled in Embree by default at
+compile time, and can be enabled in CMake through the
+<code class="language-plaintext highlighter-rouge">RTCORE_ENABLE_RAY_MASK</code> parameter.</p>
+
+<h2 id="filter-functions">Filter Functions</h2>
+
+<p>The API supports per geometry filter callback functions that are invoked
+for each intersection found during the <code class="language-plaintext highlighter-rouge">rtcIntersect</code> or <code class="language-plaintext highlighter-rouge">rtcOccluded</code>
+calls. The former ones are called intersection filter functions, the
+latter ones occlusion filter functions. The filter functions can be used
+to implement various useful features, such as accumulating opacity for
+transparent shadows, counting the number of surfaces along a ray,
+collecting all hits along a ray, etc. Filter functions can also be used
+to selectively reject hits to enable backface culling for some
+geometries. If the backfaces should be culled in general for all
+geometries then it is faster to enable <code class="language-plaintext highlighter-rouge">RTCORE_BACKFACE_CULLING</code> during
+compilation of Embree instead of using filter functions.</p>
+
+<p>The filter functions provided by the user have to have the following
+signature:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void FilterFunc  (                   void* userPtr, RTCRay&amp;   ray);
+void FilterFunc4 (const void* valid, void* userPtr, RTCRay4&amp;  ray);
+void FilterFunc8 (const void* valid, void* userPtr, RTCRay8&amp;  ray);
+void FilterFunc16(const void* valid, void* userPtr, RTCRay16&amp; ray);
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">valid</code> pointer points to a valid mask of the same format as
+expected as input by the ray query functions. The <code class="language-plaintext highlighter-rouge">userPtr</code> is a user
+pointer optionally set per geometry through the <code class="language-plaintext highlighter-rouge">rtcSetUserData</code>
+function. The ray passed to the filter function is the ray structure
+initially provided to the ray query function by the user. For that
+reason, it is safe to extend the ray by additional data and access this
+data inside the filter function (e.g. to accumulate opacity). All hit
+information inside the ray is valid. If the hit geometry is instanced,
+the <code class="language-plaintext highlighter-rouge">instID</code> member of the ray is valid and the ray origin, direction,
+and geometry normal visible through the ray are in object space. The
+filter function can reject a hit by setting the <code class="language-plaintext highlighter-rouge">geomID</code> member of the
+ray to <code class="language-plaintext highlighter-rouge">RTC_INVALID_GEOMETRY_ID</code>, otherwise the hit is accepted. The
+filter function is not allowed to modify the ray input data (<code class="language-plaintext highlighter-rouge">org</code>,
+<code class="language-plaintext highlighter-rouge">dir</code>, <code class="language-plaintext highlighter-rouge">tnear</code>, <code class="language-plaintext highlighter-rouge">tfar</code>), but can modify the hit data of the ray
+(<code class="language-plaintext highlighter-rouge">u</code>, <code class="language-plaintext highlighter-rouge">v</code>, <code class="language-plaintext highlighter-rouge">Ng</code>, <code class="language-plaintext highlighter-rouge">geomID</code>, <code class="language-plaintext highlighter-rouge">primID</code>).</p>
+
+<p>The intersection filter functions for different ray types are set for
+some geometry of a scene using the following API functions:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void rtcSetIntersectionFilterFunction  (RTCScene, unsigned geomID, RTCFilterFunc  );
+void rtcSetIntersectionFilterFunction4 (RTCScene, unsigned geomID, RTCFilterFunc4 );
+void rtcSetIntersectionFilterFunction8 (RTCScene, unsigned geomID, RTCFilterFunc8 );
+void rtcSetIntersectionFilterFunction16(RTCScene, unsigned geomID, RTCFilterFunc16);
+</code></pre></div></div>
+
+<p>These functions are invoked during execution of the <code class="language-plaintext highlighter-rouge">rtcIntersect</code> type
+queries of the matching ray type. The occlusion filter functions are set
+using the following API functions:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void rtcSetOcclusionFilterFunction  (RTCScene, unsigned geomID, RTCFilterFunc  );
+void rtcSetOcclusionFilterFunction4 (RTCScene, unsigned geomID, RTCFilterFunc4 );
+void rtcSetOcclusionFilterFunction8 (RTCScene, unsigned geomID, RTCFilterFunc8 );
+void rtcSetOcclusionFilterFunction16(RTCScene, unsigned geomID, RTCFilterFunc16);
+</code></pre></div></div>
+
+<p>See tutorial <a href="#intersection-filter">Intersection Filter</a> for an example of how to use the
+filter functions.</p>
+
+<h2 id="displacement-mapping-functions">Displacement Mapping Functions</h2>
+
+<p>The API supports displacement mapping for subdivision meshes. A
+displacement function can be set for some subdivision mesh using the
+<code class="language-plaintext highlighter-rouge">rtcSetDisplacementFunction</code> API call.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void rtcSetDisplacementFunction(RTCScene, unsigned geomID, RTCDisplacementFunc, RTCBounds*);
+</code></pre></div></div>
+
+<p>A displacement function of <code class="language-plaintext highlighter-rouge">NULL</code> will delete an already set
+displacement function. The bounds parameter is optional. If <code class="language-plaintext highlighter-rouge">NULL</code> is
+passed as bounds, then the displacement shader will get evaluated
+during the build process to properly bound displaced geometry. If a
+pointer to some bounds of the displacement are passed, then the
+implementation can choose to use these bounds to bound displaced
+geometry. When bounds are specified, then these bounds have to be
+conservative and should be tight for best performance.</p>
+
+<p>The displacement function has to have the following type:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>typedef void (*RTCDisplacementFunc)(void* ptr, unsigned geomID, unsigned primID,   
+                                    const float* u,  const float* v,    
+                                    const float* nx, const float* ny, const float* nz,   
+                                    float* px, float* py, float* pz,         
+                                    size_t N);
+</code></pre></div></div>
+
+<p>The displacement function is called with the user data pointer of the
+geometry (<code class="language-plaintext highlighter-rouge">ptr</code>), the geometry ID (<code class="language-plaintext highlighter-rouge">geomID</code>) and primitive ID (<code class="language-plaintext highlighter-rouge">primID</code>)
+of a patch to displace. For this patch, a number N of points to displace
+are specified in a struct of array layout. For each point to displace
+the local patch UV coordinates (<code class="language-plaintext highlighter-rouge">u</code> and <code class="language-plaintext highlighter-rouge">v</code> arrays), the normalized
+geometry normal (<code class="language-plaintext highlighter-rouge">nx</code>, <code class="language-plaintext highlighter-rouge">ny</code>, and <code class="language-plaintext highlighter-rouge">nz</code> arrays), as well as world space
+position (<code class="language-plaintext highlighter-rouge">px</code>, <code class="language-plaintext highlighter-rouge">py</code>, and <code class="language-plaintext highlighter-rouge">pz</code> arrays) are provided. The task of the
+displacement function is to use this information and move the world
+space position inside the allowed specified bounds around the point.</p>
+
+<p>All passed arrays are guaranteed to be 64 bytes aligned, and properly
+padded to make wide vector processing inside the displacement function
+possible.</p>
+
+<p>The displacement mapping functions might get called during the
+<code class="language-plaintext highlighter-rouge">rtcCommit</code> call, or lazily during the <code class="language-plaintext highlighter-rouge">rtcIntersect</code> or
+<code class="language-plaintext highlighter-rouge">rtcOccluded</code> calls.</p>
+
+<p>Also see tutorial <a href="#displacement-geometry">Displacement Geometry</a> for an example of how to use
+the displacement mapping functions.</p>
+
+<h2 id="sharing-threads-with-embree">Sharing Threads with Embree</h2>
+
+<p>On some implementations, Embree supports using the application threads
+when building internal data structures, by using the</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void rtcCommitThread(RTCScene, unsigned threadIndex, unsigned threadCount);
+</code></pre></div></div>
+
+<p>API call to commit the scene. This function has to get called by all
+threads that want to cooperate in the scene commit. Each call is
+provided the scene to commit, the index of the calling thread in the
+range [0, <code class="language-plaintext highlighter-rouge">threadCount</code>-1], and the number of threads that will call
+into this commit operation for the scene. All threads will return
+again from this function after the scene commit is finished.</p>
+
+<p>Multiple such scene commit operations can also be running at the same
+time, e.g. it is possible to commit many small scenes in parallel
+using one thread per commit operation. Subsequent commit operations
+for the same scene can use different number of threads in the
+<code class="language-plaintext highlighter-rouge">rtcCommitThread</code> or use the Embree internal threads using the
+<code class="language-plaintext highlighter-rouge">rtcCommit</code> call.</p>
+
+<p><em>Note:</em> When using Embree with the Intel® Threading Building Blocks
+(which is the default) you should not use the <code class="language-plaintext highlighter-rouge">rtcCommitThread</code>
+function. Sharing of your threads with TBB is not possible and TBB
+will always generate its own set of threads. We recommend to also use
+TBB inside your application to share threads with the Embree
+library. When using TBB inside your application do never use the
+<code class="language-plaintext highlighter-rouge">rtcCommitThread</code> function.</p>
+
+<p><em>Note:</em> When enabling the Embree internal tasking system the
+<code class="language-plaintext highlighter-rouge">rtcCommitThread</code> feature will work as expected and use the
+application threads for hierarchy building.</p>
+
+<p><em>Note:</em> On the Intel® Xeon Phi™ coprocessor the <code class="language-plaintext highlighter-rouge">rtcCommitThread</code>
+feature is recommended to be used.</p>
+
+<h2 id="join-build-operation">Join Build Operation</h2>
+
+<p>If <code class="language-plaintext highlighter-rouge">rtcCommit</code> is called multiple times from different threads on
+the same scene, then all these threads will join the same scene build
+operation.</p>
+
+<p>This feature allows a flexible way to lazily create hierarchies during
+rendering. A thread reaching a not yet constructed sub-scene of a
+two-level scene, can generate the sub-scene geometry and call
+<code class="language-plaintext highlighter-rouge">rtcCommit</code> on that just generated scene. During construction, further
+threads reaching the not-yet-built scene, can join the build operation
+by also invoking <code class="language-plaintext highlighter-rouge">rtcCommit</code>. A thread that calls <code class="language-plaintext highlighter-rouge">rtcCommit</code> after
+the build finishes, will directly return from the <code class="language-plaintext highlighter-rouge">rtcCommit</code>
+call (even for static scenes).</p>
+
+<p><em>Note:</em> When using Embree with the Intel® Threading Building Blocks,
+the join mode only works properly starting with TBB v4.4 Update 1. For
+earlier TBB versions threads that call <code class="language-plaintext highlighter-rouge">rtcCommit</code> to join a running
+build will just wait for the build to finish.</p>
+
+<h2 id="memory-monitor-callback">Memory Monitor Callback</h2>
+
+<p>Using the memory monitor callback mechanism, the application can track
+the memory consumption of an Embree device, and optionally terminate
+API calls that consume too much memory.</p>
+
+<p>The user provided memory monitor callback function has to have the
+following signature:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bool (*RTCMemoryMonitorFunc)(const ssize_t bytes, const bool post);
+</code></pre></div></div>
+
+<p>A single such callback function per device can be registered by calling</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rtcDeviceSetMemoryMonitorFunction(RTCDevice device, RTCMemoryMonitorFunc func);
+</code></pre></div></div>
+
+<p>and deregistered again by calling it with <code class="language-plaintext highlighter-rouge">NULL</code>. Once registered the
+Embree device will invoke the callback function before or after it
+allocates or frees important memory blocks. The callback function
+might get called from multiple threads concurrently.</p>
+
+<p>The application can track the current memory usage of the Embree
+device by atomically accumulating the provided <code class="language-plaintext highlighter-rouge">bytes</code> input
+parameter. This parameter will be &gt;0 for allocations and &lt;0 for
+deallocations. The <code class="language-plaintext highlighter-rouge">post</code> input parameter is true if the callback
+function was invoked after the allocation or deallocation, otherwise
+it is false.</p>
+
+<p>Embree will continue its operation normally when returning true from
+the callback function. If false is returned, Embree will cancel the
+current operation with the RTC_OUT_OF_MEMORY error code. Cancelling
+will only happen when the callback was called for allocations (bytes &gt;
+0), otherwise the cancel request will be ignored. If a callback that
+was invoked before the allocation happens (<code class="language-plaintext highlighter-rouge">post == false</code>) cancels
+the operation, then the <code class="language-plaintext highlighter-rouge">bytes</code> parameter should not get accumulated,
+as the allocation will never happen. If a callback that was called
+after the allocation happened (<code class="language-plaintext highlighter-rouge">post == true</code>) cancels the operation,
+then the <code class="language-plaintext highlighter-rouge">bytes</code> parameter should get accumulated, as the allocation
+properly happened. Issuing multiple cancel requests for the same
+operation is allowed.</p>
+
+<h2 id="progress-monitor-callback">Progress Monitor Callback</h2>
+
+<p>The progress monitor callback mechanism can be used to report progress
+of hierarchy build operations and to cancel long lasting build
+operations.</p>
+
+<p>The user provided progress monitor callback function has to have the
+following signature:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bool (*RTCProgressMonitorFunc)(void* userPtr, const double n);
+</code></pre></div></div>
+
+<p>A single such callback function can be registered per scene by
+calling</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rtcSetProgressMonitorFunction(RTCScene, RTCProgressMonitorFunc, void* userPtr);
+</code></pre></div></div>
+
+<p>and deregistered again by calling it with <code class="language-plaintext highlighter-rouge">NULL</code> for the callback
+function. Once registered Embree will invoke the callback function
+multiple times during hierarchy build operations of the scene, by
+providing the <code class="language-plaintext highlighter-rouge">userPtr</code> pointer that was set at registration time, and a
+double <code class="language-plaintext highlighter-rouge">n</code> in the range $[0, 1]$ estimating the completion amount of the
+operation. The callback function might get called from multiple threads
+concurrently.</p>
+
+<p>When returning <code class="language-plaintext highlighter-rouge">true</code> from the callback function, Embree will continue
+the build operation normally. When returning <code class="language-plaintext highlighter-rouge">false</code> Embree will
+cancel the build operation with the RTC_CANCELLED error code. Issuing
+multiple cancel requests for the same build operation is allowed.</p>
+
+<h2 id="configuring-embree">Configuring Embree</h2>
+
+<p>Some internal device parameters can be set and queried using the
+<code class="language-plaintext highlighter-rouge">rtcDeviceSetParameter1i</code> and <code class="language-plaintext highlighter-rouge">rtcDeviceGetParameter1i</code> API call. The
+parameters from the following table are available to set/query:</p>
+
+<hr />
+<p>Parameter                              Description                           Read/Write
+  ————————————– ————————————- ————
+  RTC_CONFIG_INTERSECT1                  checks if rtcIntersect1 is supported  Read only
+  RTC_CONFIG_INTERSECT4                  checks if rtcIntersect4 is supported  Read only
+  RTC_CONFIG_INTERSECT8                  checks if rtcIntersect8 is supported  Read only
+  RTC_CONFIG_INTERSECT16                 checks if rtcIntersect16 is supported Read only
+  RTC_CONFIG_INTERSECTN                  checks if rtcIntersectN is supported  Read only</p>
+
+<p>RTC_CONFIG_RAY_MASK                    checks if ray masks are supported     Read only
+  RTC_CONFIG_BACKFACE_CULLING            checks if backface culling is         Read only
+  supported</p>
+
+<p>RTC_CONFIG_INTERSECTION_FILTER         checks if intersection filters        Read only
+                                         are enabled</p>
+
+<p>RTC_CONFIG_INTERSECTION_FILTER_RESTORE checks if intersection filters        Read only
+                                         restore previous hit</p>
+
+<p>RTC_CONFIG_BUFFER_STRIDE               checks if buffer strides              Read only
+                                         are supported</p>
+
+<p>RTC_CONFIG_IGNORE_INVALID_RAYS         checks if invalid rays are ignored    Read only
+  RTC_CONFIG_TASKING_SYSTEM              return used tasking system            Read only
+                                         (0 = INTERNAL, 1 = TBB)</p>
+
+<p>RTC_CONFIG_VERSION_MAJOR               returns Embree major version          Read only
+  RTC_CONFIG_VERSION_MINOR               returns Embree minor version          Read only
+  RTC_CONFIG_VERSION_PATCH               returns Embree patch version          Read only
+  RTC_CONFIG_VERSION                     returns Embree version as integer     Read only
+                                         e.g. Embree v2.8.2 -&gt; 20802</p>
+
+<dl>
+  <dt>RTC_SOFTWARE_CACHE_SIZE                Configures the software cache size    Write only</dt>
+  <dt>                                         (used to cache subdivision surfaces</dt>
+  <dt>                                         for instance). The size is specified</dt>
+  <dt>                                         as an integer number of bytes. The</dt>
+  <dt>                                         software cache cannot be configured</dt>
+  <dt>                                         during rendering.</dt>
+  <dt>  ————————————– ————————————- ————</dt>
+  <dd>Parameters for <code class="language-plaintext highlighter-rouge">rtcDeviceSetParameter</code> and <code class="language-plaintext highlighter-rouge">rtcDeviceGetParameter</code>.</dd>
+</dl>
+
+<p>For example, to configure the size of the internal software
+cache that is used to handle subdivision surfaces use the
+<code class="language-plaintext highlighter-rouge">RTC_SOFTWARE_CACHE_SIZE</code> parameter to set desired size of the cache
+in bytes:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rtcDeviceSetParameter1i(device, RTC_SOFTWARE_CACHE_SIZE, bytes);
+</code></pre></div></div>
+
+<p>The software cache cannot get configured while any Embree API call is
+executed. Best configure the size of the cache only once at
+application start.</p>
+
+<h2 id="limiting-number-of-build-threads">Limiting number of Build Threads</h2>
+
+<p>You can use the TBB API to limit the number of threads used by Embree
+during hierarchy construction. Therefore just create a global
+taskscheduler_init object, initialized with the number of threads to
+use:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;tbb/tbb.h&gt;
+
+tbb::task_scheduler_init init(numThreads);
+</code></pre></div></div>
+
+<h2 id="huge-page-support">Huge Page Support</h2>
+
+<p>We recommend using 2MB huge pages with Embree as this improves ray
+tracing performance by about 10%. Huge pages are currently only
+working under Linux with Embree.</p>
+
+<p>To enable transparent huge page support under Linux execute the
+following as root:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>echo always &gt;/sys/kernel/mm/transparent_hugepage/enabled
+</code></pre></div></div>
+
+<p>When transparent huge pages are enabled, the kernel tries to merge 4k
+pages to 2MB pages when possible as a background job. See the
+following webpage for more information on transparent huge pages under Linux
+<a href="https://www.kernel.org/doc/Documentation/vm/transhuge.txt">https://www.kernel.org/doc/Documentation/vm/transhuge.txt</a>.</p>
+
+<p>Using that first approach the transitioning from 4k to 2MB pages might
+take some time. For that reason Embree also supports allocating 2MB
+pages directly when a huge page pool is configured. To configure 2GB
+of adress space for huge page allocation, execute the following as root:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>echo 1000 &gt; /proc/sys/vm/nr_overcommit_hugepages
+</code></pre></div></div>
+
+<p>See the following webpage for more information on huge pages under
+Linux <a href="https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt">https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt</a>.</p>
+
+<h2 id="scene-bounding-box">Scene Bounding Box</h2>
+
+<p>The scene bounding box can get read by the function
+<code class="language-plaintext highlighter-rouge">rtcGetBounds(RTCScene scene, RTCBounds&amp; bounds_o)</code>. This function
+will write the AABB of the scene to <code class="language-plaintext highlighter-rouge">bounds_o</code>. Invoking this function
+is only valid when all scene changes got committed using <code class="language-plaintext highlighter-rouge">rtcCommit</code>.
+Embree Tutorials
+================</p>
+
+<p>Embree comes with a set of tutorials aimed at helping users understand
+how Embree can be used and extended. All tutorials exist in an ISPC and
+C version to demonstrate the two versions of the API. Look for files
+named <code class="language-plaintext highlighter-rouge">tutorialname_device.ispc</code> for the ISPC implementation of the
+tutorial, and files named <code class="language-plaintext highlighter-rouge">tutorialname_device.cpp</code> for the single ray C++
+version of the tutorial. To start the C++ version use the <code class="language-plaintext highlighter-rouge">tutorialname</code>
+executables, to start the ISPC version use the <code class="language-plaintext highlighter-rouge">tutorialname_ispc</code>
+executables.</p>
+
+<p>Under Linux Embree also comes with an ISPC version of all tutorials
+for the Intel® Xeon Phi™ coprocessor. The executables of this version
+of the tutorials are named <code class="language-plaintext highlighter-rouge">tutorialname_xeonphi</code> and only work if a
+Xeon Phi™ coprocessor is present in the system. The Xeon Phi™ version of
+the tutorials get started on the host CPU, just like all other
+tutorials, and will connect automatically to one installed Xeon Phi™
+coprocessor in the system. For the Intel® Xeon Phi™ coprocessor to
+find to Embree library you have to add the path to
+<code class="language-plaintext highlighter-rouge">libembree_xeonphi.so</code> to the <code class="language-plaintext highlighter-rouge">SINK_LD_LIBRARY_PATH</code> variable.</p>
+
+<p>For all tutorials, you can select an initial camera using the <code class="language-plaintext highlighter-rouge">-vp</code>
+(camera position), <code class="language-plaintext highlighter-rouge">-vi</code> (camera look-at point), <code class="language-plaintext highlighter-rouge">-vu</code> (camera up
+vector), and <code class="language-plaintext highlighter-rouge">-fov</code> (vertical field of view) command line parameters:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./triangle_geometry -vp 10 10 10 -vi 0 0 0
+</code></pre></div></div>
+
+<p>You can select the initial windows size using the <code class="language-plaintext highlighter-rouge">-size</code> command line
+parameter, or start the tutorials in fullscreen using the <code class="language-plaintext highlighter-rouge">-fullscreen</code>
+parameter:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./triangle_geometry -size 1024 1024
+./triangle_geometry -fullscreen
+</code></pre></div></div>
+
+<p>Implementation specific parameters can be passed to the ray tracing core
+through the <code class="language-plaintext highlighter-rouge">-rtcore</code> command line parameter, e.g.:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./triangle_geometry -rtcore verbose=2,threads=1,accel=bvh4.triangle1
+</code></pre></div></div>
+
+<p>The navigation in the interactive display mode follows the camera orbit
+model, where the camera revolves around the current center of interest.
+With the left mouse button you can rotate around the center of interest
+(the point initially set with <code class="language-plaintext highlighter-rouge">-vi</code>). Holding Control pressed while
+clicking the left mouse button rotates the camera around its location.
+You can also use the arrow keys for navigation.</p>
+
+<p>You can use the following keys:</p>
+
+<dl>
+  <dt>F1</dt>
+  <dd>Default shading</dd>
+  <dt>F2</dt>
+  <dd>Gray EyeLight shading</dd>
+  <dt>F3</dt>
+  <dd>Wireframe shading</dd>
+  <dt>F4</dt>
+  <dd>UV Coordinate visualization</dd>
+  <dt>F5</dt>
+  <dd>Geometry normal visualization</dd>
+  <dt>F6</dt>
+  <dd>Geometry ID visualization</dd>
+  <dt>F7</dt>
+  <dd>Geometry ID and Primitive ID visualization</dd>
+  <dt>F8</dt>
+  <dd>Simple shading with 16 rays per pixel for benchmarking.</dd>
+  <dt>F9</dt>
+  <dd>Switches to render cost visualization. Pressing again reduces
+brightness.</dd>
+  <dt>F10</dt>
+  <dd>Switches to render cost visualization. Pressing again increases
+brightness.</dd>
+  <dt>f</dt>
+  <dd>Enters or leaves full screen mode.</dd>
+  <dt>c</dt>
+  <dd>Prints camera parameters.</dd>
+  <dt>ESC</dt>
+  <dd>Exits the tutorial.</dd>
+  <dt>q</dt>
+  <dd>Exits the tutorial.</dd>
+</dl>
+
+<h2 id="triangle-geometry">Triangle Geometry</h2>
+
+<p><img src="https://embree.github.io/images/triangle_geometry.jpg" alt="" /></p>
+
+<p>This tutorial demonstrates the creation of a static cube and ground
+plane using triangle meshes. It also demonstrates the use of the
+<code class="language-plaintext highlighter-rouge">rtcIntersect</code> and <code class="language-plaintext highlighter-rouge">rtcOccluded</code> functions to render primary visibility
+and hard shadows. The cube sides are colored based on the ID of the hit
+primitive.</p>
+
+<h2 id="dynamic-scene">Dynamic Scene</h2>
+
+<p><img src="https://embree.github.io/images/dynamic_scene.jpg" alt="" /></p>
+
+<p>This tutorial demonstrates the creation of a dynamic scene, consisting
+of several deformed spheres. Half of the spheres use the
+<code class="language-plaintext highlighter-rouge">RTC_GEOMETRY_DEFORMABLE</code> flag, which allows Embree to use a refitting
+strategy for these spheres, the other half uses the
+<code class="language-plaintext highlighter-rouge">RTC_GEOMETRY_DYNAMIC</code> flag, causing a rebuild of their spatial data
+structure each frame. The spheres are colored based on the ID of the hit
+sphere geometry.</p>
+
+<h2 id="user-geometry">User Geometry</h2>
+
+<p><img src="https://embree.github.io/images/user_geometry.jpg" alt="" /></p>
+
+<p>This tutorial shows the use of user defined geometry, to re-implement
+instancing and to add analytic spheres. A two level scene is created,
+with a triangle mesh as ground plane, and several user geometries, that
+instance other scenes with a small number of spheres of different kind.
+The spheres are colored using the instance ID and geometry ID of the hit
+sphere, to demonstrate how the same geometry, instanced in different
+ways can be distinguished.</p>
+
+<h2 id="viewer">Viewer</h2>
+
+<p><img src="https://embree.github.io/images/viewer.jpg" alt="" /></p>
+
+<p>This tutorial demonstrates a simple OBJ viewer that traces primary
+visibility rays only. A scene consisting of multiple meshes is created,
+each mesh sharing the index and vertex buffer with the application.
+Demonstrated is also how to support additional per vertex data, such as
+shading normals.</p>
+
+<p>You need to specify an OBJ file at the command line for this tutorial to
+work:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./viewer -i model.obj
+</code></pre></div></div>
+
+<h2 id="instanced-geometry">Instanced Geometry</h2>
+
+<p><img src="https://embree.github.io/images/instanced_geometry.jpg" alt="" /></p>
+
+<p>This tutorial demonstrates the in-build instancing feature of Embree, by
+instancing a number of other scenes build from triangulated spheres. The
+spheres are again colored using the instance ID and geometry ID of the
+hit sphere, to demonstrate how the same geometry, instanced in different
+ways can be distinguished.</p>
+
+<h2 id="intersection-filter">Intersection Filter</h2>
+
+<p><img src="https://embree.github.io/images/intersection_filter.jpg" alt="" /></p>
+
+<p>This tutorial demonstrates the use of filter callback functions to
+efficiently implement transparent objects. The filter function used for
+primary rays, lets the ray pass through the geometry if it is entirely
+transparent. Otherwise the shading loop handles the transparency
+properly, by potentially shooting secondary rays. The filter function
+used for shadow rays accumulates the transparency of all surfaces along
+the ray, and terminates traversal if an opaque occluder is hit.</p>
+
+<h2 id="pathtracer">Pathtracer</h2>
+
+<p><img src="https://embree.github.io/images/pathtracer.jpg" alt="" /></p>
+
+<p>This tutorial is a simple path tracer, building on the viewer tutorial.</p>
+
+<p>You need to specify an OBJ file and light source at the command line for
+this tutorial to work:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./pathtracer -i model.obj -ambientlight 1 1 1
+</code></pre></div></div>
+
+<p>As example models we provide the “Austrian Imperial Crown” model by
+<a href="www.loramel.net">Martin Lubich</a> and the “Asian Dragon” model from the
+<a href="http://graphics.stanford.edu/data/3Dscanrep/">Stanford 3D Scanning Repository</a>.</p>
+
+<p><a href="https://github.com/embree/models/releases/download/release/crown.zip">crown.zip</a></p>
+
+<p><a href="https://github.com/embree/models/releases/download/release/asian_dragon.zip">asian_dragon.zip</a></p>
+
+<p>To render these models execute the following:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./pathtracer -c crown/crown.ecs
+./pathtracer -c asian_dragon/asian_dragon.ecs
+</code></pre></div></div>
+
+<h2 id="hair">Hair</h2>
+
+<p><img src="https://embree.github.io/images/hair_geometry.jpg" alt="" /></p>
+
+<p>This tutorial demonstrates the use of the hair geometry to render a
+hairball.</p>
+
+<h2 id="subdivision-geometry">Subdivision Geometry</h2>
+
+<p><img src="https://embree.github.io/images/subdivision_geometry.jpg" alt="" /></p>
+
+<p>This tutorial demonstrates the use of Catmull Clark subdivision
+surfaces. Per default the edge tessellation level is set adaptively
+based on the distance to the camera origin. Embree currently supports
+three different modes for efficiently handling subdivision surfaces in
+various rendering scenarios. These three modes can be selected at the
+command line, e.g. <code class="language-plaintext highlighter-rouge">-lazy</code> builds internal per subdivision patch data
+structures on demand, <code class="language-plaintext highlighter-rouge">-cache</code> uses a small (per thread) tessellation
+cache for caching per patch data, and <code class="language-plaintext highlighter-rouge">-pregenerate</code> to generate and
+store most per patch data during the initial build process. The
+<code class="language-plaintext highlighter-rouge">cache</code> mode is most effective for coherent rays while providing a
+fixed memory footprint. The <code class="language-plaintext highlighter-rouge">pregenerate</code> modes is most effective for
+incoherent ray distributions while requiring more memory. The <code class="language-plaintext highlighter-rouge">lazy</code>
+mode works similar to the <code class="language-plaintext highlighter-rouge">pregenerate</code> mode but provides a middle
+ground in terms of memory consumption as it only builds and stores
+data only when the corresponding patch is accessed during the ray
+traversal. The <code class="language-plaintext highlighter-rouge">cache</code> mode is currently a bit more efficient at
+handling dynamic scenes where only the edge tessellation levels are
+changing per frame.</p>
+
+<h2 id="displacement-geometry">Displacement Geometry</h2>
+
+<p><img src="https://embree.github.io/images/displacement_geometry.jpg" alt="" /></p>
+
+<p>This tutorial demonstrates the use of Catmull Clark subdivision
+surfaces with procedural displacement mapping using a constant edge
+tessellation level.</p>
+
+<h2 id="motion-blur-geometry">Motion Blur Geometry</h2>
+
+<p><img src="https://embree.github.io/images/motion_blur_geometry.jpg" alt="" /></p>
+
+<p>This tutorial demonstrates rendering motion blur using the linear
+motion blur feature for triangles and hair geometry.</p>
+
+<h2 id="interpolation">Interpolation</h2>
+
+<p><img src="https://embree.github.io/images/interpolation.jpg" alt="" /></p>
+
+<p>This tutorial demonstrates interpolation of user defined per vertex data.</p>
+
+<h2 id="bvh-builder">BVH Builder</h2>
+
+<p>This tutorial demonstrates how to use the templated hierarchy builders
+of Embree to build a bounding volume hierarchy with a user defined
+memory layout using a high quality SAH builder and very fast morton
+builder.</p>
+
+<h2 id="bvh-access">BVH Access</h2>
+
+<p>This tutorial demonstrates how to access the internal triangle
+acceleration structure build by Embree. Please be aware that the
+internal Embree data structures might change between Embree updates.</p>
+
+<h2 id="find-embree">Find Embree</h2>
+
+<p>This tutorial demonstrates how to use the <code class="language-plaintext highlighter-rouge">FIND_PACKAGE</code> CMake feature
+to use an installed Embree. Under Linux and Mac OS X the tutorial finds
+the Embree installation automatically, under Windows the <code class="language-plaintext highlighter-rouge">embree_DIR</code>
+CMake variable has to be set to the following folder of the Embree
+installation: <code class="language-plaintext highlighter-rouge">C:\Program Files\Intel\Embree
+X.Y.Z\lib\cmake\embree-X.Y.Z</code>.</p>
+
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unlearning Data at Scale · Gautam Kamath의 엄밀한 접근</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1120;
+    --bg2:#0f1830;
+    --panel:#131f3d;
+    --panel2:#0d1730;
+    --line:#233559;
+    --line2:#31477a;
+    --ink:#e6ecfb;
+    --ink-soft:#a7b4d4;
+    --ink-faint:#67759c;
+    --proof:#6ba8ff;      /* 보장/증명 */
+    --proof-soft:#a3c8ff;
+    --warn:#ffb454;       /* 실증적 실패 경고 */
+    --warn-soft:#ffcf8f;
+    --qed:#5be0b0;        /* 확립됨 */
+    --disp:'Newsreader',serif;
+    --body:'Noto Sans KR',sans-serif;
+    --mono:'IBM Plex Mono',monospace;
+    --maxw:1060px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--ink);font-family:var(--body);font-weight:300;
+    line-height:1.85;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0;z-index:-2;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 0%,rgba(107,168,255,.12),transparent 60%),
+      radial-gradient(ellipse 50% 40% at 10% 100%,rgba(255,180,84,.07),transparent 60%),
+      var(--bg);}
+  /* 좌표 그리드(청사진) */
+  body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.4;
+    background-image:
+      linear-gradient(rgba(49,71,122,.22) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(49,71,122,.22) 1px,transparent 1px);
+    background-size:44px 44px;
+    -webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 25%,#000,transparent 90%);
+    mask-image:radial-gradient(ellipse 80% 70% at 50% 25%,#000,transparent 90%);}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 30px}
+  .progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:100;
+    background:linear-gradient(90deg,var(--proof),var(--qed));box-shadow:0 0 10px rgba(107,168,255,.5)}
+
+  /* ---------- HERO ---------- */
+  header.hero{padding:128px 0 84px;position:relative}
+  .kicker{font-family:var(--mono);font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--proof);margin-bottom:28px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .kicker::before{content:"";width:38px;height:1px;background:var(--proof)}
+  .hero h1{font-family:var(--disp);font-weight:500;line-height:1.02;letter-spacing:-.02em;
+    font-size:clamp(2.7rem,7.5vw,5.6rem);color:#fff}
+  .hero h1 .em{font-style:italic;font-weight:400;color:var(--proof-soft)}
+  .byline{margin-top:20px;font-family:var(--disp);font-size:1.15rem;color:var(--ink-soft);font-style:italic}
+  .byline b{font-style:normal;font-weight:600;color:#fff}
+  .hero .lede{max-width:660px;margin-top:30px;font-size:1.06rem;color:var(--ink-soft)}
+  .hero .lede b{color:#fff;font-weight:500}
+
+  /* 논지 배너 */
+  .thesis{margin-top:44px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.thesis{grid-template-columns:1fr}}
+  .thesis .t{padding:26px 26px;border-radius:8px;border:1px solid var(--line)}
+  .thesis .t.ok{background:linear-gradient(160deg,rgba(107,168,255,.1),rgba(107,168,255,.02));border-color:var(--line2)}
+  .thesis .t.no{background:linear-gradient(160deg,rgba(255,180,84,.1),rgba(255,180,84,.02));border-color:rgba(255,180,84,.35)}
+  .thesis .lbl{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px}
+  .thesis .t.ok .lbl{color:var(--proof)}
+  .thesis .t.no .lbl{color:var(--warn)}
+  .thesis h3{font-family:var(--disp);font-size:1.3rem;font-weight:600;color:#fff;margin-bottom:6px;line-height:1.2}
+  .thesis p{font-size:.92rem;color:var(--ink-soft);margin:0}
+
+  .hero-meta{margin-top:40px;display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--line)}
+  .hero-meta div{padding:18px 24px 18px 0;margin-right:24px;border-right:1px solid var(--line);
+    font-family:var(--mono);font-size:.7rem;color:var(--ink-faint);letter-spacing:.05em}
+  .hero-meta div:last-child{border-right:none}
+  .hero-meta b{display:block;color:var(--ink);font-size:.9rem;font-weight:500;margin-top:5px;font-family:var(--body)}
+
+  /* ---------- 섹션 ---------- */
+  section{padding:84px 0;position:relative}
+  section + section{border-top:1px solid var(--line)}
+  .sec-head{margin-bottom:44px;max-width:800px}
+  .sec-num{font-family:var(--mono);font-size:.74rem;letter-spacing:.2em;color:var(--proof);
+    display:inline-flex;align-items:center;gap:12px;margin-bottom:16px}
+  .sec-num::before{content:"§";font-style:normal;font-size:1.1rem;color:var(--ink-faint)}
+  .sec-head h2{font-family:var(--disp);font-weight:600;font-size:clamp(1.75rem,4vw,2.7rem);
+    letter-spacing:-.01em;line-height:1.1;color:#fff}
+  .sec-head .dek{margin-top:16px;color:var(--ink-soft);font-size:1.04rem}
+
+  .prose{max-width:740px}
+  p{margin-bottom:1.2em;font-size:1.02rem;color:var(--ink-soft)}
+  strong{font-weight:500;color:#fff}
+  em{font-style:italic;font-family:var(--disp);color:var(--proof-soft);font-weight:400}
+  .term{font-family:var(--mono);font-size:.9em;background:var(--panel2);padding:1px 7px;border-radius:3px;
+    color:var(--proof-soft);border:1px solid var(--line)}
+  a{color:var(--proof-soft);text-decoration:none;border-bottom:1px solid rgba(107,168,255,.35);transition:.2s}
+  a:hover{color:#fff;border-color:#fff}
+
+  /* 정리(Theorem) 블록 */
+  .theorem{background:var(--panel);border:1px solid var(--line2);border-radius:8px;
+    padding:30px 32px;margin:28px 0;position:relative;overflow:hidden}
+  .theorem::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--proof)}
+  .theorem .th-tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--proof);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .theorem .expr{font-family:var(--mono);font-size:1.1rem;color:#fff;line-height:1.7;margin:10px 0}
+  .theorem .expr .a{color:var(--warn-soft)}
+  .theorem .expr .b{color:var(--proof-soft)}
+  .theorem .note{font-size:.9rem;color:var(--ink-soft);margin-top:14px;margin-bottom:0}
+  .qed{color:var(--qed);font-family:var(--mono);float:right;font-size:.9rem}
+
+  /* 카드 */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:28px 28px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media(max-width:760px){.grid2,.grid3{grid-template-columns:1fr}}
+  .card .ct{font-family:var(--mono);font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:12px}
+  .card h4{font-family:var(--disp);font-weight:600;font-size:1.2rem;color:#fff;margin-bottom:8px}
+  .card p{font-size:.93rem;margin:0;color:var(--ink-soft)}
+  .card.warn{border-color:rgba(255,180,84,.35)}
+  .card.warn .ct{color:var(--warn)}
+
+  /* 대비(certified vs approx) */
+  .split{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+  @media(max-width:640px){.split{grid-template-columns:1fr}}
+  .split .col{padding:30px 30px}
+  .split .col.l{background:linear-gradient(160deg,rgba(107,168,255,.08),transparent)}
+  .split .col.r{background:linear-gradient(160deg,rgba(255,180,84,.06),transparent);border-left:1px solid var(--line)}
+  .split .tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:12px}
+  .split .col.l .tag{color:var(--proof)}
+  .split .col.r .tag{color:var(--warn)}
+  .split h4{font-family:var(--disp);font-size:1.3rem;font-weight:600;color:#fff;margin-bottom:8px}
+  .split p{font-size:.93rem;color:var(--ink-soft);margin:0}
+
+  /* 축 리스트 */
+  .axes{border-top:1px solid var(--line)}
+  .axis{display:grid;grid-template-columns:180px 1fr;gap:26px;padding:22px 0;border-bottom:1px solid var(--line);align-items:start}
+  .axis .an{font-family:var(--disp);font-weight:600;font-size:1.1rem;color:#fff}
+  .axis .an .sub{display:block;font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--proof);margin-top:6px;font-weight:400}
+  .axis p{margin:0;font-size:.96rem;color:var(--ink-soft)}
+  @media(max-width:640px){.axis{grid-template-columns:1fr;gap:6px}}
+
+  /* 인용 */
+  .pull{border-left:3px solid var(--warn);padding:8px 0 8px 28px;margin:34px 0;max-width:720px;
+    font-family:var(--disp);font-style:italic;font-size:1.4rem;line-height:1.45;color:#fff;font-weight:400}
+  .pull cite{display:block;font-style:normal;font-family:var(--mono);font-size:.75rem;color:var(--ink-faint);
+    margin-top:14px;letter-spacing:.06em}
+
+  /* 방법 스택 */
+  .method{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:24px 26px;margin-bottom:14px}
+  .method .mh{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+  .method h4{font-family:var(--disp);font-size:1.16rem;font-weight:600;color:#fff}
+  .method .badge{font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;
+    padding:4px 10px;border-radius:3px;background:var(--panel2);color:var(--ink-faint);border:1px solid var(--line)}
+  .method .badge.k{background:rgba(107,168,255,.14);color:var(--proof-soft);border-color:var(--line2)}
+  .method ul{list-style:none;margin:0}
+  .method li{padding-left:20px;position:relative;font-size:.94rem;color:var(--ink-soft);margin-bottom:7px}
+  .method li:last-child{margin-bottom:0}
+  .method li::before{content:"▸";position:absolute;left:0;color:var(--proof)}
+  .method li b{color:#fff;font-weight:500}
+
+  /* 응용 그리드 */
+  .apps{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  @media(max-width:640px){.apps{grid-template-columns:1fr}}
+  .app{background:var(--panel);padding:24px 26px}
+  .app .an{font-family:var(--mono);font-size:.68rem;color:var(--proof);letter-spacing:.1em;margin-bottom:9px}
+  .app h4{font-family:var(--disp);font-size:1.08rem;font-weight:600;color:#fff;margin-bottom:7px}
+  .app p{font-size:.9rem;color:var(--ink-soft);margin:0}
+
+  /* 미래 타임라인 */
+  .future{padding-left:24px;position:relative}
+  .future::before{content:"";position:absolute;left:4px;top:8px;bottom:8px;width:1px;background:var(--line2)}
+  .fut{position:relative;padding:0 0 28px 26px}
+  .fut:last-child{padding-bottom:0}
+  .fut::before{content:"";position:absolute;left:-24px;top:7px;width:10px;height:10px;border-radius:50%;
+    background:var(--bg);border:2px solid var(--proof)}
+  .fut h4{font-family:var(--disp);font-size:1.12rem;font-weight:600;color:#fff;margin-bottom:5px}
+  .fut p{font-size:.95rem;color:var(--ink-soft);margin:0}
+
+  /* refs */
+  .refs{display:grid;gap:12px}
+  .ref{display:grid;grid-template-columns:auto 1fr;gap:18px;padding:18px 22px;background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;align-items:center}
+  .ref .rc{font-family:var(--mono);font-size:.72rem;color:var(--proof);font-weight:500}
+  .ref .rt{font-size:.93rem;color:var(--ink)}
+  .ref .ru{display:block;font-family:var(--mono);font-size:.76rem;color:var(--ink-faint);margin-top:4px;word-break:break-all}
+
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.2,.6,.2,1),transform .7s cubic-bezier(.2,.6,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  footer{padding:70px 0 60px;border-top:1px solid var(--line2);background:var(--bg2)}
+  .foot-t{font-family:var(--disp);font-weight:600;font-size:1.6rem;color:#fff;margin-bottom:14px}
+  footer p{color:var(--ink-soft);font-size:.93rem;max-width:600px}
+  .fmeta{margin-top:26px;font-family:var(--mono);font-size:.73rem;color:var(--ink-faint);letter-spacing:.05em}
+
+  ::selection{background:rgba(107,168,255,.35);color:#fff}
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    .reveal{opacity:1;transform:none}html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Machine Unlearning · 이론적 보장과 실증적 한계</div>
+    <h1>Unlearning Data<br><span class="em">at Scale</span></h1>
+    <div class="byline">엄밀성의 관점 · <b>Gautam Kamath</b> · ICML 2026 Tutorial</div>
+    <p class="lede">Kamath 교수는 machine unlearning의 <b>이론적 기초</b>(차등 프라이버시 연계, 인증된 언러닝)와 <b>실증적 한계</b>(poisoning attack 제거 실패)를 강조하며, 대규모 LLM·기초 모델 시대의 실용적·이론적 도전을 선도한다. 그의 작업은 언러닝을 향한 <em>과장된 기대</em>를 경계하고 엄밀한 방향을 제시한다.</p>
+
+    <div class="thesis">
+      <div class="t ok">
+        <div class="lbl">이론이 보장하는 것</div>
+        <h3>인증된 제거</h3>
+        <p>매끄러운 강볼록 손실에서 근사 최적의 순수 언러닝을 수학적으로 보장한다.</p>
+      </div>
+      <div class="t no">
+        <div class="lbl">실증이 드러내는 것</div>
+        <h3>Poisoning 제거 실패</h3>
+        <p>근사 언러닝은 MIA 방어에는 효과적이지만, 데이터 오염 공격을 완전히 제거하지 못한다.</p>
+      </div>
+    </div>
+
+    <div class="hero-meta">
+      <div>관점<b>Rigorous / Certified</b></div>
+      <div>이론 뿌리<b>Differential Privacy</b></div>
+      <div>핵심 발견<b>Poisoning 잔존</b></div>
+      <div>기준 연구<b>2025–2026</b></div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 01 정의 ============ -->
+<section id="def">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">01 · 정의</span>
+      <h2>단순한 '지우기'가 아니라 엄밀한 과정</h2>
+      <p class="dek">대규모 훈련 데이터셋에서 특정 데이터의 효과를 효율적으로 제거해, 모델이 그 데이터를 전혀 보지 않은 것처럼 행동하게 만드는 기술.</p>
+    </div>
+    <div class="prose reveal">
+      <p>Kamath 교수의 관점에서 <strong>Unlearning Data at Scale</strong>은 단순한 삭제가 아니라, <span class="term">certified removal</span>(수학적 보장)과 <span class="term">approximate methods</span>(효율적 근사) 사이의 trade-off를 다루는 엄밀한 과정이다. <span class="term">Exact unlearning</span>(이상적 재훈련과 동등)과 approximate가 핵심 구분이다.</p>
+      <p class="pull">거대한 도서관에서 특정 책을 제거하되, 선반 전체의 안정성과 책들의 상호 참조를 유지하는 정밀 외과 수술이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 문제 정의 ============ -->
+<section id="problem">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">02 · 문제 정의</span>
+      <h2>Oracle 재훈련 모델과의 근사</h2>
+      <p class="dek">D = D_r ∪ D_f 에서 forget set D_f 의 영향을 제거한 θ_unl 을, 오라클 재훈련 모델에 근사시킨다.</p>
+    </div>
+    <div class="theorem reveal">
+      <div class="th-tag">Objective · 언러닝 목표</div>
+      <div class="expr">
+        θ<sub>unl</sub> &nbsp;≈&nbsp; <span class="b">argmin<sub>θ</sub> L(θ ; D \ D<sub>f</sub>)</span>
+      </div>
+      <p class="note">훈련된 모델 θ 에서 forget set의 영향을 제거해, Retain Set으로 처음부터 재훈련한 오라클 모델과 근사시킨다. Kamath 연구는 특히 <span class="term">poisoning attack</span> 제거와 대규모 심층 모델에서의 효능(efficacy)에 초점을 두고, approximate unlearning의 한계를 수학적으로 분석한다.</p>
+    </div>
+    <p class="prose reveal">대규모의 본질은 명확하다. trillions of tokens 규모에서 full retraining은 불가능하므로 <strong>사후(post-hoc) 효율적 삭제</strong>가 필요하다. 목표는 프라이버시(잊힐 권리), 안전성, 데이터 위생(data hygiene)이다.</p>
+  </div>
+</section>
+
+<!-- ============ 03 핵심 개념 ============ -->
+<section id="concepts">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">03 · 핵심 개념</span>
+      <h2>보장, 영향 제거, 확장성, 그리고 평가 축</h2>
+      <p class="dek">Kamath는 언러닝이 poisoning을 완전히 제거하지 못한다는 실증적 실패를 특히 강조한다.</p>
+    </div>
+
+    <div class="split reveal" style="margin-bottom:22px">
+      <div class="col l">
+        <div class="tag">Certified Unlearning</div>
+        <h4>인증된 언러닝</h4>
+        <p>강볼록 손실 등에서 근사 최적의 순수 언러닝을 이론적으로 보장한다.</p>
+      </div>
+      <div class="col r">
+        <div class="tag">Approximate Unlearning</div>
+        <h4>근사 언러닝</h4>
+        <p>효율적이지만 보장이 약하다. 실제 위협 제거에서 한계를 드러낸다.</p>
+      </div>
+    </div>
+
+    <div class="grid3 reveal">
+      <div class="card">
+        <div class="ct">Influence Removal</div>
+        <h4>영향 제거</h4>
+        <p>데이터 오염, MIA 방어, gradient 기반 기법으로 영향을 지운다.</p>
+      </div>
+      <div class="card">
+        <div class="ct">Scalability</div>
+        <h4>확장성</h4>
+        <p>파라미터 효율 파인튜닝, model merging, checkpoint history(MSA 연계).</p>
+      </div>
+      <div class="card warn">
+        <div class="ct">Evaluation Axes</div>
+        <h4>평가 축</h4>
+        <p>망각 효능(poisoning 제거·MIA), 유틸리티 보존, 재학습 견고성, 연산 비용.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 서론 ============ -->
+<section id="intro">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">04 · 서론</span>
+      <h2>MIA는 막아도, 실질적 위협은 남는다</h2>
+      <p class="dek">Kamath는 ICML 2026 Tutorial에서 대규모 언러닝의 실증·이론 프레임워크를 제시한다.</p>
+    </div>
+    <div class="prose reveal">
+      <p>2025년 이후 LLM·기초 모델의 폭발적 성장과 함께, 기존 방법들이 MIA 방어에는 효과적이지만 poisoning attack 제거 같은 실질적 threat에는 실패한다는 점이 드러난다. 이는 <strong>엄밀한 평가와 이론적 보장</strong>의 필요성을 부각한다. 언러닝은 프라이버시·저작권·AI 안전 규제(GDPR, EU AI Act) 준수를 위한 핵심 기술로 자리 잡았다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 동기와 배경 ============ -->
+<section id="motivation">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">05 · 동기와 배경</span>
+      <h2>차등 프라이버시에서 사후 데이터 삭제로</h2>
+      <p class="dek">Kamath 연구는 차등 프라이버시(DP)와 통계적 추정에서 출발해, 언러닝을 사후 데이터 삭제로 확장한다.</p>
+    </div>
+    <div class="grid2 reveal">
+      <div class="card">
+        <div class="ct">동기 · Motivation</div>
+        <h4>왜 잊어야 하는가</h4>
+        <p>방대한 데이터에 의한 프라이버시 누출, 저작권·유해 콘텐츠 기억(memorization), 오염 데이터 영향 제거, 규제 준수.</p>
+      </div>
+      <div class="card">
+        <div class="ct">배경 · Background</div>
+        <h4>계보</h4>
+        <p>Sekhari et al.(NeurIPS 2021)의 초기 작업과 Kamath의 후속 이론적 진전. 차등 프라이버시와 통계적 추정을 뿌리로 삼는다.</p>
+      </div>
+    </div>
+    <p class="pull reveal">모델을 기억하는 뇌로 보면, 언러닝은 선택적 기억 지우기이며 AI가 윤리적·법적 성숙을 이루는 과정이다.</p>
+  </div>
+</section>
+
+<!-- ============ 06 도전 과제 ============ -->
+<section id="challenges">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">06 · 도전 과제</span>
+      <h2>효능의 한계가 가장 먼저다</h2>
+      <p class="dek">Kamath는 평가 벤치마크의 재고를 특히 강조한다.</p>
+    </div>
+
+    <div class="theorem reveal">
+      <div class="th-tag">Kamath et al. · ICLR 2025 · 핵심 발견</div>
+      <div class="expr">
+        approximate unlearning &nbsp;<span class="a">⊄</span>&nbsp; poisoning removal
+      </div>
+      <p class="note">근사 언러닝은 무차별(indiscriminate)·표적(targeted)·가우시안(Gaussian) 오염을 제거하지 못한다. MIA 방어로 성공을 판정하는 관행이 실질적 위협 앞에서 무력함을 드러낸다.<span class="qed">□</span></p>
+    </div>
+
+    <div class="axes reveal">
+      <div class="axis"><div class="an">확장성<span class="sub">Scalability</span></div><p>Billion-parameter 모델에서 연산·저장 오버헤드가 크다.</p></div>
+      <div class="axis"><div class="an">Trade-off<span class="sub">Utility</span></div><p>망각 강도를 높이면 유틸리티 저하·파국적 망각이 커진다.</p></div>
+      <div class="axis"><div class="an">검증·보장<span class="sub">Guarantees</span></div><p>형식적 인증이 어렵고, 적대적 재학습에 취약하다.</p></div>
+      <div class="axis"><div class="an">실세계<span class="sub">Real-world</span></div><p>비정상(non-stationary) 데이터, 멀티모달, 빈번한 삭제 요청이 겹친다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 07 연구 질문 ============ -->
+<section id="rq">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">07 · 연구 질문</span>
+      <h2>MIA를 넘어서는 인증은 가능한가</h2>
+    </div>
+    <div class="grid2 reveal">
+      <div class="card">
+        <div class="ct">Certification</div>
+        <p>MIA를 넘어(예: poisoning 제거) 언러닝 효능을 어떻게 인증하는가.</p>
+      </div>
+      <div class="card">
+        <div class="ct">Fundamental Limits</div>
+        <p>대규모에서 근사 방법의 근본적 한계는 무엇인가.</p>
+      </div>
+      <div class="card">
+        <div class="ct">Theory as Tool</div>
+        <p>DP·볼록 최적화 같은 이론 도구가 확장 가능한 근사 최적 언러닝을 어떻게 가능케 하는가.</p>
+      </div>
+      <div class="card">
+        <div class="ct">Benchmark &amp; Integration</div>
+        <p>실제 위협을 포착하는 벤치마크를 어떻게 설계하는가. 나아가 언러닝을 poisoning 방어·연속 학습과 어떻게 통합하는가.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 08 접근법 ============ -->
+<section id="methods">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">08 · 접근법 · 방법론</span>
+      <h2>효율 vs. 보장의 Pareto frontier</h2>
+      <p class="dek">이론적·정확 방법에서 근사·실용 방법, 그리고 Kamath의 기여와 하이브리드까지.</p>
+    </div>
+    <div class="reveal">
+      <div class="method">
+        <div class="mh"><h4>이론적 · 정확</h4><span class="badge">Theoretical / Exact</span></div>
+        <ul>
+          <li><b>매끄러운 강볼록 손실</b>에 대한 근사 최적 순수 언러닝 (Kamath et al.)</li>
+          <li>파라미터 효율 튜닝을 결합한 <b>SISA 유형 sharding</b></li>
+        </ul>
+      </div>
+      <div class="method">
+        <div class="mh"><h4>근사 · 실용</h4><span class="badge">Approximate / Practical</span></div>
+        <ul>
+          <li><b>Gradient ascent</b> + 정규화</li>
+          <li><b>Model editing</b></li>
+          <li><b>증류 기반 견고화</b>(distillation-based robustification)</li>
+        </ul>
+      </div>
+      <div class="method">
+        <div class="mh"><h4>Kamath의 기여</h4><span class="badge k">Contribution</span></div>
+        <ul>
+          <li><b>Poisoning 실패 분석</b>을 통한 평가 강화</li>
+          <li><b>DP 연계</b> 인증(certified) 방법</li>
+        </ul>
+      </div>
+      <div class="method">
+        <div class="mh"><h4>하이브리드</h4><span class="badge">Hybrid</span></div>
+        <ul>
+          <li><b>Checkpoint 기반</b>(MSA 연계)</li>
+          <li>효율을 위한 <b>LoRA / PEFT</b></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 09 주요 응용 ============ -->
+<section id="apps">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">09 · 주요 응용</span>
+      <h2>프라이버시에서 보안, 안전, 유지보수까지</h2>
+    </div>
+    <div class="apps reveal">
+      <div class="app"><div class="an">01 · Privacy</div><h4>프라이버시 · 규제</h4><p>사용자 데이터 삭제 요청에 대응한다.</p></div>
+      <div class="app"><div class="an">02 · Security</div><h4>보안</h4><p>Poisoning attack 완화. Kamath 연구는 한계를 지적하며 개선 방향을 제시한다.</p></div>
+      <div class="app"><div class="an">03 · Safety</div><h4>AI 안전</h4><p>LLM의 유해 지식을 제거한다.</p></div>
+      <div class="app"><div class="an">04 · Maintenance</div><h4>모델 유지보수</h4><p>대규모 시스템에서 낡거나 편향된 데이터를 정리한다.</p></div>
+      <div class="app"><div class="an">05 · Distributed</div><h4>연합 · 연속 학습</h4><p>분산 환경의 언러닝을 수행한다.</p></div>
+      <div class="app"><div class="an">06 · Evaluation</div><h4>엄밀한 평가</h4><p>실제 위협을 포착하는 벤치마크로 효능을 판정한다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10 미해결 문제 ============ -->
+<section id="open">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">10 · 미해결 문제</span>
+      <h2>Poisoning 제거 실패가 중심에 있다</h2>
+    </div>
+    <div class="axes reveal">
+      <div class="axis"><div class="an">Poisoning 잔존<span class="sub">Core Finding</span></div><p>언러닝이 poisoning을 제거하지 못한다 — Kamath et al.의 핵심 발견.</p></div>
+      <div class="axis"><div class="an">비볼록 보장<span class="sub">Deep Models</span></div><p>심층 비볼록 모델에 대한 확장 가능한 인증 보장이 미비하다.</p></div>
+      <div class="axis"><div class="an">견고한 평가<span class="sub">Beyond MIA</span></div><p>MIA를 넘어 실제 위협을 담는 평가 프레임워크가 필요하다.</p></div>
+      <div class="axis"><div class="an">정책 통합<span class="sub">GenAI Policy</span></div><p>생성 AI 정책(저작권·안전)과의 통합이 열려 있다.</p></div>
+      <div class="axis"><div class="an">프론티어 처리성<span class="sub">Tractability</span></div><p>프론티어 규모에서의 연산 처리 가능성이 관건이다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11 미래 방향 ============ -->
+<section id="future">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">11 · 미래 방향</span>
+      <h2>엄밀성으로 로드맵을 세운다</h2>
+      <p class="dek">ICML 2026 Tutorial이 이 로드맵의 이정표가 될 전망이다.</p>
+    </div>
+    <div class="future reveal">
+      <div class="fut"><h4>이론적 진전</h4><p>볼록 최적화와 DP 확장으로 근사 최적 방법을 만든다.</p></div>
+      <div class="fut"><h4>견고·확장 하이브리드</h4><p>증류, checkpoint arithmetic, 설계 단계 언러닝을 결합한다.</p></div>
+      <div class="fut"><h4>더 나은 벤치마크</h4><p>Poisoning·적대적·멀티모달 평가를 확립한다.</p></div>
+      <div class="fut"><h4>학제적 접근</h4><p>정책(디지털 기억 소거)과 실세계 배포로 확장한다.</p></div>
+    </div>
+    <p class="pull reveal">언러닝을 AI의 면역 체계로 진화시켜, 동적이고 신뢰할 수 있는 지능 시스템을 구축한다.
+      <cite>— Kamath 교수는 언러닝의 과장된 기대를 경계하며 엄밀한 방향을 제시한다.</cite>
+    </p>
+  </div>
+</section>
+
+<!-- ============ 참고문헌 ============ -->
+<section id="refs">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="sec-num">↗ · 주요 출처</span>
+      <h2>Kamath 관련 2025–2026</h2>
+    </div>
+    <div class="refs reveal">
+      <div class="ref"><span class="rc">[1]</span><span class="rt">Gautam Kamath — Homepage &amp; Tutorial (ICML 2026, Unlearning Data at Scale)<a class="ru" href="http://www.gautamkamath.com/" target="_blank" rel="noopener">gautamkamath.com</a></span></div>
+      <div class="ref"><span class="rc">[2]</span><span class="rt">Machine Unlearning Fails to Remove Data Poisoning Attacks (ICLR 2025)<a class="ru" href="https://arxiv.org/abs/2406.17216" target="_blank" rel="noopener">arxiv.org/abs/2406.17216</a></span></div>
+      <div class="ref"><span class="rc">[3]</span><span class="rt">Near-Optimal Pure Machine Unlearning (manuscript, Kamath 관련)<a class="ru" href="http://www.gautamkamath.com/" target="_blank" rel="noopener">gautamkamath.com — publications 참조</a></span></div>
+      <div class="ref"><span class="rc">[4]</span><span class="rt">Curriculum Vitae &amp; Papers<a class="ru" href="http://www.gautamkamath.com/kamath-cv.pdf" target="_blank" rel="noopener">gautamkamath.com/kamath-cv.pdf</a></span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-t">Unlearning Data at Scale</div>
+    <p>인증된 제거와 근사 방법의 trade-off를 엄밀히 다룬다. MIA를 넘어 실제 위협 — 특히 데이터 오염 — 을 제거할 수 있는가가 진짜 질문이다.</p>
+    <div class="fmeta">Gautam Kamath · Certified Unlearning · Differential Privacy · ICML 2026 Tutorial</div>
+  </div>
+</footer>
+
+<script>
+  const prog=document.getElementById('prog');
+  const onScroll=()=>{const h=document.documentElement.scrollHeight-window.innerHeight;
+    prog.style.width=(h>0?window.scrollY/h*100:0)+'%';};
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},
+    {threshold:0.1,rootMargin:'0px 0px -6% 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

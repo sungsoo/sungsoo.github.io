@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Reservoir Sampling in MapReduce</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Reservoir Sampling in MapReduce</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">21 August 2015</p></h4>
+<hr>
+
+<div class="post">
+<h2 id="article-source">Article Source</h2>
+<ul>
+  <li>Title: <a href="http://had00b.blogspot.kr/2013/07/random-subset-in-mapreduce.html">Reservoir Sampling in MapReduce</a></li>
+  <li>Authors: had00b</li>
+</ul>
+
+<hr />
+
+<h1 id="reservoir-sampling-in-mapreduce">Reservoir Sampling in MapReduce</h1>
+
+<p><a href="http://faculty.elgin.edu/dkernler/statistics/ch01/images/srs.gif"><img src="http://faculty.elgin.edu/dkernler/statistics/ch01/images/srs.gif" alt="" /></a></p>
+
+<p>We consider the problem of picking a random sample of a given size <em>k</em>
+from a large dataset of some unknown size <em>n</em>. The hidden assumption
+here is that <em>n</em> is large enough that the whole dataset does not fit
+into main memory, whereas the desired sample does.</p>
+
+<p>Let’s first review how this problem is tackled in a <em>sequential</em>
+setting - then we’ll proceed with a <em>distributed map-reduce solution</em>.</p>
+
+<h2 id="reservoir-sampling">Reservoir sampling</h2>
+
+<p>One of the most common <em>sequential</em> approaches to this problem is the so-called <a href="http://en.wikipedia.org/wiki/Reservoir_sampling"><em>reservoir
+sampling</em></a>. The
+algorithm works as follows: the data is coming through a <em>stream</em> and the
+solution keeps a vector of <em>k</em> elements (the <em>reservoir</em>) initialized
+with the first <em>k</em> elements in the stream and incrementally updated as
+follows: when the <em>i</em>-th element arrives (with \(i \gt k \)), pick a
+random integer <em>r</em> in the interval \([1,..,i]\), and if <em>r</em> happens
+to be in the interval \([1,..,k]\), replace the <em>r</em>-th element in the
+solution with the current element.</p>
+
+<p>A simple implementation in Python is the following. The input items are
+the lines coming from the standard input:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># reservoir_sampling.py
+
+import sys, random
+
+k = int(sys.argv[1])
+S, c = [], 0
+
+for x in sys.stdin:
+  if c &lt; k: S.append(x)
+  else:
+    r = random.randint(0,c-1)
+    if r &lt; k: S[r] = x
+  c += 1
+
+print ''.join(S),
+</code></pre></div></div>
+
+<p>You can test it from the console as follows to pick 3 distinct random
+numbers between 1 and 100:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ for i in {1..100}; do echo $i; done | python ./reservoir_sampling.py 3
+</code></pre></div></div>
+
+<h2 id="why-does-it-work-the-math-behind-it">Why does it work? The math behind it</h2>
+
+<p><em>(Feel free to skip this section if math and probability are not your
+friends)</em>
+ Let’s convince ourselves that every element belongs to the final
+solution with the same probability.
+ Let <em>x_i</em> be the <em>i</em>-th element and \(S_i \) be the solution
+obtained after examining the first <em>i</em> elements. We will show that
+\(Pr[x_j \in S_i] = k/i \) for all \(j \le i \) with \(k \le i \le
+n\). This will imply that the probability that any element is in the
+final solution \(S_n\) is exactly <em>k/n</em>.
+ The proof is by induction on <em>i</em>: the base case <em>i=k</em> is clearly
+true since the first <em>k</em> elements are in the solution with probability
+exactly 1. Now let’s say we’re looking at the <em>i</em>-th element for some
+<em>i&gt;k</em>. We know that this element will enter the solution \(S_i\)
+with probability exactly <em>k/i</em>. On the other hand, for any of the
+elements j\lt i<em>, we know that it will be in \(S_i\) only if it was
+in \(S_{i-1}\) and is not kicked out by the *i</em>-th element. By
+induction hypothesis, \(Pr[x_j \in S_{i-1}]= k/(i-1)\), whereas the
+probability that <em>x_j</em> is not kicked out by the current element is
+\((1-1/i) = (i-1)/i \). We can conclude that \(Pr[x_j \in S_{i}] =
+\frac{k}{i-1} \cdot \frac{i-1}{i} = \frac{k}{i}\).</p>
+
+<h1 id="mapreduce-solution">MapReduce solution</h1>
+
+<p>How do we move from a sequential solution to a distributed solution?
+ To make the problem more concrete, let’s say we have a number of files
+where each line is one of the input elements (the number of lines over
+all files sum up to <em>n</em>) and we’d like to select exactly <em>k</em> of those
+lines.</p>
+
+<h2 id="the-naive-solution">The Naive solution</h2>
+
+<p>The simplest solution is to reduce the distributed problem to a
+sequential problem by using a single reducer and have every mapper map
+every line to that reducer. Then the reducer can apply the reservoir
+sampling algorithm to the data. The problem with this approach though is
+that the amount of data sent by the mappers to the reducer is the <em>whole
+dataset</em>.</p>
+
+<h2 id="a-better-approach">A better approach</h2>
+
+<p>The core insight behind reservoir sampling is that picking a random
+sample of size <em>k</em> is equivalent to generating a random permutation
+(ordering) of the elements and picking the top <em>k</em> elements. Indeed, a
+random sample can be generated as follows: associate a random <em>float</em> id
+with each element and pick the elements with the <em>k</em> largest ids.
+Since the ids induce a random ordering of the elements (assuming the ids
+are distinct), it is clear that the elements associated with the <em>k</em>
+largest ids form a random subset.</p>
+
+<p>We will start implementing this new algorithm in a streaming sequential
+setting. The goal here is to incrementally keep track of the <em>k</em>
+elements with largest ids seen so far. A useful data structure that can
+be used to this goal is the <a href="http://en.wikipedia.org/wiki/Binary_heap">binary
+min-heap</a>. We can use it as
+follows: we initialize the heap with the first <em>k</em> elements, each
+associated with a random id. Then, when a new element comes, we
+associate a random id with it: if its id is larger than the smallest id
+in the heap (the heap’s root), we replace the heap’s root with this new
+element.</p>
+
+<p>A simple implementation in Python is the following:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># rand_subset_seq.py
+
+import sys, random
+from heapq import heappush, heapreplace
+
+k = int(sys.argv[1])
+H = []
+
+for x in sys.stdin:
+  r = random.random() # this is the id
+  if len(H) &lt; k: heappush(H, (r, x))
+  elif r &gt; H[0][0]: heapreplace(H, (r, x)) # H[0] is the root of the heap, H[0][0] its id
+        
+print ''.join([x for (r,x) in H]),
+</code></pre></div></div>
+
+<p>Again, the following test pick 3 distinct random numbers between 1 and
+100:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ for i in {1..100}; do echo $i; done | python ./rand_subset_seq.py 3
+</code></pre></div></div>
+
+<p>By looking at the problem under this new light, we can now provide an
+improved map-reduce implementation. The idea is to compute the ordering
+distributedly, with each mapper associating a random id with each
+element and keeping track of the top <em>k</em> elements. The top <em>k</em>
+elements of each mapper are then sent to a single reducer which will
+complete the job by extracting the top <em>k</em> elements among all. Notice
+how in this case the amount of data sent out by the map phase is reduced
+to the top <em>k</em> elements of each mapper as opposed to the whole
+dataset.</p>
+
+<p>An important trick that we can use is the fact that Hadoop framework
+will automatically present the values to the reducer in order of keys
+from lowest to highest. Therefore, by using the negation of the id as
+key, the first <em>k</em> element read by the reducer will be the top <em>k</em>
+elements we are looking for.</p>
+
+<p>We now provide the mapper and reducer code in Python language, to be
+used with Hadoop streaming.</p>
+
+<p>The following is the code for the mapper:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#!/usr/bin/python
+# rand_subset_m.py
+
+import sys, random
+from heapq import heappush, heapreplace
+
+k = int(sys.argv[1])
+H = []
+
+for x in sys.stdin:
+  r = random.random()
+  if len(H) &lt; k: heappush(H, (r, x))
+  elif r &gt; H[0][0]: heapreplace(H, (r, x))
+
+for (r, x) in H:
+  # by negating the id, the reducer receives the elements from highest to lowest 
+  print '%ft%s' % (-r, x),
+</code></pre></div></div>
+
+<p>The Reducer simply returns the first <em>k</em> elements received.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#!/usr/bin/python
+# rand_subset_r.py
+
+import sys
+
+k = int(sys.argv[1])
+c = 0
+
+for line in sys.stdin:
+  (r, x) = line.split('t', 1)
+  print x,
+  c += 1
+  if c == k: break
+</code></pre></div></div>
+
+<p>We can test the code by simulating the map-reduce framework. First, add
+the execution flag to the mapper and reducer files (e.g.,
+<code class="language-plaintext highlighter-rouge">chmod +x ./rand_subset_m.py</code> and <code class="language-plaintext highlighter-rouge">chmod +x ./rand_subset_r.py</code>). Then
+we pipe the data to the mapper, sort the mapper output, and pipe it to
+the reducer.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ k=3; for i in {1..100}; do echo $i; done | ./rand_subset_m.py $k | sort -k1,1n | ./rand_subset_r.py $k
+</code></pre></div></div>
+
+<h2 id="running-the-hadoop-job">Running the Hadoop job</h2>
+
+<p>We can finally run our Python MapReduce job with Hadoop. If you don’t
+have Hadoop installed, you can easily set it up on your machine
+following <a href="http://had00b.blogspot.com/2013/08/setup-apache-hadoop-on-your-machine.html">these
+steps</a>.
+We leverage <a href="http://hadoop.apache.org/docs/stable/streaming.html">Hadoop
+Streaming</a> to pass
+the data between our Map and Reduce phases via standard input and
+output. Run the following command, replacing [myinput] and [myoutput]
+with your desired locations. Here, we assume that the environment
+variable HADOOP_INSTALL refers to the Hadoop installation directory.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ k=10 # set k to what you need
+$ hadoop jar ${HADOOP_INSTALL}/contrib/streaming/hadoop-*streaming*.jar 
+-D mapred.reduce.tasks=1 
+-D mapred.output.key.comparator.class=org.apache.hadoop.mapred.lib.KeyFieldBasedComparator 
+-D mapred.text.key.comparator.options=-n 
+-file ./rand_subset_m.py -mapper "./rand_subset_m.py $k" 
+-file ./rand_subset_r.py -reducer "./rand_subset_r.py $k" 
+-input [myinput] -output [myoutput]
+</code></pre></div></div>
+
+<p>The first flag sets a single reducer, whereas the second and third are
+used to make Hadoop sort the keys numerically (as opposed to using
+string comparison).</p>
+
+<h2 id="further-notes">Further notes</h2>
+
+<p>The algorithm-savvy reader has probably noticed that while reservoir
+sampling takes linear time to complete (as every step takes constant
+time), the same cannot be said of the approach that uses the heap. Each
+heap operation takes <em>O(log k)</em> time, so a trivial bound for the
+overall running time would be <em>O(n log k)</em>. However, this bound can
+be improved as the heap replace operation is only executed when the
+<em>i</em>-th element is larger than the root of the heap. This happens only
+if the <em>i</em>-th element is one of the <em>k</em> largest elements among the
+first <em>i</em> elements, which happens with probability <em>k/i</em>. Therefore
+the expected number of heap replacements is \(\sum_{i=k+1}^n k/i
+\approx k \log(n/k)\). The overall time complexity is then \(O(n +
+k\log(n/k)\log k)\), which is substantially linear in <em>n</em> unless
+<em>k</em> is comparable to <em>n</em>.</p>
+
+<h2 id="what-if-the-sample-doesnt-fit-into-memory">What if the sample doesn’t fit into memory?</h2>
+
+<p>So far we worked under the assumption that the desired sample would fit
+into memory. While this is usually the case, there are scenarios in
+which the assumption may not hold. Afterall, in the big data world, 1%
+of a huge dataset may still be too much to keep in memory!</p>
+
+<p>A simple solution to generate large samples is to modify the mapper to
+simply output every item along with a random id as key. The MapReduce
+framework will sort the items by id (substantially, generating a random
+permutation of the elements). The (single) reducer can be left as is to
+just pick the first <em>k</em> elements. The drawback with this approach is
+again that the whole dataset needs to be sent to a single reducer.
+Moreover, even if the reducer does not store the <em>k</em> items in memory,
+it has to go through them, which can be time-consuming if <em>k</em> is very
+large (say <em>k=n/2</em>).</p>
+
+<p>We now discuss a different approach that uses multiple reducers. The
+key idea is the following: suppose we have \(\ell\) buckets and
+generate a random ordering of the elements first by putting each element
+in a random bucket and then by generating a random ordering in each
+bucket. The elements in the first bucket are considered smaller (with
+respect to the ordering) than the elements in the second bucket and so
+on. Then, if we want to pick a sample of size <em>k</em>, we can collect all
+of the elements in the first <em>j</em> buckets if they overall contain a
+number of elements <em>t</em> less than <em>k</em>, and then pick the remaining
+<em>k-t</em> elements from the next bucket. Here \(\ell\) is a parameter
+such that \(n/\ell\) elements fit into memory. Note the key aspect that
+buckets can be processed distributedly.</p>
+
+<p>The implementation is as follows: mappers associate with each element
+an id <em>(j,r)</em> where <em>j</em> is a random index in
+\({1,2, \ldots,\ell}\) to be used as key, and <em>r</em> is a random
+float for secondary sorting. In addition, mappers keep track of the
+number of elements with key less than <em>j</em> (for \(1 \le j \le \ell\))
+and transmit this information to the reducers. The reducer associated
+with some key (bucket) <em>j</em> acts as follows: if the number of elements
+with key less or equal than <em>j</em> is less or equal than <em>k</em> then
+output all elements in bucket <em>j</em>; otherwise, if the number of
+elements with key strictly less than <em>j</em> is <em>tlt k</em>, then run a
+reservoir sampling to pick <em>k-t</em> random elements from the bucket; in
+the remaining case, that is when the number of elements with key
+strictly less than <em>j</em> is at least <em>k</em>, don’t output anything.</p>
+
+<p>After outputting the elements, the mapper sends the relevant counts to
+each reducer, using -1 as secondary key so that this info is presented
+to the reducer first.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#!/usr/bin/python
+# rand_large_subset_m.py
+
+import sys, random
+ 
+l = int(sys.argv[1])
+S = [0 for j in range(l)]
+
+for x in sys.stdin:
+  (j,r) = (random.randint(0,l-1), random.random())
+  S[j] += 1
+  print '%dt%ft%s' % (j, r, x),
+
+for j in range(l): # compute partial sums
+  prev = 0 if j == 0 else S[j-1]
+  S[j] += prev # number of elements with key less than j
+  print '%dt-1t%dt%d' % (j, prev, S[j]) # secondary key is -1 so reducer gets this first
+</code></pre></div></div>
+
+<p>The reducer first reads the counts for each bucket and decides what to
+do accordingly.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#!/usr/bin/python
+# rand_large_subset_r.py
+
+import sys, random
+
+k = int(sys.argv[1])
+
+line = sys.stdin.readline()
+while line:
+  # Aggregate Mappers information
+  less_count, upto_count = 0, 0
+  (j, r, x) = line.split('t', 2)
+  while float(r) == -1:
+    l, u = x.split('t', 1)
+    less_count, upto_count = less_count + int(l), upto_count + int(u)
+    (j, r, x) = sys.stdin.readline().split('t', 2)
+  n = upto_count - less_count # elements in bucket j
+
+  # Proceed with one of the three cases
+  if upto_count &lt;= k: # in this case output the whole bucket
+    print x,
+    for i in range(n-1):
+      (j, r, x) = sys.stdin.readline().split('t', 2)
+      print x,
+
+  elif less_count &gt;= k: # in this case do not output anything
+    for i in range(n-1):
+      line = sys.stdin.readline()
+
+  else: # run reservoir sampling picking (k-less_count) elements
+    k = k - less_count
+    S = [x]
+    for i in range(1,n):
+      (j, r, x) = sys.stdin.readline().split('t', 2)
+      if i &lt; k: 
+        S.append(x)
+      else:
+        r = random.randint(0,i-1)
+        if r &lt; k: S[r] = x
+    print ''.join(S),
+
+  line = sys.stdin.readline()
+</code></pre></div></div>
+
+<p>The following bash statement tests the code with <em>\ell=10</em> and
+<em>k=50</em> (note the sort flag to simulate secondary sorting):</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ l=10; k=50; for i in {1..100}; do echo $i; done | ./rand_large_subset_m.py *l | sort -k1,2n | ./rand_large_subset_r.py $k
+</code></pre></div></div>
+
+<h2 id="running-the-hadoop-job-1">Running the Hadoop job</h2>
+
+<p>Again, we’re assuming you have Hadoop ready to crunch data (if not,
+follow <a href="http://had00b.blogspot.com/2013/08/setup-apache-hadoop-on-your-machine.html">these
+steps</a>).
+To run our Python MapReduce job with Hadoop, run the following command,
+replacing [myinput] and [myoutput] with your desired locations.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ k=100000 # set k to what you need
+$ l=50 # set the number of "buckets"
+$ r=16 # set the number of "reducers" (depends on your cluster)
+$ hadoop jar ${HADOOP_INSTALL}/contrib/streaming/hadoop-*streaming*.jar \
+-D mapred.reduce.tasks=$r \
+-D mapred.output.key.comparator.class=org.apache.hadoop.mapred.lib.KeyFieldBasedComparator \
+-D stream.num.map.output.key.fields=2 \
+-D mapred.text.key.partitioner.options=-k1,1 \
+-D mapred.text.key.comparator.options="-k1n -k2n" \
+-partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner \
+-file ./rand_large_subset_m.py -mapper "./rand_large_subset_m.py $l" \
+-file ./rand_large_subset_r.py -reducer "./rand_large_subset_r.py $k" \
+-input [myinput] -output [myoutput]
+</code></pre></div></div>
+
+<p>Note how we enabled secondary key sorting as explained in the Hadoop
+streaming
+<a href="http://hadoop.apache.org/docs/stable/streaming.html">quickguide</a>. Each
+map output record is composed of the bucket <em>j</em>, the random id <em>r</em>,
+and the rest. We use <code class="language-plaintext highlighter-rouge">stream.num.map.output.key.fields</code> sets the key to
+be the pair <em>(j, r)</em>. We use <code class="language-plaintext highlighter-rouge">mapred.text.key.partitioner.options</code>
+along with the <code class="language-plaintext highlighter-rouge">-partitioner</code> argument to partition only over <em>j</em>.
+Finally, we use <code class="language-plaintext highlighter-rouge">mapred.text.key.comparator.options</code> along with
+<code class="language-plaintext highlighter-rouge">mapred.output.key.comparator.class</code> to sort by <em>j</em> in numerical order
+and then by <em>r</em> again in numerical order.</p>
+
+<h2 id="further-notes-1">Further notes</h2>
+
+<p>While this approach is general and can be used even in the case when
+<em>k</em> is small, it still has the overhead of transmitting the whole
+dataset from the map phase to the reduce phase (although not to a single
+machine/reducer). When the sample fits in memory the other approach we
+discussed is faster and should be preferred.</p>
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

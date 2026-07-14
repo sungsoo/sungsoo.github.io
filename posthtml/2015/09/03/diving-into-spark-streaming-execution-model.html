@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Diving into Spark Streaming's Execution Model</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Diving into Spark Streaming's Execution Model</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">3 September 2015</p></h4>
+<hr>
+
+<div class="post">
+<h2 id="article-source">Article Source</h2>
+<ul>
+  <li>Title: <a href="https://databricks.com/blog/2015/07/30/diving-into-spark-streamings-execution-model.html">Diving into Spark Streaming’s Execution Model</a></li>
+  <li>Authors: Tathagata Das, Matei Zaharia and Patrick Wendell</li>
+</ul>
+
+<hr />
+
+<h1 id="diving-into-spark-streamings-execution-model">Diving into Spark Streaming’s Execution Model</h1>
+
+<p>With so many distributed stream processing engines available, people
+often ask us about the unique benefits of Spark Streaming. From early
+on, Apache Spark has provided an unified engine that natively supports
+both batch and streaming workloads. This is different from other systems
+that either have a processing engine designed only for streaming, or
+have similar batch and streaming APIs but compile internally to
+different engines. Spark’s single execution engine and unified
+programming model for batch and streaming lead to some unique benefits
+over other traditional streaming systems. In particular, four major
+aspects are:</p>
+
+<ul>
+  <li>Fast recovery from failures and stragglers</li>
+  <li>Better load balancing and resource usage</li>
+  <li>Combining of streaming data with static datasets and interactive
+queries</li>
+  <li>Native integration with advanced processing libraries (SQL, machine
+learning, graph processing)</li>
+</ul>
+
+<p>In this post, we outline Spark Streaming’s architecture and explain how
+it provides the above benefits. We also discuss some of the interesting
+ongoing work in the project that leverages the execution model.</p>
+
+<h2 id="stream-processing-architectures--the-old-and-the-new">Stream Processing Architectures – The Old and the New</h2>
+
+<p>At a high level, modern distributed stream processing pipelines execute
+as follows:</p>
+
+<ol>
+  <li><strong>Receive</strong> streaming data from data sources (e.g. live logs, system
+telemetry data, IoT device data, etc.) into some data ingestion
+system like Apache Kafka, Amazon Kinesis, etc.</li>
+  <li><strong>Process</strong> the data in parallel on a cluster. This is what stream
+processing engines are designed to do, as we will discuss in detail
+next.</li>
+  <li><strong>Output</strong> the results out to downstream systems like HBase,
+Cassandra, Kafka, etc.</li>
+</ol>
+
+<p>To process the data, most traditional stream processing systems are
+designed with a <em>continuous operator model</em>, which works as follows:</p>
+
+<ul>
+  <li>There is a set of worker nodes, each of which run one or more
+<strong>continuous operators</strong>.</li>
+  <li>Each continuous operator processes the streaming data one record at
+a time and forwards the records to other operators in the pipeline.</li>
+  <li>There are “source” operators for receiving data from ingestion
+systems, and “sink” operators that output to downstream systems.</li>
+</ul>
+
+<p><img src="https://databricks.com/wp-content/uploads/2015/07/image11-1024x655.png" alt="image1" /><em>Figure
+1: Architecture of traditional stream processing systems</em></p>
+
+<p>Continuous operators are a simple and natural model. However, with
+today’s trend towards larger scale and more complex real-time analytics,
+this traditional architecture has also met some challenges. We designed
+Spark Streaming to satisfy the following requirements:</p>
+
+<ul>
+  <li>
+    <p><em>Fast failure and straggler recovery</em> – With greater scale, there is
+a higher likelihood of a cluster node failing or unpredictably
+slowing down (i.e. stragglers). The system must be able to
+automatically recover from failures and stragglers to provide
+results in real time. Unfortunately, the static allocation of
+continuous operators to worker nodes makes it challenging for
+traditional systems to recover quickly from faults and stragglers.</p>
+  </li>
+  <li>
+    <p><em>Load balancing</em> – Uneven allocation of the processing load between
+the workers can cause bottlenecks in a continuous operator system.
+This is more likely to occur in large clusters and dynamically
+varying workloads. The system needs to be able to dynamically adapt
+the resource allocation based on the workload.</p>
+  </li>
+  <li>
+    <p><em>Unification of streaming, batch and interactive workloads</em> – In
+many use cases, it is also attractive to query the streaming data
+interactively (after all, the streaming system has it all in
+memory), or to combine it with static datasets (e.g. pre-computed
+models). This is hard in continuous operator systems as they are not
+designed to the dynamically introduce new operators for ad-hoc
+queries. This requires a single engine that can combine batch,
+streaming and interactive queries.</p>
+  </li>
+  <li>
+    <p><em>Advanced analytics like machine learning and SQL</em> <em>queries</em> – More
+complex workloads require continuously learning and updating data
+models, or even querying the “latest” view of streaming data with
+SQL queries. Again, having a common abstraction across these
+analytic tasks makes the developer’s job much easier.</p>
+  </li>
+</ul>
+
+<p>To address these requirements, Spark Streaming uses a new architecture
+called <a href="http://people.csail.mit.edu/matei/papers/2013/sosp_spark_streaming.pdf">discretized
+streams</a>
+that directly leverages the rich libraries and fault tolerance of the
+Spark engine.</p>
+
+<h2 id="architecture-of-spark-streaming-discretized-streams">Architecture of Spark Streaming: Discretized Streams</h2>
+
+<p>Instead of processing the streaming data one record at a time, Spark
+Streaming discretizes the streaming data into tiny, sub-second
+micro-batches. In other words, Spark Streaming’s Receivers accept data
+in parallel and buffer it in the memory of Spark’s workers nodes. Then
+the latency-optimized Spark engine runs short tasks (tens of
+milliseconds) to process the batches and output the results to other
+systems. Note that unlike the traditional continuous operator model,
+where the computation is statically allocated to a node, Spark tasks are
+assigned dynamically to the workers based on the locality of the data
+and available resources. This enables both better load balancing and
+faster fault recovery, as we will illustrate next.</p>
+
+<p>In addition, each batch of data is a Resilient Distributed Dataset
+(RDD), which is the basic abstraction of a fault-tolerant dataset in
+Spark. This allows the streaming data to be processed using any Spark
+code or library.</p>
+
+<p><img src="https://databricks.com/wp-content/uploads/2015/07/image21-1024x734.png" alt="image2" /><em>Figure
+2: Spark Streaming Architecture</em></p>
+
+<p> </p>
+
+<h2 id="benefits-of-discretized-stream-processing">Benefits of Discretized Stream Processing</h2>
+
+<p>Let’s see how this architecture allows Spark Streaming to achieve the
+goals we set earlier.</p>
+
+<h3 id="dynamic-load-balancing">Dynamic load balancing</h3>
+
+<p>Dividing the data into small micro-batches allows for fine-grained
+allocation of computations to resources. For example, consider a simple
+workload where the input data stream needs to partitioned by a key and
+processed. In the traditional record-at-a-time approach taken by most
+other systems, if one of the partitions is more computationally
+intensive than the others, the node statically assigned to process that
+partition will become a bottleneck and slow down the pipeline. In Spark
+Streaming, the job’s tasks will be naturally load balanced across the
+workers — some workers will process a few longer tasks, others will
+process more of the shorter tasks.</p>
+
+<p><img src="https://databricks.com/wp-content/uploads/2015/07/image31-1024x581.png" alt="image3" /><em>Figure
+3: Dynamic load balancing</em></p>
+
+<p> </p>
+
+<h3 id="fast-failure-and-straggler-recovery">Fast failure and straggler recovery</h3>
+
+<p>In case of node failures, traditional systems have to restart the failed
+continuous operator on another node and replay some part of the data
+stream to recompute the lost information. Note that only one node is
+handling the recomputation, and the pipeline cannot proceed until the
+new node has caught up after the replay. In Spark, the computation is
+already discretized into small, deterministic tasks that can run
+anywhere without affecting correctness. So failed tasks can be
+relaunched <em>in</em> <em>parallel</em> on all the other nodes in the cluster, thus
+evenly distributing all the recomputations across many nodes, and
+recovering from the failure faster than the traditional approach.</p>
+
+<p><img src="https://databricks.com/wp-content/uploads/2015/07/image41-1024x602.png" alt="image4" /><em>Figure
+4: Faster failure recovery with redistribution of computation</em></p>
+
+<p> </p>
+
+<h3 id="unification-of-batch-streaming-and-interactive-analytics">Unification of batch, streaming and interactive analytics</h3>
+
+<p>The key programming abstraction in Spark Streaming is a DStream, or
+distributed stream. Each batch of streaming data is represented by an
+RDD, which is Spark’s concept for a distributed dataset. Therefore a
+DStream is just a series of RDDs. This common representation allows
+batch and streaming workloads to interoperate seamlessly. Users can
+apply arbitrary Spark functions on each batch of streaming data: for
+example, it’s easy to join a DStream with a precomputed static dataset
+(as an RDD).</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Create data set from Hadoop file</span>
+<span class="k">val</span> <span class="nv">dataset</span> <span class="k">=</span> <span class="nv">sparkContext</span><span class="o">.</span><span class="py">hadoopFile</span><span class="o">(</span><span class="err">“</span><span class="n">file</span><span class="err">”</span><span class="o">)</span>
+    
+<span class="c1">// Join each batch in stream with the dataset</span>
+<span class="nv">kafkaDStream</span><span class="o">.</span><span class="py">transform</span> <span class="o">{</span> <span class="n">batchRDD</span> <span class="k">=&gt;</span>
+  <span class="nv">batchRDD</span><span class="o">.</span><span class="py">join</span><span class="o">(</span><span class="n">dataset</span><span class="o">).</span><span class="py">filter</span><span class="o">(...)</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>Since the batches of streaming data are stored in the Spark’s worker
+memory, it can be interactively queried on demand. For example, you can
+expose all the streaming state through the Spark SQL JDBC server, as we
+will show in the next section. This kind of unification of batch,
+streaming and interactive workloads is very simple in Spark, but hard to
+achieve in systems without a common abstraction for these workloads.</p>
+
+<h3 id="advanced-analytics-like-machine-learning-and-interactive-sql">Advanced analytics like machine learning and interactive SQL</h3>
+
+<p>Spark interoperability extends to rich libraries like MLlib (machine
+learning), SQL, DataFrames, and GraphX. Let’s explore a few use cases:</p>
+
+<h4 id="streaming--sql-and-dataframes">Streaming + SQL and DataFrames</h4>
+
+<p>RDDs generated by DStreams can be converted to DataFrames (the
+programmatic interface to Spark SQL), and queried with SQL. For example,
+using Spark SQL’s <a href="http://spark.apache.org/docs/latest/sql-programming-guide.html#running-the-thrift-jdbcodbc-server">JDBC
+server</a>,
+you can expose the state of the stream to any external application that
+talks SQL.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">val</span> <span class="nv">hiveContext</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">HiveContext</span><span class="o">(</span><span class="n">sparkContext</span><span class="o">)</span>
+<span class="o">...</span>
+<span class="nv">wordCountsDStream</span><span class="o">.</span><span class="py">foreachRDD</span> <span class="o">{</span> <span class="n">rdd</span> <span class="k">=&gt;</span>
+  <span class="c1">// Convert RDD to DataFrame and register it as a SQL table</span>
+  <span class="k">val</span> <span class="nv">wordCountsDataFrame</span> <span class="k">=</span> <span class="nv">rdd</span><span class="o">.</span><span class="py">toDF</span><span class="o">(</span><span class="s">"word”, “count"</span><span class="o">)</span> 
+  <span class="nv">wordCountsDataFrame</span><span class="o">.</span><span class="py">registerTempTable</span><span class="o">(</span><span class="s">"word_counts"</span><span class="o">)</span> 
+<span class="o">}</span>
+<span class="o">...</span>
+<span class="c1">// Start the JDBC server</span>
+<span class="nv">HiveThriftServer2</span><span class="o">.</span><span class="py">startWithContext</span><span class="o">(</span><span class="n">hiveContext</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>Then you can interactively query the continuously updated “word_counts”
+table through the JDBC server, using the
+<a href="http://spark.apache.org/docs/latest/sql-programming-guide.html#running-the-thrift-jdbcodbc-server">beeline</a>
+client that ships with Spark, or tools like Tableau.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1: jdbc:hive2://localhost:10000&gt; show tables;
++--------------+--------------+
+|  tableName   | isTemporary  |
++--------------+--------------+
+| word_counts  | true         |
++--------------+--------------+
+1 row selected (0.102 seconds)
+1: jdbc:hive2://localhost:10000&gt; select * from word_counts;
++-----------+--------+
+|   word    | count  |
++-----------+--------+
+| 2015      | 264    |
+| PDT       | 264    |
+| 21:45:41  | 27     |
+</code></pre></div></div>
+
+<p> </p>
+
+<h4 id="streaming--mllib">Streaming + MLlib</h4>
+
+<p>Machine learning models generated offline with MLlib can applied on
+streaming data. For example, the following code trains a KMeans
+clustering model with some static data and then uses the model to
+classify events in a Kafka data stream.</p>
+
+<div class="language-scala highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Learn model offline</span>
+<span class="k">val</span> <span class="nv">model</span> <span class="k">=</span> <span class="nv">KMeans</span><span class="o">.</span><span class="py">train</span><span class="o">(</span><span class="n">dataset</span><span class="o">,</span> <span class="o">...)</span>
+
+<span class="c1">// Apply model online on stream</span>
+<span class="k">val</span> <span class="nv">kafkaStream</span> <span class="k">=</span> <span class="nv">KafkaUtils</span><span class="o">.</span><span class="py">createDStream</span><span class="o">(...)</span>
+<span class="nv">kafkaStream</span><span class="o">.</span><span class="py">map</span> <span class="o">{</span> <span class="n">event</span> <span class="k">=&gt;</span> <span class="nv">model</span><span class="o">.</span><span class="py">predict</span><span class="o">(</span><span class="nf">featurize</span><span class="o">(</span><span class="n">event</span><span class="o">))</span> <span class="o">}</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>We demonstrated this offline-learning-online-prediction at our Spark
+Summit 2014 Databricks demo. Since then, we have also added streaming
+machine learning algorithms in MLLib that can continuously train from a
+labelled data stream. Other Spark libraries can also easily be called
+from Spark Streaming.</p>
+
+<h2 id="performance">Performance</h2>
+
+<p>Given the unique design of Spark Streaming, how fast does it run? In
+practice, Spark Streaming’s ability to batch data and leverage the Spark
+engine leads to comparable or <a href="https://spark-summit.org/2015/events/towards-benchmarking-modern-distributed-streaming-systems/">higher
+throughput</a>
+to other streaming systems. In terms of latency, Spark Streaming can
+achieve latencies as low as a few hundred milliseconds. Developers
+sometimes ask whether the micro-batching inherently adds too much
+latency. In practice, batching latency is only a small component of
+end-to-end pipeline latency. For example, many applications compute
+results over a sliding window, and even in continuous operator systems,
+this window is only updated periodically (e.g. a 20 second window that
+slides every 2 seconds). Many pipelines collect records from multiple
+sources and wait for a short period to process delayed or out-of-order
+data. Finally, any automatic triggering algorithm tends to wait for some
+time period to fire a trigger. Therefore, compared to the end-to-end
+latency, batching rarely adds significant overheads. In fact, the
+throughput gains from DStreams often means that you need fewer machines
+to handle the same workload.</p>
+
+<h2 id="future-directions-for-spark-streaming">Future Directions for Spark Streaming</h2>
+
+<p>Spark Streaming is one of the most widely used components in Spark, and
+there is a lot more coming for streaming users down the road. Some of
+the highest priority items our team is working on are discussed below.
+You can expect these in the next few releases of Spark:</p>
+
+<ul>
+  <li>
+    <p><em>Backpressure</em> – Streaming workloads can often have bursts of data
+(e.g. sudden spike in tweets during the Oscars) and the processing
+system must be able to handle them gracefully. In the upcoming Spark
+1.5 release (next month), Spark will be adding better backpressure
+mechanisms that allow Spark Streaming dynamically control the
+ingestion rate for such bursts. This feature represents joint work
+between us at Databricks and engineers at Typesafe.</p>
+  </li>
+  <li>
+    <p><em>Dynamic scaling</em> – Controlling the ingestion rate may not be
+sufficient to handle longer terms variations in data rates (e.g.
+sustained higher tweet rate during the day than night). Such
+variations can be handled by dynamically scaling the cluster
+resource based on the processing demands. This is very easy to do
+within the Spark Streaming architecture — since the computation is
+already divided into small tasks, they can be dynamically
+redistributed to a larger cluster if more nodes are acquired from
+the cluster manager (YARN, Mesos, Amazon EC2, etc). We plan to add
+support for automatic dynamic scaling.</p>
+  </li>
+  <li>
+    <p><em>Event time and out-of-order data</em>– In practice, users sometimes
+have records that are delivered out of order, or with a timestamp
+that differs from the time of ingestion. Spark streaming will
+support “event time” by allowing user-defined time extraction
+function. This will include a slack duration for late or
+out-of-order data.</p>
+  </li>
+  <li>
+    <p><em>UI enhancements</em> – Finally, we want to make it easy for developers
+to debug their streaming applications. For this purpose, in Spark
+1.4, we added <a href="https://databricks.com/blog/2015/07/08/new-visualizations-for-understanding-spark-streaming-applications.html">new visualizations to the streaming Spark
+UI</a>
+that let developers closely monitor the performance of their
+application. In Spark 1.5, we are further improving this by showing
+more <a href="https://issues.apache.org/jira/browse/SPARK-8701">input information like Kafka
+offsets</a> processed
+in each batch.</p>
+  </li>
+</ul>
+
+<p>To learn more about Spark Streaming, read the <a href="http://spark.apache.org/docs/latest/streaming-programming-guide.html">official programming
+guide</a>,
+or the <a href="http://people.csail.mit.edu/matei/papers/2013/sosp_spark_streaming.pdf">Spark Streaming research
+paper</a>
+that introduces its execution and fault tolerance model.</p>
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

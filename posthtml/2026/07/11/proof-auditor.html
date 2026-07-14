@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>증명 감사 에이전트 · Agent-Based Proof Auditing</title>
+<style>
+  :root{
+    --bg:#0B1220;
+    --bg-2:#111A2B;
+    --bg-3:#17233A;
+    --line:#27344B;
+    --line-soft:#1F2B41;
+    --ink:#EAF0FA;
+    --ink-2:#B4C2D8;
+    --ink-3:#7385A0;
+    --ink-4:#4E5E78;
+
+    --ink-blue:#7DA9F0;      /* 검증 액센트 */
+    --ink-blue-dim:#4C77C4;
+    --critical:#F1655B;      /* Critical */
+    --major:#F0A24A;         /* Major */
+    --minor:#E9D06A;         /* Minor */
+    --false:#6FC79B;         /* False alarm */
+    --violet:#B79BF2;
+
+    --mono:"SFMono-Regular",ui-monospace,"JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Noto Serif KR",serif;
+    --sans:"Inter","Pretendard","Helvetica Neue",-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:var(--sans);line-height:1.72;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  ::selection{background:var(--ink-blue);color:var(--bg)}
+
+  /* 배경: 감사 원장 괘선 */
+  .bg-rules{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:linear-gradient(var(--line-soft) 1px,transparent 1px);
+    background-size:100% 34px;
+    opacity:.5;
+    mask-image:radial-gradient(ellipse 80% 70% at 50% 0%,#000 30%,transparent 80%);
+  }
+  .wrap{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:0 28px}
+
+  /* 상단 바 */
+  header.topbar{
+    position:sticky;top:0;z-index:60;
+    backdrop-filter:blur(14px);background:rgba(11,18,32,.74);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar .row{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .brand{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:13px}
+  .brand .seal{
+    width:22px;height:22px;border-radius:5px;border:1.5px solid var(--ink-blue);
+    display:flex;align-items:center;justify-content:center;color:var(--ink-blue);font-weight:700;font-size:13px;
+  }
+  .brand b{font-weight:600}
+  .brand span{color:var(--ink-3)}
+  nav.tnav{display:flex;gap:24px}
+  nav.tnav a{font-family:var(--mono);font-size:12px;color:var(--ink-3);text-decoration:none;transition:color .2s}
+  nav.tnav a:hover{color:var(--ink-blue)}
+  @media(max-width:820px){nav.tnav{display:none}}
+
+  /* 히어로 */
+  .hero{padding:80px 0 30px}
+  .kicker{
+    font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--ink-blue);margin-bottom:24px;display:flex;align-items:center;gap:14px;
+  }
+  .kicker::before{content:"";width:32px;height:1px;background:var(--ink-blue)}
+  h1.title{font-family:var(--serif);font-weight:600;font-size:clamp(36px,6vw,68px);line-height:1.08;letter-spacing:-.01em;margin-bottom:26px}
+  h1.title em{font-style:italic;color:var(--ink-blue)}
+  .lede{font-size:clamp(16px,2vw,19px);color:var(--ink-2);max-width:770px;line-height:1.7}
+  .lede b{color:var(--ink);font-weight:600}
+  .authors{margin-top:28px;font-family:var(--mono);font-size:12.5px;color:var(--ink-3);display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+  .authors .tag{border:1px solid var(--line);border-radius:100px;padding:4px 13px;color:var(--ink-2)}
+
+  /* 의존성 그래프 캔버스 */
+  .graphstage{
+    margin-top:52px;border:1px solid var(--line);border-radius:14px;overflow:hidden;
+    background:linear-gradient(180deg,var(--bg-2),var(--bg));
+  }
+  .graphstage .hdr{display:flex;align-items:center;gap:9px;padding:12px 16px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+  .graphstage .hdr .lg{display:inline-flex;align-items:center;gap:6px;margin-left:14px}
+  .graphstage .hdr .sw{width:9px;height:9px;border-radius:2px}
+  #graphCanvas{display:block;width:100%;height:auto}
+  @media(max-width:600px){.graphstage .hdr{flex-wrap:wrap;gap:6px 10px}}
+
+  /* 대비 스트립 (핵심 결과) */
+  .verdict{
+    margin-top:40px;display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:1px;
+    background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  }
+  @media(max-width:760px){.verdict{grid-template-columns:1fr 1fr}}
+  .vcell{background:var(--bg-2);padding:26px 22px}
+  .vcell.wide{grid-row:span 1}
+  .vcell .n{font-family:var(--mono);font-weight:700;font-size:clamp(28px,4.4vw,44px);line-height:1;color:var(--ink-blue)}
+  .vcell .n.warn{color:var(--critical)}
+  .vcell .n.ok{color:var(--false)}
+  .vcell .l{margin-top:10px;font-size:13px;color:var(--ink-3);line-height:1.45}
+  .vcell .l b{color:var(--ink-2)}
+  @media(max-width:760px){.vcell.wide{grid-column:1/-1}}
+
+  /* 섹션 */
+  section{padding:90px 0;position:relative}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.17em;text-transform:uppercase;color:var(--major);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+  .eyebrow .idx{color:var(--ink-blue)}
+  h2.sec{font-family:var(--serif);font-weight:600;font-size:clamp(26px,3.7vw,40px);letter-spacing:-.01em;line-height:1.12;margin-bottom:18px}
+  .sec-intro{font-size:16.5px;color:var(--ink-2);max-width:730px;line-height:1.72;margin-bottom:46px}
+  .sec-intro b{color:var(--ink)}
+  .sec-intro code{font-family:var(--mono);font-size:13px;color:var(--ink-blue);background:var(--bg-2);padding:1px 6px;border-radius:4px}
+
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  /* 문제 제기 카드 */
+  .problem{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.problem{grid-template-columns:1fr}}
+  .pcard{background:var(--bg-2);border:1px solid var(--line);border-radius:13px;padding:26px;position:relative}
+  .pcard .big{font-family:var(--serif);font-weight:600;font-size:38px;color:var(--major);line-height:1}
+  .pcard h4{font-size:16px;font-weight:700;margin:12px 0 7px}
+  .pcard p{font-size:14.5px;color:var(--ink-2);line-height:1.6}
+  .pcard p .ref{color:var(--ink-4);font-family:var(--mono);font-size:12px}
+
+  /* 3단계 파이프라인 */
+  .phases{display:flex;flex-direction:column;gap:16px}
+  .phase{
+    display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:start;
+    background:var(--bg-2);border:1px solid var(--line);border-radius:15px;padding:28px 30px;
+    transition:border-color .25s,transform .25s;
+  }
+  .phase:hover{border-color:var(--ink-blue-dim);transform:translateX(4px)}
+  .phase .marker{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:64px}
+  .phase .marker .pn{font-family:var(--mono);font-size:11px;color:var(--ink-blue);letter-spacing:.12em}
+  .phase .marker .disk{
+    width:52px;height:52px;border-radius:14px;border:1.5px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:19px;color:var(--ink-blue);
+    background:var(--bg-3);
+  }
+  .phase h3{font-family:var(--serif);font-weight:600;font-size:21px;margin-bottom:8px}
+  .phase p{font-size:14.5px;color:var(--ink-2);line-height:1.62;margin-bottom:14px}
+  .phase .arts{display:flex;flex-wrap:wrap;gap:8px}
+  .phase .art{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:4px 10px}
+  .phase .art b{color:var(--ink-blue)}
+
+  /* 원자 분해 테이블 */
+  .atomtbl{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--bg-2)}
+  .atomtbl .cap{padding:14px 20px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+  .atomtbl .cap b{color:var(--ink)}
+  table.atom{width:100%;border-collapse:collapse;font-size:14px}
+  table.atom th,table.atom td{padding:13px 18px;text-align:left;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  table.atom th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  table.atom td:first-child{font-family:var(--mono);color:var(--ink-blue);font-weight:600;white-space:nowrap}
+  table.atom td{color:var(--ink-2)}
+  table.atom tr:last-child td{border-bottom:none}
+  table.atom .m{font-family:var(--mono);font-size:13px;color:var(--ink)}
+  @media(max-width:640px){table.atom th:nth-child(3),table.atom td:nth-child(3){display:none}}
+
+  /* 오류 인벤토리 (원장) */
+  .ledger-controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px;align-items:center}
+  .fbtn{
+    font-family:var(--mono);font-size:12px;color:var(--ink-2);background:var(--bg-2);
+    border:1px solid var(--line);border-radius:100px;padding:7px 15px;cursor:pointer;transition:all .2s;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .fbtn .dot{width:8px;height:8px;border-radius:50%}
+  .fbtn:hover{border-color:var(--ink-blue-dim)}
+  .fbtn.active{background:var(--ink-blue);color:var(--bg);border-color:var(--ink-blue);font-weight:600}
+  .fbtn.active .dot{outline:2px solid rgba(255,255,255,.5)}
+
+  .ledger{border:1px solid var(--line);border-radius:13px;overflow:hidden}
+  .lrow{
+    display:grid;grid-template-columns:70px 1fr auto;gap:16px;align-items:center;
+    padding:15px 20px;border-bottom:1px solid var(--line-soft);background:var(--bg-2);
+    transition:background .18s;
+  }
+  .lrow:last-child{border-bottom:none}
+  .lrow:hover{background:var(--bg-3)}
+  .lrow .eid{font-family:var(--mono);font-size:12.5px;color:var(--ink-blue);font-weight:600}
+  .lrow .edesc{font-size:14px;color:var(--ink-2);line-height:1.5}
+  .lrow .edesc .type{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--ink-4);margin-top:3px;text-transform:uppercase}
+  .lrow .badges{display:flex;gap:7px;align-items:center;white-space:nowrap}
+  .sev{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:5px;border:1px solid}
+  .sev.critical{color:var(--critical);border-color:var(--critical)}
+  .sev.major{color:var(--major);border-color:var(--major)}
+  .sev.minor{color:var(--minor);border-color:var(--minor)}
+  .stat{width:11px;height:11px;border-radius:3px}
+  .stat.err{background:var(--critical)}
+  .stat.err.mj{background:var(--major)}
+  .stat.err.mn{background:var(--minor)}
+  .stat.ok{background:var(--false)}
+  .lrow[data-hidden="1"]{display:none}
+  @media(max-width:640px){
+    .lrow{grid-template-columns:56px 1fr;gap:10px}
+    .lrow .badges{grid-column:2;justify-content:flex-start;margin-top:2px}
+  }
+
+  /* 탐지 오류 하이라이트 (증명 조서) */
+  .findings{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:820px){.findings{grid-template-columns:1fr}}
+  .finding{background:var(--bg-2);border:1px solid var(--line);border-left-width:3px;border-radius:11px;padding:24px;position:relative;overflow:hidden}
+  .finding.critical{border-left-color:var(--critical)}
+  .finding.major{border-left-color:var(--major)}
+  .finding.minor{border-left-color:var(--minor)}
+  .finding .ftop{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .finding .fid{font-family:var(--mono);font-size:12px;color:var(--ink-blue);font-weight:600}
+  .finding h4{font-size:16px;font-weight:700}
+  .finding .quote{
+    font-family:var(--mono);font-size:12.5px;color:var(--ink-2);background:var(--bg);
+    border:1px solid var(--line);border-radius:8px;padding:12px 14px;line-height:1.55;margin-bottom:13px;
+  }
+  .finding .quote .hl{color:var(--critical);background:rgba(241,101,91,.12);padding:0 3px;border-radius:3px}
+  .finding .quote .hl.mj{color:var(--major);background:rgba(240,162,74,.12)}
+  .finding .quote .hl.mn{color:var(--minor);background:rgba(233,208,106,.12)}
+  .finding .exp{font-size:14px;color:var(--ink-2);line-height:1.6}
+  .finding .exp b{color:var(--ink)}
+
+  /* 오류 분류법 */
+  .taxo{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  @media(max-width:760px){.taxo{grid-template-columns:1fr}}
+  .tx{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:22px 24px;transition:transform .22s,border-color .22s}
+  .tx:hover{transform:translateY(-3px);border-color:var(--ink-blue-dim)}
+  .tx .th{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+  .tx .tn{font-family:var(--mono);font-size:12px;color:var(--ink-4)}
+  .tx h4{font-size:16px;font-weight:700}
+  .tx p{font-size:13.5px;color:var(--ink-2);line-height:1.58}
+  .tx .hist{margin-top:10px;font-size:12.5px;color:var(--ink-3);font-style:italic;border-top:1px dashed var(--line);padding-top:9px}
+
+  /* SKILL 재현성 터미널 */
+  .skill{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--bg-2);font-family:var(--mono);font-size:13px}
+  .skill .sh{display:flex;align-items:center;gap:7px;padding:11px 16px;border-bottom:1px solid var(--line);color:var(--ink-3)}
+  .skill .sh .c{width:11px;height:11px;border-radius:50%;background:var(--line)}
+  .skill .sh .c.a{background:var(--critical)}.skill .sh .c.b{background:var(--major)}.skill .sh .c.g{background:var(--false)}
+  .skill .sh .fn{margin-left:8px}
+  .skill .sb{padding:20px 22px;line-height:1.95;overflow-x:auto}
+  .skill .cm{color:var(--ink-4)}
+  .skill .k{color:var(--ink-blue)}
+  .skill .v{color:var(--major)}
+  .skill .p{color:var(--violet)}
+  .skill .arrow{color:var(--false)}
+
+  /* 한계 */
+  .limits{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.limits{grid-template-columns:1fr}}
+  .lim{background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:22px 24px}
+  .lim h4{font-size:15.5px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+  .lim h4::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--critical)}
+  .lim.good h4::before{background:var(--false)}
+  .lim p{font-size:14px;color:var(--ink-2);line-height:1.6}
+
+  /* 마무리 */
+  .closer{border:1px solid var(--line);border-radius:18px;padding:54px 44px;background:linear-gradient(140deg,var(--bg-2),var(--bg-3));text-align:center;position:relative;overflow:hidden}
+  .closer::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% -10%,rgba(125,169,240,.15),transparent 62%)}
+  .closer .qt{font-family:var(--serif);font-weight:600;font-size:clamp(20px,3vw,30px);line-height:1.35;max-width:740px;margin:0 auto;position:relative;letter-spacing:-.01em}
+  .closer .qt em{font-style:italic;color:var(--ink-blue)}
+  .closer .attr{margin-top:16px;font-family:var(--mono);font-size:12.5px;color:var(--ink-3);position:relative}
+  .closer .sub{margin-top:22px;color:var(--ink-2);font-size:15px;position:relative;max-width:640px;margin-left:auto;margin-right:auto}
+  .repo{display:inline-flex;align-items:center;gap:10px;margin-top:28px;position:relative;font-family:var(--mono);font-size:13px;color:var(--bg);background:var(--ink-blue);text-decoration:none;padding:12px 22px;border-radius:9px;font-weight:600;transition:transform .2s,box-shadow .2s}
+  .repo:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(125,169,240,.25)}
+
+  footer{border-top:1px solid var(--line);padding:34px 0;margin-top:80px}
+  footer .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+
+  @media(prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+<div class="bg-rules"></div>
+
+<header class="topbar">
+  <div class="wrap row">
+    <div class="brand"><span class="seal">✓</span><b>Proof Auditor</b><span>· ICML 2026 Workshop</span></div>
+    <nav class="tnav">
+      <a href="#problem">문제</a>
+      <a href="#pipeline">파이프라인</a>
+      <a href="#ledger">오류 원장</a>
+      <a href="#findings">탐지 사례</a>
+      <a href="#taxonomy">분류법</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="kicker reveal">비형식 수학 증명을 위한 에이전트 감사</div>
+    <h1 class="title reveal">
+      형식화 없이,<br>논문 속 증명을 <em>감사</em>한다
+    </h1>
+    <p class="lede reveal">
+      이 연구는 엄격한 형식화를 요구하는 전통적 정리 증명기 없이도, 비형식 과학 논문의 수학 증명을
+      직접 감사하는 <b>에이전트 프레임워크</b>를 제시한다. 정의·명제·보조정리·정리에 걸친
+      <b>의존성 그래프</b>를 구축해 논리적 간극과 숨은 가정을 잡는 국소 검증과, 표기 불일치·교차 의존
+      실패를 잡는 전역 일관성 분석을 함께 수행한다. 감사 결과는 구성 요소별로 지속되는 리포트로 남는다.
+    </p>
+    <div class="authors reveal">
+      <span class="tag">Hieu N. Nguyen</span>
+      <span class="tag">Rui Zhang</span>
+      <span>· The Pennsylvania State University</span>
+    </div>
+
+    <!-- 의존성 그래프 -->
+    <div class="graphstage reveal">
+      <div class="hdr">
+        <span>audit/structure.dot — 증명 의존성 그래프</span>
+        <span class="lg"><span class="sw" style="background:#E9D06A"></span>주 정리</span>
+        <span class="lg"><span class="sw" style="background:#F1655B"></span>결정적 오류 보조정리</span>
+        <span class="lg"><span class="sw" style="background:#7DA9F0"></span>검증됨</span>
+      </div>
+      <canvas id="graphCanvas" width="1080" height="440"></canvas>
+    </div>
+
+    <!-- 핵심 결과 대비 -->
+    <div class="verdict reveal">
+      <div class="vcell wide">
+        <div class="n warn">23 / 25</div>
+        <div class="l">에이전트가 탐지한 오류 중 <b>수동 검증으로 유효 확인된 개수</b> (92%)</div>
+      </div>
+      <div class="vcell">
+        <div class="n">5</div>
+        <div class="l">동일 모델 기반<br><b>LLM-as-Judge 베이스라인</b>이 찾은 오류 수</div>
+      </div>
+      <div class="vcell">
+        <div class="n ok">$5</div>
+        <div class="l">예제 논문 <b>1회 감사</b>당<br>대략적 API 비용</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- PROBLEM -->
+  <section id="problem">
+    <div class="eyebrow reveal"><span class="idx">01</span> 문제 제기</div>
+    <h2 class="sec reveal">동료 심사도, 형식 증명기도 이 간극을 메우지 못한다</h2>
+    <p class="sec-intro reveal">
+      수학 문헌 검증은 오랫동안 사람 중심의 동료 심사에 거의 전적으로 의존해 왔다. Lean·Coq·Isabelle/HOL·Mizar
+      같은 형식 검증 시스템은 절대적 논리 확실성을 주지만, 비형식 수학 산문을 엄격한 형식 언어로 옮겨야 한다.
+    </p>
+    <div class="problem reveal">
+      <div class="pcard">
+        <div class="big">10×</div>
+        <h4>드 브뢰인 인수 (de Bruijn factor)</h4>
+        <p>형식 증명 작성은 논문의 비형식 증명 대비 통상 <b style="color:var(--ink)">약 10배</b>의 노력을 요구한다. 학습 곡선이 가파르고, 형식 증명 과정에서 나오는 오류는 수학자에게 직관적·실행 가능한 피드백을 주지 못하는 경우가 많다. <span class="ref">Wiedijk, 2000</span></p>
+      </div>
+      <div class="pcard">
+        <div class="big" style="color:var(--critical)">≠0</div>
+        <h4>동료 심사 논문에도 오류가 남는다</h4>
+        <p>순수 수학 논문조차 미묘한 모호성, 논리 비약, 명시되지 않은 가정, 대수 오류를 숨긴다. 출판된 정오표(corrigenda) 비율은 낮게 유지되어, 현행 검증 파이프라인의 결정적 공백을 드러낸다. <span class="ref">Grcar et al., 2013</span></p>
+      </div>
+    </div>
+    <p class="sec-intro reveal" style="margin-top:36px;margin-bottom:0">
+      기존 비형식 감사 도구는 대개 폐쇄형이거나 상태 없는(stateless) 질의 수준 상호작용에 그쳐,
+      문서 전체에 걸친 논리적 의존성을 추적할 지속적 맥락 이해가 없다. 이 연구는 그 간극을 메우기 위해
+      <b>상태 유지형(stateful) 대화형 에이전트 프레임워크</b>를 제안한다.
+    </p>
+  </section>
+
+
+  <!-- PIPELINE -->
+  <section id="pipeline">
+    <div class="eyebrow reveal"><span class="idx">02</span> 감사 파이프라인</div>
+    <h2 class="sec reveal">세 단계로 나뉜 감사 절차</h2>
+    <p class="sec-intro reveal">
+      프레임워크는 세 단계로 동작하며, 각 단계는 <code>audit/</code> 작업 공간 안에 지속되는 중간 산물을 남긴다.
+      덕분에 논문 전체를 하나의 모델 컨텍스트 창에 담지 않고도 반복 검증이 가능하다.
+    </p>
+
+    <div class="phases reveal">
+      <div class="phase">
+        <div class="marker"><span class="pn">PHASE 1</span><span class="disk">Ⅰ</span></div>
+        <div>
+          <h3>구조 매핑 (Structural Mapping)</h3>
+          <p>정의·가정·보조정리·정리 등 모든 수학 항목을 색인해 <code>audit/</code>에 순차 감사 파일을 만든다. 각 파일은 원 서술·증명·전제·오류 분석 자리를 추적한다. 동시에 중앙 오류 레지스트리를 초기화하고, 문서 수준 의존성 그래프를 Graphviz dot과 산문 요약으로 내보낸 뒤 순환 의존·미정의 표기 같은 전역 구조 결함을 스캔한다.</p>
+          <div class="arts">
+            <span class="art"><b>+</b> audit/error_table.md</span>
+            <span class="art"><b>+</b> NN_type_name.md × 항목수</span>
+            <span class="art"><b>+</b> audit/structure.md (dot + 산문)</span>
+          </div>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="marker"><span class="pn">PHASE 2</span><span class="disk">Ⅱ</span></div>
+        <div>
+          <h3>국소 구성 요소 검증 (Local Verification)</h3>
+          <p>의존성 순서를 따라 각 구성 요소를 상세 감사한다. 에이전트는 원 증명을 <b>원자적 논리 단계</b>의 열로 재구성해 (Step ID · Claim · Premises · Justification) 감사 증명 표에 담는다. 이때 가정 표류(assumption drift), 한정자 변경, 차원 불일치, 누락된 경계 사례를 점검해 논증을 적극적으로 반증하려 시도한다. 엄밀한 정당화가 없는 단계는 국소 경고로 기록되고 전역 레지스트리에 반영된다.</p>
+          <div class="arts">
+            <span class="art"><b>›</b> 문장당 다중 추론을 S-단계로 분해</span>
+            <span class="art"><b>›</b> 정리 인용 시 조건을 별도 단계로 검증</span>
+            <span class="art"><b>›</b> "표준적 논증에 의해"는 인정하지 않음</span>
+          </div>
+        </div>
+      </div>
+      <div class="phase">
+        <div class="marker"><span class="pn">PHASE 3</span><span class="disk">Ⅲ</span></div>
+        <div>
+          <h3>오류 검증 (Error Validation)</h3>
+          <p>국소 검토가 끝나면 조정(reconciliation) 단계로 넘어간다. Phase 2의 의심 오류를 원본 LaTeX 소스와 교차 참조해 각 지적을 소스의 정확한 줄 번호까지 추적하고, 진짜 논리 결함인지 거짓 양성(false positive)인지 확인하거나 반박한다. 오류 색인과 개별 항목 파일을 판정으로 갱신하며, 확정 오류에는 명시적 수학적 정당화를 붙인다.</p>
+          <div class="arts">
+            <span class="art"><b>›</b> grep -B 3 -A 3 로 소스 검사</span>
+            <span class="art"><b>›</b> 항목 상태 갱신 + 검증 노트</span>
+            <span class="art"><b>›</b> Confirmed Error / False Alarm 판정</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="sec-intro reveal" style="margin-top:44px;margin-bottom:22px">
+      핵심 설계 원리는 <b>상태 지속성(stateful persistence)</b>이다. 일회성 상호작용에 의존하는 대신
+      결과를 구조화된 <code>audit/</code> 디렉토리에 점진적으로 기록한다. 이로써 컨텍스트 한계를 넘는 긴 논문의
+      확장 처리, 다중 패스 정제, 출처 추적, 재현성, 사람이 읽을 수 있는 중간 추론 접근이 가능해진다.
+      감사 작업 공간은 증명 재구성 아카이브·오류 추적기·의존성 그래프·구조화된 검토 기록을 겸한다.
+    </p>
+
+    <!-- 원자 분해 예시 -->
+    <div class="atomtbl reveal">
+      <div class="cap"><b>원자 분해 예시</b> · "보조정리 2와 f의 정의에 의해 x&gt;0에서 f(x)≥0이므로, a에서 b까지 적분하면 ∫f(x)dx ≥ 0" 이라는 증명을 분해하면</div>
+      <table class="atom">
+        <thead><tr><th>ID</th><th>Claim</th><th>Premises</th><th>Justification</th></tr></thead>
+        <tbody>
+          <tr><td>S1</td><td class="m">x&gt;0에서 f(x) ≥ 0</td><td>보조정리 2, f의 정의</td><td>보조정리 2가 정의된 f에 직접 적용</td></tr>
+          <tr><td>S2</td><td class="m">a &gt; 0, b &gt; a</td><td>정리 T1의 가정</td><td>정리의 가정을 명시적으로 재진술</td></tr>
+          <tr><td>S3</td><td class="m">∫ₐᵇ f(x)dx ≥ 0</td><td>S1, S2, 적분의 선형성</td><td>[a, b]에서 양변을 적분</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <!-- LEDGER -->
+  <section id="ledger">
+    <div class="eyebrow reveal"><span class="idx">03</span> 오류 원장 · 심각도로 필터링</div>
+    <h2 class="sec reveal">단조 DEQ 논문 감사에서 탐지된 25개 오류</h2>
+    <p class="sec-intro reveal">
+      알려진 수학 오류를 담은 monotone deep equilibrium model 수렴률 논문 초안을 테스트베드로 삼았다.
+      기억(memorization) 우려를 완화하면서도 현실적이고 도전적인 검증 대상이 된다. 탐지된 25개 중
+      <b>23개(92%)</b>가 수동 검증에서 유효로 확인됐다. 아래 버튼으로 심각도를 필터링할 수 있다.
+    </p>
+
+    <div class="ledger-controls reveal">
+      <button class="fbtn active" data-f="all"><span class="dot" style="background:var(--ink-blue)"></span>전체 <span style="color:var(--ink-4)">25</span></button>
+      <button class="fbtn" data-f="critical"><span class="dot" style="background:var(--critical)"></span>Critical</button>
+      <button class="fbtn" data-f="major"><span class="dot" style="background:var(--major)"></span>Major</button>
+      <button class="fbtn" data-f="minor"><span class="dot" style="background:var(--minor)"></span>Minor</button>
+      <button class="fbtn" data-f="false"><span class="dot" style="background:var(--false)"></span>False Alarm</button>
+    </div>
+
+    <div class="ledger reveal" id="ledger"></div>
+  </section>
+
+
+  <!-- FINDINGS -->
+  <section id="findings">
+    <div class="eyebrow reveal"><span class="idx">04</span> 탐지 사례 정밀 조서</div>
+    <h2 class="sec reveal">에이전트가 짚어낸 대표 오류 넷</h2>
+    <p class="sec-intro reveal">
+      각 사례는 원 서술의 문제 지점(강조)과 에이전트가 생성한 오류 설명을 함께 보여준다. 설명은 연구자가
+      증명을 정제하는 데 쓸 수 있는 실행 가능한 피드백을 제공한다.
+    </p>
+
+    <div class="findings reveal">
+      <div class="finding minor">
+        <div class="ftop"><span class="fid">E01 · 엄밀성 결여</span></div>
+        <h4>PSD로 쓴 조건이 사실은 비대칭</h4>
+        <div class="quote">단조 DEQ 정의에서 강단조 조건을 <span class="hl mn">I − W ⪰ mI</span> 로 PSD처럼 표기했다.</div>
+        <p class="exp">그러나 W는 반대칭 부분 <b>B − Bᵀ</b>를 가지므로 I − W는 비대칭이다. 의도된 조건은 대칭화된 <b>연산자 강단조성(operator strong-monotonicity)</b>이다. PSD 표기와 실제 의도가 어긋난다.</p>
+      </div>
+
+      <div class="finding minor">
+        <div class="ftop"><span class="fid">E03 · 경계 사례 (Typo)</span></div>
+        <h4>수축성 구간의 경계값 오류</h4>
+        <div class="quote">"α ∈ <span class="hl mn">(0, 2m/L²]</span> 에서 수축적(contractive)" 이라고 주장했다.</div>
+        <p class="exp">경계값 <b>α = 2m/L²</b> 에서는 L[Tα] ≤ 1 이지만 엄격하게 &lt; 1 은 아니다. 따라서 닫힌 구간 끝점에서 수축성이 보장되지 않는다. 반개구간이어야 한다.</p>
+      </div>
+
+      <div class="finding critical">
+        <div class="ftop"><span class="fid">E11a · 누락 오류 (Critical)</span></div>
+        <h4>극한에서 ∥Π∥ ≤ 1 이라는 거짓 주장</h4>
+        <div class="quote">"극한 <span class="hl">µ → 0⁺</span> 을 취하면 ∥Π∥ ≤ 1 이다"</div>
+        <p class="exp">거짓이다. Π = [J + µ(I − J)]⁻¹ 는 Πᵢᵢ = 1/[Jᵢᵢ + µ(1−Jᵢᵢ)] 이다. ReLU의 비활성 좌표에서 Jᵢᵢ = 0 이므로 <b>Πᵢᵢ = 1/µ → ∞</b>. Π의 노름은 비활성 좌표를 따라 발산하므로 극한에서 "∥Π∥ ≤ 1"은 수학적으로 틀렸다.</p>
+      </div>
+
+      <div class="finding critical">
+        <div class="ftop"><span class="fid">E11c · 논리 간극 (Critical)</span></div>
+        <h4>최대 단조성 미검증으로 무너지는 비확장성</h4>
+        <div class="quote">"Rɢ = (I + γG)⁻¹, γ = 1 이므로 <span class="hl">Rɢ = Π⁻¹[I + µWᵀ(I − J)]⁻¹</span>"</div>
+        <p class="exp">G가 <b>최대 단조(maximally monotone)</b>임을 검증하지 않았다. 따라서 Rɢ의 확고한 비확장성(firm non-expansiveness)이 정당화되지 않는다. 주 결과의 그래디언트 상한 유도에 쓰이는 결정적 보조정리라 파급이 크다.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- TAXONOMY -->
+  <section id="taxonomy">
+    <div class="eyebrow reveal"><span class="idx">05</span> 비형식 증명 오류 분류법</div>
+    <h2 class="sec reveal">여덟 가지 오류 범주</h2>
+    <p class="sec-intro reveal">
+      Lean·Coq 같은 형식 검증기는 논리 이탈을 모두 커널 수준 오류로 취급하지만, 사람이 쓴 LaTeX 논문은
+      표면적 표기 실수부터 근본적 논리 붕괴까지 스펙트럼을 갖는다. Brent(2021)의 분류를 참고해
+      파이프라인이 탐지하도록 설계된 범주는 다음과 같다.
+    </p>
+
+    <div class="taxo reveal">
+      <div class="tx">
+        <div class="th"><span class="tn">01</span><h4>오타 (Typos)</h4></div>
+        <p>잘못된 아래첨자, 변수 교환, 깨진 내부 상호참조 등 표기의 표면적 오류. "사소"하게 여겨지지만 검증 경로를 크게 흐린다.</p>
+      </div>
+      <div class="tx">
+        <div class="th"><span class="tn">02</span><h4>수치·대수 오류</h4></div>
+        <p>부호 오류부터 행렬 미적분 실패까지 계산의 기계적 실패. 알고리즘 구현 오류나 수치적으로 불안정한 근사 의존을 포함한다.</p>
+      </div>
+      <div class="tx">
+        <div class="th"><span class="tn">03</span><h4>누락 오류 (Omission)</h4></div>
+        <p>모든 경우·거동·경계 조건을 고려하지 않아 증명이 불완전해진다.</p>
+        <p class="hist">푸앵카레가 삼체 문제에서 카오스 거동을 초기에 누락한 사례.</p>
+      </div>
+      <div class="tx">
+        <div class="th"><span class="tn">04</span><h4>부당·누락 가정</h4></div>
+        <p>수학적 조건을 명시적 정당화 없이 가정해, 주장한 정의역의 특정 부분집합에서만 성립하는 증명이 된다.</p>
+        <p class="hist">ζ(s)의 ℜ(s)&gt;1 성질을 임계 대역에도 적용한 다수의 리만 가설 시도.</p>
+      </div>
+      <div class="tx">
+        <div class="th"><span class="tn">05</span><h4>증명의 간극 (Gaps)</h4></div>
+        <p>주장된 함의가 자명하지 않고 본문에 없는 중간 보조정리를 요구하는 논리 비약.</p>
+        <p class="hist">닉 카츠가 발견한 와일즈의 1993년 페르마 마지막 정리 증명의 간극.</p>
+      </div>
+      <div class="tx">
+        <div class="th"><span class="tn">06</span><h4>올바른 결과의 오용</h4></div>
+        <p>유효한 정리를 전제가 충족되지 않는 맥락에서 쓰거나, 출처와 현 연구 사이 정의가 미묘히 다를 때 발생한다.</p>
+        <p class="hist">에르되시가 1960년 논문에서 적용 범위 밖으로 결과를 쓴 사례.</p>
+      </div>
+      <div class="tx">
+        <div class="th"><span class="tn">07</span><h4>출판된 오류의 전파</h4></div>
+        <p>이전 심사 논문의 틀린 결과를 물려받아, 현 연구의 유효성이 결함 있는 토대에 전적으로 의존하는 "오류 트리"가 생긴다.</p>
+        <p class="hist">틀린 정리에 의존해 일반화 리만 가설 증명을 잘못 주장한 사례.</p>
+      </div>
+      <div class="tx">
+        <div class="th"><span class="tn">08</span><h4>명료성·엄밀성 결여</h4></div>
+        <p>개념적으로는 타당해도 모호한 표기, 누락된 단계, 손짓 같은(hand-wavy) 전이로 형식 검증을 불가능하게 만든다.</p>
+        <p class="hist">난해한 표기로 논란이 이어진 모치즈키의 abc 추측 주장.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- REPRODUCIBILITY -->
+  <section id="repro">
+    <div class="eyebrow reveal"><span class="idx">06</span> 재현성 · SKILL 정의</div>
+    <h2 class="sec reveal">Claude Code 스킬로 그대로 재현된다</h2>
+    <p class="sec-intro reveal">
+      감사 파이프라인은 Claude Code(Claude Opus 4.7 기반) 위에서 구현되어 LaTeX 소스 디렉토리에 직접 실행된다.
+      아래는 재현을 위해 제공된 <code>SKILL.md</code>의 디스패치 규칙이다. 저장소 상태와 인자에 따라 실행할
+      단계가 결정된다.
+    </p>
+
+    <div class="skill reveal">
+      <div class="sh"><span class="c a"></span><span class="c b"></span><span class="c g"></span><span class="fn">SKILL.md — /proof-audit 디스패치</span></div>
+      <div class="sb">
+        <span class="cm"># name: proof-audit · allowed-tools: Read, Write, Edit, Bash, Glob</span><br><br>
+        <span class="k">if</span> <span class="v">audit/ 폴더 없음</span> <span class="arrow">→</span> Phase 1 실행 후 Phase 2<br>
+        <span class="k">if</span> <span class="v">audit/ 존재 · 오류 "To validate"</span> <span class="arrow">→</span> Phase 3 (검증) 실행<br>
+        <span class="k">if</span> <span class="v">audit/ 존재 · 전 오류 확정</span> <span class="arrow">→</span> 최종 요약 보고<br>
+        <span class="k">if</span> <span class="v">인자 = .tex 경로</span> <span class="arrow">→</span> 해당 파일을 논문 소스로 사용<br>
+        <span class="k">if</span> <span class="v">인자 = validate</span> <span class="arrow">→</span> Phase 3 만 실행<br>
+        <span class="k">if</span> <span class="v">.tex 없음</span> <span class="arrow">→</span> 감사할 파일을 사용자에게 질의<br><br>
+        <span class="cm"># 상태 등급</span><br>
+        <span class="p">Status</span>   : To validate | Confirmed Error | False Alarm<br>
+        <span class="p">Severity</span> : Critical | Major | Minor<br>
+        <span class="p">Confidence</span>: High(명시적 모순·실패한 대수·차원 불일치) / Medium(추정 가정) / Low(문체적 엄밀성)<br><br>
+        <span class="cm"># 전역 규칙 · 항상 중간 상태를 audit/ 에 저장, 단일 컨텍스트에 논문 전체를 넣지 않는다</span>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- LIMITS -->
+  <section id="limits">
+    <div class="eyebrow reveal"><span class="idx">07</span> 영향과 한계</div>
+    <h2 class="sec reveal">자동 검증에 대한 과의존은 경계한다</h2>
+    <p class="sec-intro reveal">
+      이 작업은 비형식 LaTeX 증명을 감사하는 에이전트 프레임워크로 수학·이론 기계학습 연구의 신뢰성을
+      높이는 것을 지향한다. 잠재적 이점과 한계는 다음과 같다.
+    </p>
+    <div class="limits reveal">
+      <div class="lim good"><h4>더 신뢰할 수 있는 동료 심사</h4><p>구조화된 증명 표현과 지속되는 감사 산물로 사람 심사를 보강한다.</p></div>
+      <div class="lim good"><h4>교육 도구·수동 검토 부담 경감</h4><p>증명 재구성 아카이브가 학습·검토 도구로 기능한다.</p></div>
+      <div class="lim"><h4>거짓 양성·거짓 음성 가능성</h4><p>탐지 결과가 항상 옳지는 않다. 25개 중 2개는 오탐(False Alarm)으로 확인됐다.</p></div>
+      <div class="lim"><h4>자동 검증 과의존 위험</h4><p>충분한 사람 감독 없이 자동 검증에만 의존하는 것은 위험하다. 최종 판단은 연구자의 몫이다.</p></div>
+    </div>
+  </section>
+
+
+  <!-- CLOSER -->
+  <section style="padding-top:20px">
+    <div class="closer reveal">
+      <p class="qt">"오류를 바로잡는 일이 <em>흥미로운 수학</em>으로 이어질 수 있다."</p>
+      <p class="attr">— Richard P. Brent</p>
+      <p class="sub">에이전트 기반 구조적 감사는 사람이 쓴 증명과 기계가 생성한 증명 모두의 신뢰성을 높이는 매우 유망한 방향이다. 감사 산물은 공개 저장소에 지속된다.</p>
+      <a class="repo" href="https://github.com/NNHieu/math_auditing_examples" target="_blank" rel="noopener">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--bg)"></span>
+        github.com/NNHieu/math_auditing_examples
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap row">
+    <span>Agent-Based Auditing of Mathematical Proofs · ICML 2026 Workshop</span>
+    <span>The Pennsylvania State University</span>
+    <span>이 페이지는 논문 내용을 한글로 요약·재구성한 것이다</span>
+  </div>
+</footer>
+
+<script>
+/* ===== 스크롤 리빌 ===== */
+(function(){
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:.1});
+  document.querySelectorAll('.reveal').forEach(function(el,i){
+    el.style.transitionDelay=(Math.min(i,3)*0.05)+'s';
+    io.observe(el);
+  });
+})();
+
+/* ===== 오류 원장 데이터 ===== */
+var ERRORS=[
+  {id:"E01", sev:"minor", conf:false, type:"엄밀성 결여", d:"I−W ⪰ mI 를 PSD로 표기했으나 W의 반대칭부로 I−W는 비대칭. 의도는 연산자 강단조성."},
+  {id:"E03", sev:"minor", conf:true, type:"오타", d:"α ∈ (0, 2m/L²] 수축 주장 — 경계 α=2m/L²에서 L[Tα]≤1 이나 엄격히 <1 은 아님."},
+  {id:"E04a",sev:"minor", conf:false, type:"단축 표기", d:"로피탈 단계에서 미단순화 도함수 비율에 α̂=0 대입. 최종답 1/m 은 옳음."},
+  {id:"E04b",sev:"minor", conf:true, type:"명료성 결여", d:"'√h<1' 만으로는 f'>0 을 함의하지 않음. 실제 조건은 α²(L²−m²)>0."},
+  {id:"E04c",sev:"minor", conf:true, type:"암묵적 가정", d:"limℓ Z[ℓ]=Z* 를 암묵 사용. 극한으로 상한을 넘기려면 FBS 수렴이 필요."},
+  {id:"E07", sev:"minor", conf:true, type:"오용", d:"ReLU의 σ'가 0에서 미정의. 영측도 비미분점을 다루지 않고 IFT를 매끄러운 도함수 형태로 사용."},
+  {id:"E08a",sev:null,    conf:"false", type:"거짓 양성", d:"부록 부호 처리 우려 — 검증 결과 해당 등식은 옳음."},
+  {id:"E08b",sev:"minor", conf:true, type:"엄밀성 결여", d:"단일 표본 경우만 증명. N-표본 행렬 형태로의 확장이 별도 증명 없이 진술됨."},
+  {id:"E09", sev:"major", conf:true, type:"논리 간극", d:"'Q의 가역성은 I−W의 강단조성으로 보장' — 맨 주장. 활성 부분공간 제한 필요."},
+  {id:"E10", sev:"major", conf:true, type:"대수 오류", d:"∂ŷ/∂vec[Z*]=uᵀ⊗Iɴ 은 행우선(vec)에서만 옳음. 표준 열우선에서는 K(n,N) 만큼 어긋남."},
+  {id:"E11a",sev:"critical",conf:true, type:"누락 오류", d:"'µ→0⁺ 에서 ∥Π∥≤1' — ReLU 비활성 좌표(Jᵢᵢ=0, Πᵢᵢ=1/µ→∞)에서 거짓."},
+  {id:"E11b",sev:"major", conf:true, type:"오타", d:"'Jᵢᵢ<1 ∀i' — ReLU는 Jᵢᵢ∈{0,1} 이라 활성 상태에서 =1. 글자 그대로 틀림."},
+  {id:"E11c",sev:"critical",conf:true, type:"논리 간극", d:"G의 최대 단조성 미검증. Rɢ 의 확고한 비확장성 상한이 정당화되지 않음."},
+  {id:"E11d",sev:"minor", conf:true, type:"오타", d:"L1183: 오타(× 여야 함)."},
+  {id:"E12", sev:"critical",conf:true, type:"상속 오류", d:"∥(uᵀ⊗Iɴ)Q⁻¹∥≤∥u∥/m 로부터 미증명 그래디언트 상한을 상속."},
+  {id:"E13a",sev:"critical",conf:true, type:"논리 간극", d:"(I−W)(Z−Z')=... 에 문자 placeholder. 올바른 증명은 확고한 비확장성 필요."},
+  {id:"E13b",sev:"minor", conf:false, type:"모호성", d:"θ 정의 불일치(W,U,u vs A,B,U,u). A,B로의 환원이 주 정리로 지연됨."},
+  {id:"E15", sev:"minor", conf:true, type:"엄밀성 결여", d:"(C1b)가 drift로부터 유도되지 않음. 검증 결과 상수는 요건에 정확히 부합."},
+  {id:"E16a",sev:"minor", conf:"false", type:"거짓 양성", d:"이차항 누락 우려 — 오탐. 사용된 항등식은 정확, 서술이 오해 소지."},
+  {id:"E16b",sev:"major", conf:true, type:"엄밀성 결여", d:"∥Z*(T*)−Z*(0)∥ꜰ<λ₀/4 계산 미제시. 독자가 6줄 대수를 직접 해야 함."},
+  {id:"E16c",sev:"minor", conf:true, type:"오타", d:"σₘᵢₙ≥λ₀−λ₀/4 수학은 맞으나 서식 'λ₀3/4'는 3λ₀/4 여야 함."},
+  {id:"E16d",sev:"minor", conf:true, type:"누락 가정", d:"'폭은 O(N)' — λ₀>0 위해 n≥N 필요. O(N)은 점근적으로 오해 소지."},
+  {id:"E16e",sev:"major", conf:true, type:"누락 가정", d:"(C1a),(C1b)가 임의 초기화에 대해 실체화된 적 없음. 존재론적 λ₀ 하한 미유도."},
+  {id:"E16f",sev:"major", conf:true, type:"미검증 주장", d:"초록은 'gradient descent' 율을 주장하나 정리는 'Gradient Flow'. 이산시간 GD 결과 미완결."},
+  {id:"E17", sev:"minor", conf:true, type:"엄밀성 결여", d:"가정은 [0,T)에서 진술, 적분은 [0,∞). 독립 따름정리의 범위가 잘못 설정됨."}
+];
+
+(function(){
+  var box=document.getElementById('ledger');
+  var html="";
+  ERRORS.forEach(function(e){
+    var isFalse = (e.conf==="false");
+    var statClass = isFalse ? "ok" : (e.sev==="critical"?"err":e.sev==="major"?"err mj":"err mn");
+    var group = isFalse ? "false" : e.sev;
+    var sevBadge = (e.sev && !isFalse) ? '<span class="sev '+e.sev+'">'+e.sev+'</span>' : '<span class="sev minor" style="color:var(--false);border-color:var(--false)">false</span>';
+    html+='<div class="lrow" data-group="'+group+'">'
+      + '<div class="eid">'+e.id+'</div>'
+      + '<div class="edesc">'+e.d+'<span class="type">'+e.type+'</span></div>'
+      + '<div class="badges">'+sevBadge+'<span class="stat '+statClass+'" title="'+(isFalse?"거짓 양성":"확정 오류")+'"></span></div>'
+      + '</div>';
+  });
+  box.innerHTML=html;
+
+  var btns=document.querySelectorAll('.fbtn');
+  btns.forEach(function(b){
+    b.addEventListener('click',function(){
+      btns.forEach(function(x){x.classList.remove('active')});
+      b.classList.add('active');
+      var f=b.getAttribute('data-f');
+      document.querySelectorAll('.lrow').forEach(function(r){
+        var g=r.getAttribute('data-group');
+        r.setAttribute('data-hidden',(f==="all"||g===f)?"0":"1");
+      });
+    });
+  });
+})();
+
+/* ===== 의존성 그래프 캔버스 ===== */
+(function(){
+  var cv=document.getElementById('graphCanvas');
+  if(!cv)return;
+  var ctx=cv.getContext('2d');
+  var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var C={blue:"#7DA9F0",crit:"#F1655B",main:"#E9D06A",line:"#2E3D57",fog:"#7385A0",ink:"#EAF0FA",dim:"#4E5E78"};
+
+  // 노드: x,y 는 0~1 정규화. kind: def|lem|thm|err|main
+  var nodes=[
+    {id:"def",   x:0.06, y:0.30, k:"def", t:"Def"},
+    {id:"fbs",   x:0.06, y:0.62, k:"def", t:"FBS"},
+    {id:"gtheta",x:0.20, y:0.78, k:"lem", t:"g_θ"},
+    {id:"alpha", x:0.24, y:0.24, k:"lem", t:"α"},
+    {id:"zstarn",x:0.40, y:0.20, k:"lem", t:"‖Z‖"},
+    {id:"detz",  x:0.34, y:0.62, k:"lem", t:"det Z"},
+    {id:"vq",    x:0.42, y:0.46, k:"err", t:"VQ"},
+    {id:"detzp", x:0.50, y:0.72, k:"lem", t:"det Z'"},
+    {id:"grad",  x:0.58, y:0.40, k:"lem", t:"grad"},
+    {id:"zpert", x:0.60, y:0.16, k:"err", t:"Z*"},
+    {id:"drift", x:0.72, y:0.34, k:"lem", t:"drift"},
+    {id:"decay", x:0.72, y:0.60, k:"lem", t:"decay"},
+    {id:"c1",    x:0.80, y:0.20, k:"lem", t:"C1"},
+    {id:"main",  x:0.93, y:0.32, k:"main",t:"THM"}
+  ];
+  var edges=[
+    ["def","alpha"],["def","zstarn"],["fbs","gtheta"],["gtheta","detz"],
+    ["alpha","zstarn"],["zstarn","zpert"],["detz","vq"],["vq","grad"],
+    ["detz","detzp"],["detzp","grad"],["grad","drift"],["grad","decay"],
+    ["zpert","c1"],["drift","c1"],["c1","main"],["drift","main"],
+    ["decay","main"],["zpert","main"],["vq","drift"]
+  ];
+  var idx={}; nodes.forEach(function(n,i){idx[n.id]=i;});
+
+  function fit(){
+    var w=cv.parentElement.clientWidth;
+    var dpr=Math.min(window.devicePixelRatio||1,2);
+    var h=Math.max(300,Math.min(440,w*0.42));
+    cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {w:w,h:h};
+  }
+  var dim=fit();
+  window.addEventListener('resize',function(){dim=fit();});
+
+  function px(n){return {x:24+n.x*(dim.w-48), y:20+n.y*(dim.h-40)};}
+
+  var t=0;
+  function draw(){
+    var w=dim.w,h=dim.h;
+    ctx.clearRect(0,0,w,h);
+
+    // 엣지
+    edges.forEach(function(e,i){
+      var a=px(nodes[idx[e[0]]]), b=px(nodes[idx[e[1]]]);
+      ctx.beginPath();
+      ctx.moveTo(a.x,a.y);
+      var mx=(a.x+b.x)/2, my=(a.y+b.y)/2 - 14;
+      ctx.quadraticCurveTo(mx,my,b.x,b.y);
+      ctx.strokeStyle=C.line;ctx.lineWidth=1;ctx.stroke();
+      // 흐르는 펄스
+      if(!reduced){
+        var prog=((t*0.008)+(i*0.13))%1;
+        var t2=prog, u=1-t2;
+        var qx=u*u*a.x+2*u*t2*mx+t2*t2*b.x;
+        var qy=u*u*a.y+2*u*t2*my+t2*t2*b.y;
+        var tgt=nodes[idx[e[1]]].k;
+        ctx.beginPath();ctx.arc(qx,qy,1.8,0,Math.PI*2);
+        ctx.fillStyle=(tgt==="err")?"rgba(241,101,91,.7)":"rgba(125,169,240,.6)";
+        ctx.fill();
+      }
+    });
+
+    // 노드
+    nodes.forEach(function(n){
+      var p=px(n);
+      var col=C.blue, r=13;
+      if(n.k==="def"){col=C.fog;}
+      if(n.k==="lem"){col=C.blue;}
+      if(n.k==="err"){col=C.crit;}
+      if(n.k==="main"){col=C.main;r=18;}
+      var pulse=1;
+      if(n.k==="err"&&!reduced){pulse=1+Math.sin(t*0.06+n.x*8)*0.14;}
+      if(n.k==="main"&&!reduced){pulse=1+Math.sin(t*0.035)*0.06;}
+
+      if(n.k==="err"||n.k==="main"){
+        var g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*2.4*pulse);
+        g.addColorStop(0,(n.k==="err"?"rgba(241,101,91,.35)":"rgba(233,208,106,.30)"));
+        g.addColorStop(1,"rgba(0,0,0,0)");
+        ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,r*2.4*pulse,0,Math.PI*2);ctx.fill();
+      }
+
+      ctx.beginPath();
+      if(n.k==="main"){
+        // 육각형 느낌 대신 라운드 사각
+        roundRect(ctx,p.x-r*1.15,p.y-r*0.8,r*2.3,r*1.6,6);
+      }else{
+        ctx.arc(p.x,p.y,r*pulse,0,Math.PI*2);
+      }
+      ctx.fillStyle=(n.k==="main")?"rgba(233,208,106,.16)":"rgba(17,26,43,.95)";
+      ctx.fill();
+      ctx.lineWidth=1.8;ctx.strokeStyle=col;ctx.stroke();
+
+      ctx.fillStyle=(n.k==="main")?C.main:(n.k==="err"?C.crit:C.ink);
+      ctx.font='600 10.5px '+'ui-monospace, monospace';
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(n.t,p.x,p.y);
+    });
+
+    if(!reduced)t+=1;
+    requestAnimationFrame(draw);
+  }
+  function roundRect(c,x,y,w,h,r){
+    c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);
+    c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();
+  }
+  if(reduced){draw();}else{draw();}
+})();
+</script>
+</body>
+</html>

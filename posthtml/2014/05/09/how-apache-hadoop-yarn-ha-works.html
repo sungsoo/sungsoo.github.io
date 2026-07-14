@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>How Apache Hadoop YARN HA Works</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>How Apache Hadoop YARN HA Works</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">9 May 2014</p></h4>
+<hr>
+
+<div class="post">
+<h2 id="article-source">Article Source</h2>
+<ul>
+  <li>Title: <a href="https://blog.cloudera.com/blog/2014/05/how-apache-hadoop-yarn-ha-works/">How Apache Hadoop YARN HA Works</a></li>
+  <li>Authors: Karthik Kambatla, Wing Yew Poon, and Vikram Srivastava</li>
+</ul>
+
+<p><a href="http://sungsoo.github.com/images/resourcemanager.png"><img src="http://sungsoo.github.com/images/resourcemanager.png" alt="" /></a></p>
+
+<h1 id="how-apache-hadoop-yarn-ha-works">How Apache Hadoop YARN HA Works</h1>
+
+<p><strong>Thanks to recent work upstream, YARN is now a highly available
+service. This post explains its architecture and configuration
+details.</strong></p>
+
+<p>YARN, the next-generation compute and resource management framework in
+Apache Hadoop, until recently had a single point of failure: the
+ResourceManager, which coordinates work in a YARN cluster. With planned
+(upgrades) or unplanned (node crashes) events, this central service, and
+YARN itself, could become unavailable.</p>
+
+<p>This post details Cloudera’s recent work in the Hadoop community
+(<a href="https://issues.apache.org/jira/browse/YARN-149">YARN-149</a>) to make the
+ResourceManager (and thus YARN) highly available. We’ll also explain the
+high-level design for how the ResourceManager’s active state is
+preserved (state store), and how ResourceManagers fail-over to achieve
+high availability (HA). We also outline how to deploy an HA cluster, and
+review some important configuration options.</p>
+
+<h1 id="background">Background</h1>
+
+<p>CDH 5 (and Apache Hadoop 2.x) ship YARN as the vehicle to manage cluster
+resources, and share the said resources among compute frameworks like
+MapReduce, Impala, and Apache Spark. In <a href="http://blog.cloudera.com/blog/category/yarn/">previous
+posts</a>, you have learned
+the <a href="http://blog.cloudera.com/blog/2012/02/mapreduce-2-0-in-hadoop-0-23/">high-level architecture of
+YARN</a>,
+and how to migrate from MR1 to MR2/YARN for
+<a href="http://blog.cloudera.com/blog/2013/11/migrating-to-mapreduce-2-on-yarn-for-users/">users</a>
+and <a href="http://blog.cloudera.com/blog/2013/11/migrating-to-mapreduce-2-on-yarn-for-operators/">cluster
+admins</a>.</p>
+
+<p>To briefly re-cap, YARN has a master/worker architecture (see below);
+the master (the ResourceManager) manages the resources on the workers
+and schedules work in the cluster. Furthermore, the ResourceManager
+handles all client interactions.</p>
+
+<p><a href="http://blog.cloudera.com/wp-content/uploads/2013/11/mr21.png"><img src="http://blog.cloudera.com/wp-content/uploads/2013/11/mr21.png" alt="" title="mr2" /></a></p>
+
+<p><strong>YARN’s master/worker architecture</strong></p>
+
+<p>As you can see, the ResourceManager is an obvious single point of
+failure!</p>
+
+<h1 id="design-for-ha">Design for HA</h1>
+
+<p>ResourceManager HA is realized through an Active/Standby architecture:
+one ResourceManager is Active, and one or more ResourceManagers are in
+Standby mode waiting to take over should anything happen to the Active:</p>
+
+<p> </p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2014/05/Client_Failover.png" alt="" title="diagram_Client_Failover" /><br />
+<strong>YARN HA design</strong></p>
+
+<p>Below, you’ll learn how the store enables restarting the ResourceManager
+without losing any state, restarting an ResourceManager in a
+single-ResourceManager cluster, and failing over between
+ResourceManagers when there are multiple ResourceManagers in the
+cluster.</p>
+
+<h2 id="resourcemanager-state-store">ResourceManager State Store</h2>
+
+<p>The <code class="language-plaintext highlighter-rouge">ResourceManagerStateStore</code> enables storing the internal state of
+the ResourceManager (applications and their attempts, delegation tokens,
+and version information). The state of the cluster (resource consumption
+on individual nodes) is not stored because it can be easily
+reconstructed when the NodeManagers heartbeat to the “new”
+ResourceManager.</p>
+
+<p>There are three possible implementations of the state store:</p>
+
+<ul>
+  <li>Memory-based implementation (primarily for testing)</li>
+  <li>Filesystem-based implementation (HDFS or local filesystems can be
+used)</li>
+  <li>Apache ZooKeeper-based implementation</li>
+</ul>
+
+<p>We recommend using the ZooKeeper-based implementation when there are
+multiple ResourceManagers to ensure one assumes the Active role.</p>
+
+<h2 id="resourcemanager-restart">ResourceManager Restart</h2>
+
+<p>With the state store enabled, an ResourceManager, on restart, loads the
+internal application state from the store. The scheduler reconstructs
+its state when each node heartbeats. A new attempt is spawned for each
+managed application previously submitted to the ResourceManager.
+Applications can checkpoint periodically to avoid losing any work; the
+MR ApplicationMaster checkpoints completed tasks, so the completed tasks
+need not be re-run on ResourceManager restart.</p>
+
+<h2 id="resourcemanager-failover">ResourceManager Failover</h2>
+
+<p>ResourceManager failover is an extension of ResourceManager restart.
+When the cluster is configured to have multiple ResourceManagers (two or
+more – one Active, others Standby), one of the Standby ResourceManagers
+takes over if/when the Active ResourceManager goes down. On startup,
+each ResourceManager starts in the Standby mode — the process is
+started, but the state is not loaded. When transitioning to Active, the
+ResourceManager loads the internal state from the designated state store
+and starts all the internal services to assume the Active
+ResourceManager duties. The stimulus to transition-to-active comes from
+either the admin (through CLI) or through the integrated failover
+controller when automatic failover is enabled.</p>
+
+<p>*Fencing<br />
+*In a multi-ResourceManager cluster, there is a risk of more than one
+ResourceManager assuming the Active role. This can lead to a split-brain
+situation, where each ResourceManager controls a subset of the resources
+in the cluster and handles client requests. To avoid this split-brain
+condition, a “fencing” mechanism is required by which an Active
+ResourceManager disallows other ResourceManagers to assume the Active
+role. The ZooKeeper-based state store (ZKResourceManagerStateStore)
+implicitly allows write access to a single ResourceManager at any point
+in time, and hence is the recommended state store to use in an HA
+cluster. When using the ZKResourceManagerStateStore, there is no need
+for a separate fencing mechanism to address a potential split-brain
+situation where multiple ResourceManagers assume the Active role.</p>
+
+<p>The ZooKeeper state store achieves this implicit fencing through ACLs.
+All the ResourceManagers have shared read-write-admin access to the
+store, but only the Active has create-delete access. A ResourceManager
+claims this create-delete access while transitioning to Active. At this
+point, any other ResourceManager that previously had create-delete
+access loses access, fails to make changes to the store, and transitions
+itself to Standby. By having each ResourceManager create a dummy znode
+every so often (10 seconds, by default), a ResourceManager is always
+informed of its access to the store.</p>
+
+<p><em>Automatic failover though embedded leader election (Recommended)</em><br />
+ ResourceManagers use ZooKeeper-based <code class="language-plaintext highlighter-rouge">ActiveStandbyElector</code> to decide
+which ResourceManager should be the Active. When the Active goes down or
+becomes unresponsive, another ResourceManager is automatically elected
+to be the Active and takes over. (Note that this elector is embedded in
+the ResourceManager, and hence there is no need to run a separate
+<code class="language-plaintext highlighter-rouge">ZooKeeperFailoverController</code> (ZKFC) daemon as is the case for HDFS
+NameNode HA.)</p>
+
+<p><em>Manual failover (Not recommended)</em><br />
+ When automatic failover is not enabled, admins have to manually
+transition one of the ResourceManagers to Active. To failover from one
+ResourceManager to the other, they are expected to first transition the
+Active ResourceManager to Standby and transition a Standby
+ResourceManager to Active. All this can be done using the <code class="language-plaintext highlighter-rouge">yarn rmadmin</code>
+CLI.</p>
+
+<p><em>Client failover</em><br />
+ When there are multiple ResourceManagers, the YARN configuration
+(<code class="language-plaintext highlighter-rouge">yarn-site.xml</code>) used by clients and nodes is expected to list all the
+ResourceManagers. Clients, ApplicationMasters, and NodeManagers try
+connecting to the ResourceManagers in a round-robin fashion until they
+hit the Active ResourceManager. If the Active goes down, they resume the
+round-robin polling until they hit the “new” Active.</p>
+
+<h1 id="deploying-an-ha-cluster">Deploying an HA Cluster</h1>
+
+<p>One can set up an HA cluster with or without using Cloudera Manager. We
+recommend using it, because all you have to do is click a few buttons!</p>
+
+<h2 id="deploying-an-ha-cluster-using-cloudera-manager-recommended">Deploying an HA Cluster using Cloudera Manager (Recommended)</h2>
+
+<p>Cloudera Manager 5 provides a simple wizard to enable high availability
+for YARN ResourceManager similar to other services like HDFS, MapReduce,
+and Oozie. The wizard takes care of adding the second ResourceManager
+and setting all configuration properties needed for HA setup. To get to
+the wizard, go to your YARN service in Cloudera Manager and under
+“Actions”, click on “Enable High Availability”.</p>
+
+<p><a href="http://blog.cloudera.com/wp-content/uploads/2014/04/yarnha-3.png"><img src="http://blog.cloudera.com/wp-content/uploads/2014/04/yarnha-3.png" alt="" title="yarnha-3" /></a></p>
+
+<p><strong>Kicking-off the Cloudera Manager wizard for YARN HA</strong></p>
+
+<p>The next page in the wizard asks you to specify the host where the new
+ResourceManager should start.</p>
+
+<p><a href="http://blog.cloudera.com/wp-content/uploads/2014/04/yarnha-4.png"><img src="http://blog.cloudera.com/wp-content/uploads/2014/04/yarnha-4.png" alt="" title="yarnha-4" /></a></p>
+
+<p><strong>Specifying the host</strong></p>
+
+<p>Finally, Cloudera Manager starts the workflow that enables HA, restarts
+all the dependent services of YARN so that they can pick up the new
+ResourceManager, and deploys the client configuration.</p>
+
+<p><a href="http://blog.cloudera.com/wp-content/uploads/2014/04/yarnha-5.png"><img src="http://blog.cloudera.com/wp-content/uploads/2014/04/yarnha-5.png" alt="" title="yarnha-5" /></a></p>
+
+<p><strong>YARN HA workflow in progress</strong></p>
+
+<h2 id="deploying-an-ha-cluster-manually">Deploying an HA Cluster Manually</h2>
+
+<p>Steps:</p>
+
+<ol>
+  <li>To enable HA, set <code class="language-plaintext highlighter-rouge">yarn.resourcemanager.ha.enabled</code> to true in
+<code class="language-plaintext highlighter-rouge">yarn-site.xml</code>.</li>
+  <li>YARN uses identifiers (rm-ids) as logical names for each
+resourcemanager. Set <code class="language-plaintext highlighter-rouge">yarn.resourcemanager.ha.rm-ids</code> to the list of
+identifiers you wish to use; for example, <code class="language-plaintext highlighter-rouge">rm1,rm2</code> (the value is a
+comma-separated list).</li>
+  <li>For each of the identifiers (corresponding to each ResourceManager),
+define <code class="language-plaintext highlighter-rouge">yarn.resourcemanager.hostname.</code> (should be the hostname of
+the ResourceManager). Alternatively, you can define the addresses
+for that ResourceManager: <code class="language-plaintext highlighter-rouge">yarn.resourcemanager.address</code>,
+<code class="language-plaintext highlighter-rouge">yarn.resourcemanager.scheduler.address</code>, and so on. (See the <a href="http://www.google.com/url?q=http%3A%2F%2Fwww.cloudera.com%2Fcontent%2Fcloudera-content%2Fcloudera-docs%2FCDH5%2Flatest%2FCDH5-High-Availability-Guide%2Fcdh5hag_cfg_RM_HA.html&amp;sa=D&amp;sntz=1&amp;usg=AFQjCNF46oYXaZgP2SSbiQ2fT8nKxh1eYw">CDH5
+documentation</a>
+for more details.) NodeManagers and clients use the configured
+addresses to find the ResourceManager service they need to talk to.
+They go through the list of rm-ids and successively try the address
+corresponding to each rm-id.</li>
+</ol>
+
+<h2 id="enabling-recovery">Enabling Recovery</h2>
+
+<p>For a YARN application to complete successfully, both the
+ApplicationMaster and the ResourceManager must be live. Containers with
+completed tasks need to report to the ApplicationMaster, which in turn
+needs to report to the ResourceManager to commit the job completion.
+Recovery is controlled via configs:</p>
+
+<ol>
+  <li>To enable recovering applications on ResourceManager
+restart/failover, set <code class="language-plaintext highlighter-rouge">yarn.resourcemanager.recovery.enabled</code> to
+true.</li>
+  <li>The maximum number of times any YARN application can be recovered is
+set by <code class="language-plaintext highlighter-rouge">yarn.resourcemanager.am.max-attempts</code>; we recommend setting
+this global limit to a high value.</li>
+</ol>
+
+<p>When a ResourceManager dies and is restarted, or fails over to another
+ResourceManager in the case of an HA cluster, the newly active
+ResourceManager instructs running ApplicationMasters to abort
+(<a href="https://issues.apache.org/jira/browse/YARN-556">YARN-556</a>). This uses
+up an application attempt. Also, if the ResourceManager is down for some
+time and the ApplicationMaster is unable to connect, it will timeout and
+abort. That uses up an application attempt too. When a new
+ResourceManager becomes active, it can recover applications with failed
+attempts that have not exceeded their max-attempts.</p>
+
+<p>For MapReduce running on YARN (aka MR2), the MR ApplicationMaster plays
+the role of a per-job jobtracker. MRAM failure recovery is controlled by
+the property, <code class="language-plaintext highlighter-rouge">mapreduce.am.max-attempts</code>. This property may be set per
+job. If its value is greater than 1, then when the ApplicationMaster
+dies, a new one is spun up for a new application attempt, up to the
+max-attempts. When a new application attempt is started, in-flight tasks
+are aborted and rerun but completed tasks are not rerun.</p>
+
+<h2 id="state-store-configuration">State Store Configuration</h2>
+
+<p>As mentioned previously, we recommend using the ZooKeeper-based
+ResourceManager state store implementation:</p>
+
+<ol>
+  <li>Set <code class="language-plaintext highlighter-rouge">yarn.resourcemanager.store.class</code> to
+<code class="language-plaintext highlighter-rouge">org.apache.hadoop.yarn.server.resourcemanager.recovery.ZKResourceManagerStateStore</code>.</li>
+  <li>Set <code class="language-plaintext highlighter-rouge">yarn.resourcemanager.zk-address</code> to the address of the
+ZooKeeper ensemble (a comma-separated list of hosts, optionally with
+port if not using the default port of 2181).</li>
+</ol>
+
+<h2 id="failover">Failover</h2>
+
+<ol>
+  <li>To configure automatic ResourceManager failover, set
+<code class="language-plaintext highlighter-rouge">yarn.resourcemanager.ha.automatic-failover.enabled</code> to true.</li>
+  <li>In addition, we recommend setting
+<code class="language-plaintext highlighter-rouge">yarn.resourcemanager.ha.automatic-failover.embedded</code> to true; this
+uses the <code class="language-plaintext highlighter-rouge">EmbeddedElectorService</code> to pick an active ResourceManager.</li>
+  <li>Also, you need to configure <code class="language-plaintext highlighter-rouge">yarn.resourcemanager.cluster-id</code> for
+the cluster; this name is used for electing the active
+ResourceManager.</li>
+</ol>
+
+<p>The web UI of the standby ResourceManager will automatically redirect to
+that of the active ResourceManager, which is convenient. If you want to
+ascertain the HA status of a particular ResourceManager in an HA
+cluster, you can go to the <code class="language-plaintext highlighter-rouge">/cluster/cluster</code> page of the
+ResourceManager web address (this page does not redirect), or you can
+use the REST API, by going to <code class="language-plaintext highlighter-rouge">/ws/v1/cluster/info</code> of the web address.</p>
+
+<h1 id="whats-next">What’s Next?</h1>
+
+<p>Currently, all in-flight work is interrupted on ResourceManager
+restart/failover. While this approach doesn’t hurt applications with
+short-lived tasks like MapReduce, restarting long-running applications
+can lead to losing significant amount of internal task/application state
+and would be nice to avoid. <a href="https://issues.apache.org/jira/browse/YARN-556">Working-preserving ResourceManager
+restart</a> aims to do
+exactly that: all ApplicationMaster and task containers continue running
+and “resync” with the “new” ResourceManager.</p>
+
+<p>The community is also working on work-preserving restart for the
+NodeManager (worker;
+<a href="https://issues.apache.org/jira/browse/YARN-1336">YARN-1336</a>) and the
+ApplicationMaster
+(<a href="https://issues.apache.org/jira/browse/YARN-1489">YARN-1489</a>) to
+complement ResourceManager high availability. With all these pieces in
+place, one would be able to do a rolling restart on a YARN cluster
+without losing any work at all!</p>
+
+<h2 id="acknowledgements">Acknowledgements</h2>
+
+<p>Several people in the Hadoop community have contributed to improving the
+availability of YARN. In particular, Alejandro Abdelnur, Arpit Gupta,
+Bikas Saha, Hitesh Shah, Jian He, Sandy Ryza, Tom White, Tsuyoshi Ozawa,
+Vinod Kumar Vavilapalli, Xuan Gong, and Zhijie Shen all played a major
+role in design, implementation, testing, and code reviews. Insights from
+Aaron T Myers, Patrick Hunt, Phil Zeyliger, Santhosh Srinivasan, and
+Todd Lipcon also helped us arrive at the final design.</p>
+
+<p><em>Karthik Kambatla, Wing Yew Poon, and Vikram Srivastava are Software
+Engineers at Cloudera. Karthik is also a Hadoop committer.</em></p>
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

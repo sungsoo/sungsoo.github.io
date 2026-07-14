@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Massive Throughput Database Queries with LLVM on GPUs</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Massive Throughput Database Queries with LLVM on GPUs</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">27 June 2015</p></h4>
+<hr>
+
+<div class="post">
+<h2 id="article-source">Article Source</h2>
+<ul>
+  <li>Title: <a href="http://devblogs.nvidia.com/parallelforall/mapd-massive-throughput-database-queries-llvm-gpus/">MapD: Massive Throughput Database Queries with LLVM on GPUs</a></li>
+  <li>Authors: <a href="http://devblogs.nvidia.com/parallelforall/author/asuhan/" title="View all posts by Alex Şuhan">Alex
+Şuhan</a></li>
+</ul>
+
+<p><a href="http://devblogs.nvidia.com/parallelforall/mapd-massive-throughput-database-queries-llvm-gpus/"><img src="http://devblogs.nvidia.com/parallelforall/wp-content/uploads/sites/3/2015/06/mapd_logo.png" alt="mapd_logo" /></a></p>
+
+<h1 id="mapd-massive-throughput-database-queries-with-llvm-on-gpus">MapD: Massive Throughput Database Queries with LLVM on GPUs</h1>
+
+<blockquote>
+  <p>Note: this post was co-written by Alex Şuhan and Todd Mostak of MapD.</p>
+</blockquote>
+
+<p>At <a href="http://www.mapd.com">MapD</a> our goal is to build <em>the world’s fastest
+big data analytics and visualization platform</em> that enables lag-free
+interactive exploration of multi-billion row datasets. MapD supports
+standard SQL queries as well as a visualization API that maps OpenGL
+primitives onto SQL result sets.</p>
+
+<p>Although MapD is fast running on x86-64 CPUs, our real advantage stems
+from our ability to leverage the massive parallelism and memory
+bandwidth of GPUs. The most powerful GPU currently available is the
+<strong>NVIDIA Tesla K80</strong> Accelerator, with up to 8.74 teraflops of compute
+performance and nearly 500 GB/sec of memory bandwidth. By supporting up
+to eight of these cards per server we see orders-of-magnitude better
+performance on standard data analytics tasks, enabling a user to
+visually filter and aggregate billions of rows in tens of milliseconds,
+all without indexing. The following Video shows the MapD dashboard,
+showing 750 million tweets animated in real time. Nothing in this demo
+is pre-computed or canned. Our big data visual analytics platform is
+running on <strong>8 NVIDIA Tesla K40 GPUs on a single server</strong> to power the
+dashboard.</p>
+
+<iframe width="600" height="400" src="https://www.youtube.com/embed/iBJomD2mQf0" frameborder="0" allowfullscreen=""></iframe>
+
+<p>Fast hardware is only half of the story, so at MapD we have invested
+heavily into optimizing our code such that a wide range of <em>analytic
+workloads</em> run optimally on GPUs. In particular, we have worked hard so
+that common SQL analytic operations, such as filtering (<code class="language-plaintext highlighter-rouge">WHERE</code>) and
+<code class="language-plaintext highlighter-rouge">GROUP BY</code>, run as fast as possible. One of the biggest payoffs in this
+regard has been moving from the query interpreter that we used in our
+prototype to a JIT (Just-In-Time) compilation framework built on LLVM.
+LLVM allows us to transform query plans into architecture-independent
+intermediate code (<a href="http://llvm.org/docs/LangRef.html">LLVM IR</a>) and
+then use any of the LLVM architecture-specific “backends” to compile
+that IR code for the needed target, such as NVIDIA GPUs, x64 CPUs, and
+ARM CPUs.</p>
+
+<p><em>Query compilation</em> has the following advantages over an interpreter:</p>
+
+<ol>
+  <li>
+    <p>Since it is inefficient to evaluate a query plan for a <em>single row at
+a time</em> (in one “dispatch”), an interpreter requires the use of extra
+buffers to store the intermediate results of evaluating an
+expression. For example, to evaluate the expression <code class="language-plaintext highlighter-rouge">x*2+3</code>, an
+<em>interpreter-based query engine</em> would first evaluate <code class="language-plaintext highlighter-rouge">x*2</code> for a
+number of rows, storing that to an intermediate buffer. The
+intermediate results stored in that buffer would then be read and
+summed with 3 to get the final result. Writing and reading these
+intermediate results to memory wastes memory bandwidth and/or
+valuable cache space. Compare this to a compiled query which can
+simply store the result of the first subexpression (<code class="language-plaintext highlighter-rouge">x*2</code>) into a
+register before computing the final result, allowing the cache to be
+used for other purposes, for example to create the hash table
+necessary for a query’s <code class="language-plaintext highlighter-rouge">GROUP BY</code> clause. This is related to <a href="http://www.compileroptimizations.com/category/loop_fusion.htm"><em>loop fusion</em></a>
+and <a href="http://gpuocelot.gatech.edu/publications/optimizing-data-warehousing-applications-for-gpus-using-kernel-fusionfission/"><em>kernel fusion</em></a>
+compiler optimizations.</p>
+  </li>
+  <li>
+    <p>An efficient interpreter would likely involve executing instructions
+represented by <em>vectors</em> of opcodes/byte-codes. Decoding the byte-code
+to get the required operations and then branching to the correct
+operation requires a significant amount of extra cycles. On the
+other hand, pre-generating compiled code for the query avoids the
+inefficiencies of this virtual machine approach.</p>
+  </li>
+  <li>
+    <p>Depending on the number and range of the columns used in a
+<code class="language-plaintext highlighter-rouge">GROUP BY</code> clause, different hash strategies are optimal. Some of
+them rely on generating <em>collision-free hash functions</em> based on the
+range of the data, which is only known at runtime. Reproducing such
+functionality efficiently with an interpreter, particularly when the
+number and types of columns can vary, is difficult.</p>
+  </li>
+</ol>
+
+<p>Of course, LLVM is not the only way to generate a JIT query compiler.
+Some databases employ <a href="https://en.wikipedia.org/wiki/Source-to-source_compiler"><em>source-to-source compilers</em></a> to convert SQL to another source language like C++, which they then compile
+using regular compilers like gcc. We think that an LLVM-based compiler
+has significant advantages over a <em>transpiler</em>, including:</p>
+
+<ol>
+  <li>Compilation times are much quicker using LLVM. We can compile our
+query plans in tens of milliseconds, whereas <em>source-to-source
+compilation</em> often requires multiple seconds to compile a plan. Since
+our platform is built for interactive data exploration, minimizing
+query compilation time is critical.</li>
+  <li>
+    <p>LLVM IR is quite portable over the various architectures we run on
+(GPU, x86-64, ARM). In contrast, source language generation requires
+more attention to syntactic differences, particularly in divergent
+cases like CUDA vs. OpenCL (both can be targeted with LLVM quite
+easily).</p>
+  </li>
+  <li>LLVM comes with built-in code validation APIs and tools. For
+example, comparison and arithmetic operations on integers will fail
+(with a useful error message) if the operand widths are different.
+Once a function is generated, <code class="language-plaintext highlighter-rouge">llvm::verifyFunction</code> performs
+additional sanity checks, ensuring (among other things) that the
+control flow graph of our query is well-formed.</li>
+</ol>
+
+<h2 id="how-mapd-uses-nvvm">How MapD Uses NVVM</h2>
+
+<p>LLVM is powerful and battle-proven for CPUs, but our product focuses on
+GPUs. If we could use LLVM for GPU code compilation we’d get all the
+benefits we’ve mentioned while also being able to run on a CPU when
+needed. Fortunately, the <a href="https://developer.nvidia.com/cuda-llvm-compiler">NVIDIA Compiler
+SDK</a> made this a
+reality long before we started to build our product.</p>
+
+<p><a href="http://devblogs.nvidia.com/parallelforall/wp-content/uploads/sites/3/2015/06/crossfilter.png"><img src="http://devblogs.nvidia.com/parallelforall/wp-content/uploads/sites/3/2015/06/crossfilter-624x340.png" alt="Figure 1: The MapD dashboard showing airline data using the
+Crossfilter
+interface." /></a></p>
+
+<p>Figure 1: The MapD dashboard showing airline data using the Crossfilter
+interface.</p>
+
+<p>The NVIDIA Compiler SDK includes libNVVM, an LLVM-based compiler backend
+and <a href="http://docs.nvidia.com/cuda/nvvm-ir-spec">NVVM IR</a>, a rather
+extensive subset of LLVM IR. Thanks to our choice of LLVM and libNVVM,
+our system runs on NVIDIA GPUs, GPU-less ultrabooks, and even on the
+32-bit ARM CPU on the <a href="http://devblogs.nvidia.com/parallelforall/jetson-tk1-mobile-embedded-supercomputer-cuda-everywhere/">Jetson
+TK1</a>,
+all using the same code base.</p>
+
+<p>MapD does not need to directly generate all code. We offload some of the
+functionality to a runtime written in C++ whenever code generation would
+be tedious and error-prone without any performance benefits. This
+approach is a great fit for things like aggregate functions, handling
+arithmetic on columns with SQL <code class="language-plaintext highlighter-rouge">null</code> values, hash dictionaries and
+more. The LLVM based C++ compiler, <a href="http://clang.llvm.org/">clang</a>,
+generates the corresponding LLVM IR, and we combine it with our
+explicitly generated IR.</p>
+
+<p>As is always the case when compilation is involved, the time required to
+generate native code is an important consideration. An interactive
+system sees new queries all the time as the user refines them in search
+of insight. We’re able to keep code generation consistently under 30 ms
+for entirely new queries, which is good enough to be unnoticeable in the
+console, especially for massive datasets. However, for “mere billions”
+of rows, our UI is able to show smooth animations over multiple
+correlated charts. Since the actual execution is so fast in this case,
+30 ms can matter a lot.</p>
+
+<p>Fortunately, these queries are structurally identical and only differ in
+the value of literals as the filter window moves across the time range
+or the user selects the tail of a histogram. With caching in place,
+compilation time becomes a non-issue. We keep it simple and still
+generate the IR, then use it as a key in the native code cache. The LLVM
+API offers an easy way to serialize source level entities (functions in
+our case), shown below.</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="nf">serialize_function</span><span class="p">(</span><span class="k">const</span> <span class="n">llvm</span><span class="o">::</span><span class="n">Function</span><span class="o">*</span> <span class="n">f</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">stringstream</span> <span class="n">ss</span><span class="p">;</span>
+    <span class="n">llvm</span><span class="o">::</span><span class="n">raw_os_ostream</span> <span class="n">os</span><span class="p">(</span><span class="n">ss</span><span class="p">);</span>
+    <span class="n">f</span><span class="o">-&gt;</span><span class="n">print</span><span class="p">(</span><span class="n">os</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">ss</span><span class="p">.</span><span class="n">str</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="performance-measurements">Performance Measurements</h2>
+
+<p>Ideas are great in performance-focused systems, but the proof is in the
+pudding. As it turns out, MapD extracts a lot of performance out of
+GPUs.</p>
+
+<p>Queries using filter and aggregate routinely hit more than 80% of the
+available bandwidth. We’ve measured more than 240 GB/s on a single K40
+(vs a theoretical max of 288GB/sec) for a filter and count query
+touching a single column. When grouping by a single column with 20
+possible values and some skew (the carrier in the airline data set in
+Figure 1), MapD can only reach slightly more than 100 GB/s on K40. On
+the new Titan X GPU, based on the <a href="http://devblogs.nvidia.com/parallelforall/maxwell-most-advanced-cuda-gpu-ever-made/">Maxwell
+architecture</a>,
+we are able to get more than 200 GB/s on the same query, on a single
+card. Maxwell handles contention in <a href="http://devblogs.nvidia.com/parallelforall/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/">shared memory
+atomics</a>
+significantly better than the Kepler architecture, which explains this
+great result on skewed inputs. We’re looking forward to this feature
+being implemented on future generations of Tesla cards as well.</p>
+
+<p><a href="http://devblogs.nvidia.com/parallelforall/wp-content/uploads/sites/3/2015/06/mapd-speedup.png"><img src="http://devblogs.nvidia.com/parallelforall/wp-content/uploads/sites/3/2015/06/mapd-speedup-624x437.png" alt="Figure 2: MapD performance compared to leading in-memory database on
+2-socket, 8-GPU system (group-by and filter
+query)" /></a></p>
+
+<p>Figure 2: MapD performance compared to leading in-memory database on
+2-socket, 8-GPU system (group-by and filter query)</p>
+
+<p>MapD is easily able to get a 40-50x speedup on a multi-GPU system, even
+when compared to our own code running on a high end dual-socket CPU
+system, and there are even queries for which the gap is two orders of
+magnitude (this is often code with lots of divisions, which tend to be
+slow on x86-64). Compared to other leading in-memory CPU-based
+databases, which typically use interpreters or source-to-source
+compilers, the speedup can easily be three orders of magnitude, as
+Figure 2 shows.</p>
+
+<h2 id="llvm-jit-compilation-for-gpus-tips-and-tricks">LLVM JIT Compilation for GPUs: Tips and Tricks</h2>
+
+<p>We’ve learned a lot about LLVM and JIT compilation for GPUs while
+building MapD’s interactive query engine, and we’d like to share some of
+that experience with you.</p>
+
+<p>Most MapD runtime functions are marked as <code class="language-plaintext highlighter-rouge">always_inline</code>, which forces
+the LLVM <code class="language-plaintext highlighter-rouge">AlwaysInliner</code> optimization pass to inline them so that there
+is no function call overhead and increased scope for other optimization
+passes. For example, the following is a reasonable way of implementing a
+<code class="language-plaintext highlighter-rouge">max</code> aggregate.</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">extern</span> <span class="s">"C"</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">always_inline</span><span class="p">))</span>
+<span class="kt">void</span> <span class="nf">agg_max</span><span class="p">(</span><span class="kt">int64_t</span><span class="o">*</span> <span class="n">agg</span><span class="p">,</span> <span class="k">const</span> <span class="kt">int64_t</span> <span class="n">val</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">*</span><span class="n">agg</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="o">*</span><span class="n">agg</span><span class="p">,</span> <span class="n">val</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Note that the function is not marked as <code class="language-plaintext highlighter-rouge">__device__</code> since this is not
+CUDA C++ code. Any explicit call to this function will be eventually
+inlined and the result can run unmodified on the GPU. Also, if <code class="language-plaintext highlighter-rouge">agg</code>
+points to a value allocated on the stack (as is the case for queries
+without <code class="language-plaintext highlighter-rouge">GROUP BY</code> clause), the <code class="language-plaintext highlighter-rouge">PromoteMemoryToRegister</code> pass will
+place it in a register for the inner loop of the query. The runtime
+functions which need GPU-specific implementations are part of a regular
+CUDA C++ library we can call from the query.</p>
+
+<p>We’ve said that NVVM generates native code, but there actually is an
+additional step we haven’t discussed. From the IR we generate, NVVM
+generates <a href="http://docs.nvidia.com/cuda/parallel-thread-execution/">PTX</a>,
+which in turn is compiled to native code for the GPU. Especially if
+you’re bundling a CUDA C++ library with the generated code, like we do,
+caching the result of this last step is very important. Make sure the
+<a href="http://devblogs.nvidia.com/parallelforall/cuda-pro-tip-understand-fat-binaries-jit-caching/">compute
+cache</a>
+directory is writable by your application or else it will silently fail
+and recompile every time. The code snippet below shows how we bundle a
+library with the PTX we generate.</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">checkCudaErrors</span><span class="p">(</span><span class="n">cuLinkCreate</span><span class="p">(</span><span class="n">num_options</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">option_keys</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+<span class="o">&amp;</span><span class="n">option_values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">link_state_</span><span class="p">));</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">lib_path</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
+    <span class="c1">// To create a static CUDA library:</span>
+    <span class="c1">// 1. nvcc -std=c++11 -arch=sm_30 --device-link</span>
+    <span class="c1">// -c [list of .cu files]</span>
+    <span class="c1">// 2. nvcc -std=c++11 -arch=sm_30</span>
+    <span class="c1">// -lib [list of .o files generated by step 1]</span>
+    <span class="c1">// -o [library_name.a]</span>
+    <span class="n">checkCudaErrors</span><span class="p">(</span><span class="n">cuLinkAddFile</span><span class="p">(</span><span class="n">link_state_</span><span class="p">,</span> <span class="n">CU_JIT_INPUT_LIBRARY</span><span class="p">,</span>
+                                  <span class="n">lib_path</span><span class="p">.</span><span class="n">c_str</span><span class="p">(),</span> <span class="n">num_options</span><span class="p">,</span> 
+                                  <span class="o">&amp;</span><span class="n">option_keys</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">option_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]));</span>
+<span class="p">}</span>
+<span class="n">checkCudaErrors</span><span class="p">(</span><span class="n">cuLinkAddData</span><span class="p">(</span><span class="n">link_state_</span><span class="p">,</span> <span class="n">CU_JIT_INPUT_PTX</span><span class="p">,</span>
+                              <span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">ptx</span><span class="p">),</span>
+                              <span class="n">strlen</span><span class="p">(</span><span class="n">ptx</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">num_options</span><span class="p">,</span>
+                              <span class="o">&amp;</span><span class="n">option_keys</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">option_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]));</span>
+<span class="kt">void</span><span class="o">*</span> <span class="n">cubin</span><span class="p">;</span>
+<span class="kt">size_t</span> <span class="n">cubin_size</span><span class="p">;</span>
+<span class="n">checkCudaErrors</span><span class="p">(</span><span class="n">cuLinkComplete</span><span class="p">(</span><span class="n">link_state_</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cubin</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cubin_size</span><span class="p">));</span>
+<span class="n">checkCudaErrors</span><span class="p">(</span><span class="n">cuModuleLoadDataEx</span><span class="p">(</span><span class="o">&amp;</span><span class="n">module_</span><span class="p">,</span> <span class="n">cubin</span><span class="p">,</span> <span class="n">num_options</span><span class="p">,</span>
+                                   <span class="o">&amp;</span><span class="n">option_keys</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">option_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]));</span>
+<span class="n">checkCudaErrors</span><span class="p">(</span><span class="n">cuModuleGetFunction</span><span class="p">(</span><span class="o">&amp;</span><span class="n">kernel_</span><span class="p">,</span> <span class="n">module_</span><span class="p">,</span> <span class="n">func_name</span><span class="p">.</span><span class="n">c_str</span><span class="p">()));</span>
+</code></pre></div></div>
+
+<p>There is an upper bound for the number of registers a block can use, so
+the <code class="language-plaintext highlighter-rouge">CU_JIT_THREADS_PER_BLOCK</code> option should be set to the block size.
+Failing to do so can make the translation to native code fail. We’ve had
+this issue for queries with many projected columns and a lot of threads
+per block before setting this option.</p>
+
+<p>Speaking of libraries, not all POSIX C functions are included in the
+CUDA C++ runtime libraries. In our case, we needed <code class="language-plaintext highlighter-rouge">gmtime_r</code> for the
+<code class="language-plaintext highlighter-rouge">EXTRACT</code> family of SQL functions. Fortunately, we’ve been able to port
+it from <a href="https://sourceware.org/newlib/">newlib</a> and compile it with
+NVCC.</p>
+
+<p>Just a word of caution: despite sharing the IR specification, NVVM and
+LLVM are ultimately different code-bases. Going with an older version of
+LLVM, preferably the one NVVM is based on, can help. We decided against
+that approach since the LLVM API offers a wide range of “IR surgery”
+features and we were able to fix up these mismatches, but your mileage
+may vary.</p>
+
+<p>Also, unlike LLVM IR, unaligned loads are not allowed in NVVM IR. The
+address of a load must be a multiple of the size of the type; otherwise,
+the query would crash with an invalid memory access error on the GPU,
+even if the load is not annotated as aligned.</p>
+
+<h2 id="try-mapd-today">Try MapD Today!</h2>
+
+<p>Creating a SQL JIT for GPUs is just one of the many optimizations we’ve
+implemented to make MapD as fast as possible. If you’d like to learn
+more about MapD, please visit the <a href="http://www.mapd.com">MapD website</a>,
+download our <a href="http://www.mapd.com?whitepaper">white paper</a>, or read <a href="http://www.mapd.com/blog/2015/06/04/mapd/">our
+blog</a>.</p>
+
+<h2 id="about-todd-mostak">About Todd Mostak</h2>
+
+<p><img src="http://devblogs.nvidia.com/parallelforall/wp-content/uploads/sites/3/2015/06/tmostak_avatar_1434941151-96x96.jpeg" alt="Todd
+Mostak" /></p>
+
+<p>Todd is the founder and CEO of MapD. He entered the world of data
+exploration as a researcher at Harvard, analyzing social media in the
+Middle East, and later in his work on GPU databases at MIT.</p>
+
+<h2 id="related-posts">Related Posts</h2>
+
+<ul>
+  <li><a href="http://devblogs.nvidia.com/parallelforall/next-wave-enterprise-performance-java-power-systems-nvidia-gpus/">The Next Wave of Enterprise Performance with Java, POWER Systems
+and NVIDIA
+GPUs</a></li>
+  <li><a href="http://devblogs.nvidia.com/parallelforall/bidmach-machine-learning-limit-gpus/">BIDMach: Machine Learning at the Limit with
+GPUs</a></li>
+  <li><a href="http://devblogs.nvidia.com/parallelforall/gpu-accelerated-r-cloud-teraproc-cluster-service/">GPU-Accelerated R in the Cloud with Teraproc
+Cluster-as-a-Service</a></li>
+  <li><a href="http://devblogs.nvidia.com/parallelforall/separate-compilation-linking-cuda-device-code/">Separate Compilation and Linking of CUDA C++ Device
+Code</a></li>
+</ul>
+
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

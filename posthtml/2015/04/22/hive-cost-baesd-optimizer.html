@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>HIVE 0.14 Cost Based Optimizer (CBO) Technical Overview</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>HIVE 0.14 Cost Based Optimizer (CBO) Technical Overview</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">22 April 2015</p></h4>
+<hr>
+
+<div class="post">
+<p><a href="http://sungsoo.github.com/images/hive-cbo.png"><img src="http://sungsoo.github.com/images/hive-cbo.png" alt="cbo_1" /></a></p>
+
+<hr />
+
+<h1 id="hive-014-cost-based-optimizer-cbo-technical-overview">HIVE 0.14 Cost Based Optimizer (CBO) Technical Overview</h1>
+
+<blockquote>
+  <p>CBO’s efficient execution plans, optimized techniques and performance gains</p>
+</blockquote>
+
+<p>Analysts and data scientists⎯not to mention business executives⎯want Big
+Data not for the sake of the data itself, but for the ability to work
+with and learn from that data. As other users become more savvy, they
+also want more access. But too many inefficient queries can create a
+bottleneck in the system.</p>
+
+<p>The good news is that <a href="http://hortonworks.com/hadoop/hive" title="apache hive">Apache™ Hive
+0.14</a>—the standard SQL
+interface for processing, accessing and analyzing Apache Hadoop® data
+sets—is now powered by <a href="http://calcite.incubator.apache.org/">Apache
+Calcite</a>. Calcite is an open
+source, enterprise-grade Cost-Based Logical Optimizer (CBO) and query
+execution framework.</p>
+
+<p>The main goal of a CBO is to generate efficient execution plans by
+examining the tables and conditions specified in the query, ultimately
+cutting down on query execution time and reducing resource utilization.
+Calcite has an efficient plan pruner that can select the cheapest query
+plan. All SQL queries are converted by Hive to a physical operator tree,
+optimized and converted to Tez/MapReduce jobs, then executed on the
+Hadoop cluster. This conversion includes SQL parsing and transforming,
+as well as operator-tree optimization.</p>
+
+<p>Query optimizers tend to have the biggest performance impact in a data
+warehouse system, since generating the right (or wrong) execution plan
+could mean the difference of seconds, minutes, or even hours in query
+execution time.</p>
+
+<p><a href="http://hortonworks.com/blog/cost-based-optimizer-makes-apache-hive-0-14-more-than-2-5x-faster/">Performance testing of Hive 0.14 shows an average speedup of 2.5
+times</a>
+for TPC-DS benchmarked queries against a 30TB TPC-DS dataset. In our
+tests, total workload runtime shrank from 20.6 to 9 hours. In the
+current world of cloud computing, this improved performance directly
+translates into reduced operating costs.</p>
+
+<p>In this post, we will dig into how this CBO works, including the
+background and challenges of query optimization, such as cardinality
+estimation and join ordering. We’ll also provide in-depth analysis of
+TPC-DS 30TB results.</p>
+
+<h2 id="the-process-of-query-optimization">The process of query optimization</h2>
+
+<p>Within a CBO, a query undergoes four distinct phases of examination and
+evaluation:</p>
+
+<ol>
+  <li><strong>Parse and validate query</strong>
+The query is parsed, assuming the query is valid; the output of this
+phase is a logical tree (abstract syntax tree) that represents the
+operations that the query must perform, such as reading a particular
+table or performing an inner join.</li>
+  <li><strong>Generate possible execution plans</strong>
+Using the logical tree created in step one, the CBO will produce
+other logically equivalent plans that can also get to the answers
+you’re looking for, by applying equivalence rules. The current model
+favors bushy plans (for reasons explained in more detail below) and
+is execution-engine agnostic.</li>
+  <li><strong>For each logically equivalent plan, assign a cost</strong>
+The CBO will use number of distinct values-based heuristics to
+estimate selectivity and cardinality of each operator (to diminish
+the impact of inaccurate estimates during optimization) to calculate
+cost.</li>
+  <li><strong>Select the plan with the lowest estimated cost</strong></li>
+</ol>
+
+<h2 id="query-optimizer-challenges">Query optimizer challenges</h2>
+
+<p>Two of the biggest difficulties to overcome in creating an efficient
+query are join optimization and table size when using <strong>table</strong> and
+<strong>column statistics</strong>. First, some definitions—then we’ll look at how
+Hive 0.14 CBO deals with these issues.</p>
+
+<p>A <strong>join</strong> combines rows from two tables by using the values of fields
+common to each of them. The order used to join tables greatly influences
+the intermediary data set size, which impacts performance. The number of
+possible join orders increases exponentially with the number of tables
+involved. Coming up with all possible join orders is not practically
+feasible. Hence, one of the main benefits of the query optimizer is the
+ability to find the most efficient join order. The join order in the
+execution plan is not defined by the order of the tables in the query.</p>
+
+<p>The query optimizer considers two different types of trees: <strong>left
+deep</strong>and <strong>bushy</strong><br />
+ <strong>Left deep:</strong> All internal nodes of a left-deep tree have at least one
+leaf as a child. This is simple to implement, but doesn’t produce
+efficient plans for <a href="http://en.wikipedia.org/wiki/Snowflake_schema">snowflake
+schemas</a>.</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/cbo_1.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/cbo_1.png" alt="cbo_1" /></a></p>
+
+<p><strong>Bushy trees:</strong> When a join operates on two results of joins, as
+opposed to always having one table scan as input, you get a bushy tree.
+The join tree can take any shape. It is useful for snowflake schemas, as
+its search space is a lot bigger compared to left-deep trees. Bushy join
+trees also tend to contain subtrees that reduce intermediary data set
+size, and their joins with other subtrees tend to be more efficient than
+joins in the left-deep tree.</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/cbo_2.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/cbo_2.png" alt="cbo_2" /></a></p>
+
+<p>The CBO uses column and table statistics stored in the Hive metastore to
+create query plans that improve query performance. Statistics for the
+CBO are objects that contain information about the columns and
+partitions of a table. The CBO uses these statistics to estimate the
+cardinality and number of distinct values, etc. These estimates then
+help generate highly efficient query plans.</p>
+
+<p>Currently, the CBO uses and maintains table cardinality and boundary
+statistics: min, max, avg, and number of distinct values. In the absence
+of histograms, cardinality can be assumed to follow uniform
+distribution.</p>
+
+<p>Plans generated by the CBO are only as good as the quality of the
+statistics, so having up-to-date statistics is crucial. In Hive 0.14,
+the statistics creation DDL (data definition language) has been
+simplified and performance has vastly
+<a href="https://cwiki.apache.org/confluence/display/Hive/Column+Statistics+in+Hive">improved</a>.</p>
+
+<h2 id="new-cbo-optimization-in-hive-014">New CBO optimization in Hive 0.14</h2>
+
+<p>In Hive 0.14, we introduced new query optimization. Let’s take a look at
+these techniques and their impact on query optimization.</p>
+
+<ol>
+  <li>Join ordering optimization</li>
+  <li>Bushy join support</li>
+  <li>Join simplification</li>
+</ol>
+
+<h2 id="1-join-ordering-optimization">1. Join ordering optimization</h2>
+
+<p>Join ordering optimization plays a central role in the processing of
+relational database queries. Our goal is to find a join order with the
+lowest cost. The initial step is for the CBO to find the join order that
+results in the biggest reduction of intermediary rows as early as
+possible in the plan tree.</p>
+
+<p>In Hive 0.14, the CBO uses boundary statistics to compute operator
+cardinality and join selectivity. Based on this information, the most
+efficient join order is selected.</p>
+
+<p>To better understand the impact of join ordering, let’s look at TPC-DS
+Q3:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">select</span> 
+    <span class="n">dt</span><span class="p">.</span><span class="n">d_year</span><span class="p">,</span>
+    <span class="n">item</span><span class="p">.</span><span class="n">i_brand_id</span> <span class="n">brand_id</span><span class="p">,</span>
+    <span class="n">item</span><span class="p">.</span><span class="n">i_brand</span> <span class="n">brand</span><span class="p">,</span>
+    <span class="k">sum</span><span class="p">(</span><span class="n">ss_ext_sales_price</span><span class="p">)</span> <span class="n">sum_agg</span>
+<span class="k">from</span>
+    <span class="n">date_dim</span> <span class="n">dt</span><span class="p">,</span>
+    <span class="n">store_sales</span><span class="p">,</span>
+    <span class="n">item</span>
+<span class="k">where</span>
+    <span class="n">dt</span><span class="p">.</span><span class="n">d_date_sk</span> <span class="o">=</span> <span class="n">store_sales</span><span class="p">.</span><span class="n">ss_sold_date_sk</span>
+        <span class="k">and</span> <span class="n">store_sales</span><span class="p">.</span><span class="n">ss_item_sk</span> <span class="o">=</span> <span class="n">item</span><span class="p">.</span><span class="n">i_item_sk</span>
+        <span class="k">and</span> <span class="n">item</span><span class="p">.</span><span class="n">i_manufact_id</span> <span class="o">=</span> <span class="mi">436</span>
+        <span class="k">and</span> <span class="n">dt</span><span class="p">.</span><span class="n">d_moy</span> <span class="o">=</span> <span class="mi">12</span>
+<span class="k">group</span> <span class="k">by</span> <span class="n">dt</span><span class="p">.</span><span class="n">d_year</span> <span class="p">,</span> <span class="n">item</span><span class="p">.</span><span class="n">i_brand</span> <span class="p">,</span> <span class="n">item</span><span class="p">.</span><span class="n">i_brand_id</span>
+<span class="k">order</span> <span class="k">by</span> <span class="n">dt</span><span class="p">.</span><span class="n">d_year</span> <span class="p">,</span> <span class="n">sum_agg</span> <span class="k">desc</span> <span class="p">,</span> <span class="n">brand_id</span>
+<span class="k">limit</span> <span class="mi">10</span>
+</code></pre></div></div>
+
+<p>The query above involves an equi-join between a fact table—store_sales
+(82B)—and two dimension tables, date_dim (73K) and item (462K). Each of
+the dimension tables has a filter, achieving the goal of reducing
+intermediary data as early as possible. The CBO should first join with
+the table that is most likely to reduce rows.</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/cbo_3.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/cbo_3.png" alt="Graph 1: join graph for TPC-DS
+Q3" /></a></p>
+
+<p>Graph 1: join graph for TPC-DS Q3</p>
+
+<p>By analyzing min, max, number of distinct values (NDV) and row count for
+the join columns, the CBO is able to deduce that the joins involved are
+one-to-many joins⎯and that selectivity on the dimension table is likely
+to translate to a similar reduction of rows when joined with the fact
+table. Using that information, the CBO will order joins based on the
+estimated selectivity.</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/Screen-Shot-2015-03-02-at-8.39.12-AM.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/Screen-Shot-2015-03-02-at-8.39.12-AM.png" alt="Table 1: dimension table cardinality and selectivity for TPC-DS
+Q3" /></a></p>
+
+<p>Table 1: dimension table cardinality and selectivity for TPC-DS Q3</p>
+
+<p>Table 1 lists various statistics: the cardinality of each dimension
+table, the cardinality after applying filters, and selectivity, which is
+calculated by dividing the row count after filter by the row count
+before filter.</p>
+
+<h2 id="join-ordering-optimization-results">Join ordering optimization: results</h2>
+
+<p>The join trees in Graph 2 reflect the join tree generated by the Hive
+Explain Plan.</p>
+
+<h3 id="cbo-on">CBO ON</h3>
+
+<p>The CBO analyzes the join selectivity of item and date_dim. Using
+statistics, the CBO is able to deduce that joining store_sales with the
+item is more selective than joining store_sales with date_dim.</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/cbo_4.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/cbo_4.png" alt="Graph 2: join tree for TPC-DS Q3 with CBO
+ON" /></a></p>
+
+<p>Graph 2: join tree for TPC-DS Q3 with CBO ON</p>
+
+<p>As a result, the join reduces the number of rows coming out of
+store_sales from 82 billion to 82 million. Next, a join with date_dim
+follows this join, with the less selective join.</p>
+
+<h3 id="cbo-off">CBO OFF</h3>
+
+<p>When the CBO is turned off, the following join tree is produced:</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/cbo_5.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/cbo_5.png" alt="Graph 3: join tree for TPC-DS Q3 with CBO
+OFF" /></a></p>
+
+<p>Graph 3: join tree for TPC-DS Q3 with CBO OFF</p>
+
+<p>In this case, the join order follows the order of tables in the query,
+and the join tree joins store_sales with date_dim first, which is the
+least selective join in the query. As a result, we end up with 14
+billion rows of intermediary data without the CBO, compared to 82
+million with the CBO enabled.</p>
+
+<h2 id="join-ordering-optimization-interpreting-the-results">Join ordering optimization: interpreting the results</h2>
+
+<p>To understand the impact of the change in join order, the same query was
+run with CBO ON and then with CBO OFF. The results showed that the
+execution plan created by the CBO resulted in a 60% improvement in
+response time and CPU utilization.</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/cbo_6.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/cbo_6.png" alt="Graph 4: elapsed time and CPU for TPC-DS Q3 with CBO ON vs.
+OFF" /></a></p>
+
+<p>Graph 4: elapsed time and CPU for TPC-DS Q3 with CBO ON vs. OFF</p>
+
+<p>Table 2 shows how optimal join ordering impacts query execution, in
+which CPU response time is cut by 50% and intermediary rows are reduced
+161 times.</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/Screen-Shot-2015-03-02-at-8.58.36-AM.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/Screen-Shot-2015-03-02-at-8.58.36-AM.png" alt="Table 2: elapsed time and CPU for TPC-DS Q3 with CBO ON vs.
+OFF" /></a></p>
+
+<p>Table 2: elapsed time and CPU for TPC-DS Q3 with CBO ON vs. OFF</p>
+
+<h2 id="2-bushy-join-support">2. Bushy join support</h2>
+
+<p><a href="http://www.google.com/url?q=http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FStar_schema&amp;sa=D&amp;sntz=1&amp;usg=AFQjCNG9YMbr5o-9RHQZSACJC6HZjgMJMg">Star</a>
+and
+<a href="http://www.google.com/url?q=http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FSnowflake_schema&amp;sa=D&amp;sntz=1&amp;usg=AFQjCNGdxmEci1MXtzL9vmgKlo1gAObG2A">snowflake</a>
+schemas are often found in data warehousing systems. These schemas are
+represented by centralized fact tables connected to multiple dimensions,
+splitting up data into dimension tables and avoiding redundancy by
+moving commonly repeating groups of data into new tables. The tradeoff
+is additional complexity in source query joins.</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/cbo_7.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/cbo_7.png" alt="Image 1: snowflake schema
+example" /></a></p>
+
+<p>Image 1: snowflake schema example</p>
+
+<p>For such schemas, there are two reasons a bushy tree outperforms any
+linear “deep” tree:</p>
+
+<ol>
+  <li>Parallel execution of independent plan fragments</li>
+  <li>Reduced intermediary data size</li>
+</ol>
+
+<p>To better understand the impact of join ordering, consider TPC-DS query
+17:</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">select</span> 
+    <span class="n">i_item_id</span><span class="p">,</span>
+    <span class="n">i_item_desc</span><span class="p">,</span>
+    <span class="n">s_state</span><span class="p">,</span>
+    <span class="k">count</span><span class="p">(</span><span class="n">ss_quantity</span><span class="p">)</span> <span class="k">as</span> <span class="n">store_sales_quantitycount</span><span class="p">,</span>
+    <span class="k">avg</span><span class="p">(</span><span class="n">ss_quantity</span><span class="p">)</span> <span class="k">as</span> <span class="n">store_sales_quantityave</span><span class="p">,</span>
+    <span class="n">stddev_samp</span><span class="p">(</span><span class="n">ss_quantity</span><span class="p">)</span> <span class="k">as</span> <span class="n">store_sales_quantitystdev</span><span class="p">,</span>
+    <span class="n">stddev_samp</span><span class="p">(</span><span class="n">ss_quantity</span><span class="p">)</span> <span class="o">/</span> <span class="k">avg</span><span class="p">(</span><span class="n">ss_quantity</span><span class="p">)</span> <span class="k">as</span> <span class="n">store_sales_quantitycov</span><span class="p">,</span>
+    <span class="k">count</span><span class="p">(</span><span class="n">sr_return_quantity</span><span class="p">)</span> <span class="k">as</span> <span class="n">store_returns_quantitycount</span><span class="p">,</span>
+    <span class="k">avg</span><span class="p">(</span><span class="n">sr_return_quantity</span><span class="p">)</span> <span class="k">as</span> <span class="n">store_returns_quantityave</span><span class="p">,</span>
+    <span class="n">stddev_samp</span><span class="p">(</span><span class="n">sr_return_quantity</span><span class="p">)</span> <span class="k">as</span> <span class="n">store_returns_quantitystdev</span><span class="p">,</span>
+    <span class="n">stddev_samp</span><span class="p">(</span><span class="n">sr_return_quantity</span><span class="p">)</span> <span class="o">/</span> <span class="k">avg</span><span class="p">(</span><span class="n">sr_return_quantity</span><span class="p">)</span> <span class="k">as</span> <span class="n">store_returns_quantitycov</span><span class="p">,</span>
+    <span class="k">count</span><span class="p">(</span><span class="n">cs_quantity</span><span class="p">)</span> <span class="k">as</span> <span class="n">catalog_sales_quantitycount</span><span class="p">,</span>
+    <span class="k">avg</span><span class="p">(</span><span class="n">cs_quantity</span><span class="p">)</span> <span class="k">as</span> <span class="n">catalog_sales_quantityave</span><span class="p">,</span>
+    <span class="n">stddev_samp</span><span class="p">(</span><span class="n">cs_quantity</span><span class="p">)</span> <span class="o">/</span> <span class="k">avg</span><span class="p">(</span><span class="n">cs_quantity</span><span class="p">)</span> <span class="k">as</span> <span class="n">catalog_sales_quantitystdev</span><span class="p">,</span>
+    <span class="n">stddev_samp</span><span class="p">(</span><span class="n">cs_quantity</span><span class="p">)</span> <span class="o">/</span> <span class="k">avg</span><span class="p">(</span><span class="n">cs_quantity</span><span class="p">)</span> <span class="k">as</span> <span class="n">catalog_sales_quantitycov</span>
+<span class="k">from</span>
+    <span class="n">store_sales</span><span class="p">,</span>
+    <span class="n">store_returns</span><span class="p">,</span>
+    <span class="n">catalog_sales</span><span class="p">,</span>
+    <span class="n">date_dim</span> <span class="n">d1</span><span class="p">,</span>
+    <span class="n">date_dim</span> <span class="n">d2</span><span class="p">,</span>
+    <span class="n">date_dim</span> <span class="n">d3</span><span class="p">,</span>
+    <span class="n">store</span><span class="p">,</span>
+    <span class="n">item</span>
+<span class="k">where</span>
+    <span class="n">d1</span><span class="p">.</span><span class="n">d_quarter_name</span> <span class="o">=</span> <span class="s1">'2000Q1'</span>
+        <span class="k">and</span> <span class="n">d1</span><span class="p">.</span><span class="n">d_date_sk</span> <span class="o">=</span> <span class="n">ss_sold_date_sk</span>
+        <span class="k">and</span> <span class="n">i_item_sk</span> <span class="o">=</span> <span class="n">ss_item_sk</span>
+        <span class="k">and</span> <span class="n">s_store_sk</span> <span class="o">=</span> <span class="n">ss_store_sk</span>
+        <span class="k">and</span> <span class="n">ss_customer_sk</span> <span class="o">=</span> <span class="n">sr_customer_sk</span>
+        <span class="k">and</span> <span class="n">ss_item_sk</span> <span class="o">=</span> <span class="n">sr_item_sk</span>
+        <span class="k">and</span> <span class="n">ss_ticket_number</span> <span class="o">=</span> <span class="n">sr_ticket_number</span>
+        <span class="k">and</span> <span class="n">sr_returned_date_sk</span> <span class="o">=</span> <span class="n">d2</span><span class="p">.</span><span class="n">d_date_sk</span>
+        <span class="k">and</span> <span class="n">d2</span><span class="p">.</span><span class="n">d_quarter_name</span> <span class="k">in</span> <span class="p">(</span><span class="s1">'2000Q1'</span> <span class="p">,</span> <span class="s1">'2000Q2'</span><span class="p">,</span> <span class="s1">'2000Q3'</span><span class="p">)</span>
+        <span class="k">and</span> <span class="n">sr_customer_sk</span> <span class="o">=</span> <span class="n">cs_bill_customer_sk</span>
+        <span class="k">and</span> <span class="n">sr_item_sk</span> <span class="o">=</span> <span class="n">cs_item_sk</span>
+        <span class="k">and</span> <span class="n">cs_sold_date_sk</span> <span class="o">=</span> <span class="n">d3</span><span class="p">.</span><span class="n">d_date_sk</span>
+        <span class="k">and</span> <span class="n">d3</span><span class="p">.</span><span class="n">d_quarter_name</span> <span class="k">in</span> <span class="p">(</span><span class="s1">'2000Q1'</span> <span class="p">,</span> <span class="s1">'2000Q2'</span><span class="p">,</span> <span class="s1">'2000Q3'</span><span class="p">)</span>
+<span class="k">group</span> <span class="k">by</span> <span class="n">i_item_id</span> <span class="p">,</span> <span class="n">i_item_desc</span> <span class="p">,</span> <span class="n">s_state</span>
+<span class="k">order</span> <span class="k">by</span> <span class="n">i_item_id</span> <span class="p">,</span> <span class="n">i_item_desc</span> <span class="p">,</span> <span class="n">s_state</span>
+<span class="k">limit</span> <span class="mi">100</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>The query above involves three fact tables: store_sales (82B),
+store_returns (8B) and catalog_sales (43B). It also involves five
+dimension tables: date_dim d1 (73K), date_dim d2 (73K), date_dim d3
+(73K), store (1.7K) and item (462K).</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/cbo_8.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/cbo_8.png" alt="Graph 5: join graph for TPC-DS
+Q17" /></a></p>
+
+<p>Graph 5: join graph for TPC-DS Q17</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/Screen-Shot-2015-03-02-at-9.05.52-AM.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/Screen-Shot-2015-03-02-at-9.05.52-AM.png" alt="Table 3: dimension table cardinality and selectivity for TPC-DS
+Q17" /></a></p>
+
+<p>Table 3: dimension table cardinality and selectivity for TPC-DS Q17</p>
+
+<p>From Table 3, it is clear that joining date_dim d1, d2 and d3 should
+result in a reduction of intermediary rows in the plan, while dimension
+tables of store and item will provide no reduction in rows, as they have
+a selectivity of one (1).</p>
+
+<h2 id="bushy-join-support-results">Bushy join support: results</h2>
+
+<h3 id="cbo-on-1">CBO ON</h3>
+
+<p>Similar to our join ordering optimization scenario, the CBO creates an
+optimal join graph that reduces intermediary data size. But, in this
+case, it is able to create a bushy tree instead of a left-deep tree.</p>
+
+<p>The join tree below shows the CBO will join the fact tables with their
+corresponding date_dim table first, before completing any fact-to-fact
+joins. The CBO is also able to delay the join of store_sales with the
+store and item tables. Since the joins with both tables have a
+selectivity of one (1), the CBO will order the joins such that the
+selective joins are handled first, followed by the less selective ones.</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/cbo_9.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/cbo_9.png" alt="Graph 6: join tree for TPC-DS Q17 with CBO
+ON" /></a></p>
+
+<p>Graph 6: join tree for TPC-DS Q17 with CBO ON</p>
+
+<p>The join tree in Graph 6 shows how the CBO joins each of the fact tables
+with the most selective corresponding table. This avoids large
+fact-to-fact joins, which require expensive shuffles. Even after joining
+with date_dim, the CBO is able to order joins efficiently—as seen in
+Join #4, which reduces 2.5 billion + 1.2 billion to just 55 million
+rows.</p>
+
+<p>Store and item tables have a selectivity of one (1), so they are joined
+last.</p>
+
+<p>There is no point in needing to pass billions of rows through a join
+operator that will qualify all of the rows.</p>
+
+<h3 id="cbo-off-1">CBO OFF</h3>
+
+<p>Graph 7 shows the join tree with the CBO OFF. Notice how the join tree
+resembles a left-deep tree. Joins #1 and #2 are large fact-to-fact
+joins⎯so store_sales, store_returns and catalog_sales are joined
+together, producing lots of intermediate data. Joins #1 and #2 are
+executed as shuffle joins when both relations are shuffled on the join
+keys.</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/cbo_10.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/cbo_10.png" alt="Graph 7: join tree for TPC-DS Q17 with CBO
+OFF" /></a></p>
+
+<p>Graph 7: join tree for TPC-DS Q17 with CBO OFF</p>
+
+<h2 id="bushy-join-support-interpreting-the-results">Bushy join support: interpreting the results</h2>
+
+<p>The CBO generates a bushy tree that reduces intermediary data set size.
+The efficient join order produced by the CBO allows the physical
+optimizer to reduce the number of rows involved in shuffle joins. This
+is achieved by creating a map join of the fact table with the
+corresponding date_dim table, before doing the joins between
+store_sales, store_returns and catalog_sales.</p>
+
+<p>Table 4 summarizes the impact of the efficient join tree produced by the
+CBO. It shows a roughly sevenfold speedup in response time, plus a
+sevenfold reduction in CPU utilization, while the data shuffled over the
+network is reduced from 1.3 TB to just 78 GB.</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/Screen-Shot-2015-03-02-at-9.13.47-AM.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/Screen-Shot-2015-03-02-at-9.13.47-AM.png" alt="Table 4: elapsed time, intermediate rows and CPU for TPC-DS Q17 with
+CBO ON vs.
+OFF" /></a></p>
+
+<p>Table 4: elapsed time, intermediate rows and CPU for TPC-DS Q17 with CBO
+ON vs. OFF</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/cbo_11.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/cbo_11.png" alt="Graph 8: elapsed time and CPU for TPC-DS Q17 with CBO ON vs.
+OFF" /></a></p>
+
+<p>Graph 8: elapsed time and CPU for TPC-DS Q17 with CBO ON vs. OFF</p>
+
+<h2 id="3-join-simplification">3. Join simplification</h2>
+
+<p>Among the new features offered by Hive 0.14 CBO is join predicate
+simplification. The CBO is able to identify common join predicates from
+the conjunction and disjunction clause, plus create an implied join
+predicate, avoiding costly cross-product joins.</p>
+
+<p>An example for this optimization is TPC-DS Q48, which clearly
+illustrates this issue. Notice the join predicates in bold between
+customer_demographics x store_sales and store_sales x
+customer_address.</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">select</span> 
+    <span class="k">sum</span><span class="p">(</span><span class="n">ss_quantity</span><span class="p">)</span>
+<span class="k">from</span>
+    <span class="n">store_sales</span><span class="p">,</span>
+    <span class="n">store</span><span class="p">,</span>
+    <span class="n">customer_demographics</span><span class="p">,</span>
+    <span class="n">customer_address</span><span class="p">,</span>
+    <span class="n">date_dim</span>
+<span class="k">where</span>
+        <span class="n">store</span><span class="p">.</span><span class="n">s_store_sk</span> <span class="o">=</span> <span class="n">store_sales</span><span class="p">.</span><span class="n">ss_store_sk</span>
+        <span class="k">and</span> <span class="n">store_sales</span><span class="p">.</span><span class="n">ss_sold_date_sk</span> <span class="o">=</span> <span class="n">date_dim</span><span class="p">.</span><span class="n">d_date_sk</span>
+        <span class="k">and</span> <span class="n">d_year</span> <span class="o">=</span> <span class="mi">1998</span>
+        <span class="k">and</span> <span class="p">((</span>
+<span class="n">customer_demographics</span><span class="p">.</span><span class="n">cd_demo_sk</span> <span class="o">=</span> <span class="n">store_sales</span><span class="p">.</span><span class="n">ss_cdemo_sk</span>
+        <span class="k">and</span> <span class="n">cd_marital_status</span> <span class="o">=</span> <span class="s1">'M'</span>
+        <span class="k">and</span> <span class="n">cd_education_status</span> <span class="o">=</span> <span class="s1">'4 yr Degree'</span>
+        <span class="k">and</span> <span class="n">ss_sales_price</span> <span class="k">between</span> <span class="mi">100</span><span class="p">.</span><span class="mi">00</span> <span class="k">and</span> <span class="mi">150</span><span class="p">.</span><span class="mi">00</span><span class="p">)</span>
+        <span class="k">or</span> <span class="p">(</span>
+<span class="n">customer_demographics</span><span class="p">.</span><span class="n">cd_demo_sk</span> <span class="o">=</span> <span class="n">store_sales</span><span class="p">.</span><span class="n">ss_cdemo_sk</span>
+        <span class="k">and</span> <span class="n">cd_marital_status</span> <span class="o">=</span> <span class="s1">'M'</span>
+        <span class="k">and</span> <span class="n">cd_education_status</span> <span class="o">=</span> <span class="s1">'4 yr Degree'</span>
+        <span class="k">and</span> <span class="n">ss_sales_price</span> <span class="k">between</span> <span class="mi">50</span><span class="p">.</span><span class="mi">00</span> <span class="k">and</span> <span class="mi">100</span><span class="p">.</span><span class="mi">00</span><span class="p">)</span>
+        <span class="k">or</span> <span class="p">(</span>
+<span class="n">customer_demographics</span><span class="p">.</span><span class="n">cd_demo_sk</span> <span class="o">=</span> <span class="n">store_sales</span><span class="p">.</span><span class="n">ss_cdemo_sk</span>
+        <span class="k">and</span> <span class="n">cd_marital_status</span> <span class="o">=</span> <span class="s1">'M'</span>
+        <span class="k">and</span> <span class="n">cd_education_status</span> <span class="o">=</span> <span class="s1">'4 yr Degree'</span>
+        <span class="k">and</span> <span class="n">ss_sales_price</span> <span class="k">between</span> <span class="mi">150</span><span class="p">.</span><span class="mi">00</span> <span class="k">and</span> <span class="mi">200</span><span class="p">.</span><span class="mi">00</span><span class="p">))</span>
+        <span class="k">and</span> <span class="p">((</span>
+<span class="n">store_sales</span><span class="p">.</span><span class="n">ss_addr_sk</span> <span class="o">=</span> <span class="n">customer_address</span><span class="p">.</span><span class="n">ca_address_sk</span>
+        <span class="k">and</span> <span class="n">ca_country</span> <span class="o">=</span> <span class="s1">'United States'</span>
+        <span class="k">and</span> <span class="n">ca_state</span> <span class="k">in</span> <span class="p">(</span><span class="s1">'KY'</span> <span class="p">,</span> <span class="s1">'GA'</span><span class="p">,</span> <span class="s1">'NM'</span><span class="p">)</span>
+        <span class="k">and</span> <span class="n">ss_net_profit</span> <span class="k">between</span> <span class="mi">0</span> <span class="k">and</span> <span class="mi">2000</span><span class="p">)</span>
+        <span class="k">or</span> <span class="p">(</span>
+<span class="n">store_sales</span><span class="p">.</span><span class="n">ss_addr_sk</span> <span class="o">=</span> <span class="n">customer_address</span><span class="p">.</span><span class="n">ca_address_sk</span>
+        <span class="k">and</span> <span class="n">ca_country</span> <span class="o">=</span> <span class="s1">'United States'</span>
+        <span class="k">and</span> <span class="n">ca_state</span> <span class="k">in</span> <span class="p">(</span><span class="s1">'MT'</span> <span class="p">,</span> <span class="s1">'OR'</span><span class="p">,</span> <span class="s1">'IN'</span><span class="p">)</span>
+        <span class="k">and</span> <span class="n">ss_net_profit</span> <span class="k">between</span> <span class="mi">150</span> <span class="k">and</span> <span class="mi">3000</span><span class="p">)</span>
+        <span class="k">or</span> <span class="p">(</span>
+<span class="n">store_sales</span><span class="p">.</span><span class="n">ss_addr_sk</span> <span class="o">=</span> <span class="n">customer_address</span><span class="p">.</span><span class="n">ca_address_sk</span>
+        <span class="k">and</span> <span class="n">ca_country</span> <span class="o">=</span> <span class="s1">'United States'</span>
+        <span class="k">and</span> <span class="n">ca_state</span> <span class="k">in</span> <span class="p">(</span><span class="s1">'WI'</span> <span class="p">,</span> <span class="s1">'MO'</span><span class="p">,</span> <span class="s1">'WV'</span><span class="p">)</span>
+        <span class="k">and</span> <span class="n">ss_net_profit</span> <span class="k">between</span> <span class="mi">50</span> <span class="k">and</span> <span class="mi">25000</span><span class="p">))</span>
+</code></pre></div></div>
+
+<h2 id="join-simplification-results-and-interpretation">Join simplification: results and interpretation</h2>
+
+<h3 id="cbo-on-2">CBO ON</h3>
+
+<p>The CBO is able to identify that the join predicates
+(customer_demographics x store_sales and store_sales x
+customer_address) are duplicated in the three disjunctions. The CBO
+also simplifies the join tree, avoiding a cross product.<br />
+ Additionally, the CBO improves performance by simplifying some of the
+table predicates, while also pushing them down to scan further and
+reducing the intermediary data size.</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/Screen-Shot-2015-03-02-at-9.18.44-AM.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/Screen-Shot-2015-03-02-at-9.18.44-AM.png" alt="Table 5: table cardinality and selectivity after simplifying and
+pushing down the column predicates for Q48 with CBO
+ON" /></a></p>
+
+<p>Table 5: table cardinality and selectivity after simplifying and pushing
+down the column predicates for Q48 with CBO ON</p>
+
+<p><a href="http://hortonworks.com/wp-content/uploads/2015/03/cbo_12.png"><img src="http://hortonworks.com/wp-content/uploads/2015/03/cbo_12.png" alt="Graph 9: join tree for TPC-DS Q48 with CBO
+ON" /></a></p>
+
+<p>Graph 9: join tree for TPC-DS Q48 with CBO ON</p>
+
+<p>The CBO is able to order joins efficiently while avoiding a
+cross-product join.</p>
+
+<h3 id="cbo-off-2">CBO OFF</h3>
+
+<p>With the CBO disabled, a cross product generated for store_sales x
+customer_demographics x customer_address (without any filters)
+translates to 805 billion x 1.9 million x 40 million = 6.1903E+24 rows.
+Obviously, this query is not going to finish in a reasonable amount of
+time.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>In this post, we’ve highlighted some of the new query optimizations
+introduced in Hive 0.14 via Calcite, covering join ordering
+optimization, bushy join trees, and cross-product elimination. It’s
+clear that users can expect striking performance gains in query planning
+by leveraging the Cost-Based Logical Optimizer in Hive 0.14.</p>
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

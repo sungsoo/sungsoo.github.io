@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>C++ Arena Allocation Guide</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>C++ Arena Allocation Guide</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">19 February 2016</p></h4>
+<hr>
+
+<div class="post">
+<h2 id="article-source">Article Source</h2>
+<ul>
+  <li>Title: <a href="https://developers.google.com/protocol-buffers/docs/reference/arenas">C++ Arena Allocation Guide</a></li>
+</ul>
+
+<hr />
+
+<h1 id="c-arena-allocation-guide">C++ Arena Allocation Guide</h1>
+
+<p>Arena allocation is a C++-only feature that helps you optimize your
+memory usage and improve performance when working with protocol buffers.
+This page describes exactly what C++ code the protocol buffer compiler
+generates in addition to the code described in the <a href="https://developers.google.com/protocol-buffers/docs/reference/cpp-generated">C++ Generated Code
+Guide</a>
+when arena allocation is enabled. It assumes that you are familiar with
+the material in the <a href="https://developers.google.com/protocol-buffers/docs/proto">language
+guide</a> and
+the <a href="https://developers.google.com/protocol-buffers/docs/reference/cpp-generated">C++ Generated Code
+Guide</a>.</p>
+
+<h2 id="why-use-arena-allocation">Why use arena allocation?</h2>
+
+<p>Memory allocation and deallocation constitutes a significant fraction of
+CPU time spent in protocol buffers code. By default, protocol buffers
+performs heap allocations for each message object, each of its
+subobjects, and several field types, such as strings. These allocations
+occur in bulk when parsing a message and when building new messages in
+memory, and associated deallocations happen when messages and their
+subobject trees are freed.</p>
+
+<p>Arena-based allocation has been designed to reduce this performance
+cost. With arena allocation, new objects are allocated out of a large
+piece of preallocated memory called the arena. Objects can all be freed
+at once by discarding the entire arena, ideally without running
+destructors of any contained object (though an arena can still maintain
+a “destructor list” when required). This makes object allocation faster
+by reducing it to a simple pointer increment, and makes deallocation
+almost free. Arena allocation also provides greater cache efficiency:
+when messages are parsed, they are more likely to be allocated in
+continuous memory, which makes traversing messages more likely to hit
+hot cache lines.</p>
+
+<p>To get these benefits you’ll need to be aware of object lifetimes and
+find a suitable granularity at which to use arenas (for servers, this is
+often per-request). You can find out more about how to get the most from
+arena allocation in <a href="#usage">Usage patterns and best practices</a>.</p>
+
+<h2 id="getting-started">Getting started</h2>
+
+<p>You enable arena allocation on a per-<code class="language-plaintext highlighter-rouge">.proto</code> basis. To do this, add the
+following <code class="language-plaintext highlighter-rouge">option</code> to your <code class="language-plaintext highlighter-rouge">.proto</code> file:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">option</span> <span class="n">cc_enable_arenas</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>This tells the protocol buffer compiler to generate the additional code
+you need to use arena allocation for the messages in your file, as used
+in the following example.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include</span> <span class="cpf">"net/proto2/public/arena.h"</span><span class="cp">
+</span><span class="p">{</span>
+  <span class="n">proto2</span><span class="o">::</span><span class="n">Arena</span> <span class="n">arena</span><span class="p">;</span>
+  <span class="n">MyMessage</span><span class="o">*</span> <span class="n">message</span> <span class="o">=</span> <span class="n">proto2</span><span class="o">::</span><span class="n">Arena</span><span class="o">::</span><span class="n">CreateMessage</span><span class="o">&lt;</span><span class="n">MyMessage</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">arena</span><span class="p">);</span>
+  <span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The message object created by <code class="language-plaintext highlighter-rouge">CreateMessage()</code> will exist for as long
+as <code class="language-plaintext highlighter-rouge">arena</code> exists, and you should not <code class="language-plaintext highlighter-rouge">delete</code> the returned message
+pointer. All of the message object’s internal storage (with a few
+exceptions^<span id="ref1"><a href="#fn1">1</a></span>^) and submessages (for
+example, submessages in a repeated field within <code class="language-plaintext highlighter-rouge">MyMessage</code>) are
+allocated on the arena as well.</p>
+
+<p>For the most part, the rest of your code will be the same as if you
+weren’t using arena allocation.</p>
+
+<p>We’ll look at the arena API in more detail in the following sections,
+and you can see a more extensive <a href="#example">example</a> at the end of the
+document.</p>
+
+<p>^1.\ Currently,\ string\ fields\ store\ their\ data\ on\ the\ heap\ even\ when\ the\ containing\ message\ is\ on\ the\ arena.\ Unknown\ fields\ are\ also\ heap-allocated.<a href="#ref1">↩</a>^</p>
+
+<h2 id="arena-class-api">Arena class API</h2>
+
+<p>You create message objects on the arena using the
+<a href="https://developers.google.com/protocol-buffers/docs/reference/cpp/google.protobuf.arena.html"><code class="language-plaintext highlighter-rouge">proto2::Arena</code></a>
+class. This class implements the following public methods.</p>
+
+<h3 id="constructors">Constructors</h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Arena()</code>: Creates a new arena with default parameters, tuned for
+average use cases.</li>
+  <li><code class="language-plaintext highlighter-rouge">Arena(const ArenaOptions&amp; options)</code>: Creates a new arena that uses
+the specified allocation options. The options available in
+<a href="https://developers.google.com"><code class="language-plaintext highlighter-rouge">ArenaOptions</code></a> include the ability
+to use an initial block of user-provided memory for allocations
+before resorting to the system allocator, control over the initial
+and maximum request sizes for blocks of memory, and allowing you to
+pass in custom block allocation and deallocation function pointers
+to build freelists and others on top of the blocks.</li>
+</ul>
+
+<h3 id="allocation-methods">Allocation methods</h3>
+
+<ul>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">template&lt;typename T&gt; static T* CreateMessage(Arena* arena)</code>:
+Creates a new protocol buffer object of message type <code class="language-plaintext highlighter-rouge">T</code> on
+the arena. This message type must be defined in a <code class="language-plaintext highlighter-rouge">.proto</code> file with
+<code class="language-plaintext highlighter-rouge">option cc_enable_arenas = true;</code> otherwise, a compile error
+will result.</p>
+
+    <p>If <code class="language-plaintext highlighter-rouge">arena</code> is not NULL, the returned message object is allocated on
+the arena, its internal storage and submessages (if any) will be
+allocated on the same arena, and its lifetime is the same as that of
+the arena. The object must not be deleted/freed manually: the arena
+owns the message object for lifetime purposes.</p>
+
+    <p>If <code class="language-plaintext highlighter-rouge">arena</code> is NULL, the returned message object is allocated on the
+heap, and the caller owns the object upon return.</p>
+  </li>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">template&lt;typename T&gt; static T* Create(Arena* arena, args...)</code>:
+Similar to <code class="language-plaintext highlighter-rouge">CreateMessage()</code> but lets you create an object of any
+class on the arena, not just protocol buffer message types with
+<code class="language-plaintext highlighter-rouge">option cc_enable_arenas = true;</code>: you can use a protocol buffer
+message class from a file that doesn’t have arena support enabled,
+or an arbitrary C++ class. For example, let’s say you have this C++
+class:</p>
+
+    <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">MyCustomClass</span> <span class="p">{</span>
+    <span class="n">MyCustomClass</span><span class="p">(</span><span class="kt">int</span> <span class="n">arg1</span><span class="p">,</span> <span class="kt">int</span> <span class="n">arg2</span><span class="p">);</span>
+    <span class="c1">// ...</span>
+<span class="p">};</span>
+</code></pre></div>    </div>
+
+    <p>…you can create an instance of it on the arena like this:</p>
+
+    <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">func</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// ...</span>
+    <span class="n">proto2</span><span class="o">::</span><span class="n">Arena</span> <span class="n">arena</span><span class="p">;</span>
+    <span class="n">MyCustomClass</span><span class="o">*</span> <span class="n">c</span> <span class="o">=</span> <span class="n">proto2</span><span class="o">::</span><span class="n">Arena</span><span class="o">::</span><span class="n">Create</span><span class="o">&lt;</span><span class="n">MyCustomClass</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">arena</span><span class="p">,</span> <span class="n">constructor_arg1</span><span class="p">,</span> <span class="n">constructor_arg2</span><span class="p">);</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p><code class="language-plaintext highlighter-rouge">template&lt;typename T&gt; static T* CreateArray(Arena* arena, size_t n)</code>:
+If <code class="language-plaintext highlighter-rouge">arena</code> is not NULL, this method allocates raw storage for <code class="language-plaintext highlighter-rouge">n</code>
+elements of type <code class="language-plaintext highlighter-rouge">T</code> and returns it. The arena owns the returned
+memory and will free it on its own destruction. If <code class="language-plaintext highlighter-rouge">arena</code> is NULL,
+this method allocates storage on the heap and the caller
+receives ownership.
+<code class="language-plaintext highlighter-rouge">T</code> must have a trivial constructor: constructors are not called
+when the array is created on the arena.</p>
+  </li>
+</ul>
+
+<h3 id="owned-list-methods">“Owned list” methods</h3>
+
+<p>The following methods let you specify that particular objects or
+destructors are “owned” by the arena, ensuring that they are deleted or
+called when the arena itself is deleted</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">template&lt;typename T&gt; void Own(T* object)</code>: Adds <code class="language-plaintext highlighter-rouge">object</code> to the
+arena’s list of owned heap objects. When the arena is destroyed, it
+traverses this list and frees each object using operator delete,
+i.e., the system memory allocator. This method is useful in cases
+when an object’s lifetime should be tied to the arena but, for
+whatever reason, the object itself cannot be or was not already
+allocated on the arena.</li>
+  <li><code class="language-plaintext highlighter-rouge">template&lt;typename T&gt; void OwnDestructor(T* object)</code>: Adds the
+destructor of <code class="language-plaintext highlighter-rouge">object</code> to the arena’s list of destructors to call.
+When the arena is destroyed, it traverses this list and calls each
+destructor in turn. It does not attempt to free the underlying
+memory of object. This method is useful when an object is embedded
+in arena-allocated storage but its destructor will not otherwise be
+called, for example because its containing class is a protobuf
+message whose destructor won’t be called, or because it was manually
+constructed in a block allocated by <code class="language-plaintext highlighter-rouge">AllocateArray()</code>.</li>
+</ul>
+
+<h3 id="other-methods">Other methods</h3>
+
+<p><code class="language-plaintext highlighter-rouge">uint64 SpaceUsed() const</code>: Returns the total size of the arena, which
+is the sum of the sizes of the underlying blocks. This method is
+thread-safe; however, if there are concurrent allocations from multiple
+threads this method’s return value may not include the sizes of those
+new blocks.
+<code class="language-plaintext highlighter-rouge">uint64 Reset()</code>: Destroys the arena’s storage, first calling all
+registered destructors and freeing all registered heap objects and then
+discarding all arena blocks. This teardown procedure is equivalent to
+that which occurs when the arena’s destructor runs, except the arena is
+reusable for new allocations after this method returns. Returns the
+total size used by the arena: this information is useful for tuning
+performance.
+<code class="language-plaintext highlighter-rouge">template&lt;typename T&gt; Arena* GetArena()</code>: Returns a pointer to this
+arena. Not directly very useful but allows <code class="language-plaintext highlighter-rouge">Arena</code> to be used in
+template instantiations that expect <code class="language-plaintext highlighter-rouge">GetArena()</code> methods to be present.</p>
+<h3 id="thread-safety">Thread safety</h3>
+
+<p><code class="language-plaintext highlighter-rouge">proto2::Arena</code>’s allocation methods are thread-safe, and the underlying
+implementation goes to some length to make multithreaded allocation
+fast. The <code class="language-plaintext highlighter-rouge">Reset()</code> method is <em>not</em> thread-safe: the thread performing
+the arena reset must synchronize with all threads performing allocations
+or using objects allocated from that arena first.</p>
+
+<h2 id="generated-message-class">Generated message class</h2>
+
+<p>The following message class members are changed or added when you enable
+arena allocation.</p>
+
+<h3 id="message-class-methods">Message class methods</h3>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">void Swap(Message* other)</code>: If both messages to be swapped are not
+on arenas or are on the <em>same</em> arena,
+<a href="https://developers.google.com/protocol-buffers/docs/reference/cpp-generated.html#message"><code class="language-plaintext highlighter-rouge">Swap()</code></a>
+behaves as it does without having arena allocation enabled: it
+efficiently swaps the message objects’ contents, usually via cheap
+pointer swaps and avoiding copies at all costs. However, if only one
+message is on an arena, or the messages are on different arenas,
+<code class="language-plaintext highlighter-rouge">Swap()</code> performs <em>deep copies</em> of the underlying data. This new
+behavior is necessary because otherwise the swapped sub-objects
+could have differing lifetimes, leading potentially to
+use-after-free bugs.</li>
+  <li><code class="language-plaintext highlighter-rouge">Message* New(Arena* arena)</code>: An alternate override for the standard
+<code class="language-plaintext highlighter-rouge">New()</code> method. It allows a new message object of this type to be
+created on the given arena. Its semantics are identical to
+<code class="language-plaintext highlighter-rouge">Arena::CreateMessage&lt;T&gt;(arena)</code> if the concrete message type on
+which it is called is generated with arena allocation enabled. If
+the message type is not generated with arena allocation enabled,
+then it is equivalent to an ordinary allocation followed by
+<code class="language-plaintext highlighter-rouge">arena-&gt;Own(message)</code> if <code class="language-plaintext highlighter-rouge">arena</code> is not NULL.</li>
+  <li><code class="language-plaintext highlighter-rouge">Arena* GetArena()</code>: Returns the arena on which this message object
+was allocated, if any.</li>
+  <li><code class="language-plaintext highlighter-rouge">void UnsafeArenaSwap(Message* other)</code>: Identical to <code class="language-plaintext highlighter-rouge">Swap()</code>,
+except it assumes both objects are on the same arena (or not on
+arenas at all) and always uses the efficient pointer-sawpping
+implementation of this operation. Using this method can improve
+performance as, unlike <code class="language-plaintext highlighter-rouge">Swap()</code>, it doesn’t need to check which
+messages live on which arena before performing the swap. As the
+<code class="language-plaintext highlighter-rouge">Unsafe</code> prefix suggests, you should only use this method if you are
+sure the messages you want to swap aren’t on different arenas;
+otherwise this method could have unpredictable results.</li>
+</ul>
+
+<h3 id="embedded-message-fields">Embedded message fields</h3>
+
+<p>When you allocate a message object on an arena, its embedded message
+field objects (submessages) are automatically owned by the arena as
+well. How these message objects are allocated depends on where they are
+defined:</p>
+
+<ul>
+  <li>If the message type is also defined in a <code class="language-plaintext highlighter-rouge">.proto</code> file with arena
+allocation enabled, the object is allocated on the arena directly.</li>
+  <li>If the message type is from another <code class="language-plaintext highlighter-rouge">.proto</code> without arena
+allocation enabled, the object is heap-allocated but is “owned” by
+the parent message’s arena. This means that when the arena is
+destroyed, the object will be freed along with the objects on the
+arena itself.</li>
+</ul>
+
+<p>For either of these field definitions:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">optional</span> <span class="n">Bar</span> <span class="n">foo</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="n">required</span> <span class="n">Bar</span> <span class="n">foo</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>The following methods are added or have some special behavior when arena
+allocation is enabled. Otherwise, accessor methods just use the <a href="https://developers.google.com/protocol-buffers/docs/reference/cpp-generated.html#embeddedmessage">default
+behavior</a>.</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Bar* mutable_foo()</code>: Returns a mutable pointer to the
+submessage instance. If the parent object is on an arena then the
+returned object will be as well.</li>
+  <li><code class="language-plaintext highlighter-rouge">void set_allocated_foo(Bar* bar)</code>: Takes a new object and adopts it
+as the new value for the field. Arena support adds additional
+copying semantics to maintain proper ownership when objects cross
+arena/arena or arena/heap boundaries:
+    <ul>
+      <li>If the parent object is on the heap and <code class="language-plaintext highlighter-rouge">bar</code> is on the heap, or
+if the parent and message are on the same arena, this method’s
+behavior is unchanged.</li>
+      <li>If the parent is on an arena and <code class="language-plaintext highlighter-rouge">bar</code> is on the heap, the
+parent message adds <code class="language-plaintext highlighter-rouge">bar</code> to its arena’s ownership list with
+<code class="language-plaintext highlighter-rouge">arena-&gt;Own()</code>.</li>
+      <li>If the parent is on an arena and <code class="language-plaintext highlighter-rouge">bar</code> is on a different arena,
+this method makes a copy of message and takes the copy as the
+new field value.</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">Bar* release_foo()</code>: Returns the existing submessage instance of
+the field, if set, or a NULL pointer if not set, releasing ownership
+of this instance to the caller and clearing the parent
+message’s field. Arena support adds additional copying semantics to
+maintain the contract that the returned object is always
+<em>heap-allocated</em>:
+    <ul>
+      <li>If the parent message is on an arena, this method will make a
+copy of the submessage on the heap, clear the field value, and
+return the copy.</li>
+      <li>If the parent message is on the heap, the method behavior
+is unchanged.</li>
+    </ul>
+  </li>
+  <li><code class="language-plaintext highlighter-rouge">void unsafe_arena_set_allocated_foo(Bar* bar)</code>: Identical to
+<code class="language-plaintext highlighter-rouge">set_allocated_foo</code>, but assumes both parent and submessage are on
+the same arena. Using this version of the method can improve
+performance as it doesn’t need to check whether the messages are on
+a particular arena or the heap. This method should only be used when
+the parent message is on the arena and the submessage is on the same
+arena, or an arena with equivalent lifetime.</li>
+  <li><code class="language-plaintext highlighter-rouge">Bar* unsafe_arena_release_foo()</code>: Similar to <code class="language-plaintext highlighter-rouge">release_foo()</code>, but
+assumes the parent message is on the arena, and returns an
+<em>arena-allocated</em> object that should not be deleted directly. This
+method should only be used when the parent message is on the arena.</li>
+</ul>
+
+<h3 id="string-fields">String fields</h3>
+
+<p>Currently, string fields store their data on the heap even when their
+parent message is on the arena. Because of this, string accessor methods
+largely use the <a href="https://developers.google.com/protocol-buffers/docs/reference/cpp-generated.html#string">default
+behavior</a>
+even when arena allocation is enabled, with a couple of exceptions.</p>
+
+<p>For any of these field definitions:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">optional</span> <span class="n">string</span> <span class="n">foo</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="n">required</span> <span class="n">string</span> <span class="n">foo</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="n">optional</span> <span class="n">bytes</span> <span class="n">foo</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="n">required</span> <span class="n">bytes</span> <span class="n">foo</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>The following methods are added or have some special/notable behavior
+when arena allocation is enabled.
+<code class="language-plaintext highlighter-rouge">void set_allocated_foo(string* value)</code> and
+<code class="language-plaintext highlighter-rouge">void unsafe_arena_set_allocated_foo(string* value)</code>: Similar to the
+<a href="#arenaembeddedmessage">embedded message field methods</a> described above
+where the child message is on the heap. As well as setting the field
+value to <code class="language-plaintext highlighter-rouge">value</code>, calling <code class="language-plaintext highlighter-rouge">set_allocated_foo()</code> when the parent is on
+the arena adds <code class="language-plaintext highlighter-rouge">value</code> to the parent message’s arena’s ownership list
+with <code class="language-plaintext highlighter-rouge">arena-&gt;Own()</code>. The <code class="language-plaintext highlighter-rouge">unsafe_arena</code> version just sets the value
+without adding it to the ownership list.
+<code class="language-plaintext highlighter-rouge">string* release_foo()</code> and <code class="language-plaintext highlighter-rouge">string* unsafe_arena_release_foo()</code>: Again,
+these are similar to the <a href="#arenaembeddedmessage">embedded message field
+methods</a> described above where the child message
+is on the heap. Calling <code class="language-plaintext highlighter-rouge">release_foo()</code> when the parent is on the arena
+makes a copy of the string value, clears the field, and returns a
+pointer to the copy. Calling the <code class="language-plaintext highlighter-rouge">unsafe_arena</code> version just releases
+the field and returns a pointer to the still <code class="language-plaintext highlighter-rouge">Own()</code>-ed string.</p>
+
+<h3 id="repeated-fields">Repeated fields</h3>
+
+<p>Repeated fields allocate their internal array storage on the arena when
+the containing message is arena-allocated, and also allocate their
+elements on the arena when these elements are separate objects retained
+by pointer (messages or strings). At the message-class level, generated
+methods for repeated fields do not change. However, the <code class="language-plaintext highlighter-rouge">RepeatedField</code>
+and <code class="language-plaintext highlighter-rouge">RepeatedPtrField</code> objects that are returned by accessors do have
+new methods and modified semantics when arena support is enabled.</p>
+
+<h4 id="repeated-numeric-fields">Repeated numeric fields</h4>
+
+<p><code class="language-plaintext highlighter-rouge">RepeatedField</code> objects that contain <a href="#repeatednumeric">primitive types</a>
+have the following new/changed methods when arena allocation is enabled:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">void UnsafeArenaSwap(RepeatedField* other)</code>: Performs a swap of
+<code class="language-plaintext highlighter-rouge">RepeatedField</code> contents without validating that this repeated field
+and other are on the same arena. If they are not, the two repeated
+field objects must be on arenas with equivalent lifetimes. The case
+where one is on an arena and one is on the heap is checked
+and disallowed.</li>
+  <li><code class="language-plaintext highlighter-rouge">void Swap(RepeatedField* other)</code>: Checks each repeated field
+object’s arena, and if one is on an arena while one is on the heap
+or if both are on arenas but on different ones, the underlying
+arrays are copied before the swap occurs. This means that after the
+swap, each repeated field object holds an array on its own arena or
+heap, as appropriate.</li>
+</ul>
+
+<h4 id="repeated-embedded-message-fields">Repeated embedded message fields</h4>
+
+<p><code class="language-plaintext highlighter-rouge">RepeatedPtrField</code> objects that contain <a href="#repeatedmessage">messages</a>
+have the following new/changed methods when arena allocation is enabled.</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">void UnsafeArenaSwap(RepeatedPtrField* other)</code>: Performs a swap of
+<code class="language-plaintext highlighter-rouge">RepeatedPtrField</code> contents without validating that this repeated
+field and other have the same arena pointer. If they do not, the two
+repeated field objects must have arena pointers with
+equivalent lifetimes. The case where one has a non-NULL arena
+pointer and one has a NULL arena pointer is checked and disallowed.</li>
+  <li><code class="language-plaintext highlighter-rouge">void Swap(RepeatedPtrField* other)</code>: Checks each repeated field
+object’s arena pointer, and if one is non-NULL (contents on arena)
+while one is NULL (contents on heap) or if both are non-NULL but
+have different values, the underlying arrays and their pointed-to
+objects are copied before the swap occurs. This means that after the
+swap, each repeated field object holds an array on its own arena or
+on the heap, as appropriate.</li>
+  <li><code class="language-plaintext highlighter-rouge">void AddAllocated(SubMessageType* value)</code>: Checks that the provided
+message object is on the same arena as the repeated field’s
+arena pointer. If it is on the same arena, then the object pointer
+is added directly to the underlying array. Otherwise, a copy is
+made, the original is freed if it was heap-allocated, and the copy
+is placed on the array. This maintains the invariant that all
+objects pointed to by a repeated field are in the same ownership
+domain (heap or specific arena) as indicated by the repeated field’s
+arena pointer.</li>
+  <li><code class="language-plaintext highlighter-rouge">SubMessageType* ReleaseLast()</code>: Returns a heap-allocated message
+equivalent to the last message in the repeated field, removing it
+from the repeated field. If the repeated field itself has a NULL
+arena pointer (and thus, all of its pointed-to messages are
+heap-allocated), then this method simply returns a pointer to the
+original object. Otherwise, if the repeated field has a non-NULL
+arena pointer, this method makes a copy that is heap-allocated and
+returns that copy. In both cases, the caller receives ownership of a
+heap-allocated object and is responsible for deleting the object.</li>
+  <li><code class="language-plaintext highlighter-rouge">void UnsafeArenaAddAllocated(SubMessageType* value)</code>: Like
+<code class="language-plaintext highlighter-rouge">AddAllocated()</code>, but does not perform heap/arena checks or any
+message copies. It adds the provided pointer directly to the
+internal array of pointers for this repeated field. The caller must
+guarantee that the provided object is heap-allocated if the repeated
+field has a NULL arena pointer, or arena-allocated (on the same
+arena or on one with identical lifetime) if the repeated field has a
+non-NULL arena pointer.</li>
+  <li><code class="language-plaintext highlighter-rouge">SubMessageType* UnsafeArenaReleaseLast()</code>: Like <code class="language-plaintext highlighter-rouge">ReleaseLast()</code> but
+performs no copies, even if the repeated field has a non-NULL
+arena pointer. Instead, it directly returns the pointer to the
+object as it was in the repeated field. The returned object is thus
+on the heap if the repeated field’s arena pointer is NULL and on an
+arena if the repeated field has a non-NULL arena pointer. The caller
+receives ownership if the object was heap-allocated. If the object
+was arena-allocated, the caller must not attempt to delete the
+returned object.</li>
+  <li><code class="language-plaintext highlighter-rouge">void ExtractSubrange(int start, int num, SubMessageType** elements)</code>:
+Removes <code class="language-plaintext highlighter-rouge">num</code> elements from the repeated field, starting from index
+<code class="language-plaintext highlighter-rouge">start</code>, and returns them in <code class="language-plaintext highlighter-rouge">elements</code> if it is not NULL. If the
+repeated field is on an arena, and elements are being returned, the
+elements are copied to the heap first. In both cases (arena or no
+arena), the caller owns the returned objects on the heap.</li>
+  <li><code class="language-plaintext highlighter-rouge">void UnsafeArenaExtractSubrange(int start, int num, SubMessageType** elements)</code>:
+Removes <code class="language-plaintext highlighter-rouge">num</code> elements from the repeated field, starting from index
+<code class="language-plaintext highlighter-rouge">start</code>, and returns them in <code class="language-plaintext highlighter-rouge">elements</code> if it is not NULL. Unlike
+<code class="language-plaintext highlighter-rouge">ExtractSubrange()</code>, this method never copies the
+extracted elements.</li>
+</ul>
+
+<h4 id="repeated-string-fields">Repeated string fields</h4>
+
+<p>Repeated fields of strings have the same new methods and modified
+semantics as repeated fields of messages, because they also maintain
+their underlying objects (namely, strings) by pointer reference.</p>
+
+<h2 id="usage-patterns-and-best-practices">Usage patterns and best practices</h2>
+
+<p>When using arena-allocated messages, several usage patterns can result
+in unintended copies or other negative performance effects. You should
+be aware of the following common patterns that may need to be altered
+when adapting code for arenas. (Note that we have taken care in the API
+design to ensure that correct behavior still occurs — but
+higher-performance solutions may require some reworking.)</p>
+
+<h3 id="unintended-copies">Unintended copies</h3>
+
+<p>Several methods that never create object copies when not using arena
+allocation may end up doing so when arena support is enabled. These
+unwanted copies can be avoided if you make sure that your objects are
+allocated appropriately and/or use provided arena-specific method
+versions, as described in more detail below.</p>
+
+<h4 id="set-allocatedadd-allocatedrelease">Set Allocated/Add Allocated/Release</h4>
+
+<p>By default, the <code class="language-plaintext highlighter-rouge">release_field()</code> and <code class="language-plaintext highlighter-rouge">set_allocated_field()</code> methods
+(for singular message and string fields), and the <code class="language-plaintext highlighter-rouge">ReleaseLast()</code> and
+<code class="language-plaintext highlighter-rouge">AddAllocated()</code>() methods (for repeated message and string fields) all
+allow user code to directly attach and detach sub-objects, passing
+ownership of pointers without copying any data.</p>
+
+<p>However, when the parent message is on an arena, these methods now
+sometimes need to copy the passed in or returned object to maintain
+compatibility with existing ownership contracts. More specifically,
+methods that take ownership (<code class="language-plaintext highlighter-rouge">set_allocated_field()</code> and
+<code class="language-plaintext highlighter-rouge">AddAllocated()</code>) may copy data if the parent is on an arena and the new
+subobject is not, or vice versa, or they are on different arenas.
+Methods that release ownership (<code class="language-plaintext highlighter-rouge">release_field()</code> and <code class="language-plaintext highlighter-rouge">ReleaseLast()</code>)
+may copy data if the parent is on the arena, because the returned object
+must be on the heap, by contract.</p>
+
+<p>To avoid such copies, we have added corresponding “unsafe arena”
+versions of these methods where copies are <strong>never performed</strong>:
+<code class="language-plaintext highlighter-rouge">unsafe_arena_set_allocated_field()</code>, <code class="language-plaintext highlighter-rouge">unsafe_arena_release_field()</code>,
+<code class="language-plaintext highlighter-rouge">UnsafeArenaAddAllocated()</code>, and <code class="language-plaintext highlighter-rouge">UnsafeArenaRelease()</code> for singular and
+repeated fields, respectively. These methods should be used only when
+you know they are safe to do so and that the parent and child objects
+are allocated as expected; otherwise, for example, you could end up with
+parent and child objects with differing lifetimes, leading potentially
+to use-after-free bugs.</p>
+
+<p>Here’s an example of how you can avoid unnecessary copies with these
+methods. Let’s say you have created the following messages on an arena.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Arena</span><span class="o">*</span> <span class="n">arena</span> <span class="o">=</span> <span class="k">new</span> <span class="n">proto2</span><span class="o">::</span><span class="n">Arena</span><span class="p">();</span>
+<span class="n">MyFeatureMessage</span><span class="o">*</span> <span class="n">arena_message_1</span> <span class="o">=</span>
+  <span class="n">proto2</span><span class="o">::</span><span class="n">Arena</span><span class="o">::</span><span class="n">CreateMessage</span><span class="o">&lt;</span><span class="n">MyFeatureMessage</span><span class="o">&gt;</span><span class="p">(</span><span class="n">arena</span><span class="p">);</span>
+<span class="n">arena_message_1</span><span class="o">-&gt;</span><span class="n">mutable_nested_message</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_feature_id</span><span class="p">(</span><span class="mi">11</span><span class="p">);</span>
+
+<span class="n">MyFeatureMessage</span><span class="o">*</span> <span class="n">arena_message_2</span> <span class="o">=</span>
+  <span class="n">proto2</span><span class="o">::</span><span class="n">Arena</span><span class="o">::</span><span class="n">CreateMessage</span><span class="o">&lt;</span><span class="n">MyFeatureMessage</span><span class="o">&gt;</span><span class="p">(</span><span class="n">arena</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>The following code makes inefficient usage of the <code class="language-plaintext highlighter-rouge">release_...()</code> API:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">arena_message_2</span><span class="o">-&gt;</span><span class="n">set_allocated_nested_message</span><span class="p">(</span><span class="n">arena_message_1</span><span class="o">-&gt;</span><span class="n">release_nested_message</span><span class="p">());</span>
+
+<span class="n">arena_message_1</span><span class="o">-&gt;</span><span class="n">release_message</span><span class="p">();</span> <span class="c1">// returns a copy of the underlying nested_message and deletes underlying pointer</span>
+</code></pre></div></div>
+
+<p>Using the “unsafe arena” version instead avoids the copy:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">arena_message_2</span><span class="o">-&gt;</span><span class="n">set_allocated_nested_message</span><span class="p">(</span>
+   <span class="n">arena_message_1</span><span class="o">-&gt;</span><span class="n">unsafe_arena_release_nested_message</span><span class="p">());</span> 
+</code></pre></div></div>
+
+<p>You can find out more about these methods in the <a href="#arenaembeddedmessage">Embedded message
+fields</a> and <a href="#arenastring">String fields</a>
+sections above.</p>
+
+<h4 id="swap">Swap</h4>
+
+<p>When two messages’ contents are swapped with <code class="language-plaintext highlighter-rouge">Swap()</code>, the underlying
+subobjects may be copied if the two messages live on different arenas,
+or if one is on the arena and the other is on the heap. If you want to
+avoid this copy and either (i) know that the two messages are on the
+same arena or different arenas but the arenas have equivalent lifetimes,
+or (ii) know that the two messages are on the heap, you can use a new
+method, <code class="language-plaintext highlighter-rouge">UnsafeArenaSwap()</code>. This method both avoids the overhead of
+performing the arena check and avoids the copy if one would have
+occurred.</p>
+
+<p>For example, the following code incurs a copy in the <code class="language-plaintext highlighter-rouge">Swap()</code> call:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">MyFeatureMessage</span><span class="o">*</span> <span class="n">message_1</span> <span class="o">=</span>
+  <span class="n">proto2</span><span class="o">::</span><span class="n">Arena</span><span class="o">::</span><span class="n">CreateMessage</span><span class="o">&lt;</span><span class="n">MyFeatureMessage</span><span class="o">&gt;</span><span class="p">(</span><span class="n">arena</span><span class="p">);</span><span class="n">message_1</span><span class="o">-&gt;</span><span class="n">mutable_nested_message</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_feature_id</span><span class="p">(</span><span class="mi">11</span><span class="p">);</span>
+
+<span class="n">MyFeatureMessage</span><span class="o">*</span> <span class="n">message_2</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MyFeatureMessage</span><span class="p">;</span>
+<span class="n">message_2</span><span class="o">-&gt;</span><span class="n">mutable_nested_message</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_feature_id</span><span class="p">(</span><span class="mi">22</span><span class="p">);</span>
+
+<span class="n">message_1</span><span class="o">-&gt;</span><span class="n">Swap</span><span class="p">(</span><span class="n">message_2</span><span class="p">);</span> <span class="c1">// Inefficient swap!</span>
+</code></pre></div></div>
+
+<p>To avoid the copy in this code, you allocate <code class="language-plaintext highlighter-rouge">message_2</code> on the same
+arena as <code class="language-plaintext highlighter-rouge">message_1</code>:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">MyFeatureMessage</span><span class="o">*</span> <span class="n">message_2</span> <span class="o">=</span>        
+   <span class="n">proto2</span><span class="o">::</span><span class="n">Arena</span><span class="o">::</span><span class="n">CreateMessage</span><span class="o">&lt;</span><span class="n">MyFeatureMessage</span><span class="o">&gt;</span><span class="p">(</span><span class="n">arena</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="embedded-message-fields-and-arena-enable-options">Embedded message fields and arena-enable options</h3>
+
+<p>Each <code class="language-plaintext highlighter-rouge">.proto</code> file has its own “feature switch” for arena support. If
+<code class="language-plaintext highlighter-rouge">cc_enable_arenas</code> is not set in a given <code class="language-plaintext highlighter-rouge">.proto</code> file, the types
+defined in that file will not be stored on the arena, even if some other
+type includes a submessage that has a type defined in that file. In
+other words, <code class="language-plaintext highlighter-rouge">cc_enable_arenas</code> is not transitive. Rather, submessages
+of an arena-capable message that do not themselves have arena support
+will always be stored on the heap, and will be added to the parent
+message’s arena’s <code class="language-plaintext highlighter-rouge">Own()</code> list so that their lifetimes are tied to the
+arena’s lifetime.</p>
+
+<p>The reason for this restriction is that adding arena support adds some
+overhead in the case that arenas are not used because of the extra
+generated code, so we choose (for now) not to enable arena support
+globally. Furthermore, for type- and API-compatibility reasons, we can
+have only one C++ generated class per proto message type, so we cannot
+generate with-arena and without-arena versions of a class. In the
+future, after further optimization, we may be able to lift this
+restriction and globally enable arena support. For now, though, it
+should be enabled for as many submessage types as possible to improve
+performance.</p>
+
+<h3 id="granularity">Granularity</h3>
+
+<p>We have found in most application server use cases that an
+“arena-per-request” model works well. You may be tempted to divide arena
+use further, either to reduce heap overhead (by destroying smaller
+arenas more often) or to reduce perceived thread-contention issues.
+However, the use of more fine-grained arenas may lead to unintended
+message copying, as we describe above. We have also spent effort to
+optimize the <code class="language-plaintext highlighter-rouge">Arena</code> implementation for the multithreaded use-case, so a
+single arena should be appropriate for use throughout a request lifetime
+even if multiple threads process that request.</p>
+
+<h2 id="example">Example</h2>
+
+<p>Here’s a simple complete example demonstrating some of the features of
+the arena allocation API.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// my_feature.proto</span>
+
+<span class="n">syntax</span> <span class="o">=</span> <span class="s">"proto2"</span><span class="p">;</span>
+<span class="n">import</span> <span class="err">“</span><span class="n">nested_message</span><span class="p">.</span><span class="n">proto</span><span class="err">”</span><span class="p">;</span>
+
+<span class="n">package</span> <span class="n">feature_package</span><span class="p">;</span>
+
+<span class="n">option</span> <span class="n">cc_enable_arenas</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+
+<span class="c1">// NEXT Tag to use: 4</span>
+<span class="n">message</span> <span class="n">MyFeatureMessage</span> <span class="p">{</span>
+  <span class="n">optional</span> <span class="n">string</span> <span class="n">feature_name</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">repeated</span> <span class="n">int32</span> <span class="n">feature_data</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="n">optional</span> <span class="n">NestedMessage</span> <span class="n">nested_message</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// nested_message.proto</span>
+
+<span class="n">syntax</span> <span class="o">=</span> <span class="s">"proto2"</span><span class="p">;</span>
+
+<span class="n">package</span> <span class="n">feature_package</span><span class="p">;</span>
+
+<span class="c1">// add cc_enable_arenas on each submessage for</span>
+<span class="c1">// the best performance when using arenas.</span>
+<span class="n">option</span> <span class="n">cc_enable_arenas</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+
+<span class="c1">// NEXT Tag to use: 2</span>
+<span class="n">message</span> <span class="n">NestedMessage</span> <span class="p">{</span>
+  <span class="n">optional</span> <span class="n">int32</span> <span class="n">feature_id</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>Message construction and deallocation:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#include</span> <span class="cpf">"net/proto2/public/arena.h"</span><span class="cp">
+</span>
+<span class="n">Arena</span> <span class="n">arena</span><span class="p">;</span>
+
+<span class="n">MyFeatureMessage</span><span class="o">*</span> <span class="n">arena_message</span> <span class="o">=</span>
+   <span class="n">proto2</span><span class="o">::</span><span class="n">Arena</span><span class="o">::</span><span class="n">CreateMessage</span><span class="o">&lt;</span><span class="n">MyFeatureMessage</span><span class="o">&gt;</span><span class="p">(</span><span class="o">&amp;</span><span class="n">arena</span><span class="p">);</span>
+
+<span class="n">arena_message</span><span class="o">-&gt;</span><span class="n">set_feature_name</span><span class="p">(</span><span class="err">“</span><span class="n">Proto2</span> <span class="n">Arena</span><span class="err">”</span><span class="p">);</span>
+<span class="n">arena_message</span><span class="o">-&gt;</span><span class="n">mutable_feature_data</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Add</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+<span class="n">arena_message</span><span class="o">-&gt;</span><span class="n">mutable_feature_data</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Add</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+<span class="n">arena_message</span><span class="o">-&gt;</span><span class="n">mutable_nested_message</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">set_feature_id</span><span class="p">(</span><span class="mi">247</span><span class="p">);</span>
+</code></pre></div></div>
+
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

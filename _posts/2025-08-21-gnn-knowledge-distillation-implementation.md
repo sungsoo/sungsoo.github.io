@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Knowledge Distillation" Explanation and Implementation
+title: "Knowledge Distillation Explanation and Implementation"
 date: 2025-08-21
 categories: [artificial intelligence]
 tags: [artificial general intelligence]

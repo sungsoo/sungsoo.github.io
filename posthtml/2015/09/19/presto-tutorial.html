@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Using Presto to combine data from Hive and MySQL</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Using Presto to combine data from Hive and MySQL</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">19 September 2015</p></h4>
+<hr>
+
+<div class="post">
+<h1 id="using-presto-to-combine-data-from-hive-and-mysql">Using Presto to combine data from Hive and MySQL</h1>
+
+<p><a href="http://prestodb.io/">Presto</a> (originated at Facebook) is a yet another
+distributed SQL query engine for Hadoop that has recently generated huge
+excitement. What makes Presto so interesting, especially, in comparison
+to other existing engines like Cloudera Impala or Hive on Tez? The list
+of key differentiators includes:</p>
+
+<ul>
+  <li>Presto seems to be great for ad-hoc analysis – it runs queries
+quickly and scales from gigabytes to petabytes.</li>
+  <li>A single Presto query can process data from multiple sources e.g.
+HDFS, MySQL, Cassandra or even Kafka.</li>
+  <li>Large-scale companies like
+<a href="https://www.facebook.com/notes/facebook-engineering/presto-interacting-with-petabytes-of-data-at-facebook/10151786197628920">Facebook</a>,
+<a href="http://techblog.netflix.com/2014/10/using-presto-in-our-big-data-platform.html">Netflix</a>,
+Airbnb or Dropbox like it and actively contribute to it.</li>
+</ul>
+
+<p>Because (a) the excitement about Presto is evident, (b) running own
+benchmarks is time-consuming, in this tutorial we focus on the feature
+that allow us to process data from HDFS and MySQL in a single Presto
+query. Such a feature is quite unique, because it’s hasn’t been provided
+by other open-source projects like Hive and Impala (Impala, however, can
+process Hive and HBase table in a single query).</p>
+
+<h2 id="presto-connectors">Presto Connectors</h2>
+
+<p>First, a bit of technical background. Presto supports pluggable
+connectors that provide metadata and data for queries. There is Hive
+connector (currently supports Text, SequenceFile, RCFile, ORC and, <a href="https://github.com/facebook/presto/pull/1709">in a
+limited way,</a> Parquet
+formats), MySQL connector and several others. You can even implement a
+custom one.</p>
+
+<p>A coordinator (a master daemon) uses connectors to get metadata (such as
+table schema) that is needed to build a query plan. Workers use
+connectors to get actual data that will be processed by them.</p>
+
+<p><img src="http://getindata.com/wp-content/uploads/2014/12/Presto-Plugins.png" alt="Presto
+Plugins" /></p>
+
+<h2 id="our-use-case">Our use-case</h2>
+
+<p>To demonstrate this feature, we use the <a href="http://www.dtic.upf.edu/~ocelma/MusicRecommendationDataset/lastfm-1K.html">Last.fm Dataset – 1K
+users</a>
+dataset provided by <a href="http://www.last.fm/">Last.fm</a>. It contains profile
+information (such as gender, age, country) about 1K users plus tracks
+that these users had been listening to.</p>
+
+<p>In our tutorial, user profile information (40 kilobytes) will be kept in
+a MySQL table (something that actually makes sense in real-world
+scenarios when user base is small enough), while information about
+streamed tracks (2.4 gigabytes) will be uploaded to a Hive table.</p>
+
+<h2 id="training-environment">Training environment</h2>
+
+<p>For simplicity and quick iterations, we use an already pre-configured
+single-node Hadoop YARN cluster with Hive and MySQL. An easy way to get
+it is to download <a href="http://hortonworks.com/hdp/downloads/">Hortonworks
+Sandbox</a> (we used Hortonworks
+Sandbox 2.2).</p>
+
+<h2 id="presto-installation">Presto installation</h2>
+
+<p>Because the installation of Presto is very smooth and <a href="http://prestodb.io/docs/current/installation.html">well
+documented</a>, we don’t
+duplicate these steps here. Should you follow the instructions
+carefully, you have a running Presto server in less then 10 minutes.</p>
+
+<p>Please note that Presto requires Java 8.</p>
+
+<p>Unfortunately, Presto on YARN is not “officially” supported yet. This
+means that a Presto daemon should be installed on each node of your
+cluster (and share resources with NodeManager and YARN containers, if
+you happen to run YARN on the same nodes). There is, however, an
+interesting blog post that describes how to <a href="http://blog.cask.co/2014/04/running-presto-over-apache-twill/">run Presto on YARN over
+Apache
+Twill</a>.</p>
+
+<h2 id="integration-between-presto-and-mysql-and-hive">Integration between Presto and MySQL and Hive</h2>
+
+<p>Please follow the instructions needed to integrate Presto with
+<a href="http://prestodb.io/docs/current/connector/mysql.html">MySQL</a> and
+<a href="http://prestodb.io/docs/current/connector/hive.html">Hive</a>. In case of
+Hortonworks Sandbox 2.2, files shown below contain exemplary (and
+working) configuration settings.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cat etc/catalog/mysql.properties
+connector.name=mysql
+connection-url=jdbc:mysql://localhost:3306
+connection-user=root
+connection-password=
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cat etc/catalog/hive.properties
+connector.name=hive-hadoop2
+hive.metastore.uri=thrift://localhost:9083
+</code></pre></div></div>
+
+<p>When these files are created, you can start Presto server.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[root@sandbox presto-server-0.89]$ bin/launcher run
+</code></pre></div></div>
+
+<h2 id="uploading-input-datasets-into-mysql-and-hive">Uploading input datasets into MySQL and Hive</h2>
+
+<p>First we create a MySQL database and table. Then, we upload information about users into it.</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="n">root</span><span class="o">@</span><span class="n">sandbox</span> <span class="n">presto</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="mi">0</span><span class="p">.</span><span class="mi">89</span><span class="p">]</span><span class="err">$</span> <span class="n">mysql</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">CREATE</span> <span class="k">DATABASE</span> <span class="n">tutorial</span><span class="p">;</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="n">USE</span> <span class="n">tutorial</span><span class="p">;</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">CREATE</span> <span class="k">TABLE</span> <span class="k">user</span> <span class="p">(</span>
+    <span class="o">-&gt;</span> <span class="n">userid</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">15</span><span class="p">),</span> <span class="n">gender</span> <span class="nb">CHAR</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">age</span> <span class="nb">SMALLINT</span><span class="p">,</span> 
+    <span class="o">-&gt;</span> <span class="n">country</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span> <span class="n">signup</span> <span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+    <span class="o">-&gt;</span> <span class="p">);</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">LOAD</span> <span class="k">DATA</span>
+    <span class="o">-&gt;</span> <span class="k">LOCAL</span> <span class="n">INFILE</span> <span class="s1">'/root/lastfm-dataset-1K/userid-profile.tsv'</span>
+    <span class="o">-&gt;</span> <span class="k">INTO</span> <span class="k">TABLE</span> <span class="k">user</span>
+    <span class="o">-&gt;</span> <span class="n">FIELDS</span> <span class="n">TERMINATED</span> <span class="k">BY</span> <span class="s1">'</span><span class="se">\t</span><span class="s1">'</span><span class="p">;</span>
+<span class="n">mysql</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">LIMIT</span> <span class="mi">3</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>Next, we create a Hive database and table. Then we upload streamed tracks into it.</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">$</span> <span class="n">cat</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="k">create</span><span class="o">-</span><span class="k">and</span><span class="o">-</span><span class="n">populate</span><span class="o">-</span><span class="n">stream</span><span class="o">-</span><span class="k">table</span><span class="p">.</span><span class="n">hql</span>
+<span class="k">CREATE</span> <span class="k">DATABASE</span> <span class="n">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> <span class="n">tutorial</span><span class="p">;</span>
+<span class="n">USE</span> <span class="n">tutorial</span><span class="p">;</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">IF</span> <span class="k">NOT</span> <span class="k">EXISTS</span> <span class="n">stream</span><span class="p">(</span>
+        <span class="n">userid</span> <span class="n">STRING</span><span class="p">,</span>
+        <span class="nb">timestamp</span> <span class="n">STRING</span><span class="p">,</span>
+        <span class="n">artistid</span> <span class="n">STRING</span><span class="p">,</span>
+        <span class="n">artistname</span> <span class="n">STRING</span><span class="p">,</span>
+        <span class="n">trackid</span> <span class="n">STRING</span><span class="p">,</span>
+        <span class="n">trackname</span> <span class="n">STRING</span><span class="p">)</span>
+<span class="k">ROW</span> <span class="n">FORMAT</span> <span class="n">DELIMITED</span>
+<span class="n">FIELDS</span> <span class="n">TERMINATED</span> <span class="k">BY</span> <span class="s1">'</span><span class="se">\t</span><span class="s1">'</span>
+<span class="n">STORED</span> <span class="k">AS</span> <span class="n">TEXTFILE</span><span class="p">;</span>
+
+<span class="k">LOAD</span> <span class="k">DATA</span> <span class="k">LOCAL</span> 
+<span class="n">INPATH</span> <span class="s1">'/root/lastfm-dataset-1K/userid-timestamp-artid-artname-traid-traname.tsv'</span>
+<span class="n">OVERWRITE</span> <span class="k">INTO</span> <span class="k">TABLE</span> <span class="n">stream</span><span class="p">;</span>
+<span class="err">$</span> <span class="n">hive</span> <span class="o">-</span><span class="n">f</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="k">create</span><span class="o">-</span><span class="k">and</span><span class="o">-</span><span class="n">populate</span><span class="o">-</span><span class="n">stream</span><span class="o">-</span><span class="k">table</span><span class="p">.</span><span class="n">hql</span>
+</code></pre></div></div>
+
+<h2 id="using-presto-to-query-both-mysql-and-hive-tables">Using Presto to query both MySQL and Hive tables</h2>
+
+<p>Finally, we are ready to process data! :)</p>
+
+<p>Let’s start the Presto terminal-based interactive shell for running queries.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[root@sandbox presto-server-0.89]$ ./presto --server localhost:8080
+</code></pre></div></div>
+
+<p>In one of the previous steps, we defined two catalogs:</p>
+
+<ul>
+  <li>mysql (configured in etc/catalog/mysql.properties file)</li>
+  <li>hive (configured in the etc/catalog/hive.properties file)</li>
+</ul>
+
+<p>With Presto, to specify a table that you wish to process, we use the catalog.database.table naming convention e.g. mysql.tutorial.user or hive.tutorial.stream.</p>
+
+<p>Without further ado, let’s run some basic queries:</p>
+
+<ul>
+  <li>List tables in the tutorial database in MySQL</li>
+</ul>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">presto</span><span class="p">:</span><span class="k">default</span><span class="o">&gt;</span> <span class="k">SHOW</span> <span class="n">TABLES</span> <span class="k">FROM</span> <span class="n">mysql</span><span class="p">.</span><span class="n">tutorial</span><span class="p">;</span>
+ <span class="k">Table</span>
+<span class="c1">-------</span>
+ <span class="k">user</span>
+<span class="p">(</span><span class="mi">1</span> <span class="k">row</span><span class="p">)</span>
+
+<span class="n">Query</span> <span class="mi">20141227</span><span class="n">_222114_00006_u66ux</span><span class="p">,</span> <span class="n">FINISHED</span><span class="p">,</span> <span class="mi">1</span> <span class="n">node</span>
+<span class="n">Splits</span><span class="p">:</span> <span class="mi">2</span> <span class="n">total</span><span class="p">,</span> <span class="mi">2</span> <span class="n">done</span> <span class="p">(</span><span class="mi">100</span><span class="p">.</span><span class="mi">00</span><span class="o">%</span><span class="p">)</span>
+<span class="mi">0</span><span class="p">:</span><span class="mi">00</span> <span class="p">[</span><span class="mi">1</span> <span class="k">rows</span><span class="p">,</span> <span class="mi">94</span><span class="n">B</span><span class="p">]</span> <span class="p">[</span><span class="mi">2</span> <span class="k">rows</span><span class="o">/</span><span class="n">s</span><span class="p">,</span> <span class="mi">207</span><span class="n">B</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+</code></pre></div></div>
+
+<ul>
+  <li>Find two countries with the largest number of users</li>
+</ul>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">presto</span><span class="p">:</span><span class="k">default</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="n">country</span><span class="p">,</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">as</span> <span class="n">cnt</span>
+             <span class="o">-&gt;</span> <span class="k">FROM</span> <span class="n">mysql</span><span class="p">.</span><span class="n">tutorial</span><span class="p">.</span><span class="k">user</span> <span class="k">GROUP</span> <span class="k">BY</span> <span class="n">country</span>
+             <span class="o">-&gt;</span> <span class="k">ORDER</span> <span class="k">BY</span> <span class="n">cnt</span> <span class="k">DESC</span> <span class="k">LIMIT</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="n">country</span>     <span class="o">|</span> <span class="n">cnt</span>
+<span class="c1">----------------+-----</span>
+ <span class="n">United</span> <span class="n">States</span>  <span class="o">|</span> <span class="mi">228</span>
+ <span class="n">United</span> <span class="n">Kingdom</span> <span class="o">|</span> <span class="mi">126</span>
+<span class="p">(</span><span class="mi">2</span> <span class="k">rows</span><span class="p">)</span>
+
+<span class="n">Query</span> <span class="mi">20141227</span><span class="n">_225413_00032_u66ux</span><span class="p">,</span> <span class="n">FINISHED</span><span class="p">,</span> <span class="mi">1</span> <span class="n">node</span>
+<span class="n">Splits</span><span class="p">:</span> <span class="mi">3</span> <span class="n">total</span><span class="p">,</span> <span class="mi">3</span> <span class="n">done</span> <span class="p">(</span><span class="mi">100</span><span class="p">.</span><span class="mi">00</span><span class="o">%</span><span class="p">)</span>
+<span class="mi">0</span><span class="p">:</span><span class="mi">00</span> <span class="p">[</span><span class="mi">992</span> <span class="k">rows</span><span class="p">,</span> <span class="mi">0</span><span class="n">B</span><span class="p">]</span> <span class="p">[</span><span class="mi">5</span><span class="p">.</span><span class="mi">45</span><span class="n">K</span> <span class="k">rows</span><span class="o">/</span><span class="n">s</span><span class="p">,</span> <span class="mi">0</span><span class="n">B</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+</code></pre></div></div>
+
+<ul>
+  <li>Describe the stream table in Hive</li>
+</ul>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">presto</span><span class="p">:</span><span class="k">default</span><span class="o">&gt;</span> <span class="k">DESCRIBE</span> <span class="n">hive</span><span class="p">.</span><span class="n">tutorial</span><span class="p">.</span><span class="n">stream</span><span class="p">;</span>
+   <span class="k">Column</span>   <span class="o">|</span>  <span class="k">Type</span>   <span class="o">|</span> <span class="k">Null</span> <span class="o">|</span> <span class="k">Partition</span> <span class="k">Key</span> <span class="o">|</span> <span class="k">Comment</span>
+<span class="c1">------------+---------+------+---------------+---------</span>
+ <span class="n">userid</span>     <span class="o">|</span> <span class="nb">varchar</span> <span class="o">|</span> <span class="k">true</span> <span class="o">|</span> <span class="k">false</span>         <span class="o">|</span>
+ <span class="nb">timestamp</span>  <span class="o">|</span> <span class="nb">varchar</span> <span class="o">|</span> <span class="k">true</span> <span class="o">|</span> <span class="k">false</span>         <span class="o">|</span>
+ <span class="n">artistid</span>   <span class="o">|</span> <span class="nb">varchar</span> <span class="o">|</span> <span class="k">true</span> <span class="o">|</span> <span class="k">false</span>         <span class="o">|</span>
+ <span class="n">artistname</span> <span class="o">|</span> <span class="nb">varchar</span> <span class="o">|</span> <span class="k">true</span> <span class="o">|</span> <span class="k">false</span>         <span class="o">|</span>
+ <span class="n">trackid</span>    <span class="o">|</span> <span class="nb">varchar</span> <span class="o">|</span> <span class="k">true</span> <span class="o">|</span> <span class="k">false</span>         <span class="o">|</span>
+ <span class="n">trackname</span>  <span class="o">|</span> <span class="nb">varchar</span> <span class="o">|</span> <span class="k">true</span> <span class="o">|</span> <span class="k">false</span>         <span class="o">|</span>
+<span class="p">(</span><span class="mi">6</span> <span class="k">rows</span><span class="p">)</span>
+
+<span class="n">Query</span> <span class="mi">20141227</span><span class="n">_222534_00016_u66ux</span><span class="p">,</span> <span class="n">FINISHED</span><span class="p">,</span> <span class="mi">1</span> <span class="n">node</span>
+<span class="n">Splits</span><span class="p">:</span> <span class="mi">2</span> <span class="n">total</span><span class="p">,</span> <span class="mi">2</span> <span class="n">done</span> <span class="p">(</span><span class="mi">100</span><span class="p">.</span><span class="mi">00</span><span class="o">%</span><span class="p">)</span>
+<span class="mi">0</span><span class="p">:</span><span class="mi">00</span> <span class="p">[</span><span class="mi">6</span> <span class="k">rows</span><span class="p">,</span> <span class="mi">1</span><span class="p">.</span><span class="mi">71</span><span class="n">KB</span><span class="p">]</span> <span class="p">[</span><span class="mi">13</span> <span class="k">rows</span><span class="o">/</span><span class="n">s</span><span class="p">,</span> <span class="mi">3</span><span class="p">.</span><span class="mi">86</span><span class="n">KB</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+</code></pre></div></div>
+
+<ul>
+  <li>Find top three countries with the largest number of streams</li>
+</ul>
+
+<p>This query actually requires combining data from MySQL (user profiles) and Hive (listened tracks).</p>
+
+<div class="language-sql highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">presto</span><span class="p">:</span><span class="k">default</span><span class="o">&gt;</span> <span class="k">SELECT</span> <span class="n">u</span><span class="p">.</span><span class="n">country</span><span class="p">,</span> <span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span> <span class="k">AS</span> <span class="n">cnt</span>
+             <span class="o">-&gt;</span> <span class="k">FROM</span> <span class="n">hive</span><span class="p">.</span><span class="n">tutorial</span><span class="p">.</span><span class="n">stream</span> <span class="n">s</span>
+             <span class="o">-&gt;</span> <span class="k">JOIN</span> <span class="n">mysql</span><span class="p">.</span><span class="n">tutorial</span><span class="p">.</span><span class="k">user</span> <span class="n">u</span>
+             <span class="o">-&gt;</span> <span class="k">ON</span> <span class="n">s</span><span class="p">.</span><span class="n">userid</span> <span class="o">=</span> <span class="n">u</span><span class="p">.</span><span class="n">userid</span>
+             <span class="o">-&gt;</span> <span class="k">GROUP</span> <span class="k">BY</span> <span class="n">u</span><span class="p">.</span><span class="n">country</span>
+             <span class="o">-&gt;</span> <span class="k">ORDER</span> <span class="k">BY</span> <span class="n">cnt</span> <span class="k">DESC</span>
+             <span class="o">-&gt;</span> <span class="k">LIMIT</span> <span class="mi">5</span><span class="p">;</span>
+    <span class="n">country</span>     <span class="o">|</span>   <span class="n">cnt</span>
+<span class="c1">----------------+---------</span>
+ <span class="n">United</span> <span class="n">States</span>  <span class="o">|</span> <span class="mi">5023398</span>
+ <span class="n">United</span> <span class="n">Kingdom</span> <span class="o">|</span> <span class="mi">2389085</span>
+                <span class="o">|</span> <span class="mi">1113056</span>
+ <span class="n">Poland</span>         <span class="o">|</span>  <span class="mi">974331</span>
+ <span class="n">Canada</span>         <span class="o">|</span>  <span class="mi">842514</span>
+<span class="p">(</span><span class="mi">5</span> <span class="k">rows</span><span class="p">)</span>
+
+<span class="n">Query</span> <span class="mi">20141227</span><span class="n">_230237_00038_u66ux</span><span class="p">,</span> <span class="n">FINISHED</span><span class="p">,</span> <span class="mi">1</span> <span class="n">node</span>
+<span class="n">Splits</span><span class="p">:</span> <span class="mi">79</span> <span class="n">total</span><span class="p">,</span> <span class="mi">79</span> <span class="n">done</span> <span class="p">(</span><span class="mi">100</span><span class="p">.</span><span class="mi">00</span><span class="o">%</span><span class="p">)</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">37</span> <span class="p">[</span><span class="mi">19</span><span class="p">.</span><span class="mi">2</span><span class="n">M</span> <span class="k">rows</span><span class="p">,</span> <span class="mi">2</span><span class="p">.</span><span class="mi">36</span><span class="n">GB</span><span class="p">]</span> <span class="p">[</span><span class="mi">122</span><span class="n">K</span> <span class="k">rows</span><span class="o">/</span><span class="n">s</span><span class="p">,</span> <span class="mi">15</span><span class="p">.</span><span class="mi">3</span><span class="n">MB</span><span class="o">/</span><span class="n">s</span><span class="p">]</span>
+</code></pre></div></div>
+
+<p>2:37 [19.2M rows, 2.36GB] [122K rows/s, 15.3MB/s] means that it took 2min:37sec to process 19.2M rows (that equals 2.36GB) with the average speed of 122K rows/s.</p>
+
+<p><img src="http://sungsoo.github.com/images/presto.png" alt="" /></p>
+
+<p>You can find more statistics, if you navigate to Presto Web UI at <a href="http://127.0.0.1:8080/">http://127.0.0.1:8080</a> (see a picture on the left).</p>
+
+<h2 id="one-sql-semantics-for-all">One SQL semantics for all</h2>
+
+<p>Since Presto gives you a single SQL-like interface to query data from multiple data-sources, one should understand its implications.</p>
+
+<p>Presto uses ANSI SQL syntax and semantics that, for example, has several differences from HiveQL (which is loosely modeled after MySQL). Be aware of these <a href="http://prestodb.io/docs/current/migration/from-hive.html">syntax and semantics incompatibilities</a> when your try to re-run your HiveQL queries in Presto.</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>First impression of Presto is very positive – the installation process is problemless, the tested features work as expected, and there is actually no troubleshooting needed.</p>
+
+<p>Although Hive on Tez (or possibly Hive on Spark in the nearest future) <a href="http://yahoodevelopers.tumblr.com/post/85930551108/yahoo-betting-on-apache-hive-tez-and-yarn">aims to provide a single SQL-like query and BI solution on the Hadoop regardless of dataset size</a>, Presto goes one step further and aims to provide also a single SQL-like query solution regardless of dataset location e.g. HDFS, RDBMS, NoSQL, proprietary data stores. This idea is really cool and it’s great to see tool that makes it happen.</p>
+
+<p>Because Presto is a relatively new projects, it’s still lacking some useful features – integration with YARN (less efficient sharing of resources between Presto and other engines like MapReduce, Spark), possibility to write results back to Hive tables (problematic if you want to integrate Presto into your ETL pipelines), support for Avro, to name a few. Fortunately, Presto adoption and community is growing fast, so hopefully these features will be implemented soon. Stay tuned!</p>
+
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

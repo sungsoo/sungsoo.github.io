@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Introduction to HDFS Erasure Coding in Apache Hadoop</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Introduction to HDFS Erasure Coding in Apache Hadoop</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">28 April 2016</p></h4>
+<hr>
+
+<div class="post">
+<h2 id="article-source">Article Source</h2>
+
+<ul>
+  <li>Title: <a href="https://blog.cloudera.com/blog/2015/09/introduction-to-hdfs-erasure-coding-in-apache-hadoop/">Introduction to HDFS Erasure Coding in Apache Hadoop</a></li>
+</ul>
+
+<hr />
+
+<h1 id="introduction-to-hdfs-erasure-coding-in-apache-hadoop">Introduction to HDFS Erasure Coding in Apache Hadoop</h1>
+
+<p><strong>Erasure coding, a new feature in HDFS, can reduce storage overhead by
+approximately 50% compared to replication while maintaining the same
+durability guarantees. This post explains how it works.</strong></p>
+
+<p>HDFS by default replicates each block three times. Replication provides
+a simple and robust form of redundancy to shield against most failure
+scenarios. It also eases scheduling compute tasks on locally stored data
+blocks by providing multiple replicas of each block to choose from.</p>
+
+<p>However, replication is expensive: the default 3x replication scheme
+incurs a 200% overhead in storage space and other resources (e.g.,
+network bandwidth when writing the data). For datasets with relatively
+low I/O activity, the additional block replicas are rarely accessed
+during normal operations, but still consume the same amount of storage
+space.</p>
+
+<p>Therefore, a natural improvement is to use erasure coding (EC) in place
+of replication, which uses far less storage space while still providing
+the same level of fault tolerance. Under typical configurations, EC
+reduces the storage cost by ~50% compared with 3x replication.
+Motivated by this substantial cost saving opportunity, engineers from
+Cloudera and Intel initiated and drove the HDFS-EC project under
+<a href="https://issues.apache.org/jira/browse/HDFS-7285">HDFS-7285</a> in
+collaboration with the broader Apache Hadoop community. HDFS-EC is
+currently targeted for release in Hadoop 3.0.</p>
+
+<p>In this post, we will describe the design of HDFS erasure coding. Our
+design accounts for the unique challenges of retrofitting EC support
+into an existing distributed storage system like HDFS, and incorporates
+insights by analyzing workload data from some of Cloudera’s largest
+production customers. We will discuss in detail how we applied EC to
+HDFS, changes made to the NameNode, DataNode, and the client read and
+write paths, as well as optimizations using Intel ISA-L to accelerate
+the encoding and decoding calculations. Finally, we will discuss work to
+come in future development phases, including support for different data
+layouts and advanced EC algorithms.</p>
+
+<h2 id="background">Background</h2>
+
+<h3 id="ec-and-raid">EC and RAID</h3>
+
+<p>When comparing different storage schemes, there are two important
+considerations: data durability (measured by the number of tolerated
+simultaneous failures) and storage efficiency (logical size divided by
+raw usage).</p>
+
+<p>Replication (like RAID-1, or current HDFS) is a simple and effective way
+of tolerating disk failures, at the cost of storage overhead. <em>N</em>-way
+replication can tolerate up to <em>n</em>-1 simultaneous failures with a
+storage efficiency of 1/<em>n</em>. For example, the three-way replication
+scheme typically used in HDFS tolerates up to two failures with a
+storage efficiency of one-third (alternatively, 200% overhead).</p>
+
+<p><em>Erasure coding</em>(EC) is a branch of information theory which extends a
+message with redundant data for fault tolerance. An EC codec operates on
+units of uniformly-sized data termed cells. A codec can take as input a
+number of data cells and outputs a number of parity cells. This process
+is called encoding. Together, the data cells and parity cells are termed
+an erasure coding group. A lost cell can be reconstructed by computing
+over the remaining cells in the group; this process is called
+<em>decoding</em>.</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2015/09/hdfs-erasure-t11.png" alt="" title="hdfs-erasure-t1" /></p>
+
+<p>Table 1. XOR (exclusive-or) operations</p>
+
+<p>The simplest form of erasure coding is based on XOR (exclusive-or)
+operations, shown in Table 1. XOR operations are associative, meaning
+that <em>X</em> ⊕ <em>Y</em> ⊕ <em>Z</em> = (<em>X</em> ⊕ <em>Y</em>) ⊕ <em>Z</em>. This means that XOR can
+generate 1 parity bit from an arbitrary number of data bits. For
+example, 1 ⊕ 0 ⊕ 1 ⊕ 1 = 1. When the third bit is lost, it can be
+recovered by XORing the remaining data bits {1, 0, 1} and the parity bit</p>
+<ol>
+  <li>While XOR can take any number of data cells as input, it is very
+limited since it can only produce at most one parity cell. So, XOR
+encoding with group size n can tolerate up to 1 failure with an
+efficiency of <em>n</em>-1/<em>n</em> (<em>n</em>-1 data cells for a group of <em>n</em> total
+cells), but is insufficient for systems like HDFS which need to tolerate
+multiple failures.</li>
+</ol>
+
+<p>This limitation is addressed by Reed-Solomon (RS), another form of EC.
+RS uses sophisticated linear algebra operations to generate multiple
+parity cells, and thus can tolerate multiple failures per group. This
+makes it a common choice for production storage systems. RS is
+configurable with two parameters, <em>k</em> and <em>m</em>. As illustrated in Figure
+1, <em>RS(k,m)</em> works by multiplying a vector of k data cells with a
+Generator Matrix (<em>G^T^</em>) to generate an extended codeword vector with
+<em>k</em> data cells and <em>m</em> parity cells. Storage failures can be recovered
+by multiplying the surviving cells in the codeword with the inverse of
+<em>G^T^</em>—as long as k out of (<em>k + m</em>) cells are available. (Rows in
+<em>G^T^</em> corresponding to failed units should be deleted before taking its
+inverse.) This means that the group can tolerate the failure of any <em>m</em>
+cells.</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2015/09/hdfs-erasure-f1.png" alt="" title="hdfs-erasure-f1" /></p>
+
+<p>Figure 1: Reed-Solomon encoding with four data units and two parity
+units
+(<a href="https://www.usenix.org/legacy/event/fast09/tech/full_papers/plank/plank.pdf">source</a>)</p>
+
+<p>With Reed-Solomon, the user can flexibly adjust data durability and
+storage cost by choosing different values for <em>k</em> and <em>m</em>. The number of
+parity cells (<em>m</em>) determines the number of simultaneous storage
+failures that can be tolerated. The ratio of data cells to parity cells
+determines the storage efficiency:</p>
+
+<p><img src="https://latex.codecogs.com/gif.latex?\frac{m}{k+m}" alt="" title="\frac{m}{k+m}" /></p>
+
+<p>Typical RS configurations such as RS (6,3) and RS (10,4) provide
+superior data durability and superior storage efficiency compared to
+three-way replication, since they can tolerate up to three or four
+failures respectively and do so with &lt;50% storage overhead. Table 2
+compares the fault tolerance and storage efficiency of replication, XOR,
+and RS with typical parameters.</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2015/09/hdfs-erasure-tab2.png" alt="" title="hdfs-erasure-tab2" /></p>
+
+<p>Table 2: Comparison of replication, XOR, and RS in fault tolerance and
+storage efficiency</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2015/09/hdfs-erasure-2new.png" alt="" title="hdfs-erasure-2new" /></p>
+
+<p>Figure 2. RAID-5 and RAID-6 illustrations
+(<a href="https://en.wikipedia.org/wiki/Standard_RAID_levels">source</a>)</p>
+
+<p>EC has long been used in local storage systems, notably in the forms of
+<a href="https://en.wikipedia.org/wiki/Standard_RAID_levels">RAID-5 and RAID-6</a>.
+RAID-5 typically uses XOR encoding since it only needs to tolerate a
+single disk failure, while RAID-6 uses Reed-Solomon with two parity
+cells to tolerate up to two failures. The cell size is typically
+configurable, with the erasure coding groups formed by the cells at the
+same offset on each disk.</p>
+
+<h3 id="ec-in-distributed-storage-systems">EC in Distributed Storage Systems</h3>
+
+<p>To manage potentially very large files, distributed storage systems
+usually divide files into fixed-size logical byte ranges called logical
+blocks. These logical blocks are then mapped to storage blocks on the
+cluster, which reflect the physical layout of data on the cluster.</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2015/09/hdfs-erasure-f31.png" alt="" title="hdfs-erasure-f3" /></p>
+
+<p>Figure 3. Illustration of EC with contiguous and striped layouts</p>
+
+<p>The simplest mapping between logical and storage blocks is a contiguous
+block layout, which maps each logical block one-to-one to a storage
+block. Reading a file with a contiguous block layout is as easy as
+reading each storage block linearly in sequence.</p>
+
+<p>In contrast, a striped block layout breaks a logical block into much
+smaller storage units, typically called cells, and writes repeated
+stripes of cells round robin across a set of storage blocks. Reading a
+file with a striped layout requires querying the set of storage blocks
+of a logical block, then reading stripes of cells from the set of
+storage blocks. This section discusses how EC can be supported on both
+block layouts.</p>
+
+<p>In principle, block layout (contiguous vs. striped) and redundancy form
+(replication vs. EC) are two orthogonal dimensions, resulting in four
+possible combinations. As surveyed in Figure 4, they are all in active
+use by major storage systems. Some systems, including Ceph and QFS,
+support configuring layout and/or redundancy on a per-directory or
+per-file basis.</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2015/09/hdfs-erasure-f42.png" alt="" title="hdfs-erasure-f4" /></p>
+
+<p>Figure 4. Spectrum of existing distributed storage systems with
+different block layouts and redundancy forms</p>
+
+<p>As discussed before, erasure coding is advantageous over replication in
+terms of storage efficiency. However, this comes at the cost of
+additional complexity and more expensive failure recovery.</p>
+
+<p>Along the block layout dimension, striping can provide better I/O
+throughput than a contiguous layout since it can utilize multiple
+spindles in parallel. However, the implication is that most reads will
+be remote, stressing the need for fast full-bisection networks. This
+approach contradicts the traditional MapReduce paradigm of scheduling
+for data locality, though it is still possible if applications read and
+write their data with awareness of the underlying cell and stripe sizes.</p>
+
+<h2 id="design-and-implementation">Design and Implementation</h2>
+
+<h3 id="choosing-block-layout">Choosing Block Layout</h3>
+
+<p>For HDFS-EC, the foremost question was determining which block layout
+was most suitable. A contiguous layout is simpler to implement since the
+read and write path would still be very similar to the current system
+with replication. However, it is only suitable when files are quite
+large, since the full cost savings are only realized when writing full
+stripes. For instance, with RS (10,4) a stripe with only a single 128MB
+data block would still end up writing four 128MB parity blocks, for a
+storage overhead of 400% (worse than 3-way replication). A contiguous
+layout is also only suitable for offline or background EC, since
+otherwise a client would need to buffer GBs of data blocks to calculate
+parity.</p>
+
+<p>On the other hand, EC with striped layout can realize storage savings
+with both small and large files because the cell size is much smaller
+(typically 64KB or 1MB). This overall smaller group size also enables
+online EC where clients directly write erasure coded data, since only a
+few megabytes of buffering are needed to calculate parity information.
+One drawback is that some locality-sensitive workloads will have
+suboptimal performance when running on striped blocks. To better serve
+such workloads, a striped file can be converted to the contiguous
+layout, but that requires almost rewriting the entire file.</p>
+
+<p>Based on this analysis, file size is the key determining factor. If
+cluster usage is dominated by large files—meaning six or more 128MB
+blocks, enough for a full EC group under RS(6,3) scheme—then a
+contiguous layout is suitable since we can avoid the implementation
+issues of combining blocks from multiple small files into a single
+group. However, if cluster capacity is dominated by small files, then a
+striped layout is the more natural choice to achieve better cost savings
+and administration.</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2015/09/hdfs-erasure-f5.png" alt="" title="hdfs-erasure-f5" /></p>
+
+<p>Figure 5. File-size histograms from production clusters</p>
+
+<p>We conducted an empirical study of the HDFS file-size distribution at
+three of Cloudera’s largest customers. Details of the analysis can be
+found in our
+<a href="https://issues.apache.org/jira/secure/attachment/12690129/fsimage-analysis-20150105.pdf">report</a>,
+and Figure 5 summarizes the key findings. Most importantly, usage by
+small files (less than one group) varied between 36-97% of all cluster
+usage, indicating that handling small files is very important.</p>
+
+<p>Based on this finding, we dedicated the first phase of HDFS-EC to
+supporting EC with striped layout.</p>
+
+<h3 id="generalizing-the-block-concept-on-namenode">Generalizing the Block Concept on NameNode</h3>
+
+<p>A major portion of this project is dedicated to generalizing the
+fundamental Block concept to support data striping. The assumption of
+contiguous block layout is widely and deeply embedded in HDFS internal
+logic. To support the striped layout, the concept of a logical block had
+to be separated from that of a storage block. The former represents a
+logical byte range in a file, while the latter is the basic unit of data
+chunks stored on a DataNode. Figure 6 demonstrates the concepts of
+logical and storage blocks. In the example, the file /tmp/foo is
+logically divided into 13 <a href="https://docs.google.com/document/d/1mSmptvdQ-T2CfmNq-HIH_gGZVU7bn2l2T2Rl-LK9czk/edit#bookmark=id.gv8uten4nvw7">striping
+cells</a>
+(cell_0 through cell_12). Logical block 0 represents the logical byte
+range of cells 0~8, and logical block 1 represents cells 9~12. Cells
+0, 3, 6 form a storage block, which will be stored as a single chunk of
+data on a DataNode. For conciseness the figure doesn’t include parity
+blocks/cells.</p>
+
+<p>A naive mechanism to support this generalization is for the HDFS
+NameNode to monitor each storage block in its blocks map, which maps
+from a block ID to the corresponding block, and then use another map to
+go from a logical block to its member storage blocks. However, this
+means small files will incur significant memory overhead on the NameNode
+because striping results in many more storage blocks than replication.</p>
+
+<p>To reduce this overhead we have introduced a new hierarchical block
+naming protocol. Currently HDFS allocates block IDs sequentially based
+on block creation time. This protocol instead divides each block ID into
+2~3 sections, as illustrated in Figure 7. Each block ID starts with a
+flag indicating its layout (contiguous=0, striped=1). For striped
+blocks, the rest of the ID consists of two parts: the middle section
+with ID of the logical block and the tail section representing the index
+of a storage block in the logical block. This allows the NameNode to
+manage a logical block as a summary of its storage blocks. Storage block
+IDs can be mapped to their logical block by masking the index; this is
+required when the NameNode processes DataNode block reports.</p>
+
+<p>We have simulated the NameNode memory usage with EC based on the three
+HDFS cluster images in Figure 5. Results show that without the new
+hierarchical block naming protocol, striping would increase the size of
+NameNode blocks map by 250%~440%. With the protocol, striping only
+increases the NameNode blocks map by 21%~76%. More details of the
+memory overhead analysis can be found in this
+<a href="https://issues.apache.org/jira/secure/attachment/12690129/fsimage-analysis-20150105.pdf">report</a>.</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2015/09/hdfs-erasure-f6.png" alt="" title="hdfs-erasure-f6" /></p>
+
+<p>Figure 6. Logical and storage blocks      </p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2015/09/hdfs-erasure-f7.png" alt="" title="hdfs-erasure-f7" /></p>
+
+<p>Figure 7. Hierarchical block naming protocol</p>
+
+<p>Because of this design, a logical block appears as a group of internal
+storage blocks on NameNode. Table 3 summarizes terminologies related to
+striping and EC blocks. The default EC policy is to use 6 data blocks
+and 3 parity blocks, and a striping cell size of 64KB. These default
+values were selected based on typical cluster and file sizes. A wider EC
+schema, such as the (10,4) setting in Facebook’s EC implementation of
+<a href="http://wiki.apache.org/hadoop/HDFS-RAID">HDFS-RAID</a>, has better storage
+efficiency but leads to more expensive recovery, as well as placing a
+high requirement on the number of racks in the cluster.</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2015/09/hdfs-erasure-t3.png" alt="" title="hdfs-erasure-t3" /></p>
+
+<p>Table 3. Glossary of EC block concepts</p>
+
+<p>Supporting the logical block abstraction required updating many parts of
+the NameNode. As one example, HDFS attempts to replicate
+under-replicated blocks based on the risk of data loss. Previously, the
+algorithm simply considered the number of remaining replicas, but has
+been generalized to also incorporate information from the EC schema.
+Other key changes include updating quota, fsck, balancer, and so forth.</p>
+
+<h3 id="client-extensions">Client Extensions</h3>
+
+<p>The main I/O logic of the HDFS client is implemented in <code class="language-plaintext highlighter-rouge">DFSInputStream</code>
+and <code class="language-plaintext highlighter-rouge">DFSOutputStream</code>. We have extended them into
+<code class="language-plaintext highlighter-rouge">DFSStripedInputStream</code> and <code class="language-plaintext highlighter-rouge">DFSStripedOutputStream</code> with data striping
+and EC support. The basic principle behind the extensions is to allow
+the client node to work on multiple storage blocks in a logical block in
+parallel. When used together with HDFS encryption, these extensions
+operate on encrypted data—i.e., below the encryption layer.</p>
+
+<p>On the output/write path, <code class="language-plaintext highlighter-rouge">DFSStripedOutputStream</code> manages a set of data
+streamers, one for each DataNode storing an internal storage block in
+the current logical block. The streamers mostly work asynchronously. A
+coordinator takes charge of operations on the entire logical block,
+including ending the current logical block, allocating a new logical
+block, and so forth.</p>
+
+<p>On the input/read path, <code class="language-plaintext highlighter-rouge">DFSStripedInputStream</code> translates a requested
+logical byte range of data as ranges into internal storage blocks stored
+on DataNodes. It then issues read requests in parallel. Upon failures,
+it issues additional read requests for decoding.</p>
+
+<h3 id="datanode-extensions">DataNode Extensions</h3>
+
+<p>To avoid the chance of expensive foreground data reconstruction on the
+client side, it is critical to identify and fix DataNode failures in the
+background. As with replication, the NameNode is responsible for
+tracking missing blocks in an EC stripe and assigning recovery work to
+DataNodes. The recovery work on the DataNode is handled by a new
+<code class="language-plaintext highlighter-rouge">ErasureCodingWorker</code> (ECWorker) component, which does the following to
+reconstruct a missing EC block:</p>
+
+<ol>
+  <li>
+    <p>Read the data from source nodes: A dedicated thread pool,
+initialized at <code class="language-plaintext highlighter-rouge">ErasureCodingWorker</code> start time, is used to read
+data blocks from different source nodes. Base on the EC schema, it
+schedules the read requests to all source targets and ensures only
+to read minimum required input blocks for reconstruction.  </p>
+  </li>
+  <li>
+    <p>Decode the data and generate the output data: Similar to EC client,
+ECWorker finishes decoding/encoding work by using the codec
+framework that will be introduced in the Erasure Codec Framework.</p>
+  </li>
+  <li>
+    <p>Transfer the generated data blocks to target nodes: Once decoding is
+finished, it will encapsulate the output data to packets and send
+them to target DataNodes.</p>
+  </li>
+</ol>
+
+<h3 id="codec-calculation-framework">Codec Calculation Framework</h3>
+
+<p>Data encoding/decoding is very CPU intensive and can be a major overhead
+when using erasure coding. To mitigate this in HDFS-EC, we leverage
+Intel’s open-source <a href="http://www.intel.com/content/www/us/en/storage/erasure-code-isa-l-solution-video.html">Intelligent Storage Acceleration
+Library</a>
+(Intel ISA-L), which accelerates EC-related linear algebra calculations
+by exploiting advanced hardware instruction sets like SSE, AVX, and
+AVX2. ISA-L supports all major operating systems, including Linux and
+Windows. </p>
+
+<p>In HDFS-EC we implemented the Reed-Solomon algorithm in two forms: one
+based on ISA-L and another in pure Java (suitable for systems without
+the required CPU models). We have compared the performance of these two
+implementations, as well as the coder from Facebook’s HDFS-RAID
+implementation. A (6,3) schema is used in all tests in this section.</p>
+
+<p>Figure 8 first shows results from an in-memory encoding/decoding micro
+benchmark. The ISA-L implementation outperforms the HDFS-EC Java
+implementation by more than 4x, and the Facebook HDFS-RAID coder by
+~20x. Based on the results, we strongly recommend the ISA-L accelerated
+implementation for all production deployments.</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2015/09/hdfs-erasure-f8.png" alt="" title="hdfs-erasure-f8" /></p>
+
+<p>Figure 8. Encoding and decoding performance comparison</p>
+
+<p>We also compared end-to-end HDFS I/O performance with these different
+coders against HDFS’s default scheme of three-way replication. The tests
+were performed on a cluster with 11 nodes (1 NameNode, 9 DataNodes, 1
+client node) interconnected with 10 GigE network. Figure 9 shows the
+throughput results of 1) client writing a 12GB file to HDFS; and 2)
+client reading a 12GB file from HDFS. In the reading tests we manually
+killed two DataNodes so the results include decoding overhead.</p>
+
+<p>As shown in Figure 9, in both sequential write and read and read
+benchmarks, throughput is greatly constrained by the pure Java coders
+(HDFS-RAID and our own implementation). The ISA-L implementation is much
+faster than the pure Java coders because of its excellent CPU
+efficiency. It also outperforms replication by 2-3x because the striped
+layout allows the client to perform I/O with multiple DataNodes in
+parallel, leveraging the aggregate bandwidth of their disk drives. We
+have also tested read performance without any DataNode failure: HDFS-EC
+is roughly 5x faster than three-way replication.</p>
+
+<p>Note that further performance gains should be possible. With an RS (6,3)
+layout, a striped layout should be able to achieve approximately a 6x
+improvement in I/O throughput, or approximately 1GB/s of throughput. The
+current performance does not meet the theoretical optimum partially
+because the striped layout spreads logically sequential I/O requests to
+multiple DataNodes, potentially degrading sequential I/O pattern on
+local disk drives. We plan to add more advanced prefetching and write
+buffering to the client as a future optimization.</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2015/09/hdfs-erasure-f9.png" alt="" title="hdfs-erasure-f9" /></p>
+
+<p>Figure 9. HDFS I/O performance comparison</p>
+
+<p>Another important optimization in ISA-L is support for incremental
+coding. This means applications do not have to wait for all source data
+before starting the coding process. This will potentially enable HDFS-EC
+to efficiently handle slow writing applications, as well as append
+operations.</p>
+
+<h2 id="future-work">Future Work</h2>
+
+<p>This article summarizes the first development phase for HDFS-EC. Many
+exciting extensions and optimizations have been identified and
+documented under
+<a href="https://issues.apache.org/jira/browse/HDFS-8031">HDFS-8031</a>. A major
+follow-on task is to build a generic EC policy framework which allows
+system users to deploy and configure multiple coding schemas such as
+conventional Reed-Solomon,
+<a href="http://www.eecs.berkeley.edu/~nihar/publications/Hitchhiker_SIGCOMM14.pdf">HitchHiker</a>,
+LRC, and so forth. By abstracting and modularizing common codec logics,
+the framework will also enable users to easily develop new EC
+algorithms. We also plan to further optimize NameNode memory consumption
+and reduce data reconstruction latency.</p>
+
+<p>To save storage space on files belonging to locality-sensitive
+workloads, we have established HDFS-EC phase II
+(<a href="https://issues.apache.org/jira/browse/HDFS-8030">HDFS-8030</a>) to
+support EC with contiguous block layout.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Erasure coding can reduce the storage overhead of HDFS by approximately
+50% compared to replication while maintaining the same durability
+guarantees. This results in a substantial storage-cost savings in
+hardware expenditure, since users can now store twice as much data on
+the same amount of raw storage.</p>
+
+<p>Implementing HDFS-EC required making improvements across many parts of
+HDFS and the collaborative efforts of developers at Cloudera, Intel, and
+the rest of the Apache Hadoop community. The design of HDFS-EC results
+in minimal additional overhead on the NameNode through the use of a new
+hierarchical block naming protocol, and also leverages the optimized
+Reed-Solomon routines in Intel ISA-L for high-performance encoding and
+decoding of parity information.</p>
+
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Introduction to Transactional Memory</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Introduction to Transactional Memory</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#parallel computing-ref">parallel computing <span><sup>65</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">4 January 2014</p></h4>
+<hr>
+
+<div class="post">
+<blockquote>
+  <p>Those are my principles. If you don’t like them I have others.<br />
+<em>Groucho Marx</em></p>
+</blockquote>
+
+<p>The clock rate of processors used to grow exponentially. Going from below 1 MHz to around 3 GHz took the computer industry less than 40 years. However, increasing the clock rate further has become infeasible. In fact, the ubiquity of portable computers, for which power consumption is a top concern, has forced the industry to keep the clock rate of many processors much below the achievable maximum.</p>
+
+<p>The demand for computational power, however, has not ceased to increase. The result is a completely new trend, which is commonly referred to as a “<em>multi-core revolution</em>”. Instead of increasing the clock speed of processors, more computing cores are put on a single chip. Multiprocessing, which used to be a feature of only high-end machines, has become commonplace in personal computers and laptops. It is possible that, in the near future, mobile phones, media players, and other small devices will become equipped with many processors.</p>
+
+<p>This new trend has created a big challenge. Before, with each new processor, all existing applications would automatically get faster. Now, applications will need to get increasingly parallel in order to exploit the power of new processors. Therefore, parallel programming, which used to be the domain of a few high-performance computing experts, will now have to be mastered by common programmers.</p>
+
+<h2 id="problems-with-explicit-locking">PROBLEMS WITH EXPLICIT LOCKING</h2>
+
+<p>Creating threads is easy in any modern programming language. What is hard, however, is synchronizing their actions, especially if one wants to make those threads run truly in parallel. Consider, for example, an application in which threads operate on a <em>big data structure</em>. A simple way to en- sure thread-safety is to protect the entire structure with a single lock (<em>coarse-grained locking</em>). Then, however, all accesses to the data structure are serialized, which can severely limit the scalability of the application. Moreover, lock contention may become a problem, especially if the number of threads becomes high.</p>
+
+<p>Optimally, one would use many locks, each protecting a small part of the data structure (<em>fine- grained locking</em>). But this is an engineering challenge because one has to ensure that all components of the application follow the same locking policy. If even one method acquires locks in a <em>wrong</em> order, then a <em>deadlock</em> can occur. One <em>missing lock</em> acquisition can lead to <strong>race conditions</strong>, which are very difficult to debug. Indeed, concurrency-related programming errors often manifest themselves only in some, possibly rare, executions, and sometimes only when the application is run with all its debugging functions turned off. Those errors can result in effects ranging from program crashes, which are directly visible, up to very subtle data corruption, which may pass undetected for a long time.</p>
+
+<p>The <em>problem</em> with following a complex locking policy in a big application is that this policy exists only in the documentation (e.g., comments in the code) or in the programmers’ minds. Looking just at the code of a program, written in one of the mainstream programming languages such as Java or C++, one typically cannot tell which lock protects which objects, or in which order those locks should be acquired. Associating a monitor with each object, as in Java, does not really help in <em>fine-grained</em> locking when a single monitor or lock can protect a group of objects and, conversely, a single object can be protected by more than one lock. It thus takes a very disciplined team of programmers to do fine-grained locking right.</p>
+
+<p>But even following a locking policy to the letter does not guarantee success in terms of performance on multi-core systems. Fine-grained locking involves many trade-offs. For instance, locks are not given for free, and acquiring them takes time. Hence, it might be hard to find the right balance between using too many locks, which can result in high locking overhead, and too few locks, which can lead to scalability problems. To give a concrete example, devising an efficient, scalable algorithm that implements a thread-safe queue, a data structure almost trivial in a single-thread program, is so hard that it deserved at least two papers in top computer science conferences. We cannot expect that ordinary programmers will spend so much effort in getting the last bit of parallelism from every part of their application, given how hard it is to do it right.</p>
+
+<p>Obviously, modern programming languages offer libraries containing <em>highly-optimized</em> and <em>thread-safe</em> implementations of commonly used data structures. In many cases, it suffices to use those components to get a program that can make use of a few CPU cores. But here we face a problem with <strong><em>composability</em></strong>: a data structure composed of thread-safe objects is not necessarily itself thread-safe. For example, consider two thread-safe sets, and a problem of removing an element from one set and then adding it to the other. Often, one wants such a composite operation involving both sets to be <em>atomic</em>. That is, the intermediate step of this operation, in which an element is removed from one of the sets but still not added to the other, should not be observed by concurrent threads. But implementing such an operation requires either adding additional locks, which protect <em>both</em> sets, or extending the locking mechanisms used by the implementations of those sets. In the former case, one effectively devises a new locking policy for the two sets, which can introduce race conditions or scalability issues. In the latter case, one has to “open” the set implementations, understand their locking policies, and extend them, which not only is challenging, but also breaks object encapsulation.</p>
+
+<h3 id="composability-locks">Composability: locks</h3>
+
+<ul>
+  <li>Composing lock-based code can be tricky
+    <ul>
+      <li>Requires system-wide policies to get correct</li>
+      <li>Breaks software modularity</li>
+    </ul>
+  </li>
+  <li>Caught between an extra lock and a hard place
+    <ul>
+      <li>Fine-grain locking: good for performance, but can lead to deadlock</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void transfer(A, B, amount)
+{
+    synchronized(A) {
+      synchronized(B) {
+        withdraw(A, amount);
+        deposit(B, amount);
+		} 
+	}
+}
+</code></pre></div></div>
+
+<h4 id="deadlock">Deadlock!</h4>
+
+<p><strong>Thread 0:</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	transfer(x,y);
+</code></pre></div></div>
+
+<p><strong>Thread 1:</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	transfer(y,x);
+</code></pre></div></div>
+
+<p><img src="http://sungsoo.github.com/images/deadlock.png" alt="" /></p>
+
+<p>Using locks <em>explicitly</em> to handle concurrency becomes even harder when threads operate on <em>different priority levels</em>, e.g., in a real-time system. If a high-priority thread wants to acquire a lock that is held by a low-priority thread, it has to wait until the lock is released. That is, <em>the high-priority thread has to wait for the low-priority thread</em>—a problem known as <strong>priority inversion</strong>. Synchronizing those threads using <em>nonblocking</em> mechanisms, i.e., without using any form of mutual exclusion, would solve the problem. However, designing those mechanisms is sometimes even harder than using fine- grained locking.</p>
+
+<h3 id="composability-transactions">Composability: transactions</h3>
+
+<ul>
+  <li>Transactions compose gracefully
+    <ul>
+      <li>Programmer declares global intent (atomic transfer)
+        <ul>
+          <li>No need to know of global implementation strategy</li>
+        </ul>
+      </li>
+      <li>Transaction in transfer subsumes those in withdraw &amp; deposit
+        <ul>
+          <li>Outermost transaction de#nes atomicity boundary</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>System manages concurrency as well as possible serialization
+    <ul>
+      <li>Serialization for transfer(A, B, 100) and transfer(B, A, 200)</li>
+      <li>Concurrency for transfer(A, B, 100) and transfer(C, D, 200)</li>
+    </ul>
+  </li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void transfer(A, B, amount)
+{
+    atomic {
+      withdraw(A, amount);
+      deposit(B, amount);
+	}
+}
+
+</code></pre></div></div>
+<p><strong>Thread 0:</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	transfer(x,y);
+</code></pre></div></div>
+
+<p><strong>Thread 1:</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	transfer(y,x);
+</code></pre></div></div>
+
+<h2 id="transactional-memory">TRANSACTIONAL MEMORY</h2>
+
+<p>Given the above challenges posed by the explicit use of locks to manage concurrency, it is not surpris- ing to see a large body of research aimed at making concurrent programming easier. One of the most appealing solutions is <em>transactional memory</em> (TM). The basic idea behind TM is to enable threads of an application to communicate by exe- cuting <em>lightweight</em>, <em>in-memory</em> <strong>transactions</strong>. A transaction is a sequence of operations that should be executed atomically. The purpose of a transaction is thus similar to that of a critical section. However, unlike critical sections, transactions can <em>abort</em>, in which case all their operations are rolled back and are never visible to other transactions. Also, transactions only <em>appear</em> as if they executed sequentially—a TM is free to run them concurrently, as long as the illusion of atomicity is preserved.</p>
+
+<p>Using a TM is, in principle, very easy: the programmer simply converts those blocks of code that should be executed atomically into transactions. In some TMs, this can be as straightforward as annotating functions and methods with a special language keyword (usually: <strong>atomic</strong>), as illustrated in the following  code segement.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1 atomic
+2 v ← x.getVal;
+3 x.setVal(v + 1);
+</code></pre></div></div>
+
+<p>The TM implementation is then responsible for executing those transactions safely and efficiently. The TM might internally use <em>fine-grained locking</em>, or some <em>nonblocking</em> mechanism, but this is hidden from the programmer and the application. Thus, if the TM is implemented correctly, which can be done once by a group of experts, the programmer is less likely to introduce concurrency bugs in the code than if he or she had to handle locks explicitly. Indeed, a transaction is a very <em>intuitive abstraction</em> that has been used with success in databases for a long time.</p>
+
+<p>A TM can be implemented in hardware, in software, or as a hardware-software hybrid. The TM API usually allows for (1) <em>starting</em> a transaction, (2) <em>performing</em> operations on shared data within a transaction, and (3) <em>committing</em> or <em>aborting</em> a transaction. Such an interface can be provided, e.g., by a software library. There are also experimental TM-aware compilers for languages such as Java and C++. Those compilers automatically convert blocks of code annotated with a special keyword (e.g., <strong>atomic</strong>) into transactions.</p>
+
+<p>Even though a TM can internally use fine-grained locking, the paradigm is free of problems that <em>explicit locking</em> (i.e., locking used directly by the programmers) creates, and which we listed above. First, transactions are <em>composable</em>. For instance, consider the problem of moving an element between two sets. If both sets are implemented using transactions, then it suffices to create another transaction that will simply remove an element from one set and add it to the other set. Indeed, most TM implementations allow transactions to be <em>nested</em>. There exists also a technique, called <strong><em>transactional boosting</em></strong>, which allows transactions to use any thread- safe data structure, even one not implemented using transactions.</p>
+
+<p>Second, even though transactions are not much <em>more difficult</em> to use than <em>coarse-grained</em> locking, they can execute in parallel, and so there is a hope that using a TM one can achieve perfor- mance close to that of explicit fine-grained locking. A TM also gives additional flexibility because the synchronization policy of a TM can be fine-tuned to a specific system, or even changed com- pletely. For instance, the granularity of locks used internally by a TM can be adapted to the number of CPU cores, or the locking policy can be replaced with a <em>nonblocking</em> synchronization mechanism if priority inversion becomes an issue. All those changes are local to the TM implementation and the code of the application does not have to be updated. This also means that programs that use a TM for thread synchronization should be easier to maintain than ones that use explicit locking.</p>
+
+<h4 id="advantages-of-transactional-memory">Advantages of transactional memory</h4>
+
+<ul>
+  <li>Easy to use synchronization construct
+    <ul>
+      <li>As easy to use as coarse-grain locks</li>
+      <li>Programmer declares need for atomicity, system implements</li>
+    </ul>
+  </li>
+  <li>Often performs as well as fine-grained locks
+    <ul>
+      <li>Automatic read-read concurrency &amp; fine-grain concurrency</li>
+    </ul>
+  </li>
+  <li>Failure atomicity and recovery
+    <ul>
+      <li>No lost locks when a thread fails</li>
+      <li>Failure recovery = transaction abort + restart</li>
+    </ul>
+  </li>
+  <li>Composability
+    <ul>
+      <li>Safe and scalable composition of software modules</li>
+    </ul>
+  </li>
+</ul>
+
+<h4 id="example-integration-with-openmp">Example integration with OpenMP</h4>
+
+<ul>
+  <li>
+    <p>Example: OpenTM = OpenMP + TM</p>
+
+    <ul>
+      <li>OpenMP: master-slave parallel model
+        <ul>
+          <li>Easy to specify parallel loops &amp; tasks</li>
+        </ul>
+      </li>
+      <li>TM: atomic &amp; isolation execution
+        <ul>
+          <li>Easy to specify synchronization and speculation</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>OpenTM features
+    <ul>
+      <li>Transactions, transactional loops &amp; sections</li>
+      <li>Data directives for TM (e.g., thread private data)</li>
+      <li>Runtime system hints for TM</li>
+    </ul>
+  </li>
+  <li>Code example:</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#pragma omp transfor schedule (static, chunk=50)
+for (int i=0; i&lt;N; i++) {
+    bin[A[i]]++;
+}
+
+</code></pre></div></div>
+
+<h3 id="atomic---̸-lock--unlock">Atomic { } ≠ lock() + unlock()</h3>
+
+<ul>
+  <li><strong>The difference</strong>
+    <ul>
+      <li>Atomic: high-level declaration of atomicity
+        <ul>
+          <li>Does not specify implementation/blocking behavior</li>
+        </ul>
+      </li>
+      <li>Lock: low-level blocking primitive
+        <ul>
+          <li>Does not provide atomicity or isolation on its own</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><strong>Keep in mind</strong>
+    <ul>
+      <li>Locks can be used to implement <code class="language-plaintext highlighter-rouge">atomic</code> block but…</li>
+      <li>Locks can be used for purposes beyond atomicity
+        <ul>
+          <li>Cannot replace all lock regions with atomic regions</li>
+        </ul>
+      </li>
+      <li><code class="language-plaintext highlighter-rouge">atomic</code> eliminates many data races, but..
+        <ul>
+          <li>Programming with atomic blocks can still suffer from atomicity violations. e.g., programmer erroneous splits sequence that <em>should be atomic</em> into two atomic blocks</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h3 id="references">References</h3>
+
+<p>[1] Rachid Guerraoui and Michał Kapałka, <em>Principles of Transactional Memory</em>, Morgan &amp; Claypool, 2010.</p>
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Translate from MapReduce to Apache Spark</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Translate from MapReduce to Apache Spark</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">5 September 2014</p></h4>
+<hr>
+
+<div class="post">
+<h2 id="article-source">Article Source</h2>
+<ul>
+  <li>Title: <a href="https://blog.cloudera.com/blog/2014/09/how-to-translate-from-mapreduce-to-apache-spark/">How-to: Translate from MapReduce to Apache Spark</a></li>
+  <li>Authors: Sean Owen, Cloudera</li>
+</ul>
+
+<h1 id="translate-from-mapreduce-to-apache-spark">Translate from MapReduce to Apache Spark</h1>
+
+<p><strong>The key to getting the most out of Spark is to understand the
+differences between its RDD API and the original Mapper and Reducer
+API.</strong></p>
+
+<p>Venerable <a href="http://en.wikipedia.org/wiki/MapReduce">MapReduce</a> has been
+<a href="http://hadoop.apache.org/">Apache Hadoop</a>‘s work-horse computation
+paradigm since its inception. It is ideal for the kinds of work for
+which Hadoop was originally designed: large-scale log processing, and
+batch-oriented ETL (extract-transform-load) operations.</p>
+
+<p>As Hadoop’s usage has broadened, it has become clear that MapReduce is
+not the best framework for all computations. Hadoop has made room for
+alternative architectures by extracting resource management into its own
+first-class component,
+<a href="http://hadoop.apache.org/docs/current/hadoop-yarn/hadoop-yarn-site/YARN.html">YARN</a>.
+And so, projects like <a href="http://impala.io">Impala</a> have been able to use
+new, specialized non-MapReduce architectures to add interactive SQL
+capability to the platform, for example.</p>
+
+<p>Today, <a href="https://spark.apache.org/">Apache Spark</a> is another such
+alternative, and is said by many to succeed MapReduce as Hadoop’s
+general-purpose computation paradigm. But if MapReduce has been so
+useful, how can it suddenly be replaced? After all, there is still
+plenty of ETL-like work to be done on Hadoop, even if the platform now
+has other real-time capabilities as well.</p>
+
+<p>Thankfully, it’s entirely possible to re-implement MapReduce-like
+computations in Spark. They can be simpler to maintain, and in some
+cases faster, thanks to Spark’s ability to optimize away spilling to
+disk. For MapReduce, re-implementation on Spark is a homecoming. Spark,
+after all, mimics <a href="http://www.scala-lang.org/">Scala</a>‘s functional
+programming style and APIs. And the very <a href="http://static.googleusercontent.com/media/research.google.com/en//archive/mapreduce-osdi04.pdf">idea
+of</a><a href="http://static.googleusercontent.com/media/research.google.com/en//archive/mapreduce-osdi04.pdf">MapReduce
+comes
+from</a>
+the functional programming language
+<a href="http://en.wikipedia.org/wiki/Lisp_(programming_language)">LISP</a>.</p>
+
+<p>Although Spark’s primary abstraction, the
+<a href="http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.RDD">RDD</a>
+(Resilient Distributed Dataset), plainly exposes map() and reduce()
+operations, these are not the direct analog of Hadoop’s
+<a href="https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/Mapper.html">Mapper</a>
+or
+<a href="https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/Reducer.html">Reducer</a>
+APIs. This is often a stumbling block for developers looking to move
+Mapper and Reducer classes to Spark equivalents.</p>
+
+<p>Viewed in comparison with classic functional language implementations of
+<code class="language-plaintext highlighter-rouge">map() </code>and <code class="language-plaintext highlighter-rouge">reduce()</code> in Scala or Spark, the Mapper and Reducer APIs in
+Hadoop are actually both more flexible and more complex as a result.
+These differences may not even be apparent to developers accustomed to
+MapReduce, but, the following behaviors are specific to Hadoop’s
+implementation rather than the idea of MapReduce in the abstract:</p>
+
+<ul>
+  <li>Mappers and Reducers always use key-value pairs as input and output.</li>
+  <li>A Reducer reduces values per key only.</li>
+  <li>A Mapper or Reducer may emit 0, 1 or more key-value pairs for every
+input.</li>
+  <li>Mappers and Reducers may emit any arbitrary keys or values, not just
+subsets or transformations of those in the input.</li>
+  <li>Mapper and Reducer objects have a lifecycle that spans many <code class="language-plaintext highlighter-rouge">map()</code>
+and <code class="language-plaintext highlighter-rouge">reduce()</code> calls. They support a <code class="language-plaintext highlighter-rouge">setup()</code> and <code class="language-plaintext highlighter-rouge">cleanup()</code>
+method, which can be used to take actions before or after a batch of
+records is processed.</li>
+</ul>
+
+<p>This post will briefly demonstrate how to recreate each of these within
+Spark — and also show that it’s not necessarily desirable to literally
+translate a Mapper and Reducer!</p>
+
+<h2 id="key-value-pairs-as-tuples">Key-Value Pairs as Tuples</h2>
+
+<p>Let’s say we need to compute the length of each line in a large text
+input, and report the count of lines by line length. In Hadoop
+MapReduce, this begins with a Mapper that produces key-value pairs in
+which the line length is the key, and count of 1 is the value:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">LineLengthMapper</span>
+    <span class="kd">extends</span> <span class="nc">Mapper</span><span class="o">&lt;</span><span class="nc">LongWritable</span><span class="o">,</span><span class="nc">Text</span><span class="o">,</span><span class="nc">IntWritable</span><span class="o">,</span><span class="nc">IntWritable</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">map</span><span class="o">(</span><span class="nc">LongWritable</span> <span class="n">lineNumber</span><span class="o">,</span> <span class="nc">Text</span> <span class="n">line</span><span class="o">,</span> <span class="nc">Context</span> <span class="n">context</span><span class="o">)</span>
+      <span class="kd">throws</span> <span class="nc">IOException</span><span class="o">,</span> <span class="nc">InterruptedException</span> <span class="o">{</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="k">new</span> <span class="nc">IntWritable</span><span class="o">(</span><span class="n">line</span><span class="o">.</span><span class="na">getLength</span><span class="o">()),</span> <span class="k">new</span> <span class="nc">IntWritable</span><span class="o">(</span><span class="mi">1</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>It’s worth noting that Mappers and Reducers only operate on key-value
+pairs. So the input to <code class="language-plaintext highlighter-rouge">LineLengthMapper</code>, provided by a
+<code class="language-plaintext highlighter-rouge">TextInputFormat</code>, is actually a pair containing the line as value, with
+position within the file thrown in as a key, for fun. (It’s rarely used,
+but, something has to be the key.)</p>
+
+<p>The Spark equivalent is:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">lines</span><span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="n">line</span> <span class="o">=&gt;</span> <span class="o">(</span><span class="n">line</span><span class="o">.</span><span class="na">length</span><span class="o">,</span> <span class="mi">1</span><span class="o">))</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>In Spark, the input is an RDD of Strings only, not of key-value pairs.
+Spark’s representation of a key-value pair is a Scala
+<a href="http://www.scala-lang.org/api/2.10.4/index.html#scala.Tuple2">tuple</a>,
+created with the (a,b) syntax shown above. The result of the <code class="language-plaintext highlighter-rouge">map()</code>
+operation above is an RDD of (Int,Int) tuples. When an RDD contains
+tuples, it <a href="https://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.rdd.PairRDDFunctions">gains more
+methods</a>,
+such as <code class="language-plaintext highlighter-rouge">reduceByKey()</code>, which will be essential to reproducing
+MapReduce behavior.</p>
+
+<h2 id="reducer-and-reduce-versus-reducebykey">Reducer and reduce() versus reduceByKey()</h2>
+
+<p>To produce a count of line lengths, it’s necessary to sum the counts per
+length in a Reducer:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">LineLengthReducer</span>
+    <span class="kd">extends</span> <span class="nc">Reducer</span><span class="o">&lt;</span><span class="nc">IntWritable</span><span class="o">,</span><span class="nc">IntWritable</span><span class="o">,</span><span class="nc">IntWritable</span><span class="o">,</span><span class="nc">IntWritable</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">reduce</span><span class="o">(</span><span class="nc">IntWritable</span> <span class="n">length</span><span class="o">,</span> <span class="nc">Iterable</span><span class="o">&lt;</span><span class="nc">IntWritable</span><span class="o">&gt;</span> <span class="n">counts</span><span class="o">,</span> <span class="nc">Context</span> <span class="n">context</span><span class="o">)</span>
+      <span class="kd">throws</span> <span class="nc">IOException</span><span class="o">,</span> <span class="nc">InterruptedException</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="k">for</span> <span class="o">(</span><span class="nc">IntWritable</span> <span class="n">count</span> <span class="o">:</span> <span class="n">counts</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">sum</span> <span class="o">+=</span> <span class="n">count</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+    <span class="o">}</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">length</span><span class="o">,</span> <span class="k">new</span> <span class="nc">IntWritable</span><span class="o">(</span><span class="n">sum</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>The equivalent of the Mapper and Reducer above together is a one-liner
+in Spark:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">val</span> <span class="n">lengthCounts</span> <span class="o">=</span> <span class="n">lines</span><span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="n">line</span> <span class="o">=&gt;</span> <span class="o">(</span><span class="n">line</span><span class="o">.</span><span class="na">length</span><span class="o">,</span> <span class="mi">1</span><span class="o">)).</span><span class="na">reduceByKey</span><span class="o">(</span><span class="n">_</span> <span class="o">+</span> <span class="n">_</span><span class="o">)</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>Spark’s RDD API has a <code class="language-plaintext highlighter-rouge">reduce()</code> method, but it will reduce the entire
+set of key-value pairs to one single value. This is not what Hadoop
+MapReduce does. Instead, Reducers reduce all values for a key and emit a
+key along with the reduced value. <code class="language-plaintext highlighter-rouge">reduceByKey()</code> is the closer analog.
+But, that is not even the most direct equivalent in Spark; see
+<code class="language-plaintext highlighter-rouge">groupByKey()</code> below.</p>
+
+<p>It is worth pointing out here that a Reducer’s
+<a href="https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/Reducer.html#reduce(KEYIN,%20java.lang.Iterable,%20org.apache.hadoop.mapreduce.Reducer.Context)"><code class="language-plaintext highlighter-rouge">reduce()</code></a>
+method receives a stream of many values, and produces 0, 1 or more
+results. <code class="language-plaintext highlighter-rouge">reduceByKey()</code>, in contrast, accepts a function that turns
+exactly two values into exactly one — here, a simple addition function
+that maps two numbers to their sum. This associative function can be
+used to reduce many values to one for the caller. It is a simpler,
+narrower API for reducing values by key than what a Reducer exposes.</p>
+
+<h2 id="mapper-and-map-versus-flatmap">Mapper and map() versus flatMap()</h2>
+
+<p>Now, instead consider counting the occurrences of only words beginning
+with an uppercase character. For each line of text in the input, a
+Mapper might emit 0, 1 or many key-value pairs:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">CountUppercaseMapper</span>
+    <span class="kd">extends</span> <span class="nc">Mapper</span><span class="o">&lt;</span><span class="nc">LongWritable</span><span class="o">,</span><span class="nc">Text</span><span class="o">,</span><span class="nc">Text</span><span class="o">,</span><span class="nc">IntWritable</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">map</span><span class="o">(</span><span class="nc">LongWritable</span> <span class="n">lineNumber</span><span class="o">,</span> <span class="nc">Text</span> <span class="n">line</span><span class="o">,</span> <span class="nc">Context</span> <span class="n">context</span><span class="o">)</span>
+      <span class="kd">throws</span> <span class="nc">IOException</span><span class="o">,</span> <span class="nc">InterruptedException</span> <span class="o">{</span>
+    <span class="k">for</span> <span class="o">(</span><span class="nc">String</span> <span class="n">word</span> <span class="o">:</span> <span class="n">line</span><span class="o">.</span><span class="na">toString</span><span class="o">().</span><span class="na">split</span><span class="o">(</span><span class="s">" "</span><span class="o">))</span> <span class="o">{</span>
+      <span class="k">if</span> <span class="o">(</span><span class="nc">Character</span><span class="o">.</span><span class="na">isUpperCase</span><span class="o">(</span><span class="n">word</span><span class="o">.</span><span class="na">charAt</span><span class="o">(</span><span class="mi">0</span><span class="o">)))</span> <span class="o">{</span>
+        <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="k">new</span> <span class="nc">Text</span><span class="o">(</span><span class="n">word</span><span class="o">),</span> <span class="k">new</span> <span class="nc">IntWritable</span><span class="o">(</span><span class="mi">1</span><span class="o">));</span>
+      <span class="o">}</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>The equivalent in Spark is:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">lines</span><span class="o">.</span><span class="na">flatMap</span><span class="o">(</span>
+  <span class="n">_</span><span class="o">.</span><span class="na">split</span><span class="o">(</span><span class="s">" "</span><span class="o">).</span><span class="na">filter</span><span class="o">(</span><span class="n">word</span> <span class="o">=&gt;</span> <span class="nc">Character</span><span class="o">.</span><span class="na">isUpperCase</span><span class="o">(</span><span class="n">word</span><span class="o">(</span><span class="mi">0</span><span class="o">))).</span><span class="na">map</span><span class="o">(</span><span class="n">word</span> <span class="o">=&gt;</span> <span class="o">(</span><span class="n">word</span><span class="o">,</span><span class="mi">1</span><span class="o">))</span>
+<span class="o">)</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p><code class="language-plaintext highlighter-rouge">map(</code>) will not suffice here, because<code class="language-plaintext highlighter-rouge"> map()</code> must produce exactly one
+output per input, but unlike before, one line needs to yield potentially
+many outputs. Again, the <code class="language-plaintext highlighter-rouge">map()</code> function in Spark is simpler and
+narrower compared to what the Mapper API supports.</p>
+
+<p>The solution in Spark is to first map each line to an array of output
+values. The array may be empty, or have many values. Merely <code class="language-plaintext highlighter-rouge">map()</code>-ing
+lines to arrays would produce an RDD of arrays as the result, when the
+result should be the contents of those arrays. The result needs to be
+“flattened” afterward, and <code class="language-plaintext highlighter-rouge">flatMap()</code> does exactly this. Here, the
+array of words in the line is filtered and converted into tuples inside
+the function. In a case like this, it’s <code class="language-plaintext highlighter-rouge">flatMap()</code> that’s required to
+emulate such a Mapper, not <code class="language-plaintext highlighter-rouge">map()</code>.</p>
+
+<h2 id="groupbykey">groupByKey()</h2>
+
+<p>It’s simple to write a Reducer that then adds up the counts for each
+word, as before. And in Spark, again, <code class="language-plaintext highlighter-rouge">reduceByKey()</code> could be used to
+sum counts per word. But what if for some reason the output has to
+contain the word in all uppercase, along with a count? In MapReduce,
+that’s:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">CountUppercaseReducer</span>
+    <span class="kd">extends</span> <span class="nc">Reducer</span><span class="o">&lt;</span><span class="nc">Text</span><span class="o">,</span><span class="nc">IntWritable</span><span class="o">,</span><span class="nc">Text</span><span class="o">,</span><span class="nc">IntWritable</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">reduce</span><span class="o">(</span><span class="nc">Text</span> <span class="n">word</span><span class="o">,</span> <span class="nc">Iterable</span><span class="o">&lt;</span><span class="nc">IntWritable</span><span class="o">&gt;</span> <span class="n">counts</span><span class="o">,</span> <span class="nc">Context</span> <span class="n">context</span><span class="o">)</span>
+      <span class="kd">throws</span> <span class="nc">IOException</span><span class="o">,</span> <span class="nc">InterruptedException</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="k">for</span> <span class="o">(</span><span class="nc">IntWritable</span> <span class="n">count</span> <span class="o">:</span> <span class="n">counts</span><span class="o">)</span> <span class="o">{</span>
+      <span class="n">sum</span> <span class="o">+=</span> <span class="n">count</span><span class="o">.</span><span class="na">get</span><span class="o">();</span>
+    <span class="o">}</span>
+    <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="k">new</span> <span class="nc">Text</span><span class="o">(</span><span class="n">word</span><span class="o">.</span><span class="na">toString</span><span class="o">().</span><span class="na">toUpperCase</span><span class="o">()),</span> <span class="k">new</span> <span class="nc">IntWritable</span><span class="o">(</span><span class="n">sum</span><span class="o">));</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>But <code class="language-plaintext highlighter-rouge">reduceByKey()</code> by itself doesn’t quite work in Spark, since it
+preserves the original key. To emulate this in Spark, something even
+more like the Reducer API is needed. Recall that Reducer’s <code class="language-plaintext highlighter-rouge">reduce()</code>
+method receives a key and Iterable of values, and then emits some
+transformation of those. <code class="language-plaintext highlighter-rouge">groupByKey()</code> and a subsequent <code class="language-plaintext highlighter-rouge">map()</code> can
+achieve this:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">...</span> <span class="o">.</span><span class="na">groupByKey</span><span class="o">().</span><span class="na">map</span> <span class="o">{</span> <span class="k">case</span> <span class="o">(</span><span class="n">word</span><span class="o">,</span><span class="n">ones</span><span class="o">)</span> <span class="o">=&gt;</span> <span class="o">(</span><span class="n">word</span><span class="o">.</span><span class="na">toUpperCase</span><span class="o">,</span> <span class="n">ones</span><span class="o">.</span><span class="na">sum</span><span class="o">)</span> <span class="o">}</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p><code class="language-plaintext highlighter-rouge">groupByKey()</code> merely collects all values for a key together, and does
+not apply a reduce function. From there, any transformation can be
+applied to the key and Iterable of values. Here, the key is transformed
+to uppercase, and the values are directly summed.</p>
+
+<p>Be careful! <code class="language-plaintext highlighter-rouge">groupByKey()</code> works, but also collects all values for a key
+into memory. If a key is associated to many values, a worker could run
+out of memory. Although this is the most direct analog of a Reducer,
+it’s not necessarily the best choice in all cases. For example, Spark
+could have simply transformed the keys after a call to <code class="language-plaintext highlighter-rouge">reduceByKey</code>:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">...</span> <span class="o">.</span><span class="na">reduceByKey</span><span class="o">(</span><span class="n">_</span> <span class="o">+</span> <span class="n">_</span><span class="o">).</span><span class="na">map</span> <span class="o">{</span> <span class="k">case</span> <span class="o">(</span><span class="n">word</span><span class="o">,</span><span class="n">total</span><span class="o">)</span> <span class="o">=&gt;</span> <span class="o">(</span><span class="n">word</span><span class="o">.</span><span class="na">toUpperCase</span><span class="o">,</span><span class="n">total</span><span class="o">)</span> <span class="o">}</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>It’s better to let Spark manage the reduction rather than ask it to
+collect all values just for us to manually sum them.</p>
+
+<h2 id="setup-and-cleanup">setup() and cleanup()</h2>
+
+<p>In MapReduce, a Mapper and Reducer can declare a
+<a href="https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/Mapper.html#setup(org.apache.hadoop.mapreduce.Mapper.Context)"><code class="language-plaintext highlighter-rouge">setup()</code></a>
+method, called before any input is processed, to perhaps allocate an
+expensive resource like a database connection, and a
+<a href="https://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/Mapper.html#cleanup(org.apache.hadoop.mapreduce.Mapper.Context)"><code class="language-plaintext highlighter-rouge">cleanup()</code></a>
+method to release the resource:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">SetupCleanupMapper</span> <span class="kd">extends</span> <span class="nc">Mapper</span><span class="o">&lt;</span><span class="nc">LongWritable</span><span class="o">,</span><span class="nc">Text</span><span class="o">,</span><span class="nc">Text</span><span class="o">,</span><span class="nc">IntWritable</span><span class="o">&gt;</span> <span class="o">{</span>
+  <span class="kd">private</span> <span class="nc">Connection</span> <span class="n">dbConnection</span><span class="o">;</span>
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">setup</span><span class="o">(</span><span class="nc">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">dbConnection</span> <span class="o">=</span> <span class="o">...;</span>
+  <span class="o">}</span>
+  <span class="o">...</span>
+  <span class="nd">@Override</span>
+  <span class="kd">protected</span> <span class="kt">void</span> <span class="nf">cleanup</span><span class="o">(</span><span class="nc">Context</span> <span class="n">context</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">dbConnection</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>The Spark <code class="language-plaintext highlighter-rouge">map()</code> and <code class="language-plaintext highlighter-rouge">flatMap()</code> methods only operate on one input at a
+time though, and provide no means to execute code before or after
+transforming a batch of values. It looks possible to simply put the
+setup and cleanup code before and after a call to <code class="language-plaintext highlighter-rouge">map()</code> in Spark:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">val</span> <span class="n">dbConnection</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">lines</span><span class="o">.</span><span class="na">map</span><span class="o">(...</span> <span class="n">dbConnection</span><span class="o">.</span><span class="na">createStatement</span><span class="o">(...)</span> <span class="o">...)</span>
+<span class="n">dbConnection</span><span class="o">.</span><span class="na">close</span><span class="o">()</span> <span class="c1">// Wrong!</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>However, this fails for several reasons:</p>
+
+<ul>
+  <li>It puts the object <code class="language-plaintext highlighter-rouge">dbConnection</code> into the map function’s closure,
+which requires that it be serializable (for example, by implementing
+<a href="http://docs.oracle.com/javase/7/docs/api/java/io/Serializable.html"><code class="language-plaintext highlighter-rouge">java.io.Serializable</code></a>).
+An object like a database connection is generally not serializable.</li>
+  <li><code class="language-plaintext highlighter-rouge">map()</code> is a transformation, rather than an operation, and is lazily
+evaluated. The connection can’t be closed immediately here.</li>
+  <li>Even so, it would only close the connection on the driver, not
+necessarily freeing resources allocated by serialized copies.</li>
+</ul>
+
+<p>In fact, neither <code class="language-plaintext highlighter-rouge">map()</code> nor <code class="language-plaintext highlighter-rouge">flatMap()</code> is the closest counterpart to a
+Mapper in Spark — it’s the important <code class="language-plaintext highlighter-rouge">mapPartitions()</code> method. This
+method does not map just one value to one other value, but rather maps
+an Iterator of values to an Iterator of other values. It’s like a “bulk
+map” method. This means that the <code class="language-plaintext highlighter-rouge">mapPartitions()</code> function can allocate
+resources locally at its start, and release them when done mapping many
+values.</p>
+
+<p>Adding setup code is simple; adding cleanup code is harder because it
+remains difficult to detect when the transformed iterator has been fully
+evaluated. For example, this does not work:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">lines</span><span class="o">.</span><span class="na">mapPartitions</span> <span class="o">{</span> <span class="n">valueIterator</span> <span class="o">=&gt;</span>
+  <span class="n">val</span> <span class="n">dbConnection</span> <span class="o">=</span> <span class="o">...</span> <span class="c1">// OK</span>
+  <span class="n">val</span> <span class="n">transformedIterator</span> <span class="o">=</span> <span class="n">valueIterator</span><span class="o">.</span><span class="na">map</span><span class="o">(...</span> <span class="n">dbConnection</span> <span class="o">...)</span>
+  <span class="n">dbConnection</span><span class="o">.</span><span class="na">close</span><span class="o">()</span> <span class="c1">// Still wrong! May not have evaluated iterator</span>
+  <span class="n">transformedIterator</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>A more complete formulation (HT <a href="http://mail-archives.apache.org/mod_mbox/spark-user/201407.mbox/%3CCAPH-c_O9kQO6yJ4khXUVdO=+D4vj=JfG2tP9eqn5RPko=dRNAg@mail.gmail.com%3E">Tobias
+Pfeiffer</a>)
+is roughly:</p>
+
+<div class="language-java highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">lines</span><span class="o">.</span><span class="na">mapPartitions</span> <span class="o">{</span> <span class="n">valueIterator</span> <span class="o">=&gt;</span>
+  <span class="k">if</span> <span class="o">(</span><span class="n">valueIterator</span><span class="o">.</span><span class="na">isEmpty</span><span class="o">)</span> <span class="o">{</span>
+    <span class="nc">Iterator</span><span class="o">[...]()</span>
+  <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+    <span class="n">val</span> <span class="n">dbConnection</span> <span class="o">=</span> <span class="o">...</span>
+    <span class="n">valueIterator</span><span class="o">.</span><span class="na">map</span> <span class="o">{</span> <span class="n">item</span> <span class="o">=&gt;</span>
+      <span class="n">val</span> <span class="n">transformedItem</span> <span class="o">=</span> <span class="o">...</span>
+      <span class="k">if</span> <span class="o">(!</span><span class="n">valueIterator</span><span class="o">.</span><span class="na">hasNext</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">dbConnection</span><span class="o">.</span><span class="na">close</span><span class="o">()</span>
+      <span class="o">}</span>
+      <span class="n">transformedItem</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</code></pre></div></div>
+
+<p> </p>
+
+<p>Although decidedly less elegant than previous translations, it can be
+done.</p>
+
+<p>There is no <code class="language-plaintext highlighter-rouge">flatMapPartitions()</code> method. However, the same effect can
+be achieved by calling <code class="language-plaintext highlighter-rouge">mapPartitions()</code>, followed by a call to
+<code class="language-plaintext highlighter-rouge">flatMap(a =&gt; a)</code> to flatten.</p>
+
+<p>The equivalent of a Reducer with <code class="language-plaintext highlighter-rouge">setup()</code> and <code class="language-plaintext highlighter-rouge">cleanup()</code> is just a
+<code class="language-plaintext highlighter-rouge">groupByKey()</code> followed by a <code class="language-plaintext highlighter-rouge">mapPartitions()</code> call like the one above.
+Take note of the caveat about using <code class="language-plaintext highlighter-rouge">groupByKey()</code> above, though.</p>
+
+<h2 id="but-wait-theres-more">But Wait, There’s More</h2>
+
+<p>MapReduce developers will point out that there is yet more to the API
+that hasn’t been mentioned yet:</p>
+
+<ul>
+  <li>MapReduce supports a special type of Reducer, called a Combiner,
+that can reduce shuffled data size from a Mapper.</li>
+  <li>It also supports <a href="https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/Job.html#setPartitionerClass(java.lang.Class)">custom
+partitioning</a>
+via a Partitioner, and <a href="https://hadoop.apache.org/docs/stable/api/org/apache/hadoop/mapreduce/Job.html#setGroupingComparatorClass(java.lang.Class)">custom
+grouping</a>
+for purposes of the Reducer via grouping Comparator.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">Context</code> objects give access to a Counter API for accumulating
+statistics.</li>
+  <li>A Reducer always sees keys in sorted order within its lifecycle.</li>
+  <li>MapReduce has its own Writable serialization scheme.</li>
+  <li>Mappers and Reducers can emit multiple outputs at once.</li>
+  <li>MapReduce alone has tens of tuning parameters.</li>
+</ul>
+
+<p>There are ways to implement or port these concepts into Spark, using
+APIs like the
+<a href="http://spark.apache.org/docs/latest/programming-guide.html#accumulators">Accumulator</a>,
+methods like <code class="language-plaintext highlighter-rouge">groupBy()</code> and the partitioner argument in various of
+these methods, Java or <a href="https://code.google.com/p/kryo/">Kryo</a>
+serialization, caching, and more. To keep this post brief, the remainder
+will be left to a follow-up post.</p>
+
+<p>The concepts in MapReduce haven’t stopped being useful. It just now has
+a different and potentially more powerful implementation on Hadoop, and
+in a functional language that better matches its functional roots.
+Understanding the differences between Spark’s RDD API, and the original
+Mapper and Reducer APIs, helps developers better understand how all of
+them truly work and how to use Spark’s counterparts to best advantage.</p>
+
+<p><em>Sean Owen is Director of Data Science at Cloudera, an Apache Mahout
+committer/PMC member, and a Spark contributor.</em></p>
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

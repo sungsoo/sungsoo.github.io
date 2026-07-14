@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Pytorch-BigGraph; A Large Scale Graph Embedding System
+title: "Pytorch-BigGraph: A Large Scale Graph Embedding System"
 date: 2021-07-02
 categories: [computer science]
 tags: [machine learning, graph mining]
@@ -9,10 +9,6 @@ tags: [machine learning, graph mining]
 
 ### Article Source
 
-* [Pytorch-BigGraph; A Large Scale Graph Embedding System](https://www.youtube.com/watch?v=VPzwRQYM9-Y)
-
-
----
 
 # Pytorch-BigGraph
 ## A Large Scale Graph Embedding System
@@ -20,15 +16,6 @@ tags: [machine learning, graph mining]
 * [Paper PDF: arXiv](https://arxiv.org/pdf/1903.12287)
 * [github code](https://github.com/facebookresearch/PyTorch-BigGraph)
 
-```
-@inproceedings{pbg,
-  title={{PyTorch-BigGraph: A Large-scale Graph Embedding System}},
-  author={Lerer, Adam and Wu, Ledell and Shen, Jiajun and Lacroix, Timothee and Wehrstedt, Luca and Bose, Abhijit and Peysakhovich, Alex},
-  booktitle={Proceedings of the 2nd SysML Conference},
-  year={2019},
-  address={Palo Alto, CA, USA}
-}
-```
 ## Abstract
 
 *Graph embedding* methods produce unsupervised node features from graphs that can then be used for a variety of machine learning tasks. Modern graphs, particularly in industrial applications, contain billions of nodes and trillions of edges, which exceeds the capability of existing embedding systems. We present PyTorch-BigGraph (PBG), an embedding system that incorporates several modifications to traditional multi-relation embedding systems that allow it to scale to graphs with billions of nodes and trillions of edges. PBG uses *graph partitioning* to train arbitrarily large embeddings on either *a single machine* or *in a distributed environment*. We demonstrate comparable performance with existing embedding systems on common benchmarks, while allowing for scaling to arbitrarily large graphs and parallelization on multiple machines. We train and evaluate embeddings on several large social network graphs as well as the full Freebase dataset, which contains over 100 million nodes and 2 billion edges.

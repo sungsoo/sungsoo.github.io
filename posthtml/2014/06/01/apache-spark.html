@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Apache Spark Resource Management and YARN App Models</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Apache Spark Resource Management and YARN App Models</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">1 June 2014</p></h4>
+<hr>
+
+<div class="post">
+<h2 id="article-source">Article Source</h2>
+<ul>
+  <li>Title: <a href="http://blog.cloudera.com/blog/2014/05/apache-spark-resource-management-and-yarn-app-models/">Apache Spark Resource Management and YARN App Models</a></li>
+  <li>Authors: <a href="http://blog.cloudera.com/blog/author/sandy-ryza/">Sandy Ryza</a></li>
+</ul>
+
+<p><a href="http://sungsoo.github.com/images/spark-yarn.png"><img src="http://sungsoo.github.com/images/spark-yarn.png" alt="" /></a></p>
+
+<hr />
+
+<h1 id="apache-spark-resource-management-and-yarn-app-models">Apache Spark Resource Management and YARN App Models</h1>
+
+<p><strong>A concise look at the differences between how Spark and MapReduce
+manage cluster resources under YARN</strong></p>
+
+<p>The most popular Apache YARN application after MapReduce itself is
+Apache Spark. At Cloudera, we have worked hard to stabilize
+Spark-on-YARN (<a href="https://issues.apache.org/jira/browse/SPARK-1101">SPARK-1101</a>),
+and CDH 5.0.0 added support for Spark on YARN clusters.</p>
+
+<p>In this post, you’ll learn about the differences between the Spark and
+MapReduce architectures, why you should care, and how they run on the
+YARN cluster ResourceManager.</p>
+
+<h2 id="applications">Applications</h2>
+
+<p>In MapReduce, the highest-level unit of computation is a job. The system
+loads the data, applies a map function, shuffles it, applies a reduce
+function, and writes it back out to persistent storage. Spark has a
+similar job concept (although a job can consist of more stages than just
+a single map and reduce), but it also has a higher-level construct
+called an “application,” which can run multiple jobs, in sequence or in
+parallel.</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2014/05/spark-yarn-f1.png" alt="" title="spark-yarn-f1" /></p>
+
+<p><strong>Spark application architecture</strong></p>
+
+<p>For those familiar with the Spark API, an application corresponds to an
+instance of the <code class="language-plaintext highlighter-rouge">SparkContext</code> class. An application can be used for a
+single batch job, an interactive session with multiple jobs spaced
+apart, or a long-lived server continually satisfying requests. Unlike
+MapReduce, an application will have processes, called <em>Executors</em>,
+running on the cluster on its behalf even when it’s not running any
+jobs. This approach enables data storage in memory for quick access, as
+well as lightning-fast task startup time.</p>
+
+<h2 id="executors">Executors</h2>
+
+<p>MapReduce runs each task in its own process. When a task completes, the
+process goes away. In Spark, many tasks can run concurrently in a single
+process, and this process sticks around for the lifetime of the Spark
+application, even when no jobs are running.</p>
+
+<p>The advantage of this model, as mentioned above, is speed: Tasks can
+start up very quickly and process in-memory data. The disadvantage is
+coarser-grained resource management. As the number of executors for an
+app is fixed and each executor has a fixed allotment of resources, an
+app takes up the same amount of resources for the full duration that
+it’s running. (When YARN supports <a href="https://issues.apache.org/jira/browse/YARN-1197">container
+resizing</a>, we plan to
+take advantage of it in Spark to acquire and give back resources
+dynamically.)</p>
+
+<h2 id="active-driver">Active Driver</h2>
+
+<p>To manage the job flow and schedule tasks Spark relies on an active
+driver process. Typically, this driver process is the same as the client
+process used to initiate the job, although in YARN mode (covered later),
+the driver can run on the cluster. In contrast, in MapReduce, the client
+process can go away and the job can continue running. In Hadoop 1.x, the
+JobTracker was responsible for task scheduling, and in Hadoop 2.x, the
+MapReduce application master took over this responsibility.</p>
+
+<h2 id="pluggable-resource-management">Pluggable Resource Management</h2>
+
+<p>Spark supports pluggable cluster management. The cluster manager is
+responsible for starting executor processes. Spark application writers
+do not need to worry about what cluster manager against which Spark is
+running.</p>
+
+<p>Spark supports YARN, Mesos, and its own “standalone” cluster manager.
+All three of these frameworks have two components. A central master
+service (the YARN ResourceManager, Mesos master, or Spark standalone
+master) decides which applications get to run executor processes, as
+well as where and when they get to run. A slave service running on every
+node (the YARN NodeManager, Mesos slave, or Spark standalone slave)
+actually starts the executor processes. It may also monitor their
+liveliness and resource consumption.</p>
+
+<h2 id="why-run-on-yarn">Why Run on YARN?</h2>
+
+<p>Using YARN as Spark’s cluster manager confers a few benefits over Spark
+standalone and Mesos:</p>
+
+<ul>
+  <li>YARN allows you to dynamically share and centrally configure the
+same pool of cluster resources between all frameworks that run on
+YARN. You can throw your entire cluster at a MapReduce job, then use
+some of it on an Impala query and the rest on Spark application,
+without any changes in configuration.</li>
+  <li>You can take advantage of <a href="http://hadoop.apache.org/docs/r2.4.0/hadoop-yarn/hadoop-yarn-site/FairScheduler.html">all the features of YARN
+schedulers</a>
+for categorizing, isolating, and prioritizing workloads.</li>
+  <li>Spark standalone mode requires each application to run an executor
+on every node in the cluster, whereas with YARN, you choose the
+number of executors to use.</li>
+  <li>Finally, YARN is the only cluster manager for Spark that supports
+security. With YARN, Spark can run against Kerberized Hadoop
+clusters and uses secure authentication between its processes.</li>
+</ul>
+
+<h2 id="running-on-yarn">Running on YARN</h2>
+
+<p>When running Spark on YARN, each Spark executor runs as a YARN
+container. Where MapReduce schedules a container and fires up a JVM for
+each task, Spark hosts multiple tasks within the same container. This
+approach enables several orders of magnitude faster task startup time.</p>
+
+<p>Spark supports two modes for running on YARN, “yarn-cluster” mode and
+“yarn-client” mode.  Broadly, yarn-cluster mode makes sense for
+production jobs, while yarn-client mode makes sense for interactive and
+debugging uses where you want to see your application’s output
+immediately.</p>
+
+<p>Understanding the difference requires an understanding of YARN’s
+<em>Application Master</em> concept. In YARN, each application instance has an
+Application Master process, which is the first container started for
+that application. The application is responsible for requesting
+resources from the ResourceManager, and, when allocated them, telling
+NodeManagers to start containers on its behalf. Application Masters
+obviate the need for an active client — the process starting the
+application can go away and coordination continues from a process
+managed by YARN running on the cluster.</p>
+
+<p>In yarn-cluster mode, the driver runs in the Application Master. This
+means that the same process is responsible for both driving the
+application and requesting resources from YARN, and this process runs
+inside a YARN container. The client that starts the app doesn’t need to
+stick around for its entire lifetime.</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2014/05/spark-yarn-f31.png" alt="" title="spark-yarn-f2" /></p>
+
+<h3 id="yarn-cluster-mode">yarn-cluster mode</h3>
+
+<p>The yarn-cluster mode, however, is not well suited to using Spark
+interactively. Spark applications that require user input, like
+spark-shell and PySpark, need the Spark driver to run inside the client
+process that initiates the Spark application. In yarn-client mode, the
+Application Master is merely present to request executor containers from
+YARN. The client communicates with those containers to schedule work
+after they start:</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2014/05/spark-yarn-f22.png" alt="" title="spark-yarn-f3" /></p>
+
+<h3 id="yarn-client-mode">yarn-client mode</h3>
+
+<p>This table offers a concise list of differences between these modes:</p>
+
+<p><img src="http://blog.cloudera.com/wp-content/uploads/2014/05/spark-yarn-table.png" alt="" title="spark-yarn-table" /> </p>
+
+<h2 id="key-concepts-in-summary">Key Concepts in Summary</h2>
+
+<ul>
+  <li><strong>Application:</strong>This may be a single job, a sequence of jobs, a
+long-running service issuing new commands as needed or an
+interactive exploration session.</li>
+  <li><strong>Spark Driver:</strong> The Spark driver is the process running the spark
+context (which represents the application session). This driver is
+responsible for converting the application to a directed graph of
+individual steps to execute on the cluster. There is one driver per
+application.</li>
+  <li><strong>Spark Application Master:</strong> The Spark Application Master is
+responsible for negotiating resource requests made by the driver
+with YARN and finding a suitable set of hosts/containers in which to
+run the Spark applications. There is one Application Master per
+application.</li>
+  <li><strong>Spark Executor:</strong> A single JVM instance on a node that serves a
+single Spark application. An executor runs multiple tasks over its
+lifetime, and multiple tasks concurrently. A node may have several
+Spark executors and there are many nodes running Spark Executors for
+each client application.</li>
+  <li><strong>Spark Task:</strong>A Spark Task represents a unit of work on a partition
+of a distributed dataset. </li>
+</ul>
+
+<h2 id="further-reading">Further reading:</h2>
+
+<ul>
+  <li><a href="https://spark.apache.org/docs/latest/cluster-overview.html">Spark
+documentation</a></li>
+  <li><a href="http://www.cloudera.com/content/cloudera-content/cloudera-docs/CDH5/latest/CDH5-Installation-Guide/cdh5ig_running_spark_apps.html">Cloudera documentation for running Spark applications on
+YARN</a></li>
+</ul>
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>

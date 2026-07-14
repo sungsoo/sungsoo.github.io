@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Apache Hadoop YARN – Resource Manager (RM)</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+		<link rel="stylesheet" href="/css/styles.css">
+		<link rel="stylesheet" href="/css/pygment_trac.css">
+		<link rel="stylesheet" href="styles/default.css">
+		<script src="javascripts/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+		<script src="/css/main.js"></script>
+		<script src="/css/latexit.js"></script>
+    <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script type="text/javascript" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+    </script>
+
+        
+
+		<!--<script type="text/javascript"  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>-->
+		<!--[if lt IE 9]>
+		  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--
+		<script type="text/x-mathjax-config">
+		    MathJax.Hub.Config({
+      //jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$', '$'] ],
+        displayMath: [ ['$$', '$$'] ],
+        processEscapes: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+      //,
+      //displayAlign: "left",
+      //displayIndent: "2em"
+    });
+  </script>
+  -->
+  <!-- <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script> -->
+  
+  
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/dest/simple-jekyll-search.js" type="text/javascript"></script>
+  <script type="text/javascript">
+  $(document).ready(function(){
+    document.search.searchinput.focus();
+  });
+  </script>
+    </head>
+    <body>
+      <header>
+        <h1>Stop Thinking, Just Do!</h1>
+        <p>Sungsoo Kim's Blog</p>
+      </header>
+
+      <div id="banner">
+        <span id="logo"></span>
+		<a href="https://sungsoo.github.io" class="button fork"><strong>Home</strong></a>
+
+		<p style="text-align: right;"><a href="https://sungsoo.github.io/tags.html" class="button"><strong>Tags</strong></a>
+		<a href="https://sungsoo.github.io/categories.html" class="button"><strong>Categories</strong></a>
+		<a href="https://sungsoo.github.io/archive.html"class="button"><strong>Archive</strong></a></p>
+	  </div><!-- end banner -->
+
+<div class="wrapper">
+  <nav>
+    <ul></ul>
+  </nav>
+   <section>
+
+        <div class="site">
+          <div class="header">
+            <!-- <h1 class="title"><a href="/">Sungsoo Kim's Blog</a></h1> -->
+            <!-- <a class="extra" href="/">home</a> -->
+          </div>
+
+          
+
+<script type="text/javascript" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
+<h2>Apache Hadoop YARN – Resource Manager (RM)</h2>
+
+
+  <h4><img src="http://sungsoo.github.io/images/tag.png" width="20" alt="tags" />Tags</h4>
+  <ul class="tag_box">
+  
+  
+  
+
+
+  
+     
+    	<li><a href="https://sungsoo.github.io/tags.html#big data-ref">big data <span><sup>683</sup></span></a></li>
+    
+  
+
+
+
+  </ul>
+  
+
+<h4> <p align="right">31 March 2014</p></h4>
+<hr>
+
+<div class="post">
+<h2 id="requirements-origin">Requirements’ Origin</h2>
+
+<ol>
+  <li>Scalability</li>
+  <li>Multi-tenancy</li>
+  <li>Serviceability</li>
+  <li>Locality Awareness</li>
+  <li>High Cluster Utilization</li>
+  <li><strong>Reliability/Availability</strong></li>
+  <li><strong>Secure and Auditable Operation</strong></li>
+  <li><strong>Support for Programming Model Diversity</strong></li>
+  <li><strong>Flexible Resource Model</strong></li>
+  <li><strong>Backward compatibility</strong></li>
+</ol>
+
+<h1 id="resource-manager-rm">Resource Manager (RM)</h1>
+
+<p>The ResourceManager exposes two public interfaces towards: 1) <em>clients submitting applications</em>, and  2) <em>ApplicationMaster(s) dynamically negotiating access to resources</em>, and <em>one internal interface towards NodeManagers for cluster monitoring and resource access management</em>. In the following, we focus on the public protocol between RM and AM, as this best represents the important frontier between the YARN platform and the various applications/frameworks running on it.</p>
+
+<iframe width="600" height="400" src="//www.youtube.com/embed/HHv2pkIJjR0" frameborder="0" allowfullscreen=""></iframe>
+
+<p>The RM matches a global model of the cluster state against the digest of resource requirements reported by running applications. This makes it possible to tightly enforce <em>global scheduling properties</em> (different schedulers in YARN focus on different global properties, such as capacity or fairness), but it requires the scheduler to obtain an accurate understanding of applications’ resource requirements. Communication messages and scheduler state must be <em>compact</em> and <em>efficient</em> for the RM to scale against application demand and the size of the cluster [<strong>R1</strong>]. The way resource requests are captured strikes a balance between accuracy in capturing <em>resource needs</em> and <em>compactness</em>. Fortunately, the scheduler only handles an overall resource profile for each application, ignoring local optimizations and internal application flow. YARN completely departs from the static partitioning of resources for maps and reduces; it treats the <em>cluster resources</em> as a <em>(discretized) continuum</em> [<strong>R9</strong>]— as we will see in Section 4.1 [<strong>YARN in the real-word</strong>], this delivered significant improvements in cluster utilization.</p>
+
+<p><strong>ApplicationMasters</strong> codify their need for resources in terms of one or more <strong>ResourceRequests</strong>, each of which tracks:</p>
+
+<ol>
+  <li>number of <em>containers</em> (e.g., 200 containers),</li>
+  <li><em>resources</em> per container ⟨2GB RAM, 1 CPU⟩ [The resource vector is designed to be extensible.],</li>
+  <li><em>locality</em> preferences, and</li>
+  <li><em>priority</em> of requests within the application</li>
+</ol>
+
+<p>ResourceRequests are designed to allow users to capture the full detail of their needs and/or a roll-up version of it (e.g., one can specify <em>node-level</em>, <em>rack-level</em>, and <em>global locality preferences</em> [<strong>R4</strong>                                                                                                                                                                                                                                                                                                                     ]). This allows more uniform requests to be represented compactly as aggregates. Furthermore, this design would allow us to impose size limits on ResourceRequests, thus leveraging the <em>roll-up nature</em> of ResourceRequests as a lossy compression of the application preferences. This makes communication and storage of such requests efficient for the scheduler, and it allows applications to express their needs clearly [<strong>R1,R5,R9</strong>]. The <em>roll-up nature</em> of these requests also guides the scheduler in case perfect locality cannot be achieved, towards good alternatives (e.g., <em>rack-local allocation</em>, if the desired node is busy).</p>
+
+<p>This resource model serves current applications well in <em>homogeneous</em> environments, but we expect it to evolve over time as the ecosystem matures and new requirements emerge. Recent and developing extensions include: <em>explicit tracking</em> of <em>gang-scheduling</em> needs, and soft/hard constraints to express arbitrary co-location or <em>disjoint placement</em>. While the RM uses locality as a weight for placing containers, network bandwidth is not explicitly modeled and reserved as in Oktopus [5] or Orchestra [9].</p>
+
+<p>The scheduler tracks, updates, and satisfies these requests with available resources, as advertised on NM heartbeats. In response to AM requests, the RM generates containers together with tokens that grant access to resources. The RM forwards the exit status of finished containers, as reported by the NMs, to the responsible AMs. AMs are also notified when a new NM joins the cluster so that they can start requesting resources on the new nodes.</p>
+
+<p>A recent extension of the protocol allows the RM to <em>symmetrically</em> request resources back from an application. This typically happens when cluster resources become scarce and the scheduler decides to revoke some of the resources that were given to an application to maintain scheduling invariants. We use structures similar to <strong>ResourceRequests</strong> to capture the <em>locality preferences</em> (which could be <em>strict</em> or <em>negotiable</em>). AMs have some flexibility when fulfilling such ’preemption’ requests, e.g., by yielding containers that are less crucial for its work (for e.g. tasks that made only little progress till now), by checkpointing the state of a task, or by migrating the computation to other running containers. Overall, this allows applications to preserve work, in contrast to platforms that forcefully kill containers to satisfy resource constraints. If the application is noncollaborative, the RM can, after waiting for a certain amount of time, obtain the needed resources by instructing the NMs to forcibly terminate containers.</p>
+
+<p>Given the prenominate requirements from section 2, it is important to point out what the ResourceManager is not responsible for. As discussed, it is <em>not</em> responsible for coordinating application execution or task fault-tolerance, but neither is is charged with 1) providing status or metrics for running applications (now part of the ApplicationMaster), nor 2) serving framework specific reports of completed jobs (now delegated to a per-framework daemon).
+YARN does provide <em>generic information</em> about completed apps, containers etc. via a common daemon called <strong>Application History Server</strong>.
+This is consistent with the view that the ResourceManager should only handle live resource scheduling, and helps central components in YARN scale beyond the Hadoop 1.0 JobTracker.</p>
+
+<h2 id="major-research-topic-keywords">Major Research Topic Keywords</h2>
+<h3 id="dynamic-negotiation">Dynamic Negotiation</h3>
+
+<h3 id="discretized-continuum">Discretized Continuum</h3>
+
+<h3 id="explicit-tracking-of-gang-scheduling">Explicit Tracking of Gang-Scheduling</h3>
+
+<h2 id="references">References</h2>
+<p>[1] <a href="http://hadoop.apache.org">Apache hadoop</a>. http://hadoop.apache.org.<br />
+[2] <a href="http://incubator.apache.org/projects/tez.html">Apache tez</a>. http://incubator.apache.org/projects/tez.html. <br />
+[3] <a href="http://netty.io">Netty project</a>. http://netty.io.<br />
+[4] <a href="http://storm-project.net/">Storm</a>. http://storm-project.net/.<br />
+[5] H.Ballani, P.Costa, T.Karagiannis, and A.I.Rowstron. Towards predictable datacenter networks. In <em>SIGCOMM</em>, volume 11, pages 242–253, 2011.<br />
+[6] F.P.Brooks,Jr. <em>The mythical man-month (anniversary ed.)</em>. Addison-Wesley Longman Publishing Co., Inc., Boston, MA, USA, 1995.<br />
+[7] N. Capit, G. Da Costa, Y. Georgiou, G. Huard, C. Martin, G. Mounie, P. Neyron, and O. Richard. A batch scheduler with high level components. In <em>Cluster Computing and the Grid, 2005. CC-Grid 2005. IEEE International Symposium on</em>, volume 2, pages 776–783 Vol. 2, 2005.<br />
+[8] R. Chaiken, B. Jenkins, P.-A. Larson, B. Ramsey, D. Shakib, S. Weaver, and J. Zhou. Scope: easy and efficient parallel processing of massive data sets. <em>Proc. VLDB Endow.</em>, 1(2):1265–1276, Aug. 2008.<br />
+[9] M. Chowdhury, M. Zaharia, J. Ma, M. I. Jordan, and I. Stoica. Managing data transfers in computer clusters with orchestra. <em>SIGCOMMComputer Communication Review</em>, 41(4):98, 2011.<br />
+[10] B.-G. Chun, T. Condie, C. Curino, R. Ramakrishnan, R. Sears, and M. Weimer. Reef: Retainable evaluator execution framework. In <em>VLDB 2013</em>, Demo, 2013.<br />
+[11] B. F. Cooper, E. Baldeschwieler, R. Fonseca, J. J. Kistler, P. Narayan, C. Neerdaels, T. Negrin, R. Ramakrishnan, A. Silberstein, U. Srivastava, et al. Building a cloud for Yahoo! <em>IEEE Data Eng. Bull.</em>, 32(1):36–43, 2009.<br />
+[12] J. Dean and S. Ghemawat. MapReduce: simplified data processing on large clusters. <em>Commun. ACM</em>, 51(1):107–113, Jan. 2008.<br />
+[13] W. Emeneker, D. Jackson, J. Butikofer, and D. Stanzione. Dynamic virtual clustering with xen and moab. In G. Min, B. Martino, L. Yang, M. Guo, and G. Rnger, editors, <em>Frontiers of High Performance Computing and Networking, ISPA 2006 Workshops</em>, volume 4331 of Lecture Notes in Computer Science, pages 440–451. Springer Berlin Heidelberg, 2006.<br />
+[14] Facebook Engineering Team. <em>Under the Hood: Scheduling MapReduce jobs more efficiently with Corona</em>. http://on.fb.me/TxUsYN, 2012.<br />
+[15] D. Gottfrid. <em>Self-service prorated super-computing fun</em>. http://open. blogs.nytimes.com/2007/11/01/self-service-prorated-super-computing-fun, 2007.<br />
+[16] T. Graves. <em>GraySort and MinuteSort at Yahoo on Hadoop 0.23</em>. http://sortbenchmark. org/Yahoo2013Sort.pdf, 2013.<br />
+[17] B. Hindman, A. Konwinski, M. Zaharia, A. Ghodsi, A. D. Joseph, R. Katz, S. Shenker, and I. Stoica. Mesos: a platform for fine-grained resource sharing in the data center. In <em>Proceedings of the 8th USENIX conference on Networked systems design and implementation, NSDI’11</em>, pages 22–22, Berkeley, CA, USA, 2011. USENIX Association.<br />
+[18] M. Isard, M. Budiu, Y. Yu, A. Birrell, and D. Fetterly. Dryad: distributed data-parallel programs from sequential building blocks. In <em>Proceedings of the 2nd ACM SIGOPS/EuroSys European Conference on Computer Systems 2007, EuroSys ’07</em>, pages 59–72, New York, NY, USA, 2007. ACM.<br />
+[19] M. Islam, A. K. Huang, M. Battisha, M. Chiang, S. Srinivasan, C. Peters, A. Neumann, and A. Abdelnur. Oozie: towards a scalable workflow management system for hadoop. In <em>Proceedings of the 1st ACM SIGMOD Workshop on Scalable Workflow Execution Engines and Technologies</em>, page 4. ACM, 2012.<br />
+[20] D. B. Jackson, Q. Snell, and M. J. Clement. Core algorithms of the maui scheduler. In <em>Revised Papers from the 7th International Workshop on Job Scheduling Strategies for Parallel Processing, JSSPP ’01</em>, pages 87–102, London, UK, UK, 2001. Springer-Verlag.<br />
+[21] S. Loughran, D. Das, and E. Baldeschwieler. <a href="http://hortonworks.com/blog/introducing-hoya-hbase-on-yarn/"><em>Introducing Hoya – HBase on YARN</em></a>. http://hortonworks.com/blog/introducing-hoya-hbase-on-yarn/, 2013.<br />
+[22] G. Malewicz, M. H. Austern, A. J. Bik, J. C. Dehnert, I. Horn, N. Leiser, and G. Czajkowski. Pregel: a system for large-scale graph processing. In <em>Proceedings of the 2010 ACM SIGMOD International Conference on Management of data, SIGMOD ’10</em>, pages 135–146, New York, NY, USA, 2010. ACM.<br />
+[23] R. O. Nambiar and M. Poess. The making of tpcds. In <em>Proceedings of the 32nd international conference on Very large data bases, VLDB ’06</em>, pages 1049–1058. VLDB Endowment, 2006.<br />
+[24] C. Olston, B. Reed, U. Srivastava, R. Kumar, and A. Tomkins. Pig Latin: a not-so-foreign language for data processing. In <em>Proceedings of the 2008 ACM SIGMOD international conference on Management of data, SIGMOD ’08</em>, pages 1099–1110, New York, NY, USA, 2008. ACM.<br />
+[25] O.O’Malley. <em>Hadoop: The Definitive Guide</em>, chapter Hadoop at Yahoo!, pages 11–12. O’Reilly Media, 2012.<br />
+[26] M. Schwarzkopf, A. Konwinski, M. Abd-El-Malek, and J. Wilkes. Omega: flexible, scalable schedulers for large compute clusters. In <em>Proceedings of the 8th ACM European Conference on Computer Systems, EuroSys ’13</em>, pages 351–364, New York, NY, USA, 2013. ACM.<br />
+[27] K.Shvachko, H.Kuang, S.Radia, and R.Chansler. The Hadoop Distributed File System. In <em>Proceedings of the 2010 IEEE 26th Symposium on Mass Storage Systems and Technologies (MSST), MSST ’10</em>, pages 1–10, Washington, DC, USA, 2010. IEEE Computer Society.  <br />
+[28] T.-W. N. Sze. <a href="http://developer.yahoo.com/blogs/hadoop/two-quadrillionth-bit-0-467.html"><em>The two quadrillionth bit of π is 0!</em></a> http://developer.yahoo.com/blogs/hadoop/two-quadrillionth-bit-0-467.html.<br />
+[29] D. Thain, T. Tannenbaum, and M. Livny. Distributed computing in practice: the Condor experience. <em>Concurrency and Computation: Practice and Experience</em>, 17(2-4):323–356, 2005.<br />
+[30] A. Thusoo, J. S. Sarma, N. Jain, Z. Shao, P. Chakka, N. Z. 0002, S. Anthony, H. Liu, and R. Murthy. Hive a petabyte scale data warehouse using Hadoop. In F. Li, M. M. Moro, S. Ghandeharizadeh, J. R. Haritsa, G. Weikum, M. J. Carey, F. Casati, E. Y. Chang, I. Manolescu, S. Mehrotra, U. Dayal, and V. J. Tsotras, editors, <em>Proceedings of the 26th International Conference on Data Engineering, ICDE 2010</em>, March 1-6, 2010, Long Beach, California, USA, pages 996–1005. IEEE, 2010.<br />
+[31] Y. Yu, M. Isard, D. Fetterly, M. Budiu, U. Erlingsson, P. K. Gunda, and J. Currey. DryadLINQ: a system for general-purpose distributed data-parallel computing using a high-level language. In <em>Proceedings of the 8th USENIX conference on Operating systems design and implementation, OSDI’08</em>, pages 1–14, Berkeley, CA, USA, 2008. USENIX Association.<br />
+[32] M. Zaharia, M. Chowdhury, M. J. Franklin, S. Shenker, and I. Stoica. Spark: cluster computing with working sets. In <em>Proceedings of the 2nd USENIX conference on Hot topics in cloud computing, HotCloud’10</em>, pages 10–10, Berkeley, CA, USA, 2010. USENIX Association.<br />
+[33] Vinod Kumar Vavilapali, et. al, <em>Apache Hadoop YARN – Yet Another Resource Negotiator</em>, SoCC’13, 1-3 Oct. 2013, Santa Clara, California, USA.</p>
+
+
+</div>
+
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+
+
+		  <hr>
+
+<!-- 	<div id="disqus_thread"></div>
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'sungsoo'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+		  <hr>
+ -->
+
+<!--
+<div class="giscus">
+ <script src="https://giscus.app/client.js"
+        data-repo="sungsoo/sungsoo.github.io"
+        data-repo-id="MDEwOlJlcG9zaXRvcnkxNDk5NTE4OQ=="
+        data-category="General"
+        data-category-id="DIC_kwDOAOTO9c4CPbIC"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="ko"
+        crossorigin="anonymous"
+        async>
+</script>
+</div>
+-->
+          <div class="footer">
+            <div class="contact">
+              <p>
+                Sungsoo Kim, Ph.D.<br />
+                Principal Research Scientist<br/>
+                sungsoo@etri.re.kr
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="http://about.me/sungsoo">about me</a><br />
+                <a href="https://www.facebook.com/sungsoo.kim.9693001">sungsoo's facebook </a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+	</section>
+  
+  <!-- 
+  <script src="/assets/js/main.min.js"></script>
+  <script src="https://kit.fontawesome.com/4eee35f757.js"></script>
+
+
+
+
+<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+   MathJax.Hub.Config({
+     extensions: ["tex2jax.js"],
+     jax: ["input/TeX", "output/HTML-CSS"],
+     tex2jax: {
+       inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+       displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+       processEscapes: true
+     },
+     "HTML-CSS": { availableFonts: ["TeX"] }
+   });
+</script> -->
+
+    </body>
+</html>
