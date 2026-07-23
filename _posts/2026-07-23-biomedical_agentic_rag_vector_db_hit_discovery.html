@@ -1,0 +1,906 @@
+---
+layout: null
+title: "Biomedical Literature Vector DB for Agentic RAG" 
+date: 2026-07-23 
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence, bioinformatics, drug discovery]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="신약개발 Hit Discovery/Selection을 위한 멀티 LLM/SLM 기반 Agentic RAG와 공개 biomedical literature vector database 설계 가이드" />
+  <title>Biomedical Literature Vector DB for Agentic RAG</title>
+  <style>
+    :root{
+      --bg:#07111f;
+      --bg-2:#0b1628;
+      --panel:rgba(15,29,50,.82);
+      --panel-2:rgba(22,41,68,.78);
+      --line:rgba(160,197,255,.17);
+      --text:#eaf2ff;
+      --muted:#9fb0c9;
+      --cyan:#5ee7f7;
+      --blue:#78a8ff;
+      --violet:#b995ff;
+      --green:#65e6ad;
+      --amber:#ffd47a;
+      --red:#ff8e9a;
+      --shadow:0 24px 70px rgba(0,0,0,.34);
+      --radius:22px;
+      --max:1240px;
+    }
+    [data-theme="light"]{
+      --bg:#f4f8ff;
+      --bg-2:#e9f0fb;
+      --panel:rgba(255,255,255,.88);
+      --panel-2:rgba(246,250,255,.92);
+      --line:rgba(32,70,120,.14);
+      --text:#10233e;
+      --muted:#60728d;
+      --cyan:#007f93;
+      --blue:#315fd0;
+      --violet:#7146c4;
+      --green:#16855c;
+      --amber:#a86600;
+      --red:#c33e50;
+      --shadow:0 24px 70px rgba(49,77,120,.14);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:Inter, Pretendard, "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 10% 8%, rgba(94,231,247,.13), transparent 28%),
+        radial-gradient(circle at 88% 12%, rgba(185,149,255,.13), transparent 28%),
+        linear-gradient(160deg,var(--bg),var(--bg-2));
+      line-height:1.72;
+      min-height:100vh;
+    }
+    a{color:var(--cyan);text-decoration:none}
+    a:hover{text-decoration:underline}
+    code,kbd{font-family:"SFMono-Regular",Consolas,monospace}
+    .progress{
+      position:fixed;inset:0 0 auto 0;height:3px;z-index:1000;
+      background:linear-gradient(90deg,var(--cyan),var(--violet));
+      transform-origin:left;transform:scaleX(0);
+    }
+    .topbar{
+      position:sticky;top:0;z-index:100;
+      backdrop-filter:blur(18px);
+      background:color-mix(in srgb,var(--bg) 78%,transparent);
+      border-bottom:1px solid var(--line);
+    }
+    .topbar-inner{
+      max-width:var(--max);margin:auto;padding:12px 22px;
+      display:flex;align-items:center;gap:18px;
+    }
+    .brand{font-weight:850;letter-spacing:-.03em;white-space:nowrap}
+    .brand span{color:var(--cyan)}
+    .nav{display:flex;gap:8px;overflow:auto;scrollbar-width:none;flex:1}
+    .nav a{
+      color:var(--muted);font-size:.9rem;padding:8px 10px;border-radius:999px;white-space:nowrap;
+    }
+    .nav a:hover,.nav a.active{background:var(--panel-2);color:var(--text);text-decoration:none}
+    .icon-btn{
+      border:1px solid var(--line);background:var(--panel);color:var(--text);
+      width:38px;height:38px;border-radius:12px;cursor:pointer;font-size:1rem;
+    }
+    .hero{
+      max-width:var(--max);margin:auto;padding:92px 22px 54px;
+      display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:center;
+    }
+    .eyebrow{
+      display:inline-flex;gap:8px;align-items:center;
+      padding:7px 11px;border:1px solid var(--line);border-radius:999px;
+      color:var(--cyan);font-size:.85rem;background:rgba(94,231,247,.06)
+    }
+    h1{
+      margin:20px 0 18px;font-size:clamp(2.7rem,6vw,5.9rem);
+      line-height:.98;letter-spacing:-.065em;max-width:960px;
+    }
+    h1 .grad{
+      background:linear-gradient(100deg,var(--cyan),var(--blue),var(--violet));
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+    }
+    .hero p{font-size:1.13rem;color:var(--muted);max-width:820px}
+    .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      padding:11px 16px;border-radius:13px;border:1px solid var(--line);
+      background:var(--panel);color:var(--text);font-weight:750;
+    }
+    .btn.primary{background:linear-gradient(120deg,var(--cyan),var(--blue));color:#07111f;border:none}
+    .hero-visual{
+      min-height:430px;position:relative;border:1px solid var(--line);
+      border-radius:34px;background:
+        linear-gradient(rgba(255,255,255,.025),rgba(255,255,255,.01)),
+        radial-gradient(circle at center,rgba(94,231,247,.08),transparent 58%);
+      box-shadow:var(--shadow);overflow:hidden;
+    }
+    .orbit{position:absolute;inset:50%;transform:translate(-50%,-50%);border:1px solid var(--line);border-radius:50%}
+    .o1{width:310px;height:310px}.o2{width:220px;height:220px}.o3{width:125px;height:125px}
+    .core{
+      position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+      width:86px;height:86px;border-radius:26px;display:grid;place-items:center;
+      background:linear-gradient(145deg,var(--cyan),var(--violet));color:#07111f;font-weight:950;
+      box-shadow:0 0 60px rgba(94,231,247,.28);
+    }
+    .node{
+      position:absolute;padding:9px 12px;border:1px solid var(--line);border-radius:13px;
+      background:var(--panel);font-size:.82rem;box-shadow:var(--shadow);
+      animation:float 5s ease-in-out infinite;
+    }
+    .n1{top:12%;left:9%}.n2{top:16%;right:7%;animation-delay:.6s}.n3{bottom:16%;left:8%;animation-delay:1.2s}
+    .n4{bottom:11%;right:10%;animation-delay:1.8s}.n5{top:46%;left:3%;animation-delay:2.4s}
+    @keyframes float{50%{transform:translateY(-10px)}}
+    .container{max-width:var(--max);margin:auto;padding:0 22px 90px}
+    section{scroll-margin-top:92px;margin-top:58px}
+    .section-head{display:flex;gap:22px;justify-content:space-between;align-items:end;margin-bottom:24px}
+    .kicker{color:var(--cyan);font-size:.8rem;text-transform:uppercase;letter-spacing:.16em;font-weight:850}
+    h2{font-size:clamp(2rem,4vw,3.4rem);line-height:1.05;letter-spacing:-.045em;margin:8px 0}
+    h3{font-size:1.28rem;letter-spacing:-.025em}
+    .lead{color:var(--muted);max-width:840px}
+    .grid{display:grid;gap:18px}
+    .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card{
+      border:1px solid var(--line);border-radius:var(--radius);
+      padding:24px;background:linear-gradient(145deg,var(--panel),var(--panel-2));
+      box-shadow:var(--shadow);
+    }
+    .card p,.card li{color:var(--muted)}
+    .card strong{color:var(--text)}
+    .tag{
+      display:inline-flex;padding:5px 9px;border-radius:999px;font-size:.76rem;
+      border:1px solid var(--line);margin:0 5px 6px 0;
+    }
+    .tag.cyan{color:var(--cyan)}.tag.green{color:var(--green)}.tag.amber{color:var(--amber)}
+    .metric{font-size:2rem;font-weight:900;letter-spacing:-.04em;color:var(--cyan)}
+    .callout{
+      border-left:4px solid var(--cyan);padding:18px 22px;border-radius:0 var(--radius) var(--radius) 0;
+      background:rgba(94,231,247,.06);color:var(--text);font-size:1.08rem;
+    }
+    .pipeline{
+      display:grid;grid-template-columns:repeat(7,1fr);gap:9px;align-items:stretch;
+    }
+    .step{
+      position:relative;padding:18px 12px;text-align:center;border:1px solid var(--line);
+      border-radius:16px;background:var(--panel);min-height:110px;display:grid;place-items:center;
+      color:var(--muted);font-size:.86rem;
+    }
+    .step b{display:block;color:var(--text);font-size:.95rem}
+    .step:not(:last-child)::after{
+      content:"→";position:absolute;right:-14px;top:44%;z-index:2;color:var(--cyan);font-size:1.2rem
+    }
+    .resource-toolbar{
+      display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;
+    }
+    .filter,.search{
+      border:1px solid var(--line);background:var(--panel);color:var(--text);
+      border-radius:12px;padding:10px 13px;
+    }
+    .filter{cursor:pointer}.filter.active{border-color:var(--cyan);color:var(--cyan)}
+    .search{min-width:260px;flex:1}
+    .resource{
+      position:relative;overflow:hidden;
+    }
+    .resource::before{
+      content:"";position:absolute;inset:0 auto 0 0;width:4px;
+      background:linear-gradient(var(--cyan),var(--violet));
+    }
+    .resource .top{display:flex;justify-content:space-between;gap:16px;align-items:start}
+    .rank{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:rgba(94,231,247,.1);color:var(--cyan);font-weight:900}
+    .resource h3{margin:0 0 6px}
+    .source-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .source-links a{
+      display:inline-flex;padding:7px 10px;border:1px solid var(--line);border-radius:10px;font-size:.8rem;
+    }
+    details{
+      border-top:1px dashed var(--line);margin-top:16px;padding-top:13px;
+    }
+    summary{cursor:pointer;color:var(--cyan);font-weight:800}
+    .challenge-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+    .challenge{
+      padding:13px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.025);
+      font-size:.88rem;color:var(--muted)
+    }
+    .challenge b{color:var(--amber)}
+    .architecture{
+      display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:18px;align-items:start;
+    }
+    .lane{display:grid;gap:12px}
+    .lane-title{text-align:center;font-weight:900;color:var(--cyan)}
+    .module{
+      padding:16px;border:1px solid var(--line);border-radius:15px;background:var(--panel);
+    }
+    .module small{color:var(--muted)}
+    .center-core{
+      padding:24px;border:1px solid rgba(94,231,247,.35);border-radius:26px;
+      background:linear-gradient(145deg,rgba(94,231,247,.08),rgba(185,149,255,.08));
+      box-shadow:0 0 55px rgba(94,231,247,.08);
+    }
+    .codebox{
+      overflow:auto;padding:18px;border-radius:16px;border:1px solid var(--line);
+      background:#07101d;color:#d7e8ff;font:13px/1.65 "SFMono-Regular",Consolas,monospace;
+    }
+    [data-theme="light"] .codebox{background:#10233e;color:#eef5ff}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    table{border-collapse:collapse;width:100%;min-width:980px;background:var(--panel)}
+    th,td{padding:14px 15px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    th{position:sticky;top:0;background:var(--bg-2);color:var(--cyan);font-size:.82rem}
+    td{color:var(--muted);font-size:.88rem}
+    td:first-child{font-weight:850;color:var(--text)}
+    .score{
+      font-family:"SFMono-Regular",Consolas,monospace;
+      font-size:clamp(1rem,2vw,1.4rem);padding:25px;border-radius:20px;
+      background:linear-gradient(120deg,rgba(94,231,247,.09),rgba(185,149,255,.09));
+      border:1px solid var(--line);text-align:center;overflow:auto;
+    }
+    .checklist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .check{
+      display:flex;gap:10px;padding:12px 14px;border:1px solid var(--line);
+      border-radius:13px;background:var(--panel);color:var(--muted)
+    }
+    .check::before{content:"✓";color:var(--green);font-weight:950}
+    .final{
+      padding:34px;border:1px solid rgba(94,231,247,.35);border-radius:30px;
+      background:
+        radial-gradient(circle at 12% 10%,rgba(94,231,247,.1),transparent 35%),
+        radial-gradient(circle at 90% 80%,rgba(185,149,255,.11),transparent 35%),
+        var(--panel);
+      box-shadow:var(--shadow)
+    }
+    .sources{columns:2;column-gap:26px}
+    .sources li{break-inside:avoid;margin-bottom:10px;color:var(--muted)}
+    footer{border-top:1px solid var(--line);padding:26px 22px 50px;color:var(--muted);text-align:center}
+    .hidden{display:none!important}
+    @media(max-width:1000px){
+      .hero{grid-template-columns:1fr}.hero-visual{min-height:360px}
+      .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .pipeline{grid-template-columns:repeat(2,1fr)}
+      .step:not(:last-child)::after{display:none}
+      .architecture{grid-template-columns:1fr}
+    }
+    @media(max-width:700px){
+      .nav{display:none}.hero{padding-top:62px}
+      .g2,.g3,.g4,.challenge-list,.checklist{grid-template-columns:1fr}
+      .sources{columns:1}
+      .hero-visual{min-height:320px}.o1{width:250px;height:250px}.o2{width:180px;height:180px}
+      .node{font-size:.72rem}.topbar-inner{padding-inline:14px}
+    }
+    @media print{
+      .topbar,.progress,.hero-actions,.resource-toolbar{display:none!important}
+      body{background:white;color:#111}.card,.final,.table-wrap{box-shadow:none}
+      a{color:#0645ad}.hero{padding-top:20px}.container{padding-bottom:10px}
+    }
+  </style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">Bio<span>AgenticRAG</span></div>
+      <nav class="nav" id="nav">
+        <a href="#overview">개요</a>
+        <a href="#resources">공개 자원</a>
+        <a href="#validation">수치 검증</a>
+        <a href="#architecture">아키텍처</a>
+        <a href="#agents">에이전트</a>
+        <a href="#challenges">도전과제</a>
+        <a href="#recommendation">권장안</a>
+      </nav>
+      <button class="icon-btn" id="themeBtn" aria-label="테마 전환">◐</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <span class="eyebrow">MULTI-LLM/SLM · HIT DISCOVERY · EVIDENCE-NATIVE RAG</span>
+        <h1>신약개발을 위한<br><span class="grad">Biomedical Literature Vector DB</span></h1>
+        <p>
+          다수의 LLM/SLM 에이전트가 PubMed·PMC·Europe PMC·Semantic Scholar·PubTator와 구조화된 bioactivity 데이터베이스를 함께 사용하여
+          후보 화합물의 potency, selectivity, cellular activity, toxicity, 재현성과 상충 근거를 추적하는 구현 지침이다.
+        </p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#resources">공개 자원 비교</a>
+          <a class="btn" href="#architecture">권장 아키텍처</a>
+          <a class="btn" href="#recommendation">최종 권장 조합</a>
+        </div>
+      </div>
+      <div class="hero-visual" aria-label="Agentic RAG 개념도">
+        <div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div>
+        <div class="core">RAG</div>
+        <div class="node n1">MedCPT<br><small>Question → Article</small></div>
+        <div class="node n2">PMC OA<br><small>Passage Evidence</small></div>
+        <div class="node n3">ChEMBL<br><small>Assay Validation</small></div>
+        <div class="node n4">S2AG<br><small>Citation Graph</small></div>
+        <div class="node n5">PubTator<br><small>Entity Layer</small></div>
+      </div>
+    </section>
+
+    <div class="container">
+
+      <section id="overview">
+        <div class="section-head">
+          <div>
+            <div class="kicker">Executive Summary</div>
+            <h2>문헌 검색과 Hit 판단을 분리한다</h2>
+            <p class="lead">
+              벡터 검색은 관련 논문을 발견하는 기술이며, hit의 약효·선택성·독성·재현성을 확정하는 기술이 아니다.
+              논문 수준 검색, 본문 수준 근거 추출, 구조화 bioactivity 검증을 계층적으로 결합해야 한다.
+            </p>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>핵심 원칙:</strong> MedCPT·Pub2Vec·SPECTER2는 후보 문헌 발견에 사용하고,
+          PMC·Europe PMC는 문장·표 단위 근거 추출에 사용하며,
+          ChEMBL·BindingDB·PubChem BioAssay는 potency와 assay 조건 검증에 사용한다.
+        </div>
+
+        <div class="grid g4" style="margin-top:18px">
+          <article class="card"><div class="metric">1</div><h3>논문 검색</h3><p>자연어 질의와 seed paper를 기반으로 관련 문헌 후보를 넓게 확보한다.</p></article>
+          <article class="card"><div class="metric">2</div><h3>본문 검색</h3><p>Methods, Results, 표, 그림 설명에서 assay 조건과 정량 근거를 찾는다.</p></article>
+          <article class="card"><div class="metric">3</div><h3>수치 검증</h3><p>IC50, Ki, Kd, EC50, unit, target, cell line을 구조화 DB와 대조한다.</p></article>
+          <article class="card"><div class="metric">4</div><h3>근거 통합</h3><p>지지·반대 근거를 Hyper-Relational Evidence Graph로 연결한다.</p></article>
+        </div>
+
+        <h3 style="margin-top:28px">권장 검색·검증 파이프라인</h3>
+        <div class="pipeline">
+          <div class="step"><div><b>질의 구조화</b>표적·질환·assay·endpoint</div></div>
+          <div class="step"><div><b>논문 후보 검색</b>MedCPT / Pub2Vec</div></div>
+          <div class="step"><div><b>문헌 확장</b>S2AG 인용 그래프</div></div>
+          <div class="step"><div><b>본문 검색</b>PMC / Europe PMC</div></div>
+          <div class="step"><div><b>엔터티 정규화</b>PubTator / MeSH</div></div>
+          <div class="step"><div><b>활성 검증</b>ChEMBL / BindingDB</div></div>
+          <div class="step"><div><b>Hit Ranking</b>Evidence-aware score</div></div>
+        </div>
+      </section>
+
+      <section id="resources">
+        <div class="section-head">
+          <div>
+            <div class="kicker">Open Data Landscape</div>
+            <h2>공개 Vector DB 및 벡터화 가능한 문헌 자원</h2>
+            <p class="lead">
+              사전 계산 임베딩, 관리형 벡터 검색, 원문 코퍼스, 엔터티 보강 자원은 목적이 다르다.
+              하나의 자원으로 전체 Hit Discovery/Selection 워크플로를 대체할 수 없다.
+            </p>
+          </div>
+        </div>
+
+        <div class="resource-toolbar">
+          <button class="filter active" data-filter="all">전체</button>
+          <button class="filter" data-filter="precomputed">사전 임베딩</button>
+          <button class="filter" data-filter="fulltext">전체 본문</button>
+          <button class="filter" data-filter="managed">관리형</button>
+          <button class="filter" data-filter="enrichment">보강 계층</button>
+          <input class="search" id="resourceSearch" type="search" placeholder="자원명·용도·문제점 검색" />
+        </div>
+
+        <div class="grid g2" id="resourceGrid">
+
+          <article class="card resource" data-category="precomputed" data-text="medcpt pubmed embeddings 질의 논문 검색 reranker 초록">
+            <div class="top"><div><span class="tag cyan">사전 계산 임베딩</span><span class="tag green">생의학 전용</span><h3>NCBI MedCPT PubMed Embeddings</h3></div><div class="rank">01</div></div>
+            <p>
+              PubMed 검색 로그의 대규모 query–article 쌍으로 학습한 생의학 검색 모델이다.
+              Query Encoder, Article Encoder, Cross Encoder를 제공하므로 자연어 질문에서 관련 논문을 찾고 재순위화하는 1차 retriever로 적합하다.
+            </p>
+            <p><strong>Hit Discovery 활용:</strong> 표적 생물학, 작용기전, assay, 독성, 선택성 관련 문헌을 자연어 요구조건으로 검색한다.</p>
+            <div class="source-links">
+              <a href="https://github.com/ncbi/MedCPT" target="_blank">GitHub</a>
+              <a href="https://ftp.ncbi.nlm.nih.gov/pub/lu/MedCPT/pubmed_embeddings/" target="_blank">Precomputed Embeddings</a>
+              <a href="https://huggingface.co/ncbi/MedCPT-Query-Encoder" target="_blank">Query Encoder</a>
+              <a href="https://huggingface.co/ncbi/MedCPT-Cross-Encoder" target="_blank">Cross Encoder</a>
+            </div>
+            <details open><summary>고려사항과 Challenges</summary>
+              <div class="challenge-list">
+                <div class="challenge"><b>논문 수준 압축:</b> 표·보충자료의 IC50, cell line, assay 조건이 단일 벡터에서 희석된다.</div>
+                <div class="challenge"><b>벡터 공간 일치:</b> 사전 계산 article vector에는 반드시 MedCPT Query Encoder를 사용해야 한다.</div>
+                <div class="challenge"><b>최신성:</b> 스냅숏 이후 신규 논문은 동일 encoder로 증분 임베딩해야 한다.</div>
+                <div class="challenge"><b>초록 편향:</b> 부정적 결과와 독성 문제는 본문 또는 supplementary material에만 존재할 수 있다.</div>
+              </div>
+            </details>
+          </article>
+
+          <article class="card resource" data-category="precomputed" data-text="pub2vec pubvec specter2 유사 논문 클러스터링 pubmed">
+            <div class="top"><div><span class="tag cyan">사전 계산 임베딩</span><span class="tag amber">문서 유사성</span><h3>Pub2Vec · PubVec</h3></div><div class="rank">02</div></div>
+            <p>
+              PubMed 제목과 초록을 SPECTER2로 임베딩한 공개 데이터셋이다.
+              seed paper 기반 유사 논문 검색, chemistry series 확장, 표적별 문헌 클러스터링과 emerging topic 분석에 적합하다.
+            </p>
+            <p><strong>역할 분담:</strong> 질문→논문 검색은 MedCPT, 논문→유사 논문 확장은 Pub2Vec/SPECTER2가 자연스럽다.</p>
+            <div class="source-links">
+              <a href="https://www.iac.rm.cnr.it/pub2vec" target="_blank">Pub2Vec</a>
+              <a href="https://www.iac.cnr.it/pubvec-free-embedding-dataset-pubmed-abstracts-reproducibility-and-open-science" target="_blank">Bulk Download</a>
+            </div>
+            <details open><summary>고려사항과 Challenges</summary>
+              <div class="challenge-list">
+                <div class="challenge"><b>질의 적합성:</b> 짧은 사용자 질의보다 논문 스타일의 확장 질의가 더 안정적이다.</div>
+                <div class="challenge"><b>Assay 불일치:</b> 의미가 유사해도 biochemical assay와 cellular assay는 비교할 수 없다.</div>
+                <div class="challenge"><b>정보 혼합:</b> 하나의 논문에 여러 표적·화합물·endpoint가 섞이면 검색 근거가 모호해진다.</div>
+                <div class="challenge"><b>스냅숏 갱신:</b> Annual Baseline 이후 일일 업데이트를 별도로 처리해야 한다.</div>
+              </div>
+            </details>
+          </article>
+
+          <article class="card resource" data-category="precomputed" data-text="semantic scholar s2ag specter2 citation graph 인용 선행 후속 논문">
+            <div class="top"><div><span class="tag cyan">사전 계산 임베딩</span><span class="tag green">인용 그래프</span><h3>Semantic Scholar S2AG · SPECTER2</h3></div><div class="rank">03</div></div>
+            <p>
+              대규모 학술 논문 벡터와 인용 관계, 저자, 기관, DOI·PMID 등 식별자를 함께 제공한다.
+              선행·후속 연구, 재현 연구, 상충 연구와 연구 계보를 확장하는 Graph-enhanced RAG에 강하다.
+            </p>
+            <p><strong>Hit Discovery 활용:</strong> 신규성 평가, 선행 chemistry 탐색, 영향력 있는 후속 연구 및 반증 문헌 탐색에 사용한다.</p>
+            <div class="source-links">
+              <a href="https://api.semanticscholar.org/api-docs/datasets" target="_blank">Datasets API</a>
+              <a href="https://api.semanticscholar.org/datasets/v1/release/latest" target="_blank">Latest Release</a>
+              <a href="https://huggingface.co/allenai/specter2" target="_blank">SPECTER2</a>
+            </div>
+            <details open><summary>고려사항과 Challenges</summary>
+              <div class="challenge-list">
+                <div class="challenge"><b>대규모 운영:</b> 전체 벡터 적재보다 PMID·분야·연도 기반 부분집합이 현실적이다.</div>
+                <div class="challenge"><b>비생의학 혼입:</b> 유전자 심볼과 타 분야 약어 충돌을 entity filter로 완화해야 한다.</div>
+                <div class="challenge"><b>인용 편향:</b> 인용 수는 증거 품질이 아니며 오래된 논문에 유리하다.</div>
+                <div class="challenge"><b>식별자 정합성:</b> corpusId–PMID–PMCID–DOI 매핑과 중복 제거가 필요하다.</div>
+              </div>
+            </details>
+          </article>
+
+          <article class="card resource" data-category="managed fulltext" data-text="google bigquery pmc vector search managed full text cloud">
+            <div class="top"><div><span class="tag green">관리형</span><span class="tag cyan">Full Text</span><h3>Google BigQuery PMC Vector Search</h3></div><div class="rank">04</div></div>
+            <p>
+              PMC Open Access의 상업적 재사용 가능 부분집합을 BigQuery에서 SQL과 벡터 검색으로 다루는 관리형 접근이다.
+              여러 에이전트가 동일한 full-text 계층을 공유하면서 연도·문서 유형·표적 조건을 함께 필터링할 수 있다.
+            </p>
+            <p><strong>적합한 상황:</strong> 대규모 인프라를 직접 운영하지 않고 빠르게 Agentic Literature Review 또는 full-text RAG를 검증할 때 유리하다.</p>
+            <div class="source-links">
+              <a href="https://cloud.google.com/blog/topics/public-sector/accelerate-medical-research-with-pubmed-data-now-available-in-bigquery" target="_blank">공식 소개</a>
+              <a href="https://cloud.google.com/bigquery/docs/vector-search" target="_blank">Vector Search</a>
+              <a href="https://github.com/google/pubmed-rag" target="_blank">Agentic RAG Example</a>
+            </div>
+            <details open><summary>고려사항과 Challenges</summary>
+              <div class="challenge-list">
+                <div class="challenge"><b>비용:</b> query scan, embedding, index, model call 비용을 에이전트별 예산으로 통제해야 한다.</div>
+                <div class="challenge"><b>부분집합 편향:</b> 전체 PubMed가 아니라 OA·라이선스 가능한 subset이다.</div>
+                <div class="challenge"><b>클라우드 종속:</b> 검색 결과와 query trace를 별도 보존해야 재현성이 확보된다.</div>
+                <div class="challenge"><b>청킹:</b> 전체 논문 단일 벡터보다 section·paragraph·table 단위 테이블이 필요하다.</div>
+              </div>
+            </details>
+          </article>
+
+          <article class="card resource" data-category="fulltext" data-text="pubmed annual baseline xml abstract metadata mesh daily update">
+            <div class="top"><div><span class="tag amber">벡터화 필요</span><span class="tag green">최대 Recall</span><h3>PubMed Annual Baseline</h3></div><div class="rank">05</div></div>
+            <p>
+              생의학 문헌의 제목, 초록, MeSH, 저자, 저널, 출판 유형을 포함하는 핵심 원천이다.
+              임베딩 모델, 메타데이터 스키마, 업데이트 정책과 오프라인 운영을 완전히 통제할 수 있다.
+            </p>
+            <p><strong>Hit Discovery 활용:</strong> 가장 넓은 recall을 확보하고, MeSH·publication type·연도 필터로 dense retrieval을 보정한다.</p>
+            <div class="source-links">
+              <a href="https://pubmed.ncbi.nlm.nih.gov/download/" target="_blank">Data Download</a>
+              <a href="https://pubmed.ncbi.nlm.nih.gov/" target="_blank">PubMed</a>
+              <a href="https://www.ncbi.nlm.nih.gov/books/NBK25501/" target="_blank">E-utilities</a>
+            </div>
+            <details open><summary>고려사항과 Challenges</summary>
+              <div class="challenge-list">
+                <div class="challenge"><b>구축 비용:</b> 수천만 레코드 임베딩과 인덱싱에 큰 계산·저장 비용이 발생한다.</div>
+                <div class="challenge"><b>수정·삭제 처리:</b> daily update는 append가 아니라 PMID 기반 upsert/delete로 처리해야 한다.</div>
+                <div class="challenge"><b>본문 부재:</b> 핵심 assay 수치는 PMC 또는 출판사 본문과 연결해야 한다.</div>
+                <div class="challenge"><b>시간 누출:</b> 실험 시점 이후 문헌을 차단하는 corpus snapshot이 필요하다.</div>
+              </div>
+            </details>
+          </article>
+
+          <article class="card resource" data-category="fulltext" data-text="pmc open access full text methods results tables supplementary evidence passage">
+            <div class="top"><div><span class="tag cyan">Full Text</span><span class="tag green">근거 추출</span><h3>PMC Open Access Subset</h3></div><div class="rank">06</div></div>
+            <p>
+              Methods, Results, Discussion, 표, 그림 설명과 supplementary material을 포함하는 핵심 full-text 원천이다.
+              논문 수준 후보를 실제 assay statement와 정량 근거로 내려가는 2차 evidence index로 사용한다.
+            </p>
+            <p><strong>Hit Selection 활용:</strong> compound–target–assay–endpoint–value–unit–cell line–source 튜플을 문장·표 수준에서 추출한다.</p>
+            <div class="source-links">
+              <a href="https://pmc.ncbi.nlm.nih.gov/tools/openftlist/" target="_blank">OA Subset</a>
+              <a href="https://pmc.ncbi.nlm.nih.gov/tools/textmining/" target="_blank">Article Datasets</a>
+              <a href="https://pmc.ncbi.nlm.nih.gov/tools/developers/" target="_blank">Developer Tools</a>
+              <a href="https://pmc.ncbi.nlm.nih.gov/tools/pmcaws/" target="_blank">AWS Access</a>
+            </div>
+            <details open><summary>고려사항과 Challenges</summary>
+              <div class="challenge-list">
+                <div class="challenge"><b>라이선스:</b> 논문별 재사용·상업 이용 조건을 vector record에 유지해야 한다.</div>
+                <div class="challenge"><b>OA 편향:</b> 구독형 medicinal chemistry 문헌이 누락될 수 있다.</div>
+                <div class="challenge"><b>표 파싱:</b> 행·열·단위·endpoint 연결을 보존하는 구조화 추출이 필요하다.</div>
+                <div class="challenge"><b>청킹:</b> section·paragraph·table 경계를 유지하고 중복 chunk를 제거해야 한다.</div>
+              </div>
+            </details>
+          </article>
+
+          <article class="card resource" data-category="fulltext" data-text="europe pmc preprint version annotations api full text">
+            <div class="top"><div><span class="tag cyan">Full Text</span><span class="tag amber">Preprint</span><h3>Europe PMC</h3></div><div class="rank">07</div></div>
+            <p>
+              저널 논문, 공개 원문, preprint, annotation, 인용·참고문헌과 데이터베이스 cross-reference를 제공한다.
+              변화가 빠른 신규 표적과 modality 분야에서 조기 근거 탐색에 유용하다.
+            </p>
+            <p><strong>Hit Discovery 활용:</strong> PubMed·PMC를 보완하고 preprint에서 최신 표적·assay·화합물 시리즈를 조기에 발견한다.</p>
+            <div class="source-links">
+              <a href="https://europepmc.org/" target="_blank">Europe PMC</a>
+              <a href="https://europepmc.org/developers" target="_blank">Developers</a>
+              <a href="https://europepmc.org/downloads" target="_blank">Bulk Downloads</a>
+              <a href="https://europepmc.org/RestfulWebService" target="_blank">REST API</a>
+            </div>
+            <details open><summary>고려사항과 Challenges</summary>
+              <div class="challenge-list">
+                <div class="challenge"><b>중복:</b> PMID·PMCID·DOI·normalized title 기준 통합이 필요하다.</div>
+                <div class="challenge"><b>Version 관리:</b> preprint와 최종 논문을 독립 근거로 중복 계산하면 안 된다.</div>
+                <div class="challenge"><b>근거 수준:</b> peer review 여부를 hit score와 최종 설명에 반영해야 한다.</div>
+                <div class="challenge"><b>메타데이터 이질성:</b> 날짜·문서 유형·저자·license를 정규화해야 한다.</div>
+              </div>
+            </details>
+          </article>
+
+          <article class="card resource" data-category="enrichment" data-text="pubtator entity relation chemical gene disease variant enrichment">
+            <div class="top"><div><span class="tag green">보강 계층</span><span class="tag cyan">Entity-aware</span><h3>PubTator Central · PubTator 3.0</h3></div><div class="rank">08</div></div>
+            <p>
+              PubMed·PMC에서 gene/protein, disease, chemical, variant와 관계를 자동 주석한다.
+              문헌 벡터 DB에 entity filter와 query expansion을 결합하고 Evidence Graph를 구축하는 보조 계층이다.
+            </p>
+            <p><strong>Hit Selection 활용:</strong> target ID, variant, chemical entity와 벡터 유사도를 결합해 의미 검색의 오탐을 줄인다.</p>
+            <div class="source-links">
+              <a href="https://www.ncbi.nlm.nih.gov/research/pubtator3/" target="_blank">PubTator 3.0</a>
+              <a href="https://ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/PubTatorCentral/" target="_blank">PubTator Central</a>
+              <a href="https://www.ncbi.nlm.nih.gov/CBBresearch/Lu/Demo/tmTools/curl.html" target="_blank">API Examples</a>
+            </div>
+            <details open><summary>고려사항과 Challenges</summary>
+              <div class="challenge-list">
+                <div class="challenge"><b>자동 주석 오류:</b> 개체 공기출현이 직접적인 억제·결합 관계를 의미하지 않는다.</div>
+                <div class="challenge"><b>심볼 모호성:</b> gene symbol, organism, isoform, mutant를 구분해야 한다.</div>
+                <div class="challenge"><b>부정 표현:</b> “did not inhibit”를 양성 관계로 오인하지 않도록 polarity를 추출해야 한다.</div>
+                <div class="challenge"><b>Qualifier 부족:</b> assay, endpoint, value, unit, condition을 별도로 추출해야 한다.</div>
+              </div>
+            </details>
+          </article>
+
+          <article class="card resource" data-category="fulltext" data-text="s2orc scientific full text chemistry computation docking machine readable">
+            <div class="top"><div><span class="tag cyan">Full Text</span><span class="tag amber">범용 과학</span><h3>S2ORC</h3></div><div class="rank">09</div></div>
+            <p>
+              공개 학술 논문의 구조화된 전체 본문 코퍼스다.
+              계산화학, virtual screening, docking, GNN, 합성화학과 drug delivery 등 PMC 밖의 인접 분야를 보완한다.
+            </p>
+            <p><strong>권장 구조:</strong> S2AG에서 논문을 찾고 S2ORC에서 본문 passage를 검색하는 2단계 구조가 적합하다.</p>
+            <div class="source-links">
+              <a href="https://allenai.org/ai-for-science" target="_blank">Ai2 Scientific Data</a>
+              <a href="https://www.semanticscholar.org/product/s2orc" target="_blank">S2ORC</a>
+              <a href="https://api.semanticscholar.org/api-docs/datasets" target="_blank">Datasets API</a>
+            </div>
+            <details open><summary>고려사항과 Challenges</summary>
+              <div class="challenge-list">
+                <div class="challenge"><b>비생의학 혼입:</b> 분야 분류와 biomedical entity filter가 필요하다.</div>
+                <div class="challenge"><b>PDF 추출 노이즈:</b> 표, 화학식, 수식, 그림 설명의 구조가 손상될 수 있다.</div>
+                <div class="challenge"><b>라이선스:</b> 개별 원문의 이용 조건을 확인해야 한다.</div>
+                <div class="challenge"><b>구조화 필요:</b> assay fact와 수치 추출 파이프라인은 별도로 구축해야 한다.</div>
+              </div>
+            </details>
+          </article>
+
+        </div>
+      </section>
+
+      <section id="validation">
+        <div class="section-head">
+          <div>
+            <div class="kicker">Structured Validation</div>
+            <h2>문헌 벡터 검색을 bioactivity 검증과 연결한다</h2>
+            <p class="lead">
+              자연어의 “low nanomolar activity”는 potency를 암시하지만 assay 비교 가능성, endpoint, 단위와 실험 조건을 보장하지 않는다.
+              구조화 데이터베이스에서 수치를 재검증해야 한다.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid g3">
+          <article class="card">
+            <span class="tag cyan">Curated Bioactivity</span><h3>ChEMBL</h3>
+            <p>문헌에서 큐레이션한 화합물·표적·assay·활성값과 문헌 provenance를 연결한다.</p>
+            <a href="https://www.ebi.ac.uk/chembl/" target="_blank">https://www.ebi.ac.uk/chembl/</a>
+          </article>
+          <article class="card">
+            <span class="tag green">Screening Assays</span><h3>PubChem BioAssay</h3>
+            <p>small molecule·RNAi screening, assay annotation, active/inactive 판정과 제출기관 provenance를 제공한다.</p>
+            <a href="https://pubchem.ncbi.nlm.nih.gov/docs/bioassays" target="_blank">https://pubchem.ncbi.nlm.nih.gov/docs/bioassays</a>
+          </article>
+          <article class="card">
+            <span class="tag amber">Binding Affinity</span><h3>BindingDB</h3>
+            <p>drug-like molecule–protein 사이의 Ki, IC50, Kd 등 측정 결합 친화도와 원 문헌을 연결한다.</p>
+            <a href="https://www.bindingdb.org/" target="_blank">https://www.bindingdb.org/</a>
+          </article>
+        </div>
+
+        <div class="codebox" style="margin-top:18px">문헌에서 후보 주장 발견
+  → PMID/DOI와 compound/target 정규화
+  → ChEMBL·BindingDB·PubChem BioAssay에서 수치 대조
+  → 원문 Methods·Results에서 assay 조건 확인
+  → 상충 결과·독성·off-target 근거 탐색
+  → 검증된 Hit Evidence Record 생성</div>
+
+        <h3 style="margin-top:28px">Hit Evidence Record 최소 스키마</h3>
+        <div class="codebox">{
+  "compound": {"id": "...", "name": "...", "smiles": "..."},
+  "target": {"id": "...", "name": "...", "variant": "..."},
+  "assay": {"type": "biochemical|cellular|binding", "format": "..."},
+  "endpoint": "IC50|Ki|Kd|EC50",
+  "value": 12.4,
+  "unit": "nM",
+  "conditions": {"species": "...", "cell_line": "...", "exposure": "..."},
+  "selectivity": {"wild_type_ratio": "...", "off_targets": ["..."]},
+  "source": {"pmid": "...", "pmcid": "...", "doi": "...", "section": "..."},
+  "status": {"peer_reviewed": true, "retracted": false, "confidence": 0.91}
+}</div>
+      </section>
+
+      <section id="architecture">
+        <div class="section-head">
+          <div>
+            <div class="kicker">System Architecture</div>
+            <h2>다중 LLM/SLM Agentic RAG 권장 아키텍처</h2>
+            <p class="lead">
+              검색·추출·검증·반증·통합을 분리하고 중앙 Evidence Graph와 결정론적 도구를 공유한다.
+              각 모델은 역할에 적합한 문맥만 받고 모든 주장과 도구 호출은 재현 가능하게 기록한다.
+            </p>
+          </div>
+        </div>
+
+        <div class="architecture">
+          <div class="lane">
+            <div class="lane-title">Retrieval Layer</div>
+            <div class="module"><b>Index A · MedCPT</b><br><small>자연어 질문 → PubMed 후보 논문</small></div>
+            <div class="module"><b>Index B · Pub2Vec/S2AG</b><br><small>유사 논문·인용·후속 연구 확장</small></div>
+            <div class="module"><b>Index C · PMC/Europe PMC</b><br><small>Methods·Results·Table passage 검색</small></div>
+            <div class="module"><b>Index D · PubTator</b><br><small>Gene·Chemical·Disease·Variant filter</small></div>
+          </div>
+
+          <div class="center-core">
+            <div class="lane-title">Evidence Orchestration Core</div>
+            <div class="module"><b>Planner / Router</b><br><small>질의를 표적 타당성, potency, selectivity, safety 질문으로 분해</small></div>
+            <div class="module"><b>Hyper-Relational Evidence Graph</b><br><small>Claim–Evidence–Assay–Qualifier–Source–Counter-evidence 연결</small></div>
+            <div class="module"><b>Deterministic Validation</b><br><small>단위 변환, endpoint 비교, 중복 제거, 식별자 매핑, 날짜 컷오프</small></div>
+            <div class="module"><b>Provenance Ledger</b><br><small>query, top-k, model, index snapshot, 결과 PMID, agent trace 저장</small></div>
+          </div>
+
+          <div class="lane">
+            <div class="lane-title">Validation & Decision Layer</div>
+            <div class="module"><b>ChEMBL</b><br><small>큐레이션 bioactivity 검증</small></div>
+            <div class="module"><b>BindingDB</b><br><small>결합 친화도 검증</small></div>
+            <div class="module"><b>PubChem BioAssay</b><br><small>screening active/inactive 검증</small></div>
+            <div class="module"><b>Hit Ranker</b><br><small>potency·cellular·selectivity·toxicity·uncertainty 통합</small></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="agents">
+        <div class="section-head">
+          <div>
+            <div class="kicker">Agent Roles</div>
+            <h2>에이전트 역할을 과학적 검토 절차로 설계한다</h2>
+          </div>
+        </div>
+
+        <div class="grid g3">
+          <article class="card"><h3>Planner · Router</h3><p>질의를 target biology, assay evidence, chemistry, selectivity, safety, contradiction 질문으로 분해한다.</p></article>
+          <article class="card"><h3>Target Biology Agent</h3><p>질환–표적–경로의 인과적 타당성, genetic evidence와 translational relevance를 조사한다.</p></article>
+          <article class="card"><h3>Assay Evidence Agent</h3><p>Methods·Results·표에서 compound–target–assay–endpoint–value–unit 튜플을 추출한다.</p></article>
+          <article class="card"><h3>Chemistry · SAR Agent</h3><p>유사 scaffold, chemistry series, SAR, synthetic tractability와 선행 특허·논문을 확장한다.</p></article>
+          <article class="card"><h3>Selectivity Agent</h3><p>wild type, paralog, kinase panel, counter-screen과 off-target 근거를 별도로 수집한다.</p></article>
+          <article class="card"><h3>Safety Agent</h3><p>cytotoxicity, hERG, CYP, mitochondrial toxicity, aggregation과 reactive metabolite 위험을 조사한다.</p></article>
+          <article class="card"><h3>Contradiction Agent</h3><p>초기 hit score를 보지 않고 failed, inactive, non-selective, irreproducible 근거를 독립적으로 탐색한다.</p></article>
+          <article class="card"><h3>Provenance Validator</h3><p>모든 주장에 PMID·PMCID·DOI, section, table/figure ID와 구조화 DB 레코드를 연결한다.</p></article>
+          <article class="card"><h3>Consensus Ranker</h3><p>다수 에이전트 결과를 단순 다수결이 아니라 독립 근거 수, assay 비교 가능성과 uncertainty로 통합한다.</p></article>
+        </div>
+
+        <h3 style="margin-top:28px">공통 질의 스키마</h3>
+        <div class="codebox">{
+  "target": "BRAF V600E",
+  "disease": "melanoma",
+  "modality": "small molecule",
+  "task": "hit selection",
+  "assays": ["biochemical", "cellular"],
+  "endpoints": ["IC50", "Ki", "EC50"],
+  "requirements": ["wild-type selectivity", "cytotoxicity", "independent replication"],
+  "date_cutoff": "YYYY-MM-DD"
+}</div>
+      </section>
+
+      <section id="challenges">
+        <div class="section-head">
+          <div>
+            <div class="kicker">Cross-cutting Challenges</div>
+            <h2>멀티 에이전트 환경의 핵심 기술적 문제</h2>
+            <p class="lead">검색 정확도보다 더 어려운 문제는 서로 다른 모델·인덱스·근거 단위를 일관되게 통합하고 재현하는 일이다.</p>
+          </div>
+        </div>
+
+        <div class="grid g2">
+          <article class="card"><h3>서로 다른 벡터 공간</h3><p>MedCPT, SPECTER2, 자체 embedding의 cosine score는 직접 비교할 수 없다. 인덱스를 분리하고 rank normalization 또는 reciprocal-rank fusion으로 통합한다.</p></article>
+          <article class="card"><h3>검색 결과 불일치</h3><p>LLM/SLM마다 질의 표현이 달라 결과가 흔들린다. 공통 query schema, entity normalization, date cutoff를 강제한다.</p></article>
+          <article class="card"><h3>중복 근거 과대계산</h3><p>여러 에이전트가 동일 논문·동일 실험을 독립 근거로 집계할 수 있다. 독립 연구기관·독립 assay·독립 dataset 단위로 evidence count를 계산한다.</p></article>
+          <article class="card"><h3>Context Fragmentation</h3><p>각 SLM이 부분 근거만 보면 전체 assay 조건과 반대 근거를 놓친다. 중앙 Evidence Graph에서 claim, qualifier, evidence, counter-evidence를 공유한다.</p></article>
+          <article class="card"><h3>수치 비교 오류</h3><p>0.5 μM와 50 nM, IC50와 Ki, pIC50를 LLM이 직접 비교하게 두지 않는다. 단위 변환과 endpoint 호환성은 결정론적 함수가 처리한다.</p></article>
+          <article class="card"><h3>Confirmation Bias</h3><p>초기 planner의 가설이 후속 검색을 편향시킬 수 있다. Contradiction Agent에는 후보 점수와 지지 근거를 숨긴 독립 탐색 조건을 적용한다.</p></article>
+          <article class="card"><h3>최신성과 재현성</h3><p>운영 인덱스는 계속 갱신되지만 실험은 특정 시점 스냅숏으로 재현되어야 한다. corpus date, model checksum, index parameter, top-k를 기록한다.</p></article>
+          <article class="card"><h3>라이선스와 재배포</h3><p>검색 가능성과 원문 재배포 가능성은 다르다. 각 chunk에 source license를 저장하고 답변에는 짧은 인용과 원문 링크만 제공한다.</p></article>
+        </div>
+
+        <h3 style="margin-top:28px">Hit Selection 통합 점수 예시</h3>
+        <div class="score">
+          S(h) = w<sub>p</sub>P + w<sub>c</sub>C + w<sub>s</sub>S + w<sub>r</sub>R + w<sub>e</sub>E − w<sub>t</sub>T − w<sub>u</sub>U
+        </div>
+        <div class="grid g4" style="margin-top:14px">
+          <div class="card"><b>P</b><p>Potency 근거</p></div>
+          <div class="card"><b>C</b><p>Cellular activity</p></div>
+          <div class="card"><b>S</b><p>Selectivity</p></div>
+          <div class="card"><b>R</b><p>독립 재현성</p></div>
+          <div class="card"><b>E</b><p>Evidence quality</p></div>
+          <div class="card"><b>T</b><p>Toxicity·off-target penalty</p></div>
+          <div class="card"><b>U</b><p>Uncertainty·assay mismatch</p></div>
+          <div class="card"><b>주의</b><p>벡터 유사도는 P 자체가 아니라 문헌 후보 검색 신호다.</p></div>
+        </div>
+      </section>
+
+      <section id="comparison">
+        <div class="section-head">
+          <div>
+            <div class="kicker">Decision Matrix</div>
+            <h2>자원별 Hit Discovery/Selection 적합성</h2>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>자원</th><th>형태</th><th>Hit Discovery</th><th>Hit Selection</th><th>핵심 역할</th><th>대표 문제점</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>MedCPT PubMed Embeddings</td><td>사전 벡터</td><td>매우 높음</td><td>중간</td><td>자연어 질문→논문 검색</td><td>초록·논문 수준, 최신성 관리</td></tr>
+              <tr><td>Pub2Vec</td><td>사전 벡터</td><td>높음</td><td>중간</td><td>유사 논문·주제 확장</td><td>문서 유사성 중심, assay 혼합</td></tr>
+              <tr><td>S2AG SPECTER2</td><td>사전 벡터+그래프</td><td>높음</td><td>중간</td><td>인용·연구 계보·반증 탐색</td><td>규모, 비생의학 혼입, ID 매핑</td></tr>
+              <tr><td>BigQuery PMC</td><td>관리형 벡터 검색</td><td>높음</td><td>높음</td><td>SQL+full-text 검색</td><td>비용, OA subset, 클라우드 종속</td></tr>
+              <tr><td>PubMed Baseline</td><td>원천 코퍼스</td><td>매우 높음</td><td>중간</td><td>전체 recall·자체 인덱스</td><td>임베딩 비용, 본문 부재, 업데이트</td></tr>
+              <tr><td>PMC OA</td><td>원문 코퍼스</td><td>높음</td><td>매우 높음</td><td>assay 문장·표 근거</td><td>라이선스, OA 편향, 표 파싱</td></tr>
+              <tr><td>Europe PMC</td><td>원문+preprint</td><td>높음</td><td>높음</td><td>최신 문헌·version 추적</td><td>중복, preprint 신뢰도, 정규화</td></tr>
+              <tr><td>PubTator</td><td>엔터티 보강</td><td>보조적으로 매우 높음</td><td>높음</td><td>entity filter·KG 구축</td><td>자동 주석 오류, 부정·qualifier 처리</td></tr>
+              <tr><td>S2ORC</td><td>범용 원문 코퍼스</td><td>중간~높음</td><td>중간</td><td>계산화학·AI·합성화학 보완</td><td>PDF 노이즈, 비생의학 혼입</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="recommendation">
+        <div class="section-head">
+          <div>
+            <div class="kicker">Recommended Stack</div>
+            <h2>최종 권장 조합</h2>
+          </div>
+        </div>
+
+        <div class="final">
+          <div class="grid g2">
+            <div>
+              <h3>운영 권장 스택</h3>
+              <div class="checklist">
+                <div class="check">1차 recall: MedCPT PubMed Embeddings</div>
+                <div class="check">유사·인용 확장: Pub2Vec + S2AG</div>
+                <div class="check">본문 근거: PMC OA + Europe PMC</div>
+                <div class="check">엔터티 정규화: PubTator + MeSH</div>
+                <div class="check">활성 검증: ChEMBL + BindingDB + PubChem</div>
+                <div class="check">반증 탐색: 독립 Contradiction Agent</div>
+                <div class="check">중앙 메모리: Hyper-Relational Evidence Graph</div>
+                <div class="check">재현성: corpus·model·query·index ledger</div>
+              </div>
+            </div>
+            <div>
+              <h3>최종 설계 문장</h3>
+              <div class="callout">
+                MedCPT와 Pub2Vec는 관련 논문을 찾고, PMC와 Europe PMC는 assay·수치·한계의 원문 근거를 확인하며,
+                ChEMBL·BindingDB·PubChem BioAssay는 potency와 실험 조건을 검증한다.
+                모든 결과는 지지와 반대 근거를 함께 갖는 Hyper-Relational Evidence Graph로 통합한다.
+              </div>
+              <p class="lead" style="margin-top:18px">
+                이 구조는 여러 LLM/SLM이 서로 다른 전문 역할을 수행하더라도 최종 Hit Selection 결과를 특정 논문,
+                특정 assay, 특정 수치와 연결하고, 근거 중복·상충·불확실성을 명시할 수 있게 한다.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="sources">
+        <div class="section-head">
+          <div>
+            <div class="kicker">Primary Sources</div>
+            <h2>주요 출처 URL</h2>
+          </div>
+        </div>
+        <ol class="sources">
+          <li><a href="https://github.com/ncbi/MedCPT" target="_blank">NCBI MedCPT</a></li>
+          <li><a href="https://ftp.ncbi.nlm.nih.gov/pub/lu/MedCPT/pubmed_embeddings/" target="_blank">MedCPT Precomputed PubMed Embeddings</a></li>
+          <li><a href="https://www.iac.rm.cnr.it/pub2vec" target="_blank">Pub2Vec</a></li>
+          <li><a href="https://api.semanticscholar.org/api-docs/datasets" target="_blank">Semantic Scholar Datasets API</a></li>
+          <li><a href="https://huggingface.co/allenai/specter2" target="_blank">SPECTER2</a></li>
+          <li><a href="https://cloud.google.com/bigquery/docs/vector-search" target="_blank">BigQuery Vector Search</a></li>
+          <li><a href="https://github.com/google/pubmed-rag" target="_blank">Google PubMed Agentic RAG Example</a></li>
+          <li><a href="https://pubmed.ncbi.nlm.nih.gov/download/" target="_blank">PubMed Data Download</a></li>
+          <li><a href="https://pmc.ncbi.nlm.nih.gov/tools/openftlist/" target="_blank">PMC Open Access Subset</a></li>
+          <li><a href="https://europepmc.org/developers" target="_blank">Europe PMC Developers</a></li>
+          <li><a href="https://www.ncbi.nlm.nih.gov/research/pubtator3/" target="_blank">PubTator 3.0</a></li>
+          <li><a href="https://www.semanticscholar.org/product/s2orc" target="_blank">S2ORC</a></li>
+          <li><a href="https://www.ebi.ac.uk/chembl/" target="_blank">ChEMBL</a></li>
+          <li><a href="https://pubchem.ncbi.nlm.nih.gov/docs/bioassays" target="_blank">PubChem BioAssay</a></li>
+          <li><a href="https://www.bindingdb.org/" target="_blank">BindingDB</a></li>
+        </ol>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    Biomedical Literature Vector Database for Multi-Agent Hit Discovery/Selection · Self-contained HTML
+  </footer>
+
+  <script>
+    const root = document.documentElement;
+    const themeBtn = document.getElementById('themeBtn');
+    const savedTheme = localStorage.getItem('bio-rag-theme');
+    if(savedTheme) root.dataset.theme = savedTheme;
+
+    themeBtn.addEventListener('click', () => {
+      const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+      root.dataset.theme = next;
+      localStorage.setItem('bio-rag-theme', next);
+    });
+
+    const progress = document.getElementById('progress');
+    const navLinks = [...document.querySelectorAll('.nav a')];
+    const sections = navLinks.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+
+    function onScroll(){
+      const h = document.documentElement.scrollHeight - innerHeight;
+      progress.style.transform = `scaleX(${h > 0 ? scrollY / h : 0})`;
+      let current = sections[0]?.id;
+      for(const s of sections){
+        if(scrollY >= s.offsetTop - 150) current = s.id;
+      }
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === `#${current}`));
+    }
+    addEventListener('scroll', onScroll, {passive:true});
+    onScroll();
+
+    const filters = [...document.querySelectorAll('.filter')];
+    const resources = [...document.querySelectorAll('.resource')];
+    const search = document.getElementById('resourceSearch');
+    let activeFilter = 'all';
+
+    function applyFilter(){
+      const q = search.value.trim().toLowerCase();
+      resources.forEach(card => {
+        const categories = card.dataset.category.split(' ');
+        const text = (card.dataset.text + ' ' + card.innerText).toLowerCase();
+        const categoryOK = activeFilter === 'all' || categories.includes(activeFilter);
+        const searchOK = !q || text.includes(q);
+        card.classList.toggle('hidden', !(categoryOK && searchOK));
+      });
+    }
+
+    filters.forEach(btn => btn.addEventListener('click', () => {
+      filters.forEach(x => x.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      applyFilter();
+    }));
+    search.addEventListener('input', applyFilter);
+  </script>
+</body>
+</html>
