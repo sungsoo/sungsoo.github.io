@@ -1,0 +1,1087 @@
+---
+layout: null
+title: "Symbolic Reasoning for Inconsistency Detection over Complete KG" 
+date: 2026-07-24 
+categories: [artificial intelligence]
+tags: [artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제4장 완전한 KG 위 불일치 탐지를 위한 심볼릭 추론 — KompaRe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@400;600;700;900&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --paper:#F3F4F2;
+  --card:#FFFFFF;
+  --ink:#191E1C;
+  --sub:#4A5450;
+  --faint:#8B958F;
+  --hair:#E1E5E1;
+  --hair-strong:#C7CEC8;
+
+  --sys:#3B4F9B;      /* KompaRe 시스템 — 인디고 */
+  --sys-bg:#EDF0FA;
+  --sys-line:#B9C4E8;
+  --tru:#157A55;      /* 일관/참 — 그린 */
+  --tru-bg:#E8F4EE;
+  --tru-line:#A4D4BE;
+  --fls:#B3362B;      /* 불일치/거짓 — 레드 */
+  --fls-bg:#FBEDEB;
+  --fls-line:#EBB4AD;
+  --amb:#8A6116;      /* 주의/중립 — 앰버 */
+  --amb-bg:#F9F2E2;
+  --amb-line:#E3CD97;
+
+  --disp:'Hahmlet',serif;
+  --sans:'Pretendard Variable',Pretendard,-apple-system,'Noto Sans KR',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:16.5px;line-height:1.85;letter-spacing:-.01em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(59,79,155,.16)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--sys);outline-offset:2px}
+
+/* ---------- 내비게이션 ---------- */
+.topnav{
+  position:sticky;top:0;z-index:60;
+  background:rgba(243,244,242,.88);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--hair);
+}
+.topnav .wrap{display:flex;align-items:center;gap:24px;height:58px}
+.brand{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.04em;white-space:nowrap}
+.brand b{color:var(--sys);font-weight:600}
+.navlinks{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+.navlinks a{
+  color:var(--sub);text-decoration:none;font-size:13px;font-weight:600;
+  padding:7px 11px;border-radius:8px;transition:.2s;white-space:nowrap;
+}
+.navlinks a:hover{color:var(--ink);background:rgba(25,30,28,.05)}
+.navlinks a.active{color:var(--sys);background:var(--sys-bg)}
+
+/* ---------- 히어로 ---------- */
+.hero{border-bottom:1px solid var(--hair);background:var(--card);position:relative;overflow:hidden}
+.hero::after{
+  content:"VERIFIED?";
+  position:absolute;right:-40px;top:70px;transform:rotate(12deg);
+  font-family:var(--mono);font-weight:600;font-size:120px;letter-spacing:.06em;
+  color:rgba(59,79,155,.05);pointer-events:none;user-select:none;
+}
+.hero .wrap{position:relative;z-index:1;padding-top:80px;padding-bottom:70px}
+.pub-line{
+  font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.05em;
+  display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:24px;
+}
+.pub-line .dot{width:3px;height:3px;border-radius:50%;background:var(--hair-strong)}
+.pub-line em{font-style:normal;color:var(--sys);font-weight:600}
+.tagrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.chapter-tag{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--sys);
+  background:var(--sys-bg);border:1px solid var(--sys-line);border-radius:999px;
+  padding:6px 16px;letter-spacing:.06em;
+}
+.cond{font-family:var(--mono);font-size:12.5px;font-weight:600;border-radius:999px;padding:6px 16px}
+.cond.kg{color:var(--tru);background:var(--tru-bg);border:1px solid var(--tru-line)}
+.cond.q{color:var(--fls);background:var(--fls-bg);border:1px solid var(--fls-line)}
+h1{
+  font-family:var(--disp);font-weight:900;
+  font-size:clamp(33px,4.5vw,49px);line-height:1.36;letter-spacing:-.015em;margin-bottom:20px;
+}
+h1 .hl{color:var(--sys)}
+.hero-sub{font-size:16.5px;color:var(--sub);max-width:740px;margin-bottom:40px}
+.hero-sub b{color:var(--ink);font-weight:700}
+
+/* 히어로 플로우 */
+.flow{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  border:1px solid var(--hair-strong);border-radius:16px;overflow:hidden;background:var(--card);
+  box-shadow:0 8px 26px rgba(25,30,28,.06);
+}
+.fstep{padding:22px 20px;border-right:1px dashed var(--hair-strong);position:relative}
+.fstep:last-child{border-right:none}
+.fstep .fn{
+  font-family:var(--mono);font-size:11px;font-weight:600;color:#fff;background:var(--sys);
+  border-radius:6px;display:inline-block;padding:2px 9px;margin-bottom:10px;letter-spacing:.06em;
+}
+.fstep:last-child .fn{background:var(--tru)}
+.fstep .ft{font-family:var(--disp);font-weight:700;font-size:15px;margin-bottom:6px}
+.fstep .fd{font-size:12.5px;color:var(--sub);line-height:1.7}
+.fstep .fm{font-family:var(--mono);font-size:11px;color:var(--sys);margin-top:8px}
+
+/* ---------- 섹션 공통 ---------- */
+section{padding:86px 0;border-bottom:1px solid var(--hair)}
+section:last-of-type{border-bottom:none}
+.sec-head{max-width:830px;margin-bottom:44px}
+.eyebrow{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.12em;
+  color:var(--sys);display:flex;align-items:center;gap:12px;margin-bottom:14px;
+}
+.eyebrow::before{content:"";width:30px;height:2px;background:var(--sys)}
+h2{
+  font-family:var(--disp);font-weight:900;font-size:clamp(25px,3.1vw,33px);
+  line-height:1.42;margin-bottom:14px;letter-spacing:-.01em;
+}
+.lede{color:var(--sub);font-size:16px}
+.lede b{color:var(--ink);font-weight:700}
+h3{
+  font-family:var(--disp);font-weight:700;font-size:19.5px;margin:52px 0 18px;
+  display:flex;align-items:center;gap:12px;
+}
+h3 .seal{
+  width:11px;height:11px;border:2.5px solid var(--sys);border-radius:50%;flex-shrink:0;
+}
+p.body{color:var(--sub);margin-bottom:16px;max-width:850px;font-size:15.5px}
+p.body b{color:var(--ink);font-weight:700}
+.cite{font-family:var(--mono);font-size:.76em;color:var(--faint);vertical-align:super;white-space:nowrap}
+code.m{
+  font-family:var(--mono);font-size:.86em;background:rgba(25,30,28,.06);
+  border-radius:6px;padding:2px 7px;color:var(--ink);
+}
+sub,sup{line-height:0}
+
+/* 트리플 표기 */
+.trp{
+  font-family:var(--mono);font-size:.85em;color:var(--sys);
+  background:var(--sys-bg);border:1px solid var(--sys-line);border-radius:7px;
+  padding:2px 9px;white-space:nowrap;
+}
+.trp.t{color:var(--tru);background:var(--tru-bg);border-color:var(--tru-line)}
+.trp.f{color:var(--fls);background:var(--fls-bg);border-color:var(--fls-line)}
+
+/* 대비 카드 */
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:26px 0}
+.vs .v{border:1px solid var(--hair);border-radius:14px;background:var(--card);padding:24px}
+.vs .v .vh{font-family:var(--disp);font-weight:700;font-size:16px;margin-bottom:10px}
+.vs .v .vd{font-size:14px;color:var(--sub);line-height:1.8}
+.vs .v .vd b{color:var(--ink)}
+
+/* 멀티모달 예시 (Fig 4.1 재구성) */
+.dossier{
+  border:1px solid var(--hair-strong);border-radius:18px;background:var(--card);
+  padding:30px;margin:32px 0;box-shadow:0 10px 30px rgba(25,30,28,.06);
+}
+.dossier-title{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--faint);font-weight:600;margin-bottom:20px}
+.dossier-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.clue{
+  border:1px solid var(--hair);border-radius:13px;padding:20px;background:var(--paper);
+}
+.clue .ck{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;margin-bottom:10px;color:var(--sys)}
+.clue .cv{font-size:14px;color:var(--sub);line-height:1.8}
+.clue .cv b{color:var(--ink)}
+.clue .pt{
+  display:inline-block;margin-top:10px;font-family:var(--mono);font-size:11.5px;
+  color:var(--tru);background:var(--tru-bg);border:1px solid var(--tru-line);
+  border-radius:7px;padding:3px 10px;
+}
+.dossier-verdict{
+  margin-top:16px;border:1.5px dashed var(--fls-line);background:var(--fls-bg);
+  border-radius:13px;padding:18px 22px;font-size:14.5px;color:#7C2A22;line-height:1.85;
+  display:flex;gap:16px;align-items:flex-start;
+}
+.stamp{
+  font-family:var(--mono);font-weight:600;font-size:12px;letter-spacing:.1em;
+  color:var(--fls);border:2px solid var(--fls);border-radius:8px;padding:6px 12px;
+  transform:rotate(-6deg);flex-shrink:0;background:var(--card);margin-top:2px;
+}
+.stamp.ok{color:var(--tru);border-color:var(--tru)}
+.dossier-verdict b{color:var(--ink)}
+.dossier-verdict.ok{border-color:var(--tru-line);background:var(--tru-bg);color:#0F5C41}
+
+/* 정의/문제 블록 */
+.def{margin:22px 0;border-radius:14px;border:1px solid var(--hair);background:var(--card);overflow:hidden}
+.def-head{
+  padding:12px 22px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;font-weight:600;
+  color:var(--sys);background:var(--sys-bg);border-bottom:1px solid var(--hair);
+}
+.def-head.prob{color:var(--fls);background:var(--fls-bg)}
+.def-head.lemma{color:var(--amb);background:var(--amb-bg)}
+.def-body{padding:20px 22px;color:var(--sub);font-size:15px}
+.def-body b{color:var(--ink)}
+.formula{
+  font-family:var(--mono);font-size:13.5px;color:var(--ink);background:var(--paper);
+  border:1px solid var(--hair);border-radius:10px;padding:14px 18px;margin:12px 0;
+  overflow-x:auto;line-height:2;
+}
+.formula .c1{color:var(--fls)}
+.formula .c2{color:var(--sys)}
+.formula .c3{color:var(--tru)}
+
+/* 표 */
+table.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px;background:var(--card);border:1px solid var(--hair);border-radius:14px;overflow:hidden}
+.tbl th,.tbl td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--hair);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl thead th{
+  font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--faint);
+  background:var(--paper);border-bottom:1px solid var(--hair-strong);white-space:nowrap;
+}
+.tbl td{color:var(--sub)}
+.tbl td b{color:var(--ink)}
+.tbl .mono{font-family:var(--mono);font-size:12.5px;color:var(--ink);white-space:nowrap}
+.tbl .num{font-family:var(--mono);font-size:12.5px;color:var(--sub);text-align:right;white-space:nowrap}
+.tbl .best{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--tru);text-align:right;background:var(--tru-bg);white-space:nowrap}
+.tbl-scroll{overflow-x:auto;margin:24px 0}
+.tbl-scroll table.tbl{min-width:720px}
+
+/* 6-케이스 분류기 (시그니처) */
+.cases{
+  border:1px solid var(--hair-strong);border-radius:18px;background:var(--card);
+  padding:30px;margin:32px 0;box-shadow:0 10px 30px rgba(25,30,28,.06);
+}
+.cases-title{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--faint);font-weight:600;margin-bottom:18px}
+.case-tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:18px}
+.cbtn{
+  font-family:var(--mono);font-size:13px;font-weight:600;padding:12px 6px;border-radius:11px;
+  border:1px solid var(--hair-strong);background:var(--paper);color:var(--sub);cursor:pointer;transition:.18s;
+  text-align:center;
+}
+.cbtn small{display:block;font-size:9.5px;font-weight:400;margin-top:3px;color:var(--faint);letter-spacing:.02em}
+.cbtn:hover{border-color:var(--sys-line);color:var(--sys)}
+.cbtn.on{background:var(--sys);border-color:var(--sys);color:#fff}
+.cbtn.on small{color:rgba(255,255,255,.75)}
+.case-panel{
+  border:1px solid var(--hair);border-radius:13px;background:var(--paper);padding:22px 24px;
+}
+.case-panel .cp-cond{font-family:var(--mono);font-size:13px;color:var(--ink);margin-bottom:10px}
+.case-panel .cp-desc{font-size:14px;color:var(--sub);line-height:1.85;margin-bottom:12px}
+.case-panel .cp-desc b{color:var(--ink)}
+.case-panel .cp-act{
+  display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;
+  border-radius:8px;padding:6px 13px;border:1px solid;
+}
+.cp-act.skip{color:var(--faint);border-color:var(--hair-strong);background:var(--card)}
+.cp-act.pred{color:var(--amb);border-color:var(--amb-line);background:var(--amb-bg)}
+.cp-act.full{color:var(--fls);border-color:var(--fls-line);background:var(--fls-bg)}
+
+/* 절차 단계 */
+.steps{display:grid;gap:16px;margin:26px 0;counter-reset:step}
+.step{
+  display:grid;grid-template-columns:56px 1fr;gap:22px;
+  border:1px solid var(--hair);border-radius:15px;background:var(--card);padding:26px 28px;
+}
+.step .sn{
+  counter-increment:step;
+  font-family:var(--mono);font-weight:600;font-size:18px;color:var(--sys);
+  width:56px;height:56px;border:2px solid var(--sys-line);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;background:var(--sys-bg);
+}
+.step .sn::before{content:counter(step)}
+.step .sb .st{font-family:var(--disp);font-weight:700;font-size:17px;margin-bottom:4px}
+.step .sb .sd{font-size:14.5px;color:var(--sub);line-height:1.85}
+.step .sb .sd b{color:var(--ink)}
+
+/* 콜아웃 */
+.callout{
+  border-radius:13px;padding:18px 22px;margin:20px 0;font-size:14.5px;line-height:1.85;
+  border:1px solid;max-width:850px;
+}
+.callout b{color:var(--ink)}
+.callout .cl-tag{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;display:block;margin-bottom:6px}
+.callout.warn{background:var(--amb-bg);border-color:var(--amb-line);color:#6B4E17}
+.callout.info{background:var(--sys-bg);border-color:var(--sys-line);color:#2E3E76}
+.callout.good{background:var(--tru-bg);border-color:var(--tru-line);color:#0F5C41}
+.callout.bad{background:var(--fls-bg);border-color:var(--fls-line);color:#7C2A22}
+
+/* 지표 카드 */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:26px 0}
+.metric{border:1px solid var(--hair);border-radius:14px;background:var(--card);padding:22px}
+.metric .mv{font-family:var(--disp);font-weight:900;font-size:28px;color:var(--sys);line-height:1.25;letter-spacing:-.01em}
+.metric .mk{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.65}
+.metric .mk b{color:var(--ink)}
+
+/* 푸터 */
+footer{padding:52px 0 68px;color:var(--faint);font-size:13px;background:var(--card);border-top:1px solid var(--hair)}
+footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+footer .src{font-family:var(--mono);font-size:12px;line-height:2}
+footer .src b{color:var(--sub);font-weight:600}
+footer .legend{font-family:var(--mono);font-size:12px;text-align:right;line-height:2.1}
+footer .legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;font-style:normal}
+
+/* 리빌 */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
+
+/* 반응형 */
+@media (max-width:960px){
+  .flow{grid-template-columns:1fr 1fr}
+  .fstep:nth-child(2){border-right:none}
+  .fstep:nth-child(-n+2){border-bottom:1px dashed var(--hair-strong)}
+  .vs,.dossier-grid{grid-template-columns:1fr}
+  .case-tabs{grid-template-columns:repeat(3,1fr)}
+  .metrics{grid-template-columns:1fr 1fr}
+  .navlinks{display:none}
+  .hero::after{display:none}
+}
+@media (max-width:620px){
+  section{padding:58px 0}
+  .trp{white-space:normal;word-break:break-word}
+  .flow{grid-template-columns:1fr}
+  .fstep{border-right:none;border-bottom:1px dashed var(--hair-strong)}
+  .fstep:last-child{border-bottom:none}
+  .case-tabs{grid-template-columns:repeat(2,1fr)}
+  .metrics{grid-template-columns:1fr}
+  .step{grid-template-columns:1fr;gap:12px}
+  .cases,.dossier{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="페이지 내비게이션">
+  <div class="wrap">
+    <div class="brand">NS-KGR <b>/</b> Chapter 04</div>
+    <div class="navlinks">
+      <a href="#s41">4.1 서론</a>
+      <a href="#s42">4.2 문제 정의</a>
+      <a href="#s43">4.3 KS 추출</a>
+      <a href="#s44">4.4 제안 방법</a>
+      <a href="#s45">4.5 실험</a>
+      <a href="#s46">4.6 논의</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== 히어로 ==================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="pub-line">
+      <span>Springer · Synthesis Lectures on Computer Science</span>
+      <span class="dot"></span><span><em>2026</em></span>
+      <span class="dot"></span><span>DOI 10.1007/978-3-032-15858-1_4</span>
+      <span class="dot"></span><span>Liu &amp; Tong</span>
+    </div>
+    <div class="tagrow">
+      <span class="chapter-tag">CHAPTER 4 · RESEARCH QUESTION Q2</span>
+      <span class="cond kg">지식그래프 완전</span>
+      <span class="cond q">질의 불확실</span>
+    </div>
+    <h1>완전한 KG 위 불일치 탐지를 위한<br>심볼릭 추론 — <span class="hl">KompaRe</span></h1>
+    <p class="hero-sub">
+      지식그래프 질의에 대한 불일치 탐지/팩트체킹은 사용자 질의에 대해 그래프 내 정보의 <b>정확성과 일관성을 검증</b>하는 일이다.
+      지식그래프는 주장 검증에 필요한 핵심 배경지식을 제공하므로 팩트체킹에 널리 쓰인다.
+      이 장은 완전한 지식그래프에 심볼릭 추론 기법을 적용하여 <b>주어진 질의 내부의 불일치를 탐지</b>하는 연구를 제시한다.
+      핵심 기술은 <b>심볼릭 서브그래프 추출</b>과 <b>랜덤워크 그래프 커널 기반 유사도 계산</b>이다.
+    </p>
+
+    <div class="flow reveal">
+      <div class="fstep">
+        <div class="fn">INPUT</div>
+        <div class="ft">단서(Clue)</div>
+        <div class="fd">트리플 쌍 또는 상호 연결된 질의 그래프가 검증 대상으로 주어진다.</div>
+        <div class="fm">&lt;s, p, o&gt; × n</div>
+      </div>
+      <div class="fstep">
+        <div class="fn">EXTRACT</div>
+        <div class="ft">지식 세그먼트</div>
+        <div class="fd">각 단서의 의미 맥락을 가장 잘 요약하는 연결 서브그래프를 추출한다.</div>
+        <div class="fm">Knowledge Segment (KS)</div>
+      </div>
+      <div class="fstep">
+        <div class="fn">ANALYZE</div>
+        <div class="ft">핵심 요소 발견</div>
+        <div class="fd">그래프 커널 유사도에 대한 영향 함수로 KS 내 중요 요소를 찾는다.</div>
+        <div class="fm">∂Sim / ∂e</div>
+      </div>
+      <div class="fstep">
+        <div class="fn">VERDICT</div>
+        <div class="ft">일관성 판정</div>
+        <div class="fd">핵심 요소와 isTypeOf 검사로 공통성·불일치를 추론해 이진 판정을 내린다.</div>
+        <div class="fm">CONSISTENT / NOT</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== 4.1 서론 ==================== -->
+<section id="s41">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 4.1</div>
+      <h2>서론 — 점별 추론에서 비교 추론으로</h2>
+      <p class="lede">
+        지식그래프는 실세계 개체(예: Alan Turing)와 그 관계 <span class="trp">(Alan Turing, wasBornIn, United Kingdom)</span>를
+        저장하는 어디에나 있는 자료구조로, 많은 응용에서 발견된다<span class="cite">[122–124]</span>.
+        2012년 등장 이후 <b>Yago, Wikidata, Freebase</b> 등 널리 쓰이는 지식그래프들이 제안되었고,
+        기존 지식의 발견·설명 또는 새 지식의 추론을 목표로 하는 지식그래프 추론은
+        지난 몇 년간 중요한 연구 방향으로 부상했다<span class="cite">[14, 15, 86]</span>.
+      </p>
+    </div>
+
+    <div class="vs reveal">
+      <div class="v">
+        <div class="vh">점별(point-wise) 추론 — 기존 주류</div>
+        <div class="vd">
+          <b>단일 단서</b>(트리플<span class="cite">[11]</span>, 멀티홉 질의<span class="cite">[86]</span>,
+          복잡 질의 그래프<span class="cite">[80]</span>)에 대해 추론을 수행한다.
+          팩트체킹이라면 하나의 주장이 참인지 거짓인지를 판정한다<span class="cite">[30, 130]</span>.
+          학계·산업 모두에서 큰 성취를 이뤘으나 기존 연구 대부분이 이 범주에 속한다.
+        </div>
+      </div>
+      <div class="v">
+        <div class="vh" style="color:var(--sys)">비교(comparative) 추론 — 이 장의 주제</div>
+        <div class="vd">
+          <b>복수의 단서</b>(예: 한 뉴스 기사의 여러 주장)에 대한 <b>공통성과 불일치</b>를 추론한다<span class="cite">[83, 84]</span>.
+          거의 연구되지 않은 새로운 방향으로, 팩트체킹을 비롯한 여러 응용에 폭넓게 적용될 수 있으며
+          지식그래프 확장·통합·완성에도 쓰일 수 있다<span class="cite">[83]</span>.
+        </div>
+      </div>
+    </div>
+
+    <p class="body reveal">
+      비교 추론은 점별(단일 주장) 팩트체킹 대비 고유한 강점을 지닌다. 멀티모달 가짜뉴스 탐지처럼
+      단일 주장 검증만으로는 불충분한 실제 상황에서, 비교 추론은 입력 단서들에 대한 <b>더 완전한 그림</b>을 제공하여
+      점별 접근으로는 보이지 않는 미묘한 패턴(불일치)을 발견하게 한다.
+      <b>각 주장이 개별적으로는 일관되더라도, 두 주장을 동시에 검증하면 결과가 불일치할 수 있다.</b>
+    </p>
+
+    <div class="dossier reveal">
+      <div class="dossier-title">FIG 4.1 재구성 — 멀티모달 뉴스의 의미론적 불일치 탐지 (예시 출처: [83], 이미지 출처: [33])</div>
+      <div class="dossier-grid">
+        <div class="clue">
+          <div class="ck">CLUE A — 본문 텍스트에서 추출한 질의 그래프</div>
+          <div class="cv">기사 <b>텍스트의 모든 정보</b>를 담은 질의 그래프. 점별 추론으로 단독 검증하면 <b>참으로 보인다</b>.</div>
+          <span class="pt">단독 검증 → 통과</span>
+        </div>
+        <div class="clue">
+          <div class="ck">CLUE B — 이미지에서 추출한 질의 그래프</div>
+          <div class="cv">기사 <b>이미지의 정보</b>를 담은 질의 그래프. 역시 단독으로 검증하면 <b>참으로 보인다</b>.</div>
+          <span class="pt">단독 검증 → 통과</span>
+        </div>
+      </div>
+      <div class="dossier-verdict">
+        <span class="stamp">INCONSISTENT</span>
+        <span>그러나 <b>두 질의 그래프를 동시에 추론하고 비교</b>하면 미묘한 불일치가 드러난다 —
+        <b>서로 다른 비행기 기종</b>, 그리고 <b>최대 비행 거리의 차이</b>.
+        지식 세그먼트로 단서를 표현하면 이런 불일치를 어렵지 않게 탐지할 수 있다.</span>
+      </div>
+    </div>
+
+    <p class="body reveal">
+      이 장은 비교 추론 문제를 다루며, <b>쌍별(pairwise) 비교 추론</b>과 <b>집합적(collective) 비교 추론</b>의
+      두 문제에 집중한다. 배경 지식그래프의 정보에 따라 입력 단서들 사이의 공통성과 불일치를 드러내기 위해
+      <b>그래프 커널</b>을 활용하고, 두 가지 알고리즘을 제안하여 효과를 입증한다.
+      비교 추론의 공통 빌딩 블록은 주어진 단서(트리플 또는 그 일부)의 의미 맥락을 요약하는 작은 연결 서브그래프인
+      <b>지식 세그먼트(knowledge segment)</b>다. 이를 기반으로 쌍별·집합적 추론을 가능하게 하는 핵심 알고리즘을 제시하며,
+      핵심 아이디어는 지식 세그먼트의 <b>구조와 의미 정보로 모호한 모순(vague contradiction)을 발견</b>하는 것이다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 4.2 문제 정의 ==================== -->
+<section id="s42">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 4.2</div>
+      <h2>문제 정의</h2>
+      <p class="lede">
+        지식그래프는 <code class="m">𝒢 = (V, R, E)</code>로 표기한다 — V = {v₁, …, v<sub>n</sub>}은 노드/개체 집합,
+        R = {r₁, …, r<sub>m</sub>}은 관계 집합, E는 트리플 집합이다. 각 트리플 <span class="trp">(h, r, t)</span>에서
+        h ∈ V는 머리(주어), t ∈ V는 꼬리(목적어), r ∈ R은 머리와 꼬리를 잇는 에지(관계·술어)다.
+      </p>
+    </div>
+
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>기호</th><th>정의</th><th>기호</th><th>정의</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">𝒢 = {V_G, E_G, L_G}</td><td>지식그래프</td><td class="mono">v_i</td><td>지식그래프의 i번째 개체/노드</td></tr>
+        <tr><td class="mono">r_i</td><td>지식그래프의 i번째 관계/에지</td><td class="mono">e_i</td><td>사용자가 제공한 i번째 단서</td></tr>
+        <tr><td class="mono">Q = {V_Q, E_Q, L_Q}</td><td>속성 질의 그래프</td><td class="mono">KS_i</td><td>지식 세그먼트 i</td></tr>
+        <tr><td class="mono">A_i</td><td>KS_i의 인접 행렬</td><td class="mono">A_×</td><td>A₁과 A₂의 크로네커 곱</td></tr>
+        <tr><td class="mono">N^l</td><td>l번째 노드 속성의 대각 행렬</td><td class="mono">N_×</td><td>결합 노드 속성 행렬</td></tr>
+        <tr><td class="mono">N_i</td><td>KS_i의 속성 행렬 (j행 = 노드 j의 속성 벡터)</td><td class="mono">S^{i,j}</td><td>단일 원소 행렬 — (i, j)만 1, 나머지 0</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p class="body reveal">
+      복수의 단서가 주어졌을 때 비교 추론의 목표는 그들 사이의 <b>공통성 그리고/또는 불일치의 추론</b>이다.
+      주어진 정보가 <b>단서 쌍</b>이면 두 단서의 정합 여부를 판단하는 <b>쌍별 비교 추론(쌍별 팩트체킹)</b>,
+      <b>연결된 질의 그래프</b>이면 그래프 내부의 불일치를 탐지하는 <b>집합적 비교 추론(집합적 팩트체킹)</b>이라 부른다.
+    </p>
+
+    <div class="callout bad reveal">
+      <span class="cl-tag">MOTIVATING EXAMPLE — 함께 봐야 보이는 모순</span>
+      두 주장 <span class="trp">(Barack Obama, graduatedFrom, Harvard University)</span>와
+      <span class="trp">(Barack Obama, majorIn, Political Science)</span>를 보자.
+      <b>각 단서가 개별적으로는 참</b>이더라도 함께 검사하면 둘 다 참일 수는 없다 —
+      Obama가 Harvard University에서 공부할 때 전공은 Political Science가 아니라 <b>법학(law)</b>이었기 때문이다.
+      서로 다른 단서를 함께 적절히 검토하지 않으면 이 불일치의 탐지에 실패할 수 있다.
+    </div>
+
+    <p class="body reveal">
+      비교 추론을 위해서는 지식그래프의 배경 정보 활용이 중요하다. <b>각 입력 단서의 의미를 가장 잘 표현하는
+      서브그래프</b>를 찾을 수 있다면 숨은 충돌의 탐지가 쉬워진다. 이상적으로 이 서브그래프는
+      단서와 관련된 지식그래프 내의 의미 있는/중요한 개체와 관계를 모두 담아야 한다.
+    </p>
+
+    <div class="def reveal">
+      <div class="def-head">DEFINITION 4.1 · 지식 세그먼트 (Knowledge Segment, KS)</div>
+      <div class="def-body">
+        주어진 단서(노드, 트리플 또는 질의 그래프)의 <b>의미 맥락을 가장 잘 기술하는
+        지식그래프의 연결 서브그래프</b>다. 단서를 지식 세그먼트로 표현하면 불일치를 어렵지 않게 탐지할 수 있다.
+      </div>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head">DEFINITION 4.2 / 4.6 · 공통성 (Commonality)</div>
+      <div class="def-body">
+        두 트리플 E₁<sup>Q</sup>, E₂<sup>Q</sup>와 지식 세그먼트 KS₁, KS₂가 주어졌을 때, 공통성은
+        E₁<sup>Q</sup>·E₂<sup>Q</sup> 간의 공유 노드·에지 및 KS₁·KS₂ 간의 공유 노드·에지다:
+        <div class="formula">( (V<sup>KS₁</sup> ∩ V<sup>KS₂</sup>) ∪ (V<sup>Q₁</sup> ∩ V<sup>Q₂</sup>),&nbsp; (E<sup>KS₁</sup> ∩ E<sup>KS₂</sup>) ∪ (E<sup>Q₁</sup> ∩ E<sup>Q₂</sup>) )</div>
+      </div>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head">DEFINITION 4.3 / 4.7 · 불일치 (Inconsistency)</div>
+      <div class="def-body">
+        두 지식 세그먼트 KS₁·KS₂에서 <b>서로 모순되는 임의의 요소(노드, 노드 속성, 에지)</b>를 가리킨다.
+      </div>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head">DEFINITION 4.4 / 4.8 · 집합적 공통성 &nbsp;·&nbsp; DEFINITION 4.5 / 4.9 · 집합적 불일치</div>
+      <div class="def-body">
+        질의 그래프 Q의 각 에지 E<sub>i</sub><sup>Q</sup>에 대해 KS<sub>i</sub>를 그 지식 세그먼트라 하자.
+        <b>집합적 공통성</b>은 질의 그래프 내 임의의 트리플 쌍에 대한 지식 세그먼트들의 <b>교집합</b>이며,
+        <b>집합적 불일치</b>는 이들 지식 세그먼트에서 서로 모순되는 임의의 요소(노드, 에지, 노드 속성)다.
+      </div>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head prob">PROBLEM 4.1 · 쌍별 비교 추론 &nbsp;·&nbsp; PROBLEM 4.2 · 집합적 비교 추론</div>
+      <div class="def-body">
+        <b>쌍별</b> — 주어진 것: (1) 지식그래프 𝒢, (2) 두 트리플 E₁<sup>Q</sup>, E₂<sup>Q</sup>.
+        출력: E₁<sup>Q</sup>와 E₂<sup>Q</sup>의 <b>일관성에 대한 이진 판정</b>.<br>
+        <b>집합적</b> — 주어진 것: (1) 지식그래프 𝒢, (2) 질의 그래프 Q.
+        출력: Q의 <b>일관성에 대한 이진 판정</b>.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 4.3 지식 세그먼트 추출 ==================== -->
+<section id="s43">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 4.3</div>
+      <h2>지식 세그먼트 추출</h2>
+      <p class="lede">
+        멀티홉 방법<span class="cite">[49]</span>, 최소 비용 최대 유량<span class="cite">[125]</span>,
+        K-단순 최단 경로<span class="cite">[45]</span>, 연결 서브그래프<span class="cite">[43, 68]</span> 등
+        가중/비가중 그래프에서 간결한 서브그래프를 추출하는 방법은 많다. 그러나 지식그래프의 에지(술어)는
+        고유한 의미(타입·관계)를 지니므로 이들이 직접 적용되지 않는다.
+        이를 해결하기 위해 <b>술어-술어 유사도</b>를 설계하여 지식그래프를 가중 그래프로 변환한다.
+      </p>
+    </div>
+
+    <h3 class="reveal"><span class="seal"></span>4.3.1 술어-술어 유사도 — TF-IDF 기반</h3>
+    <p class="body reveal">
+      핵심 아이디어는 지식그래프의 <b>각 트리플과 그 인접 이웃 트리플들을 하나의 문서처럼</b> 취급하고,
+      TF-IDF 유사 가중 전략으로 술어 유사도를 계산하는 것이다. 예컨대 술어 receiveDegreeFrom의 이웃 술어로
+      major와 graduateFrom이 있을 수 있으며, 이들은 서로 높은 유사도를 가져야 한다.
+      지식그래프로 술어들의 <b>공출현(co-occurrence) 행렬</b>을 만들고 다음과 같이 계산한다.
+    </p>
+    <div class="def reveal">
+      <div class="def-head">FORMULATION · TF-IDF 가중 공출현</div>
+      <div class="def-body">
+        <div class="formula">
+          TF(i, j) = log(1 + C(i, j)·w(j)) &nbsp;&nbsp;<span style="color:var(--faint)">— C(i, j)는 술어 i·j의 공출현 횟수</span><br>
+          IDF(j) = log( |M| / |{i : C(i, j) &gt; 0}| ) &nbsp;&nbsp;<span style="color:var(--faint)">— M은 지식그래프의 술어 수</span><br>
+          U(i, j) = TF(i, j) × IDF(j)<br>
+          <span class="c3">Sim(i, j) = Cosine(U<sub>i</sub>, U<sub>j</sub>)</span> &nbsp;&nbsp;<span style="color:var(--faint)">— U<sub>i</sub>, U<sub>j</sub>는 U의 i행, j행</span>
+        </div>
+        변환된 가중 그래프의 에지 가중치는 <b>에지 술어와 질의 술어 사이의 유사도</b>를 나타낸다.
+      </div>
+    </div>
+    <div class="callout info reveal">
+      <span class="cl-tag">WORKED EXAMPLE · Sim(major, study) = 1</span>
+      major와 study 모두 인접 이웃 술어가 graduate 하나뿐이라 하자. 그러면 graduate가 아닌 임의의 술어 i에 대해
+      U(major, i) = U(study, i) = 0이다. E(graduate) = 0이므로 w(graduate) = 2σ(∞) − 1 = 1이고,
+      TF(major, graduate) = TF(study, graduate) = log(1 + 1×1) = 1,
+      U(major, graduate) = U(study, graduate) = IDF(graduate) = log(8/4) = 1이다.
+      두 벡터 U<sub>major</sub>와 U<sub>study</sub>가 동일하므로 <b>Sim(major, study) = 1</b>이다.
+    </div>
+
+    <h3 class="reveal"><span class="seal"></span>4.3.2 에지 특정 지식 세그먼트</h3>
+    <p class="body reveal">
+      주어진 에지(트리플)의 의미 맥락을 가장 잘 특징짓는 지식 세그먼트를 찾는다.
+      가중 그래프용 연결 서브그래프 추출 방법으로는 재시작 랜덤워크 기반 근사 서브그래프<span class="cite">[143]</span>,
+      최대 네트워크 유량<span class="cite">[68]</span>, 더 밀집한 국소 그래프 분할<span class="cite">[45]</span> 등이 있다.
+      이 장은 지식그래프를 가중 그래프로 변환한 뒤, 질의 에지의 <b>주어에서 목적어까지의
+      k-단순 최단 경로</b><span class="cite">[68]</span>를 찾아 지식 세그먼트로 삼는다.
+    </p>
+
+    <h3 class="reveal"><span class="seal"></span>4.3.3 서브그래프 특정 지식 세그먼트</h3>
+    <p class="body reveal">
+      에지 특정 추출의 아이디어를 따라, 주어진 서브그래프의 <b>각 에지마다 지식 세그먼트를 추출</b>하고,
+      모든 에지 특정 지식 세그먼트를 담은 그래프를 <b>서브그래프 특정 지식 세그먼트</b>라 부른다 —
+      즉 입력 질의 서브그래프의 에지당 하나씩, 상호 연결된 다수의 에지 특정 지식 세그먼트로 구성된다.
+      이는 질의 그래프 <b>각 에지의 의미</b>와 <b>에지들 사이 관계의 의미</b>를 모두 포함하는 더 풍부한 의미론을 제공한다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 4.4 제안 방법 ==================== -->
+<section id="s44">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 4.4</div>
+      <h2>제안 방법 — KompaRe의 비교 추론</h2>
+      <p class="lede">
+        지식 세그먼트로 각 질의 트리플의 의미를 표현하고, <b>영향 함수(influence function)</b>로 지식 세그먼트 내
+        중요 요소 집합을 발견한 뒤, 이 중요 요소들로 불일치를 검사한다 — 이것이 쌍별·집합적 두 기능의 핵심 아이디어다.
+      </p>
+    </div>
+
+    <h3 class="reveal"><span class="seal"></span>4.4.1 쌍별 비교 추론 — 여섯 케이스 분류</h3>
+    <p class="body reveal">
+      두 단서 <span class="trp">&lt;s₁, p₁, o₁&gt;</span>와 <span class="trp">&lt;s₂, p₂, o₂&gt;</span>가 불일치하는지 알려면,
+      먼저 <b>둘이 같은/유사한 사실을 가리키는지</b>부터 판정해야 한다. 주어·술어·목적어의 일치 패턴에 따라
+      여섯 케이스로 나뉜다.
+    </p>
+
+    <div class="cases reveal">
+      <div class="cases-title">SIX-CASE CLASSIFIER — 케이스를 선택하면 판정 규칙이 표시된다</div>
+      <div class="case-tabs" role="tablist" aria-label="여섯 케이스">
+        <button class="cbtn on" role="tab" aria-selected="true" data-case="c1">C1<small>모두 다름</small></button>
+        <button class="cbtn" role="tab" aria-selected="false" data-case="c2">C2<small>s·o 동일</small></button>
+        <button class="cbtn" role="tab" aria-selected="false" data-case="c3">C3<small>s만 동일</small></button>
+        <button class="cbtn" role="tab" aria-selected="false" data-case="c4">C4<small>s·p 동일</small></button>
+        <button class="cbtn" role="tab" aria-selected="false" data-case="c5">C5<small>o만 동일</small></button>
+        <button class="cbtn" role="tab" aria-selected="false" data-case="c6">C6<small>o₁ = s₂</small></button>
+      </div>
+      <div class="case-panel" id="casePanel">
+        <div class="cp-cond" id="cpCond"></div>
+        <div class="cp-desc" id="cpDesc"></div>
+        <span class="cp-act" id="cpAct"></span>
+      </div>
+    </div>
+
+    <p class="body reveal">
+      요약하면 — (1) 두 단서의 <b>주어가 같고</b>, (2) <b>술어가 서로 유사하거나 같으면</b> 같은 사실을 가리키며,
+      나아가 <b>목적어가 서로 무관한 두 개체라면 두 단서가 불일치할 가능성이 높다</b>.
+      이 관찰에 기반하여 쌍별 비교 추론은 세 단계로 진행된다.
+    </p>
+
+    <div class="steps">
+      <div class="step reveal">
+        <div class="sn"></div>
+        <div class="sb">
+          <div class="st">케이스 판정</div>
+          <div class="sd">두 단서의 주어·술어·목적어를 검사하여 여섯 케이스 중 어디에 속하는지 결정한다.
+          C1·C5·C6이면 서로 다른 사실이므로 불일치 검사가 불필요하고, C2이면 술어의 의미(p₁이 p₂와 모순되는지)만 확인한다.
+          <b>C3·C4가 본격 검사 대상</b>이다.</div>
+        </div>
+      </div>
+      <div class="step reveal">
+        <div class="sn"></div>
+        <div class="sb">
+          <div class="st">동일 대상 여부 판정 — 핵심 요소와 공통성</div>
+          <div class="sd">
+            두 지식 세그먼트에서 <b>핵심 요소(노드·에지·노드 속성)의 집합</b>을 찾는다.
+            핵심 요소의 대부분(예: <b>60% 이상</b>)이 두 지식 세그먼트의 공통성에 속하면 같은 대상을 가리킬 가능성이 높고,
+            그렇지 않으면 서로 다른 대상이므로 불일치 검사가 필요 없다.
+            핵심 요소는 <b>지식 세그먼트 유사도에 대한 영향 함수</b><span class="cite">[173]</span>로 찾는다 —
+            핵심 요소를 교란(속성 변경, 노드/에지 제거)하면 전체 유사도에 큰 영향을 미친다는 발상이다.
+          </div>
+        </div>
+      </div>
+      <div class="step reveal">
+        <div class="sn"></div>
+        <div class="sb">
+          <div class="st">충돌 여부 판정 — isTypeOf 검사</div>
+          <div class="sd">
+            같은 대상을 가리킨다고 판정되면, 두 새 질의 트리플 <span class="trp">&lt;o₁, isTypeOf, o₂&gt;</span>와
+            <span class="trp">&lt;o₂, isTypeOf, o₁&gt;</span>를 구성하고 각각의 지식 세그먼트를 추출해 진위를 검사한다.
+            <b>둘 중 하나라도 참이면 원래 두 트리플은 일관</b>이고, 아니면 불일치다.
+            — 예컨대 <span class="trp t">&lt;Alan Turing, wasBornIn, Maida Vale&gt;</span>과
+            <span class="trp t">&lt;Alan Turing, wasBornIn, United Kingdom&gt;</span>은 Maida Vale이
+            United Kingdom에 속하므로 둘 다 참이다.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head">EQ 4.1 · 랜덤워크 그래프 커널 기반 지식 세그먼트 유사도 [173]</div>
+      <div class="def-body">
+        지식 세그먼트를 개체마다 속성이 다른 <b>속성 그래프</b>로 취급하고, 노드 속성을 반영한 랜덤워크 그래프 커널로 유사도를 측정한다.
+        <div class="formula">Sim(KS₁, KS₂) = <span class="c2">q′<sub>×</sub></span> (I − c·N<sub>×</sub>A<sub>×</sub>)<sup>−1</sup> N<sub>×</sub> <span class="c2">p<sub>×</sub></span></div>
+        q′<sub>×</sub>·p<sub>×</sub>는 곱 행렬 위 랜덤워크의 정지/초기 확률 분포,
+        N<sub>×</sub> = Σ<sub>j=1</sub><sup>d</sup> N₁<sup>j</sup> ⊗ N₂<sup>j</sup>는 결합 노드 속성 행렬
+        (N<sub>i</sub><sup>j</sup>는 속성 행렬 N<sub>i</sub>의 j열 대각 행렬),
+        A<sub>×</sub>는 인접 행렬 A₁·A₂의 크로네커 곱, 0 &lt; c &lt; 1은 파라미터다.
+      </div>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head lemma">LEMMA 4.1 · 지식 세그먼트 유사도 영향 함수 [173] — Q = (I − c·N×A×)⁻¹</div>
+      <div class="def-body">
+        영향 함수 ∂Sim(KS₁, KS₂)/∂e에서 <b>절대값이 큰 요소가 핵심 요소</b>다(노드·에지·노드 속성 모두 가능).
+        KS₁의 요소에 대한 세 가지 영향은 다음과 같이 계산된다(KS₂도 유사하게 계산 가능).
+        <div class="formula">
+          (1) 에지: &nbsp;I(A₁(i,j)) = c·q′<sub>×</sub> Q N<sub>×</sub> [(S<sup>i,j</sup> + S<sup>j,i</sup>) ⊗ A₂] Q N<sub>×</sub> p<sub>×</sub><br>
+          (2) 노드: &nbsp;I(N₁(i)) = c·q′<sub>×</sub> Q N<sub>×</sub> [Σ<sub>j|A₁(i,j)=1</sub> (S<sup>i,j</sup> + S<sup>j,i</sup>) ⊗ A₂] Q N<sub>×</sub> p<sub>×</sub><br>
+          (3) 노드 속성: &nbsp;I(N₁<sup>j</sup>(i,i)) = q′<sub>×</sub> Q [S<sup>i,i</sup> ⊗ N₂<sup>j</sup>] (I + c·A<sub>×</sub> Q N<sub>×</sub>) p<sub>×</sub>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout warn reveal">
+      <span class="cl-tag">TRICK · 완전 연결 배경 그래프</span>
+      Lemma 4.1에 따르면 KS₁ 또는 KS₂ <b>한쪽에만 속하는 요소의 영향 함수 값은 0</b>이 된다. 이를 피하기 위해
+      KS₁·KS₂ 각각에 <b>완전 연결 배경 그래프</b>를 도입한다 — KS₁과 KS₂의 모든 노드를 포함하되 둘과는 분리된 그래프로,
+      두 지식 세그먼트를 문서로 본다면 언어 모델의 <b>배경 단어 분포</b>에 해당한다.
+      주어진 지식 세그먼트에서는 절대 영향 함수 값이 가장 높은 <b>상위 50% 요소를 핵심 요소로 표시</b>한다.
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head">EQ 4.2 · 전달 정보량 (Transferred Information Amount)</div>
+      <div class="def-body">
+        isTypeOf 질의의 지식 세그먼트를 유향 그래프로 취급하여, 주어에서 목적어로 <b>얼마나 많은 정보가 전달되는지</b>를 계산한다.
+        <div class="formula">infTrans(o₁, o₂) = max<sub>1≤j≤k</sub> pathValue(j)</div>
+        pathValue(j)는 경로 상 가중치들의 곱이며, 에지 가중치는 술어-술어 유사도 Sim(isTypeOf, e<sub>i</sub>)다.
+        임계값 T가 <code class="m">max{infTrans(o₁,o₂), infTrans(o₂,o₁)}</code>보다 작으면 o₁이 o₂에 속하거나
+        o₂가 o₁에 속한다고 판정한다. 실험에서는 <b>T = 0.700</b>으로 설정했다.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="seal"></span>4.4.2 집합적 비교 추론 — 라인 그래프 대조</h3>
+    <p class="body reveal">
+      집합적 비교 추론은 상호 연결된 에지/트리플들로 이뤄진 질의 그래프 내부의 공통성/불일치를 찾는다.
+      질의 그래프의 <b>모든 에지 쌍에 쌍별 추론을 적용하는 소박한 방법</b>은 계산적으로 비효율적이고 불충분하다 —
+      약하게 연관되거나 무관한 두 단서는 검사할 필요조차 없고(비효율), 어떤 미묘한 의미론적 불일치는
+      <b>셋 이상의 지식 세그먼트를 집합적으로 추론해야만</b> 식별되기 때문이다(불충분).
+    </p>
+    <div class="callout bad reveal">
+      <span class="cl-tag">THREE-CLAIM EXAMPLE</span>
+      (1) Obama가 Air Force One에 탑승을 거부당했다. (2) Obama는 미국 대통령이다.
+      (3) 미국 대통령이 헬리콥터 앞에 서 있다. —
+      <b>세 주장을 집합적으로 추론할 때에만</b> 이들 사이의 의미론적 불일치를 식별할 수 있다.
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head">DEFINITION 4.10 · 라인 그래프 (Line Graph) [125]</div>
+      <div class="def-body">
+        임의의 그래프 G = (V, E)에 대해 라인 그래프 L(G) = (V′, E′)는 다음 성질을 갖는다 —
+        (1) L(G)의 노드 집합은 G의 에지 집합이다(V′ = E);
+        (2) L(G)의 두 노드 V′<sub>i</sub>, V′<sub>j</sub>는 G의 대응 에지 e<sub>i</sub>, e<sub>j</sub>가
+        G에서 같은 노드에 접할 때에만 인접한다.
+      </div>
+    </div>
+
+    <p class="body reveal">
+      질의 그래프와 그 의미 매칭 서브그래프(서브그래프 특정 지식 세그먼트)를 두 개의 라인 그래프로 변환한다.
+      <b>L(Q)의 에지 가중치</b>는 연결된 두 노드의 술어-술어 유사도이고,
+      <b>L(KS)의 에지 가중치</b>는 Eq 4.1의 지식 세그먼트 유사도다.
+      의미 매칭 서브그래프가 원 질의 그래프의 좋은 표현이라면 L(Q)의 에지-에지 유사도는
+      L(KS)의 지식 세그먼트 유사도와 유사해야 한다 — 이것이 두 라인 그래프를 구축하는 근거다.
+      요소의 중요도는 <b>L(Q)와 L(KS) 사이 거리에 대한 영향 함수</b>로 측정한다 —
+      핵심 요소를 교란하면 거리 <code class="m">Loss = ||H₁ − H₂||²_F</code>에 큰 영향을 준다고 가정한다
+      (H₁·H₂는 각각 L(Q)·L(KS)의 가중 인접 행렬).
+    </p>
+
+    <div class="def reveal">
+      <div class="def-head lemma">LEMMA 4.2 · 집합적 영향 함수 — n, k는 L(Q)의 두 노드, h_e / h_c는 대응 에지 가중치</div>
+      <div class="def-body">
+        <div class="formula">
+          (1) 에지: &nbsp;I(A<sub>n</sub>(i,j)) = Σ<sub>k∈N(n)</sub> −2(h<sub>e<sub>k,n</sub></sub> − h<sub>c<sub>k,n</sub></sub>) · ∂sim(KS<sub>n</sub>, KS<sub>k</sub>)/∂A<sub>n</sub>(i,j)<br>
+          (2) 노드: &nbsp;I(N<sub>n</sub>(i)) = Σ<sub>k∈N(n)</sub> −2(h<sub>e<sub>k,n</sub></sub> − h<sub>c<sub>k,n</sub></sub>) · ∂sim(KS<sub>n</sub>, KS<sub>k</sub>)/∂N<sub>n</sub>(i)<br>
+          (3) 노드 속성: &nbsp;I(N<sub>n</sub><sup>j</sup>(i,i)) = Σ<sub>k∈N(n)</sub> −2(h<sub>e<sub>k,n</sub></sub> − h<sub>c<sub>k,n</sub></sub>) · ∂sim(KS<sub>n</sub>, KS<sub>k</sub>)/∂N<sub>n</sub><sup>j</sup>(i,i)
+        </div>
+        h<sub>e<sub>k,n</sub></sub>은 L(Q)에서 노드 k·n 사이 에지 가중치, h<sub>c<sub>k,n</sub></sub>은 KS<sub>k</sub>·KS<sub>n</sub> 사이 에지 가중치다.
+      </div>
+    </div>
+
+    <p class="body reveal">
+      핵심 요소를 모두 찾은 뒤, 이들에 따라 의미 매칭 서브그래프의 일관성을 검사한다 —
+      의미 매칭 서브그래프의 각 지식 세그먼트 쌍에 대해 <b>핵심 요소 중첩률이 임계값(60%)을 넘으면</b> 그 쌍의 일관성을 검사한다.
+      대응 트리플이 &lt;s₁, p₁, o₁&gt;·&lt;s₂, p₂, o₂&gt;라 할 때, 먼저
+      <span class="trp">&lt;s₁, isTypeOf, s₂&gt;</span> 또는 <span class="trp">&lt;s₂, isTypeOf, s₁&gt;</span>가 참인지 본다 —
+      둘 다 거짓이면 C3·C4에 속하지 않으므로 이 쌍은 건너뛴다.
+      그렇지 않으면 <span class="trp">&lt;o₁, isTypeOf, o₂&gt;</span> 또는 <span class="trp">&lt;o₂, isTypeOf, o₁&gt;</span>가 참인지 보고,
+      <b>둘 다 거짓이면 질의 그래프에 집합적 불일치가 있다</b>고 판정한다.
+      트리플 진위 검사에는 쌍별 추론과 동일한 방법(Eq 4.2의 전달 정보량)을 사용한다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 4.5 실험 ==================== -->
+<section id="s45">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 4.5</div>
+      <h2>실험 평가</h2>
+      <p class="lede">
+        실험은 두 질문에 답하도록 설계됐다. <b>Q1 (효과성)</b> — 점별 방법(KompaRe 기본 기능)과 비교 추론 방법은
+        얼마나 효과적인가? <b>Q2 (효율성)</b> — 제안 방법은 얼마나 빠른가?
+      </p>
+    </div>
+
+    <div class="metrics reveal">
+      <div class="metric"><div class="mv">0.877</div><div class="mk">쌍별 추론 <b>평균 정확도 최고</b> (±0.095, 분산 최저)</div></div>
+      <div class="metric"><div class="mv">0.858</div><div class="mk">Yago 집합적 추론 <b>평균 정확도 최고</b> (±0.089)</div></div>
+      <div class="metric"><div class="mv">0.932</div><div class="mk">Covid-19 집합적 추론 <b>평균 정확도 최고·분산 최저</b> (±0.063)</div></div>
+      <div class="metric"><div class="mv">준선형↓</div><div class="mk">서브그래프 특정 KS 추출이 KG 노드 수에 대해 <b>서브선형 확장</b></div></div>
+    </div>
+
+    <h3 class="reveal"><span class="seal"></span>실험 설정</h3>
+    <p class="body reveal">
+      <b>데이터 그래프</b> — Yago<span class="cite">[134]</span>(트리플 12,430,705개, 개체 4,295,825개, 술어 39개)와
+      Covid-19(Gene·Disease·Chemical 세 개체 타입; 실험에서는 핵심 개체 55,434개·트리플 5,527,628개의 부분집합 사용).
+      <b>베이스라인</b> — 팩트체킹 2종(Knowledge Linker(KL)<span class="cite">[30]</span>, KGMiner<span class="cite">[130]</span>),
+      링크 예측 1종(Jaccard 계수<span class="cite">[77]</span>), 지식그래프 완성 1종(TransE<span class="cite">[11]</span> —
+      임베딩 차원 64, 마진 1, 학습률 0.01, 1,200 에폭).
+      <b>환경</b> — Intel Core-i7 3.00GHz CPU·64GB 메모리 데스크톱, 시스템은 2020년 11월 17일 배포.
+    </p>
+
+    <h3 class="reveal"><span class="seal"></span>KompaRe 기본 기능</h3>
+    <p class="body reveal">
+      <b>술어-술어 유사도 검증</b> — exports에 대한 상위 유사 술어는 imports, hasOfficialLanguage, dealsWith로
+      모두 exports에 관한 구체적 의미 정보를 제공하고, livesIn에 대해서는 wasBornIn, isCitizenOf, diedIn이
+      상위에 올라 모두 livesIn과 밀접하다. 제안한 TF-IDF 기반 방법이 술어 간 유사도를 효과적으로 측정함을 보여준다.
+      <b>노드 특정 지식 세그먼트</b> — 질의 노드 Barack Obama에 대해 추출된 지식 세그먼트는 핵심 의미를 제공한다:
+      Harvard Law School과 Columbia University 졸업, 아내는 Michelle Obama, 민주당 소속, 미국 상원의원 역임,
+      Honolulu 출생. 노드 특정 지식 세그먼트가 질의 개체의 의미 맥락을 포착할 수 있음을 보여준다.
+    </p>
+
+    <h3 class="reveal"><span class="seal"></span>쌍별 비교 추론 (Table 4.2 — Yago, 10개 질의 집합 × 300)</h3>
+    <p class="body reveal">
+      각 양성 집합은 참 주장, 각 음성 집합은 거짓 주장을 기술하는 질의들로 구성된다 — 예컨대 "출생지" 집합에서
+      <span class="trp t">&lt;Alan Turing, wasBornIn, Maida Vale&gt;</span> +
+      <span class="trp t">&lt;Alan Turing, wasBornIn, United Kingdom&gt;</span>은 양성 쌍,
+      <span class="trp f">&lt;Alan Turing, wasBornIn, Maida Vale&gt;</span> +
+      <span class="trp f">&lt;Alan Turing, wasBornIn, Canada&gt;</span>는 음성 쌍이다.
+      양성 질의는 지식그래프의 참 주장 샘플링으로, 음성 질의는 양성 질의의 주어 하나를 치환하여 생성한다.
+      정확도는 N/M(M: 전체 질의 수, N: 올바르게 분류된 질의 수)이다.
+      베이스라인은 쌍별 비교 추론용으로 설계되지 않았으므로, 쌍의 각 트리플을 검사해 하나라도 거짓이면 쌍을 거짓으로,
+      아니면 &lt;o₁, isTypeOf, o₂&gt;·&lt;o₂, isTypeOf, o₁&gt;의 진위를 추가 검사해 하나라도 일관이면 일관으로 처리한다.
+    </p>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>질의 집합 (각 300개)</th><th style="text-align:right">TransE</th><th style="text-align:right">Jaccard</th><th style="text-align:right">KL</th><th style="text-align:right">KGMiner</th><th style="text-align:right">KompaRe</th></tr></thead>
+      <tbody>
+        <tr><td>가족 구성원 · 양성</td><td class="num">0.682</td><td class="num">0.831</td><td class="num">0.618</td><td class="best">0.983</td><td class="num">0.944</td></tr>
+        <tr><td>가족 구성원 · 음성</td><td class="num">0.335</td><td class="num">0.169</td><td class="best">1.000</td><td class="best">1.000</td><td class="num">0.941</td></tr>
+        <tr><td>졸업 대학 · 양성</td><td class="num">0.686</td><td class="num">0.335</td><td class="num">0.502</td><td class="num">0.769</td><td class="best">0.794</td></tr>
+        <tr><td>졸업 대학 · 음성</td><td class="num">0.626</td><td class="num">0.993</td><td class="num">0.947</td><td class="num">0.901</td><td class="best">0.994</td></tr>
+        <tr><td>거주지 · 양성</td><td class="num">0.567</td><td class="num">0.415</td><td class="num">0.489</td><td class="best">0.834</td><td class="num">0.762</td></tr>
+        <tr><td>거주지 · 음성</td><td class="num">0.802</td><td class="num">0.585</td><td class="best">0.907</td><td class="num">0.900</td><td class="num">0.888</td></tr>
+        <tr><td>출생지 · 양성</td><td class="num">0.590</td><td class="num">0.435</td><td class="num">0.537</td><td class="num">0.698</td><td class="best">0.800</td></tr>
+        <tr><td>출생지 · 음성</td><td class="num">0.845</td><td class="best">1.000</td><td class="num">0.973</td><td class="num">0.927</td><td class="num">0.927</td></tr>
+        <tr><td>근무지 · 양성</td><td class="best">0.751</td><td class="num">0.319</td><td class="num">0.445</td><td class="num">0.698</td><td class="num">0.720</td></tr>
+        <tr><td>근무지 · 음성</td><td class="num">0.624</td><td class="num">0.994</td><td class="num">0.942</td><td class="num">0.927</td><td class="best">0.995</td></tr>
+        <tr><td><b>평균 ± 표준편차</b></td><td class="num">0.651 ± 0.424</td><td class="num">0.608 ± 0.302</td><td class="num">0.736 ± 0.221</td><td class="num">0.864 ± 0.105</td><td class="best">0.877 ± 0.095</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      KompaRe와 KGMiner<span class="cite">[130]</span>가 대부분의 경우 최고 정확도를 보이나,
+      <b>KompaRe가 평균 정확도 최고이면서 분산도 가장 낮다</b>.
+    </p>
+
+    <h3 class="reveal"><span class="seal"></span>집합적 비교 추론 (Table 4.3 — Yago, 6개 질의 집합 × 300)</h3>
+    <p class="body reveal">
+      쌍별 질의(에지 2개)와 달리 집합적 질의는 <b>에지 3개</b>를 포함한다. 예컨대 "거주지" 집합에서
+      &lt;Barack Obama, livesIn, Washington,D.C.&gt;, &lt;Barack Obama, is, United States Senate Barack Obama&gt;,
+      &lt;United States Senate Barack Obama, livesIn, United States&gt;는 양성 트라이어드,
+      마지막 목적어를 Canada로 바꾸면 음성 트라이어드다. 베이스라인 처리 방식은 쌍별 설정을 따른다.
+    </p>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>질의 집합 (각 300개)</th><th style="text-align:right">TransE</th><th style="text-align:right">Jaccard</th><th style="text-align:right">KL</th><th style="text-align:right">KGMiner</th><th style="text-align:right">KompaRe</th></tr></thead>
+      <tbody>
+        <tr><td>출생지 · 양성</td><td class="num">0.542</td><td class="num">0.418</td><td class="num">0.389</td><td class="num">0.678</td><td class="best">0.795</td></tr>
+        <tr><td>출생지 · 음성</td><td class="num">0.465</td><td class="best">0.996</td><td class="num">0.968</td><td class="num">0.970</td><td class="num">0.829</td></tr>
+        <tr><td>거주지 · 양성</td><td class="num">0.448</td><td class="num">0.451</td><td class="num">0.465</td><td class="num">0.635</td><td class="best">0.989</td></tr>
+        <tr><td>거주지 · 음성</td><td class="num">0.558</td><td class="best">1.000</td><td class="num">0.860</td><td class="num">0.924</td><td class="num">0.743</td></tr>
+        <tr><td>졸업 대학 · 양성</td><td class="num">0.488</td><td class="num">0.269</td><td class="num">0.335</td><td class="num">0.585</td><td class="best">0.963</td></tr>
+        <tr><td>졸업 대학 · 음성</td><td class="num">0.545</td><td class="best">0.996</td><td class="num">0.928</td><td class="num">0.907</td><td class="num">0.829</td></tr>
+        <tr><td><b>평균 ± 표준편차</b></td><td class="num">0.508 ± 0.045</td><td class="num">0.688 ± 0.313</td><td class="num">0.658 ± 0.265</td><td class="num">0.783 ± 0.155</td><td class="best">0.858 ± 0.089</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      Jaccard<span class="cite">[77]</span>는 모든 질의를 불일치로 분류하는 경향이 있어 분산이 가장 크고,
+      TransE<span class="cite">[11]</span>는 분산은 최저지만 평균 정확도가 매우 낮다.
+      <b>KompaRe는 대부분의 경우 최고 정확도를 보이며, 평균 정확도 최고에 분산은 두 번째로 낮다</b>.
+    </p>
+
+    <h3 class="reveal"><span class="seal"></span>Covid-19 집합적 추론 (Table 4.4)</h3>
+    <p class="body reveal">
+      Covid-19 관련 약물과 유전자/화학물질 간 연결을 담은 질의 중 <b>노드 8개 미만인 질의를 양성</b>으로 쓰고,
+      각 양성 질의에서 노드 하나를 무작위로 골라 데이터 그래프의 무작위 개체로 치환한 것을 음성 질의로 삼는다.
+      베이스라인은 질의 내 모든 에지를 검사해 하나라도 거짓이면 전체를 거짓으로 처리한다.
+    </p>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>집합 (각 36개)</th><th style="text-align:right">TransE</th><th style="text-align:right">Jaccard</th><th style="text-align:right">KL</th><th style="text-align:right">KGMiner</th><th style="text-align:right">KompaRe</th></tr></thead>
+      <tbody>
+        <tr><td>양성</td><td class="num">0.667</td><td class="num">0.611</td><td class="best">1.000</td><td class="num">0.694</td><td class="best">1.000</td></tr>
+        <tr><td>음성</td><td class="num">0.528</td><td class="num">0.361</td><td class="num">0.722</td><td class="num">0.553</td><td class="best">0.863</td></tr>
+        <tr><td><b>평균 정확도</b></td><td class="num">0.598 ± 0.071</td><td class="num">0.486 ± 0.126</td><td class="num">0.861 ± 0.138</td><td class="num">0.623 ± 0.071</td><td class="best">0.932 ± 0.063</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      <b>KompaRe는 양성·음성 모두에서 최고 정확도</b>이며, 평균 정확도 최고·분산 최저를 기록한다.
+    </p>
+
+    <h3 class="reveal"><span class="seal"></span>KompaRe 효율성</h3>
+    <p class="body reveal">
+      지식 세그먼트 추출의 실행 시간은 기반 지식그래프의 크기에 의존하며, 세 유형 중
+      <b>서브그래프 특정 지식 세그먼트가 가장 시간 소모적</b>이지만 그 실행 시간은 지식그래프 노드 수에 대해
+      <b>서브선형(sub-linear)으로 확장</b>된다(질의 그래프 크기별 곡선 비교, Fig 4.4a).
+      비교 추론 자체의 실행 시간(쌍별, 그리고 에지 3·4·5개의 집합적 추론)은
+      <b>대응하는 지식 세그먼트의 크기에만 의존</b>하는데, 지식 세그먼트는 보통 노드가 몇 개에서 몇십 개 수준이다(Fig 4.4b).
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 4.6 논의 ==================== -->
+<section id="s46">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 4.6</div>
+      <h2>논의</h2>
+      <p class="lede">
+        심볼릭 지식그래프 팩트체킹은 지식그래프의 패턴으로 주장을 검증하여 <b>명료성과 투명성</b>을 보장한다.
+      </p>
+    </div>
+    <div class="vs reveal">
+      <div class="v">
+        <div class="vh" style="color:var(--fls)">의존성이라는 약점</div>
+        <div class="vd">그래프의 <b>완전성과 정확성에 크게 의존</b>하므로, 데이터가 불완전하거나 부정확하면 신뢰성이 낮아질 수 있다.</div>
+      </div>
+      <div class="v">
+        <div class="vh" style="color:var(--tru)">뉴럴과의 결합이라는 방향</div>
+        <div class="vd">심볼릭 방법과 뉴럴 네트워크를 결합하면 각자의 강점을 살려 이 난점을 완화할 수 있다 —
+        <b>심볼릭 추론의 해석력을 보존하면서 효율을 높이는</b> 접근으로, 더 견고한 팩트체킹 시스템으로 나아가는 결정적 방향이다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="src">
+      <b>출처</b><br>
+      Liu, L. &amp; Tong, H. (2026). <b>Neural Symbolic Knowledge Graph Reasoning:<br>
+      A Pathway Towards Neural Symbolic AI</b> — Chapter 4. Symbolic Reasoning<br>for Inconsistency Detection Over Complete KG.<br>
+      Synthesis Lectures on Computer Science, Springer Nature Switzerland.
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--sys)"></i>KompaRe — 지식 세그먼트 · 영향 함수</span><br>
+      <span><i style="background:var(--tru)"></i>일관 (CONSISTENT)</span><br>
+      <span><i style="background:var(--fls)"></i>불일치 (INCONSISTENT)</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // 스크롤 리빌
+  var reveals = document.querySelectorAll(".reveal");
+  if (reduce || !("IntersectionObserver" in window)) {
+    reveals.forEach(function(el){ el.classList.add("on"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add("on"); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.08 });
+    reveals.forEach(function(el){ io.observe(el); });
+  }
+
+  // 6-케이스 분류기
+  var CASES = {
+    c1: {
+      cond: "s₁ ≠ s₂,  s₁ ≠ o₂,  o₁ ≠ s₂,  o₁ ≠ o₂",
+      desc: "두 단서는 명백히 <b>서로 다른 사실</b>을 가리킨다. 예: <Alan Turing, wasBornIn, United Kingdom>과 <Google, isLocatedIn, USA>.",
+      act: "불일치 검사 불필요 — 건너뜀", cls: "skip"
+    },
+    c2: {
+      cond: "s₁ = s₂  ∧  o₁ = o₂",
+      desc: "p₁ = p₂이면 두 단서는 <b>동일</b>하다. p₁·p₂가 서로 다르거나 무관하면(예: wasBornIn vs hasWebsite) 서로 다른 사실이다. 그러나 <b>p₁이 p₂와 모순되면 불일치</b>다 — 예: p₁ = isFather, p₂ = isSon.",
+      act: "술어의 의미론적 모순만 검사", cls: "pred"
+    },
+    c3: {
+      cond: "s₁ = s₂  ∧  p₁ ≠ p₂  ∧  o₁ ≠ o₂",
+      desc: "예: <Alan Turing, wasBornIn, Maida Vale>과 <Alan Turing, livesIn, United Kingdom>. <b>각각이 참이어도 함께는 불일치할 수 있는</b> 본격 검사 대상이다.",
+      act: "전체 파이프라인 검사 (핵심 요소 → isTypeOf)", cls: "full"
+    },
+    c4: {
+      cond: "s₁ = s₂  ∧  p₁ = p₂  ∧  o₁ ≠ o₂",
+      desc: "예: <Alan Turing, wasBornIn, Maida Vale>과 <Alan Turing, wasBornIn, United Kingdom>. Maida Vale이 United Kingdom에 속하므로 둘 다 참일 수 있다 — <b>목적어 간 포함 관계(isTypeOf) 확인이 관건</b>인 본격 검사 대상이다.",
+      act: "전체 파이프라인 검사 (핵심 요소 → isTypeOf)", cls: "full"
+    },
+    c5: {
+      cond: "o₁ = o₂  ∧  s₁ ≠ s₂",
+      desc: "p₁·p₂가 무엇이든 두 단서는 <b>서로 다른 사실</b>을 가리킨다.",
+      act: "불일치 검사 불필요 — 건너뜀", cls: "skip"
+    },
+    c6: {
+      cond: "o₁ = s₂",
+      desc: "p₁·p₂가 무엇이든 <b>서로 다른 사실</b>이다. 예: <Alan Turing, wasBornIn, United Kingdom>과 <United Kingdom, dealsWith, USA>.",
+      act: "불일치 검사 불필요 — 건너뜀", cls: "skip"
+    }
+  };
+  var cbtns = document.querySelectorAll(".cbtn");
+  var cpCond = document.getElementById("cpCond");
+  var cpDesc = document.getElementById("cpDesc");
+  var cpAct = document.getElementById("cpAct");
+  function setCase(id){
+    var c = CASES[id];
+    if (!c) return;
+    cbtns.forEach(function(b){
+      var on = b.getAttribute("data-case") === id;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    cpCond.textContent = c.cond;
+    cpDesc.innerHTML = c.desc;
+    cpAct.textContent = c.act;
+    cpAct.className = "cp-act " + c.cls;
+  }
+  cbtns.forEach(function(b){
+    b.addEventListener("click", function(){ setCase(b.getAttribute("data-case")); });
+  });
+  setCase("c1");
+
+  // 현재 섹션 내비 활성화
+  var navLinks = document.querySelectorAll(".navlinks a");
+  var secs = ["s41","s42","s43","s44","s45","s46"].map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  if ("IntersectionObserver" in window) {
+    var nio = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) {
+          navLinks.forEach(function(a){
+            a.classList.toggle("active", a.getAttribute("href") === "#" + e.target.id);
+          });
+        }
+      });
+    }, { rootMargin: "-35% 0px -55% 0px" });
+    secs.forEach(function(s){ nio.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>

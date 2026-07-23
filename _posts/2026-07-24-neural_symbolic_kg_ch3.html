@@ -1,0 +1,1085 @@
+---
+layout: null
+title: "Accurate Query Answering with Symbolic Reasoning over Complete KGs" 
+date: 2026-07-24 
+categories: [artificial intelligence]
+tags: [artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제3장 완전한 KG 위 심볼릭 추론 — G-Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;800;900&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --paper:#FAFBFD;
+  --grid:rgba(28,49,88,.055);
+  --card:#FFFFFF;
+  --ink:#16233B;
+  --sub:#48566E;
+  --faint:#8A96AB;
+  --hair:#E2E7EF;
+  --hair-strong:#C8D1DE;
+
+  --qry:#D9480F;      /* 질의 그래프 — 버밀리언 */
+  --qry-bg:#FDEFE7;
+  --qry-line:#F2BFA4;
+  --dat:#1C64D6;      /* 데이터 그래프 — 블루 */
+  --dat-bg:#E9F1FD;
+  --dat-line:#A9C7F2;
+  --ok:#0B7A5B;       /* 결과/성공 — 그린 */
+  --ok-bg:#E6F5F0;
+  --ok-line:#9AD3C1;
+  --warn:#B4530A;
+  --warn-bg:#FDF3E7;
+
+  --disp:'Gothic A1',sans-serif;
+  --sans:'Pretendard Variable',Pretendard,-apple-system,'Noto Sans KR',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:
+    linear-gradient(var(--grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+    var(--paper);
+  background-size:28px 28px,28px 28px,auto;
+  color:var(--ink);
+  font-family:var(--sans);font-size:16.5px;line-height:1.85;letter-spacing:-.01em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(217,72,15,.16)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--qry);outline-offset:2px}
+
+/* ---------- 내비게이션 ---------- */
+.topnav{
+  position:sticky;top:0;z-index:60;
+  background:rgba(250,251,253,.88);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--hair);
+}
+.topnav .wrap{display:flex;align-items:center;gap:24px;height:58px}
+.brand{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.04em;white-space:nowrap}
+.brand b{color:var(--qry);font-weight:600}
+.navlinks{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+.navlinks a{
+  color:var(--sub);text-decoration:none;font-size:13px;font-weight:600;
+  padding:7px 11px;border-radius:8px;transition:.2s;white-space:nowrap;
+}
+.navlinks a:hover{color:var(--ink);background:rgba(22,35,59,.05)}
+.navlinks a.active{color:var(--qry);background:var(--qry-bg)}
+
+/* ---------- 히어로 ---------- */
+.hero{border-bottom:1px solid var(--hair);background:var(--card);position:relative;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:0;
+  background:
+    linear-gradient(rgba(28,100,214,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(28,100,214,.045) 1px,transparent 1px);
+  background-size:28px 28px;pointer-events:none;
+}
+.hero .wrap{position:relative;z-index:1;padding-top:80px;padding-bottom:70px}
+.pub-line{
+  font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.05em;
+  display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:24px;
+}
+.pub-line .dot{width:3px;height:3px;border-radius:50%;background:var(--hair-strong)}
+.pub-line em{font-style:normal;color:var(--qry);font-weight:600}
+.tagrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.chapter-tag{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--qry);
+  background:var(--qry-bg);border:1px solid var(--qry-line);border-radius:999px;
+  padding:6px 16px;letter-spacing:.06em;
+}
+.cond{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;border-radius:999px;padding:6px 16px;
+}
+.cond.kg{color:var(--dat);background:var(--dat-bg);border:1px solid var(--dat-line)}
+.cond.q{color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok-line)}
+h1{
+  font-family:var(--disp);font-weight:900;
+  font-size:clamp(34px,4.6vw,50px);line-height:1.34;letter-spacing:-.02em;margin-bottom:20px;
+}
+h1 .hl{color:var(--qry)}
+.hero-sub{font-size:16.5px;color:var(--sub);max-width:720px;margin-bottom:40px}
+.hero-sub b{color:var(--ink);font-weight:700}
+
+/* 파이프라인 (히어로) */
+.pipeline{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  border:1px solid var(--hair-strong);border-radius:16px;overflow:hidden;background:var(--card);
+  box-shadow:0 8px 26px rgba(22,35,59,.06);
+}
+.pstep{padding:22px 20px;border-right:1px dashed var(--hair-strong);position:relative}
+.pstep:last-child{border-right:none}
+.pstep .pn{
+  font-family:var(--mono);font-size:11px;font-weight:600;color:#fff;background:var(--ink);
+  border-radius:6px;display:inline-block;padding:2px 9px;margin-bottom:10px;letter-spacing:.06em;
+}
+.pstep .pt{font-family:var(--disp);font-weight:800;font-size:15px;margin-bottom:6px}
+.pstep .pd{font-size:12.5px;color:var(--sub);line-height:1.7}
+.pstep .pm{font-family:var(--mono);font-size:11px;color:var(--qry);margin-top:8px}
+
+/* ---------- 섹션 공통 ---------- */
+section{padding:86px 0;border-bottom:1px solid var(--hair)}
+section:last-of-type{border-bottom:none}
+.sec-head{max-width:820px;margin-bottom:44px}
+.eyebrow{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.12em;
+  color:var(--qry);display:flex;align-items:center;gap:12px;margin-bottom:14px;
+}
+.eyebrow::before{content:"";width:30px;height:2px;background:var(--qry)}
+h2{
+  font-family:var(--disp);font-weight:900;font-size:clamp(25px,3.1vw,33px);
+  line-height:1.4;margin-bottom:14px;letter-spacing:-.015em;
+}
+.lede{color:var(--sub);font-size:16px}
+.lede b{color:var(--ink);font-weight:700}
+h3{
+  font-family:var(--disp);font-weight:800;font-size:19.5px;margin:52px 0 18px;
+  display:flex;align-items:center;gap:12px;
+}
+h3 .tick{width:10px;height:10px;border:2.5px solid var(--qry);border-radius:3px;flex-shrink:0}
+p.body{color:var(--sub);margin-bottom:16px;max-width:850px;font-size:15.5px}
+p.body b{color:var(--ink);font-weight:700}
+.cite{font-family:var(--mono);font-size:.76em;color:var(--faint);vertical-align:super;white-space:nowrap}
+code.m{
+  font-family:var(--mono);font-size:.87em;background:rgba(22,35,59,.06);
+  border-radius:6px;padding:2px 7px;color:var(--ink);
+}
+sub,sup{line-height:0}
+
+/* 응용 칩 */
+.apps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:28px 0}
+.app{
+  border:1px solid var(--hair);border-radius:13px;background:var(--card);padding:18px 20px;
+}
+.app .an{font-family:var(--mono);font-size:11px;color:var(--dat);letter-spacing:.08em;margin-bottom:8px;font-weight:600}
+.app .at{font-weight:700;font-size:14.5px;margin-bottom:5px}
+.app .ad{font-size:12.5px;color:var(--sub);line-height:1.7}
+
+/* 한계 대비 */
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:26px 0}
+.vs .v{
+  border:1px solid var(--hair);border-radius:14px;background:var(--card);padding:24px;
+}
+.vs .v .vh{font-family:var(--disp);font-weight:800;font-size:16px;margin-bottom:10px}
+.vs .v .vd{font-size:14px;color:var(--sub);line-height:1.8}
+.vs .v .vd b{color:var(--ink)}
+.vs .v .lim{
+  margin-top:12px;font-size:13px;color:var(--warn);background:var(--warn-bg);
+  border:1px dashed #ECC79B;border-radius:9px;padding:10px 14px;line-height:1.7;
+}
+
+/* 시그니처: 탐욕의 함정 인터랙티브 */
+.trap{
+  border:1px solid var(--hair-strong);border-radius:18px;background:var(--card);
+  padding:32px;margin:34px 0;box-shadow:0 10px 30px rgba(22,35,59,.06);
+}
+.trap-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+.trap-title{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--faint);font-weight:600}
+.trap-toggle{display:flex;gap:8px}
+.tbtn{
+  font-family:var(--sans);font-size:13.5px;font-weight:700;padding:9px 18px;border-radius:10px;
+  border:1px solid var(--hair-strong);background:var(--paper);color:var(--sub);cursor:pointer;transition:.18s;
+}
+.tbtn.greedy.on{color:#fff;background:var(--warn);border-color:var(--warn)}
+.tbtn.gfinder.on{color:#fff;background:var(--ok);border-color:var(--ok)}
+.trap svg{width:100%;height:auto;display:block;margin-top:10px}
+.tg-link{stroke:var(--hair-strong);stroke-width:1.5}
+.tg-node{fill:var(--card);stroke:var(--dat);stroke-width:1.8}
+.tg-node.picked-g{stroke:var(--warn);stroke-width:3;fill:var(--warn-bg)}
+.tg-node.picked-f{stroke:var(--ok);stroke-width:3;fill:var(--ok-bg)}
+.tg-node.inter{stroke-dasharray:4 4}
+.tg-lb{font-family:var(--mono);font-size:11px;text-anchor:middle;fill:var(--ink);font-weight:600}
+.tg-note{font-family:var(--mono);font-size:10.5px;fill:var(--faint);text-anchor:middle}
+.qg-node{fill:var(--qry-bg);stroke:var(--qry);stroke-width:1.8}
+.trap-verdict{
+  margin-top:16px;border-radius:12px;padding:16px 20px;font-size:14px;line-height:1.8;
+  border:1px solid var(--hair);
+}
+.trap-verdict b{color:var(--ink)}
+.trap-verdict.greedy{background:var(--warn-bg);border-color:#ECC79B;color:#7A4410}
+.trap-verdict.gfinder{background:var(--ok-bg);border-color:var(--ok-line);color:#0A5B45}
+
+/* 표 공통 */
+table.tbl{width:100%;border-collapse:separate;border-spacing:0;margin:24px 0;font-size:14px;background:var(--card);border:1px solid var(--hair);border-radius:14px;overflow:hidden}
+.tbl th,.tbl td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--hair);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl thead th{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--faint);
+  background:var(--paper);border-bottom:1px solid var(--hair-strong);white-space:nowrap;
+}
+.tbl td{color:var(--sub)}
+.tbl td b{color:var(--ink)}
+.tbl .mono{font-family:var(--mono);font-size:13px;color:var(--ink);white-space:nowrap}
+.tbl .ok{color:var(--ok);font-weight:700;text-align:center}
+.tbl .no{color:#C2452D;font-weight:700;text-align:center}
+.tbl .ctr{text-align:center}
+.tbl tr.hero-row{background:var(--qry-bg)}
+.tbl tr.hero-row td{color:var(--ink)}
+.tbl-scroll{overflow-x:auto;margin:24px 0}
+.tbl-scroll table.tbl{margin:0;min-width:760px}
+
+/* 정의 블록 */
+.def{
+  margin:22px 0;border-radius:14px;border:1px solid var(--hair);background:var(--card);overflow:hidden;
+}
+.def-head{
+  padding:12px 22px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;font-weight:600;
+  color:var(--dat);background:var(--dat-bg);border-bottom:1px solid var(--hair);
+  display:flex;gap:12px;align-items:center;
+}
+.def-head.prob{color:var(--qry);background:var(--qry-bg)}
+.def-body{padding:20px 22px;color:var(--sub);font-size:15px}
+.def-body b{color:var(--ink)}
+.formula{
+  font-family:var(--mono);font-size:14px;color:var(--ink);background:var(--paper);
+  border:1px solid var(--hair);border-radius:10px;padding:14px 18px;margin:12px 0;
+  overflow-x:auto;line-height:1.9;
+}
+.formula .c1{color:var(--qry)}
+.formula .c2{color:var(--dat)}
+.formula .c3{color:var(--ok)}
+
+/* 개념 카드 (근사 매칭 3요소) */
+.tri{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:24px 0}
+.tri .t{
+  border:1px solid var(--hair);border-radius:13px;background:var(--card);padding:20px;
+  border-top:3px solid var(--qry);
+}
+.tri .t .tn{font-family:var(--mono);font-size:11px;color:var(--qry);font-weight:600;letter-spacing:.06em;margin-bottom:8px}
+.tri .t .tt{font-weight:800;font-size:15px;margin-bottom:6px;font-family:var(--disp)}
+.tri .t .td{font-size:13px;color:var(--sub);line-height:1.75}
+.tri .t .td code{font-family:var(--mono);font-size:12px}
+
+/* 단계 상세 */
+.steps{display:grid;gap:16px;margin:26px 0;counter-reset:step}
+.step{
+  display:grid;grid-template-columns:56px 1fr;gap:22px;
+  border:1px solid var(--hair);border-radius:15px;background:var(--card);padding:26px 28px;
+}
+.step .sn{
+  counter-increment:step;
+  font-family:var(--mono);font-weight:600;font-size:18px;color:var(--qry);
+  width:56px;height:56px;border:2px solid var(--qry-line);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;background:var(--qry-bg);
+}
+.step .sn::before{content:"0" counter(step)}
+.step .sb .st{font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px}
+.step .sb .se{font-family:var(--mono);font-size:11px;color:var(--faint);margin-bottom:10px}
+.step .sb .sd{font-size:14.5px;color:var(--sub);line-height:1.85}
+.step .sb .sd b{color:var(--ink)}
+.step .sb .sd ul{margin:10px 0 0;list-style:none}
+.step .sb .sd li{position:relative;padding-left:18px;margin-bottom:7px}
+.step .sb .sd li::before{content:"—";position:absolute;left:0;color:var(--qry)}
+
+/* 콜아웃 */
+.callout{
+  border-radius:13px;padding:18px 22px;margin:20px 0;font-size:14.5px;line-height:1.85;
+  border:1px solid;max-width:850px;
+}
+.callout b{color:var(--ink)}
+.callout.warn{background:var(--warn-bg);border-color:#ECC79B;color:#6E4A17}
+.callout.info{background:var(--dat-bg);border-color:var(--dat-line);color:#274A7C}
+.callout.good{background:var(--ok-bg);border-color:var(--ok-line);color:#0A5B45}
+.callout .cl-tag{
+  font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;display:block;margin-bottom:6px;
+}
+
+/* 결과 지표 */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:26px 0}
+.metric{
+  border:1px solid var(--hair);border-radius:14px;background:var(--card);padding:22px;
+  text-align:left;
+}
+.metric .mv{
+  font-family:var(--disp);font-weight:900;font-size:30px;color:var(--qry);line-height:1.2;
+  letter-spacing:-.02em;
+}
+.metric .mk{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.65}
+.metric .mk b{color:var(--ink)}
+
+/* 복잡도 그리드 */
+.cx{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:24px 0}
+.cx .c{
+  border:1px solid var(--hair);border-radius:13px;background:var(--card);padding:20px;
+}
+.cx .c .ck{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.08em;margin-bottom:8px;font-weight:600}
+.cx .c .cv{font-family:var(--mono);font-size:14.5px;color:var(--ink);margin-bottom:8px;overflow-x:auto}
+.cx .c .cd{font-size:12.5px;color:var(--sub);line-height:1.7}
+
+/* 각주 */
+.fnotes{margin-top:40px;border-top:1px dashed var(--hair-strong);padding-top:22px}
+.fnotes .fn{display:grid;grid-template-columns:34px 1fr;gap:12px;font-size:13px;color:var(--sub);margin-bottom:10px}
+.fnotes .fn i{font-style:normal;font-family:var(--mono);font-size:11.5px;color:var(--qry);font-weight:600}
+
+/* 푸터 */
+footer{padding:52px 0 68px;color:var(--faint);font-size:13px;background:var(--card);border-top:1px solid var(--hair)}
+footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+footer .src{font-family:var(--mono);font-size:12px;line-height:2}
+footer .src b{color:var(--sub);font-weight:600}
+footer .legend{font-family:var(--mono);font-size:12px;text-align:right;line-height:2.1}
+footer .legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;font-style:normal}
+
+/* 리빌 */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
+
+/* 반응형 */
+@media (max-width:960px){
+  .pipeline{grid-template-columns:1fr 1fr}
+  .pstep:nth-child(2){border-right:none}
+  .pstep:nth-child(-n+2){border-bottom:1px dashed var(--hair-strong)}
+  .apps{grid-template-columns:1fr 1fr}
+  .vs{grid-template-columns:1fr}
+  .tri,.cx{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .navlinks{display:none}
+}
+@media (max-width:620px){
+  section{padding:58px 0}
+  .pipeline{grid-template-columns:1fr}
+  .pstep{border-right:none;border-bottom:1px dashed var(--hair-strong)}
+  .pstep:last-child{border-bottom:none}
+  .apps,.metrics{grid-template-columns:1fr}
+  .step{grid-template-columns:1fr;gap:12px}
+  .trap{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="페이지 내비게이션">
+  <div class="wrap">
+    <div class="brand">NS-KGR <b>/</b> Chapter 03</div>
+    <div class="navlinks">
+      <a href="#s31">3.1 서론</a>
+      <a href="#s32">3.2 문제 정의</a>
+      <a href="#s33">3.3 방법 개요</a>
+      <a href="#s34">3.4 상세</a>
+      <a href="#s35">3.5 실험</a>
+      <a href="#s36">3.6 논의</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== 히어로 ==================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="pub-line">
+      <span>Springer · Synthesis Lectures on Computer Science</span>
+      <span class="dot"></span><span><em>2026</em></span>
+      <span class="dot"></span><span>DOI 10.1007/978-3-032-15858-1_3</span>
+      <span class="dot"></span><span>Liu &amp; Tong</span>
+    </div>
+    <div class="tagrow">
+      <span class="chapter-tag">CHAPTER 3 · RESEARCH QUESTION Q1</span>
+      <span class="cond kg">지식그래프 완전</span>
+      <span class="cond q">질의 정확</span>
+    </div>
+    <h1>완전한 KG 위 심볼릭 추론에 의한<br>정확한 질의 응답 — <span class="hl">G-Finder</span></h1>
+    <p class="hero-sub">
+      지식그래프가 완전하고 질의가 정확할 때의 목표는, 그래프에서 관련 정보를 <b>빠르고 정밀하게 추출</b>하여
+      정확한 답을 제공하는 효율적 추론 모델의 설계다. 이 장은 완전한 지식그래프 위에서의
+      <b>근사 심볼릭 서브그래프 매칭</b>에 관한 연구, 즉 <b>G-Finder</b> 알고리즘을 소개한다.
+    </p>
+
+    <div class="pipeline reveal">
+      <div class="pstep">
+        <div class="pn">STEP 1</div>
+        <div class="pt">루트 선택</div>
+        <div class="pd">코어-포레스트 분해 후, 후보가 적고 질의 중심에 가까운 노드를 루트로 선택한다.</div>
+        <div class="pm">u_r ← argmin |C(u)|/deg(u)</div>
+      </div>
+      <div class="pstep">
+        <div class="pn">STEP 2</div>
+        <div class="pt">LTBG 구축</div>
+        <div class="pd">동적 필터링·정제 전략으로 질의 그래프에 대한 Lookup-Table-Graph를 구축한다.</div>
+        <div class="pm">Lookup-Table (LTB)</div>
+      </div>
+      <div class="pstep">
+        <div class="pn">STEP 3</div>
+        <div class="pt">매칭 순서 결정</div>
+        <div class="pd">구축된 LTBG에 기반해 매칭 순서(matching order)를 계산한다.</div>
+        <div class="pm">greedy path ordering</div>
+      </div>
+      <div class="pstep">
+        <div class="pn">STEP 4</div>
+        <div class="pt">서브그래프 열거</div>
+        <div class="pd">매칭 순서에 따라 LTBG를 탐색하여 손실이 가장 작은 Top-k 결과를 반환한다.</div>
+        <div class="pm">top-k max heap</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== 3.1 서론 ==================== -->
+<section id="s31">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 3.1</div>
+      <h2>서론 — 왜 근사 서브그래프 매칭인가</h2>
+      <p class="lede">
+        (근사) 서브그래프 매칭은 데이터 마이닝, 데이터베이스, 정보 검색, 컴퓨터 비전, 자연어 처리에 이르는
+        여러 분야의 <b>핵심 프리미티브(core primitive)</b>다.
+      </p>
+    </div>
+
+    <div class="apps reveal">
+      <div class="app"><div class="an">DATA MINING</div><div class="at">빈발 패턴 발견</div><div class="ad">근사 서브그래프 동형사상으로 빈발 패턴을 찾는다<span class="cite">[4]</span>.</div></div>
+      <div class="app"><div class="an">DB / IR</div><div class="at">상호 연관 논문 검색</div><div class="ad">상호 연관된 연구 논문 집합을 찾는 질의를 서브그래프 매칭 문제로 취급한다<span class="cite">[55]</span>.</div></div>
+      <div class="app"><div class="an">COMPUTER VISION</div><div class="at">기호·객체 인식</div><div class="ad">객체 겹침·분할 오류에 따른 노드 병합·분할 허용 근사 매칭으로 정식화한다<span class="cite">[95]</span>.</div></div>
+      <div class="app"><div class="an">NLP</div><div class="at">패러프레이즈</div><div class="ad">어휘 자원의 단어를 노드로, 관계를 간선으로 보면 패러프레이즈는 그래프 매칭이 된다<span class="cite">[106]</span>.</div></div>
+    </div>
+
+    <p class="body reveal">
+      기존 연구는 <b>정확(exact) 매칭</b>과 <b>비정확(inexact) 매칭</b>의 두 범주로 나뉘며, 각각 뚜렷한 장단점을 지닌다.
+    </p>
+
+    <div class="vs reveal">
+      <div class="v">
+        <div class="vh">정확 매칭 <span class="cite">[9, 10, 34, 119]</span></div>
+        <div class="vd">
+          핵심 아이디어는 <b>거짓 후보의 조기 가지치기</b>와 <b>유망 후보에 대한 인덱스 구축</b>이다.
+          효과적인 가지치기 조건으로 탐색 공간을 크게 줄일 수 있다.
+        </div>
+        <div class="lim">
+          그러나 실제 그래프의 상당수는 잡음이 있고 불완전하여, 관측된 데이터 그래프에 정확 매칭이 아예 존재하지 않을 수 있다.
+          이 경우(정확 매칭의 존재 여부를 알 수 없는 상황) 인덱스 기반 정확 매칭은 인덱스의 모든 가능한 후보를 순회하며
+          <b>지수 시간 복잡도</b>를 소모한 끝에 아무것도 반환하지 못할 수 있다.
+          또한 점진적 탐색<span class="cite">[5, 16]</span>처럼 사용자가 정확히 무엇을 찾는지 모르는 경우,
+          정확 매칭이 존재하더라도 바람직하지 않을 수 있다.
+        </div>
+      </div>
+      <div class="v">
+        <div class="vh">비정확 매칭 <span class="cite">[141, 142, 144]</span></div>
+        <div class="vd">
+          휴리스틱으로 <b>중요한 시드(seed) 노드</b>를 식별한 뒤, 시드의 이웃으로 점진적으로 확장한다.
+          보통 비교적 짧은 시간에 근사 매칭 서브그래프를 반환할 수 있다.
+        </div>
+        <div class="lim">
+          그러나 부분 매칭을 단계별로 확장하는 <b>탐욕(greedy) 전략</b>은 최적이 아닌 탐색 경로로 쉽게 이탈한다.
+          아래 예시가 이 함정을 보여준다.
+        </div>
+      </div>
+    </div>
+
+    <!-- 시그니처: 탐욕의 함정 -->
+    <div class="trap reveal">
+      <div class="trap-head">
+        <div class="trap-title">FIG 3.1 재구성 — 탐욕 확장의 함정 (시드 v0에서 시작)</div>
+        <div class="trap-toggle" role="group" aria-label="전략 비교">
+          <button class="tbtn greedy on" data-mode="greedy">탐욕 확장 (TALE류)</button>
+          <button class="tbtn gfinder" data-mode="gfinder">G-Finder</button>
+        </div>
+      </div>
+      <svg viewBox="0 0 980 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="데이터 그래프와 질의 그래프의 매칭 예시">
+        <!-- 데이터 그래프 -->
+        <text class="tg-note" x="330" y="24" style="font-weight:600">데이터 그래프 G</text>
+        <line class="tg-link" x1="150" y1="170" x2="260" y2="90"/>
+        <line class="tg-link" x1="150" y1="170" x2="260" y2="250"/>
+        <line class="tg-link" x1="260" y1="90"  x2="380" y2="60"/>
+        <line class="tg-link" x1="260" y1="90"  x2="380" y2="120"/>
+        <line class="tg-link" x1="380" y1="60"  x2="480" y2="90"/>
+        <line class="tg-link" x1="260" y1="250" x2="380" y2="200"/>
+        <line class="tg-link" x1="380" y1="200" x2="380" y2="285"/>
+        <line class="tg-link" x1="380" y1="200" x2="490" y2="230"/>
+        <line class="tg-link" x1="380" y1="285" x2="490" y2="230"/>
+        <line class="tg-link" x1="490" y1="230" x2="590" y2="200"/>
+        <line class="tg-link" x1="490" y1="230" x2="590" y2="270"/>
+
+        <circle class="tg-node seed" data-g="1" data-f="1" cx="150" cy="170" r="20"/>
+        <circle class="tg-node" data-g="1" cx="260" cy="90"  r="20"/>
+        <circle class="tg-node inter" data-f="1" cx="260" cy="250" r="20"/>
+        <circle class="tg-node" data-g="1" cx="380" cy="60"  r="20"/>
+        <circle class="tg-node" data-g="1" cx="380" cy="120" r="20"/>
+        <circle class="tg-node" data-f="1" cx="380" cy="200" r="20"/>
+        <circle class="tg-node" data-f="1" cx="380" cy="285" r="20"/>
+        <circle class="tg-node" data-g="1" data-f="1" cx="480" cy="90" r="20"/>
+        <circle class="tg-node" data-f="1" cx="490" cy="230" r="20"/>
+        <circle class="tg-node" data-f="1" cx="590" cy="200" r="20"/>
+        <circle class="tg-node" data-f="1" cx="590" cy="270" r="20"/>
+
+        <text class="tg-lb" x="150" y="174">v0</text>
+        <text class="tg-lb" x="260" y="94">v1</text>
+        <text class="tg-lb" x="260" y="254">v2</text>
+        <text class="tg-lb" x="380" y="64">v4</text>
+        <text class="tg-lb" x="380" y="124">v5</text>
+        <text class="tg-lb" x="380" y="204">v3</text>
+        <text class="tg-lb" x="380" y="289">v6</text>
+        <text class="tg-lb" x="480" y="94">v8</text>
+        <text class="tg-lb" x="490" y="234">v7</text>
+        <text class="tg-lb" x="590" y="204">v9</text>
+        <text class="tg-lb" x="590" y="274">v10·v11</text>
+        <text class="tg-note" x="150" y="212">seed</text>
+        <text class="tg-note" x="260" y="292">중간 정점</text>
+
+        <!-- 질의 그래프 -->
+        <text class="tg-note" x="810" y="24" style="font-weight:600">질의 그래프 Q</text>
+        <line class="tg-link" x1="730" y1="110" x2="810" y2="70"/>
+        <line class="tg-link" x1="730" y1="110" x2="810" y2="150"/>
+        <line class="tg-link" x1="810" y1="70"  x2="890" y2="110"/>
+        <line class="tg-link" x1="810" y1="150" x2="890" y2="110"/>
+        <line class="tg-link" x1="890" y1="110" x2="890" y2="200"/>
+        <line class="tg-link" x1="890" y1="200" x2="810" y2="240"/>
+        <line class="tg-link" x1="890" y1="200" x2="890" y2="285"/>
+        <line class="tg-link" x1="810" y1="240" x2="890" y2="285"/>
+        <circle class="qg-node" cx="730" cy="110" r="18"/>
+        <circle class="qg-node" cx="810" cy="70"  r="18"/>
+        <circle class="qg-node" cx="810" cy="150" r="18"/>
+        <circle class="qg-node" cx="890" cy="110" r="18"/>
+        <circle class="qg-node" cx="890" cy="200" r="18"/>
+        <circle class="qg-node" cx="810" cy="240" r="18"/>
+        <circle class="qg-node" cx="890" cy="285" r="18"/>
+        <text class="tg-lb" x="730" y="114">u0</text>
+        <text class="tg-lb" x="810" y="74">u1</text>
+        <text class="tg-lb" x="810" y="154">u2</text>
+        <text class="tg-lb" x="890" y="114">u3</text>
+        <text class="tg-lb" x="890" y="204">u4</text>
+        <text class="tg-lb" x="810" y="244">u5</text>
+        <text class="tg-lb" x="890" y="289">u6</text>
+      </svg>
+      <div class="trap-verdict greedy" id="verdict">
+        <b>탐욕 확장 (예: [142, 144])</b> — v1이 u1에 완벽히 대응되므로 v1을 다음 후보로 선택하고,
+        이어 v4, v5로 확장하여 최종적으로 <b>(v0, v1, v4, v5, v8)</b>이 유도하는 서브그래프를 반환한다.
+        국소적으로는 최선이지만 전역적으로는 차선의 결과다.
+      </div>
+    </div>
+
+    <p class="body reveal">
+      데이터 그래프의 잡음·불완전성과 질의 그래프의 불확실성 때문에 정확 매칭 서브그래프는
+      존재하지 않거나 바람직하지 않을 수 있다. 따라서 이 장은 <b>근사 서브그래프 매칭</b>에 집중하며
+      (제안 알고리즘은 정확 매칭도 찾을 수 있다), 새로운 알고리즘 <b>G-Finder</b>를 제안한다.
+      핵심 아이디어는 <b>질의 그래프 구조에 따라 데이터 그래프에 인덱스를 구축</b>하여 매칭 정확도를 높이는 것이다.
+      기존 비정확 매칭과 비교해 G-Finder는 (1) 새로운 보조 자료구조 <b>Lookup-Table(LTB)</b>과
+      이웃 확장(neighborhood expansion) 기법을 결합해 질의 노드의 후보 정점을 색인하면서
+      질의 그래프의 위상 구조를 유지하고, (2) LTB로 질의 노드의 거짓 양성 후보를 효과적으로 가지치기하여
+      효과적인 매칭 순서를 계산한다. 다양한 실제 데이터셋 실험에서 G-Finder는 F1-Score 기준 최고 베이스라인보다
+      <b>최대 30% 우수</b>하며, 특히 풍부한 속성 정보를 가진 데이터 그래프에서
+      데이터 그래프와 질의 그래프 크기 모두에 대해 <b>준선형(near-linear)으로 확장</b>된다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 3.2 문제 정의 ==================== -->
+<section id="s32">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 3.2</div>
+      <h2>문제 정의</h2>
+      <p class="lede">
+        명확성을 위해 질의 그래프 Q의 원소는 <b>노드(node)·에지(edge)</b>로, 데이터 그래프 <b>𝒢</b>의 원소는
+        <b>정점(vertex)·링크(link)</b>로 부른다. u, û는 질의 노드를, v, v̂는 데이터 정점을 가리킨다.
+        그래프는 튜플 <code class="m">{V, E, L}</code>로 표기하며 L은 노드/정점·에지/링크를 속성값에 대응시키는 속성 함수다.
+      </p>
+    </div>
+
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>기호</th><th>정의</th><th>기호</th><th>정의</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">Q = {V_Q, E_Q, L_Q}</td><td>속성 질의 그래프</td><td class="mono">N(u)</td><td>질의 노드 u의 이웃</td></tr>
+        <tr><td class="mono">𝒢 = {V_G, E_G, L_G}</td><td>속성 데이터 그래프</td><td class="mono">C(u)</td><td>질의 노드 u의 후보 집합</td></tr>
+        <tr><td class="mono">H_i / Q_i</td><td>i개 노드의 부분 매칭 / 부분 질의 그래프</td><td class="mono">LTB(u)</td><td>질의 노드 u의 Lookup-Table</td></tr>
+        <tr><td class="mono">m(u_i) = v_i</td><td>매칭 함수</td><td class="mono">LTBG</td><td>모든 LTB가 이루는 Lookup-Table-Graph</td></tr>
+        <tr><td class="mono">u, û / v, v̂</td><td>질의 노드 / 데이터 정점</td><td class="mono">f(Q, H)</td><td>손실 함수</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head">DEFINITION 3.1 · 정확 서브그래프 매칭 (서브그래프 동형사상) [158]</div>
+      <div class="def-body">
+        단사 함수 <code class="m">m(): V(Q) → V(𝒢)</code>로서 다음을 만족한다.
+        <div class="formula">
+          (1) ∀ u ∈ V(Q): m(u) ∈ V(𝒢) ∧ L(u) = L(m(u))<br>
+          (2) ∀ (u<sub>a</sub>, u<sub>b</sub>) ∈ E(Q): (m(u<sub>a</sub>), m(u<sub>b</sub>)) ∈ E(𝒢) ∧ L(u<sub>a</sub>, u<sub>b</sub>) = L(m(u<sub>a</sub>), m(u<sub>b</sub>))
+        </div>
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="tick"></span>근사 매칭이 허용하는 세 가지 불일치</h3>
+    <p class="body reveal">
+      정확 매칭과 달리, 근사 서브그래프 매칭은 일부 누락 질의 노드·누락 질의 에지·중간 데이터 정점을 허용한다.
+      나머지 비누락 질의 노드와 비중간 데이터 정점 중 매핑 함수 m()을 만족하는 쌍은 <b>매칭 쌍(matching pair)</b>이라 한다.
+    </p>
+    <div class="tri reveal">
+      <div class="t">
+        <div class="tn">MISSING QUERY NODE (MN)</div>
+        <div class="tt">누락 질의 노드</div>
+        <div class="td"><code>u ∈ V(Q)</code>이지만 <code>m(u) ∉ V(𝒢)</code>인 노드 u.</div>
+      </div>
+      <div class="t">
+        <div class="tn">MISSING QUERY EDGE (ME)</div>
+        <div class="tt">누락 질의 에지</div>
+        <div class="td"><code>(u_a, u_b) ∈ E(Q)</code>이지만 <code>(m(u_a), m(u_b)) ∉ E(𝒢)</code>인 에지.</div>
+      </div>
+      <div class="t">
+        <div class="tn">INTERMEDIATE VERTEX (IN)</div>
+        <div class="tt">중간 데이터 정점</div>
+        <div class="td">에지 <code>(u_a, u_b) ∈ E(Q)</code>가 데이터에 없지만, <code>(m(u_a), v_i)</code>와 <code>(v_i, m(u_b))</code>가 모두 E(𝒢)에 존재할 때의 v<sub>i</sub>.</div>
+      </div>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head">DEFINITION 3.2 · 선형 손실 함수</div>
+      <div class="def-body">
+        질의 그래프 Q와 결과 매칭 서브그래프 ℋ에 대해:
+        <div class="formula">
+          f(Q, ℋ) = <span class="c1">w₁ × MN</span> + <span class="c2">w₂ × ME</span> + <span class="c3">w₃ × IN</span>
+        </div>
+        MN은 누락 질의 노드 수, ME는 누락 질의 에지 수, IN은 중간 데이터 정점 수다.
+        가중치 w₁, w₂, w₃를 조정해 각 불일치 유형에 대한 허용치를 제어한다 —
+        <b>w₁이 작으면</b> 더 많은 누락 노드를 허용하고, <b>w₂ = ∞이면</b> 누락 에지를 전혀 허용하지 않는다.
+        정확 매칭 서브그래프가 존재하면 손실 비용은 0이다.
+      </div>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head">DEFINITION 3.3 · 노드-정점 유사도</div>
+      <div class="def-body">
+        정확 매칭에서는 u의 모든 이웃이 v의 이웃에 대응되어야만 u를 v에 매핑할 수 있으나,
+        근사 매칭에서는 이 강한 제약이 완화된다. G-Finder는 (1) <b>동일한 속성값</b>, (2) <b>높은 노드-정점 유사도</b>,
+        (3) <b>이웃들 또한 높은 노드-정점 유사도</b>를 만족하면 매핑을 허용한다.
+        <div class="formula">
+          sim(v<sub>i</sub>, u<sub>i</sub>) = |( m(N(u<sub>i</sub>)) ∩ N(v<sub>i</sub>) )| / |N(u<sub>i</sub>)|
+        </div>
+        N(v<sub>i</sub>)는 v<sub>i</sub>의 이웃, m(N(u<sub>i</sub>)) ∩ N(v<sub>i</sub>)는 N(u<sub>i</sub>) 중
+        N(v<sub>i</sub>)로 매핑된 노드들이다. 예컨대 u₂→v₆, u₃→v₇로 매핑 가능하면 sim(v₃, u₁) = 2/3이다.
+      </div>
+    </div>
+
+    <div class="callout info reveal">
+      <span class="cl-tag">REMARKS</span>
+      손실 함수와 노드-정점 유사도에는 대안이 존재한다 — 그래프 편집 거리<span class="cite">[44]</span>,
+      그래프 커널<span class="cite">[128]</span>, 임베딩 기반 그래프 유사도<span class="cite">[110]</span>,
+      행렬 기반 노드 유사도<span class="cite">[5]</span>, GNN 기반 유사도<span class="cite">[50]</span> 등.
+      G-Finder는 원칙적으로 이들 대안을 수용할 수 있으나, 이 장에서는 <b>효율성을 고려해 상대적으로 단순한 두 형태</b>를 사용한다.
+    </div>
+
+    <h3 class="reveal"><span class="tick"></span>기존 방법과의 성질 비교 (Table 3.2)</h3>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead>
+        <tr><th>방법</th><th class="ctr">노드 속성</th><th class="ctr">에지 속성</th><th class="ctr">정확 매칭</th><th class="ctr">누락 노드</th><th class="ctr">누락 에지</th><th class="ctr">중간 노드</th><th class="ctr">인덱스 기반</th><th class="ctr">조기 가지치기</th><th class="ctr">멀티그래프</th></tr>
+      </thead>
+      <tbody>
+        <tr class="hero-row"><td><b>G-Finder</b></td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+        <tr><td>CFL</td><td class="ok">✓</td><td class="no">✗</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td></tr>
+        <tr><td>G-Ray</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+        <tr><td>FIRST</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+        <tr><td>MAGE</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td></tr>
+        <tr><td>FilM</td><td class="no">✗</td><td class="no">✗</td><td class="ok">✓</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="no">✗</td><td class="ok">✓</td><td class="ok">✓</td></tr>
+        <tr><td>NeMa</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="no">✗</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head prob">PROBLEM 3.1 · Top-k 근사 서브그래프 매칭</div>
+      <div class="def-body">
+        <b>주어진 것</b> — (1) 속성 데이터 그래프 𝒢, (2) 속성 질의 그래프 Q,
+        (3) 원하는 매칭 서브그래프 수 k, (4) 손실 함수 f().<br>
+        <b>찾을 것</b> — 질의 그래프 Q에 가능한 한 잘 매칭되는(손실 함수 비용이 가장 작은)
+        <b>k개의 근사 매칭 서브그래프</b>.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 3.3 방법 개요 ==================== -->
+<section id="s33">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 3.3</div>
+      <h2>방법 개요 — 네 단계 프레임워크</h2>
+      <p class="lede">
+        G-Finder의 전체 프레임워크는 네 개의 주요 단계로 구성된다(Fig 3.2, Algorithm 1).
+      </p>
+    </div>
+
+    <div class="steps">
+      <div class="step reveal">
+        <div class="sn"></div>
+        <div class="sb">
+          <div class="st">루트 선택 (Root Selection)</div>
+          <div class="se">ALGORITHM 1, LINES 3–4</div>
+          <div class="sd">
+            매칭 과정을 시작할 루트 노드를 질의 그래프에서 선택한다. 바람직한 루트는
+            (1) <b>후보가 가능한 한 적고</b>, (2) 탐색 공간의 지름을 최소화하도록 <b>질의 그래프의 중심</b>에 있어야 한다<span class="cite">[9]</span>.
+            이를 위해 질의 그래프를 <b>코어-포레스트 구조</b>로 분해한 뒤(코어: 모든 노드가 이웃을 2개 이상 갖는 최대 서브그래프<span class="cite">[10]</span>, 나머지는 포레스트),
+            코어 구조에서 <code class="m">u_r ← argmin_u |C(u)| / deg(u)</code>인 노드를 루트로 선택한다.
+            |C(u)|는 데이터 그래프 내 u의 후보 집합 크기, deg(u)는 질의 그래프 내 u의 차수다.
+          </div>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="sn"></div>
+        <div class="sb">
+          <div class="st">Lookup-Table-Graph 구축</div>
+          <div class="se">ALGORITHM 1, LINE 7</div>
+          <div class="sd">
+            질의 그래프를 노드 단위로 순회하며 인덱스를 구축한다. 핵심은 후보 정점의 정보를 저장하는 새로운 자료구조
+            <b>Lookup-Table(LTB)</b>이다. 질의 그래프의 각 노드 u가 대응하는 LTB(u)를 가지며, 모든 LTB는
+            <b>질의 그래프와 동일한 위상을 공유하는 그래프</b>, 즉 <b>Lookup-Table-Graph(LTBG)</b>를 이룬다.
+            <ul>
+              <li><b>BFS 트리 순회</b> — 여러 정확 매칭 방법이 사용하는 일반적 전략<span class="cite">[9, 10]</span>. BFS 트리와 질의 그래프 모두에 존재하는 에지는 트리 에지(TE), 질의 그래프에만 존재하는 에지는 비트리 에지(NTE)다.</li>
+              <li><b>BFS의 한계</b> — 어떤 질의 노드(예: u₇)가 데이터 그래프에 후보가 없으면 LTB(u₇)가 비고, 그 자식들(u₅, u₆)까지 무시되어 결과 품질이 나빠진다. 근사 매칭에는 부적합할 수 있다.</li>
+              <li><b>힙 기반 동적 순회(Dynamic-Tree)</b> — 처리 중인 LTB를 힙에 저장하고, 매번 <code class="m">|C(u)|/deg(u)</code>가 가장 작은 LTB를 꺼내 미방문 이웃의 LTB를 재귀적으로 구축·삽입한다. 질의 그래프의 모든 노드가 처리될 때까지 반복한다.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="sn"></div>
+        <div class="sb">
+          <div class="st">매칭 순서 결정 (Matching Identification)</div>
+          <div class="se">ALGORITHM 1, LINE 8</div>
+          <div class="sd">
+            매칭 순서는 LTBG의 후보들을 질의 노드에 매칭시키는 <b>질의 노드 시퀀스</b>다.
+            예컨대 순서가 (u₀, u₁, u₂, u₃)이면, LTB(u₀)에서 좋은 후보 v₀를 고르고, v₀에 연결된 LTB(u₁)의 후보 v₁,
+            이어 v₀·v₁ 모두에 연결된 LTB(u₂)의 후보 v₂, v₀·v₂에 연결된 LTB(u₃)의 후보 v₃를 차례로 선택한다.
+            최소 빈도 경로 우선<span class="cite">[169]</span>, 탐욕적 경로 정렬<span class="cite">[10]</span>,
+            최소 빈도 노드 우선<span class="cite">[127]</span> 등 여러 방법이 있으며,
+            공통 아이디어는 <b>후보 정점이 가장 적은 노드/경로를 먼저 선택해 탐색 공간을 압축</b>하는 것이다.
+            G-Finder에서는 이들의 매칭 정확도가 유사하여, <b>계산 효율을 위해 탐욕적 경로 정렬</b>을 사용한다.
+          </div>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="sn"></div>
+        <div class="sb">
+          <div class="st">서브그래프 열거 (Subgraph-Enumeration)</div>
+          <div class="se">ALGORITHM 1, LINE 9</div>
+          <div class="sd">
+            Step 3의 매칭 순서에 따라 LTBG의 후보를 탐색하여, 손실 함수 비용이 가장 작은
+            <b>Top-k 근사 매칭 서브그래프</b>를 찾는다. 매칭 과정 동안 <b>지금까지의 k개 최선 결과를 저장하는 힙</b>을
+            유지하고, 더 좋은 결과를 찾으면 힙을 갱신한다.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 3.4 상세 ==================== -->
+<section id="s34">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 3.4</div>
+      <h2>방법 상세 — LTBG 구축과 서브그래프 열거</h2>
+      <p class="lede">
+        G-Finder에서 가장 복잡한 두 단계인 <b>Lookup-Table-Graph 구축</b>과 <b>서브그래프 열거</b>의
+        세부를 제시하고, 시간·공간 복잡도를 분석한다.
+      </p>
+    </div>
+
+    <h3 class="reveal"><span class="tick"></span>A — Lookup-Table 구조</h3>
+    <p class="body reveal">
+      LTB는 후보 정점의 정보, 즉 <b>후보 집합, 부모-자식 관계, 중간 정점 수(IVN), 노드-정점 유사도(SIM)</b>를 저장한다.
+      LTB 간에는 부모-자식 관계(트리 에지에 의한)와, 비트리 에지에서 비롯되는 <b>선방문 이웃(prior-visited neighborhood)
+      관계</b>가 존재한다 — 예컨대 u₃와 u₄ 사이에 비트리 에지가 있고 LTB(u₃)가 LTB(u₄)보다 먼저 구축되면
+      두 LTB 사이에 선방문 이웃 관계가 생긴다. 데이터 그래프 후보 정점들 사이의 부모-자식 관계도 함께 기록된다.
+      LTB 구축 시 후보 정점은 <b>IVN과 SIM으로 정렬</b>되며, 매칭 과정에서 <b>SIM이 높고 IVN이 작은 정점을 먼저 선택</b>하여
+      선형 손실 함수 비용을 작게 만든다.
+    </p>
+
+    <h3 class="reveal"><span class="tick"></span>B — LTB 구축과 Neighbor-Expander</h3>
+    <p class="body reveal">
+      루트 선택 후, 데이터 그래프를 동적으로 탐사하며 각 질의 노드의 후보를 고른다.
+      이때 <b>노드-정점 유사도, 중간 정점 수, 누락 노드/에지 허용치</b>라는 정제·필터링 전략으로
+      유망하지 않은 후보를 가지치기하여 후보 크기를 최소화한다.
+      직관적으로, 부분 매칭 H<sub>i</sub>가 있고 다음 노드 u<sub>j</sub>의 매칭 정점을 찾을 때,
+      v<sub>j</sub>가 좋은 후보라면 Q<sub>i</sub> ∩ N(u<sub>j</sub>)의 각 노드 u<sub>n</sub>에 대해 그 후보 v<sub>n</sub>과 인접해야 한다.
+      그러나 근사 매칭에서는 누락 노드/에지를 허용한다면 이 강한 제약을 만족하지 않아도 된다.
+    </p>
+    <div class="def reveal">
+      <div class="def-head">STRATEGY · Neighbor-Expander (Algorithm 2의 핵심)</div>
+      <div class="def-body">
+        u<sub>p</sub>가 u<sub>j</sub>의 부모이고 대응 데이터 정점이 v<sub>p</sub>라 하자.
+        <div class="formula">
+          ① v<sub>p</sub>의 <span class="c2">t-홉 이웃</span> 중 속성이 L(u<sub>j</sub>)인 정점을 모두 골라 집합 M에 추가한다<br>
+          ② 각 v<sub>m</sub> ∈ M에 대해 노드-정점 유사도를 계산 — <span class="c3">sim(v<sub>m</sub>, u<sub>j</sub>) ≥ s</span>(사전 정의 임계값)이면 좋은 후보로 취급<br>
+          ③ 각 v<sub>m</sub>이 H<sub>i</sub>의 정점 몇 개와 연결되는지 계산 — <span class="c1">|N(u<sub>j</sub>)| − d</span>보다 크면 좋다고 판정 (d는 허용할 누락 에지 수)
+        </div>
+        이 장에서 근사 매칭의 t = 2이며, 사용자는 다른 t를 선택할 수 있다.
+        예컨대 v₃는 v₀의 2-홉 이웃이고 sim(v₃, u₁) = 2/3이므로 s = 0.5일 때 좋은 후보다.
+      </div>
+    </div>
+    <p class="body reveal">
+      단일 LTB는 <b>선방문 이웃들의 LTB 정보를 활용</b>하여 구축한다(Algorithm 2). u<sub>i</sub>의 방문된 이웃 집합을
+      N<sub>visited</sub>(u<sub>i</sub>)라 하면, u<sub>i</sub>의 후보는 N<sub>visited</sub>(u<sub>i</sub>)의 후보 집합들로부터 생성된다:
+      각 u<sub>j</sub> ∈ N<sub>visited</sub>(u<sub>i</sub>)의 후보 v<sub>j</sub> ∈ C(u<sub>j</sub>)마다 Neighbor-Expander로
+      sim(v, u<sub>i</sub>) ≥ s인 좋은 후보를 골라 집합 S에 넣는다(Lines 4–6).
+      이어서 부모 후보 C(u<sub>p</sub>)의 각 정점 v<sub>n</sub>에 대해 S 내의 t-홉 이웃을
+      <code class="m">LTB(u_i).adj[v_n]</code>에 저장하여 데이터 그래프 상의 공통 부모 관계를 기록하고,
+      마지막으로 중간 정점 수를 기록한다(Line 12).
+      예컨대 LTB(u₄)는 LTB(u₂)·LTB(u₃)로부터 구축되며 — C(u₂) = (v₄, v₆), C(u₃) = (v₅, v₇),
+      이들의 2-홉 이웃 중 속성 L(u₄)를 갖는 정점은 각각 (v₁, v₈), (v₃, v₉), (v₁), (v₃, v₉)이고, s = 1/4이면
+      S = (v₁, v₈, v₃, v₉)가 모두 좋은 후보다. 부모가 u₂이므로
+      <code class="m">LTB(u₄).adj[v₄] = (v₈, v₁)</code>, <code class="m">LTB(u₄).adj[v₆] = (v₃, v₉)</code>가 된다.
+    </p>
+
+    <h3 class="reveal"><span class="tick"></span>C — LTBG 구축 (Algorithm 3)</h3>
+    <p class="body reveal">
+      LTBG 구축의 또 다른 핵심은 질의 그래프 Q에 대한 <b>구축 순서 선택</b>이다. <b>최소 힙(min heap)</b>으로 현재 처리 중인
+      노드들의 LTB를 저장하며 동적으로 구축한다 — 먼저 루트 노드의 LTB를 만들어 힙에 넣고(Lines 4–5),
+      매번 힙에서 LTB 하나를 꺼내 미방문 자식들의 LTB를 구축한 뒤(Lines 7, 9) 자식 LTB를 힙에 넣는다(Line 11).
+      질의 그래프의 모든 노드가 처리될 때까지 반복한다. 다음에 꺼낼 LTB는
+      <code class="m">|C(u)|/deg(u)</code>가 최소인 것을 선택하는데, 이 값이 작은 LTB의 자식일수록
+      후보 정점이 적을 가능성이 높기 때문이다.
+    </p>
+
+    <h3 class="reveal"><span class="tick"></span>서브그래프 열거와 조기 종료 (Algorithm 4)</h3>
+    <p class="body reveal">
+      Top-k 탐색에서는 지금까지 본 최선의 k개 답을 저장하는 <b>Top-k 최대 힙(max heap)</b>을 유지한다.
+      탐색 중 부분 질의 그래프 Q<sub>i</sub>와 부분 매칭 그래프 H<sub>i</sub> 사이의 현재 선형 손실 함수 비용을 계산하고,
+      힙 내 최대 손실 비용과 비교한다. <b>현재 비용이 힙의 최대 비용보다 높으면 해당 부분 매칭의 확장을 중단</b>하여
+      조기 종료를 가능하게 한다.
+    </p>
+    <div class="callout good reveal">
+      <span class="cl-tag">EXAMPLE · FIG 3.5</span>
+      매칭 순서가 &lt;u₀, u₁, u₇, u₂, u₃, u₄, u₅, u₆&gt;이고 부분 매칭 H₅ = (v₀, v₂, v₃, v₆, v₇),
+      대응 부분 질의 그래프 Q₅ = (u₀, u₁, u₂, u₃, u₇)일 때, w₁ = w₂ = w₃ = 1이면
+      중간 데이터 정점 v₂ 하나와 누락 질의 노드 u₇ 하나로 <b>손실 비용은 2</b>다.
+      이것이 최대 힙의 최대 손실보다 크면 확장을 멈추고, 아니면 계속 확장한다.
+    </div>
+
+    <h3 class="reveal"><span class="tick"></span>복잡도 분석</h3>
+    <div class="cx reveal">
+      <div class="c">
+        <div class="ck">LTBG-BUILDER (STEP 2)</div>
+        <div class="cv">공간 O(|V(Q)| × |E(𝒢)|)<br>시간 O(|E(Q)| × |E(𝒢)| × |V(𝒢)|)</div>
+        <div class="cd">질의 Q와 데이터 그래프 𝒢에 대한 최악의 경우 복잡도다.</div>
+      </div>
+      <div class="c">
+        <div class="ck">SUBGRAPH-ENUM (STEP 4) — 최악/최선</div>
+        <div class="cv">최악 O(∏<sub>i=0</sub><sup>|V(Q)|−1</sup> |V(𝒢) − i|)<br>최선 O(|V(Q)|)</div>
+        <div class="cd">최악은 데이터 그래프가 완전 그래프일 때뿐이며 실제 그래프에서는 극히 드물다. 최선은 모든 노드의 속성이 서로 다를 때다.</div>
+      </div>
+      <div class="c">
+        <div class="ck">평균 (속성 D개일 때) &amp; 경험적</div>
+        <div class="cv">O(∏<sub>i=0</sub><sup>|V(Q)|/D</sup> ∏<sub>j=0</sub><sup>D−1</sup> ||V(𝒢)|/D − j|)</div>
+        <div class="cd">경험적으로, 속성 정보가 풍부한 데이터 그래프에서 총 실행 시간은 데이터·질의 그래프 노드 수에 대해 준선형으로 확장된다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 3.5 실험 ==================== -->
+<section id="s35">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 3.5</div>
+      <h2>실험 — 효과성과 효율성</h2>
+      <p class="lede">
+        실험은 두 질문에 답하도록 설계됐다. <b>Q1 (효과성)</b> — G-Finder의 서브그래프 매칭은 얼마나 정확한가?
+        <b>Q2 (효율성)</b> — G-Finder는 얼마나 빠르고 확장 가능한가?
+      </p>
+    </div>
+
+    <div class="metrics reveal">
+      <div class="metric"><div class="mv">+30%</div><div class="mk">DBLP에서 최고 베이스라인(MAGE) 대비 <b>F1-Score</b> 우위 (질의 노드 7·9·13개)</div></div>
+      <div class="metric"><div class="mv">6–8×</div><div class="mk">IMDB에서 <b>NeMa 대비 실행 시간</b> 우위 (동일 매칭 결과·동일 F1)</div></div>
+      <div class="metric"><div class="mv">&gt;0.8</div><div class="mk">대부분의 경우에서 G-Finder-Dynamic의 <b>F1-Score</b></div></div>
+      <div class="metric"><div class="mv">≈ 선형</div><div class="mk">데이터·질의 그래프 노드 수에 대한 <b>준선형 확장성</b></div></div>
+    </div>
+
+    <h3 class="reveal"><span class="tick"></span>실험 설정</h3>
+    <p class="body reveal">
+      <b>데이터셋</b> — 8개의 실세계 데이터셋을 사용한다(Table 3.3). Human·HPRD는 단백질-단백질 상호작용 네트워크<span class="cite">[10]</span>,
+      DBLP는 저자-논문 관계, Flickr·LastFm은 사용자 관계, AMiner는 공저 관계의 학술 소셜 네트워크(노드 속성 벡터는 출판 논문 수에서 추출),
+      PNNL-V4는 Pacific Northwest National Laboratory 제작, IMDB는 NeMa<span class="cite">[64]</span>와 동일한 영화 데이터셋이다.
+      <b>베이스라인</b> — G-Ray<span class="cite">[144]</span>, MAGE<span class="cite">[114]</span>, FIRST<span class="cite">[5]</span>,
+      FilM<span class="cite">[34]</span>, NeMa<span class="cite">[64]</span> 5종(원저자 제공 소스 코드).
+      제안 알고리즘은 순회 전략에 따라 <b>G-Finder-BFS</b>와 <b>G-Finder-Dynamic</b>의 두 변형을 평가한다.
+      <b>지표</b> — 매칭 정확도는 F1-Score, 효율성은 총 실행 시간(인덱스 구축 시간은 질의 시간보다 작다).
+      선형 손실 함수, MAGE·FIRST의 % Extra nodes, FIRST의 % Exact Matching Nodes 등 대안 지표에서도
+      G-Finder가 베이스라인을 능가하나 지면 제약으로 F1-Score만 보고한다.
+      <b>재현성</b> — C++ 구현, Intel Core-i7 3.20GHz CPU·32GB 메모리 머신에서 수행.
+    </p>
+
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>데이터셋</th><th>노드 수</th><th>에지 수</th><th>속성 위치</th><th>속성 수</th></tr></thead>
+      <tbody>
+        <tr><td><b>Human</b></td><td class="mono">4,674</td><td class="mono">86,282</td><td>노드</td><td class="mono">44</td></tr>
+        <tr><td><b>HPRD</b></td><td class="mono">9,460</td><td class="mono">37,081</td><td>노드</td><td class="mono">307</td></tr>
+        <tr><td><b>DBLP</b></td><td class="mono">9,143</td><td class="mono">16,338</td><td>노드</td><td class="mono">29</td></tr>
+        <tr><td><b>Flickr</b></td><td class="mono">12,974</td><td class="mono">16,149</td><td>노드</td><td class="mono">3</td></tr>
+        <tr><td><b>LastFm</b></td><td class="mono">136,421</td><td class="mono">1,685,524</td><td>노드</td><td class="mono">3</td></tr>
+        <tr><td><b>AMiner</b></td><td class="mono">1,274,360</td><td class="mono">4,756,194</td><td>노드</td><td class="mono">300</td></tr>
+        <tr><td><b>PNNL-V4</b></td><td class="mono">22,154</td><td class="mono">460,196</td><td>에지</td><td class="mono">259,917</td></tr>
+        <tr><td><b>IMDB</b></td><td class="mono">2,932,657</td><td class="mono">11,040,263</td><td>노드 &amp; 에지</td><td class="mono">노드 수 + 에지 수</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3 class="reveal"><span class="tick"></span>효과성 결과</h3>
+    <p class="body reveal">
+      질의 그래프는 데이터 그래프의 연결 유도 서브그래프를 뽑아(정확 매칭이 최소 1개 존재하도록) 이를 정답으로 삼고,
+      에지 삭제·노드 속성 변경·데이터 그래프에 없는 여분 노드 추가 등 <b>다양한 잡음을 주입</b>하여 생성한다.
+      주요 파라미터는 k = 10, w₁ = w₂ = w₃ = 1(편향 없음)이다.
+      Human·HPRD·DBLP·Flickr·LastFm·AMiner 6개 데이터셋에서 <b>G-Finder-Dynamic은 세 베이스라인(G-Ray·MAGE·FIRST)을
+      모든 경우에 일관되게 능가</b>했다 — DBLP에서는 최고 베이스라인 MAGE보다 30% 우수했다.
+      두 변형 사이에서는 G-Finder-Dynamic이 거의 모든 경우 승리하거나 유사한 높은 점수를 얻었으며,
+      예외는 (1) HPRD 질의 노드 7개, (2) LastFm 9개, (3) AMiner 10개의 세 경우뿐이다.
+    </p>
+    <div class="callout warn reveal">
+      <span class="cl-tag">WHY BFS FAILS</span>
+      Human에서 G-Finder-BFS의 상대적으로 낮은 F1은, 잡음 노드가 루트에 가까울 때 BFS 트리로 변환하면
+      해당 노드들이 데이터 그래프에 후보를 갖지 못하고 <b>그 자식 노드들까지 무시</b>되기 때문이다.
+      정확 매칭에서 널리 쓰이는 BFS-트리 순회가 근사 매칭에서는 차선일 수 있으며,
+      제안한 <b>Dynamic-Tree가 훨씬 효과적인 순회 전략</b>이라는 3.2절의 분석과 일치한다.
+    </div>
+
+    <h3 class="reveal"><span class="tick"></span>정확 매칭 모드 — FilM·NeMa와의 비교</h3>
+    <p class="body reveal">
+      G-Finder는 근사 매칭용으로 설계됐지만, (1) t = 1로 설정(LTBG에서 직접 이웃만 고려)하고
+      (2) 선형 손실 값이 0인 매칭만 남기면 <b>정확 매칭에도 사용</b>할 수 있다.
+      PNNL-V4에서 FilM<span class="cite">[34]</span>은 각 질의 노드에 잠재적 거짓 양성을 포함한 후보 집합을 반환하여
+      결과 매칭 서브그래프가 100개를 넘지만(후보 수의 곱), 실제 정확 매칭은 단 하나뿐이라 <b>FilM의 F1-Score는 0에 가깝다</b>.
+      반면 G-Finder-Dynamic은 각 질의 노드에 <b>정확히 하나의 후보</b>를 생성하여 유일한 정확 매칭을 정밀하게 찾아내며,
+      총 실행 시간도 더 빠르다(<b>134초 vs 199초</b>).
+      NeMa와의 비교에서는 공정성을 위해 NeMa와 동일한 IMDB 데이터셋·노드 추가 잡음 질의를 사용하고
+      IMDB의 각 속성값을 정수로 매핑했다. 데이터·질의 그래프 모두 고유 속성값을 가지므로 두 알고리즘은 같은 매칭을 찾아
+      F1이 동일하지만, <b>G-Finder-Dynamic이 6–8배 빠르다</b>.
+    </p>
+
+    <h3 class="reveal"><span class="tick"></span>효율성 결과</h3>
+    <p class="body reveal">
+      실행 시간-정확도 트레이드오프(각 방법당 5개 지점)에서 <b>G-Ray·MAGE·G-Finder가 가장 빨라</b>
+      짧은 시간 안에 매칭 결과를 찾지만, <b>G-Finder-Dynamic의 매칭 정확도는 다른 방법보다 월등히 높아</b>
+      대부분의 경우 F1-Score가 0.8을 넘는다. 확장성 실험에서는 G-Finder-Dynamic의 실행 시간이
+      데이터 그래프와 질의 그래프 노드 수 모두에 대해 <b>준선형으로 확장</b>됨을 확인했다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 3.6 논의 ==================== -->
+<section id="s36">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 3.6</div>
+      <h2>논의</h2>
+      <p class="lede">
+        이 장은 질의 그래프를 반복적으로 순회하며 데이터 그래프에서 답을 찾는 <b>심볼릭 서브그래프 매칭 방법</b>을 소개했다.
+        질의 구조에 기반해 매칭 순서를 계산하고 그에 따라 답을 검색한다.
+      </p>
+    </div>
+    <div class="vs reveal">
+      <div class="v">
+        <div class="vh" style="color:var(--ok)">심볼릭 접근의 강점</div>
+        <div class="vd">뉴럴 네트워크 기반 방법과 달리, 심볼릭 접근은 <b>더 정확하고 설명 가능</b>하다.</div>
+      </div>
+      <div class="v">
+        <div class="vh" style="color:var(--warn)">남는 한계와 다음 과제</div>
+        <div class="vd">질의 그래프의 심볼릭 관계 수가 늘어날수록 <b>시간 소모가 커진다</b>.
+        추론 과정을 가속하기 위해 <b>심볼릭 추론과 뉴럴 방법을 통합</b>하는 것이 앞으로 해결해야 할 중요한 과제다.</div>
+      </div>
+    </div>
+
+    <div class="fnotes reveal">
+      <div class="fn"><i>FN1</i><span>데이터 그래프와 질의 그래프는 멀티그래프일 수 있다. 이해를 돕기 위해 이 장은 주로 노드 속성을 가진 그래프에 집중한다.</span></div>
+      <div class="fn"><i>FN2</i><span>그래프 Q의 코어 구조는 모든 노드가 최소 2개의 이웃을 갖는 Q의 최대 서브그래프다[10]. 나머지 부분은 Q의 포레스트 구조라 부른다.</span></div>
+      <div class="fn"><i>FN3</i><span>실제로 Fig 3.1에서 G-Finder는 u₄를 루트로 선택하지만, 설명을 위해 이 장의 모든 예시는 u₀를 루트로 가정한다. 루트 노드는 누락 정점일 수 없다.</span></div>
+      <div class="fn"><i>FN4</i><span>이 장에서 근사 서브그래프 매칭의 t = 2이며, 사용자는 다른 t를 선택할 수 있다.</span></div>
+      <div class="fn"><i>FN5</i><span>인덱스 구축 시간은 질의 실행 시간에 비해 작다.</span></div>
+      <div class="fn"><i>FN6</i><span>w₁ = w₂ = w₃ = 1은 G-Finder에 편향이 없음을 의미한다. 예컨대 w₁이 크면 더 많은 결과 노드를 찾으려 하지만 결과 그래프에 중간 노드가 많이 포함될 수 있다.</span></div>
+      <div class="fn"><i>FN7</i><span>G-Finder-Dynamic은 FilM보다 빠르다(총 실행 시간 134초 vs 199초). PNNL 데이터셋에는 질의 그래프가 하나뿐이다.</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="src">
+      <b>출처</b><br>
+      Liu, L. &amp; Tong, H. (2026). <b>Neural Symbolic Knowledge Graph Reasoning:<br>
+      A Pathway Towards Neural Symbolic AI</b> — Chapter 3. Accurate Query Answering<br>with Symbolic Reasoning Over Complete KGs.<br>
+      Synthesis Lectures on Computer Science, Springer Nature Switzerland.
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--qry)"></i>질의 그래프 Q — 노드·에지</span><br>
+      <span><i style="background:var(--dat)"></i>데이터 그래프 𝒢 — 정점·링크</span><br>
+      <span><i style="background:var(--ok)"></i>결과 — Top-k 최소 손실 매칭</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // 스크롤 리빌
+  var reveals = document.querySelectorAll(".reveal");
+  if (reduce || !("IntersectionObserver" in window)) {
+    reveals.forEach(function(el){ el.classList.add("on"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add("on"); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.1 });
+    reveals.forEach(function(el){ io.observe(el); });
+  }
+
+  // 탐욕 vs G-Finder 토글
+  var btns = document.querySelectorAll(".tbtn");
+  var nodes = document.querySelectorAll(".tg-node");
+  var verdict = document.getElementById("verdict");
+  var texts = {
+    greedy: '<b>탐욕 확장 (예: [142, 144])</b> — v1이 u1에 완벽히 대응되므로 v1을 다음 후보로 선택하고, 이어 v4, v5로 확장하여 최종적으로 <b>(v0, v1, v4, v5, v8)</b>이 유도하는 서브그래프를 반환한다. 국소적으로는 최선이지만 전역적으로는 차선의 결과다.',
+    gfinder: '<b>G-Finder</b> — 질의 구조에 따라 데이터 그래프에 인덱스(LTBG)를 구축하여, <b>(v0, v2, v3, v6, v7, v9, v10, v11)</b>이 유도하는 서브그래프를 찾는다. 중간 정점이 v2 하나뿐이므로 명백히 더 좋은 결과다.'
+  };
+  function setMode(mode){
+    btns.forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-mode") === mode); });
+    nodes.forEach(function(n){
+      n.classList.remove("picked-g","picked-f");
+      if (mode === "greedy" && n.hasAttribute("data-g")) n.classList.add("picked-g");
+      if (mode === "gfinder" && n.hasAttribute("data-f")) n.classList.add("picked-f");
+    });
+    if (verdict) {
+      verdict.innerHTML = texts[mode];
+      verdict.className = "trap-verdict " + mode;
+    }
+  }
+  btns.forEach(function(b){
+    b.addEventListener("click", function(){ setMode(b.getAttribute("data-mode")); });
+  });
+  setMode("greedy");
+
+  // 현재 섹션 내비 활성화
+  var navLinks = document.querySelectorAll(".navlinks a");
+  var secs = ["s31","s32","s33","s34","s35","s36"].map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  if ("IntersectionObserver" in window) {
+    var nio = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) {
+          navLinks.forEach(function(a){
+            a.classList.toggle("active", a.getAttribute("href") === "#" + e.target.id);
+          });
+        }
+      });
+    }, { rootMargin: "-35% 0px -55% 0px" });
+    secs.forEach(function(s){ nio.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>

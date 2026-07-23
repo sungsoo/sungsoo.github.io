@@ -1,0 +1,955 @@
+---
+layout: null
+title: "Neural Symbolic Reasoning over Incomplete KG" 
+date: 2026-07-24 
+categories: [artificial intelligence]
+tags: [artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제5장 불완전한 KG 위 뉴로-심볼릭 추론 — BiNet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#10141C;
+  --card:#171D29;
+  --card-2:#1D2433;
+  --ink:#E9ECF2;
+  --sub:#9AA5B5;
+  --faint:#5F6A7C;
+  --hair:rgba(233,236,242,.09);
+  --hair-strong:rgba(233,236,242,.17);
+
+  /* Fig 5.2의 색 규약을 그대로 채택 */
+  --qa:#F0716A;       /* KGQA — 레드 */
+  --qa-bg:rgba(240,113,106,.09);
+  --qa-line:rgba(240,113,106,.36);
+  --kc:#E8B84B;       /* KGC — 옐로 */
+  --kc-bg:rgba(232,184,75,.09);
+  --kc-line:rgba(232,184,75,.36);
+  --sh:#5AC58F;       /* 공유 컴포넌트 — 그린 */
+  --sh-bg:rgba(90,197,143,.09);
+  --sh-line:rgba(90,197,143,.36);
+  --sc:#8FA3C0;       /* 답 스코어링 — 그레이 */
+  --sc-bg:rgba(143,163,192,.10);
+  --sc-line:rgba(143,163,192,.32);
+
+  --disp:'IBM Plex Sans KR',sans-serif;
+  --sans:'Pretendard Variable',Pretendard,-apple-system,'Noto Sans KR',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:var(--sans);font-size:16.5px;line-height:1.85;letter-spacing:-.01em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(240,113,106,.28)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--sh);outline-offset:2px}
+
+/* ---------- 내비게이션 ---------- */
+.topnav{
+  position:sticky;top:0;z-index:60;
+  background:rgba(16,20,28,.85);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--hair);
+}
+.topnav .wrap{display:flex;align-items:center;gap:24px;height:58px}
+.brand{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.04em;white-space:nowrap}
+.brand b{color:var(--sh);font-weight:600}
+.navlinks{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+.navlinks a{
+  color:var(--sub);text-decoration:none;font-size:13px;font-weight:600;
+  padding:7px 11px;border-radius:8px;transition:.2s;white-space:nowrap;
+}
+.navlinks a:hover{color:var(--ink);background:rgba(233,236,242,.06)}
+.navlinks a.active{color:var(--sh);background:var(--sh-bg)}
+
+/* ---------- 히어로 ---------- */
+.hero{border-bottom:1px solid var(--hair);position:relative;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(620px 340px at 12% 0%,rgba(240,113,106,.07),transparent 70%),
+    radial-gradient(620px 340px at 88% 100%,rgba(232,184,75,.07),transparent 70%);
+}
+.hero .wrap{position:relative;z-index:1;padding-top:80px;padding-bottom:70px}
+.pub-line{
+  font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.05em;
+  display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:24px;
+}
+.pub-line .dot{width:3px;height:3px;border-radius:50%;background:var(--faint)}
+.pub-line em{font-style:normal;color:var(--sh);font-weight:600}
+.tagrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.chapter-tag{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--sh);
+  background:var(--sh-bg);border:1px solid var(--sh-line);border-radius:999px;
+  padding:6px 16px;letter-spacing:.06em;
+}
+.cond{font-family:var(--mono);font-size:12.5px;font-weight:600;border-radius:999px;padding:6px 16px}
+.cond.kg{color:var(--qa);background:var(--qa-bg);border:1px solid var(--qa-line)}
+.cond.q{color:var(--kc);background:var(--kc-bg);border:1px solid var(--kc-line)}
+h1{
+  font-family:var(--disp);font-weight:700;
+  font-size:clamp(33px,4.5vw,49px);line-height:1.36;letter-spacing:-.02em;margin-bottom:20px;
+}
+h1 .hl{color:var(--sh)}
+.hero-sub{font-size:16.5px;color:var(--sub);max-width:760px;margin-bottom:40px}
+.hero-sub b{color:var(--ink);font-weight:700}
+
+/* 아키텍처 파이프라인 */
+.arch{
+  border:1px solid var(--hair-strong);border-radius:18px;background:var(--card);
+  padding:28px;overflow:hidden;
+}
+.arch-title{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--faint);font-weight:600;margin-bottom:8px}
+.arch-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;font-family:var(--mono);font-size:11px;color:var(--sub)}
+.arch-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;font-style:normal;vertical-align:-1px}
+.arch-flow{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.anode{
+  border:1px solid;border-radius:12px;padding:14px 12px;position:relative;
+}
+.anode.qa{border-color:var(--qa-line);background:var(--qa-bg)}
+.anode.sh{border-color:var(--sh-line);background:var(--sh-bg)}
+.anode.sc{border-color:var(--sc-line);background:var(--sc-bg)}
+.anode.kc{border-color:var(--kc-line);background:var(--kc-bg)}
+.anode .an{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;margin-bottom:7px}
+.anode.qa .an{color:var(--qa)}
+.anode.sh .an{color:var(--sh)}
+.anode.sc .an{color:var(--sc)}
+.anode.kc .an{color:var(--kc)}
+.anode .at{font-family:var(--disp);font-weight:700;font-size:13.5px;margin-bottom:5px;line-height:1.4}
+.anode .ad{font-size:11.5px;color:var(--sub);line-height:1.6}
+.anode::after{
+  content:"→";position:absolute;right:-11px;top:16px;color:var(--faint);font-weight:700;z-index:2;font-size:14px;
+}
+.anode:last-child::after{content:none}
+
+/* ---------- 섹션 공통 ---------- */
+section{padding:86px 0;border-bottom:1px solid var(--hair)}
+section:last-of-type{border-bottom:none}
+.sec-head{max-width:830px;margin-bottom:44px}
+.eyebrow{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.12em;
+  color:var(--sh);display:flex;align-items:center;gap:12px;margin-bottom:14px;
+}
+.eyebrow::before{content:"";width:30px;height:2px;background:var(--sh)}
+h2{
+  font-family:var(--disp);font-weight:700;font-size:clamp(25px,3.1vw,33px);
+  line-height:1.42;margin-bottom:14px;letter-spacing:-.015em;
+}
+.lede{color:var(--sub);font-size:16px}
+.lede b{color:var(--ink);font-weight:700}
+h3{
+  font-family:var(--disp);font-weight:700;font-size:19.5px;margin:52px 0 18px;
+  display:flex;align-items:center;gap:12px;
+}
+h3 .node{width:10px;height:10px;border-radius:50%;background:var(--sh);flex-shrink:0}
+p.body{color:var(--sub);margin-bottom:16px;max-width:850px;font-size:15.5px}
+p.body b{color:var(--ink);font-weight:700}
+.cite{font-family:var(--mono);font-size:.76em;color:var(--faint);vertical-align:super;white-space:nowrap}
+code.m{
+  font-family:var(--mono);font-size:.86em;background:rgba(233,236,242,.07);
+  border-radius:6px;padding:2px 7px;color:var(--ink);
+}
+sub,sup{line-height:0}
+
+/* 상호 보완 루프 (시그니처) */
+.loop{
+  border:1px solid var(--hair-strong);border-radius:18px;background:var(--card);
+  padding:30px;margin:32px 0;
+}
+.loop-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.loop-title{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--faint);font-weight:600}
+.loop-toggle{display:flex;gap:8px}
+.lbtn{
+  font-family:var(--sans);font-size:13.5px;font-weight:700;padding:9px 18px;border-radius:10px;
+  border:1px solid var(--hair-strong);background:var(--card-2);color:var(--sub);cursor:pointer;transition:.18s;
+}
+.lbtn.r1.on{color:#10141C;background:var(--qa);border-color:var(--qa)}
+.lbtn.r2.on{color:#10141C;background:var(--kc);border-color:var(--kc)}
+.loop-diagram{display:grid;grid-template-columns:1fr 120px 1fr;gap:0;align-items:center;margin-bottom:18px}
+.loop-box{
+  border:1.5px solid;border-radius:14px;padding:20px;text-align:center;
+}
+.loop-box.qa{border-color:var(--qa-line);background:var(--qa-bg)}
+.loop-box.kc{border-color:var(--kc-line);background:var(--kc-bg)}
+.loop-box .lt{font-family:var(--disp);font-weight:700;font-size:17px}
+.loop-box.qa .lt{color:var(--qa)}
+.loop-box.kc .lt{color:var(--kc)}
+.loop-box .ls{font-size:12px;color:var(--sub);margin-top:4px}
+.loop-arrows{display:flex;flex-direction:column;gap:10px;align-items:center}
+.larrow{
+  font-family:var(--mono);font-size:12px;font-weight:600;padding:5px 12px;border-radius:8px;
+  border:1px solid var(--hair-strong);color:var(--faint);white-space:nowrap;transition:.2s;
+}
+.larrow.on-r1{color:#10141C;background:var(--qa);border-color:var(--qa)}
+.larrow.on-r2{color:#10141C;background:var(--kc);border-color:var(--kc)}
+.loop-story{
+  border:1px dashed var(--hair-strong);border-radius:13px;background:var(--card-2);
+  padding:20px 24px;font-size:14.5px;color:var(--sub);line-height:1.9;
+}
+.loop-story b{color:var(--ink)}
+.loop-story .kw-qa{color:var(--qa);font-weight:700}
+.loop-story .kw-kc{color:var(--kc);font-weight:700}
+
+/* 정의/수식 블록 */
+.def{margin:22px 0;border-radius:14px;border:1px solid var(--hair);background:var(--card);overflow:hidden}
+.def-head{
+  padding:12px 22px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;font-weight:600;
+  color:var(--sh);background:var(--sh-bg);border-bottom:1px solid var(--hair);
+}
+.def-head.qa{color:var(--qa);background:var(--qa-bg)}
+.def-head.kc{color:var(--kc);background:var(--kc-bg)}
+.def-head.sc{color:var(--sc);background:var(--sc-bg)}
+.def-body{padding:20px 22px;color:var(--sub);font-size:15px}
+.def-body b{color:var(--ink)}
+.formula{
+  font-family:var(--mono);font-size:13.5px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--hair);border-radius:10px;padding:14px 18px;margin:12px 0;
+  overflow-x:auto;line-height:2;
+}
+.formula .eq{color:var(--faint);font-size:11px;float:right;margin-left:12px}
+.formula .c1{color:var(--qa)}
+.formula .c2{color:var(--kc)}
+.formula .c3{color:var(--sh)}
+
+/* 표 */
+table.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px;background:var(--card);border:1px solid var(--hair);border-radius:14px;overflow:hidden}
+.tbl th,.tbl td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--hair);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl thead th{
+  font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--faint);
+  background:var(--card-2);border-bottom:1px solid var(--hair-strong);white-space:nowrap;
+}
+.tbl td{color:var(--sub)}
+.tbl td b{color:var(--ink)}
+.tbl .mono{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+.tbl .num{font-family:var(--mono);font-size:12.5px;color:var(--sub);text-align:right;white-space:nowrap}
+.tbl .best{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--sh);text-align:right;background:var(--sh-bg);white-space:nowrap}
+.tbl-scroll{overflow-x:auto;margin:24px 0}
+.tbl-scroll table.tbl{min-width:740px}
+
+/* 콜아웃 */
+.callout{
+  border-radius:13px;padding:18px 22px;margin:20px 0;font-size:14.5px;line-height:1.85;
+  border:1px solid;max-width:850px;
+}
+.callout b{color:var(--ink)}
+.callout .cl-tag{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;display:block;margin-bottom:6px}
+.callout.qa{background:var(--qa-bg);border-color:var(--qa-line);color:#E8A29D}
+.callout.kc{background:var(--kc-bg);border-color:var(--kc-line);color:#DCC48E}
+.callout.sh{background:var(--sh-bg);border-color:var(--sh-line);color:#9DD4B8}
+.callout.sc{background:var(--sc-bg);border-color:var(--sc-line);color:#B4C2D6}
+
+/* 지표 카드 */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:26px 0}
+.metric{border:1px solid var(--hair);border-radius:14px;background:var(--card);padding:22px}
+.metric .mv{font-family:var(--disp);font-weight:700;font-size:28px;color:var(--sh);line-height:1.25}
+.metric .mk{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.65}
+.metric .mk b{color:var(--ink)}
+
+/* 데이터셋 카드 */
+.dsets{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:24px 0}
+.dset{border:1px solid var(--hair);border-radius:13px;background:var(--card);padding:20px;border-top:2px solid var(--sh)}
+.dset .dn{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--sh);margin-bottom:8px}
+.dset .dd{font-size:13px;color:var(--sub);line-height:1.75}
+.dset .dd b{color:var(--ink)}
+
+/* 렘마 */
+.lemma{
+  border:1px solid var(--kc-line);border-radius:14px;background:var(--card);overflow:hidden;margin:18px 0;
+}
+.lemma-head{
+  padding:12px 22px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;font-weight:600;
+  color:var(--kc);background:var(--kc-bg);border-bottom:1px solid var(--hair);
+}
+.lemma-body{padding:20px 22px;color:var(--sub);font-size:14.5px;line-height:1.85}
+.lemma-body b{color:var(--ink)}
+.lemma-body .proof{
+  margin-top:12px;border-top:1px dashed var(--hair-strong);padding-top:12px;font-size:13.5px;
+}
+.lemma-body .proof .pf{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.08em;margin-right:8px}
+
+/* 푸터 */
+footer{padding:52px 0 68px;color:var(--faint);font-size:13px;border-top:1px solid var(--hair)}
+footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+footer .src{font-family:var(--mono);font-size:12px;line-height:2}
+footer .src b{color:var(--sub);font-weight:600}
+footer .legend{font-family:var(--mono);font-size:12px;text-align:right;line-height:2.1}
+footer .legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;font-style:normal}
+
+/* 리빌 */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
+
+/* 반응형 */
+@media (max-width:960px){
+  .arch-flow{grid-template-columns:1fr 1fr 1fr}
+  .anode:nth-child(3)::after{content:none}
+  .metrics{grid-template-columns:1fr 1fr}
+  .dsets{grid-template-columns:1fr}
+  .navlinks{display:none}
+}
+@media (max-width:620px){
+  section{padding:58px 0}
+  .arch-flow{grid-template-columns:1fr 1fr}
+  .anode:nth-child(even)::after{content:none}
+  .metrics{grid-template-columns:1fr}
+  .loop-diagram{grid-template-columns:1fr;gap:12px}
+  .loop-arrows{flex-direction:row}
+  .arch,.loop{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="페이지 내비게이션">
+  <div class="wrap">
+    <div class="brand">NS-KGR <b>/</b> Chapter 05</div>
+    <div class="navlinks">
+      <a href="#s51">5.1 서론</a>
+      <a href="#s52">5.2 문제 정의</a>
+      <a href="#s53">5.3 제안 방법</a>
+      <a href="#s54">5.4 실험</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== 히어로 ==================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="pub-line">
+      <span>Springer · Synthesis Lectures on Computer Science</span>
+      <span class="dot"></span><span><em>2026</em></span>
+      <span class="dot"></span><span>DOI 10.1007/978-3-032-15858-1_5</span>
+      <span class="dot"></span><span>Liu &amp; Tong</span>
+    </div>
+    <div class="tagrow">
+      <span class="chapter-tag">CHAPTER 5 · RESEARCH QUESTION Q3 — 방법 ①</span>
+      <span class="cond kg">지식그래프 불완전</span>
+      <span class="cond q">질의 정확</span>
+    </div>
+    <h1>불완전한 KG 위 뉴로-심볼릭 추론에 의한<br>정확한 질의 응답 — <span class="hl">BiNet</span></h1>
+    <p class="hero-sub">
+      불완전한 지식그래프 위 추론은 <b>제한적이고 파편화된 정보</b>로부터 논리적 결론을 추론하고 정확한 예측을
+      수행하는 과정이다. 그래프에 핵심 트리플이 결여되어 있어도, 가용한 정보·패턴·관계를 활용해 공백을 메우고
+      의미 있는 통찰을 도출해야 한다. 이 장은 <b>멀티홉 KGQA와 지식그래프 완성(KGC)이 본질적으로 상호 보완적</b>이라는
+      통찰에 기반해, 두 태스크를 <b>멀티태스크 학습 문제로 결합</b>하는 BiNet을 제안한다.
+    </p>
+
+    <div class="arch reveal">
+      <div class="arch-title">FIG 5.2 재구성 — BiNet 아키텍처 (원문의 색 규약을 따름)</div>
+      <div class="arch-legend">
+        <span><i style="background:var(--qa)"></i>KGQA 전용</span>
+        <span><i style="background:var(--kc)"></i>KGC 전용</span>
+        <span><i style="background:var(--sc)"></i>답 스코어링 — 두 태스크 공용 (§5.3.3)</span>
+        <span><i style="background:var(--sh)"></i>KGQA·KGC 공동 사용</span>
+      </div>
+      <div class="arch-flow">
+        <div class="anode qa">
+          <div class="an">INPUT · KGQA</div>
+          <div class="at">질문 + 토픽 개체</div>
+          <div class="ad">멀티홉 자연어 질문. 토픽 개체는 [NE]로 마스킹된다.</div>
+        </div>
+        <div class="anode qa">
+          <div class="an">ENCODER</div>
+          <div class="at">사전학습 BERT</div>
+          <div class="ad">질문 임베딩 Q 생성 — [CLS]와 &lt;s&gt; 임베딩을 FFN으로 결합.</div>
+        </div>
+        <div class="anode sh">
+          <div class="an">DECODER · 공동</div>
+          <div class="at">LSTM 경로 디코더</div>
+          <div class="ad">질문 맥락을 가장 잘 해석하는 관계 경로 P를 확률 모델로 생성 — KGQA·KGC 모두 사용.</div>
+        </div>
+        <div class="anode sc">
+          <div class="an">SCORING · 공용</div>
+          <div class="at">답 스코어링 (ComplEx)</div>
+          <div class="ad">공유 임베딩 공간에서 모든 노드를 랭킹, 상위 k개 후보 선택.</div>
+        </div>
+        <div class="anode qa">
+          <div class="an">REFINE · KGQA</div>
+          <div class="at">Transformer 정제</div>
+          <div class="ad">v_Q · P · k개 후보를 입력으로 최종 KGQA 출력 생성 (선택적).</div>
+        </div>
+        <div class="anode kc">
+          <div class="an">OUTPUT · KGC</div>
+          <div class="at">지식그래프 완성</div>
+          <div class="ad">디코딩된 경로 P가 답 스코어링을 거쳐 KGC 태스크를 돕는다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== 5.1 서론 ==================== -->
+<section id="s51">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 5.1</div>
+      <h2>서론 — 분리되어 있던 두 태스크</h2>
+      <p class="lede">
+        지식그래프는 노드가 실세계의 개체·사건·객체를, 에지가 두 노드 간의 관계를 나타내는 사실의 집합이다.
+        2012년 등장 이후 <b>Freebase, Yago, Wikidata</b> 등 다양한 지식그래프가 만들어졌고,
+        네트워크 정렬<span class="cite">[161]</span>, 계산적 팩트체킹<span class="cite">[83, 88, 93]</span>,
+        추천<span class="cite">[39]</span>에 이르기까지 응용은 무수하다.
+        그중 <b>멀티홉 KGQA</b>는 지식그래프의 도움으로 자연어 질문에 답하고,
+        <b>지식그래프 완성(KGC)</b>은 기존 정보에 기반해 누락된 사실을 추론한다.
+      </p>
+    </div>
+
+    <p class="body reveal">
+      KGQA와 KGC 모두 학계·산업의 큰 관심을 받아 왔다. KGC에서는 TransE<span class="cite">[11]</span>가 관계를
+      임베딩 공간의 선형 전이로 모델링하고, ComplEx<span class="cite">[147]</span>는 복소 공간에 임베딩하여
+      에너지 함수로 예측한다. 멀티홉 질의응답에서는 PullNet<span class="cite">[135]</span>이 질문 특정 서브그래프를 추출한 뒤
+      GNN으로 멀티홉 추론을 수행하고, EmbedKGQA<span class="cite">[126]</span>는 사전학습 BERT로 자연어 질문을
+      관계 임베딩에 매핑하고 ComplEx로 답을 찾는다. 일부 연구<span class="cite">[126]</span>는 두 태스크의
+      호환성 때문에 KGC를 단일홉 KGQA로 취급한다 — 예컨대 KGC의 <code class="m">(Interstellar, hasGenre, ?)</code> 예측은
+      "Interstellar의 장르는 무엇인가?"라는 자연어 질문으로 변환될 수 있다.
+      그러나 <b>기존 연구는 두 태스크를 분리해서 다루며 상호 이익을 고려하지 않는다</b> —
+      기존 멀티홉 KGQA는 배경 지식그래프가 완전하다고 암묵적으로 가정하고<span class="cite">[135, 136]</span>,
+      기존 KGC(RESCAL<span class="cite">[107]</span>, ComplEx<span class="cite">[147]</span>)는
+      입력된 불완전한 KG의 기존 정보만 활용한다.
+    </p>
+
+    <!-- 시그니처: 상호 보완 루프 -->
+    <div class="loop reveal">
+      <div class="loop-head">
+        <div class="loop-title">FIG 5.1 기반 — KGQA ⇄ KGC 상호 보완 루프 (버튼으로 방향 전환)</div>
+        <div class="loop-toggle" role="group" aria-label="상호 보완 방향">
+          <button class="lbtn r1 on" data-mode="r1">R1 · KGQA → KGC</button>
+          <button class="lbtn r2" data-mode="r2">R2 · KGC → KGQA</button>
+        </div>
+      </div>
+      <div class="loop-diagram">
+        <div class="loop-box qa">
+          <div class="lt">멀티홉 KGQA</div>
+          <div class="ls">자연어 질문 → 답 개체 집합</div>
+        </div>
+        <div class="loop-arrows">
+          <span class="larrow on-r1" id="ar1">R1 →</span>
+          <span class="larrow" id="ar2">← R2</span>
+        </div>
+        <div class="loop-box kc">
+          <div class="lt">KGC</div>
+          <div class="ls">(h, r, ?) → 누락 사실 추론</div>
+        </div>
+      </div>
+      <div class="loop-story" id="loopStory">
+        <b>R1 — KGQA가 KGC를 돕는다.</b> KGQA 태스크로부터 새 지식이 추론되어 지식그래프 완성에 쓰일 수 있다.
+        Fig 5.1의 지식그래프에서 <span class="kw-qa">"A Song of Love는 몇 년에 개봉했는가?"</span>는 답할 수 없다 —
+        이 영화 주변에는 direct와 hasGenre 두 관계뿐이라 <b>사람조차 기존 그래프만으로는 답할 수 없다</b>.
+        그러나 <span class="kw-qa">"Jean Genet이 감독한 모든 영화는 몇 년에 개봉했는가?"</span>의 답(1950)이 주어지면,
+        Jean Genet이 평생 단 한 편의 영화만 감독했으므로 <b>A Song of Love의 개봉 연도가 1950임을 추론</b>할 수 있다.
+      </div>
+    </div>
+
+    <p class="body reveal">
+      이 핵심 통찰로 무장하여, 멀티홉 KGQA와 KGC를 <b>공동으로 해결</b>하는 멀티태스크 학습 문제를 정식화한다.
+      첫째, 멀티홉 KGQA를 KGC에 활용하기 위해 <b>자연어 질문을 관계 경로로 변환하는 인코더-디코더 모델</b>을 제안한다.
+      둘째, KGC를 멀티홉 KGQA에 활용하기 위해 두 태스크가 <b>임베딩 공간과 답 스코어링 모듈을 공유</b>하게 하여
+      잠재 특징을 자동으로 나누고 서로를 강화하도록 한다. 여러 실세계 데이터셋 실험에서
+      제안한 BiNet은 <b>두 태스크 모두에서 일관되게 최신 성능</b>을 달성한다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 5.2 문제 정의 ==================== -->
+<section id="s52">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 5.2</div>
+      <h2>문제 정의</h2>
+      <p class="lede">
+        지식그래프는 <code class="m">𝒢 = (V, R, ℒ)</code>로 표기한다 — V는 노드/개체 집합, R은 관계 집합, ℒ는 트리플 리스트다.
+        각 트리플 <code class="m">(h, r, t)</code>에서 h는 머리(주어), t는 꼬리(목적어), r은 둘을 잇는 에지(관계·술어)다.
+        노드·관계의 임베딩은 굵은 소문자(e<sub>i</sub>, r<sub>i</sub>)로 나타낸다.
+      </p>
+    </div>
+
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>기호</th><th>정의</th><th>기호</th><th>정의</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">v_i / r_i</td><td>i번째 개체(노드) / 관계(에지)</td><td class="mono">𝒬</td><td>멀티홉 자연어 질문 훈련 집합</td></tr>
+        <tr><td class="mono">e_{v_i}, e_i / r_i</td><td>노드 v_i의 임베딩 / 관계 r_i의 임베딩</td><td class="mono">v_Q / e_Q</td><td>질문의 토픽 개체 / 그 임베딩</td></tr>
+        <tr><td class="mono">Q</td><td>자연어 질문 Q의 임베딩</td><td class="mono">w_i</td><td>Q의 i번째 단어</td></tr>
+        <tr><td class="mono">P</td><td>질문 임베딩에서 디코딩된 경로</td><td class="mono">P[i]</td><td>경로 P의 i번째 관계</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head qa">TASK · 멀티홉 KGQA</div>
+      <div class="def-body">
+        지식그래프 𝒢와 토픽 개체 v<sub>Q</sub> ∈ V, 단어 시퀀스 Q = (w₁, …, w<sub>|Q|</sub>)를 포함하는 자연어 질문이 주어지면,
+        질문에 답하는 <b>노드 집합 A<sub>Q</sub> ⊆ V를 식별</b>한다. [126]의 정의를 따라 모든 답 개체는 지식그래프에 존재하고,
+        각 질문은 단일 토픽 개체 v<sub>Q</sub>를 포함하며 v<sub>Q</sub>는 주어진다고 가정한다 —
+        예컨대 "영화 The Love of Siam의 언어는 무엇인가"의 토픽 개체는 The Love of Siam이다.
+        이상적으로 각 질문은 지식그래프의 <b>유일한 경로 P = (r₁, r₂, …, r<sub>|P|</sub>)에 매핑</b>될 수 있다.
+      </div>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head kc">TASK · 지식그래프 완성 (KGC)</div>
+      <div class="def-body">
+        기존 정보에 기반해 누락 사실/트리플을 추론한다. KGC는 통상 세 하위 태스크를 포함한다 —
+        (1) <code class="m">(h, r, ?)</code>에서 꼬리 개체 예측, (2) <code class="m">(?, r, t)</code>에서 머리 개체 예측,
+        (3) 머리·꼬리가 주어졌을 때 관계 예측. <b>이 장은 첫 번째 하위 태스크만 고려한다.</b>
+        꼬리 개체를 예측할 때 KGC 방법은 지식그래프의 각 개체에 확률 점수를 산출하며,
+        후보 개체 v의 점수는 트리플 (h, r, v)가 참일 가능성을 나타낸다.
+      </div>
+    </div>
+
+    <p class="body reveal">
+      많은 실세계 지식그래프는 불완전하여, 불완전한 그래프에서 KGQA를 수행하면 잘못된 답으로 이어질 수 있다.
+      그래프가 완전하면 KGQA가 정답을 찾을 가능성이 높아진다. 반대로 추가 정보 없이 기존 그래프를 완성하기는 어려운데,
+      <b>KGQA의 질문-답 쌍이 그래프 완성을 돕는 보조 정보를 제공</b>할 수 있다.
+      이 관찰에 기반해 KGC와 멀티홉 KGQA를 공동으로 다루며, 형식적으로 다음과 같이 정의한다.
+    </p>
+
+    <div class="def reveal">
+      <div class="def-head">PROPOSITION 5.1 · 멀티홉 KGQA와 KGC의 공동 해결</div>
+      <div class="def-body">
+        <b>주어진 것</b> — (1) KGC 태스크의 훈련 트리플 집합, (2) KGQA 태스크의 훈련 멀티홉 자연어 질문 집합.<br>
+        <b>출력</b> — (1) KGC 태스크의 테스트 트리플에 대한 답, (2) KGQA 태스크의 테스트 멀티홉 자연어 질문에 대한 <b>Top-k 답</b>.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 5.3 제안 방법 ==================== -->
+<section id="s53">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 5.3</div>
+      <h2>제안 방법 — BiNet의 네 모듈</h2>
+      <p class="lede">
+        멀티홉 KGQA는 Q를 질의 경로로 번역해 지식그래프를 여행하며 답을 찾는 <b>개체 탐색 문제</b>로 볼 수 있으나,
+        그래프가 불완전하면 경로 순회나 서브그래프 매칭<span class="cite">[81]</span>으로 A<sub>Q</sub>를 직접 찾는 것은 비현실적이다.
+        KGC 또한 <b>지식 기근(knowledge famine)</b>이나 핵심 정보 누락에 시달린다 —
+        Fig 5.1에서 A Song of Love와 1950 사이의 releaseYear 관계가 없다면, 추가 정보 없이는 완성이 불가능하다.
+        BiNet은 (1) 인코더-디코더로 자연어 질의를 관계 경로로 변환해 KGC를 돕고,
+        (2) KGQA·KGC가 <b>같은 임베딩 공간과 답 스코어링 모듈</b>을 써서 잠재 특징을 자동 공유하도록 설계된다.
+        전체 모델은 각 부분의 손실을 결합해 <b>종단간(end-to-end)으로 최적화</b>된다.
+      </p>
+    </div>
+
+    <h3 class="reveal"><span class="node"></span>5.3.2 질문 인코더-디코더</h3>
+    <p class="body reveal">
+      <b>A — 전처리.</b> 개체 표면형이 유발하는 잡음을 줄이기 위해, 질문 맥락 내 토픽 개체를 특수 토큰
+      <code class="m">[NE]</code>로 마스킹한다 — "Who starred Interstellar?"는 "Who starred [NE]?"가 된다.
+      마스킹은 인코더가 개체 표면형을 암기하는 것을 막고 다른 개체가 등장하는 유사 질문으로의 일반화를 돕는다.
+      또한 질문 맥락의 경계를 표시하기 위해 시작과 끝에 <code class="m">[CLS]</code>와 <code class="m">&lt;s&gt;</code> 지시 토큰을 붙인다.
+    </p>
+    <div class="def reveal">
+      <div class="def-head qa">B — 질문 인코더 (사전학습 BERT [37])</div>
+      <div class="def-body">
+        <div class="formula">
+          [h<sub>CLS</sub>, w₁, …, w<sub>|Q|</sub>, h<sub>s</sub>] = BERT([CLS], w₁, …, w<sub>|Q|</sub>, &lt;s&gt;) <span class="eq">(5.1)</span><br>
+          h<sub>Q</sub> = FFN([h<sub>CLS</sub> | h<sub>s</sub>]) <span class="eq">(5.2)</span>
+        </div>
+        [CLS] 임베딩 h<sub>CLS</sub>와 &lt;s&gt; 임베딩 h<sub>s</sub>를 연결(|)해 FFN에 통과시켜 최종 질문 임베딩을 얻는다.
+      </div>
+    </div>
+    <div class="def reveal">
+      <div class="def-head sh">C — 질문 디코더 (LSTM [54])</div>
+      <div class="def-body">
+        질문 임베딩 h<sub>Q</sub>를 디코딩해 관계 시퀀스 P = (r₁, r₂, …, r<sub>n</sub>)을 생성한다.
+        <div class="formula">
+          h₀ = FFN<sub>h</sub>(h<sub>Q</sub>), &nbsp; c₀ = FFN<sub>c</sub>(h<sub>Q</sub>) <span class="eq">(5.3)</span><br>
+          h<sub>t</sub> = LSTM(h<sub>t−1</sub>, c<sub>t−1</sub>, o<sub>t−1</sub>) <span class="eq">(5.4)</span><br>
+          a<sub>t</sub> = softmax(MLP(h<sub>t</sub>)) <span class="eq">(5.5)</span><br>
+          x<sub>t+1</sub> = Σ<sub>i</sub> a<sub>t</sub>(i)·r<sub>i</sub> <span class="eq">(5.6)</span>
+        </div>
+        초기 은닉/셀 상태는 h<sub>Q</sub>를 두 FFN에 각각 통과시켜 얻고, 초기 입력 x₀는 h<sub>Q</sub> 또는 영벡터다.
+        각 시점의 은닉 상태는 배치 정규화·드롭아웃을 갖춘 FFN과 Softmax를 거쳐 관계별 점수 벡터가 되고,
+        다음 시점 입력은 <b>모든 관계 임베딩의 가중합</b>이다. 각 시점의 최종 예측은 점수가 가장 높은 관계다.
+      </div>
+    </div>
+    <div class="def reveal">
+      <div class="def-head sh">D — 인코더-디코더 훈련 (베이즈 규칙에 의한 정답 경로 추론)</div>
+      <div class="def-body">
+        토픽 개체 v<sub>Q</sub>와 답 개체 사이에는 여러 경로가 존재할 수 있다. 각 쌍 (v<sub>Q</sub>, v<sub>i</sub>)의
+        <b>k-최단 경로를 모두 찾아</b> 정답 경로 후보로 취급하고, 베이즈 규칙으로 각 경로가 질문 맥락의 올바른 매핑일 확률을 추론한다.
+        토픽 개체 마스킹 후 유일한 질문 맥락 수 m에 따라 훈련 질문을 m개 그룹 S₁, …, S<sub>m</sub>으로 나누고,
+        각 그룹은 답 풀 PL<sub>i</sub> = {A<sub>Q_j</sub> | Q<sub>j</sub> ∈ S<sub>i</sub>}, 각 답 개체는
+        후보 경로 집합 PC(Q<sub>j</sub>, v<sub>i</sub>) = {P<sub>i</sub> | (v<sub>Q_j</sub>, P<sub>i</sub>, v<sub>i</sub>) ∈ 𝒢}를 갖는다.
+        PC 내 경로들의 출현을 i.i.d. 확률 변수로 가정하면:
+        <div class="formula">
+          Pr(P<sub>i</sub> | S<sub>j</sub>, θ) = Σ<sub>Q_j∈S_j</sub> Pr(P<sub>i</sub>, Q<sub>j</sub> | θ) / |PL<sub>j</sub>| <span class="eq">(5.7)</span><br>
+          Pr(P<sub>i</sub>, Q<sub>j</sub> | θ) = [ Σ<sub>v_i∈A_{Q_j}</sub> 𝟙(P<sub>i</sub> ∈ PC(Q<sub>j</sub>, v<sub>i</sub>)) / |PC(Q<sub>j</sub>, v<sub>i</sub>)| ] / |A<sub>Q_j</sub>| <span class="eq">(5.8)</span>
+        </div>
+        확률이 가장 높은 경로를 정답으로 택하며, 최고 확률 경로가 여러 개면 모두 정답으로 취급한다.
+        인코더-디코더 훈련에는 <b>이진 교차 엔트로피 손실</b>을 사용한다:
+        <div class="formula">
+          ℒ(P̂, P) = (1/N) Σ<sub>i=1</sub><sup>N</sup> Σ<sub>j=1</sub><sup>|P|</sup> 𝟙(P[j]=r<sub>i</sub>)·log Pr(r<sub>i</sub>|M) + (1−𝟙(P[j]=r<sub>i</sub>))·log(1−Pr(r<sub>i</sub>|M)) <span class="eq">(5.9–5.10)</span>
+        </div>
+        M은 인코더-디코더 파라미터, N은 𝒢의 관계 수, P̂는 경로 디코더의 출력이다.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="node"></span>5.3.3 답 스코어링 — 두 태스크가 공유하는 심장</h3>
+    <p class="body reveal">
+      <b>A — 배경.</b> 알고리즘이 지식그래프의 이행성을 만족하면 경로 연산은
+      <code class="m">p = r₁ ⋆ r₂ ⋆ ⋯ ⋆ r_n</code> (Eq 5.11)으로 표현된다 — ⋆는 합성 연산이다.
+      TransE<span class="cite">[11]</span>에서는 각 관계가 선형 이동이므로 <code class="m">p = Σ r_i</code> (Eq 5.12),
+      RotatE<span class="cite">[138]</span>에서는 회전이므로 아다마르(원소별) 곱
+      <code class="m">p = r₁ ⊙ ⋯ ⊙ r_n</code> (Eq 5.13)이다.
+      그러나 Eq 5.11을 소박하게 써서 답을 찾으면 정확도가 낮을 수 있다 — 임베딩 공간에는 잡음이 있고,
+      경로가 길어질수록 <b>연쇄 오류(cascading error)가 커지기 때문</b>이다<span class="cite">[60, 85]</span>.
+      따라서 중간 후보들로 탐색 과정을 조정해야 한다.
+    </p>
+    <div class="def reveal">
+      <div class="def-head sc">B — 확률적 추론 모델 Θ와 빔 서치</div>
+      <div class="def-body">
+        토픽 개체 v<sub>Q</sub>에서 출발하는 관계 시퀀스 P에 대해, 모델 Θ: (r, v) → [0, 1]은
+        해당 에지를 따라갈 우도를 예측한다. v의 우도는 P가 순회하는 <b>모든 중간 단계 우도의 곱</b>이다:
+        <div class="formula">
+          Pr(v | P, v<sub>Q</sub>, 𝒢) ∝ ∏<sub>i=1</sub><sup>|P|</sup> Θ(r<sub>i</sub>, v<sub>i</sub> | P<sub>1→i−1</sub>, v<sub>Q</sub>, 𝒢) <span class="eq">(5.14)</span><br>
+          o = max<sub>v_i∈V</sub> Pr(v<sub>i</sub> | P, v<sub>Q</sub>, 𝒢) <span class="eq">(5.15)</span>
+        </div>
+        각 시점에서 최대 확률의 중간 개체만 고르면 그래프 불완전성 때문에 정답을 놓칠 수 있고,
+        모든 중간 후보를 순회하면 효율이 저해된다. 효과-효율 균형과 연쇄 오류 완화를 위해
+        <b>각 단계에서 우도 최대 Top-k 후보를 선택</b>하며, 이는 v<sub>Q</sub>에서 시작하는 빔 서치 같은
+        효율적 탐색 알고리즘으로 수행한다. 마지막 단계에서 최고 확률 후보를 택한다.
+        Θ는 KGQA·KGC 두 태스크 모두가 사용해 정보를 자동 공유하게 하며, 쌍선형 변환<span class="cite">[162]</span>·
+        합성곱 신경망<span class="cite">[36]</span> 등으로 모델링할 수 있으나 실험에서는 단순성을 위해
+        <b>ComplEx</b><span class="cite">[147]</span>를 쓴다:
+        <div class="formula">Pr(v<sub>t</sub> | r<sub>i</sub>, v<sub>h</sub>, 𝒢) = Re(&lt; r<sub>i</sub>, e<sub>h</sub>, e<sub>i</sub> &gt;) <span class="eq">(5.16)</span></div>
+      </div>
+    </div>
+    <div class="callout sc reveal">
+      <span class="cl-tag">C — 기존 방법과의 연결</span>
+      이행성을 만족하는 대부분의 기존 알고리즘은 이 모델의 특수 사례다. TransE에서는
+      Θ(r<sub>i</sub>, v<sub>t</sub> | ·) ∝ ‖e<sub>v_Q</sub> + Σ<sub>r_j∈P₁→ᵢ</sub> r<sub>j</sub> − e<sub>t</sub>‖₂<sup>−𝟙(i=|P|)</sup> (Eq 5.17),
+      RotatE에서는 Θ(r<sub>i</sub>, v<sub>t</sub> | ·) ∝ ‖e<sub>v_Q</sub> ⊙ r₁ ⊙ … ⊙ r<sub>i</sub> − e<sub>t</sub>‖₂<sup>−𝟙(i=|P|)</sup> (Eq 5.18)로 계산된다.
+    </div>
+
+    <h3 class="reveal"><span class="node"></span>5.3.4 답 정제 (Answer Refinement) — 선택적 재랭킹</h3>
+    <p class="body reveal">
+      Θ가 찾은 후보 집합은 대체로 A<sub>Q</sub>의 합리적 추정치지만, 때로 잡음이 참 답보다 높은 확률을 가질 수 있다 —
+      KG의 관계는 FatherOf·liveIn처럼 <b>비대칭</b>이거나 IsFriendWith처럼 <b>대칭</b>인 다양한 패턴·성질을 보이는데,
+      그래프의 불완전성과 복잡성 때문에 대칭·비대칭·이행성 등 <b>모든 성질 조합을 만족하는 완벽한 모델은 사실상 불가능</b>하기 때문이다.
+      이에 답 스코어링 모듈의 Top-k 후보를 재정렬하는 정제 모델을 제안한다<span class="cite">[59, 149]</span>.
+      토픽 개체 v<sub>Q</sub>와 경로 P를 각 후보와 연결해 k개의 시퀀스를 만들고, 각 시퀀스를 하나의 언어 문장처럼
+      Transformer<span class="cite">[149]</span>에 통과시켜 문장의 타당성을 예측한다:
+    </p>
+    <div class="def reveal">
+      <div class="def-head qa">EQ 5.19–5.20 · Transformer 재랭킹</div>
+      <div class="def-body">
+        <div class="formula">
+          h<sub>i</sub> = TRANSFORMER([e<sub>v_Q</sub> | r₁ | … | r<sub>n</sub> | e<sub>v_i</sub>]) <span class="eq">(5.19)</span><br>
+          Pr(v<sub>i</sub> | P, v<sub>Q</sub>, 𝒢) = Sigmoid(FFN(h<sub>i</sub>)) <span class="eq">(5.20)</span>
+        </div>
+        마지막 단계에서 분류기가 답 스코어링 모듈과 Transformer 모듈 중 어느 쪽의 예측을 반환할지 결정한다.
+        <b>정제 단계는 선택적(optional)</b>이다.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="node"></span>5.3.5 학습 알고리즘 — 통합 손실</h3>
+    <div class="def reveal">
+      <div class="def-head">EQ 5.21–5.22 · BiNet 전체 손실</div>
+      <div class="def-body">
+        <div class="formula">
+          ℒ = <span class="c1">ℒ_KGQA</span> + <span class="c2">ℒ_KGC</span> + <span class="c3">ℒ_Path</span> + ℒ_REG<br>
+          &nbsp;&nbsp;= Σ<sub>Q∈𝒬</sub> J(ŷ, y) + λ₁ Σ<sub>(h,r,t)∈𝒢</sub> J(t̂, t) + λ₂ Σ<sub>Q∈𝒬</sub> ℒ(P̂, P) + λ₃‖W‖₂²
+        </div>
+        λ₁·λ₂·λ₃는 손실 균형 하이퍼파라미터, J는 이진 교차 엔트로피다. 첫 항은 KGQA 손실(ŷ: BiNet 예측, y: 정답),
+        둘째 항은 KGC 손실, 셋째 항은 과적합 방지 정규화, 마지막 항은 경로 디코더 손실이다.
+        ℒ_KGQA는 <b>정제 전 답 스코어링 손실과 정제 후 손실의 두 부분</b>으로 구성된다.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="node"></span>5.3.6 증명과 분석 — 표현력 보장</h3>
+    <p class="body reveal">
+      Lemma 5.1·5.2는 <b>KGC와 KGQA가 실제로 서로 이익을 준다</b>는 것을, Lemma 5.3은
+      경로의 정확 매칭이 그래프에 존재하고 임의의 (h, r, t) ∈ ℒ에 대해 Eq 5.16이 1이라면
+      <b>BiNet이 그것을 반드시 찾음</b>을 보인다.
+    </p>
+    <div class="lemma reveal">
+      <div class="lemma-head">LEMMA 5.1 · KGQA가 KGC에 주는 이익</div>
+      <div class="lemma-body">
+        질문 Q(토픽 개체 v<sub>Q</sub>, 답 집합 A<sub>Q</sub>)와 관계 시퀀스 P에 대해, v<sub>Q</sub>와 A<sub>Q</sub>의 어떤 v 사이에도
+        정확 매칭이 없고 &lt;v<sub>k</sub>, r<sub>j</sub>, v<sub>m</sub>&gt;이 v<sub>Q</sub>→v<sub>a</sub> 경로 상의 누락 링크라면,
+        <b>ℒ_KGQA 최소화는 ℒ_KGC도 최소화한다</b>.
+        <div class="proof"><span class="pf">PROOF</span>ℒ_KGQA 최소화는 임의의 v ∈ A<sub>Q</sub>에 대한 Pr(v|P, v<sub>Q</sub>, 𝒢) 최대화를 뜻한다.
+        &lt;v<sub>k</sub>, r<sub>j</sub>, v<sub>m</sub>&gt;이 그 경로 위의 누락 링크이므로 Pr(v<sub>a</sub>|P, v<sub>Q</sub>, 𝒢) 최대화는
+        트리플 (v<sub>k</sub>, r<sub>j</sub>, v<sub>m</sub>)에 대한 KGC 출력 Pr(v<sub>m</sub>|r<sub>j</sub>, v<sub>k</sub>, 𝒢)의 최대화를 뜻한다.
+        따라서 ℒ_KGC가 최소화된다. □</div>
+      </div>
+    </div>
+    <div class="lemma reveal">
+      <div class="lemma-head">LEMMA 5.2 · KGC가 KGQA에 주는 이익</div>
+      <div class="lemma-body">
+        같은 설정에서 v<sub>Q</sub>와 A<sub>Q</sub>의 어떤 v 사이에도 정확 매칭이 없다면,
+        <b>ℒ_KGC 최소화는 ℒ_KGQA도 최소화한다</b>.
+        <div class="proof"><span class="pf">PROOF</span>ℒ_KGC 최소화는 임의의 (v<sub>h</sub>, r<sub>i</sub>, v<sub>t</sub>) ∈ 𝒢에 대한
+        Pr(v<sub>t</sub>|r<sub>i</sub>, v<sub>h</sub>, 𝒢) 최대화를 뜻한다. Pr(v<sub>a</sub>|P, v<sub>Q</sub>, 𝒢)는 Eq 5.14로 표현되며
+        각 항이 최대화되므로 전체도 최대화된다. 따라서 ℒ_KGQA가 최소화된다. □</div>
+      </div>
+    </div>
+    <div class="lemma reveal">
+      <div class="lemma-head">LEMMA 5.3 · 모델 건전성 (Model Soundness)</div>
+      <div class="lemma-body">
+        임의의 (h, r, t) ∈ ℒ에 대해 Eq 5.16이 1이고 v<sub>Q</sub>와 어떤 v ∈ A<sub>Q</sub> 사이에 정확 매칭이 존재하면,
+        <b>k ≥ D<sup>|P|−1</sup>인 한 BiNet은 반드시 그것을 찾는다</b> — D는 특정 관계 타입에 대한 노드의 최대 출차수다.
+        <div class="proof"><span class="pf">PROOF</span>D가 특정 관계 타입 상 최대 출차수이므로, v<sub>Q</sub>에서 출발하는
+        (r₁, …, r<sub>|P|−1</sub>)의 정확 매칭 경로는 최대 D<sup>|P|−1</sup>개다. k ≥ D<sup>|P|−1</sup>이면
+        이들이 모두 Top-k 후보에 포함되어 정확 매칭을 찾을 수 있다. □</div>
+        <p style="margin-top:10px">|P|는 비교적 작은 값이다(통상 |P| ≤ 3).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 5.4 실험 ==================== -->
+<section id="s54">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 5.4</div>
+      <h2>실험 — 두 태스크에서의 일관된 우위</h2>
+      <p class="lede">
+        완전한 KG에서의 KGQA는 이들 데이터셋에서 사소해지므로(경로 순회·서브그래프 매칭만으로 거의 100% 정확도),
+        <b>전체 그래프에서 에지의 50%와 70%를 무작위 삭제한 불완전 KG</b>라는 도전적 설정에서 비교한다 —
+        표의 "50% KG"는 에지 50% 보존, "30% KG"는 30% 보존을 뜻한다.
+      </p>
+    </div>
+
+    <div class="metrics reveal">
+      <div class="metric"><div class="mv">84.3</div><div class="mk">MetaQA 50% KG <b>평균 Hits@1</b> — EmbedKGQA보다 약 2.5%, 그 외 베이스라인보다 25% 이상 우위</div></div>
+      <div class="metric"><div class="mv">79.5</div><div class="mk">MetaQA 30% KG <b>평균 Hits@1</b> — EmbedKGQA보다 약 3.5%, 그 외 평균 28% 우위</div></div>
+      <div class="metric"><div class="mv">+2%</div><div class="mk">정제(재랭킹) 모듈의 평균 정확도 개선 — <b>긴 경로일수록 효과 증가</b> (3.2% vs 1.3%)</div></div>
+      <div class="metric"><div class="mv">&lt;15분</div><div class="mk">긴 훈련 시간에도 불구하고 <b>테스트 시간은 15분 미만</b></div></div>
+    </div>
+
+    <h3 class="reveal"><span class="node"></span>5.4.1 실험 설정</h3>
+    <div class="dsets reveal">
+      <div class="dset"><div class="dn">MetaQA</div><div class="dd">영화 도메인 멀티홉 질문 데이터셋. <b>40만 개 이상의 자연어 질문</b>과 감독·영화·장르·배우 관계를 담은 <b>10만 개 이상의 트리플</b> 배경 KG. 질문은 1-hop·2-hop·3-hop 세 범주다.</div></div>
+      <div class="dset"><div class="dn">WebQuestionsSP</div><div class="dd">Freebase로 답할 수 있는 <b>약 4,000개 질문</b>. 1-hop과 2-hop 질문이 혼재한다.</div></div>
+      <div class="dset"><div class="dn">SimpleQuestions</div><div class="dd"><b>10만 개 이상의 단순 1-hop 질문</b>과 대응 Freebase 트리플. WebQuestionsSP에 사용된 Freebase로 답할 수 있는 질문들의 부분집합을 사용한다.</div></div>
+    </div>
+    <p class="body reveal">
+      <b>KGQA 베이스라인 4종</b> — GraftNet<span class="cite">[136]</span>(질문 특정 서브그래프 + GNN 예측),
+      PullNet<span class="cite">[135]</span>(최단 경로를 감독 신호로 그래프 검색 모듈 훈련, 검색된 서브그래프 위에서 GraftNet으로 멀티홉 추론),
+      KV-Mem<span class="cite">[103]</span>(KG 사실을 저장하는 메모리 테이블 유지·검색),
+      EmbedKGQA<span class="cite">[126]</span>(RoBERTa 질문 임베딩과 사전학습 개체 임베딩 매칭; 관계 매칭 없이 사용).
+      <b>KGC 베이스라인</b> — RESCAL<span class="cite">[107]</span>(3-way 텐서 분해: 개체=잠재 벡터, 관계=행렬),
+      DistMult<span class="cite">[162]</span>(저차원 벡터 + 쌍선형 함수),
+      ComplEx<span class="cite">[147]</span>(실수부·허수부를 갖는 복소 벡터 + 쌍선형 함수).
+    </p>
+
+    <h3 class="reveal"><span class="node"></span>5.4.2 KGQA 성능 (Hits@1)</h3>
+    <p class="body reveal">
+      표준 설정<span class="cite">[126]</span>을 따라 Hits@1로 평가한다. PullNet은 코드가 비공개라 30% KG 성능은 생략했고,
+      GraftNet·KV-Mem의 결과는 [136]에서 가져왔다. 배경 그래프가 희소해질수록 모든 방법의 정확도가 감소하며 —
+      배경 KG의 품질이 KGQA에 상당한 영향을 미친다. 특히 서브그래프 검색 기반인 GraftNet·PullNet은
+      <b>그래프가 희소해지면 생성된 서브그래프가 답 개체를 포함하지 못해</b> 성능이 심각하게 저하된다.
+    </p>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead>
+        <tr><th rowspan="2">모델</th><th colspan="4" style="text-align:center">50% KG</th><th colspan="4" style="text-align:center">30% KG</th></tr>
+        <tr><th style="text-align:right">MetaQA-1</th><th style="text-align:right">MetaQA-2</th><th style="text-align:right">MetaQA-3</th><th style="text-align:right">평균</th><th style="text-align:right">MetaQA-1</th><th style="text-align:right">MetaQA-2</th><th style="text-align:right">MetaQA-3</th><th style="text-align:right">평균</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>GraftNet</td><td class="num">64.0</td><td class="num">52.6</td><td class="num">59.2</td><td class="num">58.6</td><td class="num">48.4</td><td class="num">–</td><td class="num">–</td><td class="num">48.4</td></tr>
+        <tr><td>PullNet</td><td class="num">65.1</td><td class="num">52.1</td><td class="num">59.7</td><td class="num">59.0</td><td class="num">–</td><td class="num">–</td><td class="num">–</td><td class="num">–</td></tr>
+        <tr><td>KV-Mem</td><td class="num">63.6</td><td class="num">41.8</td><td class="num">37.6</td><td class="num">47.7</td><td class="num">44.7</td><td class="num">–</td><td class="num">–</td><td class="num">44.7</td></tr>
+        <tr><td>EmbedKGQA</td><td class="num">83.1</td><td class="num">91.8</td><td class="num">70.3</td><td class="num">81.7</td><td class="num">77.7</td><td class="num">81.2</td><td class="num">69.0</td><td class="num">76.0</td></tr>
+        <tr><td><b>BiNet</b></td><td class="best">84.2</td><td class="best">92.8</td><td class="best">75.9</td><td class="best">84.3</td><td class="best">77.8</td><td class="best">86.4</td><td class="best">74.3</td><td class="best">79.5</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      WebQuestionsSP·SimpleQuestions에서도 유사한 경향이며, BiNet이 베이스라인을 일관되게 능가한다 — 평균 약 1.2% 우위다.
+    </p>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead>
+        <tr><th rowspan="2">모델</th><th colspan="2" style="text-align:center">50% KG</th><th colspan="2" style="text-align:center">30% KG</th></tr>
+        <tr><th style="text-align:right">Webqsp</th><th style="text-align:right">SimpleQA</th><th style="text-align:right">Webqsp</th><th style="text-align:right">SimpleQA</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>GraftNet</td><td class="num">32.7</td><td class="num">39.8</td><td class="num">34.9</td><td class="num">25.7</td></tr>
+        <tr><td>PullNet</td><td class="num">48.2</td><td class="num">–</td><td class="num">34.6</td><td class="num">–</td></tr>
+        <tr><td>KV-Mem</td><td class="best">50.1</td><td class="num">28.9</td><td class="num">25.8</td><td class="num">22.8</td></tr>
+        <tr><td>EmbedKGQA</td><td class="num">47.3</td><td class="num">41.7</td><td class="num">38.8</td><td class="num">33.5</td></tr>
+        <tr><td><b>BiNet</b></td><td class="num">49.4</td><td class="best">42.6</td><td class="best">40.5</td><td class="best">33.9</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3 class="reveal"><span class="node"></span>5.4.3 KGC 성능</h3>
+    <p class="body reveal">
+      RESCAL·DistMult·ComplEx 같은 전통적 임베딩 방법은 MetaQA 지식그래프에서 성능이 낮다 —
+      이 그래프는 매우 희소하여 에지가 약 <b>66,791개로 Freebase의 2.3%</b>에 불과하기 때문이다.
+      EmbedKGQA는 KGC용으로 설계되지 않았으므로 KG 트리플 (h, r, v)를 자연어 질문으로 변환해 훈련했는데,
+      MetaQA에서는 질문 데이터 없이도 기존 KGC 베이스라인보다 높고 <b>질문 데이터를 쓰면 약 15% 더 높다</b>.
+      그리고 <b>제안한 BiNet이 일관되게 최고의 KGC 성능</b>을 보인다('Merge' 데이터셋은 Webqsp + SimpleQA의 결합).
+    </p>
+
+    <h3 class="reveal"><span class="node"></span>5.4.4 어블레이션 연구</h3>
+    <p class="body reveal">
+      <b>A — 답 정제.</b> 정제 모듈은 50%·30% 불완전 KG 모두에서 평균 약 2%의 정확도 개선을 가져온다 —
+      배경 그래프의 희소성을 실제로 완화한다는 뜻이다. Webqsp·SimpleQA 같은 1-hop 질문 대비
+      <b>긴 경로 질문에서 개선이 더 크다(3.2% vs 1.3%)</b> — 경로가 길수록 정제 모듈이 더 효과적이다.
+    </p>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>모델</th><th style="text-align:right">MetaQA-3hop</th><th style="text-align:right">Webqsp</th><th style="text-align:right">SimpleQA</th></tr></thead>
+      <tbody>
+        <tr><td colspan="4"><b>50% KG</b></td></tr>
+        <tr><td>BiNet 재랭킹 없음</td><td class="num">70.3</td><td class="num">47.2</td><td class="num">41.8</td></tr>
+        <tr><td>BiNet 재랭킹 포함</td><td class="best">75.9</td><td class="best">49.4</td><td class="best">42.6</td></tr>
+        <tr><td colspan="4"><b>30% KG</b></td></tr>
+        <tr><td>BiNet 재랭킹 없음</td><td class="num">71.2</td><td class="num">39.1</td><td class="num">33.2</td></tr>
+        <tr><td>BiNet 재랭킹 포함</td><td class="best">74.3</td><td class="best">40.5</td><td class="best">33.9</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p class="body reveal">
+      <b>B — 지식그래프 완성의 힘.</b> 그래프를 먼저 완성하는 것만으로 KGQA에 도움이 되는지를 두 전략으로 검증한다.
+      먼저 KGQA 훈련·검증 집합의 자연어 질문에 따라 <b>휴리스틱 기반</b>으로 완성한다(규칙 기반 KGC<span class="cite">[47]</span>와 유사 —
+      예: A가 B의 자녀이고 C가 B의 남편이면 A는 C의 자녀). 이어서 부분 완성된 그래프에 ComplEx를 훈련해 (h, r, ?)를 예측하되,
+      <b>Pr ≥ 0.99인 트리플만 유지</b>하고 명백한 오류(예: 머리가 영화 Interstellar이고 관계가 starredBy인데 예측이 배우가 아닌 경우)는
+      확률이 0.99 이상이어도 제거한다.
+    </p>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>모델</th><th style="text-align:right">EmbedKGQA</th><th style="text-align:right">KGC + EmbedKGQA</th><th style="text-align:right">BiNet</th></tr></thead>
+      <tbody>
+        <tr><td colspan="4"><b>50% KG</b></td></tr>
+        <tr><td>MetaQA-1hop</td><td class="num">83.1</td><td class="num">83.2</td><td class="best">84.2</td></tr>
+        <tr><td>MetaQA-2hop</td><td class="num">91.8</td><td class="num">92.4</td><td class="best">92.8</td></tr>
+        <tr><td>MetaQA-3hop</td><td class="num">70.3</td><td class="num">73.5</td><td class="best">75.9</td></tr>
+        <tr><td>Webqsp</td><td class="num">47.3</td><td class="num">47.7</td><td class="best">49.4</td></tr>
+        <tr><td>SimpleQA</td><td class="num">41.7</td><td class="num">41.9</td><td class="best">42.6</td></tr>
+        <tr><td colspan="4"><b>30% KG</b></td></tr>
+        <tr><td>MetaQA-1hop</td><td class="num">77.7</td><td class="num">77.8</td><td class="best">77.8</td></tr>
+        <tr><td>MetaQA-2hop</td><td class="num">81.2</td><td class="num">85.1</td><td class="best">86.4</td></tr>
+        <tr><td>MetaQA-3hop</td><td class="num">69.0</td><td class="num">71.1</td><td class="best">74.3</td></tr>
+        <tr><td>Webqsp</td><td class="num">38.8</td><td class="num">39.1</td><td class="best">40.5</td></tr>
+        <tr><td>SimpleQA</td><td class="num">33.5</td><td class="num">33.7</td><td class="best">33.9</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      KGC+EmbedKGQA는 세 종류 질문 모두에서 EmbedKGQA보다 낫다 — <b>그래프를 먼저 완성하면 실제로 KGQA가 향상된다</b>.
+      30% KG의 MetaQA-2hop에서 최대 3.9%의 개선을 보이고, 평균적으로 그래프 선완성은 Hits@1을 약 1.2% 높인다.
+      <b>제안한 BiNet은 여기서 다시 1.3%를 추가로 개선한다</b>.
+    </p>
+
+    <p class="body reveal">
+      <b>C — 경로 예측.</b> 좋은 경로 디코더는 BiNet에 중요하다. 디코더 훈련 전 정답 경로를 훈련 데이터에 수동 추가하고,
+      각 시점에서 이전에 디코딩된 관계에 따라 다음 관계를 예측한다. 확률 α(= 0.5)로는 실제 정답 관계를 다음 시점 입력으로 쓰고,
+      확률 1 − α로는 정답과 달라도 모델이 예측한 관계를 입력으로 쓴다(스케줄드 티처 포싱).
+      경로 디코더는 높은 정확도로 관계 경로를 생성한다.
+    </p>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>질문 (Table 5.6)</th><th>디코딩된 경로</th></tr></thead>
+      <tbody>
+        <tr><td>[Tanner Maguire]가 출연한 영화들은 어떤 장르였나</td><td class="mono">Starred_actors_reverse | has_genre</td></tr>
+        <tr><td>[Cristian Nemescu]가 각본을 쓴 영화들은 언제 개봉했나</td><td class="mono">Written_by_reverse | release_year</td></tr>
+        <tr><td>[Benjamin Pitts]가 연기한 영화들은 몇 년에 개봉했나</td><td class="mono">Starred_actors_reverse | release_year</td></tr>
+        <tr><td>[Ray Ashley]의 영화 공동 각본가는 누구인가</td><td class="mono">Written_by_reverse | written_by</td></tr>
+        <tr><td>[Mary McDonnell]과 공동 출연한 사람은 누구인가</td><td class="mono">Starred_actors_reverse | starred_actors</td></tr>
+        <tr><td>[Jack Hazan]의 영화 공동 감독은 누구인가</td><td class="mono">Directed_by_reverse | directed_by</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p class="body reveal">
+      <b>D — 효율성.</b> Webqsp·SimpleQA에서의 BiNet 실행 시간은 MetaQA보다 훨씬 큰데,
+      배경 지식그래프가 훨씬 크기 때문이다. 긴 훈련 시간에도 불구하고 <b>테스트 시간은 15분 미만</b>으로 비교적 짧다.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="src">
+      <b>출처</b><br>
+      Liu, L. &amp; Tong, H. (2026). <b>Neural Symbolic Knowledge Graph Reasoning:<br>
+      A Pathway Towards Neural Symbolic AI</b> — Chapter 5. Accurate Query Answering<br>with Neural Symbolic Reasoning Over Incomplete KG.<br>
+      Synthesis Lectures on Computer Science, Springer Nature Switzerland.
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--qa)"></i>KGQA — 멀티홉 질의응답</span><br>
+      <span><i style="background:var(--kc)"></i>KGC — 지식그래프 완성</span><br>
+      <span><i style="background:var(--sh)"></i>공유 — 임베딩 공간 · 경로 디코더</span><br>
+      <span><i style="background:var(--sc)"></i>답 스코어링 — ComplEx (공용)</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // 스크롤 리빌
+  var reveals = document.querySelectorAll(".reveal");
+  if (reduce || !("IntersectionObserver" in window)) {
+    reveals.forEach(function(el){ el.classList.add("on"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add("on"); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.08 });
+    reveals.forEach(function(el){ io.observe(el); });
+  }
+
+  // R1/R2 상호 보완 루프
+  var STORIES = {
+    r1: '<b>R1 — KGQA가 KGC를 돕는다.</b> KGQA 태스크로부터 새 지식이 추론되어 지식그래프 완성에 쓰일 수 있다. Fig 5.1의 지식그래프에서 <span class="kw-qa">"A Song of Love는 몇 년에 개봉했는가?"</span>는 답할 수 없다 — 이 영화 주변에는 direct와 hasGenre 두 관계뿐이라 <b>사람조차 기존 그래프만으로는 답할 수 없다</b>. 그러나 <span class="kw-qa">"Jean Genet이 감독한 모든 영화는 몇 년에 개봉했는가?"</span>의 답(1950)이 주어지면, Jean Genet이 평생 단 한 편의 영화만 감독했으므로 <b>A Song of Love의 개봉 연도가 1950임을 추론</b>할 수 있다.',
+    r2: '<b>R2 — KGC가 KGQA를 돕는다.</b> KGC는 더 완전하고 품질 높은 지식 트리플을 갖춘 KG를 제공하여 KGQA 성능을 높인다. 영화 <span class="kw-kc">The Love of Siam</span>은 hasTag 관계로 Tailand와 연결되어 있으므로, 이상적인 KGC 모델은 <b>이 영화가 태국 관객을 대상으로 할 것</b>이라 추론하고 적절한 언어 정보로 지식그래프를 증강할 수 있다. 그러면 <span class="kw-kc">"영화 The Love of Siam의 언어는 무엇인가"</span>라는 질문은 <b>자명하게 답변</b>된다.'
+  };
+  var lbtns = document.querySelectorAll(".lbtn");
+  var story = document.getElementById("loopStory");
+  var ar1 = document.getElementById("ar1");
+  var ar2 = document.getElementById("ar2");
+  function setMode(mode){
+    lbtns.forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-mode") === mode); });
+    if (story) story.innerHTML = STORIES[mode];
+    if (ar1) ar1.className = "larrow" + (mode === "r1" ? " on-r1" : "");
+    if (ar2) ar2.className = "larrow" + (mode === "r2" ? " on-r2" : "");
+  }
+  lbtns.forEach(function(b){
+    b.addEventListener("click", function(){ setMode(b.getAttribute("data-mode")); });
+  });
+  setMode("r1");
+
+  // 현재 섹션 내비 활성화
+  var navLinks = document.querySelectorAll(".navlinks a");
+  var secs = ["s51","s52","s53","s54"].map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  if ("IntersectionObserver" in window) {
+    var nio = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) {
+          navLinks.forEach(function(a){
+            a.classList.toggle("active", a.getAttribute("href") === "#" + e.target.id);
+          });
+        }
+      });
+    }, { rootMargin: "-35% 0px -55% 0px" });
+    secs.forEach(function(s){ nio.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>
