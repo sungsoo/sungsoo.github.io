@@ -1,0 +1,862 @@
+---
+layout: null
+title: "Ambiguous Entity Matching with Neural Symbolic Reasoning" 
+date: 2026-07-24 
+categories: [artificial intelligence]
+tags: [artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제8장 불완전한 KG 위 뉴로-심볼릭 추론에 의한 모호 개체 매칭 — PromptAttrib</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --paper:#F5F7FA;
+  --card:#FFFFFF;
+  --ink:#1E2430;
+  --sub:#4E5768;
+  --faint:#8C94A5;
+  --hair:#E3E7ED;
+  --hair-strong:#C9D0DB;
+
+  --sys:#3D50C3;      /* PromptAttrib 시스템 — 인디고 */
+  --sys-bg:#EBEEFA;
+  --sys-line:#B8C1EC;
+  --sam:#0F8A5F;      /* Same — 그린 */
+  --sam-bg:#E7F4EF;
+  --sam-line:#A2D5BF;
+  --dif:#C13B3B;      /* Different — 레드 */
+  --dif-bg:#FBECEC;
+  --dif-line:#EBB3B3;
+  --amb:#B4740D;      /* Ambiguous — 앰버 */
+  --amb-bg:#FAF2E2;
+  --amb-line:#E6CD96;
+
+  --disp:'Do Hyeon',sans-serif;
+  --sans:'Pretendard Variable',Pretendard,-apple-system,'Noto Sans KR',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-size:16.5px;line-height:1.85;letter-spacing:-.01em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(61,80,195,.15)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--sys);outline-offset:2px}
+
+/* ---------- 내비게이션 ---------- */
+.topnav{
+  position:sticky;top:0;z-index:60;
+  background:rgba(245,247,250,.88);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--hair);
+}
+.topnav .wrap{display:flex;align-items:center;gap:24px;height:58px}
+.brand{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.04em;white-space:nowrap}
+.brand b{color:var(--sys);font-weight:600}
+.navlinks{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+.navlinks a{
+  color:var(--sub);text-decoration:none;font-size:13px;font-weight:600;
+  padding:7px 11px;border-radius:8px;transition:.2s;white-space:nowrap;
+}
+.navlinks a:hover{color:var(--ink);background:rgba(30,36,48,.05)}
+.navlinks a.active{color:var(--sys);background:var(--sys-bg)}
+
+/* ---------- 히어로 ---------- */
+.hero{border-bottom:1px solid var(--hair);background:var(--card);position:relative;overflow:hidden}
+.hero::after{
+  content:"[MASK]";
+  position:absolute;right:20px;top:100px;transform:rotate(8deg);
+  font-family:var(--mono);font-weight:600;font-size:96px;letter-spacing:.02em;
+  color:rgba(61,80,195,.05);pointer-events:none;user-select:none;
+}
+.hero .wrap{position:relative;z-index:1;padding-top:80px;padding-bottom:70px}
+.pub-line{
+  font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.05em;
+  display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:24px;
+}
+.pub-line .dot{width:3px;height:3px;border-radius:50%;background:var(--hair-strong)}
+.pub-line em{font-style:normal;color:var(--sys);font-weight:600}
+.tagrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.chapter-tag{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--sys);
+  background:var(--sys-bg);border:1px solid var(--sys-line);border-radius:999px;
+  padding:6px 16px;letter-spacing:.06em;
+}
+.cond{font-family:var(--mono);font-size:12.5px;font-weight:600;border-radius:999px;padding:6px 16px}
+.cond.kg{color:var(--sam);background:var(--sam-bg);border:1px solid var(--sam-line)}
+.cond.q{color:var(--amb);background:var(--amb-bg);border:1px solid var(--amb-line)}
+h1{
+  font-family:var(--disp);font-weight:400;
+  font-size:clamp(34px,4.6vw,50px);line-height:1.34;letter-spacing:.005em;margin-bottom:20px;
+}
+h1 .hl{color:var(--sys)}
+.hero-sub{font-size:16.5px;color:var(--sub);max-width:780px;margin-bottom:34px}
+.hero-sub b{color:var(--ink);font-weight:700}
+.verdicts{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:36px}
+.vd{
+  font-family:var(--mono);font-size:13px;font-weight:600;border-radius:10px;padding:9px 18px;border:1.5px solid;
+}
+.vd.sam{color:var(--sam);background:var(--sam-bg);border-color:var(--sam-line)}
+.vd.dif{color:var(--dif);background:var(--dif-bg);border-color:var(--dif-line)}
+.vd.amb{color:var(--amb);background:var(--amb-bg);border-color:var(--amb-line)}
+
+/* 두 축 요약 */
+.pillars{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.pillar{
+  border:1px solid var(--hair-strong);border-radius:16px;background:var(--card);padding:24px;
+  box-shadow:0 8px 26px rgba(30,36,48,.05);
+}
+.pillar .pn{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--sys);margin-bottom:10px}
+.pillar .pt{font-family:var(--disp);font-size:19px;margin-bottom:8px}
+.pillar .pd{font-size:13.5px;color:var(--sub);line-height:1.8}
+.pillar .pd b{color:var(--ink)}
+
+/* ---------- 섹션 공통 ---------- */
+section{padding:86px 0;border-bottom:1px solid var(--hair)}
+section:last-of-type{border-bottom:none}
+.sec-head{max-width:840px;margin-bottom:44px}
+.eyebrow{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.12em;
+  color:var(--sys);display:flex;align-items:center;gap:12px;margin-bottom:14px;
+}
+.eyebrow::before{content:"";width:30px;height:2px;background:var(--sys)}
+h2{
+  font-family:var(--disp);font-weight:400;font-size:clamp(26px,3.2vw,34px);
+  line-height:1.42;margin-bottom:14px;letter-spacing:.005em;
+}
+.lede{color:var(--sub);font-size:16px}
+.lede b{color:var(--ink);font-weight:700}
+h3{
+  font-family:var(--disp);font-weight:400;font-size:20.5px;margin:52px 0 18px;
+  display:flex;align-items:center;gap:12px;
+}
+h3 .slot{
+  font-family:var(--mono);font-size:10px;color:var(--sys);border:1.5px dashed var(--sys-line);
+  border-radius:6px;padding:3px 8px;background:var(--sys-bg);flex-shrink:0;letter-spacing:.04em;
+}
+p.body{color:var(--sub);margin-bottom:16px;max-width:860px;font-size:15.5px}
+p.body b{color:var(--ink);font-weight:700}
+.cite{font-family:var(--mono);font-size:.76em;color:var(--faint);vertical-align:super;white-space:nowrap}
+code.m{
+  font-family:var(--mono);font-size:.86em;background:rgba(30,36,48,.06);
+  border-radius:6px;padding:2px 7px;color:var(--ink);
+}
+sub,sup{line-height:0}
+
+/* 직렬화 스트립 */
+.serial{
+  border:1px solid var(--hair-strong);border-radius:14px;background:var(--card);
+  padding:20px 24px;margin:22px 0;overflow-x:auto;
+}
+.serial .sl{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.08em;font-weight:600;margin-bottom:12px}
+.serial .strip{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-family:var(--mono);font-size:12.5px}
+.tk{border-radius:7px;padding:4px 10px;border:1px solid}
+.tk.col{color:var(--sys);background:var(--sys-bg);border-color:var(--sys-line);font-weight:600}
+.tk.val{color:var(--ink);background:var(--paper);border-color:var(--hair-strong)}
+.tk.mask{color:var(--amb);background:var(--amb-bg);border:1.5px dashed var(--amb-line);font-weight:600}
+.tk.plain{color:var(--sub);border:none;padding:4px 2px}
+
+/* Michael Jordan 대조 */
+.mj{
+  border:1px solid var(--hair-strong);border-radius:16px;background:var(--card);
+  padding:26px;margin:26px 0;box-shadow:0 8px 26px rgba(30,36,48,.05);
+}
+.mj-title{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--faint);font-weight:600;margin-bottom:16px}
+.mj-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.mj-rec{border:1px solid var(--hair);border-radius:12px;padding:16px 18px;background:var(--paper)}
+.mj-rec .rn{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.08em;margin-bottom:8px;font-weight:600}
+.mj-rec .attr{display:flex;gap:8px;font-size:13.5px;margin-bottom:5px}
+.mj-rec .attr .k{color:var(--faint);font-family:var(--mono);font-size:12px;min-width:88px}
+.mj-rec .attr .v{color:var(--ink);font-weight:600}
+.mj-rows{display:grid;gap:8px}
+.mj-row{
+  display:grid;grid-template-columns:110px 1fr auto;gap:12px;align-items:center;
+  border:1px solid var(--hair);border-radius:10px;padding:10px 16px;font-size:13.5px;background:var(--card);
+}
+.mj-row .mk{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+.mj-row .md{color:var(--sub)}
+.mj-row .mv{font-family:var(--mono);font-size:11px;font-weight:600;border-radius:7px;padding:3px 11px;border:1px solid}
+.mj-row .mv.sam{color:var(--sam);background:var(--sam-bg);border-color:var(--sam-line)}
+.mj-row .mv.dif{color:var(--dif);background:var(--dif-bg);border-color:var(--dif-line)}
+.mj-final{
+  margin-top:12px;border:1.5px dashed var(--dif-line);background:var(--dif-bg);border-radius:11px;
+  padding:13px 18px;font-size:13.5px;color:#8A2E2E;line-height:1.8;
+}
+.mj-final b{color:var(--ink)}
+
+/* 퍼지 규칙 탭 (시그니처) */
+.rules{
+  border:1px solid var(--hair-strong);border-radius:18px;background:var(--card);
+  padding:30px;margin:32px 0;box-shadow:0 10px 30px rgba(30,36,48,.06);
+}
+.rules-title{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--faint);font-weight:600;margin-bottom:18px}
+.rule-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px}
+.rbtn{
+  font-family:var(--sans);font-size:14px;font-weight:700;padding:13px 10px;border-radius:12px;
+  border:1.5px solid var(--hair-strong);background:var(--paper);color:var(--sub);cursor:pointer;transition:.18s;
+}
+.rbtn small{display:block;font-family:var(--mono);font-size:10px;font-weight:400;margin-top:3px;color:var(--faint)}
+.rbtn.sam.on{color:#fff;background:var(--sam);border-color:var(--sam)}
+.rbtn.dif.on{color:#fff;background:var(--dif);border-color:var(--dif)}
+.rbtn.amb.on{color:#fff;background:var(--amb);border-color:var(--amb)}
+.rbtn.on small{color:rgba(255,255,255,.8)}
+.rule-panel{border:1px solid var(--hair);border-radius:13px;background:var(--paper);padding:22px 24px}
+.rule-panel .rp-st{font-size:14.5px;color:var(--sub);line-height:1.85;margin-bottom:12px}
+.rule-panel .rp-st b{color:var(--ink)}
+.rule-panel .rp-fx{
+  font-family:var(--mono);font-size:13px;color:var(--ink);background:var(--card);
+  border:1px solid var(--hair);border-radius:10px;padding:13px 16px;margin-bottom:12px;overflow-x:auto;line-height:1.9;
+}
+.rule-panel .rp-why{
+  font-size:13px;line-height:1.8;border-radius:9px;padding:11px 15px;border:1px dashed;
+}
+.rule-panel .rp-why b{color:var(--ink)}
+
+/* 정의/수식 */
+.def{margin:22px 0;border-radius:14px;border:1px solid var(--hair);background:var(--card);overflow:hidden}
+.def-head{
+  padding:12px 22px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;font-weight:600;
+  color:var(--sys);background:var(--sys-bg);border-bottom:1px solid var(--hair);
+}
+.def-head.prob{color:var(--dif);background:var(--dif-bg)}
+.def-body{padding:20px 22px;color:var(--sub);font-size:15px}
+.def-body b{color:var(--ink)}
+.formula{
+  font-family:var(--mono);font-size:13.5px;color:var(--ink);background:var(--paper);
+  border:1px solid var(--hair);border-radius:10px;padding:14px 18px;margin:12px 0;
+  overflow-x:auto;line-height:2;
+}
+.formula .eq{color:var(--faint);font-size:11px;float:right;margin-left:12px}
+.formula .c1{color:var(--sam)}
+.formula .c2{color:var(--dif)}
+.formula .c3{color:var(--amb)}
+.formula .c4{color:var(--sys)}
+
+/* 라벨 단어 집합 */
+.labelsets{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:22px 0}
+.lset{border:1px solid;border-radius:13px;padding:18px 20px;background:var(--card)}
+.lset.sam{border-color:var(--sam-line)}
+.lset.dif{border-color:var(--dif-line)}
+.lset.amb{border-color:var(--amb-line)}
+.lset .ln{font-family:var(--mono);font-size:11.5px;font-weight:600;margin-bottom:9px}
+.lset.sam .ln{color:var(--sam)}
+.lset.dif .ln{color:var(--dif)}
+.lset.amb .ln{color:var(--amb)}
+.lset .lw{display:flex;gap:6px;flex-wrap:wrap}
+.lset .lw span{font-family:var(--mono);font-size:11.5px;border-radius:7px;padding:3px 10px;background:var(--paper);border:1px solid var(--hair);color:var(--sub)}
+
+/* 표 */
+table.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;background:var(--card);border:1px solid var(--hair);border-radius:14px;overflow:hidden}
+.tbl th,.tbl td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--hair);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl thead th{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--faint);
+  background:var(--paper);border-bottom:1px solid var(--hair-strong);white-space:nowrap;
+}
+.tbl td{color:var(--sub)}
+.tbl td b{color:var(--ink)}
+.tbl .num{font-family:var(--mono);font-size:12px;color:var(--sub);text-align:right;white-space:nowrap}
+.tbl .best{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--sam);text-align:right;background:var(--sam-bg);white-space:nowrap}
+.tbl-scroll{overflow-x:auto;margin:24px 0}
+.tbl-scroll table.tbl{min-width:780px}
+.tbl-note{font-size:12.5px;color:var(--faint);margin-top:-14px;margin-bottom:24px;font-family:var(--mono)}
+
+/* 콜아웃 */
+.callout{
+  border-radius:13px;padding:18px 22px;margin:20px 0;font-size:14.5px;line-height:1.85;
+  border:1px solid;max-width:860px;
+}
+.callout b{color:var(--ink)}
+.callout .cl-tag{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;display:block;margin-bottom:6px}
+.callout.sys{background:var(--sys-bg);border-color:var(--sys-line);color:#33418F}
+.callout.amb{background:var(--amb-bg);border-color:var(--amb-line);color:#7C5310}
+.callout.dif{background:var(--dif-bg);border-color:var(--dif-line);color:#8A2E2E}
+.callout.sam{background:var(--sam-bg);border-color:var(--sam-line);color:#0C6247}
+
+/* 지표/데이터셋 */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:26px 0}
+.metric{border:1px solid var(--hair);border-radius:14px;background:var(--card);padding:22px}
+.metric .mv{font-family:var(--disp);font-size:29px;color:var(--sys);line-height:1.25}
+.metric .mk{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.65}
+.metric .mk b{color:var(--ink)}
+.dsets{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0}
+.dset{border:1px solid var(--hair);border-radius:13px;background:var(--card);padding:20px;border-top:2px solid var(--sys)}
+.dset .dn{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--sys);margin-bottom:8px}
+.dset .dd{font-size:13px;color:var(--sub);line-height:1.75}
+.dset .dd b{color:var(--ink)}
+
+/* 푸터 */
+footer{padding:52px 0 68px;color:var(--faint);font-size:13px;background:var(--card);border-top:1px solid var(--hair)}
+footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+footer .src{font-family:var(--mono);font-size:12px;line-height:2}
+footer .src b{color:var(--sub);font-weight:600}
+footer .legend{font-family:var(--mono);font-size:12px;text-align:right;line-height:2.1}
+footer .legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;font-style:normal}
+
+/* 리빌 */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
+
+/* 반응형 */
+@media (max-width:960px){
+  .pillars,.mj-grid,.labelsets{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .dsets{grid-template-columns:1fr}
+  .navlinks{display:none}
+  .hero::after{display:none}
+}
+@media (max-width:620px){
+  section{padding:58px 0}
+  .rule-tabs{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr}
+  .mj-row{grid-template-columns:1fr;gap:6px}
+  .rules,.mj{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="페이지 내비게이션">
+  <div class="wrap">
+    <div class="brand">NS-KGR <b>/</b> Chapter 08</div>
+    <div class="navlinks">
+      <a href="#s81">8.1 서론</a>
+      <a href="#s82">8.2 문제 정의</a>
+      <a href="#s83">8.3 방법 상세</a>
+      <a href="#s84">8.4 실험</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== 히어로 ==================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="pub-line">
+      <span>Springer · Synthesis Lectures on Computer Science</span>
+      <span class="dot"></span><span><em>2026</em></span>
+      <span class="dot"></span><span>DOI 10.1007/978-3-032-15858-1_8</span>
+      <span class="dot"></span><span>Liu &amp; Tong</span>
+    </div>
+    <div class="tagrow">
+      <span class="chapter-tag">CHAPTER 8 · RESEARCH QUESTION Q4 — 모호 개체 매칭</span>
+      <span class="cond kg">지식그래프 불완전</span>
+      <span class="cond q">개체 모호 · 저자원(라벨 5%)</span>
+    </div>
+    <h1>불완전한 KG 위 뉴로-심볼릭 추론에 의한<br>모호 개체 매칭 — <span class="hl">PromptAttrib</span></h1>
+    <p class="hero-sub">
+      개체 매칭(Entity Matching, EM)은 두 개체 사이의 논리적 관계 — <b>Same, Different, Ambiguous</b> —
+      를 판정하는 중요한 태스크다. 전통적 접근은 대량의 고품질 라벨 데이터에 크게 의존하는 지도학습에 기대는데,
+      라벨링은 시간과 비용이 많이 들어 실용적 적용을 제한한다. 최근 프롬프트 튜닝 기반 접근이 저자원 EM에서
+      유망한 결과를 보였지만, <b>개체 수준 매칭에만 집중해 결정적인 속성 수준 정보를 간과</b>하며
+      해석 가능성과 설명 가능성이 부족하다. PromptAttrib은 <b>속성 수준 프롬프트 튜닝과 논리 추론</b>으로
+      이 한계에 대응하는 포괄적 해법이다.
+    </p>
+    <div class="verdicts">
+      <span class="vd sam">SAME</span>
+      <span class="vd dif">DIFFERENT</span>
+      <span class="vd amb">AMBIGUOUS</span>
+    </div>
+    <div class="pillars reveal">
+      <div class="pillar">
+        <div class="pn">COMPONENT 1</div>
+        <div class="pt">개체 + 속성 수준 프롬프트 × 퍼지 논리</div>
+        <div class="pd">개체 수준·속성 수준 프롬프트를 모두 활용해 맥락 정보를 매칭 정확도에 반영하고,
+        <b>서로 다른 속성 정보 간 논리적 관계로부터 퍼지 논리 공식으로 매칭 라벨을 유도</b>하여
+        예측 결과를 더 설명 가능하게 만든다.</div>
+      </div>
+      <div class="pillar">
+        <div class="pn">COMPONENT 2</div>
+        <div class="pt">소프트 프롬프트 드롭아웃 대조학습</div>
+        <div class="pd">SimCSE 기법에서 영감을 받아 <b>소프트 프롬프트에 드롭아웃 기반 대조학습</b>을 적용한다.
+        훈련 중 드롭아웃 메커니즘 도입으로 입력 프롬프트의 변동에 더 강건한 모델을 만들고,
+        구별 가능한 특징 표현을 장려하며 과적합을 줄인다.</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== 8.1 서론 ==================== -->
+<section id="s81">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 8.1</div>
+      <h2>서론 — 저자원 EM과 속성 정보의 힘</h2>
+      <p class="lede">
+        개체 매칭은 두 개체 레코드가 같은 실세계 개체를 가리키는지 판정하는 데이터 관리의 근본 문제로,
+        질의응답<span class="cite">[73]</span>, 대화 시스템<span class="cite">[1, 3, 146]</span> 등 다양한 도메인에서 중요하다.
+        서로 다른 소스의 고객 정보를 저장하는 두 지식 데이터베이스를 병합할 때, 스키마·데이터 형식의 차이 때문에
+        결합은 어려운 과제가 되지만 — 개체 매칭으로 <b>데이터베이스 간 일치하는 고객 레코드를 식별</b>하면
+        정확한 데이터 병합·연결이 가능해진다.
+      </p>
+    </div>
+
+    <p class="body reveal">
+      기존 EM 기법은 풍부한 고품질 라벨 데이터에 광범위하게 의존하지만 그런 데이터는 흔히 희소하거나 존재하지 않는다.
+      따라서 최소한의 라벨로 견고한 성능을 내는 <b>저자원(low-resource) EM</b>의 필요가 커지고 있다.
+      프롬프트 튜닝은 초기 프롬프트를 정교하게 설계·조정하여 모델의 행동을 원하는 결과로 유도하는 유망한 방식이다.
+      promptEM<span class="cite">[151]</span> 같은 기존 프롬프트 튜닝 기반 저자원 EM은 각 개체를 문장으로 직렬화하고
+      프롬프트 템플릿으로 언어모델 입력을 생성한다. 많은 시나리오에서 좋은 성능을 보였으나,
+      이런 모델은 <b>블랙박스처럼 동작해 해석 가능성이 부족</b>하고,
+      <b>개체 수준 정보만 고려해 각 개체에 딸린 결정적인 속성 정보를 간과</b>한다.
+    </p>
+
+    <div class="mj reveal">
+      <div class="mj-title">WHY ATTRIBUTES MATTER — 속성이 판정을 가른다</div>
+      <div class="mj-grid">
+        <div class="mj-rec">
+          <div class="rn">RECORD A</div>
+          <div class="attr"><span class="k">name</span><span class="v">Michael Jordan</span></div>
+          <div class="attr"><span class="k">occupation</span><span class="v">basketball player</span></div>
+        </div>
+        <div class="mj-rec">
+          <div class="rn">RECORD B</div>
+          <div class="attr"><span class="k">name</span><span class="v">Michael Jordan</span></div>
+          <div class="attr"><span class="k">occupation</span><span class="v">computer scientist</span></div>
+        </div>
+      </div>
+      <div class="mj-rows">
+        <div class="mj-row"><span class="mk">name</span><span class="md">두 레코드의 이름이 완전히 일치한다</span><span class="mv sam">SAME</span></div>
+        <div class="mj-row"><span class="mk">occupation</span><span class="md">"basketball player" vs "computer scientist" — 직업이 서로 다르다</span><span class="mv dif">DIFFERENT</span></div>
+      </div>
+      <div class="mj-final">
+        <b>개체 수준 판정 → DIFFERENT.</b> 속성 정보는 더 세밀한(fine-grained) 세부를 담고 있어
+        두 개체가 왜 Same·Different·Ambiguous인지 <b>설명</b>할 수 있게 한다 —
+        직업이 "basketball player"인 Michael Jordan은 직업이 "computer scientist"인 Michael Jordan과 다르다.
+      </div>
+    </div>
+
+    <p class="body reveal">
+      또한 기존 프롬프트 튜닝 방법은 입력 소프트 프롬프트가 훈련 과정에서 잘 학습된다고 가정할 뿐,
+      서로 다른 입력의 표현을 명시적으로 구별 가능하게 만들지 않는다. 그러나 <b>고품질 개체/속성 표현은 EM 성공의 핵심</b>이다 —
+      두 개체/속성이 다르면 그 표현은 쉽게 구별되어야 한다. 언어모델에 드롭아웃 기반 대조학습을 적용해
+      표현 학습 품질을 높이는 <b>SimCSE</b>에서 영감을 받아, <b>소프트 프롬프트에 드롭아웃 기반 대조학습</b>을 적용한다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 8.2 문제 정의 ==================== -->
+<section id="s82">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 8.2</div>
+      <h2>문제 정의 — 직렬화와 프롬프트 기반 튜닝</h2>
+      <p class="lede">
+        저자원 개체 매칭의 정의를 제시하고, EM을 위한 직렬화 방법과 언어모델 프롬프트 기반 튜닝을 소개한다.
+      </p>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head prob">PROBLEM 8.1 · 저자원 개체 매칭</div>
+      <div class="def-body">
+        두 데이터 소스 E<sub>A</sub>, E<sub>B</sub>가 주어지면, 각 후보 쌍 (e<sub>a</sub>, e<sub>b</sub>) ∈ E<sub>A</sub> × E<sub>B</sub>에
+        이진 라벨 y ∈ {0, 1}을 부여한다 — y = 1은 참 매칭, y = 0은 불일치 쌍이다.<br>
+        <b>주어진 것</b> — (1) 데이터 소스 E<sub>A</sub>의 개체 e<sub>a</sub>, (2) 데이터 소스 E<sub>B</sub>의 개체 e<sub>b</sub>,
+        (3) <b>제한된 라벨 훈련 데이터</b>.
+        <b>출력</b> — 개체 쌍 (e<sub>a</sub>, e<sub>b</sub>)에 대한 이진 라벨 y ∈ {0, 1}.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="slot">SERIALIZE</span>8.2.2 예비 지식 — 직렬화 (Eq 8.1–8.2)</h3>
+    <p class="body reveal">
+      매칭 문제는 <b>시퀀스 분류 태스크</b>로 정식화하면 효과적으로 풀 수 있다 — 개체 쌍을 시퀀스로 직렬화하고
+      사전학습 LM을 파인튜닝한다. n개 속성을 가진 개체는 <code class="m">e = {attr_i, val_i}_{i∈[1,n]}</code>로 표기하며
+      (attr<sub>i</sub>: 속성명, val<sub>i</sub>: 속성값), 직렬화는
+      <code class="m">serialize(e) ::= [COL]attr₁[VAL]val₁ … [COL]attr_n[VAL]val_n</code> (Eq 8.1)이다 —
+      [COL]·[VAL]은 각각 속성명·속성값의 시작을 표시하는 특수 태그다. Fig 8.1의 관계형 개체를 예로 들면:
+    </p>
+    <div class="serial reveal">
+      <div class="sl">EQ 8.2 · 직렬화 예시</div>
+      <div class="strip">
+        <span class="tk col">[COL]</span><span class="tk val">name</span>
+        <span class="tk col">[VAL]</span><span class="tk val">McKees Rocks Bridge</span>
+        <span class="tk plain">…</span>
+        <span class="tk col">[COL]</span><span class="tk val">postalCode</span>
+        <span class="tk col">[VAL]</span><span class="tk val">15233</span>
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="slot">[MASK]</span>8.2.3 프롬프트 기반 튜닝 — 클로즈 태스크로의 변환</h3>
+    <div class="def reveal">
+      <div class="def-head">FORMULATION · 분류 → 마스크 언어 모델링</div>
+      <div class="def-body">
+        라벨 단어 집합 V<sub>y</sub> = {w₁, …, w<sub>m</sub>}은 LM 어휘 V의 부분집합(V<sub>y</sub> ⊆ V)이며,
+        각 라벨에 대응하는 사전들의 합집합으로 전체 사전 V*를 얻는다.
+        또 다른 핵심 구성 요소인 <b>프롬프트 템플릿 T(·)</b>은 원 입력 x에 토큰들을 추가해 프롬프트 입력 T(x)로 바꾸며,
+        일반적으로 LM이 누락 라벨 단어 w ∈ V<sub>y</sub>를 예측하도록 <b>[MASK] 토큰</b>이 추가된다.
+        이렇게 분류 문제가 마스크 언어 모델링 문제로 전환된다:
+        <div class="formula">p(y ∈ Y | x) = p([MASK] = w ∈ V<sub>y</sub> | T(x))</div>
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="slot">T(x)</span>8.2.4 프롬프트 템플릿 — 하드 인코딩 · 연속 · 라벨 단어</h3>
+    <p class="body reveal">
+      <b>하드 인코딩 템플릿.</b> EM 태스크는 목적이 분명해 프롬프트를 쉽게 설계할 수 있으므로 이산 프롬프트의
+      자동 탐색을 쓰지 않는다. 각 후보 쌍 x = (e, e′)에 대해 다음 템플릿을 구성한다(다양한 프롬프트 사용이 가능하며
+      두 가지 단순 예시만 제시):
+    </p>
+    <div class="serial reveal">
+      <div class="sl">EQ 8.3–8.4 · 하드 인코딩 템플릿</div>
+      <div class="strip" style="margin-bottom:10px">
+        <span class="tk plain">T₁(x) =</span><span class="tk plain">Are</span>
+        <span class="tk val">serialize(e)</span><span class="tk plain">and</span>
+        <span class="tk val">serialize(e′)</span><span class="tk plain">the</span><span class="tk mask">[MASK]</span>
+      </div>
+      <div class="strip">
+        <span class="tk plain">T₂(x) =</span>
+        <span class="tk val">serialize(e)</span><span class="tk plain">is</span><span class="tk mask">[MASK]</span>
+        <span class="tk plain">to</span><span class="tk val">serialize(e′)</span>
+      </div>
+    </div>
+    <p class="body reveal">
+      <b>연속 템플릿.</b> 프롬프트 구성의 목적은 사람이 읽기 위함이 아니라 LM이 태스크를 효과적으로 수행하게 하는 것이므로,
+      사람이 해석 가능한 자연어로 제한할 필요가 없다. <b>모델의 임베딩 공간에서 직접 프롬프팅하는 연속 프롬프트</b>가 그래서 제안됐다.
+      여기서는 <b>P-tuning</b>을 채용한다 — 훈련 가능한 변수를 임베딩 입력에 삽입해 연속 프롬프트 토큰을 학습하며,
+      <b>BiLSTM으로 프롬프트 토큰 간 상호작용을 반영</b>한다. 이로써 모델은 원 어휘 V가 표현할 수 있는 범위를 넘어
+      더 좋은 연속 프롬프트를 찾는다(Fig 8.2<span class="cite">[151]</span>).
+    </p>
+    <p class="body reveal">
+      <b>라벨 단어 집합.</b> 두 개체가 동일한지만 판정하기보다 둘 사이의 관계를 분류하는 편이 더 유익하다 —
+      단순 매칭을 넘어 <b>서로 관련이 있는지(relevant)</b>라는 더 넓은 범위의 관계를 판정한다.
+      일반적 이진 관계에 대해 y = yes는 {matched, similar, relevant}로, y = no는
+      {mismatched, different, irrelevant}로 매핑하여 관련성과 무관성의 다양한 정도를 포착한다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 8.3 방법 상세 ==================== -->
+<section id="s83">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 8.3</div>
+      <h2>방법 상세 — 두 수준의 프롬프트, 퍼지 유도, 대조학습</h2>
+      <p class="lede">
+        PromptAttrib은 개체 수준 프롬프트 튜닝 위에 속성 수준 프롬프트 튜닝을 더하고,
+        <b>속성 수준 예측으로부터 개체 수준 라벨을 퍼지 논리로 유도</b>하며,
+        소프트 토큰에 대조학습을 적용해 표현 품질을 끌어올린다.
+      </p>
+    </div>
+
+    <h3 class="reveal"><span class="slot">1×[MASK]</span>8.3.1 개체 수준 프롬프트 튜닝</h3>
+    <p class="body reveal">
+      PromptEM<span class="cite">[75, 151]</span> 같은 기존 방법에서 영감을 받아, 두 개체의 동일 여부를 프롬프트 튜닝으로 검사한다.
+      두 개체를 각각 직렬화하고(§8.2.4), 직렬화된 두 텍스트를 프롬프트 템플릿의 입력으로 써서(Fig 8.3a)
+      결과 맥락을 대규모 언어모델에 넣는다. 특수 토큰 <b>[MASK]의 출력 임베딩을 MLM 헤드가 받아</b> 결과를 예측한다.
+      라벨 단어 집합은 §8.2.4와 동일하다 — y = yes → {matched, similar, relevant},
+      y = no → {mismatched, different, irrelevant}.
+    </p>
+
+    <h3 class="reveal"><span class="slot">N×[MASK]</span>8.3.2 속성 수준 프롬프트 튜닝</h3>
+    <p class="body reveal">
+      개체 수준 프롬프트가 [MASK] 토큰 하나만 갖는 것과 달리, <b>속성 프롬프트는 개체 수준과 속성 수준 정보를 모두 담아
+      템플릿에 여러 [MASK] 토큰</b>을 갖는다 — 첫 [MASK]는 개체 수준 정보를, 이후 [MASK]들은 속성 수준 정보를 예측한다.
+      대부분의 경우 이 강화된 프롬프트는 효과적이지만, 어떤 개체는 방대한 정보를 담는다 —
+      예컨대 "computer" 같은 제품의 Description 필드는 <b>512 단어를 넘길 만큼 길 수 있어</b>,
+      속성 정보를 합친 프롬프트가 모델의 최대 입력 길이를 초과해 텍스트 절단이 불가피해진다.
+      이 문제에 대응해 <b>개체 수준 프롬프트와 속성 수준 프롬프트를 분리</b>한다(Fig 8.3b).
+      개체 수준과 달리 속성 수준 프롬프트 튜닝의 라벨 단어 집합은 <b>Same·Different·Ambiguous 세 범주</b>다.
+    </p>
+    <div class="labelsets reveal">
+      <div class="lset sam"><div class="ln">y = Same</div><div class="lw"><span>same</span><span>similar</span><span>positive</span></div></div>
+      <div class="lset dif"><div class="ln">y = Different</div><div class="lw"><span>mismatched</span><span>different</span><span>irrelevant</span></div></div>
+      <div class="lset amb"><div class="ln">y = Ambiguous</div><div class="lw"><span>uncertain</span><span>unclear</span><span>neutral</span></div></div>
+    </div>
+
+    <h3 class="reveal"><span class="slot">⊤ / max</span>8.3.3 퍼지 논리 추론 — 속성에서 개체로의 유도</h3>
+    <p class="body reveal">
+      <b>개체 수준 매칭은 속성 수준 매칭으로부터 논리적으로 유도될 수 있다.</b>
+      개체 매칭의 정의에 기반해 세 가지 유도 규칙을 개발한다 —
+      {(a<sub>k</sub>¹, a<sub>k</sub>²)}<sub>k=1</sub><sup>K</sup>를 모든 속성 쌍이라 하자.
+    </p>
+
+    <!-- 시그니처: 퍼지 규칙 탭 -->
+    <div class="rules reveal">
+      <div class="rules-title">FUZZY INDUCTION RULES — 규칙을 선택하면 논리·수식·근거가 표시된다</div>
+      <div class="rule-tabs" role="tablist" aria-label="퍼지 유도 규칙">
+        <button class="rbtn sam on" role="tab" aria-selected="true" data-rule="same">Same Rule<small>기하평균 — Eq 8.5</small></button>
+        <button class="rbtn dif" role="tab" aria-selected="false" data-rule="diff">Difference Rule<small>max — Eq 8.6</small></button>
+        <button class="rbtn amb" role="tab" aria-selected="false" data-rule="ambi">Ambiguous Rule<small>max × 부정 — Eq 8.7</small></button>
+      </div>
+      <div class="rule-panel">
+        <div class="rp-st" id="rpSt"></div>
+        <div class="rp-fx" id="rpFx"></div>
+        <div class="rp-why" id="rpWhy"></div>
+      </div>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head">EQ 8.8 · 정규화와 훈련</div>
+      <div class="def-body">
+        모든 점수가 양수이므로 합으로 나누어 확률로 정규화한다:
+        <div class="formula">
+          P(L|·) = Z<sup>−1</sup>·S(L|·), &nbsp; Z = <span class="c1">S(Same|·)</span> + <span class="c2">S(Different|·)</span> + <span class="c3">S(Ambiguous|·)</span> <span class="eq">(8.8)</span>
+        </div>
+        L ∈ {Same, Different, Ambiguous}다. 훈련은 정답 개체 수준 라벨 t에 대한
+        <b>교차 엔트로피 손실 −log P(t|·)의 최소화</b>로 수행한다. 실험에서는 Ambiguous를
+        데이터셋에 따라 Same 또는 Different로 분류한다.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="slot">z₁ ↔ z₂</span>8.3.4 소프트 토큰 대조학습 (SimCSE 영감)</h3>
+    <p class="body reveal">
+      현행 프롬프트 튜닝은 초기 소프트 프롬프트가 훈련 중 잘 확립되고 학습된 표현이 충분히 구별된다고 가정하지만,
+      <b>저자원 시나리오에서는 이 가정이 성립하지 않는 경우가 많다</b>. 대조학습의 아이디어는
+      유사 인스턴스 표현의 유사도는 최대화하고 상이한 인스턴스의 유사도는 최소화하여
+      더 의미 있고 판별적인 특징 표현을 길러내는 것이다.
+    </p>
+    <div class="def reveal">
+      <div class="def-head">MECHANISM · 드롭아웃 마스크 기반 양성 쌍 생성</div>
+      <div class="def-body">
+        개체 e<sub>i</sub>가 주어지면 serialize(e<sub>i</sub>) 내부의 <b>소프트 프롬프트 토큰에 무작위 드롭아웃 마스크를 적용</b>해
+        양성 샘플 e<sub>i</sub>⁺를 만든다(Transformer의 표준 훈련에서도 완전연결층과 어텐션 확률에
+        p = 0.1의 드롭아웃 마스크를 적용해 강건성을 높인다<span class="cite">[149]</span>).
+        양성 데이터를 프롬프트 튜닝 모델 <code class="m">z = f_θ(e_i⁺)</code>에 통과시켜 임베딩을 얻고,
+        <b>서로 다른 드롭아웃 마스크로 두 번 반복</b>해 양성 임베딩 z₁·z₂를 생성한다. 훈련 목표는:
+        <div class="formula">ℒ = ‖z₁ − z₂‖²</div>
+        SimCSE<span class="cite">[48]</span>가 언어모델 파라미터에 드롭아웃을 적용하는 것과 달리,
+        <b>언어모델은 그대로 두고 프롬프트 내부의 입력 소프트 토큰에만 드롭아웃을 적용</b>한다 —
+        언어모델 파라미터 수정은 시간이 많이 들기 때문이다. 입력 프롬프트 맥락이 같아도 드롭아웃을 여러 번 적용하면
+        서로 다른 입력이 생성된다. 이 개념은 대조 손실에서 양성 쌍만 쓴다는 점을 제외하면
+        샴 네트워크(siamese network)<span class="cite">[116]</span>와 유사하다. 최종 프레임워크는 Fig 8.4에 제시된다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 8.4 실험 ==================== -->
+<section id="s84">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 8.4</div>
+      <h2>실험 — 라벨 5%의 저자원 검증</h2>
+      <p class="lede">
+        다양한 실세계 시나리오를 대표하는 데이터셋들에서 제안 방법을 종합 평가한다.
+        <b>라벨 훈련 데이터의 5%만 사용</b>하여 저자원 개체 매칭 시나리오를 모사한다.
+      </p>
+    </div>
+
+    <div class="metrics reveal">
+      <div class="metric"><div class="mv">0.811</div><div class="mk">Geo-heter <b>F1 최고</b> (P 0.853 · A 0.889) — PromptEM 0.785, Ditto 0.036</div></div>
+      <div class="metric"><div class="mv">4/4</div><div class="mk">네 데이터셋 모두에서 <b>정확도(A) 최고</b> — 일관된 우위</div></div>
+      <div class="metric"><div class="mv">RoBERTa-L</div><div class="mk">백본 6종 중 <b>Roberta-large가 최고</b> (F 0.811 / P 0.854 / A 0.889)</div></div>
+      <div class="metric"><div class="mv">0.35</div><div class="mk"><b>최적 드롭아웃 비율</b> — F 0.455·P 0.456으로 정규화-정보보존 균형 최선</div></div>
+    </div>
+
+    <h3 class="reveal"><span class="slot">DATA</span>실험 설정</h3>
+    <div class="dsets reveal">
+      <div class="dset"><div class="dn">Geo-heter</div><div class="dd">Yelp, Foursquare(FSQ), OpenStreetMap(OSM) 등 유명 위치 기반 플랫폼에서 수집한 <b>지리공간 개체 194,089개</b>.</div></div>
+      <div class="dset"><div class="dn">Cameras (WDC 부분집합)</div><div class="dd">WDC는 다양한 전자상거래 웹사이트에서 수집한 <b>2,600만 개 제품 오퍼·설명</b>의 방대한 컬렉션이다. Cameras는 카메라 모델·브랜드·사양 등 카메라 관련 개체에 집중한다.</div></div>
+      <div class="dset"><div class="dn">Computers (WDC 부분집합)</div><div class="dd">컴퓨터 모델·브랜드·구성 등 컴퓨터 관련 개체로 구성된 WDC 부분집합.</div></div>
+      <div class="dset"><div class="dn">ISWC</div><div class="dd">International Semantic Web Conference 관련 개체 — <b>논문, 저자, 개최지, 출판 연도</b>를 포함한다.</div></div>
+    </div>
+    <p class="body reveal">
+      <b>베이스라인 4종</b> — SentenceBERT<span class="cite">[116]</span>(사전학습 LM의 샴 구조로 문장 매칭; GEM에도 적용 가능),
+      DeepMatcher<span class="cite">[156]</span>(RNN으로 속성값을 집계하고 집계 표현을 정렬하는 EM 프레임워크),
+      Ditto<span class="cite">[75]</span>(도메인 지식·TF-IDF 요약·데이터 증강의 3대 최적화로 사전학습 LM을 파인튜닝하는 SOTA EM),
+      PromptEM<span class="cite">[151]</span>(클로즈 태스크 개념으로 LLM을 튜닝하는 프롬프트 기반 EM).
+      <b>환경</b> — Intel(R) Xeon(R) Gold 6240R CPU, 1510GB 메모리, NVIDIA Tesla V100-SXM2 GPU.
+      <b>지표</b> — F1-score(F), Average Precision(P), Accuracy(A).
+    </p>
+
+    <h3 class="reveal"><span class="slot">T8.1</span>8.4.1 개체 매칭 성능</h3>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead>
+        <tr><th rowspan="2">모델</th><th colspan="3" style="text-align:center">Geo-heter</th><th colspan="3" style="text-align:center">Cameras</th><th colspan="3" style="text-align:center">Computers</th><th colspan="3" style="text-align:center">ISWC</th></tr>
+        <tr><th style="text-align:right">F</th><th style="text-align:right">P</th><th style="text-align:right">A</th><th style="text-align:right">F</th><th style="text-align:right">P</th><th style="text-align:right">A</th><th style="text-align:right">F</th><th style="text-align:right">P</th><th style="text-align:right">A</th><th style="text-align:right">F</th><th style="text-align:right">P</th><th style="text-align:right">A</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>SentenceBERT</td><td class="num">58.8</td><td class="num">53.8</td><td class="num">64.8</td><td class="num">38.3</td><td class="num">21.4</td><td class="num">21.3</td><td class="num">39.4</td><td class="num">35.6</td><td class="num">57.5</td><td class="num">66.2</td><td class="num">68.0</td><td class="num">75.5</td></tr>
+        <tr><td>DeepMatcher</td><td class="num">43.8</td><td class="num">28.9</td><td class="num">72.1</td><td class="num">39.2</td><td class="num">22.4</td><td class="num">23.0</td><td class="num">42.8</td><td class="num">37.1</td><td class="num">58.9</td><td class="num">69.1</td><td class="num">70.6</td><td class="num">76.3</td></tr>
+        <tr><td>Ditto</td><td class="num">3.6</td><td class="num">45.5</td><td class="num">71.3</td><td class="num">42.8</td><td class="num">27.3</td><td class="num">27.3</td><td class="num">44.9</td><td class="num">40.3</td><td class="num">62.1</td><td class="num">72.1</td><td class="num">72.7</td><td class="num">80.6</td></tr>
+        <tr><td>PromptEM</td><td class="num">78.5</td><td class="num">84.5</td><td class="num">85.5</td><td class="num">35.4</td><td class="num">29.4</td><td class="num">68.8</td><td class="best">49.5</td><td class="num">45.2</td><td class="num">68.4</td><td class="num">76.4</td><td class="num">73.6</td><td class="num">81.9</td></tr>
+        <tr><td><b>PromptAttrib</b></td><td class="best">81.1</td><td class="best">85.4</td><td class="best">88.9</td><td class="best">45.5</td><td class="best">45.6</td><td class="best">72.2</td><td class="num">47.7</td><td class="best">49.5</td><td class="best">72.1</td><td class="best">77.5</td><td class="best">79.6</td><td class="best">82.5</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="tbl-note">// 원문 산문은 Computers에서 PromptAttrib이 최고 F1(0.477)이라 기술하나 표에는 PromptEM의 F가 49.5로 더 높다 — 원문 자체의 불일치를 그대로 명시한다</div>
+    <p class="body reveal">
+      <b>Geo-heter</b>에서 PromptAttrib은 Ditto·PromptEM을 모두 능가하며 F1 0.811, 평균 정밀도 0.853, 정확도 0.889로 최고다 —
+      PromptEM도 F1 0.785로 선전하지만 Ditto는 F1 0.036으로 가장 낮다.
+      <b>Cameras</b>에서는 PromptAttrib이 F1 0.455·평균 정밀도 0.456·정확도 0.722로 최고이고
+      PromptEM이 정확도 0.688로 그다음이다. <b>Computers</b>에서 원문은 PromptAttrib이 최고라 기술하며
+      표 기준 평균 정밀도(0.495)와 정확도(0.721)에서 최고, PromptEM이 F1 0.495·평균 정밀도 0.452로 근접하고
+      Ditto는 F1 0.449로 뒤처진다. <b>ISWC</b>에서도 PromptAttrib이 F1 0.775·평균 정밀도 0.796·정확도 0.825로 최고이며,
+      PromptEM(F1 0.764·P 0.736·A 0.819)이 근접하고 Ditto는 F1 0.721이다.
+      전반적으로 <b>PromptAttrib이 여러 데이터셋에 걸쳐 베이스라인을 일관되게 능가</b>한다.
+    </p>
+
+    <h3 class="reveal"><span class="slot">T8.2</span>8.4.2 백본 언어모델별 성능 (Geo-heter)</h3>
+    <p class="body reveal">
+      프롬프트 튜닝 모델의 백본으로 여러 언어모델을 평가한다 — BERT<span class="cite">[37]</span>,
+      Roberta<span class="cite">[94]</span>, Albert<span class="cite">[72]</span>, GPT2<span class="cite">[115]</span>,
+      Roberta-large, Albert-large의 6종이다.
+    </p>
+    <div class="tbl-scroll reveal" style="max-width:560px">
+    <table class="tbl" style="min-width:0">
+      <thead><tr><th>백본 (Geo-heter)</th><th style="text-align:right">F</th><th style="text-align:right">P</th><th style="text-align:right">A</th></tr></thead>
+      <tbody>
+        <tr><td>BERT</td><td class="num">77.2</td><td class="num">73.5</td><td class="num">83.4</td></tr>
+        <tr><td>Roberta</td><td class="num">79.5</td><td class="num">78.2</td><td class="num">86.4</td></tr>
+        <tr><td>Albert</td><td class="num">78.7</td><td class="num">80.2</td><td class="num">86.6</td></tr>
+        <tr><td>GPT2</td><td class="num">64.7</td><td class="num">68.4</td><td class="num">79.7</td></tr>
+        <tr><td><b>Roberta-large</b></td><td class="best">81.1</td><td class="best">85.4</td><td class="best">88.9</td></tr>
+        <tr><td>Albert-large</td><td class="num">79.9</td><td class="num">83.1</td><td class="num">86.2</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      <b>Roberta-large가 F1 0.811·평균 정밀도 0.854·정확도 0.889로 최고</b>이고, Albert-large(0.799/0.831/0.862)가 근접한다.
+      Roberta(F1 0.795)·BERT(F1 0.772)가 뒤를 잇고, GPT2는 F1 0.647·평균 정밀도 0.684로 다른 모델보다 낮다.
+      정확도에서도 Roberta-large(0.889)가 두드러지며 Albert(0.866)·Albert-large(0.862)가 뒤따른다.
+      <b>Roberta-large·Albert-large 같은 큰 언어모델이 BERT·GPT2 같은 작은 모델보다 좋은 경향</b>은
+      개체 매칭 성능 개선에서 모델 크기와 용량의 중요성을 시사한다.
+    </p>
+
+    <h3 class="reveal"><span class="slot">T8.3</span>8.4.3 어블레이션 — 드롭아웃 비율 (Cameras)</h3>
+    <p class="body reveal">
+      대조학습과 속성 수준 프롬프트 튜닝의 결합 효과를, 특히 저자원 시나리오에서 검증한다.
+      "PromptAttrib 0.35"는 드롭아웃 비율 0.35, "PromptAttrib No"는 드롭아웃 미적용을 뜻한다.
+    </p>
+    <div class="tbl-scroll reveal" style="max-width:560px">
+    <table class="tbl" style="min-width:0">
+      <thead><tr><th>모델 (Cameras)</th><th style="text-align:right">F</th><th style="text-align:right">P</th><th style="text-align:right">A</th></tr></thead>
+      <tbody>
+        <tr><td>Ditto</td><td class="num">42.9</td><td class="num">27.3</td><td class="num">27.3</td></tr>
+        <tr><td>PromptEM</td><td class="num">42.3</td><td class="num">31.7</td><td class="num">71.3</td></tr>
+        <tr><td>PromptAttrib No</td><td class="num">40.4</td><td class="num">39.7</td><td class="num">71.7</td></tr>
+        <tr><td><b>PromptAttrib 0.35</b></td><td class="best">45.5</td><td class="best">45.6</td><td class="num">72.3</td></tr>
+        <tr><td>PromptAttrib 0.4</td><td class="num">37.6</td><td class="num">39.0</td><td class="num">70.9</td></tr>
+        <tr><td>PromptAttrib 0.45</td><td class="num">39.1</td><td class="num">39.5</td><td class="best">73.1</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      <b>드롭아웃 비율 0.35가 F-score 0.455·평균 정밀도 0.456으로 최고</b> — 정규화와 정보 보존 사이의 최선의 균형이다.
+      "PromptAttrib No"(F 0.404)와 비교하면 드롭아웃 적용이 일반적으로 성능을 개선하며,
+      과적합 방지와 일반화 능력 향상에 기여함을 시사한다. 흥미롭게도 <b>비율 0.4·0.45에서는 F-score가 각각
+      0.376·0.391로 하락</b>한다 — 과도한 드롭아웃은 성능을 저하시킬 수 있다.
+    </p>
+    <div class="callout amb reveal">
+      <span class="cl-tag">NOTE · 원문의 결락</span>
+      원본 전자책의 8장은 정확도(A)에 대한 논의를 시작하는 문장 <b>"However, the accuracy (A)"에서
+      본문이 끊긴 채 종료</b>되며(해당 페이지가 여기서 끝나고 다음 페이지에서 9장이 시작된다),
+      별도의 논의(Discussion) 절 없이 마무리된다. 표 기준으로는 드롭아웃 0.45의 정확도가 73.1로 가장 높다.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="src">
+      <b>출처</b><br>
+      Liu, L. &amp; Tong, H. (2026). <b>Neural Symbolic Knowledge Graph Reasoning:<br>
+      A Pathway Towards Neural Symbolic AI</b> — Chapter 8. Ambiguous Entity Matching<br>with Neural Symbolic Reasoning Over Incomplete KG.<br>
+      Synthesis Lectures on Computer Science, Springer Nature Switzerland.
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--sam)"></i>SAME — 기하평균 유도 (Eq 8.5)</span><br>
+      <span><i style="background:var(--dif)"></i>DIFFERENT — max 유도 (Eq 8.6)</span><br>
+      <span><i style="background:var(--amb)"></i>AMBIGUOUS — max × 부정 (Eq 8.7)</span><br>
+      <span><i style="background:var(--sys)"></i>PromptAttrib — 프롬프트 · 대조학습</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // 스크롤 리빌
+  var reveals = document.querySelectorAll(".reveal");
+  if (reduce || !("IntersectionObserver" in window)) {
+    reveals.forEach(function(el){ el.classList.add("on"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add("on"); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.08 });
+    reveals.forEach(function(el){ io.observe(el); });
+  }
+
+  // 퍼지 규칙 탭
+  var RULES = {
+    same: {
+      st: '<b>Same Rule.</b> 두 개체가 같다면 모든 속성 또한 같아야 한다 — 즉 모든 속성 쌍이 Same으로 라벨되어야 한다. 속성 수준 Same 점수는 K개 속성 쌍 예측의 <b>기하평균</b>으로 유도한다.',
+      fx: 'S(Same | e₁, e₂) = [ ∏_{k=1}^{K} P(Same | a_k¹, a_k²) ]^{1/K}   — Eq 8.5',
+      why: '<b>왜 기하평균인가</b> — 퍼지 논리 방식[52]으로 속성 수준 예측의 평균을 고려하되, 기하평균은 <b>낮은 점수 쪽으로 편향</b>된다. Same 점수가 낮은 속성 쌍이 하나라도 있으면 개체 라벨이 Same일 가능성도 낮아진다.',
+      whyStyle: 'sam'
+    },
+    diff: {
+      st: '<b>Difference Rule.</b> Different로 라벨된 속성 쌍이 (최소) 하나라도 존재하면 두 개체는 Different다. 이 유도 규칙의 퍼지 논리 버전은 <b>max 연산자</b>다.',
+      fx: 'S(Different | e₁, e₂) = max_{k=1,…,K} P(Different | a_k¹, a_k²)   — Eq 8.6',
+      why: '<b>왜 max인가</b> — Difference 규칙은 존재 명제(∃, "…가 존재한다")이므로 유도에 max 연산자를 사용한다.',
+      whyStyle: 'dif'
+    },
+    ambi: {
+      st: '<b>Ambiguous Rule.</b> Ambiguous 속성 쌍이 (최소) 하나 존재하되 Different 속성 쌍은 하나도 존재하지 않으면 두 개체는 Ambiguous다.',
+      fx: 'S(Ambiguous | e₁, e₂) = [ max_{k=1…K′} P(Ambiguous | a_k¹, a_k²) ] · [ 1 − S(Different | e₁, e₂) ]   — Eq 8.7',
+      why: '<b>두 인자의 역할</b> — 첫째 인자는 Ambiguous 속성 쌍의 존재 여부를 판정하고, 둘째 인자는 규칙의 둘째 절이 요구하는 "Different 속성이 하나라도 있음"의 <b>부정</b>을 평가한다.',
+      whyStyle: 'amb'
+    }
+  };
+  var STYLES = {
+    sam: 'background:var(--sam-bg);border-color:var(--sam-line);color:#0C6247',
+    dif: 'background:var(--dif-bg);border-color:var(--dif-line);color:#8A2E2E',
+    amb: 'background:var(--amb-bg);border-color:var(--amb-line);color:#7C5310'
+  };
+  var rbtns = document.querySelectorAll(".rbtn");
+  var rpSt = document.getElementById("rpSt");
+  var rpFx = document.getElementById("rpFx");
+  var rpWhy = document.getElementById("rpWhy");
+  function setRule(id){
+    var r = RULES[id];
+    if (!r) return;
+    rbtns.forEach(function(b){
+      var on = b.getAttribute("data-rule") === id;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    rpSt.innerHTML = r.st;
+    rpFx.textContent = r.fx;
+    rpWhy.innerHTML = r.why;
+    rpWhy.style.cssText = STYLES[r.whyStyle];
+  }
+  rbtns.forEach(function(b){
+    b.addEventListener("click", function(){ setRule(b.getAttribute("data-rule")); });
+  });
+  setRule("same");
+
+  // 현재 섹션 내비 활성화
+  var navLinks = document.querySelectorAll(".navlinks a");
+  var secs = ["s81","s82","s83","s84"].map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  if ("IntersectionObserver" in window) {
+    var nio = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) {
+          navLinks.forEach(function(a){
+            a.classList.toggle("active", a.getAttribute("href") === "#" + e.target.id);
+          });
+        }
+      });
+    }, { rootMargin: "-35% 0px -55% 0px" });
+    secs.forEach(function(s){ nio.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>

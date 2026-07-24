@@ -1,0 +1,908 @@
+---
+layout: null
+title: "Ambiguous Query Answering with Neural Symbolic Reasoning" 
+date: 2026-07-24 
+categories: [artificial intelligence]
+tags: [artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제7장 불완전한 KG 위 뉴로-심볼릭 추론에 의한 모호 질의 응답 — PrefNet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#14111C;
+  --card:#1C1826;
+  --card-2:#251F33;
+  --ink:#EDEAF3;
+  --sub:#A29BB4;
+  --faint:#6A6280;
+  --hair:rgba(237,234,243,.09);
+  --hair-strong:rgba(237,234,243,.18);
+
+  --pri:#6FA8FF;      /* 사전확률 Pr(a|v_Q) · 해석 A(정치인) — 블루 */
+  --pri-bg:rgba(111,168,255,.10);
+  --pri-line:rgba(111,168,255,.38);
+  --lik:#F06FA8;      /* 우도 Pr(Q|T,v_Q) · 해석 B(배우) — 로즈 */
+  --lik-bg:rgba(240,111,168,.10);
+  --lik-line:rgba(240,111,168,.38);
+  --pos:#E8C15A;      /* 사후확률 Pr(T|a,v_Q) · PrefNet — 골드 */
+  --pos-bg:rgba(232,193,90,.10);
+  --pos-line:rgba(232,193,90,.40);
+  --grn:#5FC49A;      /* 판정/최고치 — 그린 */
+  --grn-bg:rgba(95,196,154,.10);
+  --grn-line:rgba(95,196,154,.38);
+
+  --disp:'Gowun Dodum',sans-serif;
+  --sans:'Pretendard Variable',Pretendard,-apple-system,'Noto Sans KR',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:var(--sans);font-size:16.5px;line-height:1.85;letter-spacing:-.01em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(232,193,90,.25)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--pos);outline-offset:2px}
+
+/* ---------- 내비게이션 ---------- */
+.topnav{
+  position:sticky;top:0;z-index:60;
+  background:rgba(20,17,28,.86);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--hair);
+}
+.topnav .wrap{display:flex;align-items:center;gap:24px;height:58px}
+.brand{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.04em;white-space:nowrap}
+.brand b{color:var(--pos);font-weight:600}
+.navlinks{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+.navlinks a{
+  color:var(--sub);text-decoration:none;font-size:13px;font-weight:600;
+  padding:7px 11px;border-radius:8px;transition:.2s;white-space:nowrap;
+}
+.navlinks a:hover{color:var(--ink);background:rgba(237,234,243,.06)}
+.navlinks a.active{color:var(--pos);background:var(--pos-bg)}
+
+/* ---------- 히어로 ---------- */
+.hero{border-bottom:1px solid var(--hair);position:relative;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(640px 360px at 10% 0%,rgba(111,168,255,.08),transparent 70%),
+    radial-gradient(640px 360px at 90% 100%,rgba(240,111,168,.07),transparent 70%),
+    radial-gradient(500px 280px at 55% 40%,rgba(232,193,90,.05),transparent 70%);
+}
+.hero .wrap{position:relative;z-index:1;padding-top:80px;padding-bottom:70px}
+.pub-line{
+  font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.05em;
+  display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:24px;
+}
+.pub-line .dot{width:3px;height:3px;border-radius:50%;background:var(--faint)}
+.pub-line em{font-style:normal;color:var(--pos);font-weight:600}
+.tagrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.chapter-tag{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--pos);
+  background:var(--pos-bg);border:1px solid var(--pos-line);border-radius:999px;
+  padding:6px 16px;letter-spacing:.06em;
+}
+.cond{font-family:var(--mono);font-size:12.5px;font-weight:600;border-radius:999px;padding:6px 16px}
+.cond.kg{color:var(--pri);background:var(--pri-bg);border:1px solid var(--pri-line)}
+.cond.q{color:var(--lik);background:var(--lik-bg);border:1px solid var(--lik-line)}
+h1{
+  font-family:var(--disp);font-weight:400;
+  font-size:clamp(31px,4.3vw,46px);line-height:1.42;letter-spacing:-.01em;margin-bottom:20px;
+}
+h1 .hl{color:var(--pos)}
+.hero-sub{font-size:16.5px;color:var(--sub);max-width:770px;margin-bottom:40px}
+.hero-sub b{color:var(--ink);font-weight:700}
+
+/* 파이프라인 (Fig 7.1) */
+.pipe{
+  border:1px solid var(--hair-strong);border-radius:18px;background:var(--card);
+  padding:28px;overflow:hidden;
+}
+.pipe-title{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--faint);font-weight:600;margin-bottom:18px}
+.pipe-flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.pnode{border:1px solid;border-radius:12px;padding:14px 12px;position:relative}
+.pnode.a{border-color:var(--pri-line);background:var(--pri-bg)}
+.pnode.b{border-color:var(--pos-line);background:var(--pos-bg)}
+.pnode.c{border-color:var(--lik-line);background:var(--lik-bg)}
+.pnode.d{border-color:var(--grn-line);background:var(--grn-bg)}
+.pnode .pn{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;margin-bottom:7px}
+.pnode.a .pn{color:var(--pri)}
+.pnode.b .pn{color:var(--pos)}
+.pnode.c .pn{color:var(--lik)}
+.pnode.d .pn{color:var(--grn)}
+.pnode .pt{font-family:var(--disp);font-size:14px;margin-bottom:5px;line-height:1.4;color:var(--ink)}
+.pnode .pd{font-size:11.5px;color:var(--sub);line-height:1.65}
+.pnode::after{content:"→";position:absolute;right:-11px;top:15px;color:var(--faint);font-weight:700;z-index:2;font-size:14px}
+.pnode:last-child::after{content:none}
+
+/* ---------- 섹션 공통 ---------- */
+section{padding:86px 0;border-bottom:1px solid var(--hair)}
+section:last-of-type{border-bottom:none}
+.sec-head{max-width:840px;margin-bottom:44px}
+.eyebrow{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.12em;
+  color:var(--pos);display:flex;align-items:center;gap:12px;margin-bottom:14px;
+}
+.eyebrow::before{content:"";width:30px;height:2px;background:var(--pos)}
+h2{
+  font-family:var(--disp);font-weight:400;font-size:clamp(24px,3vw,32px);
+  line-height:1.48;margin-bottom:14px;
+}
+.lede{color:var(--sub);font-size:16px}
+.lede b{color:var(--ink);font-weight:700}
+h3{
+  font-family:var(--disp);font-weight:400;font-size:19.5px;margin:52px 0 18px;
+  display:flex;align-items:center;gap:12px;
+}
+h3 .lens{
+  width:12px;height:12px;border:2.5px solid var(--pos);border-radius:50%;flex-shrink:0;
+  box-shadow:0 0 0 3px var(--pos-bg);
+}
+p.body{color:var(--sub);margin-bottom:16px;max-width:860px;font-size:15.5px}
+p.body b{color:var(--ink);font-weight:700}
+.cite{font-family:var(--mono);font-size:.76em;color:var(--faint);vertical-align:super;white-space:nowrap}
+code.m{
+  font-family:var(--mono);font-size:.86em;background:rgba(237,234,243,.07);
+  border-radius:6px;padding:2px 7px;color:var(--ink);
+}
+sub,sup{line-height:0}
+
+/* 모호 질의 이중 해석 토글 (시그니처) */
+.lensbox{
+  border:1px solid var(--hair-strong);border-radius:18px;background:var(--card);
+  padding:30px;margin:32px 0;
+}
+.lens-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.lens-title{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--faint);font-weight:600}
+.lens-toggle{display:flex;gap:8px}
+.tbtn{
+  font-family:var(--sans);font-size:13.5px;font-weight:700;padding:9px 18px;border-radius:10px;
+  border:1px solid var(--hair-strong);background:var(--card-2);color:var(--sub);cursor:pointer;transition:.18s;
+}
+.tbtn.a.on{color:#14111C;background:var(--pri);border-color:var(--pri)}
+.tbtn.b.on{color:#14111C;background:var(--lik);border-color:var(--lik)}
+.lens-q{
+  font-family:var(--mono);font-size:15px;color:var(--ink);background:var(--card-2);
+  border:1px dashed var(--hair-strong);border-radius:12px;padding:14px 20px;margin-bottom:16px;
+  text-align:center;
+}
+.lens-q .te{border-radius:7px;padding:2px 9px;font-weight:600;transition:.2s}
+.lens-q.mode-a .te{color:var(--pri);background:var(--pri-bg);border:1px solid var(--pri-line)}
+.lens-q.mode-b .te{color:var(--lik);background:var(--lik-bg);border:1px solid var(--lik-line)}
+.lens-q .amb{color:var(--pos);border-bottom:2px dotted var(--pos-line)}
+.lens-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.lens-cell{
+  border:1px solid var(--hair);border-radius:13px;background:var(--card-2);padding:18px 20px;
+}
+.lens-cell .lk{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.08em;color:var(--faint);margin-bottom:9px}
+.lens-cell .lv{font-size:13.5px;color:var(--sub);line-height:1.8}
+.lens-cell .lv b{color:var(--ink)}
+.lens-cell .rel{
+  display:inline-block;font-family:var(--mono);font-size:11.5px;font-weight:600;border-radius:7px;
+  padding:4px 10px;margin-top:8px;border:1px solid;word-break:break-all;
+}
+.lens-verdict{margin-top:14px;font-size:13.5px;line-height:1.85;color:var(--sub);border-top:1px dashed var(--hair-strong);padding-top:14px}
+.lens-verdict b{color:var(--ink)}
+
+/* 베이즈 3요소 */
+.bayes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:26px 0}
+.bay{border:1px solid;border-radius:14px;padding:20px;background:var(--card)}
+.bay.pri{border-color:var(--pri-line)}
+.bay.lik{border-color:var(--lik-line)}
+.bay.pos{border-color:var(--pos-line)}
+.bay .bn{font-family:var(--mono);font-size:12px;font-weight:600;margin-bottom:8px}
+.bay.pri .bn{color:var(--pri)}
+.bay.lik .bn{color:var(--lik)}
+.bay.pos .bn{color:var(--pos)}
+.bay .bt{font-family:var(--disp);font-size:15.5px;margin-bottom:6px;color:var(--ink)}
+.bay .bd{font-size:12.5px;color:var(--sub);line-height:1.75}
+
+/* 정의/수식 */
+.def{margin:22px 0;border-radius:14px;border:1px solid var(--hair);background:var(--card);overflow:hidden}
+.def-head{
+  padding:12px 22px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;font-weight:600;
+  color:var(--pos);background:var(--pos-bg);border-bottom:1px solid var(--hair);
+}
+.def-head.pri{color:var(--pri);background:var(--pri-bg)}
+.def-head.lik{color:var(--lik);background:var(--lik-bg)}
+.def-head.grn{color:var(--grn);background:var(--grn-bg)}
+.def-body{padding:20px 22px;color:var(--sub);font-size:15px}
+.def-body b{color:var(--ink)}
+.def-body .proof{
+  margin-top:12px;border-top:1px dashed var(--hair-strong);padding-top:12px;font-size:13.5px;line-height:1.9;
+}
+.def-body .proof .pf{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.08em;margin-right:8px}
+.formula{
+  font-family:var(--mono);font-size:13.5px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--hair);border-radius:10px;padding:14px 18px;margin:12px 0;
+  overflow-x:auto;line-height:2;
+}
+.formula .eq{color:var(--faint);font-size:11px;float:right;margin-left:12px}
+.formula .c1{color:var(--pri)}
+.formula .c2{color:var(--lik)}
+.formula .c3{color:var(--pos)}
+
+/* 표 */
+table.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;background:var(--card);border:1px solid var(--hair);border-radius:14px;overflow:hidden}
+.tbl th,.tbl td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--hair);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl thead th{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--faint);
+  background:var(--card-2);border-bottom:1px solid var(--hair-strong);white-space:nowrap;
+}
+.tbl td{color:var(--sub)}
+.tbl td b{color:var(--ink)}
+.tbl .mono{font-family:var(--mono);font-size:11.5px;color:var(--ink);word-break:break-all}
+.tbl .mono.bad{color:var(--lik)}
+.tbl .mono.good{color:var(--grn)}
+.tbl .num{font-family:var(--mono);font-size:12px;color:var(--sub);text-align:right;white-space:nowrap}
+.tbl .best{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--grn);text-align:right;background:var(--grn-bg);white-space:nowrap}
+.tbl-scroll{overflow-x:auto;margin:24px 0}
+.tbl-scroll table.tbl{min-width:700px}
+
+/* 콜아웃 */
+.callout{
+  border-radius:13px;padding:18px 22px;margin:20px 0;font-size:14.5px;line-height:1.85;
+  border:1px solid;max-width:860px;
+}
+.callout b{color:var(--ink)}
+.callout .cl-tag{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;display:block;margin-bottom:6px}
+.callout.pri{background:var(--pri-bg);border-color:var(--pri-line);color:#A9C8F5}
+.callout.lik{background:var(--lik-bg);border-color:var(--lik-line);color:#EFB2CD}
+.callout.pos{background:var(--pos-bg);border-color:var(--pos-line);color:#E2CD97}
+.callout.grn{background:var(--grn-bg);border-color:var(--grn-line);color:#A8DCC4}
+
+/* 지표 */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:26px 0}
+.metric{border:1px solid var(--hair);border-radius:14px;background:var(--card);padding:22px}
+.metric .mv{font-family:var(--disp);font-size:27px;color:var(--pos);line-height:1.3}
+.metric .mk{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.65}
+.metric .mk b{color:var(--ink)}
+
+/* 데이터셋 */
+.dsets{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:24px 0}
+.dset{border:1px solid var(--hair);border-radius:13px;background:var(--card);padding:20px;border-top:2px solid var(--pos)}
+.dset .dn{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--pos);margin-bottom:8px}
+.dset .dd{font-size:13px;color:var(--sub);line-height:1.75}
+.dset .dd b{color:var(--ink)}
+
+/* 각주 */
+.fnotes{margin-top:40px;border-top:1px dashed var(--hair-strong);padding-top:22px}
+.fnotes .fn{display:grid;grid-template-columns:34px 1fr;gap:12px;font-size:13px;color:var(--sub);margin-bottom:10px}
+.fnotes .fn i{font-style:normal;font-family:var(--mono);font-size:11.5px;color:var(--pos);font-weight:600}
+.fnotes .fn a{color:var(--pri);word-break:break-all}
+
+/* 푸터 */
+footer{padding:52px 0 68px;color:var(--faint);font-size:13px;border-top:1px solid var(--hair)}
+footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+footer .src{font-family:var(--mono);font-size:12px;line-height:2}
+footer .src b{color:var(--sub);font-weight:600}
+footer .legend{font-family:var(--mono);font-size:12px;text-align:right;line-height:2.1}
+footer .legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;font-style:normal}
+
+/* 리빌 */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
+
+/* 반응형 */
+@media (max-width:960px){
+  .pipe-flow{grid-template-columns:1fr 1fr}
+  .pnode:nth-child(even)::after{content:none}
+  .lens-grid,.bayes{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .dsets{grid-template-columns:1fr}
+  .navlinks{display:none}
+}
+@media (max-width:620px){
+  section{padding:58px 0}
+  .pipe-flow{grid-template-columns:1fr}
+  .pnode::after{content:none}
+  .metrics{grid-template-columns:1fr}
+  .lensbox,.pipe{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="페이지 내비게이션">
+  <div class="wrap">
+    <div class="brand">NS-KGR <b>/</b> Chapter 07</div>
+    <div class="navlinks">
+      <a href="#s71">7.1 서론</a>
+      <a href="#s72">7.2 문제 정의</a>
+      <a href="#s73">7.3 제안 방법</a>
+      <a href="#s74">7.4 실험</a>
+      <a href="#s75">7.5 논의</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== 히어로 ==================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="pub-line">
+      <span>Springer · Synthesis Lectures on Computer Science</span>
+      <span class="dot"></span><span><em>2026</em></span>
+      <span class="dot"></span><span>DOI 10.1007/978-3-032-15858-1_7</span>
+      <span class="dot"></span><span>Liu &amp; Tong</span>
+    </div>
+    <div class="tagrow">
+      <span class="chapter-tag">CHAPTER 7 · RESEARCH QUESTION Q4</span>
+      <span class="cond kg">지식그래프 불완전</span>
+      <span class="cond q">질의 모호</span>
+    </div>
+    <h1>불완전한 KG 위 뉴로-심볼릭 추론에 의한<br>모호 질의 응답 — <span class="hl">PrefNet</span></h1>
+    <p class="hero-sub">
+      기존 KGQA는 질의가 결함 없이 주어진다고 가정하지만, 실제 질의는 <b>모호하고 부정확</b>하다.
+      PrefNet은 정보 검색에서 검증된 <b>의사 적합성 피드백(Pseudo Relevance Feedback, PReF)</b>을
+      그래프 데이터에 적용하여, 상위 후보 답들로부터 <b>참 질의 구조를 역으로 추론</b>하고 응답 성능을 함께 끌어올린다.
+      베이즈 규칙으로 문제를 분해하고, 각 구성 요소를 신경망으로 모델링하며, 변분 베이지안 추론으로 학습하고,
+      이웃 임베딩 기반 VGAE로 열등한 질의를 가지치기한 뒤, 추론된 질의로 후보 답을 재랭킹한다.
+    </p>
+
+    <div class="pipe reveal">
+      <div class="pipe-title">FIG 7.1 재구성 — PrefNet 프레임워크</div>
+      <div class="pipe-flow">
+        <div class="pnode a">
+          <div class="pn">STEP 1 · 초기 검색</div>
+          <div class="pt">Top-k 후보 답</div>
+          <div class="pd">EmbedKGQA [126]로 모호 질의에 대한 상위 k개 후보 답을 얻는다.</div>
+        </div>
+        <div class="pnode b">
+          <div class="pn">STEP 2 · §7.3.2–7.3.3</div>
+          <div class="pt">질의 추론 (생성기)</div>
+          <div class="pd">Pr(T|a, v_Q) — 후보 답과 토픽 개체로부터 잠재 경로를 경유해 참 질의 관계를 생성.</div>
+        </div>
+        <div class="pnode b">
+          <div class="pn">PRUNE</div>
+          <div class="pt">이웃 VGAE 가지치기</div>
+          <div class="pd">이웃 임베딩 기반 VGAE [66]로 저품질 추론 관계를 제거한다.</div>
+        </div>
+        <div class="pnode c">
+          <div class="pn">STEP 3 · §7.3.4</div>
+          <div class="pt">질의 랭킹 (판별기)</div>
+          <div class="pd">Pr(Q|T, v_Q) — 모호 질의 Q와 추론된 T의 임베딩 거리로 유사도를 채점.</div>
+        </div>
+        <div class="pnode d">
+          <div class="pn">STEP 4 · §7.3.5</div>
+          <div class="pt">답 재랭킹</div>
+          <div class="pd">추론된 고품질 질의로 Top-k 후보 답을 재정렬해 최종 답을 낸다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== 7.1 서론 ==================== -->
+<section id="s71">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 7.1</div>
+      <h2>서론 — "결함 없는 질의"라는 비현실적 가정</h2>
+      <p class="lede">
+        RnG-KBQA<span class="cite">[165]</span>(랭킹-생성 전략), KVMem<span class="cite">[103]</span>,
+        EmbedKGQA<span class="cite">[126]</span> 등 KGQA 방법들은 큰 진전을 이뤘으나,
+        대부분 <b>입력 질의가 정확하다고 암묵적으로 가정</b>한다. 실제로는 세 가지 이유로 질의가 불완전하다.
+      </p>
+    </div>
+
+    <div class="bayes reveal">
+      <div class="bay pri">
+        <div class="bn">SOURCE 1</div>
+        <div class="bt">어휘 문제 (Vocabulary Problem)</div>
+        <div class="bd">두 사람이 같은 개념을 서로 다른 표현으로 기술할 확률이 <b>80–90%</b>에 이른다<span class="cite">[46, 133]</span>. 자연어 질문의 표면형은 지식그래프의 관계 어휘와 어긋나기 쉽다.</div>
+      </div>
+      <div class="bay lik">
+        <div class="bn">SOURCE 2</div>
+        <div class="bt">변환 알고리즘의 부정확성</div>
+        <div class="bd">자연어를 질의 그래프로 바꾸는 변환 알고리즘이 <b>부정확한 그래프 구조</b>를 생성할 수 있다<span class="cite">[24, 165]</span>.</div>
+      </div>
+      <div class="bay pos">
+        <div class="bn">SOURCE 3</div>
+        <div class="bt">사용자 입력의 구조적 잡음</div>
+        <div class="bd">사용자가 직접 구성한 질의 그래프 자체에 <b>구조적 잡음</b>이 존재할 수 있다<span class="cite">[133]</span>.</div>
+      </div>
+    </div>
+
+    <p class="body reveal">
+      정보 검색(IR) 분야는 이런 문제에 <b>적합성 피드백(Relevance Feedback, ReF)</b>으로 대응해 왔다 —
+      검색 결과에 대한 피드백으로 질의를 개선하는 기법으로, <b>명시적(explicit)</b>·<b>암묵적(implicit)</b>·
+      <b>의사(pseudo)</b> 피드백의 세 형태가 있다. 의사 적합성 피드백은 상위 검색 결과가 적합하다고 가정하고
+      이를 이용해 질의를 재구성한다. IR에서는 효과가 검증됐으나 <b>그래프 질의 시스템에서는 연구되지 않았다</b>.
+      이 장은 의사 적합성 피드백을 그래프 데이터에 적용한 <b>PrefNet</b>을 제안한다 —
+      상위 후보 답들을 신호로 삼아 모호한 질의 뒤에 숨은 <b>참 질의 구조를 추론</b>하고,
+      그 추론으로 답변 자체를 재랭킹하여 KGQA 성능을 개선한다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 7.2 문제 정의 ==================== -->
+<section id="s72">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 7.2</div>
+      <h2>문제 정의 — 같은 구문, 두 개의 의도</h2>
+      <p class="lede">
+        지식그래프는 <code class="m">𝒢 = (V, R, ℒ)</code>로 표기한다.
+        핵심 기호 — <code class="m">Q</code>: 모호한 자연어 질문, <code class="m">h_Q</code>: 그 임베딩,
+        <code class="m">T</code>: 참 질의 그래프, <code class="m">A_Q</code>: 답 집합, <code class="m">a</code>: 후보 답,
+        <code class="m">v_Q</code>: 토픽(앵커) 개체, <code class="m">z</code>: 잠재 경로,
+        <code class="m">r_Q</code>: 질문이 매핑되는 유일 관계.
+      </p>
+    </div>
+
+    <!-- 시그니처: 이중 해석 토글 -->
+    <div class="lensbox reveal">
+      <div class="lens-head">
+        <div class="lens-title">동일 구문 "role in" 의 이중 해석 — 토픽 개체를 전환하면 의도가 달라진다</div>
+        <div class="lens-toggle" role="group" aria-label="토픽 개체 전환">
+          <button class="tbtn a on" data-mode="a">Thomas Jefferson</button>
+          <button class="tbtn b" data-mode="b">John Litel</button>
+        </div>
+      </div>
+      <div class="lens-q mode-a" id="lensQ">
+        "<span class="te" id="lensTE">thomas jefferson</span> <span class="amb">role in</span> declaration independence"
+      </div>
+      <div class="lens-grid">
+        <div class="lens-cell">
+          <div class="lk">TOPIC ENTITY — 누구인가</div>
+          <div class="lv" id="lensWho"></div>
+        </div>
+        <div class="lens-cell">
+          <div class="lk">PSEUDO RELEVANCE FEEDBACK — 상위 후보 답</div>
+          <div class="lv" id="lensFB"></div>
+        </div>
+        <div class="lens-cell">
+          <div class="lk">INFERRED TRUE INTENTION — 추론된 참 의도</div>
+          <div class="lv" id="lensRel"></div>
+        </div>
+      </div>
+      <div class="lens-verdict">
+        같은 구문 "role in"이 <b>토픽 개체에 따라 전혀 다른 관계로 해석</b>된다 —
+        Thomas Jefferson이면 문서(독립선언서)에서의 <b>직업·역할</b>, John Litel이면 영화
+        &lt;Declaration of Independence&gt;에서의 <b>배역</b>이다. PrefNet은 상위 후보 답의 분포에서
+        이 차이를 읽어 참 의도를 복원한다.
+      </div>
+    </div>
+
+    <p class="body reveal">
+      이 장은 <b>1-홉 모호 질의</b>에 집중하며, 각 질문은 <b>단일 토픽 개체 v<sub>Q</sub></b>를 포함하고
+      v<sub>Q</sub>는 주어진다고 가정한다. 또한 각 질문은 <b>유일한 관계 r<sub>Q</sub>에 매핑</b>된다.
+    </p>
+    <div class="def reveal">
+      <div class="def-head">PROBLEM 7.1 · 모호 질의 응답</div>
+      <div class="def-body">
+        <b>주어진 것</b> — (1) 지식그래프 𝒢, (2) 모호한 1-홉 자연어 질문.<br>
+        <b>출력</b> — (1) 질문의 답, (2) <b>가장 가능성 높은 Top-k 질의 관계</b>.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 7.3 제안 방법 ==================== -->
+<section id="s73">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 7.3</div>
+      <h2>제안 방법 — 베이즈 분해와 생성기·판별기</h2>
+      <p class="lede">
+        KGQA의 목표는 Pr(T|Q, v<sub>Q</sub>)·Pr(a|T, v<sub>Q</sub>)의 최대화다. 베이즈 규칙으로 이를 분해하면
+        의사 적합성 피드백이 자연스럽게 문제 구조 안에 들어온다.
+      </p>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head">LEMMA 7.1 · KGQA의 베이즈 분해 (Eq 7.1–7.5)</div>
+      <div class="def-body">
+        <div class="formula">
+          Pr(T|Q, v<sub>Q</sub>)·Pr(a|T, v<sub>Q</sub>) ∝ <span class="c2">Pr(Q|T, v<sub>Q</sub>)</span>·<span class="c3">Pr(T|a, v<sub>Q</sub>)</span>·<span class="c1">Pr(a|v<sub>Q</sub>)</span>
+        </div>
+        <div class="proof"><span class="pf">PROOF</span>
+        베이즈 규칙에 의해 Pr(T|Q, v<sub>Q</sub>) ∝ Pr(Q|T, v<sub>Q</sub>)·Pr(T|v<sub>Q</sub>)이고,
+        Pr(a|T, v<sub>Q</sub>)·Pr(T|v<sub>Q</sub>) = Pr(T, a|v<sub>Q</sub>) = Pr(T|a, v<sub>Q</sub>)·Pr(a|v<sub>Q</sub>)이므로
+        곱하면 위 비례식이 성립한다. □</div>
+      </div>
+    </div>
+
+    <div class="bayes reveal">
+      <div class="bay pri">
+        <div class="bn">Pr(a | v_Q) — 사전확률</div>
+        <div class="bt">후보 답의 사전확률</div>
+        <div class="bd">후보 답 a가 토픽 개체 v<sub>Q</sub>와 <b>가까울수록 높다</b>. 초기 Top-k 검색(EmbedKGQA)이 이 역할을 맡는다.</div>
+      </div>
+      <div class="bay pos">
+        <div class="bn">Pr(T | a, v_Q) — 사후확률</div>
+        <div class="bt">참 질의의 사후확률 = "숨은 적합성"</div>
+        <div class="bd">후보 답과 토픽 개체로부터 <b>참 질의 T를 역추론</b>한다 — 의사 적합성 피드백의 심장부. <b>생성기</b> 신경망이 고품질 후보 질의 관계를 만든다.</div>
+      </div>
+      <div class="bay lik">
+        <div class="bn">Pr(Q | T, v_Q) — 우도</div>
+        <div class="bt">모호 질의의 우도</div>
+        <div class="bd">입력 질의 Q와 추론된 T가 <b>유사할수록 높다</b>. <b>판별기</b> 신경망이 Q–T 유사도를 측정하며, 낮으면 T를 가지치기한다.</div>
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="lens"></span>7.3.2 질의 추론 — Pr(T|a, v_Q)의 신경망 모델링</h3>
+    <p class="body reveal">
+      참 질의의 사후확률은 <b>잠재 경로 z</b>를 경유해 분해된다:
+      <code class="m">log Pr(T|a, v_Q) = log Σ_z Pr_θ(z|a, v_Q)·Pr_η(T|z, a, v_Q)</code> (Eq 7.6).
+      직관은 <b>이웃 정보</b>다 — v<sub>Q</sub> 주변에 bornAt·liveIn·hasChild가 있으면 사람일 가능성이 높고,
+      a 주변에 hasMajor·locatedIn·university_founder가 있으면 대학일 가능성이 높다.
+      이 이웃 신호로 v<sub>Q</sub>→a 사이의 그럴듯한 경로와 관계를 추론한다.
+    </p>
+    <div class="def reveal">
+      <div class="def-head pri">A — Pr_θ(z|a, v_Q) 추정: 관계 메시지 패싱 GNN + LSTM (Eq 7.7–7.11, Fig 7.2)</div>
+      <div class="def-body">
+        관계/에지 단위 메시지 패싱 GNN<span class="cite">[150]</span>을 사용한다:
+        <div class="formula">
+          m<sub>v</sub><sup>k</sup> = Σ<sub>e∈N(v)</sub> s<sub>e</sub><sup>k</sup> <span class="eq">(7.7)</span><br>
+          s<sub>e</sub><sup>k+1</sup> = σ([m<sub>v_Q</sub><sup>k</sup>, m<sub>a</sub><sup>k</sup>, s<sub>e</sub><sup>k</sup>]·W<sup>k</sup> + b<sup>k</sup>) <span class="eq">(7.8)</span><br>
+          Z = LSTM(z) <span class="eq">(7.9)</span><br>
+          s<sub>(v_Q,a)</sub> = MLP(m<sub>v_Q</sub><sup>K−1</sup>, m<sub>a</sub><sup>K−1</sup>) = σ([·, ·]·W<sup>K−1</sup> + b<sup>K−1</sup>) <span class="eq">(7.10)</span><br>
+          Pr<sub>θ</sub>(z|a, v<sub>Q</sub>) = Sigmoid(s<sub>(v_Q,a)</sub> · Z) <span class="eq">(7.11)</span>
+        </div>
+        에지 상태는 s<sub>e</sub><sup>0</sup> = r<sub>e</sub>(관계 임베딩)로 초기화하고 K회 반복한다.
+        경로 임베딩 Z는 잠재 경로 z를 LSTM에 통과시켜 얻는다.
+      </div>
+    </div>
+    <div class="def reveal">
+      <div class="def-head pri">B — Pr_η(T|z, a, v_Q): 그래프 디코더 (Eq 7.12)</div>
+      <div class="def-body">
+        <div class="formula">Pr<sub>η</sub>(T = r<sub>j</sub> | z, a, v<sub>Q</sub>) = softmax(FNN(s<sub>(v_Q,a)</sub> ‖ Z))[j] <span class="eq">(7.12)</span></div>
+        접합 특징을 FNN과 softmax에 통과시켜 <b>관계 어휘 전체에 대한 분포</b>로 참 질의 관계를 디코딩한다.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="lens"></span>7.3.3 질의 추론 훈련 — 변분 베이지안 추론</h3>
+    <p class="body reveal">
+      Eq 7.6을 직접 최적화하는 것은 <b>모든 가능한 경로에 대한 합산이 계산 불가능(intractable)</b>하므로 어렵다.
+      변분 추론에 의지하여 <b>음의 증거 하한(negative ELBO)을 최소화</b>한다.
+    </p>
+    <div class="def reveal">
+      <div class="def-head">PROPOSITION 7.1 · ELBO (Eq 7.13–7.14)</div>
+      <div class="def-body">
+        ℒ(ϕ, θ, η)를 다음과 같이 정의하면 log Pr(T|a, v<sub>Q</sub>) ≥ −ℒ(ϕ, θ, η)이다:
+        <div class="formula">
+          ℒ(ϕ, θ, η) = 𝔼<sub>z∼q_ϕ(z|T,a,v_Q)</sub>[−log Pr<sub>η</sub>(T|z, a, v<sub>Q</sub>)] + KL(q<sub>ϕ</sub>(z|T, a, v<sub>Q</sub>) ‖ Pr<sub>θ</sub>(z|a, v<sub>Q</sub>)) <span class="eq">(7.13)</span>
+        </div>
+        q<sub>ϕ</sub>(z|T, a, v<sub>Q</sub>)는 변분 사후분포다.
+        <div class="proof"><span class="pf">PROOF</span>
+        Eq 7.6에서 log Pr(T|a, v<sub>Q</sub>) = log Σ<sub>z</sub> Pr<sub>θ</sub>(z|a,v<sub>Q</sub>)·Pr<sub>η</sub>(T|z,a,v<sub>Q</sub>)
+        = log Σ<sub>z</sub> q<sub>ϕ</sub>(z|T,a,v<sub>Q</sub>) · [Pr<sub>θ</sub>·Pr<sub>η</sub> / q<sub>ϕ</sub>]이고,
+        옌센 부등식에 의해 ≥ Σ<sub>z</sub> q<sub>ϕ</sub> log[Pr<sub>θ</sub>·Pr<sub>η</sub> / q<sub>ϕ</sub>]
+        = 𝔼<sub>z∼q_ϕ</sub>[log Pr<sub>θ</sub> + log Pr<sub>η</sub> − log q<sub>ϕ</sub>] = −ℒ(ϕ, θ, η)이다 (Eq 7.14). □</div>
+      </div>
+    </div>
+    <p class="body reveal">
+      따라서 Eq 7.13의 최소화가 log Pr(T|a, v<sub>Q</sub>)를 가장 잘 근사한다.
+      변분 사후분포 q<sub>ϕ</sub>는 사전분포(Eq 7.11)와 같은 모델을 쓰되, <b>T의 임베딩을 주입</b>한다:
+      <code class="m">x = s_(v_Q,a) + e_T, q_ϕ(z|T,a,v_Q) = Sigmoid(x · Z)</code> (Eq 7.15).
+      갱신은 경사 하강으로 수행하며, ϕ에 대한 손실의 기울기(Eq 7.16)는 변분 분포에서 뽑은
+      <b>잠재 변수 N개 샘플의 몬테카를로 방법</b>으로 근사한다(Eq 7.17).
+      η에 대한 기울기는 직접 계산할 수 있고, θ에 대한 기울기는
+      KL(q<sub>ϕ</sub> ‖ Pr<sub>θ</sub>)의 θ에 대한 기울기 계산과 동치다.
+    </p>
+
+    <h3 class="reveal"><span class="lens"></span>7.3.4 질의 랭킹 — 모호 질의의 우도 Pr(Q|T, v_Q)</h3>
+    <p class="body reveal">
+      초기 Top-k 후보로부터 Pr(T|a, v<sub>Q</sub>)가 잠재적 참 질의 관계 집합을 생성한다. 초기 후보 집합에
+      잡음이 있을 수 있으므로, 생성된 T의 품질을 높이기 위해 <b>이웃 임베딩 기반 VGAE</b><span class="cite">[66]</span>로
+      저품질 T를 가지치기한다. 이후 또 다른 신경망으로 Pr(Q|T, v<sub>Q</sub>) —
+      T와 입력 모호 질의 Q의 유사도 — 를 모델링하며, [11]에서 영감을 받아 <b>임베딩 공간의 거리로 근사</b>한다.
+    </p>
+    <div class="def reveal">
+      <div class="def-head lik">BERT 질문 인코딩과 마진 손실 (Eq 7.18–7.20)</div>
+      <div class="def-body">
+        모호 질의는 자연어 질문이므로 사전학습 BERT<span class="cite">[37]</span>로 임베딩을 학습한다:
+        <div class="formula">
+          [h<sub>CLS</sub>, w₁, …, w<sub>|Q|</sub>, h<sub>s</sub>] = BERT([CLS], w₁, …, w<sub>|Q|</sub>, &lt;s&gt;) <span class="eq">(7.18)</span><br>
+          h<sub>Q</sub> = FNN([h<sub>CLS</sub>]) <span class="eq">(7.19)</span><br>
+          ℒ = Σ<sub>e_T</sub> Σ<sub>e_T′</sub> [γ + d(h<sub>Q</sub>, e<sub>T</sub>) − d(h<sub>Q</sub>, e<sub>T′</sub>)] <span class="eq">(7.20)</span>
+        </div>
+        훈련 시 <b>지식그래프에서 음성 관계를 무작위 샘플링</b>하고(양성 질의 관계는 훈련 데이터에 주어짐),
+        마진 γ를 갖는 랭킹 손실을 최소화한다 — e<sub>T′</sub>은 음성 샘플 T′의 임베딩, 거리 d는 L₁ 또는 L₂-노름이다.
+        <b>테스트 시</b> 이웃 임베딩 기반 VGAE로 추론 질의의 품질을 측정하여, <b>점수가 0.5보다 크면 고품질로 보고
+        그대로 반환</b>하고, 아니면 질의 추론이 생성한 모든 고품질 잠재 질의를 d()의 거리에 따라 랭킹한다.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="lens"></span>7.3.5 답 재랭킹 (Answer Re-ranking)</h3>
+    <div class="def reveal">
+      <div class="def-head grn">EQ 7.21 · 관계 교집합 기반 재랭킹</div>
+      <div class="def-body">
+        고품질 추론 질의를 얻은 뒤, Top-k 후보 답 전체를 Σ<sub>T</sub> Pr(a|T, v<sub>Q</sub>)로 재랭킹한다.
+        [126]과 유사하게 다음처럼 근사한다:
+        <div class="formula">log Σ<sub>T</sub> Pr(a|T, v<sub>Q</sub>) ∝ γ · |R<sub>a</sub> ∩ R<sub>T</sub>| <span class="eq">(7.21)</span></div>
+        R<sub>a</sub>는 앵커 개체 v<sub>Q</sub>와 후보 답 a 사이 <b>최단 경로 상의 관계 집합</b>,
+        R<sub>T</sub>는 질의 추론 Pr(T|a, v<sub>Q</sub>)이 생성한 <b>상위 랭킹 잠재 질의</b>다.
+        추론 질의 T의 품질 유지를 위해, 이웃 임베딩 기반 VGAE 점수가 <b>0.2 미만인 질의는 가지치기</b>한다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 7.4 실험 ==================== -->
+<section id="s74">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 7.4</div>
+      <h2>실험 — 질의 랭킹과 질의응답, 두 갈래 검증</h2>
+      <p class="lede">
+        완전한 KG와 <b>에지 50%·20%를 무작위 삭제한 불완전 KG</b>에서 PrefNet의 효과를 검증한다 —
+        표의 "half"는 50% 누락(50% 보존), "80% KG"는 20% 누락(80% 보존)을 뜻한다.
+      </p>
+    </div>
+
+    <div class="metrics reveal">
+      <div class="metric"><div class="mv">79.0</div><div class="mk">Webqsp 완전 KG <b>질의 랭킹 Hit@1</b> — VGAE 대비 50%·80% KG에서 <b>+5.0%p·+5.9%p</b>, Neighborhood-VGAE 대비 평균 +0.9%p</div></div>
+      <div class="metric"><div class="mv">+1%</div><div class="mk">QA에서 최강 베이스라인 <b>EmbedKGQA(관계 매칭 포함) 대비</b> 평균 Hit@1 개선</div></div>
+      <div class="metric"><div class="mv">88.8%</div><div class="mk">질의 추론 모듈의 <b>평균 Hit@1</b> (Hit@3 95.8% · Hit@5 96.9%)</div></div>
+      <div class="metric"><div class="mv">&lt;20분</div><div class="mk">전체 테스트셋에서 질의 랭킹 + 답 재랭킹의 실행 시간 — 질의 추론 대비 <b>무시 가능</b></div></div>
+    </div>
+
+    <h3 class="reveal"><span class="lens"></span>7.4.1 실험 설정</h3>
+    <div class="dsets reveal">
+      <div class="dset"><div class="dn">WebQuestionsSP</div><div class="dd">1-hop·2-hop 자연어 질문, <b>총 4,000개</b>. 모든 질문은 Freebase로 답할 수 있다.</div></div>
+      <div class="dset"><div class="dn">SimpleQuestions</div><div class="dd"><b>10만 개 이상의 단순 1-hop 질문</b>. Freebase로 답할 수 있다.</div></div>
+      <div class="dset"><div class="dn">MetaQA</div><div class="dd">영화 도메인 <b>40만 개 이상 질문</b>. 배경 KG는 감독·영화·장르·배우 정보를 담는다. 실험에는 <b>1-hop 질문</b>을 사용한다.</div></div>
+    </div>
+    <p class="body reveal">
+      <b>질의 랭킹 베이스라인 4종</b> — HGNet<span class="cite">[24]</span>(입력 질의를 SPARQL로 변환하는 생성 방식),
+      RnG-KBQA<span class="cite">[165]</span>(부트스트래핑으로 질의 그래프 랭커·생성기 훈련),
+      VGAE<span class="cite">[66]</span>(변분 오토인코더 변형 — 인코더는 사전학습 BERT, 디코더는 FNN, <b>이웃 정보 미사용</b>),
+      Neighborhood-VGAE(PrefNet이 쓰는 관계 가지치기 모델, §7.3.4).
+      <b>QA 베이스라인 3종</b> — GraftNet<span class="cite">[136]</span>, KVMem<span class="cite">[103]</span>,
+      EmbedKGQA<span class="cite">[126]</span>(<b>관계 매칭 포함</b> 버전 — 미포함보다 성능이 좋다).
+      관련 방법 GRF<span class="cite">[133]</span>는 코드·데이터셋 모두 비공개라 비교를 향후 과제로 남긴다.
+    </p>
+
+    <h3 class="reveal"><span class="lens"></span>7.4.2 질의 랭킹 성능 (Table 7.2, Hit@1)</h3>
+    <p class="body reveal">
+      전통적 KBQA는 자연어 질의를 질의 그래프로 변환한 뒤 답을 찾지만, <b>입력 질의의 모호성 때문에 생성된 질의 그래프가
+      부정확</b>하곤 하다. 의사 적합성 피드백은 반대로 상위 후보 답들에 따라 질의를 추론한다.
+      MetaQA의 배경 KG 데이터 포맷이 HGNet·RnG-KBQA의 요구 형식과 달라 MetaQA 질의 랭킹 실험은 생략한다.
+    </p>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>모델</th><th style="text-align:right">Webqsp half</th><th style="text-align:right">Webqsp 80% KG</th><th style="text-align:right">Webqsp full</th><th style="text-align:right">SimpleQA half</th><th style="text-align:right">SimpleQA 80% KG</th><th style="text-align:right">SimpleQA full</th></tr></thead>
+      <tbody>
+        <tr><td>RnG-KBQA</td><td class="num">61.2</td><td class="num">63.3</td><td class="num">66.7</td><td class="num">–</td><td class="num">–</td><td class="num">–</td></tr>
+        <tr><td>VGAE</td><td class="num">70.7</td><td class="num">71.3</td><td class="num">73.7</td><td class="num">87.4</td><td class="num">89.1</td><td class="num">91.6</td></tr>
+        <tr><td>Neighborhood-VGAE</td><td class="num">74.2</td><td class="num">76.1</td><td class="num">78.1</td><td class="num">90.3</td><td class="num">92.3</td><td class="num">93.5</td></tr>
+        <tr><td><b>PrefNet</b></td><td class="best">75.7</td><td class="best">77.2</td><td class="best">79.0</td><td class="best">90.8</td><td class="best">92.7</td><td class="best">94.5</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      PrefNet의 질의 랭킹 정확도가 가장 높다 — Webqsp에서 VGAE 대비 50%·80% KG 각각 <b>+5.0%p·+5.9%p</b>,
+      Neighborhood-VGAE 대비 평균 <b>+0.9%p</b>이며 완전 KG에서도 유사하다. 또한 50% KG 대비 80%·완전 KG에서
+      네 방법 모두 정확도가 높아진다 — <b>배경 지식그래프가 완전해질수록 모든 방법이 더 정확한 질의 그래프를 생성</b>한다.
+    </p>
+
+    <h3 class="reveal"><span class="lens"></span>7.4.3 질의응답 성능 (Tables 7.3–7.5, Hit@1)</h3>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>모델</th><th style="text-align:right">Webqsp 50%</th><th style="text-align:right">Webqsp 80%</th><th style="text-align:right">Webqsp 완전</th><th style="text-align:right">SimpleQA 50%</th><th style="text-align:right">SimpleQA 80%</th><th style="text-align:right">SimpleQA 완전</th><th style="text-align:right">MetaQA 50%</th><th style="text-align:right">MetaQA 80%</th><th style="text-align:right">MetaQA 완전</th></tr></thead>
+      <tbody>
+        <tr><td>GraftNet</td><td class="num">32.7</td><td class="num">39.8</td><td class="num">–</td><td class="num">39.8</td><td class="num">–</td><td class="num">–</td><td class="num">64.0</td><td class="num">–</td><td class="num">–</td></tr>
+        <tr><td>KVMem</td><td class="num">44.2</td><td class="num">–</td><td class="num">46.7</td><td class="num">28.9</td><td class="num">–</td><td class="num">–</td><td class="num">63.6</td><td class="num">–</td><td class="num">–</td></tr>
+        <tr><td>HGNet</td><td class="num">37.8</td><td class="num">45.4</td><td class="num">46.1</td><td class="num">–</td><td class="num">–</td><td class="num">–</td><td class="num">–</td><td class="num">–</td><td class="num">–</td></tr>
+        <tr><td>RnG-KBQA</td><td class="num">40.6</td><td class="num">48.5</td><td class="num">53.1</td><td class="num">–</td><td class="num">–</td><td class="num">–</td><td class="num">–</td><td class="num">–</td><td class="num">–</td></tr>
+        <tr><td>EmbedKGQA</td><td class="num">46.3</td><td class="num">52.8</td><td class="num">56.7</td><td class="num">46.5</td><td class="num">58.9</td><td class="num">64.3</td><td class="num">83.1</td><td class="num">90.1</td><td class="num">95.3</td></tr>
+        <tr><td><b>PrefNet</b></td><td class="best">47.7</td><td class="best">53.7</td><td class="best">57.2</td><td class="best">48.8</td><td class="best">60.1</td><td class="best">64.8</td><td class="best">83.9</td><td class="best">90.6</td><td class="best">95.6</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      배경 지식그래프의 희소성(불완전성)이 커질수록 모든 방법의 Hit@1이 감소한다 — 배경 KG의 품질이 KGQA에 상당한
+      영향을 미친다. 베이스라인 중에서는 <b>관계 매칭을 포함한 EmbedKGQA가 최고 정확도</b>이고,
+      <b>PrefNet은 여기서 평균 1%를 추가로 개선</b>한다. SimpleQuestions·MetaQA에서도 유사한 결과가 관찰된다.
+    </p>
+
+    <h3 class="reveal"><span class="lens"></span>7.4.4 효율성</h3>
+    <p class="body reveal">
+      질의 추론 컴포넌트의 실행 시간은 Webqsp·SimpleQA에서 MetaQA보다 훨씬 큰데, 배경 지식그래프가 훨씬 크기 때문이다.
+      긴 훈련 시간에도 불구하고 <b>질의 추론의 테스트 시간은 비교적 짧다</b>(Fig 7.3).
+      질의 랭킹(§7.3.4)과 답 재랭킹(§7.3.5)의 실행 시간은 질의 추론에 비해 무시할 만하다 —
+      <b>전체 테스트 데이터셋에서 20분 미만</b>이다.
+    </p>
+
+    <h3 class="reveal"><span class="lens"></span>7.4.5 어블레이션 연구</h3>
+    <p class="body reveal">
+      <b>A — 질의 추론.</b> 모듈을 각 데이터셋의 배경 지식그래프만으로 먼저 사전훈련하고, 질문 훈련 데이터로 재훈련한다.
+      두 과정 모두 데이터를 훈련 80% / 검증 10% / 테스트 10%로 분할한다. 질의 추론 모듈은 모든 데이터셋에서 매우 높은
+      Hit@K를 보인다 — <b>평균 Hit@1 88.8%, Hit@3 95.8%, Hit@5 96.9%</b>. 완전한 배경 지식그래프에서는
+      앵커 노드 v<sub>Q</sub>와 후보 답 a 사이의 올바른 경로를 직접 찾을 수 있어 질의 추론 모듈이 필요 없다(각주 4).
+    </p>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>Table 7.6 · 질의 추론 성능</th><th style="text-align:right">wsp 50%</th><th style="text-align:right">wsp 80%</th><th style="text-align:right">sQA 50%</th><th style="text-align:right">sQA 80%</th><th style="text-align:right">MetaQA 50%</th><th style="text-align:right">MetaQA 80%</th></tr></thead>
+      <tbody>
+        <tr><td>Hit@1</td><td class="num">82.4</td><td class="num">87.4</td><td class="num">92.6</td><td class="num">95.9</td><td class="num">86.2</td><td class="num">88.4</td></tr>
+        <tr><td>Hit@3</td><td class="num">91.8</td><td class="num">93.4</td><td class="num">98.8</td><td class="num">99.6</td><td class="num">98.1</td><td class="num">93.2</td></tr>
+        <tr><td>Hit@5</td><td class="num">93.7</td><td class="num">94.7</td><td class="num">99.3</td><td class="num">99.9</td><td class="num">99.9</td><td class="num">94.1</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p class="body reveal">
+      <b>B — 질의 랭킹.</b> 입력 질문이 모호할 때 참 질의 의도의 정확한 예측이 얼마나 어려운지를 실례로 보인다(Table 7.7).
+      질의 "thomas jefferson role in declaration independence"에서 질의 생성기 VGAE는 의도를
+      "film.actor.film"으로 판단한다 — "role in"이라는 구문이 보통 "누군가 영화에서 배역을 연기한다"를 기술하는 데 쓰이기 때문이다.
+      그러나 <b>의사 적합성 피드백을 쓰면 질의 추론 모듈이 thomas jefferson이 정치인/외교관임을 발견</b>하고,
+      이것이 참 의도 "people.person.profession"의 올바른 예측을 도와 배경 지식그래프에서 정답(statesperson)을 찾는다.
+    </p>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>질문 (Table 7.7)</th><th>PrefNet이 찾은 질의 관계</th><th>VGAE가 찾은 질의 관계</th></tr></thead>
+      <tbody>
+        <tr><td>Thomas jefferson role in declaration independence</td><td class="mono good">people.person.profession</td><td class="mono bad">film.actor.film</td></tr>
+        <tr><td>State mount st. helens in</td><td class="mono good">location.location.containedby</td><td class="mono bad">geography.mountain.mountain_type</td></tr>
+        <tr><td>Monarchy japan</td><td class="mono good">location.country.form_of_government</td><td class="mono bad">schema.administrative_area.administrative_children</td></tr>
+        <tr><td>First gulf war fought</td><td class="mono good">time.event.locations</td><td class="mono bad">military_command.military_commander</td></tr>
+        <tr><td>Buddha come</td><td class="mono good">people.person.place_of_birth</td><td class="mono bad">people.person.places_lived</td></tr>
+        <tr><td>Part country new england</td><td class="mono good">location.location.containedby</td><td class="mono bad">base.locations.countries.continent</td></tr>
+        <tr><td>Drink john pemberton create</td><td class="mono good">inventor.inventions</td><td class="mono bad">symbols.name_source.namesakes</td></tr>
+        <tr><td>Jesus after he died cross</td><td class="mono good">people.deceased_person.place_of_death</td><td class="mono bad">people.person.profession</td></tr>
+        <tr><td>Charles babbage discover</td><td class="mono good">inventor.inventions</td><td class="mono bad">base.argumentmaps.innovator.original_ideas</td></tr>
+        <tr><td>Country code mexico</td><td class="mono good">location.country.internet_tld</td><td class="mono bad">location.location.adjoin_s</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <p class="body reveal">
+      <b>C — 질의응답.</b> EmbedKGQA—RM은 관계 매칭 없는 EmbedKGQA, EmbedKGQA+QI는 질의 추론 모듈이 추론한
+      질의 정보를 EmbedKGQA의 관계 매칭 과정에 추가한 것이다 — 관계 매칭은 앵커 노드 v<sub>Q</sub>와 후보 답 a 사이의
+      최단 경로를 찾아 후보를 정렬하는데, 이 정렬 시 질의 추론이 만든 관계를 최단 경로에 더한다.
+      <b>제안한 PrefNet이 최고 성능을 달성한다.</b>
+    </p>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead><tr><th>Table 7.8 · QA 어블레이션</th><th style="text-align:right">webqsp 50%</th><th style="text-align:right">webqsp 80%</th><th style="text-align:right">simpleQA 50%</th><th style="text-align:right">simpleQA 80%</th></tr></thead>
+      <tbody>
+        <tr><td>EmbedKGQA—RM (관계 매칭 없음)</td><td class="num">44.8</td><td class="num">50.3</td><td class="num">46.5</td><td class="num">58.9</td></tr>
+        <tr><td>EmbedKGQA</td><td class="num">45.9</td><td class="num">52.8</td><td class="num">46.6</td><td class="num">58.8</td></tr>
+        <tr><td>EmbedKGQA+QI (질의 추론 추가)</td><td class="num">46.3</td><td class="num">52.8</td><td class="num">46.7</td><td class="num">58.9</td></tr>
+        <tr><td><b>PrefNet</b></td><td class="best">47.7</td><td class="best">53.7</td><td class="best">48.8</td><td class="best">60.1</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 7.5 논의 ==================== -->
+<section id="s75">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 7.5</div>
+      <h2>논의</h2>
+      <p class="lede">
+        지식그래프의 <b>심볼릭 서브그래프 정보로 후보 답을 재랭킹</b>하는 접근은 유망한 결과를 보였다.
+        그래프 신경망 기반 모델의 통합이 참 질의 의도를 더 잘 예측하게 하여 <b>뉴로-심볼릭 추론의 효과</b>를 입증한다.
+        다만 현재 접근은 지식그래프의 <b>명시적 트리플 정보만 활용</b>하며, 질문이 지닌 다른 암묵적 의미 정보를 놓친다 —
+        이 암묵적 정보의 활용이 유망한 향후 방향이다.
+      </p>
+    </div>
+
+    <div class="fnotes reveal">
+      <div class="fn"><i>FN1</i><span>적합성 피드백 — <a href="https://en.wikipedia.org/wiki/Relevance_feedback" rel="noopener">https://en.wikipedia.org/wiki/Relevance_feedback</a></span></div>
+      <div class="fn"><i>FN2</i><span>EmbedKGQA를 쓰는 이유는 최신(state-of-the-art) 방법 중 하나이기 때문이다.</span></div>
+      <div class="fn"><i>FN3</i><span>그래프 신경망[174, 175]은 노드 표현 학습에 흔히 쓰이는 방법이다.</span></div>
+      <div class="fn"><i>FN4</i><span>완전한 배경 지식그래프에서는 앵커 노드 v_Q와 후보 답 노드 a 사이의 올바른 경로를 직접 찾을 수 있으므로 질의 추론 모듈이 필요 없다.</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="src">
+      <b>출처</b><br>
+      Liu, L. &amp; Tong, H. (2026). <b>Neural Symbolic Knowledge Graph Reasoning:<br>
+      A Pathway Towards Neural Symbolic AI</b> — Chapter 7. Ambiguous Query Answering<br>with Neural Symbolic Reasoning Over Incomplete KG.<br>
+      Synthesis Lectures on Computer Science, Springer Nature Switzerland.
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--pri)"></i>Pr(a|v_Q) — 후보 답의 사전확률</span><br>
+      <span><i style="background:var(--pos)"></i>Pr(T|a,v_Q) — 참 질의의 사후확률 (생성기)</span><br>
+      <span><i style="background:var(--lik)"></i>Pr(Q|T,v_Q) — 모호 질의의 우도 (판별기)</span><br>
+      <span><i style="background:var(--grn)"></i>재랭킹 — γ·|R_a ∩ R_T|</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // 스크롤 리빌
+  var reveals = document.querySelectorAll(".reveal");
+  if (reduce || !("IntersectionObserver" in window)) {
+    reveals.forEach(function(el){ el.classList.add("on"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add("on"); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.08 });
+    reveals.forEach(function(el){ io.observe(el); });
+  }
+
+  // 이중 해석 토글
+  var MODES = {
+    a: {
+      te: "thomas jefferson",
+      who: '<b>Thomas Jefferson</b> — 정치인·외교관. 미국 독립선언서(문서)의 기초자다.',
+      fb: '초기 상위 후보 답 — <b>White_House, Politician, President</b> … 정치 도메인 개체들이 상위를 차지한다.',
+      rel: '문서에서의 직업·역할을 묻는 의도로 해석된다.',
+      relTag: 'people.person.profession',
+      relColor: 'pri'
+    },
+    b: {
+      te: "John Litel",
+      who: '<b>John Litel</b> — 배우. 영화 &lt;Declaration of Independence&gt;에 출연했다.',
+      fb: '초기 상위 후보 답 — <b>United_States, Actor, Albany_Wisconsin</b> … 배우 관련 개체들이 상위에 등장한다.',
+      rel: '영화에서의 배역(출연)을 묻는 의도로 해석된다.',
+      relTag: 'film.actor / act in',
+      relColor: 'lik'
+    }
+  };
+  var tbtns = document.querySelectorAll(".tbtn");
+  var lensQ = document.getElementById("lensQ");
+  var lensTE = document.getElementById("lensTE");
+  var lensWho = document.getElementById("lensWho");
+  var lensFB = document.getElementById("lensFB");
+  var lensRel = document.getElementById("lensRel");
+  function setMode(mode){
+    var m = MODES[mode];
+    if (!m) return;
+    tbtns.forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-mode") === mode); });
+    lensQ.className = "lens-q mode-" + mode;
+    lensTE.textContent = m.te;
+    lensWho.innerHTML = m.who;
+    lensFB.innerHTML = m.fb;
+    var color = mode === "a" ? "var(--pri)" : "var(--lik)";
+    var line = mode === "a" ? "var(--pri-line)" : "var(--lik-line)";
+    var bg = mode === "a" ? "var(--pri-bg)" : "var(--lik-bg)";
+    lensRel.innerHTML = m.rel +
+      '<br><span class="rel" style="color:' + color + ';border-color:' + line + ';background:' + bg + '">' + m.relTag + '</span>';
+  }
+  tbtns.forEach(function(b){
+    b.addEventListener("click", function(){ setMode(b.getAttribute("data-mode")); });
+  });
+  setMode("a");
+
+  // 현재 섹션 내비 활성화
+  var navLinks = document.querySelectorAll(".navlinks a");
+  var secs = ["s71","s72","s73","s74","s75"].map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  if ("IntersectionObserver" in window) {
+    var nio = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) {
+          navLinks.forEach(function(a){
+            a.classList.toggle("active", a.getAttribute("href") === "#" + e.target.id);
+          });
+        }
+      });
+    }, { rootMargin: "-35% 0px -55% 0px" });
+    secs.forEach(function(s){ nio.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,991 @@
+---
+layout: null
+title: "Dynamic Query Answering with Neural Symbolic Reasoning" 
+date: 2026-07-24 
+categories: [artificial intelligence]
+tags: [artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제9장 불완전한 KG 위 뉴로-심볼릭 추론에 의한 동적 질의 응답 — CornNet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sunflower:wght@500;700&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#101613;
+  --card:#17201B;
+  --card-2:#1E2A23;
+  --ink:#EAF0EC;
+  --sub:#9FAFA6;
+  --faint:#66756C;
+  --hair:rgba(234,240,236,.09);
+  --hair-strong:rgba(234,240,236,.18);
+
+  --rl:#6FC77E;       /* RL 기반 QA — 그린 (원문 light green) */
+  --rl-bg:rgba(111,199,126,.10);
+  --rl-line:rgba(111,199,126,.38);
+  --st:#9FB9D6;       /* 스튜던트 — 실버블루 (원문 light gray) */
+  --st-bg:rgba(159,185,214,.10);
+  --st-line:rgba(159,185,214,.36);
+  --te:#E2B34F;       /* 티처 · 인간 재구성 — 앰버 */
+  --te-bg:rgba(226,179,79,.10);
+  --te-line:rgba(226,179,79,.40);
+  --rw:#E8788A;       /* 보상 · 토픽 시프트 — 로즈 */
+  --rw-bg:rgba(232,120,138,.10);
+  --rw-line:rgba(232,120,138,.38);
+
+  --disp:'Sunflower',sans-serif;
+  --sans:'Pretendard Variable',Pretendard,-apple-system,'Noto Sans KR',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:var(--sans);font-size:16.5px;line-height:1.85;letter-spacing:-.01em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:rgba(111,199,126,.25)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 28px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--rl);outline-offset:2px}
+
+/* ---------- 내비게이션 ---------- */
+.topnav{
+  position:sticky;top:0;z-index:60;
+  background:rgba(16,22,19,.86);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--hair);
+}
+.topnav .wrap{display:flex;align-items:center;gap:24px;height:58px}
+.brand{font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.04em;white-space:nowrap}
+.brand b{color:var(--rl);font-weight:600}
+.navlinks{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+.navlinks a{
+  color:var(--sub);text-decoration:none;font-size:13px;font-weight:600;
+  padding:7px 11px;border-radius:8px;transition:.2s;white-space:nowrap;
+}
+.navlinks a:hover{color:var(--ink);background:rgba(234,240,236,.06)}
+.navlinks a.active{color:var(--rl);background:var(--rl-bg)}
+
+/* ---------- 히어로 ---------- */
+.hero{border-bottom:1px solid var(--hair);position:relative;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(640px 360px at 10% 0%,rgba(111,199,126,.08),transparent 70%),
+    radial-gradient(640px 360px at 90% 100%,rgba(226,179,79,.06),transparent 70%);
+}
+.hero .wrap{position:relative;z-index:1;padding-top:80px;padding-bottom:70px}
+.pub-line{
+  font-family:var(--mono);font-size:12px;color:var(--faint);letter-spacing:.05em;
+  display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:24px;
+}
+.pub-line .dot{width:3px;height:3px;border-radius:50%;background:var(--faint)}
+.pub-line em{font-style:normal;color:var(--rl);font-weight:600}
+.tagrow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+.chapter-tag{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--rl);
+  background:var(--rl-bg);border:1px solid var(--rl-line);border-radius:999px;
+  padding:6px 16px;letter-spacing:.06em;
+}
+.cond{font-family:var(--mono);font-size:12.5px;font-weight:600;border-radius:999px;padding:6px 16px}
+.cond.kg{color:var(--te);background:var(--te-bg);border:1px solid var(--te-line)}
+.cond.q{color:var(--st);background:var(--st-bg);border:1px solid var(--st-line)}
+h1{
+  font-family:var(--disp);font-weight:700;
+  font-size:clamp(31px,4.3vw,46px);line-height:1.42;letter-spacing:-.01em;margin-bottom:20px;
+}
+h1 .hl{color:var(--rl)}
+.hero-sub{font-size:16.5px;color:var(--sub);max-width:780px;margin-bottom:40px}
+.hero-sub b{color:var(--ink);font-weight:700}
+
+/* Fig 9.2 파이프라인 */
+.pipe{
+  border:1px solid var(--hair-strong);border-radius:18px;background:var(--card);
+  padding:28px;overflow:hidden;
+}
+.pipe-title{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--faint);font-weight:600;margin-bottom:8px}
+.pipe-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;font-family:var(--mono);font-size:11px;color:var(--sub)}
+.pipe-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;font-style:normal;vertical-align:-1px}
+.pipe-flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.pnode{border:1px solid;border-radius:12px;padding:14px 12px;position:relative}
+.pnode.st{border-color:var(--st-line);background:var(--st-bg)}
+.pnode.te{border-color:var(--te-line);background:var(--te-bg)}
+.pnode.rl{border-color:var(--rl-line);background:var(--rl-bg)}
+.pnode .pn{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;margin-bottom:7px}
+.pnode.st .pn{color:var(--st)}
+.pnode.te .pn{color:var(--te)}
+.pnode.rl .pn{color:var(--rl)}
+.pnode .pt{font-family:var(--disp);font-weight:700;font-size:14px;margin-bottom:5px;line-height:1.4;color:var(--ink)}
+.pnode .pd{font-size:11.5px;color:var(--sub);line-height:1.65}
+.pnode::after{content:"→";position:absolute;right:-11px;top:15px;color:var(--faint);font-weight:700;z-index:2;font-size:14px}
+.pnode:last-child::after{content:none}
+
+/* ---------- 섹션 공통 ---------- */
+section{padding:86px 0;border-bottom:1px solid var(--hair)}
+section:last-of-type{border-bottom:none}
+.sec-head{max-width:840px;margin-bottom:44px}
+.eyebrow{
+  font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.12em;
+  color:var(--rl);display:flex;align-items:center;gap:12px;margin-bottom:14px;
+}
+.eyebrow::before{content:"";width:30px;height:2px;background:var(--rl)}
+h2{
+  font-family:var(--disp);font-weight:700;font-size:clamp(24px,3vw,32px);
+  line-height:1.46;margin-bottom:14px;
+}
+.lede{color:var(--sub);font-size:16px}
+.lede b{color:var(--ink);font-weight:700}
+h3{
+  font-family:var(--disp);font-weight:700;font-size:19.5px;margin:52px 0 18px;
+  display:flex;align-items:center;gap:12px;
+}
+h3 .walk{
+  width:11px;height:11px;border-radius:50%;background:var(--rl);flex-shrink:0;
+  box-shadow:0 0 0 4px var(--rl-bg);
+}
+p.body{color:var(--sub);margin-bottom:16px;max-width:860px;font-size:15.5px}
+p.body b{color:var(--ink);font-weight:700}
+.cite{font-family:var(--mono);font-size:.76em;color:var(--faint);vertical-align:super;white-space:nowrap}
+code.m{
+  font-family:var(--mono);font-size:.86em;background:rgba(234,240,236,.07);
+  border-radius:6px;padding:2px 7px;color:var(--ink);
+}
+sub,sup{line-height:0}
+
+/* 대화 워크스루 (시그니처) */
+.convo{
+  border:1px solid var(--hair-strong);border-radius:18px;background:var(--card);
+  padding:30px;margin:32px 0;
+}
+.convo-title{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--faint);font-weight:600;margin-bottom:18px}
+.turns{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px}
+.turn{
+  border:1.5px solid var(--hair-strong);border-radius:12px;background:var(--card-2);
+  padding:13px 12px;cursor:pointer;transition:.18s;text-align:left;font-family:var(--sans);
+}
+.turn:hover{border-color:var(--rl-line)}
+.turn.on{border-color:var(--rl);background:var(--rl-bg)}
+.turn .tq{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--rl);margin-bottom:6px}
+.turn .tt{font-size:12.5px;color:var(--sub);line-height:1.6}
+.turn .tt b{color:var(--ink)}
+.turn .badge{
+  display:inline-block;margin-top:8px;font-family:var(--mono);font-size:9.5px;font-weight:600;
+  border-radius:6px;padding:2px 8px;border:1px solid;
+}
+.turn .badge.ana{color:var(--rw);border-color:var(--rw-line);background:var(--rw-bg)}
+.turn .badge.eli{color:var(--te);border-color:var(--te-line);background:var(--te-bg)}
+.turn .badge.ok{color:var(--rl);border-color:var(--rl-line);background:var(--rl-bg)}
+.convo-panel{
+  border:1px dashed var(--hair-strong);border-radius:13px;background:var(--card-2);
+  padding:20px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;
+}
+.cvcell .ck{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.08em;color:var(--faint);margin-bottom:8px}
+.cvcell .cv{font-size:13.5px;color:var(--sub);line-height:1.85}
+.cvcell .cv b{color:var(--ink)}
+.cvcell .cv .tag{
+  display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;border-radius:7px;
+  padding:3px 10px;border:1px solid;margin-top:6px;
+}
+
+/* 정의/수식 */
+.def{margin:22px 0;border-radius:14px;border:1px solid var(--hair);background:var(--card);overflow:hidden}
+.def-head{
+  padding:12px 22px;font-family:var(--mono);font-size:12px;letter-spacing:.06em;font-weight:600;
+  color:var(--rl);background:var(--rl-bg);border-bottom:1px solid var(--hair);
+}
+.def-head.st{color:var(--st);background:var(--st-bg)}
+.def-head.te{color:var(--te);background:var(--te-bg)}
+.def-head.rw{color:var(--rw);background:var(--rw-bg)}
+.def-body{padding:20px 22px;color:var(--sub);font-size:15px}
+.def-body b{color:var(--ink)}
+.formula{
+  font-family:var(--mono);font-size:13.5px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--hair);border-radius:10px;padding:14px 18px;margin:12px 0;
+  overflow-x:auto;line-height:2;
+}
+.formula .eq{color:var(--faint);font-size:11px;float:right;margin-left:12px}
+.formula .c1{color:var(--st)}
+.formula .c2{color:var(--te)}
+.formula .c3{color:var(--rl)}
+.formula .c4{color:var(--rw)}
+
+/* 용어 카드 */
+.terms{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:24px 0}
+.term{border:1px solid var(--hair);border-radius:13px;background:var(--card);padding:18px 20px}
+.term .tn{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--rl);margin-bottom:8px}
+.term .td{font-size:13px;color:var(--sub);line-height:1.75}
+.term .td b{color:var(--ink)}
+
+/* MDP 카드 */
+.mdp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0}
+.mcard{border:1px solid var(--hair);border-radius:13px;background:var(--card);padding:18px 20px;border-top:2px solid var(--rl)}
+.mcard .mn{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--rl);margin-bottom:8px}
+.mcard .md{font-size:13px;color:var(--sub);line-height:1.8}
+.mcard .md b{color:var(--ink)}
+.mcard .md code{font-family:var(--mono);font-size:11.5px;color:var(--ink)}
+
+/* 표 */
+table.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;background:var(--card);border:1px solid var(--hair);border-radius:14px;overflow:hidden}
+.tbl th,.tbl td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--hair);vertical-align:top}
+.tbl tr:last-child td{border-bottom:none}
+.tbl thead th{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--faint);
+  background:var(--card-2);border-bottom:1px solid var(--hair-strong);white-space:nowrap;
+}
+.tbl td{color:var(--sub)}
+.tbl td b{color:var(--ink)}
+.tbl .num{font-family:var(--mono);font-size:12px;color:var(--sub);text-align:right;white-space:nowrap}
+.tbl .best{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--rl);text-align:right;background:var(--rl-bg);white-space:nowrap}
+.tbl-scroll{overflow-x:auto;margin:24px 0}
+.tbl-scroll table.tbl{min-width:760px}
+.tbl-note{font-size:12.5px;color:var(--faint);margin-top:-14px;margin-bottom:24px;font-family:var(--mono)}
+
+/* 콜아웃 */
+.callout{
+  border-radius:13px;padding:18px 22px;margin:20px 0;font-size:14.5px;line-height:1.85;
+  border:1px solid;max-width:860px;
+}
+.callout b{color:var(--ink)}
+.callout .cl-tag{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;display:block;margin-bottom:6px}
+.callout.rl{background:var(--rl-bg);border-color:var(--rl-line);color:#A8DBB1}
+.callout.st{background:var(--st-bg);border-color:var(--st-line);color:#BFD0E3}
+.callout.te{background:var(--te-bg);border-color:var(--te-line);color:#DFC48D}
+.callout.rw{background:var(--rw-bg);border-color:var(--rw-line);color:#E8AEB9}
+
+/* 지표/데이터셋 */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:26px 0}
+.metric{border:1px solid var(--hair);border-radius:14px;background:var(--card);padding:22px}
+.metric .mv{font-family:var(--disp);font-weight:700;font-size:27px;color:var(--rl);line-height:1.3}
+.metric .mk{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.65}
+.metric .mk b{color:var(--ink)}
+.dsets{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:24px 0}
+.dset{border:1px solid var(--hair);border-radius:13px;background:var(--card);padding:20px;border-top:2px solid var(--rl)}
+.dset .dn{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--rl);margin-bottom:8px}
+.dset .dd{font-size:13px;color:var(--sub);line-height:1.75}
+.dset .dd b{color:var(--ink)}
+
+/* 각주 */
+.fnotes{margin-top:40px;border-top:1px dashed var(--hair-strong);padding-top:22px}
+.fnotes .fn{display:grid;grid-template-columns:34px 1fr;gap:12px;font-size:13px;color:var(--sub);margin-bottom:10px}
+.fnotes .fn i{font-style:normal;font-family:var(--mono);font-size:11.5px;color:var(--rl);font-weight:600}
+.fnotes .fn a{color:var(--st);word-break:break-all}
+
+/* 푸터 */
+footer{padding:52px 0 68px;color:var(--faint);font-size:13px;border-top:1px solid var(--hair)}
+footer .wrap{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap}
+footer .src{font-family:var(--mono);font-size:12px;line-height:2}
+footer .src b{color:var(--sub);font-weight:600}
+footer .legend{font-family:var(--mono);font-size:12px;text-align:right;line-height:2.1}
+footer .legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;font-style:normal}
+
+/* 리빌 */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
+
+/* 반응형 */
+@media (max-width:960px){
+  .pipe-flow{grid-template-columns:1fr 1fr}
+  .pnode:nth-child(even)::after{content:none}
+  .turns{grid-template-columns:1fr 1fr}
+  .convo-panel,.terms{grid-template-columns:1fr}
+  .metrics,.mdp{grid-template-columns:1fr 1fr}
+  .dsets{grid-template-columns:1fr}
+  .navlinks{display:none}
+}
+@media (max-width:620px){
+  section{padding:58px 0}
+  .pipe-flow,.turns{grid-template-columns:1fr}
+  .pnode::after{content:none}
+  .metrics,.mdp{grid-template-columns:1fr}
+  .convo,.pipe{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="페이지 내비게이션">
+  <div class="wrap">
+    <div class="brand">NS-KGR <b>/</b> Chapter 09</div>
+    <div class="navlinks">
+      <a href="#s91">9.1 서론</a>
+      <a href="#s92">9.2 문제 정의</a>
+      <a href="#s93">9.3 제안 방법</a>
+      <a href="#s94">9.4 실험</a>
+      <a href="#s95">9.5 논의</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== 히어로 ==================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="pub-line">
+      <span>Springer · Synthesis Lectures on Computer Science</span>
+      <span class="dot"></span><span><em>2026</em></span>
+      <span class="dot"></span><span>DOI 10.1007/978-3-032-15858-1_9</span>
+      <span class="dot"></span><span>Liu &amp; Tong</span>
+    </div>
+    <div class="tagrow">
+      <span class="chapter-tag">CHAPTER 9 · RESEARCH QUESTION Q5</span>
+      <span class="cond kg">지식그래프 불완전</span>
+      <span class="cond q">질의 동적 · 대화형</span>
+    </div>
+    <h1>불완전한 KG 위 뉴로-심볼릭 추론에 의한<br>동적 질의 응답 — <span class="hl">CornNet</span></h1>
+    <p class="hero-sub">
+      지식그래프 위 대화형 질의응답(ConvQA)은 지식그래프를 사용하는 시스템과 자연스러운 대화형 상호작용을 주고받으며
+      정확하고 적절한 답을 얻는 과정이다. 지식그래프의 풍부한 <b>심볼릭 트리플 정보</b>를 활용하면 대화 중에도 정밀한 답을
+      전달할 수 있다. 이 장은 <b>신경망 기반 강화학습(RL)</b>으로 지식그래프의 심볼릭 지식의 도움을 받아
+      대화형 질문에 답하는 방법 — <b>CornNet</b> — 을 다룬다. CornNet은 (1) <b>GPT2·Bart를 파인튜닝</b>해 고품질 재구성을 생성하고,
+      (2) 인간 수준 성능에 다가서기 위한 <b>티처-스튜던트 아키텍처</b>를 도입하며,
+      (3) <b>정책망을 따라 지식그래프를 걷는 RL 에이전트</b>로 답 후보를 찾는다.
+    </p>
+
+    <div class="pipe reveal">
+      <div class="pipe-title">FIG 9.2 재구성 — CornNet 훈련 과정 (원문의 색 규약을 따름 · 전체가 종단간 훈련)</div>
+      <div class="pipe-legend">
+        <span><i style="background:var(--st)"></i>스튜던트 모델 아키텍처 (원문 light gray)</span>
+        <span><i style="background:var(--rl)"></i>RL 기반 질의응답 (원문 light green)</span>
+        <span><i style="background:var(--te)"></i>티처 · 인간 재구성 (보조 표기)</span>
+      </div>
+      <div class="pipe-flow">
+        <div class="pnode st">
+          <div class="pn">STEP 1 · §9.3.1</div>
+          <div class="pt">LLM 재구성 생성</div>
+          <div class="pd">파인튜닝된 GPT2·Bart가 입력 질문의 재구성 여러 개를 생성한다.</div>
+        </div>
+        <div class="pnode st">
+          <div class="pn">STEP 2 · 스튜던트</div>
+          <div class="pt">인코딩 + 융합 + 이력</div>
+          <div class="pd">BERT 인코더 → Transformer 융합 → LSTM 대화 이력으로 질의 임베딩 l_q를 만든다.</div>
+        </div>
+        <div class="pnode te">
+          <div class="pn">STEP 3 · §9.3.2</div>
+          <div class="pt">티처 모방 (L2)</div>
+          <div class="pd">인간 재구성으로 사전훈련·고정된 티처의 출력에 스튜던트 출력을 근접시킨다.</div>
+        </div>
+        <div class="pnode rl">
+          <div class="pn">STEP 4 · §9.3.3</div>
+          <div class="pt">토픽 개체 추론</div>
+          <div class="pd">MLP 분류기가 토픽 유지/변경을 판정 — 변경이면 주 토픽 v_q1로 리셋한다.</div>
+        </div>
+        <div class="pnode rl">
+          <div class="pn">STEP 5 · §9.3.4–9.3.7</div>
+          <div class="pt">RL 에이전트 워크</div>
+          <div class="pd">정책망이 이끄는 에이전트가 토픽 개체에서 출발해 KG를 걸으며 답 후보를 찾는다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== 9.1 서론 ==================== -->
+<section id="s91">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 9.1</div>
+      <h2>서론 — 단발 질문에서 이어지는 대화로</h2>
+      <p class="lede">
+        전통적 KGQA는 실세계 대화의 반복적 본성이 아닌 <b>단발(single-shot) 질문만을 고려</b>해 왔다.
+        대화형 질의응답(ConvQA)은 사용자가 QA 시스템과 대화하듯 상호작용하게 하여 이 간극을 메운다 —
+        Apple의 Siri, Amazon의 Alexa, OpenAI의 ChatGPT가 보여주듯 ConvQA 시스템은 큰 성공을 거두었다.
+      </p>
+    </div>
+
+    <p class="body reveal">
+      ConvQA는 사용자가 자연어 질문을 반복적으로 묻고, 시스템이 대화 맥락과 저변의 질의를 해독하며,
+      자연어 답을 돌려주는 멀티턴 과정이다. 풍부하고 인간다운 응답을 생성하는 모델<span class="cite">[3, 12, 172]</span>은
+      <b>'dialogue' 대화 모델</b>이라 부르고, KG 위 ConvQA처럼 KG의 대응 개체만으로 입력 질문에 답하기 충분한 경우는
+      <b>'non-dialogue' 대화 모델</b>이라 부른다 — 이 장은 non-dialogue ConvQA 태스크에 집중한다(Fig 9.1).
+    </p>
+    <p class="body reveal">
+      KG 위 ConvQA를 위한 기존 방법들 — Magdalena 등<span class="cite">[63]</span>은 개체명 인식(NER)으로 대화 속
+      잠재적 KG 토픽 개체를 탐지하고 그 개체들에서 출발하는 <b>멀티에이전트 강화학습</b>으로 답을 찾는다(성능이 탐지된
+      개체 품질에 크게 좌우된다). Philipp 등<span class="cite">[29]</span>은 대화 관련 <b>서브그래프를 찾아</b> 휴리스틱으로
+      그 안에서 답을 식별하며, 새 질문이 올 때마다 서브그래프를 확장한다. Endri 등<span class="cite">[62]</span>은
+      <b>대조학습</b>으로 KG 개체 임베딩을 서로 비유사하게 만들어 정답과 오답을 분리한다.
+    </p>
+    <div class="callout rw reveal">
+      <span class="cl-tag">TWO LINGUISTIC PHENOMENA [148]</span>
+      이런 성과에도 불구하고 <b>불명시적(inexplicit) 입력이 ConvQA의 정답 탐색을 방해</b>한다<span class="cite">[13, 63, 148]</span>.
+      대화 속 질의의 의미적 완전성을 해치는 흔한 언어 현상 두 가지 — <b>아나포라(anaphora)</b>는 이전 맥락의 표현에
+      의존하는 표현 현상으로, Example 1에서 q₂의 "he"는 a₁을 가리킨다. <b>생략(ellipsis)</b>은 이전 맥락에 있는
+      표현의 누락 현상으로, q₄의 완전형은 "Where is Herman Melville's wife from?"이어야 한다.
+      이에 대응해 입력 질의의 <b>재구성(reformulation)</b>을 학습해 원 질문을 더 의미 있게 다시 쓰고
+      기존 기법으로 답을 찾는 방법들이 제안됐으나<span class="cite">[13, 108, 148]</span>,
+      선행 연구<span class="cite">[57]</span>가 보였듯 생성된 재구성은 <b>인간이 만든 재구성에 미치지 못한다</b><span class="cite">[148]</span>.
+    </div>
+    <p class="body reveal">
+      CornNet은 LLM 생성 재구성을 쓰는 non-dialogue ConvQA를 위한 새 강화학습 모델이다.
+      첫째, 기존 LLM인 GPT2<span class="cite">[115]</span>와 Bart<span class="cite">[73]</span>를 <b>인간 작성 재구성을
+      정답으로 삼아 파인튜닝</b>해 고품질 재구성을 생성한다. 둘째, ConvQA 성능을 더 높이기 위해
+      <b>인간 수준 성능에 근접하는 티처-스튜던트 아키텍처</b>를 제안한다 — (1) 훈련 데이터의 인간 작성 재구성으로
+      <b>티처 모델을 직접 훈련</b>하고, (2) LLM 생성 재구성을 쓰는 <b>스튜던트 모델이 티처의 출력을 모방하도록 간접
+      훈련</b>한다. 인간 작성 재구성은 훈련·검증 데이터에만 존재한다. 마지막으로 답을 찾기 위해 <b>RL 모델이 KG 위를 걸으며</b>
+      정책망에서 행동을 샘플링해 걸음의 방향을 정하고 후보 답을 식별한다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 9.2 문제 정의 ==================== -->
+<section id="s92">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 9.2</div>
+      <h2>문제 정의 — 대화, 턴, 그리고 움직이는 토픽</h2>
+      <p class="lede">
+        KG는 <code class="m">𝒢 = (V, R, ℒ)</code>로 표기하며, 각 트리플/에지 (h, r, t)는 <b>고유한 에지 임베딩 u_r</b>을 갖는다.
+        핵심 기호 — <code class="m">C</code>: 대화, <code class="m">T</code>: C의 턴 수, <code class="m">q_i</code>: i번째 질문,
+        <code class="m">Ref^k_{q_i}</code>: q_i의 k번째 재구성, <code class="m">a_i</code>: q_i의 답,
+        <code class="m">v_q1</code>: 대화의 주 토픽 개체, <code class="m">s ∈ S</code>: RL 상태,
+        <code class="m">A_s</code>: 상태 s의 가능 행동 집합, <code class="m">R</code>: 보상,
+        <code class="m">θ / π_θ</code>: 정책망 파라미터와 정책.
+      </p>
+    </div>
+
+    <!-- 시그니처: 대화 5턴 워크스루 -->
+    <div class="convo reveal">
+      <div class="convo-title">FIG 9.1 · EXAMPLE 1 기반 — Moby-Dick 대화 5턴 워크스루 (턴을 클릭하면 상세가 표시된다)</div>
+      <div class="turns" role="tablist" aria-label="대화 턴">
+        <button class="turn on" role="tab" aria-selected="true" data-turn="1">
+          <div class="tq">TURN q₁</div>
+          <div class="tt"><b>잘 형성된 질문</b> — 소설 Moby-Dick에 대해 묻는다</div>
+          <span class="badge ok">WELL-FORMED</span>
+        </button>
+        <button class="turn" role="tab" aria-selected="false" data-turn="2">
+          <div class="tq">TURN q₂</div>
+          <div class="tt">Herman Melville의 <b>출생 시기</b>를 묻는다 — "he"가 a₁을 지시</div>
+          <span class="badge ana">ANAPHORA</span>
+        </button>
+        <button class="turn" role="tab" aria-selected="false" data-turn="3">
+          <div class="tq">TURN q₃</div>
+          <div class="tt">"And where is he from originally?"</div>
+          <span class="badge ana">ANAPHORA</span>
+        </button>
+        <button class="turn" role="tab" aria-selected="false" data-turn="4">
+          <div class="tq">TURN q₄</div>
+          <div class="tt">완전형 — "Where is Herman Melville's wife from?"</div>
+          <span class="badge eli">ELLIPSIS</span>
+        </button>
+        <button class="turn" role="tab" aria-selected="false" data-turn="5">
+          <div class="tq">TURN q₅</div>
+          <div class="tt">다시 소설 <b>Moby Dick</b>으로 돌아와 묻는다</div>
+          <span class="badge ok">TOPIC RETURN</span>
+        </button>
+      </div>
+      <div class="convo-panel">
+        <div class="cvcell">
+          <div class="ck">TOPIC ENTITY — 이 턴의 토픽 개체</div>
+          <div class="cv" id="cvTopic"></div>
+        </div>
+        <div class="cvcell">
+          <div class="ck">LINGUISTIC PHENOMENON — 언어 현상</div>
+          <div class="cv" id="cvPhen"></div>
+        </div>
+        <div class="cvcell">
+          <div class="ck">CORNNET — 시스템의 대응</div>
+          <div class="cv" id="cvSys"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="terms reveal">
+      <div class="term"><div class="tn">Conversation</div><div class="td">T턴 대화 C = (q₁,a₁), …, (q_T,a_T). Example 1은 <b>T = 5</b>턴이다. <b>q₁은 잘 형성</b>되고 나머지 q_t는 모두 불명시적이라 가정한다.</div></div>
+      <div class="term"><div class="tn">Question</div><div class="td">각 질문 q_t는 Ω_t개 단어의 시퀀스. 각 질문은 KG의 <b>유일한 관계 r_qt에 매핑</b>될 수 있다고 가정하며, <b>문법적 정확성은 가정하지 않는다</b>.</div></div>
+      <div class="term"><div class="tn">Topic Entity</div><div class="td">각 q_t는 토픽/중심 개체 v_qt를 갖는다. <b>q₁의 토픽만 훈련 데이터에 주어지고</b> q₂…q_T의 토픽은 주어지지 않는다. Example 1의 다섯 토픽은 <b>Moby Dick, Herman Melville, Herman Melville, Moby Dick, Moby Dick</b>이다.</div></div>
+      <div class="term"><div class="tn">Answer</div><div class="td">답 a_t는 KG 개체들의 집합으로 <b>복수·단일·null 값</b>이 가능하다. 진위(true/false) 질문을 제외하면 모든 답 개체가 KG에 존재한다고 가정한다.</div></div>
+      <div class="term"><div class="tn">Reformulation</div><div class="td">입력 질문과 같은 정보를 <b>다른 방식으로 표현하는 문장</b>. 훈련 데이터에서 각 질문은 복수의 재구성을 갖는다고 가정한다.</div></div>
+      <div class="term"><div class="tn">Turn</div><div class="td">C의 각 질문은 그 재구성들·대응하는 답과 함께 하나의 턴 t_i를 구성한다 — 턴은 질문 q_i, 답 a_i, q_i의 재구성들을 포함한다.</div></div>
+    </div>
+
+    <div class="def reveal">
+      <div class="def-head">PROBLEM 9.1 · 지식그래프 위 대화형 질의응답</div>
+      <div class="def-body">
+        <b>주어진 것</b> — (1) 지식그래프 𝒢, (2) 각 질문이 <b>복수의 인간 작성 재구성을 포함하는 대화 훈련 집합</b>,
+        (3) <b>질문 재구성이 제공되지 않는 대화 테스트 집합</b>.<br>
+        <b>출력</b> — (1) 훈련된 모델, (2) 테스트 집합의 각 대화 속 각 질문에 대한 답.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="walk"></span>9.2.1 예비 지식 — 강화학습과 MDP</h3>
+    <p class="body reveal">
+      RL 문제는 통상 마르코프 결정 과정(MDP)<span class="cite">[25, 26]</span>으로 정식화된다 —
+      <code class="m">M = (S, A, R, P, γ)</code>. S는 상태 공간, A는 행동 공간이고,
+      R: S × A → ℝ은 상태-행동 쌍을 에이전트가 받을 보상 스칼라에 매핑하는 환경의 보상 함수,
+      P: S × A → S는 상태-행동 쌍에서 다음 상태로의 전이 확률을 정의하는 전이 함수, γ ∈ [0, 1]은 할인 인자다.
+      KGQA를 RL 태스크로 모델링하면 <b>에이전트는 KG에서 정답을 찾는 정책을 학습</b>하고,
+      새 질의를 받으면 정책 함수의 안내에 따라 결정을 내린다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 9.3 제안 방법 ==================== -->
+<section id="s93">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 9.3</div>
+      <h2>제안 방법 — 티처를 모방하는 스튜던트, 그래프를 걷는 에이전트</h2>
+      <p class="lede">
+        아나포라와 생략 때문에 현행 ConvQA는 입력 질의를 다시 써서 이해하기 쉬운 재구성을 생성하곤 한다.
+        CornNet은 이 아이디어를 따라 <b>GPT2와 Bart를 파인튜닝</b>해 재구성을 생성하되, 두 LLM이 좋은 생성기임에도
+        여전히 인간 수준에 못 미치므로 <b>티처-스튜던트 아키텍처</b>를 제안한다 — 티처는 인간 작성 재구성으로 질문 표현을
+        학습하고, 스튜던트는 LLM 생성 재구성을 입력으로 받아 <b>티처의 출력을 모방</b>함으로써 LLM 재구성을 쓰면서도
+        티처와 같은 성능에 도달하고자 한다. 매 반복마다 모델은 대화 이력과 현재 질의로 <b>현재 토픽 개체를 식별</b>하고,
+        RL 에이전트가 토픽 개체에서 출발해 KG를 여행하며 답을 찾는다 — 대화가 끝날 때까지 턴마다 반복된다(Fig 9.2).
+      </p>
+    </div>
+
+    <h3 class="reveal"><span class="walk"></span>9.3.1 스튜던트 모델 — LLM 재구성 인코더</h3>
+    <div class="def reveal">
+      <div class="def-head st">A — 컨텍스트 인코더 (Eq 9.1–9.2)</div>
+      <div class="def-body">
+        질문 q_i의 앞뒤에 경계 표시 토큰 [CLS]·&lt;s&gt;를 붙이고 사전학습 BERT<span class="cite">[37]</span>로
+        토큰별 문맥 임베딩을 추출한다:
+        <div class="formula">
+          [h<sub>CLS</sub>, w₁, …, w<sub>Ω_t</sub>, h<sub>s</sub>] = BERT([CLS], w₁, …, w<sub>Ω_t</sub>, &lt;s&gt;) <span class="eq">(9.1)</span><br>
+          h<sub>q_i</sub> = FFN(h<sub>CLS</sub> ‖ h<sub>s</sub>) <span class="eq">(9.2)</span>
+        </div>
+        [CLS] 임베딩과 &lt;s&gt; 임베딩의 변환으로 문맥 질문 임베딩을 얻는다(FFN: 순전파 신경망).
+      </div>
+    </div>
+    <div class="def reveal">
+      <div class="def-head st">B — 컨텍스트 융합 (Eq 9.3)</div>
+      <div class="def-body">
+        훈련 중 각 입력 질문에는 생성된 재구성이 여러 개 대응한다. 각 재구성의 문맥 임베딩을 컨텍스트 인코더로 얻은 뒤,
+        <b>N개 재구성 임베딩과 원 질문 문맥 임베딩을 쌓아 N+1개 임베딩의 시퀀스</b>를 만들고,
+        이를 하나의 언어 문장 임베딩처럼 Transformer 인코더<span class="cite">[149]</span>에 통과시켜 병합한다:
+        <div class="formula">
+          M<sub>q_i</sub> = TRANSFORMER([h<sub>q_i</sub> ‖ h<sub>Ref¹_{q_i}</sub> ‖ … ‖ h<sub>Ref^n_{q_i}</sub>])[0] <span class="eq">(9.3)</span>
+        </div>
+        M<sub>q_i</sub>는 재구성을 병합한 뒤의 질의 임베딩이다.
+      </div>
+    </div>
+    <div class="def reveal">
+      <div class="def-head st">C — 대화 이력 통합 (Eq 9.4)</div>
+      <div class="def-body">
+        ConvQA의 또 다른 문제는 사용자 입력의 모호성이다 — Example 1의 q₃ "And where is he from originally?"에서
+        <b>대화 이력 없이는 대명사 'he'의 선행사를 식별할 수 없다</b>. 따라서 대화 이력은 CornNet의 성공에 필수적이며,
+        LSTM으로 모든 대화 이력을 인코딩한다:
+        <div class="formula">l<sub>q_i</sub> = LSTM(M<sub>q_i</sub>) <span class="eq">(9.4)</span></div>
+        LSTM의 출력 l<sub>q_i</sub>가 질의 임베딩으로 취급되어 다른 컴포넌트들이 사용한다.
+        여기서 쓰이는 재구성은 <b>LLM이 생성</b>한 것이다.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="walk"></span>9.3.2 티처 모델 — 인간 작성 재구성 인코더</h3>
+    <p class="body reveal">
+      재구성은 여러 방법에서 QA 성능 향상에 쓰여 왔다 — Christian 등<span class="cite">[13]</span>은 Seq2Seq 기반 RL
+      에이전트로 입력 질문을 기계 판독형 재구성으로 변환하고, Svitlana 등<span class="cite">[148]</span>은
+      Transformer 디코더 기반 질문 재작성 모델을 제안했다. 그러나 연구<span class="cite">[57]</span>에 따르면
+      대부분의 질문 재구성 방법은 성능을 <b>약 2–3%만 개선</b>하며, LLM이 온갖 자연어 태스크에서 인기가 폭발했음에도
+      <b>LLM 생성 재구성 기반 ConvQA 성능은 여전히 인간 재구성이 상한</b>이다<span class="cite">[57, 148]</span>.
+    </p>
+    <div class="def reveal">
+      <div class="def-head te">EQ 9.5 · 티처-스튜던트 모방 손실 (Fig 9.3 — Reformulation Imitator)</div>
+      <div class="def-body">
+        티처 네트워크는 <b>스튜던트와 같은 구조</b>지만 인간 작성 재구성을 입력으로 쓴다.
+        훈련의 목표는 스튜던트의 출력 질문 임베딩을 임베딩 공간에서 티처의 출력에 최대한 근접시키는 것이며,
+        거리는 <b>L2 거리</b>로 측정한다:
+        <div class="formula">ℒ = Σ<sub>q_i∈C</sub> [d(Υ<sub>q_i</sub>, l<sub>q_i</sub>)] <span class="eq">(9.5)</span></div>
+        Υ<sub>q_i</sub>는 입력 질문 q_i에 대한 <b>티처</b>의 출력, l<sub>q_i</sub>는 재구성을 포함한 같은 입력에 대한
+        <b>스튜던트</b>의 출력이다. 이 거리를 최소화하면 <b>합성 재구성만 접근 가능한 상황에서도 스튜던트가 티처와
+        유사한 출력을 내도록</b> 보장할 수 있다. <b>티처는 사전훈련 후 고정</b>된 채 스튜던트를 훈련한다.
+        테스트 단계에서는 질문이 주어지면 먼저 LLM으로 복수의 재구성을 생성하고 스튜던트 모델로 인코딩한다.
+        티처 모델을 테스트 데이터에 직접 쓰면 <b>인간 재구성과 LLM 생성 재구성의 데이터 분포 차이 때문에
+        제안 모델보다 약간 열등</b>하다.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="walk"></span>9.3.3 토픽 개체 추론 (Eq 9.6–9.8)</h3>
+    <div class="def reveal">
+      <div class="def-head rl">MLP 분류기 — 토픽 유지/변경 판정</div>
+      <div class="def-body">
+        대화 중 토픽 개체는 시간에 따라 변할 수 있다. 대화 이력과 현재 질문에 기반해 현재 토픽 개체를 결정하며,
+        <b>토픽 개체가 유지되는지를 MLP로 판정</b>한다 — 분류기가 현재 질문의 토픽 개체가 이전 질문의 답이 아니라고
+        예측하면, 토픽 개체를 <b>주 토픽 개체 v<sub>q1</sub>로 설정</b>한다.
+        분류기는 ReLU 활성화의 FFN과 분류층으로 구성되고, 분류층은 2차원 출력에 softmax를 적용해 교차 엔트로피 손실을
+        계산한다(PyTorch 인덱스 표기로 v<sub>q_i</sub> = a<sub>i−1</sub>일 확률은 2차원 출력의 두 번째 원소):
+        <div class="formula">
+          Pr(v<sub>q_i</sub> = a<sup>i−1</sup>) = MLP_classifier(FNN(l<sub>q_i</sub>))[1] <span class="eq">(9.6)</span>
+        </div>
+        <b>A — 토픽 개체 선택기 사전훈련.</b> 토픽 개체 선택기의 목표는 RL 모델의 입력이 되는 대화 내 올바른 토픽 개체의
+        식별이다. RL 모델의 훈련 안정화를 위해 분류기 파라미터를 <b>이진 교차 엔트로피 손실로 사전훈련</b>한다:
+        <div class="formula">
+          ℒ₁ = −[y·log(Pr(v<sub>q_i</sub> = a<sup>i−1</sup>)) + (1−y)·log(1 − Pr(v<sub>q_i</sub> = a<sup>i−1</sup>))] <span class="eq">(9.7–9.8)</span>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="walk"></span>9.3.4 질의응답 — MDP 정식화</h3>
+    <div class="mdp reveal">
+      <div class="mcard"><div class="mn">STATES · 상태</div><div class="md">i번째 단계의 상태는 삼중 <code>s_t = (n_i, l_q, g_i)</code> — n_i는 에이전트가 있는 현재 개체, l_q는 앞의 방법으로 생성한 질문 임베딩, g_i는 탐색 이력 정보다. (n_i, g_i)는 상태 의존 정보, l_q는 <b>모든 상태가 공유하는 전역 문맥</b>이다.</div></div>
+      <div class="mcard"><div class="mn">ACTIONS · 행동</div><div class="md">상태의 가능 행동 집합은 정점 n_t의 모든 나가는 에지 — <code>A_s = {(r_i, u_ri, e_e′) | (n_t, r_i, e′) ∈ 𝒢}</code>. 에이전트는 에지 라벨 r_i와 목적 정점 e′를 알고 어느 에지를 탈지 고른다. <b>A_s = (r_i, e_e′)만 쓰는 기존 방법[63, 79]과 달리 고유 에지 임베딩 u_r도 사용</b>한다. 탐색 종료 옵션을 위해 모든 개체에 셀프루프 에지를 추가하고, 트리플의 역관계도 그래프에 포함한다.</div></div>
+      <div class="mcard"><div class="mn">TRANSITION · 전이</div><div class="md">전이 함수 <code>δ: S × A → S</code>는 다음 상태의 확률 분포 δ(s_{t+1}|s_t, a_t)를 나타낸다. 현재 상태 s_t에서 적절한 행동 a_t를 골라 다음 상태 s_{t+1} = (n_{t+1}, l_q, g_{t+1})에 도달한다 — <b>n_t와 g_t는 갱신되고 질의·답은 그대로</b>다.</div></div>
+      <div class="mcard"><div class="mn">REWARDS · 보상</div><div class="md">현재 위치가 정답이면 <code>R_b(s_t) = 1</code>, 아니면 0을 받는다. 실험에서는 <b>γ = 1</b>로 설정한다.</div></div>
+    </div>
+
+    <h3 class="reveal"><span class="walk"></span>9.3.5 정책망 (Eq 9.9–9.11)</h3>
+    <div class="def reveal">
+      <div class="def-head rl">탐색 이력 LSTM과 정책</div>
+      <div class="def-body">
+        𝒢의 모든 개체·관계에 밀집 벡터 임베딩 e ∈ ℝ<sup>d</sup>, r ∈ ℝ<sup>d</sup>를 부여한다.
+        행동 a_t = (r<sub>r_i</sub>, u<sub>r_i</sub>, e<sub>e′</sub>) ∈ A_t는 <b>관계 임베딩·고유 에지 임베딩·끝 노드 임베딩의
+        연결(concatenation)</b>로 표현된다. 탐색 이력 (n₁ = v<sub>q_i</sub>, r₁, n₂, …, n_t) ∈ H는 t단계까지의
+        관측·행동 시퀀스로, LSTM으로 인코딩한다:
+        <div class="formula">
+          g₀ = LSTM(0, [e<sub>v_qi</sub> ‖ l<sub>q_i</sub>]) <span class="eq">(9.9)</span><br>
+          g<sub>t</sub> = LSTM(g<sub>t−1</sub>, a<sub>t−1</sub>), t &gt; 0 <span class="eq">(9.10)</span>
+        </div>
+        질문 임베딩 l<sub>q_i</sub>가 e<sub>v_q</sub>와 함께 시작 행동을 이룬다.
+        행동 공간은 A_t의 모든 행동 임베딩을 쌓아 인코딩한다 — <b>A_t ∈ ℝ<sup>|A_t|×3d</sup></b>. 정책망 π는:
+        <div class="formula">
+          π<sub>θ</sub>(a_t|s_t) = δ(A_t × W₂ ReLU(W₁[n_t ‖ l<sub>q_i</sub> ‖ g_t])) <span class="eq">(9.11)</span>
+        </div>
+        δ는 softmax 연산자다.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="walk"></span>9.3.6 지식 기반 소프트 보상 (Eq 9.12–9.13)</h3>
+    <p class="body reveal">
+      ConvQA의 약한 감독(weak supervision) 때문에 에이전트는 목표 개체에 도달해야만 양의 보상을 받는다 —
+      이런 <b>지연되고 희소한 보상은 수렴을 크게 늦춘다</b>. 이를 해결하기 위해 목표 답이 아닌 개체들에도
+      정답과의 유사도를 재는 <b>소프트 보상</b>을 부여한다. 이는 수렴을 가속하고 <b>KG의 불완전성을 완화</b>한다.
+      모든 노드·에지의 초기 개체·관계 임베딩은 ComplEx<span class="cite">[147]</span>로 학습하며,
+      n_t가 정답일 확률은:
+    </p>
+    <div class="def reveal">
+      <div class="def-head rw">SOFT REWARD 전략</div>
+      <div class="def-body">
+        <div class="formula">
+          Pr(n_t | l<sub>q_i</sub>, v<sub>q_i</sub>, 𝒢) = Re(&lt; l<sub>q_i</sub>, e<sub>n_t</sub>, e<sub>v_qi</sub> &gt;) <span class="eq">(9.12)</span><br>
+          R(s_t) = R_b(s_t) + (1 − R_b(s_t))·Pr(n_t | l<sub>q_i</sub>, v<sub>q_i</sub>, 𝒢) <span class="eq">(9.13)</span>
+        </div>
+        목적지 n_t가 𝒢 기준 정답이면 에이전트는 보상 1을 받고,
+        아니면 <b>사전학습 분포로 가중된 사실 점수</b> Pr(n_t|l<sub>q_i</sub>, v<sub>q_i</sub>, 𝒢)를 받는다.
+      </div>
+    </div>
+
+    <h3 class="reveal"><span class="walk"></span>9.3.7 훈련 — REINFORCE와 엔트로피 정규화 (Eq 9.14–9.18)</h3>
+    <div class="def reveal">
+      <div class="def-head">몬테카를로 · REINFORCE · 탐험 장려</div>
+      <div class="def-body">
+        대화 집합이 주어지면 보상을 최대화하는 최선의 답 a* = argmax_a Σ_C Σ_T R(a_i|q_i)를 반환하고자 한다.
+        목표는 정책 하에서 반환된 답의 기대 보상 𝔼<sub>a₁,…,a_T∼π_θ</sub>[R(s_t)]의 최대화다.
+        기대값 계산이 어려우므로 <b>몬테카를로 샘플링</b>으로 불편 추정치를 얻는다:
+        <div class="formula">
+          𝔼<sub>a₁,…,a_T∼π_θ</sub>[R(s_t)] ≈ (1/N) Σ<sub>i=1</sub><sup>N</sup> Σ<sub>j=1</sub><sup>T</sup> R(s_t)·π<sub>θ</sub>(a_t|s_t) <span class="eq">(9.14)</span>
+        </div>
+        실험에서는 훈련 예시마다 복수의 롤아웃을 실행해 기대 보상을 근사하며, <b>롤아웃 수는 20으로 고정</b>한다.
+        기울기는 REINFORCE<span class="cite">[155]</span>로 계산한다:
+        <div class="formula">
+          ∇<sub>θ</sub>𝔼[R(s_t)] = Σ<sub>i=1</sub><sup>T</sup> ∇<sub>θ</sub>π<sub>θ</sub>(a_t|s_t)·R(s_t) ≈ (1/N) Σ<sub>i=1</sub><sup>N</sup> Σ<sub>j=1</sub><sup>T</sup> R(s_t)·∇<sub>θ</sub> log(π<sub>θ</sub>(a_t|s_t)) <span class="eq">(9.15–9.16)</span>
+        </div>
+        훈련 중 정책이 샘플링하는 경로의 다양성을 장려하기 위해 [63]이 제안한 <b>엔트로피 정규화 항</b>을 비용 함수에 더한다:
+        <div class="formula">
+          H<sub>π,θ</sub>(·, s) = −Σ<sub>a∈A_s</sub> π<sub>θ</sub>(a|s)·log π<sub>θ</sub>(a|s) <span class="eq">(9.17)</span><br>
+          최종 목적: 𝔼<sub>a₁,…,a_T∼π_θ</sub>[R(s_t)] + λ·H<sub>π,θ</sub>(·, s) <span class="eq">(9.18)</span>
+        </div>
+        H<sub>π,θ</sub>는 더 나은 탐험을 보장하고 에이전트가 국소 최적에 갇히는 것을 막는다.
+        훈련 후 테스트 단계에서는 질의가 주어지면 KG의 모든 개체를 정답 확률로 랭킹한다 —
+        <b>정책망이 빔 서치로 최우도 top-k 경로를 유지</b>하고 가능도에 따라 랭킹하며,
+        top-k 후보에 없는 나머지 개체들은 <b>ComplEx로 Eq 9.12에 따라 랭킹</b>한다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 9.4 실험 ==================== -->
+<section id="s94">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 9.4</div>
+      <h2>실험 — 정확성과 효율성, 두 질문</h2>
+      <p class="lede">
+        공개 데이터셋들에서 CornNet을 평가하며 두 질문에 답한다 —
+        (1) 제안한 CornNet 알고리즘은 ConvQA에 <b>얼마나 정확한가</b>?
+        (2) 제안한 CornNet 알고리즘은 <b>얼마나 효율적인가</b>?
+      </p>
+    </div>
+
+    <div class="metrics reveal">
+      <div class="metric"><div class="mv">0.417</div><div class="mk">ConvQA <b>Hit@5</b> — CONQUER 대비 +4.5%, CONVEX 대비 +20%</div></div>
+      <div class="metric"><div class="mv">+13.7%</div><div class="mk">도메인별 <b>H@8 평균 개선</b> (H@5 +6.6%) — 2위 CONQUER 대비</div></div>
+      <div class="metric"><div class="mv">+2.2%</div><div class="mk"><b>고유 에지 임베딩 u_r</b>의 평균 QA 성능 기여</div></div>
+      <div class="metric"><div class="mv">83.2%</div><div class="mk">사전훈련 후 <b>토픽 개체 선택기</b>의 분류 정확도</div></div>
+    </div>
+
+    <h3 class="reveal"><span class="walk"></span>9.4.1 실험 설정</h3>
+    <div class="dsets reveal">
+      <div class="dset"><div class="dn">ConvQuestions [29]</div><div class="dd">총 <b>6,720개 대화, 각 5턴</b>. "Books", "Movies", "Soccer", "Music", "TV Series"의 5개 도메인에 속하며 도메인당 <b>훈련 1344 / 검증 448 / 테스트 448</b> 대화다.</div></div>
+      <div class="dset"><div class="dn">ConvRef [63]</div><div class="dd">총 <b>6,720개 대화, 각 5턴</b>. 도메인 구성과 분할은 ConvQuestions와 동일하다.</div></div>
+    </div>
+    <p class="body reveal">
+      두 데이터셋 모두 <b>Wikidata</b>를 배경 KG로 쓰는데, 전체 Wikidata는 <b>약 20억 트리플</b>로 극히 크다.
+      따라서 실험에서는 Wikidata의 트리플 부분집합을 샘플링한다 — 먼저 Wikidata와 QA 데이터셋의 <b>중첩 개체</b>를 취하고,
+      그 개체들의 <b>1-홉 이웃</b>을 모두 얻는다. 1-홉 이웃은 원본 데이터 덤프와 개체들의 온라인 Wikidata 웹사이트
+      양쪽에서 검색한다.
+    </p>
+    <p class="body reveal">
+      <b>베이스라인 4종</b> — Convex<span class="cite">[29]</span>(서브그래프를 추출한 뒤 그 안에서 답을 식별),
+      Conqer<span class="cite">[63]</span>(<b>현재 최신(SOTA) 베이스라인</b> — 재구성을 활용하는 RL로 KG에서 답 탐색),
+      OAT<span class="cite">[102]</span>(JSON류 구조를 입력으로 받아 광범위한 그래프 질의를 모델링하는 논리 형식(Logical Form, LF)
+      문법을 생성하는 Transformer 기반 모델 — LF 적용으로 답을 찾는다),
+      Focal Entity<span class="cite">[71]</span>(그래프 신경망으로 답을 찾는 새로운 그래프 기반 모델).
+      <b>재구성 생성 LLM 2종</b> — GPT2<span class="cite">[115]</span>와 Bart<span class="cite">[73]</span>.
+      각 입력 질문마다 복수의 재구성을 생성하고 <b>어텐션 메커니즘으로 모델 내부에서 집계</b>한다.
+      <b>지표</b> — P@1(상위 1위 정밀도), MRR(첫 문맥 경로가 검색된 순위의 역수 평균), H@k/Hit@k(정답이 상위 k위 내에
+      검색된 비율).
+    </p>
+
+    <h3 class="reveal"><span class="walk"></span>9.4.2 주요 결과 — Table 9.3 (ConvQA · ConvRef)</h3>
+    <div class="tbl-scroll reveal" style="max-width:640px">
+    <table class="tbl" style="min-width:0">
+      <thead>
+        <tr><th rowspan="2">모델</th><th colspan="2" style="text-align:center">ConvQA</th><th colspan="2" style="text-align:center">ConvRef</th></tr>
+        <tr><th style="text-align:right">Hit@5</th><th style="text-align:right">MRR</th><th style="text-align:right">Hit@5</th><th style="text-align:right">MRR</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>CONVEX</td><td class="num">0.219</td><td class="num">0.200</td><td class="num">0.257</td><td class="num">0.241</td></tr>
+        <tr><td>CONQUER</td><td class="num">0.372</td><td class="num">0.327</td><td class="num">0.427</td><td class="best">0.382</td></tr>
+        <tr><td>OAT</td><td class="num">–</td><td class="num">0.260</td><td class="num">–</td><td class="num">–</td></tr>
+        <tr><td>Focal Entity</td><td class="num">–</td><td class="num">0.248</td><td class="num">–</td><td class="num">–</td></tr>
+        <tr><td><b>CornNet</b></td><td class="best">0.417</td><td class="best">0.337</td><td class="best">0.477</td><td class="num">0.353</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      <b>A — ConvQA 데이터셋 종합 성능.</b> CornNet은 ConvQA에서 H@5와 MRR 지표 모두 기존 베이스라인을 능가한다 —
+      H@5는 <b>CONQUER보다 4.5%, CONVEX보다 20% 우수</b>하다. MRR은 CONVEX가 최저(CornNet보다 13.7% 낮음)이고
+      CONQUER가 2위지만 역시 CornNet보다 1% 낮다. OAT는 소스 코드가 비공개라 [102]의 결과를 그대로 인용했는데,
+      <b>P@1은 가장 높지만 MRR은 CornNet보다 7.3%p 낮다</b>. Focal Entity는 P@1 2위·MRR 3위다.
+      ConvRef에서도 유사하다 — CornNet은 <b>Hit@5 최고(CONQUER 대비 +5%)</b>이고 P@1·MRR은 2위다.
+      OAT의 소스 코드 부재와 Focal Entity의 ConvRef 실행 실패로 두 방법의 ConvRef 결과는 분석에 포함할 수 없다.
+    </p>
+
+    <h3 class="reveal"><span class="walk"></span>도메인별 성능 — Table 9.2 (H@3 / H@5 / H@8)</h3>
+    <div class="tbl-scroll reveal">
+    <table class="tbl">
+      <thead>
+        <tr><th rowspan="2">모델</th><th colspan="3" style="text-align:center">Movies</th><th colspan="3" style="text-align:center">TV series</th><th colspan="3" style="text-align:center">Music</th><th colspan="3" style="text-align:center">Soccer</th></tr>
+        <tr><th style="text-align:right">H@3</th><th style="text-align:right">H@5</th><th style="text-align:right">H@8</th><th style="text-align:right">H@3</th><th style="text-align:right">H@5</th><th style="text-align:right">H@8</th><th style="text-align:right">H@3</th><th style="text-align:right">H@5</th><th style="text-align:right">H@8</th><th style="text-align:right">H@3</th><th style="text-align:right">H@5</th><th style="text-align:right">H@8</th></tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="13"><b>ConvQA</b></td></tr>
+        <tr><td>Conv</td><td class="num">0.345</td><td class="num">0.345</td><td class="num">0.345</td><td class="num">0.303</td><td class="num">0.308</td><td class="num">0.309</td><td class="num">0.213</td><td class="num">0.217</td><td class="num">0.221</td><td class="num">0.2019</td><td class="num">0.2019</td><td class="num">0.2019</td></tr>
+        <tr><td>Conquer</td><td class="num">0.336</td><td class="num">0.343</td><td class="num">0.354</td><td class="num">0.375</td><td class="num">0.396</td><td class="num">0.421</td><td class="num">0.279</td><td class="num">0.282</td><td class="num">0.289</td><td class="best">0.325</td><td class="num">0.343</td><td class="num">0.350</td></tr>
+        <tr><td><b>CornNet</b></td><td class="best">0.385</td><td class="best">0.456</td><td class="best">0.514</td><td class="best">0.437</td><td class="best">0.482</td><td class="best">0.587</td><td class="best">0.290</td><td class="best">0.356</td><td class="best">0.392</td><td class="num">0.288</td><td class="best">0.418</td><td class="best">0.550</td></tr>
+        <tr><td colspan="13"><b>ConvRef</b></td></tr>
+        <tr><td>Conv</td><td class="num">0.345</td><td class="num">0.345</td><td class="num">0.345</td><td class="num">0.303</td><td class="num">0.308</td><td class="num">0.308</td><td class="num">0.213</td><td class="num">0.217</td><td class="num">0.221</td><td class="num">0.202</td><td class="num">0.202</td><td class="num">0.202</td></tr>
+        <tr><td>Conquer</td><td class="num">0.389</td><td class="num">0.404</td><td class="num">0.429</td><td class="num">0.435</td><td class="num">0.442</td><td class="num">0.485</td><td class="num">0.371</td><td class="num">0.398</td><td class="num">0.413</td><td class="best">0.371</td><td class="num">0.384</td><td class="num">0.393</td></tr>
+        <tr><td><b>CornNet</b></td><td class="best">0.393</td><td class="best">0.461</td><td class="best">0.521</td><td class="best">0.436</td><td class="best">0.533</td><td class="best">0.564</td><td class="best">0.377</td><td class="best">0.447</td><td class="best">0.484</td><td class="num">0.353</td><td class="best">0.385</td><td class="best">0.425</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="tbl-note">// 원문 조판의 Table 9.2에는 Movies·TV series·Music·Soccer 4개 도메인 열만 수록되어 있다 — 산문이 언급하는 Books 도메인 열은 표에 없다. ConvRef의 TV series H@3에서는 Conquer(0.435)가 CornNet(0.436)에 근소하게 뒤진다</div>
+    <p class="body reveal">
+      <b>B — 도메인별 성능.</b> CornNet은 ConvQuestions 벤치마크의 대부분 도메인에서 다른 베이스라인을 능가한다 —
+      2위 베이스라인 CONQUER 대비 <b>평균 H@8 +13.7%, H@5 +6.6%</b>이며, H@3는 평균 0.58% 낮아 근소하게 밀린다.
+      <b>Books 도메인의 상대적 부진은 "yes/no" 질문과 플롯(줄거리) 관련 질의의 존재</b> 때문일 가능성이 높다 —
+      토픽 개체 선택기가 토픽 개체를 정확히 결정하기 어려워져 모델 예측에 도전이 된다.
+      ConvRef 데이터셋에서도 유사한 결과가 관찰된다.
+    </p>
+
+    <h3 class="reveal"><span class="walk"></span>9.4.3 어블레이션 연구와 효율성</h3>
+    <p class="body reveal">
+      <b>A — 재구성의 효과.</b> GPT2·Bart 두 LLM으로 재구성을 생성하며, 재구성을 쓰지 않을 때는
+      질문 인코더의 출력을 LSTM의 입력으로 직접 쓴다. <b>재구성 사용은 대부분의 경우 ConvQA 성능을 실제로 높인다</b>.
+      GPT2 재구성과 Bart 재구성의 성능은 매우 유사하고, <b>인간 작성 재구성이 최고 성능</b>이다.
+    </p>
+    <div class="tbl-scroll reveal" style="max-width:640px">
+    <table class="tbl" style="min-width:0">
+      <thead><tr><th>Table 9.4 · 재구성 효과</th><th style="text-align:right">P@1</th><th style="text-align:right">Hit@3</th><th style="text-align:right">Hit@5</th><th style="text-align:right">Hit@8</th></tr></thead>
+      <tbody>
+        <tr><td>재구성 없음</td><td class="num">0.231</td><td class="num">0.373</td><td class="num">0.445</td><td class="num">0.474</td></tr>
+        <tr><td>GPT2 재구성</td><td class="num">0.212</td><td class="num">0.367</td><td class="num">0.451</td><td class="num">0.504</td></tr>
+        <tr><td>Bart 재구성</td><td class="num">0.221</td><td class="num">0.376</td><td class="num">0.441</td><td class="num">0.494</td></tr>
+        <tr><td><b>인간 재구성</b></td><td class="best">0.257</td><td class="best">0.395</td><td class="best">0.463</td><td class="best">0.518</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      <b>B — 티처-스튜던트 모델의 효과.</b> LLM 생성 재구성만 쓰면 성능이 티처-스튜던트 모델보다 <b>약 3% 낮고</b>,
+      인간 작성 재구성으로 훈련하고 생성 재구성으로 테스트하면(Train test different) CornNet보다 <b>약 1.3% 낮다</b>.
+    </p>
+    <div class="tbl-scroll reveal" style="max-width:640px">
+    <table class="tbl" style="min-width:0">
+      <thead><tr><th>Table 9.5 · 티처-스튜던트 효과</th><th style="text-align:right">P@1</th><th style="text-align:right">Hit@3</th><th style="text-align:right">Hit@5</th><th style="text-align:right">Hit@8</th></tr></thead>
+      <tbody>
+        <tr><td>GPT2 재구성</td><td class="num">0.212</td><td class="num">0.367</td><td class="num">0.451</td><td class="num">0.504</td></tr>
+        <tr><td><b>CornNet (GPT2)</b></td><td class="best">0.265</td><td class="num">0.404</td><td class="num">0.477</td><td class="best">0.526</td></tr>
+        <tr><td>Bart 재구성</td><td class="num">0.221</td><td class="num">0.376</td><td class="num">0.441</td><td class="num">0.494</td></tr>
+        <tr><td><b>CornNet (Bart)</b></td><td class="num">0.244</td><td class="best">0.413</td><td class="best">0.491</td><td class="num">0.523</td></tr>
+        <tr><td>Train test different</td><td class="num">0.237</td><td class="num">0.389</td><td class="num">0.472</td><td class="num">0.507</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      <b>C — 효율성.</b> ConvRef 데이터셋에서의 훈련·테스트 시간 비교(Fig 9.4)에서 <b>CornNet의 훈련·테스트 시간이
+      가장 짧고 Conv가 가장 길다</b>. 짧은 훈련 시간에도 불구하고 CornNet은 다른 베이스라인 대비 더 좋거나 대등한
+      ConvQA 성능을 달성한다.
+    </p>
+    <p class="body reveal">
+      <b>D — 고유 관계(에지) 임베딩의 효과.</b> RL 행동 공간에서 고유 에지 임베딩 사용의 효과를 검증한다 —
+      실험에는 재구성 4개를 사용하며, "CornNet -"는 고유 에지 임베딩을 쓰지 않는 CornNet이다.
+      <b>고유 에지 임베딩 사용은 QA 성능을 평균 2.2% 개선</b>한다.
+    </p>
+    <div class="tbl-scroll reveal" style="max-width:640px">
+    <table class="tbl" style="min-width:0">
+      <thead><tr><th>Table 9.6 · 고유 에지 임베딩</th><th style="text-align:right">P@1</th><th style="text-align:right">Hit@3</th><th style="text-align:right">Hit@5</th><th style="text-align:right">Hit@8</th><th style="text-align:right">MRR</th></tr></thead>
+      <tbody>
+        <tr><td>CornNet -</td><td class="num">0.227</td><td class="num">0.396</td><td class="num">0.469</td><td class="num">0.507</td><td class="num">0.330</td></tr>
+        <tr><td><b>CornNet</b></td><td class="best">0.265</td><td class="best">0.404</td><td class="best">0.477</td><td class="best">0.526</td><td class="best">0.353</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="body reveal">
+      <b>E — 토픽 개체 선택기의 효과.</b> 토픽 개체 선택기는 훈련 데이터로 사전훈련하며, 훈련 중에는 티처 모델이
+      입력 질문과 재구성을 인코딩한다. 토픽 개체 선택기 사전훈련 후에는 <b>새 티처 모델이 RL 기반 QA 모델과 함께
+      재훈련</b>된다. 사전훈련 후 분류기의 정확도는 <b>83.2%</b>로 비교적 높다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 9.5 논의 ==================== -->
+<section id="s95">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">SECTION 9.5</div>
+      <h2>논의</h2>
+      <p class="lede">
+        강화학습은 지식그래프 위 대화형 질의응답에 흔히 사용되어 왔다. LLM의 등장과 함께, 연구자들은 이제
+        <b>LLM을 강화학습 에이전트로 써서 지식그래프에서 답을 찾는 방향</b>을 탐구하고 있다 —
+        LLM의 자연어 이해·생성 능력을 강화해 이 문제에 더 잘 대응하려는 것이다.
+        향후에는 <b>추론 과정에 인간 피드백을 통합</b>하는 것이 유망한 방향이다.
+        인간 피드백은 값진 통찰과 교정을 제공해 모델의 정확성과 신뢰성을 높일 수 있으며,
+        인간 입력으로 모델을 지속적으로 다듬으면 더 견고하고 신뢰할 수 있는 대화형 에이전트를 개발할 수 있다.
+      </p>
+    </div>
+
+    <div class="fnotes reveal">
+      <div class="fn"><i>FN1</i><span>인간 수준 성능(human-level performance)은 테스트 시 실제 인간 작성 재구성에 기반해 답을 찾는 능력을 뜻한다.</span></div>
+      <div class="fn"><i>FN2</i><span>Wikidata 데이터 덤프 — <a href="https://www.wikidata.org/wiki/Wikidata:Database_download" rel="noopener">https://www.wikidata.org/wiki/Wikidata:Database_download</a></span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="src">
+      <b>출처</b><br>
+      Liu, L. &amp; Tong, H. (2026). <b>Neural Symbolic Knowledge Graph Reasoning:<br>
+      A Pathway Towards Neural Symbolic AI</b> — Chapter 9. Dynamic Query Answering<br>with Neural Symbolic Reasoning Over Incomplete KG.<br>
+      Synthesis Lectures on Computer Science, Springer Nature Switzerland.
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--st)"></i>스튜던트 — LLM 재구성 인코더</span><br>
+      <span><i style="background:var(--te)"></i>티처 — 인간 재구성 · L2 모방</span><br>
+      <span><i style="background:var(--rl)"></i>RL — 정책망 · KG 워크 · REINFORCE</span><br>
+      <span><i style="background:var(--rw)"></i>소프트 보상 — ComplEx 사실 점수</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // 스크롤 리빌
+  var reveals = document.querySelectorAll(".reveal");
+  if (reduce || !("IntersectionObserver" in window)) {
+    reveals.forEach(function(el){ el.classList.add("on"); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add("on"); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.08 });
+    reveals.forEach(function(el){ io.observe(el); });
+  }
+
+  // 대화 5턴 워크스루
+  var TURNS = {
+    "1": {
+      topic: '<b>Moby Dick</b> — 대화의 주 토픽 개체 v_q1. 훈련 데이터에서 <b>q₁의 토픽만 주어진다</b>.' +
+        '<br><span class="tag" style="color:var(--rl);border-color:var(--rl-line);background:var(--rl-bg)">v_q1 = Moby Dick</span>',
+      phen: '해당 없음 — 대화는 통상 <b>잘 형성된(well-formed) 질문 q₁</b>로 시작하고, 이어지는 후속 질문들(q₂–q₅)은 불명시적이다.',
+      sys: '주어진 토픽 개체 v_q1에서 <b>RL 에이전트가 출발</b>해 정책망을 따라 KG를 걸으며 답 a₁을 찾는다.'
+    },
+    "2": {
+      topic: '<b>Herman Melville</b> — 토픽이 소설에서 저자로 <b>이동(shift)</b>했다. Herman Melville의 출생 시기를 묻는다.' +
+        '<br><span class="tag" style="color:var(--rw);border-color:var(--rw-line);background:var(--rw-bg)">TOPIC SHIFT → a₁</span>',
+      phen: '<b>아나포라(anaphora)</b> — 이전 맥락의 표현에 의존하는 표현 현상. q₂의 <b>"he"는 a₁을 가리킨다</b>.',
+      sys: '토픽 개체 선택기(Eq 9.6)가 <b>v_q2 = a₁(이전 답)임을 판정</b>하고, 대화 이력 LSTM(Eq 9.4)이 "he"의 해석을 뒷받침한다.'
+    },
+    "3": {
+      topic: '<b>Herman Melville</b> — 토픽이 유지된다. "And where is he from originally?"' +
+        '<br><span class="tag" style="color:var(--st);border-color:var(--st-line);background:var(--st-bg)">TOPIC 유지</span>',
+      phen: '<b>아나포라 지속</b> — <b>대화 이력 없이는 대명사 \'he\'의 선행사를 식별할 수 없다</b>. 대화 이력이 CornNet의 성공에 필수적인 이유다.',
+      sys: 'LLM(GPT2·Bart)이 생성한 <b>복수의 재구성을 Transformer로 융합</b>(Eq 9.3)하고 이력 LSTM으로 문맥을 이어 붙인다.'
+    },
+    "4": {
+      topic: '<b>Moby Dick</b> — 원문 Example 1이 명시한 다섯 토픽 시퀀스에 따라 q₄의 토픽은 Moby Dick이다.' +
+        '<br><span class="tag" style="color:var(--rl);border-color:var(--rl-line);background:var(--rl-bg)">v_q4 = Moby Dick</span>',
+      phen: '<b>생략(ellipsis)</b> — 이전 맥락에 있는 표현의 누락 현상. q₄의 <b>완전형은 "Where is Herman Melville\'s wife from?"</b>이어야 한다.',
+      sys: '재구성 모델이 <b>누락된 표현을 복원한 재구성</b>을 생성하고, 스튜던트가 이를 인코딩해 티처(인간 재구성) 출력에 근접시킨다(Eq 9.5).'
+    },
+    "5": {
+      topic: '<b>Moby Dick</b> — 토픽이 다시 소설로 돌아온다.' +
+        '<br><span class="tag" style="color:var(--rl);border-color:var(--rl-line);background:var(--rl-bg)">v_q5 = Moby Dick</span>',
+      phen: '토픽 복귀 — 대화의 토픽 개체는 <b>시간에 따라 이동할 수 있고 되돌아올 수도 있다</b>.',
+      sys: '분류기가 <b>현재 질문의 토픽이 이전 답(a₄)이 아니라고 예측</b>하면, 토픽 개체를 <b>주 토픽 개체 v_q1로 리셋</b>한다.'
+    }
+  };
+  var turnBtns = document.querySelectorAll(".turn");
+  var cvTopic = document.getElementById("cvTopic");
+  var cvPhen = document.getElementById("cvPhen");
+  var cvSys = document.getElementById("cvSys");
+  function setTurn(id){
+    var t = TURNS[id];
+    if (!t) return;
+    turnBtns.forEach(function(b){
+      var on = b.getAttribute("data-turn") === id;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    cvTopic.innerHTML = t.topic;
+    cvPhen.innerHTML = t.phen;
+    cvSys.innerHTML = t.sys;
+  }
+  turnBtns.forEach(function(b){
+    b.addEventListener("click", function(){ setTurn(b.getAttribute("data-turn")); });
+  });
+  setTurn("1");
+
+  // 현재 섹션 내비 활성화
+  var navLinks = document.querySelectorAll(".navlinks a");
+  var secs = ["s91","s92","s93","s94","s95"].map(function(id){ return document.getElementById(id); }).filter(Boolean);
+  if ("IntersectionObserver" in window) {
+    var nio = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) {
+          navLinks.forEach(function(a){
+            a.classList.toggle("active", a.getAttribute("href") === "#" + e.target.id);
+          });
+        }
+      });
+    }, { rootMargin: "-35% 0px -55% 0px" });
+    secs.forEach(function(s){ nio.observe(s); });
+  }
+})();
+</script>
+</body>
+</html>
