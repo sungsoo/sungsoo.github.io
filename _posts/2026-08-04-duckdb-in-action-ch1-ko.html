@@ -1,0 +1,936 @@
+---
+layout: null
+title: "An introduction to DuckDB" 
+date: 2026-08-04 
+categories: [artificial intelligence]
+tags: [artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DuckDB 답사기 · 제1장 DuckDB 입문 — 『DuckDB in Action』 정독</title>
+<meta name="description" content="Mark Needham, Michael Hunger, Michael Simons의 『DuckDB in Action』 제1장을 한 문장도 빠뜨리지 않고 읽어 정리한 해설. 임베디드 분석 데이터베이스 DuckDB의 정체, 쓸 자리와 쓰지 말 자리, 데이터 처리 흐름의 네 걸음.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────
+   토큰: 델프트 도자(Delft) 팔레트
+   CWI가 있는 네덜란드의 청화백자에서 가져온 한랭 계열.
+   ───────────────────────────────────────────── */
+:root{
+  --porcelain:#e9eef4;      /* 배경: 식은 백자 */
+  --glaze:#ffffff;          /* 유약: 판면 */
+  --delft:#1f4e9c;          /* 청화 */
+  --delft-deep:#0f2a54;     /* 짙은 청화 */
+  --ink:#101a28;            /* 먹 */
+  --bill:#e0912a;           /* 오리 부리 */
+  --canal:#2b7d74;          /* 운하 */
+  --grey:#69788c;           /* 회청 */
+  --hair:rgba(16,26,40,.14);
+
+  --disp:'Fraunces','Gowun Batang',serif;
+  --body:'Noto Sans KR','Fraunces',sans-serif;
+  --mono:'IBM Plex Mono','Noto Sans KR',monospace;
+
+  --col:min(720px,100%);
+  --wide:min(1080px,100%);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--porcelain);color:var(--ink);
+  font-family:var(--body);font-weight:300;font-size:17px;line-height:1.95;
+  word-break:keep-all;line-break:strict;
+  background-image:
+    radial-gradient(1200px 600px at 12% -10%,rgba(31,78,156,.10),transparent 60%),
+    radial-gradient(900px 500px at 95% 4%,rgba(43,125,116,.09),transparent 60%);
+  background-attachment:fixed;
+}
+::selection{background:var(--bill);color:#fff}
+a{color:var(--delft);text-decoration:none;border-bottom:1px solid rgba(31,78,156,.35)}
+a:hover{color:var(--canal);border-color:var(--canal)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--bill);outline-offset:3px}
+
+/* ── 레이아웃 ── */
+.wrap{width:var(--wide);margin:0 auto;padding:0 26px}
+.col{width:var(--col);margin:0 auto}
+
+/* ── 표제부 ── */
+.hero{position:relative;padding:74px 0 46px;overflow:hidden}
+.eyebrow{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--grey);display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+}
+.eyebrow b{color:var(--delft);font-weight:500}
+.chapno{
+  display:flex;align-items:baseline;gap:18px;margin:26px 0 6px;
+}
+.chapno span:first-child{
+  font-family:var(--disp);font-size:clamp(52px,11vw,104px);font-weight:800;
+  line-height:.82;color:var(--delft);font-variation-settings:'SOFT' 40,'WONK' 1;
+}
+.chapno span:last-child{
+  font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--grey);
+  padding-bottom:10px;
+}
+h1{
+  font-family:var(--disp);font-weight:600;letter-spacing:-.015em;
+  font-size:clamp(34px,6.4vw,66px);line-height:1.1;margin:0 0 22px;color:var(--ink);
+  max-width:20ch;
+}
+h1 em{font-style:italic;color:var(--delft);font-weight:400;background:none}
+.lede{
+  width:var(--col);font-size:clamp(17px,2vw,20px);line-height:1.9;color:#243247;
+  font-weight:300;
+}
+.lede strong{font-weight:500;color:var(--ink);background:linear-gradient(transparent 62%,rgba(224,145,42,.32) 62%)}
+.hero-meta{
+  margin-top:34px;display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--hair);
+}
+.hero-meta div{
+  flex:1 1 190px;padding:16px 22px 16px 0;border-right:1px solid var(--hair);
+}
+.hero-meta div:last-child{border-right:0}
+.hero-meta dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--grey);text-transform:uppercase;margin:0 0 6px}
+.hero-meta dd{margin:0;font-size:14.5px;font-weight:400;line-height:1.65}
+
+/* ── 도판(圖版): 이 페이지의 서명 요소 ── */
+.plate{margin:52px 0;width:var(--wide)}
+.plate.narrow{width:var(--col);margin-left:auto;margin-right:auto}
+.plate figure{margin:0}
+.tile{
+  background:var(--glaze);border:1px solid var(--hair);
+  box-shadow:0 1px 0 #fff inset,0 18px 40px -30px rgba(15,42,84,.55);
+  padding:14px;
+}
+.tile-in{border:1px solid rgba(31,78,156,.22);padding:20px 14px}
+.plate svg{display:block;width:100%;height:auto}
+figcaption{
+  margin-top:14px;font-family:var(--mono);font-size:12px;letter-spacing:.02em;color:var(--grey);
+  display:flex;gap:10px;align-items:baseline;
+}
+figcaption b{color:var(--delft-deep);font-weight:500;white-space:nowrap}
+
+/* ── 목차 레일 ── */
+.rail{
+  position:fixed;left:22px;top:50%;transform:translateY(-50%);z-index:20;
+  display:none;flex-direction:column;gap:2px;
+}
+.rail a{
+  display:flex;align-items:center;gap:10px;border:0;font-family:var(--mono);
+  font-size:10.5px;letter-spacing:.14em;color:var(--grey);padding:4px 0;
+}
+.rail i{display:block;width:16px;height:1px;background:var(--grey);opacity:.5;transition:.35s}
+.rail a span{opacity:0;transform:translateX(-4px);transition:.35s}
+.rail a:hover i,.rail a.on i{width:32px;opacity:1;background:var(--bill);height:2px}
+.rail a:hover span,.rail a.on span{opacity:1;transform:none;color:var(--delft-deep)}
+@media(min-width:1280px){.rail{display:flex}}
+
+/* ── 본문 절 ── */
+section{padding:34px 0}
+.sechead{width:var(--col);margin:0 auto 26px}
+.sechead .num{
+  font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--bill);
+  display:block;margin-bottom:10px;
+}
+h2{
+  font-family:var(--disp);font-weight:600;font-size:clamp(26px,3.6vw,38px);line-height:1.25;
+  margin:0;letter-spacing:-.01em;color:var(--delft-deep);
+}
+h2 .en{display:block;font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:.08em;color:var(--grey);margin-top:9px}
+h3{
+  font-family:var(--body);font-weight:700;font-size:19px;line-height:1.5;
+  margin:44px 0 12px;color:var(--ink);
+}
+h3::before{content:"";display:inline-block;width:9px;height:9px;background:var(--bill);margin-right:11px;vertical-align:2px}
+p{margin:0 0 20px}
+p+p{text-indent:0}
+.dropcap::first-letter{
+  font-family:var(--disp);font-size:3.6em;line-height:.86;float:left;
+  margin:6px 12px 0 0;color:var(--delft);font-weight:600;
+}
+em{font-style:normal;background:linear-gradient(transparent 60%,rgba(43,125,116,.22) 60%)}
+strong{font-weight:500}
+code{
+  font-family:var(--mono);font-size:.86em;background:rgba(31,78,156,.08);
+  padding:.12em .42em;border-radius:2px;color:var(--delft-deep);white-space:nowrap;
+}
+.q{
+  border-left:3px solid var(--bill);padding:2px 0 2px 22px;margin:34px 0;
+  font-family:var(--disp);font-size:20px;line-height:1.75;color:var(--delft-deep);
+}
+.q span{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--grey);margin-top:12px}
+
+/* 목록 */
+ul.plain{list-style:none;padding:0;margin:0 0 24px}
+ul.plain li{
+  position:relative;padding:11px 0 11px 30px;border-bottom:1px solid var(--hair);
+}
+ul.plain li::before{
+  content:"";position:absolute;left:4px;top:22px;width:12px;height:1px;background:var(--delft);opacity:.6;
+}
+ul.plain li b{font-weight:500;color:var(--delft-deep)}
+
+/* 두 칸 카드 */
+.duo{display:grid;grid-template-columns:1fr;gap:16px;margin:34px 0;align-items:start}
+@media(min-width:760px){.duo{grid-template-columns:1fr 1fr}}
+@media(min-width:1160px){.duo{width:calc(100% + 300px);margin-left:-150px;margin-right:-150px}}
+.card{
+  background:var(--glaze);border:1px solid var(--hair);padding:22px 22px 8px;
+  box-shadow:0 12px 30px -26px rgba(15,42,84,.5);
+}
+.card h4{
+  margin:0 0 12px;font-family:var(--mono);font-size:11.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--grey);
+}
+.card.yes h4{color:var(--canal)}
+.card.no h4{color:#a8552b}
+.card ul{margin:0;padding-left:0;list-style:none}
+.card li{padding:8px 0 8px 18px;position:relative;font-size:15.5px;line-height:1.75;border-bottom:1px solid var(--hair)}
+.card li:last-child{border-bottom:0}
+.card li::before{position:absolute;left:0;top:8px;font-family:var(--mono);font-size:13px}
+.card.yes li::before{content:"+";color:var(--canal)}
+.card.no li::before{content:"−";color:#a8552b}
+
+/* NOTE */
+.note{
+  background:linear-gradient(180deg,rgba(224,145,42,.10),rgba(224,145,42,.04));
+  border:1px solid rgba(224,145,42,.4);padding:22px 24px 6px;margin:34px 0;
+}
+.note .tag{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;color:#8a5410;
+  display:block;margin-bottom:10px;
+}
+.note p{font-size:15.5px;line-height:1.85;margin-bottom:16px}
+
+/* 코드 블록 */
+pre{
+  font-family:var(--mono);font-size:13.5px;line-height:1.85;background:var(--delft-deep);
+  color:#dce7f7;padding:20px 22px;overflow-x:auto;margin:26px 0;border-left:3px solid var(--bill);
+}
+pre .k{color:#8fb8ff}
+pre .f{color:#ffc776}
+pre .c{color:#7f93ae}
+
+/* 항목 격자(포맷·타입) */
+.grid3{display:grid;grid-template-columns:1fr;gap:1px;background:var(--hair);border:1px solid var(--hair);margin:30px 0}
+@media(min-width:640px){.grid3{grid-template-columns:1fr 1fr}}
+@media(min-width:960px){.grid3{grid-template-columns:1fr 1fr 1fr}}
+.cell{background:var(--glaze);padding:20px}
+.cell .t{font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;color:var(--delft);display:block;margin-bottom:8px;font-weight:500}
+.cell p{font-size:14.5px;line-height:1.78;margin:0;color:#2c3a4e}
+
+/* 요약 */
+.summary{background:var(--delft-deep);color:#e6eefb;margin-top:70px;padding:66px 0 58px;position:relative}
+.summary::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px 44px);
+}
+.summary h2{color:#fff}
+.summary .num{color:var(--bill)}
+.summary h2 .en{color:rgba(230,238,251,.5)}
+.summary ol{list-style:none;counter-reset:s;padding:0;margin:0;width:var(--col);margin:0 auto}
+.summary li{
+  counter-increment:s;position:relative;padding:16px 0 16px 52px;
+  border-bottom:1px solid rgba(255,255,255,.13);font-weight:300;font-size:16px;line-height:1.8;
+}
+.summary li::before{
+  content:counter(s,decimal-leading-zero);position:absolute;left:0;top:19px;
+  font-family:var(--mono);font-size:12px;color:var(--bill);letter-spacing:.1em;
+}
+.summary li b{font-weight:500;color:#fff}
+
+footer{padding:56px 0 76px;font-size:13.5px;color:var(--grey);line-height:1.85}
+footer .col{border-top:1px solid var(--hair);padding-top:26px}
+footer b{color:var(--delft-deep);font-weight:500}
+footer .mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;display:block;margin-top:16px;color:#8494a8}
+
+/* ── 등장 연출 ── */
+.rev{opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rev.in{opacity:1;transform:none}
+.flow{stroke-dasharray:var(--len,300);stroke-dashoffset:var(--len,300);animation:draw 1.5s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.pulse{animation:pulse 3.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:1}}
+.bead{offset-path:path(var(--p));animation:bead 3.6s linear infinite}
+@keyframes bead{0%{offset-distance:0%;opacity:0}8%{opacity:1}92%{opacity:1}100%{offset-distance:100%;opacity:0}}
+/* ── 좁은 화면 대응 ── */
+@media(max-width:759px){
+  .hero-meta div{border-right:0;border-bottom:1px solid var(--hair);padding-right:0}
+  .hero-meta div:last-child{border-bottom:0}
+}
+@media(max-width:720px){
+  .tile-in{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tile-in>svg{min-width:660px}
+  figcaption{flex-direction:column;gap:4px}
+  .scrollhint{display:block}
+}
+.scrollhint{
+  display:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  color:var(--grey);margin-top:8px;
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .rev{opacity:1;transform:none}
+  .flow{stroke-dashoffset:0}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="절 목차">
+  <a href="#s0"><i></i><span>여는 글</span></a>
+  <a href="#s1"><i></i><span>1.1 정체</span></a>
+  <a href="#s2"><i></i><span>1.2 이유</span></a>
+  <a href="#s3"><i></i><span>1.3 쓸 자리</span></a>
+  <a href="#s4"><i></i><span>1.4 쓰지 말 자리</span></a>
+  <a href="#s5"><i></i><span>1.5 활용 사례</span></a>
+  <a href="#s6"><i></i><span>1.6 놓이는 자리</span></a>
+  <a href="#s7"><i></i><span>1.7 네 걸음</span></a>
+  <a href="#s8"><i></i><span>요약</span></a>
+</nav>
+
+<!-- ══════════ 표제부 ══════════ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">
+      <span>DuckDB in Action</span>
+      <span>·</span>
+      <span>Manning, 2024</span>
+      <span>·</span>
+      <b>제1장 정독</b>
+    </div>
+
+    <div class="chapno">
+      <span>1</span>
+      <span>AN INTRODUCTION TO DUCKDB<br>원서 1–11쪽</span>
+    </div>
+
+    <h1>빅데이터의 시대에 <em>단일 노드</em> 데이터베이스가 되돌아온 사연</h1>
+
+    <p class="lede">
+      지난 십 년간 데이터 업계가 배운 상식은 하나였다. 데이터가 커지면 기계를 늘려라.
+      그런데 이 책은 첫 문장부터 그 상식을 거스른다고 선언한다.
+      <strong>한 대의 컴퓨터, 프로세스 안에 들어앉은 작은 분석 엔진 하나로 수백 기가바이트를 처리한다</strong>는 것이다.
+      제1장은 그 주장의 배경과 근거, 그리고 이 오리가 앉을 자리와 앉지 말아야 할 자리를 차례로 짚는다.
+    </p>
+
+    <dl class="hero-meta">
+      <div><dt>저자</dt><dd>Mark Needham · Michael Hunger · Michael Simons</dd></div>
+      <div><dt>1장이 다루는 것</dt><dd>DuckDB의 등장 배경, 기능, 데이터 파이프라인에서의 위치</dd></div>
+      <div><dt>절 구성</dt><dd>1.1 – 1.7 (하위 절 1.7.1 – 1.7.4) 및 요약</dd></div>
+      <div><dt>도판</dt><dd>5점 · 〈도판 1.1〉 – 〈도판 1.5〉</dd></div>
+    </dl>
+  </div>
+
+  <!-- 서명 도판: 생태계 속의 DuckDB -->
+  <div class="wrap plate" id="s0">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 380" role="img" aria-label="여러 데이터 원천이 DuckDB 엔진으로 들어가 데이터프레임, 차트, 파일, API로 나가는 구조도">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#1f4e9c"/>
+            </marker>
+            <linearGradient id="eng" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#1f4e9c"/><stop offset="1" stop-color="#0f2a54"/>
+            </linearGradient>
+          </defs>
+
+          <!-- 원천 -->
+          <g font-family="IBM Plex Mono, monospace" font-size="13" fill="#0f2a54">
+            <g>
+              <rect x="30" y="34" width="150" height="40" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/>
+              <text x="46" y="59">CSV · JSON</text>
+            </g>
+            <g>
+              <rect x="30" y="96" width="150" height="40" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/>
+              <text x="46" y="121">Parquet · Arrow</text>
+            </g>
+            <g>
+              <rect x="30" y="158" width="150" height="40" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/>
+              <text x="46" y="183">MySQL · SQLite</text>
+            </g>
+            <g>
+              <rect x="30" y="220" width="150" height="40" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/>
+              <text x="46" y="245">Postgres</text>
+            </g>
+            <g>
+              <rect x="30" y="282" width="150" height="40" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/>
+              <text x="46" y="307">DataFrame · S3</text>
+            </g>
+          </g>
+          <text x="30" y="348" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2.4" fill="#69788c">DATA SOURCES</text>
+
+          <!-- 화살표 다발 -->
+          <g stroke="#1f4e9c" stroke-width="1.3" fill="none" marker-end="url(#ar)" opacity=".8">
+            <path class="flow" style="--len:260" d="M180 54 C 260 54 300 150 356 172"/>
+            <path class="flow" style="--len:240;animation-delay:.1s" d="M180 116 C 250 116 300 158 356 178"/>
+            <path class="flow" style="--len:220;animation-delay:.2s" d="M180 178 L356 184"/>
+            <path class="flow" style="--len:240;animation-delay:.3s" d="M180 240 C 250 240 300 210 356 192"/>
+            <path class="flow" style="--len:260;animation-delay:.4s" d="M180 302 C 260 302 300 220 356 198"/>
+          </g>
+
+          <!-- 엔진: 벡터화된 컬럼 청크 -->
+          <g>
+            <rect x="366" y="118" width="200" height="126" rx="4" fill="url(#eng)"/>
+            <g fill="#e0912a">
+              <rect x="392" y="146" width="14" height="70" class="pulse"/>
+              <rect x="414" y="146" width="14" height="70" class="pulse" style="animation-delay:.4s"/>
+              <rect x="436" y="146" width="14" height="70" class="pulse" style="animation-delay:.8s"/>
+            </g>
+            <g fill="#8fb8ff">
+              <rect x="470" y="146" width="14" height="70" class="pulse" style="animation-delay:.2s"/>
+              <rect x="492" y="146" width="14" height="70" class="pulse" style="animation-delay:.6s"/>
+              <rect x="514" y="146" width="14" height="70" class="pulse" style="animation-delay:1s"/>
+            </g>
+            <text x="466" y="273" text-anchor="middle" font-family="Fraunces, serif" font-size="21" font-weight="600" fill="#0f2a54">DuckDB</text>
+            <text x="466" y="293" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="2" fill="#69788c">IN-PROCESS · VECTORIZED</text>
+          </g>
+
+          <!-- 질의 -->
+          <g font-family="IBM Plex Mono, monospace" font-size="12.5">
+            <text x="366" y="34" fill="#69788c">SELECT year, avg(a.value)</text>
+            <text x="366" y="54" fill="#69788c">FROM read_csv(...) AS a</text>
+            <text x="366" y="74" fill="#69788c">JOIN sales AS b ON a.region = b.region</text>
+            <text x="366" y="94" fill="#1f4e9c">GROUP BY ALL</text>
+          </g>
+
+          <!-- 출력 -->
+          <g stroke="#1f4e9c" stroke-width="1.3" fill="none" marker-end="url(#ar)" opacity=".8">
+            <path class="flow" style="--len:220;animation-delay:.6s" d="M566 158 C 640 158 660 96 736 92"/>
+            <path class="flow" style="--len:200;animation-delay:.7s" d="M566 181 L736 181"/>
+            <path class="flow" style="--len:220;animation-delay:.8s" d="M566 204 C 640 204 660 266 736 270"/>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="13" fill="#0f2a54">
+            <rect x="746" y="70" width="220" height="44" fill="#fff" stroke="#2b7d74" stroke-width="1.2"/>
+            <text x="764" y="97">pandas · Polars 프레임</text>
+            <rect x="746" y="159" width="220" height="44" fill="#fff" stroke="#2b7d74" stroke-width="1.2"/>
+            <text x="764" y="186">CSV · Parquet · Excel</text>
+            <rect x="746" y="248" width="220" height="44" fill="#fff" stroke="#2b7d74" stroke-width="1.2"/>
+            <text x="764" y="275">차트 · 대시보드 · API</text>
+          </g>
+          <text x="746" y="336" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2.4" fill="#69788c">OUTPUT</text>
+        </svg>
+      </div><span class="scrollhint">← 좌우로 밀어 보기 →</span></div>
+      <figcaption><b>〈도판 1.1〉</b><span>생태계 속의 DuckDB. 원천을 옮기지 않고 제자리에서 읽어 들이고, 결과는 다시 프레임·파일·차트·API로 흘려보낸다.</span></figcaption>
+    </figure>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════ 여는 글 ══════════ -->
+<section>
+  <div class="col">
+    <p class="dropcap">저자들은 이 책의 성격을 미리 못 박는다. 참고서가 아니다. 문서를 찢어 옮긴 사전이 아니라, 자기들이 DuckDB를 쓰면서 느낀 즐거움을 그대로 옮기려는 실습서다. 그래서 서술은 짧고 빠르며, 예제 코드가 지천으로 깔린다. 책을 덮을 무렵이면 여러 형식의 표 형태 데이터를 DuckDB로 분석할 수 있고, 데이터 변환·정제·변형에 쓸 연장 하나를 새로 얻게 되고, 성능이 나오지 않는 자리에서 pandas 데이터프레임을 대신할 수단을 갖게 되고, Streamlit과 DuckDB로 간단한 데이터 분석 애플리케이션을 지어 올릴 수 있게 된다는 것이 저자들의 약속이다.</p>
+
+    <p>제1장은 그 약속의 밑그림이다. 왜 빅데이터의 시대에 굳이 단일 노드 인메모리 데이터베이스가 나타났는가, 그것으로 무엇을 할 수 있는가, 그리고 내 데이터 파이프라인의 어느 지점에 그것을 앉힐 것인가. 세 가지 물음에 답하는 것으로 장 전체가 짜여 있다.</p>
+
+    <div class="q">
+      우리는 지난 십 년간 빅데이터 시스템에 대해 배운 거의 모든 것에 역행하는 듯한 기술을 다룬다.
+      <span>제1장 도입부의 취지</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 1.1 ══════════ -->
+<section id="s1">
+  <div class="sechead rev">
+    <span class="num">1.1</span>
+    <h2>DuckDB란 무엇인가<span class="en">What is DuckDB?</span></h2>
+  </div>
+  <div class="col rev">
+    <p>DuckDB는 <em>현대적인 임베디드 분석 데이터베이스</em>다. 내 기계 위에서 돌면서, 서로 다른 원천에 흩어져 있는 기가바이트 단위의 데이터를 효율적으로 처리하고 질의한다. 여기서 임베디드라는 말의 뜻이 중요하다. 임베디드 데이터베이스는 애플리케이션이나 노트북 같은 <strong>다른 프로세스 안에서 함께 돈다</strong>. 네트워크를 통해 접속하는 대상이 아니다. 서버를 세우고 포트를 열고 접속 문자열을 관리하는 일련의 의례가 애초에 없다.</p>
+
+    <p>태생을 보면 이 물건의 성격이 더 잘 읽힌다. DuckDB는 2018년 마르크 라스벨트(Mark Raasveldt)와 하네스 뮐라이젠(Hannes Mühleisen)이 만들었다. 두 사람은 당시 네덜란드 국립 수학·컴퓨터과학 연구소인 CWI(Centrum Wiskunde &amp; Informatica)의 데이터베이스 시스템 연구자였다. 즉 이것은 실리콘밸리 스타트업의 제품 기획서에서 나온 것이 아니라, 데이터베이스 연구실의 문제의식에서 자라난 물건이다.</p>
+
+    <h3>세 개의 조직, 하나의 프로젝트</h3>
+    <p>창업자들과 CWI는 DuckDB를 더 밀고 나가기 위해 <strong>DuckDB Labs</strong>를 분사시켰다. 이 회사의 엔지니어링 조직은 DuckDB를 더 빠르게, 더 쓰기 편하게, 더 잘 통합되게 만드는 일에 집중한다.</p>
+    <p>한편 비영리 <strong>DuckDB Foundation</strong>이 프로젝트를 관장한다. 지적재산권을 지키고, MIT 라이선스 아래 오픈소스 프로젝트의 지속성을 보장하는 것이 재단의 일이다. 재단의 운영과 DuckDB의 개발은 상용 회원사들의 지원으로 이루어지며, 협회 회원은 개발 로드맵에 의견을 낼 수 있다. 오픈소스의 수명을 걱정하는 조직이라면 이 지배구조를 한 번 들여다볼 만하다.</p>
+    <p>DuckDB가 로컬 처리에 집중하는 사이, 또 하나의 스타트업 <strong>MotherDuck</strong>은 DuckDB를 분산·셀프서비스 분석 시스템으로 확장하려 한다. 클라우드와 엣지에서 데이터를 처리하고, DuckDB에 협업과 공유 기능을 얹고, 온갖 클라우드 스토리지의 데이터를 다룰 수 있게 하는 것이 목표다.</p>
+    <p>생태계는 꽤 넓다. 많은 사람과 조직이 통합 도구와 범용 애플리케이션을 만들어 붙이고 있다. 다행히 공동체의 인심이 후하고 친절해서, <a href="https://discord.duckdb.org/" target="_blank" rel="noopener">Discord</a>와 <a href="https://github.com/duckdb/duckdb" target="_blank" rel="noopener">GitHub</a>에서 사람들을 만날 수 있다. 문서는 웬만한 질문에 답할 만큼 충실하고 상세하다.</p>
+
+    <h3>무엇을 읽을 수 있는가</h3>
+    <p>DuckDB는 로컬 파일이든 원격 파일이든—클라우드 버킷이나 URL에 있는 것이든—CSV, JSON, Parquet, Apache Arrow 같은 여러 형식으로 읽고 조인한다. MySQL, SQLite, Postgres 같은 데이터베이스도 상대한다. 파이썬 스크립트나 주피터 노트북 안의 pandas·Polars 데이터프레임에 직접 질의를 던지는 것까지 가능하다. 〈도판 1.1〉이 그 쓰임새를 개념적으로 보여준다.</p>
+
+    <p>pandas나 Polars 같은 데이터프레임 라이브러리와 DuckDB의 차이는 여기서 갈린다. DuckDB는 <em>진짜 분석 데이터베이스</em>다. 더 효율적인 데이터 처리 기제를 구현해 대량의 데이터를 초 단위로 처리한다. 자체 SQL 방언 덕에 복잡한 질의도 더 간결하게 표현되고, 그 표현력이 여러 연산을 하나의 질의 안에 몰아넣게 해준다. 여러 번 실행할 일을 한 번으로 줄이는 것, 그것이 곧 비용의 절감이다.</p>
+
+    <p>효율적인 처리와 메모리 관리의 근거는 코어 데이터베이스 엔진의 구조에 있다. 질의가 어떤 경로를 지나는지는 〈도판 1.2〉가 보여준다.</p>
+  </div>
+
+  <div class="wrap plate rev">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 210" role="img" aria-label="SQL이 파서, 플래너, 옵티마이저, 물리 플래너를 지나 물리 계획이 되는 질의 처리 파이프라인">
+          <defs>
+            <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#0f2a54"/>
+            </marker>
+          </defs>
+          <g font-family="IBM Plex Mono, monospace" font-size="11.5" letter-spacing="1.6" fill="#e0912a" text-anchor="middle">
+            <text x="222" y="34">파서 PARSER</text>
+            <text x="416" y="34">플래너 PLANNER</text>
+            <text x="610" y="34">옵티마이저 OPTIMIZER</text>
+            <text x="804" y="34">물리 플래너</text>
+          </g>
+          <g stroke="#0f2a54" stroke-width="1.4" marker-end="url(#ar2)">
+            <path class="flow" style="--len:80" d="M158 108 L196 108"/>
+            <path class="flow" style="--len:80;animation-delay:.15s" d="M352 108 L390 108"/>
+            <path class="flow" style="--len:80;animation-delay:.3s" d="M546 108 L584 108"/>
+            <path class="flow" style="--len:80;animation-delay:.45s" d="M740 108 L778 108"/>
+          </g>
+          <g font-family="Noto Sans KR, sans-serif" font-size="14" text-anchor="middle">
+            <g>
+              <rect x="26" y="76" width="132" height="64" rx="5" fill="#dce7f7" stroke="#1f4e9c"/>
+              <text x="92" y="113" fill="#0f2a54" font-family="IBM Plex Mono, monospace">SQL</text>
+            </g>
+            <g>
+              <rect x="220" y="76" width="132" height="64" rx="5" fill="#dce7f7" stroke="#1f4e9c"/>
+              <text x="286" y="113" fill="#0f2a54">구문 트리</text>
+            </g>
+            <g>
+              <rect x="414" y="76" width="132" height="64" rx="5" fill="#dce7f7" stroke="#1f4e9c"/>
+              <text x="480" y="105" fill="#0f2a54">미최적화</text>
+              <text x="480" y="127" fill="#0f2a54">논리 계획</text>
+            </g>
+            <g>
+              <rect x="608" y="76" width="132" height="64" rx="5" fill="#dce7f7" stroke="#1f4e9c"/>
+              <text x="674" y="105" fill="#0f2a54">최적화된</text>
+              <text x="674" y="127" fill="#0f2a54">논리 계획</text>
+            </g>
+            <g>
+              <rect x="802" y="76" width="132" height="64" rx="5" fill="#1f4e9c" stroke="#0f2a54"/>
+              <text x="868" y="113" fill="#fff">물리 계획</text>
+            </g>
+          </g>
+          <circle r="4.5" fill="#e0912a" class="bead" style="--p:'M 92 168 L 868 168'"/>
+          <line x1="26" y1="168" x2="934" y2="168" stroke="#69788c" stroke-width=".7" stroke-dasharray="2 5"/>
+          <text x="26" y="196" font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="2" fill="#69788c">STATEMENT → PHYSICAL PLAN</text>
+        </svg>
+      </div><span class="scrollhint">← 좌우로 밀어 보기 →</span></div>
+      <figcaption><b>〈도판 1.2〉</b><span>DuckDB의 질의 처리 파이프라인 개관. 여느 데이터베이스와 다르지 않은 정공법이다.</span></figcaption>
+    </figure>
+  </div>
+
+  <div class="col rev">
+    <p>도판이 말해주는 바는 뜻밖에도 평범하다. DuckDB는 다른 데이터베이스와 <strong>똑같은 방식으로</strong> 질의를 처리한다. SQL 파서, 질의 실행 플래너, 질의 런타임이 차례로 놓인다. 비범한 것은 그다음이다. 질의 엔진이 <em>벡터화(vectorized)</em>되어 있다. 데이터를 한 행씩 훑는 대신 청크 단위로 묶어 병렬 처리하고, 그래서 현대적인 멀티코어 CPU 구조의 이점을 온전히 받아먹는다. 여기에 새 기능을 얹는 확장(extension) 체계와 사용자 정의 함수가 있고, CLI와 API부터 다른 시스템—데이터 처리 라이브러리 같은 것—에 대한 저수준 통합까지 다양한 사용자 인터페이스가 준비되어 있다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 1.2 ══════════ -->
+<section id="s2">
+  <div class="sechead rev">
+    <span class="num">1.2</span>
+    <h2>왜 관심을 가져야 하는가<span class="en">Why should you care about DuckDB?</span></h2>
+  </div>
+  <div class="col rev">
+    <p>저자들의 답은 감정적이다. DuckDB는 <strong>데이터 분석을 다시 빠르고 즐거운 일로 만든다</strong>. 고작 수백 기가바이트를 처리하겠다고 커다란 Apache Spark 클러스터를 세우거나 클라우드 데이터 웨어하우스를 돌릴 필요가 없다. 여러 원천의 데이터에 직접 접근해서, 데이터가 놓인 자리에서 처리한다. 데이터를 선 위로 실어 옮기지 않는다는 이 한 가지가 작업을 더 빠르고 단순하고 값싸게 만든다. 시간만 아끼는 것이 아니다. 돈이 아껴지고, 무엇보다 짜증이 줄어든다.</p>
+
+    <h3>S3 로그 한 뭉치의 청구서</h3>
+    <p>저자들이 든 실례가 이 대목의 백미다. 최근 S3에 놓인 AWS 접근 로그 파일을 처리할 일이 있었다. 통상의 방법대로라면 압축된 JSON 파일을 상대로 AWS Athena의 SQL 질의를 돌린다. 그런데 이게 비싸진다. 비용의 큰 몫이 <em>분석 서비스가 스캔한 데이터의 양</em>에 따라 붙기 때문이다. 지금은 대신 EC2 VM에 DuckDB를 올려두고 데이터 곁에서 파일을 질의한다. 처리한 데이터 용량이 아니라 VM 값만 내면 되므로 비용은 몇 분의 일로 떨어진다. 아키텍처의 우아함이 아니라 청구서가 이 기술의 명분이 되는 셈이다.</p>
+
+    <h3>표준을 넘어선 SQL 방언</h3>
+    <p>DuckDB로는 수많은 실험을 돌려 아이디어와 가설을 빠르게, 그것도 로컬에서 검증할 수 있다. 도구는 SQL 하나뿐이다. ANSI SQL 표준을 지원하는 데서 멈추지 않고, DuckDB의 방언은 다음과 같은 혁신으로 표준을 확장한다.</p>
+    <ul class="plain">
+      <li><b>SELECT * EXCLUDE() / SELECT * REPLACE()</b> — <code>SELECT *</code> 질의를 단순하게 만든다. 컬럼 하나를 빼거나 갈아 끼우려고 전체 목록을 다시 적을 필요가 없다.</li>
+      <li><b>ORDER BY ALL / GROUP BY ALL</b> — 모든 컬럼을 기준으로 정렬하고 묶는다. <code>GROUP BY ALL</code> 한 줄이 필드 이름을 일일이 타이핑하는 노동을 없앤다.</li>
+      <li><b>PIVOT / UNPIVOT</b> — 행과 열을 서로 전치한다.</li>
+      <li><b>STRUCT 데이터 타입과 관련 함수</b> — 복잡한 중첩 데이터를 다루기 쉽게 만든다.</li>
+    </ul>
+    <p>저자들이 DuckDB에 흥분하는 이유는 결국 하나다. 데이터 파이프라인과 데이터 준비 작업이 단순해지면, 그만큼의 시간이 <em>실제 분석과 탐색과 실험</em>으로 되돌아온다.</p>
+
+    <h3>책이 설득하려는 여섯 가지</h3>
+    <p>저자들은 이 책을 통해 DuckDB에 관해 다음을 납득시키겠다고 적어놓았다. 문장의 결이 노골적으로 도발적인데, 그 솔직함이 오히려 미덥다.</p>
+    <ul class="plain">
+      <li><b>분석 워크로드에서는 SQLite보다 빠르다.</b></li>
+      <li><b>Spark 클러스터보다 세우기 쉽다.</b></li>
+      <li><b>pandas보다 자원 요구량이 적다.</b></li>
+      <li><b>Polars처럼 희한한 Rust 오류를 뱉지 않는다.</b></li>
+      <li><b>PostgreSQL, Redshift 등 여느 관계형 데이터베이스보다 설치와 사용이 쉽다.</b></li>
+      <li><b>데이터 변환에 있어 Talend보다 빠르고 강력하다.</b></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════ 1.3 / 1.4 ══════════ -->
+<section id="s3">
+  <div class="sechead rev">
+    <span class="num">1.3 — 1.4</span>
+    <h2>쓸 자리와 쓰지 말 자리<span class="en">When should you use DuckDB? / When should you not?</span></h2>
+  </div>
+  <div class="col rev">
+    <p>기술을 소개하는 책이 자기가 파는 물건의 한계를 두 절에 걸쳐 못 박아두는 일은 흔치 않다. 이 장의 가장 정직한 대목이 여기다. 요건을 먼저 정리하면 이렇다. <strong>SQL로 표현할 수 있고, 구조화된 데이터—표 또는 문서—를 대상으로 하고, 데이터가 이미 확보되어 있고(스트리밍이 아니고), 용량이 수백 기가바이트를 넘지 않는</strong> 모든 분석 작업에 DuckDB를 쓸 수 있다. 컬럼 기반 엔진이라 컬럼이 많은 넓은 테이블과 행이 많은 큰 테이블을 모두 잘 감당하며, 앞서 열거한 여러 형식을 처리하고 확장을 통해 다른 시스템과 통합된다.</p>
+
+    <p>여기서 딸려 나오는 미덕이 하나 더 있다. 데이터가 내 시스템을 떠나지 않는다는 점이다(로컬 또는 개인정보 규정을 준수하는 호스팅). 그래서 건강 정보, 홈 오토메이션 데이터, 환자 데이터, 개인 식별 정보, 재무제표 같은 민감한 데이터를 분석하는 데 특히 잘 맞는다.</p>
+
+    <div class="duo">
+      <div class="card yes">
+        <h4>DuckDB가 잘 푸는 분석 과제</h4>
+        <ul>
+          <li>로그 파일을 <b>저장된 자리에서</b> 분석한다. 새 위치로 복사할 필요가 없다.</li>
+          <li>개인의 의료 데이터를 정량화한다. 러너가 자기 심박수를 들여다보는 일 같은 것.</li>
+          <li>스마트 미터 데이터로 전력 생산과 소비를 보고한다.</li>
+          <li>자전거와 자동차 등 현대적 운송의 운행 데이터를 최적화한다.</li>
+          <li>머신러닝 학습에 쓸 사용자 생성 데이터를 전처리하고 미리 정제한다.</li>
+        </ul>
+      </div>
+      <div class="card no">
+        <h4>DuckDB를 쓰지 말아야 할 자리</h4>
+        <ul>
+          <li>분석 데이터베이스이므로 <b>트랜잭션과 병렬 쓰기 지원이 최소한</b>이다. 입력 데이터가 임의로 도착해 이를 처리·저장하는 애플리케이션과 API에는 쓸 수 없다.</li>
+          <li>처리 용량이 대체로 <b>컴퓨터의 주 메모리</b>에 묶인다. 메모리 초과 처리를 디스크로 흘려보내는 기능이 있지만, 이는 처리의 마지막 일부가 메모리에 들어가지 않는 예외적 상황을 겨냥한 것이다. 대개는 수백 기가바이트가 상한이며, 그 전부가 동시에 메모리에 있어야 하는 것은 아니다. DuckDB가 필요한 것만 골라 적재하도록 최적화하기 때문이다.</li>
+          <li>DuckDB는 <b>데이터 분석의 긴 꼬리</b>를 겨냥한다. 수 테라바이트를 처리하는 복잡한 데이터 원천·도구·애플리케이션 구성의 엔터프라이즈 환경이라면 알맞은 선택이 아닐 수 있다.</li>
+          <li>계속 갱신되는 <b>실시간 데이터 스트림</b>을 처리하지 못한다. 데이터 갱신은 새 테이블이나 큰 덩어리를 한 번에 적재하는 벌크 방식이어야 한다. 스트림에서 미니 배치를 만들어 어딘가에 저장하고 그것을 DuckDB가 질의하게 하는 배칭은 직접 구현해야 한다.</li>
+        </ul>
+      </div>
+    </div>
+
+    <p>덧붙일 만한 좋은 쓰임이 하나 더 있다. 이미 pandas나 Polars 데이터프레임에 올라와 있는 데이터를 더 효율적으로 처리하는 일이다. DuckDB는 데이터프레임 표현에서 데이터를 <em>복사하지 않고</em> 직접 접근한다. 반대 방향도 같다. DuckDB가 만들어낸 출력과 테이블은 추가 메모리 사용이나 전송 없이 그대로 데이터프레임으로 쓸 수 있다. 이 무복사 왕래가 노트북 작업의 체감 속도를 바꿔놓는다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 1.5 ══════════ -->
+<section id="s5">
+  <div class="sechead rev">
+    <span class="num">1.5</span>
+    <h2>활용 사례<span class="en">Use cases</span></h2>
+  </div>
+  <div class="col rev">
+    <p>이런 도구의 활용처는 많다. 그중 가장 흥미로운 것은 기존의 클라우드·모바일·데스크톱·명령행 애플리케이션에 통합되어 <em>무대 뒤에서 제 일을 하는</em> 경우다. 그렇게 되면 그것은 오늘날 SQLite가 누리는 광범위한 쓰임의 등가물이 된다. 다만 트랜잭션 데이터 저장이 아니라 분석 처리를 위한 SQLite인 것이다. 건강·운동·금융·홈 오토메이션 데이터처럼 사용자의 기기를 떠나서는 안 되는 데이터를 분석할 때, 효율적인 로컬 인프라는 요긴하다. 로컬에서 분석하고 전처리하면 스마트 미터나 센서 같은 엣지 기기에서 실어 보내야 하는 데이터의 양 자체가 줄어든다.</p>
+
+    <div class="grid3">
+      <div class="cell">
+        <span class="t">대용량 로그 분석</span>
+        <p>로그 파일 같은 큰 데이터셋을 빠르게 분석한다. 계산과 축약을 데이터가 저장된 자리에서 수행하므로 높은 전송 시간과 비용을 아낀다.</p>
+      </div>
+      <div class="cell">
+        <span class="t">클라우드 분석 서비스 대체</span>
+        <p>현재 클라우드 사업자들은 BigQuery, Amazon Redshift, AWS Athena 같은 값비싼 분석 서비스를 처리 데이터 용량 기준으로 과금한다. 그 상당 부분을 DuckDB로 데이터를 처리하는 예약 클라우드 함수로 대체할 수 있다.</p>
+      </div>
+      <div class="cell">
+        <span class="t">함수의 연쇄와 감사</span>
+        <p>중간 결과를 클라우드 스토리지에 써내며 처리 함수들을 사슬처럼 이을 수 있다. 그 중간 산출물은 감사(auditing)에도 그대로 쓰인다.</p>
+      </div>
+      <div class="cell">
+        <span class="t">데이터 과학자의 노트북</span>
+        <p>최신 질의 엔진을 쓰므로 데이터 준비·분석·필터링·집계가 pandas나 여느 데이터프레임 라이브러리보다 효율적이다. 그것도 파이썬·R API가 있는 편안한 노트북 환경을 떠나지 않고서.</p>
+      </div>
+      <div class="cell">
+        <span class="t">고급 분석의 대중화</span>
+        <p>더 진전된 분석 역량이 데이터 과학 사용자의 손에 들어가고, 더 큰 데이터를 더 빠르고 효율적으로 다루게 된다. 구성의 복잡도가 크게 줄어들어 데이터 운영 조직을 끌어들일 필요도 없어진다.</p>
+      </div>
+      <div class="cell">
+        <span class="t">분산 분석</span>
+        <p>마지막으로 흥미로운 사례는 클라우드 스토리지·엣지 네트워크·로컬 기기 사이의 분산 분석이다. MotherDuck이 지금 바로 그 일을 하고 있으며, DuckDB를 클라우드와 로컬 양쪽에서 돌릴 수 있게 한다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 1.6 ══════════ -->
+<section id="s6">
+  <div class="sechead rev">
+    <span class="num">1.6</span>
+    <h2>파이프라인의 어디에 놓이는가<span class="en">Where does DuckDB fit in?</span></h2>
+  </div>
+  <div class="col rev">
+    <p>이 책은 독자가 <strong>분석하거나 변환하고 싶은 데이터를 이미 갖고 있다고 가정한다</strong>. 그 데이터는 CSV, Parquet, JSON 같은 평면 파일에 있을 수도 있고, PostgreSQL이나 SQLite 같은 다른 데이터베이스 시스템에 있을 수도 있다. 책의 예제 데이터는 저자들이 <a href="https://github.com/duckdb-in-action/examples" target="_blank" rel="noopener">깃허브 저장소</a>에 올려두었다.</p>
+  </div>
+
+  <div class="wrap plate rev">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 340" role="img" aria-label="데이터 원천이 DuckDB의 변환 단계를 지나 프로그래밍 언어로 전달되고, 아래로는 선택적 영속화가 이루어지는 파이프라인 구조도">
+          <defs>
+            <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#2b7d74"/>
+            </marker>
+          </defs>
+          <text x="30" y="30" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2.4" fill="#69788c">DATA SOURCES</text>
+          <g font-family="IBM Plex Mono, monospace" font-size="13" fill="#0f2a54">
+            <rect x="30" y="52" width="146" height="42" fill="#fff" stroke="#2b7d74" stroke-width="1.2"/><text x="48" y="79">JSON</text>
+            <rect x="30" y="118" width="146" height="42" fill="#fff" stroke="#2b7d74" stroke-width="1.2"/><text x="48" y="145">Parquet</text>
+            <rect x="30" y="184" width="146" height="42" fill="#fff" stroke="#2b7d74" stroke-width="1.2"/><text x="48" y="211">CSV</text>
+            <rect x="30" y="250" width="146" height="42" fill="#fff" stroke="#2b7d74" stroke-width="1.2"/><text x="48" y="277">RDBMS</text>
+          </g>
+          <g stroke="#2b7d74" stroke-width="1.3" fill="none" marker-end="url(#ar3)" opacity=".85">
+            <path class="flow" style="--len:250" d="M176 73 C 260 73 300 140 372 156"/>
+            <path class="flow" style="--len:220;animation-delay:.1s" d="M176 139 C 250 139 300 152 372 164"/>
+            <path class="flow" style="--len:220;animation-delay:.2s" d="M176 205 C 250 205 300 190 372 176"/>
+            <path class="flow" style="--len:250;animation-delay:.3s" d="M176 271 C 260 271 300 210 372 186"/>
+          </g>
+
+          <rect x="382" y="122" width="216" height="96" rx="5" fill="#0f2a54"/>
+          <text x="490" y="163" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="16" fill="#fff">데이터 변환</text>
+          <text x="490" y="190" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="1.6" fill="#e0912a">DuckDB</text>
+
+          <!-- 출력: 프로그래밍 언어 -->
+          <g stroke="#2b7d74" stroke-width="1.3" fill="none" marker-end="url(#ar3)" opacity=".85">
+            <path class="flow" style="--len:200;animation-delay:.5s" d="M598 150 C 680 150 700 108 782 104"/>
+            <path class="flow" style="--len:200;animation-delay:.6s" d="M598 190 C 680 190 700 232 782 236"/>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="13" fill="#0f2a54">
+            <rect x="792" y="82" width="178" height="42" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/><text x="810" y="109">Python · R</text>
+            <rect x="792" y="214" width="178" height="42" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/><text x="810" y="241">Java · JS · Go</text>
+          </g>
+          <text x="792" y="288" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2.2" fill="#69788c">PROGRAMMING</text>
+          <text x="792" y="306" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2.2" fill="#69788c">LANGUAGES</text>
+
+          <!-- 선택적 영속화 -->
+          <g stroke="#e0912a" stroke-width="1.4" fill="none" marker-end="url(#ar3)" stroke-dasharray="5 4">
+            <path d="M490 218 L490 260"/>
+          </g>
+          <g>
+            <rect x="404" y="266" width="172" height="46" rx="4" fill="#fff" stroke="#e0912a" stroke-width="1.4"/>
+            <text x="490" y="295" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="14" fill="#8a5410">선택적 영속화</text>
+          </g>
+        </svg>
+      </div><span class="scrollhint">← 좌우로 밀어 보기 →</span></div>
+      <figcaption><b>〈도판 1.3〉</b><span>데이터 파이프라인 속의 DuckDB. 스쳐 지나가게 쓸 수도 있고, 테이블로 붙잡아 둘 수도 있다.</span></figcaption>
+    </figure>
+  </div>
+
+  <div class="col rev">
+    <p>쓰임에 따라 DuckDB를 <strong>일시적으로</strong> 써서 데이터를 변환하고 걸러 다른 형식으로 통과시켜 보낼 수 있다. 그러나 대개는 데이터를 테이블로 만들어 영속화하고, 이후의 고성능 분석에 쓴다. 그 과정에서 컬럼 이름과 데이터 타입과 값을 바로잡을 수 있다. 입력이 중첩 문서라면 중첩을 풀어 평탄화해서 관계형 분석이 더 쉽고 효율적이게 만들 수 있다.</p>
+
+    <p>다음 단계는 어떤 SQL 기능 또는 DuckDB 기능이 그 분석과 변환에 도움이 되는지 가늠하는 일이다. 탐색적 데이터 분석(EDA)을 수행해 데이터의 분포와 범위와 관계를 빠르게 파악해 두는 것도 이때다.</p>
+
+    <p>데이터와 낯을 익힌 다음에야 실제 분석 과제로 넘어간다. 여기서는 관련 SQL 문을 <em>점진적으로</em> 쌓아 올리면서, 매 단계마다 산출된 결과의 표본이 기대와 맞는지 확인한다. 윈도 함수, 공통 테이블 표현식, 피벗 같은 고급 SQL 기능을 쓰기 전에 테이블이나 뷰를 추가로 만들어 두는 것도 이 단계다. 마지막으로 결과를 어떻게 소비할지 정한다. 다시 파일이나 데이터베이스로 만들지, 애플리케이션이나 API를 통해 사용자에게 서비스할지, 주피터 노트북이나 대시보드에서 시각화할지.</p>
+  </div>
+</section>
+
+<!-- ══════════ 1.7 ══════════ -->
+<section id="s7">
+  <div class="sechead rev">
+    <span class="num">1.7</span>
+    <h2>데이터 처리 흐름의 네 걸음<span class="en">Steps of the data processing flow</span></h2>
+  </div>
+  <div class="col rev">
+    <p>이어지는 하위 절들은 DuckDB의 구조와 기능 집합을 높은 수준에서 훑는다. 전체를 이해하고 그 됨됨이를 감상하게 하려는 것이 목적이다. 절의 순서는 실제로 DuckDB를 쓰는 순서를 따랐다. 데이터를 적재하고, 테이블을 채우고, 분석할 SQL을 쓰고, 결과를 시각화하는 순서다.</p>
+  </div>
+
+  <div class="wrap plate narrow rev">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 900 150" role="img" aria-label="데이터 적재, 테이블 구성, SQL 분석, 결과 활용의 네 단계 흐름">
+          <defs>
+            <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+              <path d="M0 0 L10 5 L0 10 z" fill="#e0912a"/>
+            </marker>
+          </defs>
+          <g font-family="Noto Sans KR, sans-serif" font-size="15" text-anchor="middle">
+            <g><rect x="14" y="42" width="180" height="66" rx="4" fill="#dce7f7" stroke="#1f4e9c"/><text x="104" y="82" fill="#0f2a54">데이터 적재</text></g>
+            <g><rect x="238" y="42" width="180" height="66" rx="4" fill="#dce7f7" stroke="#1f4e9c"/><text x="328" y="82" fill="#0f2a54">테이블 구성</text></g>
+            <g><rect x="462" y="42" width="180" height="66" rx="4" fill="#dce7f7" stroke="#1f4e9c"/><text x="552" y="82" fill="#0f2a54">SQL로 분석</text></g>
+            <g><rect x="686" y="42" width="180" height="66" rx="4" fill="#1f4e9c" stroke="#0f2a54"/><text x="776" y="82" fill="#fff">결과 활용</text></g>
+          </g>
+          <g stroke="#e0912a" stroke-width="1.6" marker-end="url(#ar4)">
+            <path class="flow" style="--len:44" d="M198 75 L232 75"/>
+            <path class="flow" style="--len:44;animation-delay:.2s" d="M422 75 L456 75"/>
+            <path class="flow" style="--len:44;animation-delay:.4s" d="M646 75 L680 75"/>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="10.5" letter-spacing="1.8" fill="#69788c" text-anchor="middle">
+            <text x="104" y="130">1.7.1</text><text x="328" y="130">1.7.2</text><text x="552" y="130">1.7.3</text><text x="776" y="130">1.7.4</text>
+          </g>
+        </svg>
+      </div><span class="scrollhint">← 좌우로 밀어 보기 →</span></div>
+      <figcaption><b>〈도판 1.4〉</b><span>데이터 처리 흐름. 이 장의 하위 절 번호가 그대로 걸음의 순서다.</span></figcaption>
+    </figure>
+  </div>
+
+  <div class="col rev">
+    <h3>1.7.1 데이터 형식과 원천</h3>
+    <p>DuckDB는 수많은 데이터 형식과 원천을 지원하며, 그 데이터를 <em>격식 없이</em> 들여다보고 분석하게 해준다. SQL Server 같은 다른 데이터 시스템과 달리 스키마 세부를 먼저 명시할 필요가 없다. 데이터를 읽을 때 데이터베이스가 합리적인 기본값과 데이터에 내재한 스키마 정보를 활용하며, 필요하면 그것을 덮어쓸 수 있다. 이 한 가지 태도의 차이가 첫 삽을 뜨는 데 걸리는 시간을 크게 줄인다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p>DuckDB로는 사전 데이터 엔지니어링보다 정작 필요한 데이터 처리와 분석에 더 집중할 수 있다. 실무자들이 만든 오픈소스 프로젝트이기에 사용성에 대한 강조가 강하다. 쓰기에 너무 어려운 것이 있으면 공동체의 누군가가 고칠 것을 제안하고 실제로 제출한다. 내장 기능이 미치지 못하는 곳이라면 그 요구를 채워주는 확장이 이미 있을 것이다. 지리공간 데이터나 전문 검색 같은 것이 그 예다.</p>
+    </div>
+
+    <div class="grid3">
+      <div class="cell"><span class="t">CSV</span><p>대량으로, 그리고 병렬로 적재된다. 컬럼은 자동으로 매핑된다.</p></div>
+      <div class="cell"><span class="t">DataFrame</span><p>데이터프레임의 메모리를 같은 파이썬 프로세스 안에서 DuckDB가 직접 다룬다. 복사가 없다.</p></div>
+      <div class="cell"><span class="t">JSON</span><p>구조를 해체하고 평탄화해서 관계형 테이블로 바꿀 수 있다. 이런 데이터를 담는 JSON 타입도 따로 있다.</p></div>
+      <div class="cell"><span class="t">Parquet</span><p>스키마 메타데이터와 함께 질의된다. 질의의 조건절은 아래로 밀려 내려가 Parquet 저장 계층에서 평가되므로 적재되는 데이터의 양 자체가 줄어든다. 데이터 레이크에 읽고 쓰기에 이상적인 컬럼 형식이다.</p></div>
+      <div class="cell"><span class="t">Apache Arrow</span><p>컬럼 형태의 데이터를 ADBC(Arrow Database Connectivity)를 통해 읽는다. 데이터 복사도, 변환도 없다.</p></div>
+      <div class="cell"><span class="t">클라우드 버킷</span><p>S3나 GCP의 데이터에 접근하면 전송·복사 인프라가 줄고, 대용량 데이터를 값싸게 처리할 수 있다.</p></div>
+    </div>
+
+    <h3>1.7.2 데이터 구조</h3>
+    <p>DuckDB는 다양한 테이블과 뷰, 데이터 타입을 다룬다. 테이블 컬럼과 처리와 결과에 쓸 수 있는 타입은 전통적인 것—문자열(varchar), 수치(integer·float·decimal), 날짜, 타임스탬프, 인터벌, 불리언, 큰 이진 객체(BLOB)—에 그치지 않는다. 구조화된 타입이 함께 있다.</p>
+    <ul class="plain">
+      <li><b>열거형(enum)</b> — 집합의 원소에 색인과 이름을 붙인 것. 저장과 처리가 효율적이다.</li>
+      <li><b>리스트 또는 배열</b> — 같은 타입의 원소 여럿을 담는다. 리스트를 다루는 함수가 다양하게 준비되어 있다.</li>
+      <li><b>맵(map)</b> — 효율적인 키–값 쌍. 키를 붙인 데이터 지점을 보관하는 데 쓴다. JSON 처리 과정에서 쓰이며, 여러 방식으로 만들고 접근할 수 있다.</li>
+      <li><b>구조체(struct)</b> — 일관된 키–값 구조. 같은 키는 언제나 같은 타입의 값을 갖는다. 그 덕에 저장과 추론과 처리가 더 효율적이다.</li>
+    </ul>
+    <p>사용자가 자기 타입과 데이터베이스 확장을 만들 수도 있고, 확장이 새 데이터 타입을 제공할 수도 있다. 다른 데이터로부터 표현식을 통해 만들어지는 가상 컬럼, 파생 컬럼도 만들 수 있다.</p>
+
+    <h3>1.7.3 SQL을 지어 올리는 법</h3>
+    <p>데이터를 분석할 때는 보통 데이터의 <em>모양</em>을 파악하는 데서 시작한다. 그다음 간단한 질의로 출발해 기본 구성 요소를 조합하며 점점 복잡한 질의를 만들어간다. 데이터 원천과 테이블과 뷰의 컬럼과 데이터 타입을 알아보려면 <code>DESCRIBE</code>를 쓴다. 그 정보로 무장한 다음에는 <code>count(*)</code> 질의를 전역으로, 또는 시간·위치·품목 유형처럼 흥미로운 차원으로 묶어 돌려서 데이터셋의 기본 통계와 분포를 얻는다. 그것만으로도 앞으로 이 데이터에서 무엇을 기대할 수 있는지에 대한 좋은 통찰이 생긴다.</p>
+
+    <p>DuckDB에는 컬럼별 통계를 한 번에 내주는 <code>SUMMARIZE</code> 절까지 있다.</p>
+    <ul class="plain">
+      <li><b>count</b></li>
+      <li><b>min, max, avg, std</b> — 최소·최대·평균·표준편차</li>
+      <li><b>approx_unique</b> — 서로 다른 값의 개수 추정</li>
+      <li><b>percentiles</b> — q25, q50, q75</li>
+      <li><b>null_percentage</b> — 데이터 중 널의 비중</li>
+    </ul>
+
+    <p>분석 질의를 쓸 때는 <code>LIMIT</code>을 걸거나 입력 파일 하나만 보면서 데이터의 부분집합에서 작업을 시작할 수 있다. 필요한 결과 컬럼의 윤곽을 먼저 잡는다. 이 컬럼들은 때로 변환이 필요하다. 날짜라면 <code>strptime</code> 같은 것을 쓴다. 그리고 그 컬럼들이 곧 묶는 기준이 된다. 그다음 필요한 만큼 집계와 필터를 적용한다.</p>
+
+    <p>DuckDB에는 집계 함수가 대단히 많다. <code>min</code>, <code>avg</code>, <code>sum</code> 같은 전통적인 것에서 <code>histogram</code>, <code>bitstring_agg</code>, <code>list</code> 같은 진전된 것, <code>approx_count_distinct</code> 같은 근사 함수까지 있다. 백분위수, 엔트로피 또는 회귀 계산, 왜도 같은 고급 집계도 마련되어 있다. 누적 합계나 이전·이후 행과의 비교에는 윈도 함수 집계를 쓴다.</p>
+
+<pre><span class="c">-- 누적과 비교: 윈도 함수 집계</span>
+<span class="k">SELECT</span> ..., <span class="f">sum</span>(value) <span class="k">OVER</span> (
+         <span class="k">PARTITION BY</span> column
+         <span class="k">ORDER BY</span> column2 [<span class="k">RANGE</span> …]
+       )
+<span class="k">FROM</span> ...</pre>
+
+    <p>분석 문장에서 반복해 쓰이는 부분은 이름 붙인 공통 테이블 표현식(CTE)이나 뷰로 뽑아낼 수 있다. 계산의 일부를 서브쿼리로 옮겨 그 결과로 존재 여부를 검사하거나 중첩 데이터를 준비하는 것도 가독성에 도움이 되곤 한다. 그리고 분석 문장을 쌓아 올리는 동안 언제든 결과를 확인해서 아직 정확한지, 잘못된 길로 접어들지 않았는지 확인할 수 있다. <strong>이 확인의 습관이 곧 통제력이다.</strong></p>
+
+    <h3>1.7.4 결과를 쓰거나 처리하기</h3>
+    <p>문장을 다 썼고, DuckDB에서 분석 결과를 빠르게 얻었다. 그다음은 무엇인가.</p>
+    <p>일단 결과를 남겨두는 것이 유용하다. 파일이나 테이블에 저장하는 식이다. 결과로 테이블을 만드는 일은 <code>CREATE TABLE &lt;name&gt; AS SELECT …</code>로 간단히 끝난다. DuckDB는 CSV, JSON, Parquet, Excel, Apache Arrow 등 여러 형식으로 쓸 수 있고, 사용자 확장을 통해 SQLite, Postgres 등 다른 데이터베이스 형식도 지원한다. 결과 집합이 작다면 DuckDB CLI로 CSV나 JSON으로 출력해도 된다.</p>
+
+    <div class="q">
+      한 장의 그림이 천 개의 행보다 많은 것을 말해준다.
+      <span>1.7.4절, 시각화를 권하는 대목</span>
+    </div>
+
+    <p>그래서 선호되는 선택은 흔히 데이터 시각화다. 내장 <code>bar</code> 함수로 인라인 막대 차트를 그려낼 수 있고, <code>youplot</code> 같은 명령행 플로팅 도구로 터미널에서 빠른 결과를 볼 수도 있다. 그러나 대개는 방대한 파이썬과 자바스크립트 생태계를 동원한다. 그 목적이라면 결과를 데이터프레임으로 바꾼 다음, 파이썬의 matplotlib와 ggplot, R의 ggplot2, 자바스크립트의 d3·nivo·observable로 온갖 차트를 렌더링한다. 〈도판 1.5〉가 그 모습이다.</p>
+  </div>
+
+  <div class="wrap plate rev">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 300" role="img" aria-label="선 그래프, 원 그래프, 캘린더 히트맵으로 구성된 대시보드 시각화 예시">
+          <!-- 선 그래프 -->
+          <g>
+            <rect x="24" y="30" width="290" height="200" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/>
+            <text x="40" y="56" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="1.8" fill="#69788c">LINE</text>
+            <g stroke="#e9eef4" stroke-width="1">
+              <line x1="40" y1="200" x2="298" y2="200"/><line x1="40" y1="160" x2="298" y2="160"/>
+              <line x1="40" y1="120" x2="298" y2="120"/><line x1="40" y1="80" x2="298" y2="80"/>
+            </g>
+            <path class="flow" style="--len:420" d="M44 186 L82 150 L120 168 L158 104 L196 132 L234 86 L272 100 L296 72"
+                  fill="none" stroke="#1f4e9c" stroke-width="2.2"/>
+            <path class="flow" style="--len:420;animation-delay:.25s" d="M44 204 L82 196 L120 190 L158 176 L196 182 L234 158 L272 166 L296 146"
+                  fill="none" stroke="#2b7d74" stroke-width="1.6" stroke-dasharray="4 3"/>
+          </g>
+          <!-- 원 그래프 -->
+          <g>
+            <rect x="338" y="30" width="290" height="200" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/>
+            <text x="354" y="56" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="1.8" fill="#69788c">PIE</text>
+            <g transform="translate(452,145)">
+              <path d="M0 0 L0 -62 A62 62 0 0 1 53.7 31 Z" fill="#1f4e9c"/>
+              <path d="M0 0 L53.7 31 A62 62 0 0 1 -31 53.7 Z" fill="#e0912a"/>
+              <path d="M0 0 L-31 53.7 A62 62 0 0 1 -58.2 -21.2 Z" fill="#2b7d74"/>
+              <path d="M0 0 L-58.2 -21.2 A62 62 0 0 1 0 -62 Z" fill="#8fb8ff"/>
+              <circle r="22" fill="#fff"/>
+            </g>
+            <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#69788c">
+              <rect x="540" y="96" width="9" height="9" fill="#1f4e9c"/><text x="556" y="105">41%</text>
+              <rect x="540" y="120" width="9" height="9" fill="#e0912a"/><text x="556" y="129">27%</text>
+              <rect x="540" y="144" width="9" height="9" fill="#2b7d74"/><text x="556" y="153">19%</text>
+              <rect x="540" y="168" width="9" height="9" fill="#8fb8ff"/><text x="556" y="177">13%</text>
+            </g>
+          </g>
+          <!-- 캘린더 히트맵 -->
+          <g>
+            <rect x="652" y="30" width="324" height="200" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/>
+            <text x="668" y="56" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="1.8" fill="#69788c">CALENDAR HEATMAP</text>
+            <g id="hm"></g>
+          </g>
+          <text x="24" y="272" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2.2" fill="#69788c">DataFrame → matplotlib · ggplot · ggplot2 · d3 · nivo · observable</text>
+        </svg>
+      </div><span class="scrollhint">← 좌우로 밀어 보기 →</span></div>
+      <figcaption><b>〈도판 1.5〉</b><span>대시보드 또는 주피터 노트북에서의 데이터 시각화.</span></figcaption>
+    </figure>
+  </div>
+
+  <div class="col rev">
+    <p>마지막 한 수가 남았다. DuckDB가 워낙 빠르기 때문에, 데이터에 대한 질의 결과를 웹·명령행·모바일 클라이언트가 소비할 API로 <em>바로</em> 서비스할 수 있다. 전통적인 클라이언트–데이터베이스 서버 구성이 정말로 필요한 경우는, 원본 데이터가 너무 커서 옮길 수 없고 결과는 그에 비해 아주 작을 때—전체 용량의 1%에도 훨씬 못 미칠 때—뿐이다. 그 밖의 경우라면 Streamlit 같은 것으로 지은 애플리케이션이나 대시보드 도구에 DuckDB를 임베드해 두고, 로컬 원시 데이터나 로컬 DuckDB 데이터베이스 위에서 돌리면 된다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 요약 ══════════ -->
+<section class="summary" id="s8">
+  <div class="sechead">
+    <span class="num">SUMMARY</span>
+    <h2>제1장이 남긴 아홉 문장<span class="en">Summary</span></h2>
+  </div>
+  <ol>
+    <li>DuckDB는 <b>인메모리 처리에 특히 뛰어난, 새로 개발된 분석 데이터베이스</b>다.</li>
+    <li>확장된 SQL 방언을 지원하며, <b>확장(extension)</b>을 통해 새 역량을 얻는다.</li>
+    <li>로컬과 원격 원천의 <b>여러 형식을 별도 도구 없이 그대로</b> 읽는다.</li>
+    <li>파이썬, R, 그 밖의 언어와의 통합이 <b>매끄럽고 효율적</b>이다.</li>
+    <li>프로세스 내(in-process) 데이터베이스이므로 <b>복사 없이</b> 데이터를 효율적으로 처리한다.</li>
+    <li>전통적인 데이터 타입에 더해 <b>리스트, 맵, 구조체, 열거형</b>을 지원한다.</li>
+    <li>데이터 타입과 값에 대한 함수가 풍부해서 <b>데이터 처리와 정형화가 훨씬 쉬워진다</b>.</li>
+    <li>데이터의 모양을 먼저 익힌 뒤 <b>SQL 질의를 한 걸음씩 쌓아 올리면</b> 통제력을 유지할 수 있다.</li>
+    <li>질의 결과는 <b>보고서 생성, 차트 시각화, 새 형식으로의 출력</b>까지 여러 방식으로 쓸 수 있다.</li>
+  </ol>
+</section>
+
+</main>
+
+<footer>
+  <div class="col">
+    <p>이 문서는 <b>Mark Needham · Michael Hunger · Michael Simons, 『DuckDB in Action』 (Manning Publications, 2024)</b>의 제1장 「An introduction to DuckDB」(원서 1–11쪽) 전체를 검토해 한국어로 정리한 해설이다. 절 번호와 도판 번호는 원서를 따랐으며, 도판은 원서 그림의 구성을 옮겨 새로 작도한 것이다.</p>
+    <p>다음 장은 「Getting started with DuckDB」로, DuckDB CLI의 설치와 사용, 내장 명령, 원격 CSV 파일 질의를 다룬다. 집필 시점 기준으로 명령행과 Python, R, Java, JavaScript, Go, Rust, Node.js, Julia, C/C++, ODBC, JDBC, WASM, Swift가 지원된다.</p>
+    <span class="mono">CH.01 · 7 SECTIONS · 4 SUBSECTIONS · 5 PLATES · 9 SUMMARY POINTS</span>
+  </div>
+</footer>
+
+<script>
+// 캘린더 히트맵 생성 — 원서 도판 1.5의 세 번째 차트
+(function(){
+  var g=document.getElementById('hm'); if(!g) return;
+  var cols=22, rows=7, x0=668, y0=74, s=11.4, gap=1.8;
+  var pal=['#e9eef4','#c9dcf4','#8fb8ff','#1f4e9c','#0f2a54'];
+  var out='';
+  for(var c=0;c<cols;c++){
+    for(var r=0;r<rows;r++){
+      var v=Math.floor(Math.abs(Math.sin(c*0.7+r*1.3)*Math.cos(c*0.31))*5);
+      if(v>4)v=4;
+      out+='<rect x="'+(x0+c*(s+gap)).toFixed(1)+'" y="'+(y0+r*(s+gap)).toFixed(1)+
+           '" width="'+s+'" height="'+s+'" fill="'+pal[v]+'"/>';
+    }
+  }
+  g.innerHTML=out;
+})();
+
+// 스크롤 등장
+(function(){
+  var els=document.querySelectorAll('.rev');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){ if(e.isIntersecting){e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{rootMargin:'0px 0px -12% 0px',threshold:.06});
+  els.forEach(function(e){io.observe(e)});
+})();
+
+// 목차 레일 활성화
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.rail a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))}).filter(Boolean);
+  if(!secs.length) return;
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){
+      if(!e.isIntersecting) return;
+      links.forEach(function(a){a.classList.toggle('on', a.getAttribute('href')==='#'+e.target.id)});
+    });
+  },{rootMargin:'-45% 0px -45% 0px'});
+  secs.forEach(function(s){io.observe(s)});
+})();
+</script>
+</body>
+</html>
