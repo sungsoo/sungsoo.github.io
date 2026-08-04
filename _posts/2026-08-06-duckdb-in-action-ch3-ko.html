@@ -1,0 +1,2225 @@
+---
+layout: null
+title: "Executing SQL queries" 
+date: 2026-08-06 
+categories: [artificial intelligence]
+tags: [artificial general intelligence, data management]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DuckDB 답사기 · 제3장 SQL 질의 실행 — 『DuckDB in Action』 정독</title>
+<meta name="description" content="Mark Needham, Michael Hunger, Michael Simons의 『DuckDB in Action』 제3장을 한 줄도 빠뜨리지 않고 읽어 정리한 해설. 태양광 발전량 데이터셋으로 배우는 DDL과 DML, JOIN과 CTE, 그리고 DuckDB 고유의 SQL 확장.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────
+   토큰 — 제1·2장과 같은 델프트 도자 계열의 연작.
+   이 장의 소재가 태양광 발전이므로 오리 부리의
+   호박색이 햇빛 쪽으로 반 걸음 나아간다.
+   ───────────────────────────────────────────── */
+:root{
+  --porcelain:#e9eef4;
+  --glaze:#ffffff;
+  --delft:#1f4e9c;
+  --delft-deep:#0f2a54;
+  --shell:#0b1d3a;
+  --ink:#101a28;
+  --bill:#e0912a;
+  --sun:#f2b134;
+  --canal:#2b7d74;
+  --grey:#69788c;
+  --sky:#8fb8ff;
+  --hair:rgba(16,26,40,.14);
+  --wire:rgba(143,184,255,.22);
+
+  --disp:'Fraunces','Gowun Batang',serif;
+  --body:'Noto Sans KR','Fraunces',sans-serif;
+  --mono:'IBM Plex Mono','Menlo','DejaVu Sans Mono','Consolas','Noto Sans KR',monospace;
+
+  --col:min(720px,100%);
+  --wide:min(1080px,100%);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--porcelain);color:var(--ink);
+  font-family:var(--body);font-weight:300;font-size:17px;line-height:1.95;
+  word-break:keep-all;line-break:strict;
+  background-image:
+    radial-gradient(900px 520px at 82% -6%,rgba(242,177,52,.16),transparent 62%),
+    radial-gradient(1100px 620px at 6% 4%,rgba(31,78,156,.12),transparent 60%);
+  background-attachment:fixed;
+}
+::selection{background:var(--bill);color:#fff}
+a{color:var(--delft);text-decoration:none;border-bottom:1px solid rgba(31,78,156,.35)}
+a:hover{color:var(--canal);border-color:var(--canal)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--bill);outline-offset:3px}
+
+.wrap{width:var(--wide);margin:0 auto;padding:0 26px}
+.col{width:var(--col);margin:0 auto}
+
+/* ── 표제부 ── */
+.hero{padding:74px 0 40px}
+.eyebrow{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--grey);display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+}
+.eyebrow b{color:var(--delft);font-weight:500}
+.chapno{display:flex;align-items:baseline;gap:18px;margin:26px 0 6px}
+.chapno span:first-child{
+  font-family:var(--disp);font-size:clamp(52px,11vw,104px);font-weight:800;
+  line-height:.82;color:var(--delft);font-variation-settings:'SOFT' 40,'WONK' 1;
+}
+.chapno span:last-child{
+  font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--grey);padding-bottom:10px;
+}
+h1{
+  font-family:var(--disp);font-weight:600;letter-spacing:-.015em;
+  font-size:clamp(33px,6vw,62px);line-height:1.1;margin:0 0 22px;max-width:22ch;
+}
+h1 em{font-style:italic;color:var(--delft);font-weight:400;background:none}
+.lede{width:var(--col);font-size:clamp(17px,2vw,20px);line-height:1.9;color:#243247}
+.lede strong{font-weight:500;color:var(--ink);background:linear-gradient(transparent 62%,rgba(224,145,42,.32) 62%)}
+.hero-meta{margin-top:34px;display:flex;flex-wrap:wrap;border-top:1px solid var(--hair)}
+.hero-meta div{flex:1 1 190px;padding:16px 22px 16px 0;border-right:1px solid var(--hair)}
+.hero-meta div:last-child{border-right:0}
+.hero-meta dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--grey);text-transform:uppercase;margin:0 0 6px}
+.hero-meta dd{margin:0;font-size:14.5px;font-weight:400;line-height:1.65}
+
+/* ── 목차 레일 ── */
+.rail{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:20;display:none;flex-direction:column;gap:1px}
+.rail a{display:flex;align-items:center;gap:10px;border:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--grey);padding:3px 0}
+.rail i{display:block;width:15px;height:1px;background:var(--grey);opacity:.5;transition:.35s}
+.rail a span{opacity:0;transform:translateX(-4px);transition:.35s}
+.rail a:hover i,.rail a.on i{width:30px;opacity:1;background:var(--bill);height:2px}
+.rail a:hover span,.rail a.on span{opacity:1;transform:none;color:var(--delft-deep)}
+@media(min-width:1300px){.rail{display:flex}}
+
+/* ── 본문 ── */
+section{padding:34px 0}
+.sechead{width:var(--col);margin:0 auto 26px}
+.sechead .num{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--bill);display:block;margin-bottom:10px}
+h2{font-family:var(--disp);font-weight:600;font-size:clamp(26px,3.6vw,38px);line-height:1.25;margin:0;letter-spacing:-.01em;color:var(--delft-deep)}
+h2 .en{display:block;font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:.08em;color:var(--grey);margin-top:9px}
+h3{font-family:var(--body);font-weight:700;font-size:19px;line-height:1.5;margin:46px 0 12px;color:var(--ink)}
+h3::before{content:"";display:inline-block;width:9px;height:9px;background:var(--bill);margin-right:11px;vertical-align:2px}
+h3 .sub{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--grey);letter-spacing:.06em;margin-left:8px}
+h4.clause{
+  font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.14em;color:var(--delft);
+  margin:38px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--hair);text-transform:uppercase;
+}
+p{margin:0 0 20px}
+.dropcap::first-letter{font-family:var(--disp);font-size:3.6em;line-height:.86;float:left;margin:6px 12px 0 0;color:var(--delft);font-weight:600}
+em{font-style:normal;background:linear-gradient(transparent 60%,rgba(43,125,116,.22) 60%)}
+strong{font-weight:500}
+code{font-family:var(--mono);font-size:.86em;background:rgba(31,78,156,.08);padding:.12em .42em;border-radius:2px;color:var(--delft-deep);white-space:nowrap}
+.q{border-left:3px solid var(--bill);padding:2px 0 2px 22px;margin:34px 0;font-family:var(--disp);font-size:20px;line-height:1.75;color:var(--delft-deep)}
+.q span{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--grey);margin-top:12px}
+
+ul.plain{list-style:none;padding:0;margin:0 0 24px}
+ul.plain li{position:relative;padding:11px 0 11px 30px;border-bottom:1px solid var(--hair)}
+ul.plain li::before{content:"";position:absolute;left:4px;top:22px;width:12px;height:1px;background:var(--delft);opacity:.6}
+ul.plain li b{font-weight:500;color:var(--delft-deep)}
+
+/* ── 도판(圖版) ── */
+.plate{margin:46px 0;width:var(--wide)}
+.plate.narrow{width:var(--col);margin-left:auto;margin-right:auto}
+.plate figure{margin:0}
+.tile{background:var(--glaze);border:1px solid var(--hair);box-shadow:0 1px 0 #fff inset,0 18px 40px -30px rgba(15,42,84,.55);padding:14px}
+.tile-in{border:1px solid rgba(31,78,156,.22);padding:20px 14px}
+.plate svg{display:block;width:100%;height:auto}
+figcaption{margin-top:14px;font-family:var(--mono);font-size:12px;color:var(--grey);display:flex;gap:10px;align-items:baseline}
+figcaption b{color:var(--delft-deep);font-weight:500;white-space:nowrap}
+
+/* ── 터미널 ── */
+.term{background:var(--shell);border:1px solid rgba(143,184,255,.28);box-shadow:0 26px 60px -40px rgba(11,29,58,.9);margin:28px 0;overflow:hidden}
+.term.bleed{width:var(--wide)}
+.term-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--wire);background:rgba(143,184,255,.06)}
+.dots{display:flex;gap:6px}
+.dots i{width:9px;height:9px;border-radius:50%;display:block;background:#3a557f}
+.dots i:first-child{background:var(--bill)}
+.term-bar .name{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:#7f9bc7;text-transform:uppercase}
+.term-bar .tagn{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--bill);border:1px solid rgba(224,145,42,.5);padding:2px 8px;white-space:nowrap}
+.term pre{margin:0;padding:20px 22px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.85;color:#d5e3f7}
+.term pre b{color:#fff;font-weight:500}
+.p{color:var(--bill)}
+.k{color:var(--sky)}
+.f{color:#ffd28a}
+.c{color:#6f86a8}
+.err{color:#ff9a7a}
+.ok{color:#67d4b4}
+.term-note{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;font-weight:300;color:#a3b8d6;line-height:1.85}
+.term-note b{color:var(--bill);font-weight:500;font-family:var(--mono);font-size:12.5px}
+.term-note.catch{background:rgba(224,145,42,.07)}
+.term-note.catch::before{
+  content:"살펴본 김에";display:block;font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+  color:var(--bill);margin-bottom:7px;
+}
+
+/* ── duckbox 격자 ── */
+.duckbox{font-family:var(--mono);font-size:13px;border-collapse:collapse;color:#d5e3f7}
+.duckbox th,.duckbox td{border:1px solid var(--wire);padding:5px 14px;text-align:right;white-space:nowrap}
+.duckbox th{color:#fff;font-weight:500;text-align:center}
+.duckbox tr.type th{color:#7f9bc7;font-weight:400;font-size:12px;font-style:italic}
+.duckbox td.l,.duckbox th.l{text-align:left}
+.duckbox tfoot td{border:1px solid var(--wire);color:#7f9bc7;text-align:right;font-size:12px}
+.duckbox td.dots3{color:#4f6a91;text-align:center}
+.dbwrap{padding:20px 22px;overflow-x:auto}
+
+/* ── JOIN 탐색기 ── */
+.explorer{background:var(--shell);border:1px solid rgba(143,184,255,.28);margin:36px 0;width:var(--wide);box-shadow:0 26px 60px -40px rgba(11,29,58,.9)}
+.tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--wire);background:rgba(143,184,255,.06)}
+.tabs button{appearance:none;background:none;border:0;border-right:1px solid var(--wire);font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:#7f9bc7;padding:12px 16px;cursor:pointer;transition:.2s}
+.tabs button:hover{color:#fff;background:rgba(143,184,255,.08)}
+.tabs button[aria-pressed="true"]{color:var(--shell);background:var(--bill);font-weight:600}
+.tabs .dupe{margin-left:auto;border-right:0;border-left:1px solid var(--wire);color:#a3b8d6}
+.tabs .dupe[aria-pressed="true"]{background:var(--canal);color:#fff}
+.exbody{display:grid;grid-template-columns:1fr;gap:0}
+@media(min-width:820px){.exbody{grid-template-columns:280px 1fr}}
+.exsrc{padding:20px 22px;border-bottom:1px solid var(--wire)}
+@media(min-width:820px){.exsrc{border-bottom:0;border-right:1px solid var(--wire)}}
+.exsrc h5{margin:0 0 10px;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:#7f9bc7;font-weight:400}
+.exsrc h5:not(:first-child){margin-top:22px}
+.exres{padding:20px 22px;overflow-x:auto}
+.exres h5{margin:0 0 12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--bill);font-weight:400}
+.exsql{
+  border-top:1px solid var(--wire);padding:14px 22px;font-family:var(--mono);font-size:12.5px;
+  color:#c6d8f2;line-height:1.8;overflow-x:auto;white-space:pre;
+}
+.excap{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;font-weight:300;color:#a3b8d6;line-height:1.85}
+.excap b{color:var(--bill);font-weight:500}
+
+/* ── 격자·카드 ── */
+.grid3{display:grid;grid-template-columns:1fr;gap:1px;background:var(--hair);border:1px solid var(--hair);margin:30px 0}
+@media(min-width:640px){.grid3{grid-template-columns:1fr 1fr}}
+@media(min-width:960px){.grid3{grid-template-columns:1fr 1fr 1fr}}
+.cell{background:var(--glaze);padding:20px}
+.cell .t{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--delft);display:block;margin-bottom:8px;font-weight:500}
+.cell p{font-size:14.5px;line-height:1.78;margin:0;color:#2c3a4e}
+
+/* 목록 색인 */
+.index{width:var(--wide);margin:36px auto;background:var(--glaze);border:1px solid var(--hair);padding:26px 28px 20px;box-shadow:0 16px 40px -34px rgba(15,42,84,.6)}
+.index h5{margin:0 0 18px;font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--grey);font-weight:400}
+.index ol{list-style:none;padding:0;margin:0;columns:1;column-gap:34px;font-size:14px;line-height:1.6}
+@media(min-width:660px){.index ol{columns:2}}
+@media(min-width:1000px){.index ol{columns:3}}
+.index li{break-inside:avoid;padding:5px 0 5px 46px;position:relative;color:#33425a}
+.index li span{position:absolute;left:0;top:5px;font-family:var(--mono);font-size:11.5px;color:var(--bill)}
+
+/* 명령 표 */
+.cmds{width:100%;border-collapse:collapse;margin:22px 0 30px}
+.cmds td{padding:12px 14px;border-bottom:1px solid var(--hair);vertical-align:top;font-size:15.5px;line-height:1.75}
+.cmds td:first-child{width:1%;white-space:nowrap;font-family:var(--mono);font-size:13.5px;color:var(--delft);font-weight:500;padding-right:22px}
+.cmds tr:hover{background:rgba(31,78,156,.045)}
+
+/* NOTE / TIP / 사이드바 */
+.note,.tip{padding:22px 24px 6px;margin:34px 0}
+.note{background:linear-gradient(180deg,rgba(224,145,42,.10),rgba(224,145,42,.04));border:1px solid rgba(224,145,42,.4)}
+.tip{background:linear-gradient(180deg,rgba(43,125,116,.09),rgba(43,125,116,.03));border:1px solid rgba(43,125,116,.36)}
+.note .tag,.tip .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;display:block;margin-bottom:10px}
+.note .tag{color:#8a5410}
+.tip .tag{color:#1e5c55}
+.note p,.tip p{font-size:15.5px;line-height:1.85;margin-bottom:16px}
+.aside{background:var(--glaze);border:1px solid var(--hair);border-left:4px solid var(--canal);padding:24px 26px 8px;margin:38px 0;box-shadow:0 14px 34px -30px rgba(15,42,84,.6)}
+.aside .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:var(--canal);display:block;margin-bottom:12px}
+.aside h4{margin:0 0 12px;font-family:var(--disp);font-size:21px;font-weight:600;color:var(--delft-deep)}
+.aside p{font-size:15.5px;line-height:1.85}
+
+/* ── 요약 ── */
+.summary{background:var(--delft-deep);color:#e6eefb;margin-top:70px;padding:66px 0 58px;position:relative}
+.summary::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px 44px)}
+.summary h2{color:#fff}
+.summary .num{color:var(--bill)}
+.summary h2 .en{color:rgba(230,238,251,.5)}
+.summary ol{list-style:none;counter-reset:s;padding:0;width:var(--col);margin:0 auto}
+.summary li{counter-increment:s;position:relative;padding:16px 0 16px 52px;border-bottom:1px solid rgba(255,255,255,.13);font-weight:300;font-size:16px;line-height:1.8}
+.summary li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:19px;font-family:var(--mono);font-size:12px;color:var(--bill);letter-spacing:.1em}
+.summary li b{font-weight:500;color:#fff}
+.summary code{background:rgba(255,255,255,.12);color:#ffd9a3}
+
+footer{padding:56px 0 76px;font-size:13.5px;color:var(--grey);line-height:1.85}
+footer .col{border-top:1px solid var(--hair);padding-top:26px}
+footer b{color:var(--delft-deep);font-weight:500}
+footer .mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;display:block;margin-top:16px;color:#8494a8}
+
+/* ── 연출 ── */
+.rev{opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rev.in{opacity:1;transform:none}
+.flow{stroke-dasharray:var(--len,300);stroke-dashoffset:var(--len,300);animation:draw 1.4s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.scrollhint{display:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--grey);margin-top:8px}
+@media(max-width:759px){
+  .hero-meta div{border-right:0;border-bottom:1px solid var(--hair);padding-right:0}
+  .hero-meta div:last-child{border-bottom:0}
+  .cmds td:first-child{white-space:normal}
+}
+@media(max-width:720px){
+  code{white-space:normal;overflow-wrap:anywhere}
+  .scrollhint{display:block}
+  .tile-in{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tile-in>svg{min-width:640px}
+  .tabs button{flex:1 1 auto;padding:11px 11px;font-size:11px}
+  .tabs .dupe{margin-left:0;flex-basis:100%;border-left:0;border-top:1px solid var(--wire)}
+  figcaption{flex-direction:column;gap:4px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .rev{opacity:1;transform:none}
+  .flow{stroke-dashoffset:0}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="절 목차">
+  <a href="#s0"><i></i><span>여는 글</span></a>
+  <a href="#s1"><i></i><span>3.1 SQL 복습</span></a>
+  <a href="#s2"><i></i><span>3.2 발전량 분석</span></a>
+  <a href="#s3"><i></i><span>3.3 DDL</span></a>
+  <a href="#s4"><i></i><span>3.4 DML</span></a>
+  <a href="#s4b"><i></i><span>3.4.4 SELECT</span></a>
+  <a href="#s4j"><i></i><span>JOIN</span></a>
+  <a href="#s4w"><i></i><span>WITH · CTE</span></a>
+  <a href="#s5"><i></i><span>3.5 고유 확장</span></a>
+  <a href="#s6"><i></i><span>요약</span></a>
+</nav>
+
+<!-- ══════════ 표제부 ══════════ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">
+      <span>DuckDB in Action</span><span>·</span><span>Manning, 2024</span><span>·</span>
+      <b>제3장 정독</b>
+    </div>
+
+    <div class="chapno">
+      <span>3</span>
+      <span>EXECUTING SQL QUERIES<br>원서 22–57쪽</span>
+    </div>
+
+    <h1>지붕 위 태양광 계량기가 <em>관계 대수</em>를 가르친다</h1>
+
+    <p class="lede">
+      앞의 두 장이 소개와 설치였다면 제3장은 본론이다. 저자들은 미국 에너지부의 태양광 발전 실측 데이터셋 하나를 들고 와서,
+      <strong>테이블을 정의하고, 지저분한 원자료를 밀어 넣고, 그것을 질의하는 순서로</strong> SQL 전체를 훑는다.
+      만들어낸 데이터로 질의를 꾸미기보다 먼저 스키마를 세우고 채운 다음 묻는 것이 낫다는 것이 저자들의 주장이며,
+      그 고집 덕에 이 장은 문법 나열이 아니라 한 편의 작업 기록이 되었다.
+    </p>
+
+    <dl class="hero-meta">
+      <div><dt>이 장이 다루는 것</dt><dd>SQL 문의 갈래와 기본 구조 · 실제 데이터셋을 들이기 위한 테이블과 구조 만들기 · 대용량 데이터 상세 분석의 토대 · DuckDB 고유의 SQL 확장</dd></div>
+      <div><dt>절 구성</dt><dd>3.1 – 3.5 및 하위 절 열한 개, 요약</dd></div>
+      <div><dt>실린 것</dt><dd>목록 24건 · 도판 4점 · NOTE·TIP 9건 · 사이드바 1건</dd></div>
+      <div><dt>데이터셋</dt><dd>미국 에너지부 PVDAQ (Photovoltaic Data Acquisition), CC-BY</dd></div>
+    </dl>
+  </div>
+
+  <!-- 서명 도판: 목표 스키마 -->
+  <div class="wrap plate" id="s0">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 400" role="img" aria-label="readings, systems, prices 세 테이블로 이루어진 에너지 소비 스키마 구조도">
+          <defs>
+            <marker id="fk" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 z" fill="#1f4e9c"/>
+            </marker>
+            <linearGradient id="hd" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#2d63b8"/><stop offset="1" stop-color="#1f4e9c"/>
+            </linearGradient>
+          </defs>
+
+          <!-- readings -->
+          <g>
+            <rect x="26" y="30" width="360" height="150" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+            <rect x="26" y="30" width="360" height="34" fill="url(#hd)"/>
+            <text x="206" y="53" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="14" fill="#fff" letter-spacing="1.4">readings</text>
+            <g font-family="IBM Plex Mono, monospace" font-size="13">
+              <line x1="26" y1="102" x2="386" y2="102" stroke="#e9eef4"/>
+              <line x1="26" y1="141" x2="386" y2="141" stroke="#e9eef4"/>
+              <text x="44" y="88" fill="#e0912a" font-size="10.5" letter-spacing="1">PK FK</text>
+              <text x="98" y="88" fill="#0f2a54" font-weight="500">system_id</text>
+              <text x="368" y="88" fill="#69788c" text-anchor="end">INTEGER</text>
+              <text x="44" y="127" fill="#e0912a" font-size="10.5" letter-spacing="1">PK</text>
+              <text x="98" y="127" fill="#0f2a54" font-weight="500">read_on</text>
+              <text x="368" y="127" fill="#69788c" text-anchor="end">TIMESTAMP</text>
+              <text x="98" y="166" fill="#0f2a54">power</text>
+              <text x="368" y="166" fill="#69788c" text-anchor="end">DECIMAL(8,3)</text>
+            </g>
+          </g>
+
+          <!-- systems -->
+          <g>
+            <rect x="614" y="46" width="360" height="112" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+            <rect x="614" y="46" width="360" height="34" fill="url(#hd)"/>
+            <text x="794" y="69" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="14" fill="#fff" letter-spacing="1.4">systems</text>
+            <g font-family="IBM Plex Mono, monospace" font-size="13">
+              <line x1="614" y1="119" x2="974" y2="119" stroke="#e9eef4"/>
+              <text x="632" y="105" fill="#e0912a" font-size="10.5" letter-spacing="1">PK</text>
+              <text x="686" y="105" fill="#0f2a54" font-weight="500">id</text>
+              <text x="956" y="105" fill="#69788c" text-anchor="end">INTEGER</text>
+              <text x="686" y="144" fill="#0f2a54">name</text>
+              <text x="956" y="144" fill="#69788c" text-anchor="end">VARCHAR</text>
+            </g>
+          </g>
+
+          <!-- FK 연결선 -->
+          <g>
+            <circle cx="392" cy="84" r="4.5" fill="#1f4e9c"/>
+            <path class="flow" style="--len:230" d="M398 84 C 480 84 540 102 606 102" fill="none" stroke="#1f4e9c" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#fk)"/>
+            <text x="500" y="74" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#69788c" letter-spacing="1.4">FOREIGN KEY</text>
+          </g>
+
+          <!-- prices -->
+          <g>
+            <rect x="26" y="222" width="360" height="150" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+            <rect x="26" y="222" width="360" height="34" fill="url(#hd)"/>
+            <text x="206" y="245" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="14" fill="#fff" letter-spacing="1.4">prices</text>
+            <g font-family="IBM Plex Mono, monospace" font-size="12.5">
+              <line x1="26" y1="288" x2="386" y2="288" stroke="#e9eef4"/>
+              <line x1="26" y1="317" x2="386" y2="317" stroke="#e9eef4"/>
+              <line x1="26" y1="346" x2="386" y2="346" stroke="#e9eef4"/>
+              <text x="44" y="278" fill="#e0912a" font-size="10.5" letter-spacing="1">PK</text>
+              <text x="98" y="278" fill="#0f2a54" font-weight="500">id</text>
+              <text x="368" y="278" fill="#69788c" text-anchor="end">INTEGER · nextval()</text>
+              <text x="98" y="307" fill="#0f2a54">value</text>
+              <text x="368" y="307" fill="#69788c" text-anchor="end">DECIMAL(5,2)</text>
+              <text x="44" y="336" fill="#2b7d74" font-size="10.5" letter-spacing="1">UK</text>
+              <text x="98" y="336" fill="#0f2a54">valid_from</text>
+              <text x="368" y="336" fill="#69788c" text-anchor="end">DATE</text>
+              <text x="98" y="365" fill="#0f2a54">valid_until</text>
+              <text x="368" y="365" fill="#69788c" text-anchor="end">DATE</text>
+            </g>
+          </g>
+
+          <!-- 주석 -->
+          <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#69788c">
+            <text x="614" y="215">키 설계</text>
+            <line x1="614" y1="228" x2="974" y2="228" stroke="#e9eef4" stroke-width="1.4"/>
+            <text x="614" y="256" fill="#0f2a54">systems</text><text x="700" y="256">외부에서 생성된 대리 키</text>
+            <text x="614" y="288" fill="#0f2a54">prices</text><text x="700" y="288">SEQUENCE 기반 대리 키</text>
+            <text x="614" y="320" fill="#0f2a54">readings</text><text x="700" y="320">시스템 ID + 측정 시각의</text>
+            <text x="700" y="340">복합 자연 키</text>
+          </g>
+        </svg>
+      </div></div>
+      <figcaption><b>〈도판 3.1〉</b><span>에너지 소비 스키마. 조인을 시연하기 좋도록 정규화한 세 테이블이다.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════ 여는 글 ══════════ -->
+<section>
+  <div class="col">
+    <p class="dropcap">CLI를 익혔으니 이제 SQL 두뇌를 간지럽힐 차례라고 저자들은 적었다. 이 장의 예제는 모두 CLI로 돌아가지만, 여기 나오는 모든 예제는 파이썬 클라이언트든 자바 JDBC 드라이버든 지원되는 어느 환경에서나 그대로 적용된다. 기본적이고 꼭 필요한 SQL 문을 빠르게 지나간 뒤 더 진전된 질의로 넘어가며, 공통 테이블 표현식과 윈도 함수 같은 복잡한 주제까지 다룬다. 목표는 분명하다. <em>DuckDB로 가능한 최선의 인메모리 온라인 분석 처리(OLAP)</em>를 위한 질의를 짜는 법을 익히는 것이다.</p>
+
+    <p>예제를 돌리려면 제2장에서 본 데이터 수집—특히 CSV 파일을 들이는 법과 컬럼 자동 감지·명시 감지를 다루는 법—을 알고 있어야 하고, 제1장의 데이터 타입 지식도 도움이 된다. 질의부터 곧장 보고 싶다면 <code>SELECT</code> 문을 상세히 다루는 절로 건너뛰라고 저자들은 안내한다.</p>
+
+    <p>다만 저자들은 그 순서를 권하지 않는다. <strong>생성했거나 존재하지 않는 데이터를 놓고 질의를 지어내기보다, 먼저 테이블과 구조를 정의하고 데이터로 채운 다음 질의하는 편이 낫다</strong>고 보기 때문이다. 이 고집이 이 장의 성격을 정한다. 문법 목록이 아니라, 남의 실측 데이터를 받아 스키마를 세우고 흠을 메우고 마침내 답을 얻어내는 한 편의 작업 기록이 되었다.</p>
+
+    <div class="q">
+      아는 만큼 보인다는 말은 데이터에도 그대로 적용된다. 스키마를 먼저 세우는 일은 데이터를 어디까지 볼 것인지를 미리 정하는 일이다.
+      <span>이 장의 편성이 말하는 것</span>
+    </div>
+  </div>
+
+  <!-- 목록 색인 -->
+  <div class="index rev">
+    <h5>이 장에 실린 목록 24건</h5>
+    <ol>
+      <li><span>3.1</span>기본 CREATE TABLE 문</li>
+      <li><span>3.2</span>멱등한 문장으로 readings 만들기</li>
+      <li><span>3.3</span>시퀀스 기반 기본 키로 prices 만들기</li>
+      <li><span>3.4</span>시스템·일자별 발전량 뷰</li>
+      <li><span>3.5</span>다른 관계에서 데이터 삽입</li>
+      <li><span>3.6</span>중복을 제거한 행 집합 삽입</li>
+      <li><span>3.7</span>첫 측정값 내려받아 수집</li>
+      <li><span>3.8</span>충돌 시 새 값 계산</li>
+      <li><span>3.9</span>수집된 데이터 정리</li>
+      <li><span>3.10</span>SELECT 문의 구조</li>
+      <li><span>3.11</span>그룹 집계</li>
+      <li><span>3.12</span>내부 조인</li>
+      <li><span>3.13</span>왼쪽 외부 조인</li>
+      <li><span>3.14</span>완전 외부 조인</li>
+      <li><span>3.15</span>중복 키가 있는 테이블의 내부 조인</li>
+      <li><span>3.16</span>서브쿼리를 CTE로 바꾸기</li>
+      <li><span>3.17</span>여러 겹의 그룹 만들기</li>
+      <li><span>3.18</span>재귀 SQL로 그래프 구조 조회</li>
+      <li><span>3.19</span>이름으로 삽입</li>
+      <li><span>3.20</span>WHERE·GROUP BY·HAVING에서 별칭 쓰기</li>
+      <li><span>3.21</span>비집계 컬럼 전체로 그룹 만들기</li>
+      <li><span>3.22</span>SELECT 절 생략과 정렬 단순화</li>
+      <li><span>3.23</span>관계 표본 추출</li>
+      <li><span>3.24</span>이름 붙은 매개변수 쓰기</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ══════════ 3.1 ══════════ -->
+<section id="s1">
+  <div class="sechead rev">
+    <span class="num">3.1</span>
+    <h2>SQL 빠른 복습<span class="en">A quick SQL recap</span></h2>
+  </div>
+  <div class="col rev">
+    <p>용어의 층위를 먼저 정리한다. <strong>질의(query)는 여러 문(statement)으로 이루어지고, 문은 다시 절(clause)로 이루어진다.</strong> 그리고 CLI나 지원되는 다른 클라이언트에 제출된 질의를 명령(command)이라 부른다. DuckDB CLI에서 명령은 세미콜론으로 끝낸다.</p>
+
+    <p>공백은 마음대로 써도 된다. 명령을 아름답게 정렬해도 되고 한 줄에 몰아서 타이핑해도 되며, 어느 쪽을 골라도 상관없다. 그리고 SQL은 <em>키워드와 식별자 모두에 대해 대소문자를 구분하지 않는다.</em> 이 관대함이 SQL을 40년 넘게 살아남게 한 미덕 가운데 하나다.</p>
+
+    <p>대부분의 문은 동작을 바꾸는 여러 절을 지원한다. 그중 가장 두드러진 셋이 다음과 같다.</p>
+    <ul class="plain">
+      <li><b>WHERE</b> — 최종 결과에 어떤 행을 포함할지에 대한 조건을 붙인다.</li>
+      <li><b>GROUP BY</b> — 하나 이상의 키로 정의되는 바구니에 여러 값을 집계해 담는다.</li>
+      <li><b>ORDER BY</b> — 돌려받을 결과의 순서를 지정한다.</li>
+    </ul>
+    <p>이제 이 문들과 절들을 실제 사례로 시연한다. 소재는 태양광 발전이다. 개념마다 구체적인 세부를 붙여, 독자 자신의 작업에 어떻게 적용되는지 감을 갖고 떠나게 하는 것이 이 예제의 목적이다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 3.2 ══════════ -->
+<section id="s2">
+  <div class="sechead rev">
+    <span class="num">3.2</span>
+    <h2>에너지 생산량 분석<span class="en">Analyzing energy production</span></h2>
+  </div>
+  <div class="col rev">
+    <p>에너지 소비와 생산은 이미 오래전부터 OLAP 분석의 대상이었다. 15분 간격으로 소비를 측정하는 스마트 계량기는 금속 가공이나 대형 생산 공장 같은 여러 산업에서 진작부터 쓰여 이제 상당히 표준이 되었다. 이 측정값으로 소비 에너지의 값을 매기고, 소비를 예측하고, 그 밖의 일을 한다.</p>
+
+    <p>스마트 모니터링 시스템이 퍼지면서 이제 개인 가정에서도 상세한 에너지 검침값을 얻을 수 있게 되었고, 해마다 더 흔해지고 있다. 집에 태양광 발전 설비와 스마트 계량기를 설치했다고 상상해보자. 대기업이 하듯 전기 사용을 얼마간 계획하고 설비의 투자 회수를 예측하고 싶어진다. 그러려면 <em>본격적인 시계열 데이터베이스와 실시간 대시보드까지 갖출 필요는 없다.</em> DuckDB와 이 장의 예제가 자신에게 쓸모 있는 보고서를 만드는 좋은 출발점이 되기를 저자들은 바란다. 이 대목이 이 책 전체의 태도를 압축한다. 큰 장비를 세우지 않고도 할 수 있는 일이 생각보다 많다는 것이다.</p>
+
+    <div class="grid3">
+      <div class="cell">
+        <span class="t">출처</span>
+        <p>미국 에너지부가 <b>PVDAQ</b>(Photovoltaic Data Acquisition)라는 이름으로 공개한 데이터셋이다. 문서는 깃허브에 정리되어 있다.</p>
+      </div>
+      <div class="cell">
+        <span class="t">접근</span>
+        <p>에너지부 산하 국립재생에너지연구소(NREL)가 분할된 CSV·Parquet 파일을 받아갈 수 있는 간단하고 깔끔한 API를 제공한다. 무료이며 요구하는 개인 정보도 적다.</p>
+      </div>
+      <div class="cell">
+        <span class="t">라이선스</span>
+        <p>Creative Commons Attribution으로 공개되어 있다. 이 장에서는 접근 편의를 위해 데이터셋의 일부를 이 책의 소스와 함께 원본 그대로 재배포한다.</p>
+      </div>
+    </div>
+
+    <div class="note">
+      <span class="tag">NOTE — 왜 15분 간격인가</span>
+      <p>요즘 센서는 훨씬 촘촘한 측정값을 만들어내는데 왜 15분 간격으로 저장하는가. 15분이라는 주기는 앞서 말한 목적—값 매기기, 유리한 구간에 사서 쓰기—에는 충분히 맞고, 동시에 웬만한 현대 관계형 시스템이 어렵지 않게 다룰 만큼 작다는 것이 답이다.</p>
+      <p>출력이나 소비 전력은 와트(W) 또는 킬로와트(kW) 단위로 측정하고, 보통 킬로와트시(kWh)로 판매한다. 15분 간격은 W에서 kWh로 손쉽게 환산할 수 있으면서도 좋은 발전량 차트를 그리기에 충분히 정확하다.</p>
+      <p>대부분의 경우 값을 적어도 시간 단위로 매끄럽게 다듬는 편이 좋다. 구름 때문에 생기는 봉우리와 골은 대개 무의미하기 때문이다. 일기 예보 차트를 참고하면서 일별 측정값을 쓰면 일반적으로 좋은 기준 구간이 된다. 주말과 공휴일이 반영되고 자잘한 불규칙이 다듬어지기 때문이다.</p>
+    </div>
+
+    <h3>데이터셋 내려받기 <span class="sub">3.2.1</span></h3>
+    <p>CSV 파일을 거치지 않고 데이터를 적재하기 위해 DuckDB의 <code>httpfs</code> 확장을 쓴다. CLI에서 <code>install httpfs; load httpfs;</code>를 실행해 설치한다. 다룰 데이터 파일은 두 종류다.</p>
+    <ul class="plain">
+      <li><b>systems.csv</b> — PVDAQ가 측정하는 모든 태양광 시스템의 목록이다.</li>
+      <li><b>10번·34번·1200번 시스템의 2019년과 2020년 측정값</b> — URL은 모두 같은 형태를 따르며, <code>system_id</code>와 <code>year</code> 질의 문자열 매개변수를 바꿔가며 받는다. 접근하려면 API 키가 필요하고, 여기서는 <code>DEMO_KEY</code>를 쓴다.</li>
+    </ul>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">데이터 확보 경로 세 가지</span>
+        <span class="tagn">3.2.1</span>
+      </div>
+      <pre><span class="c"># ① NREL API에서 직접 — API 키, 시스템 ID, 연도를 질의 문자열로 넘긴다.</span>
+https://developer.nrel.gov/api/pvdaq/v3/data_file?api_key=DEMO_KEY&amp;system_id=34&amp;year=2019
+
+<span class="c"># ② URL 접근이 어려우면 책 소스의 데이터베이스 익스포트를 새 DB로 들여온다.</span>
+<span class="p">$</span> duckdb my_ch03.db
+<span class="p">D</span> <span class="k">import database</span> <span class="f">'ch03_db'</span>;
+
+<span class="c"># ③ MotherDuck의 원격 데이터베이스에 붙는다. 읽기 전용 공유본이다.</span>
+<span class="p">D</span> <span class="k">ATTACH</span> <span class="f">'md:_share/duckdb_in_action_ch3_4/d0c08584-1d33-491c-8db7-cf9c6910eceb'</span>;</pre>
+      <div class="term-note">
+        ③번 공유본은 읽기 전용이지만 저자들이 쓴 데이터 전부를 담고 있어, 삽입 같은 조작을 다루지 않는 예제는 모두 따라갈 수 있다.
+        MotherDuck이 제공하는 서비스는 뒤의 장에서 따로 자세히 다룬다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>이 데이터셋을 고른 이유가 분명하다. <em>영역이 파악하기 쉬우면서도 여러 분석 개념을 도입할 만큼 복잡하고, 실제 현장의 필요가 뒷받침되어 있기 때문이다.</em> 그리고 어떤 분석 과정에서나 그렇듯, 결국 일관되지 않은 데이터를 만나게 된다. 이 데이터셋의 일부 계열도 그렇다. 저자들이 이 사실을 미리 밝혀두는 것은 뒤에 나올 <code>CASE</code> 표현식과 <code>DELETE</code> 문의 예고이기도 하다.</p>
+
+    <h3>목표 스키마 <span class="sub">3.2.2</span></h3>
+    <p>DuckDB는 관계형 데이터베이스 관리 시스템(RDBMS)이다. 곧 <em>관계(relation)에 저장된 데이터를 관리하는 시스템</em>이라는 뜻이며, 관계란 본질적으로 테이블을 가리키는 수학 용어다. 각 테이블은 이름이 붙은 행의 모음이다. 한 테이블의 각 행은 이름이 붙은 같은 컬럼 집합을 가지고, 각 컬럼은 특정 데이터 타입을 갖는다. 테이블 자체는 스키마 안에 저장되며, 스키마의 모음이 접근할 수 있는 데이터베이스 전체를 이룬다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE — 대리 키란 무엇인가</span>
+      <p>테이블의 행을 지목하려면 값이 유일한 컬럼, 또는 모든 행에 걸쳐 유일한 컬럼의 조합이 필요하다. 그런 컬럼을 보통 기본 키(primary key)라 부른다. 그런데 데이터베이스에 저장할 만한 데이터가 모두 유일한 속성을 갖고 있는 것은 아니다. 예컨대 사람의 이름을 유일 키 또는 기본 키로 쓰는 것은 형편없는 선택이다.</p>
+      <p>그런 경우 스키마 설계자들은 단조 증가하는 시퀀스에 기반한 숫자 컬럼이나, 범용 유일 식별자(UUID)를 담는 컬럼을 <em>대리 키(surrogate key)</em>로 도입한다.</p>
+    </div>
+
+    <p>이 데이터셋의 스키마는 몇 개의 테이블로 이루어진다(〈도판 3.1〉). 지원되는 조인을 쉽게 시연할 수 있도록 정규화해두었다. 다룰 세 테이블은 다음과 같다.</p>
+    <ul class="plain">
+      <li><b>systems</b> — 발전량을 읽어 들이는 대상 시스템들을 담는다.</li>
+      <li><b>readings</b> — 그 시스템들에서 실제로 측정한 값을 담는다.</li>
+      <li><b>prices</b> — 에너지를 판매하는 가격을 담는다. 예제의 가격은 킬로와트시당 유로센트(cents/kWh)로 측정하지만, 킬로와트시당 어떤 단위를 써도 무관하다.</li>
+    </ul>
+    <p>키 설계의 세 갈래를 한 문단으로 정리하면 이렇다. <code>systems</code> 테이블은 CSV 집합에 정의된 ID를 그대로 쓰며, 이를 <strong>외부에서 생성된 대리 키</strong>로 취급한다. <code>prices</code> 테이블은 <strong>SEQUENCE</strong>를 쓴다. <code>readings</code> 테이블은 <strong>복합 자연 키</strong>—측정된 시스템의 ID에 측정 시각을 붙인 것—를 쓴다. 같은 스키마 안에서 세 가지 키 전략을 나란히 보여주는 설계이니, 교재로서는 잘 짜인 배치다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 3.3 DDL ══════════ -->
+<section id="s3">
+  <div class="sechead rev">
+    <span class="num">3.3</span>
+    <h2>데이터 정의어 질의<span class="en">Data definition language queries</span></h2>
+  </div>
+  <div class="col rev">
+    <p>테이블을 담은 스키마를 먼저 만들지 않고도 여러 원천에 질의할 수 있다는 것은 이미 보았다. 그러나 DuckDB는 온전한 RDBMS이며, 데이터셋을 수집하기 전에 목표 스키마를 만들기 위해 데이터 정의어(DDL) 질의를 쓴다. 새 테이블은 <code>CREATE TABLE</code> 문으로 만들고, 기존 테이블은 <code>ALTER TABLE</code> 문으로 바꾼다. 테이블이 더 필요하지 않으면 <code>DROP TABLE</code>을 쓴다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p>DuckDB는 데이터 정의어 절 전체를 지원하지만, 이 장에서는 간결함을 위해 그 일부만 쓴다. 지원되는 모든 절은 문장 관련 공식 문서를 확인해야 한다.</p>
+    </div>
+
+    <h3>CREATE TABLE 문 <span class="sub">3.3.1</span></h3>
+    <p>감시할 시스템을 담을 테이블부터 만든다. 만들 테이블의 이름과 컬럼 목록은 반드시 지정해야 하고, 문장 전체에 붙는 수정자 같은 나머지 옵션은 선택이다. 컬럼 목록은 컬럼의 이름 다음에 타입, 그리고 선택적인 컬럼 제약을 붙여 정의한다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">기본 CREATE TABLE 문</span>
+        <span class="tagn">목록 3.1</span>
+      </div>
+      <pre><span class="k">CREATE TABLE IF NOT EXISTS</span> systems (
+    id          <span class="k">INTEGER PRIMARY KEY</span>,
+    name        <span class="k">VARCHAR</span>(128) <span class="k">NOT NULL</span>
+);</pre>
+      <div class="term-note">
+        <b>IF NOT EXISTS</b>는 명령 전체를 멱등하게 만드는 선택 절이다. 테이블이 이미 있어도 실패하지 않는다.
+        <b>PRIMARY KEY</b>는 이 컬럼을 필수 컬럼으로 만들며 기본 키, 따라서 유일 키의 구실을 하게 한다. 인덱스도 함께 추가된다.
+        <b>NOT NULL</b>은 컬럼을 필수로 만든다. 리터럴 NULL 값은 넣을 수 없다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>여기서, 그리고 이 테이블을 토대로 삼는 이후의 예제에서 저자들은 여러 제약을 활용한다. 기본 키와 유일 키, 그리고 외래 키다. <code>CREATE</code> 문의 선택지를 시연하기 위해서만이 아니라, <em>데이터 정합성에 마음을 쓰기 때문</em>이라고 밝혀두었다.</p>
+
+    <p>다만 대가가 있다. DuckDB에서도—거의 모든 다른 데이터베이스와 마찬가지로—제약은 대량의 데이터를 적재할 때 성능에 대체로 부정적으로 작용한다. 그 제약을 뒷받침하는 인덱스를 다시 만들거나 갱신해야 하고, 규칙도 검사해야 하기 때문이다. <strong>정합성 검사가 필요하지 않다면 그 제약들을 생략하라</strong>는 것이 저자들의 조언이다. 원칙과 실용의 저울을 감추지 않고 보여주는 문장이다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p>DuckDB에는 <code>CREATE OR REPLACE TABLE</code> 문도 있다. 기존 테이블을 삭제하고 새 정의로 교체한다. 그러나 저자들은 <code>IF NOT EXISTS</code> 절을 선호한다. 조건 없이 테이블을 삭제하는 것보다 안전하다고 보기 때문이며, 삭제하면 그 안에 있었을 데이터가 그대로 사라지기 때문이다.</p>
+    </div>
+
+    <p><code>readings</code> 테이블의 정의는 모양이 조금 다르다. <em>복합 기본 키</em>를 쓴다. <code>systems</code> 테이블을 가리키는 참조 컬럼 <code>system_id</code>와, 값이 측정된 날짜와 시각을 담은 타임스탬프 컬럼으로 이루어진 키다. 이런 기본 키 제약은 컬럼 하나에 직접 붙일 수 없고 컬럼 목록 바깥으로 나간다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">멱등한 문장으로 readings 테이블 만들기</span>
+        <span class="tagn">목록 3.2</span>
+      </div>
+      <pre><span class="k">CREATE TABLE IF NOT EXISTS</span> readings (
+    system_id   <span class="k">INTEGER NOT NULL</span>,
+    read_on     <span class="k">TIMESTAMP NOT NULL</span>,
+    power       <span class="k">DECIMAL</span>(10,3) <span class="k">NOT NULL</span>
+            <span class="k">DEFAULT</span> 0 <span class="k">CHECK</span>(power &gt;= 0),
+    <span class="k">PRIMARY KEY</span> (system_id, read_on),
+    <span class="k">FOREIGN KEY</span> (system_id)
+            <span class="k">REFERENCES</span> systems(id)
+);</pre>
+      <div class="term-note">
+        데이터 품질을 지키기 위해 여러 절이 쓰였다. 전력 측정값에는 기본값 <b>0</b>이 가정되고,
+        추가로 컬럼 <b>CHECK</b> 제약을 두어 음수 값이 들어오지 못하게 막는다.
+        복합 기본 키와 외래 키 제약은 모두 <b>테이블 제약</b>이므로 컬럼 정의 뒤에 놓인다.
+      </div>
+      <div class="term-note catch">
+        이 목록은 <code>power</code>를 <b>DECIMAL(10,3)</b>으로 선언하지만, 〈도판 3.1〉의 스키마 그림과 뒤에 나오는
+        <code>DESCRIBE readings</code> 출력은 모두 <b>DECIMAL(8,3)</b>으로 적혀 있다. 원서 안에서 어긋난 자리이며,
+        따라 해볼 때는 둘 중 하나로 통일해두는 편이 뒤가 편하다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>마지막은 <code>prices</code> 테이블이다. 이 스크립트에는 실은 명령이 둘 들어 있다. 증가하는 숫자 값을 대리 기본 키로 쓸 것이기 때문이다. <code>nextval()</code> 함수 호출을 담은 <code>DEFAULT</code> 선언으로 이를 구현한다. 이 함수는 시퀀스의 이름을 입력으로 받는다. <strong>시퀀스는 테이블 정의 바깥에 데이터베이스에 저장되는 숫자 값</strong>이며, <code>CREATE SEQUENCE</code>로 만든다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">시퀀스 기반 기본 키로 prices 테이블 만들기</span>
+        <span class="tagn">목록 3.3</span>
+      </div>
+      <pre><span class="k">CREATE SEQUENCE IF NOT EXISTS</span> prices_id
+    <span class="k">INCREMENT BY</span> 1 <span class="k">MINVALUE</span> 10;
+
+<span class="k">CREATE TABLE IF NOT EXISTS</span> prices (
+    id          <span class="k">INTEGER PRIMARY KEY</span>
+                  <span class="k">DEFAULT</span>(<span class="f">nextval</span>(<span class="f">'prices_id'</span>)),
+    value       <span class="k">DECIMAL</span>(5,2) <span class="k">NOT NULL</span>,
+    valid_from  <span class="k">DATE NOT NULL</span>,
+    <span class="k">CONSTRAINT</span> prices_uk <span class="k">UNIQUE</span> (valid_from)
+);</pre>
+      <div class="term-note">
+        10에서 시작해 단조 증가하는 시퀀스를 만들고, 그것을 <b>id</b> 컬럼의 기본값으로 쓴다.
+        마지막 줄은 <b>valid_from</b> 컬럼에 유일 테이블 제약을 더한다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>그런데 왜 <code>valid_from</code>을 기본 키로 쓰지 않았는가. 저자들의 설명이 이 절에서 가장 읽어둘 만한 대목이다. 초기 응용에서는 판매 가격만 다루겠지만, 앞으로는 구매 가격도 다루게 될 수 있다. 그것을 모델링하는 방법은 여럿이다. 테이블을 하나 더 두거나, <code>prices</code> 테이블에 어떤 값이 판매가인지 구매가인지 명시하는 유형 컬럼을 도입하는 식이다. 그런데 <code>valid_from</code>을 기본 키로 쓰면 <em>유형이 다른 두 가격이 같은 날짜부터 유효할 수 없게 된다.</em> 그러면 단순 기본 키를 복합 키로 바꿔야 한다. 다른 데이터베이스는 기본 키와 유일 키를 삭제하고 다시 만드는 것을 허용할지 모르지만 <strong>DuckDB는 허용하지 않으므로, 이 경우 더 큰 이관 작업을 거쳐야 한다.</strong></p>
+
+    <p>게다가 기본 키의 값을 갱신하는 일은 그 자체로 비싸다. 인덱스 관점에서만이 아니라 조직적 관점에서도 그렇다. 예컨대 해당 컬럼이 이미 외래 키의 참조 컬럼으로 쓰이고 있는 경우가 그렇다. 모든 제약은 인덱스로 뒷받침되며, 값이 바뀌면 그 인덱스를 재편해야 하는 일이 잦고, 그것은 느리고 비쌀 수 있다. 한 트랜잭션에서 여러 테이블을 갱신하는 것은 흔한 오류의 원천이며, 자주 불일치로 이어진다. 그 위험은 <code>readings</code> 테이블에는 없다. 타임스탬프 컬럼을 기본 키로 삼았는데, <em>측정값은 본질적으로 불변</em>이기 때문이다.</p>
+
+    <div class="tip">
+      <span class="tag">TIP</span>
+      <p>데이터베이스에 있는 기존 시퀀스는 <code>SELECT sequence_name FROM duckdb_sequences();</code>로 살펴본다.</p>
+      <p><span style="color:#8a5410">※ 원서의 이 대목은 <code>FROM</code>이 <code>FRIN</code>으로 잘못 인쇄되어 있다. 그대로 붙여 넣으면 파서 오류가 난다.</span></p>
+    </div>
+
+    <h3>ALTER TABLE 문 <span class="sub">3.3.2</span></h3>
+    <p>스키마를 정의하는 일은 복잡한 과제이고, 조직들은 보통 여기에 많은 공을 들인다. 그러나 스키마가 모든 만일의 사태를 아우르고 처음부터 완전히 옳은 경우는 좀처럼 만나지 못한다. <strong>요구는 늘 변한다.</strong> 예컨대 가격의 유효 기간을 담아야 한다는 요구가 생기면 컬럼이 하나 더 필요해진다. 그런 경우 <code>ALTER TABLE</code> 문을 쓴다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">컬럼 추가와 CTAS</span>
+        <span class="tagn">3.3.2</span>
+      </div>
+      <pre><span class="c">-- DDL 관련 문장 상당수가 IF NOT EXISTS 절을 지원한다.</span>
+<span class="c">-- 기존 스키마를 다룰 때 오류를 덜 내게 해준다.</span>
+<span class="k">ALTER TABLE</span> prices
+<span class="k">ADD COLUMN IF NOT EXISTS</span> valid_until <span class="k">DATE</span>;
+
+<span class="c">-- CTAS(Create table as select): 테이블의 모양과 내용을 한 번에 복제한다.</span>
+<span class="k">CREATE TABLE</span> prices_duplicate <span class="k">AS</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> prices;</pre>
+      <div class="term-note">
+        <code>ALTER TABLE</code>로는 컬럼을 <b>DROP</b>·<b>RENAME</b>할 수 있고 테이블 이름도 <b>RENAME</b>할 수 있다.
+        기본값 같은 일부 컬럼 옵션은 바꿀 수 있지만, <b>제약을 추가·삭제·변경하는 것은 집필 시점에 지원되지 않는다.</b>
+        그렇게 하려면 테이블을 다시 만들어야 한다.
+      </div>
+      <div class="term-note">
+        CTAS에 <b>LIMIT 0</b> 절을 더하면 데이터 없이 테이블의 스키마만 복사하고,
+        조건을 담은 <b>WHERE</b> 절을 더하면 모양과 함께 일부 데이터까지 복사한다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <h3>CREATE VIEW 문 <span class="sub">3.3.3</span></h3>
+    <p><code>CREATE VIEW</code> 문은 질의에 대한 뷰를 정의한다. 본질적으로 <em>그 질의를 표현하는 문장을 모든 조건과 변환을 포함해 저장</em>하는 것이다. 질의될 때 뷰는 다른 어떤 테이블이나 관계와 똑같이 동작하며, 추가 조건과 변환을 얹을 수 있다.</p>
+
+    <p>어떤 데이터베이스는 뷰를 실체화(materialize)하고 어떤 데이터베이스는 하지 않는다. DuckDB는 뷰를 질의하면 그 밑에 깔린 문장을 실행한다. 성능 문제에 부딪히면 CTAS 문으로 뷰의 데이터를 임시 테이블에 실체화하는 것을 고려할 만하다. 그리고 뷰를 질의할 때 <code>WHERE</code> 절에 쓰는 추가 술어는 흔히 <strong>푸시다운 술어</strong>로 활용된다. 그 술어가 뷰를 정의하는 밑단 질의에 더해지며, 데이터를 적재한 뒤에 걸러내는 필터로 쓰이지 않는다는 뜻이다. 뷰가 게으른 껍데기가 아니라 최적화의 통로가 된다는 점을 짚어둘 만하다.</p>
+
+    <p>이 시나리오에서 요긴한 뷰는 <em>시스템별·일별로 생산된 에너지를 kWh로 알려주는 뷰</em>다. 이 뷰가 그 값을 계산하는 논리를 필요한 그룹화 문장과 함께 감싸준다. 저자들은 뷰의 값어치를 이렇게 정리한다. <strong>뷰는 데이터베이스 안에 API를 만드는 훌륭한 방법이다.</strong> 그 API는 즉석 질의와 응용 프로그램을 모두 상대할 수 있고, 밑단 계산이 바뀌어도 같은 구조로 뷰를 다시 만들면 바깥의 어떤 응용에도 영향을 주지 않는다.</p>
+
+    <p><code>GROUP BY</code> 절은 관계형 세계에서 없이 지내기 어려운 절 가운데 하나이며, 왜 그렇게 중요한지는 이 장 뒤에서 살펴본다. 이 예제에서는 <code>GROUP BY</code> 절이 시스템과 일자별로 생산된 총 전력을 계산한다는 것만 이해하면 된다. 선택 목록에 쓰인 <code>sum</code> 함수는 이른바 집계 함수로, 한 그룹에 속한 값들을 집계한다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">시스템·일자별 발전량 뷰 만들기</span>
+        <span class="tagn">목록 3.4</span>
+      </div>
+      <pre><span class="k">CREATE OR REPLACE VIEW</span> v_power_per_day <span class="k">AS</span>
+<span class="k">SELECT</span> system_id,
+       <span class="f">date_trunc</span>(<span class="f">'day'</span>, read_on)        <span class="k">AS</span> day,
+       <span class="f">round</span>(<span class="f">sum</span>(power) / 4 / 1000, 2)  <span class="k">AS</span> kWh,
+<span class="k">FROM</span> readings
+<span class="k">GROUP BY</span> system_id, day;</pre>
+      <div class="term-note">
+        15분 간격의 와트 값을 4로 나누어 시간 단위로 환산하고, 1000으로 나누어 킬로와트로 바꾼다.
+        뷰가 만들어지는 데는 밑단 테이블이 비어 있어도 상관없다. 존재하기만 하면 된다.
+        <code>readings</code> 테이블은 만들었지만 아직 데이터를 넣지 않았으므로 지금 질의하면 빈 결과가 돌아온다.
+      </div>
+      <div class="term-note catch">
+        <code>AS kWh,</code> 뒤의 쉼표가 눈에 걸린다. 오타처럼 보이지만 오타가 아니다.
+        DuckDB는 선택 목록 마지막의 <b>후행 쉼표</b>를 허용한다. 컬럼을 덧붙이고 지우는 편집을 편하게 해주는 배려이며,
+        원서가 별말 없이 이 문법을 써 보인 자리다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <h3>DESCRIBE 문 <span class="sub">3.3.4</span></h3>
+    <p>거의 보편적으로, 관계형 데이터베이스는 데이터베이스 스키마를 질의하기 위해 <code>DESCRIBE</code> 문을 지원한다. 가장 기본적인 구현에서는 보통 테이블과 뷰에 대해 동작한다. 그런데 DuckDB의 <code>DESCRIBE</code>는 <strong>관계인 모든 것에 대해 동작한다.</strong> 뷰, 질의, 집합, 그 밖의 것까지 모두 해당한다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">DESCRIBE는 관계인 모든 것에 통한다</span>
+        <span class="tagn">3.3.4</span>
+      </div>
+      <pre><span class="c">-- ① 테이블</span>
+<span class="p">D</span> <span class="k">DESCRIBE</span> readings;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">column_name</th><th class="l">column_type</th><th>null</th><th>key</th><th>default</th><th>extra</th></tr>
+            <tr class="type"><th class="l">varchar</th><th class="l">varchar</th><th>varchar</th><th>varchar</th><th>varchar</th><th>int32</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">system_id</td><td class="l">INTEGER</td><td>NO</td><td>PRI</td><td></td><td></td></tr>
+            <tr><td class="l">read_on</td><td class="l">TIMESTAMP</td><td>NO</td><td>PRI</td><td></td><td></td></tr>
+            <tr><td class="l">power</td><td class="l">DECIMAL(8,3)</td><td>NO</td><td></td><td>0</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><span class="c">-- ② 임의의 테이블에서 골라낸 컬럼 부분집합, 곧 새 튜플</span>
+<span class="p">D</span> <span class="k">DESCRIBE SELECT</span> read_on, power <span class="k">FROM</span> readings;
+
+<span class="c">-- ③ 즉석에서 구성한 튜플</span>
+<span class="p">D</span> <span class="k">DESCRIBE VALUES</span> (4711, <span class="f">'2023-05-28 11:00'</span>::<span class="k">timestamp</span>, 42);</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">column_name</th><th class="l">column_type</th><th>null</th><th>key</th><th>default</th><th>extra</th></tr>
+            <tr class="type"><th class="l">varchar</th><th class="l">varchar</th><th>varchar</th><th>varchar</th><th>varchar</th><th>varchar</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">col0</td><td class="l">INTEGER</td><td>YES</td><td></td><td></td><td></td></tr>
+            <tr><td class="l">col1</td><td class="l">TIMESTAMP</td><td>YES</td><td></td><td></td><td></td></tr>
+            <tr><td class="l">col2</td><td class="l">INTEGER</td><td>YES</td><td></td><td></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        ②의 결과에서는 <b>null</b> 컬럼이 모두 <b>YES</b>로 바뀌고 <b>key</b>가 비어 있다. 질의의 결과 튜플은 원 테이블의 제약을 물려받지 않는다.
+        ③은 테이블도, 파일도 없이 값의 나열만으로 관계를 만들어 그 모양을 물은 것이다. 이름 없는 컬럼에는 <b>col0, col1, col2</b>가 붙는다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <div class="tip">
+      <span class="tag">TIP — 관계형 모델의 뿌리</span>
+      <p>관계형 데이터베이스는 관계형 모델, 그리고 결국 관계 대수에 기반한다. 관계형 모델은 1970년 에드거 F. 코드(Edgar F. Codd)가 처음 서술했다. 요컨대 모든 데이터는 관계로 묶인 튜플의 집합으로 저장된다. 튜플은 속성의 순서 있는 목록이며, 테이블의 컬럼 목록이라고 생각하면 된다. 그러면 테이블은 튜플 집합의 관계다. 뷰도 튜플의 관계이고, 질의의 결과도 그렇다.</p>
+      <p>그래프 데이터베이스는 관계형 데이터베이스와 달리 <em>개체 사이의 실제 관계를 저장한다.</em> 이 책에서는 관계라는 말을 관계형 모델에서 정의된 뜻으로 쓴다.</p>
+    </div>
+
+    <div class="tip">
+      <span class="tag">TIP — 모양이 의심스러울 때는</span>
+      <p>데이터의 모양이 확실하지 않은 모든 상황에서 <code>DESCRIBE</code> 문을 쓴다. 로컬 파일이든 원격 파일이든 온갖 종류의 관계에 통한다. 다만 <strong>쓰는 파일의 종류가 DuckDB의 최적화 효율을 좌우한다.</strong> 예컨대 Parquet 형식의 원격 파일은 아주 빠르게 서술되지만, CSV 형식의 파일은 스키마를 함께 지니고 있지 않아 엔진이 내용을 표집해야 하므로 서술에 더 오래 걸리는 일이 잦다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 3.4 DML ══════════ -->
+<section id="s4">
+  <div class="sechead rev">
+    <span class="num">3.4</span>
+    <h2>데이터 조작어 질의<span class="en">Data manipulation language queries</span></h2>
+  </div>
+  <div class="col rev">
+    <p>데이터베이스의 맥락에서 데이터를 삽입하고 삭제하고 수정하고 <em>읽는</em> 모든 문장을 데이터 조작어(DML)라 부른다. 읽는 것까지 조작에 넣는다는 점이 처음에는 낯설지만, 관계를 새 관계로 변환하는 일이 곧 조작이라고 보면 자연스럽다. 이 절은 데이터 질의로 들어가기 전에 <code>INSERT</code>와 <code>DELETE</code> 문을 먼저 다룬다. <code>UPDATE</code> 문은 여기서 자세히 파지 않는다.</p>
+    <p>그럴 수 있는 이유가 있다. <strong>SQL 질의의 아름다움은 그것들이 아주 자연스럽게 조합된다는 데 있다.</strong> 예컨대 <code>WHERE</code> 절에 대해 배운 모든 것은 <code>INSERT</code>, <code>DELETE</code>, <code>UPDATE</code>, <code>SELECT</code> 문에서 쓰이는 그 절에도 그대로 적용된다.</p>
+
+    <h3>INSERT 문 <span class="sub">3.4.1</span></h3>
+    <p>데이터를 만들 때는 <code>INSERT</code> 문을 쓴다. 데이터 삽입은 단순한 "쏘고 잊는" 문장에서부터 충돌을 완화하고 높은 데이터 품질을 보장하는 복잡한 문장까지 폭이 넓다. 저자들은 단순하고 순진한 쪽에서 출발한다. <code>INSERT</code> 문은 <em>어디에</em> 넣을지를 먼저 지정하고 <em>무엇을</em> 넣을지를 그다음에 지정한다. 어디는 테이블 이름이고, 무엇은 컬럼 값의 목록일 수 있지만 <strong>테이블의 컬럼 타입과 순서에 맞아야 한다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">순진한 삽입과 그 대가</span>
+        <span class="tagn">3.4.1</span>
+      </div>
+      <pre><span class="c">-- 숫자 둘과 문자열 둘. 뒤의 둘은 자동으로 DATE로 형 변환된다.</span>
+<span class="p">D</span> <span class="k">INSERT INTO</span> prices
+  <span class="k">VALUES</span> (1, 11.59, <span class="f">'2018-12-01'</span>, <span class="f">'2019-01-01'</span>);
+
+<span class="c">-- 같은 문장을 한 번 더 실행하면, 마땅히 실패한다.</span>
+<span class="p">D</span> <span class="k">INSERT INTO</span> prices
+<span class="p">&gt;</span>   <span class="k">VALUES</span> (1, 11.59, <span class="f">'2018-12-01'</span>, <span class="f">'2019-01-01'</span>);
+<span class="err">Error: Constraint Error: Duplicate key "id: 1" violates primary key
+constraint. If this is an unexpected constraint violation please
+double check with the known index limitations section in our
+documentation (https://duckdb.org/docs/sql/indexes).</span></pre>
+      <div class="term-note">
+        이 질의는 두 가지로 취약하다. 첫째, <b>컬럼의 순서에 의존</b>하므로 대상 테이블이 바뀌는 순간 문장이 깨진다.
+        둘째, <b>1을 유일 키로 명시</b>했으므로 두 번째 실행은 기본 키가 유일해야 한다는 제약을 위반한다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>스키마가 주어진 이상 충돌 자체를 막을 수는 없었지만, 표준이 아닌 <code>ON CONFLICT</code> 절을 써서 <em>아무것도 하지 않게</em> 완화할 수 있다. <code>DO NOTHING</code> 절은 기본적으로 기본 인덱스—여기서는 <code>id</code> 컬럼—를 대상으로 삼는다. 여전히 취약하지만 최소한 이제 이 문장은 멱등해진다.</p>
+    <p>다만 저자들은 여기에 정직한 경고를 붙인다. <strong>이 경우 멱등성은 생각만큼 유용하지 않을 수 있다.</strong> 오류는 나지 않지만, 기대한 결과도 얻지 못할 가능성이 크기 때문이다. 오류를 삼키는 것이 문제 해결과 같지 않다는 이 지적은 새겨둘 만하다. 더 나은 해법은 넣고 싶은 컬럼을 모두 명시하고 ID에 명시적 값을 쓰지 않는 것이다. 이미 시퀀스와 기본값을 정의해두었으니 ID는 알아서 생성된다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">멱등성에서 병합까지</span>
+        <span class="tagn">3.4.1</span>
+      </div>
+      <pre><span class="c">-- ① 충돌을 무시한다. 멱등하지만 여전히 취약하다.</span>
+<span class="k">INSERT INTO</span> prices
+<span class="k">VALUES</span> (1, 11.59, <span class="f">'2018-12-01'</span>, <span class="f">'2019-01-01'</span>)
+<span class="k">ON CONFLICT DO NOTHING</span>;
+
+<span class="c">-- ② 컬럼을 명시하고 ID는 시퀀스에 맡긴다. 이것이 나은 해법이다.</span>
+<span class="k">INSERT INTO</span> prices(value, valid_from, valid_until)
+<span class="k">VALUES</span> (11.47, <span class="f">'2019-01-01'</span>, <span class="f">'2019-02-01'</span>),
+       (11.35, <span class="f">'2019-02-01'</span>, <span class="f">'2019-03-01'</span>),
+       (11.23, <span class="f">'2019-03-01'</span>, <span class="f">'2019-04-01'</span>),
+       (11.11, <span class="f">'2019-04-01'</span>, <span class="f">'2019-05-01'</span>),
+       (10.95, <span class="f">'2019-05-01'</span>, <span class="f">'2019-06-01'</span>);
+
+<span class="c">-- ③ 유효 시작일의 유일 키에서 충돌하면 값을 갱신한다.</span>
+<span class="k">INSERT INTO</span> prices(value, valid_from, valid_until)
+<span class="k">VALUES</span> (11.47, <span class="f">'2019-01-01'</span>, <span class="f">'2019-02-01'</span>)
+<span class="k">ON CONFLICT</span> (valid_from)
+  <span class="k">DO UPDATE SET</span> value = excluded.value;</pre>
+      <div class="term-note">
+        ③처럼 테이블에 제약이 여럿(기본 키와 유일 키)일 때는 <b>어느 키에서 충돌 완화가 일어날지 반드시 명시</b>해야 한다.
+        유효 기간 날짜에 유일 키를 걸어둔 덕에, 오류를 삼키는 대신 <b>업무적으로 의미 있는 방식</b>으로 반응할 수 있게 되었다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>물론 <code>SELECT</code> 문의 결과를 <code>INSERT</code> 문의 입력으로 쓸 수도 있다. 이 문장을 <em><code>INSERT</code> 절로 들어가는 파이프라인</em>이라고 생각하면 된다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">다른 관계에서 데이터 삽입</span>
+        <span class="tagn">목록 3.5</span>
+      </div>
+      <pre><span class="k">INSERT INTO</span> prices(value, valid_from, valid_until)
+<span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">'prices.csv'</span> src;</pre>
+      <div class="term-note">
+        <code>prices.csv</code>의 모든 데이터를 골라 나타난 순서대로 삽입한다. 파일은 이 책 깃허브 저장소의 <b>ch03</b> 폴더에 있다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>이제 <code>systems</code> 테이블을 채우고 첫 측정값 묶음을 적재한다. <code>INSERT</code> 문을 제대로 쓰려면 CSV 데이터가 어떻게 생겼는지부터 알아야 한다. 여기서 앞 절의 교훈—<em><code>DESCRIBE</code>는 관계인 모든 것에 통한다</em>—이 그대로 쓰인다. 이 경우 그 관계는 CSV 파일을 읽는 것으로 정의된다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">systems.csv의 모양 살피기</span>
+        <span class="tagn">3.4.1</span>
+      </div>
+      <pre><span class="p">D</span> <span class="k">INSTALL</span> <span class="f">'httpfs'</span>;
+<span class="p">D</span> <span class="k">LOAD</span> <span class="f">'httpfs'</span>;
+<span class="p">D</span> <span class="k">DESCRIBE SELECT</span> * <span class="k">FROM</span>
+      <span class="f">'https://oedi-data-lake.s3.amazonaws.com/pvdaq/csv/systems.csv'</span>;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">column_name</th><th class="l">column_type</th><th>null</th><th>key</th><th>default</th><th>extra</th></tr>
+            <tr class="type"><th class="l">varchar</th><th class="l">varchar</th><th>varchar</th><th>varchar</th><th>varchar</th><th>varchar</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">system_id</td><td class="l">BIGINT</td><td>YES</td><td></td><td></td><td></td></tr>
+            <tr><td class="l">system_public_name</td><td class="l">VARCHAR</td><td>YES</td><td></td><td></td><td></td></tr>
+            <tr><td class="l">site_id</td><td class="l">BIGINT</td><td>YES</td><td></td><td></td><td></td></tr>
+            <tr><td class="l">site_public_name</td><td class="l">VARCHAR</td><td>YES</td><td></td><td></td><td></td></tr>
+            <tr><td class="l">site_location</td><td class="l">VARCHAR</td><td>YES</td><td></td><td></td><td></td></tr>
+            <tr><td class="l">site_latitude</td><td class="l">DOUBLE</td><td>YES</td><td></td><td></td><td></td></tr>
+            <tr><td class="l">site_longitude</td><td class="l">DOUBLE</td><td>YES</td><td></td><td></td><td></td></tr>
+            <tr><td class="l">site_elevation</td><td class="l">DOUBLE</td><td>YES</td><td></td><td></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        타입 힌트를 하나도 주지 않았을 때 DuckDB의 눈에 <code>systems.csv</code>는 이렇게 보인다.
+        여덟 컬럼 중 <b>system_id</b>와 <b>system_public_name</b>만 쓰면 충분하다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>그런데 이 파일에는 중복이 있어서 삽입이 실패한다. 중복을 걸러내는 가장 쉬운 방법은 <code>SELECT</code> 문의 컬럼 절에 <code>DISTINCT</code> 키워드를 적용하는 것이다. 이렇게 하면 선택한 모든 컬럼에 걸쳐 유일한 집합이 보장된다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">중복을 제거한 행 집합을 다른 테이블에서 삽입</span>
+        <span class="tagn">목록 3.6</span>
+      </div>
+      <pre><span class="k">INSTALL</span> <span class="f">'httpfs'</span>;
+<span class="k">LOAD</span> <span class="f">'httpfs'</span>;
+
+<span class="k">INSERT INTO</span> systems(id, name)
+<span class="k">SELECT DISTINCT</span> system_id, system_public_name
+<span class="k">FROM</span> <span class="f">'https://oedi-data-lake.s3.amazonaws.com/pvdaq/csv/systems.csv'</span>
+<span class="k">ORDER BY</span> system_id <span class="k">ASC</span>;</pre>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>3.2.1절에서 시스템을 고른 데에는 이유가 있었다. <strong>34번 시스템</strong>의 데이터셋으로 시작하는 것은 그것이 15분 간격 측정이라는 요건에 맞기 때문이다. 다만 다뤄야 할 흠이 있다. <em>출력 전력이 때때로 NULL이거나 음수다.</em> 빠진 값을 0으로 대체하기 위해 <code>CASE</code> 표현식을 쓴다. 그리고 이 URL은 <code>.csv</code>나 <code>.parquet</code>처럼 낯익은 확장자를 쓰지 않아 어떤 종류의 파일이나 구조가 뒤에 있는지 DuckDB에게 분명하게 알려주지 못한다. 그래서 <code>read_csv_auto</code> 함수를 써야 한다. 제2장의 짧은 링크 문제가 여기서 실전으로 되돌아온다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">첫 측정값 묶음 내려받아 수집하기</span>
+        <span class="tagn">목록 3.7</span>
+      </div>
+      <pre><span class="k">INSERT INTO</span> readings(system_id, read_on, power)
+<span class="k">SELECT</span> SiteId, <span class="f">"Date-Time"</span>,
+        <span class="k">CASE</span>
+             <span class="k">WHEN</span> ac_power &lt; 0 <span class="k">OR</span> ac_power <span class="k">IS NULL THEN</span> 0
+             <span class="k">ELSE</span> ac_power <span class="k">END</span>
+<span class="k">FROM</span> <span class="f">read_csv_auto</span>(
+        <span class="f">'https://developer.nrel.gov/api/pvdaq/v3/data_file?'</span> ||
+        <span class="f">'api_key=DEMO_KEY&amp;system_id=34&amp;year=2019'</span>
+     );
+
+<span class="c">-- 들어온 데이터를 하루치만 훑어본다.</span>
+<span class="p">D</span> <span class="k">SELECT</span> * <span class="k">FROM</span> readings
+  <span class="k">WHERE</span> <span class="f">date_trunc</span>(<span class="f">'day'</span>, read_on) = <span class="f">'2019-08-26'</span> <span class="k">AND</span> power &lt;&gt; 0;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>system_id</th><th class="l">read_on</th><th>power</th></tr>
+            <tr class="type"><th>int32</th><th class="l">timestamp</th><th>decimal(10,3)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>34</td><td class="l">2019-08-26 05:30:00</td><td>1700.000</td></tr>
+            <tr><td>34</td><td class="l">2019-08-26 05:45:00</td><td>3900.000</td></tr>
+            <tr><td>34</td><td class="l">2019-08-26 06:00:00</td><td>8300.000</td></tr>
+            <tr><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td></tr>
+            <tr><td>34</td><td class="l">2019-08-26 17:30:00</td><td>5200.000</td></tr>
+            <tr><td>34</td><td class="l">2019-08-26 17:45:00</td><td>2200.000</td></tr>
+            <tr><td>34</td><td class="l">2019-08-26 18:00:00</td><td>600.000</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="3">51 rows (6 shown) &nbsp;&nbsp; 3 columns</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        새벽 5시 30분에 1.7kW로 깨어나 정오를 지나 저녁 6시에 0.6kW로 잦아드는 하루가 표 한 장에 담긴다.
+        측정값이 들어왔으니 목록 3.4의 뷰 <code>v_power_per_day</code>도 이제 값을 돌려준다.
+      </div>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>system_id</th><th class="l">day</th><th>kWh</th></tr>
+            <tr class="type"><th>int32</th><th class="l">date</th><th>double</th></tr>
+          </thead>
+          <tbody><tr><td>34</td><td class="l">2019-08-26</td><td>716.9</td></tr></tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        하루 716.9kWh. 뷰가 날짜를 일 단위로 잘라내고 그날의 측정값 총합을 집계하는 논리를 감싸준 결과다.
+        <b>뷰는 이런 논리를 감싸두는 훌륭한 수단</b>이라는 앞 절의 주장이 여기서 실물로 확인된다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>2020년치 질의는 URL 매개변수만 빼면 사실상 같다. 그렇다면 인라인 테이블 구실을 하는 <code>range</code> 함수로 파일 이름 목록을 생성하면 되지 않을까. 저자들도 그 생각을 해보고, 되지 않는다고 솔직하게 적었다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">이론적으로는 맞지만 아직 되지 않는 질의</span>
+        <span class="tagn">3.4.1</span>
+      </div>
+      <pre><span class="k">SELECT</span> *
+<span class="k">FROM</span> (
+    <span class="k">SELECT</span> <span class="f">'https://'</span> || years.range || <span class="f">'.csv'</span> <span class="k">AS</span> v
+    <span class="k">FROM</span> <span class="f">range</span>(2019,2021) years
+) urls, <span class="f">read_csv_auto</span>(urls.v);</pre>
+      <div class="term-note">
+        이유가 둘이다. 첫째, 이른바 <b>테이블 함수</b>의 구현 제약 때문에 집필 시점에는 <b>상수 매개변수만 받는다.</b>
+        둘째, <code>read_csv</code>나 <code>read_parquet</code>는 입력 매개변수를 보고 주어진 파일을 읽어서 스키마를 알아내므로,
+        <b>닭과 달걀의 문제</b>가 남는다. 스키마를 알려면 파일을 읽어야 하고, 파일 이름은 질의가 돌아야 정해진다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <h3>데이터 병합 <span class="sub">3.4.2</span></h3>
+    <p>중복이 있거나 이미 데이터베이스에 있는 항목을 담은 데이터셋을 마주하는 일이 잦다. 새 데이터를 다듬고 정리하는 것이 유일한 목적이라면 충돌을 무시해도 되지만, 때로는 <em>새 데이터를 기존 데이터에 병합</em>하고 싶어진다. 이 목적을 위해 DuckDB는 <code>ON CONFLICT DO UPDATE</code> 절을 제공한다. 다른 데이터베이스에서는 <code>MERGE INTO</code>로 알려진 그것이다.</p>
+    <p>예제의 상황은 이렇다. 같은 시스템에 대해 서로 다른 계량기에서 온 측정값이 여럿 있을 수 있고, 그 평균 측정값을 계산하고 싶다. 충돌 시 아무것도 하지 않는 대신 <code>DO UPDATE</code>를 쓴다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">충돌 시 새 값 계산하기</span>
+        <span class="tagn">목록 3.8</span>
+      </div>
+      <pre><span class="k">INSERT INTO</span> readings(system_id, read_on, power)
+  <span class="k">VALUES</span> (10, <span class="f">'2023-06-05 13:00:00'</span>, 4000);
+
+<span class="k">INSERT INTO</span> readings(system_id, read_on, power)
+  <span class="k">VALUES</span> (10, <span class="f">'2023-06-05 13:00:00'</span>, 3000)
+<span class="k">ON CONFLICT</span>(system_id, read_on) <span class="k">DO UPDATE</span>
+<span class="k">SET</span> power = <span class="k">CASE</span>
+  <span class="k">WHEN</span> power = 0 <span class="k">THEN</span> excluded.power
+  <span class="k">ELSE</span> (power + excluded.power) / 2 <span class="k">END</span>;</pre>
+      <div class="term-note">
+        두 번째 시도는 기본 키가 아니라 <b>system_id와 read_on의 복합 키</b>에서 충돌한다.
+        갱신 절은 필요한 만큼 여러 컬럼을 갱신할 수 있어 사실상 병합(merge/upsert)이 되며,
+        <code>CASE</code> 문 같은 복잡한 표현식도 허용된다. 원래 데이터셋의 컬럼은 별칭 <b>excluded</b>로 참조한다.
+      </div>
+      <div class="term-note">
+        결과는 3500이 된다. 4000과 3000의 평균이다. 충돌을 오류로 볼 것인가 정보로 볼 것인가.
+        <b>이 절의 요지는 후자를 택할 문법이 준비되어 있다는 것이다.</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p>DuckDB는 <code>INSERT OR REPLACE</code>와 <code>INSERT OR IGNORE</code>를 각각 <code>ON CONFLICT DO UPDATE</code>와 <code>ON CONFLICT DO NOTHING</code>의 짧은 대안으로 제공한다. 다만 <code>INSERT OR REPLACE</code>는 앞의 예제처럼 <em>기존 값을 결합하는 능력이 없고,</em> 충돌 대상을 정의할 수도 없다.</p>
+    </div>
+
+    <h3>DELETE 문 <span class="sub">3.4.3</span></h3>
+    <p>쓰고 있는 데이터 원천에는 이상치가 몇 개 있다. 시각의 서로 다른 분(minute)에 측정된 측정값 무리를 들여왔는데, 그것들을 데이터셋에 두고 싶지 않다. 가장 쉬운 처리는 <code>DELETE</code> 문을 적용해 없애버리는 것이다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">수집된 데이터 정리하기</span>
+        <span class="tagn">목록 3.9</span>
+      </div>
+      <pre><span class="k">DELETE FROM</span> readings
+<span class="k">WHERE</span> <span class="f">date_part</span>(<span class="f">'minute'</span>, read_on) <span class="k">NOT IN</span> (0,15,30,45);</pre>
+      <div class="term-note">
+        부정된 <b>IN</b> 연산자로 삭제할 행을 걸러낸다. 이 연산자는 왼쪽 표현식이 오른쪽 표현식 집합에 들어 있는지를 검사한다.
+        <b>date_part</b>는 날짜와 타임스탬프를 다루는 DuckDB의 여러 내장 함수 중 하나로, 타임스탬프에서 한 부분—여기서는 분—을 뽑아낸다.
+      </div>
+      <div class="term-note">
+        저자들은 여기에 한마디를 덧붙인다. 이런 별스러움과 불일치는 미리 알고 있으면 수집한 뒤에 처리할 필요가 없다.
+        예제처럼 시간 기반 데이터라면 수집 문장에서 <b>time_bucket</b> 함수를 활용해 쓸 수도 있었다.
+        <b>가져온 뒤에야 알아차렸고, 그 사실을 짚어둘 만하다고 생각했다</b>는 고백이 미덥다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 3.4.4 SELECT ══════════ -->
+<section id="s4b">
+  <div class="sechead rev">
+    <span class="num">3.4.4</span>
+    <h2>SELECT 문<span class="en">The SELECT statement</span></h2>
+  </div>
+  <div class="col rev">
+    <p>이 절은 <code>SELECT</code> 문과, 수집한 데이터를 질의하는 일에 집중한다. 이 문장은 데이터베이스에서 데이터를 행으로 가져오거나, 중첩해 쓰이면 <em>덧없는(ephemeral) 관계</em>를 만든다. 그 관계는 다시 질의할 수도 있고, 앞에서 본 것처럼 데이터를 삽입하는 데 쓸 수도 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">SELECT 문의 구조</span>
+        <span class="tagn">목록 3.10</span>
+      </div>
+      <pre><span class="k">SELECT</span>   select_list
+<span class="k">FROM</span>     tables
+<span class="k">WHERE</span>    condition
+<span class="k">GROUP BY</span> groups
+<span class="k">HAVING</span>   group_filter
+<span class="k">ORDER BY</span> order_expr
+<span class="k">LIMIT</span>    n</pre>
+      <div class="term-note">
+        절의 본질적 목록과 그 정통 순서다. 표준과 DuckDB 고유 방언 양쪽에 절이 더 있고, 그중 몇은 다음 장에서 다룬다.
+        저자들이 가장 중요하다고 꼽는 것은 <b>JOIN과 함께 쓰이는 FROM</b>, <b>WHERE</b>, <b>GROUP BY</b> 셋이다.
+        질의의 원천을 정의하고, 읽는 질의와 쓰는 질의를 모두 걸러내며, 종국에 그것들의 모양을 다시 잡는 절들이기 때문이다.
+        <b>ORDER</b>처럼 이름 그대로 순서를 세우는 나머지 절들은 이해하기가 훨씬 쉽다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <h4 class="clause">SELECT 절과 FROM 절</h4>
+    <p>데이터를 읽는 모든 표준 SQL 문은 <code>SELECT</code> 절로 시작한다. <code>SELECT</code> 절은 종국에 행으로 돌아올 컬럼이나 표현식을 정의한다. 원천 테이블에서 모든 것을 가져오려면 <code>*</code>를 쓴다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p><code>SELECT</code> 절은 때로 <em>사영(projection)</em>이라 불린다. 어떤 컬럼을 돌려줄지 고르는 일이기 때문이다. 역설적이게도 <strong>행의 선택(selection)은 <code>WHERE</code> 절에서 일어난다.</strong></p>
+    </div>
+
+    <p>두 절은 서로를 보완하므로 어느 쪽을 먼저 설명해도 좋고 함께 설명해도 좋다. <code>FROM</code> 절은 나머지 질의가 작동할 데이터의 원천을 지정하며, 대부분의 질의에서 그것은 하나 이상의 테이블이다. <code>FROM</code> 절에 테이블이 둘 이상 나열되거나 추가로 <code>JOIN</code> 절이 쓰이면, 그것을 테이블을 서로 조인한다고 말한다.</p>
+
+    <p>여기서 <code>LIMIT</code> 절이 등장한다. 돌려받을 행의 수를 제한한다. <strong>밑에 깔린 데이터셋을 모를 때는 돌려받는 데이터의 양을 제한하는 것이 흔히 현명하다.</strong> 대량의 네트워크 트래픽을 일으키거나 클라이언트가 응답하지 않는 상태에 빠지는 일을 피할 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">두 행만 보기</span>
+        <span class="tagn">3.4.4</span>
+      </div>
+      <pre><span class="p">D</span> <span class="k">SELECT</span> *
+  <span class="k">FROM</span> prices
+  <span class="k">LIMIT</span> 2;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>id</th><th>value</th><th class="l">valid_from</th><th class="l">valid_until</th></tr>
+            <tr class="type"><th>int32</th><th>decimal(5,2)</th><th class="l">date</th><th class="l">date</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>11.59</td><td class="l">2018-12-01</td><td class="l">2019-01-01</td></tr>
+            <tr><td>10</td><td>11.47</td><td class="l">2019-01-01</td><td class="l">2019-02-01</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>ORDER 절이 없으면 순서는 실제로 정의되지 않으며</b> 각자의 인스턴스에서 다를 수 있다.
+        id가 1에서 곧바로 10으로 건너뛰는 것은 시퀀스를 <code>MINVALUE 10</code>으로 시작했기 때문이다.
+        그리고 DuckDB의 방언은 이 코드를 <b>FROM prices;</b> 한 줄로 줄이게 해준다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <h4 class="clause">WHERE 절</h4>
+    <p><code>WHERE</code> 절은 질의에 조건을 붙여 데이터를 걸러낸다. 그 조건은 하나 이상의 표현식으로 짜인다. <code>SELECT</code>, <code>DELETE</code>, <code>UPDATE</code> 문으로 선택한 데이터는 그 술어에 맞아야 연산에 포함된다. 논리적으로 <code>WHERE</code> 절은 <code>FROM</code> 절 바로 뒤, 또는 앞서는 <code>DELETE</code>·<code>UPDATE</code> 문 바로 뒤에 적용된다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">임의의 LIMIT을 제대로 된 조건으로 바꾸기</span>
+        <span class="tagn">3.4.4</span>
+      </div>
+      <pre><span class="c">-- 스타 셀렉트의 경우 SELECT *를 생략하고 FROM 절로 시작할 수 있다. DuckDB의 확장이다.</span>
+<span class="p">D</span> <span class="k">FROM</span> prices
+  <span class="k">WHERE</span> valid_from <span class="k">BETWEEN</span>
+    <span class="f">'2020-01-01'</span> <span class="k">AND</span> <span class="f">'2020-12-31'</span>;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>id</th><th>value</th><th class="l">valid_from</th><th class="l">valid_until</th></tr>
+            <tr class="type"><th>int32</th><th>decimal(5,2)</th><th class="l">date</th><th class="l">date</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>15</td><td>8.60</td><td class="l">2020-11-01</td><td class="l">2023-01-01</td></tr>
+            <tr><td>17</td><td>8.64</td><td class="l">2020-10-01</td><td class="l">2020-11-01</td></tr>
+            <tr><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td></tr>
+            <tr><td>25</td><td>9.72</td><td class="l">2020-02-01</td><td class="l">2020-03-01</td></tr>
+            <tr><td>26</td><td>9.87</td><td class="l">2020-01-01</td><td class="l">2020-02-01</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="4">11 rows (4 shown) &nbsp;&nbsp; 4 columns</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>BETWEEN</b> 키워드는 <code>x &lt;= v AND v &lt;= y</code>의 줄임이다. 양 끝을 포함한다는 점을 늘 기억해두는 편이 좋다.
+      </div>
+      <div class="term-note catch">
+        원서 본문은 이 질의가 "특정 연도(2000)의 가격만" 포함한다고 적었으나, 질의와 결과는 모두 <b>2020년</b>의 것이다.
+        인쇄상의 오식이다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <h4 class="clause">GROUP BY 절</h4>
+    <p>하나 이상의 컬럼으로 그룹을 만들면 그 컬럼들의 유일한 값마다 출력 행이 하나 생긴다. 그 필드들이 일치하는 모든 행을 함께 묶는 것이다. 이어서 묶인 값들이 <code>count</code>, <code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code> 같은 집계 함수로 집계되어, 그 그룹에 대한 단 하나의 값이 만들어진다. 하루 평균 측정 횟수나 주별 고객 합계 같은 것을 계산할 때 쓸모가 있다.</p>
+    <p>한 가지 짚어둘 규칙이 있다. <strong><code>GROUP BY</code> 절이 지정되면, 선택 목록에 집계가 하나도 없어도 그 질의는 언제나 집계 질의다.</strong> 그리고 DuckDB에는 집계 함수의 일부가 아닌 모든 컬럼으로 그룹을 만들어주는 편리한 확장 <code>GROUP BY ALL</code>이 있다.</p>
+  </div>
+
+  <div class="wrap plate rev">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 430" role="img" aria-label="가격 행들을 연도로 묶어 최소·최대·개수·평균 집계를 적용한 결과를 보여주는 도해">
+          <defs>
+            <marker id="g1" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 z" fill="#69788c"/>
+            </marker>
+          </defs>
+          <!-- 원본 행 -->
+          <text x="26" y="28" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2" fill="#69788c">SOURCE ROWS</text>
+          <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#0f2a54">
+            <rect x="26" y="40" width="200" height="22" fill="#0f2a54"/>
+            <text x="46" y="56" fill="#fff">id</text><text x="110" y="56" fill="#fff">year</text><text x="196" y="56" fill="#fff" text-anchor="end">value</text>
+          </g>
+          <!-- 2019 그룹 -->
+          <g>
+            <rect x="26" y="62" width="200" height="132" fill="rgba(31,78,156,.07)" stroke="#1f4e9c" stroke-width="1.1"/>
+            <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#33425a">
+              <text x="46" y="78">10</text><text x="110" y="78">2019</text><text x="196" y="78" text-anchor="end" fill="#e0912a" font-weight="600">11.47</text>
+              <text x="46" y="95">11</text><text x="110" y="95">2019</text><text x="196" y="95" text-anchor="end">11.35</text>
+              <text x="46" y="112">12</text><text x="110" y="112">2019</text><text x="196" y="112" text-anchor="end">11.23</text>
+              <text x="46" y="129">13</text><text x="110" y="129">2019</text><text x="196" y="129" text-anchor="end">11.11</text>
+              <text x="46" y="146">27</text><text x="110" y="146">2019</text><text x="196" y="146" text-anchor="end" fill="#2b7d74" font-weight="600">9.97</text>
+              <text x="46" y="163">…</text><text x="110" y="163">2019</text><text x="196" y="163" text-anchor="end">…</text>
+              <text x="46" y="185" fill="#1f4e9c">33</text><text x="110" y="185" fill="#1f4e9c">2019</text><text x="196" y="185" text-anchor="end" fill="#1f4e9c">10.79</text>
+            </g>
+            <text x="26" y="210" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#1f4e9c">그룹 1 · 2019 · 12행</text>
+          </g>
+          <!-- 2020 그룹 -->
+          <g>
+            <rect x="26" y="228" width="200" height="132" fill="rgba(242,177,52,.10)" stroke="#e0912a" stroke-width="1.1"/>
+            <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#33425a">
+              <text x="46" y="244">15</text><text x="110" y="244">2020</text><text x="196" y="244" text-anchor="end" fill="#2b7d74" font-weight="600">8.60</text>
+              <text x="46" y="261">17</text><text x="110" y="261">2020</text><text x="196" y="261" text-anchor="end">8.64</text>
+              <text x="46" y="278">18</text><text x="110" y="278">2020</text><text x="196" y="278" text-anchor="end">8.77</text>
+              <text x="46" y="295">19</text><text x="110" y="295">2020</text><text x="196" y="295" text-anchor="end">8.90</text>
+              <text x="46" y="312">…</text><text x="110" y="312">2020</text><text x="196" y="312" text-anchor="end">…</text>
+              <text x="46" y="329">25</text><text x="110" y="329">2020</text><text x="196" y="329" text-anchor="end">9.72</text>
+              <text x="46" y="351">26</text><text x="110" y="351">2020</text><text x="196" y="351" text-anchor="end" fill="#e0912a" font-weight="600">9.87</text>
+            </g>
+            <text x="26" y="376" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#8a5410">그룹 2 · 2020 · 11행</text>
+          </g>
+
+          <!-- 집계 척추: 두 그룹이 한 지점으로 모였다가 두 결과 표로 갈라진다 -->
+          <g stroke="#69788c" stroke-width="1.2" fill="none">
+            <path class="flow" style="--len:130" d="M234 128 C 272 128 288 168 302 190"/>
+            <path class="flow" style="--len:130;animation-delay:.12s" d="M234 294 C 272 294 288 254 302 232"/>
+          </g>
+          <g>
+            <rect x="256" y="192" width="94" height="38" rx="3" fill="#0f2a54"/>
+            <text x="303" y="216" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#fff">집계 적용</text>
+          </g>
+          <g stroke="#69788c" stroke-width="1.2" fill="none" marker-end="url(#g1)">
+            <path class="flow" style="--len:150;animation-delay:.3s" d="M352 202 C 372 202 372 108 388 108"/>
+            <path class="flow" style="--len:150;animation-delay:.42s" d="M352 220 C 372 220 372 276 388 276"/>
+          </g>
+
+          <!-- min/max 결과 -->
+          <text x="398" y="52" font-family="IBM Plex Mono, monospace" font-size="11" fill="#69788c">그룹마다 적용한 min() · max()</text>
+          <g font-family="IBM Plex Mono, monospace" font-size="11.5">
+            <rect x="398" y="64" width="576" height="24" fill="#0f2a54"/>
+            <text x="418" y="81" fill="#fff">year</text><text x="640" y="81" fill="#fff">minimum_price</text><text x="954" y="81" fill="#fff" text-anchor="end">maximum_price</text>
+            <rect x="398" y="88" width="576" height="26" fill="#fff" stroke="#e9eef4"/>
+            <text x="418" y="106" fill="#0f2a54">2019</text><text x="640" y="106" fill="#2b7d74" font-weight="600">9.97</text><text x="954" y="106" text-anchor="end" fill="#e0912a" font-weight="600">11.47</text>
+            <rect x="398" y="114" width="576" height="26" fill="#fff" stroke="#e9eef4"/>
+            <text x="418" y="132" fill="#0f2a54">2020</text><text x="640" y="132" fill="#2b7d74" font-weight="600">8.60</text><text x="954" y="132" text-anchor="end" fill="#e0912a" font-weight="600">9.87</text>
+          </g>
+
+          <!-- count/avg 결과 -->
+          <text x="398" y="222" font-family="IBM Plex Mono, monospace" font-size="11" fill="#69788c">그룹마다 적용한 count() · avg()</text>
+          <g font-family="IBM Plex Mono, monospace" font-size="11.5">
+            <rect x="398" y="234" width="576" height="24" fill="#0f2a54"/>
+            <text x="418" y="251" fill="#fff">year</text><text x="620" y="251" fill="#fff">num_prices</text><text x="954" y="251" fill="#fff" text-anchor="end">avg_price</text>
+            <rect x="398" y="258" width="576" height="26" fill="#fff" stroke="#e9eef4"/>
+            <text x="418" y="276" fill="#0f2a54">2019</text><text x="620" y="276" fill="#0f2a54">12</text><text x="954" y="276" text-anchor="end" fill="#0f2a54">10.715</text>
+            <rect x="398" y="284" width="576" height="26" fill="#fff" stroke="#e9eef4"/>
+            <text x="418" y="302" fill="#0f2a54">2020</text><text x="620" y="302" fill="#0f2a54">11</text><text x="954" y="302" text-anchor="end" fill="#0f2a54">9.183636363636364</text>
+          </g>
+          <text x="398" y="352" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#69788c">그룹의 유일한 값마다 출력 행 하나. 스물세 행이 두 행으로 접힌다.</text>
+          <text x="398" y="376" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#69788c">2020년 평균값의 자릿수가 그대로 드러난 것은 double 연산의 결과다.</text>
+        </svg>
+      </div></div>
+      <figcaption><b>〈도판 3.2〉</b><span>데이터셋을 연도로 묶기. 같은 그룹에 네 가지 집계를 적용한 결과를 나란히 놓았다.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>고를 수 있는 집계 함수는 많다. 앞서 다룬 비교적 표준적인 것들에 더해, 저자들이 자주 요긴하다고 꼽는 것들은 다음과 같다.</p>
+    <ul class="plain">
+      <li><b>list</b> — 각 그룹의 모든 값을 리스트 구조로 집계한다.</li>
+      <li><b>any_value</b> — 그룹화에 쓰이지 않은 컬럼에서 아무 값이나 하나 고른다.</li>
+      <li><b>first, last</b> — 결과가 정렬된 경우 그룹화에 쓰이지 않은 컬럼에서 첫 값이나 마지막 값을 고른다.</li>
+      <li><b>arg_max, arg_min</b> — 어떤 표현식이 최대 또는 최소 값을 갖는 행에서 그 표현식의 값을 찾는, 흔한 과제를 해결한다.</li>
+      <li><b>bit_and, bit_or, bit_xor 등</b> — 집합에 대해 동작하는 비트 연산이다.</li>
+      <li><b>median, 분위수 계산, 공분산 계산, 일반 회귀</b> — 통계 집계의 빠짐없는 집합이다.</li>
+    </ul>
+
+    <p>이제 가격 예제로 돌아간다. 앞에서는 <code>WHERE</code> 절로 한 해의 가격을 찾았다. 그것도 흥미롭지만, 연도별 최저·최고 가격을 알아내는 것은 어떤가.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">그룹 집계</span>
+        <span class="tagn">목록 3.11</span>
+      </div>
+      <pre><span class="k">SELECT</span> <span class="f">date_part</span>(<span class="f">'year'</span>, valid_from) <span class="k">AS</span> year,
+       <span class="f">min</span>(value) <span class="k">AS</span> minimum_price,
+       <span class="f">max</span>(value) <span class="k">AS</span> maximum_price
+<span class="k">FROM</span> prices
+<span class="k">WHERE</span> year <span class="k">BETWEEN</span> 2019 <span class="k">AND</span> 2020
+<span class="k">GROUP BY</span> year
+<span class="k">ORDER BY</span> year;</pre>
+      <div class="term-note">
+        <code>valid_from</code>은 날짜인데 관심 있는 것은 연도뿐이다. <b>date_part</b> 함수가 그것을 뽑아낸다.
+        별칭 없이 쓰면 결과 컬럼의 이름이 <code>date_part('year', valid_from)</code>이 되어 읽기도 나쁘고 참조하기도 번거롭다.
+        그래서 <b>AS</b> 키워드로 별칭 <code>year</code>를 도입한다.
+      </div>
+      <div class="term-note">
+        여기서 DuckDB의 관대함이 드러난다. <b>선택 목록에서 준 별칭을 WHERE 절과 GROUP BY 절에서 다시 쓸 수 있다.</b>
+        이것은 SQL 표준과 다르며, 대단히 요긴하다. 표준을 따르는 다른 데이터베이스에서는 컬럼 정의를 그대로 되풀이해 적어야 한다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <div class="tip">
+      <span class="tag">TIP — 날짜 부분을 다루는 두 갈래</span>
+      <p>DuckDB는 날짜 부분을 다루는 선택지를 준다. 앞에서처럼 범용 <code>date_part</code> 함수를 쓰고 부분을 매개변수로 지정할 수 있다. <code>'day'</code>, <code>'hour'</code>, <code>'minute'</code> 등 관련된 모든 부분에 식별자가 있다. 그리고 그 전부가 전용 함수로도 존재하므로, 목록 3.11에서는 <code>year(valid_from)</code>이라고 써도 되었다.</p>
+      <p>어느 쪽을 고르는가. <strong>범용 함수는 부분이 문장 안의 다른 표현식에서 파생될 때, 또는 이식성 있는 SQL을 쓰려 할 때 유용하다. 전용 함수는 읽기가 더 쉽다.</strong></p>
+    </div>
+
+    <h4 class="clause">VALUES 절</h4>
+    <p><code>VALUES</code> 절은 정해진 개수의 행을 지정하는 데 쓴다. 데이터를 삽입할 때 이미 보았으며, 그것이 상당히 흔한 사용처다. 그러나 DuckDB에서는 다른 몇몇 데이터베이스보다 훨씬 다재다능하다. <strong>독립된 문장으로도, <code>FROM</code> 절의 일부로도, 행과 컬럼의 개수에 제한 없이 쓸 수 있다.</strong> 조건에 넣을 씨앗 데이터를 마련하는 것 같은 몇 가지 상황에서 요긴하다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">괄호 하나가 바꾸는 것</span>
+        <span class="tagn">3.4.4</span>
+      </div>
+      <pre><span class="c">-- ① 두 컬럼을 가진 한 행</span>
+<span class="p">D</span> <span class="k">VALUES</span> (1,2);
+<span class="c">-- ② 여러 튜플을 그냥 나열하면 여러 행이 된다. 괄호로 더 감쌀 필요가 없다.</span>
+<span class="p">D</span> <span class="k">VALUES</span> (1,2), (3,4);
+<span class="c">-- ③ 그런데 감싸면, 구조화 타입을 담은 컬럼 둘의 한 행이 된다.</span>
+<span class="p">D</span> <span class="k">VALUES</span> ((1,2), (3,4));</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">col0</th><th class="l">col1</th></tr>
+            <tr class="type"><th class="l">struct(v1 integer, v2 integer)</th><th class="l">struct(v1 integer, v2 integer)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">{'v1': 1, 'v2': 2}</td><td class="l">{'v1': 3, 'v2': 4}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <pre><span class="c">-- FROM 절에서 쓰면 결과 타입과 컬럼에 이름을 붙일 수 있다. 테이블 이름 t는 임의로 고른 것이다.</span>
+<span class="p">D</span> <span class="k">SELECT</span> *
+  <span class="k">FROM</span> (<span class="k">VALUES</span>
+      (1, <span class="f">'Row 1'</span>, <span class="f">now</span>()),
+      (2, <span class="f">'Row 2'</span>, <span class="f">now</span>())
+  ) t(id, name, arbitrary_column_name);</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>id</th><th class="l">name</th><th class="l">arbitrary_column_name</th></tr>
+            <tr class="type"><th>int32</th><th class="l">varchar</th><th class="l">timestamp with time zone</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td class="l">Row 1</td><td class="l">2023-06-02 13:44:30.309+02</td></tr>
+            <tr><td>2</td><td class="l">Row 2</td><td class="l">2023-06-02 13:44:30.309+02</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        괄호 한 겹 차이로 <b>두 행</b>이 <b>구조체 두 개를 담은 한 행</b>으로 바뀐다.
+        이렇게 만든 이름 붙은 인라인 테이블은 다음 절에서 조인 논리를 설명하는 데 그대로 쓰인다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<!-- ══════════ JOIN ══════════ -->
+<section id="s4j">
+  <div class="sechead rev">
+    <span class="num">3.4.4 · JOIN</span>
+    <h2>조인 절<span class="en">The JOIN clause</span></h2>
+  </div>
+  <div class="col rev">
+    <p>단일 Parquet 파일이나 CSV 파일을 분석할 때는 <code>JOIN</code> 절 없이도 넘어갈 수 있다. 그러나 이 절은 건너뛰지 말라고 저자들은 당부한다. <strong>조인은 두 테이블 또는 관계를 잇는 데 쓰이는 관계형 연산의 근본이다.</strong> 두 관계를 조인의 왼쪽과 오른쪽이라 부르며, 먼저 나열된 테이블이 왼쪽이다. 이 연결은 그전까지 이어져 있지 않던 정보를 결합한 새 관계를 표상하며, 그로써 새로운 통찰을 준다.</p>
+
+    <p>본질적으로 조인은 양쪽에서 <em>짝이 맞는 행의 쌍</em>을 만든다. 짝짓기는 보통 왼쪽 테이블의 키 컬럼이 오른쪽 테이블의 컬럼과 같은지에 기반한다. 테이블을 조인하기 위해 외래 키 제약이 필요하지는 않다. 저자들은 <code>JOIN .. ON</code>보다 SQL 표준 정의인 <code>JOIN .. USING</code>에 기반한 조인을 선호하며, 이 책 나머지에서도 그렇게 쓴다. 그렇다고 그것만 되는 것은 아니다. <code>FROM</code> 절에 테이블을 그냥 나열하고 <code>WHERE</code> 절에서 키 컬럼을 비교하는 것으로도 조인을 표현할 수 있다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE — 왜 벤 다이어그램을 쓰지 않는가</span>
+      <p>조인을 설명하는 데 벤 다이어그램을 쓰지 않는 이유는, <strong>조인 연산이 순수한 집합 연산이 아니기 때문</strong>이다. 순수한 집합 연산이라면 벤 다이어그램이 훌륭한 선택이었을 것이다. SQL에도 집합 연산은 있다. <code>UNION</code>, <code>INTERSECT</code>, <code>EXCEPT</code>가 그것이고 DuckDB는 전부 지원한다.</p>
+      <p>반면 조인은 모두 관계 대수의 <em>데카르트 곱</em>에 기반한다. 쉽게 말해 모든 것을 다른 모든 것과 붙여놓고 나서 걸러내는 것이다. 본질적으로 <strong>서로 다른 모든 조인은 <code>CROSS JOIN</code>에서 파생될 수 있다.</strong> 내부 조인은 거기에 어떤 조건으로 필터를 걸고, 왼쪽 또는 오른쪽 외부 조인은 합집합을 더한다. 조인에서 집합 기반 연산이라 할 것은 그것이 전부다.</p>
+    </div>
+
+    <p>아래는 그 설명을 손으로 확인해보는 장치다. 왼쪽과 오른쪽 관계는 목록 3.12–3.14가 쓴 값을 그대로 옮겼다. 조인 종류를 갈아 끼우면 결과 행이 어떻게 달라지는지, 그리고 <code>NULL</code>이 어느 자리에 채워지는지 눈으로 좇을 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="explorer" id="jx">
+      <div class="tabs" role="group" aria-label="조인 종류 선택">
+        <button data-m="inner" aria-pressed="true">INNER</button>
+        <button data-m="left" aria-pressed="false">LEFT OUTER</button>
+        <button data-m="right" aria-pressed="false">RIGHT OUTER</button>
+        <button data-m="full" aria-pressed="false">FULL OUTER</button>
+        <button data-m="cross" aria-pressed="false">CROSS</button>
+        <button class="dupe" id="jxdup" aria-pressed="false">중복 키 데이터로 바꾸기</button>
+      </div>
+      <div class="exbody">
+        <div class="exsrc">
+          <h5>왼쪽 관계 &nbsp;l(id, nameA)</h5>
+          <div id="jxL"></div>
+          <h5>오른쪽 관계 &nbsp;r(id, nameB)</h5>
+          <div id="jxR"></div>
+        </div>
+        <div class="exres">
+          <h5 id="jxTitle">결과</h5>
+          <div id="jxOut"></div>
+        </div>
+      </div>
+      <div class="exsql" id="jxSql"></div>
+      <div class="excap" id="jxCap"></div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>두 관계에 이름이 같은 컬럼이 있으면 <code>USING</code> 절로 그것을 지정할 수 있다. <code>USING</code> 절은 지정한 컬럼을 두 관계에서 찾아내며, <code>ON</code> 절로 직접 <code>ON tab1.col = tab2.col</code>이라 쓰는 것과 똑같이 동작한다. 목록 3.12–3.14의 세 문장은 <code>JOIN</code>, <code>LEFT OUTER JOIN</code>, <code>FULL OUTER JOIN</code>만 바뀌고 나머지는 같다.</p>
+
+    <p>외부 조인은 <em>지정한 쪽의 행 가운데 상대에 짝이 없는 것에 대해 <code>NULL</code> 값을 보충해준다.</em> 데이터베이스에 발전 시스템이 여럿 있다고 생각해보자. 어떤 것에는 다른 테이블에 공급업체 정보를 저장해두었고 어떤 것에는 없다. 모든 시스템의 목록을 공급업체가 있으면 그것과 함께, 없으면 빈 컬럼과 함께 내놓아야 하는 과제라면 외부 조인을 쓴다.</p>
+
+    <p>왼쪽 외부 조인과 오른쪽 외부 조인은 모두 <strong>세 행</strong>을 돌려준다. 네 행을 되찾으려면 완전 외부 조인을 써야 한다. 그렇다고 언제나 외부 조인을 쓰라고 권하는 것은 잘못이다. 외부 조인은 내부 조인이 줄 행을 언제나 포함하지만, <em>내부 조인은 다른 테이블에 짝이 없는 행을 걸러내며 그것이 요구 사항인 경우가 잦다.</em> 외부 조인은 보통 <strong>반드시 있어야 하는 데이터를 선택적인 데이터로 살찌우고 싶을 때</strong> 적절하다. 두 조인의 용도를 이보다 간결하게 정리하기 어렵다.</p>
+
+    <p>예제의 스키마에서는 사정이 조금 다르다. <code>systems</code> 테이블에는 <code>id</code> 컬럼을 정의했고 <code>readings</code>의 외래 키 컬럼은 <code>system_id</code>이니, 이름이 다르므로 <code>ON</code> 절을 써야 한다. 그 컬럼으로 조인하면 조인은 <em>언제나</em> 짝이 맞는 행을 만들어낸다. 조인 컬럼(<code>id</code>)이 <code>system_id</code>에 정의한 외래 키가 참조하는 컬럼이기 때문이다. 곧 <strong><code>systems</code>에 대응 항목이 없는 <code>readings</code> 행은 존재할 수 없다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">이름이 다른 키로 조인하기</span>
+        <span class="tagn">3.4.4</span>
+      </div>
+      <pre><span class="k">SELECT</span> name, <span class="f">count</span>(*) <span class="k">as</span> number_of_readings
+<span class="k">FROM</span> readings <span class="k">JOIN</span> systems <span class="k">ON</span> id = system_id
+<span class="k">GROUP BY</span> name;</pre>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <div class="note">
+      <span class="tag">NOTE — 데카르트 곱</span>
+      <p>데카르트 곱은 두 원소 집합에서 첫 집합의 각 원소를 두 번째 집합의 각 원소와 결합해 만들 수 있는 모든 순서쌍의 목록을 서술하는 수학 용어다. 데카르트 곱의 크기는 각 집합의 크기의 곱과 같다.</p>
+    </div>
+
+    <p>조인 종류는 더 있다. 모든 튜플의 데카르트 곱을 만드는 <code>CROSS JOIN</code>이 있고, 유효 기간이 제한된 가격을 다룰 때 요긴해지는 <code>ASOF</code>(as of) 조인이 있다. <code>ASOF</code> 조인은 시간적 유효성—사실은 <code>&lt;=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&gt;=</code> 같은 부등 조건을 갖는 무엇이든—에 기반해 한 테이블의 행을 다른 테이블의 행과 맞춰준다. 자세한 내용은 다음 장에서 다룬다.</p>
+
+    <div class="aside">
+      <span class="tag">SIDEBAR</span>
+      <h4>COPY TO 명령</h4>
+      <p>CSV 파일을 중심으로 데이터 파이프라인을 짓다 보면, 파일마다 공통 컬럼 하나씩을 가진 채 데이터가 여러 파일에 흩어져 있는 일이 잦다. 이 파일들을 <em>공통 컬럼을 중복하지 않고</em> 정확히 한 개 파일로 줄이고 싶다면, 내부 조인과 <code>COPY TO</code> 명령으로 쉽게 이룰 수 있다. 후자는 어떤 관계든 받아서 지정한 형식으로 파일에 복사한다.</p>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">네 개의 CSV를 공통 컬럼으로 접어 하나로</span>
+        <span class="tagn">사이드바</span>
+      </div>
+      <pre><span class="p">$</span> duckdb -c <span class="f">"COPY (SELECT * FROM 'production.csv'
+        JOIN 'consumption.csv' USING (ts)
+        JOIN 'export.csv'      USING (ts)
+        JOIN 'import.csv'      USING (ts) )
+     TO '/dev/stdout' (HEADER)"</span></pre>
+      <div class="term-note">
+        공유 컬럼 <b>ts</b>로 네 CSV 파일을 조인하고, <code>SELECT *</code>에서 공유 컬럼은 한 벌만 남기고, 결과를 표준 출력으로 복사한다.
+        <b>USING</b>을 쓰면 조인 컬럼이 하나로 접히는 성질이 여기서 그대로 활용된다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <h4 class="clause">경고 — 키가 중복될 때</h4>
+    <p>저자들은 이 절을 경고에 가까운 이야기로 맺는다. 내부 조인과 외부 조인의 예제에서는 <em>키 컬럼의 값이 다른 테이블에서 발견되지 않을 때</em> 무슨 일이 생기는지만 논했다. 그러면 조인 컬럼 가운데 하나가 <strong>같은 값을 여러 번</strong> 담고 있을 때는, 그것도 한쪽에서 또는 양쪽에서 그럴 때는 어떻게 되는가. 위의 탐색기에서 〈중복 키 데이터로 바꾸기〉를 눌러보면 직접 확인할 수 있다. 왼쪽에서 <code>id</code>가 2인 행이 둘, 오른쪽에서 3인 행이 둘이다.</p>
+
+    <div class="term">
+      <div class="term-note catch">
+        원서 본문은 이 결과가 "앞서와 달리 네 행이 아니라 <b>여섯 행</b>"이 된다고 적었지만, 곧이어 실린 출력은 <b>다섯 행</b>이다.
+        곱을 따져보면 id 1에서 1×1, id 2에서 2×1, id 3에서 1×2이니 합이 다섯이다. 출력이 옳고 본문이 오식이다.
+      </div>
+    </div>
+
+    <p>이것은 스키마를 정의할 때 대비할 수 있는 일이다. 통상 조인은 미리 알고 있는 컬럼에서 일어난다. 예제라면 <code>systems</code> 테이블의 <code>id</code>와 <code>readings</code>의 <code>system_id</code> 쌍이 그렇다. <code>systems</code> 테이블에서 그 컬럼은 기본 키로 정의되어 있으므로 언제나 유일한 값이며, 따라서 그 테이블에 한 번만 나타날 수 있다. <code>readings</code> 테이블에서는 외래 키로 정의되어 있으므로 다른 쪽에 반드시 존재해야 한다. 외래 키는 보통 데이터베이스에 이른바 인덱스를 만들며, 모든 행을 훑지 않고 빠르게 조회할 수 있게 해 조인의 성능을 좋게 한다.</p>
+
+    <p>그리고 외래 키는 유일하지 않으며 대부분의 모델에서 유일할 필요도 없다. 예제에서 시스템이 <code>readings</code> 테이블—오른쪽—에 여러 번 나타나는 것은 당연히 기대되는 바다. <em>발전 설비가 평생 한 번만 전기를 만들기를 바라는 것이 아니라면 말이다.</em> 마지막 한 문장의 능청스러움이 이 책의 성격을 잘 보여준다.</p>
+  </div>
+</section>
+
+<!-- ══════════ WITH / CTE ══════════ -->
+<section id="s4w">
+  <div class="sechead rev">
+    <span class="num">3.4.4 · WITH</span>
+    <h2>공통 테이블 표현식<span class="en">The WITH clause</span></h2>
+  </div>
+  <div class="col rev">
+    <p><code>WITH</code> 절은 공통 테이블 표현식(CTE)이라는 이름으로도 알려져 있다. <strong>CTE는 본질적으로 특정 질의 안으로 범위가 제한된 뷰다.</strong> 뷰처럼, 질의 논리의 일부를 독립된 문장으로, 적어도 더 큰 질의 안의 격리된 부분으로 감싸두고 싶을 때 쓴다. 뷰를 만들어도 전혀 문제는 없지만, 그 결과가 더 큰 질의의 특정 문맥에서만 필요하다면 뷰까지 만들고 싶지는 않을 것이다.</p>
+
+    <p>게다가 CTE에는 뷰에 없는 특성이 하나 있다. <em>뷰는 다른 뷰를 참조할 수 있지만 중첩될 수는 없다. CTE는 같은 <code>WITH</code> 절에 정의된 다른 CTE를 참조할 수 있다.</em> 그로써 질의 논리를 점진적으로 쌓아 올릴 수 있다.</p>
+
+    <p><code>WITH</code> 절은 <code>FROM</code> 절에 서브쿼리를 정의하는 반패턴을 막아준다. <code>FROM</code> 절의 원천 관계로 놓인 서브쿼리는 구문적으로도 의미적으로도 타당하다. 그 결과가 그 자체로 관계이기 때문이다. 그러나 읽기가 어려운 일이 잦다. 게다가 중첩된 서브쿼리는 자기 자신을 참조할 수 없다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">서브쿼리를 CTE로 바꾸기</span>
+        <span class="tagn">목록 3.16</span>
+      </div>
+      <pre><span class="c">-- 전: FROM 절 안의 서브쿼리</span>
+<span class="k">SELECT</span> max_power.v, read_on
+<span class="k">FROM</span> (
+  <span class="k">SELECT</span> <span class="f">max</span>(power) <span class="k">AS</span> v <span class="k">FROM</span> readings
+) max_power
+<span class="k">JOIN</span> readings <span class="k">ON</span> power = max_power.v;
+
+<span class="c">-- 후: 같은 질의를 WITH 절로 끌어올리고 이름을 준다. JOIN 문은 그대로다.</span>
+<span class="k">WITH</span> max_power <span class="k">AS</span> (
+  <span class="k">SELECT</span> <span class="f">max</span>(power) <span class="k">AS</span> v <span class="k">FROM</span> readings
+)
+<span class="k">SELECT</span> max_power.v, read_on
+<span class="k">FROM</span> max_power
+<span class="k">JOIN</span> readings <span class="k">ON</span> power = max_power.v;</pre>
+      <div class="term-note">
+        이 정도로 단순한 질의 하나라면 서브쿼리를 쓰든 CTE를 쓰든 큰 차이가 없다.
+        <b>차이는 질문이 복잡해지는 순간 벌어진다.</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>그렇다면 <em>시스템별·시간별 평균 발전량의 최대치</em>를 묻는다면 어떤가. <code>max</code>와 <code>avg</code> 같은 집계 함수는 중첩할 수 없다. 곧 <code>avg(max(v))</code>라고 쓸 수 없으므로 집계를 따로따로 써야 한다. 여기서 CTE가 참으로 필요해진다.</p>
+
+    <p>그 전에 함수 둘을 짚어둔다. 어떤 컬럼의 최소·최대 값을 담은 행이 무엇인지 묻는 일은 아주 흔한 과제이므로, DuckDB에는 그것을 수행하는 내장 함수 <code>arg_max</code>와 <code>arg_min</code>이 있다. <strong>두 번째 매개변수의 최소 또는 최대 값이 처음 나타나는 행에서, 첫 번째 매개변수로 정의된 표현식을 계산해준다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">arg_max — 한 행만 돌려주는 이유</span>
+        <span class="tagn">3.4.4</span>
+      </div>
+      <pre><span class="k">SELECT</span> <span class="f">max</span>(power), <span class="f">arg_max</span>(read_on, power) <span class="k">AS</span> read_on
+<span class="k">FROM</span> readings;</pre>
+      <div class="term-note">
+        이 질의는 최대 발전량이 나온 데이터셋의 <b>한 행</b>을 만들어낸다. 목록 3.16의 질의가 돌려주는 다섯 행이 아니다.
+        <b>arg_max는 최대값과 일치하는 첫 값에서 멈추지만, 조인은 해당하는 모든 행을 포함하기 때문이다.</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>이제 두 겹의 집계다. 먼저 시스템과 시간별 평균 발전량으로 측정값을 묶는 복잡한 논리—첫 번째 집계—를 <code>per_hour</code>라 이름 붙인 CTE에 감싸고, 그 CTE를 받아 두 번째 집계를 계산한다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">여러 겹의 그룹 만들기</span>
+        <span class="tagn">목록 3.17</span>
+      </div>
+      <pre><span class="k">WITH</span> per_hour <span class="k">AS</span> (
+    <span class="k">SELECT</span> system_id,
+           <span class="f">date_trunc</span>(<span class="f">'hour'</span>, read_on) <span class="k">AS</span> read_on,
+           <span class="f">avg</span>(power) / 1000 <span class="k">AS</span> kWh
+    <span class="k">FROM</span> readings
+    <span class="k">GROUP BY ALL</span>
+)
+<span class="k">SELECT</span> name,
+       <span class="f">max</span>(kWh),
+       <span class="f">arg_max</span>(read_on, kWh) <span class="k">AS</span> <span class="f">'Read on'</span>
+<span class="k">FROM</span> per_hour
+   <span class="k">JOIN</span> systems s <span class="k">ON</span> s.id = per_hour.system_id
+<span class="k">WHERE</span> system_id = 34
+<span class="k">GROUP by</span> s.name;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">name</th><th>max(kWh)</th><th class="l">Read on</th></tr>
+            <tr class="type"><th class="l">varchar</th><th>double</th><th class="l">timestamp</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">[34] Andre Agassi Preparatory Academy</td><td>123.75</td><td class="l">2020-04-09 11:00:00</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        CTE에 제대로 된 이름을 주고, 안쪽에서 시간별 평균이라는 첫 집계를 만들고,
+        바깥에서 찾던 중첩 집계를 계산하고, CTE를 <code>FROM</code> 절의 주도 테이블로 쓴다.
+        <b>GROUP BY ALL</b>은 집계에 속하지 않은 모든 컬럼으로 그룹을 만드는 DuckDB의 확장이다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <div class="note">
+      <span class="tag">NOTE — 숫자가 실제와 맞는지 확인해보았다</span>
+      <p>저자들은 이 건물을 직접 찾아보았고, 측정값과 수치가 맞아떨어졌다고 적었다. 설비를 다룬 자료에 따르면 "2010년 4월과 2011년 7월 사이에 Bombard가 라스베이거스 아가시 아카데미의 다섯 개 건물 옥상과 세 개의 태양광 지지 구조물에 2,249장의 Sharp 240와트 태양광 모듈을 설치했다"고 한다.</p>
+      <p>질의가 뱉은 숫자를 현실의 설비 명세와 대조해보는 이 짧은 확인 절차가, 이 장을 단순한 문법 교재에서 한 걸음 위로 올려놓는다.</p>
+    </div>
+
+    <h4 class="clause">RECURSIVE — 뷰도 서브쿼리도 못 하는 일</h4>
+    <p>CTE는 뷰와 서브쿼리가 하지 못하는 멋진 일을 하나 더 할 수 있다. <code>WITH</code> 절에는 <code>RECURSIVE</code>라는 추가 키워드가 있어서, CTE를 뒤따르는 다른 CTE와 <code>FROM</code> 절에서만이 아니라 <em>자기 자신 안에서도</em> 참조할 수 있게 해준다. 재귀 CTE를 작동시키려면 재귀의 초기 씨앗이 있어야 한다. 트리 구조라면 쉽다. <strong>부모 행이 없는 행을 가져와 <code>UNION</code> 절의 한쪽 잎으로 삼으면 된다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">재귀 SQL로 그래프 모양 구조 조회하기</span>
+        <span class="tagn">목록 3.18</span>
+      </div>
+      <pre><span class="k">CREATE TABLE IF NOT EXISTS</span> src (
+    id <span class="k">INT PRIMARY KEY</span>,
+    parent_id <span class="k">INT</span>, name <span class="k">VARCHAR</span>(8)
+);
+
+<span class="k">INSERT INTO</span> src (<span class="k">VALUES</span>
+    (1, <span class="k">null</span>, <span class="f">'root1'</span>),
+    (2,    1, <span class="f">'ch1a'</span>),
+    (3,    1, <span class="f">'ch2a'</span>),
+    (4,    3, <span class="f">'ch3a'</span>),
+    (5, <span class="k">null</span>, <span class="f">'root2'</span>),
+    (6,    5, <span class="f">'ch1b'</span>)
+);
+
+<span class="k">WITH RECURSIVE</span> tree <span class="k">AS</span> (
+    <span class="k">SELECT</span> id,
+           id <span class="k">AS</span> root_id,          <span class="c">-- 리스트 리터럴로 새 목록을 초기화한다.</span>
+           [name] <span class="k">AS</span> path            <span class="c">-- 여기까지가 재귀의 초기 씨앗이다.</span>
+    <span class="k">FROM</span> src <span class="k">WHERE</span> parent_id <span class="k">IS NULL</span>
+
+    <span class="k">UNION ALL</span>
+
+    <span class="k">SELECT</span> src.id,
+           root_id,
+           <span class="f">list_append</span>(tree.path, src.name) <span class="k">AS</span> path
+    <span class="k">FROM</span> src
+      <span class="k">JOIN</span> tree <span class="k">ON</span> (src.parent_id = tree.id)
+)                                <span class="c">-- 주어진 부모 id를 가진 src 항목이 더 없을 때까지 재귀 조인한다.</span>
+<span class="k">SELECT</span> path <span class="k">FROM</span> tree;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">path</th></tr>
+            <tr class="type"><th class="l">varchar[]</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">[root1]</td></tr>
+            <tr><td class="l">[root2]</td></tr>
+            <tr><td class="l">[root1, ch1a]</td></tr>
+            <tr><td class="l">[root1, ch2a]</td></tr>
+            <tr><td class="l">[root2, ch1b]</td></tr>
+            <tr><td class="l">[root1, ch2a, ch3a]</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        뿌리에서 출발해 해당하는 잎까지 올라가는 여러 갈래의 경로가 결과로 나온다.
+        예제는 <b>list_append</b>로 이름을 경로에 쌓아 올린다. <b>list_prepend</b>를 쓰고 매개변수를 뒤집으면
+        잎에서 뿌리로 향하는 경로를 만들 수 있다.
+      </div>
+      <div class="term-note">
+        저자들이 남긴 연습 과제. <b>트리에서 가장 긴 경로를 계산해보라.</b>
+        재귀 CTE는 그대로 두고, <code>SELECT</code> 문에서 배운 <code>arg_max</code> 함수를 리스트에 대한 <code>length</code> 집계와 함께 쓰면 된다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<!-- ══════════ 3.5 ══════════ -->
+<section id="s5">
+  <div class="sechead rev">
+    <span class="num">3.5</span>
+    <h2>DuckDB 고유의 SQL 확장<span class="en">DuckDB-specific SQL extensions</span></h2>
+  </div>
+  <div class="col rev">
+    <p>DuckDB를 만든 이들의 목표 가운데 하나는 <strong>SQL을 더 접근하기 쉽고 사람에게 친절하게 만드는 것</strong>이다. 그 방법의 하나로, 흔한 과제를 쉽게 처리하게 해주는 추가 문법을 자신들의 SQL 구현에 더해왔다. 이 절이 그 추가분을 소개한다.</p>
+
+    <h3>SELECT를 다루는 법 <span class="sub">3.5.1</span></h3>
+    <p><code>SELECT *</code>는 양날의 검이다. 적어내기 쉽고, 결과 튜플에는 실제로 필요한 것이 웬만하면 다 들어 있다. 관계의 모든 컬럼을 선택하는 데 딸린 문제로 저자들은 넷을 든다.</p>
+    <ul class="plain">
+      <li><b>결과 튜플의 불안정성</b> — 테이블 정의가 바뀔 수 있다. 컬럼이 더해지거나 없어지면 결과의 모양이 함께 바뀐다.</li>
+      <li><b>메모리 압박</b> — 데이터베이스 서버나 프로세스에 더 큰 부담을 준다.</li>
+      <li><b>네트워크 트래픽</b> — DuckDB는 임베디드 데이터베이스라 네트워크가 개입하지 않지만, 임베디드가 아닌 데이터베이스에서는 스타 셀렉트가 트래픽을 늘린다.</li>
+      <li><b>인덱스 온리 스캔의 무산</b> — 인덱스 온리 스캔은 질의가 인덱스를 쓸 수 있고 <em>그 인덱스에 있는 컬럼만 돌려주어 다른 입출력을 모두 피할 수 있을 때</em> 일어난다. 대부분의 경우 바람직한 거동인데, 스타 셀렉트는 그것을 막아버릴 수 있다.</li>
+    </ul>
+    <p>그러니 <code>SELECT *</code> 질의를 너무 많이 하지 않는 것이 좋지만, 때로는 필요하다. 그래서 DuckDB는 키워드 둘을 더해 그것을 더 안전하게 쓸 수 있게 했다. <code>EXCLUDE</code>와 <code>REPLACE</code>다. 그리고 정말로 모든 컬럼을 원하는 것이 확실하다면, <code>SELECT</code> 절을 아예 생략하고 <code>FROM</code> 절로 시작하는 단순화된 형태를 쓸 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">EXCLUDE와 REPLACE</span>
+        <span class="tagn">3.5.1</span>
+      </div>
+      <pre><span class="c">-- 예전 방식: 필요한 컬럼을 모두 열거한다. 컬럼이 몇 개를 넘어가면 금세 고되고 오류가 잦아진다.</span>
+<span class="k">SELECT</span> value, valid_from, valid_until <span class="k">FROM</span> prices;
+
+<span class="c">-- EXCLUDE: 관심 없는 컬럼만 열거하면 된다. 원하는 만큼 제외할 수 있다.</span>
+<span class="k">SELECT</span> * <span class="k">EXCLUDE</span> (id)
+<span class="k">FROM</span> prices;
+
+<span class="c">-- REPLACE: 뷰 전체를 고쳐 쓰지 않고, kWh 컬럼만 반올림한 값으로 갈아 끼운다.</span>
+<span class="k">SELECT</span> * <span class="k">REPLACE</span> (<span class="f">round</span>(kWh)::<span class="k">int</span> <span class="k">AS</span> kWh)
+<span class="k">FROM</span> v_power_per_day;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>system_id</th><th class="l">day</th><th>kWh</th></tr>
+            <tr class="type"><th>int32</th><th class="l">date</th><th>int32</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1200</td><td class="l">2019-08-29</td><td>289</td></tr>
+            <tr><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td></tr>
+            <tr><td>10</td><td class="l">2020-03-19</td><td>0</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="3">1587 rows (2 shown) &nbsp;&nbsp; 3 columns</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>EXCLUDE</b>는 순수한 <code>SELECT *</code>의 유연함을 거의 그대로 누리면서 별의 가독성을 지키고,
+        필요 없는 것에 손대지 않게 보장해준다.
+        <b>REPLACE</b>는 <code>x AS y</code> 꼴의 짝을 하나 이상 받는다. <code>x</code>는 원래 선택 목록의 컬럼을 참조해
+        함수와 변환을 적용할 수 있는 표현식이고, <code>y</code>는 원래 선택 목록에 쓰인 이름이다.
+        결과의 <b>구조는 그대로이고 kWh 컬럼만 정수 컬럼</b>이 되었다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <h4 class="clause">COLUMNS — 컬럼을 동적으로 사영하고 걸러내기</h4>
+    <p><code>prices</code> 테이블에는 가격의 유효성에 관한 정보를 담은 컬럼이 둘 있다. <code>COLUMNS</code> 표현식은 <strong>정규식에 기반해 하나 이상의 컬럼을 사영하고, 걸러내고, 집계</strong>하는 데 쓸 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">COLUMNS 표현식의 네 가지 쓰임</span>
+        <span class="tagn">3.5.1</span>
+      </div>
+      <pre><span class="c">-- ① 유효성에 관한 컬럼만 사영한다.</span>
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">COLUMNS</span>(<span class="f">'valid.*'</span>) <span class="k">FROM</span> prices <span class="k">LIMIT</span> 3;
+
+<span class="c">-- ② 동적으로 고른 컬럼들에 함수를 한꺼번에 적용해, 그만큼의 계산 컬럼을 얻는다.</span>
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">max</span>(<span class="f">COLUMNS</span>(<span class="f">'valid.*'</span>)) <span class="k">FROM</span> prices;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">max(prices.valid_from)</th><th class="l">max(prices.valid_until)</th></tr>
+            <tr class="type"><th class="l">date</th><th class="l">date</th></tr>
+          </thead>
+          <tbody><tr><td class="l">2023-01-01</td><td class="l">2024-02-01</td></tr></tbody>
+        </table>
+      </div>
+      <pre><span class="c">-- ③ AND로 길게 이어붙인 조건을 한 줄로 줄인다. 두 컬럼이 모두 범위 안에 들어야 한다.</span>
+<span class="p">D</span> <span class="k">FROM</span> prices <span class="k">WHERE</span> <span class="f">COLUMNS</span>(<span class="f">'valid.*'</span>) <span class="k">BETWEEN</span> <span class="f">'2020-01-01'</span> <span class="k">AND</span> <span class="f">'2021-01-01'</span>;
+
+<span class="c">-- ④ 정규식이 낯설면 람다 함수로도 쓴다. LIKE의 % 와일드카드를 그대로 활용할 수 있다.</span>
+<span class="p">D</span> <span class="k">FROM</span> prices
+  <span class="k">WHERE</span> <span class="f">COLUMNS</span>(col -&gt; col <span class="k">LIKE</span> <span class="f">'valid%'</span>)
+  <span class="k">BETWEEN</span> <span class="f">'2020-01-01'</span> <span class="k">AND</span> <span class="f">'2021-01-01'</span>;
+
+<span class="c">-- 그리고 EXCLUDE·REPLACE와도 결합한다. 생성된 id를 뺀 모든 컬럼의 최대값.</span>
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">max</span>(<span class="f">COLUMNS</span>(* <span class="k">EXCLUDE</span> id)) <span class="k">FROM</span> prices;</pre>
+      <div class="term-note">
+        이름이 비슷한 컬럼이 많은 테이블이라면 이 기법의 이득이 크다. 측정값이나 계측 테이블이 그런 형태이며,
+        측정마다 여러 가지 검침값을 만들어내는 <b>IoT 센서</b>를 떠올려보면 쓸모가 곧 보인다.
+      </div>
+      <div class="term-note">
+        많은 사람에게 <code>.*</code>보다 익숙한 것은 <code>LIKE</code> 연산자와 함께 쓰는 <b>%</b>와 <b>_</b> 와일드카드다.
+        <code>%</code>는 문자 0개, 1개 또는 여러 개를 뜻하고 밑줄은 정확히 한 개를 뜻한다.
+        다행히 <code>COLUMNS</code>는 람다 함수를 지원한다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <div class="tip">
+      <span class="tag">TIP — 람다 함수</span>
+      <p>람다 함수는 이리저리 넘겨가며 코드에서 쓸 수 있는, 자체로 완결된 기능 덩어리다. 프로그래밍 언어에 따라 이름이 다르다. 자바·코틀린·파이썬에서는 람다 표현식, 스위프트에서는 클로저, C에서는 블록이라 부른다.</p>
+    </div>
+
+    <h3>이름으로 삽입 <span class="sub">3.5.2</span></h3>
+    <p>목록 3.6을 기억할 것이다. 거기서는 <code>INSERT INTO target(col1, col2) SELECT a, b FROM src</code> 꼴의 문장으로 <code>systems</code> 테이블을 채웠다. 작동은 하지만 <em>유지하기에 취약하다.</em> <code>INSERT</code> 문은 선택된 컬럼이 대상 테이블에 정의된 것과 같은 순서이기를 요구하거나, 컬럼 이름을 두 번—<code>INTO</code> 절에 한 번, 선택 목록에 한 번—되풀이하기를 요구하기 때문이다.</p>
+    <p>DuckDB는 이 문제를 풀기 위해 <code>BY NAME</code> 절을 제공한다. <strong>원천의 컬럼 이름에서 대상의 컬럼 이름으로 가는 대응 관계를 한자리에 모아둘 수 있다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">이름으로 삽입하기</span>
+        <span class="tagn">목록 3.19</span>
+      </div>
+      <pre><span class="k">INSERT INTO</span> systems <span class="k">BY NAME</span>
+<span class="k">SELECT DISTINCT</span>
+       system_id <span class="k">AS</span> id,
+       system_public_name <span class="k">AS</span> <span class="k">NAME</span>
+<span class="k">FROM</span> <span class="f">'https://oedi-data-lake.s3.amazonaws.com/pvdaq/csv/systems.csv'</span>
+<span class="k">ON CONFLICT DO NOTHING</span>;</pre>
+      <div class="term-note">
+        <b>BY NAME</b> 키워드는 뒤따르는 선택 절의 컬럼을 대상 테이블의 컬럼에 <b>이름으로 맞추라</b>는 뜻이다.
+        삽입에 컬럼을 더하든 빼든 이제 질의 한 곳만 고치면 된다.
+        다만 널 금지 컬럼 같은 <b>제약은 여전히 충족해야 한다.</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <h3>어디서나 별칭에 접근하기 <span class="sub">3.5.3</span></h3>
+    <p>알아채지 못했을 수도 있지만, 앞의 여러 예제는 <em>표준이어야 마땅한데 표준이 아닌</em> 어떤 성질의 혜택을 이미 받고 있었다. 컬럼에 별칭을 도입하는 순간, 뒤따르는 절들에서 그 별칭에 접근할 수 있다는 성질이다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">WHERE·GROUP BY·HAVING 절에서 별칭 쓰기</span>
+        <span class="tagn">목록 3.20</span>
+      </div>
+      <pre><span class="k">SELECT</span> system_id &gt; 10 <span class="k">AS</span> is_not_system10,
+       <span class="f">date_trunc</span>(<span class="f">'month'</span>, read_on) <span class="k">AS</span> month,
+       <span class="f">sum</span>(power) / 1000 / 1000 <span class="k">AS</span> power_per_month
+<span class="k">FROM</span> readings
+<span class="k">WHERE</span> is_not_system10 = <span class="k">TRUE</span>
+<span class="k">GROUP BY</span> is_not_system10, month
+<span class="k">HAVING</span> power_per_month &gt; 100;</pre>
+      <div class="term-note">
+        비집계를 가리키는 별칭 <b>is_not_system10</b>을 컬럼 정의를 되풀이하지 않고 <code>WHERE</code>와 <code>GROUP BY</code>에서 쓴다.
+        <b>후자는 다른 많은 관계형 데이터베이스에서는 불가능하다.</b>
+        집계에 준 별칭 <b>power_per_month</b>도 마찬가지로 <code>HAVING</code> 절에서 접근할 수 있다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <h3>관련된 모든 컬럼으로 묶고 정렬하기 <span class="sub">3.5.4</span></h3>
+    <p><code>GROUP BY</code> 절을 다룬 절에서 논한 대로, 집계가 아닌 모든 컬럼은 <code>GROUP BY</code> 절에 열거되어야 한다. 비집계 컬럼이 많으면 이는 고통스러운 경험이 되는데, DuckDB는 <code>GROUP BY ALL</code>을 허용해 그 고통을 덜어준다. 정렬에도 비슷한 개념이 있다. <code>ORDER BY ALL</code>은 <strong>포함된 컬럼들로 왼쪽에서 오른쪽으로 결과를 정렬한다.</strong> 스타 셀렉트의 경우 컬럼의 순서는 물론 테이블이나 뷰의 정의가 정한다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">GROUP BY ALL과 ORDER BY ALL</span>
+        <span class="tagn">목록 3.21 · 3.22</span>
+      </div>
+      <pre><span class="c">-- 목록 3.21 — 비집계 값 전체로 그룹 집합을 만든다.</span>
+<span class="k">CREATE OR REPLACE VIEW</span> v_power_per_day <span class="k">AS</span>
+<span class="k">SELECT</span> system_id,
+       <span class="f">date_trunc</span>(<span class="f">'day'</span>, read_on)        <span class="k">AS</span> day,
+       <span class="f">round</span>(<span class="f">sum</span>(power) / 4 / 1000, 2)  <span class="k">AS</span> kWh,
+<span class="k">FROM</span> readings
+<span class="k">GROUP BY ALL</span>;
+
+<span class="c">-- 먼저 system_id로, 다음 day로 정렬한다.</span>
+<span class="k">SELECT</span> system_id, day <span class="k">FROM</span> v_power_per_day <span class="k">ORDER BY ALL</span>;
+
+<span class="c">-- 목록 3.22 — SELECT 절을 생략하고 정렬을 단순화한다.</span>
+<span class="c">-- 시스템, 일자, 그다음 kWh 순으로 정렬된 일별 발전량을 돌려준다. DuckDB에서 유효한 SQL이다.</span>
+<span class="k">FROM</span> v_power_per_day <span class="k">ORDER BY ALL</span>;</pre>
+      <div class="term-note">
+        목록 3.4와 목록 3.21을 나란히 놓아보면 확장의 값어치가 한눈에 보인다.
+        <code>GROUP BY system_id, day</code>가 <code>GROUP BY ALL</code>로 줄었다.
+        컬럼을 하나 더 추가할 때 그룹 절을 고쳐야 한다는 사실을 잊어 생기는 오류가 그만큼 줄어든다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <h3>데이터 표본 추출 <span class="sub">3.5.5</span></h3>
+    <p>큰 데이터셋을 다룰 때는 전부를 훑는 대신 표본을 얻고 싶은 일이 잦다. 34번 시스템의 측정값만 들여왔다 해도 데이터베이스에는 5만 건이 넘는 레코드가 있다. 0이 아닌 발전량 측정값의 개요를 <em>n 퍼센트</em> 또는 <em>n개 행</em>의 표본으로 얻을 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">관계에서 표본 추출하기</span>
+        <span class="tagn">목록 3.23</span>
+      </div>
+      <pre><span class="k">SELECT</span> power
+<span class="k">FROM</span> readings
+<span class="k">WHERE</span> power &lt;&gt; 0
+<span class="k">USING SAMPLE</span> 10%        <span class="c">-- 데이터 크기의 약 10%에 해당하는 표본을 얻는다.</span>
+  (bernoulli);          <span class="c">-- 쓸 표본 추출 방법을 지정한다.</span></pre>
+      <div class="term-note">
+        임의의 <code>LIMIT</code>을 다루는 것보다 훨씬 쉽고 유연하며, 더 낫고 더 믿을 만한 개요를 준다.
+        다만 표본 추출 자체는 <b>확률적 방법</b>을 쓰므로, 추가 <b>REPEATABLE</b> 절로 씨앗을 지정하지 않으면 매번 달라진다.
+        퍼센트로 준 비율은 정확히 맞히려는 것이 아니다. 예제에서는 0이 아닌 약 2만 행 가운데
+        <b>2천 행 정도의 편차</b>가 났다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>표본 추출 방법의 선택에 관한 설명이 이 절의 알맹이다. 세 가지가 있다.</p>
+    <div class="grid3">
+      <div class="cell">
+        <span class="t">system</span>
+        <p>특정 비율을 지정하면 시스템 표본 추출이 적용되어, <b>각 벡터를 같은 확률로 포함</b>한다. 튜플 대신 벡터 단위로 표본을 뽑는 것은 대단히 효율적이며 추가 부담이 없다.</p>
+      </div>
+      <div class="cell">
+        <span class="t">bernoulli</span>
+        <p>대안으로 <b>튜플 단위</b>로 동작한다. 벡터 하나는 대략 2,048개 튜플 크기이므로 시스템 방식은 작은 데이터셋에 맞지 않는다. 데이터가 전부 포함되거나 전부 걸러지기 때문이다. 발전량이 0보다 큰 10만 건 정도에서도 저자들은 <b>더 고르게 분포하는 표본을 위해 bernoulli를 권한다.</b></p>
+      </div>
+      <div class="cell">
+        <span class="t">reservoir</span>
+        <p>고정된 표본 크기에는 저수지(reservoir) 방법이 쓰인다. <b>요청한 개수만큼 저수지를 먼저 채운 뒤 나머지를 흘려보내면서 저수지의 원소를 무작위로 교체</b>한다. 흥미로운 기법이니 표본 문서를 더 읽어볼 만하다.</p>
+      </div>
+    </div>
+
+    <h3>선택적 매개변수를 갖는 함수 <span class="sub">3.5.6</span></h3>
+    <p>DuckDB의 몇몇 함수—예컨대 <code>read_json_auto</code>—는 필수 매개변수와, 합리적인 기본값을 갖는 선택적 매개변수 하나 이상을 함께 갖는다. 방금 언급한 함수는 매개변수가 <strong>열일곱 개</strong>다. 그 목록은 다음 질의로 얻는다. 오버로드가 여러 개 있어 타입이 다른 것들이 섞이므로 <code>DISTINCT</code>를 쓴다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">이름 붙은 매개변수 쓰기</span>
+        <span class="tagn">목록 3.24</span>
+      </div>
+      <pre><span class="c">-- 매개변수 목록을 얻는다.</span>
+<span class="k">SELECT DISTINCT</span> <span class="f">unnest</span>(parameters)
+<span class="k">FROM</span> <span class="f">duckdb_functions</span>()
+<span class="k">WHERE</span> function_name = <span class="f">'read_json_auto'</span>;
+
+<span class="c">-- dateformat만 지정하고 싶다면 name=value 문법을 쓴다.</span>
+<span class="p">$</span> echo <span class="f">'{"foo": "21.9.1979"}'</span> &gt; <span class="f">'my.json'</span>
+<span class="p">$</span> duckdb -s \
+  <span class="f">"SELECT * FROM read_json_auto(
+     'my.json',
+     dateformat='%d.%M.%Y'
+  )"</span></pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">foo</th></tr>
+            <tr class="type"><th class="l">date</th></tr>
+          </thead>
+          <tbody><tr><td class="l">1979-01-21</td></tr></tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>dateformat</b> 매개변수를 썼기 때문에 DuckDB가 ISO 형식이 아닌 문자열을 제대로 된 날짜로 해석해냈다.
+        이름 붙은 선택적 인자를 지원한다는 것이 이 목록의 요지다.
+      </div>
+      <div class="term-note catch">
+        그런데 출력을 자세히 보면 원자료의 월은 <b>9</b>인데 결과의 월은 <b>01</b>이다.
+        DuckDB의 형식 지정자에서 <code>%M</code>은 <b>분(minute)</b>이고 월은 <code>%m</code>이므로,
+        월이 파싱되지 않고 기본값 1로 남은 것이다. 원서에 실린 출력 자체가 그 증거다.
+        따라 해볼 때는 <code>dateformat='%d.%m.%Y'</code>로 고쳐 쓰는 편이 맞다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<!-- ══════════ 요약 ══════════ -->
+<section class="summary" id="s6">
+  <div class="sechead">
+    <span class="num">SUMMARY</span>
+    <h2>제3장이 남긴 일곱 문장<span class="en">Summary</span></h2>
+  </div>
+  <ol>
+    <li>SQL 질의는 여러 문으로 이루어지고, 문은 다시 절로 이루어진다. 질의는 <b>데이터 정의어(DDL)</b>와 <b>데이터 조작어(DML)</b>로 갈린다.</li>
+    <li>DML 질의는 행의 <b>생성, 읽기, 갱신, 삭제</b>를 아우른다.</li>
+    <li>데이터 조작은 영속 상태를 바꾸는 일만이 아니라 <b>기존 관계를 새 관계로 변환하는 일</b>이기도 하다. 그러므로 데이터를 읽는 것도 DML에 속한다.</li>
+    <li><code>CREATE TABLE</code>과 <code>CREATE VIEW</code> 같은 DDL 질의로 <b>영속 스키마</b>를 만든다. 이는 여느 관계형 데이터베이스와 같으며, DuckDB를 디스크 기반으로 띄웠는지 인메모리로 띄웠는지와 무관하다.</li>
+    <li><b>엄격한 스키마는 데이터 불일치를 더 잘 드러낸다.</b> 불일치가 있는 데이터를 무턱대고 수집하려 하면 제약 오류로 실패한다.</li>
+    <li>제약 오류는 행을 만들거나 갱신할 때 <code>ON CONFLICT</code>로 정의한 적절한 조치로 완화할 수 있다.</li>
+    <li>DuckDB는 <code>SELECT * EXCLUDE()</code>와 <code>SELECT * REPLACE()</code> 같은 혁신, 그리고 더 직관적인 별칭 사용으로 <b>SQL을 한결 쓰기 쉽게 만든다.</b></li>
+  </ol>
+</section>
+
+</main>
+
+<footer>
+  <div class="col">
+    <p>이 문서는 <b>Mark Needham · Michael Hunger · Michael Simons, 『DuckDB in Action』 (Manning Publications, 2024)</b>의 제3장 「Executing SQL queries」(원서 22–57쪽) 전체를 검토해 한국어로 정리한 해설이다. 절 번호, 목록 번호, 도판 번호는 원서를 따랐다. 〈도판 3.1〉과 〈도판 3.2〉는 원서 그림의 구성을 옮겨 새로 작도했고, 조인 탐색기는 원서의 〈도판 3.3〉·〈도판 3.4〉와 목록 3.12–3.15가 쓴 값을 그대로 담아 이 문서에서 더한 장치다.</p>
+    <p>본문 가운데 〈살펴본 김에〉로 표시한 다섯 대목은 원서 안에서 서로 어긋나거나 오식으로 보이는 자리를 적어둔 것이다. <code>DECIMAL(10,3)</code>과 <code>DECIMAL(8,3)</code>의 불일치, <code>FROM</code>의 오식, 2020년을 2000년으로 적은 자리, 다섯 행을 여섯 행이라 적은 자리, 그리고 <code>%M</code> 형식 지정자다. 따라 해볼 때 걸려 넘어지기 쉬운 곳들이다.</p>
+    <p>다음 장은 「Advanced aggregation and analysis of data」로, 수집하면서 데이터를 준비·정리·집계하는 법, 임의 데이터셋의 서로 다른 파티션에 걸쳐 새 집계를 만드는 윈도 함수, 서브쿼리의 여러 갈래, 공통 테이블 표현식, 그리고 모든 집계에 필터를 적용하는 법을 다룬다.</p>
+    <span class="mono">CH.03 · 5 SECTIONS · 11 SUBSECTIONS · 24 LISTINGS · 4 PLATES · 7 SUMMARY POINTS</span>
+  </div>
+</footer>
+
+<script>
+/* ── 조인 탐색기 ── */
+(function(){
+  var root=document.getElementById('jx'); if(!root) return;
+  var SETS={
+    plain:{
+      L:[[1,'a1'],[2,'a2'],[3,'a3']],
+      R:[[1,'b1'],[2,'b2'],[4,'b4']]
+    },
+    dupe:{
+      L:[[1,'a1'],[2,'a2'],[2,'a2'],[3,'a3']],
+      R:[[1,'b1'],[2,'b2'],[3,'b3'],[3,'b3']]
+    }
+  };
+  var CAP={
+    inner:'짝이 맞는 쌍만 남는다. 왼쪽에만 있는 3과 오른쪽에만 있는 4는 사라진다. 조인의 기본값이 이것이다.',
+    left:'왼쪽 관계의 행은 모두 포함되고, 짝이 없는 행에는 <b>NULL</b>이 보충된다. 필수 데이터를 선택적 데이터로 살찌우는 자리에 쓴다.',
+    right:'거울상이다. 오른쪽 관계의 행이 모두 포함된다. 왼쪽·오른쪽 외부 조인은 모두 <b>세 행</b>을 돌려준다.',
+    full:'네 행을 되찾으려면 완전 외부 조인을 써야 한다. <b>NULL</b>이 nameA와 nameB 양쪽에 하나씩 생긴다.',
+    cross:'데카르트 곱이다. 조인 컬럼이 접히지 않으므로 id가 양쪽에 남는다. <b>모든 조인은 여기서 파생된다.</b>'
+  };
+  var mode='inner', which='plain';
+  var esc=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')};
+
+  function srcTable(rows,c2){
+    var h='<table class="duckbox"><thead><tr><th>id</th><th class="l">'+c2+'</th></tr>'+
+          '<tr class="type"><th>int32</th><th class="l">varchar</th></tr></thead><tbody>';
+    rows.forEach(function(r){h+='<tr><td>'+r[0]+'</td><td class="l">'+esc(r[1])+'</td></tr>'});
+    return h+'</tbody></table>';
+  }
+
+  function compute(m,L,R){
+    var out=[],i,j;
+    if(m==='cross'){
+      for(i=0;i<L.length;i++) for(j=0;j<R.length;j++) out.push([L[i][0],L[i][1],R[j][0],R[j][1]]);
+      return out;
+    }
+    var matchedR={};
+    for(i=0;i<L.length;i++){
+      var hit=false;
+      for(j=0;j<R.length;j++) if(L[i][0]===R[j][0]){out.push([L[i][0],L[i][1],R[j][1]]);hit=true;matchedR[j]=1;}
+      if(!hit&&(m==='left'||m==='full')) out.push([L[i][0],L[i][1],null]);
+    }
+    if(m==='right'||m==='full'){
+      for(j=0;j<R.length;j++) if(!matchedR[j]) out.push([R[j][0],null,R[j][1]]);
+    }
+    out.sort(function(a,b){return a[0]-b[0]});
+    return out;
+  }
+
+  function resTable(m,rows){
+    var h='<table class="duckbox"><thead>';
+    if(m==='cross'){
+      h+='<tr><th>id</th><th class="l">nameA</th><th>id</th><th class="l">nameB</th></tr>'+
+         '<tr class="type"><th>int32</th><th class="l">varchar</th><th>int32</th><th class="l">varchar</th></tr>';
+    }else{
+      h+='<tr><th>id</th><th class="l">nameA</th><th class="l">nameB</th></tr>'+
+         '<tr class="type"><th>int32</th><th class="l">varchar</th><th class="l">varchar</th></tr>';
+    }
+    h+='</thead><tbody>';
+    rows.forEach(function(r){
+      if(m==='cross'){
+        h+='<tr><td>'+r[0]+'</td><td class="l">'+esc(r[1])+'</td><td>'+r[2]+'</td><td class="l">'+esc(r[3])+'</td></tr>';
+      }else{
+        var a=r[1]===null?'<span style="color:#4f6a91">·</span>':esc(r[1]);
+        var b=r[2]===null?'<span style="color:#4f6a91">·</span>':esc(r[2]);
+        h+='<tr><td>'+r[0]+'</td><td class="l">'+a+'</td><td class="l">'+b+'</td></tr>';
+      }
+    });
+    var cols=(m==='cross')?4:3;
+    h+='</tbody><tfoot><tr><td colspan="'+cols+'">'+rows.length+' rows &nbsp;&nbsp; '+cols+' columns</td></tr></tfoot></table>';
+    return h;
+  }
+
+  function sqlText(m,L,R){
+    var kw={inner:'JOIN',left:'LEFT OUTER JOIN',right:'RIGHT OUTER JOIN',full:'FULL OUTER JOIN',cross:'CROSS JOIN'}[m];
+    var lit=function(rows){
+      return rows.map(function(r,i){
+        return (i?'          ':'(VALUES ')+'('+r[0]+", '"+r[1]+"')"+(i===rows.length-1?'':',');
+      }).join('\n');
+    };
+    var tail=(m==='cross')?'' : '\nUSING (id)';
+    var ord=(m==='inner'||m==='cross')?'' : '\nORDER BY id';
+    return 'SELECT *\nFROM\n  '+lit(L)+') l(id, nameA)\n'+kw+'\n  '+lit(R)+') r(id, nameB)'+tail+ord+';';
+  }
+
+  function render(){
+    var S=SETS[which];
+    document.getElementById('jxL').innerHTML=srcTable(S.L,'nameA');
+    document.getElementById('jxR').innerHTML=srcTable(S.R,'nameB');
+    var rows=compute(mode,S.L,S.R);
+    document.getElementById('jxOut').innerHTML=resTable(mode,rows);
+    document.getElementById('jxTitle').textContent='결과 · '+rows.length+'행';
+    document.getElementById('jxSql').textContent=sqlText(mode,S.L,S.R);
+    var extra=(which==='dupe')
+      ? ' 지금은 <b>중복 키 데이터</b>다. 왼쪽의 id 2가 둘, 오른쪽의 id 3이 둘이므로 짝의 개수는 곱으로 늘어난다.'
+      : '';
+    document.getElementById('jxCap').innerHTML=CAP[mode]+extra;
+  }
+
+  [].forEach.call(root.querySelectorAll('.tabs button[data-m]'),function(b){
+    b.addEventListener('click',function(){
+      mode=b.dataset.m;
+      [].forEach.call(root.querySelectorAll('.tabs button[data-m]'),function(x){
+        x.setAttribute('aria-pressed', x===b?'true':'false');
+      });
+      render();
+    });
+  });
+  var dup=document.getElementById('jxdup');
+  dup.addEventListener('click',function(){
+    which=(which==='plain')?'dupe':'plain';
+    dup.setAttribute('aria-pressed', which==='dupe'?'true':'false');
+    dup.textContent=(which==='dupe')?'기본 데이터로 되돌리기':'중복 키 데이터로 바꾸기';
+    render();
+  });
+  render();
+})();
+
+/* ── 스크롤 등장 ── */
+(function(){
+  var els=document.querySelectorAll('.rev');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){ if(e.isIntersecting){e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{rootMargin:'0px 0px -10% 0px',threshold:.05});
+  els.forEach(function(e){io.observe(e)});
+})();
+
+/* ── 목차 레일 ── */
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.rail a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))}).filter(Boolean);
+  if(!secs.length) return;
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){
+      if(!e.isIntersecting) return;
+      links.forEach(function(a){a.classList.toggle('on', a.getAttribute('href')==='#'+e.target.id)});
+    });
+  },{rootMargin:'-45% 0px -45% 0px'});
+  secs.forEach(function(s){io.observe(s)});
+})();
+</script>
+</body>
+</html>

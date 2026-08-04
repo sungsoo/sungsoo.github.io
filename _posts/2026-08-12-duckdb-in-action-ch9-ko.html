@@ -1,0 +1,1456 @@
+---
+layout: null
+title: "Building and deploying data apps" 
+date: 2026-08-12 
+categories: [artificial intelligence]
+tags: [artificial general intelligence, data management]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DuckDB 답사기 · 제9장 데이터 앱 짓고 배포하기 — 『DuckDB in Action』 정독</title>
+<meta name="description" content="Mark Needham, Michael Hunger, Michael Simons의 『DuckDB in Action』 제9장을 한 줄도 빠뜨리지 않고 읽어 정리한 해설. Streamlit으로 대화형 웹 앱 짓기, plot.ly로 차트 그리기, Community Cloud 배포, Apache Superset으로 BI 대시보드 만들기와 내보내기.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────
+   토큰 — 제1~8장과 같은 델프트 도자 계열의 연작.
+   이 장은 '코드를 쓰는 길'과 '누르는 길'이 맞서므로,
+   전자는 파이썬 민트, 후자는 UI 자주로 갈라 쓴다.
+   ───────────────────────────────────────────── */
+:root{
+  --porcelain:#e9eef4;
+  --glaze:#ffffff;
+  --delft:#1f4e9c;
+  --delft-deep:#0f2a54;
+  --shell:#0b1d3a;
+  --ink:#101a28;
+  --bill:#e0912a;
+  --sun:#f2b134;
+  --canal:#2b7d74;
+  --grey:#69788c;
+  --sky:#8fb8ff;
+  --py:#67d4b4;
+  --ui:#c9a0e8;
+  --clay:#a8552b;
+  --hair:rgba(16,26,40,.14);
+  --wire:rgba(143,184,255,.22);
+
+  --disp:'Fraunces','Gowun Batang',serif;
+  --body:'Noto Sans KR','Fraunces',sans-serif;
+  --mono:'IBM Plex Mono','Menlo','DejaVu Sans Mono','Consolas','Noto Sans KR',monospace;
+
+  --col:min(720px,100%);
+  --wide:min(1080px,100%);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--porcelain);color:var(--ink);
+  font-family:var(--body);font-weight:300;font-size:17px;line-height:1.95;
+  word-break:keep-all;line-break:strict;
+  background-image:
+    radial-gradient(880px 500px at 86% -6%,rgba(103,212,180,.15),transparent 62%),
+    radial-gradient(1000px 580px at 4% 5%,rgba(201,160,232,.13),transparent 60%);
+  background-attachment:fixed;
+}
+::selection{background:var(--bill);color:#fff}
+a{color:var(--delft);text-decoration:none;border-bottom:1px solid rgba(31,78,156,.35)}
+a:hover{color:var(--canal);border-color:var(--canal)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--bill);outline-offset:3px}
+
+.wrap{width:var(--wide);margin:0 auto;padding:0 26px}
+.col{width:var(--col);margin:0 auto}
+
+/* ── 표제부 ── */
+.hero{padding:74px 0 40px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--grey);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.eyebrow b{color:var(--delft);font-weight:500}
+.chapno{display:flex;align-items:baseline;gap:18px;margin:26px 0 6px}
+.chapno span:first-child{font-family:var(--disp);font-size:clamp(52px,11vw,104px);font-weight:800;line-height:.82;color:var(--delft);font-variation-settings:'SOFT' 40,'WONK' 1}
+.chapno span:last-child{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--grey);padding-bottom:10px}
+h1{font-family:var(--disp);font-weight:600;letter-spacing:-.015em;font-size:clamp(33px,6vw,62px);line-height:1.1;margin:0 0 22px;max-width:22ch}
+h1 em{font-style:italic;color:var(--delft);font-weight:400;background:none}
+.lede{width:var(--col);font-size:clamp(17px,2vw,20px);line-height:1.9;color:#243247}
+.lede strong{font-weight:500;color:var(--ink);background:linear-gradient(transparent 62%,rgba(224,145,42,.32) 62%)}
+.hero-meta{margin-top:34px;display:flex;flex-wrap:wrap;border-top:1px solid var(--hair)}
+.hero-meta div{flex:1 1 190px;padding:16px 22px 16px 0;border-right:1px solid var(--hair)}
+.hero-meta div:last-child{border-right:0}
+.hero-meta dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--grey);text-transform:uppercase;margin:0 0 6px}
+.hero-meta dd{margin:0;font-size:14.5px;font-weight:400;line-height:1.65}
+
+/* ── 목차 레일 ── */
+.rail{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:20;display:none;flex-direction:column;gap:1px}
+.rail a{display:flex;align-items:center;gap:9px;border:0;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--grey);padding:3px 0}
+.rail i{display:block;width:14px;height:1px;background:var(--grey);opacity:.5;transition:.35s}
+.rail a span{opacity:0;transform:translateX(-4px);transition:.35s}
+.rail a:hover i,.rail a.on i{width:28px;opacity:1;background:var(--bill);height:2px}
+.rail a:hover span,.rail a.on span{opacity:1;transform:none;color:var(--delft-deep)}
+@media(min-width:1320px){.rail{display:flex}}
+
+/* ── 본문 ── */
+section{padding:34px 0}
+.sechead{width:var(--col);margin:0 auto 26px}
+.sechead .num{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--bill);display:block;margin-bottom:10px}
+h2{font-family:var(--disp);font-weight:600;font-size:clamp(26px,3.6vw,38px);line-height:1.25;margin:0;letter-spacing:-.01em;color:var(--delft-deep)}
+h2 .en{display:block;font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:.08em;color:var(--grey);margin-top:9px}
+h3{font-family:var(--body);font-weight:700;font-size:19px;line-height:1.5;margin:46px 0 12px;color:var(--ink)}
+h3::before{content:"";display:inline-block;width:9px;height:9px;background:var(--bill);margin-right:11px;vertical-align:2px}
+h3 .sub{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--grey);letter-spacing:.06em;margin-left:8px}
+h4.clause{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.14em;color:var(--delft);margin:38px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--hair);text-transform:uppercase}
+p{margin:0 0 20px}
+.dropcap::first-letter{font-family:var(--disp);font-size:3.6em;line-height:.86;float:left;margin:6px 12px 0 0;color:var(--delft);font-weight:600}
+em{font-style:normal;background:linear-gradient(transparent 60%,rgba(43,125,116,.22) 60%)}
+strong{font-weight:500}
+code{font-family:var(--mono);font-size:.86em;background:rgba(31,78,156,.08);padding:.12em .42em;border-radius:2px;color:var(--delft-deep);white-space:nowrap}
+.q{border-left:3px solid var(--bill);padding:2px 0 2px 22px;margin:34px 0;font-family:var(--disp);font-size:20px;line-height:1.75;color:var(--delft-deep)}
+.q span{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--grey);margin-top:12px}
+
+ul.plain{list-style:none;padding:0;margin:0 0 24px}
+ul.plain li{position:relative;padding:11px 0 11px 30px;border-bottom:1px solid var(--hair)}
+ul.plain li::before{content:"";position:absolute;left:4px;top:22px;width:12px;height:1px;background:var(--delft);opacity:.6}
+ul.plain li b{font-weight:500;color:var(--delft-deep)}
+
+/* ── 도판 ── */
+.plate{margin:46px 0;width:var(--wide)}
+.plate.narrow{width:var(--col);margin-left:auto;margin-right:auto}
+.plate figure{margin:0}
+.tile{background:var(--glaze);border:1px solid var(--hair);box-shadow:0 1px 0 #fff inset,0 18px 40px -30px rgba(15,42,84,.55);padding:14px}
+.tile-in{border:1px solid rgba(31,78,156,.22);padding:20px 14px}
+.plate svg{display:block;width:100%;height:auto}
+figcaption{margin-top:14px;font-family:var(--mono);font-size:12px;color:var(--grey);display:flex;gap:10px;align-items:baseline}
+figcaption b{color:var(--delft-deep);font-weight:500;white-space:nowrap}
+figcaption.added b{color:var(--canal)}
+
+/* 스크린숏 대체 */
+.shot{background:var(--glaze);border:1px dashed rgba(201,160,232,.6);padding:20px 22px 6px;margin:30px 0}
+.shot .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:#6b3f8f;display:block;margin-bottom:10px}
+.shot p{font-size:15px;line-height:1.85;margin-bottom:14px;color:#2c3a4e}
+.shot p b{color:var(--delft-deep);font-weight:500}
+.shot ol{margin:0 0 16px;padding-left:22px}
+.shot ol li{font-size:15px;line-height:1.85;color:#2c3a4e;margin-bottom:6px}
+.shot ol li b{color:var(--delft-deep);font-weight:500}
+
+/* ── 터미널 ── */
+.term{background:var(--shell);border:1px solid rgba(143,184,255,.28);box-shadow:0 26px 60px -40px rgba(11,29,58,.9);margin:28px 0;overflow:hidden}
+.term.bleed{width:var(--wide)}
+.term-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--wire);background:rgba(143,184,255,.06)}
+.dots{display:flex;gap:6px}
+.dots i{width:9px;height:9px;border-radius:50%;display:block;background:#3a557f}
+.dots i:first-child{background:var(--bill)}
+.term.py .dots i:first-child{background:var(--py)}
+.term-bar .name{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:#7f9bc7;text-transform:uppercase}
+.term-bar .tagn{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--bill);border:1px solid rgba(224,145,42,.5);padding:2px 8px;white-space:nowrap}
+.term.py .term-bar .tagn{color:var(--py);border-color:rgba(103,212,180,.5)}
+.term pre{margin:0;padding:20px 22px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.85;color:#d5e3f7}
+.p{color:var(--bill)}
+.pp{color:var(--py)}
+.k{color:var(--sky)}
+.f{color:#ffd28a}
+.c{color:#6f86a8}
+.err{color:#ff9a7a}
+.ok{color:#67d4b4}
+.term-note{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;font-weight:300;color:#a3b8d6;line-height:1.85}
+.term-note b{color:var(--bill);font-weight:500;font-family:var(--mono);font-size:12.5px}
+.term-note.catch{background:rgba(224,145,42,.07)}
+.term-note.catch::before{content:"살펴본 김에";display:block;font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--bill);margin-bottom:7px}
+/* 어두운 패널 안의 코드 조각은 밝은 배경 규칙을 덮어써야 읽힌다.
+   .ax 하나로 조립기의 네 영역(파일·설명·메타·캡션)을 모두 덮는다 */
+.term-note code,.term code,.ax code{background:rgba(255,255,255,.13);color:#ffd9a3;border-radius:2px}
+
+/* ── duckbox ── */
+.duckbox{font-family:var(--mono);font-size:13px;border-collapse:collapse;color:#d5e3f7}
+.duckbox th,.duckbox td{border:1px solid var(--wire);padding:5px 14px;text-align:right;white-space:nowrap}
+.duckbox th{color:#fff;font-weight:500;text-align:center}
+.duckbox tr.type th{color:#7f9bc7;font-weight:400;font-size:12px;font-style:italic}
+.duckbox td.l,.duckbox th.l{text-align:left}
+.duckbox td.hi{color:var(--sun)}
+.dbwrap{padding:20px 22px;overflow-x:auto}
+
+/* ── app.py 조립기 ── */
+.ax{background:var(--shell);border:1px solid rgba(143,184,255,.28);margin:36px 0;width:var(--wide);box-shadow:0 26px 60px -40px rgba(11,29,58,.9)}
+.axsteps{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--wire);background:rgba(143,184,255,.06)}
+.axsteps button{
+  appearance:none;background:none;border:0;border-right:1px solid var(--wire);cursor:pointer;
+  font-family:var(--mono);font-size:11px;letter-spacing:.02em;color:#7f9bc7;padding:11px 12px;transition:.2s;flex:1 1 auto;
+  display:flex;align-items:baseline;gap:7px;justify-content:center;
+}
+.axsteps button i{font-style:normal;font-size:10px;color:var(--bill)}
+.axsteps button:hover{color:#fff;background:rgba(143,184,255,.08)}
+.axsteps button[aria-pressed="true"]{background:var(--py);color:var(--shell);font-weight:600}
+.axsteps button[aria-pressed="true"] i{color:var(--shell);opacity:.65}
+.axbody{display:grid;grid-template-columns:1fr}
+@media(min-width:900px){.axbody{grid-template-columns:1fr 300px}}
+.axfile{padding:18px 22px;font-family:var(--mono);font-size:12.5px;line-height:1.8;
+  overflow-x:auto;white-space:pre;color:#5c7ba8}
+.axfile .new{color:#d7f0e6;background:rgba(103,212,180,.13);display:inline-block;width:100%}
+.axside{padding:18px 22px;border-top:1px solid var(--wire)}
+@media(min-width:900px){.axside{border-top:0;border-left:1px solid var(--wire)}}
+.axside h6{margin:0 0 10px;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--bill);font-weight:400}
+.axside dt{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:#7f9bc7;margin-bottom:5px}
+.axside dd{margin:0 0 14px;font-size:13.5px;font-weight:300;color:#c6d8f2;line-height:1.8}
+.axside dd b{color:var(--bill);font-weight:500}
+.axmeta{display:flex;flex-wrap:wrap;gap:16px;border-top:1px solid var(--wire);padding:11px 22px;font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:#7f9bc7}
+.axmeta b{color:#fff;font-weight:500}
+.axcap{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;font-weight:300;color:#a3b8d6;line-height:1.85}
+.axcap b{color:var(--bill);font-weight:500}
+
+/* ── 격자·카드·표 ── */
+.grid3{display:grid;grid-template-columns:1fr;gap:1px;background:var(--hair);border:1px solid var(--hair);margin:30px 0}
+@media(min-width:640px){.grid3{grid-template-columns:1fr 1fr}}
+@media(min-width:960px){.grid3{grid-template-columns:1fr 1fr 1fr}}
+.cell{background:var(--glaze);padding:20px}
+.cell .t{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--delft);display:block;margin-bottom:8px;font-weight:500}
+.cell p{font-size:14.5px;line-height:1.78;margin:0;color:#2c3a4e}
+.tblwrap{overflow-x:auto;margin:20px 0 8px}
+.tbl{width:100%;min-width:640px;border-collapse:collapse;font-size:15px}
+.tbl caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;color:var(--grey);padding-bottom:10px}
+.tbl caption b{color:var(--canal);font-weight:500}
+.tbl th,.tbl td{padding:11px 14px;border-bottom:1px solid var(--hair);text-align:left;font-size:14.5px;line-height:1.7;vertical-align:top}
+.tbl th{background:var(--delft-deep);color:#fff;font-weight:500;letter-spacing:.04em;border-bottom:0;white-space:nowrap}
+.tbl th.pyc{background:#1a6b58}
+.tbl th.uic{background:#5b3480}
+.tbl td.m{font-family:var(--mono);font-size:13px;color:var(--delft);font-weight:500;white-space:nowrap}
+.tbl tbody tr:nth-child(even){background:rgba(31,78,156,.04)}
+.tbl td.code{font-family:var(--mono);font-size:12.5px;color:#1a6b58;line-height:1.6}
+.tbl td.click{font-size:13.5px;color:#5b3480;line-height:1.7}
+
+/* NOTE / TIP / 사이드바 */
+.note,.tip{padding:22px 24px 6px;margin:34px 0}
+.note{background:linear-gradient(180deg,rgba(224,145,42,.10),rgba(224,145,42,.04));border:1px solid rgba(224,145,42,.4)}
+.tip{background:linear-gradient(180deg,rgba(43,125,116,.09),rgba(43,125,116,.03));border:1px solid rgba(43,125,116,.36)}
+.note .tag,.tip .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;display:block;margin-bottom:10px}
+.note .tag{color:#8a5410}
+.tip .tag{color:#1e5c55}
+.note p,.tip p{font-size:15.5px;line-height:1.85;margin-bottom:16px}
+.aside{background:var(--glaze);border:1px solid var(--hair);border-left:4px solid var(--canal);padding:24px 26px 8px;margin:38px 0;box-shadow:0 14px 34px -30px rgba(15,42,84,.6)}
+.aside .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:var(--canal);display:block;margin-bottom:12px}
+.aside h4{margin:0 0 12px;font-family:var(--disp);font-size:21px;font-weight:600;color:var(--delft-deep)}
+.aside p{font-size:15.5px;line-height:1.85}
+
+/* ── 요약 ── */
+.summary{background:var(--delft-deep);color:#e6eefb;margin-top:70px;padding:66px 0 58px;position:relative}
+.summary::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px 44px)}
+.summary h2{color:#fff}
+.summary .num{color:var(--bill)}
+.summary h2 .en{color:rgba(230,238,251,.5)}
+.summary ol{list-style:none;counter-reset:s;padding:0;width:var(--col);margin:0 auto}
+.summary li{counter-increment:s;position:relative;padding:16px 0 16px 52px;border-bottom:1px solid rgba(255,255,255,.13);font-weight:300;font-size:16px;line-height:1.8}
+.summary li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:19px;font-family:var(--mono);font-size:12px;color:var(--bill);letter-spacing:.1em}
+.summary li b{font-weight:500;color:#fff}
+.summary li mark{background:rgba(224,145,42,.25);color:#ffd9a3;padding:.05em .3em}
+.summary code{background:rgba(255,255,255,.12);color:#ffd9a3}
+
+footer{padding:56px 0 76px;font-size:13.5px;color:var(--grey);line-height:1.85}
+footer .col{border-top:1px solid var(--hair);padding-top:26px}
+footer b{color:var(--delft-deep);font-weight:500}
+footer .mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;display:block;margin-top:16px;color:#8494a8}
+
+/* ── 연출 ── */
+.rev{opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rev.in{opacity:1;transform:none}
+.flow{stroke-dasharray:var(--len,300);stroke-dashoffset:var(--len,300);animation:draw 1.3s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.scrollhint{display:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--grey);margin-top:8px}
+@media(max-width:759px){
+  .hero-meta div{border-right:0;border-bottom:1px solid var(--hair);padding-right:0}
+  .hero-meta div:last-child{border-bottom:0}
+}
+@media(max-width:720px){
+  code{white-space:normal;overflow-wrap:anywhere}
+  .scrollhint{display:block}
+  .tile-in{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tile-in>svg{min-width:660px}
+  .axsteps button{flex:1 1 46%;border-right:0;border-bottom:1px solid var(--wire)}
+  figcaption{flex-direction:column;gap:4px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .rev{opacity:1;transform:none}
+  .flow{stroke-dashoffset:0}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="절 목차">
+  <a href="#s0"><i></i><span>여는 글</span></a>
+  <a href="#s1"><i></i><span>9.1 Streamlit</span></a>
+  <a href="#s1b"><i></i><span>9.1.3 컴포넌트</span></a>
+  <a href="#s1c"><i></i><span>9.1.4 plot.ly</span></a>
+  <a href="#s1d"><i></i><span>9.1.5 배포</span></a>
+  <a href="#s2"><i></i><span>9.2 Superset</span></a>
+  <a href="#s2b"><i></i><span>9.2.2 개념</span></a>
+  <a href="#s2c"><i></i><span>9.2.3 대시보드</span></a>
+  <a href="#s2d"><i></i><span>9.2.4 SQL 데이터셋</span></a>
+  <a href="#s2e"><i></i><span>9.2.5 내보내기</span></a>
+  <a href="#s3"><i></i><span>요약</span></a>
+</nav>
+
+<!-- ══════════ 표제부 ══════════ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">
+      <span>DuckDB in Action</span><span>·</span><span>Manning, 2024</span><span>·</span>
+      <b>제9장 정독</b>
+    </div>
+
+    <div class="chapno">
+      <span>9</span>
+      <span>BUILDING AND DEPLOYING DATA APPS<br>원서 193–221쪽</span>
+    </div>
+
+    <h1>SQL을 모르는 사람에게 <em>데이터를 건네는</em> 두 가지 길</h1>
+
+    <p class="lede">
+      제8장이 클라우드에 데이터를 발행해두었다. 이제 그 위에 제품을 짓는다.
+      <strong>많은 데이터 분석가는 SQL로 DuckDB의 데이터를 다루는 데 만족하겠지만, 다른 사용자들은 코드를 쓰지 않아도 되는 인터페이스를 선호한다.</strong>
+      그들에게 값을 주려면 DuckDB에서 정보를 꺼내오는 애플리케이션을 만들어야 한다.
+      이 장은 그 길을 둘로 나눠 걷는다. <em>파이썬만으로 대화형 웹 앱을 짓는 Streamlit</em>과,
+      <em>코드를 거의 쓰지 않고 눌러서 대시보드를 만드는 Apache Superset</em>이다.
+      한쪽은 코드가 먼저이고 다른 쪽은 클릭이 먼저인데, <strong>DuckDB를 다루는 방식은 양쪽에서 조금도 달라지지 않는다.</strong>
+    </p>
+
+    <dl class="hero-meta">
+      <div><dt>이 장이 다루는 것</dt><dd>Streamlit으로 대화형 웹 애플리케이션 짓기 · Streamlit Community Cloud로 배포 · Plot.ly로 대화형 차트 렌더링 · Apache Superset으로 BI 대시보드 만들기 · 맞춤 SQL 질의로 차트 만들기</dd></div>
+      <div><dt>절 구성</dt><dd>9.1 – 9.2 및 하위 절 열 개, 요약</dd></div>
+      <div><dt>실린 것</dt><dd>도판 29점(그중 <em>스물여덟이 화면 갈무리</em>) · 목록 5건 · NOTE 5건 · 사이드바 1건</dd></div>
+      <div><dt>다루는 데이터</dt><dd>제8장이 만든 <code>atp.duckdb</code> · matches · players · levels · rounds</dd></div>
+    </dl>
+  </div>
+
+  <!-- 서명 도판: ATP 스키마 -->
+  <div class="wrap plate" id="s0">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 470" role="img" aria-label="matches 테이블이 levels, players, rounds 세 테이블과 관계를 맺는 ATP 데이터베이스 스키마">
+          <defs>
+            <marker id="a9" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 z" fill="#2b7d74"/>
+            </marker>
+          </defs>
+
+          <!-- matches -->
+          <g>
+            <rect x="24" y="86" width="248" height="298" fill="#fff" stroke="#e0912a" stroke-width="1.8"/>
+            <rect x="24" y="86" width="248" height="28" fill="#e0912a"/>
+            <text x="148" y="105" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13.5" fill="#fff" font-weight="600">matches</text>
+            <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#33425a">
+              <text x="40" y="132">tourney_id: varchar</text>
+              <text x="40" y="150">tourney_name: varchar</text>
+              <text x="40" y="168">surface: varchar</text>
+              <text x="40" y="186">draw_size: bigint</text>
+              <text x="40" y="204" fill="#8a5410" font-weight="600">tourney_level: varchar</text>
+              <text x="40" y="222">tourney_date: date</text>
+              <text x="40" y="240">match_num: bigint</text>
+              <text x="40" y="258" fill="#1e5c55" font-weight="600">winner_id: bigint</text>
+              <text x="40" y="276" fill="#1e5c55" font-weight="600">loser_id: bigint</text>
+              <text x="40" y="294">winner_rank: varchar</text>
+              <text x="40" y="312">winner_rank_points: varchar</text>
+              <text x="40" y="330">loser_rank: varchar</text>
+              <text x="40" y="348">loser_rank_points: varchar</text>
+              <text x="40" y="372" fill="#a8552b" font-style="italic">⋯ 원서 도판은 여기까지만 적었다</text>
+            </g>
+          </g>
+
+          <!-- levels -->
+          <g>
+            <rect x="404" y="34" width="200" height="94" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+            <rect x="404" y="34" width="200" height="26" fill="#0f2a54"/>
+            <text x="504" y="52" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" fill="#fff" font-weight="600">levels</text>
+            <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#33425a">
+              <text x="420" y="78">name: varchar</text>
+              <text x="420" y="96" fill="#8a5410" font-weight="600">short_name: varchar</text>
+              <text x="420" y="114">rank: bigint</text>
+            </g>
+          </g>
+
+          <!-- players -->
+          <g>
+            <rect x="740" y="86" width="236" height="212" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+            <rect x="740" y="86" width="236" height="26" fill="#0f2a54"/>
+            <text x="858" y="104" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" fill="#fff" font-weight="600">players</text>
+            <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#33425a">
+              <text x="756" y="132" fill="#1e5c55" font-weight="600">player_id: bigint</text>
+              <text x="756" y="150">name_first: varchar</text>
+              <text x="756" y="168">name_last: varchar</text>
+              <text x="756" y="186">hand: varchar</text>
+              <text x="756" y="204">dob: date</text>
+              <text x="756" y="222">ioc: varchar</text>
+              <text x="756" y="240">height: bigint</text>
+              <text x="756" y="258">wikidata_id: varchar</text>
+              <text x="756" y="276" fill="#1e5c55">name_full: varchar</text>
+            </g>
+          </g>
+
+          <!-- rounds -->
+          <g>
+            <rect x="404" y="340" width="200" height="76" fill="#fff" stroke="#a8552b" stroke-width="1.5" stroke-dasharray="6 4"/>
+            <rect x="404" y="340" width="200" height="26" fill="#a8552b"/>
+            <text x="504" y="358" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="13" fill="#fff" font-weight="600">rounds</text>
+            <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#33425a">
+              <text x="420" y="384">name: varchar</text>
+              <text x="420" y="402">order: bigint</text>
+            </g>
+          </g>
+
+          <!-- 관계선 -->
+          <g stroke="#2b7d74" stroke-width="1.4" fill="none" marker-end="url(#a9)">
+            <path class="flow" style="--len:280" d="M278 202 C 340 202 340 82 398 82"/>
+            <path class="flow" style="--len:520;animation-delay:.12s" d="M278 258 C 480 258 560 130 734 130"/>
+            <path class="flow" style="--len:520;animation-delay:.24s" d="M278 276 C 480 276 560 146 734 146"/>
+            <path class="flow" style="--len:200;animation-delay:.36s" d="M278 348 C 340 348 340 378 398 378"/>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#69788c">
+            <text x="298" y="160">tourney_level</text>
+            <text x="330" y="248">winner_id</text>
+            <text x="330" y="292">loser_id</text>
+            <text x="298" y="342" fill="#a8552b">round</text>
+          </g>
+
+          <line x1="24" y1="428" x2="976" y2="428" stroke="#e9eef4" stroke-width="1.4"/>
+          <text x="24" y="448" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#0f2a54"><tspan font-weight="600">matches를 가운데 두고 세 테이블이 붙는다.</tspan> 등급 이름은 levels에서, 선수 정보는 players에서, 라운드의 순서는 rounds에서 온다.</text>
+          <text x="24" y="466" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#a8552b">점선으로 표시한 rounds는 제8장에서 한 번도 만들어지지 않은 테이블이다. 뒤에서 따로 다룬다.</text>
+        </svg>
+      </div></div>
+      <figcaption><b>〈도판 9.1〉</b><span>ATP 데이터베이스 스키마. 원서 그림의 구성을 옮겨 새로 작도했다. 관계에 관여하는 컬럼을 색으로 구분했다.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════ 여는 글 ══════════ -->
+<section>
+  <div class="col">
+    <p class="dropcap">어떤 데이터셋은 표 형태로 표상할 수 있지만, <em>차트로 시각화하고 요약하는 편이 도움이 되는 경우가 더 잦다.</em> 그렇게 하면 데이터가 더 접근하기 쉬워지고, 사용자가 질문에 답하고 통찰을 제시하고 결정을 뒷받침할 수 있게 된다. 대부분의 데이터 기반 쓰임에 결정적인 일이다.</p>
+
+    <p>그런데 저자들이 여기서 선을 하나 긋는다. <strong>데이터셋의 뜻을 왜곡하지 않는 이상적인 차트를 만드는 일은 다른 책의 주제다.</strong> 이 장은 <em>기술적인 면에 초점을 두고</em>, 접근 가능한 프론트엔드를 짓기 위한 기존 도구들과 DuckDB의 통합을 탐색한다. 할 수 있는 것과 할 수 없는 것을 미리 갈라놓는 이 절제가 미덥다.</p>
+
+    <p>먼저 Streamlit으로 최종 사용자를 향한 애플리케이션을 만들고, 나중에 Apache Superset으로 비즈니스 인텔리전스(BI) 대시보드를 만든다. 그리고 둘의 차이를 이렇게 규정한다.</p>
+
+    <div class="q">
+      대화형 애플리케이션은 통상 완성된 보고서에 초점을 두고 그 보고서를 걸러내는 정도로 상호작용을 제한한다. BI 대시보드는 통상 가능한 여러 원천의 데이터를 총체적 개관이 가능한 방식으로 집계하며, 원시 숫자가 아니라 전용 차트에 기반한다.
+      <span>제9장 도입, 두 도구의 성격 구분</span>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <div class="note">
+      <span class="tag">이 장을 읽는 방식에 대하여</span>
+      <p>이 장에는 도판이 <strong>스물아홉 점</strong> 실려 있는데, 그중 <strong>스물여덟이 Streamlit과 Superset의 화면 갈무리</strong>다. 재현할 수 없고 재현해서도 안 되는 것들이므로, 이 문서는 그 화면들을 <em>점선 상자에 무엇을 어떻게 누르는지의 서술로</em> 대신했다.</p>
+      <p>재현 가능한 것은 둘뿐이다. <strong>〈도판 9.1〉의 스키마 도해</strong>와 <strong>〈도판 9.12〉의 Superset 개념 관계도</strong>다. 그 둘만 원서 구성을 옮겨 새로 작도했다.</p>
+      <p>대신 이 문서는 원서가 하지 않은 일을 하나 한다. <strong>9.1절이 열 쪽에 걸쳐 조각조각 흘려놓은 <code>app.py</code>를 한자리에 모아 조립 과정으로 보여주는 것</strong>이다. 원서는 완성된 파일을 끝까지 한 번도 보여주지 않는다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 9.1 ══════════ -->
+<section id="s1">
+  <div class="sechead rev">
+    <span class="num">9.1</span>
+    <h2>Streamlit으로 맞춤 데이터 앱 짓기<span class="en">Building a custom data app with Streamlit</span></h2>
+  </div>
+  <div class="col rev">
+    <p>ATP 데이터는 제5장과 제8장에서 이미 다뤘다. 제5장에서는 여러 CSV 원천의 랭킹을 한 테이블로, 결국 하나의 Parquet 파일로 집계했다. 제8장에서는 데이터 파이프라인의 일부로 웹 자원에서 선수 데이터를 소비했다. 그 결과가 〈도판 9.1〉의 DuckDB 데이터베이스다.</p>
+    <p>그런데 문제가 있다. <strong>이제 여러분은 이 데이터베이스를 쓰는 법을 알지만, 여러분의 사용자는 반드시 그렇지 않다.</strong> <em>그들은 SQL을 모를 수도 있고, 데이터베이스에 직접 접근할 수 없을 수도 있다.</em> 애플리케이션이 그들에게 데이터와 구조를 항해하도록 도와줄 수 있고, 대화형 필터와 유용한 시각화를 결합해줄 수 있다. 목표는 <strong>사용자가 선수 간 상대 전적 통계를 검색하고 분석할 수 있는 플랫폼</strong>이다.</p>
+
+    <h3>Streamlit이란 무엇인가 <span class="sub">9.1.1</span></h3>
+    <p>Streamlit은 <strong>파이썬만 써서 대화형 웹 앱을 만들 수 있게 해주는 라이브러리</strong>다. <em>자바스크립트 기반 프론트엔드 라이브러리나 프레임워크에 대한 지식이 전혀 필요하지 않다.</em> 흔히 풀스택 엔지니어가 아닌 데이터 엔지니어, 데이터 과학자, 백엔드 개발자에게 이것은 <em>데이터 주도 애플리케이션을 빠르게 프로토타이핑하고 짓는 좋은 방법</em>이다.</p>
+    <p>그리고 이 절에서 못 박아둘 문장이 나온다. <strong>데이터·BI 분야의 다른 시각화 도구들이 로우코드 시각 빌더인 것과 달리, Streamlit은 코드 우선(code-first) 도구다.</strong> pandas, scikit-learn, matplotlib, DuckDB처럼 <em>이미 익숙한 도구와 라이브러리</em>로 파이썬을 써서 앱을 쓴다. 그래서 데이터나 기계학습 앱의 프론트엔드를 만드는 데 특히 요긴하다. 덧붙여 Streamlit을 만든 회사 <em>Snowflake Inc.</em>가 앱을 무료로 배포하고 관리할 수 있는 <strong>Streamlit Community Cloud</strong>를 제공한다.</p>
+
+    <h3>앱 짓기 <span class="sub">9.1.2</span></h3>
+    <p>Streamlit은 <strong>애플리케이션의 골격을 만들어주지 않는다.</strong> 대신 <em>파이썬 스크립트로 표상되는 애플리케이션을 직접 만들며, 그것이 차트와 텍스트와 위젯과 표를 그려 넣을 <strong>캔버스</strong>가 된다.</em> 이 비유가 이 도구의 성격을 정확히 말한다. 위에서 아래로 스크립트가 실행되고, 실행된 순서대로 화면에 그려진다.</p>
+    <p>아래는 <strong>원서 9.1절이 열 쪽에 걸쳐 조각조각 제시한 <code>app.py</code>를 한자리에 모은 것</strong>이다. 걸음마다 무엇이 더해지는지, 그리고 그 걸음이 어떤 목록에 해당하는지 확인할 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="ax" id="ax">
+      <div class="axsteps" role="group" aria-label="app.py 조립 단계 선택">
+        <button data-s="0" aria-pressed="true"><i>1</i>제목</button>
+        <button data-s="1" aria-pressed="false"><i>2</i>연결</button>
+        <button data-s="2" aria-pressed="false"><i>3</i>검색 함수</button>
+        <button data-s="3" aria-pressed="false"><i>4</i>검색 상자</button>
+        <button data-s="4" aria-pressed="false"><i>5</i>전적 질의</button>
+        <button data-s="5" aria-pressed="false"><i>6</i>표 렌더</button>
+        <button data-s="6" aria-pressed="false"><i>7</i>차트</button>
+      </div>
+      <div class="axbody">
+        <div class="axfile" id="axFile"></div>
+        <div class="axside">
+          <h6 id="axTitle">이 걸음이 하는 일</h6>
+          <dl>
+            <dt>해당 목록</dt><dd id="axList">—</dd>
+            <dt>더해진 것</dt><dd id="axWhat">—</dd>
+            <dt>앞 장과의 연결</dt><dd id="axLink">—</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="axmeta" id="axMeta"></div>
+      <div class="axcap" id="axCap"></div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>터미널로 돌아가 <code>streamlit run app.py</code>를 실행하면 <em>로컬 Streamlit 서버가 떠오르고 기본 웹 브라우저의 새 탭에서 앱이 열린다.</em> 출력에는 <code>Local URL: http://localhost:8501</code>과 네트워크 URL이 함께 나온다.</p>
+
+    <div class="tip">
+      <span class="tag">TIP — 이 배치가 왜 특별한가</span>
+      <p>연결 한 줄에 대해 저자들이 붙인 단서가 이 장에서 기술적으로 가장 중요한 대목이다. <strong>이 배치는 클라이언트–서버 기반 데이터베이스 배포와 다르다. 데이터베이스가 Streamlit 애플리케이션과 <em>같은 프로세스 안에 임베드되어</em> 돌아간다.</strong></p>
+      <p>그 결과가 이것이다. <strong>렌더링될 프론트엔드가 어떤 원격 데이터베이스 접속도 요구하지 않는다.</strong> 제1장에서 배운 임베디드 데이터베이스의 성질이 배포 아키텍처를 한 단계 단순하게 만들어버린 것이다. 데이터베이스 서버도, 접속 풀도, 네트워크 지연도 없다.</p>
+    </div>
+
+    <div class="shot">
+      <span class="tag">〈도판 9.2〉·〈도판 9.3〉 · 화면 갈무리</span>
+      <p>앞의 것은 제목만 있는 <b>초기 Streamlit 앱</b>의 화면이다. 저자들의 평이 담백하다. <em>"여기까지는 그리 흥미롭지 않지만, 시작은 시작이다."</em></p>
+      <p>뒤의 것은 <code>st.write(search_players("Novak"))</code>를 실행했을 때의 화면으로, <b>검색 결과가 목록으로 렌더링된 모습</b>이다. Streamlit은 데이터를 여러 형태로 써내는 일에 관한 것이며 <b>리스트, 맵, 데이터프레임 등을 지원한다.</b></p>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">python — 준비된 문장으로 SQL 주입을 막는다</span>
+        <span class="tagn">목록 9.2</span>
+      </div>
+      <pre><span class="k">def</span> search_players(search_term):
+    query = <span class="f">'''
+    SELECT DISTINCT winner_name AS player
+    FROM matches
+    WHERE player ilike '%' || $search_term || '%'
+    UNION
+    SELECT DISTINCT loser_name AS player
+    FROM matches
+    WHERE player ilike '%' || $search_term || '%'
+    '''</span>
+    values = atp_duck.execute(query, {<span class="f">"search_term"</span>:search_term}).fetchall()
+    <span class="k">return</span> [value[0] <span class="k">for</span> value <span class="k">in</span> values]</pre>
+      <div class="term-note">
+        열두 줄 안에 이 책이 가르친 것이 셋이나 들어 있다.
+        첫째, <b>두 WHERE 절 모두 컬럼에 나중에 붙인 별칭을 참조한다.</b>
+        <code>winner_name AS player</code>로 별칭을 준 다음 <code>WHERE player ilike …</code>로 쓰는 것,
+        제3장 3.5.3절의 DuckDB 확장이다. 표준 SQL이라면 <code>WHERE winner_name ilike …</code>라고 두 번 적어야 한다.
+      </div>
+      <div class="term-note">
+        둘째, <b>이름 붙은 매개변수 <code>$search_term</code>을 쓴 준비된 문장</b>이다.
+        <b>SQL 주입의 가능성을 없애기 위한 것</b>이며, 제6장 6.2.3절에서 그 원리를 더 자세히 다뤘다.
+        검색어를 문자열로 이어 붙이지 않는다는 원칙이 사용자 입력을 받는 첫 화면에서 곧바로 적용된다.
+      </div>
+      <div class="term-note">
+        셋째, <b>UNION이지 UNION ALL이 아니다.</b> 제3장에서 그 차이를 배웠다.
+        한 선수가 이긴 경기와 진 경기에 모두 있으면 이름이 두 번 나올 텐데,
+        <code>UNION</code>이 그 중복을 없애준다. 검색 자동완성 목록에 같은 이름이 두 번 뜨지 않는 이유다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 9.1.3 ══════════ -->
+<section id="s1b">
+  <div class="sechead rev">
+    <span class="num">9.1.3</span>
+    <h2>Streamlit 컴포넌트 쓰기<span class="en">Using Streamlit components</span></h2>
+  </div>
+  <div class="col rev">
+    <p>특정 선수의 경기만 보여준다면 앱이 꽤 심심할 것이다. 검색어 입력 필드를 만든다. 여기서 이 도구의 사고 방식이 드러난다. <strong>Streamlit은 컴포넌트로 생각한다.</strong> <em>클라이언트 쪽 상호작용을 위해 개별 HTML 조각과 자바스크립트 코드를 쓰는 대신, 컴포넌트의 사용을 선언하고 매개변수를 주면, 컴포넌트가 필요한 조각들을 웹 페이지에 렌더링해준다.</em></p>
+    <p>그런 컴포넌트 하나가 <code>streamlit-searchbox</code>다. GitHub의 <code>m-wrzr/streamlit-searchbox</code>로 공개된 라이브러리이며, <strong>자동완성처럼 사용자가 이런 것에 기대하는 통상의 기능을 모두 제공한다.</strong></p>
+    <p>목록 9.3에서 두 열짜리 배치를 만들 때 <em>HTML을 어떻게 쓸지 생각할 필요가 없다.</em> Streamlit에게 그렇게 해달라고 부탁하면 된다. 그리고 컴포넌트가 그 배치 안에 어떻게 놓이는지도 <strong>파이썬 키워드 <code>with</code></strong>로 처리된다. <code>left</code>와 <code>right</code> 변수를 정의해두고, 그 안에서 두 개의 범위를 만드는 것이다.</p>
+    <p>가장 중요한 것은 <code>st_searchbox</code>의 <strong>첫 인수</strong>다. 앞에서 정의한 <code>search_players</code> 함수 자체이며, <strong>사용자가 렌더링된 검색 상자의 내용을 바꿀 때 그 함수가 호출된다.</strong> 함수를 값으로 넘기는 파이썬의 성질이 UI의 반응성으로 바뀌는 자리다.</p>
+
+    <div class="shot">
+      <span class="tag">〈도판 9.4〉·〈도판 9.5〉 · 화면 갈무리</span>
+      <p>앞의 것은 <b>기본값이 채워진 두 개의 검색 상자</b>다. Player 1은 Roger Federer, Player 2는 Rafael Nadal이다.</p>
+      <p>뒤의 것은 <b>Andy Murray를 검색하는 모습</b>이다. 저자들의 설명이 흐름을 잘 보여준다. <em>Murr을 입력하는 순간 밑에 깔린 <code>search_players</code>가 호출되고, 결과가 UI로 되돌아온다. 결과를 클릭하는 순간 그것이 <code>player1</code> 변수에 할당되며, 그 변수는 컴포넌트와 렌더링된 검색 상자 양쪽을 표상한다.</em></p>
+    </div>
+
+    <p>선수 이름 목록은 좋지만 사용자가 관심 있는 것은 대개 그것이 아니다. <em>선택한 선수들 사이의 모든 경기를, 대회 등급과 그 경기가 치러진 라운드 정보와 함께</em> 담은 보고서를 원할 것이다. 여기서 제6장이 되돌아온다. <strong>Streamlit은 pandas 데이터프레임을 대화형 표로 렌더링하는 데 훌륭한 지원을 하며, 추가 코딩이 전혀 필요하지 않다.</strong> 그리고 DuckDB에는 데이터프레임에 대한 고유 지원이 있다. 두 선수 이름을 매개변수로 받아 <code>fetchdf</code> 메서드로 결과를 데이터프레임으로 돌려주면 된다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">python — 세 테이블을 조인해 데이터프레임으로 받기</span>
+        <span class="tagn">목록 9.4</span>
+      </div>
+      <pre>matches_for_players = atp_duck.execute(<span class="f">"""
+SELECT
+    tourney_date, tourney_name, surface, round,
+    rounds.order AS roundOrder,                        -- 라운드의 순서
+    levels.name AS level, levels.rank AS levelRank,    -- 대회 등급과 그 순위
+    winner_name, score
+FROM matches
+JOIN levels ON levels.short_name = matches.tourney_level   -- 등급 이름을 가져온다
+JOIN rounds ON rounds.name = matches.round                 -- 라운드 정보를 가져온다
+WHERE (loser_name = $player1 AND winner_name = $player2) OR
+      (loser_name = $player2 AND winner_name = $player1)
+ORDER BY tourney_date DESC
+"""</span>, {<span class="f">"player1"</span>:player1, <span class="f">"player2"</span>:player2}).fetchdf()</pre>
+      <div class="term-note">
+        <code>WHERE</code> 절의 두 갈래가 이 질의의 요점이다.
+        <b>누가 이겼는지 모르는 상태로 두 선수의 모든 맞대결을 찾아야 하므로 양방향을 다 적는다.</b>
+        상대 전적을 다루는 질의의 정석이다.
+      </div>
+      <div class="term-note">
+        <code>rounds.order</code>를 눈여겨볼 만하다. <b><code>order</code>는 SQL의 예약어</b>인데
+        인용부호 없이 컬럼 이름으로 쓰였다. DuckDB가 맥락으로 구별해준 것이지만,
+        <b>다른 데이터베이스로 옮길 때 걸릴 수 있는 자리</b>이니 알아두는 편이 좋다.
+      </div>
+      <div class="term-note catch">
+        <b>이 질의는 제8장을 따라온 독자의 데이터베이스에서 실패한다.</b>
+        제8장이 만든 테이블은 <code>matches</code>, <code>players</code>, <code>levels</code> 셋뿐이다.
+        <b><code>rounds</code>라는 낱말은 제8장에 한 번도 나오지 않는다.</b>
+        그런데 〈도판 9.1〉은 <code>rounds</code>를 스키마의 일원으로 그려놓고, 이 목록은 그것을 조인한다.
+        저장소에서 내려받는 <code>atp.duckdb</code>에는 들어 있겠지만,
+        <b>제8장의 코드를 손으로 따라온 독자는 이 테이블을 손수 만들어야 한다.</b>
+      </div>
+      <div class="term-note catch">
+        〈도판 9.1〉의 <code>matches</code> 필드 목록도 온전하지 않다.
+        이 질의가 쓰는 <code>round</code>, <code>score</code>, <code>winner_name</code>, <code>loser_name</code>이 그 목록에 없다.
+        지면을 위해 줄인 것으로 보이는데, <b>하필 <code>rounds</code>로 가는 관계선이 목록에 없는 <code>round</code> 컬럼에서 나온다.</b>
+        스키마 그림을 보고 질의를 쓰려는 독자에게는 곤란한 생략이다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">python — 세 열로 이름과 전적을 앉히기</span>
+        <span class="tagn">9.1.3</span>
+      </div>
+      <pre>left, middle, right = st.columns(3)          <span class="c"># 세 열짜리 컨테이너를 만든다</span>
+<span class="k">with</span> left:
+    st.markdown(
+        <span class="f">f"&lt;h2 style='text-align: left; '&gt;{player1}<span class="err">&lt;/h1&gt;</span>"</span>,
+        unsafe_allow_html=<span class="k">True</span>
+    )
+<span class="k">with</span> right:
+    st.markdown(
+        <span class="f">f"&lt;h2 style='text-align: right; '&gt;{player2}<span class="err">&lt;/h1&gt;</span>"</span>,
+        unsafe_allow_html=<span class="k">True</span>
+    )
+
+p1_wins = matches_for_players[                       <span class="c"># 선수 1의 승수를 센다</span>
+    matches_for_players.winner_name == player1].shape[0]
+p2_wins = matches_for_players[                       <span class="c"># 선수 2의 승수를 센다</span>
+    matches_for_players.winner_name == player2].shape[0]
+
+<span class="k">with</span> middle:
+    st.markdown(
+        <span class="f">f"&lt;h2 style='text-align: center; '&gt;{p1_wins} vs {p2_wins}<span class="err">&lt;/h1&gt;</span>"</span>,
+        unsafe_allow_html=<span class="k">True</span>
+    )
+
+st.markdown(<span class="f">f'### Matches'</span>)
+st.dataframe(
+    matches_for_players.drop([<span class="f">"roundOrder"</span>, <span class="f">"level"</span>, <span class="f">"levelRank"</span>], axis=1)
+)</pre>
+      <div class="term-note">
+        승수를 세는 방식이 간결하다. <b>데이터프레임을 <code>winner_name == player1</code>로 걸러 <code>.shape[0]</code>으로 행 수를 얻는다.</b>
+        같은 일을 SQL로도 할 수 있었지만, 이미 손에 데이터프레임이 있으니 pandas로 하는 편이 짧다.
+        <b>어느 쪽으로 계산할지 고를 수 있다는 것</b>이 제6장이 만들어준 여유다.
+      </div>
+      <div class="term-note">
+        렌더링할 데이터프레임에서 <code>roundOrder</code>, <code>level</code>, <code>levelRank</code> 셋을 떨어낸다.
+        <b>화면이 너무 어수선해지기 때문</b>이며, <b>그 필드들은 나중에 요긴해지지만 아직은 필요하지 않다.</b>
+        실제로 <code>roundOrder</code>는 다음 절에서 점의 크기로 쓰인다.
+        <b>질의로는 가져오고 표에서는 감춘다</b>는 이 분리가 실무의 요령이다.
+      </div>
+      <div class="term-note catch">
+        세 개의 <code>st.markdown</code> 호출이 모두 <b><code>&lt;h2&gt;</code>로 열고 <code>&lt;/h1&gt;</code>로 닫는다.</b>
+        태그가 어긋나 있다. 브라우저가 관용적으로 처리해주므로 화면은 나오지만 올바른 HTML이 아니다.
+        그리고 바로 옆 사이드바가 <b>"이 마크업은 구조적으로 유효한 HTML로 변환된다"</b>고 적어놓았으니,
+        설명과 예제가 같은 지면에서 어긋난 셈이다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <div class="aside">
+      <span class="tag">SIDEBAR</span>
+      <h4>마크다운</h4>
+      <p>마크다운은 <strong>쓰고 읽기 쉽도록 설계된, 평문 형식 문법을 가진 경량 마크업 언어</strong>다. 이 마크업은 <em>구조적으로 유효한 HTML로 변환된다.</em> 통상 README 파일의 문서를 형식화하는 데 쓰이지만, Streamlit에서도 <code>markdown</code> 함수로 지원된다.</p>
+      <p>여기서는 그것으로 <strong>선수 이름과 승수를 세 개의 제목—왼쪽, 오른쪽, 가운데 정렬—으로 렌더링</strong>하며, 마크다운 안에 맞춤 스타일을 준 HTML을 넣는다. <em>그래서 <code>unsafe_allow_html=True</code>도 설정해야 한다.</em></p>
+    </div>
+
+    <div class="shot">
+      <span class="tag">〈도판 9.6〉 · 화면 갈무리</span>
+      <p><b>앤디 머리와 라파엘 나달의 맞대결 표</b>다. 위에는 두 이름과 그 사이의 전적이 큰 글씨로 놓이고, 아래에 경기 목록이 대화형 표로 놓인다. <b>사용자가 다른 선수 조합을 선택하면 내용이 자동으로 새로 고쳐진다.</b></p>
+      <p>이 자동 갱신이 Streamlit의 실행 모델에서 나온다. 위젯이 바뀌면 <em>스크립트 전체가 위에서 아래로 다시 실행된다.</em> 그래서 상태 관리 코드를 쓰지 않아도 화면이 데이터와 맞아 있게 된다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 9.1.4 ══════════ -->
+<section id="s1c">
+  <div class="sechead rev">
+    <span class="num">9.1.4</span>
+    <h2>plot.ly로 데이터 시각화하기<span class="en">Visualizing data using plot.ly</span></h2>
+  </div>
+  <div class="col rev">
+    <p>표 형태 표상에 만족할 사람도 있지만 더 시각적인 방식을 선호할 사람도 있다. 저자들이 이 절을 여는 문장이 정직하다. <strong>훌륭한 차트는 데이터 중심 애플리케이션과 대시보드 양쪽에서 중요하지만, 훌륭한 차트를 만드는 일은 기술적으로도 내용적으로도 어렵다.</strong> 그러나 <em>바퀴를 다시 발명할 필요는 없다.</em> 상업 라이선스와 오픈소스 라이선스 양쪽으로 이미 만들어진 해법이 여럿 있다.</p>
+    <p>저자들이 좋아하는 라이브러리가 <strong>plot.ly</strong>다. <em>직관적인 API로 보기 좋은 차트와 도표를 만들 수 있게 해주는 데이터 시각화 도구</em>이며, <strong>Streamlit이 plot.ly 차트 사용을 직접 지원한다.</strong></p>
+    <p>머릿속에 그린 시각화는 <em>산점도</em>다. <strong>y축에 대회 이름을(열린 월·일 순으로 정렬), x축에 날짜를 놓는다. 차트의 점은 경기를 표상하며, 승자에 따라 다르게 색을 칠한다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">python — 데이터프레임을 SQL로 다시 정렬하고 점을 찍는다</span>
+        <span class="tagn">9.1.4</span>
+      </div>
+      <pre><span class="k">import</span> plotly.express <span class="k">as</span> px
+
+<span class="c"># 대회를 열린 월·일 순으로 정렬한 새 데이터프레임을 만든다.</span>
+sorted_matches_for_players = atp_duck.sql(<span class="f">"""
+FROM matches_for_players
+ORDER BY strftime(tourney_date, '%m-%d')
+"""</span>).fetchdf()
+
+fig = px.scatter(sorted_matches_for_players,
+    x=<span class="f">"tourney_date"</span>,
+    y=<span class="f">"tourney_name"</span>,
+    color=<span class="f">"winner_name"</span>,
+    size=<span class="f">"roundOrder"</span>,                       <span class="c"># 라운드의 중요도가 점의 크기가 된다</span>
+    color_discrete_sequence=px.colors.qualitative.Plotly,
+    category_orders={
+        <span class="f">"tourney_name"</span>: (                     <span class="c"># plot.ly가 대회 이름을</span>
+            sorted_matches_for_players[<span class="f">'tourney_name'</span>]   <span class="c"># 제멋대로 다시 정렬하지</span>
+            .drop_duplicates()                            <span class="c"># 못하게 한다</span>
+            .tolist()
+        )
+    },
+)
+
+st.plotly_chart(fig, use_container_width=<span class="k">True</span>)</pre>
+      <div class="term-note">
+        첫 줄이 이 장에서 가장 눈여겨볼 자리다. <b><code>FROM matches_for_players</code>의 <code>matches_for_players</code>는
+        테이블이 아니라 파이썬의 pandas 데이터프레임 변수 이름</b>이다.
+        제6장의 오리 시험—<b>테이블처럼 보이면 질의할 수 있다</b>—이 여기서 또 쓰인다.
+        데이터프레임을 SQL로 정렬해 다시 데이터프레임으로 받는 왕복이 한 문장에 담겼다.
+      </div>
+      <div class="term-note">
+        <code>color_discrete_sequence</code>를 지정한 이유를 저자들이 밝혀두었다.
+        <b>기본값이 밝은 파랑 둘인데, 인쇄에서 구별하기 어렵다고 판단했기 때문</b>이다.
+        책을 만드는 사람의 사정이 코드에 남은 자리인데, 색약을 고려한 팔레트 선택이라는 더 일반적인 교훈으로도 읽힌다.
+      </div>
+      <div class="term-note">
+        <b>NOTE</b> Streamlit에는 <b>Altair, Bokeh, PyDeck</b> 같은 다른 데이터 시각화 도구로 만든 차트를
+        렌더링하는 함수도 있다. plot.ly가 유일한 선택은 아니다.
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">python — 연도마다 세로선을 그어 격자를 만든다</span>
+        <span class="tagn">9.1.4</span>
+      </div>
+      <pre>min_year = sorted_matches_for_players[<span class="f">'tourney_date'</span>].dt.year.min()
+max_year = sorted_matches_for_players[<span class="f">'tourney_date'</span>].dt.year.max()
+unique_years = <span class="f">list</span>(<span class="f">range</span>(min_year, max_year+2))   <span class="c"># 최대 연도 +1년까지 포함하려면 +2</span>
+
+<span class="k">for</span> year <span class="k">in</span> unique_years:
+    fig.add_shape(
+        type=<span class="f">"line"</span>,
+        x0=<span class="f">f"{year}-01-01"</span>, x1=<span class="f">f"{year}-01-01"</span>,
+        y0=0, y1=1,
+        yref=<span class="f">"paper"</span>,                <span class="c"># y좌표를 도표 전체 높이의 비율로 해석한다</span>
+        layer=<span class="f">"below"</span>,               <span class="c"># 점 아래에 깔린다</span>
+        line=<span class="f">dict</span>(color=<span class="f">"#efefef"</span>, width=2)
+    )</pre>
+      <div class="term-note">
+        <code>max_year+2</code>가 눈에 걸릴 수 있는데 옳다.
+        <b>파이썬 <code>range</code>의 상한이 배타적</b>이므로 <b>최대 연도의 다음 해까지 선을 그으려면 +2가 필요하다.</b>
+        제4장 4.9절과 제8장 목록 8.12에서 되풀이된 그 규칙이 여기서는 제대로 쓰였다.
+      </div>
+      <div class="term-note">
+        <code>yref="paper"</code>와 <code>layer="below"</code> 두 옵션이 요령이다.
+        전자는 <b>y좌표 0과 1을 도표 높이의 0%와 100%로 읽게</b> 해 대회 이름 축과 무관하게 위아래로 꽉 찬 선을 만들고,
+        후자는 <b>그 선을 데이터 점 아래에 깔아</b> 격자가 데이터를 가리지 않게 한다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <div class="shot">
+      <span class="tag">〈도판 9.7〉·〈도판 9.8〉 · 화면 갈무리</span>
+      <p>앞의 것은 <b>세로선 없는 산점도</b>이고 뒤의 것은 <b>연도 세로선을 넣은 산점도</b>다. 무엇이 나아졌는지를 저자들이 직접 읽어준다.</p>
+      <p><em>지난 15년쯤 동안 두 선수가 언제 맞붙었는지 보기가 훨씬 쉬워졌다. <strong>경기 대부분이 2008–2009년과 2010–2011년에 치러졌고 나머지는 흩어져 있다.</strong> 결과 표를 볼 때는 알아채기 어려웠던 사실이다. 나달이 이 라이벌 관계를 지배했다는 것은 이미 알고 있었지만, 이 시각화가 그 사실을 한층 더 강조한다.</em></p>
+      <p>차트가 표보다 나은 까닭을 이보다 구체적으로 보여주기 어렵다. <b>표에는 있었지만 보이지 않던 것—시간의 뭉침—이 눈에 들어온다.</b></p>
+    </div>
+
+    <div class="q">
+      데이터프레임을 표로 표상할지 차트로 표상할지가 DuckDB에서 그 데이터프레임을 가져오는 방식을 바꾸지 않는다.
+      <span>9.1.4절을 맺는 문단</span>
+    </div>
+
+    <p>이어지는 설명이 이 장의 뼈대를 다시 짚는다. <em>표 형태 표상을 위해 Streamlit에 곧바로 넘길지, 아니면 plot.ly에 먼저 넘겨 차트를 만들고 그것을 Streamlit에 넘길지는 선택의 문제다.</em> 그리고 저자들이 직접 비유를 댄다. <strong>제6장에서 pandas에서 Apache Arrow로, Polars 데이터프레임으로 갈아타면서도 데이터베이스 기술과 상호작용하는 방식을 바꾸지 않았던 그 경험과 비슷하다.</strong> 갈아 끼울 수 있는 것은 바깥의 도구이고, 안쪽의 접점은 그대로다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 9.1.5 ══════════ -->
+<section id="s1d">
+  <div class="sechead rev">
+    <span class="num">9.1.5</span>
+    <h2>Community Cloud에 앱 배포하기<span class="en">Deploying our app on the Community Cloud</span></h2>
+  </div>
+  <div class="col rev">
+    <p>배포는 <em>정적 파일을 웹 서버에 복사하는 것만큼 단순할 수도, 컨테이너와 서비스와 온갖 움직이는 부품을 세우는 것만큼 복잡할 수도 있다.</em> 양쪽 극단에 다 그럴 만한 이유가 있을 때도 있지만, 흔히는 <strong>중간 어딘가</strong>가 답이다. 저자들이 그 중간을 이렇게 묘사한다. <em>어쩌면 누군가 이미 그 복잡한 인프라 전체를 세워두고 여러분의 애플리케이션에 "밀면 돌아가는(push-to-run)" 시나리오를 제공했을 수도 있다.</em> <strong>Snowflake Inc.가 뒤를 받치는 Streamlit Community Cloud가 정확히 그것을 제공한다.</strong></p>
+    <p>약관에 동의하면 <strong>로컬 Streamlit 서버 안에서 바로, UI 오른쪽 위의 Deploy 버튼을 눌러 새 애플리케이션을 운영에 밀어 넣을 수 있다.</strong> 다만 저장소에 <code>requirements.txt</code>가 없으면 만들어 넣어야 한다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">requirements.txt — 의존 넷</span>
+        <span class="tagn">목록 9.5</span>
+      </div>
+      <pre>streamlit
+duckdb
+streamlit-searchbox
+plotly</pre>
+      <div class="term-note">
+        네 줄이 이 애플리케이션의 전부다. <b>프론트엔드 프레임워크도, 번들러도, 패키지 매니저 설정도 없다.</b>
+        제9장이 앞의 여덟 장에 붙는 방식이 이 파일에 압축되어 있다.
+        <b>DuckDB가 그 넷 가운데 하나로 들어간다.</b> 데이터베이스가 애플리케이션의 의존 목록에 한 줄로 적히는 것이
+        임베디드 데이터베이스라는 말의 실제 뜻이다.
+      </div>
+      <div class="term-note">
+        판본을 못 박지 않은 점을 눈여겨볼 만하다. 예제로는 간결하지만
+        <b>운영에서는 판본을 고정하는 편이 안전하다.</b> 제8장 사이드바에서 <code>dagster-webserver</code>의
+        의존 충돌을 <code>urllib3==1.26.15</code>로 못 박아 해결했던 일을 떠올릴 만하다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <div class="shot">
+      <span class="tag">〈도판 9.9〉·〈도판 9.10〉·〈도판 9.11〉 · 화면 갈무리</span>
+      <p>배포 흐름의 세 화면이다.</p>
+      <ol>
+        <li><b>배포 방식 선택</b> — 도구가 <b>Community Cloud와 맞춤 배포 사이의 선택</b>을 준다.</li>
+        <li><b>오류 화면</b> — <b>프로젝트가 원격 GitHub 저장소에 연결되어 있어야 한다.</b> 그렇지 않으면 오류 메시지를 본다.</li>
+        <li><b>배포 화면</b> — <b>앱의 URL을 고르고, 필요하면 브랜치나 주 파일 경로를 조정</b>한다. <b>Advanced Settings에서 쓸 파이썬 판본도 바꿀 수 있다.</b></li>
+      </ol>
+      <p>완성된 앱은 <code>mneedham/atp-head-to-head</code> 저장소에 있고 <code>atp-head-to-head.streamlit.app</code>에 배포되어 있다.</p>
+    </div>
+
+    <div class="q">
+      프론트엔드 프레임워크의 세계로 들어가지 않고도, 우리는 한 줌의 Streamlit 컴포넌트로—이미 아는 하나의 언어로—대화형 웹 애플리케이션을 지을 수 있었다.
+      <span>9.1절을 맺는 문단</span>
+    </div>
+
+    <p>그리고 저자들이 곧바로 단서를 붙인다. <strong>"그렇지만 인정하자면, 이 모든 것을 작동시키려면 우리는 여전히 코드를 좀 써야 했다!"</strong> 코드를 쓰는 데 그리 편안하지 않거나, 자신이나 사용자를 위해 뭔가를 빨리 띄우고 싶을 뿐이라면 다른 선택지가 있다. <em>대화형 애플리케이션이 아니라 대시보드를 만들고 싶다면 로우코드나 BI 도구로 그것을 이룰 수 있다.</em> <strong>차트를 확대하고 이동하고 표상을 바꾸는 정도의 상호작용은 여전히 얻으면서, 애플리케이션 코드는 하나도 쓰지 않아도 된다.</strong></p>
+  </div>
+</section>
+
+<!-- ══════════ 9.2 ══════════ -->
+<section id="s2">
+  <div class="sechead rev">
+    <span class="num">9.2</span>
+    <h2>Apache Superset으로 BI 대시보드 짓기<span class="en">Building a BI dashboard with Apache Superset</span></h2>
+  </div>
+  <div class="col rev">
+    <p>Streamlit이 전문적인 프론트엔드 지식 없이도 애플리케이션에 대한 많은 통제권을 주지만, <em>때로는 프론트엔드를 위한 맞춤 코드를 쓰는 데 그만한 시간을 들이고 싶지 않다.</em> DuckDB는 <strong>Hex, Tableau</strong>를 포함한 다양한 BI 도구와 통합되며, 이 장에서 쓸 것은 <strong>Apache Superset</strong>이다.</p>
+
+    <h3>Apache Superset이란 무엇인가 <span class="sub">9.2.1</span></h3>
+    <p><strong>오픈소스 데이터 탐색·시각화 플랫폼</strong>이며, <em>Apache Airflow를 만든 것으로 가장 잘 알려진 <strong>막심 보슈맹(Maxime Beauchemin)</strong>이 개발했다.</em> 제8장에서 조율 도구를 열거할 때 Airflow가 첫자리에 있었으니, 같은 사람이 만든 도구로 그 파이프라인의 결과를 보게 되는 셈이다.</p>
+    <p>Superset은 <strong>DuckDB를 포함한 많은 데이터베이스와 통합되고, 모든 것을 UI로 설정할 수 있다.</strong> 대부분의 쓰임을 감당할 시각화 유형이 미리 설치되어 있지만, <em>자바스크립트로 맞춤 시각화를 만들 수도 있다.</em></p>
+    <p>DuckDB와 붙는 접점이 <strong>SQLAlchemy</strong>다. <em>데이터베이스와 상호작용하기 위한 고수준 객체 지향 인터페이스를 제공하는 파이썬 라이브러리</em>이며, <strong>데이터베이스 접속을 관리하고 데이터베이스 스키마를 정의하고 그 데이터베이스에 대해 질의를 수행한다.</strong> 제6장이 <em>"SQLAlchemy는 이 책의 범위를 벗어난다"</em>고 미뤄두었던 그것이, 여기서 다리로 되돌아온다.</p>
+    <p>도구 선택의 실용적 근거도 밝혀둔다. <em>BI 도구가 많지만 그중 다수가 계정 등록을 요구하는 클라우드 서비스다.</em> <strong>반면 Superset은 내 기계에서 시험해볼 수 있고, 나중에 운영에 배포하기로 정하면 Preset 호스팅 서비스를 쓸 선택지가 있다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">shell — 설치와 초기화 여섯 걸음</span>
+        <span class="tagn">9.2.1</span>
+      </div>
+      <pre><span class="p">$</span> pip install apache-superset==3.1.2
+<span class="c"># NOTE 집필 시점에 Superset은 Python 3.10에서만 작동한다.</span>
+
+<span class="p">$</span> pip install duckdb-engine     <span class="c"># DuckDB의 SQLAlchemy 드라이버</span>
+
+<span class="c"># 이 변수 없이는 Superset이 돌지 않는다. 새 터미널 세션마다 설정해야 한다.</span>
+<span class="p">$</span> export SUPERSET_SECRET_KEY=<span class="f">"sYBpNA2+bQHvmXcojOVp53b8xbmN3ZQ"</span>
+<span class="p">$</span> export FLASK_APP=superset
+
+<span class="c"># Superset의 메타데이터 데이터베이스를 초기화한다. 이것 없이는 작동하지 않는다.</span>
+<span class="p">$</span> superset init
+<span class="p">$</span> superset db upgrade
+
+<span class="c"># 관리자 사용자를 만든다.</span>
+<span class="p">$</span> superset fab create-admin \
+    --username admin \
+    --firstname Superset \
+    --lastname Admin \
+    --email admin@example.com \
+    --password admin
+
+logging was configured successfully
+...
+Recognized Database Authentications.
+<span class="ok">Admin User admin created.</span>
+
+<span class="c"># 8088 포트로 웹 서버를 띄운다.</span>
+<span class="p">$</span> superset run -p 8088 --with-threads --reload --debugger
+<span class="c"># → http://localhost:8088 에서 admin/admin으로 로그인한다.</span></pre>
+      <div class="term-note">
+        <b>Superset은 Flask 애플리케이션을 담고 있으므로</b> Flask가 찾을 파일 이름을 정의하는
+        <code>FLASK_APP</code> 변수를 설정해야 한다. 그리고 더 안전한 설치를 위해
+        <b>무작위 문자열로 된 비밀 키</b>를 지정해야 한다.
+      </div>
+      <div class="term-note">
+        <b>Flask app builder(FAB)가 Superset이 그 위에 지어진 프레임워크</b>다.
+        <b>인증, 사용자 관리, 권한, 역할</b>을 제공한다. 그래서 사용자 생성 명령이 <code>superset fab …</code>인 것이다.
+        저자들도 짚어두었듯 <b>기계가 인터넷에 노출된다면 더 안전한 자격 증명을 써야 한다.</b>
+      </div>
+      <div class="term-note catch">
+        두 가지를 확인해두는 편이 좋다. 첫째, 원서는 <b><code>superset init</code>을 <code>superset db upgrade</code>보다 먼저</b> 놓았다.
+        <code>init</code>이 하는 일은 기본 역할과 권한을 만드는 것이고 그것은 메타데이터 테이블이 이미 있어야 가능하니,
+        <b>새로 설치하는 경우라면 <code>db upgrade</code>가 먼저여야 순서가 맞는다.</b> 공식 문서로 확인해볼 만한 자리다.
+      </div>
+      <div class="term-note catch">
+        둘째, <b>비밀 키가 책에 문자열 그대로 인쇄되어 있다.</b>
+        본문이 "무작위 문자열로"라고 적어두었으니 예시일 뿐이지만,
+        <b>그대로 복사해 쓰면 공개된 비밀 키를 쓰는 셈</b>이 된다. 자기 것을 새로 만들어야 한다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<!-- ══════════ 9.2.2 ══════════ -->
+<section id="s2b">
+  <div class="sechead rev">
+    <span class="num">9.2.2</span>
+    <h2>Superset의 작업 흐름<span class="en">Superset's workflow</span></h2>
+  </div>
+  <div class="col rev">
+    <p>무엇을 만들기 전에 <em>Superset이 쓰는 용어와 그것들이 서로 어떻게 관계하는지</em> 이해해두는 편이 도움이 된다. 개념이 다섯이다.</p>
+  </div>
+
+  <div class="wrap plate rev">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 260" role="img" aria-label="데이터베이스에서 테이블과 저장된 SQL 질의를 거쳐 데이터셋, 차트, 대시보드로 이어지는 Superset 개념 관계도">
+          <defs>
+            <marker id="as9" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 z" fill="#6b3f8f"/>
+            </marker>
+          </defs>
+          <text x="24" y="26" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2" fill="#69788c">SUPERSET CONCEPTS</text>
+
+          <g font-family="Noto Sans KR, sans-serif" font-size="13">
+            <g>
+              <rect x="24" y="94" width="150" height="60" rx="4" fill="#fff" stroke="#1f4e9c" stroke-width="1.5"/>
+              <text x="99" y="118" text-anchor="middle" font-weight="600" fill="#0f2a54">데이터베이스</text>
+              <text x="99" y="138" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#69788c">DuckDB</text>
+            </g>
+            <g>
+              <rect x="222" y="42" width="150" height="52" rx="4" fill="#f3f6fb" stroke="#909caa" stroke-width="1.2" stroke-dasharray="5 4"/>
+              <text x="297" y="64" text-anchor="middle" fill="#5a6a80">테이블</text>
+              <text x="297" y="82" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#909caa">개념이 아니다</text>
+            </g>
+            <g>
+              <rect x="222" y="152" width="150" height="60" rx="4" fill="#fff" stroke="#1f4e9c" stroke-width="1.5"/>
+              <text x="297" y="176" text-anchor="middle" font-weight="600" fill="#0f2a54">저장된 SQL 질의</text>
+              <text x="297" y="196" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#69788c">SQL Saved Query</text>
+            </g>
+            <g>
+              <rect x="424" y="94" width="150" height="60" rx="4" fill="rgba(201,160,232,.16)" stroke="#6b3f8f" stroke-width="1.8"/>
+              <text x="499" y="118" text-anchor="middle" font-weight="600" fill="#4b2a66">데이터셋</text>
+              <text x="499" y="138" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#6b3f8f">Dataset</text>
+            </g>
+            <g>
+              <rect x="626" y="94" width="150" height="60" rx="4" fill="#fff" stroke="#1f4e9c" stroke-width="1.5"/>
+              <text x="701" y="118" text-anchor="middle" font-weight="600" fill="#0f2a54">차트</text>
+              <text x="701" y="138" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#69788c">Chart</text>
+            </g>
+            <g>
+              <rect x="828" y="94" width="150" height="60" rx="4" fill="#fff" stroke="#2b7d74" stroke-width="1.8"/>
+              <text x="903" y="118" text-anchor="middle" font-weight="600" fill="#1e5c55">대시보드</text>
+              <text x="903" y="138" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#69788c">Dashboard</text>
+            </g>
+          </g>
+
+          <g stroke="#6b3f8f" stroke-width="1.5" fill="none" marker-end="url(#as9)">
+            <path class="flow" style="--len:140" d="M180 112 C 200 112 200 68 216 68"/>
+            <path class="flow" style="--len:140;animation-delay:.1s" d="M180 136 C 200 136 200 182 216 182"/>
+            <path class="flow" style="--len:140;animation-delay:.2s" d="M378 68 C 400 68 400 112 418 112"/>
+            <path class="flow" style="--len:140;animation-delay:.3s" d="M378 182 C 400 182 400 136 418 136"/>
+            <path class="flow" style="--len:60;animation-delay:.4s" d="M580 124 L620 124"/>
+            <path class="flow" style="--len:60;animation-delay:.5s" d="M782 124 L822 124"/>
+          </g>
+
+          <text x="24" y="240" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#0f2a54"><tspan font-weight="600">데이터셋이 병목이 아니라 관문이다.</tspan> 테이블에서 오든 저장된 SQL 질의에서 오든, 차트는 반드시 데이터셋 위에 세워진다.</text>
+        </svg>
+      </div></div>
+      <figcaption><b>〈도판 9.12〉</b><span>Superset이 쓰는 용어와 그 관계. 원서 그림의 구성을 옮겨 새로 작도했다.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <ul class="plain">
+      <li><b>데이터베이스 Database</b> — 밑에 깔린 데이터 원천. 여기서는 DuckDB다.</li>
+      <li><b>저장된 SQL 질의 SQL Saved Query</b> — 데이터베이스의 한 테이블 또는 여러 테이블에 대한 맞춤 SQL 질의.</li>
+      <li><b>데이터셋 Dataset</b> — <em>저장된 SQL 질의 또는 데이터베이스 테이블을 감싼 껍데기.</em></li>
+      <li><b>차트 Chart</b> — 데이터셋에 기반한 시각화.</li>
+      <li><b>대시보드 Dashboard</b> — 차트의 모음.</li>
+    </ul>
+    <p>그리고 한 가지를 분명히 해둔다. <strong>데이터베이스를 이루는 테이블들은 Superset의 개념 가운데 하나가 아니지만, 데이터셋이 그것을 쓴다.</strong> 그래서 흐름은 이렇게 된다. 먼저 데이터베이스를 만들면 <em>Superset이 스키마와 그에 따른 테이블을 자동으로 감지한다.</em> 그다음 그 테이블에 기반한 데이터셋을 만들거나, <em>SQL 질의를 써서 그것을 데이터셋으로 바꾼다.</em> 마지막으로 그 데이터셋 위에 차트를 만들고, 그 차트가 대시보드에 쓰인다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 9.2.3 ══════════ -->
+<section id="s2c">
+  <div class="sechead rev">
+    <span class="num">9.2.3</span>
+    <h2>첫 대시보드 만들기<span class="en">Creating our first dashboard</span></h2>
+  </div>
+  <div class="col rev">
+    <p><strong>대시보드는 중요한 업무 지표를 시각화해 상황을 재빨리 그려볼 수 있게 해준다.</strong> 그리고 <em>문제가 있다면 데이터를 더 깊이 파고들 수 있도록 대시보드와 상호작용할 수 있기를</em> 바란다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p>테니스 데이터셋 위에 만드는 어떤 대시보드도 업무 데이터셋 위에 만드는 것만큼 중요하지는 않을 것이다. 그래도 <strong>이 기법을 여러분 자신의 데이터에 어떻게 적용할지는 보이기를 바란다</strong>는 것이 저자들의 말이다.</p>
+    </div>
+
+    <div class="shot">
+      <span class="tag">〈도판 9.13〉–〈도판 9.17〉 · 화면 갈무리 다섯 점</span>
+      <p>DuckDB를 Superset에 붙이고 데이터셋을 만드는 흐름이다.</p>
+      <ol>
+        <li>오른쪽 위의 <b>Settings</b>를 눌러 <b>데이터베이스 접속</b> 화면으로 간다.</li>
+        <li><b>+ Database</b> 버튼을 누르면 <b>새 데이터베이스 접속</b> 모달이 뜬다.</li>
+        <li><b>DuckDB</b>를 누르고 <b>SQL Alchemy URI</b> 칸에 접속 문자열을 넣는다. 형식은 <code>duckdb:///&lt;your-database&gt;</code>이고 여기서는 <code>duckdb:///atp.duckdb</code>다.</li>
+        <li><b>Data</b> 링크 → <b>Create Dataset</b> → <b>데이터베이스·스키마·테이블</b>을 고른다. <code>matches</code>를 고른다.</li>
+        <li>고르면 <b>그 테이블의 모든 필드를 보여주는 미리보기</b>가 나온다.</li>
+      </ol>
+      <p><b>Test Connection</b> 버튼으로 모든 것이 제대로 연결되었는지 확인할 수 있다.</p>
+    </div>
+
+    <div class="tip">
+      <span class="tag">TIP — 앞 절의 앱을 먼저 닫아야 한다</span>
+      <p>저자들이 붙인 실무 단서다. <strong>앞 절의 Streamlit 애플리케이션이 아직 돌고 있다면, 데이터베이스 파일의 잠금을 풀기 위해 먼저 그것을 닫아야 한다.</strong></p>
+      <p>9.1.2절에서 <code>read_only=True</code>로 열었는데도 잠금이 문제가 되는 것은, <em>Superset이 그 파일을 쓰기 가능하게 열려 하기 때문</em>이다. DuckDB는 여러 읽기 전용 접속은 함께 허용하지만 <strong>읽기 전용 접속과 읽기·쓰기 접속을 같은 파일에 동시에 두지는 않는다.</strong> 제7장에서 업로드 전에 <code>.open md:</code>로 잠금을 풀어야 했던 것, 제8장에서 Dagster는 그럴 필요가 없었던 것과 나란히 놓고 볼 만한 자리다.</p>
+    </div>
+
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p><strong>MotherDuck 데이터베이스에도 접속할 수 있다.</strong> <code>duckdb:///md:&lt;my_database&gt;?motherduck_token=&lt;my_token&gt;</code> 형식을 쓴다. 제7장 7.3.7절이 말한 <em>"<code>md:</code> 접두사를 끼워 넣고 토큰 매개변수를 덧붙이는 것뿐"</em>이라는 규칙이 SQLAlchemy URI 안에서도 그대로 성립한다.</p>
+    </div>
+
+    <div class="shot">
+      <span class="tag">〈도판 9.18〉–〈도판 9.22〉 · 화면 갈무리 다섯 점</span>
+      <p>차트를 만들어 대시보드에 앉히는 흐름이다.</p>
+      <ol>
+        <li><b>Create Dataset and Create Chart</b>를 누르면 <b>어떤 차트를 만들지 고르는 화면</b>이 나온다. <b>Bar Chart</b>를 고른다.</li>
+        <li>세 칸을 설정한다. <b>X-Axis는 <code>tourney_date</code>, Time Grain은 Year, Metrics는 <code>COUNT(*)</code></b>다.</li>
+        <li>차트를 만들면 오른쪽에 <b>미리보기</b>가 나온다.</li>
+        <li>마음에 들면 <b>저장 화면</b>에서 저장한다. 기존 대시보드에 넣을지 새 대시보드에 넣을지 묻는다. <b>ATP Dashboard</b>라는 새 대시보드에 넣는다.</li>
+        <li><b>Save &amp; Go to Dashboard</b>를 누르면 <b>차트를 담은 대시보드</b>가 보인다.</li>
+      </ol>
+      <p>설정한 것이 <b>세 줄뿐</b>이라는 점을 눈여겨볼 만하다. 축, 시간 단위, 지표. 9.1절에서 산점도 하나에 스무 줄 남짓의 파이썬을 쓴 것과 대비된다.</p>
+    </div>
+
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p>대시보드 칸에 아무것도 입력하지 않으면 <strong>차트가 어느 대시보드에도 배정되지 않지만, 나중에 언제든 대시보드에 더할 수 있다.</strong></p>
+    </div>
+
+    <h3>이 장의 유일한 데이터 발견</h3>
+    <p>만든 차트는 <em>1967년부터 2023년까지 해마다 치러진 경기 수</em>를 보여준다. 저자들이 질문을 먼저 세워둔다. <strong>요즘 테니스 경기가 예전보다 훨씬 많이 치러진다는 말이 흔히 있으니, 데이터가 무엇을 보여줄지 흥미로울 것이다.</strong> 그리고 답이 통념을 뒤집는다.</p>
+
+    <div class="q">
+      요즘 경기가 더 많이 치러진다는 증거는 보이지 않는다. 오히려 치러지는 경기 수에 약간의 하향 추세가 있어 보인다.
+      <span>9.2.3절, 막대 차트를 읽은 결과</span>
+    </div>
+
+    <p>여기에 이상치 하나를 짚는다. <strong>2020년에 이상치가 있으며, 그것은 코로나19 대유행이 원인이다. 그해 3월부터 8월까지 테니스 시즌이 멈췄다.</strong> 데이터의 튀는 값을 세계의 사건으로 설명해내는 이 한 줄이, 대시보드를 만드는 일의 목적을 잘 보여준다. <em>차트는 숫자를 보여주고, 사람이 그 숫자에 이유를 붙인다.</em></p>
+  </div>
+</section>
+
+<!-- ══════════ 9.2.4 ══════════ -->
+<section id="s2d">
+  <div class="sechead rev">
+    <span class="num">9.2.4</span>
+    <h2>SQL 질의로 데이터셋 만들기<span class="en">Creating a dataset from an SQL query</span></h2>
+  </div>
+  <div class="col rev">
+    <p>테이블에서 데이터셋을 만드는 것에 더해 <strong>SQL 질의에서도 데이터셋을 만들 수 있다.</strong> 새 데이터셋을 더할 때 상단 메뉴의 <strong>SQL Lab</strong> 링크를 누른다. 새 질의 탭을 더하고, 데이터베이스와 스키마를 고르고, 질의를 입력한다.</p>
+    <p>물음은 이것이다. <em>그랜드 슬램 우승자들이 시간이 흐르며 나이가 많아졌는가.</em> 이 질문에 답하려면 <strong><code>matches</code>와 <code>players</code> 두 테이블에서 데이터를 가져와야 한다.</strong> 앞 절의 차트가 한 테이블에서 나온 것과 달라지는 지점이며, 그것이 이 절이 따로 있는 이유다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">sql — 서른 넘은 그랜드 슬램 우승자의 누적 수</span>
+        <span class="tagn">9.2.4</span>
+      </div>
+      <pre><span class="k">SELECT</span>
+    winner_name,
+    tourney_date,
+    (tourney_date - dob)/365 <span class="k">AS</span> age,                        <span class="c">-- 우승자의 나이를 계산한다</span>
+    <span class="f">COUNT</span>(*) <span class="k">OVER</span> (<span class="k">ORDER BY</span> tourney_date) <span class="k">AS</span> cumulative_count  <span class="c">-- 우승자의 누적 수</span>
+<span class="k">FROM</span> matches
+<span class="k">JOIN</span> players <span class="k">ON</span> players.player_id = matches.winner_id
+<span class="k">WHERE</span> round=<span class="f">'F'</span>              <span class="c">-- 각 대회의 결승만 돌려준다</span>
+  <span class="k">AND</span> tourney_level = <span class="f">'G'</span>    <span class="c">-- 그랜드 슬램만 포함한다</span>
+  <span class="k">AND</span> age &gt;= 30              <span class="c">-- 서른 이상의 우승자만 돌려준다</span>
+<span class="k">ORDER BY</span> tourney_date;</pre>
+      <div class="term-note">
+        아홉 줄에 이 책의 여러 장이 겹쳐 있다.
+        <b>날짜끼리 빼서 365로 나눠 나이를 얻고</b>(제3장), <b>WHERE 절에서 선택 목록의 별칭 <code>age</code>를 참조하고</b>(제3장 3.5.3절),
+        <b>프레임 절 없는 <code>COUNT(*) OVER (ORDER BY …)</code>로 누적 수를 세고</b>(제4장 4.5절, 4.8절의 누적 수익과 같은 꼴),
+        <b>두 테이블을 조인한다</b>(제3장). 이 장이 앞의 장들 없이 성립하지 않는다는 것이 이 질의에 다 담겼다.
+      </div>
+      <div class="term-note">
+        <code>WHERE</code>가 윈도 함수보다 먼저 적용되므로 <b><code>cumulative_count</code>는 필터를 통과한 행만 셈한다.</b>
+        곧 "서른 넘은 그랜드 슬램 결승 우승" 사건만 순서대로 누적된다. 의도한 대로다.
+        제4장 4.6절이 <b>WHERE·HAVING·QUALIFY의 적용 순서</b>를 가르쳐둔 값이 여기서 나온다.
+      </div>
+      <div class="term-note">
+        <code>tourney_level = 'G'</code>가 그랜드 슬램을 고른다.
+        제8장 목록 8.19의 등급 표에서 <b>여섯 코드 가운데 유일하게 옳게 짝지어져 있던 코드가 G</b>였는데,
+        이 질의가 쓰는 것이 바로 그 하나다. <b>운이 좋았다.</b>
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <div class="shot">
+      <span class="tag">〈도판 9.23〉–〈도판 9.26〉 · 화면 갈무리 네 점</span>
+      <p>질의를 데이터셋으로 만들어 차트로 세우는 흐름이다.</p>
+      <ol>
+        <li>질의를 붙여 넣고 <b>Run</b>을 누르면 <b>서른 넘은 그랜드 슬램 우승자 목록</b>이 나온다. 마음에 들면 <b>Save Dataset</b>을 골라 이름을 준다.</li>
+        <li><b>Charts</b> 페이지로 돌아가 이번에는 <b>Big Number with Trendline</b>을 고르고 <b>새로 만든 데이터셋</b>을 선택한다.</li>
+        <li>세 칸을 설정한다. <b>X-Axis는 <code>tourney_date</code>, Time Grain은 Day, Metrics는 <code>SUM(cumulative_count)</code></b>이며 이것은 맞춤 지표다.</li>
+        <li><b>Update Chart</b>를 누르면 오른쪽에 시각화가 나온다. 저장해 <b>ATP Dashboard</b>에 더한다.</li>
+      </ol>
+    </div>
+
+    <div class="note">
+      <span class="tag">살펴본 김에 — 누적 수를 다시 합하는 지표</span>
+      <p>지표가 <code>SUM(cumulative_count)</code>다. <strong><code>cumulative_count</code>는 이미 누적된 값</strong>이므로, 그것을 다시 <code>SUM</code>하면 일반적으로 <em>부풀려진 숫자</em>가 나온다. 값이 1, 2, 3, …, N으로 늘어난다면 그 합은 N이 아니라 N(N+1)/2다.</p>
+      <p>도판 9.25의 설명이 <em>"서른 넘은 그랜드 슬램 우승자의 <strong>수</strong>"</em>라고 되어 있으니, 의도는 <strong>총 몇 명인가</strong>일 것이다. 그렇다면 <code>MAX(cumulative_count)</code>나 <code>COUNT(*)</code>가 의도에 맞는다. Big Number 계열 차트가 <em>마지막 시간 구간의 값</em>을 큰 숫자로 보여주기 때문에, <strong>마지막 날에 해당 사건이 하나뿐이면 우연히 총계와 같아진다.</strong> 그러나 같은 날 결승이 둘 있으면 어긋난다.</p>
+      <p>차트 설정 화면을 재현할 수 없으니 실제로 어떤 숫자가 표시되었는지는 확인할 수 없다. 그러나 <strong>누적값에 다시 합계를 씌우는 지표는 의도를 다시 확인해볼 자리</strong>임은 분명하다.</p>
+    </div>
+
+    <div class="shot">
+      <span class="tag">〈도판 9.27〉 · 화면 갈무리</span>
+      <p><b>완성된 ATP Dashboard</b>다. 저자들은 이 절과 앞 절의 방식을 따라 차트를 몇 개 더 더했다고 밝힌다. <em>"Superset으로 무엇을 할 수 있는지 감을 주려고 몇 가지 다른 차트 유형을 썼다"</em>는 것이다. 다음 절에서 이 대시보드의 사본을 가져오는 법을 설명한다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 9.2.5 ══════════ -->
+<section id="s2e">
+  <div class="sechead rev">
+    <span class="num">9.2.5</span>
+    <h2>대시보드 내보내고 가져오기<span class="en">Exporting and importing dashboards</span></h2>
+  </div>
+  <div class="col rev">
+    <p>데이터베이스, 데이터셋, 차트, 대시보드를 통상 <em>Superset의 UI로 설정한다.</em> 그런데 <strong>그 대시보드를 다른 곳에 배포하고 싶다면—또는 책의 독자들과 공유하고 싶다면—처음부터 전 과정을 다시 거치고 싶지는 않을 것이다.</strong> 여기서 내보내기·가져오기 기능이 등장한다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">shell — 눌러 만든 것이 결국 YAML이다</span>
+        <span class="tagn">9.2.5</span>
+      </div>
+      <pre><span class="p">$</span> unzip dashboard_export_20231203T162310.zip
+<span class="p">$</span> tree dashboard_export_20231203T162310
+
+dashboard_export_20231203T162310
+├── <span class="k">charts</span>
+│   ├── Grand_Slam_Winners__30_11.yaml
+│   ├── Grand_Slam_winners__25_9.yaml
+│   ├── Lowest_Ranked_Grand_Slam_Winners_8.yaml
+│   ├── Matches_Played_7.yaml
+│   └── Multi_Title_Winners_6.yaml
+├── <span class="k">dashboards</span>
+│   └── ATP_Dashboard_1.yaml
+├── <span class="k">databases</span>
+│   └── DuckDB.yaml
+├── <span class="k">datasets</span>
+│   └── DuckDB
+│       ├── Grand_Slam_Winners__30.yaml
+│       ├── Multi_Title_Winners.yaml
+│       ├── Young_Grand_Slam_Winners.yaml
+│       └── matches.yaml
+└── metadata.yaml</pre>
+      <div class="term-note">
+        9.2.2절에서 배운 개념마다 디렉터리가 하나씩 있다.
+        <b>데이터베이스 접속 설정은 <code>databases/DuckDB.yaml</code>, 데이터셋은 <code>datasets/DuckDB</code>,
+        차트는 <code>charts</code>, 대시보드 설정은 <code>dashboards/ATP_Dashboard_1.yaml</code></b>이다.
+        <b>개념 도해가 그대로 디렉터리 구조가 되었다.</b>
+      </div>
+      <div class="term-note">
+        이 목록에서 이 장 전체를 되짚을 만한 사실이 하나 드러난다.
+        <b>UI로 눌러 만든 것이 결국 YAML이다.</b> 제8장에서 dbt가 <b>YAML로 시작해</b> 파이프라인을 서술했는데,
+        Superset은 <b>클릭으로 시작해 YAML로 끝난다.</b> 도착지가 같으니 <b>버전 관리도, 코드 리뷰도, 배포 자동화도 가능하다.</b>
+        노코드 도구가 코드를 배제하는 것이 아니라 <b>코드를 쓰는 시점을 뒤로 미룰 뿐</b>이라는 것이 여기서 보인다.
+      </div>
+      <div class="term-note">
+        차트가 다섯인데 데이터셋은 넷이다. <code>matches</code> 테이블에서 온 데이터셋 하나와
+        SQL 질의에서 온 데이터셋 셋이며, <b>한 데이터셋 위에 차트 둘이 서 있다</b>는 뜻이다.
+        <code>Grand_Slam_Winners__30</code> 데이터셋과 그 위의 차트 이름이 짝을 이루는 것이 보인다.
+      </div>
+      <div class="term-note catch">
+        공유하기 전에 확인해둘 것이 하나 있다. <code>databases/DuckDB.yaml</code>은 <b>접속 설정을 담는다.</b>
+        9.2.3절의 NOTE가 알려준 대로 MotherDuck에 붙었다면 그 접속 문자열에
+        <b><code>?motherduck_token=…</code>이 들어 있다.</b>
+        내보낸 ZIP을 그대로 남에게 주거나 저장소에 올리기 전에
+        <b>그 파일에 토큰이 남아 있지 않은지 확인하는 편이 안전하다.</b>
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <div class="shot">
+      <span class="tag">〈도판 9.28〉·〈도판 9.29〉 · 화면 갈무리</span>
+      <p>앞의 것은 <b>내보내기</b>다. Dashboards 페이지에서 <b>해당 행의 Actions 열에 마우스를 올리면 내보내기 버튼</b>이 나타난다. 누르면 Superset이 <b>데이터베이스·데이터셋·차트·대시보드를 담은 ZIP 파일</b>을 만들어준다.</p>
+      <p>뒤의 것은 <b>가져오기</b>다. Dashboard 페이지 <b>오른쪽 위의 아래쪽 화살표 버튼</b>을 누르고 ZIP 파일을 고르면 그 설정이 Superset으로 들어온다.</p>
+    </div>
+
+    <div class="tblwrap">
+      <table class="tbl">
+        <caption><b>덧붙인 표</b> &nbsp;같은 일을 두 길로 하면 무엇이 달라지는가. 원서에는 이런 대조표가 없다.</caption>
+        <thead><tr><th>해야 할 일</th><th class="pyc">Streamlit · 코드 우선</th><th class="uic">Superset · 클릭 우선</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="m">DuckDB 붙이기</td>
+            <td class="code">duckdb.connect('atp.duckdb',<br>&nbsp;&nbsp;read_only=True)</td>
+            <td class="click">Settings → + Database → DuckDB →<br>SQL Alchemy URI에 <code>duckdb:///atp.duckdb</code></td>
+          </tr>
+          <tr>
+            <td class="m">검색 입력 받기</td>
+            <td class="code">st_searchbox(search_players, …)<br>+ 준비된 문장 함수 12줄</td>
+            <td class="click">해당 개념이 없다. 대시보드의 상호작용은<br>확대·이동·차트 표상 변경으로 제한된다</td>
+          </tr>
+          <tr>
+            <td class="m">표 보여주기</td>
+            <td class="code">st.dataframe(df.drop([…], axis=1))</td>
+            <td class="click">데이터셋을 만들면 미리보기가 표로 나온다</td>
+          </tr>
+          <tr>
+            <td class="m">차트 그리기</td>
+            <td class="code">px.scatter(…) 20줄 남짓 +<br>st.plotly_chart(fig)</td>
+            <td class="click">차트 유형 선택 → 축·Time Grain·Metrics<br>세 칸 설정 → Update Chart</td>
+          </tr>
+          <tr>
+            <td class="m">여러 테이블 합치기</td>
+            <td class="code">SQL 문자열에 JOIN을 적어 execute</td>
+            <td class="click">SQL Lab에서 질의를 쓰고 Save Dataset<br><em>결국 SQL은 쓴다</em></td>
+          </tr>
+          <tr>
+            <td class="m">배포·공유</td>
+            <td class="code">requirements.txt 네 줄 +<br>GitHub 저장소 + Deploy 버튼</td>
+            <td class="click">대시보드 내보내기 → ZIP(YAML 묶음) →<br>다른 Superset에서 가져오기</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>표를 옆으로 읽으면 이 장의 결론이 보인다. <strong>Superset이 없애준 것은 프레젠테이션 코드이고, 없애주지 못한 것은 SQL이다.</strong> 여러 테이블을 합쳐야 하는 순간 SQL Lab이 열리고, 거기서 쓰는 것은 제3·4장에서 배운 그 SQL이다. 요약의 마지막 문장이 그것을 인정한다. <em>Apache Superset을 쓰며 통상 써야 하는 유일한 코드는 시각화에 흘러 들어가는 맞춤 SQL 질의다.</em></p>
+  </div>
+</section>
+
+<!-- ══════════ 요약 ══════════ -->
+<section class="summary" id="s3">
+  <div class="sechead">
+    <span class="num">SUMMARY</span>
+    <h2>제9장이 남긴 여섯 문장<span class="en">Summary</span></h2>
+  </div>
+  <ol>
+    <li>Streamlit은 <mark>로우코드 환경</mark>으로, 웹 애플리케이션을 쓸 때 되풀이되는 과제를 푸는 <b>이미 만들어진 재사용 가능한 컴포넌트</b>를 여럿 제공한다.</li>
+    <li>Streamlit은 파이썬으로 쓰였으므로 <b>DB-API 2.0, 관계형 API, 데이터프레임</b>을 통해 DuckDB의 파이썬 API와 여러 방식으로 통합된다.</li>
+    <li>노코드이고 순전히 선언적인 환경과 달리, <b>Streamlit 애플리케이션에는 맞춤 파이썬을 써서 능력을 확장할 수 있다.</b></li>
+    <li>plot.ly는 <b>보기 좋고 대화형인 시각화를 만드는 비슷한 로우코드 접근</b>을 제공하며 Streamlit과 매끄럽게 함께 쓸 수 있다.</li>
+    <li>Apache Superset은 <b>스펙트럼의 반대쪽 끝</b>에 있다. 보기 좋은 대시보드를 짓기 위한 <b>사실상 노코드의 끌어놓기 대안</b>이다.</li>
+    <li>Apache Superset을 쓰며 통상 써야 하는 유일한 코드는 <b>시각화에 흘러 들어가는 맞춤 SQL 질의</b>다.</li>
+  </ol>
+</section>
+
+<section>
+  <div class="col rev">
+    <div class="note">
+      <span class="tag">살펴본 김에 — 요약이 본문과 어긋난다</span>
+      <p>요약의 첫 문장은 Streamlit을 <strong>"로우코드 환경(a low-code environment)"</strong>이라 부른다. 그런데 9.1.1절은 정반대로 못 박아두었다.</p>
+      <p><em>"데이터·BI 분야의 다른 시각화 도구들이 <strong>로우코드</strong> 시각 빌더인 것과 달리, <strong>Streamlit은 코드 우선(code-first) 도구다.</strong>"</em></p>
+      <p>같은 장 안에서 한 도구를 <em>로우코드가 아니라고</em> 규정했다가 <em>로우코드라고</em> 요약한 셈이다. 요약의 세 번째 문장이 <em>"노코드이고 순전히 선언적인 환경과 달리 맞춤 파이썬을 쓸 수 있다"</em>고 적은 것을 보면, 요약이 세우려던 대비는 <strong>노코드(Superset) ↔ 코드를 쓸 수 있음(Streamlit)</strong>이었던 듯하다. 그렇다면 첫 문장의 "로우코드"는 <strong>"코드 우선"</strong>이어야 아귀가 맞는다.</p>
+      <p>사소한 낱말 하나로 보이지만 이 장의 구도 전체가 그 낱말에 걸려 있다. <em>두 도구를 스펙트럼의 양 끝에 놓는 것이 이 장의 뼈대인데, 첫 문장이 한쪽 끝을 가운데로 끌어당겨버린다.</em></p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="col">
+    <p>이 문서는 <b>Mark Needham · Michael Hunger · Michael Simons, 『DuckDB in Action』 (Manning Publications, 2024)</b>의 제9장 「Building and deploying data apps」(원서 193–221쪽) 전체를 검토해 한국어로 정리한 해설이다. 절 번호와 목록 번호, 도판 번호는 원서를 따랐다.</p>
+    <p><b>이 장은 도판 스물아홉 점 가운데 스물여덟이 화면 갈무리다.</b> 재현할 수 없고 재현해서도 안 되는 것들이므로 <em>점선 상자에 무엇을 어떻게 누르는지의 서술로</em> 대신했다. 재현 가능한 <b>〈도판 9.1〉의 스키마 도해</b>와 <b>〈도판 9.12〉의 개념 관계도</b>만 원서 구성을 옮겨 새로 작도했으며, 스키마 도해에는 <em>관계에 관여하는 컬럼을 색으로 구분</em>하고 <em>원서 필드 목록이 여기서 끊긴다는 사실</em>을 표시해두었다.</p>
+    <p><b><code>app.py</code> 조립기</b>는 이 문서에서 더한 장치다. 원서 9.1절은 이 파일을 열 쪽에 걸쳐 조각조각 제시하면서 <em>완성된 파일을 끝까지 한 번도 보여주지 않는다.</em> 그래서 일곱 걸음으로 나눠 누적되는 파일과 새로 더해진 부분을 함께 볼 수 있게 했다. 코드는 모두 원서에 인쇄된 것이며, 걸음마다 해당 목록 번호와 앞 장과의 연결을 붙였다. 마지막 두 길 대조표도 덧붙인 것이다.</p>
+    <p>〈살펴본 김에〉로 표시한 일곱 대목은 원서 안에서 어긋나거나 확인해둘 만한 자리다. 그중 하나는 <em>따라 하면 실패한다.</em> <b>목록 9.4가 조인하는 <code>rounds</code> 테이블은 제8장에 한 번도 등장하지 않는다.</b> 제8장이 만든 것은 <code>matches</code>·<code>players</code>·<code>levels</code> 셋뿐이며, "rounds"라는 낱말이 그 장에 나온 횟수는 <b>0</b>이다. 나머지는 <b>요약이 Streamlit을 "로우코드"라 부른 자리</b>(9.1.1절은 "코드 우선"이라 못 박았다), <b>〈도판 9.1〉이 질의가 쓰는 컬럼을 생략한 자리</b>, <b><code>&lt;h2&gt;</code>로 열고 <code>&lt;/h1&gt;</code>로 닫는 세 번의 마크다운</b>, <b><code>superset init</code>과 <code>db upgrade</code>의 순서</b>, <b>책에 인쇄된 비밀 키</b>, <b>누적값에 다시 합계를 씌운 지표</b>, 그리고 <b>내보낸 ZIP에 MotherDuck 토큰이 남을 수 있다는 점</b>이다.</p>
+    <span class="mono">CH.09 · 2 SECTIONS · 10 SUBSECTIONS · 5 LISTINGS · 2 PLATES REDRAWN · 6 SUMMARY POINTS</span>
+  </div>
+</footer>
+
+<script>
+/* ── app.py 조립기 ── */
+(function(){
+  var root=document.getElementById('ax'); if(!root) return;
+
+  // 원서 9.1절이 흩어놓은 조각을 순서대로 모은 것이다.
+  var STEPS=[
+    {
+      title:'제목만 있는 캔버스',
+      list:'<b>목록 9.1</b> · 최소 Streamlit 앱',
+      what:'<code>set_page_config</code>로 <b>넓은 배치</b>를 정의하고 제목을 렌더링한다.',
+      link:'없음. 여기까지는 순전히 Streamlit이다.',
+      meta:['의존 <b>1</b>','화면: 제목뿐'],
+      cap:'Streamlit은 골격을 만들어주지 않는다. <b>이 스크립트가 곧 캔버스</b>이며, 위에서 아래로 실행된 순서대로 화면에 그려진다.',
+      code:'import streamlit as st\n\nst.set_page_config(layout="wide")\nst.title("ATP Head to Head")\n'
+    },
+    {
+      title:'같은 프로세스 안의 데이터베이스',
+      list:'본문 9.1.2 · 목록 번호 없음',
+      what:'<code>atp.duckdb</code>에 <b>읽기 전용으로</b> 붙는다. 데이터를 바꿀 뜻이 없기 때문이다.',
+      link:'<b>제6장 6.1.2절</b>의 <code>duckdb.connect</code>. 파일 이름 하나만 주면 된다.',
+      meta:['의존 <b>2</b>','원격 접속 <b>없음</b>'],
+      cap:'여기가 이 장에서 기술적으로 가장 중요한 한 줄이다. <b>데이터베이스가 Streamlit 앱과 같은 프로세스 안에 임베드되어 돌아가므로, 렌더링될 프론트엔드가 어떤 원격 데이터베이스 접속도 요구하지 않는다.</b>',
+      code:'import duckdb\n\natp_duck = duckdb.connect(\'atp.duckdb\', read_only=True)\n'
+    },
+    {
+      title:'주입을 막는 검색 함수',
+      list:'<b>목록 9.2</b> · 준비된 문장을 쓰는 함수',
+      what:'검색어로 <code>matches</code>의 <b>승자와 패자 이름</b>을 모두 훑어 <code>UNION</code>으로 합친다.',
+      link:'<b>제3장 3.5.3절</b>의 별칭 재참조, <b>제6장 6.2.3절</b>의 매개변수화 질의.',
+      meta:['SQL 주입 <b>차단</b>','중복 <b>UNION으로 제거</b>'],
+      cap:'두 <code>WHERE</code> 절이 모두 <b>나중에 붙인 별칭 <code>player</code>를 참조</b>한다. 표준 SQL이라면 컬럼 이름을 두 번 적어야 한다. 그리고 검색어는 <b>이름 붙은 매개변수</b>로 넘어가므로 문자열 이어 붙이기가 없다.',
+      code:'def search_players(search_term):\n    query = \'\'\'\n    SELECT DISTINCT winner_name AS player\n    FROM matches\n    WHERE player ilike \'%\' || $search_term || \'%\'\n    UNION\n    SELECT DISTINCT loser_name AS player\n    FROM matches\n    WHERE player ilike \'%\' || $search_term || \'%\'\n    \'\'\'\n    values = atp_duck.execute(query, {"search_term":search_term}).fetchall()\n    return [value[0] for value in values]\n'
+    },
+    {
+      title:'함수를 넘겨 만드는 검색 상자',
+      list:'<b>목록 9.3</b> · 컴포넌트에 매개변수 주기',
+      what:'<code>st.columns(2)</code>로 두 열을 만들고 <b>각 열에 자동완성 검색 상자</b>를 앉힌다.',
+      link:'없음. 다만 <b>함수를 값으로 넘기는 파이썬의 성질</b>이 UI 반응성이 된다.',
+      meta:['의존 <b>3</b>','HTML 작성 <b>0줄</b>'],
+      cap:'가장 중요한 것은 <code>st_searchbox</code>의 <b>첫 인수</b>다. 앞에서 정의한 <code>search_players</code> 함수 자체이며, <b>사용자가 검색 상자의 내용을 바꿀 때 그 함수가 호출된다.</b> 두 열짜리 배치도 <code>with</code> 문으로 처리된다.',
+      code:'from streamlit_searchbox import st_searchbox\n\nleft, right = st.columns(2)\nwith left:\n    player1 = st_searchbox(search_players,\n        label="Player 1",\n        key="player1_search",\n        default="Roger Federer",\n        placeholder="Roger Federer"\n    )\nwith right:\n    player2 = st_searchbox(search_players,\n        label="Player 2",\n        key="player2_search",\n        default="Rafael Nadal",\n        placeholder="Rafael Nadal"\n    )\n'
+    },
+    {
+      title:'세 테이블을 합친 상대 전적',
+      list:'<b>목록 9.4</b> · 질의하고 데이터프레임으로 받기',
+      what:'<code>levels</code>와 <code>rounds</code>를 조인해 <b>등급 이름과 라운드 순서</b>까지 가져온다.',
+      link:'<b>제3장</b>의 JOIN, <b>제6장</b>의 <code>fetchdf</code>. 여기서 SQL이 pandas로 건너간다.',
+      meta:['조인 <b>2</b>','반환 <b>DataFrame</b>'],
+      cap:'<code>WHERE</code>의 두 갈래가 요점이다. <b>누가 이겼는지 모르는 채로 두 선수의 모든 맞대결을 찾아야 하므로 양방향을 다 적는다.</b> 그리고 <code>rounds</code> 테이블은 제8장에서 만들어지지 않았으므로 손수 만들어야 한다.',
+      code:'matches_for_players = atp_duck.execute("""\nSELECT\n    tourney_date, tourney_name, surface, round,\n    rounds.order AS roundOrder,\n    levels.name AS level, levels.rank AS levelRank,\n    winner_name, score\nFROM matches\nJOIN levels ON levels.short_name = matches.tourney_level\nJOIN rounds ON rounds.name = matches.round\nWHERE (loser_name = $player1 AND winner_name = $player2) OR\n      (loser_name = $player2 AND winner_name = $player1)\nORDER BY tourney_date DESC\n""", {"player1":player1, "player2":player2}).fetchdf()\n'
+    },
+    {
+      title:'이름과 전적과 표',
+      list:'본문 9.1.3 · 목록 번호 없음',
+      what:'세 열에 <b>두 이름과 전적</b>을 앉히고, 그 아래에 <b>대화형 표</b>를 렌더링한다.',
+      link:'<b>제6장</b>의 데이터프레임 필터링. 승수는 pandas로 센다.',
+      meta:['열 <b>3</b>','표에서 감춘 컬럼 <b>3</b>'],
+      cap:'승수는 SQL이 아니라 <b>pandas로 센다.</b> 이미 손에 데이터프레임이 있으니 그편이 짧기 때문이다. 그리고 <code>roundOrder</code>·<code>level</code>·<code>levelRank</code> 셋은 <b>질의로는 가져오고 표에서는 감춘다.</b> 다음 걸음에서 <code>roundOrder</code>가 점의 크기로 쓰인다.',
+      code:'left, middle, right = st.columns(3)\nwith left:\n    st.markdown(\n        f"<h2 style=\'text-align: left; \'>{player1}</h1>",\n        unsafe_allow_html=True\n    )\nwith right:\n    st.markdown(\n        f"<h2 style=\'text-align: right; \'>{player2}</h1>",\n        unsafe_allow_html=True\n    )\n\np1_wins = matches_for_players[\n    matches_for_players.winner_name == player1].shape[0]\np2_wins = matches_for_players[\n    matches_for_players.winner_name == player2].shape[0]\n\nwith middle:\n    st.markdown(\n        f"<h2 style=\'text-align: center; \'>{p1_wins} vs {p2_wins}</h1>",\n        unsafe_allow_html=True\n    )\n\nst.markdown(f\'### Matches\')\nst.dataframe(\n    matches_for_players.drop(["roundOrder", "level", "levelRank"], axis=1)\n)\n'
+    },
+    {
+      title:'산점도와 연도 격자',
+      list:'본문 9.1.4 · 목록 번호 없음',
+      what:'데이터프레임을 <b>SQL로 다시 정렬</b>하고 산점도를 그린 뒤 <b>연도마다 세로선</b>을 긋는다.',
+      link:'<b>제6장</b>의 오리 시험 — 데이터프레임을 SQL의 FROM에 이름으로 쓴다.',
+      meta:['의존 <b>4</b>','완성'],
+      cap:'<code>FROM matches_for_players</code>의 그것은 <b>테이블이 아니라 pandas 데이터프레임 변수</b>다. 테이블처럼 보이면 질의할 수 있다는 원칙이 앱 코드 안에서 값을 한다. <code>max_year+2</code>는 <b>파이썬 range의 상한이 배타적</b>이기 때문이며, 최대 연도의 다음 해까지 선을 그으려면 그래야 한다.',
+      code:'import plotly.express as px\n\nsorted_matches_for_players = atp_duck.sql("""\nFROM matches_for_players\nORDER BY strftime(tourney_date, \'%m-%d\')\n""").fetchdf()\n\nfig = px.scatter(sorted_matches_for_players,\n    x="tourney_date",\n    y="tourney_name",\n    color="winner_name",\n    size="roundOrder",\n    color_discrete_sequence=px.colors.qualitative.Plotly,\n    category_orders={\n        "tourney_name": (\n            sorted_matches_for_players[\'tourney_name\']\n            .drop_duplicates()\n            .tolist()\n        )\n    },\n)\n\nmin_year = sorted_matches_for_players[\'tourney_date\'].dt.year.min()\nmax_year = sorted_matches_for_players[\'tourney_date\'].dt.year.max()\nunique_years = list(range(min_year, max_year+2))\n\nfor year in unique_years:\n    fig.add_shape(\n        type="line",\n        x0=f"{year}-01-01", x1=f"{year}-01-01",\n        y0=0, y1=1,\n        yref="paper",\n        layer="below",\n        line=dict(color="#efefef", width=2)\n    )\n\nst.plotly_chart(fig, use_container_width=True)\n'
+    }
+  ];
+
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+
+  function render(i){
+    var out='';
+    for(var j=0;j<=i;j++){
+      var block=esc(STEPS[j].code);
+      if(j===i) out+='<span class="new">'+block+'</span>';
+      else out+=block;
+      if(j<i) out+='\n';
+    }
+    document.getElementById('axFile').innerHTML=out;
+    var s=STEPS[i];
+    document.getElementById('axTitle').textContent=s.title;
+    document.getElementById('axList').innerHTML=s.list;
+    document.getElementById('axWhat').innerHTML=s.what;
+    document.getElementById('axLink').innerHTML=s.link;
+    // 줄 수는 하드코딩하지 않고 실제로 그려진 내용에서 센다
+    var cum=0;
+    for(var k=0;k<=i;k++){
+      cum += STEPS[k].code.replace(/\n$/,'').split('\n').length;
+    }
+    var items=['app.py <b>'+cum+'</b>줄'].concat(s.meta);
+    document.getElementById('axMeta').innerHTML=items.map(function(m){return '<span>'+m+'</span>'}).join('');
+    document.getElementById('axCap').innerHTML=s.cap;
+  }
+
+  [].forEach.call(root.querySelectorAll('.axsteps button'),function(b){
+    b.addEventListener('click',function(){
+      [].forEach.call(root.querySelectorAll('.axsteps button'),function(x){
+        x.setAttribute('aria-pressed', x===b?'true':'false');
+      });
+      render(parseInt(b.dataset.s,10));
+    });
+  });
+  render(0);
+})();
+
+/* ── 스크롤 등장 ── */
+(function(){
+  var els=document.querySelectorAll('.rev');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){ if(e.isIntersecting){e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{rootMargin:'0px 0px -10% 0px',threshold:.05});
+  els.forEach(function(e){io.observe(e)});
+})();
+
+/* ── 목차 레일 ── */
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.rail a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))}).filter(Boolean);
+  if(!secs.length) return;
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){
+      if(!e.isIntersecting) return;
+      links.forEach(function(a){a.classList.toggle('on', a.getAttribute('href')==='#'+e.target.id)});
+    });
+  },{rootMargin:'-45% 0px -45% 0px'});
+  secs.forEach(function(s){io.observe(s)});
+})();
+</script>
+</body>
+</html>

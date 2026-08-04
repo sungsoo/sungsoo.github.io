@@ -1,0 +1,1395 @@
+---
+layout: null
+title: "DuckDB in the cloud with MotherDuck" 
+date: 2026-08-10 
+categories: [artificial intelligence]
+tags: [artificial general intelligence, data management]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DuckDB 답사기 · 제7장 MotherDuck으로 클라우드에서 쓰는 DuckDB — 『DuckDB in Action』 정독</title>
+<meta name="description" content="Mark Needham, Michael Hunger, Michael Simons의 『DuckDB in Action』 제7장을 한 줄도 빠뜨리지 않고 읽어 정리한 해설. MotherDuck의 착상과 아키텍처, 하이브리드 질의 실행, 데이터베이스 업로드와 생성과 공유, S3 비밀 관리, MD_RUN으로 실행 위치 제어, 자연어 질의.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────
+   토큰 — 제1~6장과 같은 델프트 도자 계열의 연작.
+   이 장은 '내 기계'와 '클라우드'가 한 질의 안에서 나뉘는
+   이야기이므로, 로컬(청화)과 원격(운하)의 대비가 축이 된다.
+   ───────────────────────────────────────────── */
+:root{
+  --porcelain:#e9eef4;
+  --glaze:#ffffff;
+  --delft:#1f4e9c;
+  --delft-deep:#0f2a54;
+  --shell:#0b1d3a;
+  --ink:#101a28;
+  --bill:#e0912a;
+  --sun:#f2b134;
+  --canal:#2b7d74;
+  --grey:#69788c;
+  --sky:#8fb8ff;
+  --clay:#a8552b;
+  --hair:rgba(16,26,40,.14);
+  --wire:rgba(143,184,255,.22);
+
+  --disp:'Fraunces','Gowun Batang',serif;
+  --body:'Noto Sans KR','Fraunces',sans-serif;
+  --mono:'IBM Plex Mono','Menlo','DejaVu Sans Mono','Consolas','Noto Sans KR',monospace;
+
+  --col:min(720px,100%);
+  --wide:min(1080px,100%);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--porcelain);color:var(--ink);
+  font-family:var(--body);font-weight:300;font-size:17px;line-height:1.95;
+  word-break:keep-all;line-break:strict;
+  background-image:
+    radial-gradient(920px 520px at 82% -6%,rgba(43,125,116,.15),transparent 62%),
+    radial-gradient(1020px 590px at 6% 5%,rgba(31,78,156,.13),transparent 60%);
+  background-attachment:fixed;
+}
+::selection{background:var(--bill);color:#fff}
+a{color:var(--delft);text-decoration:none;border-bottom:1px solid rgba(31,78,156,.35)}
+a:hover{color:var(--canal);border-color:var(--canal)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--bill);outline-offset:3px}
+
+.wrap{width:var(--wide);margin:0 auto;padding:0 26px}
+.col{width:var(--col);margin:0 auto}
+
+/* ── 표제부 ── */
+.hero{padding:74px 0 40px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--grey);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.eyebrow b{color:var(--delft);font-weight:500}
+.chapno{display:flex;align-items:baseline;gap:18px;margin:26px 0 6px}
+.chapno span:first-child{font-family:var(--disp);font-size:clamp(52px,11vw,104px);font-weight:800;line-height:.82;color:var(--delft);font-variation-settings:'SOFT' 40,'WONK' 1}
+.chapno span:last-child{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--grey);padding-bottom:10px}
+h1{font-family:var(--disp);font-weight:600;letter-spacing:-.015em;font-size:clamp(33px,6vw,62px);line-height:1.1;margin:0 0 22px;max-width:22ch}
+h1 em{font-style:italic;color:var(--delft);font-weight:400;background:none}
+.lede{width:var(--col);font-size:clamp(17px,2vw,20px);line-height:1.9;color:#243247}
+.lede strong{font-weight:500;color:var(--ink);background:linear-gradient(transparent 62%,rgba(224,145,42,.32) 62%)}
+.hero-meta{margin-top:34px;display:flex;flex-wrap:wrap;border-top:1px solid var(--hair)}
+.hero-meta div{flex:1 1 190px;padding:16px 22px 16px 0;border-right:1px solid var(--hair)}
+.hero-meta div:last-child{border-right:0}
+.hero-meta dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--grey);text-transform:uppercase;margin:0 0 6px}
+.hero-meta dd{margin:0;font-size:14.5px;font-weight:400;line-height:1.65}
+
+/* ── 목차 레일 ── */
+.rail{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:20;display:none;flex-direction:column;gap:1px}
+.rail a{display:flex;align-items:center;gap:9px;border:0;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--grey);padding:3px 0}
+.rail i{display:block;width:14px;height:1px;background:var(--grey);opacity:.5;transition:.35s}
+.rail a span{opacity:0;transform:translateX(-4px);transition:.35s}
+.rail a:hover i,.rail a.on i{width:28px;opacity:1;background:var(--bill);height:2px}
+.rail a:hover span,.rail a.on span{opacity:1;transform:none;color:var(--delft-deep)}
+@media(min-width:1320px){.rail{display:flex}}
+
+/* ── 본문 ── */
+section{padding:34px 0}
+.sechead{width:var(--col);margin:0 auto 26px}
+.sechead .num{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--bill);display:block;margin-bottom:10px}
+h2{font-family:var(--disp);font-weight:600;font-size:clamp(26px,3.6vw,38px);line-height:1.25;margin:0;letter-spacing:-.01em;color:var(--delft-deep)}
+h2 .en{display:block;font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:.08em;color:var(--grey);margin-top:9px}
+h3{font-family:var(--body);font-weight:700;font-size:19px;line-height:1.5;margin:46px 0 12px;color:var(--ink)}
+h3::before{content:"";display:inline-block;width:9px;height:9px;background:var(--bill);margin-right:11px;vertical-align:2px}
+h3 .sub{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--grey);letter-spacing:.06em;margin-left:8px}
+h4.clause{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.14em;color:var(--delft);margin:38px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--hair);text-transform:uppercase}
+p{margin:0 0 20px}
+.dropcap::first-letter{font-family:var(--disp);font-size:3.6em;line-height:.86;float:left;margin:6px 12px 0 0;color:var(--delft);font-weight:600}
+em{font-style:normal;background:linear-gradient(transparent 60%,rgba(43,125,116,.22) 60%)}
+strong{font-weight:500}
+code{font-family:var(--mono);font-size:.86em;background:rgba(31,78,156,.08);padding:.12em .42em;border-radius:2px;color:var(--delft-deep);white-space:nowrap}
+.q{border-left:3px solid var(--bill);padding:2px 0 2px 22px;margin:34px 0;font-family:var(--disp);font-size:20px;line-height:1.75;color:var(--delft-deep)}
+.q span{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--grey);margin-top:12px}
+
+ul.plain{list-style:none;padding:0;margin:0 0 24px}
+ul.plain li{position:relative;padding:11px 0 11px 30px;border-bottom:1px solid var(--hair)}
+ul.plain li::before{content:"";position:absolute;left:4px;top:22px;width:12px;height:1px;background:var(--delft);opacity:.6}
+ul.plain li b{font-weight:500;color:var(--delft-deep)}
+
+/* ── 도판 ── */
+.plate{margin:46px 0;width:var(--wide)}
+.plate.narrow{width:var(--col);margin-left:auto;margin-right:auto}
+.plate figure{margin:0}
+.tile{background:var(--glaze);border:1px solid var(--hair);box-shadow:0 1px 0 #fff inset,0 18px 40px -30px rgba(15,42,84,.55);padding:14px}
+.tile-in{border:1px solid rgba(31,78,156,.22);padding:20px 14px}
+.plate svg{display:block;width:100%;height:auto}
+figcaption{margin-top:14px;font-family:var(--mono);font-size:12px;color:var(--grey);display:flex;gap:10px;align-items:baseline}
+figcaption b{color:var(--delft-deep);font-weight:500;white-space:nowrap}
+figcaption.added b{color:var(--canal)}
+
+/* 스크린숏 대체 설명 */
+.shot{background:var(--glaze);border:1px dashed rgba(31,78,156,.4);padding:20px 22px 6px;margin:30px 0}
+.shot .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--delft);display:block;margin-bottom:10px}
+.shot p{font-size:15px;line-height:1.85;margin-bottom:14px;color:#2c3a4e}
+.shot p b{color:var(--delft-deep);font-weight:500}
+
+/* ── 터미널 ── */
+.term{background:var(--shell);border:1px solid rgba(143,184,255,.28);box-shadow:0 26px 60px -40px rgba(11,29,58,.9);margin:28px 0;overflow:hidden}
+.term.bleed{width:var(--wide)}
+.term-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--wire);background:rgba(143,184,255,.06)}
+.dots{display:flex;gap:6px}
+.dots i{width:9px;height:9px;border-radius:50%;display:block;background:#3a557f}
+.dots i:first-child{background:var(--bill)}
+.term-bar .name{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:#7f9bc7;text-transform:uppercase}
+.term-bar .tagn{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--bill);border:1px solid rgba(224,145,42,.5);padding:2px 8px;white-space:nowrap}
+.term pre{margin:0;padding:20px 22px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.85;color:#d5e3f7}
+.p{color:var(--bill)}
+.k{color:var(--sky)}
+.f{color:#ffd28a}
+.c{color:#6f86a8}
+.err{color:#ff9a7a}
+.ok{color:#67d4b4}
+.rt{color:#7f9bc7}
+.term-note{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;font-weight:300;color:#a3b8d6;line-height:1.85}
+.term-note b{color:var(--bill);font-weight:500;font-family:var(--mono);font-size:12.5px}
+.term-note.catch{background:rgba(224,145,42,.07)}
+.term-note.catch::before{content:"살펴본 김에";display:block;font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--bill);margin-bottom:7px}
+.term-note code,.mxcap code,.mxinfo code{background:rgba(255,255,255,.13);color:#ffd9a3;border-radius:2px}
+
+/* ── duckbox ── */
+.duckbox{font-family:var(--mono);font-size:13px;border-collapse:collapse;color:#d5e3f7}
+.duckbox th,.duckbox td{border:1px solid var(--wire);padding:5px 14px;text-align:right;white-space:nowrap}
+.duckbox th{color:#fff;font-weight:500;text-align:center}
+.duckbox tr.type th{color:#7f9bc7;font-weight:400;font-size:12px;font-style:italic}
+.duckbox td.l,.duckbox th.l{text-align:left}
+.duckbox tfoot td{border:1px solid var(--wire);color:#7f9bc7;text-align:right;font-size:12px}
+.duckbox td.hi{color:var(--sun)}
+.dbwrap{padding:20px 22px;overflow-x:auto}
+
+/* ── 실행 위치 결정기 ── */
+.mx{background:var(--shell);border:1px solid rgba(143,184,255,.28);margin:36px 0;width:var(--wide);box-shadow:0 26px 60px -40px rgba(11,29,58,.9)}
+.mxctl{padding:18px 22px;border-bottom:1px solid var(--wire);background:rgba(143,184,255,.05)}
+.mxrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.mxrow:last-child{margin-bottom:0}
+.mxrow label{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:#7f9bc7;min-width:96px}
+.mxrow button{
+  appearance:none;background:none;border:1px solid var(--wire);cursor:pointer;
+  font-family:var(--mono);font-size:11.5px;color:#a3b8d6;padding:7px 12px;transition:.2s;
+}
+.mxrow button:hover{color:#fff;border-color:var(--sky)}
+.mxrow button[aria-pressed="true"]{background:var(--delft);border-color:var(--delft);color:#fff;font-weight:600}
+.mxrow.run button[aria-pressed="true"]{background:var(--bill);border-color:var(--bill);color:var(--shell)}
+.mxbody{display:grid;grid-template-columns:1fr}
+@media(min-width:860px){.mxbody{grid-template-columns:1fr 330px}}
+.mxsql{padding:18px 22px;font-family:var(--mono);font-size:12.5px;color:#c6d8f2;line-height:1.85;overflow-x:auto;white-space:pre;border-bottom:1px solid var(--wire)}
+@media(min-width:860px){.mxsql{border-bottom:0;border-right:1px solid var(--wire)}}
+.mxinfo{padding:18px 22px}
+.mxwhere{
+  display:block;font-family:var(--mono);font-size:11px;letter-spacing:.18em;padding:8px 12px;margin-bottom:14px;
+  text-align:center;font-weight:600;
+}
+.mxwhere.loc{background:rgba(31,78,156,.28);color:#a9c6f5;border:1px solid rgba(143,184,255,.45)}
+.mxwhere.rem{background:rgba(43,125,116,.3);color:#8fe0cd;border:1px solid rgba(103,212,180,.5)}
+.mxinfo dt{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:#7f9bc7;margin-bottom:5px}
+.mxinfo dd{margin:0 0 14px;font-size:13.5px;font-weight:300;color:#c6d8f2;line-height:1.8}
+.mxinfo dd b{color:var(--bill);font-weight:500}
+.mxcap{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;font-weight:300;color:#a3b8d6;line-height:1.85}
+.mxcap b{color:var(--bill);font-weight:500}
+
+/* ── 격자·카드·표 ── */
+.grid3{display:grid;grid-template-columns:1fr;gap:1px;background:var(--hair);border:1px solid var(--hair);margin:30px 0}
+@media(min-width:640px){.grid3{grid-template-columns:1fr 1fr}}
+@media(min-width:960px){.grid3{grid-template-columns:1fr 1fr 1fr}}
+.grid4{display:grid;grid-template-columns:1fr;gap:1px;background:var(--hair);border:1px solid var(--hair);margin:30px 0}
+@media(min-width:700px){.grid4{grid-template-columns:1fr 1fr}}
+.cell{background:var(--glaze);padding:20px}
+.cell .t{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--delft);display:block;margin-bottom:8px;font-weight:500}
+.cell p{font-size:14.5px;line-height:1.78;margin:0;color:#2c3a4e}
+.cell .big{font-family:var(--disp);font-size:30px;font-weight:600;color:var(--delft-deep);display:block;line-height:1.1;margin-bottom:6px}
+.tblwrap{overflow-x:auto;margin:20px 0 8px}
+.tbl{width:100%;min-width:600px;border-collapse:collapse;font-size:15px}
+.tbl caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;color:var(--grey);padding-bottom:10px}
+.tbl caption b{color:var(--delft-deep);font-weight:500}
+.tbl caption.added b{color:var(--canal)}
+.tbl th,.tbl td{padding:11px 14px;border-bottom:1px solid var(--hair);text-align:left;font-size:14.5px;line-height:1.7;vertical-align:top}
+.tbl th{background:var(--delft-deep);color:#fff;font-weight:500;letter-spacing:.04em;border-bottom:0;white-space:nowrap}
+.tbl td.m{font-family:var(--mono);font-size:13px;color:var(--delft);font-weight:500;white-space:nowrap}
+.tbl td.n{text-align:right;font-family:var(--mono);font-size:13.5px;white-space:nowrap}
+.tbl tbody tr:nth-child(even){background:rgba(31,78,156,.04)}
+
+/* 작업 순서 띠 */
+.flowstrip{width:var(--wide);margin:34px auto;background:var(--glaze);border:1px solid var(--hair);padding:24px 26px 18px;box-shadow:0 16px 40px -34px rgba(15,42,84,.6)}
+.flowstrip h5{margin:0 0 18px;font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--grey);font-weight:400}
+.flowstrip ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:700px){.flowstrip ol{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:1080px){.flowstrip ol{grid-template-columns:repeat(7,1fr)}}
+.flowstrip li{position:relative;padding:12px 10px 12px 0;border-top:2px solid var(--canal);font-size:13px;line-height:1.6;color:#33425a}
+.flowstrip li b{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--bill);margin-bottom:6px}
+
+/* NOTE / TIP */
+.note,.tip{padding:22px 24px 6px;margin:34px 0}
+.note{background:linear-gradient(180deg,rgba(224,145,42,.10),rgba(224,145,42,.04));border:1px solid rgba(224,145,42,.4)}
+.tip{background:linear-gradient(180deg,rgba(43,125,116,.09),rgba(43,125,116,.03));border:1px solid rgba(43,125,116,.36)}
+.note .tag,.tip .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;display:block;margin-bottom:10px}
+.note .tag{color:#8a5410}
+.tip .tag{color:#1e5c55}
+.note p,.tip p{font-size:15.5px;line-height:1.85;margin-bottom:16px}
+
+/* ── 요약 ── */
+.summary{background:var(--delft-deep);color:#e6eefb;margin-top:70px;padding:66px 0 58px;position:relative}
+.summary::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px 44px)}
+.summary h2{color:#fff}
+.summary .num{color:var(--bill)}
+.summary h2 .en{color:rgba(230,238,251,.5)}
+.summary ol{list-style:none;counter-reset:s;padding:0;width:var(--col);margin:0 auto}
+.summary li{counter-increment:s;position:relative;padding:16px 0 16px 52px;border-bottom:1px solid rgba(255,255,255,.13);font-weight:300;font-size:16px;line-height:1.8}
+.summary li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:19px;font-family:var(--mono);font-size:12px;color:var(--bill);letter-spacing:.1em}
+.summary li b{font-weight:500;color:#fff}
+.summary code{background:rgba(255,255,255,.12);color:#ffd9a3}
+
+footer{padding:56px 0 76px;font-size:13.5px;color:var(--grey);line-height:1.85}
+footer .col{border-top:1px solid var(--hair);padding-top:26px}
+footer b{color:var(--delft-deep);font-weight:500}
+footer .mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;display:block;margin-top:16px;color:#8494a8}
+
+/* ── 연출 ── */
+.rev{opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rev.in{opacity:1;transform:none}
+.flow{stroke-dasharray:var(--len,300);stroke-dashoffset:var(--len,300);animation:draw 1.3s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.scrollhint{display:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--grey);margin-top:8px}
+@media(max-width:759px){
+  .hero-meta div{border-right:0;border-bottom:1px solid var(--hair);padding-right:0}
+  .hero-meta div:last-child{border-bottom:0}
+}
+@media(max-width:720px){
+  code{white-space:normal;overflow-wrap:anywhere}
+  .scrollhint{display:block}
+  .tile-in{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tile-in>svg{min-width:660px}
+  .mxrow label{min-width:100%}
+  figcaption{flex-direction:column;gap:4px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .rev{opacity:1;transform:none}
+  .flow{stroke-dashoffset:0}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="절 목차">
+  <a href="#s0"><i></i><span>여는 글</span></a>
+  <a href="#s1"><i></i><span>7.1 MotherDuck</span></a>
+  <a href="#s2"><i></i><span>7.2 시작하기</span></a>
+  <a href="#s3"><i></i><span>7.3.1 업로드</span></a>
+  <a href="#s4"><i></i><span>7.3.2 생성</span></a>
+  <a href="#s5"><i></i><span>7.3.3 공유</span></a>
+  <a href="#s6"><i></i><span>7.3.4 S3 비밀</span></a>
+  <a href="#s7"><i></i><span>7.3.5 최적화</span></a>
+  <a href="#s8"><i></i><span>7.3.6 AI 질의</span></a>
+  <a href="#s9"><i></i><span>7.3.7 통합</span></a>
+  <a href="#s10"><i></i><span>요약</span></a>
+</nav>
+
+<!-- ══════════ 표제부 ══════════ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">
+      <span>DuckDB in Action</span><span>·</span><span>Manning, 2024</span><span>·</span>
+      <b>제7장 정독</b>
+    </div>
+
+    <div class="chapno">
+      <span>7</span>
+      <span>DUCKDB IN THE CLOUD WITH MOTHERDUCK<br>원서 144–162쪽</span>
+    </div>
+
+    <h1>질의 하나가 <em>내 기계와 클라우드</em>에 걸쳐 실행된다</h1>
+
+    <p class="lede">
+      여섯 장 동안 초점은 내 컴퓨터에서 직접 데이터셋을 질의하는 데 있었다. 그 방식이 폭넓은 필요를 채우지만,
+      <strong>원격 데이터베이스 서버가 이점을 더해주는 특정한 상황</strong>이 있다. 여기서 MotherDuck이 등장한다.
+      단순화된 규모 확장 전략으로 SQL 분석을 강화하는 해법이며, 이 장의 핵심어는 하나다.
+      <strong>하이브리드 질의 실행</strong>—원격에 호스팅된 DuckDB와 내 기계에서 돌아가는 DuckDB를 <em>한 질의 안에서 함께</em> 쓰는 것이다.
+      질의를 빠르게 돌리려고 클라우드에 어떤 크기의 기계를 띄워야 하는지 고민하는 대신, 질의 자체에 집중하게 하는 것이 설계 목표다.
+    </p>
+
+    <dl class="hero-meta">
+      <div><dt>이 장이 다루는 것</dt><dd>MotherDuck의 착상 · 아키텍처가 그 아래에서 어떻게 작동하는가 · 서버리스 SQL 분석의 쓰임새 · MotherDuck 데이터베이스를 만들고 관리하고 공유하기 · 사용 최적화 요령</dd></div>
+      <div><dt>절 구성</dt><dd>7.1 – 7.3 및 하위 절 아홉 개, 요약</dd></div>
+      <div><dt>실린 것</dt><dd>도판 6점(그중 다섯은 화면 갈무리·로고) · 표 1건 · NOTE 3건 · <em>번호 붙은 목록 없음</em></dd></div>
+      <div><dt>연혁</dt><dd>2023년 6월 비공개 베타 · 2023년 9월 일반 공개</dd></div>
+    </dl>
+  </div>
+
+  <!-- 서명 도판: 하이브리드 질의 실행 -->
+  <div class="wrap plate" id="s0">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 448" role="img" aria-label="웹 UI와 파이썬과 CLI가 하이브리드 질의 실행을 거쳐 클라우드의 서비스 계층·더클링·카탈로그·저장소로 이어지고, 외부 질의로 S3와 다른 데이터베이스에 닿는 구조도">
+          <defs>
+            <marker id="a7" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 z" fill="#2b7d74"/>
+            </marker>
+            <linearGradient id="cl" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="rgba(43,125,116,.10)"/><stop offset="1" stop-color="rgba(43,125,116,.04)"/>
+            </linearGradient>
+          </defs>
+
+          <!-- 클라우드 경계 -->
+          <rect x="352" y="34" width="316" height="358" rx="6" fill="url(#cl)" stroke="#2b7d74" stroke-width="1.4" stroke-dasharray="7 5"/>
+          <text x="510" y="58" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="13.5" font-weight="600" fill="#1e5c55">클라우드의 관리형 DuckDB</text>
+
+          <!-- 왼쪽: 클라이언트 -->
+          <text x="24" y="30" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2" fill="#69788c">CLIENTS · 로컬</text>
+          <g>
+            <rect x="24" y="44" width="222" height="72" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+            <text x="42" y="68" font-family="IBM Plex Mono, monospace" font-size="13" fill="#0f2a54" font-weight="500">Web UI</text>
+            <text x="42" y="88" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#69788c">노트북 · SQL IDE ·</text>
+            <text x="42" y="105" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#69788c">대화형 결과 탐색기</text>
+          </g>
+          <g>
+            <rect x="24" y="130" width="222" height="66" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+            <text x="42" y="154" font-family="IBM Plex Mono, monospace" font-size="13" fill="#0f2a54" font-weight="500">Python DuckDB</text>
+            <text x="42" y="176" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#69788c">로컬 연산과 저장</text>
+          </g>
+          <g>
+            <rect x="24" y="210" width="222" height="66" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+            <text x="42" y="234" font-family="IBM Plex Mono, monospace" font-size="13" fill="#0f2a54" font-weight="500">CLI DuckDB</text>
+            <text x="42" y="256" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#69788c">로컬 연산과 저장</text>
+          </g>
+
+          <!-- 하이브리드 실행 띠 -->
+          <g>
+            <rect x="262" y="140" width="76" height="136" rx="4" fill="#e0912a"/>
+            <text x="300" y="188" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#fff" font-weight="600">하이브리드</text>
+            <text x="300" y="207" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#fff" font-weight="600">질의 실행</text>
+            <text x="300" y="230" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="rgba(255,255,255,.8)">HYBRID</text>
+          </g>
+          <g stroke="#2b7d74" stroke-width="1.3" fill="none" marker-end="url(#a7)" opacity=".85">
+            <path class="flow" style="--len:120" d="M252 80 C 274 80 274 160 292 168"/>
+            <path class="flow" style="--len:80;animation-delay:.08s" d="M252 163 L292 190"/>
+            <path class="flow" style="--len:120;animation-delay:.16s" d="M252 243 C 274 243 274 220 292 212"/>
+          </g>
+          <path class="flow" style="--len:60;animation-delay:.3s" d="M342 208 L370 208" fill="none" stroke="#2b7d74" stroke-width="1.3" marker-end="url(#a7)"/>
+
+          <!-- 클라우드 내부 4층 -->
+          <g font-family="IBM Plex Mono, monospace" font-size="12.5">
+            <g>
+              <rect x="374" y="74" width="272" height="60" fill="#fff" stroke="#2b7d74" stroke-width="1.2"/>
+              <text x="392" y="96" fill="#0f2a54" font-weight="500">Service Layer</text>
+              <text x="392" y="118" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#69788c">공유 · 관리 · 비밀 · 모니터링</text>
+            </g>
+            <g>
+              <rect x="374" y="146" width="272" height="60" fill="#fff" stroke="#e0912a" stroke-width="1.6"/>
+              <text x="392" y="168" fill="#8a5410" font-weight="600">Ducklings</text>
+              <text x="392" y="190" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#69788c">서버리스 DuckDB 연산 · 표준 SQL</text>
+            </g>
+            <g>
+              <rect x="374" y="218" width="272" height="60" fill="#fff" stroke="#2b7d74" stroke-width="1.2"/>
+              <text x="392" y="240" fill="#0f2a54" font-weight="500">Catalog</text>
+              <text x="392" y="262" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#69788c">테이블과 데이터베이스</text>
+            </g>
+            <g>
+              <rect x="374" y="290" width="272" height="60" fill="#fff" stroke="#2b7d74" stroke-width="1.2"/>
+              <text x="392" y="312" fill="#0f2a54" font-weight="500">Storage</text>
+              <text x="392" y="334" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#69788c">내부 저장 · 투명한 유지 관리</text>
+            </g>
+          </g>
+
+          <!-- 외부 질의 띠 -->
+          <g>
+            <rect x="684" y="140" width="76" height="136" rx="4" fill="#1f4e9c"/>
+            <text x="722" y="188" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#fff" font-weight="600">외부 질의</text>
+            <text x="722" y="207" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#fff" font-weight="600">간편 복사</text>
+            <text x="722" y="230" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="rgba(255,255,255,.8)">EXTERNAL</text>
+          </g>
+          <path class="flow" style="--len:60;animation-delay:.4s" d="M652 208 L678 208" fill="none" stroke="#2b7d74" stroke-width="1.3" marker-end="url(#a7)"/>
+          <g stroke="#2b7d74" stroke-width="1.3" fill="none" marker-end="url(#a7)" opacity=".85">
+            <path class="flow" style="--len:120;animation-delay:.5s" d="M766 180 C 790 180 790 122 812 116"/>
+            <path class="flow" style="--len:120;animation-delay:.58s" d="M766 236 C 790 236 790 288 812 294"/>
+          </g>
+
+          <!-- 오른쪽: 외부 원천 -->
+          <text x="816" y="30" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2" fill="#69788c">EXTERNAL</text>
+          <g>
+            <rect x="816" y="80" width="158" height="72" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+            <text x="834" y="104" font-family="IBM Plex Mono, monospace" font-size="13" fill="#0f2a54" font-weight="500">S3</text>
+            <text x="834" y="126" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#69788c">Parquet · CSV ·</text>
+            <text x="834" y="143" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#69788c">JSON</text>
+          </g>
+          <g>
+            <rect x="816" y="258" width="158" height="72" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+            <text x="834" y="282" font-family="IBM Plex Mono, monospace" font-size="13" fill="#0f2a54" font-weight="500">Databases</text>
+            <text x="834" y="304" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#69788c">Postgres ·</text>
+            <text x="834" y="321" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#69788c">SQLite</text>
+          </g>
+
+          <line x1="24" y1="378" x2="976" y2="378" stroke="#e9eef4" stroke-width="1.4"/>
+          <text x="24" y="402" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#0f2a54">질의 엔진 안에서 확장이 <tspan font-weight="600">테이블이 로컬에 있는지 원격에 있는지 분석</tspan>하고, 알맞은 실행 엔진을 골라 데이터를 합친다.</text>
+          <text x="24" y="426" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#69788c">필요하면 로컬 데이터의 일부를 조인이나 필터를 위해 서버로 보내거나, 원격 쪽 데이터를 가져와 로컬에서 조인한다.</text>
+        </svg>
+      </div></div>
+      <figcaption><b>〈도판 7.1〉</b><span>MotherDuck 안에 구현된 하이브리드 질의 실행. 원서 그림의 구성을 옮겨 새로 작도했다.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════ 여는 글 ══════════ -->
+<section>
+  <div class="col">
+    <p class="dropcap">이 장은 앞의 여섯 장과 성격이 다르다. 지금까지는 오픈소스 데이터베이스 하나를 다뤘는데, 여기서는 <em>그것을 감싼 상업 서비스</em>를 다룬다. 그래서 서술에 값과 요금제가 등장하고, 화면 갈무리가 여섯 도판 가운데 다섯을 차지한다. 저자들은 MotherDuck이 DuckDB Labs 팀과 긴밀히 협력해 클라우드 플랫폼에서 모든 기능의 상호운용성과 가용성을 확보한다고 밝혀두었다.</p>
+
+    <p>그럼에도 기술적으로 읽을 대목이 분명하다. <strong>MotherDuck은 오픈소스 DuckDB에 <em>선택적으로 붙는(opt-in) 기능</em>으로 확장을 통해 제시된다.</strong> 이 확장은 <code>md:</code> 또는 <code>motherduck:</code> 프로토콜로 데이터베이스를 열 때 자동으로 적재되며, <em>질의 파서와 엔진 양쪽에 통합된다.</em> 파서는 데이터베이스와 공유 관리 기능으로 확장되고, 질의 엔진에서는 확장이 테이블의 소재를 분석해 알맞은 실행 엔진을 고른다.</p>
+
+    <div class="q">
+      필요하면 로컬 데이터의 일부가 조인이나 필터를 위해 서버로 보내지고, 또는 원격 쪽의 데이터가 가져와져 로컬에서 조인된다.
+      <span>7.1.1절, 하이브리드 질의 실행의 정의</span>
+    </div>
+  </div>
+
+  <div class="flowstrip rev">
+    <h5>이 장의 작업 순서 — 번호 붙은 목록이 하나도 없고, 본문 자체가 세션 기록과 서비스 안내다</h5>
+    <ol>
+      <li><b>7.1</b>서버리스가 무슨 뜻이고 아키텍처가 어떻게 생겼는지 본다</li>
+      <li><b>7.2</b>가입하고 토큰으로 CLI를 인증한다</li>
+      <li><b>7.3.1</b>로컬 데이터베이스를 클라우드로 올린다</li>
+      <li><b>7.3.2</b>클라우드에서 데이터베이스를 처음부터 만든다</li>
+      <li><b>7.3.3</b>읽기 전용 스냅숏을 공유하고 붙인다</li>
+      <li><b>7.3.4·5</b>S3 비밀을 두고, 실행 위치와 비용을 제어한다</li>
+      <li><b>7.3.6·7</b>자연어로 질의하고, 파이프라인 가운데에 앉힌다</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ══════════ 7.1 ══════════ -->
+<section id="s1">
+  <div class="sechead rev">
+    <span class="num">7.1</span>
+    <h2>MotherDuck 소개<span class="en">Introduction to MotherDuck</span></h2>
+  </div>
+  <div class="col rev">
+    <p>MotherDuck은 <strong>협업형 서버리스 분석 플랫폼</strong>이다. 브라우저나 DuckDB의 어떤 API로든 클라우드 데이터베이스와 클라우드 저장소의 데이터를 질의하고 분석하게 해준다. 여기서 <em>서버리스</em>가 뜻하는 바를 저자들이 분명히 정의한다. <strong>사용자가 서버나 클러스터를 띄우거나 데이터베이스 인스턴스를 설정하는 일을 다룰 필요가 없다는 뜻이다.</strong> 대신 데이터베이스만 만들면 나머지는 서비스가 알아서 한다.</p>
+
+    <h3>어떻게 작동하는가 <span class="sub">7.1.1</span></h3>
+    <p>쓰는 길이 여럿이다. 서비스에 가입하면 브라우저에서 돌아가는 MotherDuck 웹 UI에 이르게 된다. <strong>이 UI는 MotherDuck과 통신하는 법을 아는 특별한 DuckDB 판본을 브라우저에서 돌리고 있다.</strong> UI는 데이터베이스를 관리하는 도구이면서, 질의를 입력하고 실행하고 결과를 보는 <em>노트북 기반 접근</em>이기도 하다.</p>
+    <p>다른 입구는 물론 CLI와 파이썬 같은 언어 통합이다. 여기서 <code>md:</code> 확장의 두 갈래 역할이 갈린다.</p>
+    <ul class="plain">
+      <li><b>파서</b> — 데이터베이스와 공유 관리를 둘러싼 기능으로 확장된다.</li>
+      <li><b>질의 엔진</b> — 확장이 <em>테이블이 로컬에 있는지 원격에 있는지 분석하고</em> 알맞은 실행 엔진을 써서 데이터를 그에 맞게 조인한다. 필요하면 로컬 데이터의 일부를 조인이나 필터를 위해 서버로 보내거나, 원격 쪽 데이터를 가져와 로컬에서 조인한다.</li>
+    </ul>
+
+    <p>아키텍처의 핵심 구성 요소는 넷이다.</p>
+    <div class="grid4">
+      <div class="cell">
+        <span class="t">서비스 계층 (service layer)</span>
+        <p>공유, 관리, 서비스, 모니터링. 안전한 신원 확인, 인가, 관리, 모니터링, <b>과금</b> 같은 능력을 제공한다.</p>
+      </div>
+      <div class="cell">
+        <span class="t">더클링 (Ducklings)</span>
+        <p><b>서버리스 DuckDB 연산 인스턴스</b>다. 질의의 "원격" 부분을 실행한다. 이름 하나에 이 서비스의 성격이 다 담겼다.</p>
+      </div>
+      <div class="cell">
+        <span class="t">카탈로그 (catalog)</span>
+        <p>데이터베이스와 테이블. 저장 계층에서 관리되는 데이터베이스, 테이블, 뷰를 노출한다.</p>
+      </div>
+      <div class="cell">
+        <span class="t">저장소 (storage)</span>
+        <p>내부 저장과 유지 관리. <b>지속적이고 안전하며 최선의 성능을 위해 자동으로 최적화된다.</b></p>
+      </div>
+    </div>
+
+    <p>그리고 이 절에서 뒤의 비용 논의로 이어지는 복선이 하나 놓인다. <strong>MotherDuck은—다른 현대적 클라우드 데이터 플랫폼과 마찬가지로—저장과 연산 설비를 분리한다.</strong> 이것이 결국 MotherDuck을 쓸 때 발생하는 비용에 중요해진다. 7.3.5절에서 그 분리가 요금표로 어떻게 나타나는지 보게 된다.</p>
+
+    <h3>왜 MotherDuck을 쓰는가 <span class="sub">7.1.2</span></h3>
+    <p>첫째이자 무엇보다, <strong>DuckDB에 기반한 단순하고 성능 좋고 효율적인 데이터 웨어하우스</strong>를 제공한다. 저자들의 진단이 이 책 전체의 문제의식과 이어진다. <em>대부분의 사람은 클라우드 데이터 웨어하우스 사용자의 긴 꼬리에 속하고, 수십 수백 테라바이트의 뜨거운 데이터를 위한 분석 처리 능력을 필요로 하지 않는다.</em> 그런 쓰임새는 분산 시스템에 기반하지 않고 <strong>클라우드를 주된 데이터 저장소로, DuckDB를 질의 엔진으로 쓰는 더 단순하고 효율적인 아키텍처</strong>에서 이득을 볼 수 있다.</p>
+
+    <div class="tip">
+      <span class="tag">계산해보라는 권유</span>
+      <p>제3·4장의 가상 시스템—에너지 생산 감시—을 다시 떠올려보라는 것이 저자들의 방식이다. <strong>수백 곳이나 수천 곳의 사이트를 15분 간격으로 감시한다 해도, 연간 10억 레코드에 가까운 것은 나오지 않으며 크기도 대개 몇 기가바이트에 머문다.</strong></p>
+      <p>이것을 빅데이터라 부르기는 어렵고, MotherDuck이 손쉽게 다룰 수 있는 규모다. <em>규모를 재보지 않고 분산 시스템을 세우는 습관</em>에 대한 조용한 반문이다.</p>
+    </div>
+
+    <p>나머지 세 쓰임새도 정리해둘 만하다.</p>
+    <ul class="plain">
+      <li><b>다종 원천으로 이루어진 데이터 레이크의 질의 엔진</b> — Parquet으로 저장된 차가운 데이터, S3의 CSV 파일, 또는 Apache Iceberg에 저장된 데이터 같은 것이다. <em>그 데이터를 MotherDuck에 직접 저장된 뜨거운 데이터와 손쉽게 조인할 수 있다.</em></li>
+      <li><b>데이터 애플리케이션·대시보드·API의 서버리스 백엔드</b> — 주 트랜잭션 데이터베이스에서 분석 질의를 돌리는 대신, 전용 분석 데이터베이스에서 그 질의를 돌린다.</li>
+      <li><b>읽기 전용 스냅숏의 공유</b> — 다른 MotherDuck 사용자에게 데이터베이스의 스냅숏을 공유할 수 있다. 그들은 공유된 대로 원천을 쓸 수도 있고, <em>자기 인스턴스의 데이터를 그 데이터셋과 조인</em>할 수도 있다.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════ 7.2 ══════════ -->
+<section id="s2">
+  <div class="sechead rev">
+    <span class="num">7.2</span>
+    <h2>MotherDuck 시작하기<span class="en">Getting started with MotherDuck</span></h2>
+  </div>
+  <div class="col rev">
+    <p>책 전체에서 CLI나 파이썬 통합을 썼는데, MotherDuck을 시작하려면 먼저 브라우저를 띄워야 한다. 가입 버튼을 눌러 GitHub 계정이나 구글 계정으로, 또는 이메일 주소를 주고 <strong>무료 계정</strong>을 만들 수 있다.</p>
+
+    <div class="shot">
+      <span class="tag">〈도판 7.2〉 · 화면 갈무리</span>
+      <p>원서의 이 도판은 <b>MotherDuck UI의 화면 갈무리</b>다. 왼쪽에 데이터베이스와 그 스키마가 <b>탐색 가능한 트리</b>로 표시되고, 주 화면에 질의와 그 결과가—<b>인라인 막대 차트를 포함해</b>—표시되는 구성이다. 화면 갈무리는 이 문서에서 재현하지 않고 서술로 대신한다.</p>
+    </div>
+
+    <h3>UI로 MotherDuck 쓰기 <span class="sub">7.2.1</span></h3>
+    <p>웹 기반 UI는 세 가지를 한자리에 모아준다. <em>모든 원격 데이터베이스에 접근하고 질의하기, 계정 설정 관리하기, 그리고 S3의 원격 데이터 원천을 질의하는 데 필요한 비밀을 저장하기</em>다. <strong>UI 밖에서 MotherDuck에 접근하는 데 필요한 API 토큰도 여기서 얻는다.</strong></p>
+
+    <div class="note">
+      <span class="tag">NOTE — 브라우저 안의 것도 임베디드다</span>
+      <p><strong>웹 UI에서 돌아가는 데이터베이스도 실은 로컬 임베디드 데이터베이스다!</strong> WebAssembly(WASM)로 컴파일된 판본을 쓰고 있어 <em>브라우저 안에서 로컬로 돌아간다.</em> 물론 질의는 앞서 설명한 대로 MotherDuck 클라우드에서 실행된다.</p>
+      <p>대안으로, MotherDuck 계정이 없거나 원하지 않는다면 <code>shell.duckdb.org</code>를 방문할 수 있다. <em>본질적으로 CLI처럼 동작하지만 데이터를 영속화하거나 MotherDuck에 접속할 수는 없다.</em></p>
+    </div>
+
+    <p>이 구조에서 따라오는 이득이 있다. <strong>SQL 질의의 결과가 브라우저에 로컬한 DuckDB 인스턴스에 캐시되어, 질의 결과를 즉시 정렬하고 피벗하고 필터링할 수 있다.</strong> 서버를 다시 부르지 않고 손에서 결과를 만지작거릴 수 있다는 뜻이다.</p>
+
+    <div class="shot">
+      <span class="tag">〈도판 7.3〉 · 화면 갈무리</span>
+      <p>UI 왼쪽은 데이터베이스와 그 테이블·컬럼, 업로드된 파일을 나열한다. 트리 구조를 탐색할 때 <b>맥락 메뉴</b>가 나타나 데이터베이스를 <b>사용(use)·공유(share)·삭제(drop)·분리(detach)하거나 이름을 복사</b>할 수 있다. 원서의 이 도판은 그 맥락 메뉴의 화면 갈무리다.</p>
+    </div>
+
+    <p>질의를 실행하는 경험은 <em>주피터 노트북과 비슷하게</em> 마련되어 있다. 자동 완성과 함께 SQL 문을 쓰고, 실행하고, 셀 아래의 데이터 격자에 렌더링된 질의 결과를 본다. 출력 격자는 <strong>로컬 정렬, 출력 컬럼 선택, 컬럼 머리글에 히스토그램과 집계 표시, 데이터의 피벗과 필터링</strong>을 지원한다. 그리고 <strong>질의를 담은 UI의 상태가 세션을 넘어 유지되므로, 브라우저를 닫고 나중에 이어서 할 수 있다.</strong></p>
+    <p><code>CSV</code>와 <code>Parquet</code> 파일을 UI에서 직접 업로드하는 것도 지원된다. 업로드한 파일은 <em>어떤 질의에서든 접근할 수 있게</em> 되고, <code>CREATE TABLE AS SELECT</code> 문을 활용하거나 필요에 맞게 변환하게 된다.</p>
+
+    <h3>토큰 기반 인증으로 DuckDB를 MotherDuck에 연결하기 <span class="sub">7.2.2</span></h3>
+    <p><strong>DuckDB는 공유 데이터베이스 인스턴스를 열려고 하는 순간에 MotherDuck과의 인증 과정을 촉발한다.</strong> 이름 붙은 데이터베이스일 수도 있고 기본 데이터베이스일 수도 있다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE — 기본 데이터베이스</span>
+      <p>데이터베이스를 지정하지 않고 MotherDuck에 접속하면 <code>my_db</code>라는 <strong>기본 데이터베이스</strong>에 접속한다. 그것이 현재 데이터베이스가 된다. 그러면 테이블 이름만 지정해 이 데이터베이스의 어떤 테이블이든 질의할 수 있다. <code>USE</code> 명령이 현재 데이터베이스를 바꾸게 해준다.</p>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">기기 인증 흐름 — 링크와 코드</span>
+        <span class="tagn">7.2.2</span>
+      </div>
+      <pre><span class="p">D</span> .open md:
+
+Attempting to automatically open the SSO authorization page in your
+default browser.
+1. Please open this link to login into your account:
+   https://auth.motherduck.com/activate
+2. Enter the following code: <span class="f">XXXX-XXXX</span>
+
+<span class="c"># 인증 흐름을 끝까지 따라가면 터미널에 다음이 나온다.</span>
+<span class="ok">Token successfully retrieved [√]</span>
+You can store it as an environment variable to avoid having to log in again:
+  <span class="p">$</span> export motherduck_token=<span class="f">'eyJhbGciOiJI..._Jfo'</span></pre>
+      <div class="term-note">
+        브라우저에는 기기 확인 메시지가 열린다. 원서 〈도판 7.4〉가 그 화면 갈무리다.
+        <b>앞으로의 세션에서 자동으로 로그인되기를 바란다면 MotherDuck 토큰을 환경 변수로 추가해야 한다.</b>
+      </div>
+      <pre><span class="c"># 또는 토큰을 md: 프로토콜의 매개변수로 쓴다.</span>
+<span class="p">D</span> .open <span class="f">'md:?motherduck_token=eyJhbGciOiJI..._Jfo'</span>
+
+<span class="c"># 이 URL 형식은 개별 언어 바인딩에도 그대로 적용된다.</span>
+<span class="c"># 제6장에서 논한 파이썬 연결 관리를 떠올려보라.</span>
+<span class="k">import</span> duckdb
+
+con = duckdb.connect(<span class="f">'md:?motherduck_token=eyJhbGciOiJI..._Jfo'</span>)</pre>
+      <div class="term-note">
+        제6장 6.1.2절에서 <code>duckdb.connect</code>에 <code>':memory:'</code>나 파일 이름을 넘겼던 그 자리에
+        <b>URL 하나를 넣으면 클라우드가 된다.</b> API가 바뀌지 않는다는 것이 이 설계의 요령이다.
+        웹 UI를 쓸지 CLI를 쓸지는 결국 각자의 선택이다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 7.3.1 ══════════ -->
+<section id="s3">
+  <div class="sechead rev">
+    <span class="num">7.3.1</span>
+    <h2>데이터베이스를 MotherDuck에 올리기<span class="en">Uploading databases to MotherDuck</span></h2>
+  </div>
+  <div class="col rev">
+    <p>7.3절의 도입에서 저자들은 이 절의 목표를 정리해둔다. <em>데이터를 클라우드에 넣고, 동료와 협력자에게 데이터베이스를 공유하도록 도와주는 모든 기능</em>이다. 그리고 첫 예제의 동기가 현실적이다. 제6장에서 파이썬 통합으로 나라 데이터를 담은 데이터베이스를 만들고 데이터셋의 문제를 정리했다. <strong>이제 그 작업을 동료와 공유하고 싶다.</strong></p>
+    <p>한 방법은 저자들이 <em>"스프레드시트식 삶의 방식"</em>이라 부르는 것이다. <code>countries.duckdb</code> 저장 파일을 이메일에 첨부하거나 네트워크 폴더에 복사하고 넘어가는 것. <strong>더 낫고 덜 부서지기 쉬운 공유 방법이 MotherDuck이다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">잠금을 풀고 올리기</span>
+        <span class="tagn">7.3.1</span>
+      </div>
+      <pre><span class="p">D</span> .open countries.duckdb   <span class="c"># 그 저장 파일이 없어도 걱정할 것 없다. 이 명령이 만들어준다.</span>
+
+<span class="c">-- 갓 만든 데이터베이스라면 특히, cities 테이블을 더해둔다.</span>
+<span class="p">D</span> <span class="k">CREATE TABLE</span> cities <span class="k">AS</span>
+  <span class="k">SELECT</span> *
+  <span class="k">FROM</span> (<span class="k">VALUES</span> (<span class="f">'Amsterdam'</span>, 1), (<span class="f">'London'</span>, 2)) cities(Name, Id);
+
+<span class="c"># 공유하기 전에 분리해서 모든 잠금을 풀어야 한다.</span>
+<span class="c"># 인수 없는 .open으로 인메모리 DB로 돌아간 뒤 LOAD motherduck; 를 하거나,</span>
+<span class="c"># 한 번에 .open md: 를 부른다. 후자는 CLI를 MotherDuck 기본 DB에 붙인다.</span>
+<span class="p">D</span> .open md:
+<span class="p">D</span> <span class="k">CREATE DATABASE</span> <span class="f">"countries"</span> <span class="k">FROM</span> <span class="f">'countries.duckdb'</span>;</pre>
+      <div class="term-note">
+        <b>업로드 시간을 저자들이 실측해 적어두었다.</b> 데이터베이스 크기와 인터넷 속도에 따라 다르지만,
+        실험에서 <b>일반 노트북에서 40Mbps 업링크의 가정용 인터넷으로 16GB 데이터베이스를 올리는 데 약 40분</b>이 걸렸다.
+        집필 시점에 MotherDuck이 활발히 개선 중인 주제이며 업로드 성능이 곧 나아질 것으로 기대된다.
+      </div>
+      <div class="term-note">
+        <b>당장의 우회로도 제시된다.</b> 지금으로서는 데이터베이스를 <b>Parquet 파일로 내보내 클라우드 저장소에 올리고,
+        그 파일들로 MotherDuck에서 데이터베이스를 만드는 편이 더 빠를 수 있다.</b>
+        제5장에서 배운 <code>COPY … TO … (FORMAT PARQUET)</code>가 여기서 쓸모를 찾는다.
+      </div>
+      <div class="term-note catch">
+        수치를 재보면 어림이 섞여 있다. <b>40Mbps로 40분이면 약 12GB가 지나간다.</b>
+        16GB를 40분에 옮기려면 <b>53Mbps</b>가 필요하다. 전송 중 압축이 있었거나, 회선이 공칭보다 빨랐거나,
+        아니면 두 수치가 모두 어림이라는 뜻이다. 자기 환경의 소요 시간을 추정할 때는 <b>업링크 속도로 직접 나눠보는 편</b>이 안전하다.
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">접두사를 붙이거나 데이터베이스를 바꾸거나</span>
+        <span class="tagn">7.3.1</span>
+      </div>
+      <pre><span class="c">-- 세션은 아직 MotherDuck 기본 DB에 붙어 있다. 접두사를 쓰거나 데이터베이스를 바꾼다.</span>
+<span class="p">D</span> <span class="k">FROM</span> countries.cities;    <span class="c">-- 접두사를 쓰는 방식</span>
+
+<span class="p">D</span> <span class="k">USE</span> countries;           <span class="c">-- USE는 원격 MotherDuck 카탈로그에서 이름을 찾는다</span>
+<span class="p">D</span> <span class="k">FROM</span> cities;              <span class="c">-- 그러면 접두사를 생략할 수 있다</span>
+
+<span class="c"># 이미 CLI를 나왔다면 새 데이터베이스에 직접 접속해도 된다.</span>
+<span class="p">$</span> duckdb
+<span class="p">D</span> .open md:countries</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">Name</th><th>Id</th></tr>
+            <tr class="type"><th class="l">varchar</th><th>int32</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">Amsterdam</td><td>1</td></tr>
+            <tr><td class="l">London</td><td>2</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>USE 문이 원격 카탈로그를 조회한다</b>는 점을 눈여겨볼 만하다.
+        제3장에서 로컬 스키마를 다룰 때 쓴 것과 같은 문장이 이제 네트워크 저편을 가리킨다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <div class="note">
+      <span class="tag">NOTE — 기억해야 할 규칙</span>
+      <p>로컬 데이터베이스를 MotherDuck에 올릴 때 <strong>로컬 이름과 원격 이름은 언제나 달라야 한다.</strong> 이 규칙을 잊고 같은 이름을 주면 오류를 만날 위험이 있다.</p>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">같은 이름이 부르는 두 가지 오류</span>
+        <span class="tagn">7.3.1</span>
+      </div>
+      <pre><span class="p">D</span> create database <span class="f">"countries"</span> from <span class="f">'countries'</span> ;
+<span class="err">Error: Catalog Error: Database 'countries' has already been
+created and attached</span>
+
+<span class="c"># 그리고 현재 데이터베이스를 올리려 하면 이 오류가 난다.</span>
+<span class="err">Error: Binder Error: Database "countries.duckdb" is already attached
+with alias "countries"</span></pre>
+      <div class="term-note">
+        예제에서 이 오류들을 피한 것은 <b>.open md:</b>를 불렀기 때문이다. 그 한 줄이 두 가지를 해주었다.
+        <b>MotherDuck 확장을 적재하고, MotherDuck 기본 데이터베이스에 접속한 것</b>이다.
+        또 다른 선택은 인수 없는 <b>.open</b>이며, 인메모리 데이터베이스로 바꿔준다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 7.3.2 ══════════ -->
+<section id="s4">
+  <div class="sechead rev">
+    <span class="num">7.3.2</span>
+    <h2>MotherDuck에서 데이터베이스 만들기<span class="en">Creating databases in MotherDuck</span></h2>
+  </div>
+  <div class="col rev">
+    <p>앞 절에서는 기존 데이터베이스를 올렸다. 대안으로 <em>클라우드에서 직접 스키마를 처음부터 지을 수 있다.</em> 그리고 그 편이 나은 경우를 저자들이 분명히 짚는다. <strong>스키마의 내용이 대체로 다른 공용 클라우드에 저장된 파일에 의존한다면, 그것을 먼저 로컬 DuckDB 인스턴스로 내려받고 그 데이터베이스를 다시 MotherDuck에 올리는 것은 시간과 자원의 낭비다.</strong> 대부분의 경우 <em>MotherDuck이 내 로컬 시스템보다 S3 버킷에 더 가까이서 돌아가므로</em>, 클라우드에서 MotherDuck으로 직접 들이는 편이 시간과 돈을 아껴줄 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">만들고, 확인하고, 옮겨 앉고, 지우기</span>
+        <span class="tagn">7.3.2</span>
+      </div>
+      <pre><span class="p">D</span> <span class="k">CREATE DATABASE</span> <span class="f">"my-test"</span>;
+
+<span class="p">D</span> <span class="k">SHOW DATABASES</span>;      <span class="c">-- .databases CLI 명령으로도 된다</span></pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">database_name</th></tr>
+            <tr class="type"><th class="l">varchar</th></tr>
+          </thead>
+          <tbody><tr><td class="l">my-test</td></tr></tbody>
+        </table>
+      </div>
+      <div class="term-note catch">
+        본문은 <b>"데이터베이스 이름에는 특수 문자가 들어갈 수 없다. 영숫자와 밑줄만 허용된다"</b>고 적어놓고,
+        바로 다음 줄에서 <b>하이픈이 든 <code>"my-test"</code></b>를 만든다. 규칙과 예제가 어긋난다.
+        그리고 하이픈이 들어갔기 때문에 이름을 인용부호로 감싸야 하는데,
+        <code>CREATE</code>·<code>DROP</code>에서는 겹인용부호 <code>"my-test"</code>를 쓰고
+        <code>USE</code>에서는 홑인용부호 <code>'my-test'</code>를 쓴다.
+        <b>식별자를 감싸는 표준 표기는 겹인용부호</b>이니, 따라 할 때는 한쪽으로 맞추는 편이 안전하다.
+      </div>
+      <pre><span class="c">-- CREATE DATABASE는 데이터베이스만 만들고 세션을 그리로 바꾸지는 않는다.</span>
+<span class="p">D</span> <span class="k">USE</span> <span class="f">'my-test'</span>;
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">current_database</span>();</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">current_database()</th></tr>
+            <tr class="type"><th class="l">varchar</th></tr>
+          </thead>
+          <tbody><tr><td class="l ok">my-test</td></tr></tbody>
+        </table>
+      </div>
+      <pre><span class="c">-- 테이블을 만들고 행을 넣어본다.</span>
+<span class="p">D</span> <span class="k">CREATE TABLE</span> people (name <span class="k">varchar</span>, born <span class="k">date</span>);
+<span class="p">D</span> <span class="k">INSERT INTO</span> people <span class="k">VALUES</span> (<span class="f">'Mark'</span>, <span class="f">'1989-01-01'</span>), (<span class="f">'Hannes'</span>, <span class="f">'1990-01-01'</span>);
+
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span> people;              <span class="c">-- → 2</span>
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span> <span class="f">"my-test"</span>.people;    <span class="c">-- 데이터베이스 이름을 접두사로 붙여도 같다</span>
+
+<span class="c">-- 감을 잡았으면 시험용 데이터베이스를 지운다.</span>
+<span class="c">-- 쓰고 있는 데이터베이스는 지울 수 없으므로 먼저 기본 DB로 옮겨 앉는다.</span>
+<span class="p">D</span> <span class="k">USE</span> my_db;
+<span class="p">D</span> <span class="k">DROP DATABASE</span> <span class="f">"my-test"</span>;</pre>
+      <div class="term-note">
+        <b>쓰고 있는 것은 지울 수도 분리할 수도 없다</b>는 규칙이 이 장에서 세 번 되풀이된다.
+        업로드 전에 분리할 때, 시험 데이터베이스를 지울 때, 그리고 뒤에서 공유를 분리할 때다.
+        서비스가 원격이라는 사실과 무관하게, <b>자기가 앉아 있는 의자는 치울 수 없다.</b>
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<!-- ══════════ 7.3.3 ══════════ -->
+<section id="s5">
+  <div class="sechead rev">
+    <span class="num">7.3.3</span>
+    <h2>데이터베이스 공유하기<span class="en">Sharing databases</span></h2>
+  </div>
+  <div class="col rev">
+    <p>MotherDuck은 데이터베이스의 <strong>읽기 전용 스냅숏</strong>을 공유하는 능력을 제공한다. 데이터를 공유하는 데만 좋은 것이 아니라 <em>협업 분석과 기능의 공유</em>에도 좋다. 그 까닭이 이 절의 핵심이다. <strong>스냅숏은 데이터만이 아니라 모든 뷰를 담으며, 그와 함께 그 뷰를 만드는 동안 들인 모든 노력을 담는다.</strong> 저자들의 표현으로는 <em>"스테로이드를 맞은 스프레드시트"</em>다.</p>
+    <p>제3·5장에서 뷰가 논리를 감싸두는 수단이라고 배웠다. 그 뷰가 그대로 건너간다는 것은, <em>정제 규칙과 단위 환산과 조인 논리까지 함께 건너간다</em>는 뜻이다. 파일 하나를 이메일로 보내는 것과는 다른 종류의 공유다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">공유 링크 만들기, 붙이기, 서술하기</span>
+        <span class="tagn">7.3.3</span>
+      </div>
+      <pre><span class="p">D</span> <span class="k">CREATE SHARE</span> shared_countries   <span class="c">-- 공유될 데이터베이스의 이름</span>
+  <span class="k">FROM</span> countries;                  <span class="c">-- 공유할 데이터베이스의 이름</span></pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">share_url</th></tr>
+            <tr class="type"><th class="l">varchar</th></tr>
+          </thead>
+          <tbody><tr><td class="l">md:_share/countries/1acb80cf-d872-4fab-8077-64975cce0452</td></tr></tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>공유 데이터베이스를 만드는 데 걸리는 시간은 현재 원본 데이터베이스의 크기에 달려 있다.</b>
+        저자들의 경우 <b>16GB 데이터베이스가 공유되는 데 약 1분</b>이 걸렸다.
+      </div>
+      <div class="term-note catch">
+        같은 16GB인데 <b>올리는 데 40분, 공유하는 데 1분</b>이다. 사십 배 차이다.
+        공유는 이미 클라우드에 있는 데이터의 <b>서버 쪽 스냅숏</b>이고, 업로드는 <b>가정용 업링크</b>를 건너는 일이다.
+        두 수치를 나란히 놓으면, 이 서비스에서 무엇이 비싼 연산인지가 선명해진다.
+        <b>병목은 계산이 아니라 이동이다.</b>
+      </div>
+      <pre><span class="c">-- 붙이려면 상대도 MotherDuck 계정이 있어야 한다.</span>
+<span class="p">D</span> <span class="k">ATTACH</span> <span class="f">'md:_share/countries/1acb80cf-d872-4fab-8077-64975cce0452'</span>
+  <span class="k">AS</span> shared_countries;
+
+<span class="p">D</span> .mode line
+<span class="p">D</span> <span class="k">DESCRIBE SHARE</span> shared_countries;
+
+   share_name = shared_countries
+   share_link = md:_share/countries/1acb80cf-d872-4fab-8077-64975cce0452
+database_name = countries
+  database_id = 9d7586ac-add9-46dc-a4fb-def6b42f0f7c
+  snapshot_id = 041a5ba9-8cf4-471b-af13-1bec75a0b3ce
+
+<span class="p">D</span> <span class="k">LIST SHARES</span>;              <span class="c">-- 내가 만든 공유 목록</span></pre>
+      <div class="term-note">
+        출력이 원본 링크와 원래 이름, 그리고 <b>데이터베이스와 최신 스냅숏의 ID</b>를 함께 비춰준다.
+        <b>snapshot_id가 따로 있다는 사실</b>이 다음 문단의 제약을 예고한다.
+      </div>
+      <pre><span class="c">-- 출간 시점에 공유는 원본이 바뀌어도 자동으로 갱신되지 않는다.</span>
+<span class="c">-- 스키마와 데이터의 변경은 공유하는 쪽에서 명시적으로 전파해야 한다.</span>
+<span class="p">D</span> <span class="k">UPDATE SHARE</span> shared_countries;
+
+<span class="c">-- 더 이상 필요 없는 공유는 DETACH로 없앤다.</span>
+<span class="c">-- 그 공유에 접속해 있다면 먼저 다른 데이터베이스로 옮겨 앉아야 한다.</span>
+<span class="p">D</span> <span class="k">USE</span> my_db;
+<span class="p">D</span> <span class="k">DETACH</span> shared_countries;</pre>
+      <div class="term-note">
+        <b>공유는 스냅숏이지 뷰가 아니다.</b> 제5장에서 뷰와 테이블의 차이—매번 다시 계산하는가,
+        한 시점을 찍어두는가—를 배웠는데, MotherDuck의 공유는 명백히 후자다.
+        받는 쪽이 늘 최신 데이터를 볼 것이라고 가정하면 낭패를 본다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <h3>저자들이 준비해둔 공유들</h3>
+    <p>저자들은 독자를 위해 흥미로운 공유 몇 개를 준비해두었다. <strong>제3·4장의 완전한 데이터베이스</strong>—그 장들에서 만든 모든 테이블과 뷰를 담은—와 <strong>스택 오버플로의 완전한 덤프</strong>, 그리고 표본 데이터 모음이다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">붙여서 바로 써볼 수 있는 공유 셋</span>
+        <span class="tagn">7.3.3</span>
+      </div>
+      <pre><span class="c">-- ① 제3·4장의 데이터베이스</span>
+<span class="p">D</span> <span class="k">ATTACH</span>
+    <span class="f">'md:_share/duckdb_in_action_ch3_4/d0c08584-1d33-491c-8db7-cf9c6910eceb'</span>
+  <span class="k">AS</span> duckdb_book_ch3_and_4;
+<span class="p">D</span> <span class="k">USE</span> duckdb_book_ch3_and_4;
+<span class="p">D</span> <span class="k">SHOW</span> tables;
+
+<span class="c">-- ② 스택 오버플로 덤프</span>
+<span class="p">D</span> <span class="k">ATTACH</span>
+    <span class="f">'md:_share/stackoverflow/6c318917-6888-425a-bea1-5860c29947e5'</span>
+  <span class="k">AS</span> stackoverflow_analysis;
+<span class="p">D</span> <span class="k">USE</span> stackoverflow_analysis;
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span> posts;
+<span class="ok">58,329,356</span>
+
+<span class="c">-- ③ 표본 데이터 모음. 테이블에 접두사가 붙어 있어 완전한 이름으로 접근한다.</span>
+<span class="p">D</span> <span class="k">ATTACH</span> <span class="f">'md:_share/share_sample_data/23b0d623-1361-421d-ae77-62d701d471e6'</span>
+  <span class="k">AS</span> sample_data;</pre>
+      <div class="term-note">
+        스택 오버플로 공유는 <b>5,832만 9,356건의 질문과 답변</b>을 담고 있다.
+        제3·4장의 SQL을 실제 규모의 데이터에 대고 써볼 수 있는 좋은 말뭉치다.
+        제2장에서 227행짜리 CSV로 시작한 여정이 여기까지 왔다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <div class="tblwrap">
+      <table class="tbl">
+        <caption><b>표 7.1</b> &nbsp;표본 데이터베이스의 테이블 목록. 완전한 이름으로 접근한다(예: <code>sample_data.nyc.taxi</code>).</caption>
+        <thead><tr><th>이름</th><th>테이블 이름</th><th>행 수</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr><td>Hacker News</td><td class="m">hn.hacker_news</td><td class="n">3.9M</td><td>해커 뉴스 댓글의 표본</td></tr>
+          <tr><td>NYC 311 민원 데이터</td><td class="m">nyc.service_requests</td><td class="n">32.5M</td><td>전화와 웹을 통한 뉴욕시 311 민원 상담 전화 요청</td></tr>
+          <tr><td>대기질</td><td class="m">who.ambient_air_quality</td><td class="n">41k</td><td>세계보건기구의 과거 대기질 데이터</td></tr>
+          <tr><td>택시 운행</td><td class="m">nyc.taxi</td><td class="n">3.3M</td><td>2020년 11월 뉴욕 옐로캡 운행 데이터</td></tr>
+          <tr><td>승차 공유</td><td class="m">nyc.rideshare</td><td class="n">18.1M</td><td>뉴욕의 승차 공유(Lyft, Uber 등) 운행</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">살펴본 김에</span>
+      <p>본문이 완전한 이름의 예로 든 것은 <code>sample_data.nyc.yellow_cab_nyc_2022_11</code>이다. 그런데 <strong>표 7.1에는 그 이름이 없다.</strong> 택시 데이터의 테이블 이름은 <code>nyc.taxi</code>로 적혀 있고, 설명은 <strong>2020년 11월</strong>이라고 되어 있다. 예시 이름에 박힌 <code>2022_11</code>과도 어긋난다.</p>
+      <p>예시가 옛 이름이었을 가능성이 있으니, 실제로 붙여본 뒤 <code>SHOW tables</code>로 확인하는 편이 확실하다. 이 문서의 표에는 <em>표 7.1에 인쇄된 이름을 그대로</em> 실었다.</p>
+    </div>
+
+    <p>저자들의 맺음말이 이 공유들의 목적을 말한다. <em>이 데이터셋들은 여러 다른 주제를 제공하니, SQL 실력을 단련하거나 DuckDB와 MotherDuck의 가능성을 탐색하는 데 쓸 수 있다.</em></p>
+  </div>
+</section>
+
+<!-- ══════════ 7.3.4 ══════════ -->
+<section id="s6">
+  <div class="sechead rev">
+    <span class="num">7.3.4</span>
+    <h2>S3 비밀 관리와 S3 버킷에서 데이터 적재하기<span class="en">Managing S3 secrets and loading Data from S3 buckets</span></h2>
+  </div>
+  <div class="col rev">
+    <p>앞 장들에서는 <code>http://</code>나 <code>https://</code> 프로토콜로 직접 접근할 수 있는 파일에서 데이터를 들였다. 그러나 파일 저장에 아마존 S3를 쓰는 일이 잦고, 그것은 <code>s3://</code> 프로토콜로 접근한다. <strong>MotherDuck과 DuckDB는 그 프로토콜도 말하지만, 여러분을 대신해 아마존 S3에 인증하려면 비밀이 필요하다.</strong></p>
+    <p>여기에 MotherDuck을 쓸 때의 이점이 하나 붙는다. <strong>비밀을 그들의 시스템에 저장해두면 MotherDuck에 접속된 모든 세션에서 쓸 수 있다.</strong> 웹 UI로 하거나 전용 문장으로 한다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">비밀을 두고, 쓰고, 치우기</span>
+        <span class="tagn">7.3.4</span>
+      </div>
+      <pre><span class="p">D</span> <span class="k">CREATE OR REPLACE SECRET</span> (
+     <span class="k">TYPE</span> S3,
+     KEY_ID <span class="f">'access-key'</span>,
+     SECRET <span class="f">'secret-key'</span>,
+     REGION <span class="f">'us-east-1'</span>
+  );
+
+<span class="c">-- 그러면 보안 S3 버킷의 데이터를, 앞서 http나 파일시스템으로 질의했던</span>
+<span class="c">-- 여느 CSV나 Parquet 파일과 똑같이 질의할 수 있다.</span>
+<span class="p">D</span> <span class="k">CREATE OR REPLACE TABLE</span> mytable <span class="k">AS</span>
+  <span class="k">FROM</span> <span class="f">'s3://...'</span>;
+
+<span class="c">-- 버킷 작업이 끝나면 비밀을 치운다.</span>
+<span class="p">D</span> <span class="k">DROP SECRET</span> (<span class="k">TYPE</span> s3);</pre>
+      <div class="term-note">
+        비밀을 만들 때 새겨둘 것이 둘이다.
+        <b>DuckDB 0.10.0 이전 판본에서는 SECRET 객체를 하나만 가질 수 있다.</b>
+        그리고 <b>영구 S3 비밀만 쓸 수 있으며, 세션 동안만 유효한 임시 S3 비밀은 현재 지원되지 않는다.</b>
+      </div>
+      <div class="term-note">
+        임시 자격 증명을 쓸 수 없다는 제약은 운영 환경에서 무겁게 다가온다.
+        <b>수명이 짧은 토큰을 발급해 돌려쓰는 관행</b>을 이 자리에서는 적용할 수 없다는 뜻이므로,
+        <code>DROP SECRET</code>으로 손수 치우는 절차를 습관으로 삼아야 한다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 7.3.5 ══════════ -->
+<section id="s7">
+  <div class="sechead rev">
+    <span class="num">7.3.5</span>
+    <h2>데이터 수집과 MotherDuck 사용 최적화<span class="en">Optimizing data ingestion and MotherDuck usage</span></h2>
+  </div>
+  <div class="col rev">
+    <p>클라우드 기반 해법을 돌리는 데는 여러 종류의 비용이 든다. <strong>연산, 저장, 데이터 인그레스, 데이터 이그레스</strong>가 그중에 있다. 그리고 이 절의 핵심 능력이 여기서 나온다. <strong>MotherDuck 확장은 함수가 클라우드에서 실행될지 내 로컬 기계에서 실행될지에 대한 촘촘한 제어를 준다.</strong></p>
+    <p>저자들이 든 반례가 명료하다. 이미 로컬에 있는 큰 Parquet 파일을 처리하고 싶다면, <em>그것을 S3에 먼저 올린 다음 MotherDuck에서 처리를 돌리는 것은 무의미하다.</em> <strong>MotherDuck의 연산 비용과 S3의 이그레스 비용을 둘 다 물게 되기 때문이다.</strong> 인터넷이 빠르다면 로컬에서 처리하고 내 기계에서 MotherDuck으로 그냥 올리는 편이 아마 낫다.</p>
+    <p>확장은 <code>read_</code> 접두사로 시작하는 모든 함수—<code>read_json</code>, <code>read_csv_auto</code> 같은 것—를 확장해 <code>MD_RUN</code> 매개변수를 지원하게 만든다. 아래에서 원천과 <code>MD_RUN</code> 값을 갈아 끼워, 함수가 어디서 실행되고 그것이 무엇을 뜻하는지 확인할 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="mx" id="mx">
+      <div class="mxctl">
+        <div class="mxrow">
+          <label>읽을 원천</label>
+          <button data-s="0" aria-pressed="true">로컬 파일</button>
+          <button data-s="1" aria-pressed="false">https:// URL</button>
+          <button data-s="2" aria-pressed="false">s3:// 버킷</button>
+          <button data-s="3" aria-pressed="false">localhost URL</button>
+        </div>
+        <div class="mxrow run">
+          <label>MD_RUN</label>
+          <button data-r="AUTO" aria-pressed="true">AUTO (기본값)</button>
+          <button data-r="LOCAL" aria-pressed="false">LOCAL</button>
+          <button data-r="REMOTE" aria-pressed="false">REMOTE</button>
+        </div>
+      </div>
+      <div class="mxbody">
+        <div class="mxsql" id="mxSql"></div>
+        <div class="mxinfo">
+          <span class="mxwhere" id="mxWhere">—</span>
+          <dl>
+            <dt>그렇게 되는 이유</dt><dd id="mxWhy">—</dd>
+            <dt>새겨둘 것</dt><dd id="mxNote">—</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="mxcap" id="mxCap"></div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <h3>차가운 저장과 뜨거운 저장</h3>
+    <p>무료 등급을 넘어서면 MotherDuck은 <strong>표준 등급</strong>을 제공한다. 저자들이 적어둔 집필 시점의 값은 다음과 같다.</p>
+
+    <div class="grid3">
+      <div class="cell">
+        <span class="big">$25</span>
+        <span class="t">월 기본료</span>
+        <p><b>100GB 저장과 100 연산 시간</b>이 포함된다.</p>
+      </div>
+      <div class="cell">
+        <span class="big">$0.08</span>
+        <span class="t">GB당 추가 차가운 저장</span>
+        <p>표준 사용 할당량을 넘는 자원이 필요하면 추가로 구매할 수 있다.</p>
+      </div>
+      <div class="cell">
+        <span class="big">$0.40</span>
+        <span class="t">시간당 추가 연산</span>
+        <p>다만 <b>이것은 클라우드 사용에만 해당하며 로컬 실행에는 해당하지 않는다.</b></p>
+      </div>
+    </div>
+
+    <p>두 저장의 뜻이 다르다. <strong>차가운 저장(cold storage)</strong>은 데이터베이스와 파일을 위한 영속 저장을 가리킨다. <strong>뜨거운 저장(hot storage)</strong>은 질의를 실행하는 데 쓰이며 <em>메모리 사용에 해당하고</em>, 필요에 맞게 미세 조정한 최대치로 제한할 수 있다. DuckDB에서 뜨거운 저장은 <strong>상한까지 자동으로 확장되고 초와 기가바이트 단위로 계량된다.</strong></p>
+
+    <div class="tip">
+      <span class="tag">TIP — 왜 그 분리가 이치에 맞는가</span>
+      <p>저자들이 근거로 든 관찰이 인상적이다. <strong>연구에 따르면 처리되는 데이터의 대단히 큰 비율이 24시간이 안 된 것이다. 데이터가 일주일 묵을 무렵이면 가장 최근 날의 데이터보다 질의될 가능성이 약 20배 낮아진다.</strong></p>
+      <p>여기에 하나가 더 붙는다. <em>워크로드의 크기가 전체 데이터 크기보다 작은 일이 잦다.</em> 예컨대 대시보드는 통상 집계된 데이터로 만들어진다. <strong>지난 한 시간의 데이터는 새로 집계하면 최신 변경을 놓치지 않고, 일주일보다 더 거슬러 올라가는 것은 미리 집계해 별도 테이블로 저장할 수 있다.</strong> 집계는 통상 행이 훨씬 적고 저장을 훨씬 덜 잡아먹는다.</p>
+      <p>그래서 비용을 통제하려면 <strong>불필요한 데이터를 MotherDuck에 직접 저장하지 말고 필요할 때 적재하거나 처리하며, 한 번에 유지할 뜨거운 저장의 최대량을 합리적으로 설정</strong>해야 한다. 다만 <em>쓸 수 있는 뜨거운 저장의 양이 질의 성능에 영향을 준다</em>는 저울을 잊지 말아야 한다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 7.3.6 ══════════ -->
+<section id="s8">
+  <div class="sechead rev">
+    <span class="num">7.3.6</span>
+    <h2>AI로 데이터 질의하기<span class="en">Querying your data with AI</span></h2>
+  </div>
+  <div class="col rev">
+    <p>SQL이 영어와 어느 정도 닮았다고는 하나 익히기가 늘 쉽지는 않고, 처음 접하는 사람에게는 어떤 구성물은 노골적으로 겁을 준다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE — SQL의 옛 이름</span>
+      <p>SQL의 이전 이름은 <strong>SEQUEL(Structured English QUEry Language)</strong>이었다. 관계형 모델에 기반한 또 다른 질의 언어 <em>QUEL</em>을 두고 만든 말장난이었다. 그 이름은 결국 <strong>상표권 문제로 폐기되었다.</strong></p>
+    </div>
+
+    <p>그런데 <em>구조화된 언어로 된 질의는 곧잘 생성될 수 있다.</em> MotherDuck은 자연어로 데이터를 질의하게 해주는 생성 AI 기능을 제공한다. 데이터를 서술할 수 있고, SQL 문을 생성해주거나 기존 문장을 고쳐준다. 작동 원리를 저자들이 분명히 밝혀둔다. <strong>데이터베이스 스키마를 상세한 프롬프트와 여러분의 질문과 함께 대규모 언어 모델(LLM)로 보내면, 그것이 요청된 SQL 문을 생성하고 선택적으로 실행한다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">두 번 부르면 두 번 다르게 답한다</span>
+        <span class="tagn">7.3.6</span>
+      </div>
+      <pre><span class="p">D</span> .mode line
+<span class="p">D</span> <span class="k">CALL</span> <span class="f">prompt_schema</span>();
+
+summary = The database contains tables for storing data related to votes,
+tags, posts, post links, badges, users, and comments.
+<span class="rt">Run Time (s): real 3.672 user 0.007355 sys 0.002674</span>
+
+<span class="c">-- 한 번 더 부르면 대개 다른 응답을 얻는다.</span>
+<span class="p">D</span> <span class="k">CALL</span> <span class="f">prompt_schema</span>();
+
+summary = The data in the database is about votes, tags, posts, post links,
+badges, users, and comments.
+<span class="rt">Run Time (s): real 3.054 user 0.007354 sys 0.003175</span></pre>
+      <div class="term-note">
+        저자들의 평가가 담백하다. <b>몇 초가 걸리는데 결과가 그리 인상적이지 않다. 테이블 목록만 봐도 같은 출력을 얻을 수 있었다.</b>
+        같은 호출에 다른 답이 오는 것이 처음에는 놀라워 보일 수 있는데,
+        <b>LLM은 확률적 모델이며 매번 같은 응답을 돌려준다고 보장되지 않는다</b>는 사실을 감안하면 그렇지 않다.
+      </div>
+      <div class="term-note">
+        이 책이 AI 기능을 다루는 태도가 여기서 드러난다. <b>홍보하지 않고 재보고, 되는 것과 안 되는 것을 나누어 적는다.</b>
+        기능 소개 절에서 "인상적이지 않다"고 쓰는 교재는 흔치 않다.
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">자연어로 묻고, 어떤 SQL이 쓰였는지 되묻기</span>
+        <span class="tagn">7.3.6</span>
+      </div>
+      <pre><span class="c">-- "가장 인기 있는 태그는 무엇인가?"는 유효한 SQL이 아니므로</span>
+<span class="c">-- prompt_query라는 특별한 pragma로 그 사실을 알려야 한다.</span>
+<span class="c">-- pragma는 컴파일러나 질의 파서에게 입력을 어떻게 처리해야 하는지 알려주는 특별한 지시다.</span>
+<span class="p">D</span> .mode duckbox
+<span class="p">D</span> <span class="k">pragma</span> <span class="f">prompt_query</span>(<span class="f">'What are the most popular tags?'</span>);</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">TagName</th><th>Count</th></tr>
+            <tr class="type"><th class="l">varchar</th><th>int64</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">javascript</td><td class="hi">2479947</td></tr>
+            <tr><td class="l">python</td><td>2113196</td></tr>
+            <tr><td class="l">java</td><td>1889767</td></tr>
+            <tr><td class="l">c#</td><td>1583879</td></tr>
+            <tr><td class="l">php</td><td>1456271</td></tr>
+            <tr><td class="l">android</td><td>1400026</td></tr>
+            <tr><td class="l">html</td><td>1167742</td></tr>
+            <tr><td class="l">jquery</td><td>1033113</td></tr>
+            <tr><td class="l">c++</td><td>789699</td></tr>
+            <tr><td class="l">css</td><td>787138</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="2">10 rows &nbsp;&nbsp; 2 columns &nbsp;·&nbsp; real 3.763</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>어떻게 했는지는 보여주지 않은 채</b> 열 행이 돌아오고, 실제로 의미가 있는 값이다.
+        그러면 어떤 SQL이 쓰였는지 궁금해지는데, <code>prompt_sql</code> 프로시저로 알아낼 수 있다.
+        다만 <b>확률적으로 조금 달랐을 수도 있다</b>는 점은 염두에 두어야 한다.
+      </div>
+      <pre><span class="p">D</span> .mode line
+<span class="p">D</span> <span class="k">call</span> <span class="f">prompt_sql</span>(<span class="f">'What are the most popular tags?'</span>);
+
+query = <span class="k">SELECT</span> TagName, Count
+<span class="k">FROM</span> tags
+<span class="k">ORDER BY</span> Count <span class="k">DESC</span>;
+<span class="rt">Run Time (s): real 5.425 user 0.010331 sys 0.005074</span></pre>
+      <div class="term-note catch">
+        본문은 이 생성 결과를 <b>"테이블 컬럼을 정렬과 <em>limit</em>과 함께 쓸 만큼 똑똑하다"</b>고 평했다.
+        그런데 <b>인쇄된 질의에는 LIMIT이 없다.</b> 그러면서도 앞의 <code>prompt_query</code>는 정확히 열 행을 돌려주었다.
+        생성된 SQL과 실제 실행된 SQL이 달랐거나, 평이 과했거나, 인쇄에서 한 줄이 빠진 것이다.
+        <b>LLM이 만든 질의를 그대로 믿지 말고 눈으로 확인하라는 이 절의 교훈이, 뜻하지 않게 이 자리에서 증명된다.</b>
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">프롬프트를 손질해 조인을 없애기</span>
+        <span class="tagn">7.3.6</span>
+      </div>
+      <pre><span class="c">-- 더 복잡한 질문을 던져본다.</span>
+<span class="p">D</span> <span class="k">pragma</span> <span class="f">prompt_query</span>(<span class="f">"Which 5 questions have the most comments, what is the
+  post title and comment count"</span>);
+<span class="c">-- → 5행. real 19.695</span>
+
+<span class="p">D</span> <span class="k">call</span> <span class="f">prompt_sql</span>(<span class="f">"Which 5 questions have the most comments, ..."</span>);
+
+query = <span class="k">SELECT</span> p.Title, <span class="f">COUNT</span>(c.Id) <span class="k">AS</span> comment_count
+<span class="k">FROM</span> posts p
+  <span class="k">JOIN</span> comments c <span class="k">ON</span> p.Id = c.PostId <span class="k">AND</span> p.PostTypeId = 1
+<span class="k">GROUP BY</span> p.Title
+<span class="k">ORDER BY</span> comment_count <span class="k">DESC</span>
+<span class="k">LIMIT</span> 5;
+<span class="rt">Run Time (s): real 4.795</span></pre>
+      <div class="term-note">
+        저자들이 흥미롭다고 짚은 대목. <b>posts 테이블에서 PostTypeId = 1인 항목이 모두 답변이 아니라 질문임을
+        모델이 감지하거나 알고 있다.</b> 그리고 그 이유를 조심스럽게 추측한다.
+        <b>"아마 스택 오버플로 데이터셋으로 훈련되었기 때문일 것이다."</b>
+      </div>
+      <pre><span class="c">-- 댓글 수는 posts 테이블의 컬럼이므로 comments와의 조인이 필요하지 않다.</span>
+<span class="c">-- 프롬프트를 손질해 posts 테이블만 쓰는 질의를 만들게 해본다.</span>
+<span class="p">D</span> <span class="k">call</span> <span class="f">prompt_sql</span>(<span class="f">"System: No joins! User: Which 5 questions have the most
+  comments, what is the post title and comment count"</span>);
+
+query = <span class="k">SELECT</span> Title, CommentCount
+<span class="k">FROM</span> posts
+<span class="k">WHERE</span> PostTypeId = 1
+<span class="k">ORDER BY</span> CommentCount <span class="k">DESC</span>
+<span class="k">LIMIT</span> 5;
+<span class="rt">Run Time (s): real 3.587</span></pre>
+      <div class="term-note">
+        <b>훨씬 낫다.</b> 스키마를 아는 사람이 프롬프트에 한 줄을 더해 불필요한 조인을 없앤 것이다.
+        <b>도메인 지식이 없으면 프롬프트도 손질할 수 없다</b>는 사실이 이 짧은 왕복에 담겨 있다.
+      </div>
+      <pre><span class="c">-- prompt_fixup으로 SQL을 고칠 수도 있다. 악명 높은 "GROUP BY를 잊었다" 같은 것.</span>
+<span class="p">D</span> <span class="k">call</span> <span class="f">prompt_fixup</span>(<span class="f">"select postTypeId, count(*) from posts"</span>);
+query = <span class="k">SELECT</span> postTypeId, <span class="f">COUNT</span>(*) <span class="k">FROM</span> posts <span class="k">GROUP BY</span> postTypeId
+<span class="rt">Run Time (s): real 12.006</span>
+
+<span class="c">-- 또는 잘못된 조인 컬럼 이름을 고치는 데 쓴다.</span>
+<span class="p">D</span> <span class="k">call</span> <span class="f">prompt_fixup</span>(<span class="f">"select count(*) from posts join users on
+  posts.userId = users.userId"</span>);
+query = <span class="k">SELECT</span> <span class="f">COUNT</span>(*) <span class="k">FROM</span> posts <span class="k">JOIN</span> users <span class="k">ON</span>
+  posts.OwnerUserId = users.Id
+<span class="rt">Run Time (s): real 2.378</span></pre>
+      <div class="term-note">
+        두 번째 예가 더 인상적이다. <b>존재하지 않는 컬럼 이름(userId)을 실제 스키마의 이름(OwnerUserId, Id)으로 바꿔놓았다.</b>
+        스키마를 프롬프트에 함께 보내는 설계가 여기서 값을 한다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <div class="tblwrap">
+      <table class="tbl">
+        <caption class="added"><b>덧붙인 표</b> &nbsp;7.3.6절에 등장하는 네 가지 프롬프트 기능과 원서에 기재된 실행 시간. 원서에는 이런 표가 없다.</caption>
+        <thead><tr><th>기능</th><th>형태</th><th>하는 일</th><th>기재된 시간</th></tr></thead>
+        <tbody>
+          <tr><td class="m">prompt_schema()</td><td>CALL</td><td>데이터베이스 스키마를 요약해 서술한다</td><td class="n">3.672 · 3.054</td></tr>
+          <tr><td class="m">prompt_query(…)</td><td>pragma</td><td>자연어 질문을 SQL로 바꿔 <b>실행하고 결과를 돌려준다</b></td><td class="n">3.763 · 19.695</td></tr>
+          <tr><td class="m">prompt_sql(…)</td><td>CALL</td><td>자연어 질문에 대해 <b>생성된 SQL 문만</b> 돌려준다</td><td class="n">5.425 · 4.795 · 3.587</td></tr>
+          <tr><td class="m">prompt_fixup(…)</td><td>CALL</td><td>잘못된 SQL 문을 고쳐 돌려준다</td><td class="n">12.006 · 2.378</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <span class="tag">살펴본 김에</span>
+      <p>본문은 <strong>"이 AI 프롬프트의 실행 시간은 2초에서 10초 사이이며, 그 시간의 대부분이 LLM 안에서 소비된다"</strong>고 적었다. 그런데 같은 절에 인쇄된 아홉 개 측정값 가운데 <strong>둘이 그 범위를 벗어난다.</strong> <code>prompt_query</code>의 댓글 질문이 <strong>19.695초</strong>, <code>prompt_fixup</code>의 GROUP BY 예제가 <strong>12.006초</strong>다.</p>
+      <p>범위를 넘긴 둘이 우연히 <em>가장 복잡한 질문</em>과 <em>가장 짧은 입력</em>이라는 점도 눈에 걸린다. LLM 호출의 지연은 입력 길이만으로 예측되지 않으니, <strong>대화형 대시보드의 응답 시간을 이 기능에 걸어두는 설계는 피하는 편이 좋다.</strong></p>
+    </div>
+
+    <p>저자들의 총평은 균형이 잡혀 있다. <strong>데이터베이스에 대한 질의를 생성하는 데 LLM을 쓰는 것에는 잠재력이 많고, 특히 모델이 데이터베이스 스키마로 증강될 수 있을 때 그렇다.</strong> 다만 <em>보고서와 애플리케이션을 위해 전문가가 쓰고 조율한 질의를 대체하지는 못할 가능성이 크다.</em> 그럼에도 <strong>데이터베이스 시스템을 훨씬 넓은 청중에게 접근할 수 있게 만들어줄 것</strong>이다. 무엇을 대체하고 무엇을 넓히는지를 나누어 적는 이 절제가 미덥다.</p>
+    <p>덧붙여, <em>2024년 초에 MotherDuck은 <strong>FixIt</strong>을 도입했다.</em> 같은 기술에 기반한 UI용 빠른 SQL 오류 수정기이며, <strong>구문이 잘못된 SQL 문이나 UI에 직접 인라인으로 있는 문장을 고쳐준다.</strong></p>
+  </div>
+</section>
+
+<!-- ══════════ 7.3.7 ══════════ -->
+<section id="s9">
+  <div class="sechead rev">
+    <span class="num">7.3.7</span>
+    <h2>통합<span class="en">Integrations</span></h2>
+  </div>
+  <div class="col rev">
+    <p>MotherDuck은 다양한 <strong>데이터 전송, 비즈니스 인텔리전스, 데이터 시각화 도구</strong>를 지원한다. 저자들이 그린 그림의 구도는 이렇다. <em>왼쪽에서 오른쪽으로 가면서 중간에 선택적인 변환을 두면, MotherDuck이 파이프라인의 가운데에 앉을 수 있다.</em></p>
+    <p>원천은 직접 수집되거나 추가 서비스를 거쳐 수집되어 <strong>MotherDuck의 저장소에 놓이고</strong>, 그다음 비즈니스 인텔리전스 쓰임새나 특정 데이터 과학 도구가 그것을 질의한다. 그리고 한 가지가 더 붙는다. <strong>LLM 모델을 위한 검색 증강 생성(RAG)의 정보 검색 구성 요소로도 쓸 수 있다.</strong></p>
+
+    <div class="shot">
+      <span class="tag">〈도판 7.6〉 · 로고 모음</span>
+      <p>원서의 이 도판은 <b>지원 도구들의 로고를 왼쪽(원천)에서 오른쪽(소비)으로 배치한 그림</b>이다. 상표가 걸린 로고 모음이므로 이 문서에서 재현하지 않고 구도만 서술로 대신한다. 요지는 <b>MotherDuck이 파이프라인의 어느 한쪽 끝이 아니라 가운데에 앉는다</b>는 것이다.</p>
+    </div>
+
+    <div class="q">
+      기존의 어떤 DuckDB 통합과 드라이버도 MotherDuck과 함께 작동한다. 그러므로 DuckDB를 쓸 수 있는 모든 곳에서 MotherDuck을 쓸 수 있다.
+      <span>7.3.7절을 맺는 문장</span>
+    </div>
+
+    <p>그리고 그것에 필요한 것이 무엇인지를 저자들이 한 문장으로 적어둔다. <strong>데이터베이스 접속 문자열에 <code>md:</code> 접두사를 끼워 넣고 <code>?motherduck_token=&lt;token&gt;</code> 매개변수를 덧붙이는 것뿐이다.</strong> 제6장에서 <code>duckdb.connect(':memory:')</code>였던 자리가 <code>duckdb.connect('md:?motherduck_token=…')</code>으로 바뀌는 것 하나로 로컬이 클라우드가 된다. <em>API를 바꾸지 않고 URL만 바꾸는</em> 이 설계가 이 장 전체를 관통하는 요령이다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 요약 ══════════ -->
+<section class="summary" id="s10">
+  <div class="sechead">
+    <span class="num">SUMMARY</span>
+    <h2>제7장이 남긴 일곱 문장<span class="en">Summary</span></h2>
+  </div>
+  <ol>
+    <li>MotherDuck은 <b>브라우저에서 클라우드 저장소의 데이터를 질의하고 분석하기 쉽게 만들어주는 서버리스 데이터 분석 플랫폼</b>이다.</li>
+    <li><code>md:</code> 프로토콜을 써서 <b>DuckDB CLI와 파이썬 및 다른 언어 통합에 매끄럽게 통합</b>되며, 그 프로토콜이 MotherDuck 확장을 자동으로 적재한다.</li>
+    <li>MotherDuck은 <b>구조화된 데이터를 저장하고, SQL로 질의하고, 다른 사람과 공유</b>하게 해준다.</li>
+    <li>이 서비스의 핵심 원칙 하나는 <b>사용의 편의</b>다. 인스턴스나 클러스터, 웨어하우스를 설정하거나 띄울 필요가 없다. <b>로컬에서 작업할 때와 같은 도구, 같은 생태계 안에서</b> SQL을 쓰고 제출하면 된다.</li>
+    <li>많은 경우 <b>데이터 원천에 더 가까이 있기 때문에 로컬보다 MotherDuck에서 데이터를 훨씬 빠르게 수집할 수 있다.</b></li>
+    <li><b>로컬·원격·공유 데이터셋을 스키마와 관계의 완전한 이름을 써서 손쉽게 조인</b>할 수 있다.</li>
+    <li>이 플랫폼은 <b>자연어로 데이터셋을 질의하는 지원</b>도 제공해, SQL을 배우지 않은 사람도 분석 데이터베이스의 이득을 볼 수 있게 한다.</li>
+  </ol>
+</section>
+
+</main>
+
+<footer>
+  <div class="col">
+    <p>이 문서는 <b>Mark Needham · Michael Hunger · Michael Simons, 『DuckDB in Action』 (Manning Publications, 2024)</b>의 제7장 「DuckDB in the cloud with MotherDuck」(원서 144–162쪽) 전체를 검토해 한국어로 정리한 해설이다. 절 번호와 표 번호는 원서를 따랐다.</p>
+    <p><b>이 장에는 도판이 여섯 점 있는데 그중 다섯이 UI 화면 갈무리와 로고 모음이다.</b> 재현할 수 없고 재현해서도 안 되는 것들이므로, 〈도판 7.2〉·〈도판 7.3〉·〈도판 7.6〉은 <em>점선 상자에 서술로 대신</em>했고 〈도판 7.4〉·〈도판 7.5〉는 본문 흐름 안에서 언급했다. 유일하게 재현 가능한 아키텍처 도해 <b>〈도판 7.1〉</b>만 원서 구성을 옮겨 새로 작도했다.</p>
+    <p><b>실행 위치 결정기</b>는 이 문서에서 더한 장치다. 7.3.5절의 <code>MD_RUN</code> 규칙은 값이 셋뿐인데도 <code>AUTO</code>의 <code>localhost</code> 예외 때문에 말로만 읽으면 헷갈린다. 원천 넷과 값 셋을 조합해 열두 경우를 눌러볼 수 있게 했고, 판정 근거는 모두 원서 서술에서 가져왔다. 마지막 프롬프트 기능 표도 덧붙인 것이며, 실행 시간은 원서에 인쇄된 값이다.</p>
+    <p>〈살펴본 김에〉로 표시한 다섯 대목은 원서 안에서 어긋나거나 재보아야 할 자리다. 40Mbps로 16GB를 40분에 올릴 수 없다는 산수, 같은 16GB가 업로드 40분·공유 1분으로 갈리는 대비, 영숫자와 밑줄만 허용한다면서 하이픈 든 이름을 만드는 자리, 표 7.1에 없는 테이블 이름을 예로 든 자리, <code>LIMIT</code> 없는 질의를 "limit까지 쓸 만큼 똑똑하다"고 평한 자리, 그리고 2~10초라고 말한 범위를 두 측정값이 벗어나는 자리다.</p>
+    <p>다음 장은 「Building data pipelines with DuckDB」로, 데이터 파이프라인의 뜻과 그 중요성, 파이프라인의 일부로서 DuckDB가 가질 수 있는 역할, 수집을 위한 파이썬 기반 <em>data load tool</em>과 변환을 위한 dbt Labs의 <em>data build tool</em>과의 통합, 그리고 <em>Dagster</em>로 파이프라인을 조율하는 법을 다룬다.</p>
+    <span class="mono">CH.07 · 3 SECTIONS · 9 SUBSECTIONS · 0 LISTINGS · 1 PLATE REDRAWN · 7 SUMMARY POINTS</span>
+  </div>
+</footer>
+
+<script>
+/* ── 실행 위치 결정기 ── */
+(function(){
+  var root=document.getElementById('mx'); if(!root) return;
+
+  var SRC=[
+    {label:"로컬 파일", uri:"'data/big.parquet'", fn:"read_parquet",
+     kind:"local", desc:"내 기계의 파일시스템에 있는 파일"},
+    {label:"https:// URL", uri:"'https://github.com/duckdb/duckdb/raw/main/data/csv/ips.csv.gz'", fn:"read_csv_auto",
+     kind:"web", desc:"공개 웹에 있는 압축 CSV"},
+    {label:"s3:// 버킷", uri:"'s3://my-bucket/data.parquet'", fn:"read_parquet",
+     kind:"s3", desc:"S3 버킷의 Parquet 파일"},
+    {label:"localhost URL", uri:"'http://localhost:8080/data.csv'", fn:"read_csv_auto",
+     kind:"localhost", desc:"내 기계에서 돌아가는 서버가 내주는 파일"}
+  ];
+
+  var s=0, r='AUTO';
+
+  function decide(){
+    var src=SRC[s];
+    if(r==='LOCAL')  return {at:'loc', why:'<b>MD_RUN=LOCAL</b>은 원천이 무엇이든 함수를 <b>내 로컬 DuckDB 환경에서</b> 실행한다.'};
+    if(r==='REMOTE') return {at:'rem', why:'<b>MD_RUN=REMOTE</b>는 원천이 무엇이든 함수를 <b>MotherDuck이 호스팅하는 클라우드의 DuckDB 런타임에서</b> 실행한다.'};
+    // AUTO
+    if(src.kind==='s3'||src.kind==='web')
+      return {at:'rem', why:'<b>MD_RUN=AUTO</b>(기본값)는 <b>s3://·http://·https:// 요청을 모두 원격으로</b> 실행한다. 이 원천이 그에 해당한다.'};
+    if(src.kind==='localhost')
+      return {at:'loc', why:'<b>AUTO의 유일한 예외</b>다. <code>localhost</code>와 <code>127.0.0.1</code>로 가는 요청은 원격으로 보내지 않는다. 클라우드에서는 내 기계의 localhost에 닿을 수 없으니 당연한 처사다.'};
+    return {at:'loc', why:'<b>AUTO</b>가 원격으로 보내는 것은 s3·http·https 요청뿐이다. <b>로컬 파일 경로는 로컬에서</b> 읽는다.'};
+  }
+
+  var NOTES={
+    'local-loc':'이미 내 기계에 있는 큰 파일이라면 이것이 정답이다. <b>S3에 먼저 올린 다음 MotherDuck에서 처리하는 것은 무의미하다.</b> MotherDuck의 연산 비용과 S3의 이그레스 비용을 둘 다 물게 된다.',
+    'local-rem':'로컬 파일을 원격에서 읽으라고 시킨 셈이다. 클라우드의 런타임은 <b>내 파일시스템을 볼 수 없다.</b> 굳이 원격에서 처리하려면 파일을 먼저 클라우드 저장소로 옮겨야 한다.',
+    'web-rem':'원서가 실측한 경우다. <code>ips.csv.gz</code>를 세어보는 질의가 <b>MotherDuck 클라우드에서 1초 미만</b>에 끝났다.',
+    'web-loc':'같은 질의를 로컬로 돌리면 저자의 느린 인터넷에서 <b>2초에 가까웠다.</b> 데이터가 이미 클라우드 쪽에 가까이 있을 때는 원격이 유리하다는 뜻이다.',
+    's3-rem':'<b>대부분의 경우 MotherDuck이 내 로컬 시스템보다 S3 버킷에 더 가까이서 돌아간다.</b> 그래서 클라우드에서 직접 들이는 편이 시간과 돈을 아껴줄 수 있다. 다만 <b>S3 비밀</b>이 먼저 등록되어 있어야 한다.',
+    's3-loc':'버킷의 데이터를 내 기계까지 끌어온 다음 처리하는 셈이다. <b>S3 이그레스 비용을 물면서 네트워크도 더 오래 쓴다.</b> 결과를 다시 MotherDuck에 올릴 생각이라면 두 번 옮기는 일이 된다.',
+    'localhost-loc':'AUTO가 알아서 로컬로 판정해준다. <b>이 예외가 없으면 개발 중 로컬 서버로 실험하는 일이 모두 실패할 것이다.</b>',
+    'localhost-rem':'클라우드의 런타임에게 <b>자기 자신의 localhost</b>를 가리키게 한 셈이다. 내가 띄운 서버가 아니므로 원하는 결과가 나올 수 없다. AUTO가 이 경우를 예외로 둔 이유가 여기 있다.'
+  };
+
+  function render(){
+    var src=SRC[s], d=decide();
+    var key=src.kind.replace('web','web').replace('localhost','localhost')+'-'+d.at;
+    document.getElementById('mxSql').textContent=
+      '.timer on\n\nSELECT count(*)\nFROM '+src.fn+'(\n   '+src.uri+',\n   MD_RUN='+r+'\n);';
+    var w=document.getElementById('mxWhere');
+    w.className='mxwhere '+(d.at==='loc'?'loc':'rem');
+    w.textContent=(d.at==='loc')?'▼ 내 기계에서 실행':'▲ MotherDuck 클라우드에서 실행';
+    document.getElementById('mxWhy').innerHTML=d.why;
+    document.getElementById('mxNote').innerHTML=NOTES[key]||'—';
+    document.getElementById('mxCap').innerHTML=
+      '읽을 원천은 <b>'+src.desc+'</b>다. '+
+      '<code>MD_RUN</code>은 <code>read_</code> 접두사로 시작하는 모든 함수—<code>read_json</code>, <code>read_csv_auto</code> 같은 것—에서 쓸 수 있다. '+
+      '값을 주지 않으면 <b>AUTO</b>가 적용된다.';
+  }
+
+  [].forEach.call(root.querySelectorAll('.mxrow button[data-s]'),function(b){
+    b.addEventListener('click',function(){
+      s=parseInt(b.dataset.s,10);
+      [].forEach.call(root.querySelectorAll('.mxrow button[data-s]'),function(x){
+        x.setAttribute('aria-pressed', x===b?'true':'false');
+      });
+      render();
+    });
+  });
+  [].forEach.call(root.querySelectorAll('.mxrow button[data-r]'),function(b){
+    b.addEventListener('click',function(){
+      r=b.dataset.r;
+      [].forEach.call(root.querySelectorAll('.mxrow button[data-r]'),function(x){
+        x.setAttribute('aria-pressed', x===b?'true':'false');
+      });
+      render();
+    });
+  });
+  render();
+})();
+
+/* ── 스크롤 등장 ── */
+(function(){
+  var els=document.querySelectorAll('.rev');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){ if(e.isIntersecting){e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{rootMargin:'0px 0px -10% 0px',threshold:.05});
+  els.forEach(function(e){io.observe(e)});
+})();
+
+/* ── 목차 레일 ── */
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.rail a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))}).filter(Boolean);
+  if(!secs.length) return;
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){
+      if(!e.isIntersecting) return;
+      links.forEach(function(a){a.classList.toggle('on', a.getAttribute('href')==='#'+e.target.id)});
+    });
+  },{rootMargin:'-45% 0px -45% 0px'});
+  secs.forEach(function(s){io.observe(s)});
+})();
+</script>
+</body>
+</html>

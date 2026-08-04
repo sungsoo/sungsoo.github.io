@@ -1,0 +1,1305 @@
+---
+layout: null
+title: "Importing Data into DuckDB"  
+date: 2026-08-05 
+categories: [artificial intelligence]
+tags: [artificial general intelligence, data management]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>네 개의 문으로 들어온다 — DuckDB 답사기 제2장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 제1장과 같은 회벽·먹·주칠을 쓰고, 구조색만 청록에서 쪽빛으로 바꾼다 */
+  --hoebyeok:#E6E8E2;
+  --hanji:#F2F3ED;
+  --meok:#191E1B;
+  --meok-soft:#3A4441;
+  --jjok:#2B4F7A;
+  --jjok-dk:#1B3557;
+  --juchil:#A2331F;
+  --chija:#B58218;
+  --line:rgba(25,30,27,.16);
+  --line-soft:rgba(25,30,27,.08);
+
+  --display:"Gowun Batang",'Nanum Myeongjo',serif;
+  --body:"Noto Sans KR",system-ui,sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",monospace;
+
+  --maxw:1180px;
+  --colw:720px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--hoebyeok);color:var(--meok);
+  font-family:var(--body);font-weight:300;font-size:17px;line-height:1.95;
+  -webkit-font-smoothing:antialiased;letter-spacing:-.005em;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(rgba(25,30,27,.055) 1px,transparent 1px);
+  background-size:4px 4px;opacity:.7;
+}
+.wrap{position:relative;z-index:1}
+
+/* ───── 표제 ───── */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#ECEEE8 0%,var(--hoebyeok) 100%)}
+.hero-in{max-width:var(--maxw);margin:0 auto;
+  padding:clamp(64px,11vw,132px) clamp(22px,5vw,56px) clamp(40px,6vw,64px);position:relative}
+.glyph{position:absolute;right:clamp(-30px,-1vw,0px);top:1%;
+  font-family:var(--display);font-weight:700;
+  font-size:clamp(230px,44vw,560px);line-height:.78;
+  color:var(--jjok);opacity:.055;pointer-events:none;user-select:none}
+.kicker{font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--jjok-dk);margin:0 0 26px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.kicker i{display:block;width:52px;height:1px;background:var(--jjok);opacity:.5}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(38px,7.2vw,80px);
+  line-height:1.14;letter-spacing:-.03em;margin:0 0 22px;max-width:15em}
+h1 em{font-style:normal;color:var(--jjok-dk);position:relative}
+h1 em::after{content:"";position:absolute;left:0;right:0;bottom:.1em;height:.22em;
+  background:var(--chija);opacity:.22;z-index:-1}
+.lede{font-family:var(--display);font-size:clamp(18px,2.2vw,22px);line-height:1.85;
+  max-width:33em;color:var(--meok-soft);margin:0 0 40px}
+.colophon{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:22px;max-width:900px}
+.colophon div{padding:2px 28px 2px 0;margin-right:28px;border-right:1px solid var(--line-soft)}
+.colophon div:last-child{border-right:0;margin-right:0}
+.colophon dt{font-size:10.5px;letter-spacing:.2em;font-weight:500;color:var(--jjok-dk);
+  opacity:.75;margin:0 0 4px;text-transform:uppercase}
+.colophon dd{margin:0;font-size:14.5px;font-weight:400}
+
+/* ───── 서명 요소: 네 개의 문 ───── */
+.gates{max-width:var(--maxw);margin:0 auto;
+  padding:clamp(40px,6vw,72px) clamp(22px,5vw,56px) clamp(48px,7vw,80px)}
+.gates svg,.dia svg{width:100%;height:auto;display:block}
+.cap{font-size:13.5px;color:var(--meok-soft);margin:22px 0 0;padding-left:16px;
+  border-left:2px solid var(--chija);max-width:46em;line-height:1.8}
+.cap b{font-weight:500;color:var(--meok)}
+
+/* ───── 본문 골격 ───── */
+main{max-width:var(--maxw);margin:0 auto;padding:0 clamp(22px,5vw,56px) 120px}
+section{padding:clamp(56px,8vw,104px) 0;border-top:1px solid var(--line)}
+section:first-child{border-top:0}
+.sec-head{display:flex;gap:clamp(16px,3vw,40px);align-items:flex-start;margin-bottom:clamp(28px,4vw,48px)}
+.seal{flex:0 0 auto;width:54px;height:54px;border:1.5px solid var(--juchil);color:var(--juchil);
+  display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:22px;
+  line-height:1;border-radius:3px;background:rgba(162,51,31,.045);margin-top:6px}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(27px,4.2vw,44px);line-height:1.3;
+  letter-spacing:-.025em;margin:0 0 10px}
+.sub{font-size:13px;letter-spacing:.16em;color:var(--jjok-dk);font-weight:500;margin:0}
+.col{max-width:var(--colw)}
+p{margin:0 0 1.35em}
+.col p:last-child{margin-bottom:0}
+h3{font-family:var(--display);font-weight:700;font-size:clamp(20px,2.6vw,26px);
+  letter-spacing:-.02em;margin:2.6em 0 .8em;line-height:1.4}
+h3:first-child{margin-top:0}
+h4{font-family:var(--body);font-weight:500;font-size:15px;letter-spacing:.02em;
+  margin:2.1em 0 .6em;color:var(--jjok-dk)}
+strong{font-weight:500;color:var(--meok)}
+.tm{font-family:var(--mono);font-size:.88em;background:rgba(43,79,122,.09);
+  padding:.12em .4em;border-radius:2px;color:var(--jjok-dk);font-weight:500}
+
+/* ───── 카드 ───── */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(262px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);margin-top:8px}
+.card{background:var(--hanji);padding:28px 26px 30px;position:relative}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--jjok);opacity:.18}
+.card .no{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--chija);
+  font-weight:500;display:block;margin-bottom:12px}
+.card h5{font-family:var(--display);font-weight:700;font-size:19.5px;margin:0 0 4px;
+  line-height:1.4;letter-spacing:-.02em}
+.card .en{font-family:var(--mono);font-size:11.5px;color:var(--meok-soft);opacity:.72;
+  display:block;margin-bottom:14px}
+.card p{font-size:15px;line-height:1.85;margin:0;color:var(--meok-soft)}
+
+/* ───── 목록·연쇄 ───── */
+.chain{margin:30px 0 0;padding:0;list-style:none;border-left:1px solid var(--line)}
+.chain li{position:relative;padding:0 0 24px 30px}
+.chain li:last-child{padding-bottom:0}
+.chain li::before{content:"";position:absolute;left:-4.5px;top:11px;width:8px;height:8px;
+  background:var(--hoebyeok);border:1.5px solid var(--jjok);border-radius:50%}
+.chain b{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--juchil);
+  letter-spacing:.04em;display:block}
+.chain span{font-size:15.5px;color:var(--meok-soft)}
+
+/* ───── 방주 ───── */
+.aside{margin:32px 0;padding:22px 26px;background:var(--hanji);border:1px solid var(--line);
+  border-left:3px solid var(--jjok);font-size:15px;line-height:1.85;color:var(--meok-soft)}
+.aside.warn{border-left-color:var(--juchil)}
+.aside.tip{border-left-color:var(--chija)}
+.aside .lbl{display:block;font-family:var(--body);font-weight:500;font-size:11px;
+  letter-spacing:.24em;text-transform:uppercase;margin-bottom:10px;color:var(--jjok-dk)}
+.aside.warn .lbl{color:var(--juchil)}
+.aside.tip .lbl{color:var(--chija)}
+.aside ol,.aside ul{margin:10px 0 0;padding-left:1.2em}
+.aside li{margin-bottom:5px}
+.aside p:last-child{margin-bottom:0}
+
+/* ───── 코드 ───── */
+figure{margin:28px 0}
+.code{background:#151A17;color:#DBE2DD;border-radius:4px;overflow:hidden;border:1px solid #0C100E}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:9px 16px;
+  background:#0F1411;border-bottom:1px solid #222A25;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.16em;color:#7C8D93;text-transform:uppercase;gap:12px}
+.code pre{margin:0;padding:20px 18px;overflow-x:auto;font-family:var(--mono);
+  font-size:13.4px;line-height:1.78}
+.code .k{color:#9CC2E6}
+.code .s{color:#E2C173}
+.code .c{color:#6C7B76;font-style:italic}
+.code .f{color:#8FD3B6}
+.code .n{color:#D99B84}
+.code .rec{border-bottom:1px dotted rgba(181,130,24,.85);cursor:help}
+.code .cut{color:#B58218;font-weight:500;cursor:help}
+figcaption{font-size:13px;color:var(--meok-soft);margin-top:12px;font-family:var(--body)}
+figcaption::before{content:"〈";color:var(--chija)}
+figcaption::after{content:"〉";color:var(--chija)}
+
+/* ───── 결과 표 ───── */
+.rs{margin:24px 0}
+.rs table{border-collapse:collapse;width:100%;max-width:660px;font-family:var(--mono);
+  font-size:13px;background:var(--hanji)}
+.rs th{text-align:left;padding:9px 14px;border-bottom:1.5px solid var(--meok);font-weight:500;
+  font-size:11.5px;letter-spacing:.06em;color:var(--jjok-dk);white-space:nowrap}
+.rs td{padding:8px 14px;border-bottom:1px solid var(--line-soft);color:var(--meok-soft)}
+.rs tr:last-child td{border-bottom:1px solid var(--line)}
+.rs td.num{text-align:right;color:var(--meok)}
+.rs .idx{color:rgba(25,30,27,.35);width:1%}
+.rs .el{color:rgba(25,30,27,.4);font-style:normal}
+.rs figcaption{margin-top:10px}
+
+/* ───── 비교 표 ───── */
+.cmp{margin:30px 0;overflow-x:auto}
+.cmp table{border-collapse:collapse;width:100%;font-size:14.5px;background:var(--hanji);
+  border:1px solid var(--line)}
+.cmp th{text-align:left;padding:13px 16px;background:rgba(43,79,122,.07);
+  border-bottom:1px solid var(--line);font-weight:500;font-size:12.5px;letter-spacing:.08em;
+  color:var(--jjok-dk);vertical-align:top}
+.cmp td{padding:13px 16px;border-bottom:1px solid var(--line-soft);color:var(--meok-soft);
+  vertical-align:top;line-height:1.75}
+.cmp tr:last-child td{border-bottom:0}
+.cmp td:first-child{font-family:var(--mono);font-size:12.5px;color:var(--meok);white-space:nowrap}
+
+/* ───── 도해 ───── */
+.dia{margin:34px 0 0}
+.dia svg{max-width:860px}
+
+/* ───── 맺음 ───── */
+.closing{border-top:1px solid var(--line);background:var(--hanji)}
+.closing-in{max-width:var(--maxw);margin:0 auto;padding:clamp(56px,8vw,96px) clamp(22px,5vw,56px)}
+.closing blockquote{margin:0 0 40px;font-family:var(--display);font-size:clamp(20px,2.8vw,27px);
+  line-height:1.72;letter-spacing:-.02em;max-width:27em}
+.next{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.14em;
+  border:1px solid var(--jjok);color:var(--jjok-dk);padding:12px 20px;text-decoration:none}
+footer{max-width:var(--maxw);margin:0 auto;padding:34px clamp(22px,5vw,56px) 60px;
+  font-size:12.5px;color:var(--meok-soft);opacity:.8;border-top:1px solid var(--line-soft);
+  display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+
+/* ───── 등장 ───── */
+.rv{opacity:0;transform:translateY(22px);
+  transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.25,1)}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .flow-anim{display:none}
+}
+@media (max-width:720px){
+  body{font-size:16px;line-height:1.9}
+  .colophon div{border-right:0;padding-right:0;margin-right:0;flex:1 0 46%}
+  .seal{width:42px;height:42px;font-size:17px}
+  .sec-head{gap:14px}
+  .rs{overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══════ 표제 ══════ -->
+<header class="hero">
+  <div class="glyph">門</div>
+  <div class="hero-in">
+    <p class="kicker"><i></i>답사기 · 제2장 정독</p>
+    <h1>네 개의 문으로<br><em>들어온다</em></h1>
+    <p class="lede">현실의 데이터는 한 곳에서 오지 않는다. CSV로, Parquet으로, 엑셀 통합문서로, 그리고 저 멀리 MySQL 서버에서 온다. 제2장은 이 네 갈래 길에 각각 어떤 문이 서 있는지, 그 문턱을 넘는 방법과 문턱에서 흔히 걸려 넘어지는 자리를 기록한 장이다.</p>
+    <dl class="colophon">
+      <div><dt>원전</dt><dd>DuckDB: Up and Running</dd></div>
+      <div><dt>지은이</dt><dd>Wei-Meng Lee</dd></div>
+      <div><dt>펴낸곳</dt><dd>O'Reilly Media, 2024</dd></div>
+      <div><dt>대상</dt><dd>Chapter 2. Importing Data into DuckDB</dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ══════ 서명 요소 ══════ -->
+<div class="gates rv">
+  <svg viewBox="0 0 1100 340" role="img" aria-label="CSV, Parquet, Excel, MySQL 네 개의 원천이 DuckDB라는 하나의 마당으로 들어오는 구조도">
+    <defs>
+      <marker id="g-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#2B4F7A"/>
+      </marker>
+      <linearGradient id="yard" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#2B4F7A" stop-opacity=".14"/>
+        <stop offset="100%" stop-color="#2B4F7A" stop-opacity=".05"/>
+      </linearGradient>
+    </defs>
+
+    <text x="0" y="16" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2.5" fill="#1B3557">네 개의 문 · FOUR GATES</text>
+
+    <!-- 네 개의 문 -->
+    <g font-family="Noto Sans KR,sans-serif">
+      <!-- CSV -->
+      <g>
+        <rect x="0" y="42" width="196" height="56" fill="#F2F3ED" stroke="#191E1B" stroke-opacity=".2"/>
+        <text x="16" y="66" font-size="14" font-weight="500" fill="#191E1B">CSV</text>
+        <text x="16" y="86" font-size="10.5" font-family="IBM Plex Mono,monospace" fill="#1B3557">read_csv_auto() · read_csv()</text>
+        <line x1="196" y1="70" x2="286" y2="140" stroke="#2B4F7A" stroke-width="1.1" stroke-opacity=".55" marker-end="url(#g-ar)"/>
+      </g>
+      <!-- Parquet -->
+      <g>
+        <rect x="0" y="110" width="196" height="56" fill="#F2F3ED" stroke="#191E1B" stroke-opacity=".2"/>
+        <text x="16" y="134" font-size="14" font-weight="500" fill="#191E1B">Parquet</text>
+        <text x="16" y="154" font-size="10.5" font-family="IBM Plex Mono,monospace" fill="#1B3557">read_parquet()</text>
+        <line x1="196" y1="138" x2="286" y2="158" stroke="#2B4F7A" stroke-width="1.1" stroke-opacity=".55" marker-end="url(#g-ar)"/>
+      </g>
+      <!-- Excel -->
+      <g>
+        <rect x="0" y="178" width="196" height="56" fill="#F2F3ED" stroke="#191E1B" stroke-opacity=".2"/>
+        <text x="16" y="202" font-size="14" font-weight="500" fill="#191E1B">Excel (xlsx)</text>
+        <text x="16" y="222" font-size="10.5" font-family="IBM Plex Mono,monospace" fill="#1B3557">st_read() · spatial 확장</text>
+        <line x1="196" y1="206" x2="286" y2="186" stroke="#2B4F7A" stroke-width="1.1" stroke-opacity=".55" marker-end="url(#g-ar)"/>
+      </g>
+      <!-- MySQL -->
+      <g>
+        <rect x="0" y="246" width="196" height="56" fill="#F2F3ED" stroke="#191E1B" stroke-opacity=".2"/>
+        <text x="16" y="270" font-size="14" font-weight="500" fill="#191E1B">MySQL 서버</text>
+        <text x="16" y="290" font-size="10.5" font-family="IBM Plex Mono,monospace" fill="#1B3557">ATTACH · mysql 확장</text>
+        <line x1="196" y1="274" x2="286" y2="204" stroke="#2B4F7A" stroke-width="1.1" stroke-opacity=".55" marker-end="url(#g-ar)"/>
+      </g>
+
+      <!-- 마당 -->
+      <rect x="300" y="96" width="330" height="152" fill="url(#yard)" stroke="#2B4F7A" stroke-opacity=".55"/>
+      <text x="465" y="136" text-anchor="middle" font-size="17" font-weight="500" fill="#1B3557" font-family="Gowun Batang,serif">DuckDB</text>
+      <text x="465" y="160" text-anchor="middle" font-size="11" fill="#1B3557">in-process · 하나의 마당</text>
+      <g font-family="IBM Plex Mono,monospace" font-size="9.5" fill="#1B3557">
+        <rect x="320" y="176" width="132" height="20" fill="#E6E8E2" stroke="#2B4F7A" stroke-opacity=".3"/>
+        <text x="386" y="190" text-anchor="middle">CREATE TABLE … AS</text>
+        <rect x="464" y="176" width="146" height="20" fill="#E6E8E2" stroke="#2B4F7A" stroke-opacity=".3"/>
+        <text x="537" y="190" text-anchor="middle">COPY … FROM · register()</text>
+        <rect x="320" y="206" width="132" height="20" fill="#E6E8E2" stroke="#2B4F7A" stroke-opacity=".3"/>
+        <text x="386" y="220" text-anchor="middle">SHOW TABLES</text>
+        <rect x="464" y="206" width="146" height="20" fill="#E6E8E2" stroke="#2B4F7A" stroke-opacity=".3"/>
+        <text x="537" y="220" text-anchor="middle">information_schema</text>
+      </g>
+
+      <!-- 나가는 문 -->
+      <line x1="630" y1="172" x2="720" y2="172" stroke="#2B4F7A" stroke-width="1.1" stroke-opacity=".55" marker-end="url(#g-ar)"/>
+      <text x="734" y="132" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2.5" fill="#A2331F">내보내는 문 · COPY … TO</text>
+      <g>
+        <rect x="734" y="146" width="150" height="34" fill="#F2F3ED" stroke="#A2331F" stroke-opacity=".45"/>
+        <text x="748" y="168" font-size="12.5" fill="#191E1B">.csv (HEADER 1)</text>
+        <rect x="734" y="188" width="150" height="34" fill="#F2F3ED" stroke="#A2331F" stroke-opacity=".45"/>
+        <text x="748" y="210" font-size="12.5" fill="#191E1B">.parquet</text>
+        <rect x="734" y="230" width="150" height="34" fill="#F2F3ED" stroke="#A2331F" stroke-opacity=".45"/>
+        <text x="748" y="252" font-size="12.5" fill="#191E1B">.xlsx (FORMAT GDAL)</text>
+      </g>
+    </g>
+  </svg>
+  <p class="cap"><b>답사의 지도.</b> 제2장의 구조는 단순하다. 네 갈래 길이 하나의 마당으로 모이고, 그 마당에서 다시 세 갈래로 나간다. 들이는 문에는 <span class="tm">read_*()</span> 계열 함수와 <span class="tm">COPY … FROM</span>, <span class="tm">register()</span>가 걸려 있고, 내보내는 문에는 <span class="tm">COPY … TO</span> 하나가 걸려 있다. 문마다 문턱의 높이가 다르다. 엑셀 문턱이 가장 높고, Parquet 문턱이 가장 낮다.</p>
+</div>
+
+<main>
+
+<!-- ══════ 序 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">序</div>
+    <div>
+      <h2>답사에 앞서</h2>
+      <p class="sub">HOW THIS CHAPTER FOLLOWS THE FIRST</p>
+    </div>
+  </div>
+  <div class="col">
+    <p>제1장에서는 간단한 DuckDB 데이터베이스를 만들고 테이블을 적재하는 법을 보았다. 그러나 현실 세계의 데이터는 CSV, 엑셀, Parquet, 데이터베이스 서버처럼 서로 다른 원천과 파일 형식에서 온다. 제2장은 먼저 DuckDB 데이터베이스를 만드는 여러 방법을 익히고, 이어서 다양한 데이터 원천으로 그것을 채우는 법을 익힌다. 장을 마칠 때에는 각 데이터 원천을 다루는 방법과, 그것들을 상대할 때의 요령과 함정이 정리된다.</p>
+    <p>제1장이 <strong>구조</strong>에 관한 장이었다면 제2장은 <strong>반입</strong>에 관한 장이다. 아무리 잘 지은 건물이라도 물건이 들어오지 않으면 창고에 지나지 않는다. 그리고 물건을 들이는 일에는 늘 잡음이 따른다. 머리글이 없는 워크시트, 데이터처럼 생긴 헤더, 열 개수가 어긋난 표, 비밀번호가 걸린 파일. 이 장의 가치는 매끄러운 성공담이 아니라 이런 잡음의 목록에 있다.</p>
+  </div>
+  <div class="aside tip">
+    <span class="lbl">검토 방법에 관한 밝힘</span>
+    <p>원서 PDF는 코드 블록이 지면 폭에서 가로로 잘려 있어, 긴 줄의 오른쪽 끝이 지면에 나타나지 않는다. 이 페이지에서는 잘린 부분을 두 가지로 구분해 표시했다.</p>
+    <ul>
+      <li>본문 설명으로 <strong>일의적으로 복원되는</strong> 부분 — <code style="font-family:var(--mono);font-size:13px;border-bottom:1px dotted var(--chija)">점선 밑줄</code>로 표시한다.</li>
+      <li>복원이 <strong>불확실한</strong> 부분 — <code style="font-family:var(--mono);font-size:13px;color:var(--chija)">…</code>로 남기고 임의로 채우지 않는다.</li>
+    </ul>
+    <p style="margin-top:10px">도판의 수치도 같은 원칙을 따른다. 본문에 명기된 값만 인용하고, 도판 이미지에서만 읽히는 값은 구조만 제시한다.</p>
+  </div>
+</section>
+
+<!-- ══════ 一 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">基</div>
+    <div>
+      <h2>터를 닦는 세 가지 방식</h2>
+      <p class="sub">CREATING DUCKDB DATABASES</p>
+    </div>
+  </div>
+  <div class="col">
+    <p>DuckDB 데이터베이스를 만드는 가장 간단한 방법은 <span class="tm">duckdb</span> 모듈의 <span class="tm">connect()</span> 함수를 쓰는 것이다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>기본형</span></div>
+<pre><span class="k">import</span> duckdb
+
+conn = duckdb.<span class="f">connect</span>()</pre></div>
+  </figure>
+  <div class="col">
+    <p><span class="tm">connect()</span> 함수는 <span class="tm">DuckDBPyConnection</span> 객체를 돌려준다. 기본적으로 이 문장은 <strong>수정 가능한 메모리 데이터베이스</strong>를 연다. 아래와 같이 명시적으로 쓴 것과 같다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>메모리 · 명시형</span></div>
+<pre>conn = duckdb.<span class="f">connect</span>(<span class="s">':memory:'</span>)</pre></div>
+  </figure>
+  <div class="col">
+    <p>저장 장치에 남는 DuckDB 데이터베이스를 만들려면 <span class="tm">database</span> 인수에 데이터베이스 이름을 준다. 예컨대 <span class="tm">mydb.duckdb</span>다. 파일 이름의 확장자는 무엇이든 원하는 대로 쓸 수 있다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>영속형</span></div>
+<pre>conn = duckdb.<span class="f">connect</span>(database = <span class="s">'mydb.duckdb'</span>, <span class="rec" title="원서 지면에서 잘린 부분. 본문의 read_only 설명으로 복원했다">read_only = <span class="k">False</span></span>)</pre></div>
+    <figcaption>이 문장을 실행하면 현재 디렉터리에 mydb.duckdb 파일이 나타난다</figcaption>
+  </figure>
+  <div class="aside">
+    <span class="lbl">일러두기 — read_only</span>
+    <p>이 문장을 처음 실행하면 코드가 있는 폴더(예컨대 Jupyter Notebook과 같은 폴더)에 <span class="tm">mydb.duckdb</span> 데이터베이스 파일이 생성된다. <span class="tm">read_only</span> 인수를 <span class="tm">True</span>로 설정하는 것은 <strong>데이터베이스 파일이 이미 존재할 때만</strong> 가능하다. 여러 파이썬 프로세스가 같은 데이터베이스 파일에 동시에 접근해야 한다면 읽기 전용 모드로 열어야 한다.</p>
+  </div>
+  <div class="aside warn">
+    <span class="lbl">주의 — 메모리 데이터베이스와 read_only의 충돌</span>
+    <p>메모리 DuckDB 데이터베이스를 만들면서 <span class="tm">read_only</span> 인수를 <span class="tm">True</span>로 설정하면 데이터베이스가 불변(읽기 전용)이 되어 어떤 테이블도 붙일 수 없다. 따라서 메모리 데이터베이스에서는 <span class="tm">read_only</span>를 반드시 <span class="tm">False</span>로 두거나, 기본값이 <span class="tm">False</span>이므로 아예 생략한다.</p>
+  </div>
+  <div class="col">
+    <p>세 가지 선택지는 성격이 뚜렷이 갈린다. 임시 분석에는 메모리, 세션을 넘겨 남길 것이 있으면 파일, 여러 프로세스가 같은 파일을 동시에 읽어야 하면 읽기 전용이다. 터를 닦는 방식이 곧 그 집의 수명을 정한다.</p>
+    <p>DuckDB는 여러 데이터 원천과 파일 형식을 지원한다. 이 장에서 다루는 것은 <strong>CSV 파일</strong>, <strong>Parquet 파일</strong>, <strong>엑셀 파일</strong>, <strong>MySQL 데이터베이스</strong> 네 가지다.</p>
+  </div>
+</section>
+
+<!-- ══════ 二 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">簡</div>
+    <div>
+      <h2>첫째 문 · CSV — 가장 낡고 가장 흔한 문</h2>
+      <p class="sub">WORKING WITH CSV FILES</p>
+    </div>
+  </div>
+  <div class="col">
+    <p>가장 흔한 데이터 원천 파일 형식 하나가 CSV 파일이다. 표 형식 데이터를 저장하고 교환하는 흔하고 단순한 방식이다. CSV 파일의 성질은 셋이다.</p>
+  </div>
+  <div class="cards" style="margin-top:26px">
+    <div class="card">
+      <span class="no">性 · 一</span><h5>가볍다</h5><span class="en">lightweight</span>
+      <p>복잡한 메타데이터나 서식이 없다. 그래서 장치와 플랫폼 사이의 데이터 교환에 매우 적합하다.</p>
+    </div>
+    <div class="card">
+      <span class="no">性 · 二</span><h5>단순하다</h5><span class="en">simple</span>
+      <p>행과 열로 구성된 평문 데이터로 이루어진다. 한 줄이 한 행이며, 각 열의 값은 구분자로 나뉜다.</p>
+    </div>
+    <div class="card">
+      <span class="no">性 · 三</span><h5>유연하다</h5><span class="en">flexible</span>
+      <p>숫자, 문자열, 날짜 등 서로 다른 유형의 데이터를 담을 수 있다.</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <h3>답사 자료 — 2015 Flight Delays and Cancellations</h3>
+    <p>이 장에서 쓰는 자료는 Kaggle의 2015 Flight Delays and Cancellations 데이터셋이다. 라이선스는 CC0: Public Domain이다. 세 개의 CSV 파일로 이루어진다.</p>
+    <ul class="chain">
+      <li><b>airlines.csv</b><span> 미국 항공사 목록</span></li>
+      <li><b>airports.csv</b><span> 미국 공항 목록</span></li>
+      <li><b>flights.csv</b><span> 2015년 여러 항공사의 항공편 상세 내역</span></li>
+    </ul>
+    <p style="margin-top:1.8em">데이터셋을 내려받았으면 개별 파일을 풀어 Jupyter Notebook과 같은 폴더에 둔다. 이 절에서는 CSV 파일을 DuckDB 데이터베이스로 적재하는 두 가지 방법, 곧 <strong>SQL 질의 방법</strong>과 <strong>register 방법</strong>을 익히고, DuckDB에서 CSV로 내보내는 일까지 다룬다.</p>
+
+    <h3>SQL 질의 방법</h3>
+    <p>첫째 방법은 SQL 질의 방법이다. <span class="tm">CREATE TABLE</span> 문과 <span class="tm">SELECT FROM</span> 문을 함께 써서 연결 객체의 <span class="tm">execute()</span> 메서드로 CSV 파일을 적재한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>CREATE TABLE AS SELECT</span></div>
+<pre><span class="k">import</span> duckdb
+
+conn = duckdb.<span class="f">connect</span>()
+
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> flights
+    <span class="k">as</span>
+    <span class="k">SELECT</span>
+        *
+    <span class="k">FROM</span> <span class="f">read_csv_auto</span>('flights.csv')
+'''</span>)</pre></div>
+  </figure>
+  <div class="col">
+    <p><span class="tm">read_csv_auto()</span> 함수는 CSV 파일을 적재하는 가장 간단한 방법이다. CSV 헤더의 올바른 구성을 알아내려 시도하고, 파일 내 열의 데이터 유형을 자동으로 추론한다. CSV 파일에 헤더가 있으면 그 헤더에서 찾은 이름으로 열 이름을 정한다. 없으면 <span class="tm">column0</span>, <span class="tm">column1</span>, <span class="tm">column2</span> 같은 기본 이름이 붙는다.</p>
+  </div>
+  <div class="aside">
+    <span class="lbl">일러두기 — 경로</span>
+    <p>파일의 위치는 상대 경로나 절대 경로로 지정할 수 있다. 파일 이름만 적으면 Jupyter Notebook과 같은 위치에 있다고 간주된다.</p>
+  </div>
+  <div class="col">
+    <p><span class="tm">execute()</span> 메서드는 <span class="tm">DuckDBPyConnection</span> 객체를 돌려준다. 적재된 결과를 살펴보려면 그 객체에 <span class="tm">df()</span> 메서드를 불러 pandas DataFrame을 받는다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>결과 확인</span></div>
+<pre><span class="k">import</span> duckdb
+
+conn = duckdb.<span class="f">connect</span>()
+
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> flights
+    <span class="k">as</span>
+    <span class="k">SELECT</span>
+        *
+    <span class="k">FROM</span> <span class="f">read_csv_auto</span>('flights.csv')
+'''</span>).<span class="f">df</span>()</pre></div>
+  </figure>
+  <div class="col">
+    <p>이 코드에서 DuckDB는 메모리 저장을 쓰도록 구성되어 있고 <span class="tm">flights</span> 테이블은 메모리에 만들어진다. 그런데 CSV 파일을 DuckDB로 적재했다 해도, 나중에 질의하거나 가공하기 전까지 DuckDB는 모든 것을 메모리에 완전히 올리지 않는다. 테이블 자체가 디스크가 아니라 메모리에 저장되어 있더라도, 필요한 시점에만 데이터를 메모리로 들여와 메모리 사용을 최적화한다. 이것이 <strong>지연 적재(lazy loading)</strong>다. <span class="tm">df()</span> 메서드를 부르는 순간 DuckDB는 테이블의 내용을 pandas DataFrame으로 적재한다. 따라서 실무에서는 질의의 <strong>최종 결과를 살펴볼 때만</strong> <span class="tm">df()</span>를 써야 한다.</p>
+    <p>여기가 이 절에서 가장 중요한 한 문장이다. <span class="tm">df()</span>는 결과를 보여 주는 창이 아니라, 메모리로 실체화하라는 명령이다. 창을 열 때마다 짐이 들어온다는 사실을 잊으면 제1장에서 애써 아낀 4GB가 되돌아온다.</p>
+  </div>
+  <div class="aside">
+    <span class="lbl">결과 요지 — 도판 2-1</span>
+    <p>적재된 행 수가 DataFrame으로 표시된다. <span class="tm">flights.csv</span>는 <strong>580만 행을 넘는다</strong>. 이 문장들의 실행에 시간이 조금 걸리는 이유가 여기 있다.</p>
+  </div>
+
+  <div class="col">
+    <h4>축약 — SELECT 절도 함수도 생략할 수 있다</h4>
+    <p><span class="tm">SELECT</span> 절은 선택적이며 <span class="tm">read_csv_auto()</span> 함수도 그렇다. CSV 파일에서 모든 열을 가져오려면 둘 다 없이 SQL 문을 다시 쓰면 된다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>축약형</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> flights
+    <span class="k">as</span>
+    <span class="k">FROM</span> 'flights.csv'
+'''</span>).<span class="f">df</span>()</pre></div>
+  </figure>
+  <div class="aside tip">
+    <span class="lbl">도움말 — 이미 있는 테이블</span>
+    <p>DuckDB에서 이미 존재하는 테이블을 만들려 하면 오류가 난다. 이를 피하려면 새로 만들기 전에 기존 테이블을 지운다.</p>
+    <div class="code" style="margin-top:14px"><div class="bar"><span>SQL</span><span>DROP 후 생성</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">DROP TABLE IF EXISTS</span> flights;
+    <span class="k">CREATE TABLE</span> flights
+    <span class="k">as</span>
+    <span class="k">FROM</span> 'flights.csv'
+'''</span>).<span class="f">df</span>()</pre></div>
+    <p style="margin-top:14px">또는 <span class="tm">CREATE OR REPLACE</span> 문을 쓴다.</p>
+    <div class="code" style="margin-top:14px"><div class="bar"><span>SQL</span><span>CREATE OR REPLACE</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE OR REPLACE TABLE</span> flights
+    <span class="k">as</span>
+    <span class="k">FROM</span> 'flights.csv'
+'''</span>).<span class="f">df</span>()</pre></div>
+  </div>
+  <div class="col">
+    <p>CSV 파일이 이 파일처럼 크다면 일부만 적재하고 싶을 수 있다. 예컨대 <span class="tm">LIMIT</span> 절로 처음 1,000행만 적재한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>LIMIT</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">DROP TABLE IF EXISTS</span> flights;
+    <span class="k">CREATE TABLE</span> flights
+    <span class="k">as</span>
+    <span class="k">FROM</span> <span class="f">read_csv_auto</span>('flights.csv')
+    <span class="k">LIMIT</span> <span class="n">1000</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+  </figure>
+  <div class="col">
+    <p>데이터베이스에 만들어진 테이블을 확인하려면 <span class="tm">SHOW TABLES</span> 질의를 쓴다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>SHOW TABLES</span></div>
+<pre><span class="f">display</span>(conn.<span class="f">execute</span>(<span class="s">'SHOW TABLES'</span>).<span class="f">df</span>())</pre></div>
+  </figure>
+  <div class="rs">
+    <table><thead><tr><th class="idx"></th><th>name</th></tr></thead>
+    <tbody><tr><td class="idx">0</td><td>flights</td></tr></tbody></table>
+    <figcaption>도판 2-2 · DuckDB 데이터베이스에 flights 테이블 하나가 있다</figcaption>
+  </div>
+  <div class="col">
+    <p><span class="tm">flights</span> 테이블의 내용을 보려면 <span class="tm">execute()</span> 메서드에 <span class="tm">SELECT</span> 문을 준다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>SELECT</span></div>
+<pre><span class="f">display</span>(conn.<span class="f">execute</span>(<span class="s">'SELECT * FROM flights'</span>).<span class="f">df</span>())</pre></div>
+    <figcaption>도판 2-3 · 데이터베이스에 있는 flights 테이블의 내용</figcaption>
+  </figure>
+
+  <div class="col">
+    <h4>COPY 방식 — 손으로 테이블을 짓고 붓는다</h4>
+    <p>CSV 파일을 적재하는 또 한 가지 방법은 테이블을 직접 만들고 <span class="tm">COPY</span> 문으로 데이터를 붓는 것이다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>CREATE + COPY FROM</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> airports(
+        IATA_CODE <span class="k">VARCHAR</span>, AIRPORT <span class="k">VARCHAR</span>, CITY <span class="rec" title="원서 지면에서 잘린 부분. 뒤에 이어지는 names 목록의 7개 열과 대조해 복원했다"><span class="k">VARCHAR</span>,</span>
+        STATE <span class="k">VARCHAR</span>, COUNTRY <span class="k">VARCHAR</span>, LATITUDE <span class="rec" title="원서 지면에서 잘린 부분. 뒤에 이어지는 names 목록의 7개 열과 대조해 복원했다"><span class="k">VARCHAR</span>,</span>
+        LONGITUDE <span class="k">VARCHAR</span>);
+    <span class="k">COPY</span> airports <span class="k">FROM</span> 'airports.csv' (<span class="rec" title="원서 지면에서 잘린 부분. AUTO_DETECT 옵션으로 복원했다">AUTO_DETECT true</span>);
+'''</span>)
+
+<span class="f">display</span>(conn.<span class="f">execute</span>(<span class="s">'SELECT * FROM airports'</span>).<span class="f">df</span>())</pre></div>
+  </figure>
+  <div class="col">
+    <p>이 방법을 쓸 때는 CSV 파일의 열 개수와 테이블의 열 개수가 일치해야 한다. 또한 각 열의 내용이 테이블에 지정한 열 유형으로 변환될 수 있어야 한다. 그렇지 않으면 오류가 발생한다.</p>
+  </div>
+  <div class="aside">
+    <span class="lbl">일러두기 — 이 방식을 고르는 이유</span>
+    <p>이 방식은 데이터 적재 과정을 더 세밀하게 통제하려 할 때 흔히 쓰인다. 예컨대 테이블의 각 열에 특정 데이터 유형이나 제약을 정의하려는 경우다. 또 하나의 이점은 테이블의 열 머리글을 자유롭게 정의할 수 있다는 것이다. 그리고 <strong><span class="tm">COPY</span> 명령은 큰 데이터셋에서 최고의 성능을 낸다</strong>.</p>
+  </div>
+  <div class="col">
+    <p>대안은 <span class="tm">read_csv()</span> 함수의 <span class="tm">names</span> 매개변수에 열 이름을 지정하는 것이다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>read_csv(names=…)</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">DROP TABLE IF EXISTS</span> airports;
+    <span class="k">CREATE TABLE</span> airports
+    <span class="k">AS</span>
+    <span class="k">FROM</span>
+    <span class="f">read_csv</span>('airports.csv',
+        names=['IATA_CODE', 'AIRPORT', 'CITY',
+               'STATE', 'COUNTRY', 'LATITUDE',
+               'LONGITUDE'
+    ])
+'''</span>)</pre></div>
+  </figure>
+  <div class="aside tip">
+    <span class="lbl">도움말 — 열 개수 확인</span>
+    <p>테이블에 만들어진 열의 총 개수를 확인하려면, 모든 테이블의 열 메타데이터를 담고 있는 <span class="tm">information_schema.columns</span> 테이블을 쓴다.</p>
+    <div class="code" style="margin-top:14px"><div class="bar"><span>SQL</span><span>information_schema</span></div>
+<pre>result = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT COUNT</span>(*) <span class="k">AS</span> column_count
+    <span class="k">FROM</span> information_schema.columns
+    <span class="k">WHERE</span> table_name = 'airports';
+'''</span>).<span class="f">fetchall</span>()</pre></div>
+  </div>
+  <div class="col">
+    <p>CSV 파일의 실제 데이터 유형과 무관하게 모든 열을 문자열 유형으로 다루고자 한다면, <span class="tm">read_csv()</span> 함수의 <span class="tm">all_varchar</span> 매개변수를 <span class="tm">true</span>로 지정한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>all_varchar</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">DROP TABLE IF EXISTS</span> airports;
+    <span class="k">CREATE TABLE</span> airports
+    <span class="k">AS</span>
+    <span class="k">FROM</span> <span class="f">read_csv</span>('airports.csv', all_varchar=<span class="rec" title="원서 지면에서 잘린 부분. 본문 설명대로 true로 복원했다">true)</span>
+'''</span>)</pre></div>
+  </figure>
+  <div class="rs">
+    <table><thead><tr><th class="idx"></th><th>name</th></tr></thead>
+    <tbody>
+      <tr><td class="idx">0</td><td>airports</td></tr>
+      <tr><td class="idx">1</td><td>flights</td></tr>
+    </tbody></table>
+    <figcaption>도판 2-5 · 데이터베이스에 두 개의 테이블이 있다</figcaption>
+  </div>
+
+  <div class="col">
+    <h3>register() 방법 — 등록만 하고 복사하지 않는다</h3>
+    <p>CSV 파일을 DuckDB로 적재하는 또 한 가지 방법은 연결 객체의 <span class="tm">register()</span> 메서드다. <span class="tm">register()</span>는 CSV 파일이나 그 밖의 외부 데이터 원천을 <strong>메모리 상의 가상 테이블</strong>로 적재하게 해 준다. DuckDB 테이블을 명시적으로 만들거나 데이터를 복사해 넣을 필요가 없다. 유연성과 외부 데이터에 대한 임시 접근이 필요한 상황에서 유용하다.</p>
+    <p>다음 코드는 <span class="tm">SELECT</span> 문과 <span class="tm">read_csv()</span> 함수를 함께 써서 <span class="tm">airlines.csv</span> 파일의 내용을 적재하고 pandas DataFrame으로 돌려받는다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>read_csv(Header, Columns)</span></div>
+<pre>airlines = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        *
+    <span class="k">FROM</span> <span class="f">read_csv</span>('airlines.csv',
+                  Header = <span class="k">True</span>,
+                  Columns = {'IATA_CODE': 'VARCHA<span class="cut" title="원서 지면에서 잘려 복원이 불확실한 부분">…</span>
+'''</span>).<span class="f">df</span>()
+airlines</pre></div>
+  </figure>
+  <div class="rs">
+    <table><thead><tr><th class="idx"></th><th>IATA_CODE</th><th>AIRLINE</th></tr></thead>
+    <tbody>
+      <tr><td class="idx">0</td><td>—</td><td>미국 항공사 이름</td></tr>
+      <tr><td class="idx">⋮</td><td class="el">⋮</td><td class="el">⋮</td></tr>
+    </tbody></table>
+    <figcaption>도판 2-6 · airlines DataFrame의 구조. 두 열의 이름과 유형은 Columns 인수로 지정된다</figcaption>
+  </div>
+
+  <div class="aside">
+    <span class="lbl">READ_CSV_AUTO() 대 READ_CSV()</span>
+    <p>이 예에서는 <span class="tm">read_csv_auto()</span> 대신 <span class="tm">read_csv()</span>를 쓰고 <span class="tm">Header</span> 인수로 CSV 파일의 첫 행이 헤더임을 알렸다. 그리고 <span class="tm">Columns</span> 인수로 열 이름과 그 유형을 지정했다. 이렇게 해야 하는 경우가 있는데, CSV 파일이 제대로 서식화되어 있지 않거나 CSV 파일의 헤더에 데이터 항목처럼 보이는 값이 들어 있을 때다.</p>
+    <p style="margin-top:12px">대신 <span class="tm">read_csv_auto()</span> 함수를 쓰면 CSV 파일의 첫 행이 헤더로 인식되지 않는 것을 곧 알게 된다.</p>
+    <div class="code" style="margin-top:14px"><div class="bar"><span>SQL</span><span>자동 추론의 실패</span></div>
+<pre>airlines = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        *
+    <span class="k">FROM</span> <span class="f">read_csv_auto</span>('airlines.csv')
+'''</span>).<span class="f">df</span>()
+
+airlines</pre></div>
+    <div class="rs" style="margin-top:16px">
+      <table><thead><tr><th class="idx"></th><th>column0</th><th>column1</th></tr></thead>
+      <tbody>
+        <tr><td class="idx">0</td><td>IATA_CODE</td><td>AIRLINE</td></tr>
+        <tr><td class="idx">1</td><td class="el">⋮</td><td class="el">⋮</td></tr>
+      </tbody></table>
+      <figcaption>도판 2-7 · 첫 행이 헤더로 인식되지 않아 열 이름이 기본값이 되고, 헤더가 데이터 행으로 내려앉는다</figcaption>
+    </div>
+    <p style="margin-top:12px">이 동작은 DuckDB의 향후 릴리스에서 달라질 수 있으므로, 두 함수를 모두 시험해 보고 올바르게 작동하는지 확인해야 한다.</p>
+  </div>
+
+  <div class="col">
+    <p><span class="tm">airlines</span> DataFrame이 적재되었으면 <span class="tm">register()</span> 메서드로 그 테이블을 DuckDB 데이터베이스에 연결해야 한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>register()</span></div>
+<pre>conn.<span class="f">register</span>(<span class="s">"airlines"</span>, airlines)</pre></div>
+  </figure>
+  <div class="rs">
+    <table><thead><tr><th class="idx"></th><th>name</th></tr></thead>
+    <tbody>
+      <tr><td class="idx">0</td><td>airlines</td></tr>
+      <tr><td class="idx">1</td><td>airports</td></tr>
+      <tr><td class="idx">2</td><td>flights</td></tr>
+    </tbody></table>
+    <figcaption>도판 2-8 · SHOW TABLES로 확인한, 현재 DuckDB 데이터베이스의 세 테이블</figcaption>
+  </div>
+  <div class="col">
+    <p><span class="tm">airlines</span> 테이블이 올바르게 적재되었는지는 <span class="tm">SELECT</span> 문으로 확인한다. 출력은 도판 2-6과 같다.</p>
+    <p>연결 객체로 CSV 파일을 적재하고 싶지 않다면, pandas의 <span class="tm">read_csv()</span> 함수로 CSV를 읽은 뒤 <span class="tm">register()</span> 메서드를 쓰는 더 전통적인 방식을 택할 수도 있다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>pandas 경유</span></div>
+<pre><span class="k">import</span> pandas <span class="k">as</span> pd
+
+<span class="c"># load the CSV using pandas</span>
+df_airlines = pd.<span class="f">read_csv</span>(<span class="s">"airlines.csv"</span>)
+
+<span class="c"># associate the DataFrame with the DuckDB database</span>
+conn.<span class="f">register</span>(<span class="s">"airlines"</span>, df_airlines)</pre></div>
+  </figure>
+
+  <div class="col">
+    <h3>CSV로 내보내기</h3>
+    <p>여기까지는 CSV 파일을 DuckDB 데이터베이스로 들이는 이야기였다. 반대로 DuckDB 데이터베이스의 데이터를 CSV 파일로 내보내려면 <span class="tm">COPY</span> 문을 쓴다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>COPY … TO</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">COPY</span>
+        (<span class="k">SELECT</span> IATA_CODE, LATITUDE, LONGITUDE <span class="k">FR</span><span class="rec" title="원서 지면에서 잘린 부분. 문맥상 FROM airports)로 복원했다"><span class="k">OM</span> airports)</span>
+    <span class="k">TO</span>
+    'airports_location.csv' <span class="k">WITH</span> (HEADER <span class="n">1</span>, DELIM<span class="cut" title="원서 지면에서 잘려 복원이 불확실한 부분. DELIMITER 옵션으로 이어진다">…</span>
+'''</span>)</pre></div>
+  </figure>
+  <div class="col">
+    <p><span class="tm">HEADER 1</span> 인수는 CSV 파일이 헤더 행, 곧 열 이름을 포함해야 한다는 뜻이다. 이 코드는 세 개의 열을 가진 <span class="tm">airports_location.csv</span> 파일을 만든다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>airports_location.csv</span><span>출력</span></div>
+<pre>IATA_CODE,LATITUDE,LONGITUDE
+ABE,40.65236,-75.4404
+ABI,32.41132,-99.6819
+ABQ,35.04022,-106.60919
+ABR,45.44906,-98.42183
+ABY,31.53552,-84.19447
+...</pre></div>
+  </figure>
+  <div class="col">
+    <p>데이터를 DuckDB로 전혀 들이지 않은 채 파일의 일부만 다른 파일로 복사하려면, 파일에서 직접 데이터를 읽으며 복사할 행 수를 지정하면 된다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>파일에서 파일로</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">COPY</span>
+        (<span class="k">SELECT</span>
+            IATA_CODE, LATITUDE, LONGITUDE
+         <span class="k">FROM</span> 'airports.csv'
+         <span class="k">LIMIT</span> <span class="n">10</span>)
+    <span class="k">TO</span>
+    'airports_location.csv' <span class="k">WITH</span> (HEADER <span class="n">1</span>, DELIM<span class="cut" title="원서 지면에서 잘려 복원이 불확실한 부분">…</span>
+'''</span>)</pre></div>
+    <figcaption>airports.csv의 처음 10행에서 세 개의 열을 airports_location.csv로 복사한다. DuckDB는 중간에 아무것도 적재하지 않는다</figcaption>
+  </figure>
+  <div class="col">
+    <p>연결을 다 썼으면 닫는 것을 잊지 않는다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>정리</span></div>
+<pre>conn.<span class="f">close</span>()</pre></div>
+  </figure>
+</section>
+
+<!-- ══════ 三 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">列</div>
+    <div>
+      <h2>둘째 문 · Parquet — 스스로를 설명하는 파일</h2>
+      <p class="sub">WORKING WITH PARQUET FILES</p>
+    </div>
+  </div>
+  <div class="col">
+    <p>데이터 과학자들 사이에서 인기를 얻고 있는 또 하나의 파일 형식이 Parquet이다. Parquet, 곧 Apache Parquet은 복잡한 데이터의 빠른 처리를 지원하도록 설계된 파일 형식이다. Apache Hadoop 라이선스를 따르는 오픈소스 형식이며 대부분의 Hadoop 처리 프레임워크와 호환된다. Parquet은 <strong>자기 서술적(self-describing)</strong>이다. 스키마와 구조를 포함한 메타데이터가 각 파일 안에 내장된다. 더 중요한 점은, Parquet이 데이터를 행이 아니라 <strong>열로</strong> 저장한다는 것이다.</p>
+    <p>세 개의 열을 가진 DataFrame을 놓고 생각해 본다. 이 DataFrame을 CSV 파일로 저장하면 행 기반 저장을 쓴다. CSV 파일이 DataFrame으로 적재될 때 각 행이 하나씩 적재되며, 각 행은 서로 다른 세 가지 데이터 유형을 담는다. 반면 Parquet은 열 기반 저장을 쓴다. 각 열의 데이터가 특정 데이터 유형을 갖는 하나의 열로 정리된다.</p>
+  </div>
+
+  <div class="dia">
+    <svg viewBox="0 0 860 300" role="img" aria-label="같은 DataFrame을 행 기반으로 저장한 경우와 열 기반으로 저장한 경우의 비교도">
+      <text x="0" y="14" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2" fill="#191E1B">원본 DATAFRAME · 세 개의 열</text>
+      <g font-family="IBM Plex Mono,monospace" font-size="10">
+        <rect x="0" y="28" width="80" height="22" fill="rgba(43,79,122,.18)" stroke="#E6E8E2" stroke-width="1.5"/>
+        <rect x="80" y="28" width="80" height="22" fill="rgba(181,130,24,.22)" stroke="#E6E8E2" stroke-width="1.5"/>
+        <rect x="160" y="28" width="80" height="22" fill="rgba(162,51,31,.18)" stroke="#E6E8E2" stroke-width="1.5"/>
+        <text x="40" y="43" text-anchor="middle" fill="#1B3557">col A</text>
+        <text x="120" y="43" text-anchor="middle" fill="#7A5710">col B</text>
+        <text x="200" y="43" text-anchor="middle" fill="#7A2415">col C</text>
+        <g>
+          <rect x="0" y="50" width="80" height="20" fill="rgba(43,79,122,.09)" stroke="#E6E8E2" stroke-width="1.5"/>
+          <rect x="80" y="50" width="80" height="20" fill="rgba(181,130,24,.11)" stroke="#E6E8E2" stroke-width="1.5"/>
+          <rect x="160" y="50" width="80" height="20" fill="rgba(162,51,31,.09)" stroke="#E6E8E2" stroke-width="1.5"/>
+          <rect x="0" y="70" width="80" height="20" fill="rgba(43,79,122,.09)" stroke="#E6E8E2" stroke-width="1.5"/>
+          <rect x="80" y="70" width="80" height="20" fill="rgba(181,130,24,.11)" stroke="#E6E8E2" stroke-width="1.5"/>
+          <rect x="160" y="70" width="80" height="20" fill="rgba(162,51,31,.09)" stroke="#E6E8E2" stroke-width="1.5"/>
+          <rect x="0" y="90" width="80" height="20" fill="rgba(43,79,122,.09)" stroke="#E6E8E2" stroke-width="1.5"/>
+          <rect x="80" y="90" width="80" height="20" fill="rgba(181,130,24,.11)" stroke="#E6E8E2" stroke-width="1.5"/>
+          <rect x="160" y="90" width="80" height="20" fill="rgba(162,51,31,.09)" stroke="#E6E8E2" stroke-width="1.5"/>
+        </g>
+      </g>
+
+      <!-- 행 기반 -->
+      <text x="330" y="14" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2" fill="#A2331F">CSV · 행 기반 저장</text>
+      <g font-family="IBM Plex Mono,monospace" font-size="9.5">
+        <g>
+          <rect x="330" y="28" width="42" height="20" fill="rgba(43,79,122,.16)"/>
+          <rect x="372" y="28" width="42" height="20" fill="rgba(181,130,24,.2)"/>
+          <rect x="414" y="28" width="42" height="20" fill="rgba(162,51,31,.16)"/>
+          <text x="466" y="42" fill="#3A4441">행 1</text>
+        </g>
+        <g>
+          <rect x="330" y="54" width="42" height="20" fill="rgba(43,79,122,.16)"/>
+          <rect x="372" y="54" width="42" height="20" fill="rgba(181,130,24,.2)"/>
+          <rect x="414" y="54" width="42" height="20" fill="rgba(162,51,31,.16)"/>
+          <text x="466" y="68" fill="#3A4441">행 2</text>
+        </g>
+        <g>
+          <rect x="330" y="80" width="42" height="20" fill="rgba(43,79,122,.16)"/>
+          <rect x="372" y="80" width="42" height="20" fill="rgba(181,130,24,.2)"/>
+          <rect x="414" y="80" width="42" height="20" fill="rgba(162,51,31,.16)"/>
+          <text x="466" y="94" fill="#3A4441">행 3</text>
+        </g>
+        <text x="330" y="124" font-family="Noto Sans KR,sans-serif" font-size="11.5" fill="#3A4441">한 뭉치에 세 가지 유형이 섞인다</text>
+      </g>
+
+      <!-- 열 기반 -->
+      <text x="600" y="14" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2" fill="#1B3557">PARQUET · 열 기반 저장</text>
+      <g font-family="IBM Plex Mono,monospace" font-size="9.5">
+        <g>
+          <rect x="600" y="28" width="126" height="20" fill="rgba(43,79,122,.2)"/>
+          <text x="736" y="42" fill="#1B3557">col A · 단일 유형</text>
+        </g>
+        <g>
+          <rect x="600" y="54" width="126" height="20" fill="rgba(181,130,24,.24)"/>
+          <text x="736" y="68" fill="#7A5710">col B · 단일 유형</text>
+        </g>
+        <g>
+          <rect x="600" y="80" width="126" height="20" fill="rgba(162,51,31,.2)"/>
+          <text x="736" y="94" fill="#7A2415">col C · 단일 유형</text>
+        </g>
+        <text x="600" y="124" font-family="Noto Sans KR,sans-serif" font-size="11.5" fill="#3A4441">유형이 같으므로 열마다 압축이 걸린다</text>
+      </g>
+
+      <line x1="0" y1="152" x2="860" y2="152" stroke="#191E1B" stroke-opacity=".12"/>
+      <g font-family="Noto Sans KR,sans-serif" font-size="12.5" fill="#3A4441">
+        <text x="0" y="182" font-weight="500" fill="#191E1B">열 기반 저장의 두 가지 결과</text>
+        <text x="0" y="212">① 같은 데이터 유형이 한데 모이므로 열 단위 압축이 가능하고, 파일이 더 가벼워진다.</text>
+        <text x="0" y="240">② 특정 열만 뽑아내는 일이 매우 효율적이 된다. 데이터 분석 과제에서 늘 하는 일이며,</text>
+        <text x="18" y="266">   특히 DuckDB가 다루도록 설계된 OLAP 작업 부하에서 그렇다.</text>
+      </g>
+    </svg>
+    <p class="cap">요약하면, 데이터를 열 기반 저장으로 두면 파일이 더 가벼워지고 특정 열의 추출이 효율적이 된다. 이 때문에 Parquet은 데이터 분석가에게 가장 인기 있는 파일 형식 가운데 하나다. 제1장의 기둥 이야기가 파일 형식의 차원에서 되풀이되는 셈이다.</p>
+  </div>
+
+  <div class="col">
+    <h3>Parquet 파일 적재</h3>
+    <p>이 절의 예에서는 Parquet 파일이 따로 없으므로, 가지고 있는 CSV 파일로 하나 만든다. <span class="tm">airlines.csv</span>를 pandas DataFrame으로 적재한 뒤 <strong>fastparquet</strong> 엔진으로 Parquet 형식으로 저장한다. fastparquet은 Parquet 파일을 읽고 쓰는 빠르고 효율적인 엔진을 제공하는 오픈소스 파이썬 라이브러리다. 쓰려면 <span class="tm">pip</span>으로 설치한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Shell</span><span>설치</span></div>
+<pre>$ pip install fastparquet</pre></div>
+  </figure>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>CSV → Parquet</span></div>
+<pre><span class="k">import</span> pandas <span class="k">as</span> pd
+
+df_airports = pd.<span class="f">read_csv</span>(<span class="s">"airports.csv"</span>)
+df_airports.<span class="f">to_parquet</span>(<span class="s">'airports.parquet'</span>, <span class="rec" title="원서 지면에서 잘린 부분. 본문의 fastparquet 엔진 설명으로 복원했다">engine=<span class="s">'fastparquet'</span>)</span></pre></div>
+  </figure>
+  <div class="aside tip">
+    <span class="lbl">도움말 — Parquet 파일 열어 보기</span>
+    <p>Parquet 파일을 눈으로 보고 싶으면 <strong>Tad</strong>를 내려받는다. CSV, Parquet, SQLite, DuckDB 데이터베이스를 볼 수 있는 뷰어다. 도판 2-12는 Tad로 <span class="tm">airports.parquet</span>를 표시한 화면이다.</p>
+  </div>
+  <div class="col">
+    <p>Parquet 파일을 DuckDB 데이터베이스로 적재하려면 <span class="tm">read_parquet()</span> 함수를 쓴다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>read_parquet()</span></div>
+<pre><span class="k">import</span> duckdb
+
+conn = duckdb.<span class="f">connect</span>()
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> airports
+    <span class="k">as</span>
+    <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">read_parquet</span>('airports.parquet<span class="rec" title="원서 지면에서 잘린 부분. 함수 호출을 닫는 괄호로 복원했다">')</span>
+    <span class="k">LIMIT</span> <span class="n">100</span>
+'''</span>)</pre></div>
+    <figcaption>도판 2-13 · Parquet 파일의 처음 100행을 airports 테이블로 적재한 결과</figcaption>
+  </figure>
+  <div class="col">
+    <p>마지막 100행을 적재하려면 <span class="tm">ORDER BY 1 DESC</span> 문으로 첫 열을 기준으로 내림차순 정렬한 뒤 처음 100행을 적재한다. 결과적으로 Parquet 파일의 마지막 100행을 가져오는 것이 된다. 정렬을 뒤집어 앞에서 자른다는 이 발상은 소박하지만, 파일 끝을 직접 겨눌 수 없는 상황에서 쓸 만한 우회로다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>INSERT + ORDER BY 1 DESC</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">INSERT INTO</span> airports
+    <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">read_parquet</span>('airports.parquet<span class="rec" title="원서 지면에서 잘린 부분. 함수 호출을 닫는 괄호로 복원했다">')</span>
+    <span class="k">ORDER BY</span> <span class="n">1</span> <span class="k">DESC</span>
+    <span class="k">LIMIT</span> <span class="n">100</span>
+'''</span>)
+
+<span class="f">display</span>(conn.<span class="f">execute</span>(<span class="s">'SELECT * FROM airports'</span>).<span class="f">df</span>())</pre></div>
+    <figcaption>도판 2-14 · 테이블에 Parquet 파일의 처음 100행과 마지막 100행이 함께 담긴다</figcaption>
+  </figure>
+  <div class="col">
+    <p>Parquet 파일을 DuckDB 데이터베이스의 <strong>기존 테이블</strong>로 적재하려면 <span class="tm">COPY FROM</span> 문을 쓴다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>COPY … FROM (FORMAT PARQUET)</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">COPY</span> airports
+    <span class="k">FROM</span> 'airports.parquet' (<span class="k">FORMAT</span> PARQUET);
+'''</span>)</pre></div>
+  </figure>
+
+  <div class="col">
+    <h3>Parquet으로 내보내기</h3>
+    <p>DuckDB의 테이블을 Parquet 파일로 내보내려면 다음 질의를 쓴다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>전체 내보내기</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">COPY</span> airports
+    <span class="k">TO</span>
+    'airports_all.parquet' (<span class="k">FORMAT</span> PARQUET);
+'''</span>)</pre></div>
+    <figcaption>airports 테이블의 모든 행을 airports_all.parquet 파일로 저장한다</figcaption>
+  </figure>
+  <div class="col">
+    <p>일부 행만 내보내려면 <span class="tm">LIMIT</span>을 쓴다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>부분 내보내기</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">COPY</span>
+        (<span class="k">SELECT</span> * <span class="k">FROM</span> airports <span class="k">LIMIT</span> <span class="n">100</span>)
+    <span class="k">TO</span>
+    'airports_100.parquet' (<span class="k">FORMAT</span> PARQUET);
+'''</span>)</pre></div>
+    <figcaption>airports 테이블의 처음 100행을 airports_100.parquet 파일로 저장한다</figcaption>
+  </figure>
+  <div class="col">
+    <p>DuckDB에서 Parquet으로 데이터를 내보내는 일은 효율적인 저장, 빠른 질의, 빅데이터 도구와의 상호운용성이 요구되는 상황에서 유용하다. 열 지향 데이터에 최적화된 구조와 압축 지원 덕분에, Parquet은 클라우드 저장, 데이터 레이크, 분석 작업 부하, 기계학습 파이프라인에서 으레 선택되는 형식이다.</p>
+  </div>
+</section>
+
+<!-- ══════ 四 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">帳</div>
+    <div>
+      <h2>셋째 문 · 엑셀 — 문턱이 가장 높은 문</h2>
+      <p class="sub">WORKING WITH EXCEL FILES</p>
+    </div>
+  </div>
+  <div class="col">
+    <p>엑셀은 모든 산업과 여러 직종에서 널리 쓰이는 다재다능한 스프레드시트 응용이다. 프로그래머든 아니든 어떤 방식으로든 엑셀을 써 본 사람이 대다수일 것이다.</p>
+    <p>이 절의 실습에는 두 개의 워크시트, <span class="tm">airports</span>와 <span class="tm">airlines</span>를 가진 엑셀 파일을 쓴다. <span class="tm">airports</span> 워크시트의 내용은 <span class="tm">airports.csv</span>에서, <span class="tm">airlines</span> 워크시트의 내용은 <span class="tm">airlines.csv</span>에서 가져온 것이다.</p>
+  </div>
+  <div class="aside">
+    <span class="lbl">일러두기 — 의도된 결함</span>
+    <p><span class="tm">airlines</span> 워크시트에는 <strong>머리글이 없다</strong>. 이는 의도한 것이다. 워크시트를 DuckDB의 테이블로 적재할 때 머리글을 수동으로 지정하는 법을 익히기 위해서다.</p>
+  </div>
+  <div class="col">
+    <p>엑셀 스프레드시트에서 데이터를 적재하려면 <strong><span class="tm">spatial</span> 확장</strong>을 써야 한다. 이 확장은 DuckDB에서 지리공간 데이터 처리를 지원한다. 지리공간 확장으로 스프레드시트를 읽는다는 것은 처음 보면 뜻밖의 조합인데, DuckDB가 엑셀을 읽는 데 GDAL/OGR 라이브러리를 쓰기 때문이다. 이 우회의 흔적은 뒤에 나오는 환경 변수 이름에도 그대로 남아 있다.</p>
+  </div>
+  <div class="aside">
+    <span class="lbl">일러두기 — DuckDB의 확장들</span>
+    <p>DuckDB는 여러 확장을 지원한다.</p>
+    <ul>
+      <li><span class="tm">httpfs</span> — HTTP나 클라우드 저장을 통한 파일 읽기와 쓰기를 가능하게 한다.</li>
+      <li><span class="tm">icu</span> — ICU(International Components for Unicode) 라이브러리를 통해 고급 문자열 처리와 국제화 기능을 제공한다.</li>
+      <li><span class="tm">sqlite</span> — SQLite 데이터베이스 파일을 읽고 질의하는 능력을 제공한다.</li>
+      <li><span class="tm">inet</span> — IP 주소와 네트워크 데이터를 다루는 지원을 추가한다.</li>
+    </ul>
+    <p style="margin-top:10px">이 확장들을 설치하려면 <span class="tm">INSTALL</span> 키워드를 쓴다. 확장을 내려받아 설치하는 SQL 명령이다.</p>
+  </div>
+  <div class="col">
+    <p>먼저 엑셀 워크시트를 DuckDB 데이터베이스로 적재한다. 다음 코드는 <span class="tm">airports</span> 워크시트를 <span class="tm">airports</span>라는 DuckDB 테이블로 적재한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>spatial · st_read()</span></div>
+<pre><span class="k">import</span> duckdb
+
+conn = duckdb.<span class="f">connect</span>()
+
+conn.<span class="f">execute</span>(<span class="s">'INSTALL spatial'</span>)
+conn.<span class="f">execute</span>(<span class="s">'LOAD spatial'</span>)
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> airports
+    <span class="k">as</span>
+    <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">st_read</span>('airports_and_airlines<span class="rec" title="원서 지면에서 잘린 부분. 본문의 layer 인수 설명으로 복원했다">.xlsx', layer='airports')</span>
+'''</span>)
+<span class="f">display</span>(conn.<span class="f">execute</span>(<span class="s">'SELECT * FROM airports'</span>).<span class="f">df</span>())</pre></div>
+    <figcaption>도판 2-16 · 엑셀 스프레드시트에서 적재한 airports 테이블의 내용</figcaption>
+  </figure>
+  <div class="col">
+    <p>설명할 점이 몇 가지 있다.</p>
+    <ul class="chain">
+      <li><b>확장의 설치 시점</b><span> 엑셀 데이터를 들이기 전에 <span class="tm">spatial</span> 확장을 설치하고 적재해야 한다. 이 일은 한 번만 하면 된다. DuckDB를 제거할 때까지 확장은 기억된다.</span></li>
+      <li><b>st_read()</b><span> 엑셀 스프레드시트에서 읽어 오는 함수다. 적재할 워크시트는 <span class="tm">layer</span> 인수로 지정한다.</span></li>
+      <li><b>제약</b><span> DuckDB는 현재 비밀번호로 보호된 엑셀 스프레드시트를 읽지 못한다. 파일에 비밀번호가 걸려 있다면 먼저 해제해야 한다.</span></li>
+    </ul>
+  </div>
+
+  <div class="col">
+    <h3>머리글을 다루는 세 가지 태도 — OGR_XLSX_HEADERS</h3>
+    <p>워크시트 첫 행의 값이 자동으로 감지되어 테이블의 열 이름으로 쓰인다. 다만 이 동작은 <span class="tm">OGR_XLSX_HEADERS</span> 환경 변수로 통제할 수 있다. DuckDB가 엑셀 파일을 읽는 데 쓰는 GDAL/OGR 라이브러리의 일부다.</p>
+  </div>
+  <div class="cmp">
+    <table>
+      <thead><tr><th>OGR_XLSX_HEADERS</th><th>동작</th></tr></thead>
+      <tbody>
+        <tr><td>AUTO</td><td>기본값이다. 동작이 자동으로 정해지며, 엑셀 파일용 OGR 드라이버가 내용에 근거해 첫 행을 열 머리글로 다룰지 판단한다.</td></tr>
+        <tr><td>DISABLE</td><td>첫 행의 필드를 열 이름으로 쓰지 않는다. 기본 열 이름은 <span class="tm">Field1</span>, <span class="tm">Field2</span> 같은 형태가 된다.</td></tr>
+        <tr><td>FORCE</td><td>첫 행의 필드를 열 이름으로 쓰도록 강제한다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>환경 변수 설정</span></div>
+<pre><span class="k">import</span> os
+
+os.environ[<span class="s">'OGR_XLSX_HEADERS'</span>] = <span class="s">'DISABLE'</span>   <span class="c"># 첫 행을 머리글로 쓰지 않는다</span>
+os.environ[<span class="s">'OGR_XLSX_HEADERS'</span>] = <span class="s">'FORCE'</span>     <span class="c"># 첫 행을 머리글로 강제한다</span>
+os.environ[<span class="s">'OGR_XLSX_HEADERS'</span>] = <span class="s">'AUTO'</span>      <span class="c"># 기본값. 드라이버가 판단한다</span></pre></div>
+  </figure>
+  <div class="col">
+    <p>이제 <span class="tm">airlines</span> 워크시트를 DuckDB로 적재해 본다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>머리글 없는 워크시트</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> airlines
+    <span class="k">AS</span>
+    <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">st_read</span>('airports_and_airlines<span class="rec" title="원서 지면에서 잘린 부분. 본문의 layer 인수 설명으로 복원했다">.xlsx', layer='airlines')</span>
+'''</span>)
+<span class="f">display</span>(conn.<span class="f">execute</span>(<span class="s">'SELECT * FROM airlines'</span>).<span class="f">df</span>())</pre></div>
+  </figure>
+  <div class="rs">
+    <table><thead><tr><th class="idx"></th><th>Field1</th><th>Field2</th></tr></thead>
+    <tbody>
+      <tr><td class="idx">0</td><td class="el">⋮</td><td class="el">⋮</td></tr>
+    </tbody></table>
+    <figcaption>도판 2-17 · st_read()가 열 이름으로 쓸 필드 이름을 찾지 못해 기본 이름 Field1, Field2가 붙는다</figcaption>
+  </div>
+  <div class="col">
+    <p>테이블에 원하는 열 이름을 확실히 주려면, 먼저 원하는 열 이름과 데이터 유형으로 테이블을 만들고 <span class="tm">INSERT</span> 문으로 엑셀 스프레드시트의 데이터를 적재한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>CREATE + INSERT</span></div>
+<pre>conn = duckdb.<span class="f">connect</span>()
+
+conn.<span class="f">execute</span>(<span class="s">'INSTALL spatial'</span>)
+conn.<span class="f">execute</span>(<span class="s">'LOAD spatial'</span>)
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> airlines (
+        IATA_CODE <span class="k">STRING</span>,
+        AIRLINES <span class="k">STRING</span>
+    );
+    <span class="k">INSERT INTO</span> airlines
+    <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">st_read</span>('airports_and_airlines<span class="rec" title="원서 지면에서 잘린 부분. 본문의 layer 인수 설명으로 복원했다">.xlsx', layer='airlines')</span>
+'''</span>)
+<span class="f">display</span>(conn.<span class="f">execute</span>(<span class="s">'SELECT * FROM airlines'</span>).<span class="f">df</span>())</pre></div>
+    <figcaption>도판 2-18 · 올바른 열 이름이 적용된 테이블</figcaption>
+  </figure>
+  <div class="aside warn">
+    <span class="lbl">주의 — INSERT의 대가</span>
+    <p>DuckDB에서 <span class="tm">INSERT</span> 문을 쓸 때의 성능 영향을 경계해야 한다. 일반적으로 행을 하나씩 삽입하는 데 <span class="tm">INSERT</span>를 쓰는 일은 피해야 하며, 데이터셋이 크다면 특히 그렇다. 또한 DuckDB의 <span class="tm">COPY</span> 문은 <strong>엑셀 파일과는 동작하지 않는다</strong>는 점에 유의한다. 앞 절에서 큰 데이터셋의 최고 성능을 내던 <span class="tm">COPY</span>가 이 문에서는 쓸 수 없다. 엑셀 문턱이 가장 높다고 한 이유가 여기 있다.</p>
+  </div>
+  <div class="col">
+    <p>엑셀 데이터를 적재할 때 쓸 수 있는 또 하나의 환경 변수는 <span class="tm">OGR_XLSX_FIELD_TYPES</span>다. 기본적으로 엑셀 스프레드시트를 해석할 때 DuckDB는 파일의 데이터 유형을 자동으로 감지한다. 모든 데이터 유형을 문자열로 강제하려면 이 환경 변수를 <span class="tm">STRING</span>으로 설정한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>유형 강제</span></div>
+<pre>os.environ[<span class="s">'OGR_XLSX_FIELD_TYPES'</span>] = <span class="s">'STRING'</span></pre></div>
+  </figure>
+
+  <div class="col">
+    <h3>엑셀로 내보내기</h3>
+    <p>다른 파일 형식과 마찬가지로 DuckDB 테이블을 엑셀 형식으로 내보낼 수 있다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>COPY … TO (FORMAT GDAL)</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">COPY</span> airlines
+    <span class="k">TO</span> 'airlines.xlsx' <span class="k">WITH</span> (<span class="k">FORMAT</span> GDAL, DRIVER <span class="rec" title="원서 지면에서 잘린 부분. 본문의 xlsx writer driver 설명으로 복원했다">'xlsx')</span>
+'''</span>)</pre></div>
+    <figcaption>airlines 테이블이 airlines.xlsx 파일로 저장된다. FORMAT GDAL 옵션은 GDAL(Geospatial Data Abstraction Library)이 지원하는 파일 형식으로 내보내게 한다</figcaption>
+  </figure>
+  <div class="aside warn">
+    <span class="lbl">주의 — 내보내기의 두 함정</span>
+    <p>대상 파일이 이미 존재하면 오류가 발생한다. 또한 <strong>날짜와 타임스탬프는 xlsx 쓰기 드라이버가 지원하지 않는다</strong>. 테이블에 이런 유형의 열이 있다면 xlsx 파일을 만들기 전에 <span class="tm">VARCHAR</span>로 캐스팅해야 한다.</p>
+  </div>
+</section>
+
+<!-- ══════ 五 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">遠</div>
+    <div>
+      <h2>넷째 문 · MySQL — 멀리서 오는 짐</h2>
+      <p class="sub">WORKING WITH MYSQL</p>
+    </div>
+  </div>
+  <div class="col">
+    <p>이 장에서 마지막으로 다루는 것은 MySQL이다. 원천 데이터가 MySQL 같은 데이터베이스 서버에 저장되어 있는 경우가 매우 흔하므로, MySQL에 있는 데이터를 DuckDB로 적재할 수 있으면 유용하다.</p>
+    <p>이 절의 예는 다음을 전제한다.</p>
+    <ul class="chain">
+      <li><b>서버</b><span> 컴퓨터에 MySQL 서버 인스턴스가 실행 중이다.</span></li>
+      <li><b>데이터</b><span> <span class="tm">My_DB</span>라는 데이터베이스가 있고 그 안에 <span class="tm">airlines</span>라는 테이블 하나가 있다.</span></li>
+      <li><b>계정</b><span> MySQL 서버에 <span class="tm">user1</span>이라는 계정이 있고 비밀번호는 “password”다. 이 계정은 <span class="tm">My_DB</span> 데이터베이스와 그 테이블에 접근할 권한을 가진다.</span></li>
+    </ul>
+  </div>
+
+  <div class="col">
+    <h3>수동 방식 — 여섯 걸음</h3>
+    <p>MySQL의 테이블을 DuckDB로 적재하려면 다음 단계를 밟는다.</p>
+    <ul class="chain">
+      <li><b>1</b><span> DuckDB 연결을 만든다.</span></li>
+      <li><b>2</b><span> MySQL 연결을 만든다.</span></li>
+      <li><b>3</b><span> MySQL 서버에서 데이터를 가져온다.</span></li>
+      <li><b>4</b><span> MySQL 테이블과 같은 스키마로 DuckDB 데이터베이스에 테이블을 만든다.</span></li>
+      <li><b>5</b><span> MySQL에서 얻은 각 행을 순회하며 DuckDB 테이블에 삽입한다.</span></li>
+      <li><b>6</b><span> MySQL과 DuckDB 연결을 닫는다.</span></li>
+    </ul>
+    <p style="margin-top:1.8em">파이썬으로 MySQL 데이터베이스에 접속하려면 <span class="tm">mysql-connector-python</span> 라이브러리를 설치해야 한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Jupyter Notebook</span><span>설치</span></div>
+<pre><span class="f">!pip</span> install mysql-connector-python</pre></div>
+  </figure>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>수동 방식 전체</span></div>
+<pre><span class="k">import</span> mysql.connector
+<span class="k">import</span> duckdb
+
+<span class="c"># MySQL connection information</span>
+mysql_host     = <span class="s">'localhost'</span>
+mysql_user     = <span class="s">'user1'</span>
+mysql_password = <span class="s">'password'</span>
+mysql_database = <span class="s">'My_DB'</span>
+mysql_table    = <span class="s">'airlines'</span>
+
+<span class="c"># create a DuckDB connection</span>
+duckdb_conn = duckdb.<span class="f">connect</span>()
+
+<span class="c"># connect to MySQL</span>
+mysql_conn = mysql.connector.<span class="f">connect</span>(
+    host = mysql_host,
+    user = mysql_user,
+    password = mysql_password,
+    database = mysql_database
+)
+
+<span class="c"># create a cursor for MySQL</span>
+mysql_cursor = mysql_conn.<span class="f">cursor</span>()
+
+<span class="c"># query data from MySQL</span>
+mysql_query = <span class="s">f'SELECT * FROM {mysql_table}'</span>
+mysql_cursor.<span class="f">execute</span>(mysql_query)
+
+<span class="c"># create a DuckDB table with the same schema as MySQL</span>
+duckdb_create_table_query = \
+    <span class="s">f'CREATE TABLE airlines (IATA_CODE VARCHAR(2<span class="cut" title="원서 지면에서 잘려 복원이 불확실한 부분. 열 길이와 두 번째 열 정의가 지면에 나타나지 않는다">…</span></span>
+duckdb_conn.<span class="f">execute</span>(duckdb_create_table_query)
+
+<span class="c"># get column names from MySQL result</span>
+mysql_columns = [column[<span class="n">0</span>] <span class="k">for</span> column <span class="k">in</span> mysql_cu<span class="rec" title="원서 지면에서 잘린 부분. 커서의 description 속성으로 복원했다">rsor.description]</span>
+
+<span class="c"># fetch data from MySQL and insert into DuckDB table</span>
+duckdb_insert_query = \
+    <span class="s">f'INSERT INTO airlines VALUES ({", ".join(["<span class="cut" title="원서 지면에서 잘려 복원이 불확실한 부분. 자리표시자 생성식이 지면에 나타나지 않는다">…</span></span>
+<span class="k">for</span> row <span class="k">in</span> mysql_cursor.<span class="f">fetchall</span>():
+    duckdb_conn.<span class="f">execute</span>(duckdb_insert_query, row<span class="rec" title="원서 지면에서 잘린 부분. execute 호출을 닫는 괄호로 복원했다">)</span>
+
+<span class="c"># query the data in DuckDB</span>
+<span class="f">display</span>(duckdb_conn.<span class="f">execute</span>(<span class="s">'SELECT * FROM airlin<span class="rec" title="원서 지면에서 잘린 부분. 테이블 이름과 df() 호출로 복원했다">es'</span></span>).<span class="f">df</span>())
+
+<span class="c"># close the MySQL and DuckDB connections</span>
+mysql_cursor.<span class="f">close</span>()
+mysql_conn.<span class="f">close</span>()
+duckdb_conn.<span class="f">close</span>()</pre></div>
+    <figcaption>도판 2-20 · MySQL에서 적재한 airlines 테이블의 내용</figcaption>
+  </figure>
+
+  <div class="col">
+    <h3>mysql 확장 방식 — 서버를 그대로 붙인다</h3>
+    <p>대안으로 <span class="tm">mysql</span> 확장을 써서 MySQL의 데이터베이스에 있는 테이블을 DuckDB로 직접 적재할 수 있다. 여섯 걸음이 <span class="tm">ATTACH</span> 한 문장으로 줄어든다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>INSTALL · LOAD · ATTACH · USE</span></div>
+<pre><span class="k">import</span> duckdb
+
+<span class="c"># create a DuckDB connection</span>
+conn = duckdb.<span class="f">connect</span>()
+
+<span class="c"># install and load the MySQL extension</span>
+conn.<span class="f">execute</span>(<span class="s">'INSTALL mysql'</span>)
+conn.<span class="f">execute</span>(<span class="s">'LOAD mysql'</span>)
+
+<span class="c"># define MySQL connection parameters</span>
+mysql_host     = <span class="s">'localhost'</span>
+mysql_user     = <span class="s">'user1'</span>
+mysql_password = <span class="s">'password'</span>
+mysql_database = <span class="s">'My_DB'</span>
+mysql_table    = <span class="s">'airlines'</span>
+mysql_port     = <span class="n">3306</span>
+
+<span class="c"># create a MySQL connection</span>
+mysql_connection = \
+    <span class="s">f'mysql://{mysql_user}:{mysql_password}@{mysq<span class="cut" title="원서 지면에서 잘려 복원이 불확실한 부분. 접속 URI의 뒷부분이 지면에 나타나지 않는다">…</span></span>
+
+<span class="c"># attach the MySQL database with authentication</span>
+attach_command = <span class="s">f'''
+    <span class="k">ATTACH</span> 'host={mysql_host}
+    user={mysql_user}
+    password={mysql_password}
+    port={mysql_port}
+    database={mysql_database}'
+    <span class="k">AS</span> mysqldb (<span class="k">TYPE</span> MYSQL);
+'''</span>
+conn.<span class="f">execute</span>(attach_command)
+conn.<span class="f">execute</span>(<span class="s">'USE mysqldb;'</span>)
+
+<span class="f">display</span>(conn.<span class="f">execute</span>(<span class="s">f'''
+    <span class="k">SELECT</span> * <span class="k">FROM</span> {mysql_table}
+'''</span>).<span class="f">df</span>())
+
+<span class="f">display</span>(conn.<span class="f">execute</span>(<span class="s">f'''
+    show tables
+'''</span>).<span class="f">df</span>())
+
+<span class="c"># close the DuckDB connection</span>
+conn.<span class="f">close</span>()</pre></div>
+    <figcaption>출력은 도판 2-20과 같다</figcaption>
+  </figure>
+
+  <div class="col">
+    <h3>어느 쪽이 나은가</h3>
+    <p>원저자가 제시하는 일반적 판단 기준은 다음과 같다.</p>
+  </div>
+  <div class="cmp">
+    <table>
+      <thead><tr><th>필요한 것</th><th>선택</th><th>이유</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>단순함 · 성능 · 최소 설정</td>
+          <td><strong>mysql 확장</strong></td>
+          <td>간결하고 성능이 좋으며, 최소한의 설정으로 MySQL 데이터에 직접 접근해야 한다면 확장이 더 나은 선택이다.</td>
+        </tr>
+        <tr>
+          <td>스키마 통제 · 변환 · 확장 사용 불가 환경</td>
+          <td><strong>수동 방식</strong></td>
+          <td>스키마를 통제하는 데 더 큰 유연성이 필요하거나, 변환을 수행해야 하거나, 확장을 쓸 수 없는 환경을 상대해야 한다면 수동 방식이 더 적절하다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p>데이터에 자주 접근하고 분석하는 대부분의 사용 사례에서는, 효율성과 사용의 편의 덕에 <span class="tm">mysql</span> 확장이 더 나은 선택이 될 것이다.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════ 맺음 ══════ -->
+<div class="closing rv">
+  <div class="closing-in">
+    <p class="kicker" style="margin-bottom:22px"><i></i>맺음말 · SUMMARY</p>
+    <blockquote>네 개의 문에는 각각 다른 문턱이 있다. 문턱의 높이를 미리 알고 가는 것이 이 장에서 얻는 실질적인 소득이다.</blockquote>
+    <div class="col">
+      <p>제2장에서는 서로 다른 유형의 데이터를 DuckDB 데이터베이스로 적재하는 기법을 익혔다.</p>
+    </div>
+    <div class="cards" style="margin-top:30px">
+      <div class="card">
+        <span class="no">門 · 一</span><h5>CSV 파일</h5><span class="en">csv</span>
+        <p>큰 데이터셋이라면 최적의 성능을 위해 <span class="tm">COPY</span> 명령을 고려한다.</p>
+      </div>
+      <div class="card">
+        <span class="no">門 · 二</span><h5>Parquet 파일</h5><span class="en">parquet</span>
+        <p>Parquet은 효율적인 파일 형식이며, 그 데이터를 DuckDB로 들이는 일 또한 효율적이다.</p>
+      </div>
+      <div class="card">
+        <span class="no">門 · 三</span><h5>엑셀 파일</h5><span class="en">xlsx</span>
+        <p>DuckDB는 엑셀 파일을 직접 지원하지 않는다. 특별한 확장으로 엑셀 데이터를 적재하거나, 적재 전에 엑셀 파일을 CSV로 변환한다.</p>
+      </div>
+      <div class="card">
+        <span class="no">門 · 四</span><h5>MySQL 데이터베이스</h5><span class="en">mysql</span>
+        <p>MySQL 테이블과 같은 스키마로 DuckDB 테이블을 만들고 데이터를 적재한다. 또는 DuckDB가 지원하는 <span class="tm">mysql</span> 확장을 쓴다.</p>
+      </div>
+    </div>
+    <div class="col" style="margin-top:36px">
+      <p>이 지식을 갖추었으므로, 이제 SQL로 DuckDB 데이터베이스의 데이터를 가공하는 여러 방법을 익힐 준비가 되었다. 그것이 다음 장의 주제다.</p>
+      <p style="color:var(--meok-soft)">답사를 마치며 문턱의 높이를 다시 적어 둔다. Parquet은 <span class="tm">read_parquet()</span> 하나로 끝난다. CSV는 헤더의 자동 추론이 어긋날 수 있어 <span class="tm">read_csv()</span>로 손수 지정할 각오가 필요하다. MySQL은 확장 하나로 서버를 그대로 붙일 수 있다. 엑셀만이 지리공간 확장을 빌려 오고, 환경 변수로 머리글을 달래고, <span class="tm">COPY</span>를 포기하고, 날짜를 문자열로 바꿔야 한다. 가장 흔히 쓰이는 형식이 가장 다루기 까다롭다는 이 역설이, 제2장이 남기는 가장 실용적인 문장이다.</p>
+    </div>
+    <p style="margin-top:40px"><a class="next" href="#">다음 장 → SQL 입문 · A Primer on SQL</a></p>
+  </div>
+</div>
+
+<footer>
+  <span>DuckDB: Up and Running · Wei-Meng Lee · O'Reilly Media, 2024 — 제2장 「Importing Data into DuckDB」 검토 기록</span>
+  <span>점선 밑줄은 지면에서 잘려 복원한 코드, …는 복원하지 않은 부분이다</span>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    items.forEach(function(el){ el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, {threshold:0.06, rootMargin:'0px 0px -8% 0px'});
+    items.forEach(function(el){ io.observe(el); });
+  }
+})();
+</script>
+</body>
+</html>

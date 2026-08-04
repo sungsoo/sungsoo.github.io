@@ -1,0 +1,990 @@
+---
+layout: null
+title: "Using DuckDB in the Cloud with MotherDuck"
+date: 2026-08-12 
+categories: [artificial intelligence]
+tags: [artificial general intelligence, data management]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>두 물이 한 문장에서 만난다 — DuckDB 답사기 제9장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 아홉 권을 닫는 권이므로, 여덟 권 내내 낙관에만 쓰던 주칠(朱漆)을 표지 색으로 올린다.
+     그래서 이 권만 낙관이 먹빛이다 */
+  --hoebyeok:#E7E5E3;
+  --hanji:#F3F1EF;
+  --meok:#1A1817;
+  --meok-soft:#403B39;
+  --juchil:#A2331F;
+  --juchil-dk:#7C2313;
+  --chija:#B58218;
+  --line:rgba(26,24,23,.16);
+  --line-soft:rgba(26,24,23,.08);
+  --display:"Gowun Batang",'Nanum Myeongjo',serif;
+  --body:"Noto Sans KR",system-ui,sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",monospace;
+  --maxw:1180px;
+  --colw:720px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--hoebyeok);color:var(--meok);font-family:var(--body);
+  font-weight:300;font-size:17px;line-height:1.95;-webkit-font-smoothing:antialiased;
+  letter-spacing:-.005em}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(rgba(26,24,23,.055) 1px,transparent 1px);
+  background-size:4px 4px;opacity:.7}
+.wrap{position:relative;z-index:1}
+
+/* 표제 */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#EDEBE9 0%,var(--hoebyeok) 100%)}
+.hero-in{max-width:var(--maxw);margin:0 auto;
+  padding:clamp(64px,11vw,132px) clamp(22px,5vw,56px) clamp(40px,6vw,64px);position:relative}
+.glyph{position:absolute;right:clamp(-30px,-1vw,0px);top:1%;font-family:var(--display);
+  font-weight:700;font-size:clamp(230px,44vw,560px);line-height:.78;color:var(--juchil);
+  opacity:.07;pointer-events:none;user-select:none}
+.kicker{font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--juchil-dk);margin:0 0 26px;display:flex;
+  align-items:center;gap:14px;flex-wrap:wrap}
+.kicker i{display:block;width:52px;height:1px;background:var(--juchil);opacity:.6}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(35px,6.6vw,74px);line-height:1.15;
+  letter-spacing:-.03em;margin:0 0 22px;max-width:15em}
+h1 em{font-style:normal;color:var(--juchil-dk);position:relative}
+h1 em::after{content:"";position:absolute;left:0;right:0;bottom:.1em;height:.22em;
+  background:var(--chija);opacity:.3;z-index:-1}
+.lede{font-family:var(--display);font-size:clamp(18px,2.2vw,22px);line-height:1.85;
+  max-width:33em;color:var(--meok-soft);margin:0 0 40px}
+.colophon{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:22px;max-width:900px}
+.colophon div{padding:2px 28px 2px 0;margin-right:28px;border-right:1px solid var(--line-soft)}
+.colophon div:last-child{border-right:0;margin-right:0}
+.colophon dt{font-size:10.5px;letter-spacing:.2em;font-weight:500;color:var(--juchil-dk);
+  opacity:.8;margin:0 0 4px;text-transform:uppercase}
+.colophon dd{margin:0;font-size:14.5px;font-weight:400}
+
+/* 서명 요소 */
+.confluence{max-width:var(--maxw);margin:0 auto;
+  padding:clamp(40px,6vw,72px) clamp(22px,5vw,56px) clamp(48px,7vw,80px)}
+.confluence svg,.dia svg{width:100%;height:auto;display:block}
+.cap{font-size:13.5px;color:var(--meok-soft);margin:22px 0 0;padding-left:16px;
+  border-left:2px solid var(--chija);max-width:46em;line-height:1.8}
+.cap b{font-weight:500;color:var(--meok)}
+
+/* 골격 */
+main{max-width:var(--maxw);margin:0 auto;padding:0 clamp(22px,5vw,56px) 120px}
+section{padding:clamp(52px,7vw,96px) 0;border-top:1px solid var(--line)}
+section:first-child{border-top:0}
+.sec-head{display:flex;gap:clamp(16px,3vw,40px);align-items:flex-start;margin-bottom:clamp(26px,4vw,44px)}
+.seal{flex:0 0 auto;width:54px;height:54px;border:1.5px solid var(--meok);color:var(--meok);
+  display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:22px;
+  line-height:1;border-radius:3px;background:rgba(26,24,23,.04);margin-top:6px}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(26px,4vw,42px);line-height:1.3;
+  letter-spacing:-.025em;margin:0 0 10px}
+.sub{font-size:13px;letter-spacing:.16em;color:var(--juchil-dk);font-weight:500;margin:0}
+.col{max-width:var(--colw)}
+p{margin:0 0 1.35em}
+.col p:last-child{margin-bottom:0}
+h3{font-family:var(--display);font-weight:700;font-size:clamp(20px,2.6vw,26px);
+  letter-spacing:-.02em;margin:2.5em 0 .8em;line-height:1.4}
+h3:first-child{margin-top:0}
+h4{font-family:var(--body);font-weight:500;font-size:15px;letter-spacing:.02em;
+  margin:2em 0 .6em;color:var(--juchil-dk)}
+strong{font-weight:500;color:var(--meok)}
+.tm{font-family:var(--mono);font-size:.88em;background:rgba(162,51,31,.1);padding:.12em .4em;
+  border-radius:2px;color:var(--juchil-dk);font-weight:500;word-break:break-all}
+
+/* 카드 */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);margin-top:8px}
+.card{background:var(--hanji);padding:26px 24px 28px;position:relative}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--juchil);opacity:.35}
+.card .no{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--chija);
+  font-weight:500;display:block;margin-bottom:11px}
+.card h5{font-family:var(--display);font-weight:700;font-size:19px;margin:0 0 4px;
+  line-height:1.4;letter-spacing:-.02em}
+.card .en{font-family:var(--mono);font-size:11.5px;color:var(--meok-soft);opacity:.72;
+  display:block;margin-bottom:12px}
+.card p{font-size:14.5px;line-height:1.82;margin:0;color:var(--meok-soft)}
+
+/* 연쇄 */
+.chain{margin:28px 0 0;padding:0;list-style:none;border-left:1px solid var(--line)}
+.chain li{position:relative;padding:0 0 22px 30px}
+.chain li:last-child{padding-bottom:0}
+.chain li::before{content:"";position:absolute;left:-4.5px;top:11px;width:8px;height:8px;
+  background:var(--hoebyeok);border:1.5px solid var(--juchil);border-radius:50%}
+.chain b{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--juchil-dk);
+  letter-spacing:.04em;display:block}
+.chain span{font-size:15.5px;color:var(--meok-soft)}
+
+/* 순서 목록 */
+.steps{margin:28px 0 0;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;position:relative;padding:0 0 18px 46px;font-size:15.5px;
+  color:var(--meok-soft);line-height:1.85}
+.steps li::before{content:counter(s);position:absolute;left:0;top:4px;width:28px;height:28px;
+  border:1px solid var(--juchil);color:var(--juchil-dk);border-radius:50%;
+  display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:500;
+  background:var(--hanji)}
+.steps li:last-child{padding-bottom:0}
+
+/* 방주 */
+.aside{margin:30px 0;padding:22px 26px;background:var(--hanji);border:1px solid var(--line);
+  border-left:3px solid var(--juchil);font-size:15px;line-height:1.85;color:var(--meok-soft)}
+.aside.warn{border-left-color:var(--meok)}
+.aside.tip{border-left-color:var(--chija)}
+.aside .lbl{display:block;font-family:var(--body);font-weight:500;font-size:11px;
+  letter-spacing:.24em;text-transform:uppercase;margin-bottom:10px;color:var(--juchil-dk)}
+.aside.warn .lbl{color:var(--meok)}
+.aside.tip .lbl{color:var(--chija)}
+.aside ol,.aside ul{margin:10px 0 0;padding-left:1.2em}
+.aside li{margin-bottom:5px}
+.aside p:last-child{margin-bottom:0}
+
+/* 코드 */
+figure{margin:26px 0}
+.code{background:#1A1413;color:#DEDAD8;border-radius:4px;overflow:hidden;border:1px solid #0E0A09}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:9px 16px;
+  background:#140F0E;border-bottom:1px solid #29201E;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.16em;color:#A08480;text-transform:uppercase;gap:12px}
+.code pre{margin:0;padding:20px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.4px;
+  line-height:1.78}
+.code .k{color:#E2A79A}
+.code .s{color:#E2C173}
+.code .c{color:#7A6E6B;font-style:italic}
+.code .f{color:#9FD0B8}
+.code .n{color:#D9B084}
+.code .pr{color:#8E9A9E;user-select:none}
+.code .out{color:#9A9391}
+.code .rec{border-bottom:1px dotted rgba(181,130,24,.9);cursor:help}
+.code .cut{color:#C8981F;font-weight:500;cursor:help}
+figcaption{font-size:13px;color:var(--meok-soft);margin-top:12px;font-family:var(--body)}
+figcaption::before{content:"〈";color:var(--chija)}
+figcaption::after{content:"〉";color:var(--chija)}
+
+/* 결과 표 */
+.rs{margin:24px 0}
+.rs table{border-collapse:collapse;width:100%;max-width:700px;font-family:var(--mono);
+  font-size:12.6px;background:var(--hanji)}
+.rs th{text-align:left;padding:9px 12px;border-bottom:1.5px solid var(--meok);font-weight:500;
+  font-size:11.5px;letter-spacing:.06em;color:var(--juchil-dk);white-space:nowrap}
+.rs tr.dt td{padding:4px 12px 8px;font-size:10.5px;color:rgba(26,24,23,.42);
+  border-bottom:1px solid var(--line);letter-spacing:.05em}
+.rs td{padding:7px 12px;border-bottom:1px solid var(--line-soft);color:var(--meok-soft)}
+.rs tr:last-child td{border-bottom:1px solid var(--line)}
+.rs td.num{text-align:right;color:var(--meok)}
+.rs .el{color:rgba(26,24,23,.4);text-align:center}
+.rs .drv{color:var(--juchil-dk);border-bottom:1px dotted rgba(181,130,24,.9);cursor:help}
+.rs figcaption{margin-top:10px}
+.rs .foot{font-family:var(--mono);font-size:11px;color:var(--meok-soft);opacity:.75;
+  padding-top:7px;letter-spacing:.04em}
+
+/* 비교 표 */
+.cmp{margin:28px 0;overflow-x:auto}
+.cmp table{border-collapse:collapse;width:100%;font-size:14.5px;background:var(--hanji);
+  border:1px solid var(--line)}
+.cmp th{text-align:left;padding:12px 15px;background:rgba(162,51,31,.07);
+  border-bottom:1px solid var(--line);font-weight:500;font-size:12.5px;letter-spacing:.08em;
+  color:var(--juchil-dk);vertical-align:top}
+.cmp td{padding:12px 15px;border-bottom:1px solid var(--line-soft);color:var(--meok-soft);
+  vertical-align:top;line-height:1.75}
+.cmp tr:last-child td{border-bottom:0}
+.cmp td:first-child{font-family:var(--mono);font-size:12.5px;color:var(--meok);white-space:nowrap}
+
+/* 총서 목록 */
+.series{margin:36px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:1px;background:var(--line);border:1px solid var(--line)}
+.series div{background:var(--hanji);padding:20px 18px 22px;position:relative}
+.series div.now{background:rgba(162,51,31,.07)}
+.series .g{font-family:var(--display);font-weight:700;font-size:30px;line-height:1;
+  display:block;margin-bottom:10px}
+.series .vn{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  color:var(--meok-soft);opacity:.7;display:block;margin-bottom:6px}
+.series .t{font-family:var(--display);font-weight:700;font-size:15.5px;line-height:1.45;
+  display:block;margin-bottom:6px}
+.series .d{font-size:12.5px;line-height:1.7;color:var(--meok-soft);display:block}
+
+.dia{margin:32px 0 0}
+.dia svg{max-width:860px}
+
+/* 맺음 */
+.closing{border-top:1px solid var(--line);background:var(--hanji)}
+.closing-in{max-width:var(--maxw);margin:0 auto;padding:clamp(56px,8vw,96px) clamp(22px,5vw,56px)}
+.closing blockquote{margin:0 0 40px;font-family:var(--display);font-size:clamp(20px,2.8vw,27px);
+  line-height:1.72;letter-spacing:-.02em;max-width:27em}
+.fin{display:inline-block;font-family:var(--display);font-weight:700;font-size:15px;
+  letter-spacing:.3em;border:1px solid var(--juchil);color:var(--juchil-dk);padding:12px 22px}
+footer{max-width:var(--maxw);margin:0 auto;padding:34px clamp(22px,5vw,56px) 60px;font-size:12.5px;
+  color:var(--meok-soft);opacity:.8;border-top:1px solid var(--line-soft);display:flex;
+  justify-content:space-between;gap:20px;flex-wrap:wrap}
+
+.rv{opacity:0;transform:translateY(22px);
+  transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.25,1)}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+}
+@media (max-width:720px){
+  body{font-size:16px;line-height:1.9}
+  .colophon div{border-right:0;padding-right:0;margin-right:0;flex:1 0 46%}
+  .seal{width:42px;height:42px;font-size:17px}
+  .sec-head{gap:14px}
+  .rs{overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══════ 표제 ══════ -->
+<header class="hero">
+  <div class="glyph">合</div>
+  <div class="hero-in">
+    <p class="kicker"><i></i>답사기 · 제9장 정독 · 마지막 권</p>
+    <h1>두 물이<br><em>한 문장에서</em> 만난다</h1>
+    <p class="lede">답사의 마지막 날이다. 강을 따라 내려오다 보면 두 물줄기가 합쳐지는 자리가 있다. 물빛이 다른 두 흐름이 한동안 나란히 가다 결국 한 물이 되는 그 지점. 제9장의 마지막 절이 그 자리다. 내 컴퓨터의 CSV 파일과 구름 위에 올려 둔 표가 한 문장 안에서 조인된다.</p>
+    <dl class="colophon">
+      <div><dt>원전</dt><dd>DuckDB: Up and Running</dd></div>
+      <div><dt>지은이</dt><dd>Wei-Meng Lee</dd></div>
+      <div><dt>펴낸곳</dt><dd>O'Reilly Media, 2024</dd></div>
+      <div><dt>대상</dt><dd>Chapter 9. Using DuckDB in the Cloud with MotherDuck</dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ══════ 서명 요소: 합수도 ══════ -->
+<div class="confluence rv">
+  <svg viewBox="0 0 1100 420" role="img" aria-label="지역 CSV 파일과 MotherDuck의 표가 하나의 조인 질의에서 만나는 구조도">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#A2331F"/>
+      </marker>
+      <linearGradient id="mix" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#A2331F" stop-opacity=".16"/>
+        <stop offset="100%" stop-color="#B58218" stop-opacity=".16"/>
+      </linearGradient>
+    </defs>
+
+    <!-- 왼쪽 물줄기: 지역 -->
+    <text x="0" y="16" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2.2" fill="#403B39">이쪽 물 · 내 컴퓨터</text>
+    <rect x="0" y="30" width="300" height="164" fill="rgba(26,24,23,.05)" stroke="#1A1817" stroke-opacity=".2"/>
+    <text x="14" y="52" font-family="IBM Plex Mono,monospace" font-size="11.5" fill="#403B39">'./flights.csv'</text>
+    <g font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#403B39">
+      <line x1="14" y1="60" x2="286" y2="60" stroke="#1A1817" stroke-opacity=".18"/>
+      <text x="14" y="78">AIRLINE   FLIGHT_NUMBER</text>
+      <line x1="14" y1="86" x2="286" y2="86" stroke="#1A1817" stroke-opacity=".1"/>
+      <text x="14" y="102">AS              98</text>
+      <text x="14" y="118">AA            2336</text>
+      <text x="14" y="134">US             840</text>
+      <text x="14" y="150" fill="rgba(26,24,23,.4)">·                 ·</text>
+      <text x="14" y="166">DL            1173</text>
+      <line x1="14" y1="174" x2="286" y2="174" stroke="#1A1817" stroke-opacity=".18"/>
+      <text x="14" y="188" fill="#7C2313">10 rows      2 columns</text>
+    </g>
+
+    <!-- 오른쪽 물줄기: 구름 -->
+    <text x="0" y="234" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2.2" fill="#7C2313">저쪽 물 · MOTHERDUCK</text>
+    <rect x="0" y="248" width="300" height="164" fill="rgba(162,51,31,.08)" stroke="#A2331F" stroke-opacity=".45"/>
+    <text x="14" y="270" font-family="IBM Plex Mono,monospace" font-size="11.5" fill="#7C2313">my_db.main.airlines</text>
+    <g font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#403B39">
+      <line x1="14" y1="278" x2="286" y2="278" stroke="#A2331F" stroke-opacity=".22"/>
+      <text x="14" y="296">IATA_CODE   AIRLINE</text>
+      <line x1="14" y1="304" x2="286" y2="304" stroke="#A2331F" stroke-opacity=".14"/>
+      <text x="14" y="320">UA          United Air…</text>
+      <text x="14" y="336">AA          American A…</text>
+      <text x="14" y="352">US          US Airways…</text>
+      <text x="14" y="368" fill="rgba(26,24,23,.4)">·           ·</text>
+      <line x1="14" y1="378" x2="286" y2="378" stroke="#A2331F" stroke-opacity=".22"/>
+      <text x="14" y="392" fill="#7C2313">14 rows      2 columns</text>
+    </g>
+
+    <!-- 합수 -->
+    <path d="M300 112 C 360 112, 380 190, 430 205" fill="none" stroke="#1A1817" stroke-opacity=".35" stroke-width="1.4" marker-end="url(#ar)"/>
+    <path d="M300 330 C 360 330, 380 220, 430 207" fill="none" stroke="#A2331F" stroke-opacity=".55" stroke-width="1.4" marker-end="url(#ar)"/>
+    <text x="330" y="150" font-family="Noto Sans KR,sans-serif" font-size="11" fill="#403B39">지역 스캔</text>
+    <text x="330" y="292" font-family="Noto Sans KR,sans-serif" font-size="11" fill="#7C2313">구름 스캔</text>
+
+    <rect x="440" y="150" width="240" height="112" fill="url(#mix)" stroke="#A2331F" stroke-opacity=".5"/>
+    <text x="560" y="180" text-anchor="middle" font-family="Gowun Batang,serif" font-size="17"
+          font-weight="700" fill="#7C2313">한 문장</text>
+    <g font-family="IBM Plex Mono,monospace" font-size="10" fill="#403B39">
+      <text x="560" y="204" text-anchor="middle">SELECT … FROM (지역) f</text>
+      <text x="560" y="222" text-anchor="middle">JOIN my_db.main.airlines a</text>
+      <text x="560" y="240" text-anchor="middle">ON f.AIRLINE = a.IATA_CODE</text>
+    </g>
+    <line x1="680" y1="206" x2="736" y2="206" stroke="#A2331F" stroke-width="1.4" marker-end="url(#ar)"/>
+
+    <!-- 결과 -->
+    <text x="744" y="16" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2.2" fill="#7C2313">합쳐진 물 · 10 ROWS 3 COLUMNS</text>
+    <rect x="744" y="30" width="356" height="382" fill="#F3F1EF" stroke="#A2331F" stroke-opacity=".45"/>
+    <g font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#403B39">
+      <text x="758" y="52">AIRLINE  FLIGHT_NUMBER  AIRLINE</text>
+      <line x1="758" y1="60" x2="1086" y2="60" stroke="#A2331F" stroke-opacity=".22"/>
+      <text x="758" y="80">AS                 98  Alaska Airlines Inc.</text>
+      <text x="758" y="102">AA               2336  American Airlines Inc.</text>
+      <text x="758" y="124">US                840  US Airways Inc.</text>
+      <text x="758" y="146">AA                258  American Airlines Inc.</text>
+      <text x="758" y="168">AS                135  Alaska Airlines Inc.</text>
+      <text x="758" y="190">DL                806  Delta Air Lines Inc.</text>
+      <text x="758" y="212">NK                612  Spirit Air Lines</text>
+      <text x="758" y="234">US               2013  US Airways Inc.</text>
+      <text x="758" y="256">AA               1112  American Airlines Inc.</text>
+      <text x="758" y="278">DL               1173  Delta Air Lines Inc.</text>
+      <line x1="758" y1="292" x2="1086" y2="292" stroke="#A2331F" stroke-opacity=".22"/>
+      <text x="758" y="310" fill="#7C2313">10 rows                    3 columns</text>
+    </g>
+    <g font-family="Noto Sans KR,sans-serif" font-size="12" fill="#403B39">
+      <text x="758" y="346">코드가 이름을 얻는다. 그 이름은 구름에 있었고,</text>
+      <text x="758" y="368">편명은 내 디스크에 있었다.</text>
+      <text x="758" y="394" fill="#7C2313">어느 쪽에 있었는지는 질의문에 드러나지 않는다.</text>
+    </g>
+  </svg>
+  <p class="cap"><b>답사의 마지막 소견.</b> 제1장이 기둥의 장, 제2장이 문의 장, 제3장이 칸의 장, 제4장이 때의 장, 제5장이 자리의 장, 제6장이 겹의 장, 제7장이 야장의 장, 제8장이 탁본의 장이었다면 제9장은 <b>합수의 장</b>이다. 왼쪽 두 물줄기의 값은 모두 원서 지면에 온전히 인쇄된 것이고, 오른쪽 결과는 그 두 표를 대조해 검토자가 맞춘 것이다. 열 행이 정확히 맞아떨어지며 짝을 찾지 못한 코드는 하나도 없다.</p>
+</div>
+
+<main>
+
+<!-- ══════ 序 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">序</div>
+    <div><h2>터를 닦지 않고 든다</h2><p class="sub">INTRODUCTION TO MOTHERDUCK</p></div>
+  </div>
+  <div class="col">
+    <p>지금까지는 내 기계에 설치한 DuckDB로 데이터를 다루는 법을 익혔다. 데이터가 지역에 있든 원격 서버에 있든 그러했다. 내 기계에서 DuckDB를 쓰는 일에는 DuckDB를 설치하고 Anaconda 같은 개발 환경을 갖추는 일이 딸린다. 그런데 기계를 갖추는 번거로움 없이 데이터를 빠르게 분석하고 싶다면 어떻게 하는가. 여기서 <strong>MotherDuck</strong>이 등장한다.</p>
+    <p>MotherDuck은 DuckDB 위에 세운 <strong>서버 없는(serverless) 클라우드 분석 플랫폼</strong>이다. 클라우드 기반의 관리 가능성, 확장성, 진전된 분석 능력을 제공해 DuckDB를 확장한다. 요컨대 이 책에서 익힌 모든 연산을 자기 기계를 갖추지 않고 MotherDuck으로 수행할 수 있다.</p>
+    <p>많은 데이터 분석 사용자에게 복잡한 데이터 기반 시설이 늘 필요한 것은 아니다. 그들이 흔히 필요한 것은 데이터를 손쉽게 호스팅하고 공유할 수 있는 <strong>서버 없는 데이터 웨어하우스</strong>다. MotherDuck으로는 데이터를 클라우드에 힘들이지 않고 올려 곧바로 질의할 수 있다. Parquet, CSV, JSON, Iceberg, Delta Lake 같은 여러 데이터 형식을 지원한다. 게다가 <strong>이중 실행(Dual Execution)</strong>이라는 기능을 통해 질의의 일부는 지역에서, 다른 일부는 클라우드에서 실행할 수 있다.</p>
+    <p>또한 MotherDuck은 사용자마다 <strong>분리되고 격리된 컴퓨트 인스턴스</strong>를 배정해, 조직의 관리를 간결하게 만들고 비용을 줄인다. 이 컴퓨트 인스턴스는 개별적으로 확장되어 수 테라바이트에 걸친 작업 부하를 감당한다.</p>
+    <p>이 장에서 익히는 것은 일곱이다. 데이터베이스를 올리고 만드는 일, 남과 나누는 일, 나눈 데이터베이스를 붙이는 일, 질의하는 일, AI로 SQL 문을 쓰는 일, 지역 DuckDB 데이터베이스를 MotherDuck과 잇는 일, 그리고 지역과 원격을 함께 다루는 <strong>하이브리드 질의</strong>다.</p>
+  </div>
+  <div class="aside">
+    <span class="lbl">일러두기 — 무엇 위에 서 있는가</span>
+    <p>MotherDuck의 운영 기반 시설은 Amazon Web Services에 호스팅되며, 서비스는 주로 Kubernetes가 제어하는 컨테이너로 실행된다. “서버 없음”이란 서버가 없다는 뜻이 아니라 <strong>사용자가 서버를 돌보지 않는다</strong>는 뜻이다.</p>
+  </div>
+  <div class="col">
+    <h3>가입과 요금제</h3>
+    <p>MotherDuck을 쓰려면 무료 30일 시험 사용으로 시작한다. 시험 기간이 끝난 뒤에는 무료 계정을 이어 쓰거나 유료 요금제로 올릴 수 있다.</p>
+  </div>
+  <ol class="steps">
+    <li><span class="tm">https://motherduck.com</span>을 찾는다.</li>
+    <li><strong>30-DAY TRIAL</strong> 버튼을 누른다.</li>
+    <li>로그인 방식을 고른다. Google 계정, GitHub 계정, 또는 전자우편과 비밀번호를 쓸 수 있다.</li>
+    <li>로그인하면 MotherDuck의 웹 UI로 들어간다. 왼쪽에는 Notebooks와 Attached databases 같은 절이 담긴 패널이 있고, 오른쪽에는 SQL 질의를 적는 노트북이 있다.</li>
+  </ol>
+  <div class="col">
+    <p>이 인터페이스가 Jupyter Notebook을 닮았다는 점이 눈에 띈다. 낯익은 환경에서 매끄럽게 옮겨 다니며 질의를 쓸 수 있게 하려는 것이다. 제7장에서 노트북에 SQL 셀을 넣는 도구를 익혔는데, 여기서는 그 노트북 자체가 클라우드로 올라간다.</p>
+    <p>화면 위쪽의 “Learn more” 버튼을 누르면 MotherDuck이 제공하는 두 요금제를 볼 수 있다. 30일 시험이 끝나면 “Switch to Free” 버튼으로 무료 요금제로 옮길 수 있고, 그것이 제공하는 것보다 더 많은 자원이 필요하면 곧바로 표준 요금제로 올릴 수 있다. 두 요금제의 주된 차이는 <strong>컴퓨트 유닛(CU)과 저장 선택지</strong>에 있다. 표준 요금제는 추가 CU와 저장 공간을 구입할 수 있고, 무료 요금제는 그런 선택지를 제공하지 않는다.</p>
+  </div>
+  <div class="aside tip">
+    <span class="lbl">검토 방법에 관한 밝힘</span>
+    <p>이 장은 절차의 절반이 <strong>웹 UI를 누르는 순서</strong>이고 결과는 스크린숏 도판이다. 그래서 이 페이지는 <strong>명령의 구문과 절차의 순서</strong>를 정확히 옮기는 데 힘을 쏟았다. 다행히 DuckDB CLI 절의 박스 출력은 지면에 온전히 인쇄되어 있어 그대로 옮겼고, 하이브리드 질의의 결과는 두 표를 대조해 검산했다.</p>
+    <p style="margin-top:10px">표기 규칙은 앞 여덟 장과 같다. 복원한 부분은 <code style="font-family:var(--mono);font-size:13px;border-bottom:1px dotted var(--chija)">점선 밑줄</code>, 복원하지 않은 부분은 <code style="font-family:var(--mono);font-size:13px;color:var(--chija)">…</code>, 검토자가 대조해 맞춘 값은 <span class="rs" style="display:inline"><span class="drv">점선을 두른 글자</span></span>다.</p>
+    <p style="margin-top:10px">아울러 이 권은 <strong>아홉 권을 닫는 권</strong>이므로, 여덟 권 내내 낙관에만 쓰던 주칠(朱漆)을 표지 색으로 올렸다. 그래서 이 권만 낙관이 먹빛이다.</p>
+  </div>
+</section>
+
+<!-- ══════ 一 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">庫</div>
+    <div><h2>이미 붙어 있는 두 채</h2><p class="sub">GETTING STARTED — ATTACHED DATABASES</p></div>
+  </div>
+  <div class="col">
+    <p>로그인하면 창의 왼쪽에 두 개의 주요 절이 보인다. <strong>Notebooks</strong>와 <strong>Attached databases</strong>다. 계정에는 기본적으로 두 개의 데이터베이스가 붙어 있다.</p>
+  </div>
+  <div class="cards" style="margin-top:26px">
+    <div class="card">
+      <span class="no">庫 · 一</span><h5>my_db</h5><span class="en">read &amp; write</span>
+      <p>자기 데이터를 올리고 관리할 수 있는 데이터베이스다. 읽기와 쓰기 권한을 모두 가진다.</p>
+    </div>
+    <div class="card">
+      <span class="no">庫 · 二</span><h5>sample_data</h5><span class="en">read only · shared</span>
+      <p>실험과 연습을 위해 여러 표를 담은 표본 데이터베이스다. 아이콘에 사람 그림이 붙어 있어 <strong>여러 사용자가 접근하는 공유 데이터베이스</strong>임을 알린다. 여러 사용자가 함께 쓰므로 읽기 권한만 가진다.</p>
+    </div>
+  </div>
+  <div class="col">
+    <p>각 데이터베이스 안에서는 표를 하나 이상의 <strong>스키마</strong>로 정리할 수 있다. 스키마는 관련된 표들의 논리적 묶음으로, 데이터를 구조화하고 효과적으로 관리하는 데 도움이 된다. 데이터베이스 이름에 마우스를 올리면 그 유형과 권한이 표시된다.</p>
+    <p>제3장에서 <span class="tm">ATTACH</span>로 별채를 붙이고 <span class="tm">USE</span>로 갈아탔던 일이 여기서는 화면 왼쪽의 목록으로 나타난다. 그때 명령줄에서 별표로 활성 데이터베이스를 표시했던 것이, 이제는 아이콘과 권한 표시로 바뀐다. 도구가 바뀌어도 다루는 대상은 같다.</p>
+  </div>
+</section>
+
+<!-- ══════ 二 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">入</div>
+    <div><h2>표를 올리고 스키마를 짓는다</h2><p class="sub">ADDING TABLES · CREATING SCHEMAS</p></div>
+  </div>
+  <div class="col">
+    <p>자기 데이터를 MotherDuck에 올리려면 왼쪽 패널 위쪽의 <strong>Add Data</strong> 버튼을 누른다. 올릴 파일을 고르라는 안내가 나오고, CSV 파일을 고르면 새 셀이 만들어져 그 내용이 표시된다. 원서의 예에서는 <span class="tm">airlines.csv</span>다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>MotherDuck 노트북</span><span>자동으로 만들어지는 문장</span></div>
+<pre><span class="c">-- ① 자동으로 만들어진 문장 — 목적지가 없다</span>
+<span class="k">CREATE OR REPLACE TABLE</span> airlines <span class="k">AS SELECT</span> *
+<span class="k">FROM</span> <span class="f">read_csv_auto</span>([<span class="s">'airlines.csv'</span>]);
+
+<span class="c">-- ② 목적지를 지정한다 — 데이터베이스 · 스키마 · 표</span>
+<span class="k">CREATE OR REPLACE TABLE</span> my_db.main.airlines <span class="k">AS SE</span><span class="rec" title="원서 지면에서 잘린 부분. 앞 문장과 대조해 AS SELECT *로 복원했다">LECT *</span>
+<span class="k">FROM</span> <span class="f">read_csv_auto</span>([<span class="s">'airlines.csv'</span>]);</pre></div>
+    <figcaption>도판 9-8 · 9-9 · 코드를 실행하기 전에 데이터가 저장될 목적지, 곧 데이터베이스와 스키마를 지정해야 한다. my_db에는 “main”이라는 스키마가 있으므로 거기에 넣는다</figcaption>
+  </figure>
+  <div class="col">
+    <p>이 대비가 이 절의 요점이다. 자동으로 만들어진 문장에는 표 이름만 있고, 어느 데이터베이스의 어느 스키마에 넣을지가 비어 있다. 구름 위에는 집이 여러 채이므로 <strong>번지를 적어야</strong> 한다. 이름 세 토막, 곧 <span class="tm">데이터베이스.스키마.표</span>가 그 번지다.</p>
+    <p>Run 버튼을 눌러 질의를 실행하면 main 스키마 아래에 <span class="tm">airlines</span> 표가 나열된다. 필요 없어지면 <span class="tm">DROP TABLE</span>로 지운다.</p>
+  </div>
+  <div class="aside tip">
+    <span class="lbl">도움말</span>
+    <p>새로 만든 <span class="tm">airlines</span> 표가 보이지 않으면 페이지를 새로 고친다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>스키마를 짓고 허문다</span></div>
+<pre><span class="c">-- 표를 지운다</span>
+<span class="k">DROP TABLE</span> my_db.main.airlines;
+
+<span class="c">-- 새 스키마를 만든다. 데이터베이스 이름 뒤에 스키마 이름을 적는다</span>
+<span class="k">CREATE SCHEMA</span> my_db.Titanic
+
+<span class="c">-- 그 스키마 아래로 새 데이터셋을 올린다</span>
+<span class="k">CREATE OR REPLACE TABLE</span> my_db.Titanic.Titanic_tra<span class="rec" title="원서 지면에서 잘린 부분. 본문 서술에 따라 표 이름 Titanic_train과 AS로 복원했다">in AS</span>
+<span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">read_csv_auto</span>([<span class="s">'Titanic_train.csv'</span><span class="rec" title="원서 지면에서 잘린 부분. 목록과 호출을 닫는 부호로 복원했다">]);</span>
+
+<span class="c">-- 스키마를 지운다</span>
+<span class="k">DROP SCHEMA</span> Titanic;
+
+<span class="c">-- 안에 든 것까지 함께 지운다</span>
+<span class="k">DROP SCHEMA</span> Titanic <span class="k">CASCADE</span></pre></div>
+    <figcaption>도판 9-11 ~ 9-14 · 셀을 더하고, Titanic 스키마를 만들고, 그 아래 Titanic_train 표를 올린다</figcaption>
+  </figure>
+  <div class="aside warn">
+    <span class="lbl">주의 — 빈 방부터 허문다</span>
+    <p>스키마 아래에 데이터베이스가 남아 있으면 그 스키마를 지울 수 없다. 표를 먼저 지운 다음 스키마를 지우거나, <span class="tm">DROP … CASCADE</span> 문을 쓴다.</p>
+    <p style="margin-top:10px">덧붙여 두면, 원서 본문은 “스키마 아래에 <strong>데이터베이스</strong>가 있으면 지울 수 없다”고 적는다. 계층으로 보면 스키마 아래에 있는 것은 <strong>표</strong>이므로, 이는 “표”의 오기로 읽힌다. 바로 다음 문장이 “표를 먼저 지우라”고 적고 있어 뜻은 분명하다.</p>
+  </div>
+</section>
+
+<!-- ══════ 三 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">共</div>
+    <div><h2>복사하지 않고 나눈다</h2><p class="sub">SHARING DATABASES</p></div>
+  </div>
+  <div class="col">
+    <p>MotherDuck의 두드러진 기능 하나는 조직 안에서든 공개적으로든 데이터베이스를 사용자와 <strong>공유</strong>하는 능력이다. 예컨대 수백만 행의 큰 데이터셋이 있다면, 팀원마다 그 데이터셋을 자기 계정에 적재하는 대신 <strong>한 번 올려 두고 접근만 나누면</strong> 된다.</p>
+    <p>데이터베이스를 공유하면 사용자는 그것으로 가는 <strong>링크</strong>를 만든다. 사본이 만들어지지 않으므로 효율적인 데이터 관리와 협업이 보장된다. 여기가 이 절의 핵심이다. 나눈다는 것이 곧 복제한다는 뜻이 아니라는 점, 제8장에서 원격 파일을 내려받지 않고 그 자리에서 묻던 그 원리가 사람과 사람 사이로 확장된 셈이다.</p>
+  </div>
+  <ol class="steps">
+    <li>데이터베이스 이름 옆의 세로 점 셋을 누르고 <strong>Share</strong>를 고른다.</li>
+    <li>공유 이름을 지정하고, 조직 구성원과 나눌지 아니면 아무 MotherDuck 사용자와 나눌지 고른다. 원서의 예에서는 공유 이름을 “my_db_WeiMengLee”로 하고 “Anyone with the share link”를 골랐다.</li>
+    <li><strong>Create share</strong> 버튼을 누른다. 공유가 만들어지고 SQL 문이 표시된다.</li>
+    <li>“Shares I've created” 절에 새로 만든 공유가 나타난다.</li>
+  </ol>
+  <div class="aside tip">
+    <span class="lbl">도움말 — 두 가지 접근 범위</span>
+    <p>첫째 접근 선택지인 “Anyone in my organization”은 조직의 모든 구성원과 데이터를 나누게 한다. 작고 협업이 활발한 데이터 팀에서 흔한 사용 사례다.</p>
+  </div>
+  <div class="aside warn">
+    <span class="lbl">주의 — 공유된 데이터베이스는 읽기 전용이다</span>
+    <p>공유된 데이터베이스는 읽기 전용이다. 사용자는 그것을 고칠 수 없다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>공유를 붙이고 이름을 바꾼다</span></div>
+<pre><span class="c">-- Run this snippet to attach database</span>
+<span class="k">ATTACH</span> <span class="s">'md:_share/my_db_WeiMengLee/79ec5e33-a605</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 공유 식별자의 나머지가 지면에 나타나지 않는다">…</span>
+
+<span class="c">-- 받는 쪽에 이미 my_db가 있을 수 있으므로 이름을 바꾸는 편이 낫다</span>
+<span class="k">ATTACH</span> <span class="s">'md:_share/my_db_WML/79ec5e33-a605-4ee2-a3</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span></pre></div>
+    <figcaption>도판 9-19 · 9-20 · 다른 MotherDuck 계정에서 이 문장을 실행하면 공유된 데이터베이스가 my_db_WML로 적재된다</figcaption>
+  </figure>
+  <div class="col">
+    <p>이름을 바꾸는 이 배려가 실무의 흔적이다. 받는 쪽에도 <span class="tm">my_db</span>가 있을 것이므로, 남의 집을 내 마당에 붙일 때는 문패를 갈아 달아야 한다. 제2장의 <span class="tm">ATTACH … as</span>가 여기서 같은 구실을 한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>갱신하고 나열한다</span></div>
+<pre><span class="c">-- 원본이 바뀌었으면 변경을 전파한다</span>
+<span class="k">UPDATE SHARE</span> my_db_WeiMengLee;
+
+<span class="c">-- 지금 나누고 있는 데이터베이스를 본다</span>
+<span class="k">LIST SHARES</span></pre></div>
+    <figcaption>도판 9-21 · 현재 공유 중인 데이터베이스의 목록</figcaption>
+  </figure>
+  <div class="col">
+    <p><span class="tm">UPDATE SHARE</span>가 따로 있다는 사실이 공유의 성격을 알려 준다. 링크는 자동으로 최신을 가리키지 않는다. 원본을 고쳤으면 <strong>전파를 명시적으로 지시해야</strong> 한다. 나눈 것과 나눌 것을 나누어 두는 방식이며, 남이 보고 있는 판본을 내가 임의로 바꾸지 않는다는 예의이기도 하다.</p>
+    <p>특정 사용자에게서 접근을 회수하려면 세로 점 셋을 누르고 <strong>Alter</strong>를 골라 접근 권한을 바꾼다. 공유를 아예 그만두려면 공유 옆의 세로 점 셋을 누르고 <strong>Drop</strong>을 고른다. 공유를 내리면 다른 사용자는 더 이상 그것에 접근하거나 그것을 나눌 수 없다.</p>
+  </div>
+</section>
+
+<!-- ══════ 四 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">建</div>
+    <div><h2>짓고 떼어 낸다</h2><p class="sub">CREATING AND DETACHING DATABASES</p></div>
+  </div>
+  <div class="col">
+    <p>계정에 기본으로 딸려 오는 <span class="tm">my_db</span> 외에 자기 데이터베이스를 만들 수 있다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>만들고 활성으로 삼는다</span></div>
+<pre><span class="c">-- 새 데이터베이스를 만든다. 만들면 main 스키마가 자동으로 딸려 온다</span>
+<span class="k">CREATE DATABASE</span> flights_db;
+
+<span class="c">-- 현재 활성 데이터베이스로 삼는다</span>
+<span class="k">USE</span> flights_db;
+
+<span class="c">-- 쓰지 않는 데이터베이스를 떼어 낸다</span>
+<span class="k">DETACH</span> flights_db;</pre></div>
+    <figcaption>도판 9-25 ~ 9-27 · 새 데이터베이스가 만들어지고, 떼어 낸 것은 “Detached databases” 절에 나열된다</figcaption>
+  </figure>
+  <div class="aside">
+    <span class="lbl">일러두기 — 아직 웹 UI로는 못 만든다</span>
+    <p>현재로서는 SQL 문으로만 새 데이터베이스를 만들 수 있다. 웹 UI를 통한 데이터베이스 생성은 지금 시점에 지원되지 않는다.</p>
+  </div>
+  <div class="col">
+    <p>여러 데이터베이스를 다룰 때는 지금 쓰지 않는 것을 떼어 두는 편이 유익하다. 활성 데이터베이스에 집중하게 되고, 붙어 있는 데이터베이스에 배정된 메모리와 그 밖의 자원이 풀린다. 지역이든 공유된 원격이든 마찬가지다. 다시 붙이려면 떼어 낸 데이터베이스 옆의 세로 점 셋을 누르고 <strong>Attach</strong>를 고른다.</p>
+    <p>떼어 낸다는 개념이 파일을 지우는 것과 다르다는 점을 짚어 둘 만하다. 별채는 그대로 있고 회랑만 걷어 내는 일이다. 제3장의 <span class="tm">ATTACH</span>와 <span class="tm">USE</span>가 이 장에 와서 <span class="tm">DETACH</span>라는 짝을 얻는다.</p>
+  </div>
+</section>
+
+<!-- ══════ 五 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">問</div>
+    <div><h2>질의하고, 오른쪽을 본다</h2><p class="sub">QUERYING YOUR DATABASE</p></div>
+  </div>
+  <div class="col">
+    <p>처음 MotherDuck에 로그인했을 때 셀에 들어 있던 기본 질의를 실행하면, <span class="tm">sample_data</span> 데이터베이스의 <span class="tm">nyc</span> 스키마 안 <span class="tm">service_requests</span> 표에서 URL과 각각의 개수를 뽑아낸다.</p>
+    <p>창의 오른쪽에는 결과의 네 필드에 대한 통계가 보인다. <span class="tm">agency</span>, <span class="tm">complaint_type</span>, <span class="tm">landmark</span>, <span class="tm">resolution_description</span>이다. 필드를 누르면 상세 통계가 표시된다. 예컨대 <span class="tm">agency</span>는 문자열 필드이므로 고유한 기관 이름별 개수의 분포를 보이고, 숫자 필드라면 최대 개수와 최소 개수 같은 요약 통계를 표시한다.</p>
+    <p>이 오른쪽 패널이 이 절의 실질이다. 질의를 실행하면 결과만 오는 것이 아니라 <strong>결과에 대한 요약이 함께 온다</strong>. 제4장의 <span class="tm">describe()</span>와 제7장의 <span class="tm">%sqlcmd profile</span>이 하던 일을 여기서는 부르지 않아도 해 준다.</p>
+    <p>앞서 올린 <span class="tm">Titanic_train</span> 표로 질의를 시도한다. 나이와 승선지 필드가 널이 아닌 모든 승객을 가져온다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>세 토막 이름으로 부른다</span></div>
+<pre><span class="k">SELECT</span>
+    Survived, PClass, Sex, Age
+<span class="k">FROM</span> my_db.Titanic.titanic_train
+<span class="k">WHERE</span> age <span class="k">NOT NULL</span> <span class="k">AND</span> embarked <span class="k">NOT NULL</span></pre></div>
+    <figcaption>도판 9-31 ~ 9-35 · 질의 결과와, 오른쪽 필드 목록에서 각 필드를 누를 때 나타나는 그림들</figcaption>
+  </figure>
+  <div class="cmp">
+    <table>
+      <thead><tr><th>필드</th><th>오른쪽에 나타나는 것</th></tr></thead>
+      <tbody>
+        <tr><td>Survived</td><td>생존자와 비생존자의 수를 보이는 히스토그램</td></tr>
+        <tr><td>Pclass</td><td>등급별 승객 수를 보이는 히스토그램</td></tr>
+        <tr><td>Sex</td><td>남성과 여성 승객 수를 보이는 막대 차트</td></tr>
+        <tr><td>Age</td><td>나이의 분포와 그 필드의 요약 통계를 함께 표시</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p>제7장에서 <span class="tm">%sqlplot histogram --column age --bins 10 --table titanic</span>이라 적어야 했던 그림이, 여기서는 필드 이름을 누르는 것으로 나온다. 편의가 한 걸음 더 나아간 자리다. 다만 제7장의 절충이 여기서도 그대로 남는다. 손이 닿는 만큼만 정할 수 있다.</p>
+  </div>
+</section>
+
+<!-- ══════ 六 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">智</div>
+    <div><h2>물으면 문장을 지어 준다</h2><p class="sub">WRITING SQL USING AI</p></div>
+  </div>
+  <div class="col">
+    <p>MotherDuck의 흥미로운 기능 하나는 AI 능력이다. 이 AI 함수와 프라그마는 자동화된 과제 수행과 분석 작업 흐름 최적화를 위한 진전된 도구를 제공한다. 질의 생성을 간결하게 하고 데이터 분석 과제를 자동화하며, 데이터베이스 환경 안에서 곧바로 기계학습 알고리듬을 활용하게 한다.</p>
+    <p>둘의 차이를 밝혀 둔다. MotherDuck의 <strong>함수</strong>는 SQL 질의 안에서 특정 과제나 계산을 수행하고, <strong>프라그마</strong>는 과제를 직접 실행하지 않으면서 데이터베이스의 동작과 최적화를 통제하는 지시를 제공한다.</p>
+  </div>
+  <div class="cmp">
+    <table>
+      <thead><tr><th>함수 · 프라그마</th><th>하는 일</th></tr></thead>
+      <tbody>
+        <tr><td>prompt_sql()</td><td>물음에 대한 SQL 문을 생성하는 함수</td></tr>
+        <tr><td>prompt_query</td><td>데이터에 관한 물음에 답하는 프라그마</td></tr>
+        <tr><td>prompt_fixup()</td><td>SQL 질의를 교정하고 고치는 함수</td></tr>
+        <tr><td>prompt_fix_line()</td><td>SQL 질의를 한 줄씩 교정하고 고치는 함수</td></tr>
+        <tr><td>prompt_schema()</td><td>데이터베이스의 내용을 이해하도록 돕는 함수</td></tr>
+        <tr><td>prompt_explain()</td><td>SQL 질의를 이해하도록 돕는 함수</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p>목록을 훑어보면 여섯 항목이 두 갈래로 갈린다. <strong>짓는 것</strong>(<span class="tm">prompt_sql</span>, <span class="tm">prompt_query</span>)과 <strong>읽고 고치는 것</strong>(<span class="tm">prompt_fixup</span>, <span class="tm">prompt_fix_line</span>, <span class="tm">prompt_schema</span>, <span class="tm">prompt_explain</span>)이다. 넷이 후자라는 사실이 뜻깊다. 문장을 지어 주는 일보다 이미 있는 문장을 설명하고 고치는 일에 무게가 실려 있다.</p>
+
+    <h3>첫째 예 — 홀로 탄 승객 중 몇이 살았는가</h3>
+    <p>타이타닉에서 혼자 탄 승객 가운데 몇이 생존했는지 알고 싶다고 하자. <span class="tm">CALL</span> 문으로 <span class="tm">prompt_sql()</span> 함수를 부른다. 묻기 전에 <span class="tm">USE</span> 문으로 활성 데이터베이스를 정해 두어야 한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>물음 → 문장 → 값</span></div>
+<pre><span class="k">USE</span> my_db;
+<span class="k">CALL</span> <span class="f">prompt_sql</span>(<span class="s">"How many people who were alone s</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 물음 문장의 나머지가 지면에 나타나지 않는다">…</span>
+
+<span class="c">-- 생성된 문장을 실행한다</span>
+<span class="k">SELECT</span> <span class="f">COUNT</span>(*) <span class="k">FROM</span> Titanic.Titanic_train <span class="k">WHERE</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 홀로 탄 승객과 생존을 가리는 조건이 지면에 나타나지 않는다">…</span>
+
+<span class="c">-- 결과는 163이다</span></pre></div>
+    <figcaption>도판 9-36 · prompt_sql() 함수가 생성한 SQL 문. 실행하면 163이 나온다</figcaption>
+  </figure>
+
+  <div class="col">
+    <h3>둘째 예 — 연령대별 생존 확률</h3>
+    <p>연령대마다 생존 확률을 계산해 어느 연령대의 생존율이 가장 높았는지 알아본다. 이 예에서는 생성된 SQL 문이 지면에 <strong>온전히</strong> 인쇄되어 있다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>생성된 문장 · 원서 인쇄분 전문</span></div>
+<pre><span class="k">CALL</span> <span class="f">prompt_sql</span>(<span class="s">"Calculate the survival chance fo</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 물음 문장의 나머지가 지면에 나타나지 않는다">…</span>
+
+<span class="c">-- 함수가 돌려준 SQL 문</span>
+<span class="k">SELECT</span>
+    <span class="k">CASE</span>
+        <span class="k">WHEN</span> Age &lt; <span class="n">10</span> <span class="k">THEN</span> <span class="s">'0-9'</span>
+        <span class="k">WHEN</span> Age <span class="k">BETWEEN</span> <span class="n">10</span> <span class="k">AND</span> <span class="n">19</span> <span class="k">THEN</span> <span class="s">'10-19'</span>
+        <span class="k">WHEN</span> Age <span class="k">BETWEEN</span> <span class="n">20</span> <span class="k">AND</span> <span class="n">29</span> <span class="k">THEN</span> <span class="s">'20-29'</span>
+        <span class="k">WHEN</span> Age <span class="k">BETWEEN</span> <span class="n">30</span> <span class="k">AND</span> <span class="n">39</span> <span class="k">THEN</span> <span class="s">'30-39'</span>
+        <span class="k">WHEN</span> Age <span class="k">BETWEEN</span> <span class="n">40</span> <span class="k">AND</span> <span class="n">49</span> <span class="k">THEN</span> <span class="s">'40-49'</span>
+        <span class="k">WHEN</span> Age <span class="k">BETWEEN</span> <span class="n">50</span> <span class="k">AND</span> <span class="n">59</span> <span class="k">THEN</span> <span class="s">'50-59'</span>
+        <span class="k">WHEN</span> Age <span class="k">BETWEEN</span> <span class="n">60</span> <span class="k">AND</span> <span class="n">69</span> <span class="k">THEN</span> <span class="s">'60-69'</span>
+        <span class="k">WHEN</span> Age &gt;= <span class="n">70</span> <span class="k">THEN</span> <span class="s">'70+'</span>
+        <span class="k">ELSE</span> <span class="s">'Unknown'</span>
+    <span class="k">END</span> <span class="k">AS</span> age_group,
+    <span class="f">AVG</span>(Survived) * <span class="n">100</span> <span class="k">AS</span> survival_chance
+<span class="k">FROM</span> Titanic.Titanic_train
+<span class="k">GROUP BY</span> age_group
+<span class="k">ORDER BY</span> age_group;</pre></div>
+    <figcaption>도판 9-37 · 이 질의를 실행하면 타이타닉이 침몰할 때 아동의 생존 가능성이 가장 높았음이 드러난다</figcaption>
+  </figure>
+  <div class="aside tip">
+    <span class="lbl">검토자의 주석 — 제7장의 그 질의와 견주어 본다</span>
+    <p>제7장에서 사람이 손으로 쓴 연령대 질의는 <span class="tm">0-9</span>부터 <span class="tm">50-59</span>까지 여섯 구간에 <span class="tm">'60+'</span>를 두었고, 부질의로 <span class="tm">AgeGroup</span>을 만든 뒤 겉에서 집계했다. 여기서 AI가 지은 문장은 구간을 <span class="tm">60-69</span>와 <span class="tm">'70+'</span>로 더 나누고, <span class="tm">ELSE 'Unknown'</span>을 두어 나이가 없는 행을 따로 담았으며, 부질의 없이 <span class="tm">GROUP BY age_group</span>으로 별칭을 곧바로 묶는다.</p>
+    <p style="margin-top:10px">눈여겨볼 것은 <span class="tm">AVG(Survived) * 100</span>이다. 생존 여부가 0과 1이므로 평균이 곧 비율이 된다. 제5장이 세 번 되풀어 가르친 그 교훈, 세는 것보다 나누는 것이 결론을 정한다는 말을 이 한 줄이 문법으로 구현한다.</p>
+  </div>
+  <div class="col">
+    <h3>셋째와 넷째 예 — 값만 받기, 설명 받기</h3>
+    <p>SQL 문이 아니라 결과만 원한다면 <span class="tm">prompt_query</span> 프라그마를 쓴다. <span class="tm">airlines</span> 표에 항공사가 몇 개인지 물으면 <strong>14</strong>를 돌려준다. 제2장에서부터 여덟 장에 걸쳐 함께 온 그 열네 항공사다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>prompt_query · prompt_explain</span></div>
+<pre><span class="c">-- 문장 없이 값만 받는다</span>
+<span class="k">PRAGMA</span> <span class="f">prompt_query</span>(<span class="s">'How many airlines are there</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 물음 문장의 나머지가 지면에 나타나지 않는다">…</span>
+
+<span class="c">-- 결과는 14다</span></pre></div>
+    <figcaption>도판 9-38 · prompt_query 프라그마가 결과를 곧바로 돌려준다</figcaption>
+  </figure>
+  <div class="col">
+    <p>마지막으로, 앞의 나이와 생존에 관한 SQL 질의가 무엇을 하는지 알고 싶다면 <span class="tm">prompt_explain()</span> 함수를 쓴다. 원서에 인쇄된 설명은 다음과 같다.</p>
+  </div>
+  <div class="aside">
+    <span class="lbl">prompt_explain()이 돌려준 설명 · 원서 인쇄분</span>
+    <p>이 SQL 질의는 타이타닉의 승객을 나이에 따라 집단(‘0-9’, ‘10-19’, ‘20-29’ 등)으로 분류하고, 각 연령대의 평균 생존율을 계산해 백분율로 제시한다. 승객의 나이 범위를 나타내는 <span class="tm">age_group</span>을 만들고, 각 연령대에 대해 <span class="tm">Survived</span> 열을 평균해 <span class="tm">survival_chance</span>를 계산한다. 그 결과를 <span class="tm">age_group</span>으로 묶고 <span class="tm">age_group</span>으로 정렬한다.</p>
+  </div>
+  <div class="col">
+    <p>이 설명이 정확하다는 점은 앞의 SQL 문과 대조해 확인된다. 다만 눈금을 하나 달아 두자면, 설명은 <strong>질의가 무엇을 하는지</strong>는 옳게 말하지만 <strong>그 결과를 어떻게 읽어야 하는지</strong>는 말하지 않는다. <span class="tm">ELSE 'Unknown'</span> 집단이 나이가 없는 행을 담고 있어 그 집단의 <span class="tm">survival_chance</span>는 다른 집단과 같은 뜻으로 읽을 수 없다는 것, 그런 판단은 여전히 사람의 몫이다.</p>
+  </div>
+</section>
+
+<!-- ══════ 七 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">線</div>
+    <div><h2>명령줄로 구름에 붙는다</h2><p class="sub">USING MOTHERDUCK THROUGH THE DUCKDB CLI</p></div>
+  </div>
+  <div class="col">
+    <p>웹 UI 대신 명령줄에서 곧바로 질의를 실행하고 싶을 때가 있다. 계속하기 전에 DuckDB를 최신 판본으로 갱신한다. <strong>DuckDB 1.0.0 이상의 안정 릴리스</strong>를 써야 한다.</p>
+    <p>제3장에서 다룬 그 프롬프트가 여기서 돌아온다. 다만 이번에는 <span class="tm">ATTACH</span>가 파일이 아니라 <span class="tm">'md:'</span>를 받는다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>DuckDB CLI</span><span>ATTACH 'md:' · SSO 인증</span></div>
+<pre><span class="pr">$ </span>duckdb
+<span class="out">v1.0.0 1f98600c2c
+Enter ".help" for usage hints.
+Connected to a transient in-memory database.
+Use ".open FILENAME" to reopen on a persistent da</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="pr">D </span><span class="k">ATTACH</span> <span class="s">'md:'</span>;
+<span class="out">Attempting to automatically open the SSO authoriz</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">1. Please open this link to login into your accou</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">2. Enter the following code: CQMP-DQHV</span></pre></div>
+    <figcaption>도판 9-40 ~ 9-42 · 생성된 코드를 브라우저의 확인 화면과 맞추고 Confirm을 누른다. 로그인되어 있지 않으면 로그인하고, MotherDuck 확장의 접근 요청에 Accept를 누른다</figcaption>
+  </figure>
+  <figure>
+    <div class="code"><div class="bar"><span>DuckDB CLI</span><span>토큰을 받는다</span></div>
+<pre><span class="out">Token successfully retrieved                  ✅
+You can display the token and store it as an envi</span><span class="rec" title="원서 지면에서 잘린 부분. 본문 취지에 따라 환경 변수로 저장해 다시 로그인하지 않아도 되게 한다는 안내다">ronment variable to avoid</span>
+<span class="out">having to log in again:
+  PRAGMA PRINT_MD_TOKEN;</span>
+<span class="out">100% ▕███████████████████████████████████████████</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="pr">D </span></pre></div>
+    <figcaption>PRAGMA PRINT_MD_TOKEN으로 토큰을 표시해 환경 변수에 저장하면 다시 로그인하지 않아도 된다</figcaption>
+  </figure>
+  <div class="col">
+    <p>제7장과 제8장에서 되풀어 나온 그 물음이 여기서 세 번째로 등장한다. <strong>열쇠를 어디에 두는가.</strong> 제7장은 환경 변수·<span class="tm">.ini</span>·keyring이었고, 제8장은 <span class="tm">CONFIG</span>·<span class="tm">CREDENTIAL_CHAIN</span>이었고, 여기서는 SSO로 받은 토큰을 환경 변수에 둔다. 세 도구가 같은 문제를 각자의 어법으로 푼다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>DuckDB CLI</span><span>둘러보기 · 원서 인쇄분</span></div>
+<pre><span class="pr">D </span><span class="k">SHOW</span> databases;
+<span class="out">┌───────────────┐
+│ database_name │
+│    varchar    │
+├───────────────┤
+│ memory        │
+│ my_db         │
+│ sample_data   │
+└───────────────┘</span>
+
+<span class="pr">D </span><span class="k">SELECT</span> <span class="f">current_database</span>();
+<span class="out">┌────────────────────┐
+│ current_database() │
+│      varchar       │
+├────────────────────┤
+│ memory             │
+└────────────────────┘</span>
+
+<span class="pr">D </span><span class="k">SELECT</span> <span class="f">current_schema</span>();
+<span class="out">┌──────────────────┐
+│ current_schema() │
+│     varchar      │
+├──────────────────┤
+│ main             │
+└──────────────────┘</span></pre></div>
+    <figcaption>붙었으되 활성 데이터베이스는 여전히 memory다. 구름의 데이터베이스가 목록에 나타났을 뿐이다</figcaption>
+  </figure>
+  <figure>
+    <div class="code"><div class="bar"><span>DuckDB CLI</span><span>세 토막 이름으로 · 그리고 USE로 줄인다</span></div>
+<pre><span class="pr">D </span><span class="k">SELECT</span>
+     Survived, PClass, Sex, Age
+  <span class="k">FROM</span> my_db.Titanic.titanic_train
+  <span class="k">WHERE</span> age <span class="k">NOT NULL</span> <span class="k">AND</span> embarked <span class="k">NOT NULL</span>;
+<span class="out">┌──────────┬────────┬─────────┬────────┐
+│ Survived │ Pclass │   Sex   │  Age   │
+│  int64   │ int64  │ varchar │ double │
+├──────────┼────────┼─────────┼────────┤
+│        0 │      3 │ male    │   22.0 │
+│        1 │      1 │ female  │   38.0 │
+│        1 │      3 │ female  │   26.0 │
+│        · │      · │   ·     │     ·  │
+│        · │      · │   ·     │     ·  │
+│        · │      · │   ·     │     ·  │
+│        1 │      1 │ female  │   19.0 │
+│        1 │      1 │ male    │   26.0 │
+│        0 │      3 │ male    │   32.0 │
+├──────────┴────────┴─────────┴────────┤
+│ 712 rows (40 shown)        4 columns  │
+└──────────────────────────────────────┘</span>
+
+<span class="c">-- 데이터베이스와 스키마를 함께 정해 두면 표 이름만으로 부를 수 있다</span>
+<span class="pr">D </span><span class="k">USE</span> my_db.Titanic;
+
+<span class="pr">D </span><span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span> titanic_train;
+<span class="out">┌──────────────┐
+│ count_star() │
+│    int64     │
+├──────────────┤
+│          891 │
+└──────────────┘</span></pre></div>
+  </figure>
+  <div class="rs">
+    <table>
+      <thead><tr><th>물음</th><th>값</th><th>읽어 낼 것</th></tr></thead>
+      <tbody>
+        <tr><td>표 전체의 행 수</td><td class="num">891</td><td>타이타닉 훈련 집합의 전체 승객 수</td></tr>
+        <tr><td>나이와 승선지가 널이 아닌 행</td><td class="num">712</td><td>두 필드가 모두 채워진 승객</td></tr>
+        <tr><td>둘의 차</td><td class="num"><span class="drv" title="891 - 712 = 179. 두 인쇄값에서 검토자가 계산했다">179</span></td><td>나이나 승선지 가운데 하나 이상이 비어 있는 행</td></tr>
+      </tbody>
+    </table>
+    <figcaption>두 수치는 원서 지면에 인쇄된 것이고, 차이는 검토자가 계산했다. 제7장에서 같은 데이터에 같은 조건을 걸었으므로, 그 장의 히스토그램도 712행 위에서 그려진 것이다</figcaption>
+  </div>
+  <div class="col">
+    <p><span class="tm">USE my_db.Titanic</span> 한 줄이 데이터베이스와 스키마를 동시에 정한다는 점을 눈여겨본다. 그러면 세 토막이던 이름이 한 토막으로 줄어든다. 번지를 미리 적어 두면 이름만 부를 수 있다는 것, 앞 절에서 목적지를 지정해야 했던 사정의 반대편이다.</p>
+
+    <h3>명령줄로 짓기</h3>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>DuckDB CLI</span><span>구름에 올리고 짓는다</span></div>
+<pre><span class="c">-- 지역 CSV를 구름의 my_db.main에 올린다</span>
+<span class="pr">D </span><span class="k">CREATE OR REPLACE TABLE</span> my_db.main.airports <span class="k">AS</span>
+  <span class="k">FROM</span> <span class="f">read_csv_auto</span>([<span class="s">'airports.csv'</span>]);
+
+<span class="c">-- 새 데이터베이스 · 스키마 · 표를 짓는다</span>
+<span class="pr">D </span><span class="k">CREATE DATABASE</span> new_db;
+<span class="pr">D </span><span class="k">USE</span> new_db;
+<span class="pr">D </span><span class="k">CREATE SCHEMA</span> new_schema;
+<span class="pr">D </span><span class="k">USE</span> new_schema;
+<span class="pr">D </span><span class="k">CREATE TABLE</span> new_schema.example_table (
+        id <span class="k">INTEGER</span>,
+        name <span class="k">TEXT</span>
+    );
+<span class="pr">D </span><span class="k">INSERT INTO</span> new_schema.example_table (id, name<span class="rec" title="원서 지면에서 잘린 부분. 아래 결과에 따라 VALUES (1, 'Sample Data');로 복원했다">) VALUES (1, 'Sample Data');</span>
+<span class="pr">D </span><span class="k">SELECT</span> * <span class="k">FROM</span> new_schema.example_table;
+<span class="out">┌───────┬─────────────┐
+│  id   │    name     │
+│ int32 │   varchar   │
+├───────┼─────────────┤
+│     1 │ Sample Data │
+└───────┴─────────────┘</span></pre></div>
+    <figcaption>도판 9-43 · 9-44 · airports 표와 new_db 데이터베이스가 MotherDuck에 만들어졌음을 웹 UI에서 확인할 수 있다</figcaption>
+  </figure>
+  <div class="aside warn">
+    <span class="lbl">주의 — 파일의 자리</span>
+    <p><span class="tm">airports.csv</span> 파일이 DuckDB CLI를 띄운 <strong>그 디렉터리</strong>에 있어야 한다. 질의문은 구름을 가리키지만 파일 이름은 여전히 내 디스크를 가리킨다. 이 절이 하이브리드 질의의 예고인 셈이다.</p>
+  </div>
+</section>
+
+<!-- ══════ 八 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">合</div>
+    <div><h2>합수 · 지역과 구름이 한 문장에서</h2><p class="sub">PERFORMING HYBRID QUERIES</p></div>
+  </div>
+  <div class="col">
+    <p>MotherDuck의 아주 멋진 기능 하나는 <strong>하이브리드 질의</strong>를 수행하는 능력이다. 지역 DuckDB 데이터베이스를 MotherDuck의 데이터베이스와 나란히 질의하게 한다.</p>
+    <p>앞서 MotherDuck에 올려 둔 <span class="tm">airlines</span> 표의 내용을 본다. 열네 행 두 열이다. 제3장에서 CLI로 처음 만났고 제5장에서 조인의 재료가 되었던 그 목록이, 이번에는 구름 위에서 돌아온다.</p>
+  </div>
+  <div class="rs">
+    <table>
+      <thead><tr><th>IATA_CODE</th><th>AIRLINE</th></tr></thead>
+      <tbody>
+        <tr class="dt"><td>varchar</td><td>varchar</td></tr>
+        <tr><td>UA</td><td>United Air Lines Inc.</td></tr>
+        <tr><td>AA</td><td>American Airlines Inc.</td></tr>
+        <tr><td>US</td><td>US Airways Inc.</td></tr>
+        <tr><td>F9</td><td>Frontier Airlines Inc.</td></tr>
+        <tr><td>B6</td><td>JetBlue Airways</td></tr>
+        <tr><td>OO</td><td>Skywest Airlines Inc.</td></tr>
+        <tr><td>AS</td><td>Alaska Airlines Inc.</td></tr>
+        <tr><td>NK</td><td>Spirit Air Lines</td></tr>
+        <tr><td>WN</td><td>Southwest Airlines Co.</td></tr>
+        <tr><td>DL</td><td>Delta Air Lines Inc.</td></tr>
+        <tr><td>EV</td><td>Atlantic Southeast Airlines</td></tr>
+        <tr><td>HA</td><td>Hawaiian Airlines Inc.</td></tr>
+        <tr><td>MQ</td><td>American Eagle Airlines Inc.</td></tr>
+        <tr><td>VX</td><td>Virgin America</td></tr>
+        <tr><td class="foot" colspan="2">14 rows &nbsp;&nbsp; 2 columns &nbsp;·&nbsp; SELECT * from my_db.main.airlines;</td></tr>
+      </tbody>
+    </table>
+    <figcaption>구름 위의 airlines 표. 원서 지면에 온전히 인쇄되어 있다</figcaption>
+  </div>
+  <div class="col">
+    <p>다른 한편에는 제2장에서 처음 쓴 <span class="tm">flights.csv</span>가 있다. 이를 지역 DuckDB 데이터베이스로 적재하되, 처음 열 행과 두 열만 가져온다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>DuckDB CLI</span><span>지역 파일 · 원서 인쇄분</span></div>
+<pre><span class="pr">D </span><span class="k">SELECT</span> AIRLINE, FLIGHT_NUMBER <span class="k">FROM</span> <span class="s">'./flights.c</span><span class="rec" title="원서 지면에서 잘린 부분. 파일 이름과 LIMIT 10을 포함하는 것으로 읽힌다. 결과가 10행이므로 행 수 제한이 걸려 있다">sv' LIMIT 10;</span>
+<span class="out">┌─────────┬───────────────┐
+│ AIRLINE │ FLIGHT_NUMBER │
+│ varchar │     int64     │
+├─────────┼───────────────┤
+│ AS      │            98 │
+│ AA      │          2336 │
+│ US      │           840 │
+│ AA      │           258 │
+│ AS      │           135 │
+│ DL      │           806 │
+│ NK      │           612 │
+│ US      │          2013 │
+│ AA      │          1112 │
+│ DL      │          1173 │
+├─────────┴───────────────┤
+│ 10 rows       2 columns │
+└─────────────────────────┘</span></pre></div>
+  </figure>
+  <div class="col">
+    <p>이 표에는 항공사 코드만 있어 이름이 없다. 각 행에 항공사 이름을 표시하려면, 이름을 가진 <span class="tm">airlines</span> 표와 조인해야 한다. 그런데 그 표는 <strong>구름 위에 있다</strong>. 하이브리드 질의가 그 일을 한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>DuckDB CLI</span><span>합수 · 하이브리드 질의</span></div>
+<pre><span class="pr">D </span><span class="k">SELECT</span> f.AIRLINE, f.FLIGHT_NUMBER, a.AIRLINE
+  <span class="k">FROM</span> (<span class="k">SELECT</span> AIRLINE, FLIGHT_NUMBER <span class="k">FROM</span> <span class="s">'./fli</span><span class="rec" title="원서 지면에서 잘린 부분. 앞의 질의와 대조해 ghts.csv' LIMIT 10) AS f로 복원했다">ghts.csv' LIMIT 10) AS f</span>
+  <span class="k">JOIN</span> my_db.main.airlines <span class="k">AS</span> a
+  <span class="k">ON</span> f.AIRLINE = a.IATA_CODE;</pre></div>
+  </figure>
+  <div class="rs">
+    <table>
+      <thead><tr><th>AIRLINE</th><th>FLIGHT_NUMBER</th><th>AIRLINE</th></tr></thead>
+      <tbody>
+        <tr class="dt"><td>varchar</td><td>int64</td><td>varchar</td></tr>
+        <tr><td>AS</td><td class="num">98</td><td>Alaska Airlines Inc.</td></tr>
+        <tr><td>AA</td><td class="num">2336</td><td>American Airlines Inc<span class="drv" title="원서 지면에서 오른쪽이 잘려 있다. 구름 airlines 표의 인쇄분과 대조해 마침표까지 복원했다">.</span></td></tr>
+        <tr><td>US</td><td class="num">840</td><td>US Airways Inc.</td></tr>
+        <tr><td>AA</td><td class="num">258</td><td>American Airlines Inc<span class="drv" title="같은 근거로 복원했다">.</span></td></tr>
+        <tr><td>AS</td><td class="num">135</td><td>Alaska Airlines Inc.</td></tr>
+        <tr><td>DL</td><td class="num">806</td><td>Delta Air Lines Inc.</td></tr>
+        <tr><td>NK</td><td class="num">612</td><td>Spirit Air Lines</td></tr>
+        <tr><td>US</td><td class="num">2013</td><td>US Airways Inc.</td></tr>
+        <tr><td>AA</td><td class="num">1112</td><td>American Airlines Inc<span class="drv" title="같은 근거로 복원했다">.</span></td></tr>
+        <tr><td>DL</td><td class="num">1173</td><td>Delta Air Lines Inc.</td></tr>
+        <tr><td class="foot" colspan="3">10 rows &nbsp;&nbsp; 3 columns &nbsp;·&nbsp; 짝을 찾지 못한 코드는 없다</td></tr>
+      </tbody>
+    </table>
+    <figcaption>하이브리드 질의의 결과. 열 행 전부가 구름의 열네 항공사 가운데 짝을 찾았다. 지면에서 잘린 세 자리의 마침표만 검토자가 대조해 채웠다</figcaption>
+  </div>
+  <div class="col">
+    <p>하이브리드 질의의 결과는 지역 DuckDB 데이터베이스와 MotherDuck에 호스팅된 표의 데이터를 결합해, 항공사 코드와 그에 대응하는 온전한 항공사 이름을 함께 담은 종합적인 시야를 제공한다. 이 접근은 MotherDuck의 하이브리드 질의 능력을 활용해, 서로 다른 원천의 데이터를 <strong>한 번의 질의 실행</strong>으로 매끄럽게 통합하고 분석한다.</p>
+    <p>여기서 짚어 둘 것은 <strong>질의문에 어느 쪽인지가 드러나지 않는다</strong>는 점이다. <span class="tm">'./flights.csv'</span>는 내 디스크이고 <span class="tm">my_db.main.airlines</span>는 구름인데, 문법상 둘은 그냥 조인의 양쪽 항이다. 서론에서 말한 이중 실행(Dual Execution)이 그것을 감당한다. 질의의 어느 부분을 어디서 실행할지는 도구가 정한다.</p>
+    <p>두 물이 만나는 자리에서 물빛이 한동안 갈려 보이다 이내 한 물이 되는 것처럼, 두 원천의 경계는 결과표에 남지 않는다. 답사기의 마지막 장면으로 이만한 것이 없다.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════ 맺음 ══════ -->
+<div class="closing rv">
+  <div class="closing-in">
+    <p class="kicker" style="margin-bottom:22px"><i></i>맺음말 · 제9장과 책 전체의 결론</p>
+    <blockquote>DuckDB는 분석 데이터베이스 시스템의 영역에서 뜻있는 진전을 대표하며, 고성능과 유연성과 쓰임의 편의를 특유의 방식으로 결합해 제공한다.</blockquote>
+    <div class="col">
+      <p>제9장은 MotherDuck으로 데이터베이스를 관리하고 다루는 법에 대한 종합적인 이해를 제공했다. 새 데이터를 더하고, 복잡한 질의를 수행하고, AI 기능을 활용해 데이터 분석 과정을 단순하게 하고 향상시키는 법을 익혔다. 아울러 웹 UI와 명령줄 양쪽에서 질의를 실행하는 법을 다루어, 서로 다른 환경을 매끄럽게 오갈 수 있게 되었다.</p>
+      <p>그래서 MotherDuck이 답인가. 데이터 관리를 단순하게 하고 질의 성능을 높이며 지역과 원격 데이터베이스와 매끄럽게 통합되는 강력한 클라우드 기반 분석 플랫폼을 찾는다면, MotherDuck이 이상적인 선택일 수 있다. 서버 없는 구조와 AI 능력, 사용자 친화적 인터페이스의 결합이 그것을 현대 데이터 분석의 튼튼한 도구로 만든다.</p>
+      <p>결론적으로, DuckDB는 분석 데이터베이스 시스템의 영역에서 뜻있는 진전을 대표하며 고성능과 유연성과 쓰임의 편의를 특유의 방식으로 결합해 제공한다. 이 책 전체에 걸쳐, <strong>열 기반 저장과 벡터화 실행과 in-process 구조</strong>에 뿌리를 둔 DuckDB의 효율적인 설계가 복잡한 질의를 놀라운 속도로 감당하게 하는 모습을 살폈다. pandas와 Polars 같은 여러 데이터 프레임워크와의 매끄러운 통합, 폭넓은 데이터 형식의 지원, 기존 작업 흐름 안으로의 간명한 배치도 파고들었다.</p>
+    </div>
+
+    <div class="col" style="margin-top:2.6em">
+      <h3 style="margin-top:0">답사를 마치며 — 아홉 권의 낙관</h3>
+      <p>아홉 장을 걸어왔다. 각 장을 한 글자로 적어 두면 이 책의 구조가 한눈에 든다.</p>
+    </div>
+    <div class="series">
+      <div><span class="g" style="color:#2F6E5F">列</span><span class="vn">권 一 · 기둥</span><span class="t">오리의 집은 기둥으로 서 있다</span><span class="d">왜 이 도구인가. 열 기반 저장이라는 주초</span></div>
+      <div><span class="g" style="color:#2B4F7A">門</span><span class="vn">권 二 · 문</span><span class="t">네 개의 문으로 들어온다</span><span class="d">CSV·Parquet·엑셀·MySQL. 문턱의 높낮이</span></div>
+      <div><span class="g" style="color:#56407A">D</span><span class="vn">권 三 · 칸</span><span class="t">D 프롬프트 앞에 서다</span><span class="d">맨손의 CLI와 장서각 네 칸의 SQL</span></div>
+      <div><span class="g" style="color:#3F5730">待</span><span class="vn">권 四 · 때</span><span class="t">미루는 것이 아끼는 것이다</span><span class="d">Polars의 지연 평가. 언제 읽기 시작하는가</span></div>
+      <div><span class="g" style="color:#78304A">圖</span><span class="vn">권 五 · 자리</span><span class="t">지도를 펴고 읽는다</span><span class="d">지리공간과 기술 분석. 나누는 일이 결론을 정한다</span></div>
+      <div><span class="g" style="color:#8A5A1E">函</span><span class="vn">권 六 · 겹</span><span class="t">함 속에 함이 있다</span><span class="d">JSON의 중첩. 배열은 눕히고 객체는 연다</span></div>
+      <div><span class="g" style="color:#44515C">%</span><span class="vn">권 七 · 야장</span><span class="t">야장에 바로 적는다</span><span class="d">JupySQL. 계산을 저쪽에 떠넘긴다</span></div>
+      <div><span class="g" style="color:#17646E">拓</span><span class="vn">권 八 · 탁본</span><span class="t">돌을 옮기지 않고 탁본을 뜬다</span><span class="d">원격 데이터. 필요한 기둥만 통신선을 탄다</span></div>
+      <div class="now"><span class="g" style="color:#A2331F">合</span><span class="vn">권 九 · 합수</span><span class="t">두 물이 한 문장에서 만난다</span><span class="d">MotherDuck. 지역과 구름의 경계가 결과표에 남지 않는다</span></div>
+    </div>
+
+    <div class="col" style="margin-top:2.6em">
+      <p style="color:var(--meok-soft)">아홉 권을 되짚으면 한 가지가 유난히 눈에 띈다. <strong>제1장의 주장이 네 번 되풀어 값을 한다는 것</strong>이다. 데이터를 열 단위 기둥으로 세워 둔다는 그 한 가지 결정이, 제1장에서는 디스크에서 읽는 양을 줄였고, 제2장에서는 Parquet이라는 형식의 성격이 되었고, 제4장에서는 메모리에 올리는 양을 줄였고, 제8장에서는 통신선을 타고 오는 양을 줄였다. 층위가 바뀔 때마다 아끼는 것의 이름이 달라지지만 원리는 하나다.</p>
+      <p style="color:var(--meok-soft)">또 한 가지. <strong>같은 물음이 도구를 바꿀 때마다 다른 이름으로 되돌아온다.</strong> 표를 나열하는 일은 <span class="tm">.table</span>이었다가 <span class="tm">%sqlcmd tables</span>가 되고, 통계를 내는 일은 <span class="tm">describe()</span>였다가 <span class="tm">%sqlcmd profile</span>이 되고 마침내 화면 오른쪽의 패널이 된다. 열쇠를 어디에 두는가는 세 장에 걸쳐 세 가지 어법으로 물어졌다. 도구를 익히는 일이 결국 <strong>같은 물음의 여러 이름을 알아 두는 일</strong>이라는 사정, 답사자가 같은 양식의 건물을 지역마다 다른 이름으로 부르는 것과 다르지 않다.</p>
+      <p style="color:var(--meok-soft)">원저자는 이 책이 독자에게 DuckDB의 능력을 온전히 활용할 지식과 자신감을 갖추어 주었기를, 그리하여 효율적인 데이터 처리와 분석의 새로운 가능성이 열리기를 바란다고 적으며 책을 닫는다. 답사기도 여기서 붓을 놓는다. 기둥에서 시작해 합수에서 끝났다. 좋은 구조는 어느 층위에서든 값을 하고, 좋은 기록은 다음 사람이 그 자리를 다시 찾아갈 수 있게 한다.</p>
+    </div>
+    <p style="margin-top:44px"><span class="fin">終</span></p>
+  </div>
+</div>
+
+<footer>
+  <span>DuckDB: Up and Running · Wei-Meng Lee · O'Reilly Media, 2024 — 제9장 「Using DuckDB in the Cloud with MotherDuck」 검토 기록 · 아홉 권으로 완결</span>
+  <span>점선 밑줄은 지면에서 잘려 복원한 부분, …는 복원하지 않은 부분, 표의 점선 글자는 대조해 채운 값이다</span>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    items.forEach(function(el){ el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, {threshold:0.05, rootMargin:'0px 0px -8% 0px'});
+    items.forEach(function(el){ io.observe(el); });
+  }
+})();
+</script>
+</body>
+</html>

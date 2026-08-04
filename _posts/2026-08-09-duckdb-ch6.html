@@ -1,0 +1,1303 @@
+---
+layout: null
+title: "Using DuckDB with JSON Files"
+date: 2026-08-09 
+categories: [artificial intelligence]
+tags: [artificial general intelligence, data management]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>함 속에 함이 있다 — DuckDB 답사기 제6장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 이 권의 구조색은 금동(金銅) 사리함의 호박빛이다.
+     금색 계열이 구조색으로 올라섰으므로, 강조색은 치자금에서 먹청으로 바꾼다 */
+  --hoebyeok:#E7E5DE;
+  --hanji:#F3F1EA;
+  --meok:#1A1815;
+  --meok-soft:#403C36;
+  --hobak:#8A5A1E;
+  --hobak-dk:#6B4413;
+  --juchil:#A2331F;
+  --meokcheong:#2C5470;
+  --line:rgba(26,24,21,.16);
+  --line-soft:rgba(26,24,21,.08);
+  --display:"Gowun Batang",'Nanum Myeongjo',serif;
+  --body:"Noto Sans KR",system-ui,sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",monospace;
+  --maxw:1180px;
+  --colw:720px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--hoebyeok);color:var(--meok);font-family:var(--body);
+  font-weight:300;font-size:17px;line-height:1.95;-webkit-font-smoothing:antialiased;
+  letter-spacing:-.005em}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(rgba(26,24,21,.055) 1px,transparent 1px);
+  background-size:4px 4px;opacity:.7}
+.wrap{position:relative;z-index:1}
+
+/* 표제 */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#EDEBE4 0%,var(--hoebyeok) 100%)}
+.hero-in{max-width:var(--maxw);margin:0 auto;
+  padding:clamp(64px,11vw,132px) clamp(22px,5vw,56px) clamp(40px,6vw,64px);position:relative}
+.glyph{position:absolute;right:clamp(-30px,-1vw,0px);top:1%;font-family:var(--display);
+  font-weight:700;font-size:clamp(230px,44vw,560px);line-height:.78;color:var(--hobak);
+  opacity:.07;pointer-events:none;user-select:none}
+.kicker{font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--hobak-dk);margin:0 0 26px;display:flex;
+  align-items:center;gap:14px;flex-wrap:wrap}
+.kicker i{display:block;width:52px;height:1px;background:var(--hobak);opacity:.55}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(36px,6.8vw,76px);line-height:1.14;
+  letter-spacing:-.03em;margin:0 0 22px;max-width:15em}
+h1 em{font-style:normal;color:var(--hobak-dk);position:relative}
+h1 em::after{content:"";position:absolute;left:0;right:0;bottom:.1em;height:.22em;
+  background:var(--meokcheong);opacity:.2;z-index:-1}
+.lede{font-family:var(--display);font-size:clamp(18px,2.2vw,22px);line-height:1.85;
+  max-width:33em;color:var(--meok-soft);margin:0 0 40px}
+.colophon{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:22px;max-width:900px}
+.colophon div{padding:2px 28px 2px 0;margin-right:28px;border-right:1px solid var(--line-soft)}
+.colophon div:last-child{border-right:0;margin-right:0}
+.colophon dt{font-size:10.5px;letter-spacing:.2em;font-weight:500;color:var(--hobak-dk);
+  opacity:.8;margin:0 0 4px;text-transform:uppercase}
+.colophon dd{margin:0;font-size:14.5px;font-weight:400}
+
+/* 서명 요소 */
+.reliquary{max-width:var(--maxw);margin:0 auto;
+  padding:clamp(40px,6vw,72px) clamp(22px,5vw,56px) clamp(48px,7vw,80px)}
+.reliquary svg,.dia svg{width:100%;height:auto;display:block}
+.cap{font-size:13.5px;color:var(--meok-soft);margin:22px 0 0;padding-left:16px;
+  border-left:2px solid var(--meokcheong);max-width:46em;line-height:1.8}
+.cap b{font-weight:500;color:var(--meok)}
+
+/* 골격 */
+main{max-width:var(--maxw);margin:0 auto;padding:0 clamp(22px,5vw,56px) 120px}
+section{padding:clamp(52px,7vw,96px) 0;border-top:1px solid var(--line)}
+section:first-child{border-top:0}
+.sec-head{display:flex;gap:clamp(16px,3vw,40px);align-items:flex-start;margin-bottom:clamp(26px,4vw,44px)}
+.seal{flex:0 0 auto;width:54px;height:54px;border:1.5px solid var(--juchil);color:var(--juchil);
+  display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:22px;
+  line-height:1;border-radius:3px;background:rgba(162,51,31,.045);margin-top:6px}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(26px,4vw,42px);line-height:1.3;
+  letter-spacing:-.025em;margin:0 0 10px}
+.sub{font-size:13px;letter-spacing:.16em;color:var(--hobak-dk);font-weight:500;margin:0}
+.col{max-width:var(--colw)}
+p{margin:0 0 1.35em}
+.col p:last-child{margin-bottom:0}
+h3{font-family:var(--display);font-weight:700;font-size:clamp(20px,2.6vw,26px);
+  letter-spacing:-.02em;margin:2.5em 0 .8em;line-height:1.4}
+h3:first-child{margin-top:0}
+h4{font-family:var(--body);font-weight:500;font-size:15px;letter-spacing:.02em;
+  margin:2em 0 .6em;color:var(--hobak-dk)}
+strong{font-weight:500;color:var(--meok)}
+.tm{font-family:var(--mono);font-size:.88em;background:rgba(138,90,30,.11);padding:.12em .4em;
+  border-radius:2px;color:var(--hobak-dk);font-weight:500}
+
+/* 카드 */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);margin-top:8px}
+.card{background:var(--hanji);padding:26px 24px 28px;position:relative}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--hobak);opacity:.28}
+.card .no{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--meokcheong);
+  font-weight:500;display:block;margin-bottom:11px}
+.card h5{font-family:var(--display);font-weight:700;font-size:19px;margin:0 0 4px;
+  line-height:1.4;letter-spacing:-.02em}
+.card .en{font-family:var(--mono);font-size:11.5px;color:var(--meok-soft);opacity:.72;
+  display:block;margin-bottom:12px}
+.card p{font-size:14.5px;line-height:1.82;margin:0;color:var(--meok-soft)}
+.card code{font-family:var(--mono);font-size:12px;color:var(--hobak-dk);display:block;
+  margin-top:10px;padding:8px 10px;background:rgba(138,90,30,.07);border-radius:2px;
+  white-space:pre;overflow-x:auto}
+
+/* 연쇄 */
+.chain{margin:28px 0 0;padding:0;list-style:none;border-left:1px solid var(--line)}
+.chain li{position:relative;padding:0 0 22px 30px}
+.chain li:last-child{padding-bottom:0}
+.chain li::before{content:"";position:absolute;left:-4.5px;top:11px;width:8px;height:8px;
+  background:var(--hoebyeok);border:1.5px solid var(--hobak);border-radius:50%}
+.chain b{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--juchil);
+  letter-spacing:.04em;display:block}
+.chain span{font-size:15.5px;color:var(--meok-soft)}
+
+/* 방주 */
+.aside{margin:30px 0;padding:22px 26px;background:var(--hanji);border:1px solid var(--line);
+  border-left:3px solid var(--hobak);font-size:15px;line-height:1.85;color:var(--meok-soft)}
+.aside.warn{border-left-color:var(--juchil)}
+.aside.tip{border-left-color:var(--meokcheong)}
+.aside .lbl{display:block;font-family:var(--body);font-weight:500;font-size:11px;
+  letter-spacing:.24em;text-transform:uppercase;margin-bottom:10px;color:var(--hobak-dk)}
+.aside.warn .lbl{color:var(--juchil)}
+.aside.tip .lbl{color:var(--meokcheong)}
+.aside ol,.aside ul{margin:10px 0 0;padding-left:1.2em}
+.aside li{margin-bottom:5px}
+.aside p:last-child{margin-bottom:0}
+
+/* 코드 */
+figure{margin:26px 0}
+.code{background:#17150F;color:#DEDAD0;border-radius:4px;overflow:hidden;border:1px solid #0C0A07}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:9px 16px;
+  background:#110F0A;border-bottom:1px solid #262117;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.16em;color:#998A6E;text-transform:uppercase;gap:12px}
+.code pre{margin:0;padding:20px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.4px;
+  line-height:1.78}
+.code .k{color:#D9B87A}
+.code .s{color:#A8C7D9}
+.code .c{color:#75705F;font-style:italic}
+.code .f{color:#9FD0AE}
+.code .n{color:#D9998A}
+.code .j{color:#E0C58A}      /* JSON 키 */
+.code .out{color:#9A958C}
+.code .rec{border-bottom:1px dotted rgba(168,199,217,.85);cursor:help}
+.code .cut{color:#A8C7D9;font-weight:500;cursor:help}
+figcaption{font-size:13px;color:var(--meok-soft);margin-top:12px;font-family:var(--body)}
+figcaption::before{content:"〈";color:var(--meokcheong)}
+figcaption::after{content:"〉";color:var(--meokcheong)}
+
+/* 결과 표 */
+.rs{margin:24px 0}
+.rs table{border-collapse:collapse;width:100%;max-width:720px;font-family:var(--mono);
+  font-size:12.6px;background:var(--hanji)}
+.rs th{text-align:left;padding:9px 12px;border-bottom:1.5px solid var(--meok);font-weight:500;
+  font-size:11.5px;letter-spacing:.06em;color:var(--hobak-dk);white-space:nowrap}
+.rs tr.dt td{padding:4px 12px 8px;font-size:10.5px;color:rgba(26,24,21,.42);
+  border-bottom:1px solid var(--line);letter-spacing:.05em}
+.rs td{padding:7px 12px;border-bottom:1px solid var(--line-soft);color:var(--meok-soft)}
+.rs tr:last-child td{border-bottom:1px solid var(--line)}
+.rs td.num{text-align:right;color:var(--meok)}
+.rs td.nul{color:rgba(26,24,21,.36);font-style:italic}
+.rs .el{color:rgba(26,24,21,.4)}
+.rs .drv{color:var(--meokcheong);border-bottom:1px dotted rgba(44,84,112,.7);cursor:help}
+.rs figcaption{margin-top:10px}
+.rs .foot{font-family:var(--mono);font-size:11px;color:var(--meok-soft);opacity:.75;
+  padding-top:7px;letter-spacing:.04em}
+
+/* 비교 표 */
+.cmp{margin:28px 0;overflow-x:auto}
+.cmp table{border-collapse:collapse;width:100%;font-size:14.5px;background:var(--hanji);
+  border:1px solid var(--line)}
+.cmp th{text-align:left;padding:12px 15px;background:rgba(138,90,30,.08);
+  border-bottom:1px solid var(--line);font-weight:500;font-size:12.5px;letter-spacing:.08em;
+  color:var(--hobak-dk);vertical-align:top}
+.cmp td{padding:12px 15px;border-bottom:1px solid var(--line-soft);color:var(--meok-soft);
+  vertical-align:top;line-height:1.75}
+.cmp tr:last-child td{border-bottom:0}
+.cmp td:first-child{font-family:var(--mono);font-size:12.5px;color:var(--meok);white-space:nowrap}
+
+.dia{margin:32px 0 0}
+.dia svg{max-width:860px}
+
+/* 맺음 */
+.closing{border-top:1px solid var(--line);background:var(--hanji)}
+.closing-in{max-width:var(--maxw);margin:0 auto;padding:clamp(56px,8vw,96px) clamp(22px,5vw,56px)}
+.closing blockquote{margin:0 0 40px;font-family:var(--display);font-size:clamp(20px,2.8vw,27px);
+  line-height:1.72;letter-spacing:-.02em;max-width:27em}
+.next{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.14em;
+  border:1px solid var(--hobak);color:var(--hobak-dk);padding:12px 20px;text-decoration:none}
+footer{max-width:var(--maxw);margin:0 auto;padding:34px clamp(22px,5vw,56px) 60px;font-size:12.5px;
+  color:var(--meok-soft);opacity:.8;border-top:1px solid var(--line-soft);display:flex;
+  justify-content:space-between;gap:20px;flex-wrap:wrap}
+
+.rv{opacity:0;transform:translateY(22px);
+  transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.25,1)}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+}
+@media (max-width:720px){
+  body{font-size:16px;line-height:1.9}
+  .colophon div{border-right:0;padding-right:0;margin-right:0;flex:1 0 46%}
+  .seal{width:42px;height:42px;font-size:17px}
+  .sec-head{gap:14px}
+  .rs{overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══════ 표제 ══════ -->
+<header class="hero">
+  <div class="glyph">函</div>
+  <div class="hero-in">
+    <p class="kicker"><i></i>답사기 · 제6장 정독</p>
+    <h1>함 속에<br><em>함이 있다</em></h1>
+    <p class="lede">석탑을 해체하면 사리공 안에서 외함이 나오고, 외함을 열면 내함이 나오고, 내함을 열면 사리병이 나온다. JSON을 읽는 일이 이와 다르지 않다. 중괄호를 열면 그 안에 또 중괄호가 있고, 그 안에 또 있다. 제6장은 그 겹을 하나씩 여는 손놀림에 관한 장이다.</p>
+    <dl class="colophon">
+      <div><dt>원전</dt><dd>DuckDB: Up and Running</dd></div>
+      <div><dt>지은이</dt><dd>Wei-Meng Lee</dd></div>
+      <div><dt>펴낸곳</dt><dd>O'Reilly Media, 2024</dd></div>
+      <div><dt>대상</dt><dd>Chapter 6. Using DuckDB with JSON Files</dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ══════ 서명 요소: 중첩의 단면 ══════ -->
+<div class="reliquary rv">
+  <svg viewBox="0 0 1100 400" role="img" aria-label="중첩된 JSON 객체의 단면과 그것을 여는 SQL 경로를 나타낸 도해">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#8A5A1E"/>
+      </marker>
+      <marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#2C5470"/>
+      </marker>
+    </defs>
+    <text x="0" y="16" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2.2" fill="#6B4413">JSON2_A.JSON — 세 겹으로 든 함</text>
+
+    <!-- 외함 -->
+    <rect x="0" y="34" width="470" height="316" fill="rgba(138,90,30,.07)" stroke="#8A5A1E" stroke-opacity=".5"/>
+    <text x="16" y="58" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="500" fill="#6B4413">{ 외함 · 객체 하나</text>
+    <g font-family="IBM Plex Mono,monospace" font-size="11" fill="#403C36">
+      <text x="30" y="84"><tspan fill="#8A5A1E">"id"</tspan>: 1</text>
+      <text x="30" y="104"><tspan fill="#8A5A1E">"name"</tspan>: "Sarah Johnson"</text>
+    </g>
+
+    <!-- 내함 -->
+    <rect x="24" y="118" width="422" height="164" fill="rgba(138,90,30,.1)" stroke="#8A5A1E" stroke-opacity=".65"/>
+    <text x="40" y="140" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="500" fill="#6B4413">"address": { 내함</text>
+    <g font-family="IBM Plex Mono,monospace" font-size="11" fill="#403C36">
+      <text x="54" y="164"><tspan fill="#8A5A1E">"line1"</tspan>: "4321 Oak Street Apartment"</text>
+      <text x="54" y="184"><tspan fill="#8A5A1E">"line2"</tspan>: "304 Los Angeles"</text>
+    </g>
+
+    <!-- 사리병 -->
+    <rect x="48" y="198" width="374" height="72" fill="rgba(44,84,112,.14)" stroke="#2C5470" stroke-opacity=".75"/>
+    <text x="64" y="219" font-family="IBM Plex Mono,monospace" font-size="12" font-weight="500" fill="#2C5470">"location": { 사리병</text>
+    <g font-family="IBM Plex Mono,monospace" font-size="11" fill="#2C5470">
+      <text x="78" y="240">"state": "CA" · "city": "Calexico" · "zip": 90001</text>
+      <text x="64" y="260">}</text>
+    </g>
+    <text x="40" y="298" font-family="IBM Plex Mono,monospace" font-size="12" fill="#6B4413">}</text>
+    <g font-family="IBM Plex Mono,monospace" font-size="11" fill="#403C36">
+      <text x="30" y="320"><tspan fill="#8A5A1E">"email"</tspan>: "sarah_johnson478@gmail.com"</text>
+      <text x="30" y="340"><tspan fill="#8A5A1E">"weight"</tspan>: 140.50</text>
+    </g>
+
+    <!-- 오른쪽: 여는 손 -->
+    <text x="560" y="16" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2.2" fill="#2C5470">겹을 여는 두 개의 손</text>
+
+    <g font-family="Noto Sans KR,sans-serif" font-size="12" fill="#403C36">
+      <text x="560" y="52" font-weight="500" fill="#1A1815">① 대괄호 — 함을 한 겹씩 연다</text>
+    </g>
+    <g font-family="IBM Plex Mono,monospace" font-size="11.5">
+      <rect x="560" y="64" width="540" height="26" fill="#F3F1EA" stroke="#8A5A1E" stroke-opacity=".4"/>
+      <text x="574" y="82" fill="#6B4413">address['line1']</text>
+      <text x="900" y="82" fill="#403C36" font-size="10.5">내함까지</text>
+      <line x1="830" y1="90" x2="830" y2="104" stroke="#8A5A1E" stroke-width="1.1" marker-end="url(#ar)"/>
+      <rect x="560" y="108" width="540" height="26" fill="#F3F1EA" stroke="#2C5470" stroke-opacity=".55"/>
+      <text x="574" y="126" fill="#2C5470">address['location']['state']</text>
+      <text x="900" y="126" fill="#403C36" font-size="10.5">사리병까지</text>
+    </g>
+
+    <g font-family="Noto Sans KR,sans-serif" font-size="12" fill="#403C36">
+      <text x="560" y="172" font-weight="500" fill="#1A1815">② unnest() — 배열을 행으로 눕힌다</text>
+    </g>
+    <g font-family="IBM Plex Mono,monospace" font-size="11">
+      <rect x="560" y="184" width="150" height="70" fill="rgba(138,90,30,.09)" stroke="#8A5A1E" stroke-opacity=".45"/>
+      <text x="574" y="204" fill="#6B4413">"people": [</text>
+      <text x="586" y="222" fill="#403C36">{…}, {…}, {…}</text>
+      <text x="574" y="242" fill="#6B4413">]</text>
+      <line x1="716" y1="219" x2="770" y2="219" stroke="#2C5470" stroke-width="1.2" marker-end="url(#arb)"/>
+      <text x="730" y="210" font-size="9.5" fill="#2C5470">unnest</text>
+      <g>
+        <rect x="780" y="184" width="180" height="22" fill="#F3F1EA" stroke="#2C5470" stroke-opacity=".45"/>
+        <text x="792" y="199" fill="#2C5470">행 1 · {…}</text>
+        <rect x="780" y="208" width="180" height="22" fill="#F3F1EA" stroke="#2C5470" stroke-opacity=".45"/>
+        <text x="792" y="223" fill="#2C5470">행 2 · {…}</text>
+        <rect x="780" y="232" width="180" height="22" fill="#F3F1EA" stroke="#2C5470" stroke-opacity=".45"/>
+        <text x="792" y="247" fill="#2C5470">행 3 · {…}</text>
+      </g>
+    </g>
+
+    <line x1="560" y1="284" x2="1100" y2="284" stroke="#1A1815" stroke-opacity=".12"/>
+    <g font-family="Noto Sans KR,sans-serif" font-size="12.5" fill="#403C36">
+      <text x="560" y="312">배열은 <tspan font-style="italic">눕히고</tspan>, 객체는 <tspan font-style="italic">연다</tspan>.</text>
+      <text x="560" y="338">이 두 동작의 조합이 제6장의 문법 전부다.</text>
+      <text x="560" y="366" fill="#6B4413">그 밖의 것은 어느 함수로 파일을 집어 드는가의 문제일 뿐이다.</text>
+    </g>
+  </svg>
+  <p class="cap"><b>답사의 손놀림.</b> 제1장이 기둥의 장, 제2장이 문의 장, 제3장이 칸의 장, 제4장이 때의 장, 제5장이 자리의 장이었다면 제6장은 <b>겹의 장</b>이다. 왼쪽은 <span class="tm">json2_a.json</span>의 첫 객체를 단면으로 옮긴 것이고, 오른쪽은 그 겹에 손을 넣는 두 가지 방법이다. 사리장엄구를 해체하는 발굴자가 외함·내함·사리병을 순서대로 여는 일과, 대괄호를 한 겹씩 이어 붙이는 일은 같은 종류의 조심스러움을 요구한다.</p>
+</div>
+
+<main>
+
+<!-- ══════ 序 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">序</div>
+    <div><h2>JSON이 왜 한 장을 따로 받는가</h2><p class="sub">WHY JSON DESERVES A DEDICATED CHAPTER</p></div>
+  </div>
+  <div class="col">
+    <p>제2장에서 CSV, Parquet, 엑셀 파일, MySQL 데이터베이스 같은 여러 형식의 데이터를 DuckDB로 들여오는 법을 익혔다. 개발자들 사이에서 널리 쓰이는 또 하나의 중요한 파일 형식이 JSON(JavaScript Object Notation)이다.</p>
+    <p>JSON의 두드러진 특징 하나는 <strong>유연하고 동적인 구조</strong>다. 따라야 할 고정된 스키마가 없고, 동적인 키·값 쌍으로 자기 데이터를 표현할 수 있다. DuckDB에서 JSON 파일을 다루는 기법은 여럿이며, 그런 까닭에 JSON은 한 장을 따로 받을 만하다.</p>
+    <p>제2장에서 네 개의 문을 지날 때, 문턱이 가장 높았던 것은 엑셀이었다. 그런데 JSON은 문턱의 높낮이가 문제가 아니다. <strong>문 안쪽의 구조가 파일마다 다르다</strong>는 것이 문제다. CSV는 어느 파일이든 행과 열이지만, JSON은 같은 확장자를 달고도 배열일 수 있고 줄바꿈으로 나뉜 낱개일 수 있고 세 겹으로 든 함일 수 있다. 그래서 이 장은 형식을 소개하는 장이 아니라 <strong>구조를 판별하고 그에 맞는 함수를 고르는 장</strong>이다.</p>
+    <p>이 장에서 살필 적재 수단은 셋이다.</p>
+    <ul class="chain">
+      <li><b>read_json_auto()</b><span> 가장 직접적인 방법. 늘 이것을 먼저 시도한다.</span></li>
+      <li><b>read_json()</b><span> 자동 감지가 실패할 때 형식과 스키마를 손으로 지정한다.</span></li>
+      <li><b>COPY-FROM</b><span> 큰 데이터셋에 유리하다. 다만 표를 먼저 손으로 지어야 한다.</span></li>
+    </ul>
+  </div>
+  <div class="aside tip">
+    <span class="lbl">검토 방법에 관한 밝힘</span>
+    <p>이 장은 다행히 결과의 상당 부분이 <strong>DuckDB CLI의 박스 출력</strong>과 <strong>파일 내용의 인용</strong>으로 지면에 인쇄되어 있다. 그런 값은 그대로 옮겼다. 도판 이미지에만 있는 표는 값을 옮기지 않고, 원서 본문이 그 도판에서 무엇을 지적했는지를 적었다.</p>
+    <p style="margin-top:10px">표기 규칙은 앞 다섯 장과 같다. 문맥으로 복원되는 부분은 <code style="font-family:var(--mono);font-size:13px;border-bottom:1px dotted var(--meokcheong)">점선 밑줄</code>, 복원하지 않은 부분은 <code style="font-family:var(--mono);font-size:13px;color:var(--meokcheong)">…</code>, 검토자가 다른 곳의 인쇄분과 대조해 채운 값은 표에서 <span class="rs" style="display:inline"><span class="drv">점선을 두른 글자</span></span>로 표시했다.</p>
+    <p style="margin-top:10px">아울러 이 권만 강조색이 다르다. 구조색으로 금동(金銅)의 호박빛을 썼으므로, 앞 권들에서 강조로 쓰던 치자금을 <strong>먹청</strong>으로 바꿨다.</p>
+  </div>
+</section>
+
+<!-- ══════ 一 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">型</div>
+    <div><h2>JSON의 여섯 가지 그릇</h2><p class="sub">PRIMER ON JSON</p></div>
+  </div>
+  <div class="col">
+    <p>JSON은 사람이 읽고 해석하기 쉽고 컴퓨터가 조작하고 생성하기에 매우 효율적인, 가벼운 데이터 표현 형식이다. 지원하는 데이터 유형은 여섯이다.</p>
+  </div>
+  <div class="cards" style="margin-top:26px">
+    <div class="card">
+      <span class="no">型 · 一</span><h5>객체</h5><span class="en">object</span>
+      <p>중괄호 한 쌍으로 감싼, 순서 없는 키·값 쌍의 모음이다. 키·값 쌍이 하나도 없는 객체도 가능하며 이를 빈 객체라 한다.</p>
+      <code>{ "key": "value" }
+{}</code>
+    </div>
+    <div class="card">
+      <span class="no">型 · 二</span><h5>문자열</h5><span class="en">string</span>
+      <p>객체의 <strong>키는 반드시 문자열</strong>이어야 하며, 값은 문자열·불리언·숫자·배열·null 또는 또 다른 객체가 될 수 있다. 각 키·값 쌍은 쉼표로 나눈다. 마지막 쌍 뒤에는 쉼표가 필요하지 않다.</p>
+      <code>{
+  "firstName": "John",
+  "lastName": "Doe"
+}</code>
+    </div>
+    <div class="card">
+      <span class="no">型 · 三</span><h5>불리언</h5><span class="en">boolean</span>
+      <p>참 또는 거짓, 곧 <span class="tm">true</span> 또는 <span class="tm">false</span>다.</p>
+      <code>"isMember": true,
+"single": false,</code>
+    </div>
+    <div class="card">
+      <span class="no">型 · 四</span><h5>숫자</h5><span class="en">number</span>
+      <p>정수이거나 부동소수점 수다.</p>
+      <code>"weight": 79.5,
+"height": 1.73,
+"children": 3</code>
+    </div>
+    <div class="card">
+      <span class="no">型 · 五</span><h5>배열</h5><span class="en">array</span>
+      <p>객체의 순서 있는 나열이다. 대괄호 한 쌍으로 표시하고 모든 객체는 쉼표로 나눈다.</p>
+      <code>"phone": [
+  {"type":"work",  "number":"1234567"},
+  {"type":"home",  "number":"8765432"},
+  {"type":"mobile","number":"1234876"}
+]</code>
+    </div>
+    <div class="card">
+      <span class="no">型 · 六</span><h5>null</h5><span class="en">null</span>
+      <p>키에 값이 없을 때 <span class="tm">null</span>을 넣는다.</p>
+      <code>"oldMembershipNo": null</code>
+    </div>
+  </div>
+  <div class="aside warn">
+    <span class="lbl">주의 — 키는 유일해야 한다</span>
+    <p>객체의 각 키는 유일해야 한다. 예컨대 다음은 <span class="tm">firstName</span> 키가 둘이므로 유효한 JSON 문자열이 <strong>아니다</strong>.</p>
+    <div class="code" style="margin-top:14px"><div class="bar"><span>JSON</span><span>유효하지 않다</span></div>
+<pre>{
+    <span class="j">"firstName"</span>: <span class="s">"John"</span>,
+    <span class="j">"firstName"</span>: <span class="s">"Doe"</span>
+}</pre></div>
+  </div>
+  <div class="col">
+    <p>원서는 이 여섯 유형을 하나의 예시를 조금씩 키워 가며 설명한다. <span class="tm">firstName</span> 하나에서 시작해 이름·불리언·숫자·중첩 객체·배열·null까지 차례로 얹어, 마지막에는 한 사람에 관한 온전한 기록 하나가 완성된다. 아래가 그 최종 형태다. 이 한 덩어리 안에 여섯 유형이 모두 들어 있다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>JSON</span><span>여섯 유형이 한자리에</span></div>
+<pre>{
+    <span class="j">"firstName"</span>: <span class="s">"John"</span>,
+    <span class="j">"lastName"</span>: <span class="s">"Doe"</span>,
+    <span class="j">"isMember"</span>: <span class="k">true</span>,
+    <span class="j">"single"</span>: <span class="k">false</span>,
+    <span class="j">"weight"</span>: <span class="n">79.5</span>,
+    <span class="j">"height"</span>: <span class="n">1.73</span>,
+    <span class="j">"children"</span>: <span class="n">3</span>,
+    <span class="j">"address"</span>: {
+        <span class="j">"line1"</span>: <span class="s">"123 Street"</span>,
+        <span class="j">"line2"</span>: <span class="s">"San Francisco"</span>,
+        <span class="j">"state"</span>: <span class="s">"CA"</span>,
+        <span class="j">"postal"</span>: <span class="s">"12345"</span>
+    },
+    <span class="j">"phone"</span>: [
+        { <span class="j">"type"</span>: <span class="s">"work"</span>,   <span class="j">"number"</span>: <span class="s">"1234567"</span> },
+        { <span class="j">"type"</span>: <span class="s">"home"</span>,   <span class="j">"number"</span>: <span class="s">"8765432"</span> },
+        { <span class="j">"type"</span>: <span class="s">"mobile"</span>, <span class="j">"number"</span>: <span class="s">"1234876"</span> }
+    ],
+    <span class="j">"oldMembershipNo"</span>: <span class="k">null</span>
+}</pre></div>
+    <figcaption>원서가 절을 이어 가며 조금씩 키운 예시의 최종 형태. 객체 · 문자열 · 불리언 · 숫자 · 중첩 객체 · 배열 · null이 모두 들어 있다</figcaption>
+  </figure>
+  <div class="col">
+    <p>주목할 것은 <span class="tm">"single": false,</span> 뒤의 쉼표다. 원서의 불리언 예시는 마지막 쌍 뒤에 쉼표를 두고 있어, 바로 앞에서 밝힌 “마지막 쌍 뒤에는 쉼표가 필요하지 않다”는 규칙과 어긋난다. 엄격한 파서라면 거부한다. 예시를 옮기되 이 점은 적어 둔다.</p>
+  </div>
+</section>
+
+<!-- ══════ 二 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">開</div>
+    <div><h2>가장 먼저 시도하는 손 · read_json_auto()</h2><p class="sub">USING THE READ_JSON_AUTO() FUNCTION</p></div>
+  </div>
+  <div class="col">
+    <p>시연을 위해 <span class="tm">json1.json</span>이라는 파일의 내용을 살핀다. JSON 객체의 배열이며, 각 객체는 <span class="tm">id</span>, <span class="tm">name</span>, <span class="tm">address</span>, <span class="tm">email</span>, <span class="tm">weight</span> 다섯 필드를 담는다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>json1.json</span><span>객체의 배열</span></div>
+<pre>[
+    {
+        <span class="j">"id"</span>: <span class="n">1</span>,
+        <span class="j">"name"</span>: <span class="s">"Sarah Johnson"</span>,
+        <span class="j">"address"</span>: <span class="s">"4321 Oak Street Apartment 304</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 이어지는 주소 문자열이 지면에 나타나지 않는다">…</span>
+        <span class="j">"email"</span>:<span class="s">"sarah_johnson478@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">140.50</span>
+    },
+    {
+        <span class="j">"id"</span>: <span class="n">2</span>,
+        <span class="j">"name"</span>: <span class="s">"David Martinez"</span>,
+        <span class="j">"address"</span>: <span class="s">"789 Maple Avenue Suite 102 Ne</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+        <span class="j">"email"</span>:<span class="s">"david_martinez431@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">155.0</span>
+    },
+    {
+        <span class="j">"id"</span>: <span class="n">3</span>,
+        <span class="j">"name"</span>: <span class="s">"Emily Wilson"</span>,
+        <span class="j">"address"</span>: <span class="s">"567 Pine Road Unit 5B Chicago</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+        <span class="j">"email"</span>:<span class="s">"emily_wilson998@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">200.1</span>
+    }
+]</pre></div>
+    <figcaption>세 사람의 기록. 이 세 사람이 제6장의 처음부터 끝까지 함께 간다</figcaption>
+  </figure>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>read_json_auto()</span></div>
+<pre><span class="k">import</span> duckdb
+conn = duckdb.<span class="f">connect</span>()
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> <span class="f">read_json_auto</span>('json1.json')
+'''</span>).<span class="f">df</span>()
+
+<span class="c"># 표로 남기려면 이렇게 고친다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> People
+    <span class="k">as</span>
+    <span class="k">FROM</span> 'json1.json'
+'''</span>)</pre></div>
+    <figcaption>도판 6-1 · 다섯 개 필드를 가진 표가 돌아온다</figcaption>
+  </figure>
+  <div class="col">
+    <p><span class="tm">read_json_auto()</span> 함수는 JSON 파일의 여러 키·값 쌍을 자동으로 해석해 DuckDB로 적재한다. 결과가 다섯 열의 표이며, JSON 파일의 키·값 쌍과 맞아떨어진다.</p>
+    <p>제3장에서 다룬 DuckDB CLI로 같은 질의를 실행하면 다음 출력이 보인다. 여기서 중요한 것은 <strong>열마다 데이터 유형이 함께 표시된다</strong>는 점이다. 어떤 유형의 데이터가 적재되었는지 알아야 할 때 특히 도움이 된다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>DuckDB CLI</span><span>원서 인쇄분</span></div>
+<pre><span class="out">D </span><span class="k">SELECT</span> *
+  <span class="k">FROM</span> <span class="f">read_json_auto</span>('json1.json');
+<span class="out">┌───────┬────────────────┬───┬───────────────────</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">│ id    │      name      │ … │        email
+│ int64 │    varchar     │   │       varchar
+├───────┼────────────────┼───┼───────────────────</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">│     1 │ Sarah Johnson  │ … │ sarah_johnson478@g</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">│     2 │ David Martinez │ … │ david_martinez431@</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">│     3 │ Emily Wilson   │ … │ emily_wilson998@gm</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">├───────┴────────────────┴───┴───────────────────</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">│ 3 rows                                 5 column</span><span class="rec" title="원서 지면에서 잘린 부분. 열 개수 표기 5 columns로 복원했다">s</span>
+<span class="out">└────────────────────────────────────────────────</span><span class="cut" title="원서 지면에서 잘린 부분">…</span></pre></div>
+    <figcaption>3행 5열. id는 int64, name과 email은 varchar로 추론되었다</figcaption>
+  </figure>
+
+  <div class="col">
+    <h3>records 매개변수 — 펼치지 않고 그대로 두기</h3>
+    <p>각 객체를 한 행으로 적재하되 모든 키·값 쌍을 <strong>단일 열</strong>에 담고 싶다면 <span class="tm">records</span> 매개변수를 <span class="tm">false</span>로 설정한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>records = false</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> <span class="f">read_json_auto</span>('json1.json', records = f<span class="rec" title="원서 지면에서 잘린 부분. false와 호출을 닫는 괄호로 복원했다">alse)</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 6-2 · 모든 키·값 쌍이 하나의 열에 저장된다</figcaption>
+  </figure>
+  <div class="col">
+    <p>기본적으로 <span class="tm">records</span>는 <span class="tm">true</span>다. JSON 확장이 JSON 객체를 기대하므로, 필드를 개별 열로 자동으로 풀어 놓는다. DuckDB CLI로 보면 출력이 이렇다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>DuckDB CLI</span><span>struct로 남는다</span></div>
+<pre><span class="out">D </span><span class="k">SELECT</span> *
+  <span class="k">FROM</span> <span class="f">read_json_auto</span>('json1.json', records = fal<span class="rec" title="원서 지면에서 잘린 부분. false);로 복원했다">se);</span>
+<span class="out">┌────────────────────────────────────────────────</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">│                                     json
+│ struct(id bigint, "name" varchar, address varch</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 나머지 필드의 유형 선언이 지면에 나타나지 않는다">…</span>
+<span class="out">├────────────────────────────────────────────────</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">│ {'id': 1, 'name': Sarah Johnson, 'address': 432</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">│ {'id': 2, 'name': David Martinez, 'address': 78</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">│ {'id': 3, 'name': Emily Wilson, 'address': 567</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+<span class="out">└────────────────────────────────────────────────</span><span class="cut" title="원서 지면에서 잘린 부분">…</span></pre></div>
+    <figcaption>열 이름은 json 하나이고, 그 유형은 struct다. 함을 열지 않고 함째로 들고 있는 상태다</figcaption>
+  </figure>
+  <div class="col">
+    <p>이 출력에서 <span class="tm">"name"</span>만 이중 인용부호에 싸여 있는 것이 눈에 띈다. <span class="tm">name</span>이 SQL의 예약어에 가까운 이름이어서 식별자로 감싼 것이다. 자동 추론이 이름 하나까지 살펴 처리하고 있다는 흔적이다.</p>
+    <p>JSON 파일에서 특정 필드만 골라 적재할 수도 있다. 예컨대 <span class="tm">name</span>과 <span class="tm">email</span> 쌍만 적재하려면 <span class="tm">SELECT</span> 목록에 그 둘만 적는다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>선택적 적재</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> name, email
+    <span class="k">FROM</span> <span class="f">read_json_auto</span>('json1.json')
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 6-3 · name과 email 필드만 적재된다</figcaption>
+  </figure>
+  <div class="col">
+    <p>대부분의 경우 <span class="tm">read_json_auto()</span>가 JSON 파일 적재의 일을 해낸다. 그러나 어떤 특수한 경우에는 손으로 적재해야 한다. 그럴 때 쓰는 것이 <span class="tm">read_json()</span>이다.</p>
+  </div>
+</section>
+
+<!-- ══════ 三 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">手</div>
+    <div><h2>손으로 지정하는 손 · read_json()</h2><p class="sub">USING THE READ_JSON() FUNCTION</p></div>
+  </div>
+  <div class="col">
+    <p><span class="tm">read_json_auto()</span>는 실은 자동 감지가 켜진 <span class="tm">read_json()</span>의 별칭이다. 대부분의 경우 <span class="tm">read_json_auto()</span>를 써야 한다. 드물게 그 함수가 파일의 형식을 자동으로 감지하지 못하는 경우가 있으며, 그때는 <span class="tm">read_json()</span>을 쓰고 데이터의 형식과 스키마를 지정한다.</p>
+    <p>두 함수의 관계가 이렇다는 사실이 이 절의 요점이다. 새 도구를 배우는 것이 아니라, 같은 도구의 <strong>자동 장치를 끄고 손으로 잡는</strong> 일이다.</p>
+  </div>
+  <div class="cmp">
+    <table>
+      <thead><tr><th>format 값</th><th>뜻</th></tr></thead>
+      <tbody>
+        <tr><td>array</td><td>JSON 객체의 배열, 곧 대괄호로 감싼 형태다.</td></tr>
+        <tr><td>newline_delimited &middot; nd</td><td>줄바꿈 문자로 나뉜 낱개의 JSON 객체들이다.</td></tr>
+        <tr><td>unstructured</td><td>줄바꿈 구분 JSON을 포함해 어떤 종류의 JSON이든 담을 수 있다. 더 자유로운 형태나 불규칙한 JSON까지 아우른다.</td></tr>
+        <tr><td>auto</td><td>형식을 자동으로 판별한다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <h3>객체의 배열</h3>
+    <p><span class="tm">json1.json</span>이 JSON 객체의 배열임을 앞에서 보았다. <span class="tm">read_json()</span>으로 그 내용을 읽으려면 형식을 <span class="tm">auto</span>로 두고, 어떤 열을 어떤 유형으로 적재할지 지정한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>columns로 스키마 지정</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> <span class="f">read_json</span>('json1.json',
+    format = 'auto',
+    columns =
+        {
+            id:'INTEGER',
+            name:'STRING',
+            weight:'FLOAT'
+        })
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 6-4 · 세 열이 DuckDB로 적재된다</figcaption>
+  </figure>
+  <div class="col">
+    <p>DuckDB CLI로 각 열의 유형을 확인할 수 있다. 이 출력은 원서 지면에 <strong>온전히</strong> 인쇄되어 있어, 이 장에서 값이 완전하게 확인되는 드문 대목이다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>DuckDB CLI</span><span>원서 인쇄분 · 전문</span></div>
+<pre><span class="out">D </span><span class="k">SELECT</span> *
+  <span class="k">FROM</span> <span class="f">read_json</span>('json1.json',
+       format = 'auto',
+       columns =
+            {
+                 id:'INTEGER',
+                 name:'STRING',
+                 weight:'FLOAT'
+            });
+
+<span class="out">┌───────┬────────────────┬────────┐
+│  id   │      name      │ weight │
+│ int32 │    varchar     │ float  │
+├───────┼────────────────┼────────┤
+│     1 │ Sarah Johnson  │  140.5 │
+│     2 │ David Martinez │  155.0 │
+│     3 │ Emily Wilson   │  200.1 │
+└───────┴────────────────┴────────┘</span></pre></div>
+  </figure>
+  <div class="rs">
+    <table>
+      <thead><tr><th>id</th><th>name</th><th>weight</th></tr></thead>
+      <tbody>
+        <tr class="dt"><td>int32</td><td>varchar</td><td>float</td></tr>
+        <tr><td class="num">1</td><td>Sarah Johnson</td><td class="num">140.5</td></tr>
+        <tr><td class="num">2</td><td>David Martinez</td><td class="num">155.0</td></tr>
+        <tr><td class="num">3</td><td>Emily Wilson</td><td class="num">200.1</td></tr>
+      </tbody>
+    </table>
+    <figcaption>같은 출력을 표로 옮긴 것. columns에 INTEGER를 지정했으므로 id의 유형이 앞 절의 int64에서 int32로 바뀌었다</figcaption>
+  </div>
+  <div class="col">
+    <p>여기서 유형의 변화를 눈여겨보아야 한다. 자동 감지에서 <span class="tm">id</span>는 <span class="tm">int64</span>였으나, <span class="tm">columns</span>에 <span class="tm">INTEGER</span>를 지정하자 <span class="tm">int32</span>가 되었다. 손으로 잡는다는 것은 이런 종류의 <strong>통제권</strong>을 얻는 일이다. 그리고 <span class="tm">140.50</span>이라 적혀 있던 값이 <span class="tm">140.5</span>로 인쇄되는 것도 같은 이치다. JSON의 글자가 아니라 <span class="tm">float</span>이라는 유형이 그 값을 표현하고 있기 때문이다.</p>
+    <p>모든 키·값 쌍을 읽으려면 <span class="tm">columns</span> 매개변수를 그냥 생략한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>columns 생략</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> <span class="f">read_json</span>('json1.json',
+    format = 'auto')
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 6-5 · 모든 키·값 쌍이 열로 적재된다</figcaption>
+  </figure>
+</section>
+
+<!-- ══════ 四 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">行</div>
+    <div><h2>한 줄에 한 함 · 줄바꿈 구분 JSON</h2><p class="sub">NEWLINE-DELIMITED (ND) JSON</p></div>
+  </div>
+  <div class="col">
+    <p><span class="tm">json1_a.json</span>이라는 또 하나의 파일이 있다고 하자. 세 줄의 JSON 객체가 각각 줄바꿈 문자로 나뉘어 있다. 이를 줄바꿈 구분 JSON 파일이라 한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>json1_a.json</span><span>한 줄이 한 객체</span></div>
+<pre>{<span class="j">"id"</span>: <span class="n">1</span>, <span class="j">"name"</span>: <span class="s">"Sarah Johnson"</span>, <span class="j">"address"</span>:
+    {<span class="j">"line1"</span>:<span class="s">"4321 Oak Street Apartment"</span>,<span class="j">"line2"</span><span class="cut" title="원서 지면에서 잘린 부분. json2.json의 인쇄분에 따르면 값은 304 Los Angeles다">…</span>
+     <span class="j">"state"</span>:<span class="s">"CA"</span>, <span class="j">"zip"</span>:<span class="n">90001</span>}, <span class="j">"email"</span>:<span class="s">"sarah_j</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+     <span class="j">"weight"</span>: <span class="n">140.50</span>}
+{<span class="j">"id"</span>: <span class="n">2</span>, <span class="j">"name"</span>: <span class="s">"David Martinez"</span>, <span class="j">"address"</span>:
+    {<span class="j">"line1"</span>:<span class="s">"789 Maple Avenue "</span>,<span class="j">"line2"</span>:<span class="s">"Suite</span><span class="cut" title="원서 지면에서 잘린 부분. json2.json의 인쇄분에 따르면 값은 Suite 102 New York다">…</span>
+     <span class="j">"state"</span>:<span class="s">"NY"</span>,<span class="j">"zip"</span>:<span class="n">10001</span>}, <span class="j">"email"</span>:<span class="s">"david_</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+     <span class="j">"weight"</span>: <span class="n">155.0</span>}
+{<span class="j">"id"</span>: <span class="n">3</span>, <span class="j">"name"</span>: <span class="s">"Emily Wilson"</span>, <span class="j">"address"</span>:
+    {<span class="j">"line1"</span>:<span class="s">"567 Pine Road Unit 5B Chicago"</span>,
+     <span class="j">"state"</span>:<span class="s">"IL"</span>, <span class="j">"zip"</span>:<span class="n">60601</span>}, <span class="j">"email"</span>:<span class="s">"emily_w</span><span class="cut" title="원서 지면에서 잘린 부분">…</span>
+     <span class="j">"weight"</span>: <span class="n">200.1</span>}</pre></div>
+    <figcaption>파일 이름에 _a가 붙은 이 판본은 주소가 중첩 객체로 바뀌어 있다. 그리고 세 번째 객체에는 line2 키가 없다</figcaption>
+  </figure>
+  <div class="aside tip">
+    <span class="lbl">검토자의 주석 — 이 파일이 알려 주는 것</span>
+    <p>이 인쇄분에서 두 가지가 확인된다. 첫째, 이 장의 세 사람의 주소가 실제로는 <span class="tm">line1</span>·<span class="tm">line2</span>·<span class="tm">state</span>·<span class="tm">zip</span>으로 나뉜 중첩 객체라는 것. 둘째, <strong>Emily Wilson의 객체에는 <span class="tm">line2</span> 키가 없다</strong>는 것이다. 이 결손은 우연이 아니라 뒤에서 되풀어 쓰이는 장치다. 중첩을 전개할 때, 여러 파일을 합칠 때, 그리고 <span class="tm">COPY-FROM</span>의 한계를 말할 때 모두 이 빠진 키가 등장한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>두 가지 읽는 법</span></div>
+<pre><span class="c"># ① format을 newline_delimited로 지정한다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> <span class="f">read_json</span>('json1_a.json',
+    format = 'newline_delimited',
+    columns =
+        {
+            id:'INTEGER',
+            name:'STRING',
+            weight:'FLOAT'
+        })
+'''</span>).<span class="f">df</span>()
+
+<span class="c"># ② 전용 함수를 쓰면 format 지정이 필요 없다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> <span class="f">read_ndjson_auto</span>('json1_a.json',
+    columns =
+        {
+            id:'INTEGER',
+            name:'STRING',
+            weight:'FLOAT'
+        })
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>두 코드가 같은 출력을 낸다. 도판 6-4와 동일하다</figcaption>
+  </figure>
+  <div class="col">
+    <p><span class="tm">newline_delimited</span> 외에 <span class="tm">nd</span>나 <span class="tm">unstructured</span> 형식도 쓸 수 있다. <span class="tm">unstructured</span> 형식은 줄바꿈 구분 JSON을 포함해 어떤 종류의 JSON이든, 더 자유로운 형태나 불규칙한 JSON까지 담을 수 있다.</p>
+  </div>
+</section>
+
+<!-- ══════ 五 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">函</div>
+    <div><h2>겹을 여는 손 · 중첩 JSON</h2><p class="sub">NESTED JSON</p></div>
+  </div>
+  <div class="col">
+    <p>객체가 중첩된 또 하나의 예시 파일 <span class="tm">json2.json</span>을 본다. <span class="tm">address</span> 키의 값이 <span class="tm">line1</span>, <span class="tm">line2</span>, <span class="tm">state</span>, <span class="tm">zip</span> 네 개의 키로 다시 갈라진다. 예외는 세 번째 객체이며, <span class="tm">address</span> 키의 값에 <span class="tm">line2</span> 키가 없다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>json2.json</span><span>address가 함이 된다</span></div>
+<pre>[
+    {
+        <span class="j">"id"</span>: <span class="n">1</span>,
+        <span class="j">"name"</span>: <span class="s">"Sarah Johnson"</span>,
+        <span class="j">"address"</span>: {
+            <span class="j">"line1"</span>:<span class="s">"4321 Oak Street Apartment"</span>,
+            <span class="j">"line2"</span>:<span class="s">"304 Los Angeles"</span>,
+            <span class="j">"state"</span>:<span class="s">"CA"</span>,
+            <span class="j">"zip"</span>:<span class="n">90001</span>
+        },
+        <span class="j">"email"</span>:<span class="s">"sarah_johnson478@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">140.50</span>
+    },
+    {
+        <span class="j">"id"</span>: <span class="n">2</span>,
+        <span class="j">"name"</span>: <span class="s">"David Martinez"</span>,
+        <span class="j">"address"</span>: {
+            <span class="j">"line1"</span>:<span class="s">"789 Maple Avenue "</span>,
+            <span class="j">"line2"</span>:<span class="s">"Suite 102 New York"</span>,
+            <span class="j">"state"</span>:<span class="s">"NY"</span>,
+            <span class="j">"zip"</span>:<span class="n">10001</span>
+        },
+        <span class="j">"email"</span>:<span class="s">"david_martinez431@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">155.0</span>
+    },
+    {
+        <span class="j">"id"</span>: <span class="n">3</span>,
+        <span class="j">"name"</span>: <span class="s">"Emily Wilson"</span>,
+        <span class="j">"address"</span>: {
+            <span class="j">"line1"</span>:<span class="s">"567 Pine Road Unit 5B Chicag</span><span class="rec" title="원서 지면에서 잘린 부분. 다른 인쇄분과 대조해 Chicago로 복원했다">o"</span>,
+            <span class="c">// line2 키가 없다</span>
+            <span class="j">"state"</span>:<span class="s">"IL"</span>,
+            <span class="j">"zip"</span>:<span class="n">60601</span>
+        },
+        <span class="j">"email"</span>:<span class="s">"emily_wilson998@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">200.1</span>
+    }
+]</pre></div>
+    <figcaption>세 번째 객체에 line2가 없다는 사실을 기억한다. 주석 표기는 설명을 위해 검토자가 덧붙인 것이며 실제 JSON에는 주석이 없다</figcaption>
+  </figure>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>그냥 읽으면</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> <span class="f">read_json</span>('json2.json')
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 6-6 · address 필드의 값이 단일 열 안에 담긴다. 함을 들었으되 열지 않은 상태다</figcaption>
+  </figure>
+  <div class="col">
+    <p><span class="tm">address</span> 필드의 값을 개별 열로 표현하고 싶다면, 곧 <span class="tm">line1</span>·<span class="tm">line2</span>·<span class="tm">state</span>·<span class="tm">zip</span> 네 열을 갖고 싶다면 SQL 문에서 개별 키를 지정한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>한 겹 열기</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        id,
+        name,
+        address['line1'] <span class="k">as</span> line1,
+        address['line2'] <span class="k">as</span> line2,
+        address['state'] <span class="k">as</span> state,
+        address['zip'] <span class="k">as</span> zip,
+        email,
+        weight
+    <span class="k">FROM</span> <span class="f">read_json</span>('json2.json')
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 6-7 · address 필드의 내용이 네 열로 표현된다</figcaption>
+  </figure>
+  <div class="rs">
+    <table>
+      <thead><tr><th>id</th><th>name</th><th>line1</th><th>line2</th><th>state</th><th>zip</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>Sarah Johnson</td><td>4321 Oak Street Apartment</td><td>304 Los Angeles</td><td>CA</td><td class="num">90001</td></tr>
+        <tr><td class="num">2</td><td>David Martinez</td><td>789 Maple Avenue </td><td>Suite 102 New York</td><td>NY</td><td class="num">10001</td></tr>
+        <tr><td class="num">3</td><td>Emily Wilson</td><td>567 Pine Road Unit 5B Chicago</td><td class="nul">line2 키 없음</td><td>IL</td><td class="num">60601</td></tr>
+      </tbody>
+    </table>
+    <figcaption>파일 내용에서 재구성한 결과. 세 번째 행의 line2 자리가 비는 것이 이 예시의 요점이다. DuckDB가 그 자리를 어떤 값으로 채우는지는 도판 이미지에만 있어 옮기지 않았다</figcaption>
+  </div>
+  <div class="col">
+    <h3>함 속의 함 · 이중 중첩</h3>
+    <p><span class="tm">address</span> 키 안에 또 하나의 중첩 객체가 있으면 어떻게 되는가. <span class="tm">json2_a.json</span>이 그 경우다. <span class="tm">address</span> 키의 값 안에 <span class="tm">location</span> 키가 또 있고, 그 안에 세 개의 키·값 쌍이 든다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>json2_a.json</span><span>세 겹</span></div>
+<pre>[
+    {
+        <span class="j">"id"</span>: <span class="n">1</span>,  <span class="j">"name"</span>: <span class="s">"Sarah Johnson"</span>,
+        <span class="j">"address"</span>: {
+            <span class="j">"line1"</span>:<span class="s">"4321 Oak Street Apartment"</span>,
+            <span class="j">"line2"</span>:<span class="s">"304 Los Angeles"</span>,
+            <span class="j">"location"</span> : {
+                <span class="j">"state"</span>:<span class="s">"CA"</span>,
+                <span class="j">"city"</span>:<span class="s">"Calexico"</span>,
+                <span class="j">"zip"</span>:<span class="n">90001</span>
+            }
+        },
+        <span class="j">"email"</span>:<span class="s">"sarah_johnson478@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">140.50</span>
+    },
+    {
+        <span class="j">"id"</span>: <span class="n">2</span>,  <span class="j">"name"</span>: <span class="s">"David Martinez"</span>,
+        <span class="j">"address"</span>: {
+            <span class="j">"line1"</span>:<span class="s">"789 Maple Avenue "</span>,
+            <span class="j">"line2"</span>:<span class="s">"Suite 102 New York"</span>,
+            <span class="j">"location"</span> : {
+                <span class="j">"state"</span>:<span class="s">"NY"</span>,
+                <span class="j">"city"</span>:<span class="s">"Coney Island"</span>,
+                <span class="j">"zip"</span>:<span class="n">10001</span>
+            }
+        },
+        <span class="j">"email"</span>:<span class="s">"david_martinez431@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">155.0</span>
+    },
+    {
+        <span class="j">"id"</span>: <span class="n">3</span>,  <span class="j">"name"</span>: <span class="s">"Emily Wilson"</span>,
+        <span class="j">"address"</span>: {
+            <span class="j">"line1"</span>:<span class="s">"567 Pine Road Unit 5B Chicag</span><span class="rec" title="원서 지면에서 잘린 부분. 다른 인쇄분과 대조해 Chicago로 복원했다">o"</span>,
+            <span class="j">"location"</span> : {
+                <span class="j">"state"</span>:<span class="s">"IL"</span>,
+                <span class="j">"city"</span>:<span class="s">"Brookfield"</span>,
+                <span class="j">"zip"</span>:<span class="n">60601</span>
+            }
+        },
+        <span class="j">"email"</span>:<span class="s">"emily_wilson998@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">200.1</span>
+    }
+]</pre></div>
+  </figure>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>대괄호를 이어 붙인다</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        address['line1'] <span class="k">as</span> line1,
+        address['line2'] <span class="k">as</span> line2,
+        address['location']['state'] <span class="k">as</span> state,
+        address['location']['city'] <span class="k">as</span> city,
+        address['location']['zip'] <span class="k">as</span> zip,
+        email,
+        weight
+    <span class="k">FROM</span> <span class="f">read_json</span>('json2_a.json')
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 6-8 · location 필드의 내용이 세 열로 표현된다</figcaption>
+  </figure>
+  <div class="rs">
+    <table>
+      <thead><tr><th>line1</th><th>state</th><th>city</th><th>zip</th></tr></thead>
+      <tbody>
+        <tr><td>4321 Oak Street Apartment</td><td>CA</td><td>Calexico</td><td class="num">90001</td></tr>
+        <tr><td>789 Maple Avenue </td><td>NY</td><td>Coney Island</td><td class="num">10001</td></tr>
+        <tr><td>567 Pine Road Unit 5B Chicago</td><td>IL</td><td>Brookfield</td><td class="num">60601</td></tr>
+      </tbody>
+    </table>
+    <figcaption>파일 내용에서 재구성한 결과. 도시 이름이 주(州)와 어울리지 않는 조합이라는 점은 예시 데이터의 성격이므로 그대로 옮겼다</figcaption>
+  </div>
+  <div class="col">
+    <p>대괄호를 하나 더 이어 붙이는 것으로 한 겹을 더 들어간다. 문법이 단순한 만큼 정직하다. 다만 정직함에는 값이 따른다. 겹이 깊어질수록 SQL 문이 길어지고, 어느 겹에 무엇이 있는지를 <strong>사람이 미리 알고 있어야 한다</strong>. 자동 감지가 열을 만들어 주는 것은 첫 겹까지이며, 그 아래는 손으로 짚어야 한다. 발굴 기록을 남기지 않으면 다음 사람이 함을 열 수 없다는 사정과 같다.</p>
+  </div>
+</section>
+
+<!-- ══════ 六 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">展</div>
+    <div><h2>배열을 눕히는 손 · unnest()</h2><p class="sub">CUSTOM JSON FILE</p></div>
+  </div>
+  <div class="col">
+    <p>되풀이되는 뚜렷한 양상이 없는 특정 구조를 담은 JSON 파일은 어떻게 다루는가. <span class="tm">json3.json</span>을 본다. <span class="tm">people</span>이라는 키 하나가 있고 그 값이 JSON 객체의 배열이다. 곧 <strong>파일의 최상위가 배열이 아니라 객체</strong>이며, 우리가 원하는 배열은 그 객체의 값으로 한 겹 들어가 있다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>json3.json</span><span>people 키가 배열을 품는다</span></div>
+<pre>{
+    <span class="j">"people"</span>: [
+    {
+        <span class="j">"id"</span>: <span class="n">1</span>,
+        <span class="j">"name"</span>: <span class="s">"Sarah Johnson"</span>,
+        <span class="j">"address"</span>: {
+            <span class="j">"line1"</span>:<span class="s">"4321 Oak Street Apartment"</span>,
+            <span class="j">"line2"</span>:<span class="s">"304 Los Angeles"</span>,
+            <span class="j">"state"</span>:<span class="s">"CA"</span>,
+            <span class="j">"zip"</span>:<span class="n">90001</span>
+        },
+        <span class="j">"email"</span>:<span class="s">"sarah_johnson478@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">140.50</span>
+    },
+    {
+        <span class="j">"id"</span>: <span class="n">2</span>,
+        <span class="j">"name"</span>: <span class="s">"David Martinez"</span>,
+        <span class="j">"address"</span>: { <span class="c">… line1 · line2 · state NY · zip 10001 …</span> },
+        <span class="j">"email"</span>:<span class="s">"david_martinez431@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">155.0</span>
+    },
+    {
+        <span class="j">"id"</span>: <span class="n">3</span>,
+        <span class="j">"name"</span>: <span class="s">"Emily Wilson"</span>,
+        <span class="j">"address"</span>: { <span class="c">… line1 · state IL · zip 60601, line2 없음 …</span> },
+        <span class="j">"email"</span>:<span class="s">"emily_wilson998@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">200.1</span>
+    }
+    ]
+}</pre></div>
+    <figcaption>둘째와 셋째 객체의 주소는 앞의 json2.json과 같은 내용이므로 줄여 적었다. 원서 지면에도 같은 값이 인쇄되어 있다</figcaption>
+  </figure>
+  <div class="col">
+    <p>이 파일을 <span class="tm">read_json()</span>으로 적재해 본다. 흥미롭게도 <span class="tm">people</span> 키의 값이 <strong>단일 열</strong>로 적재된다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>세 걸음으로 펼친다</span></div>
+<pre><span class="c"># ① 그냥 읽는다 — people이 한 열이 된다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> <span class="f">read_json</span>('json3.json')
+'''</span>).<span class="f">df</span>()
+
+<span class="c"># ② unnest()로 배열의 원소를 행으로 바꾼다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> <span class="f">unnest</span>(people) p
+    <span class="k">FROM</span> <span class="f">read_json</span>('json3.json')
+'''</span>).<span class="f">df</span>()
+
+<span class="c"># ③ 각 행의 내용을 p로 풀어 낸다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        p.id,
+        p.name,
+        p.address['line1'] <span class="k">as</span> line1,
+        p.address['line2'] <span class="k">as</span> line2,
+        p.address['state'] <span class="k">as</span> state,
+        p.address['zip'] <span class="k">as</span> zip,
+        p.email,
+        p.weight
+    <span class="k">FROM</span>
+    (
+        <span class="k">SELECT</span> <span class="f">unnest</span>(people) p
+        <span class="k">FROM</span> <span class="f">read_json</span>('json3.json')
+    )
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 6-9 · 6-10 · 6-11 · people이 한 열로 들어오고, unnest()로 각 객체가 한 행이 되고, 마지막으로 각 행이 개별 열로 풀린다</figcaption>
+  </figure>
+  <div class="col">
+    <p>이 질의는 각 행의 내용을 대괄호로 감싸는 방식으로도 쓸 수 있다. 두 어법이 같은 일을 한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>점 표기와 대괄호 표기</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        p['id'],
+        p['name'],
+        p['address']['line1'] <span class="k">as</span> line1,
+        p['address']['line2'] <span class="k">as</span> line2,
+        p['address']['state'] <span class="k">as</span> state,
+        p['address']['zip'] <span class="k">as</span> zip,
+        p['email'],
+        p['weight']
+    <span class="k">FROM</span>
+    (
+        <span class="k">SELECT</span> <span class="f">unnest</span>(people) p
+        <span class="k">FROM</span> <span class="f">read_json</span>('json3.json')
+    )
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>p.id와 p['id']는 같다. 다만 대괄호 표기에는 별칭을 주지 않으면 열 이름이 표기 그대로 남는다</figcaption>
+  </figure>
+  <div class="col">
+    <p>이 절의 세 걸음이 이 장 전체의 구조를 압축한다. <strong>배열은 눕히고, 객체는 연다.</strong> <span class="tm">unnest()</span>가 세로로 늘리고, 대괄호가 가로로 펼친다. 파일이 아무리 낯설게 생겼어도 이 두 동작의 조합으로 표가 된다. 이 장의 나머지는 어느 함수로 파일을 집어 드는가의 문제일 뿐이다.</p>
+  </div>
+</section>
+
+<!-- ══════ 七 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">群</div>
+    <div><h2>여러 함을 한꺼번에</h2><p class="sub">LOADING MULTIPLE JSON FILES</p></div>
+  </div>
+  <div class="col">
+    <p>여기까지는 개별 JSON 파일을 적재했다. 그러나 여러 JSON 파일을 한꺼번에 적재해야 하는 경우가 잦다. <span class="tm">json4.json</span>과 <span class="tm">json5.json</span>을 본다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>json4.json · json5.json</span><span>구조는 같고 구성이 다르다</span></div>
+<pre><span class="c"># json4.json — 두 사람. 주소는 문자열, weight와 email이 있다</span>
+[
+    {
+        <span class="j">"id"</span>: <span class="n">1</span>, <span class="j">"name"</span>: <span class="s">"Sarah Johnson"</span>,
+        <span class="j">"address"</span>: <span class="s">"4321 Oak Street Apartment 304</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+        <span class="j">"email"</span>:<span class="s">"sarah_johnson478@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">140.50</span>
+    },
+    {
+        <span class="j">"id"</span>: <span class="n">2</span>, <span class="j">"name"</span>: <span class="s">"David Martinez"</span>,
+        <span class="j">"address"</span>: <span class="s">"789 Maple Avenue Suite 102 Ne</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+        <span class="j">"email"</span>:<span class="s">"david_martinez431@gmail.com"</span>,
+        <span class="j">"weight"</span>: <span class="n">155.0</span>
+    }
+]
+
+<span class="c"># json5.json — 한 사람. 주소는 객체, weight와 email이 없고 height가 있다</span>
+[
+    {
+        <span class="j">"id"</span>: <span class="n">3</span>, <span class="j">"name"</span>: <span class="s">"Emily Wilson"</span>,
+        <span class="j">"address"</span>: {
+            <span class="j">"line1"</span>:<span class="s">"567 Pine Road Unit 5B Chicag</span><span class="rec" title="원서 지면에서 잘린 부분. 다른 인쇄분과 대조해 Chicago로 복원했다">o"</span>,
+            <span class="j">"state"</span>:<span class="s">"IL"</span>,
+            <span class="j">"zip"</span>:<span class="n">60601</span>
+        },
+        <span class="j">"height"</span>: <span class="n">66</span>
+    }
+]</pre></div>
+  </figure>
+  <div class="col">
+    <p>두 파일 모두 일반적인 구조는 같다. 객체의 배열이다. 핵심적인 차이는 각 객체의 구성이다. 두 번째 JSON 파일에는 <span class="tm">weight</span>와 <span class="tm">email</span> 키가 없고, <span class="tm">address</span> 키의 내용이 두 파일에서 서로 다르다. 이제 파일 이름의 목록을 <span class="tm">read_json()</span>에 넘겨 두 파일을 함께 적재한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>목록으로 넘긴다</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> <span class="f">read_json</span>(['json4.json','json5.json'])
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 6-12 · 두 JSON 파일을 적재한 결과</figcaption>
+  </figure>
+  <div class="aside warn">
+    <span class="lbl">주의 — 유형 충돌</span>
+    <p>DuckDB에서 여러 JSON 파일을 적재할 때 어떤 필드가 한 파일에서는 문자열 값이고 다른 파일에서는 숫자 값이면, DuckDB는 그 필드의 데이터 유형을 추론하려 시도한다. 유형 충돌이 있으면 일관성을 지키기 위해 숫자 값을 문자열로 변환할 수 있으며, 그 결과 열 전체가 문자열로 다루어진다. 충돌이 심한 경우에는 오류를 낼 수도 있다. 이를 피하려면 파일 사이의 데이터 유형 일관성을 보장하거나, 질의에서 그 필드를 원하는 유형으로 명시적으로 변환한다.</p>
+  </div>
+  <div class="col">
+    <p>원서가 이 결과에서 관찰한 것은 셋이다.</p>
+    <ul class="chain">
+      <li><b>합쳐진다</b><span> 결과는 적재된 두 파일의 결합이다.</span></li>
+      <li><b>이름으로 맞춘다</b><span> 결과의 열은 JSON 파일 안 키의 이름과 일치한다. JSON 파일 안에서 <strong>키의 순서는 중요하지 않다</strong>.</span></li>
+      <li><b>빈 자리를 채운다</b><span> 각 행에서 빠진 필드에는 숫자 필드라면 <span class="tm">NaN</span> 값이, 문자열 필드라면 <span class="tm">None</span> 값이 들어간다.</span></li>
+    </ul>
+  </div>
+  <div class="rs">
+    <table>
+      <thead><tr><th>id</th><th>name</th><th>address</th><th>email</th><th>weight</th><th>height</th></tr></thead>
+      <tbody>
+        <tr><td class="num">1</td><td>Sarah Johnson</td><td>문자열</td><td>sarah_johnson478@…</td><td class="num">140.5</td><td class="nul"><span class="drv" title="json4.json에는 height 키가 없다. 본문에 따르면 숫자 필드의 빈 자리는 NaN이 된다">NaN</span></td></tr>
+        <tr><td class="num">2</td><td>David Martinez</td><td>문자열</td><td>david_martinez431@…</td><td class="num">155.0</td><td class="nul"><span class="drv" title="같은 이유로 NaN">NaN</span></td></tr>
+        <tr><td class="num">3</td><td>Emily Wilson</td><td>객체</td><td class="nul"><span class="drv" title="json5.json에는 email 키가 없다. 본문에 따르면 문자열 필드의 빈 자리는 None이 된다">None</span></td><td class="nul"><span class="drv" title="같은 이유로, 숫자 필드이므로 NaN">NaN</span></td><td class="num">66</td></tr>
+      </tbody>
+    </table>
+    <figcaption>본문의 세 관찰에 따라 검토자가 구성한 <strong>구조도</strong>다. 도판 6-12의 실제 렌더링을 옮긴 것이 아니며, address 열의 값이 어떤 형태로 표시되는지는 유형 충돌의 처리에 달려 있어 유형 이름만 적었다</figcaption>
+  </div>
+  <div class="col">
+    <p>일반적으로 여러 파일을 적재할 때는 모든 파일이 같은 구조를 갖도록 하는 것이 이상적이다.</p>
+  </div>
+  <div class="aside">
+    <span class="lbl">일러두기</span>
+    <p>두 JSON 파일이 같은 구조를 갖도록 보장하는 파이썬 스크립트를 언제든 작성할 수 있다.</p>
+  </div>
+  <div class="col">
+    <h3>이름으로 한 줌 집어 오기 · glob</h3>
+    <p>적재할 파일 이름의 목록을 주는 대신, 흔히 와일드카드 구문이라 불리는 <strong>glob 구문</strong>을 쓸 수도 있다. 여러 JSON 파일을 읽는 데 다음 와일드카드를 쓴다.</p>
+  </div>
+  <div class="cmp">
+    <table>
+      <thead><tr><th>와일드카드</th><th>하는 일</th></tr></thead>
+      <tbody>
+        <tr><td>*</td><td>임의 개수의 임의 문자와 일치한다. 없는 경우도 포함한다.</td></tr>
+        <tr><td>**</td><td>임의 개수의 하위 디렉터리와 일치한다. 없는 경우도 포함한다.</td></tr>
+        <tr><td>?</td><td>임의의 한 문자와 일치한다.</td></tr>
+        <tr><td>[abc]</td><td>대괄호 안에 주어진 문자 가운데 하나와 일치한다.</td></tr>
+        <tr><td>[a-z]</td><td>대괄호 안에 주어진 범위에서 한 문자와 일치한다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>glob 두 예</span></div>
+<pre><span class="c"># json으로 시작하고 .json으로 끝나는 현재 디렉터리의 모든 파일</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> <span class="f">read_json</span>('json*.json')
+'''</span>).<span class="f">df</span>()
+
+<span class="c"># json 다음에 한 글자가 오고 .json으로 끝나는 파일</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> <span class="f">read_json</span>('json?.json')
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>뒤의 코드는 json1.json, json2.json, json3.json, json4.json, json5.json 다섯 개를 적재한다. json1_a.json과 json2_a.json은 ?가 한 글자만 맞추므로 제외된다</figcaption>
+  </figure>
+  <div class="col">
+    <p><span class="tm">?</span> 하나가 <span class="tm">_a</span>가 붙은 두 파일을 걸러 낸다. 파일 이름을 짓는 방식이 곧 질의의 도구가 된다는 점에서, 이 절은 데이터 정리의 기초를 말하고 있다. 이름을 규칙 있게 붙여 두면 나중에 한 줌씩 집어 올 수 있다.</p>
+  </div>
+</section>
+
+<!-- ══════ 八 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">移</div>
+    <div><h2>큰 짐을 옮기는 손 · COPY-FROM</h2><p class="sub">USING THE COPY-FROM STATEMENT</p></div>
+  </div>
+  <div class="col">
+    <p>JSON 파일을 DuckDB로 적재하는 세 번째 방법은 <span class="tm">COPY-FROM</span> 문이다. 이는 특히 큰 데이터셋을 상대할 때 <span class="tm">read_json()</span>보다 상당한 이점을 제공한다.</p>
+  </div>
+  <div class="cmp">
+    <table>
+      <thead><tr><th>견주는 자리</th><th>COPY-FROM</th><th>read_json()</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>적재 방식</td>
+          <td>데이터를 <strong>일괄(batch)</strong>로 적재해 큰 파일을 더 효율적으로 다룬다. 메모리 소비가 줄고 속도가 오른다.</td>
+          <td>파일 전체를 메모리에 적재한다. 큰 파일에서 성능 병목을 낼 수 있다.</td>
+        </tr>
+        <tr>
+          <td>병렬성</td>
+          <td>DuckDB의 병렬 처리 능력을 온전히 활용해, 기가바이트 단위 데이터를 적재할 때 성능을 더 끌어올린다.</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>작업 흐름</td>
+          <td>최소한의 전처리로 데이터를 표에 직접 적재하고 스키마를 자동 추론해 데이터 일관성을 보장하므로, 데이터베이스 작업 흐름에 더 매끄럽게 들어맞는다.</td>
+          <td>스키마 일관성을 강제하거나 데이터를 데이터베이스에 넣기 위해 추가 단계가 필요한 경우가 많다.</td>
+        </tr>
+        <tr>
+          <td>적합한 자리</td>
+          <td>고성능 대규모 데이터 반입</td>
+          <td>더 작고 대화적인 작업</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p><span class="tm">COPY-FROM</span> 문으로 JSON 파일을 적재하려면 먼저 JSON 구조에 맞는 올바른 스키마로 표를 만들고, 그다음 <span class="tm">COPY-FROM</span>으로 파일을 적재한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>표를 먼저 짓는다</span></div>
+<pre>conn = duckdb.<span class="f">connect</span>()
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> people (id <span class="k">INT</span>, name <span class="k">STRING</span>, add<span class="rec" title="원서 지면에서 잘린 부분. json1.json의 필드 구성에 따라 address STRING,로 이어진다">ress STRING,</span>
+                          email <span class="k">STRING</span>, weight <span class="k">FLOA</span><span class="rec" title="원서 지면에서 잘린 부분. FLOAT);로 복원했다">T);</span>
+    <span class="k">COPY</span> people <span class="k">FROM</span> 'json1.json' (<span class="k">FORMAT</span> JSON, AU<span class="rec" title="원서 지면에서 잘린 부분. 본문 설명에 따라 AUTO_DETECT true);로 복원했다">TO_DETECT true);</span>
+    <span class="k">SELECT</span> * <span class="k">FROM</span> people;
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 6-13 · COPY-FROM 문으로 JSON 파일을 적재한 결과</figcaption>
+  </figure>
+  <div class="aside warn">
+    <span class="lbl">주의 — 이 방법을 쓰지 말아야 할 때</span>
+    <p>JSON 파일을 제대로 적재하려면 <span class="tm">(FORMAT JSON, AUTO_DETECT true)</span> 문을 써야 한다. 그리고 JSON 파일이 <strong>복잡한 구조</strong>를 가진 경우, 예컨대 <span class="tm">json5.json</span> 같은 경우에는 이 방법을 권하지 않는다.</p>
+  </div>
+  <div class="col">
+    <p>대가 관계가 뚜렷하다. <span class="tm">COPY-FROM</span>은 빠르고 크게 다루지만, 스키마를 <strong>미리 알고 손으로 적어야</strong> 한다. 중첩된 함이나 파일마다 다른 구성 앞에서는 그 미리 아는 일이 불가능해진다. 제2장에서 <span class="tm">COPY</span>가 큰 CSV에 최고의 성능을 내면서도 엑셀에는 아예 쓸 수 없었던 그 대비가 여기서 되풀어진다. 빠른 길에는 늘 정해진 모양의 짐만 오른다.</p>
+  </div>
+</section>
+
+<!-- ══════ 九 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">出</div>
+    <div><h2>다시 함에 담아 내보내다</h2><p class="sub">EXPORTING TABLES TO JSON</p></div>
+  </div>
+  <div class="col">
+    <p>DuckDB에 있는 표를 JSON 파일로 남기고 싶을 때가 있다. 다른 플랫폼과 데이터를 교환하려 할 때, 또는 단순히 데이터를 백업하는 방법으로 유용하다. 앞 절에서 다룬 <span class="tm">COPY</span> 문으로 쉽게 내보낸다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>표를 만들고 내보낸다</span></div>
+<pre>conn = duckdb.<span class="f">connect</span>()
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE OR REPLACE TABLE</span> people
+    <span class="k">as</span>
+    <span class="k">SELECT</span>
+        name,
+        weight
+    <span class="k">FROM</span> <span class="f">read_ndjson_auto</span>('json1_a.json')
+'''</span>)
+<span class="f">display</span>(conn.<span class="f">execute</span>(<span class="s">'SELECT * FROM people'</span>).<span class="f">df</span>(<span class="rec" title="원서 지면에서 잘린 부분. display 호출을 닫는 괄호로 복원했다">))</span>
+
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">COPY</span> people
+    <span class="k">TO</span>
+    'people.json' (<span class="k">FORMAT</span> JSON);
+'''</span>)</pre></div>
+    <figcaption>도판 6-14 · people 표의 내용. FORMAT JSON은 선택적이다. DuckDB가 파일 확장자로 유형을 유추하기 때문이다</figcaption>
+  </figure>
+  <div class="col">
+    <p><span class="tm">people.json</span>의 내용은 이렇다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>people.json</span><span>원서 인쇄분</span></div>
+<pre>{<span class="j">"id"</span>:<span class="n">1</span>,<span class="j">"name"</span>:<span class="s">"Sarah Johnson"</span>,<span class="j">"weight"</span>:<span class="n">140.5</span>}
+{<span class="j">"id"</span>:<span class="n">2</span>,<span class="j">"name"</span>:<span class="s">"David Martinez"</span>,<span class="j">"weight"</span>:<span class="n">155.0</span>}
+{<span class="j">"id"</span>:<span class="n">3</span>,<span class="j">"name"</span>:<span class="s">"Emily Wilson"</span>,<span class="j">"weight"</span>:<span class="n">200.1</span>}</pre></div>
+  </figure>
+  <div class="aside warn">
+    <span class="lbl">검토자의 주석 — 인쇄분의 어긋남</span>
+    <p>앞의 <span class="tm">CREATE OR REPLACE TABLE</span> 문은 <span class="tm">name</span>과 <span class="tm">weight</span> 두 열만 골라 표를 만든다. 그런데 여기 인쇄된 <span class="tm">people.json</span>에는 <span class="tm">id</span>가 함께 들어 있다. 뒤에 나오는 <span class="tm">people_array.json</span>에는 <span class="tm">id</span>가 없다. 두 출력이 서로 어긋나므로, 원서 지면의 어느 한쪽이 다른 시점의 실행 결과로 보인다. 양쪽을 그대로 옮기되 이 어긋남을 적어 둔다. 질의문을 따른다면 두 열만 나오는 쪽이 맞다.</p>
+  </div>
+  <div class="col">
+    <p>내용이 엄격한 표준 JSON이 <strong>아니라는</strong> 점을 눈여겨본다. 실은 줄바꿈 구분 JSON 파일이며, 각 줄이 별개의 JSON 객체를 담는다. 출력을 엄격한 JSON으로 만들려면 <span class="tm">ARRAY TRUE</span>를 지정한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL · people_array.json</span><span>ARRAY TRUE</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">COPY</span> people
+    <span class="k">TO</span>
+    'people_array.json' (<span class="k">ARRAY TRUE</span>);
+'''</span>)
+
+<span class="c"># people_array.json의 내용</span>
+[
+    {<span class="j">"name"</span>:<span class="s">"Sarah Johnson"</span>,<span class="j">"weight"</span>:<span class="n">140.5</span>},
+    {<span class="j">"name"</span>:<span class="s">"David Martinez"</span>,<span class="j">"weight"</span>:<span class="n">155.0</span>},
+    {<span class="j">"name"</span>:<span class="s">"Emily Wilson"</span>,<span class="j">"weight"</span>:<span class="n">200.1</span>}
+]</pre></div>
+    <figcaption>이것은 유효한 JSON 문자열이다</figcaption>
+  </figure>
+  <div class="col">
+    <p>기본값이 줄바꿈 구분이라는 사실은 우연이 아니다. 대괄호로 전체를 감싸려면 마지막 줄이 언제인지 알아야 하고, 그러려면 스트림을 끝까지 붙들고 있어야 한다. 반면 한 줄에 한 객체를 쓰는 방식은 <strong>쓰는 즉시 끝난 줄</strong>이 되므로 얼마든 이어 붙일 수 있다. 이 장의 첫머리에서 만난 그 형식이 마지막에 기본값으로 돌아오는 셈이다.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════ 맺음 ══════ -->
+<div class="closing rv">
+  <div class="closing-in">
+    <p class="kicker" style="margin-bottom:22px"><i></i>맺음말 · SUMMARY</p>
+    <blockquote>가장 직접적인 방법을 늘 먼저 시도한다. 그것이 실패할 때에야 손으로 잡는다.</blockquote>
+    <div class="col">
+      <p>제6장에서는 JSON 파일을 DuckDB로 적재하는 여러 방법을 익혔다. 원서의 맺음말은 세 방법을 고르는 순서를 못박아 준다.</p>
+    </div>
+    <div class="cards" style="margin-top:30px">
+      <div class="card">
+        <span class="no">選 · 一</span><h5>read_json_auto()</h5><span class="en">first try</span>
+        <p>가장 직접적인 방법이며, <strong>늘 이 방법을 먼저 시도해야</strong> 한다.</p>
+      </div>
+      <div class="card">
+        <span class="no">選 · 二</span><h5>read_json()</h5><span class="en">when auto fails</span>
+        <p>JSON 파일이 복잡한 구조를 가지고 <span class="tm">read_json_auto()</span>가 제대로 적재하지 못하면, <span class="tm">read_json()</span>으로 적재를 시도해야 한다.</p>
+      </div>
+      <div class="card">
+        <span class="no">選 · 三</span><h5>COPY-FROM</h5><span class="en">simple &amp; large</span>
+        <p>이 방법을 쓰려면 JSON 파일을 적재하기 전에 DuckDB에 표를 손으로 먼저 만들어야 한다. JSON 파일의 구조가 비교적 단순한 경우에 쓴다. 그렇지 않다면 언제나 <span class="tm">read_json_auto()</span>나 <span class="tm">read_json()</span>을 먼저 시도해야 한다.</p>
+      </div>
+    </div>
+    <div class="col" style="margin-top:36px">
+      <p>마지막으로 <span class="tm">COPY-TO</span> 문으로 DuckDB의 표를 JSON 파일로 내보내는 법도 익혔다.</p>
+      <p style="margin-top:2.4em;color:var(--meok-soft)">답사를 마치며 이 장의 자리를 적어 둔다. 제6장에는 새로운 SQL 문법이 거의 없다. 대괄호와 <span class="tm">unnest()</span>, 그리고 함수 이름 몇 개가 전부다. 그런데도 이 장이 한 장을 따로 받는 까닭은, JSON이 <strong>형식이 아니라 형식의 부재</strong>이기 때문이다. CSV를 읽는 데는 판단이 필요하지 않다. JSON을 읽는 데는 매번 판단이 필요하다. 배열인가 낱줄인가, 몇 겹인가, 어느 키가 빠져 있는가.</p>
+      <p style="color:var(--meok-soft)">그래서 이 장의 실질적인 소득은 함수 목록이 아니라 <strong>구조를 먼저 들여다보는 습관</strong>이다. Emily Wilson의 주소에 <span class="tm">line2</span>가 없다는 그 사소한 결손이 이 장 내내 되풀어 등장하는 것도 그 때문이다. 원서는 우연히 그렇게 만든 것이 아니다. 파일 하나를 열어 보지 않고 적재부터 시작하면 그 빈 자리를 나중에 알게 되고, 그때는 이미 늦다.</p>
+      <p style="color:var(--meok-soft)">사리장엄구를 여는 발굴자는 먼저 함의 겉을 그리고 무게를 재고 이음새를 살핀 다음 연다. 함을 열기 전에 함을 아는 일, 그것이 이 장이 가르치는 태도다.</p>
+    </div>
+    <p style="margin-top:40px"><a class="next" href="#">다음 장 → JupySQL · Jupyter Notebook의 SQL 클라이언트</a></p>
+  </div>
+</div>
+
+<footer>
+  <span>DuckDB: Up and Running · Wei-Meng Lee · O'Reilly Media, 2024 — 제6장 「Using DuckDB with JSON Files」 검토 기록</span>
+  <span>점선 밑줄은 지면에서 잘려 복원한 부분, …는 복원하지 않은 부분, 표의 점선 글자는 본문 서술에 따라 구성한 값이다</span>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    items.forEach(function(el){ el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, {threshold:0.05, rootMargin:'0px 0px -8% 0px'});
+    items.forEach(function(el){ io.observe(el); });
+  }
+})();
+</script>
+</body>
+</html>

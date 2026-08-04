@@ -1,0 +1,838 @@
+---
+layout: null
+title: "Residual Policy Gradients for Commonsense RL " 
+date: 2026-08-08
+categories: [artificial intelligence]
+tags: [artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>지식 유도 순차적 의사결정 답사기 제4권 — 상식 강화학습을 위한 잔차 정책 경사</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@600;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --hanji:#F6F1E5;
+  --hanji-deep:#EFE7D5;
+  --paper:#FBF8F0;
+  --meok:#26221C;
+  --meok-soft:#4A443A;
+  --inju:#A03227;
+  --jaja:#6E3B57;          /* 자다색 — 이 권의 기운 */
+  --jaja-deep:#4E2740;
+  --jaja-soft:#EBDFE6;
+  --hwangto:#A0703A;       /* 황토 */
+  --hwangto-soft:#F1E4D2;
+  --jjok:#2C4A6E;
+  --oksaek:#4E7A64;
+  --grey:#8A8272;
+  --hairline:#D8CFBC;
+  --disp:'Noto Serif KR',serif;
+  --body:'Gowun Batang',serif;
+  --eng:'Cormorant Garamond',serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--body);background:var(--hanji);
+  background-image:radial-gradient(ellipse 90% 60% at 50% -10%, #FBF7ED 0%, transparent 60%);
+  color:var(--meok);line-height:2.02;font-size:17px;-webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--jaja);color:#fff}
+
+.rv{opacity:0;transform:translateY(18px);transition:opacity .85s ease,transform .85s ease}
+.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .bar i{transition:none !important}
+}
+
+.wrap{max-width:880px;margin:0 auto;padding:0 30px}
+
+/* ---------- 서두 ---------- */
+.hero{position:relative;padding:96px 0 66px;border-bottom:1px solid var(--hairline);overflow:hidden}
+.hero::before{
+  content:"譜";position:absolute;right:-4px;top:34px;
+  font-family:var(--disp);font-weight:900;font-size:280px;line-height:1;
+  color:var(--hanji-deep);z-index:0;user-select:none;
+}
+.hero .wrap{position:relative;z-index:1}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--grey);text-transform:uppercase}
+.hero h1{font-family:var(--disp);font-weight:900;font-size:clamp(30px,4.8vw,50px);line-height:1.42;margin:26px 0 8px;letter-spacing:.01em}
+.hero h1 .thin{font-weight:600;color:var(--meok-soft)}
+.hero .en{font-family:var(--eng);font-style:italic;font-size:clamp(15px,1.9vw,19px);color:var(--grey)}
+.hero-intro{margin-top:40px;font-size:17.5px;color:var(--meok-soft)}
+.hero-intro .first::first-letter{
+  font-family:var(--disp);font-weight:900;font-size:3.3em;float:left;
+  line-height:.86;margin:6px 14px 0 0;color:var(--jaja);
+}
+.seal{
+  display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  width:76px;height:76px;border:2.5px solid var(--inju);color:var(--inju);
+  font-family:var(--disp);font-weight:700;font-size:15px;line-height:1.35;
+  border-radius:6px;transform:rotate(-2.5deg);margin-top:34px;letter-spacing:.14em;text-align:center;
+  box-shadow:inset 0 0 0 1.5px rgba(160,50,39,.25);
+}
+.meta-line{margin-top:30px;font-family:var(--mono);font-size:12.5px;color:var(--grey);letter-spacing:.06em;line-height:2}
+.toc{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:34px}
+.toc a{font-family:var(--disp);font-size:13.5px;color:var(--meok-soft);text-decoration:none;border:1px solid var(--hairline);background:var(--paper);border-radius:999px;padding:6px 16px;transition:all .25s}
+.toc a:hover{border-color:var(--jaja);color:var(--jaja)}
+.toc a:focus-visible{outline:2px solid var(--jaja);outline-offset:2px}
+
+/* 족보 */
+.jokbo{margin-top:46px;background:var(--paper);border:1px solid var(--hairline);border-radius:6px;padding:26px 26px 16px}
+.jokbo h5{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--grey);text-transform:uppercase;margin-bottom:16px}
+.jokbo svg{display:block;width:100%;height:auto}
+.jokbo .cap{font-size:13.5px;color:var(--meok-soft);margin-top:12px;line-height:1.95}
+
+/* ---------- 본문 ---------- */
+section{padding:70px 0 6px}
+.sec-mark{display:flex;align-items:center;gap:16px;margin-bottom:10px}
+.sec-mark .stamp{
+  flex:none;width:46px;height:46px;border:2px solid var(--inju);border-radius:5px;
+  color:var(--inju);font-family:var(--disp);font-weight:700;font-size:13.5px;
+  display:flex;align-items:center;justify-content:center;transform:rotate(-2deg);letter-spacing:.03em;
+}
+h2{font-family:var(--disp);font-weight:900;font-size:clamp(23px,3vw,30px);line-height:1.5;letter-spacing:.01em}
+.sec-en{font-family:var(--eng);font-style:italic;color:var(--grey);font-size:14.5px;margin:4px 0 30px;padding-left:62px}
+p{margin-bottom:22px;color:var(--meok-soft)}
+p strong,b{color:var(--meok);font-weight:700}
+em{font-style:normal;color:var(--jaja);font-weight:700}
+.hl-inju{font-style:normal;color:var(--inju);font-weight:700}
+.cite{font-family:var(--mono);font-size:11px;color:var(--grey);white-space:nowrap}
+code{font-family:var(--mono);font-size:.85em;background:var(--hanji-deep);border-radius:4px;padding:2px 7px;color:var(--jaja-deep)}
+
+.aside{border-left:3px solid var(--hwangto);padding:6px 0 6px 26px;margin:34px 0;font-size:16.5px;color:var(--meok-soft)}
+.aside .who{display:block;font-family:var(--mono);font-size:11.5px;color:var(--grey);margin-top:8px;letter-spacing:.08em}
+
+/* 족자 수식 */
+.scroll-eq{
+  background:var(--meok);color:#EDE6D6;border-radius:4px;padding:26px 30px;margin:36px 0;position:relative;
+  font-family:var(--mono);font-size:clamp(12px,1.7vw,15px);overflow-x:auto;line-height:2.1;
+  box-shadow:0 3px 0 #14110C, 0 -3px 0 #14110C;
+}
+.scroll-eq::before,.scroll-eq::after{content:"";position:absolute;left:0;right:0;height:10px;background:#3A3428;border-radius:6px}
+.scroll-eq::before{top:-10px}.scroll-eq::after{bottom:-10px}
+.scroll-eq .pi{color:#E0B87F}.scroll-eq .g{color:#9BC7A9}.scroll-eq .pl{color:#D6A8C4}
+.scroll-eq .cap{display:block;margin-top:12px;font-family:var(--body);font-size:13px;color:#B4AA92;white-space:normal;line-height:1.9}
+.scroll-eq .num{color:#8A8272;font-size:.9em}
+
+/* 카드 */
+.grid{display:grid;gap:14px;margin:30px 0}
+.grid>*{min-width:0}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--paper);border:1px solid var(--hairline);border-radius:8px;padding:22px}
+.card h4{font-family:var(--disp);font-weight:900;font-size:16px;margin-bottom:2px}
+.card .en{font-family:var(--eng);font-style:italic;font-size:12.5px;color:var(--grey);margin-bottom:12px}
+.card p{font-size:13.5px;line-height:1.9;margin:0}
+.card p+p{margin-top:10px}
+.card.contrib{border-top:4px solid var(--jaja)}
+.card.contrib .no{font-family:var(--eng);font-weight:700;font-size:22px;color:var(--jaja);opacity:.6}
+
+/* 두 공법 대비 */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:32px 0}
+.duo>*{min-width:0}
+.mth{background:var(--paper);border:1px solid var(--hairline);border-radius:8px;padding:24px 26px}
+.mth.sum{border-top:4px solid var(--grey)}
+.mth.res{border-top:4px solid var(--jaja);background:linear-gradient(180deg,#F7F1F5,var(--paper) 55%)}
+.mth .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--grey)}
+.mth h4{font-family:var(--disp);font-weight:900;font-size:18.5px;margin:6px 0 10px}
+.mth p{font-size:14px;line-height:1.9;margin-bottom:10px}
+.mth .verdict{display:inline-block;font-family:var(--mono);font-size:11px;border:1px solid var(--hairline);border-radius:4px;padding:2px 9px;color:var(--meok-soft);background:var(--hanji-deep)}
+.bestseal{display:inline-block;font-family:var(--disp);font-weight:700;font-size:11px;color:var(--jaja);border:1.5px solid var(--jaja);border-radius:4px;padding:1px 8px;transform:rotate(-2deg);margin-left:8px;vertical-align:2px}
+
+/* 물목표 */
+.nota{width:100%;border-collapse:collapse;margin:20px 0 8px;font-size:14px;background:var(--paper)}
+.nota th{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--grey);text-align:left;padding:10px 14px;border-bottom:2px solid var(--meok)}
+.nota td{padding:11px 14px;border-bottom:1px solid var(--hairline);color:var(--meok-soft);vertical-align:top;line-height:1.85}
+.nota td:first-child{font-family:var(--mono);font-size:12.5px;color:var(--jaja-deep);white-space:nowrap}
+
+/* 시험장 */
+.envs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:30px 0}
+.envs>*{min-width:0}
+.envc{background:var(--paper);border:1px solid var(--hairline);border-radius:8px;padding:20px 22px}
+.envc .nm{font-family:var(--disp);font-weight:900;font-size:16.5px}
+.envc .en{font-family:var(--eng);font-style:italic;font-size:12px;color:var(--grey)}
+.envc p{font-size:13px;line-height:1.85;margin:8px 0 0}
+.envc .spec{font-family:var(--mono);font-size:11px;color:var(--grey);margin-top:10px;line-height:1.9}
+
+/* 세 형편 (toy) */
+.cases{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:28px 0}
+.cases>*{min-width:0}
+.case{background:var(--paper);border:1px solid var(--hairline);border-radius:8px;padding:20px 22px;border-left:4px solid var(--hairline)}
+.case.ideal{border-left-color:var(--oksaek)}
+.case.noise{border-left-color:var(--hwangto)}
+.case.amb{border-left-color:var(--jaja)}
+.case h4{font-family:var(--disp);font-weight:900;font-size:15.5px;margin-bottom:8px}
+.case p{font-size:13px;line-height:1.85;margin:0}
+.case .win{display:inline-block;margin-top:10px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;border-radius:4px;padding:2px 8px;background:var(--jaja-soft);color:var(--jaja-deep)}
+.case .win.tie{background:var(--hanji-deep);color:var(--meok-soft)}
+
+/* 성적표 */
+.board{background:var(--paper);border:1px solid var(--hairline);border-radius:8px;padding:26px 30px;margin:28px 0}
+.board h4{font-family:var(--disp);font-weight:900;font-size:17px;margin-bottom:2px}
+.board .en{font-family:var(--eng);font-style:italic;font-size:12.5px;color:var(--grey);margin-bottom:18px}
+.row{display:grid;grid-template-columns:180px 1fr 118px;gap:12px;align-items:center;margin-bottom:9px}
+.row>*{min-width:0}
+.row .lb{font-family:var(--disp);font-size:13px;color:var(--meok-soft);text-align:right;font-weight:700}
+.row .lb.ours{color:var(--jaja)}
+.row .lb.man{color:var(--hwangto)}
+.bar{height:15px;background:var(--hanji-deep);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:3px;transition:width 1.1s cubic-bezier(.25,.7,.3,1);background:#B8AE97}
+.bar i.res{background:linear-gradient(90deg,var(--jaja-deep),var(--jaja))}
+.bar i.man{background:linear-gradient(90deg,#7C5528,var(--hwangto))}
+.bar i.bad{background:repeating-linear-gradient(45deg,#B8AE97 0 6px,#CEC5AE 6px 12px)}
+.row .vl{font-family:var(--mono);font-size:12px;color:var(--meok-soft);white-space:nowrap}
+.row .vl small{color:var(--grey)}
+.board .note{font-size:13.5px;color:var(--meok-soft);margin-top:16px;line-height:1.95}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--meok-soft)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.subhd{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--grey);margin:16px 0 10px;border-bottom:1px dashed var(--hairline);padding-bottom:6px}
+
+/* 상세표 */
+.mtbl{width:100%;border-collapse:collapse;margin:18px 0;font-size:13px;background:var(--paper)}
+.mtbl th{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);padding:9px 10px;border-bottom:2px solid var(--meok);text-align:right}
+.mtbl th:first-child{text-align:left}
+.mtbl td{padding:9px 10px;border-bottom:1px solid var(--hairline);text-align:right;font-family:var(--mono);font-size:12.5px;color:var(--meok-soft)}
+.mtbl td:first-child{text-align:left;font-family:var(--disp);font-weight:700;color:var(--meok);font-size:13px}
+.mtbl tr.win td{background:#F6EFF3}
+.mtbl tr.win td:first-child{color:var(--jaja)}
+.mtbl tr.man td{background:#FAF2E6}
+.mtbl tr.man td:first-child{color:var(--hwangto)}
+.mtbl tr.dim td{color:var(--grey)}
+.tbl-cap{font-size:13px;color:var(--grey);line-height:1.85;margin-bottom:8px}
+
+footer{margin-top:86px;background:var(--meok);color:#B4AA92;padding:52px 0 60px;font-size:13.5px;line-height:2.1}
+footer b{color:#EDE6D6;font-weight:700}
+footer .wrap{display:grid;grid-template-columns:1fr auto;gap:26px;align-items:end}
+footer .seal{border-color:#C86B5C;color:#C86B5C;box-shadow:inset 0 0 0 1.5px rgba(200,107,92,.3);margin-top:0}
+footer .mono{font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+
+@media(max-width:720px){
+  body{font-size:16px;line-height:1.95}
+  .wrap{padding:0 20px}
+  .g2,.g3,.g4,.duo,.envs,.cases{grid-template-columns:1fr}
+  .sec-en{padding-left:0}
+  .hero::before{font-size:190px;right:-24px}
+  .cite,.nota td:first-child,.row .vl{white-space:normal}
+  .nota,.mtbl{display:block;overflow-x:auto}
+  .row{grid-template-columns:1fr;gap:4px}
+  .row .lb{text-align:left}
+  footer .wrap{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== 서두 ==================== -->
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker rv">지식 유도 순차적 의사결정 답사기 · 제4권</div>
+    <h1 class="rv">족보를 들고<br><span class="thin">낯선 얼굴을 알아보다</span></h1>
+    <div class="en rv">Residual Policy Gradients for Commonsense RL · Chapter 4 — based on IJCAI 2022</div>
+
+    <div class="hero-intro rv">
+      <p class="first">
+        여기서 답사의 영토가 바뀐다. 2·3권이 사전학습의 곳간을 넓히는 공사였다면,
+        이제부터는 그 배운 것을 새 땅에 <strong>옮겨 심는 일</strong>이다. 옮겨 심기의 통상 공법은
+        사전학습–미세조정의 그것 — 기본 정책 π<sub>b</sub>를 한두 과업에서 기른 뒤 배운 가중치를 그대로 물려주는 식으로,
+        자연어처리 <span class="cite">[Devlin 2019]</span>와 비전 <span class="cite">[Radford 2021]</span>에서
+        큰 성공을 거두었다. 그러나 이 공법에는 답답한 데가 있다 — <strong>물려준 지식이 끝내 암묵적</strong>이라는 것이다.
+        신경망 매개변수 속에 스며 있으니 무엇을 배웠는지 들여다볼 수도, 편향이 끼었는지 짚어낼 수도 없다
+        <span class="cite">[Feng 2023; Gallegos 2024]</span>.
+      </p>
+      <p>
+        그래서 이 권은 다른 물건을 꺼낸다. 사실을 삼중항으로 또박또박 적어 둔 <em>지식그래프</em>
+        <span class="cite">[Singhal 2012]</span>다. 연속적인 신경 표현과 이산적인 관계 구조 사이에 다리가 놓인 것은
+        2017년 무렵 그래프 신경망이 되살아나면서였다 <span class="cite">[Kipf &amp; Welling 2017; Velickovic 2018]</span>.
+        지식을 옮긴다 하면 물음이 절로 둘이다 — <strong>표본 효율이 좋아지는가</strong>, 그리고
+        <strong>그 지식이 환경을 건너 통하는가</strong>. 이것이 1장에서 받아 든 셋째 물음(RQ3)이다.
+      </p>
+      <p>
+        답사의 연장은 뜻밖에도 <em>족보(族譜)</em>다. 사람은 낱낱의 물건을 일일이 외우지 않는다.
+        <strong>부류(class)</strong>로 한 켜 올려 뭉뚱그린 뒤 그 켜에서 행동을 배우고, 처음 보는 물건에도 그 배움을 편다
+        <span class="cite">[Yee 2019]</span>. 염소를 몰던 솜씨로 양을 몰 수 있는 것은, 둘이 <strong>유제류</strong>라는
+        한 항렬(行列)에 놓이기 때문이다. 상식 게임의 물건들이 실세계의 것들이니,
+        공개 지식그래프에 적힌 <strong>상위부류(subclass) 관계</strong>를 족보로 삼아 상태를 추상화하는 길이 열린다.
+      </p>
+    </div>
+
+    <div class="seal rv">상식<br>탐방</div>
+
+    <div class="meta-line rv">
+      Höpner · Tiddi · van Hoof — IJCAI 2022 기반<br>
+      Thesis pp. 49–63 · Research Question 3
+    </div>
+
+    <nav class="toc rv" aria-label="답사 순서">
+      <a href="#s1">§4.1 초입</a>
+      <a href="#s2">§4.2 네 곳의 문헌</a>
+      <a href="#s3">§4.3 형편</a>
+      <a href="#s4">§4.4 족보 만들기</a>
+      <a href="#s5">§4.5 시험장</a>
+      <a href="#s6">§4.6 성적</a>
+      <a href="#s7">§4.7 답사를 마치며</a>
+    </nav>
+
+    <div class="jokbo rv">
+      <h5>족보(族譜) — 상태의 항렬을 거슬러 오르다 (Figure 4.1의 재구성)</h5>
+      <svg viewBox="0 0 840 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="WordNet에서 뽑은 클래스 트리: 개체에서 동물과 건물로, 척추동물과 무척추동물로, 다시 유제류와 절지동물로 갈라져 염소 양 거미 헛간에 이르는 족보">
+        <!-- 항렬 눈금 -->
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#8A8272">
+          <text x="8" y="34">s₄</text><text x="8" y="86">s₃</text><text x="8" y="138">s₂</text><text x="8" y="190">s₁</text><text x="8" y="242">s₀</text>
+        </g>
+        <g stroke="#E4DCC8" stroke-width="1" stroke-dasharray="3 5">
+          <line x1="34" y1="30" x2="836" y2="30"/><line x1="34" y1="82" x2="836" y2="82"/>
+          <line x1="34" y1="134" x2="836" y2="134"/><line x1="34" y1="186" x2="836" y2="186"/>
+          <line x1="34" y1="238" x2="836" y2="238"/>
+        </g>
+        <!-- 간선 -->
+        <g stroke="#B9AF98" stroke-width="1.2" fill="none">
+          <path d="M420 40 L250 72"/><path d="M420 40 L640 72"/>
+          <path d="M250 92 L150 124"/><path d="M250 92 L350 124"/>
+          <path d="M150 144 L120 176"/><path d="M350 144 L360 176"/>
+          <path d="M120 196 L70 228"/><path d="M120 196 L190 228"/>
+          <path d="M360 196 L360 228"/>
+          <path d="M640 92 L640 176"/><path d="M640 196 L640 228"/>
+        </g>
+        <!-- 노드 -->
+        <g font-family="Gowun Batang, serif" font-size="12.5" text-anchor="middle">
+          <g>
+            <rect x="368" y="18" width="104" height="24" rx="12" fill="#EFE7D5" stroke="#8A8272"/>
+            <text x="420" y="34" fill="#4A443A">개체 entity</text>
+          </g>
+          <g>
+            <rect x="196" y="70" width="108" height="24" rx="12" fill="#EBDFE6" stroke="#6E3B57"/>
+            <text x="250" y="86" fill="#4E2740">동물 animal</text>
+            <rect x="580" y="70" width="120" height="24" rx="12" fill="#F1E4D2" stroke="#A0703A"/>
+            <text x="640" y="86" fill="#7C5528">건물 building</text>
+          </g>
+          <g>
+            <rect x="90" y="122" width="120" height="24" rx="12" fill="#EBDFE6" stroke="#6E3B57"/>
+            <text x="150" y="138" fill="#4E2740">척추동물</text>
+            <rect x="292" y="122" width="118" height="24" rx="12" fill="#DFE9E2" stroke="#4E7A64"/>
+            <text x="351" y="138" fill="#2E5444">무척추동물</text>
+          </g>
+          <g>
+            <rect x="66" y="174" width="108" height="24" rx="12" fill="#EBDFE6" stroke="#6E3B57"/>
+            <text x="120" y="190" fill="#4E2740">유제류</text>
+            <rect x="306" y="174" width="108" height="24" rx="12" fill="#DFE9E2" stroke="#4E7A64"/>
+            <text x="360" y="190" fill="#2E5444">절지동물</text>
+            <rect x="580" y="174" width="120" height="24" rx="12" fill="#F1E4D2" stroke="#A0703A"/>
+            <text x="640" y="190" fill="#7C5528">농가 건물</text>
+          </g>
+          <g font-weight="700">
+            <rect x="26" y="226" width="88" height="24" rx="5" fill="#FBF8F0" stroke="#26221C"/>
+            <text x="70" y="242" fill="#26221C">염소</text>
+            <rect x="146" y="226" width="88" height="24" rx="5" fill="#FBF8F0" stroke="#26221C"/>
+            <text x="190" y="242" fill="#26221C">양</text>
+            <rect x="316" y="226" width="88" height="24" rx="5" fill="#FBF8F0" stroke="#26221C"/>
+            <text x="360" y="242" fill="#26221C">거미</text>
+            <rect x="596" y="226" width="88" height="24" rx="5" fill="#FBF8F0" stroke="#26221C"/>
+            <text x="640" y="242" fill="#26221C">헛간</text>
+          </g>
+        </g>
+        <!-- 설명 -->
+        <g font-family="IBM Plex Mono, monospace" font-size="10" fill="#8A8272">
+          <text x="438" y="128">φᵢ — 한 대(代) 위로</text>
+          <text x="438" y="146">잎=개체 · 뿌리=일반</text>
+        </g>
+      </svg>
+      <p class="cap">
+        WordNet에서 뽑은 클래스 트리의 한 조각. 밑바닥 s₀가 낱낱의 물건을 담은 <b>기저 상태</b>요,
+        위로 오를수록 물건을 제 조상 부류로 갈아 넣은 <b>추상 상태</b>다. 같은 항렬에 놓인 것들 —
+        염소와 양 — 은 유제류라는 한 이름으로 뭉쳐지고, 그 켜에서 배운 행동은 처음 보는 유제류에게도 통한다.
+        <b>다만 족보가 늘 옳지는 않다는 것</b>, 그것이 이 권 내내 씨름할 화두다.
+      </p>
+    </div>
+  </div>
+</header>
+
+<!-- ==================== 4.1 ==================== -->
+<section id="s1" class="wrap">
+  <div class="sec-mark rv"><span class="stamp">§4.1</span><h2>초입 — 백지에서 사람처럼으로</h2></div>
+  <div class="sec-en rv">Introduction</div>
+
+  <div class="rv">
+    <p>
+      심층 강화학습은 고차원의 상태·행동 공간을 가진 MDP에서도 제어 정책을 벼려 냈다 —
+      바둑과 게임 <span class="cite">[Silver 2016]</span>, 로보틱스 <span class="cite">[Lillicrap 2016]</span>가 그 증좌다.
+      실세계로 나오는 길목을 막는 두 걸림돌은 여전히 <strong>표본 비효율</strong>과 <strong>부실한 일반화</strong>다
+      <span class="cite">[Kirk 2023]</span>. 여러 방책 가운데, 학습 과정에 <strong>사전 지식</strong>을 들여
+      강화학습을 백지(tabula rasa)의 방법에서 사람에 가까운 배움으로 옮기려는 시도가 있다.
+      사전 지식의 꼴은 분야에 따라 갈리는데, 사전학습된 임베딩이나 가중치 <span class="cite">[Devlin 2019]</span>가 있고,
+      논리 <span class="cite">[Vaezipoor 2021]</span>나 지식그래프 <span class="cite">[Zhang 2020b]</span> 같은
+      심볼릭 표현이 있다. 앞의 것은 신경망에 얹기 쉬우나 <strong>구체성·추상성·강건성·해석 가능성이 부족</strong>하다
+      <span class="cite">[van Harmelen &amp; ten Teije 2019]</span>.
+    </p>
+    <p>
+      데이터만으로는 좀처럼 얻어지지 않는 사전 지식이 하나 있다. <strong>상식(commonsense)</strong>이다.
+      에이전트에게 상식과 세계 지식을 갖춰 주는 일은 인간–기계 상호작용의 진전에 요긴하다
+      <span class="cite">[Akata 2020]</span> — 쓸모 있는 대화란 경험만으로는 배울 수 없는 사전 지식을 요구하는 법이다.
+      그리하여 <strong>상식 게임</strong> <span class="cite">[Jiang 2020; Murugesan 2021]</span>이 시험장으로 등장했다.
+      선행 연구는 ConceptNet의 조각을 뽑아 상태에 덧붙이는 데 힘을 쏟았는데
+      <span class="cite">[Murugesan 2021]</span>, <strong>그 지식을 환경에 맞춰 재단했을 때에만</strong> 성적이 올랐다.
+      이 장이 노리는 것은 다르다 — <strong>자동으로 뽑히고, 여러 상식 게임에 두루 통할 지식</strong>이다.
+    </p>
+    <p>
+      족보를 얻었다 하여 일이 끝나는 것은 아니다. 부류로 뭉뚱그린 상태는 그 자리에서 최적으로 처신하는 데 필요한
+      정보를 다 지니지 못할 수 있다. 하여 <strong>점점 더 촘촘해지는 상태 표현들의 사슬을 넘나들며 쓸모 있는 지식만
+      골라 통합하는 공법</strong>이 있어야 한다. 이 장은 순진한 앙상블 공법이 어설피 추상된 상태를 잘못 통합함을 보이고,
+      <em>이웃한 항렬 사이의 차이(差)만을 배우도록 강제하는 잔차 학습</em>을 설계한다.
+      먼저 추상화의 효험을 손으로 조절할 수 있는 장난감 환경에서 두 공법의 됨됨이를 살피고,
+      이어 부류 구조가 실제로 지배하는 상식 게임에서 표본 효율과 일반화가 좋아짐을 보인다 —
+      임베딩 공법과 ConceptNet 조각을 덧붙이는 공법을 모두 앞선다. <strong>다만 족보가 물건을 잘못 묶으면
+      배움이 외려 막힌다</strong>는 것도 함께 드러난다. 세 가지 공적을 현판에 새기면 이렇다.
+    </p>
+  </div>
+
+  <div class="grid g3">
+    <div class="card contrib rv"><div class="no">一</div><h4>족보에서 상태 추상화로</h4><p>공개 지식그래프의 상위부류 관계를 써서 상식 게임의 상태 추상화를 정식화한다.</p></div>
+    <div class="card contrib rv"><div class="no">二</div><h4>잔차 정책 경사</h4><p>불완전한 상태 추상화를 살려 쓸 수 있도록, 정책 경사 알고리즘에 접붙일 잔차 학습 공법을 제안한다.</p></div>
+    <div class="card contrib rv"><div class="no">三</div><h4>효험의 입증</h4><p>부류 구조를 가진 환경에서 이 공법이 표본 효율을 높이고 처음 보는 물건으로의 일반화를 개선함을 보인다.</p></div>
+  </div>
+</section>
+
+<!-- ==================== 4.2 ==================== -->
+<section id="s2" class="wrap">
+  <div class="sec-mark rv"><span class="stamp">§4.2</span><h2>네 곳의 문헌 — 관련 연구</h2></div>
+  <div class="sec-en rv">Related Work</div>
+
+  <div class="grid g2">
+    <div class="card rv">
+      <h4>상식 지식그래프</h4><div class="en">Commonsense KGs</div>
+      <p>
+        지식그래프는 사실을 <b>개체–관계–개체</b>의 삼중항으로 갈무리한다. 상식 <span class="cite">[Ilievski 2021]</span>처럼
+        너른 영역을 담기도 하고 의학 <span class="cite">[Huang 2017]</span>처럼 한 고을을 파기도 한다.
+        ConceptNet <span class="cite">[Speer 2017]</span>은 상식 전부를 담으려 하고, 어떤 것은 인과 관계
+        <span class="cite">[Sap 2019]</span>만 벼른다. 손으로 지은 것 <span class="cite">[Miller 1995]</span>은 오류가 적으나
+        품이 많이 들고 덮는 범위가 좁아, 혼합 공법이 흔하다.
+      </p>
+      <p>
+        이 장은 <b>WordNet · ConceptNet · DBpedia</b> <span class="cite">[Lehmann 2015]</span> 셋을 놓고
+        그 족보의 품질이 공법에 어떻게 되비치는지 살핀다. 지식그래프를 벡터로 옮기는 임베딩 기법도 있는데
+        <span class="cite">[Nickel &amp; Kiela 2017]</span>, 특히 <b>쌍곡 임베딩</b>은 WordNet의 상위어 관계가 만드는
+        계층 구조를 담아내니 부류 지식을 넣는 대안으로 견주어 볼 만하다.
+      </p>
+    </div>
+    <div class="card rv">
+      <h4>상식 게임</h4><div class="en">Commonsense Games</div>
+      <p>
+        상식을 에이전트에 들이는 문제를 겨루려 근래 등장한 시험장이다 <span class="cite">[Jiang 2020; Murugesan 2021]</span>.
+        선행 공법은 지식그래프 임베딩을 부리거나 <span class="cite">[Jiang 2020]</span>,
+        ConceptNet 조각을 뽑아 상태 표현에 덧붙였다 <span class="cite">[Murugesan 2021]</span>.
+        임베딩은 GloVe <span class="cite">[Pennington 2014]</span>보다 낫지만, 그 바탕 그래프가
+        <b>게임의 내부 정보를 특혜로 얻은 것</b>이라는 흠이 있다.
+      </p>
+      <p>
+        ConceptNet에서 과업에 맞는 지식을 자동으로 뽑는 일은 여전히 난제다 — 손으로 짚어 주면 표본 효율은 오르나
+        어림짐작의 추출 규칙은 배움을 막는다. <b>쓸모 있는 지식을 스스로 뽑아내는 공법은 아직 없다.</b>
+        이 장이 쓰는 부류 지식은 환경에 맞춰 재단한 것이 아니니, 여러 환경에 두루 통해야 마땅하다.
+      </p>
+    </div>
+    <div class="card rv">
+      <h4>지식그래프를 신경망에 들이기</h4><div class="en">Integrating KGs into Deep Learning</div>
+      <p>
+        이 문제는 주로 자연어 동네가 파 왔다 <span class="cite">[Xie &amp; Pu 2021]</span> —
+        열린 대화 <span class="cite">[Moon 2019]</span>, 과업형 대화 <span class="cite">[Gou 2021]</span>,
+        이야기 완성 <span class="cite">[Zhang 2020b]</span> 따위가 그 무대다. 공법은 대개 지식 베이스 일부에
+        어텐션을 두는 식이다.
+      </p>
+      <p>
+        두 가지가 결정적으로 다르다. 그쪽 그래프는 <b>과업에 맞춰 벼려 놓아 잡음이 적고</b>,
+        과업 대부분이 올바른 추론 무늬까지 주석된 지도학습이다. 이 장은 공개 그래프에서 지식을 캐 오니
+        <b>개체 정합(entity reconciliation)의 실패와 지식의 결손</b>이 만든 족보의 오류를 감당해야 한다.
+      </p>
+    </div>
+    <div class="card rv">
+      <h4>강화학습의 상태 추상화</h4><div class="en">State Abstraction in RL</div>
+      <p>
+        상태 추상화란 기저 MDP의 상태 공간을 갈라 묶어, 정책이 배울 공간의 복잡도를 줄이는 일이다
+        <span class="cite">[Li 2006]</span>. 묶는 기준이 여럿 제안되었고 <span class="cite">[Givan 2003]</span>,
+        그 기준을 지키면 추상 MDP에서 배운 최적 정책이 기저 MDP에서도 최적임이 보장된다.
+      </p>
+      <p>
+        추상화를 부리려면 집계 함수를 배워야 하는데 <span class="cite">[Zhang 2020a]</span>, 이는 표본을 더 요구하거나
+        온-폴리시로 하다가 함수가 <b>주저앉을</b> 위험을 진다 <span class="cite">[Kemertas 2021]</span>.
+        <b>근사적 추상화가 사전 지식으로 주어진 경우는 아직 아무도 보지 않았다.</b>
+        이 장의 추상화는 어떤 일관성 기준도 지키지 않아도 되며 여러 켜로 이뤄질 수 있으니,
+        켜마다의 쓸모를 골라 통합할 공법이 필요하다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 4.3 ==================== -->
+<section id="s3" class="wrap">
+  <div class="sec-mark rv"><span class="stamp">§4.3</span><h2>형편 — 추상 MDP와 항렬의 사슬</h2></div>
+  <div class="sec-en rv">Problem Setting</div>
+
+  <div class="rv">
+    <p>
+      기저 MDP <code>M = (S, A, R, T, γ)</code>에서 배움의 목표는 할인 반환값 G의 기대치를 최대화하는 정책 π다.
+      상태 추상화 함수 <code>φ : S → S′</code>는 상태들을 묶어 공간의 복잡도를 줄인다.
+      가중치 함수 w를 두면 추상 공간 위에 추상 보상 R′와 추상 전이 T′를 정의해 추상 MDP
+      <code>M′ = (S′, A, R′, T′, γ)</code>를 얻을 수 있다.
+    </p>
+  </div>
+
+  <div class="scroll-eq rv">
+    <span class="num">(4.1)</span> J(π) = E<sub>π</sub>[ Σ<sub>t=0..∞</sub> γ<sup>t</sup> R<sub>t</sub> ] = E<sub>π</sub>[G]<br>
+    <span class="num">(4.2)</span> <span class="pi">R′(s′, a)</span> = Σ<sub>s∈φ⁻¹(s′)</sub> w(s) R(s, a)<br>
+    <span class="num">(4.3)</span> <span class="g">T′(s′, a, s̄′)</span> = Σ<sub>s∈φ⁻¹(s′)</sub> Σ<sub>s̄∈φ⁻¹(s̄′)</sub> w(s̄) T(s, a, s̄)
+    <span class="cap">
+      추상화가 일관성 기준을 지킨다면 M′에서 배운 정책은 기저 MDP M에서도 최적으로 처신한다
+      <span style="font-family:var(--mono)">[Li 2006]</span>.
+      허나 이 장의 형편은 그렇지 못하다 — 주어진 추상화 함수들 φ₁, …, φ<sub>n</sub>
+      (φ_i : S<sub>i−1</sub> → S<sub>i</sub>, S₀는 기저 상태 공간)은 <b>어떤 기준도 지키지 않아도 되므로</b>,
+      어느 한 켜의 추상 MDP에서 배운 정책은 최적이 아닐 수 있다. 목표는 <b>항렬의 사슬
+      s = (s₁, …, s_n) 전체를 입력으로 받는 정책 π 혹은 행동 가치 Q를 배우는 것</b>이며,
+      더 추상적인 s₂, …, s_n을 표본 효율과 일반화의 밑천으로 쓰는 데 뜻이 있다.
+    </span>
+  </div>
+</section>
+
+<!-- ==================== 4.4 ==================== -->
+<section id="s4" class="wrap">
+  <div class="sec-mark rv"><span class="stamp">§4.4</span><h2>족보 만들기와 층층이 배우기 — 방법</h2></div>
+  <div class="sec-en rv">Methodology</div>
+
+  <div class="rv">
+    <p>
+      공법은 두 마디다 — <strong>① 공개 지식그래프의 상위부류 관계로 추상화 함수 φ₁, …, φ<sub>n</sub>을 짓기</strong>,
+      <strong>② 그 항렬의 사슬 위에서 정책을 배우기</strong>.
+    </p>
+    <p>
+      <strong>족보를 짓는다.</strong> 상식 게임의 상태는 실세계 개체와 그 관계를 집합·수열·그래프로 담는다.
+      요령은 <strong>개체를 제 상위부류로 갈아 넣어</strong>, 같은 조상을 가진 물건이 든 상태들을 한 추상 상태로 묶는 것이다.
+      추상 상태에 나올 수 있는 기호의 어휘를 E, 그중 실세계 물건을 O ⊆ E라 하고,
+      그들의 <strong>클래스 트리</strong> C<sub>tree</sub>를 세운다 — 잎이 물건이요, 각 마디의 부모가 그 상위부류며,
+      뿌리는 모든 것이 그 아래인 개체 일반의 부류다.
+    </p>
+  </div>
+
+  <div class="scroll-eq rv">
+    <span class="num">(4.4)</span> φᴱ<sub>i</sub>(e) = <span class="pl">Pa(e)</span>, &nbsp;if e ∈ C<sub>L+1−i</sub> &nbsp;;&nbsp; e, &nbsp;else<br>
+    <span class="num">(4.5)</span> φ<sub>i</sub>(s) = { φᴱ<sub>i</sub>(e) | e ∈ s }
+    <span class="cap">
+      C<sub>k</sub>는 트리에서 깊이 k의 물건·부류요, L은 트리의 깊이, Pa(e)는 e의 부모다.
+      곧 아래에서 i번째 켜에 놓인 것들만 한 대(代) 위로 올리고 나머지는 그대로 두는 셈이다.
+    </span>
+  </div>
+
+  <div class="rv">
+    <p>
+      실제로는 게임 상태에서 물건을 골라내고 공개 그래프에서 트리를 캐 와야 한다.
+      상태가 개체 집합이 아니라 글이라면 spaCy로 명사를 죄다 뽑아 물건으로 삼는다.
+      트리는 DBpedia·ConceptNet·WordNet에서 캔다. 캐다 보면 성가신 일이 생긴다.
+    </p>
+  </div>
+
+  <div class="grid g3">
+    <div class="card rv">
+      <h4>기울어진 족보</h4>
+      <p>잎의 깊이가 저마다 달라 트리가 <b>불균형</b>해진다(Figure 4.2). 어느 켜는 물건을 700개나 담고 어느 켜는 몇 개뿐이다.</p>
+    </div>
+    <div class="card rv">
+      <h4>켜를 접다</h4>
+      <p>부류가 몇 개뿐인 켜는 계산 품만 늘리고 추상화에는 보탬이 없으니, <b>추상화에 기여하는 정도를 보아 켜를 접는다</b>(Figure 4.2 오른쪽 — 4·5번 켜를 접는 식이다).</p>
+    </div>
+    <div class="card rv">
+      <h4>조상이 여럿일 때</h4>
+      <p>DBpedia와 WordNet은 조상이 하나로 정해지지만 ConceptNet은 여럿이다. 하여 개체마다 i단계 상위부류의 <b>집합</b>에 사상하고, 그 집합 원소들의 임베딩을 <b>평균</b>해 표현으로 쓴다.</p>
+    </div>
+  </div>
+
+  <div class="rv">
+    <p style="margin-top:28px">
+      <strong>이제 층층이 배우는 법이다.</strong> 상식 게임의 선행 공법이 정책 경사 계열이니 이쪽에 집중한다
+      (가치 기반의 유사한 분석은 부록에 있다). 가장 손쉬운 길은 <strong>앙상블</strong>이다 —
+      항렬마다 따로 매개변수를 둔 신경망이 로짓을 내놓고, 그것들을 <strong>합(sum)</strong>한 뒤 소프트맥스로 정책을 만든다.
+      계산이 켜마다 병렬로 되니 값도 싸다(켜를 순차로 처리하면 품이 감당 못 할 만큼 커진다).
+    </p>
+  </div>
+
+  <div class="duo">
+    <div class="mth sum rv">
+      <span class="tag">순진한 길 · 합 공법</span>
+      <h4>Sum Method</h4>
+      <p><code>π(a_t|s_t) = Softmax( Σ_{i=1..n} NN_{θi}(s_{i,t}) )</code></p>
+      <p>
+        흠은 <b>가장 추상적인 켜에서 배우도록 강제하는 장치가 없다</b>는 것이다.
+        훈련 때는 맨 아래 켜만 보고 죄다 판단하는 것도 반환값을 최대화하는 한 해법이지만,
+        그 정책이 처음 보는 물건에 통할 리 없다. 말하자면 족보를 손에 들고도
+        낱낱의 얼굴만 외워 시험을 치는 격이다.
+      </p>
+      <span class="verdict">일반화 — 낮은 켜에 과적합 위험</span>
+    </div>
+    <div class="mth res rv">
+      <span class="tag">제안하는 길 · 잔차 공법</span>
+      <h4>Residual Policy Gradient <span class="bestseal">제안</span></h4>
+      <p><code>π_i(a|sⁿ_{i,t}) = Softmax( Σ_{k=i..n} NN_{θk}(s_{k,t}) )</code>, &nbsp; π = π₁</p>
+      <p>
+        전체 정책 π를 <b>항렬별 정책의 곱</b>으로 풀어 쓴 뒤(식 4.8), 정책 경사식에 꽂아 넣는다(식 4.9).
+        요체는 켜 i의 경사를 <b>θ 전체가 아니라 θ_i에 대해서만</b> 취하는 것 —
+        그러면 θ_i는 전체 정책에 미치는 영향이 아니라 <b>제 켜의 추상 정책에 미치는 영향</b>으로 벼려진다.
+        위 항렬이 이미 설명한 것을 빼고 <b>남은 차이만 배우는</b> 셈이다.
+      </p>
+      <span class="verdict">일반화 — 가장 추상적인 켜에서 배우도록 강제</span>
+    </div>
+  </div>
+
+  <div class="scroll-eq rv">
+    <span class="num">(4.8)</span> π(a|s_t) = ( Π<sub>i=1..n−1</sub> <span class="pl">π_i(a|sⁿ_{i,t}) / π_{i+1}(a|sⁿ_{i+1,t})</span> ) · π_n(a|s_{n,t})<br>
+    <span class="num">(4.9)</span> ∇<sub>θ</sub>J(θ) = Σ<sub>i</sub> E<sub>π</sub>[ Σ<sub>t</sub> ∇<sub>θ</sub> log( π_i / π_{i+1} ) G ] , &nbsp; π_{n+1} ≡ 1<br>
+    <span class="num">(4.10)</span> <span class="pi">∇<sub>θ</sub>J_res(θ) = Σ<sub>i</sub> E<sub>π</sub>[ Σ<sub>t</sub> ∇<sub>θi</sub> log( π_i(a|sⁿ_{i,t}) ) G ]</span>
+    <span class="cap">
+      식 4.10의 각 항은 추상 상태 s_i 위의 정책 경사 손실을 닮았다. 다만 궤적은 전체 정책 π에서 표집되며,
+      π_i는 위 켜들이 남긴 로짓 수준의 편향을 물려받는다. 이것이 <b>잔차 공법</b>이다 —
+      족보의 윗대가 이미 설명한 몫을 제하고, 제 대(代)가 보태야 할 차이만 배우게 하는 갱신이다.
+    </span>
+  </div>
+</section>
+
+<!-- ==================== 4.5 ==================== -->
+<section id="s5" class="wrap">
+  <div class="sec-mark rv"><span class="stamp">§4.5</span><h2>시험장 — 이상향과 두 고을</h2></div>
+  <div class="sec-en rv">Experimental Evaluation</div>
+
+  <div class="rv">
+    <p>
+      이 공법은 <strong>공개 그래프의 부류 지식이 상식 게임에서 쓸모 있다</strong>는 가정에 서 있다.
+      그런데 그것이 반드시 참일 리 없다. 그러니 먼저 <strong>추상화의 효험을 손으로 조절할 수 있는 이상향</strong>에서
+      됨됨이를 살피고, 이어 두 고을 — Textworld Commonsense와 Wordcraft — 로 나간다.
+    </p>
+  </div>
+
+  <div class="envs">
+    <div class="envc rv">
+      <div class="nm">장난감 환경</div><div class="en">Toy Environment</div>
+      <p>뿌리 있는 트리를 세워 마디마다 무작위 임베딩을 준다. 잎이 기저 상태요 깊이마다 한 켜의 추상이며, 내부 마디는 자식들을 묶은 추상 상태다. 켜 l을 하나 정해 그 켜의 추상 상태마다 다섯 행동 중 하나를 뽑아 두면, 잎의 최적 행동은 제 조상이 뽑은 그 행동이 된다. 지평은 한 걸음 — 맞히면 보상 1이다. 시험은 <b>임베딩이 처음인 새 잎</b>으로 치되 족보와 최적 행동의 무늬는 그대로 둔다.</p>
+      <div class="spec">REINFORCE · 가치 기준선 · 엔트로피 정칙화 · 3 seeds</div>
+    </div>
+    <div class="envc rv">
+      <div class="nm">Textworld Commonsense</div><div class="en">TWC <span class="cite">[Murugesan 2021]</span></div>
+      <p>글로 된 상태·행동 공간의 게임. 에이전트는 살림집에 놓여, 물건을 <b>상식이 이르는 제자리</b>에 넣어야 한다 — 제자리마다 보상 1이다. 추상화가 꼭 필요하도록 부류마다 물건 수를 늘리고, 훈련 중 보는 게임을 5판에서 <b>90판</b>으로 늘려 물건 노출을 키웠다. 검증 집합은 본 물건, 시험 집합은 <b>못 본 물건</b>으로 가른다.</p>
+      <div class="spec">난이도 — 방 2 · 옮길 물건 2 · 미끼 3 · 최장 50스텝 · 10 seeds<br>바탕 — RNN + numberbatch 임베딩</div>
+    </div>
+    <div class="envc rv">
+      <div class="nm">Wordcraft</div><div class="en">Wordcraft <span class="cite">[Jiang 2020]</span></div>
+      <p>목표 개체와 재료 개체가 주어지면, 재료를 엮어 목표를 얻어야 한다. 무엇을 엮으면 무엇이 되는지는 <b>조합표(recipe)</b>가 정한다. 미끼 개체 수와 훈련 시 주어지는 조합표를 달리해 여러 형편을 만들며, <b>못 본 조합표</b>와 <b>못 본 목표</b>로의 일반화를 시험한다.</p>
+      <div class="spec">IMPALA · 다중 헤드 어텐션 정책망 · 10 seeds</div>
+    </div>
+  </div>
+
+  <div class="rv">
+    <p>
+      TWC에서 견줄 상대는 셋이다 — <strong>Base</strong>(추상화 없음),
+      <strong>Base-H</strong>(WordNet으로 기른 쌍곡 임베딩을 numberbatch에 잇댄 것 <span class="cite">[Nickel &amp; Kiela 2017]</span>),
+      <strong>Base-L</strong>(ConceptNet에서 게임 물건의 <code>LocatedAt</code> 관계를 뽑아 그래프 어텐션으로 새겨
+      글 임베딩과 합친 것 <span class="cite">[Murugesan 2021]</span>).
+      그리고 캐 온 족보의 오류가 얼마나 해로운지 보려고, 보상과 전이 거동을 보아 <strong>손으로 묶은 족보(manual)</strong>를
+      기준으로 함께 둔다.
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 4.6 ==================== -->
+<section id="s6" class="wrap">
+  <div class="sec-mark rv"><span class="stamp">§4.6</span><h2>성적 — 세 형편과 두 고을에서</h2></div>
+  <div class="sec-en rv">Results</div>
+
+  <div class="rv">
+    <p>
+      <strong>이상향의 세 형편(§4.6.1).</strong> 장난감 환경에서 추상화의 됨됨이를 셋으로 갈라 보았다.
+    </p>
+  </div>
+
+  <div class="cases">
+    <div class="case ideal rv">
+      <h4>① 족보가 완전할 때</h4>
+      <p>추상 상태가 기저 상태의 행동을 온전히 정하는 형편이다. 합·잔차 두 공법 모두 추상화 없는 기준선보다
+      표본 효율이 좋고, <b>오라클(최적 추상 상태만 본 정책)과 어깨를 나란히</b> 한다. 일반화도 그렇다 —
+      기저 공법은 시험 때 처음 보는 무작위 임베딩을 만나니 일반화의 여지 자체가 없다.</p>
+      <span class="win tie">합 ≈ 잔차 ≈ 오라클</span>
+    </div>
+    <div class="case noise rv">
+      <h4>② 족보에 잡음이 섞일 때</h4>
+      <p>40%의 경우 최적 행동을 미리 무작위로 정해 버려 추상–행동의 연을 흐트러 놓았다.
+      추상 상태만 본 정책은 그 비율에 묶여 천장을 치고, 기저·합·잔차는 훈련에서 최적에 이른다.
+      일반화 성적은 둘 다 내려앉되, <b>합 공법이 훈련 잡음에 더 심하게 과적합</b>한다.</p>
+      <span class="win">잔차 &gt; 합</span>
+    </div>
+    <div class="case amb rv">
+      <h4>③ 족보가 애매할 때</h4>
+      <p>추상화가 상태 하나만 묶는(곧 뭉뚱그리는 바 없는) 켜가 섞인 형편이다.
+      여기서 <b>잔차가 합을 뚜렷이 앞선다</b>. 잔차 갱신은 되도록 위 항렬에서 배우도록 강제하는데,
+      합은 최종 정책의 몫을 켜들에 흩어 놓기 때문이다. 시험 때 합 공법은
+      <b>쓸모없는 기저 상태에 지나치게 무게를 실어</b> 엉뚱한 행동을 고른다.</p>
+      <span class="win">잔차 &gt; 합</span>
+    </div>
+  </div>
+
+  <div class="rv">
+    <p>
+      <strong>TWC의 표본 효율(§4.6.2).</strong> 잔차와 합 공법 모두 기저 공법보다 적은 표본으로 배운다 —
+      총 100 훈련 에피소드에서 <strong>평균 차이가 최대 20 에피소드</strong>에 달했다(Figure 4.4).
+      다만 합 공법은 초반의 기세가 좋다가 <strong>어떤 씨앗(seed)에서는 훈련 말미에 주저앉아</strong>
+      정규화 보상의 변덕이 커진다 — 이상향의 잡음 형편에서 본 바로 그 증상이다.
+      씨앗에 따라 무너진다는 것은, 더 추상적인 켜에서 배운 거동이 <strong>가중치의 무작위 초기화에 좌우</strong>됨을 뜻한다.
+      <strong>잔차 공법에는 이런 불안이 없다.</strong> 한편 쌍곡 임베딩은 표본 효율에 보탬이 없고 훈련 말미에는
+      성적을 깎기까지 하며, <code>LocatedAt</code> 관계를 덧붙이면 부류 추상화와 비슷한 정도로 효율이 오른다(Figure 4.5).
+    </p>
+  </div>
+
+  <p class="tbl-cap rv">⟨Table 4.1⟩ TWC 일반화 성적 — 검증(본 물건)과 시험(못 본 물건)에서의 정규화 보상과 소요 스텝. M=손으로 묶은 족보, W=WordNet, R=잔차, S=합. Base-H는 쌍곡 임베딩, Base-L은 LocatedAt 추가. 10 seeds, ( )는 표준편차. 자색 행은 손 족보 없이 얻은 최고, 황토 행은 손 족보가 앞선 조건이다.</p>
+  <table class="mtbl rv">
+    <tr><th>공법</th><th>보상 · 검증</th><th>보상 · 시험</th><th>스텝 · 검증</th><th>스텝 · 시험</th></tr>
+    <tr class="dim"><td>Base</td><td>0.91 (0.04)</td><td>0.85 (0.05)</td><td>25.98 (3.14)</td><td>29.36 (3.42)</td></tr>
+    <tr class="dim"><td>Base-H · 쌍곡 임베딩</td><td>0.83 (0.06)</td><td>0.75 (0.14)</td><td>30.59 (5.39)</td><td>33.92 (6.08)</td></tr>
+    <tr class="dim"><td>Base-L · LocatedAt</td><td>0.90 (0.04)</td><td>0.86 (0.06)</td><td>24.83 (2.31)</td><td>28.71 (3.46)</td></tr>
+    <tr class="man"><td>M-R · 손 족보 + 잔차</td><td>0.96 (0.03)</td><td>0.96 (0.02)</td><td>21.26 (2.65)</td><td>20.00 (1.57)</td></tr>
+    <tr class="man"><td>M-S · 손 족보 + 합</td><td>0.97 (0.02)</td><td>0.96 (0.02)</td><td>20.95 (1.38)</td><td>19.55 (1.69)</td></tr>
+    <tr class="win"><td>W-R · WordNet + 잔차</td><td>0.93 (0.02)</td><td>0.94 (0.02)</td><td>23.25 (1.46)</td><td>24.04 (1.75)</td></tr>
+    <tr><td>W-S · WordNet + 합</td><td>0.88 (0.10)</td><td>0.87 (0.17)</td><td>25.69 (4.78)</td><td>26.21 (6.81)</td></tr>
+  </table>
+
+  <div class="board rv">
+    <h4>못 본 물건 앞에서 — 시험 집합 성적</h4>
+    <div class="en">Table 4.1의 시험 집합 열을 옮긴 것 · 위는 정규화 보상(높을수록 좋다), 아래는 소요 스텝(낮을수록 좋다)</div>
+    <div class="subhd">정규화 보상 · 시험 집합</div>
+    <div class="row"><span class="lb">Base</span><div class="bar"><i data-w="85"></i></div><span class="vl">0.85 <small>(.05)</small></span></div>
+    <div class="row"><span class="lb">Base-H</span><div class="bar"><i class="bad" data-w="75"></i></div><span class="vl">0.75 <small>(.14)</small></span></div>
+    <div class="row"><span class="lb">Base-L</span><div class="bar"><i data-w="86"></i></div><span class="vl">0.86 <small>(.06)</small></span></div>
+    <div class="row"><span class="lb man">M-R · 손 족보</span><div class="bar"><i class="man" data-w="96"></i></div><span class="vl">0.96 <small>(.02)</small></span></div>
+    <div class="row"><span class="lb ours">W-R · WordNet 잔차</span><div class="bar"><i class="res" data-w="94"></i></div><span class="vl">0.94 <small>(.02)</small></span></div>
+    <div class="row"><span class="lb">W-S · WordNet 합</span><div class="bar"><i data-w="87"></i></div><span class="vl">0.87 <small>(.17)</small></span></div>
+    <div class="subhd">소요 스텝 · 시험 집합 — 막대가 짧을수록 낫다 (50스텝 만점 기준)</div>
+    <div class="row"><span class="lb">Base</span><div class="bar"><i class="bad" data-w="58.7"></i></div><span class="vl">29.36 <small>(3.42)</small></span></div>
+    <div class="row"><span class="lb">Base-H</span><div class="bar"><i class="bad" data-w="67.8"></i></div><span class="vl">33.92 <small>(6.08)</small></span></div>
+    <div class="row"><span class="lb">Base-L</span><div class="bar"><i class="bad" data-w="57.4"></i></div><span class="vl">28.71 <small>(3.46)</small></span></div>
+    <div class="row"><span class="lb man">M-R · 손 족보</span><div class="bar"><i class="man" data-w="40.0"></i></div><span class="vl">20.00 <small>(1.57)</small></span></div>
+    <div class="row"><span class="lb ours">W-R · WordNet 잔차</span><div class="bar"><i class="res" data-w="48.1"></i></div><span class="vl">24.04 <small>(1.75)</small></span></div>
+    <div class="row"><span class="lb">W-S · WordNet 합</span><div class="bar"><i data-w="52.4"></i></div><span class="vl">26.21 <small>(6.81)</small></span></div>
+    <div class="legend">
+      <span><i style="background:#6E3B57"></i>WordNet 족보 + 잔차</span>
+      <span><i style="background:#A0703A"></i>손으로 묶은 족보</span>
+      <span><i style="background:#B8AE97"></i>그 외</span>
+      <span><i style="background:repeating-linear-gradient(45deg,#B8AE97 0 6px,#CEC5AE 6px 12px)"></i>기준선보다 못하거나 정체</span>
+    </div>
+    <p class="note">
+      읽을거리가 셋이다. 첫째, 아무 지식 없는 기준선은 <b>못 본 물건 앞에서 성적이 떨어진다</b>(보상 0.91→0.85, 스텝 25.98→29.36).
+      둘째, 쌍곡 임베딩은 이 낙차를 달래지 못하고 <b>외려 일반화를 해치며</b>, LocatedAt은 낙차를 조금 줄일 뿐이다.
+      셋째, <b>손으로 묶은 족보를 주면 못 본 물건 앞에서도 성적이 떨어지지 않는다</b> — 잔차든 합이든.
+      그리고 <b>그 손 족보를 WordNet 족보로 바꿔도 잔차 공법은 그 미덕을 지킨다</b>(0.94, 24.04).
+      합 공법은 훈련 중의 붕괴 탓에 검증·시험 모두에서 처진다.
+    </p>
+  </div>
+
+  <div class="aside rv">
+    <b>족보의 품질을 캐다(KG 뒷조사).</b>
+    손 족보에서 WordNet 족보로 옮겨 앉을 때 끼어드는 잡음과 여분의 켜는, 잔차 공법에서 일반화 성적을
+    조금 깎을 뿐 표본 비효율을 새로 낳지는 않았다. 그러나 DBpedia와 ConceptNet의 족보는 배움을 뚜렷이 막았다.
+    <b>DBpedia는 개체 정합이 어긋난 데가 많아 뜻이 전혀 다른 물건들이 한 항렬로 묶였고</b>,
+    <b>ConceptNet은 조상이 여럿인 개체의 임베딩을 평균한 데서 탈이 났다</b> —
+    상위부류 집합이 얼마간 겹쳐도, 겹치지 않는 부류들 탓에 결과 임베딩이 크게 갈리는 것이다.
+    잘못 엮인 족보는 없는 족보보다 해롭다.
+    <span class="who">— §4.6.2의 뒷조사</span>
+  </div>
+
+  <div class="rv">
+    <p>
+      <strong>Wordcraft의 형편(§4.6.3).</strong> 못 본 목표 개체로의 일반화를 보면(Figure 4.6),
+      무작위 임베딩을 쓸 때는 추상화가 일반화에 보탬이 된다. 그런데 무작위 임베딩을 <strong>GloVe로 갈아 끼우면
+      부류 추상화를 넘어서는 일반화</strong>가 나오고, 부류 추상화와 GloVe를 함께 써도 덤이 없다.
+      조합표의 결을 들여다보면 까닭이 보인다 — 이 고을에서 물건은 <strong>의미적 유사성</strong>에 따라 엮이는데,
+      그것은 부류보다 <strong>단어 임베딩이 더 잘 담아내는</strong> 정보다.
+      일반화의 이득은 없었으되, GloVe가 있는 자리에 추상화를 더하면 <strong>표본 효율은 좋아진다.</strong>
+    </p>
+  </div>
+
+  <div class="aside rv">
+    답사가 늘 상찬으로 끝나지 않는 것이 이 대목이다. 족보는 만능이 아니다.
+    세상의 결이 <b>혈통이 아니라 뜻의 닮음</b>으로 짜여 있을 때는, 족보보다 낱말의 결을 담은 임베딩이 낫다.
+    <b>연장의 값은 연장 자체가 아니라 그 연장이 다룰 세상의 짜임에 달려 있다.</b>
+    <span class="who">— Wordcraft에서 배운 것</span>
+  </div>
+</section>
+
+<!-- ==================== 4.7 ==================== -->
+<section id="s7" class="wrap">
+  <div class="sec-mark rv"><span class="stamp">§4.7</span><h2>답사를 마치며 — 결론과 오늘의 물음</h2></div>
+  <div class="sec-en rv">Conclusion</div>
+
+  <div class="rv">
+    <p>
+      이 장은 공개 지식그래프에서 캐 온 부류 지식으로, 상식 게임에서 <strong>낱낱의 물건이 아니라 부류의 거동을
+      배울 수 있음</strong>을 보였다. 잡음이 섞인 형편에서도 에이전트가 그 부류 지식을 쓰도록 강제하려,
+      앙상블 학습에 기댄 <strong>잔차 정책 경사 갱신</strong>을 새로 제안했다.
+      캐 온 부류 구조가 환경의 요긴한 부류들을 어림잡아 맞히면 표본 효율과 못 본 물건으로의 일반화가 좋아진다.
+      불완전한 사전 지식이 주어진 다른 형편들, 그리고 부류를 넘어 지식그래프에 담긴 더 많은 의미 —
+      특히 환경과 부대껴서는 배우기 어려운 <strong>인과 관계</strong> <span class="cite">[Heindorf 2020]</span> —
+      를 살려 쓰는 일이 장래의 몫이다.
+    </p>
+    <p>
+      끝으로 오늘의 물음을 피하지 않는다. 요즘 대형 언어모델 <span class="cite">[Achiam 2023; Touvron 2023]</span>은
+      상식 추론 벤치마크 다수에서 이미 인간 수준에 이르렀으니 <span class="cite">[Talmor 2019]</span>,
+      상식을 <strong>지식그래프로 명시하여 들이는 것이 여전히 옳은 방향이냐</strong>는 의문이 인다.
+      그럼에도 지식그래프의 미덕은 남는다 — 신경 매개변수의 불투명함에 견주어,
+      <em>해석 가능하고 구조화된 지식 표현</em>이라는 점이다. 게다가 상식은 본디 말로 표현되니
+      사전학습 언어모델에 곧바로 증류될 수 있다. 그러나 <strong>과학 지식</strong>
+      <span class="cite">[Fabregat 2018]</span> 같은 다른 고을에서는 사정이 다르다 —
+      개념들을 명시적으로 잇는 이산적·관계적 구조가 그 정보를 더 자연스럽게 담아내니,
+      그런 고을에서는 지식그래프가 더 알맞은 그릇이다.
+    </p>
+  </div>
+
+  <div class="aside rv" style="margin-top:40px">
+    허나 과학의 고을에서마저 요즈음의 눈길은 LLM으로 과학 가설을 지어내는 쪽에 쏠려 있다
+    <span class="cite">[Lu 2024; Si 2025]</span>. 지식그래프를 업은 강화학습 에이전트를 과학의 땅에 옮겨 심으려면,
+    지어낸 과학 콘텐츠의 <b>질을 가늠할 원칙 있는 보상 함수</b>가 있어야 한다.
+    그 보상을 설계하는 일이 만만치 않다는 것 — 그것이 마지막 답사처, 다섯째 물음의 화두다.
+    발길을 5장, 과학 에이전트의 고을로 옮긴다.
+    <span class="who">— 제4권을 덮으며, 제5권을 예고한다</span>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <b>지식 유도 순차적 의사결정 답사기 · 제4권 — 상식 강화학습을 위한 잔차 정책 경사</b><br>
+      원문 — Höpner, N. R. (2026). <i>Algorithms for Knowledge-Guided Sequential Decision-Making.</i> Ch.4, pp.49–63. PhD Thesis, Universiteit van Amsterdam. CC BY 4.0.<br>
+      기반 출판물 — Höpner, Tiddi, van Hoof, "Leveraging Class Abstraction for Commonsense Reinforcement Learning via Residual Policy Gradient Methods," IJCAI 2022.<br>
+      본 페이지는 원문 4장의 전 내용을 답사기풍 한국어 산문으로 재구성한 요약이며, 문체는 기행문의 어법을 빌렸으되 수치와 사실 관계는 원문을 따른다.
+    </div>
+    <div>
+      <div class="seal">사독<br>완료</div>
+      <div class="mono" style="margin-top:14px">Ch.4 / Residual Policy Gradients · §4.1–§4.7</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els=document.querySelectorAll('.rv');
+  function fillBars(scope){scope.querySelectorAll('.bar i').forEach(function(b){b.style.width=b.dataset.w+'%'})}
+  if(!('IntersectionObserver' in window)||reduced){
+    els.forEach(function(e){e.classList.add('on')});fillBars(document);return;
+  }
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){en.target.classList.add('on');fillBars(en.target);io.unobserve(en.target);}
+    });
+  },{threshold:.06,rootMargin:'0px 0px -5% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2488 @@
+---
+layout: null
+title: "Advanced aggregation and analysis of data" 
+date: 2026-08-05 
+categories: [artificial intelligence]
+tags: [artificial general intelligence, data management]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DuckDB 답사기 · 제4장 고급 집계와 데이터 분석 — 『DuckDB in Action』 정독</title>
+<meta name="description" content="Mark Needham, Michael Hunger, Michael Simons의 『DuckDB in Action』 제4장을 한 줄도 빠뜨리지 않고 읽어 정리한 해설. 수집 중 사전 집계, SUMMARIZE, 서브쿼리의 갈래, 그룹화 집합, 윈도 함수와 프레이밍, HAVING·QUALIFY·FILTER, PIVOT, ASOF JOIN, 테이블 함수, LATERAL 조인.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────
+   토큰 — 제1~3장과 같은 델프트 도자 계열의 연작.
+   이 장의 주제가 '옆줄을 보는 창'이므로,
+   창의 테두리를 표시하는 초록(canal)의 비중이 커진다.
+   ───────────────────────────────────────────── */
+:root{
+  --porcelain:#e9eef4;
+  --glaze:#ffffff;
+  --delft:#1f4e9c;
+  --delft-deep:#0f2a54;
+  --shell:#0b1d3a;
+  --ink:#101a28;
+  --bill:#e0912a;
+  --sun:#f2b134;
+  --canal:#2b7d74;
+  --grey:#69788c;
+  --sky:#8fb8ff;
+  --hair:rgba(16,26,40,.14);
+  --wire:rgba(143,184,255,.22);
+
+  --disp:'Fraunces','Gowun Batang',serif;
+  --body:'Noto Sans KR','Fraunces',sans-serif;
+  --mono:'IBM Plex Mono','Menlo','DejaVu Sans Mono','Consolas','Noto Sans KR',monospace;
+
+  --col:min(720px,100%);
+  --wide:min(1080px,100%);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--porcelain);color:var(--ink);
+  font-family:var(--body);font-weight:300;font-size:17px;line-height:1.95;
+  word-break:keep-all;line-break:strict;
+  background-image:
+    radial-gradient(940px 520px at 78% -6%,rgba(43,125,116,.14),transparent 62%),
+    radial-gradient(1100px 620px at 8% 3%,rgba(31,78,156,.12),transparent 60%);
+  background-attachment:fixed;
+}
+::selection{background:var(--bill);color:#fff}
+a{color:var(--delft);text-decoration:none;border-bottom:1px solid rgba(31,78,156,.35)}
+a:hover{color:var(--canal);border-color:var(--canal)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--bill);outline-offset:3px}
+
+.wrap{width:var(--wide);margin:0 auto;padding:0 26px}
+.col{width:var(--col);margin:0 auto}
+
+/* ── 표제부 ── */
+.hero{padding:74px 0 40px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--grey);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.eyebrow b{color:var(--delft);font-weight:500}
+.chapno{display:flex;align-items:baseline;gap:18px;margin:26px 0 6px}
+.chapno span:first-child{font-family:var(--disp);font-size:clamp(52px,11vw,104px);font-weight:800;line-height:.82;color:var(--delft);font-variation-settings:'SOFT' 40,'WONK' 1}
+.chapno span:last-child{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--grey);padding-bottom:10px}
+h1{font-family:var(--disp);font-weight:600;letter-spacing:-.015em;font-size:clamp(33px,6vw,62px);line-height:1.1;margin:0 0 22px;max-width:22ch}
+h1 em{font-style:italic;color:var(--delft);font-weight:400;background:none}
+.lede{width:var(--col);font-size:clamp(17px,2vw,20px);line-height:1.9;color:#243247}
+.lede strong{font-weight:500;color:var(--ink);background:linear-gradient(transparent 62%,rgba(224,145,42,.32) 62%)}
+.hero-meta{margin-top:34px;display:flex;flex-wrap:wrap;border-top:1px solid var(--hair)}
+.hero-meta div{flex:1 1 190px;padding:16px 22px 16px 0;border-right:1px solid var(--hair)}
+.hero-meta div:last-child{border-right:0}
+.hero-meta dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--grey);text-transform:uppercase;margin:0 0 6px}
+.hero-meta dd{margin:0;font-size:14.5px;font-weight:400;line-height:1.65}
+
+/* ── 목차 레일 ── */
+.rail{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:20;display:none;flex-direction:column;gap:1px}
+.rail a{display:flex;align-items:center;gap:9px;border:0;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--grey);padding:3px 0}
+.rail i{display:block;width:14px;height:1px;background:var(--grey);opacity:.5;transition:.35s}
+.rail a span{opacity:0;transform:translateX(-4px);transition:.35s}
+.rail a:hover i,.rail a.on i{width:28px;opacity:1;background:var(--bill);height:2px}
+.rail a:hover span,.rail a.on span{opacity:1;transform:none;color:var(--delft-deep)}
+@media(min-width:1320px){.rail{display:flex}}
+
+/* ── 본문 ── */
+section{padding:34px 0}
+.sechead{width:var(--col);margin:0 auto 26px}
+.sechead .num{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--bill);display:block;margin-bottom:10px}
+h2{font-family:var(--disp);font-weight:600;font-size:clamp(26px,3.6vw,38px);line-height:1.25;margin:0;letter-spacing:-.01em;color:var(--delft-deep)}
+h2 .en{display:block;font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:.08em;color:var(--grey);margin-top:9px}
+h3{font-family:var(--body);font-weight:700;font-size:19px;line-height:1.5;margin:46px 0 12px;color:var(--ink)}
+h3::before{content:"";display:inline-block;width:9px;height:9px;background:var(--bill);margin-right:11px;vertical-align:2px}
+h3 .sub{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--grey);letter-spacing:.06em;margin-left:8px}
+h4.clause{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.14em;color:var(--delft);margin:38px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--hair);text-transform:uppercase}
+p{margin:0 0 20px}
+.dropcap::first-letter{font-family:var(--disp);font-size:3.6em;line-height:.86;float:left;margin:6px 12px 0 0;color:var(--delft);font-weight:600}
+em{font-style:normal;background:linear-gradient(transparent 60%,rgba(43,125,116,.22) 60%)}
+strong{font-weight:500}
+code{font-family:var(--mono);font-size:.86em;background:rgba(31,78,156,.08);padding:.12em .42em;border-radius:2px;color:var(--delft-deep);white-space:nowrap}
+.q{border-left:3px solid var(--bill);padding:2px 0 2px 22px;margin:34px 0;font-family:var(--disp);font-size:20px;line-height:1.75;color:var(--delft-deep)}
+.q span{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--grey);margin-top:12px}
+
+ul.plain{list-style:none;padding:0;margin:0 0 24px}
+ul.plain li{position:relative;padding:11px 0 11px 30px;border-bottom:1px solid var(--hair)}
+ul.plain li::before{content:"";position:absolute;left:4px;top:22px;width:12px;height:1px;background:var(--delft);opacity:.6}
+ul.plain li b{font-weight:500;color:var(--delft-deep)}
+
+/* ── 도판 ── */
+.plate{margin:46px 0;width:var(--wide)}
+.plate.narrow{width:var(--col);margin-left:auto;margin-right:auto}
+.plate figure{margin:0}
+.tile{background:var(--glaze);border:1px solid var(--hair);box-shadow:0 1px 0 #fff inset,0 18px 40px -30px rgba(15,42,84,.55);padding:14px}
+.tile-in{border:1px solid rgba(31,78,156,.22);padding:20px 14px}
+.plate svg{display:block;width:100%;height:auto}
+figcaption{margin-top:14px;font-family:var(--mono);font-size:12px;color:var(--grey);display:flex;gap:10px;align-items:baseline}
+figcaption b{color:var(--delft-deep);font-weight:500;white-space:nowrap}
+
+/* ── 터미널 ── */
+.term{background:var(--shell);border:1px solid rgba(143,184,255,.28);box-shadow:0 26px 60px -40px rgba(11,29,58,.9);margin:28px 0;overflow:hidden}
+.term.bleed{width:var(--wide)}
+.term-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--wire);background:rgba(143,184,255,.06)}
+.dots{display:flex;gap:6px}
+.dots i{width:9px;height:9px;border-radius:50%;display:block;background:#3a557f}
+.dots i:first-child{background:var(--bill)}
+.term-bar .name{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:#7f9bc7;text-transform:uppercase}
+.term-bar .tagn{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--bill);border:1px solid rgba(224,145,42,.5);padding:2px 8px;white-space:nowrap}
+.term pre{margin:0;padding:20px 22px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.85;color:#d5e3f7}
+.p{color:var(--bill)}
+.k{color:var(--sky)}
+.f{color:#ffd28a}
+.c{color:#6f86a8}
+.err{color:#ff9a7a}
+.ok{color:#67d4b4}
+.term-note{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;font-weight:300;color:#a3b8d6;line-height:1.85}
+.term-note b{color:var(--bill);font-weight:500;font-family:var(--mono);font-size:12.5px}
+.term-note.catch{background:rgba(224,145,42,.07)}
+.term-note.catch::before{content:"살펴본 김에";display:block;font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--bill);margin-bottom:7px}
+
+/* ── duckbox ── */
+.duckbox{font-family:var(--mono);font-size:13px;border-collapse:collapse;color:#d5e3f7}
+.duckbox th,.duckbox td{border:1px solid var(--wire);padding:5px 14px;text-align:right;white-space:nowrap}
+.duckbox th{color:#fff;font-weight:500;text-align:center}
+.duckbox tr.type th{color:#7f9bc7;font-weight:400;font-size:12px;font-style:italic}
+.duckbox td.l,.duckbox th.l{text-align:left}
+.duckbox tfoot td{border:1px solid var(--wire);color:#7f9bc7;text-align:right;font-size:12px}
+.duckbox td.dots3{color:#4f6a91;text-align:center}
+.duckbox td.nil::after{content:"·";color:#4f6a91}
+.dbwrap{padding:20px 22px;overflow-x:auto}
+
+/* ── 전환기(그룹화 집합) ── */
+.switch{background:var(--shell);border:1px solid rgba(143,184,255,.28);margin:34px 0;width:var(--wide);box-shadow:0 26px 60px -40px rgba(11,29,58,.9)}
+.tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--wire);background:rgba(143,184,255,.06)}
+.tabs button{appearance:none;background:none;border:0;border-right:1px solid var(--wire);font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:#7f9bc7;padding:12px 16px;cursor:pointer;transition:.2s}
+.tabs button:hover{color:#fff;background:rgba(143,184,255,.08)}
+.tabs button[aria-pressed="true"]{color:var(--shell);background:var(--bill);font-weight:600}
+.switch .cap{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;font-weight:300;color:#a3b8d6;line-height:1.85}
+.switch .cap b{color:var(--bill);font-weight:500}
+.gsql{border-top:1px solid var(--wire);padding:14px 22px;font-family:var(--mono);font-size:12.5px;color:#c6d8f2;line-height:1.8;overflow-x:auto;white-space:pre}
+tr.roll td{background:rgba(224,145,42,.13)}
+tr.cube td{background:rgba(43,125,116,.16)}
+tr.total td{background:rgba(143,184,255,.14);font-weight:600}
+
+/* ── 프레임 탐색기 ── */
+.fx{background:var(--shell);border:1px solid rgba(143,184,255,.28);margin:36px 0;width:var(--wide);box-shadow:0 26px 60px -40px rgba(11,29,58,.9)}
+.fxctl{padding:18px 22px;border-bottom:1px solid var(--wire);background:rgba(143,184,255,.05)}
+.fxrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.fxrow:last-child{margin-bottom:0}
+.fxrow label{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:#7f9bc7;min-width:112px}
+.fxrow button{appearance:none;background:none;border:1px solid var(--wire);font-family:var(--mono);font-size:11.5px;color:#a3b8d6;padding:7px 12px;cursor:pointer;transition:.2s}
+.fxrow button:hover{color:#fff;border-color:var(--sky)}
+.fxrow button[aria-pressed="true"]{background:var(--canal);border-color:var(--canal);color:#fff;font-weight:600}
+.fxrow input[type=range]{flex:1 1 200px;accent-color:var(--bill);min-width:160px}
+.fxrow .cur{font-family:var(--mono);font-size:12.5px;color:var(--bill);min-width:96px;text-align:right}
+.fxbody{display:grid;grid-template-columns:1fr;gap:0}
+@media(min-width:860px){.fxbody{grid-template-columns:1fr 330px}}
+.fxtable{padding:18px 22px;overflow-x:auto}
+.fxpanel{padding:18px 22px;border-top:1px solid var(--wire)}
+@media(min-width:860px){.fxpanel{border-top:0;border-left:1px solid var(--wire)}}
+.fxtable table{font-family:var(--mono);font-size:12.5px;border-collapse:collapse;width:100%;color:#c6d8f2}
+.fxtable th,.fxtable td{padding:4px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid rgba(143,184,255,.1)}
+.fxtable th{color:#7f9bc7;font-weight:400;font-size:11px;letter-spacing:.08em;border-bottom:1px solid var(--wire)}
+.fxtable td.l,.fxtable th.l{text-align:left}
+.fxtable tr.inf td{background:rgba(43,125,116,.2)}
+.fxtable tr.now td{background:var(--bill);color:#0b1d3a;font-weight:600}
+.fxtable .bar{display:inline-block;height:8px;background:var(--sky);opacity:.5;vertical-align:1px}
+.fxtable tr.now .bar{background:#0b1d3a;opacity:.55}
+.fxstat{margin:0 0 16px}
+.fxstat dt{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:#7f9bc7;margin-bottom:4px}
+.fxstat dd{margin:0 0 14px;font-family:var(--mono);font-size:19px;color:#fff}
+.fxstat dd small{display:block;font-size:11.5px;color:#8ba3c8;margin-top:4px;letter-spacing:.02em}
+.fxbadge{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;padding:3px 9px;margin-top:2px}
+.fxbadge.good{background:rgba(103,212,180,.16);color:#67d4b4;border:1px solid rgba(103,212,180,.4)}
+.fxbadge.warn{background:rgba(224,145,42,.14);color:#ffb35c;border:1px solid rgba(224,145,42,.45)}
+.fxbadge.out{background:rgba(143,184,255,.12);color:#9fb9e6;border:1px solid rgba(143,184,255,.32)}
+.fxsql{border-top:1px solid var(--wire);padding:14px 22px;font-family:var(--mono);font-size:12.5px;color:#c6d8f2;line-height:1.8;overflow-x:auto;white-space:pre}
+.fxcap{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;font-weight:300;color:#a3b8d6;line-height:1.85}
+.fxcap b{color:var(--bill);font-weight:500}
+
+/* ── 격자·카드·표 ── */
+.grid3{display:grid;grid-template-columns:1fr;gap:1px;background:var(--hair);border:1px solid var(--hair);margin:30px 0}
+@media(min-width:640px){.grid3{grid-template-columns:1fr 1fr}}
+@media(min-width:960px){.grid3{grid-template-columns:1fr 1fr 1fr}}
+.cell{background:var(--glaze);padding:20px}
+.cell .t{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--delft);display:block;margin-bottom:8px;font-weight:500}
+.cell p{font-size:14.5px;line-height:1.78;margin:0;color:#2c3a4e}
+.tblwrap{overflow-x:auto;margin:20px 0 8px}
+.tbl{width:100%;min-width:520px;border-collapse:collapse;font-size:15px}
+.tbl caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;color:var(--grey);padding-bottom:10px}
+.tbl caption b{color:var(--delft-deep);font-weight:500}
+.tbl th,.tbl td{padding:12px 14px;border-bottom:1px solid var(--hair);text-align:left;font-size:15px;line-height:1.7;vertical-align:top}
+.tbl th{background:var(--delft-deep);color:#fff;font-weight:500;letter-spacing:.04em;border-bottom:0}
+.tbl td:first-child{font-family:var(--mono);font-size:13.5px;color:var(--delft);font-weight:500;white-space:nowrap}
+.tbl tbody tr:nth-child(even){background:rgba(31,78,156,.04)}
+
+/* 목록 색인 */
+.index{width:var(--wide);margin:36px auto;background:var(--glaze);border:1px solid var(--hair);padding:26px 28px 20px;box-shadow:0 16px 40px -34px rgba(15,42,84,.6)}
+.index h5{margin:0 0 18px;font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--grey);font-weight:400}
+.index ol{list-style:none;padding:0;margin:0;columns:1;column-gap:34px;font-size:14px;line-height:1.6}
+@media(min-width:660px){.index ol{columns:2}}
+@media(min-width:1000px){.index ol{columns:3}}
+.index li{break-inside:avoid;padding:5px 0 5px 48px;position:relative;color:#33425a}
+.index li span{position:absolute;left:0;top:5px;font-family:var(--mono);font-size:11.5px;color:var(--bill)}
+
+/* NOTE / TIP / 사이드바 */
+.note,.tip{padding:22px 24px 6px;margin:34px 0}
+.note{background:linear-gradient(180deg,rgba(224,145,42,.10),rgba(224,145,42,.04));border:1px solid rgba(224,145,42,.4)}
+.tip{background:linear-gradient(180deg,rgba(43,125,116,.09),rgba(43,125,116,.03));border:1px solid rgba(43,125,116,.36)}
+.note .tag,.tip .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;display:block;margin-bottom:10px}
+.note .tag{color:#8a5410}
+.tip .tag{color:#1e5c55}
+.note p,.tip p{font-size:15.5px;line-height:1.85;margin-bottom:16px}
+
+/* ── 요약 ── */
+.summary{background:var(--delft-deep);color:#e6eefb;margin-top:70px;padding:66px 0 58px;position:relative}
+.summary::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px 44px)}
+.summary h2{color:#fff}
+.summary .num{color:var(--bill)}
+.summary h2 .en{color:rgba(230,238,251,.5)}
+.summary ol{list-style:none;counter-reset:s;padding:0;width:var(--col);margin:0 auto}
+.summary li{counter-increment:s;position:relative;padding:16px 0 16px 52px;border-bottom:1px solid rgba(255,255,255,.13);font-weight:300;font-size:16px;line-height:1.8}
+.summary li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:19px;font-family:var(--mono);font-size:12px;color:var(--bill);letter-spacing:.1em}
+.summary li b{font-weight:500;color:#fff}
+.summary code{background:rgba(255,255,255,.12);color:#ffd9a3}
+
+footer{padding:56px 0 76px;font-size:13.5px;color:var(--grey);line-height:1.85}
+footer .col{border-top:1px solid var(--hair);padding-top:26px}
+footer b{color:var(--delft-deep);font-weight:500}
+footer .mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;display:block;margin-top:16px;color:#8494a8}
+
+/* ── 연출 ── */
+.rev{opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rev.in{opacity:1;transform:none}
+.flow{stroke-dasharray:var(--len,300);stroke-dashoffset:var(--len,300);animation:draw 1.4s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.scrollhint{display:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--grey);margin-top:8px}
+@media(max-width:759px){
+  .hero-meta div{border-right:0;border-bottom:1px solid var(--hair);padding-right:0}
+  .hero-meta div:last-child{border-bottom:0}
+}
+@media(max-width:720px){
+  code{white-space:normal;overflow-wrap:anywhere}
+  .scrollhint{display:block}
+  .tile-in{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tile-in>svg{min-width:660px}
+  .tabs button{flex:1 1 auto;padding:11px 10px;font-size:11px}
+  .fxrow label{min-width:100%}
+  figcaption{flex-direction:column;gap:4px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .rev{opacity:1;transform:none}
+  .flow{stroke-dashoffset:0}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="절 목차">
+  <a href="#s0"><i></i><span>여는 글</span></a>
+  <a href="#s1"><i></i><span>4.1 사전 집계</span></a>
+  <a href="#s2"><i></i><span>4.2 SUMMARIZE</span></a>
+  <a href="#s3"><i></i><span>4.3 서브쿼리</span></a>
+  <a href="#s4"><i></i><span>4.4 그룹화 집합</span></a>
+  <a href="#s5"><i></i><span>4.5 윈도 함수</span></a>
+  <a href="#s5b"><i></i><span>4.5.2 프레이밍</span></a>
+  <a href="#s6"><i></i><span>4.6 HAVING·QUALIFY</span></a>
+  <a href="#s7"><i></i><span>4.7 PIVOT</span></a>
+  <a href="#s8"><i></i><span>4.8 ASOF JOIN</span></a>
+  <a href="#s9"><i></i><span>4.9 테이블 함수</span></a>
+  <a href="#s10"><i></i><span>4.10 LATERAL</span></a>
+  <a href="#s11"><i></i><span>요약</span></a>
+</nav>
+
+<!-- ══════════ 표제부 ══════════ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">
+      <span>DuckDB in Action</span><span>·</span><span>Manning, 2024</span><span>·</span>
+      <b>제4장 정독</b>
+    </div>
+
+    <div class="chapno">
+      <span>4</span>
+      <span>ADVANCED AGGREGATION AND ANALYSIS OF DATA<br>원서 58–97쪽</span>
+    </div>
+
+    <h1>한 행만 보던 함수에게 <em>옆줄</em>을 볼 눈을 주는 일</h1>
+
+    <p class="lede">
+      SQL 함수는 원래 자기 행 하나만 본다. 옆을 보려면 집계를 해야 하는데, 집계를 하면 행이 줄어든다.
+      제4장은 그 딜레마를 푸는 문법들을 모아놓았다. <strong>윈도 함수는 행 수를 줄이지 않고 옆줄을 보게 하고,
+      그룹화 집합은 여러 층의 요약을 한 질의에 담고, ASOF 조인은 딱 맞지 않는 시각들을 그럴듯하게 짝지어준다.</strong>
+      저자들이 밝힌 목표는 하나다. 명령형 언어로 쓰면 코드가 한참 길어질 보고서를, 분석 데이터베이스로 어떻게 뽑아내는지 보여주는 것이다.
+    </p>
+
+    <dl class="hero-meta">
+      <div><dt>이 장이 다루는 것</dt><dd>수집하면서 데이터를 준비·정리·집계하기 · 임의 데이터셋의 여러 파티션에 걸쳐 새 집계를 만드는 윈도 함수 · 서브쿼리의 갈래 · 공통 테이블 표현식 · 모든 집계에 필터 적용하기</dd></div>
+      <div><dt>절 구성</dt><dd>4.1 – 4.10 및 하위 절 여덟 개, 요약</dd></div>
+      <div><dt>실린 것</dt><dd>목록 34건 · 도판 6점 · 표 1건 · NOTE 4건</dd></div>
+      <div><dt>이어지는 데이터</dt><dd>제3장의 PVDAQ 태양광 실측값 · <code>readings</code> 151,879행</dd></div>
+    </dl>
+  </div>
+
+  <!-- 서명 도판: 가장 단순한 창 -->
+  <div class="wrap plate" id="s0">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 400" role="img" aria-label="power 내림차순으로 정렬된 측정값 위를 한 행 높이의 창이 이동하면서 dense_rank로 순위를 매기는 모습">
+          <defs>
+            <marker id="a1" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 z" fill="#2b7d74"/>
+            </marker>
+          </defs>
+          <!-- 머리글 -->
+          <g font-family="IBM Plex Mono, monospace" font-size="12">
+            <rect x="222" y="30" width="560" height="26" fill="#0f2a54"/>
+            <text x="252" y="48" fill="#fff">system_id</text>
+            <text x="366" y="48" fill="#fff">read_on</text>
+            <text x="646" y="48" fill="#fff" text-anchor="end">power</text>
+            <text x="762" y="48" fill="#e0912a" text-anchor="end">rnk</text>
+          </g>
+          <!-- 행 -->
+          <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#33425a">
+            <g>
+              <rect x="222" y="56" width="560" height="30" fill="rgba(224,145,42,.16)" stroke="#e0912a" stroke-width="1.2"/>
+              <text x="284" y="76">34</text><text x="366" y="76">2019-05-08 12:15:00</text>
+              <text x="646" y="76" text-anchor="end">133900.000</text><text x="762" y="76" text-anchor="end" fill="#8a5410" font-weight="600">1</text>
+            </g>
+            <g><rect x="222" y="86" width="560" height="26" fill="#fff" stroke="#e9eef4"/>
+              <text x="284" y="104">34</text><text x="366" y="104">2019-05-23 10:00:00</text>
+              <text x="646" y="104" text-anchor="end">133900.000</text><text x="762" y="104" text-anchor="end" fill="#8a5410">1</text></g>
+            <g><rect x="222" y="112" width="560" height="26" fill="#fff" stroke="#e9eef4"/>
+              <text x="284" y="130">34</text><text x="366" y="130">2019-05-23 11:30:00</text>
+              <text x="646" y="130" text-anchor="end">133900.000</text><text x="762" y="130" text-anchor="end" fill="#8a5410">1</text></g>
+            <g><rect x="222" y="138" width="560" height="26" fill="#fff" stroke="#e9eef4"/>
+              <text x="284" y="156">34</text><text x="366" y="156">2019-05-28 11:45:00</text>
+              <text x="646" y="156" text-anchor="end">133900.000</text><text x="762" y="156" text-anchor="end" fill="#8a5410">1</text></g>
+            <g><rect x="222" y="164" width="560" height="26" fill="#fff" stroke="#e9eef4"/>
+              <text x="284" y="182">34</text><text x="366" y="182">2020-04-02 11:30:00</text>
+              <text x="646" y="182" text-anchor="end">133900.000</text><text x="762" y="182" text-anchor="end" fill="#8a5410">1</text></g>
+            <g><rect x="222" y="190" width="560" height="26" fill="rgba(43,125,116,.10)" stroke="#e9eef4"/>
+              <text x="284" y="208">34</text><text x="366" y="208">2019-05-09 10:30:00</text>
+              <text x="646" y="208" text-anchor="end">133700.000</text><text x="762" y="208" text-anchor="end" fill="#1e5c55" font-weight="600">2</text></g>
+            <g><rect x="222" y="216" width="560" height="26" fill="rgba(43,125,116,.10)" stroke="#e9eef4"/>
+              <text x="284" y="234">34</text><text x="366" y="234">2019-05-10 12:15:00</text>
+              <text x="646" y="234" text-anchor="end">133700.000</text><text x="762" y="234" text-anchor="end" fill="#1e5c55">2</text></g>
+            <g><rect x="222" y="242" width="560" height="26" fill="rgba(31,78,156,.08)" stroke="#e9eef4"/>
+              <text x="284" y="260">34</text><text x="366" y="260">2019-03-21 13:00:00</text>
+              <text x="646" y="260" text-anchor="end">133600.000</text><text x="762" y="260" text-anchor="end" fill="#1f4e9c" font-weight="600">3</text></g>
+            <g><rect x="222" y="268" width="560" height="26" fill="rgba(31,78,156,.08)" stroke="#e9eef4"/>
+              <text x="284" y="286">34</text><text x="366" y="286">2019-04-02 10:30:00</text>
+              <text x="646" y="286" text-anchor="end">133600.000</text><text x="762" y="286" text-anchor="end" fill="#1f4e9c">3</text></g>
+          </g>
+
+          <!-- 이동하는 창 -->
+          <g>
+            <path class="flow" style="--len:250" d="M186 66 L186 286" fill="none" stroke="#2b7d74" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#a1)"/>
+            <text x="176" y="150" text-anchor="end" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#1e5c55">1행 높이의 창이</text>
+            <text x="176" y="170" text-anchor="end" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#1e5c55">power 내림차순으로</text>
+            <text x="176" y="190" text-anchor="end" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#1e5c55">데이터셋 위를 지나간다</text>
+          </g>
+
+          <!-- 순위 변화 주석 -->
+          <g>
+            <path d="M790 200 C 830 200 830 196 862 196" fill="none" stroke="#69788c" stroke-width="1.1"/>
+            <text x="870" y="192" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#69788c">power 값이 떨어지는</text>
+            <text x="870" y="212" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#69788c">여기서 순위가 바뀐다</text>
+          </g>
+          <text x="222" y="330" font-family="IBM Plex Mono, monospace" font-size="12" fill="#69788c">dense_rank() OVER (ORDER BY power DESC)</text>
+          <text x="222" y="356" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#69788c">동순위 다섯 행 다음이 6위가 아니라 2위다. 순위에 구멍을 남기지 않는 것이 dense_rank의 성질이다.</text>
+        </svg>
+      </div></div>
+      <figcaption><b>〈도판 4.1〉</b><span>발전량 측정값 위에 세울 수 있는 가장 단순한 창.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════ 여는 글 ══════════ -->
+<section>
+  <div class="col">
+    <p class="dropcap">저자들이 밝힌 이 장의 목표는 소박하게 적혀 있지만 야심이 크다. <em>DuckDB 같은 분석 데이터베이스를 써서, 명령형 프로그래밍 언어로 쓰면 코드가 상당히 길어질 보고서를 어떻게 만들어내는지에 대한 착상을 주겠다</em>는 것이다. 제3장에서 놓은 토대 위에 쌓아 올리지만, <code>SELECT xzy FROM abc</code> 같은 단순한 문장은 금세 뒤로 남겨두고 떠난다.</p>
+
+    <p>그리고 한 문장을 덧붙인다. <strong>현대 SQL을 익히는 데 들이는 시간은 낭비되지 않는다.</strong> 여기 소개하는 구성물은 DuckDB를 돌릴 수 있거나 임베드할 수 있는 모든 곳에서 쓸 수 있고, 그러므로 여러분의 응용을 풍부하게 만든다. 문법 하나를 배우면 그것이 얹히는 자리가 함께 늘어난다는 뜻이니, 교재로서 할 수 있는 가장 정직한 권유다.</p>
+
+    <div class="q">
+      집계를 하면 옆줄이 보이지만 행이 줄어든다. 행을 지키면 옆줄이 안 보인다. 이 장은 그 둘을 동시에 갖는 문법들의 목록이다.
+      <span>제4장의 편성이 말하는 것</span>
+    </div>
+  </div>
+
+  <div class="index rev">
+    <h5>이 장에 실린 목록 34건</h5>
+    <ol>
+      <li><span>4.1</span>수집 중 데이터 정리와 변환</li>
+      <li><span>4.2</span>중첩 집계를 계산하는 서브쿼리</li>
+      <li><span>4.3</span>비교의 오른쪽에 쓰인 서브쿼리</li>
+      <li><span>4.4</span>상관 스칼라 서브쿼리</li>
+      <li><span>4.5</span>비상관 서브쿼리를 외부 테이블과 조인</li>
+      <li><span>4.6</span>EXISTS 표현식과 서브쿼리</li>
+      <li><span>4.7</span>IN 표현식과 서브쿼리</li>
+      <li><span>4.8</span>ANY 표현식과 서브쿼리</li>
+      <li><span>4.9</span>ALL 표현식과 서브쿼리</li>
+      <li><span>4.10</span>수집이 타당한지 집계로 점검</li>
+      <li><span>4.11</span>그룹 키 한 벌짜리 평범한 GROUP BY</li>
+      <li><span>4.12</span>GROUPING SETS 명시적으로 쓰기</li>
+      <li><span>4.13</span>GROUP BY ROLLUP</li>
+      <li><span>4.14</span>GROUP BY CUBE</li>
+      <li><span>4.15</span>제대로 된 top-n 질의</li>
+      <li><span>4.16</span>창에 파티션 적용하기</li>
+      <li><span>4.17</span>RANGE 프레임으로 윈도 함수 적용</li>
+      <li><span>4.18</span>복잡한 순서·파티션을 가진 명명 윈도</li>
+      <li><span>4.19</span>창의 앞뒤 값 계산하기</li>
+      <li><span>4.20</span>창 위의 집계 계산하기</li>
+      <li><span>4.21</span>HAVING으로 집계값 기준 필터링</li>
+      <li><span>4.22</span>QUALIFY로 창의 집계값 필터링</li>
+      <li><span>4.23</span>여러 행에 걸친 창에 QUALIFY 쓰기</li>
+      <li><span>4.24</span>무의미한 데이터를 집계에서 배제</li>
+      <li><span>4.25</span>모든 집계에 필터를 걸어 정적 피벗</li>
+      <li><span>4.26</span>DuckDB의 PIVOT 문</li>
+      <li><span>4.27</span>타임스탬프에 내부 조인 쓰기</li>
+      <li><span>4.28</span>타임스탬프에 ASOF JOIN 쓰기</li>
+      <li><span>4.29</span>ASOF JOIN과 윈도로 누적 수익 계산</li>
+      <li><span>4.30</span>사용 가능한 테이블 함수 목록</li>
+      <li><span>4.31</span>날짜 범위를 주도 테이블로 쓰기</li>
+      <li><span>4.32</span>과거 데이터를 미래로 투사하기</li>
+      <li><span>4.33</span>GHI를 담은 Open Meteo JSON 응답</li>
+      <li><span>4.34</span>ASOF JOIN과 LATERAL JOIN 비교</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ══════════ 4.1 ══════════ -->
+<section id="s1">
+  <div class="sechead rev">
+    <span class="num">4.1</span>
+    <h2>수집하면서 미리 집계하기<span class="en">Pre-aggregating data while ingesting</span></h2>
+  </div>
+  <div class="col rev">
+    <p>예제 시나리오를 이어간다. 제3장 3.4.1절에서 다룬 34번 시스템의 데이터는 정합성에 문제가 좀 있었지만 스키마와 착상에 잘 맞았다. 목표는 <strong>15분 간격으로 측정값을 저장하는 것</strong>이었음을 기억해두자. 그런데 3.2.1절에서 함께 내려받은 다른 데이터셋을 열어보면, 15분이 아닌 간격으로 오는 것들이 눈에 띈다. 파일을 재빨리 들여다보는 한 방법은 <code>tail</code> 명령—파일의 마지막 n줄을 돌려준다—이고, <code>head</code>도 마찬가지로 쓸 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">같은 창고에서 나온 파일들이 서로 다르다</span>
+        <span class="tagn">4.1</span>
+      </div>
+      <pre><span class="c"># 10번 시스템의 2020년 파일 — 1분 간격, 16개 컬럼</span>
+<span class="p">&gt;</span> duckdb -s <span class="f">".maxwidth 40"</span> -s <span class="f">"FROM read_csv_auto('2020_10.csv') LIMIT 3"</span></pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>SiteID</th><th class="l">Date-Time</th><th>…</th><th>module_temp_3</th><th>poa_irradiance</th></tr>
+            <tr class="type"><th>int64</th><th class="l">timestamp</th><th></th><th>double</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>10</td><td class="l">2020-01-23 11:20:00</td><td class="dots3">…</td><td>14.971</td><td>748.36</td></tr>
+            <tr><td>10</td><td class="l">2020-01-23 11:21:00</td><td class="dots3">…</td><td>14.921</td><td>638.23</td></tr>
+            <tr><td>10</td><td class="l">2020-01-23 11:22:00</td><td class="dots3">…</td><td>14.895</td><td>467.67</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="5">3 rows &nbsp;&nbsp; 16 columns (4 shown)</td></tr></tfoot>
+        </table>
+      </div>
+      <pre><span class="c"># 1200번 시스템의 2020년 파일 — 5분 간격, 6개 컬럼. 전체 구조도 다르다.</span>
+<span class="p">&gt;</span> duckdb -s <span class="f">".maxwidth 40"</span> -s <span class="f">"FROM read_csv_auto('2020_1200.csv') LIMIT 3"</span></pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>SiteID</th><th class="l">Date-Time</th><th>…</th><th>ac_power_metered</th><th>power_factor</th></tr>
+            <tr class="type"><th>int64</th><th class="l">timestamp</th><th></th><th>int64</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1200</td><td class="l">2020-01-01 00:00:00</td><td class="dots3">…</td><td>20</td><td>0.029</td></tr>
+            <tr><td>1200</td><td class="l">2020-01-01 00:05:00</td><td class="dots3">…</td><td>20</td><td>0.029</td></tr>
+            <tr><td>1200</td><td class="l">2020-01-01 00:10:00</td><td class="dots3">…</td><td>20</td><td>0.029</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="5">3 rows &nbsp;&nbsp; 6 columns (4 shown)</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        같은 풀에서 나온 데이터 파일들인데도 <b>원천이 다르면 서로 일관되지 않다.</b>
+        저자들의 한마디가 이 장 전체의 실무 감각을 요약한다.
+        <b>데이터 분석은 정확히 이런 문제를 다루는 일인 경우가 꽤 잦다.</b>
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>해결의 도구는 <code>time_bucket()</code>이다. DuckDB가 날짜·시각·타임스탬프를 위해 제공하는 여러 함수 가운데 하나로, <strong>타임스탬프를 주어진 간격으로 절단하고 선택적인 오프셋에 맞춰 정렬해 시간 바구니(time bucket)를 만든다.</strong> 시간 바구니는 센서 측정값 따위를 집계하는 강력한 기제다. <code>GROUP BY</code>와 집계 함수 <code>avg</code>를 함께 쓰면 요구에 맞게 데이터를 준비해 결국 수집할 수 있다. 15분 간격의 바구니를 만들고, 특정 바구니에 떨어지는 모든 측정값의 평균 발전량을 계산한다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p>이어지는 예제들은 제3장의 예제를 따라와 <code>systems</code> 테이블을 채워두었을 때만 동작한다.</p>
+    </div>
+
+    <p>질의를 보면 <code>CASE WHEN THEN ELSE END</code> 구성물이 눈에 들어온다. if/else처럼 동작하는 <code>CASE</code> 문이다. 여기서 하는 일은 평균을 계산하기 전에 <em>값이 0보다 작거나 값이 아예 없는 측정값을 0으로 바꾸는 것</em>이다. 이 데이터셋의 별스러움 가운데 하나인데, 저자들이 붙인 설명이 담백해서 오래 기억에 남는다. <strong>센서가 고장났는지, 아니면 네트워크가 말썽이었는지, 끝내 알 수 없다. 그래도 데이터는 다뤄야 한다.</strong> 여기서는 NULL 값을 음수값처럼 취급해 0으로 눌러두는 것이 괜찮다고 판단했다. 계산을 망가뜨리는 경우라면 집계에 <code>FILTER</code>를 걸어보는 편을 고려할 만하고, 그것은 4.6.3절에서 다룬다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">수집하는 동안 데이터를 정리하고 변환하기</span>
+        <span class="tagn">목록 4.1</span>
+      </div>
+      <pre><span class="k">INSERT INTO</span> readings(system_id, read_on, power)
+<span class="k">SELECT</span> <span class="f">any_value</span>(SiteId),
+        <span class="f">time_bucket</span>(
+             <span class="k">INTERVAL</span> <span class="f">'15 Minutes'</span>,
+             <span class="k">CAST</span>(<span class="f">"Date-Time"</span> <span class="k">AS timestamp</span>)
+        ) <span class="k">AS</span> read_on,
+        <span class="f">avg</span>(
+             <span class="k">CASE</span>
+                  <span class="k">WHEN</span> ac_power &lt; 0 <span class="k">OR</span> ac_power <span class="k">IS NULL THEN</span> 0
+                  <span class="k">ELSE</span> ac_power <span class="k">END</span>)
+<span class="k">FROM</span>
+     <span class="f">read_csv_auto</span>(
+         <span class="f">'https://developer.nrel.gov/api/pvdaq/v3/'</span> ||
+         <span class="f">'data_file?api_key=DEMO_KEY&amp;system_id=10&amp;year=2019'</span>
+     )
+<span class="k">GROUP BY</span> read_on
+<span class="k">ORDER BY</span> read_on;</pre>
+      <div class="term-note">
+        <b>any_value(SiteId)</b>는 CSV 파일에서 <code>SiteId</code> 컬럼의 아무 값이나 하나 고른다.
+        파일이 시스템별로 나뉘어 있으므로 이 컬럼은 모든 행에서 같은 값이고, 따라서 아무 하나를 골라도 옳다.
+        집계(<code>avg</code>)를 계산하고 있으므로 <b>any_value()를 씌우는 것이 필수</b>다.
+      </div>
+      <div class="term-note">
+        <b>time_bucket</b>이 타임스탬프를 15분 단위로 절단한다. 표준 SQL 문법으로 컬럼을 타임스탬프로 <b>명시적으로 형 변환</b>한 점,
+        그리고 변환된 값에 별칭 <code>read_on</code>을 붙인 점을 눈여겨볼 만하다.
+        결과를 그 바구니로 묶었으므로 <b>avg</b>는 앞서 만든 바구니 안의 모든 측정값의 평균을 계산한다.
+        남은 데이터셋의 수집도 <code>FROM</code> 절의 파일 이름만 바꾸면 동일하다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p>DuckDB에는 날짜·시각 기반 함수가 훨씬 더 많다. 의심스러울 때는 참조 문서를 살펴보면 된다. <strong>거의 어떤 문자열이든 제대로 된 날짜나 타임스탬프로 파싱해낼 수 있다.</strong></p>
+    </div>
+
+    <p>이 절은 판단의 문제로 맺는다. 수집을 아예 피하고 외부 파일에 기반해 모든 분석을 인메모리로 할지, 수집하는 동안 어느 정도 집계할지, 아니면 분석할 때만 집계할지. 이 결정은 통상 <em>데이터셋의 크기, 장기 보관에 대한 목표, 이후의 처리 필요</em> 사이의 절충으로 귀결된다. 그러므로 <strong>여기서 일반적으로 적용되는 해법을 만들려 하면 반드시 실패한다.</strong> 이 시나리오에서는 교육적 목적으로 수집과 집계를 모두 하기로 했고, 공유할 수 있을 만큼 데이터셋을 작게 유지하기로 했다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 4.2 ══════════ -->
+<section id="s2">
+  <div class="sechead rev">
+    <span class="num">4.2</span>
+    <h2>데이터 요약하기<span class="en">Summarizing data</span></h2>
+  </div>
+  <div class="col rev">
+    <p>새 데이터셋을 깊이 분석하기 전에 그 특성을 얼마간 알고 싶은 것이 보통이다. 값의 개수—예제에서는 측정값이 몇 개인가—, 수치의 분포와 크기, 그리고 시계열의 간격 크기 같은 것이다. 두 번째가 특히 중요하다. <strong>와트를 다루는지 킬로와트를 다루는지 모른 채로는 보고서가 노골적으로 틀리게 된다.</strong> DuckDB에는 어떤 데이터셋에 대해서든 이 정보를 재빨리 내주는 고유 명령 <code>SUMMARIZE</code>가 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">SUMMARIZE — 테이블 전체</span>
+        <span class="tagn">4.2</span>
+      </div>
+      <pre><span class="p">D</span> <span class="k">SUMMARIZE</span> readings;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">column_name</th><th class="l">column_type</th><th class="l">max</th><th>…</th><th>q75</th><th>count</th></tr>
+            <tr class="type"><th class="l">varchar</th><th class="l">varchar</th><th class="l">varchar</th><th></th><th>varchar</th><th>int64</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">system_id</td><td class="l">INTEGER</td><td class="l">1200</td><td class="dots3">…</td><td>1200</td><td>151879</td></tr>
+            <tr><td class="l">read_on</td><td class="l">TIMESTAMP</td><td class="l">2020-06-26 11:00:00</td><td class="dots3">…</td><td></td><td>151879</td></tr>
+            <tr><td class="l">power</td><td class="l">DECIMAL(10,3)</td><td class="l">133900.000</td><td class="dots3">…</td><td>5125</td><td>151879</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        컬럼이 훨씬 많지만 읽기 쉽도록 줄인 것이다. 이제 CLI를 <code>.mode line</code>으로 바꾸고 측정값의 부분집합을 요약해본다.
+      </div>
+      <pre><span class="p">D</span> .mode line
+<span class="p">D</span> <span class="k">SUMMARIZE SELECT</span> read_on, power <span class="k">FROM</span> readings <span class="k">WHERE</span> system_id = 1200;
+
+    column_name = read_on
+    column_type = TIMESTAMP
+            min = 2019-01-01 00:00:00
+            max = 2020-06-26 11:00:00
+  approx_unique = 50833
+            avg =
+            std =
+            q25 =
+            q50 =
+            q75 =
+          count = 52072
+null_percentage = 0.0%
+
+    column_name = power
+    column_type = DECIMAL(10,3)
+            min = 0.000
+            max = 47873.333
+  approx_unique = 6438
+            avg = 7122.5597121293595
+            std = 11760.089219586542
+            q25 = 20
+            q50 = 27
+            q75 = 9532
+          count = 52072
+null_percentage = 0.0%</pre>
+      <div class="term-note">
+        <code>SUMMARIZE</code>는 테이블에 직접 통하지만, 위에서 보듯 <b>질의 결과에도 통한다.</b>
+        게다가 데이터를 수집하지 않고도 CSV나 Parquet 파일에 대고 바로 돌릴 수 있다.
+      </div>
+      <div class="term-note catch">
+        1200번 시스템의 발전량 분포를 잠깐 읽어볼 만하다. 중앙값(q50)이 <b>27W</b>인데 3분위수(q75)는 <b>9,532W</b>이고
+        평균은 <b>7,122W</b>다. 절반 이상의 측정값이 사실상 0에 가깝다는 뜻이며, 밤과 흐린 날이 데이터의 절반을 차지하는
+        태양광 데이터의 성격이 통계 세 줄에 그대로 드러난다. 표준편차가 평균보다 큰 것도 같은 이유다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<!-- ══════════ 4.3 ══════════ -->
+<section id="s3">
+  <div class="sechead rev">
+    <span class="num">4.3</span>
+    <h2>서브쿼리에 관하여<span class="en">On subqueries</span></h2>
+  </div>
+  <div class="col rev">
+    <p>관리하는 시스템들이 생산한 총 전력의 평균을 계산하고 싶다고 하자. 그러려면 집계 함수 둘, <code>avg</code>와 <code>sum</code>을 적용해야 한다. 그런데 <strong>둘을 중첩할 수 없다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">중첩할 수 없는 집계, 그리고 그 우회</span>
+        <span class="tagn">목록 4.2</span>
+      </div>
+      <pre><span class="c">-- 순진한 접근</span>
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">avg</span>(<span class="f">sum</span>(kWh)) <span class="k">FROM</span> v_power_per_day <span class="k">GROUP BY</span> system_id;
+<span class="err">Error: Binder Error: aggregate function calls cannot be nested</span>
+
+<span class="c">-- 계산을 단계로 나눈다. 서브쿼리가 그 한 방법이다.</span>
+<span class="k">SELECT</span> <span class="f">avg</span>(sum_per_system)
+<span class="k">FROM</span> (
+    <span class="k">SELECT</span> <span class="f">sum</span>(kWh) <span class="k">AS</span> sum_per_system
+    <span class="k">FROM</span> v_power_per_day
+    <span class="k">GROUP BY</span> system_id
+);
+<span class="ok">avg(sum_per_system) = 133908.087</span></pre>
+      <div class="term-note">
+        이 문장의 안쪽 질의는 두 가지 성질을 갖는다. <b>여러 행을 돌려준다</b>는 것, 그리고 <b>바깥 질의의 값에 의존하지 않는다</b>는 것이다.
+        이런 질의를 <b>비상관 서브쿼리</b>라 부른다. 다른 질의 안에 중첩된 질의일 뿐이며,
+        바깥 질의가 안쪽 질의의 결과 위에서 실행되는 것처럼 동작한다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>다음 질문으로 넘어간다. <em>어느 날, 어느 시스템에서 가장 많은 전력이 생산되었는가.</em> 한 가지 해법은 <code>WHERE</code> 절의 비교에서 오른쪽 항으로 서브쿼리를 쓰는 것이다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">스칼라 비상관 서브쿼리</span>
+        <span class="tagn">목록 4.3</span>
+      </div>
+      <pre><span class="k">SELECT</span> read_on, power
+<span class="k">FROM</span> readings
+<span class="k">WHERE</span> power = (<span class="k">SELECT</span> <span class="f">max</span>(power) <span class="k">FROM</span> readings);</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">read_on</th><th>power</th></tr>
+            <tr class="type"><th class="l">timestamp</th><th>decimal(10,3)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">2019-05-08 12:15:00</td><td>133900.000</td></tr>
+            <tr><td class="l">2019-05-23 10:00:00</td><td>133900.000</td></tr>
+            <tr><td class="l">2019-05-23 11:30:00</td><td>133900.000</td></tr>
+            <tr><td class="l">2019-05-28 11:45:00</td><td>133900.000</td></tr>
+            <tr><td class="l">2020-04-02 11:30:00</td><td>133900.000</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        이 서브쿼리는 첫 번째와 달리 <b>단 하나의 스칼라 값</b>만 돌려준다. 이것을 <b>스칼라 비상관 서브쿼리</b>라 부른다.
+        결과가 말하는 바는 이렇다. 최대 출력 133,900W가 <b>서로 다른 다섯 시각</b>에 생산되었다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p><code>arg_min</code>과 <code>arg_max</code>는 최소 또는 최대 값이 나타나는 행의 표현식을 계산하는 집계 함수다. <strong>표현식 하나에만 관심이 있다면, 앞에서 다룬 것 같은 과제에는 서브쿼리보다 이 함수를 쓰는 편이 낫다.</strong> 그러나 표현식이 둘 이상 필요하거나 최소·최대가 아닌 다른 값을 평가하려 한다면, 조건 안의 서브쿼리를 피해 갈 수 없다.</p>
+    </div>
+
+    <p>그러면 <em>시스템별로</em> 최대 발전량과 측정 시각을 알아내려면 어떻게 하는가. 원래의 서브쿼리로는 까다롭다. 그것은 전체 최대 발전량에 대한 값만 보여주기 때문이다. 서브쿼리가 <strong>행마다 다른 값을 돌려주어야</strong> 하며, 그러려면 바깥 질의의 필드를 안쪽에서 쓰는 <em>상관 서브쿼리</em>를 쓴다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">상관 스칼라 서브쿼리 쓰기</span>
+        <span class="tagn">목록 4.4</span>
+      </div>
+      <pre><span class="k">SELECT</span> system_id, read_on, power
+<span class="k">FROM</span> readings r1
+<span class="k">WHERE</span> power = (
+    <span class="k">SELECT</span> <span class="f">max</span>(power)
+    <span class="k">FROM</span> readings r2
+    <span class="k">WHERE</span> r2.system_id = r1.system_id   <span class="c">-- 상관을 만드는 조건은 이것이다</span>
+)
+<span class="k">ORDER BY ALL</span>;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>system_id</th><th class="l">read_on</th><th>power</th></tr>
+            <tr class="type"><th>int32</th><th class="l">timestamp</th><th>decimal(10,3)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>10</td><td class="l">2019-02-23 12:45:00</td><td>1109.293</td></tr>
+            <tr><td>34</td><td class="l">2019-05-08 12:15:00</td><td>133900.000</td></tr>
+            <tr><td>34</td><td class="l">2019-05-23 10:00:00</td><td>133900.000</td></tr>
+            <tr><td>34</td><td class="l">2019-05-23 11:30:00</td><td>133900.000</td></tr>
+            <tr><td>34</td><td class="l">2019-05-28 11:45:00</td><td>133900.000</td></tr>
+            <tr><td>34</td><td class="l">2020-04-02 11:30:00</td><td>133900.000</td></tr>
+            <tr><td>1200</td><td class="l">2020-04-16 12:15:00</td><td>47873.333</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        상관을 만드는 것은 <b>power 값의 비교가 아니라 system_id의 비교</b>라는 지적이 정확하다.
+        이것이 <b>스칼라 상관 서브쿼리</b>다. 안쪽 질의는 데이터베이스가 <b>바깥 질의의 행마다 평가해야 하는</b> 방식으로 바깥에 관계된다.
+      </div>
+      <div class="term-note">
+        규모의 차이가 눈에 확 들어온다. 10번 시스템의 최대치는 <b>1.1kW</b>인데 34번은 <b>133.9kW</b>다.
+        백 배가 넘는다. 이 사실이 다음 절에서 파티션이 왜 필요한지의 근거가 된다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>표현식으로 쓰인 서브쿼리는 조인으로 다시 쓸 수 있다. 중첩 집계의 계산만이 예외다. 방금의 예제라면 이렇게 된다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">비상관 서브쿼리를 외부 테이블과 조인하기</span>
+        <span class="tagn">목록 4.5</span>
+      </div>
+      <pre><span class="k">SELECT</span> r1.system_id, read_on, power
+<span class="k">FROM</span> readings r1
+<span class="k">JOIN</span> (
+    <span class="k">SELECT</span> r2.system_id, <span class="f">max</span>(power) <span class="k">AS</span> value
+    <span class="k">FROM</span> readings r2
+    <span class="k">GROUP BY ALL</span>
+) <span class="k">AS</span> max_power <span class="k">ON</span> (
+    max_power.system_id = r1.system_id <span class="k">AND</span>
+    max_power.value = r1.power
+  )
+<span class="k">ORDER BY ALL</span>;</pre>
+      <div class="term-note">
+        이것이 가독성에 도움이 되는지 아닌지는 <b>읽는 사람이 판단할 몫</b>이라고 저자들은 물러선다.
+        다른 관계형 데이터베이스에서는 사람들이 이렇게 고쳐 쓰는 일이 잦다.
+        큰 테이블의 모든 행에 대해 상관 서브쿼리를 평가하는 것이 느릴 수 있기 때문이다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>그런데 DuckDB에서는 그 수고가 필요하지 않다. 이 절에서 가장 중요한 대목이므로 옮겨 적어둘 만하다. DuckDB는 <strong>서브쿼리 탈상관(decorrelation) 옵티마이저</strong>를 쓴다. 이 옵티마이저는 <em>서브쿼리를 언제나 바깥 질의로부터 독립적으로 만든다.</em> 그래서 사용자는 서브쿼리를 조인으로 손수 고쳐 쓸 걱정 없이 표현력 있는 질의를 자유롭게 쓸 수 있다.</p>
+    <p>더 나아간 사실이 있다. SQL을 고쳐 써서 어떤 서브쿼리를 손으로 탈상관하는 것이 언제나 가능한 것은 아니다. DuckDB는 내부적으로 모든 서브쿼리를 탈상관하는 특수한 종류의 조인을 쓴다. <strong>실은 DuckDB에는 탈상관되지 않은 서브쿼리를 실행하는 기능 자체가 없다.</strong> 이것이 사용자에게는 이득이다. 질의의 가독성과 표현력, 그리고 풀려는 업무 문제에 집중할 수 있게 해주기 때문이다. 어떤 종류의 서브쿼리를 쓰는지 아예 걱정하지 않아도 된다는 것, 그것이 이 엔진이 주는 여유다.</p>
+
+    <h3>표현식으로서의 서브쿼리 <span class="sub">4.3.1</span></h3>
+    <p>상관이든 비상관이든, <code>JOIN</code>에서 관계로 쓰이지 않는 모든 형태의 서브쿼리는 <em>표현식</em>이다. 따라서 다른 여러 연산자와 함께 쓸 수 있다. <code>=</code> 연산자와 부등 연산자 <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;=</code>, <code>&gt;</code>는 서브쿼리가 <strong>정확히 한 행을 돌려주는 스칼라일 것을 요구한다.</strong> 스칼라와 비스칼라 서브쿼리를 함께 다룰 때는 추가 연산자를 쓸 수 있다. <code>IN</code>, <code>EXISTS</code>, <code>ANY</code>, <code>ALL</code>이며, 모두 <em>집합 비교</em>를 통해 작동한다.</p>
+    <p>이 절의 인공적인 예제들은 모두 <code>v = 7</code>을 돌려준다. 값이 같다는 것이 요점이 아니라, 같은 답에 이르는 네 가지 어법을 나란히 놓는 것이 요점이다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">같은 답에 이르는 네 가지 어법</span>
+        <span class="tagn">목록 4.6 – 4.9</span>
+      </div>
+      <pre><span class="p">D</span> .mode line
+
+<span class="c">-- 목록 4.6 · EXISTS — 다른 테이블의 한 행에 존재할 수 있는 값을 가진 행을 모두 고른다.</span>
+<span class="k">SELECT</span> * <span class="k">FROM VALUES</span> (7), (11) s(v)
+<span class="k">WHERE EXISTS</span> (<span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">range</span>(10) <span class="k">WHERE</span> range = v);
+
+<span class="c">-- 목록 4.7 · IN — EXISTS는 통상 IN을 쓴 비상관 서브쿼리로 고쳐 쓸 수 있다.</span>
+<span class="c">--            바깥 값이 서브쿼리 결과에 한 번이라도 담겨 있으면 참이 된다.</span>
+<span class="k">SELECT</span> * <span class="k">FROM VALUES</span> (7), (11) s(v)
+<span class="k">WHERE</span> v <span class="k">IN</span> (<span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">range</span>(10));
+
+<span class="c">-- 목록 4.8 · ANY — IN은 각 값의 '같음' 비교로 동작한다. 부등 조건을 만족하는 값이</span>
+<span class="c">--            하나라도 있는지 묻고 싶을 때는 원하는 비교와 함께 ANY를 쓴다.</span>
+<span class="k">SELECT</span> * <span class="k">FROM VALUES</span> (7), (11) s(v)
+<span class="k">WHERE</span> v &lt;= <span class="k">ANY</span> (<span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">range</span>(10));
+
+<span class="c">-- 목록 4.9 · ALL — 바깥 값과 안쪽 값 '전부'의 비교가 참일 때 참이 된다.</span>
+<span class="k">SELECT</span> * <span class="k">FROM VALUES</span> (7), (11) s(v)
+<span class="k">WHERE</span> v = <span class="k">ALL</span> (<span class="k">SELECT</span> 7);
+
+<span class="ok">v = 7</span>   <span class="c">-- 네 질의 모두 같은 답</span></pre>
+      <div class="term-note">
+        <b>ANY 앞에 붙는 추가 비교</b>를 눈여겨봐야 한다. <code>&lt;=</code>를 빼면 문장이 성립하지 않는다.
+        그리고 <code>= ANY()</code>는 <code>IN()</code>으로 바꿔 쓸 수 있지만, <b>ALL 연산자에는 그런 단순화가 없다.</b>
+      </div>
+      <div class="term-note">
+        저자들이 <code>IN</code>을 알아둘 값어치로 든 이유가 실용적이다.
+        <b>서브쿼리에 온갖 최적화를 해주지 않을 수도 있는, DuckDB 아닌 관계형 데이터베이스를 다룰 때</b> 요긴하다는 것이다.
+        방금 배운 탈상관 옵티마이저의 은혜가 다른 곳에서는 없을 수 있다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 4.4 ══════════ -->
+<section id="s4">
+  <div class="sechead rev">
+    <span class="num">4.4</span>
+    <h2>그룹화 집합<span class="en">Grouping sets</span></h2>
+  </div>
+  <div class="col rev">
+    <p>어떤 데이터셋을 볼 때는 속성의 최소·최대값, 혹은 평균의 개요를 얻어두는 것이 늘 도움이 된다. 지워야 할 이상치가 섞여 있을 수도 있고, 단위를 잘못 다뤘을 수도 있다. 그것을 계산하는 가장 쉬운 방법은 <code>GROUP BY</code> 절 없이 한 질의에 몰아넣는 것이다. 그러면 집계가 <em>바구니 하나</em>—테이블 전체—에서 일어난다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">수집이 타당한지 집계로 점검하기</span>
+        <span class="tagn">목록 4.10</span>
+      </div>
+      <pre><span class="k">SELECT</span> <span class="f">count</span>(*),
+       <span class="f">min</span>(power) <span class="k">AS</span> min_W, <span class="f">max</span>(power) <span class="k">AS</span> max_W,
+       <span class="f">round</span>(<span class="f">sum</span>(power) / 4 / 1000, 2) <span class="k">AS</span> kWh
+<span class="k">FROM</span> readings;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>count_star()</th><th>min_W</th><th>max_W</th><th>kWh</th></tr>
+          </thead>
+          <tbody><tr><td>151879</td><td>0.000</td><td>133900.000</td><td>401723.22</td></tr></tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        단위 환산의 논리를 저자들이 친절히 적어두었다. 15분당 와트 값을 <b>합산하고, 4로 나누어</b> 시간당 와트(Wh)를 얻고,
+        <b>다시 1,000으로 나누어</b> kWh에 이른다.
+      </div>
+      <div class="term-note">
+        측정값은 타당해 보인다. <b>최소값 0조차 그렇다. 밤에는 발전이 없을 뿐이다.</b>
+        데이터의 0을 결측으로 오해하지 않는 이 감각이 도메인 지식이다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>이제 시스템별 kWh와 측정 횟수를 본다. 여러 해를 15분 간격으로 절단해 들여왔으니 <strong>연간 대략 35,040개</strong>의 측정값이 있어야 한다. <code>GROUP BY system_id, year</code>가 그 가정을 확인해준다. 그런데 그다음 질문이 이 절의 본론이다. <em>합계는 어떻게 하는가.</em> 연도별, 연도·시스템별, 그리고 전체의 측정 횟수와 총 발전량 말이다. 다시 말해 <strong>그룹마다 서로 다른 상세 수준을 보여주는 드릴다운 보고서</strong>를 만들 수 있는가.</p>
+    <p>숫자를 계산기에 하나씩 넣어 손으로 더하거나, 그룹 키 없는 집계 질의를 하나 더 쓸 수도 있다. 그러나 더 나은 선택이 있다. 그룹화 집합이다. 아래에서 네 어법을 갈아 끼워 결과 행이 어떻게 늘어나는지 확인할 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="switch" id="gs">
+      <div class="tabs" role="group" aria-label="그룹화 어법 선택">
+        <button data-g="plain" aria-pressed="true">GROUP BY year, system_id</button>
+        <button data-g="sets" aria-pressed="false">GROUPING SETS</button>
+        <button data-g="rollup" aria-pressed="false">ROLLUP</button>
+        <button data-g="cube" aria-pressed="false">CUBE</button>
+      </div>
+      <div class="dbwrap"><div id="gsOut"></div></div>
+      <div class="gsql" id="gsSql"></div>
+      <div class="cap" id="gsCap"></div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>그룹화 집합이 만든 바구니를 정리하면 이렇다.</p>
+    <ul class="plain">
+      <li><b>(year, system_id)</b> — 두 값의 조합으로 정의되는 바구니. 예제에서는 여섯 가지 조합이므로 여섯 행이 나온다.</li>
+      <li><b>(year)</b> — 연도 하나로만 정의되는 바구니. 이 집합에는 없지만 다른 집합에는 있는 키에는 <code>NULL</code> 값이 채워진다. 여기서는 <code>system_id</code>가 그렇다.</li>
+      <li><b>()</b> — 빈 바구니, 또는 빈 그룹이라 할 수 있다. 다른 모든 키에 <code>NULL</code> 값이 채워진다.</li>
+    </ul>
+    <p>같은 결과를 줄임 절 <code>ROLLUP</code>으로도 얻는다. <code>ROLLUP</code> 절은 앞서 논한 집합들을 <strong>n + 1개의 그룹화 집합</strong>으로 자동 생성하며, n은 <code>ROLLUP</code> 절의 항 수다. 모든 해에 걸친 시스템별 합계까지 보고 싶다면 <code>GROUP BY CUBE</code>를 쓴다. <code>CUBE</code>는 부분그룹이 아니라 <strong>실제 조합(2<sup>n</sup>개의 그룹화 집합)</strong>을 만든다. 예제에서는 <code>(year, system_id)</code>, <code>(year)</code>, <code>(system)</code>, <code>()</code>를 만든다.</p>
+    <p>저자들의 맺음이 이 절의 값어치를 정확히 짚는다. <strong>여러 개의 질의가 아니라 하나의 간결한 질의로 발전량 측정값의 완전한 개요를 갖게 되었다.</strong> 오는 길에 덧붙인 모든 드릴다운을 그룹화 집합으로 표현할 수 있다. 최소·최대값은 목록을 읽기 좋게 하려고 생략했을 뿐이다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 4.5 ══════════ -->
+<section id="s5">
+  <div class="sechead rev">
+    <span class="num">4.5</span>
+    <h2>윈도 함수<span class="en">Window functions</span></h2>
+  </div>
+  <div class="col rev">
+    <p>창, 그리고 창 위에서 적용되는 함수는 현대 SQL과 분석의 본질적인 부분이다. <strong>윈도 함수는 일반적으로 다른 행을 볼 수 있게 해준다.</strong> 통상 SQL 함수는 한 번에 현재 행만 볼 수 있고, 집계를 하는 경우가 예외인데 그 경우에는 행의 수가 줄어든다. 여기서 윈도 함수의 결정적 성질이 나온다. <em>보통의 집계 함수와 달리, 윈도 함수를 써도 행들이 하나의 출력 행으로 묶이지 않는다. 행들은 각자의 정체성을 유지한다.</em></p>
+
+    <p>창은 적용하려는 함수 뒤에 붙는 <code>OVER()</code> 절로 도입한다. 창 자체는 <em>작업 대상이 되는 행들의 정의</em>이며, 정해진 순서를 따라 정해진 크기의 행을 데이터셋 위로 움직여 가는 창이라고 생각하면 된다. 윈도잉이 하는 일은 셋으로 정리된다. <strong>관계를 독립적인 파티션들로 쪼개고, 그 파티션을 선택적으로 정렬하고, 각 행마다 근처 값들의 함수로서 새 컬럼을 계산하는 것</strong>이다.</p>
+
+    <div class="grid3">
+      <div class="cell"><span class="t">OVER () — 빈 창</span><p>모든 행을 보려면 빈 창을 쓴다.</p></div>
+      <div class="cell"><span class="t">PARTITION BY — 파티션</span><p>다른 필드의 값이 같은 모든 행을 보려면 그 필드로 파티션을 만든다.</p></div>
+      <div class="cell"><span class="t">RANGE · ROWS — 프레임</span><p>근처의 행들을 보려면 프레임을 쓴다.</p></div>
+    </div>
+
+    <p>여기서 오해하기 쉬운 지점을 저자들이 못 박아둔다. <strong>창의 크기는 파티션의 크기와 같지 않다. 둘은 독립적으로 정의할 수 있다.</strong> 종국에 창의 내용이 함수로 넘어가 새 값이 계산된다. 창의 맥락에서만 동작하는 전용 함수가 몇 개 있지만, <em>모든 보통의 집계 함수를 윈도 함수로 쓸 수 있다.</em> 그래서 다음과 같은 쓰임이 열린다.</p>
+    <ul class="plain">
+      <li><b>순위 매기기</b></li>
+      <li><b>창마다 독립적인 집계 계산</b></li>
+      <li><b>창마다 누적 합계 계산</b></li>
+      <li><b>lag 또는 lead로 앞뒤 행에 접근해 변화량 계산</b></li>
+    </ul>
+
+    <h3>순진한 top-3의 함정</h3>
+    <p>구체적인 예제를 본다. 가장 많은 전력이 생산된 시스템과 그 시각 상위 셋을 15분 단위로 얻고 싶다고 하자. 순진한 접근은 발전량으로 정렬해 3으로 제한하는 것이다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">LIMIT 3이 답하지 못하는 질문</span>
+        <span class="tagn">목록 4.15</span>
+      </div>
+      <pre><span class="c">-- 순진한 접근</span>
+<span class="p">D</span> <span class="k">SELECT</span> * <span class="k">FROM</span> readings <span class="k">ORDER BY</span> power <span class="k">DESC LIMIT</span> 3;
+<span class="c">-- → 세 행 모두 power = 133900.000. 서로 다른 날짜의 34번 시스템이다.</span>
+
+<span class="c">-- 제대로 된 top-n 질의</span>
+<span class="k">WITH</span> ranked_readings <span class="k">AS</span> (
+    <span class="k">SELECT</span> *,
+           <span class="f">dense_rank</span>()
+             <span class="k">OVER</span> (<span class="k">ORDER BY</span> power <span class="k">DESC</span>) <span class="k">AS</span> rnk
+    <span class="k">FROM</span> readings
+)
+<span class="k">SELECT</span> *
+<span class="k">FROM</span> ranked_readings
+<span class="k">WHERE</span> rnk &lt;= 3;</pre>
+      <div class="term-note">
+        생산된 전력의 원값으로는 <b>가장 많이 생산된 시각(즉 1위)만</b> 얻게 되고,
+        상위 세 개의 발전량 각각에 대한 측정값은 얻지 못한다. 요청받은 것은 후자다.
+      </div>
+      <div class="term-note">
+        <b>dense_rank()</b>는 동순위에 대해 순위를 건너뛰지 않고 현재 행의 순위를 계산한다.
+        다섯 행이 1위라면 그다음으로 많이 생산한 행은 6위가 아니라 <b>여전히 2위</b>다.
+        구멍이 포함되기를 바란다면—그다음 행이 2위가 아니라 6위이기를 바란다면—<b>rank</b>를 쓴다.
+      </div>
+      <div class="term-note">
+        <code>WHERE</code> 절에서 순위를 걸러내는 이 다소 어색한 조건은 4.6.2절에서 <b>QUALIFY</b>를 배울 때 없어진다.
+        저자들이 미리 예고해두었다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p><code>OVER()</code> 절 안의 창 정의에 들어가는 <code>ORDER</code> 절은 선택이며, 문장 끝의 <code>ORDER BY</code> 절과 달리 <strong>질의 결과를 정렬하지 않는다.</strong> <code>OVER()</code> 절의 일부로 쓰일 때 <code>ORDER BY</code>는 <em>윈도 함수가 실행되는 순서를 정의한다.</em> 생략하면 윈도 함수는 임의의 순서로 실행된다. 방금의 예제에서 생략하는 것은 무의미하다. 정렬되지 않은 밀집 순위는 언제나 1이 될 것이기 때문이다.</p>
+
+    <h3>파티션 정의하기 <span class="sub">4.5.1</span></h3>
+    <p>앞의 순위 매기기는 나아졌지만 아직 특별히 도움이 되지 않는다. 시스템들의 발전량이 <strong>자릿수가 다를 만큼 차이가 나기</strong> 때문이다. 시스템을 구분하지 않고 순위를 계산하는 것은 원하는 바가 아닐 수 있다. 여기서 실제로 필요한 것은 <em>시스템별 상위 세 측정값</em>이며, 각 시스템이 데이터의 독자적인 파티션을 이룬다. 파티셔닝은 관계를 독립적이고 서로 무관한 조각들로 쪼개고, 그 안에서 윈도 함수가 적용된다.</p>
+    <p><code>PARTITION BY</code> 절로 파티션이 어떻게 구성되는지 정의하지 않으면 <strong>관계 전체가 하나의 파티션으로 취급된다.</strong> 그리고 결정적인 제약이 하나 있다. <em>윈도 함수는 평가되고 있는 행이 담긴 파티션 밖의 값에 접근할 수 없다.</em></p>
+  </div>
+
+  <div class="wrap plate rev">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 430" role="img" aria-label="시스템별로 파티션을 나누어 순위를 매긴 결과, 파티션 경계마다 순위가 1로 되돌아가는 모습">
+          <g font-family="IBM Plex Mono, monospace" font-size="12">
+            <rect x="196" y="24" width="536" height="26" fill="#0f2a54"/>
+            <text x="228" y="42" fill="#fff">system_id</text>
+            <text x="330" y="42" fill="#fff">read_on</text>
+            <text x="604" y="42" fill="#fff" text-anchor="end">power</text>
+            <text x="712" y="42" fill="#e0912a" text-anchor="end">rnk</text>
+          </g>
+          <!-- 파티션 1 -->
+          <g>
+            <rect x="196" y="50" width="536" height="56" fill="rgba(31,78,156,.08)" stroke="#1f4e9c" stroke-width="1.2"/>
+            <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#33425a">
+              <text x="252" y="70">10</text><text x="330" y="70">2019-02-23 12:45:00</text><text x="604" y="70" text-anchor="end">1109.293</text><text x="712" y="70" text-anchor="end" fill="#1f4e9c" font-weight="600">1</text>
+              <text x="252" y="96">10</text><text x="330" y="96">2019-03-01 12:15:00</text><text x="604" y="96" text-anchor="end">1087.900</text><text x="712" y="96" text-anchor="end" fill="#1f4e9c" font-weight="600">2</text>
+            </g>
+            <text x="746" y="82" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#1f4e9c">첫째 파티션 · 10번</text>
+          </g>
+          <!-- 파티션 2 -->
+          <g>
+            <rect x="196" y="112" width="536" height="182" fill="rgba(224,145,42,.10)" stroke="#e0912a" stroke-width="1.2"/>
+            <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#33425a">
+              <text x="252" y="132">34</text><text x="330" y="132">2019-05-08 12:15:00</text><text x="604" y="132" text-anchor="end">133900.000</text><text x="712" y="132" text-anchor="end" fill="#8a5410" font-weight="600">1</text>
+              <text x="252" y="158">34</text><text x="330" y="158">2019-05-23 10:00:00</text><text x="604" y="158" text-anchor="end">133900.000</text><text x="712" y="158" text-anchor="end" fill="#8a5410" font-weight="600">1</text>
+              <text x="252" y="184">34</text><text x="330" y="184">2019-05-23 11:30:00</text><text x="604" y="184" text-anchor="end">133900.000</text><text x="712" y="184" text-anchor="end" fill="#8a5410" font-weight="600">1</text>
+              <text x="252" y="210">34</text><text x="330" y="210">2019-05-28 11:45:00</text><text x="604" y="210" text-anchor="end">133900.000</text><text x="712" y="210" text-anchor="end" fill="#8a5410" font-weight="600">1</text>
+              <text x="252" y="236">34</text><text x="330" y="236">2020-04-02 11:30:00</text><text x="604" y="236" text-anchor="end">133900.000</text><text x="712" y="236" text-anchor="end" fill="#8a5410" font-weight="600">1</text>
+              <text x="252" y="262">34</text><text x="330" y="262">2019-05-09 10:30:00</text><text x="604" y="262" text-anchor="end">133700.000</text><text x="712" y="262" text-anchor="end" fill="#8a5410" font-weight="600">2</text>
+              <text x="252" y="288">34</text><text x="330" y="288">2019-05-10 12:15:00</text><text x="604" y="288" text-anchor="end">133700.000</text><text x="712" y="288" text-anchor="end" fill="#8a5410" font-weight="600">2</text>
+            </g>
+            <text x="746" y="200" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#8a5410">둘째 파티션 · 34번</text>
+          </g>
+          <!-- 파티션 3 -->
+          <g>
+            <rect x="196" y="300" width="536" height="82" fill="rgba(43,125,116,.12)" stroke="#2b7d74" stroke-width="1.2"/>
+            <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#33425a">
+              <text x="240" y="320">1200</text><text x="330" y="320">2020-04-16 12:15:00</text><text x="604" y="320" text-anchor="end">47873.333</text><text x="712" y="320" text-anchor="end" fill="#1e5c55" font-weight="600">1</text>
+              <text x="240" y="346">1200</text><text x="330" y="346">2020-04-02 12:30:00</text><text x="604" y="346" text-anchor="end">47866.667</text><text x="712" y="346" text-anchor="end" fill="#1e5c55" font-weight="600">2</text>
+              <text x="240" y="372">1200</text><text x="330" y="372">2020-04-16 13:15:00</text><text x="604" y="372" text-anchor="end">47866.667</text><text x="712" y="372" text-anchor="end" fill="#1e5c55" font-weight="600">2</text>
+            </g>
+            <text x="746" y="346" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#1e5c55">셋째 파티션 · 1200번</text>
+          </g>
+          <!-- 경계 주석 -->
+          <g>
+            <path d="M188 112 L164 112" stroke="#e0912a" stroke-width="1.4"/>
+            <path d="M188 300 L164 300" stroke="#2b7d74" stroke-width="1.4"/>
+            <text x="156" y="108" text-anchor="end" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#69788c">파티션 경계에서</text>
+            <text x="156" y="128" text-anchor="end" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#69788c">순위가 1로 되돌아간다</text>
+          </g>
+          <text x="196" y="412" font-family="IBM Plex Mono, monospace" font-size="12" fill="#69788c">dense_rank() OVER (PARTITION BY system_id ORDER BY power DESC)</text>
+        </svg>
+      </div></div>
+      <figcaption><b>〈도판 4.2〉</b><span>창을 적용하기 전에 데이터를 파티션으로 나누기. 34번 시스템은 최고 출력에 다섯 번, 두 번째 출력에 두 번 도달했다.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>순위 매기기만 파티션 안에서 쓸 수 있는 것은 아니다. <code>avg</code>, <code>sum</code>, <code>max</code>, <code>min</code> 같은 집계 함수도 윈도잉 맥락에서 쓸 훌륭한 후보다. <strong>차이는 그것들이 생산되는 행의 수를 바꾸지 않는다는 점이다.</strong> 시스템마다 하루의 발전량을 고르면서, 추가 컬럼에 그 시스템의 전체 평균 발전량을 함께 얻고 싶다고 하자. <code>GROUP BY ROLLUP</code>을 떠올릴 수 있고 그 생각이 틀리지도 않다. 그러나 그 그룹화 집합은 꽤 커지고(<code>GROUP BY ROLLUP (system_id, day, kwh)</code>), 평균값을 <em>추가 컬럼이 아니라 추가 행으로</em> 만들어낸다. 찾던 값—시스템별 전체 발전량—은 시스템 값이 있고 날짜 값이 없는 행에서 발견될 것이다.</p>
+    <p>추가 행을 다루지 않는 다른 방법은 <strong>자기 조인</strong>이다. 같은 테이블을 다시 조인해 원하는 집계를 키로 묶어 고르는 것이다. 원하는 결과는 나오지만 읽기 어렵고, 테이블 전체가 두 번 스캔되므로 성능도 좋지 않을 것이다. 파티션 창 맥락에서 <code>avg</code>를 쓰는 편이 훨씬 읽기 쉽고 성능도 좋다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">파티션 위의 집계 — 행 수는 그대로</span>
+        <span class="tagn">4.5.1</span>
+      </div>
+      <pre><span class="k">SELECT</span> *,
+       <span class="f">avg</span>(kWh)
+          <span class="k">OVER</span> (
+            <span class="k">PARTITION BY</span> system_id
+          ) <span class="k">AS</span> average_per_system
+<span class="k">FROM</span> v_power_per_day;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>system_id</th><th class="l">day</th><th>kWh</th><th>average_per_system</th></tr>
+            <tr class="type"><th>int32</th><th class="l">date</th><th>double</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>10</td><td class="l">2019-01-01</td><td>2.19</td><td>4.444051896207586</td></tr>
+            <tr><td>10</td><td class="l">2019-01-04</td><td>5.37</td><td>4.444051896207586</td></tr>
+            <tr><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td></tr>
+            <tr><td>1200</td><td class="l">2019-07-25</td><td>232.37</td><td>170.75771639042347</td></tr>
+            <tr><td>1200</td><td class="l">2019-04-29</td><td>210.97</td><td>170.75771639042347</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="4">1587 rows (4 shown) &nbsp;&nbsp; 4 columns</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        집계—여기서는 <code>avg(kWh)</code>—는 뒤따르는 창 위에서 계산된다. 행의 수를 바꾸지 않으며 <b>모든 행에 그 값이 놓인다.</b>
+        파티션이 정의한 대로 <b>시스템마다</b> 계산된다.
+        창 정의 안의 <code>ORDER BY</code>를 생략한 것은, 평균값에는 값이 집계에 들어가는 순서가 무관하기 때문이다.
+      </div>
+      <div class="term-note">
+        저자들이 남긴 경험 법칙이 이 절의 결론이다.
+        <b>행 수를 바꾸지 않고 질의에 집계를 더하려고 앞서 논한 것 같은 자기 조인을 쓸까 고민할 때마다, 아마 윈도 함수를 써야 한다.</b>
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<!-- ══════════ 4.5.2 프레이밍 ══════════ -->
+<section id="s5b">
+  <div class="sechead rev">
+    <span class="num">4.5.2</span>
+    <h2>프레이밍<span class="en">Framing</span></h2>
+  </div>
+  <div class="col rev">
+    <p>top-n 질의는 스트리밍 서비스를 운영하며 상위 n개 차트를 보여주고 싶을 때 요긴하다. 그러나 이 예제에서 더 흥미로운 질문은 이것이다. <em>시스템 전체에서 생산된 에너지의 7일 이동평균은 얼마인가.</em> 이 질문에 답하려면 세 가지를 해야 한다.</p>
+    <ul class="plain">
+      <li><b>15분 간격의 측정값을 일 단위로 집계한다</b> — 그룹화와 합산.</li>
+      <li><b>일자와 시스템으로 파티션을 나눈다.</b></li>
+      <li><b>7일 크기의 프레임을 만든다.</b></li>
+    </ul>
+    <p>여기서 프레이밍이 등장한다. <strong>프레이밍은 함수가 평가되는 각 행에 대해 상대적인 행의 집합을 지정한다.</strong> 현재 행으로부터의 거리는 현재 행에 선행하거나 후행하는 표현식으로 주어진다. 이 거리는 <em>정수 개의 행</em>으로 지정할 수도 있고, <em>정렬 표현식의 값으로부터의 범위 델타 표현식</em>으로 지정할 수도 있다. 이 두 갈래가 곧 <code>ROWS</code>와 <code>RANGE</code>다.</p>
+    <p>가독성을 위해, 그리고 예제가 창 정의에 집중하도록, 제3장에서 정의한 뷰 <code>v_power_per_day</code>를 쓴다. 시스템별·일자별 kWh를 돌려주는 그 뷰다. CTE로 표현해도 마찬가지로 쉬웠을 것이다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">RANGE 프레임으로 윈도 함수 적용하기</span>
+        <span class="tagn">목록 4.17</span>
+      </div>
+      <pre><span class="k">SELECT</span> system_id,
+       day,
+       kWh,
+       <span class="f">avg</span>(kWh) <span class="k">OVER</span> (
+           <span class="k">PARTITION BY</span> system_id        <span class="c">-- 시스템 id로 정의한 파티션 위를 창이 움직인다</span>
+           <span class="k">ORDER BY</span> day <span class="k">ASC</span>              <span class="c">-- 일자 순서로 정렬</span>
+           <span class="k">RANGE BETWEEN INTERVAL</span> 3 Days <span class="k">PRECEDING</span>
+                      <span class="k">AND INTERVAL</span> 3 Days <span class="k">FOLLOWING</span>   <span class="c">-- 도합 7일 크기</span>
+       ) <span class="k">AS</span> <span class="f">"kWh 7-day moving average"</span>
+<span class="k">FROM</span> v_power_per_day
+<span class="k">ORDER BY</span> system_id, day;</pre>
+      <div class="term-note">
+        3일 앞, 현재 날, 3일 뒤. 창 정의에 쓸 수 있는 모든 선택지를 한 문장에 동원한 예다.
+        결과의 행 수는 원본 측정값에 든 온전한 날의 수만큼이므로, 원서도 일부만 보여준다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>말로만 읽으면 프레임은 좀처럼 손에 잡히지 않는다. 아래는 원서 〈도판 4.3〉이 보여주는 10번 시스템의 2019년 1월 첫 15일을 그대로 옮겨놓고, <strong>현재 행을 옮겨가며 프레임이 어디까지 걸치는지, 그 안의 평균이 어떻게 계산되는지</strong> 직접 확인할 수 있게 만든 장치다. 프레임 정의도 세 가지로 갈아 끼울 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="fx" id="fx">
+      <div class="fxctl">
+        <div class="fxrow">
+          <label for="fxslider">현재 행</label>
+          <input type="range" id="fxslider" min="0" max="14" value="3" step="1" aria-label="현재 행 선택">
+          <span class="cur" id="fxcur">2019-01-04</span>
+        </div>
+        <div class="fxrow">
+          <label>프레임 정의</label>
+          <button data-f="center" aria-pressed="true">3 PRECEDING · 3 FOLLOWING</button>
+          <button data-f="trail" aria-pressed="false">6 PRECEDING · CURRENT ROW</button>
+          <button data-f="cum" aria-pressed="false">UNBOUNDED PRECEDING · CURRENT ROW</button>
+        </div>
+      </div>
+      <div class="fxbody">
+        <div class="fxtable" id="fxTable"></div>
+        <div class="fxpanel">
+          <dl class="fxstat">
+            <dt>프레임 안의 행</dt>
+            <dd id="fxn">—</dd>
+            <dt>평균 kWh</dt>
+            <dd id="fxavg">—<small id="fxsum"></small></dd>
+            <dt>원서 도판 4.3 값</dt>
+            <dd id="fxbook">—<small id="fxstatus"></small></dd>
+          </dl>
+        </div>
+      </div>
+      <div class="fxsql" id="fxSql"></div>
+      <div class="fxcap" id="fxCap"></div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>프레임의 성질 하나가 이 장치에서 곧바로 눈에 들어온다. <strong>파티션의 시작과 끝에서는 프레임이 잘린다.</strong> 첫 행의 창에는 선행하는 3일이 없으므로 네 행만 들어가고, 그래서 첫 행의 평균은 뒤쪽 값들에 끌려간다. 이동평균 차트의 양 끝이 늘 수상해 보이는 이유가 여기 있다.</p>
+
+    <h3>명명 윈도 <span class="sub">4.5.3</span></h3>
+    <p>범위를 가진 창을 논하며 방금 배운 대로, 창 정의는 꽤 복잡해질 수 있다. 파티션의 정의, 순서, 그리고 창의 실제 범위를 모두 담을 수 있기 때문이다. 그런데 <em>주어진 창 위에서 집계 하나만 필요한 것이 아닐 때</em>가 있다. 창 정의를 계속 되풀이하는 것은 고된 일이다.</p>
+    <p>이 도메인—태양광 시스템의 발전량 측정—에서라면 <strong>분위수</strong>를 써서 계절과 날씨를 함께 담는 보고서를 만들 수 있다. 월별로 7일 창의 분위수를 계산하는 것이다. 넓은 월별 평균으로도 충분할 때가 있지만, 그런 차트는 달마다 변하는 비교적 매끄러운 곡선만 보여준다. <em>한 주 동안 변하는 날씨를 거치며 발전량의 요동은 더 크다.</em> 이상치와 튀는 값은 분위수로 잡아 표현하는 편이 낫다. 그 결과는 예컨대 <strong>움직이는 상자수염 그림</strong>을 만드는 데 쉽게 쓸 수 있다.</p>
+    <p>이상치를 잡고 분위수를 계산하려면 집계 셋(<code>min</code>, <code>max</code>, 분위수)이 필요하고, 창을 매번 정의하고 싶지는 않다. 목록 4.17의 정의를 그대로 가져와 측정값의 <em>월</em>을 파티션에 더한다. 그 밖에는 창 정의가 같다. 정의를 <code>FROM</code> 절 뒤로 옮겨 <code>seven_days</code>라는 이름을 준다. 필요한 만큼 여러 집계에서 참조할 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">복잡한 순서와 파티션을 가진 명명 윈도</span>
+        <span class="tagn">목록 4.18</span>
+      </div>
+      <pre><span class="k">SELECT</span> system_id,
+       day,
+       <span class="f">min</span>(kWh) <span class="k">OVER</span> seven_days <span class="k">AS</span> <span class="f">"7-day min"</span>,
+       <span class="f">quantile</span>(kWh, [0.25, 0.5, 0.75])
+         <span class="k">OVER</span> seven_days <span class="k">AS</span> <span class="f">"kWh 7-day quartile"</span>,
+       <span class="f">max</span>(kWh) <span class="k">OVER</span> seven_days <span class="k">AS</span> <span class="f">"7-day max"</span>,
+<span class="k">FROM</span> v_power_per_day
+<span class="k">WINDOW</span>
+    seven_days <span class="k">AS</span> (
+        <span class="k">PARTITION BY</span> system_id, <span class="f">month</span>(day)
+        <span class="k">ORDER BY</span> day <span class="k">ASC</span>
+        <span class="k">RANGE BETWEEN INTERVAL</span> 3 Days <span class="k">PRECEDING</span>
+                  <span class="k">AND INTERVAL</span> 3 Days <span class="k">FOLLOWING</span>
+    )
+<span class="k">ORDER BY</span> system_id, day;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>system_id</th><th class="l">day</th><th>7-day min</th><th class="l">kWh 7-day quartile</th><th>7-day max</th></tr>
+            <tr class="type"><th>int32</th><th class="l">date</th><th>double</th><th class="l">double[]</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>10</td><td class="l">2019-01-01</td><td>2.19</td><td class="l">[2.19, 5.37, 5.55]</td><td>5.72</td></tr>
+            <tr><td>10</td><td class="l">2019-01-02</td><td>2.19</td><td class="l">[4.62, 5.37, 5.55]</td><td>5.72</td></tr>
+            <tr><td>10</td><td class="l">2019-01-03</td><td>2.19</td><td class="l">[3.69, 4.62, 5.55]</td><td>5.72</td></tr>
+            <tr><td>10</td><td class="l">2019-01-04</td><td>2.19</td><td class="l">[3.69, 5.37, 5.72]</td><td>5.81</td></tr>
+            <tr><td>10</td><td class="l">2019-01-05</td><td>3.69</td><td class="l">[4.62, 5.37, 5.72]</td><td>5.81</td></tr>
+            <tr><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td></tr>
+            <tr><td>1200</td><td class="l">2020-06-22</td><td>107.68</td><td class="l">[149.11, 191.61, 214.68]</td><td>279.8</td></tr>
+            <tr><td>1200</td><td class="l">2020-06-23</td><td>0.0</td><td class="l">[107.68, 191.61, 214.68]</td><td>279.8</td></tr>
+            <tr><td>1200</td><td class="l">2020-06-24</td><td>0.0</td><td class="l">[190.91, 191.61, 214.68]</td><td>279.8</td></tr>
+            <tr><td>1200</td><td class="l">2020-06-25</td><td>0.0</td><td class="l">[191.61, 203.06, 214.68]</td><td>279.8</td></tr>
+            <tr><td>1200</td><td class="l">2020-06-26</td><td>0.0</td><td class="l">[0.0, 203.06, 214.68]</td><td>279.8</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="5">1587 rows (10 shown) &nbsp;&nbsp; 5 columns</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>WINDOW 절은 FROM 절 뒤에 지정해야 하며</b>, 창의 정의 자체는 인라인 창의 문법을 따른다.
+        <b>quantile</b> 함수는 분위수를 계산할 값과 원하는 분위수의 리스트를 받는다.
+        결과에는 <b>구조화된 컬럼 타입</b>—<code>double[]</code>—이 등장한다.
+      </div>
+      <div class="term-note">
+        모든 집계를 윈도 함수로 쓸 수 있다는 앞의 말에는 복잡한 통계 함수도 포함된다.
+        그룹의 <b>정확한 분위수</b>(<code>quantile</code>, <code>quantile_disc</code>)와 <b>보간된 분위수</b>(<code>quantile_cont</code>)가 그렇다.
+        이 함수들의 구현은 윈도잉에 최적화되어 있어 성능을 걱정하지 않고 쓸 수 있다.
+        <b>여러 집계를 질의할 때는 명명 윈도를 쓴다.</b>
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <h3>파티션 안에서 앞뒤 행에 접근하기 <span class="sub">4.5.4</span></h3>
+    <p>순위 매기기는 이미 논했고 누적 합계의 예는 4.8절에서 보겠지만, <em>파티션 안에서 행 사이를 앞뒤로 뛰어다니는 능력</em>은 아직 쓰지 않았다. 변화량을 계산해보는데, 요즘 시세만큼 좋은 예가 또 있겠는가.</p>
+    <p>제3장에서 만든 <code>prices</code> 테이블은 독일에서 에너지를 계통에 되팔 때의 판매 가격(ct/kWh)을 담고 있다. 그 판매 가격이 재생에너지 장려 정책의 유인 축소에 반응해 이후 하락했다고 하자. 이제 <strong>재생에너지에 대한 보상이 시간에 따라 얼마나 변했는지</strong> 알고 싶다. 차이를 계산하려면 n번째 행의 가격 값이 필요하고, 그것을 n-1번째 행의 값과 비교해야 한다. <em>테이블의 행은 본질적으로 한 행씩 고립되어 처리되므로 창 없이는 불가능하다.</em> 그러나 정렬 가능한 아무 컬럼에나 창을 걸치면 <code>lag()</code>와 <code>lead()</code>로 현재 창 밖의 행에 접근할 수 있다. 어제의 가격을 골라 오늘 가격과 비교할 수 있게 되는 것이다.</p>
+    <p><code>lag</code> 함수는 파티션 안에서 현재 행에 선행하는 행의 표현식 값을 주거나, 그런 행이 없으면 <code>NULL</code>을 준다. 파티션의 첫 행이 그 경우다. <code>lead</code>는 반대로 동작하니 파티션의 마지막 행에서 <code>NULL</code>을 돌려준다. DuckDB에서 두 함수는 <strong>몇 행을 뒤로 또는 앞으로 갈지뿐 아니라 기본값까지 지정할 수 있는 여러 오버로드</strong>를 갖는다. 그렇지 않다면 <code>NULL</code> 값이 실용적이지 않을 때 <code>coalesce</code>를 쓰는 것도 선택이 된다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p><code>coalesce</code> 함수는 <code>NULL</code>이 아닌 첫 번째 인자를 돌려준다.</p>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">창의 앞 값 가져와 변화량 계산하기</span>
+        <span class="tagn">목록 4.19</span>
+      </div>
+      <pre><span class="k">SELECT</span> valid_from,
+       value,
+       <span class="f">lag</span>(value)
+         <span class="k">OVER</span> validity <span class="k">AS</span> <span class="f">"Previous value"</span>,
+       value - <span class="f">lag</span>(value, 1, value)
+         <span class="k">OVER</span> validity <span class="k">AS</span> Change
+<span class="k">FROM</span> prices
+<span class="k">WHERE</span> <span class="f">date_part</span>(<span class="f">'year'</span>, valid_from) = 2019
+<span class="k">WINDOW</span> validity <span class="k">AS</span> (<span class="k">ORDER BY</span> valid_from)
+<span class="k">ORDER BY</span> valid_from;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">valid_from</th><th>value</th><th>Previous value</th><th>Change</th></tr>
+            <tr class="type"><th class="l">date</th><th>decimal(5,2)</th><th>decimal(5,2)</th><th>decimal(6,2)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">2019-01-01</td><td>11.47</td><td class="nil"></td><td>0.00</td></tr>
+            <tr><td class="l">2019-02-01</td><td>11.35</td><td>11.47</td><td>-0.12</td></tr>
+            <tr><td class="l">2019-03-01</td><td>11.23</td><td>11.35</td><td>-0.12</td></tr>
+            <tr><td class="l">2019-04-01</td><td>11.11</td><td>11.23</td><td>-0.12</td></tr>
+            <tr><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td></tr>
+            <tr><td class="l">2019-09-01</td><td>10.33</td><td>10.48</td><td>-0.15</td></tr>
+            <tr><td class="l">2019-10-01</td><td>10.18</td><td>10.33</td><td>-0.15</td></tr>
+            <tr><td class="l">2019-11-01</td><td>10.08</td><td>10.18</td><td>-0.10</td></tr>
+            <tr><td class="l">2019-12-01</td><td>9.97</td><td>10.08</td><td>-0.11</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="4">12 rows (8 shown) &nbsp;&nbsp; 4 columns</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>lag(value)</b>는 한 행 뒤로 뛰어 <code>value</code> 컬럼을 집어온다. 첫 행에는 선행 행이 없으므로 <code>NULL</code>이 놓인다.
+        변화량은 <b>lag(value, 1, value)</b>—앞 행이 없으면 같은 값을 기본값으로 삼는다—를 써서
+        현재 행의 가격과 그 앞 행 가격의 차이로 계산했다. 그래서 첫 행의 변화량이 <code>NULL</code>이 아니라 <b>0.00</b>이다.
+      </div>
+      <div class="term-note catch">
+        본문에 어긋난 자리가 있다. 이 절의 앞에서는 판매 가격이 <b>하락했다</b>고 설정했는데,
+        목록 4.19를 소개하는 문장에서는 현재 가격이 <b>새 규제에 반응해 올랐다</b>고 적었다.
+        데이터와 결과는 모두 하락을 보여주고 총 변화량도 음수이니, 후자가 오식이다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>2019년 가격의 <em>총</em> 변화량을 계산하려면 CTE를 써야 한다. <strong>윈도 함수 호출을 집계 함수 안에 중첩할 수 없기</strong> 때문이다. 4.3절에서 본 "집계는 중첩할 수 없다"의 사촌 격인 제약이다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">창 위의 집계 계산하기</span>
+        <span class="tagn">목록 4.20</span>
+      </div>
+      <pre><span class="k">WITH</span> changes <span class="k">AS</span> (
+    <span class="k">SELECT</span> value - <span class="f">lag</span>(value, 1, value) <span class="k">OVER</span> (<span class="k">ORDER BY</span> valid_from) <span class="k">AS</span> v
+    <span class="k">FROM</span> prices
+    <span class="k">WHERE</span> <span class="f">date_part</span>(<span class="f">'year'</span>, valid_from) = 2019
+    <span class="k">ORDER BY</span> valid_from
+)
+<span class="k">SELECT</span> <span class="f">sum</span>(changes.v) <span class="k">AS</span> total_change
+<span class="k">FROM</span> changes;</pre>
+      <div class="term-note">
+        찾던 2019년 독일의 가격 차이가 나온다. <b>개인이 생산한 재생에너지에 대한 보상이 1.50 ct/kWh 깎였다.</b>
+        11.47에서 9.97로, 열두 달 동안 열한 번의 인하가 쌓인 결과다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 4.6 ══════════ -->
+<section id="s6">
+  <div class="sechead rev">
+    <span class="num">4.6</span>
+    <h2>WHERE 절 밖의 조건과 필터링<span class="en">Conditions and filtering outside the WHERE clause</span></h2>
+  </div>
+  <div class="col rev">
+    <p>계산된 집계도, 윈도 함수의 결과도 표준 <code>WHERE</code> 절로는 걸러낼 수 없다. 그런데 그 필터링은 다음 같은 질문에 답하기 위해 필요하다. <em>집계값이 x를 넘는 그룹을 고르려면</em> <code>HAVING</code> 절을 써야 하고, <em>며칠의 범위에서 특정 값을 넘는 데이터를 고르려면</em> <code>QUALIFY</code> 절을 써야 한다. 여기에 더해, 값이 집계 함수에 <em>애초에 들어가지 못하게</em> 걸러내려면 <code>FILTER</code> 절이 필요하다.</p>
+
+    <div class="tblwrap">
+      <table class="tbl">
+        <caption><b>표 4.1</b> &nbsp;필터링 절과 그것을 쓸 자리</caption>
+        <thead><tr><th></th><th>쓰는 자리</th><th>효과</th></tr></thead>
+        <tbody>
+          <tr><td>HAVING</td><td><code>GROUP BY</code> 뒤</td><td>그룹에 대해 계산된 집계를 기준으로 행을 걸러낸다.</td></tr>
+          <tr><td>QUALIFY</td><td>임의의 윈도 표현식을 참조하는 <code>FROM</code> 절 뒤</td><td>그 창에서 계산된 무엇이든 기준으로 행을 걸러낸다.</td></tr>
+          <tr><td>FILTER</td><td>임의의 집계 함수 뒤</td><td>집계로 넘겨지는 값을 걸러낸다.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>HAVING 절 쓰기 <span class="sub">4.6.1</span></h3>
+    <p><em>발전량이 900kWh를 넘는 날을 모두 주시오!</em> 제3장에서 <code>WHERE</code> 절과 <code>GROUP BY</code>의 작동을 배웠으니 그 둘을 조합해볼 만하다. 그런데 실패한다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">WHERE가 집계를 담을 수 없는 이유</span>
+        <span class="tagn">목록 4.21</span>
+      </div>
+      <pre><span class="c">-- 시도</span>
+<span class="k">SELECT</span> system_id,
+       <span class="f">date_trunc</span>(<span class="f">'day'</span>, read_on)              <span class="k">AS</span> day,
+       <span class="f">round</span>(<span class="f">sum</span>(power) / 4 / 1000, 2)       <span class="k">AS</span> kWh,
+<span class="k">FROM</span> readings
+<span class="k">WHERE</span> kWh &gt;= 900
+<span class="k">GROUP BY ALL</span>;
+<span class="err">Error: Binder Error: Referenced column "kWh" not found in FROM clause!</span>
+<span class="c">-- (DuckDB 0.10 이전의 문구. 최신 판본은 "WHERE 절은 집계를 담을 수 없다"고 알려준다.)</span>
+
+<span class="c">-- 조건을 GROUP BY 뒤의 HAVING으로 옮긴다.</span>
+<span class="k">SELECT</span> system_id,
+       <span class="f">date_trunc</span>(<span class="f">'day'</span>, read_on)              <span class="k">AS</span> day,
+       <span class="f">round</span>(<span class="f">sum</span>(power) / 4 / 1000, 2)       <span class="k">AS</span> kWh,
+<span class="k">FROM</span> readings
+<span class="k">GROUP BY ALL</span>
+<span class="k">HAVING</span> kWh &gt;= 900
+<span class="k">ORDER BY</span> kWh <span class="k">DESC</span>;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>system_id</th><th class="l">day</th><th>kWh</th></tr>
+            <tr class="type"><th>int32</th><th class="l">date</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>34</td><td class="l">2020-05-12</td><td>960.03</td></tr>
+            <tr><td>34</td><td class="l">2020-06-08</td><td>935.33</td></tr>
+            <tr><td>34</td><td class="l">2020-05-23</td><td>924.08</td></tr>
+            <tr><td>34</td><td class="l">2019-06-09</td><td>915.4</td></tr>
+            <tr><td>34</td><td class="l">2020-06-06</td><td>914.98</td></tr>
+            <tr><td>34</td><td class="l">2020-05-20</td><td>912.65</td></tr>
+            <tr><td>34</td><td class="l">2019-05-01</td><td>912.6</td></tr>
+            <tr><td>34</td><td class="l">2020-06-16</td><td>911.93</td></tr>
+            <tr><td>34</td><td class="l">2020-06-07</td><td>911.73</td></tr>
+            <tr><td>34</td><td class="l">2020-05-18</td><td>907.98</td></tr>
+            <tr><td>34</td><td class="l">2019-04-10</td><td>907.63</td></tr>
+            <tr><td>34</td><td class="l">2019-06-22</td><td>906.78</td></tr>
+            <tr><td>34</td><td class="l">2020-05-19</td><td>906.4</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        이유가 명료하다. <b>계산된 컬럼 kWh는 WHERE 절이 적용될 시점에 아직 알려져 있지 않고, 그 시점에 알 수도 없다.</b>
+        마찬가지로 계산된 컬럼인 <code>day</code>와는 사정이 다르다.
+        <code>WHERE</code> 절에서 행을 고르는 것, 다시 말해 행을 걸러내는 것은 <b>애초에 어떤 행이 집계될지를 바꾸는 일</b>이기 때문이다.
+        그러므로 집계 이후에 적용되는 다른 절이 필요하다.
+      </div>
+      <div class="term-note">
+        열세 날 모두 <b>34번 시스템</b>이다. 그리고 5월과 6월에 몰려 있다. 북반구 태양광의 성수기가 표로 드러난다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <h3>QUALIFY 절 쓰기 <span class="sub">4.6.2</span></h3>
+    <p>윈도 함수의 결과가 어떤 필터에 맞는 행만 돌려받고 싶다고 하자. 그 필터를 <code>WHERE</code> 절에 넣을 수 없다. <em>창에 포함되어야 할 행들을 걸러내버릴 것이고, 우리는 윈도 함수의 결과를 써야 하기 때문이다.</em> 그런데 <code>HAVING</code>도 쓸 수 없다. <strong>윈도 함수는 집계보다 먼저 평가되기 때문이다.</strong> 그래서 <code>QUALIFY</code>가 윈도 함수의 결과에 필터를 걸게 해준다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">CTE 없이 다시 쓴 top-3, 그리고 임계값 걸기</span>
+        <span class="tagn">목록 4.22 · 4.23</span>
+      </div>
+      <pre><span class="c">-- 목록 4.22 — 윈도 함수를 도입할 때는 CTE로 결과를 걸러야 했다. QUALIFY로 훨씬 간결해진다.</span>
+<span class="k">SELECT</span> <span class="f">dense_rank</span>() <span class="k">OVER</span> (<span class="k">ORDER BY</span> power <span class="k">DESC</span>) <span class="k">AS</span> rnk, *
+<span class="k">FROM</span> readings
+<span class="k">QUALIFY</span> rnk &lt;= 3;
+
+<span class="c">-- 목록 4.23 — 7일 이동평균이 875kWh를 넘은 날만. QUALIFY 절은 윈도 함수를 이름으로 참조할 수 있다.</span>
+<span class="k">SELECT</span> system_id,
+       day,
+       <span class="f">avg</span>(kWh) <span class="k">OVER</span> (
+            <span class="k">PARTITION BY</span> system_id
+            <span class="k">ORDER BY</span> day <span class="k">ASC</span>
+            <span class="k">RANGE BETWEEN INTERVAL</span> 3 Days <span class="k">PRECEDING</span>
+                       <span class="k">AND INTERVAL</span> 3 Days <span class="k">FOLLOWING</span>
+       ) <span class="k">AS</span> <span class="f">"kWh 7-day moving average"</span>
+<span class="k">FROM</span> v_power_per_day
+<span class="k">QUALIFY</span> <span class="f">"kWh 7-day moving average"</span> &gt; 875
+<span class="k">ORDER BY</span> system_id, day;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>system_id</th><th class="l">day</th><th>kWh 7-day moving average</th></tr>
+            <tr class="type"><th>int32</th><th class="l">date</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>34</td><td class="l">2020-05-21</td><td>887.4628571428572</td></tr>
+            <tr><td>34</td><td class="l">2020-05-22</td><td>884.7342857142858</td></tr>
+            <tr><td>34</td><td class="l">2020-06-09</td><td>882.4628571428572</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        7일 평균 발전량은 태양광 설비의 효율을 잘 보여주는 지표이니, 어떤 문턱에 도달한 날을 물을 만하다.
+        예제 데이터에서는 <b>서반구 태양광 발전의 전형적인 '좋은 날'</b> 세 날이 나온다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <h3>FILTER 절 쓰기 <span class="sub">4.6.3</span></h3>
+    <p>집계나 평균, 값의 개수를 계산하려는데 포함하고 싶지 않은 행이 있다는 것을 알아차릴 때가 있다. 그런데 복잡한 질의에서는 <em>다른 필드를 계산하기 위해 그 행들을 남겨두어야</em> 할 수도 있다. 예컨대 이따금 음수로 나타나는 잘못된 측정값이 있다고 하자. 측정값의 총 개수와 센서의 평균 측정값을 함께 계산하고 싶다. <strong>잘못된 측정값을 <code>WHERE</code> 절에서 걸러내면 총 개수를 계산할 수 없다. 그러나 모든 측정값을 그냥 평균 내면 잘못된 음수값이 섞여 들어간다.</strong> 이런 유형의 문제를 풀려면 집계의 일부로 <code>FILTER</code> 표현식을 쓴다.</p>
+    <p>4.1절로 돌아가 보면, 우리는 실은 <code>NULL</code> 값을 평균에 끌어들이는 바로 그 문제에 놓여 있었다. 대개 원하는 바가 아니다. <code>NULL</code> 값을 0으로 눌러두는 대신, 평균에서 아예 걸러낼 수 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">무의미한 데이터를 집계에서 배제하기</span>
+        <span class="tagn">목록 4.24</span>
+      </div>
+      <pre><span class="k">INSERT INTO</span> readings(system_id, read_on, power)
+<span class="k">SELECT</span> <span class="f">any_value</span>(SiteId),
+       <span class="f">time_bucket</span>(
+           <span class="k">INTERVAL</span> <span class="f">'15 Minutes'</span>,
+           <span class="k">CAST</span>(<span class="f">"Date-Time"</span> <span class="k">AS timestamp</span>)
+       ) <span class="k">AS</span> read_on,
+       <span class="f">coalesce</span>(<span class="f">avg</span>(ac_power)
+         <span class="k">FILTER</span> (
+           ac_power <span class="k">IS NOT NULL AND</span>      <span class="c">-- NULL이거나 0보다 작은 값은</span>
+           ac_power &gt;= 0                <span class="c">-- 더 이상 평균에 들어가지 않는다</span>
+         ),0 )
+<span class="k">FROM</span>
+    <span class="f">read_csv_auto</span>(
+        <span class="f">'https://developer.nrel.gov/api/pvdaq/v3/'</span> ||
+        <span class="f">'data_file?api_key=DEMO_KEY&amp;system_id=10&amp;year=2019'</span>
+    )
+<span class="k">GROUP BY</span> read_on
+<span class="k">ORDER BY</span> read_on
+<span class="k">ON CONFLICT DO NOTHING</span>;   <span class="c">-- 이미 채워진 DB에서 돌려도 실패하지 않게</span></pre>
+      <div class="term-note">
+        <code>coalesce</code>를 왜 쓰는지 궁금할 만하다. <b>데이터가 전부 걸러지면 집계에 아무것도 들어가지 않고, 표현식 전체가 NULL로 바뀐다.</b>
+        그러면 <code>readings</code> 테이블의 제약을 위반하게 된다. 그래서 0으로 받쳐둔다.
+      </div>
+      <div class="term-note">
+        늘 그렇듯 <b>여기에 하나의 옳은 접근은 없다.</b> 목록 4.1의 해법을 선호해도 괜찮고 목록 4.24를 선호해도 괜찮다.
+        다만 이 경우에는 <code>FILTER</code>와 <code>coalesce</code>를 조합한 해법이 조금 더 낫다고 저자들은 말한다.
+        <b>의도가 조금 더 분명하기 때문</b>이라는 이유가 좋다. 0으로 누른 값과 애초에 세지 않은 값은 다른 이야기다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 4.7 PIVOT ══════════ -->
+<section id="s7">
+  <div class="sechead rev">
+    <span class="num">4.7</span>
+    <h2>PIVOT 문<span class="en">The PIVOT statement</span></h2>
+  </div>
+  <div class="col rev">
+    <p>한 질의에 집계를 여럿 담을 수 있고, 그 각각에 개별적으로 필터를 걸 수 있다. 그러면 다음 같은 과제에 답할 수 있다. <em>시스템별·연도별 에너지 생산량 보고서를 원하는데, 연도는 컬럼이 되어야 한다!</em> 시스템별 집계도 쉽고 연도별 집계도 쉽다. 두 키로 묶는 것도 어렵지 않다. 그러나 그렇게 하면 <strong>연도가 행으로 나오고 컬럼으로 나오지 않는다.</strong> 원하는 것은 세 행에 2019와 2020이라는 두 컬럼, 스프레드시트 프로그램에서 보던 그 모양이다. 그런 표를 재조직하는 과정을 <em>피벗</em>이라 부른다.</p>
+  </div>
+
+  <div class="wrap plate rev">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 400" role="img" aria-label="긴 형태의 집계 결과가 PIVOT의 세 단계를 지나 연도가 컬럼이 된 표로 바뀌는 과정">
+          <defs>
+            <marker id="pv" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 z" fill="#1f4e9c"/>
+            </marker>
+          </defs>
+          <!-- 긴 형태 -->
+          <text x="24" y="26" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="1.8" fill="#69788c">LONG</text>
+          <g font-family="IBM Plex Mono, monospace" font-size="11.5">
+            <rect x="24" y="36" width="326" height="24" fill="#0f2a54"/>
+            <text x="40" y="53" fill="#fff">system_id</text><text x="150" y="53" fill="#fff">year("day")</text><text x="336" y="53" fill="#fff" text-anchor="end">sum(kWh)</text>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#33425a">
+            <rect x="24" y="60" width="326" height="150" fill="#fff" stroke="#e9eef4"/>
+            <text x="60" y="77">10</text><text x="168" y="77">2019</text><text x="336" y="77" text-anchor="end">1549.280000000001</text>
+            <text x="60" y="101">10</text><text x="168" y="101">2020</text><text x="336" y="101" text-anchor="end">677.1900000000003</text>
+            <text x="60" y="125">34</text><text x="168" y="125">2019</text><text x="336" y="125" text-anchor="end">205742.59999999992</text>
+            <text x="60" y="149">34</text><text x="168" y="149">2020</text><text x="336" y="149" text-anchor="end">101033.75000000001</text>
+            <text x="48" y="173">1200</text><text x="168" y="173">2019</text><text x="336" y="173" text-anchor="end">62012.109999999986</text>
+            <text x="48" y="197">1200</text><text x="168" y="197">2020</text><text x="336" y="197" text-anchor="end">30709.329999999998</text>
+          </g>
+
+          <!-- 단계 -->
+          <g>
+            <circle cx="404" cy="72" r="13" fill="#1f4e9c"/><text x="404" y="77" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="#fff">1</text>
+            <text x="428" y="70" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#0f2a54">PIVOT (FROM v_power_per_day)</text>
+            <text x="428" y="90" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#69788c">모든 컬럼을 고른다. FROM은 생략할 수도 있다.</text>
+          </g>
+          <g>
+            <circle cx="404" cy="140" r="13" fill="#1f4e9c"/><text x="404" y="145" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="#fff">2</text>
+            <text x="428" y="138" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#0f2a54">ON year(day)</text>
+            <text x="428" y="158" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#69788c">이 표현식의 서로 다른 값 전부가 컬럼이 된다.</text>
+          </g>
+          <g>
+            <circle cx="404" cy="208" r="13" fill="#e0912a"/><text x="404" y="213" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="#fff">3</text>
+            <text x="428" y="206" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#0f2a54">USING sum(kWh)</text>
+            <text x="428" y="226" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#69788c">컬럼에 대해 계산할 집계다.</text>
+          </g>
+          <path class="flow" style="--len:120" d="M356 130 L388 130" fill="none" stroke="#1f4e9c" stroke-width="1.4" marker-end="url(#pv)"/>
+          <path class="flow" style="--len:120;animation-delay:.3s" d="M540 246 L540 278" fill="none" stroke="#e0912a" stroke-width="1.4" marker-end="url(#pv)"/>
+
+          <!-- 피벗 결과 -->
+          <text x="286" y="296" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="1.8" fill="#69788c">PIVOTED</text>
+          <g font-family="IBM Plex Mono, monospace" font-size="11.5">
+            <rect x="286" y="306" width="680" height="24" fill="#0f2a54"/>
+            <text x="302" y="323" fill="#fff">system_id</text><text x="560" y="323" fill="#e0912a" text-anchor="end">2019</text><text x="946" y="323" fill="#e0912a" text-anchor="end">2020</text>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#33425a">
+            <rect x="286" y="330" width="680" height="66" fill="#fff" stroke="#e9eef4"/>
+            <text x="322" y="347">10</text><text x="560" y="347" text-anchor="end">1549.280000000001</text><text x="946" y="347" text-anchor="end">677.1900000000003</text>
+            <text x="322" y="369">34</text><text x="560" y="369" text-anchor="end">205742.59999999992</text><text x="946" y="369" text-anchor="end">101033.75000000001</text>
+            <text x="310" y="391">1200</text><text x="560" y="391" text-anchor="end">62012.109999999986</text><text x="946" y="391" text-anchor="end">30709.329999999998</text>
+          </g>
+        </svg>
+      </div></div>
+      <figcaption><b>〈도판 4.4〉</b><span>발전량 값을 연도로 피벗하기. 단계 번호는 목록 4.26의 절 순서와 같다.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">정적 피벗과 동적 피벗</span>
+        <span class="tagn">목록 4.25 · 4.26</span>
+      </div>
+      <pre><span class="c">-- 목록 4.25 — 집계를 여럿 정의하고 각 컬럼에 필요 없는 값을 걸러낸다.</span>
+<span class="k">SELECT</span> system_id,
+       <span class="f">sum</span>(kWh) <span class="k">FILTER</span> (<span class="k">WHERE</span> <span class="f">year</span>(day) = 2019)
+            <span class="k">AS</span> <span class="f">'kWh in 2019'</span>,
+       <span class="f">sum</span>(kWh) <span class="k">FILTER</span> (<span class="k">WHERE</span> <span class="f">year</span>(day) = 2020)
+            <span class="k">AS</span> <span class="f">'kWh in 2020'</span>
+<span class="k">FROM</span> v_power_per_day
+<span class="k">GROUP BY</span> system_id;
+
+<span class="c">-- 목록 4.26 — DuckDB의 PIVOT 절. 임의의 표현식으로 동적 피벗이 된다.</span>
+<span class="k">PIVOT</span> (<span class="k">FROM</span> v_power_per_day)
+<span class="k">ON</span> <span class="f">year</span>(day)
+<span class="k">USING</span> <span class="f">sum</span>(kWh);</pre>
+      <div class="term-note">
+        정적 방식에는 흠 하나가 있다. <b>컬럼이 사실상 하드코딩되어, 연도가 추가될 때마다 그 질의를 다시 손봐야 한다.</b>
+        원하는 컬럼 집합이 변하지 않을 것이 확실하거나, 다른 형태의 피벗을 지원하지 않을 수도 있는 다른 데이터베이스를 겨냥한다면
+        정적 방식이 맞는 해법일 수 있다.
+      </div>
+      <div class="term-note catch">
+        같은 값을 두 곳에서 재보면 미세하게 다르다. 4.4절의 목록 4.11은 34번 시스템 2019년을 <b>205741.9</b>로,
+        4.7절은 <b>205742.59999999992</b>로 적는다. 전자는 원시 <code>power</code>를 합산해 한 번 반올림한 값이고,
+        후자는 <b>뷰가 하루마다 이미 반올림해둔 kWh를 다시 합산</b>한 값이다.
+        365일에 걸친 ±0.005의 반올림이 쌓여 0.7의 차이를 만든다. 어느 쪽도 틀리지 않았으나, 같은 보고서에 나란히 실으면 곤란해질 숫자다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>셀 값에 집계를 쓰는 경우, <code>ON</code> 절에 속하지 않은 모든 컬럼이 그 집계의 그룹 키로 쓰인다. 그런데 집계를 <em>쓰지 않아도</em> 된다. 그러면 흥미로운 일이 벌어진다. <code>PIVOT v_power_per_day ON day</code>는 <strong>1,382행 545컬럼</strong>의 결과를 만든다. 왜 그런가. <code>v_power_per_day</code>에는 <code>(system_id, kWh)</code>의 서로 다른 값이 1,382개 있어 그것이 행을 이루고, <code>year(day)</code>가 아니라 <code>day</code>로 컬럼을 만들라고 했으니 기록된 543개의 서로 다른 날이 컬럼이 되고, 여기에 <code>system_id</code>와 <code>kWh</code> 두 컬럼이 더해진다.</p>
+    <p>그러면 셀에는 무엇이 들어 있는가. <strong>수많은 0과 몇 개의 1</strong>이다. <code>USING</code> 절이 없으면 DuckDB는 해당 값이 없던 날의 셀에 0을, 있던 날의 셀에 1을 채운다. 그러므로 모든 날을 표 형태로 보고 싶다면 <code>first</code> 집계를 쓰는 편이 좋다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">날짜를 컬럼으로, 그리고 집계 둘을 한꺼번에</span>
+        <span class="tagn">4.7</span>
+      </div>
+      <pre><span class="c">-- 수백 컬럼을 인쇄하지 않도록 며칠만 일부러 골랐다.</span>
+<span class="k">PIVOT</span> (
+    <span class="k">FROM</span> v_power_per_day <span class="k">WHERE</span> day <span class="k">BETWEEN</span> <span class="f">'2020-05-30'</span> <span class="k">AND</span> <span class="f">'2020-06-02'</span>
+)
+<span class="k">ON</span> DAY <span class="k">USING</span> <span class="f">first</span>(kWh);</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>system_id</th><th class="l">2020-05-30</th><th class="l">2020-05-31</th><th class="l">2020-06-01</th><th class="l">2020-06-02</th></tr>
+            <tr class="type"><th>int32</th><th>double</th><th>double</th><th>double</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>10</td><td>4.24</td><td>3.78</td><td>4.47</td><td>5.09</td></tr>
+            <tr><td>34</td><td>732.5</td><td>790.33</td><td>796.55</td><td>629.17</td></tr>
+            <tr><td>1200</td><td>280.4</td><td>282.25</td><td>288.29</td><td>152.83</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">저자들의 표현대로, <b>어떤 스프레드시트 예술가라도 흡족해할 결과</b>다.</div>
+      <pre><span class="c">-- USING 절에 집계를 여럿 계산할 수도 있고, 피벗에 컬럼을 여럿 쓸 수도 있다.</span>
+<span class="k">PIVOT</span> v_power_per_day
+<span class="k">ON</span> <span class="f">year</span>(day)
+<span class="k">USING</span> <span class="f">round</span>(<span class="f">sum</span>(kWh)) <span class="k">AS</span> total, <span class="f">max</span>(kWh) <span class="k">AS</span> best_day;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>system_id</th><th>2019_total</th><th>2019_best_day</th><th>2020_total</th><th>2020_best_day</th></tr>
+            <tr class="type"><th>int32</th><th>double</th><th>double</th><th>double</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>10</td><td>1549.0</td><td>7.47</td><td>677.0</td><td>6.97</td></tr>
+            <tr><td>34</td><td>205743.0</td><td>915.4</td><td>101034.0</td><td>960.03</td></tr>
+            <tr><td>1200</td><td>62012.0</td><td>337.29</td><td>30709.0</td><td>343.43</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        연도별 총 발전량에 <b>가장 좋았던 날</b>까지 두 컬럼을 더했다.
+        컬럼 이름이 <code>2019_total</code>, <code>2019_best_day</code>처럼 <b>피벗 값과 집계 별칭의 조합</b>으로 자동 생성되는 점을 눈여겨볼 만하다.
+      </div>
+      <div class="term-note">
+        앞의 질의들은 모두 <b>DuckDB 고유의 PIVOT 변종</b>을 쓴다. DuckDB의 문법은 피벗할 행을 정적으로 열거하는 일을
+        완전히 없애주므로 피벗 문장을 훨씬 쉽고 오류 적게 쓰게 해준다.
+        DuckDB는 <b>더 표준적인 SQL 형태의 PIVOT</b>도 지원한다.
+        그러나 <code>PIVOT</code> 절의 지원은 데이터베이스마다 크게 다르고, 다른 대상 데이터베이스가 표준의 정확히 같은 맛을 가질 가능성은 낮다.
+        그래서 이 경우에는 <b>더 이식성 있는 SQL을 바라기보다 읽기 쉬운 고유 문법을 쓰는 편</b>을 택한다고 저자들은 밝힌다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<!-- ══════════ 4.8 ASOF ══════════ -->
+<section id="s8">
+  <div class="sechead rev">
+    <span class="num">4.8</span>
+    <h2>ASOF JOIN 쓰기<span class="en">Using the ASOF JOIN</span></h2>
+  </div>
+  <div class="col rev">
+    <p>변동성 있는 상품을 하루 중 임의의 시각에 판다고 상상해보자. 가격은 어떤 간격—15분이라 하자—으로 예측할 수 있고, 그것이 얻을 수 있는 정밀도의 한계다. <strong>그런데 사람들은 아무 때나 상품을 요구한다.</strong> 그래서 다음 같은 상황이 벌어진다. 가격 표에 한 시간짜리 항목 넷, 판매 표에 열두 항목이 있는데, 이를 순진하게 조인하면 <em>열두 건의 판매 가운데 넉 건만</em> 결과로 나온다.</p>
+  </div>
+
+  <div class="wrap plate rev">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 470" role="img" aria-label="15분 간격 가격과 5분 간격 판매를 내부 조인하면 네 건만 짝이 맞고, ASOF 조인하면 열두 건 모두 짝이 맞는 모습">
+          <defs>
+            <marker id="as" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 z" fill="#2b7d74"/>
+            </marker>
+          </defs>
+          <!-- 왼쪽: INNER JOIN -->
+          <text x="24" y="26" font-family="IBM Plex Mono, monospace" font-size="11.5" letter-spacing="1.6" fill="#a8552b">INNER JOIN · 4건만 성립</text>
+          <g font-family="IBM Plex Mono, monospace" font-size="11.5">
+            <!-- 가격 4개 -->
+            <g fill="#0f2a54">
+              <rect x="24" y="40" width="86" height="26" fill="#dce7f7" stroke="#1f4e9c"/><text x="67" y="58" text-anchor="middle">p 1:00</text>
+              <rect x="24" y="140" width="86" height="26" fill="#dce7f7" stroke="#1f4e9c"/><text x="67" y="158" text-anchor="middle">p 1:15</text>
+              <rect x="24" y="240" width="86" height="26" fill="#dce7f7" stroke="#1f4e9c"/><text x="67" y="258" text-anchor="middle">p 1:30</text>
+              <rect x="24" y="340" width="86" height="26" fill="#dce7f7" stroke="#1f4e9c"/><text x="67" y="358" text-anchor="middle">p 1:45</text>
+            </g>
+            <!-- 판매 12개 -->
+            <g fill="#33425a">
+              <rect x="160" y="40" width="80" height="22" fill="#fff" stroke="#2b7d74"/><text x="200" y="56" text-anchor="middle">v 1:00</text>
+              <rect x="160" y="72" width="80" height="22" fill="#fff" stroke="#e9eef4"/><text x="200" y="88" text-anchor="middle">v 1:05</text>
+              <rect x="160" y="104" width="80" height="22" fill="#fff" stroke="#e9eef4"/><text x="200" y="120" text-anchor="middle">v 1:10</text>
+              <rect x="160" y="140" width="80" height="22" fill="#fff" stroke="#2b7d74"/><text x="200" y="156" text-anchor="middle">v 1:15</text>
+              <rect x="160" y="172" width="80" height="22" fill="#fff" stroke="#e9eef4"/><text x="200" y="188" text-anchor="middle">v 1:20</text>
+              <rect x="160" y="204" width="80" height="22" fill="#fff" stroke="#e9eef4"/><text x="200" y="220" text-anchor="middle">v 1:25</text>
+              <rect x="160" y="240" width="80" height="22" fill="#fff" stroke="#2b7d74"/><text x="200" y="256" text-anchor="middle">v 1:30</text>
+              <rect x="160" y="272" width="80" height="22" fill="#fff" stroke="#e9eef4"/><text x="200" y="288" text-anchor="middle">v 1:35</text>
+              <rect x="160" y="304" width="80" height="22" fill="#fff" stroke="#e9eef4"/><text x="200" y="320" text-anchor="middle">v 1:40</text>
+              <rect x="160" y="340" width="80" height="22" fill="#fff" stroke="#2b7d74"/><text x="200" y="356" text-anchor="middle">v 1:45</text>
+              <rect x="160" y="372" width="80" height="22" fill="#fff" stroke="#e9eef4"/><text x="200" y="388" text-anchor="middle">v 1:50</text>
+              <rect x="160" y="404" width="80" height="22" fill="#fff" stroke="#e9eef4"/><text x="200" y="420" text-anchor="middle">v 1:55</text>
+            </g>
+            <!-- 성립하는 4쌍 -->
+            <g stroke="#2b7d74" stroke-width="1.3" fill="none">
+              <path d="M112 53 L156 51"/><path d="M112 153 L156 151"/>
+              <path d="M112 253 L156 251"/><path d="M112 353 L156 351"/>
+            </g>
+            <!-- 결과 -->
+            <g fill="#0f2a54">
+              <rect x="286" y="40" width="120" height="24" fill="rgba(43,125,116,.14)" stroke="#2b7d74"/><text x="346" y="57" text-anchor="middle">1:00 → 1:00</text>
+              <rect x="286" y="140" width="120" height="24" fill="rgba(43,125,116,.14)" stroke="#2b7d74"/><text x="346" y="157" text-anchor="middle">1:15 → 1:15</text>
+              <rect x="286" y="240" width="120" height="24" fill="rgba(43,125,116,.14)" stroke="#2b7d74"/><text x="346" y="257" text-anchor="middle">1:30 → 1:30</text>
+              <rect x="286" y="340" width="120" height="24" fill="rgba(43,125,116,.14)" stroke="#2b7d74"/><text x="346" y="357" text-anchor="middle">1:45 → 1:45</text>
+            </g>
+            <g fill="#a8552b" font-size="11">
+              <text x="286" y="90">1:05 · 1:10 유실</text>
+              <text x="286" y="190">1:20 · 1:25 유실</text>
+              <text x="286" y="290">1:35 · 1:40 유실</text>
+              <text x="286" y="390">1:50 · 1:55 유실</text>
+            </g>
+          </g>
+
+          <!-- 구분선 -->
+          <line x1="470" y1="20" x2="470" y2="450" stroke="#e9eef4" stroke-width="2"/>
+
+          <!-- 오른쪽: ASOF JOIN -->
+          <text x="500" y="26" font-family="IBM Plex Mono, monospace" font-size="11.5" letter-spacing="1.6" fill="#1e5c55">ASOF JOIN · p &lt;= v · 12건 모두 성립</text>
+          <g font-family="IBM Plex Mono, monospace" font-size="11.5">
+            <g fill="#0f2a54">
+              <rect x="500" y="40" width="86" height="26" fill="#dce7f7" stroke="#1f4e9c"/><text x="543" y="58" text-anchor="middle">p 1:00</text>
+              <rect x="500" y="140" width="86" height="26" fill="#dce7f7" stroke="#1f4e9c"/><text x="543" y="158" text-anchor="middle">p 1:15</text>
+              <rect x="500" y="240" width="86" height="26" fill="#dce7f7" stroke="#1f4e9c"/><text x="543" y="258" text-anchor="middle">p 1:30</text>
+              <rect x="500" y="340" width="86" height="26" fill="#dce7f7" stroke="#1f4e9c"/><text x="543" y="358" text-anchor="middle">p 1:45</text>
+            </g>
+            <g stroke="#2b7d74" stroke-width="1.2" fill="none" marker-end="url(#as)" opacity=".85">
+              <path class="flow" style="--len:120" d="M588 50 L646 50"/>
+              <path class="flow" style="--len:120;animation-delay:.06s" d="M588 56 C 620 56 620 82 646 82"/>
+              <path class="flow" style="--len:120;animation-delay:.12s" d="M588 62 C 620 62 620 114 646 114"/>
+              <path class="flow" style="--len:120;animation-delay:.18s" d="M588 150 L646 150"/>
+              <path class="flow" style="--len:120;animation-delay:.24s" d="M588 156 C 620 156 620 182 646 182"/>
+              <path class="flow" style="--len:120;animation-delay:.3s" d="M588 162 C 620 162 620 214 646 214"/>
+              <path class="flow" style="--len:120;animation-delay:.36s" d="M588 250 L646 250"/>
+              <path class="flow" style="--len:120;animation-delay:.42s" d="M588 256 C 620 256 620 282 646 282"/>
+              <path class="flow" style="--len:120;animation-delay:.48s" d="M588 262 C 620 262 620 314 646 314"/>
+              <path class="flow" style="--len:120;animation-delay:.54s" d="M588 350 L646 350"/>
+              <path class="flow" style="--len:120;animation-delay:.6s" d="M588 356 C 620 356 620 382 646 382"/>
+              <path class="flow" style="--len:120;animation-delay:.66s" d="M588 362 C 620 362 620 414 646 414"/>
+            </g>
+            <g fill="#33425a">
+              <rect x="650" y="40" width="180" height="22" fill="rgba(43,125,116,.14)" stroke="#2b7d74"/><text x="740" y="56" text-anchor="middle">v 1:00 · 가격 1:00</text>
+              <rect x="650" y="72" width="180" height="22" fill="rgba(43,125,116,.10)" stroke="#e9eef4"/><text x="740" y="88" text-anchor="middle">v 1:05 · 가격 1:00</text>
+              <rect x="650" y="104" width="180" height="22" fill="rgba(43,125,116,.10)" stroke="#e9eef4"/><text x="740" y="120" text-anchor="middle">v 1:10 · 가격 1:00</text>
+              <rect x="650" y="140" width="180" height="22" fill="rgba(43,125,116,.14)" stroke="#2b7d74"/><text x="740" y="156" text-anchor="middle">v 1:15 · 가격 1:15</text>
+              <rect x="650" y="172" width="180" height="22" fill="rgba(43,125,116,.10)" stroke="#e9eef4"/><text x="740" y="188" text-anchor="middle">v 1:20 · 가격 1:15</text>
+              <rect x="650" y="204" width="180" height="22" fill="rgba(43,125,116,.10)" stroke="#e9eef4"/><text x="740" y="220" text-anchor="middle">v 1:25 · 가격 1:15</text>
+              <rect x="650" y="240" width="180" height="22" fill="rgba(43,125,116,.14)" stroke="#2b7d74"/><text x="740" y="256" text-anchor="middle">v 1:30 · 가격 1:30</text>
+              <rect x="650" y="272" width="180" height="22" fill="rgba(43,125,116,.10)" stroke="#e9eef4"/><text x="740" y="288" text-anchor="middle">v 1:35 · 가격 1:30</text>
+              <rect x="650" y="304" width="180" height="22" fill="rgba(43,125,116,.10)" stroke="#e9eef4"/><text x="740" y="320" text-anchor="middle">v 1:40 · 가격 1:30</text>
+              <rect x="650" y="340" width="180" height="22" fill="rgba(43,125,116,.14)" stroke="#2b7d74"/><text x="740" y="356" text-anchor="middle">v 1:45 · 가격 1:45</text>
+              <rect x="650" y="372" width="180" height="22" fill="rgba(43,125,116,.10)" stroke="#e9eef4"/><text x="740" y="388" text-anchor="middle">v 1:50 · 가격 1:45</text>
+              <rect x="650" y="404" width="180" height="22" fill="rgba(43,125,116,.10)" stroke="#e9eef4"/><text x="740" y="420" text-anchor="middle">v 1:55 · 가격 1:45</text>
+            </g>
+          </g>
+          <text x="500" y="446" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#69788c">가격 하나가 뒤따르는 판매 셋을 맡는다.</text>
+          <text x="500" y="464" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#69788c">판매 시점 이전에 유효했던 가장 가까운 가격을 고르기 때문이다.</text>
+        </svg>
+      </div></div>
+      <figcaption><b>〈도판 4.5 · 4.6〉</b><span>시계열 데이터의 내부 조인이 잘못되는 모습과, ASOF JOIN이 정확히 맞지 않는 시각들을 짝지어주는 모습.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">두 글자를 바꾸면 네 건이 열두 건이 된다</span>
+        <span class="tagn">목록 4.27 · 4.28</span>
+      </div>
+      <pre><span class="k">WITH</span> prices <span class="k">AS</span> (
+   <span class="k">SELECT</span> range <span class="k">AS</span> valid_at,
+          <span class="f">random</span>()*10 <span class="k">AS</span> price
+   <span class="k">FROM</span> <span class="f">range</span>(
+        <span class="f">'2023-01-01 01:00:00'</span>::<span class="k">timestamp</span>,
+        <span class="f">'2023-01-01 02:00:00'</span>::<span class="k">timestamp</span>, <span class="k">INTERVAL</span> <span class="f">'15 minutes'</span>)
+),
+sales <span class="k">AS</span> (
+   <span class="k">SELECT</span> range <span class="k">AS</span> sold_at,
+          <span class="f">random</span>()*10 <span class="k">AS</span> num
+   <span class="k">FROM</span> <span class="f">range</span>(
+       <span class="f">'2023-01-01 01:00:00'</span>::<span class="k">timestamp</span>,
+       <span class="f">'2023-01-01 02:00:00'</span>::<span class="k">timestamp</span>, <span class="k">INTERVAL</span> <span class="f">'5 minutes'</span>)
+)
+<span class="k">SELECT</span> sold_at, valid_at <span class="k">AS</span> <span class="f">'with_price_at'</span>, <span class="f">round</span>(num * price,2) <span class="k">as</span> price
+<span class="k">FROM</span> sales
+<span class="k">ASOF JOIN</span> prices                        <span class="c">-- 목록 4.27은 그냥 JOIN이었다</span>
+     <span class="k">ON</span> prices.valid_at &lt;= sales.sold_at;  <span class="c">-- 목록 4.27은 = 였다</span></pre>
+      <div class="term-note">
+        <b>ASOF</b>—"as of"로 읽는다—<b>JOIN은 부등식으로 조인하며, JOIN 컬럼이 정확히 같지 않은 틈에 대해
+        '충분히 좋은' 값을 골라준다.</b> 고칠 것은 둘뿐이다. <code>JOIN</code>을 <code>ASOF JOIN</code>으로 바꾸고, 부등 연산자를 주는 것.
+        <code>prices.valid_at &lt;= sales.sold_at</code>이라는 조건은
+        <b>판매 시점에 또는 그 이전에 유효했던 모든 가격을 총액 계산에 쓸 수 있다</b>는 뜻이다.
+      </div>
+      <div class="term-note">
+        DuckDB가 판매 시점에 가장 가까운 가격을 고르는 것을 눈여겨볼 만하다. 그리고 이제 <b>기대한 열두 행</b>을 얻는다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p><code>ASOF JOIN</code>은 주식 시세, 가격, IoT 센서처럼 시계열 데이터를 다룰 때 자주 쓰인다. 예제에서라면 변하는 판매 가격을 시스템의 측정값과 조인해 임의 시점의 가격을 계산하는 데 쓸 수 있다. 마지막 예제는 다시 태양광 예제 데이터를 쓰면서, <code>ASOF JOIN</code>이 이 장에서 배운 다른 구성물—가격이 서로 다른 판매 기간의 <em>누적 수익</em>을 구하는 창—과 함께 쓰일 수 있음을 보여준다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">ASOF JOIN과 윈도 함수로 누적 수익 계산하기</span>
+        <span class="tagn">목록 4.29</span>
+      </div>
+      <pre><span class="k">SELECT</span> power.day,
+       power.kWh,
+       prices.value <span class="k">as</span> <span class="f">'ct/kWh'</span>,
+       <span class="f">round</span>(<span class="f">sum</span>(prices.value * power.kWh)
+           <span class="k">OVER</span> (<span class="k">ORDER BY</span> power.day <span class="k">ASC</span>) / 100, 2)
+           <span class="k">AS</span> <span class="f">'Accumulated earnings in EUR'</span>
+<span class="k">FROM</span> v_power_per_day power
+    <span class="k">ASOF JOIN</span> prices
+    <span class="k">ON</span> prices.valid_from &lt;= power.day
+<span class="k">WHERE</span> system_id = 34
+<span class="k">ORDER BY</span> day;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">day</th><th>kWh</th><th>ct/kWh</th><th>Accumulated earnings in EUR</th></tr>
+            <tr class="type"><th class="l">date</th><th>double</th><th>decimal(5,2)</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">2019-01-01</td><td>471.4</td><td>11.47</td><td>54.07</td></tr>
+            <tr><td class="l">2019-01-02</td><td>458.58</td><td>11.47</td><td>106.67</td></tr>
+            <tr><td class="l">2019-01-03</td><td>443.65</td><td>11.47</td><td>157.56</td></tr>
+            <tr><td class="l">2019-01-04</td><td>445.03</td><td>11.47</td><td>208.6</td></tr>
+            <tr><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td><td class="dots3">·</td></tr>
+            <tr><td class="l">2020-06-23</td><td>798.85</td><td>9.17</td><td>31371.86</td></tr>
+            <tr><td class="l">2020-06-24</td><td>741.15</td><td>9.17</td><td>31439.83</td></tr>
+            <tr><td class="l">2020-06-25</td><td>762.6</td><td>9.17</td><td>31509.76</td></tr>
+            <tr><td class="l">2020-06-26</td><td>11.98</td><td>9.17</td><td>31510.86</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="4">543 rows (8 shown) &nbsp;&nbsp; 4 columns</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        <code>ORDER BY power.day ASC</code>만 있고 프레임 절이 없는 <code>OVER</code>는 <b>처음부터 현재 행까지의 누적</b>이 된다.
+        한 해 반 동안 34번 시스템이 벌어들인 돈이 <b>31,510.86유로</b>다.
+        그리고 <code>ct/kWh</code> 컬럼이 11.47에서 9.17로 내려앉은 것이 4.5.4절에서 본 가격 인하의 결과다.
+      </div>
+      <div class="term-note">
+        도메인이 무엇이든—예제의 센서 측정값이든, 환자의 심박 모니터 판독값이든, 주식시장의 변동이든—
+        <b>특정 시각에 기록된 값은 한동안 유효했던 특정 키 값과 조인되어 풍부해지는 일이 잦다.</b>
+        <code>ASOF</code>를 지원한다는 것은 <b>타임스탬프가 완벽하게 정렬되어 있지 않은 모든 시나리오</b>를 가능하게 한다는 뜻이다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<!-- ══════════ 4.9 ══════════ -->
+<section id="s9">
+  <div class="sechead rev">
+    <span class="num">4.9</span>
+    <h2>테이블 함수 쓰기<span class="en">Using table functions</span></h2>
+  </div>
+  <div class="col rev">
+    <p>SQL의 대부분 함수는 매개변수를 받아 하나의 값을 돌려준다. 반면 <strong>테이블 함수는 하나의 값이 아니라 행의 모음을 돌려준다.</strong> 그러므로 테이블이 나타날 수 있는 어느 자리에나 나타날 수 있다. 기능에 따라서는 파일이나 URL 같은 외부 자원에 접근해 그것을 표준 SQL 문장의 일부인 관계로 바꿔놓을 수 있다. 테이블을 만들어내는 함수라는 개념을 지원하는 관계형 데이터베이스가 DuckDB만은 아니지만, <em>DuckDB는 많은 쓰임새를 감당하는 인상적인 테이블 함수 집합을 갖고 온다.</em></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">사용 가능한 테이블 함수 목록 얻기</span>
+        <span class="tagn">목록 4.30</span>
+      </div>
+      <pre><span class="k">SELECT DISTINCT ON</span>(function_name) function_name
+<span class="k">FROM</span> <span class="f">duckdb_functions</span>()
+<span class="k">WHERE</span> function_type = <span class="f">'table'</span>      <span class="c">-- FROM 절이 테이블 생산 함수를 호출하는 가장 흔한 자리다</span>
+<span class="k">ORDER BY</span> function_name;</pre>
+      <div class="term-note">
+        이 장의 예제와 데이터 수집 과정에서 <code>read_csv*</code>, <code>read_parquet</code> 등을 이미 폭넓게 써왔다.
+        <b>공간(spatial) 확장</b> 같은 추가 확장도 외부 자원을 읽어 관계형 데이터를 만들어내는 테이블 함수 목록에 더해질 수 있다.
+        자기 자신의 함수 목록을 자기 자신에게 질의해 얻는다는 점이 재미있다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p><code>range(start, stop)</code>와 <code>generate_series(start, stop)</code>는 대단히 요긴한 테이블 함수 둘이다. 둘 다 <code>start</code>와 <code>stop</code> 사이 범위의 값 목록을 만든다. 차이는 경계에 있다.</p>
+    <ul class="plain">
+      <li><b>start는 두 함수 모두 포함</b>한다.</li>
+      <li><b>stop은 range에서는 배제, generate_series에서는 포함</b>이다.</li>
+      <li>둘 다 <b>세 번째 매개변수 step</b>으로 걸음 크기를 정하는 오버로드를 제공하며, 기본값은 1이다.</li>
+      <li><b>stop만 받고 start를 0으로 기본 설정</b>하는 변종도 있다.</li>
+    </ul>
+    <p>보통 함수로 쓰이면 유용한 구성물이지만, <em>테이블처럼 질의할 때 훨씬 강력해진다.</em> 1에서 5 사이 숫자 목록이 필요하고 하드코딩하고 싶지 않다면 <code>SELECT generate_series(1, 5);</code>를 쓴다. 숫자도 도움이 되지만 이 함수들은 <strong>시간 데이터에도 통한다.</strong> 다만 시간 데이터를 쓸 때는 <em>start와 end 매개변수를 모두 지정해야 한다.</em> 둘 다 합리적인 기본값이 없기 때문이다.</p>
+    <p>이제 실용으로 옮긴다. 예제 데이터의 측정값은 2020년 중반에 끝난다. 이에 기반한 보고서는 한 해 전체를 의도했다면 <strong>조기에 끊긴다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">범위를 주도 테이블로 세워 빈 달을 만들기</span>
+        <span class="tagn">목록 4.31</span>
+      </div>
+      <pre><span class="c">-- 그냥 집계하면 6월에서 끊긴다.</span>
+<span class="k">SELECT</span> <span class="f">strftime</span>(day, <span class="f">'%Y-%m'</span>) <span class="k">AS</span> month, <span class="f">avg</span>(kwh)
+<span class="k">FROM</span> v_power_per_day <span class="k">WHERE</span> <span class="f">year</span>(day) = 2020
+<span class="k">GROUP BY ALL ORDER BY</span> month;
+<span class="c">-- → 2020-01 … 2020-06, 여섯 행뿐</span>
+
+<span class="c">-- 한 해 전체를 덮고 빠진 값은 비워두는 한 방법</span>
+<span class="k">WITH</span> full_year <span class="k">AS</span> (
+    <span class="k">SELECT</span> generate_series <span class="k">AS</span> day       <span class="c">-- 연초부터 연말까지 1일 간격의 범위</span>
+    <span class="k">FROM</span> <span class="f">generate_series</span>(
+        <span class="f">'2020-01-01'</span>::<span class="k">date</span>,
+        <span class="f">'2020-12-31'</span>::<span class="k">date</span>, <span class="k">INTERVAL</span> <span class="f">'1 day'</span>)
+)
+<span class="k">SELECT</span> <span class="f">strftime</span>(full_year.day, <span class="f">'%Y-%m'</span>) <span class="k">AS</span> month,
+       <span class="f">avg</span>(kWh) <span class="k">FILTER</span> (kWh <span class="k">IS NOT NULL</span>) <span class="k">AS</span> actual
+<span class="k">FROM</span> full_year                                  <span class="c">-- 테이블 함수의 출력을 주도 테이블로</span>
+<span class="k">LEFT OUTER JOIN</span> v_power_per_day per_day        <span class="c">-- 관심 있는 값을 외부 조인</span>
+  <span class="k">ON</span> per_day.day = full_year.day
+<span class="k">GROUP BY ALL ORDER BY</span> month;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">month</th><th>actual</th></tr>
+            <tr class="type"><th class="l">varchar</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">2020-01</td><td>222.13169014084508</td></tr>
+            <tr><td class="l">2020-02</td><td>133.52356321839076</td></tr>
+            <tr><td class="l">2020-03</td><td>207.86670454545455</td></tr>
+            <tr><td class="l">2020-04</td><td>309.7838888888888</td></tr>
+            <tr><td class="l">2020-05</td><td>349.57537634408607</td></tr>
+            <tr><td class="l">2020-06</td><td>337.80820512820515</td></tr>
+            <tr><td class="l">2020-07</td><td class="nil"></td></tr>
+            <tr><td class="l">2020-08</td><td class="nil"></td></tr>
+            <tr><td class="l">2020-09</td><td class="nil"></td></tr>
+            <tr><td class="l">2020-10</td><td class="nil"></td></tr>
+            <tr><td class="l">2020-11</td><td class="nil"></td></tr>
+            <tr><td class="l">2020-12</td><td class="nil"></td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="2">12 rows &nbsp;&nbsp; 2 columns</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        이제 한 해 전체의 보고서가 되었다. <b>안타깝게도 2020년 6월 이후의 값이 없다는 사실까지</b> 함께 드러난다.
+        차트를 만들어야 하는 처지라면 미래의 달들을 어떻게 표현할지 고민하게 되는데, 빈칸이 있는 열두 행은
+        <b>없는 것을 없다고 말해주는 표</b>다.
+      </div>
+      <div class="term-note catch">
+        <code>FILTER (kWh IS NOT NULL)</code>에 <b>WHERE가 없다.</b> 목록 4.25는 <code>FILTER (WHERE ...)</code>로 썼다.
+        DuckDB는 두 표기를 모두 받아들이지만, 표준 SQL의 표기는 <code>FILTER (WHERE ...)</code>다.
+        원서 안에서 두 표기가 섞여 있으니, 이식성을 생각한다면 <code>WHERE</code>를 붙여 쓰는 편이 안전하다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>이 착상을 한 걸음 더 밀면, <strong>전년 같은 달의 값을 써서 생산량을 예측</strong>할 수 있다. 그러려면 <code>v_power_per_day</code>를 <em>1년의 오프셋을 두고 한 번 더</em> 조인한다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">과거 데이터를 미래로 투사하기</span>
+        <span class="tagn">목록 4.32</span>
+      </div>
+      <pre><span class="k">WITH</span> full_year <span class="k">AS</span> (
+    <span class="k">SELECT</span> generate_series <span class="k">AS</span> day
+    <span class="k">FROM</span> <span class="f">generate_series</span>(
+        <span class="f">'2020-01-01'</span>::<span class="k">date</span>,
+        <span class="f">'2020-12-31'</span>::<span class="k">date</span>, <span class="k">INTERVAL</span> <span class="f">'1 day'</span>)
+)
+<span class="k">SELECT</span> <span class="f">strftime</span>(full_year.day, <span class="f">'%Y-%m'</span>) <span class="k">AS</span> month,
+       <span class="f">round</span>(<span class="f">avg</span>(present.kWh) <span class="k">FILTER</span> (present.kWh <span class="k">IS NOT NULL</span>),3) <span class="k">AS</span> actual,
+       <span class="f">round</span>(<span class="f">avg</span>(past.kWh) <span class="k">FILTER</span> (past.kWh <span class="k">IS NOT NULL</span>), 3) <span class="k">AS</span> forecast,
+<span class="k">FROM</span> full_year
+<span class="k">LEFT OUTER JOIN</span> v_power_per_day present
+  <span class="k">ON</span> present.day = full_year.day
+<span class="k">LEFT OUTER JOIN</span> v_power_per_day past          <span class="c">-- 생성된 계열의 값에서 1년을 빼서</span>
+  <span class="k">ON</span> past.day = full_year.day - <span class="k">INTERVAL</span> <span class="f">'1 year'</span>  <span class="c">-- 두 번째로 조인한다</span>
+<span class="k">GROUP BY ALL ORDER BY</span> month;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">month</th><th>actual</th><th>forecast</th></tr>
+            <tr class="type"><th class="l">varchar</th><th>double</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">2020-01</td><td>222.132</td><td>161.593</td></tr>
+            <tr><td class="l">2020-02</td><td>133.524</td><td>111.073</td></tr>
+            <tr><td class="l">2020-03</td><td>207.867</td><td>150.652</td></tr>
+            <tr><td class="l">2020-04</td><td>309.784</td><td>316.178</td></tr>
+            <tr><td class="l">2020-05</td><td>349.575</td><td>325.369</td></tr>
+            <tr><td class="l">2020-06</td><td>337.808</td><td>351.607</td></tr>
+            <tr><td class="l">2020-07</td><td class="nil"></td><td>334.323</td></tr>
+            <tr><td class="l">2020-08</td><td class="nil"></td><td>314.929</td></tr>
+            <tr><td class="l">2020-09</td><td class="nil"></td><td>289.605</td></tr>
+            <tr><td class="l">2020-10</td><td class="nil"></td><td>253.829</td></tr>
+            <tr><td class="l">2020-11</td><td class="nil"></td><td>191.384</td></tr>
+            <tr><td class="l">2020-12</td><td class="nil"></td><td>164.886</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="3">12 rows &nbsp;&nbsp; 3 columns</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        <code>actual</code>과 <code>forecast</code> 두 컬럼에 <b>round</b>를 불러 어수선함을 줄였다.
+        kWh 값에 소수 세 자리를 넘는 것은 별 뜻이 없기 때문이다. 그리고 이 변경은
+        <b>FILTER 절이 함수 호출 안에도 나타날 수 있음</b>을 보여준다. 그것은 컬럼 전체가 아니라 <code>avg</code> 집계에 속하기 때문이다.
+      </div>
+      <div class="term-note">
+        결과가 훨씬 보기 좋아졌고, <b>올해와 지난해의 비교를 사실상 공짜로 얻었다.</b>
+        같은 뷰를 오프셋만 달리해 두 번 조인한다는 이 착상은 예측이라기엔 소박하지만,
+        SQL 한 문장으로 얻을 수 있는 것치고는 값싸고 정직하다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<!-- ══════════ 4.10 ══════════ -->
+<section id="s10">
+  <div class="sechead rev">
+    <span class="num">4.10</span>
+    <h2>LATERAL 조인 쓰기<span class="en">Using LATERAL joins</span></h2>
+  </div>
+  <div class="col rev">
+    <p>4.3절에서 상관·비상관 서브쿼리를 배웠고, 목록 4.5는 비상관 서브쿼리가 바깥 질의와 한 번 조인될 수 있음을 보여주었다. 성능 관점에서는 그것이 이로울 수 있다. <em>서브쿼리는 한 번만 평가되고, 그다음 조인이 기억된 값들에 대해 다른 테이블의 행마다 수행되기 때문이다.</em></p>
+    <p>그런데 때로는 <strong>바깥 질의의 값마다 안쪽 질의를 정확히 평가하고 싶다.</strong> 여기서 <code>LATERAL JOIN</code>이 등장한다. 저자들이 준 비유가 명료하다. <em>바깥 질의를 제어 구조로 삼는 for 루프의 안쪽 블록이라고 생각하면 된다.</em> 배열을 펼치는 일, 데이터를 부채처럼 넓히는 일 따위를 <code>LATERAL</code>로 다룰 수 있다.</p>
+
+    <p>예제의 소재가 이 장에서 가장 구체적이다. 태양의 세기, 구체적으로는 <em>그 에너지가 하루의 특정 시각에 내 자리에 얼마나 도달하는가</em>에 관심이 있다고 하자. 과거든 미래든. Open Meteo는 폭넓은 날씨 데이터를 제공하는 무료 API를 내놓고 있고, 그중에 <strong>전천 일사량(GHI, global horizontal irradiance)</strong>이 있다. <em>지면과 수평인 표면이 위에서 받는 단파 복사의 총량</em>이며, 태양광 설비에 특히 관심 있는 값이고 W/m² 단위로 측정된다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">GHI를 담은 Open Meteo JSON 응답의 일부</span>
+        <span class="tagn">목록 4.33</span>
+      </div>
+      <pre>{
+     <span class="k">"latitude"</span>: 50.78,
+     <span class="k">"longitude"</span>: 6.0799994,
+     <span class="k">"utc_offset_seconds"</span>: 7200,
+     <span class="k">"timezone"</span>: <span class="f">"Europe/Berlin"</span>,
+     <span class="k">"timezone_abbreviation"</span>: <span class="f">"CEST"</span>,
+     <span class="k">"elevation"</span>: 178.0,
+     <span class="k">"hourly_units"</span>: {
+        <span class="k">"time"</span>: <span class="f">"iso8601"</span>,
+        <span class="k">"shortwave_radiation_instant"</span>: <span class="f">"W/m\u00b2"</span>
+     },
+     <span class="k">"hourly"</span>: {
+          <span class="k">"time"</span>: [
+              <span class="f">"2023-08-26T00:00"</span>, <span class="f">"2023-08-26T01:00"</span>, <span class="f">"2023-08-26T02:00"</span>,
+              <span class="f">"2023-08-26T03:00"</span>, <span class="f">"2023-08-26T04:00"</span>, <span class="f">"2023-08-26T05:00"</span>
+          ],
+          <span class="k">"shortwave_radiation_instant"</span>: [
+              0.0, 0.0, 0.0, 0.0, 0.0, 9.1
+        ]
+     }
+}</pre>
+      <div class="term-note">
+        구조를 눈여겨봐야 한다. API는 <b>두 개의 개별 배열</b>을 담은 JSON 객체를 만들어낸다.
+        하나는 타임스탬프, 다른 하나는 선택한 값이다. 관심 있는 것은 후자의 배열이며,
+        <b>주어진 사실들에 대해 특정 값을 뽑아내고 싶다.</b>
+        시각과 값이 같은 행에 나란히 있지 않고 <b>순서로만 대응</b>한다는 점이 이 과제의 어려움이다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>첫눈에는 SQL로 그 배열에서 아침, 정오, 저녁 시각을 골라내는 일이 벅찬 과제처럼 보인다. <code>LATERAL</code>이 이 과제를 어떻게 푸는지 보자. 제1장에서 DuckDB가 JSON을 처리할 수 있다고 읽었고 제5장에서 더 자세히 살펴볼 것이지만, 지금은 <strong><code>FROM</code> 절에서 다른 어떤 테이블처럼 JSON 파일에서 고를 수 있다</strong>는 것만 알면 된다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">7일 × 3시각의 색인으로 배열에서 값 뽑기</span>
+        <span class="tagn">4.10</span>
+      </div>
+      <pre><span class="k">INSTALL</span> json;
+<span class="k">LOAD</span> json;
+
+<span class="k">WITH</span> days <span class="k">AS</span> (
+  <span class="k">SELECT</span> generate_series <span class="k">AS</span> value <span class="k">FROM</span> <span class="f">generate_series</span>(7)
+), hours <span class="k">AS</span> (
+  <span class="k">SELECT</span> <span class="f">unnest</span>([8, 13, 18]) <span class="k">AS</span> value
+), indexes <span class="k">AS</span> (
+  <span class="k">SELECT</span> days.value * 24 + hours.value <span class="k">AS</span> i
+  <span class="k">FROM</span> days, hours
+)
+<span class="k">SELECT</span> <span class="f">date_trunc</span>(<span class="f">'day'</span>, <span class="f">now</span>()) - <span class="k">INTERVAL</span> <span class="f">'7 days'</span> +
+          <span class="k">INTERVAL</span> (indexes.i || <span class="f">' hours'</span>) <span class="k">AS</span> ts,   <span class="c">-- 시각 색인에서 날짜를 되살린다</span>
+       ghi.v <span class="k">AS</span> <span class="f">'GHI in W/m^2'</span>
+<span class="k">FROM</span> indexes,
+<span class="k">LATERAL</span> (
+  <span class="k">SELECT</span> hourly.shortwave_radiation_instant[i+1]   <span class="c">-- DuckDB(그리고 SQL 일반)에서 배열은 1부터다</span>
+            <span class="k">AS</span> v
+  <span class="k">FROM</span> <span class="f">'code/ch04/ghi_past_and_future.json'</span>          <span class="c">-- 문자열이 JSON 파일임을 자동 감지해</span>
+) <span class="k">AS</span> ghi                                             <span class="c">-- 적재하고 파싱한다</span>
+<span class="k">ORDER BY</span> ts;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">ts</th><th>GHI in W/m^2</th></tr>
+            <tr class="type"><th class="l">timestamp with time zone</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">2023-08-26 08:00:00+02</td><td>36.0</td></tr>
+            <tr><td class="l">2023-08-26 13:00:00+02</td><td>490.7</td></tr>
+            <tr><td class="l">2023-08-26 18:00:00+02</td><td>2.3</td></tr>
+            <tr><td class="l">2023-08-27 08:00:00+02</td><td>243.4</td></tr>
+            <tr><td class="l">2023-08-27 13:00:00+02</td><td>124.3</td></tr>
+            <tr><td class="dots3">·</td><td class="dots3">·</td></tr>
+            <tr><td class="l">2023-09-01 13:00:00+02</td><td>392.0</td></tr>
+            <tr><td class="l">2023-09-01 18:00:00+02</td><td>0.0</td></tr>
+            <tr><td class="l">2023-09-02 08:00:00+02</td><td>451.0</td></tr>
+            <tr><td class="l">2023-09-02 13:00:00+02</td><td>265.0</td></tr>
+            <tr><td class="l">2023-09-02 18:00:00+02</td><td>0.0</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="2">24 rows (10 shown) &nbsp;&nbsp; 2 columns</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        색인은 <b>날짜 번호 × 24 + 하루의 시각</b>이며, 그 색인이 서브쿼리를 구동하는 lateral driver다.
+        27일 정오의 일사량(124.3)이 아침(243.4)의 절반인 것을 보면 그날 낮에 구름이 들었음을 짐작할 수 있다.
+        저자들의 소감이 담백하다. <b>2023년 8월 말 아헨은 이랬다. 태양광에 좋은 달은 아니었다.</b>
+      </div>
+      <div class="term-note catch">
+        본문은 골라낼 시각을 "8시, 13시, 그리고 19시(오후 7시)"라고 적었지만,
+        코드는 <code>unnest([8, 13, 18])</code>이고 결과의 저녁 시각도 <b>18:00</b>이다. 본문의 19시가 오식이다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>서브쿼리는 구동하는 바깥 테이블의 행마다 <strong>0개, 1개, 또는 더 많은 행을 만들어낼 수 있다.</strong> 앞의 예제에서는 바깥 행마다 한 행을 만들었다. 서브쿼리가 더 많은 행을 만들면 <em>바깥 행의 값이 <code>CROSS JOIN</code>과 비슷한 방식으로 되풀이된다.</em> 서브쿼리가 아무 값도 만들지 않으면 조인도 값을 만들지 않는다. 이 경우에는 <code>OUTER JOIN</code>을 적용해야 하며, <strong>그 지점에서는 <code>LATERAL</code> 키워드만으로는 충분하지 않고 온전한 <code>JOIN</code> 문법을 써야 한다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">LATERAL에 OUTER JOIN을 붙이는 문법</span>
+        <span class="tagn">4.10</span>
+      </div>
+      <pre><span class="c">-- 문법을 보여주는 것 말고는 값어치가 거의 없는 인공적인 질의다.</span>
+<span class="c">-- 두 질의 모두 1부터 4까지의 계열을 만들되, 바깥은 걸음 1, 안쪽은 걸음 2다.</span>
+<span class="k">SELECT</span> i, j
+<span class="k">FROM</span> <span class="f">generate_series</span>(1, 4) t(i)
+<span class="k">LEFT OUTER JOIN LATERAL</span> (
+  <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">generate_series</span>(1, 4, 2) t(j)
+) sq <span class="k">ON</span> sq.j = i
+<span class="k">ORDER BY</span> i;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>i</th><th>j</th></tr>
+            <tr class="type"><th>int64</th><th>int64</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>1</td></tr>
+            <tr><td>2</td><td class="nil"></td></tr>
+            <tr><td>3</td><td>3</td></tr>
+            <tr><td>4</td><td class="nil"></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>조건이 이제 바깥에 놓였고 달리 표현할 수도 없지만, 그럼에도 여전히 상관 서브쿼리다.</b>
+        이 문장 하나가 <code>LATERAL</code>의 정체를 정확히 짚는다. 문법의 자리가 아니라 <b>평가의 방식</b>이 상관을 만든다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>4.8절의 가격 문제도 서브쿼리와 <code>LATERAL JOIN</code>으로 풀 수 있다. 요컨대 서브쿼리는 <em>판매 시점에 시간적으로 가장 가까운 유효 기간을 가진 가격 행</em>을 돌려주어야 한다. 그것이 되려면 보통의 <code>JOIN</code>을 쓸 수 없다. 서브쿼리가 <strong>들어오는 날짜마다 다른 값을 만들어야</strong> 하기 때문이다. 따라서 보통이라면 <code>JOIN</code>의 일부였을 날짜 컬럼이 서브쿼리 안으로 옮겨가야 하고, 그럼으로써 조인된 서브쿼리는 <em>상관되거나, 곧 바깥 질의에 lateral하게 조인된다.</em></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">목록 4.29의 ASOF JOIN을 LATERAL JOIN과 비교하기</span>
+        <span class="tagn">목록 4.34</span>
+      </div>
+      <pre><span class="k">SELECT</span> power.day, power.kWh,
+       prices.value <span class="k">as</span> <span class="f">'EUR/kWh'</span>
+<span class="k">FROM</span> v_power_per_day power,
+    <span class="k">LATERAL</span> (                                <span class="c">-- 서브쿼리를 lateral로 표시해 상관을 허용한다</span>
+        <span class="k">SELECT</span> *
+        <span class="k">FROM</span> prices
+        <span class="k">WHERE</span> prices.valid_from &lt;= power.day  <span class="c">-- 부등식으로 상관시킨다</span>
+        <span class="k">ORDER BY</span> valid_from <span class="k">DESC</span> limit 1
+    ) <span class="k">AS</span> prices
+<span class="k">WHERE</span> system_id = 34
+<span class="k">ORDER BY</span> day;</pre>
+      <div class="term-note">
+        <b>ASOF JOIN은 가장 가까운 값을 자동으로 골라주지만, LATERAL을 쓸 때는 값을 우리가 직접 정렬해야 한다.</b>
+        <code>ORDER BY valid_from DESC limit 1</code>이 손으로 쓴 "as of"인 것이다.
+      </div>
+      <div class="term-note catch">
+        컬럼 별칭이 <code>'EUR/kWh'</code>로 적혀 있다. 그런데 <code>prices.value</code>는 목록 4.29에서 <code>'ct/kWh'</code>로 이름 붙였고,
+        4.5.4절도 이 값이 <b>유로센트 단위</b>라고 밝혔다. 11.47이라는 값 자체가 kWh당 11.47유로일 수 없다.
+        단위 이름의 오식이다.
+      </div>
+      <div class="term-note">
+        저자들의 결론이 실용적이다. DuckDB로 시계열 관련 계산을 한다면 <b>거의 확실히 ASOF JOIN을 쓸 것이다.</b>
+        <b>LATERAL은 이식성을 생각할 때 매력적</b>이며, ASOF JOIN보다 LATERAL을 지원하는 데이터베이스가 아마 더 많다.
+        <b>데이터셋을 부채처럼 펼쳐 더 많은 행을 만들고 싶은 상황</b>에 LATERAL을 쓴다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 요약 ══════════ -->
+<section class="summary" id="s11">
+  <div class="sechead">
+    <span class="num">SUMMARY</span>
+    <h2>제4장이 남긴 여덟 문장<span class="en">Summary</span></h2>
+  </div>
+  <ol>
+    <li>SQL 표준은 1992년의 마지막 대규모 개정(SQL-92) 이후 크게 발전했다. DuckDB는 <b>CTE(SQL:1999), 윈도 함수(SQL:2003), 리스트 집계(SQL:2016)</b> 등 현대 SQL을 폭넓게 지원한다.</li>
+    <li><b>그룹화 집합</b>은 여러 그룹에 걸친 집계 계산을 가능하게 해 서로 다른 상세 수준으로 드릴다운하게 해준다. <code>ROLLUP</code>과 <code>CUBE</code>로 그룹 키의 부분그룹이나 조합을 생성할 수 있다.</li>
+    <li>DuckDB는 <b>명명 윈도와 범위를 포함해 윈도 함수를 온전히 지원</b>하며, 누적 합계와 순위 같은 쓰임을 가능하게 한다.</li>
+    <li>통계 계산과 보간을 포함한 <b>모든 집계 함수가 윈도 맥락에서 쓰이도록 최적화</b>되어 있다.</li>
+    <li><code>HAVING</code>과 <code>QUALIFY</code>는 집계와 창이 <b>계산된 뒤에</b> 그것을 고르는 데 쓰고, <code>FILTER</code>는 원치 않는 데이터가 <b>집계에 들어가는 것을 막는다.</b></li>
+    <li>DuckDB에는 <b>시계열 데이터가 관여하는 쓰임새에 필수적인 <code>ASOF JOIN</code></b>이 들어 있다.</li>
+    <li>DuckDB는 데이터를 부채처럼 펼치는 데 도움이 되고 <b>어느 정도 루프를 모방할 수 있는 <code>LATERAL</code> 조인</b>도 지원한다.</li>
+    <li>결과는 <b>단순화된 DuckDB 고유의 <code>PIVOT</code> 문</b>으로든, 더 정적인 표준 SQL 방식으로든 피벗할 수 있다.</li>
+  </ol>
+</section>
+
+</main>
+
+<footer>
+  <div class="col">
+    <p>이 문서는 <b>Mark Needham · Michael Hunger · Michael Simons, 『DuckDB in Action』 (Manning Publications, 2024)</b>의 제4장 「Advanced aggregation and analysis of data」(원서 58–97쪽) 전체를 검토해 한국어로 정리한 해설이다. 절 번호, 목록 번호, 도판 번호, 표 번호는 원서를 따랐다. 〈도판 4.1〉·〈도판 4.2〉·〈도판 4.4〉와 〈도판 4.5·4.6〉은 원서 그림의 구성을 옮겨 새로 작도했다.</p>
+    <p><b>그룹화 어법 전환기</b>와 <b>프레임 탐색기</b>는 이 문서에서 더한 장치다. 전자는 목록 4.11–4.14의 결과 행을 원서에 인쇄된 값 그대로 담아 어법에 따라 어느 행이 나타나는지 보여주며, 후자는 〈도판 4.3〉의 10번 시스템 15일 값을 그대로 옮겨 프레임의 이동과 평균을 계산한다. <em>발췌 범위를 넘어가는 프레임과 원서의 오식은 계산값과 나란히 표시해두었으니, 어느 숫자가 어디서 왔는지 혼동할 일은 없다.</em></p>
+    <p>〈살펴본 김에〉로 표시한 여섯 대목은 원서 안에서 서로 어긋나거나 오식으로 보이는 자리다. 〈도판 4.3〉 셋째 행의 이동평균, 가격이 하락했다는 서술과 올랐다는 서술의 충돌, 반올림 시점이 달라 생긴 205741.9와 205742.6의 차이, <code>FILTER</code>의 <code>WHERE</code> 유무가 섞인 표기, 18시를 19시로 적은 자리, 그리고 <code>ct/kWh</code>를 <code>EUR/kWh</code>로 적은 별칭이다.</p>
+    <p>다음 장은 「Exploring data without persistence」로, CSV를 Parquet으로 변환하는 법, 파일 형식과 데이터 스키마의 자동 추론, 중첩 JSON 문서 질의를 단순하게 하는 뷰, Parquet 파일의 메타데이터 탐색, 그리고 SQLite 같은 다른 데이터베이스에 질의하는 법을 다룬다.</p>
+    <span class="mono">CH.04 · 10 SECTIONS · 8 SUBSECTIONS · 34 LISTINGS · 6 PLATES · 8 SUMMARY POINTS</span>
+  </div>
+</footer>
+
+<script>
+/* ── 그룹화 어법 전환기 ── */
+(function(){
+  var root=document.getElementById('gs'); if(!root) return;
+  // 원서 목록 4.11 ~ 4.14에 인쇄된 값을 그대로 옮긴 것이다.
+  var ROWS=[
+    {y:null,s:null,c:'151879',k:'401723.22',kind:'total'},
+    {y:null,s:'10',  c:'47750', k:'2226.48',  kind:'cube'},
+    {y:null,s:'34',  c:'52057', k:'306775.25',kind:'cube'},
+    {y:null,s:'1200',c:'52072', k:'92721.48', kind:'cube'},
+    {y:'2019',s:null,c:'103621',k:'269303.39',kind:'roll'},
+    {y:'2019',s:'10',  c:'33544',k:'1549.34',  kind:'base'},
+    {y:'2019',s:'34',  c:'35040',k:'205741.9', kind:'base'},
+    {y:'2019',s:'1200',c:'35037',k:'62012.15', kind:'base'},
+    {y:'2020',s:null,c:'48258', k:'132419.83',kind:'roll'},
+    {y:'2020',s:'10',  c:'14206',k:'677.14',   kind:'base'},
+    {y:'2020',s:'34',  c:'17017',k:'101033.35',kind:'base'},
+    {y:'2020',s:'1200',c:'17035',k:'30709.34', kind:'base'}
+  ];
+  var MODE={
+    plain:{keep:['base'],
+      sql:'SELECT year(read_on) AS year, system_id,\n       count(*), round(sum(power) / 4 / 1000, 2) AS kWh\nFROM readings\nGROUP BY year, system_id\nORDER BY year, system_id;',
+      cap:'그룹 키가 사실상 한 벌뿐인 평범한 <b>GROUP BY</b>다. 여섯 가지 조합이므로 여섯 행. 합계는 어디에도 없다. <b>목록 4.11</b>'},
+    sets:{keep:['base','roll','total'],
+      sql:'SELECT year(read_on) AS year, system_id,\n       count(*), round(sum(power) / 4 / 1000, 2) AS kWh\nFROM readings\nGROUP BY GROUPING SETS ((year, system_id), year, ())\nORDER BY year NULLS FIRST, system_id NULLS FIRST;',
+      cap:'세 벌의 그룹 키를 손으로 열거했다. <b>(year, system_id)</b>가 여섯 행, <b>(year)</b>가 두 행, <b>()</b>—빈 바구니—가 한 행. 포함되지 않은 키에는 NULL이 채워진다. <b>목록 4.12</b>'},
+    rollup:{keep:['base','roll','total'],
+      sql:'SELECT year(read_on) AS year, system_id,\n       count(*), round(sum(power) / 4 / 1000, 2) AS kWh\nFROM readings\nGROUP BY ROLLUP (year, system_id)\nORDER BY year NULLS FIRST, system_id NULLS FIRST;',
+      cap:'결과가 GROUPING SETS와 <b>완전히 같다</b>. ROLLUP은 항이 n개일 때 <b>n + 1개</b>의 그룹화 집합을 자동 생성하는 줄임 절이기 때문이다. 손으로 열거할 일이 없어진다. <b>목록 4.13</b>'},
+    cube:{keep:['base','roll','cube','total'],
+      sql:'SELECT year(read_on) AS year, system_id,\n       count(*), round(sum(power) / 4 / 1000, 2) AS kWh\nFROM readings\nGROUP BY CUBE (year, system_id)\nORDER BY year NULLS FIRST, system_id NULLS FIRST;',
+      cap:'CUBE는 부분그룹이 아니라 <b>실제 조합 2<sup>n</sup>개</b>를 만든다. ROLLUP에 없던 <b>시스템별 전체 합계</b> 세 행이 초록으로 더해졌다. 이제 하나의 질의가 모든 드릴다운을 담는다. <b>목록 4.14</b>'}
+  };
+  function render(m){
+    var cfg=MODE[m], keep=cfg.keep;
+    var h='<table class="duckbox"><thead>'+
+      '<tr><th>year</th><th>system_id</th><th>count_star()</th><th>kWh</th></tr>'+
+      '<tr class="type"><th>int64</th><th>int32</th><th>int64</th><th>double</th></tr>'+
+      '</thead><tbody>';
+    var n=0;
+    ROWS.forEach(function(r){
+      if(keep.indexOf(r.kind)<0) return;
+      n++;
+      var cls=(r.kind==='total')?' class="total"':(r.kind==='roll')?' class="roll"':(r.kind==='cube')?' class="cube"':'';
+      h+='<tr'+cls+'><td>'+(r.y||'<span style="color:#4f6a91">·</span>')+'</td>'+
+         '<td>'+(r.s||'<span style="color:#4f6a91">·</span>')+'</td>'+
+         '<td>'+r.c+'</td><td>'+r.k+'</td></tr>';
+    });
+    h+='</tbody><tfoot><tr><td colspan="4">'+n+' rows &nbsp;&nbsp; 4 columns</td></tr></tfoot></table>';
+    document.getElementById('gsOut').innerHTML=h;
+    document.getElementById('gsSql').textContent=cfg.sql;
+    document.getElementById('gsCap').innerHTML=cfg.cap;
+  }
+  [].forEach.call(root.querySelectorAll('.tabs button'),function(b){
+    b.addEventListener('click',function(){
+      [].forEach.call(root.querySelectorAll('.tabs button'),function(x){
+        x.setAttribute('aria-pressed', x===b?'true':'false');
+      });
+      render(b.dataset.g);
+    });
+  });
+  render('plain');
+})();
+
+/* ── 프레임 탐색기 ── */
+(function(){
+  var root=document.getElementById('fx'); if(!root) return;
+  // 원서 〈도판 4.3〉의 10번 시스템 2019년 1월 1~15일 값을 그대로 옮긴 것이다.
+  var DAYS=['2019-01-01','2019-01-02','2019-01-03','2019-01-04','2019-01-05',
+            '2019-01-06','2019-01-07','2019-01-08','2019-01-09','2019-01-10',
+            '2019-01-11','2019-01-12','2019-01-13','2019-01-14','2019-01-15'];
+  var KWH=[2.19,5.55,5.72,5.37,4.62,3.69,5.81,5.32,3.52,3.46,0.28,1.58,5.9,6.22,5.09];
+  // 원서 도판 4.3에 인쇄된 7일 이동평균 값
+  var BOOK=[4.7075000000000005,4.69,4.5523333333333334,4.707142857142857,5.154285714285714,
+            4.864285714285715,4.541428571428571,3.8142857142857145,3.3800000000000003,
+            3.6957142857142853,3.7542857142857144,3.7214285714285715,3.7814285714285716,
+            4.064285714285715,4.042857142857143];
+  var FRAME={
+    center:{lo:function(i){return i-3},hi:function(i){return i+3},
+      sql:'RANGE BETWEEN INTERVAL 3 Days PRECEDING\n                      AND INTERVAL 3 Days FOLLOWING',
+      cap:'원서 <b>목록 4.17</b>의 정의다. 3일 앞, 현재 날, 3일 뒤로 도합 7일. 미래를 들여다보므로 실시간 보고서에는 쓸 수 없지만, 지나간 계열을 매끄럽게 다듬는 데는 가장 고르다.'},
+    trail:{lo:function(i){return i-6},hi:function(i){return i},
+      sql:'ROWS BETWEEN 6 PRECEDING\n                     AND CURRENT ROW',
+      cap:'현재 행과 그 앞 여섯 행. <b>후행 이동평균</b>이며 미래를 보지 않으므로 실시간 지표에 쓸 수 있다. <code>ROWS</code>는 행의 개수로, <code>RANGE</code>는 정렬 표현식의 값으로 거리를 잰다는 차이가 여기서 드러난다.'},
+    cum:{lo:function(){return 0},hi:function(i){return i},
+      sql:'ROWS BETWEEN UNBOUNDED PRECEDING\n                     AND CURRENT ROW',
+      cap:'파티션의 처음부터 현재 행까지. <b>누적</b>이다. 목록 4.29의 누적 수익이 바로 이 프레임을 쓴다. 프레임 절을 아예 생략해도 <code>ORDER BY</code>가 있으면 기본값이 이것이 된다.'}
+  };
+  var cur=3, mode='center';
+
+  function render(){
+    var f=FRAME[mode];
+    var lo=Math.max(0,f.lo(cur)), hi=Math.min(KWH.length-1,f.hi(cur));
+    var wantLo=f.lo(cur), wantHi=f.hi(cur);
+    var vals=KWH.slice(lo,hi+1);
+    var sum=vals.reduce(function(a,b){return a+b},0);
+    var avg=sum/vals.length;
+    var max=Math.max.apply(null,KWH);
+
+    var h='<table><thead><tr><th class="l">day</th><th>kWh</th><th class="l">분포</th></tr></thead><tbody>';
+    for(var i=0;i<KWH.length;i++){
+      var cls=(i===cur)?'now':((i>=lo&&i<=hi)?'inf':'');
+      var w=Math.round(KWH[i]/max*84);
+      h+='<tr class="'+cls+'"><td class="l">'+DAYS[i]+'</td><td>'+KWH[i].toFixed(2)+
+         '</td><td class="l"><span class="bar" style="width:'+w+'px"></span></td></tr>';
+    }
+    h+='</tbody></table>';
+    document.getElementById('fxTable').innerHTML=h;
+    document.getElementById('fxcur').textContent=DAYS[cur];
+    document.getElementById('fxn').textContent=vals.length+' 행';
+    document.getElementById('fxavg').innerHTML=avg.toFixed(6)+
+      '<small>합계 '+sum.toFixed(2)+' ÷ '+vals.length+'행</small>';
+
+    var bookVal=BOOK[cur].toString();
+    var st='', cls='out';
+    if(mode!=='center'){
+      st='원서 값은 목록 4.17의 프레임(3 앞 · 3 뒤)에 대한 것이므로 지금 정의와는 비교 대상이 아니다.';
+      cls='out';
+    }else if(wantHi>KWH.length-1){
+      st='이 행의 프레임은 발췌한 15일을 넘어간다. 원서는 파티션 전체로 계산했으므로 값이 다르다.';
+      cls='out';
+    }else if(Math.abs(avg-BOOK[cur])<1e-9){
+      st='계산값과 일치한다.'; cls='good';
+    }else{
+      st='계산값 '+avg.toString()+'과 어긋난다. 자릿수가 뒤바뀐 원서의 오식으로 보인다.';
+      cls='warn';
+    }
+    document.getElementById('fxbook').innerHTML=bookVal+
+      '<small><span class="fxbadge '+cls+'">'+st+'</span></small>';
+
+    document.getElementById('fxSql').textContent=
+      'SELECT day, kWh,\n'+
+      '       avg(kWh) OVER (\n'+
+      '           PARTITION BY system_id\n'+
+      '           ORDER BY day ASC\n'+
+      '           '+f.sql+'\n'+
+      '       ) AS moving_average\n'+
+      'FROM v_power_per_day\n'+
+      'WHERE system_id = 10;';
+    document.getElementById('fxCap').innerHTML=f.cap;
+  }
+
+  var sl=document.getElementById('fxslider');
+  sl.addEventListener('input',function(){cur=parseInt(sl.value,10);render()});
+  [].forEach.call(root.querySelectorAll('.fxrow button'),function(b){
+    b.addEventListener('click',function(){
+      mode=b.dataset.f;
+      [].forEach.call(root.querySelectorAll('.fxrow button'),function(x){
+        x.setAttribute('aria-pressed', x===b?'true':'false');
+      });
+      render();
+    });
+  });
+  render();
+})();
+
+/* ── 스크롤 등장 ── */
+(function(){
+  var els=document.querySelectorAll('.rev');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){ if(e.isIntersecting){e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{rootMargin:'0px 0px -10% 0px',threshold:.05});
+  els.forEach(function(e){io.observe(e)});
+})();
+
+/* ── 목차 레일 ── */
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.rail a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))}).filter(Boolean);
+  if(!secs.length) return;
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){
+      if(!e.isIntersecting) return;
+      links.forEach(function(a){a.classList.toggle('on', a.getAttribute('href')==='#'+e.target.id)});
+    });
+  },{rootMargin:'-45% 0px -45% 0px'});
+  secs.forEach(function(s){io.observe(s)});
+})();
+</script>
+</body>
+</html>

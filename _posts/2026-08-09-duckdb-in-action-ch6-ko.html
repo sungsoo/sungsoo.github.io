@@ -1,0 +1,1403 @@
+---
+layout: null
+title: "Integrating with the Python ecosystem" 
+date: 2026-08-09 
+categories: [artificial intelligence]
+tags: [artificial general intelligence, data management]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DuckDB 답사기 · 제6장 파이썬 생태계와의 통합 — 『DuckDB in Action』 정독</title>
+<meta name="description" content="Mark Needham, Michael Hunger, Michael Simons의 『DuckDB in Action』 제6장을 한 줄도 빠뜨리지 않고 읽어 정리한 해설. Python DB-API 2.0과 관계형 API의 차이, DuckDBPyRelation, pandas 데이터프레임 질의, 사용자 정의 함수, Apache Arrow와 Polars 상호운용.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────
+   토큰 — 제1~5장과 같은 델프트 도자 계열의 연작.
+   다만 이 장의 무대는 CLI가 아니라 파이썬 REPL이므로,
+   프롬프트가 D에서 >>>로 바뀌고 파이썬 쪽 색(sky)이
+   SQL 쪽 색과 나란히 놓이는 자리가 많다.
+   ───────────────────────────────────────────── */
+:root{
+  --porcelain:#e9eef4;
+  --glaze:#ffffff;
+  --delft:#1f4e9c;
+  --delft-deep:#0f2a54;
+  --shell:#0b1d3a;
+  --ink:#101a28;
+  --bill:#e0912a;
+  --sun:#f2b134;
+  --canal:#2b7d74;
+  --grey:#69788c;
+  --sky:#8fb8ff;
+  --py:#67d4b4;
+  --clay:#a8552b;
+  --hair:rgba(16,26,40,.14);
+  --wire:rgba(143,184,255,.22);
+
+  --disp:'Fraunces','Gowun Batang',serif;
+  --body:'Noto Sans KR','Fraunces',sans-serif;
+  --mono:'IBM Plex Mono','Menlo','DejaVu Sans Mono','Consolas','Noto Sans KR',monospace;
+
+  --col:min(720px,100%);
+  --wide:min(1080px,100%);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:var(--porcelain);color:var(--ink);
+  font-family:var(--body);font-weight:300;font-size:17px;line-height:1.95;
+  word-break:keep-all;line-break:strict;
+  background-image:
+    radial-gradient(900px 520px at 86% -6%,rgba(103,212,180,.16),transparent 62%),
+    radial-gradient(1040px 600px at 5% 4%,rgba(31,78,156,.12),transparent 60%);
+  background-attachment:fixed;
+}
+::selection{background:var(--bill);color:#fff}
+a{color:var(--delft);text-decoration:none;border-bottom:1px solid rgba(31,78,156,.35)}
+a:hover{color:var(--canal);border-color:var(--canal)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--bill);outline-offset:3px}
+
+.wrap{width:var(--wide);margin:0 auto;padding:0 26px}
+.col{width:var(--col);margin:0 auto}
+
+/* ── 표제부 ── */
+.hero{padding:74px 0 40px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--grey);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.eyebrow b{color:var(--delft);font-weight:500}
+.chapno{display:flex;align-items:baseline;gap:18px;margin:26px 0 6px}
+.chapno span:first-child{font-family:var(--disp);font-size:clamp(52px,11vw,104px);font-weight:800;line-height:.82;color:var(--delft);font-variation-settings:'SOFT' 40,'WONK' 1}
+.chapno span:last-child{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--grey);padding-bottom:10px}
+h1{font-family:var(--disp);font-weight:600;letter-spacing:-.015em;font-size:clamp(33px,6vw,62px);line-height:1.1;margin:0 0 22px;max-width:22ch}
+h1 em{font-style:italic;color:var(--delft);font-weight:400;background:none}
+.lede{width:var(--col);font-size:clamp(17px,2vw,20px);line-height:1.9;color:#243247}
+.lede strong{font-weight:500;color:var(--ink);background:linear-gradient(transparent 62%,rgba(224,145,42,.32) 62%)}
+.hero-meta{margin-top:34px;display:flex;flex-wrap:wrap;border-top:1px solid var(--hair)}
+.hero-meta div{flex:1 1 190px;padding:16px 22px 16px 0;border-right:1px solid var(--hair)}
+.hero-meta div:last-child{border-right:0}
+.hero-meta dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--grey);text-transform:uppercase;margin:0 0 6px}
+.hero-meta dd{margin:0;font-size:14.5px;font-weight:400;line-height:1.65}
+
+/* ── 목차 레일 ── */
+.rail{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:20;display:none;flex-direction:column;gap:1px}
+.rail a{display:flex;align-items:center;gap:9px;border:0;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--grey);padding:3px 0}
+.rail i{display:block;width:14px;height:1px;background:var(--grey);opacity:.5;transition:.35s}
+.rail a span{opacity:0;transform:translateX(-4px);transition:.35s}
+.rail a:hover i,.rail a.on i{width:28px;opacity:1;background:var(--bill);height:2px}
+.rail a:hover span,.rail a.on span{opacity:1;transform:none;color:var(--delft-deep)}
+@media(min-width:1320px){.rail{display:flex}}
+
+/* ── 본문 ── */
+section{padding:34px 0}
+.sechead{width:var(--col);margin:0 auto 26px}
+.sechead .num{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--bill);display:block;margin-bottom:10px}
+h2{font-family:var(--disp);font-weight:600;font-size:clamp(26px,3.6vw,38px);line-height:1.25;margin:0;letter-spacing:-.01em;color:var(--delft-deep)}
+h2 .en{display:block;font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:.08em;color:var(--grey);margin-top:9px}
+h3{font-family:var(--body);font-weight:700;font-size:19px;line-height:1.5;margin:46px 0 12px;color:var(--ink)}
+h3::before{content:"";display:inline-block;width:9px;height:9px;background:var(--bill);margin-right:11px;vertical-align:2px}
+h3 .sub{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--grey);letter-spacing:.06em;margin-left:8px}
+h4.clause{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.14em;color:var(--delft);margin:38px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--hair);text-transform:uppercase}
+p{margin:0 0 20px}
+.dropcap::first-letter{font-family:var(--disp);font-size:3.6em;line-height:.86;float:left;margin:6px 12px 0 0;color:var(--delft);font-weight:600}
+em{font-style:normal;background:linear-gradient(transparent 60%,rgba(43,125,116,.22) 60%)}
+strong{font-weight:500}
+code{font-family:var(--mono);font-size:.86em;background:rgba(31,78,156,.08);padding:.12em .42em;border-radius:2px;color:var(--delft-deep);white-space:nowrap}
+.q{border-left:3px solid var(--bill);padding:2px 0 2px 22px;margin:34px 0;font-family:var(--disp);font-size:20px;line-height:1.75;color:var(--delft-deep)}
+.q span{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--grey);margin-top:12px}
+
+ul.plain{list-style:none;padding:0;margin:0 0 24px}
+ul.plain li{position:relative;padding:11px 0 11px 30px;border-bottom:1px solid var(--hair)}
+ul.plain li::before{content:"";position:absolute;left:4px;top:22px;width:12px;height:1px;background:var(--delft);opacity:.6}
+ul.plain li b{font-weight:500;color:var(--delft-deep)}
+
+/* ── 그림 액자 (이 장의 그림은 모두 덧붙인 것이다) ── */
+.plate{margin:46px 0;width:var(--wide)}
+.plate.narrow{width:var(--col);margin-left:auto;margin-right:auto}
+.plate figure{margin:0}
+.tile{background:var(--glaze);border:1px solid var(--hair);box-shadow:0 1px 0 #fff inset,0 18px 40px -30px rgba(15,42,84,.55);padding:14px}
+.tile-in{border:1px solid rgba(31,78,156,.22);padding:20px 14px}
+.plate svg{display:block;width:100%;height:auto}
+figcaption{margin-top:14px;font-family:var(--mono);font-size:12px;color:var(--grey);display:flex;gap:10px;align-items:baseline}
+figcaption b{color:var(--canal);font-weight:500;white-space:nowrap}
+
+/* ── 터미널 (이 장은 파이썬 REPL) ── */
+.term{background:var(--shell);border:1px solid rgba(143,184,255,.28);box-shadow:0 26px 60px -40px rgba(11,29,58,.9);margin:28px 0;overflow:hidden}
+.term.bleed{width:var(--wide)}
+.term-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--wire);background:rgba(143,184,255,.06)}
+.dots{display:flex;gap:6px}
+.dots i{width:9px;height:9px;border-radius:50%;display:block;background:#3a557f}
+.dots i:first-child{background:var(--bill)}
+.term.py .dots i:first-child{background:var(--py)}
+.term-bar .name{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:#7f9bc7;text-transform:uppercase}
+.term-bar .tagn{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--bill);border:1px solid rgba(224,145,42,.5);padding:2px 8px;white-space:nowrap}
+.term.py .term-bar .tagn{color:var(--py);border-color:rgba(103,212,180,.5)}
+.term pre{margin:0;padding:20px 22px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.85;color:#d5e3f7}
+.p{color:var(--bill)}
+.pp{color:var(--py)}          /* 파이썬 프롬프트 */
+.k{color:var(--sky)}
+.f{color:#ffd28a}
+.c{color:#6f86a8}
+.err{color:#ff9a7a}
+.ok{color:#67d4b4}
+.term-note{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;font-weight:300;color:#a3b8d6;line-height:1.85}
+.term-note b{color:var(--bill);font-weight:500;font-family:var(--mono);font-size:12.5px}
+.term-note.catch{background:rgba(224,145,42,.07)}
+.term-note.catch::before{content:"살펴본 김에";display:block;font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--bill);margin-bottom:7px}
+
+/* 어두운 패널 안의 코드 조각 */
+.term-note code,.rxcap code,.rxsql code,.rxpy code{
+  background:rgba(255,255,255,.13);color:#ffd9a3;border-radius:2px;
+}
+
+/* ── duckbox ── */
+.duckbox{font-family:var(--mono);font-size:13px;border-collapse:collapse;color:#d5e3f7}
+.duckbox th,.duckbox td{border:1px solid var(--wire);padding:5px 14px;text-align:right;white-space:nowrap}
+.duckbox th{color:#fff;font-weight:500;text-align:center}
+.duckbox tr.type th{color:#7f9bc7;font-weight:400;font-size:12px;font-style:italic}
+.duckbox td.l,.duckbox th.l{text-align:left}
+.duckbox tfoot td{border:1px solid var(--wire);color:#7f9bc7;text-align:right;font-size:12px}
+.duckbox td.dots3{color:#4f6a91;text-align:center}
+.duckbox td.hi{color:var(--sun)}
+/* 후행 공백을 눈에 보이게 하려면 접히지 않게 해야 한다 */
+.duckbox td.pad{color:#c6d8f2;white-space:pre}
+.duckbox td.pad i{font-style:normal;background:rgba(224,145,42,.32);box-shadow:inset 0 0 0 1px rgba(224,145,42,.5)}
+.dbwrap{padding:20px 22px;overflow-x:auto}
+
+/* ── 관계형 API ↔ SQL 대응기 ── */
+.rx{background:var(--shell);border:1px solid rgba(143,184,255,.28);margin:36px 0;width:var(--wide);box-shadow:0 26px 60px -40px rgba(11,29,58,.9)}
+.rxtabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--wire);background:rgba(143,184,255,.06)}
+.rxtabs button{
+  appearance:none;background:none;border:0;border-right:1px solid var(--wire);cursor:pointer;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.02em;color:#7f9bc7;padding:11px 14px;transition:.2s;flex:1 1 auto;
+}
+.rxtabs button:hover{color:#fff;background:rgba(143,184,255,.08)}
+.rxtabs button[aria-pressed="true"]{background:var(--py);color:var(--shell);font-weight:600}
+.rxbody{display:grid;grid-template-columns:1fr}
+@media(min-width:880px){.rxbody{grid-template-columns:1fr 1fr}}
+.rxpy,.rxsql{padding:18px 22px;font-family:var(--mono);font-size:12.5px;line-height:1.8;overflow-x:auto;white-space:pre;border-bottom:1px solid var(--wire)}
+.rxpy{color:#d7f0e6}
+.rxsql{color:#c6d8f2}
+@media(min-width:880px){.rxpy{border-bottom:0;border-right:1px solid var(--wire)}}
+.rxlabel{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;margin-bottom:10px;font-weight:400}
+.rxpy .rxlabel{color:var(--py)}
+.rxsql .rxlabel{color:var(--sky)}
+.rxres{padding:18px 22px;border-top:1px solid var(--wire);overflow-x:auto}
+.rxres h6{margin:0 0 12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--bill);font-weight:400}
+.rxcap{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;font-weight:300;color:#a3b8d6;line-height:1.85}
+.rxcap b{color:var(--bill);font-weight:500}
+
+/* ── 격자·카드·표 ── */
+.grid3{display:grid;grid-template-columns:1fr;gap:1px;background:var(--hair);border:1px solid var(--hair);margin:30px 0}
+@media(min-width:640px){.grid3{grid-template-columns:1fr 1fr}}
+@media(min-width:960px){.grid3{grid-template-columns:1fr 1fr 1fr}}
+.cell{background:var(--glaze);padding:20px}
+.cell .t{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--delft);display:block;margin-bottom:8px;font-weight:500}
+.cell p{font-size:14.5px;line-height:1.78;margin:0;color:#2c3a4e}
+.tblwrap{overflow-x:auto;margin:20px 0 8px}
+.tbl{width:100%;min-width:560px;border-collapse:collapse;font-size:15px}
+.tbl caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;color:var(--grey);padding-bottom:10px}
+.tbl caption b{color:var(--canal);font-weight:500}
+.tbl th,.tbl td{padding:11px 14px;border-bottom:1px solid var(--hair);text-align:left;font-size:14.5px;line-height:1.7;vertical-align:top}
+.tbl th{background:var(--delft-deep);color:#fff;font-weight:500;letter-spacing:.04em;border-bottom:0;white-space:nowrap}
+.tbl td:first-child,.tbl td.m{font-family:var(--mono);font-size:13px;color:var(--delft);font-weight:500;white-space:nowrap}
+.tbl tbody tr:nth-child(even){background:rgba(31,78,156,.04)}
+
+/* 작업 순서 띠 */
+.flowstrip{width:var(--wide);margin:34px auto;background:var(--glaze);border:1px solid var(--hair);padding:24px 26px 18px;box-shadow:0 16px 40px -34px rgba(15,42,84,.6)}
+.flowstrip h5{margin:0 0 18px;font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--grey);font-weight:400}
+.flowstrip ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:700px){.flowstrip ol{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1080px){.flowstrip ol{grid-template-columns:repeat(5,1fr)}}
+.flowstrip li{position:relative;padding:12px 12px 12px 0;border-top:2px solid var(--py);font-size:13.5px;line-height:1.6;color:#33425a}
+.flowstrip li b{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--bill);margin-bottom:6px}
+
+/* NOTE / TIP / 사이드바 */
+.note,.tip{padding:22px 24px 6px;margin:34px 0}
+.note{background:linear-gradient(180deg,rgba(224,145,42,.10),rgba(224,145,42,.04));border:1px solid rgba(224,145,42,.4)}
+.tip{background:linear-gradient(180deg,rgba(43,125,116,.09),rgba(43,125,116,.03));border:1px solid rgba(43,125,116,.36)}
+.note .tag,.tip .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;display:block;margin-bottom:10px}
+.note .tag{color:#8a5410}
+.tip .tag{color:#1e5c55}
+.note p,.tip p{font-size:15.5px;line-height:1.85;margin-bottom:16px}
+.aside{background:var(--glaze);border:1px solid var(--hair);border-left:4px solid var(--canal);padding:24px 26px 8px;margin:38px 0;box-shadow:0 14px 34px -30px rgba(15,42,84,.6)}
+.aside .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:var(--canal);display:block;margin-bottom:12px}
+.aside h4{margin:0 0 12px;font-family:var(--disp);font-size:21px;font-weight:600;color:var(--delft-deep)}
+.aside p{font-size:15.5px;line-height:1.85}
+.aside ol{padding-left:22px;margin:0 0 18px}
+.aside ol li{font-size:15.5px;line-height:1.85;margin-bottom:8px}
+.aside .warn{background:rgba(224,145,42,.12);border:1px solid rgba(224,145,42,.4);padding:16px 18px 2px;margin:6px 0 18px}
+.aside .warn::before{content:"살펴본 김에";display:block;font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:#8a5410;margin-bottom:8px}
+
+/* ── 요약 ── */
+.summary{background:var(--delft-deep);color:#e6eefb;margin-top:70px;padding:66px 0 58px;position:relative}
+.summary::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px 44px)}
+.summary h2{color:#fff}
+.summary .num{color:var(--bill)}
+.summary h2 .en{color:rgba(230,238,251,.5)}
+.summary ol{list-style:none;counter-reset:s;padding:0;width:var(--col);margin:0 auto}
+.summary li{counter-increment:s;position:relative;padding:16px 0 16px 52px;border-bottom:1px solid rgba(255,255,255,.13);font-weight:300;font-size:16px;line-height:1.8}
+.summary li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:19px;font-family:var(--mono);font-size:12px;color:var(--bill);letter-spacing:.1em}
+.summary li b{font-weight:500;color:#fff}
+.summary code{background:rgba(255,255,255,.12);color:#ffd9a3}
+
+footer{padding:56px 0 76px;font-size:13.5px;color:var(--grey);line-height:1.85}
+footer .col{border-top:1px solid var(--hair);padding-top:26px}
+footer b{color:var(--delft-deep);font-weight:500}
+footer .mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;display:block;margin-top:16px;color:#8494a8}
+
+/* ── 연출 ── */
+.rev{opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rev.in{opacity:1;transform:none}
+.flow{stroke-dasharray:var(--len,300);stroke-dashoffset:var(--len,300);animation:draw 1.3s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.scrollhint{display:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--grey);margin-top:8px}
+@media(max-width:759px){
+  .hero-meta div{border-right:0;border-bottom:1px solid var(--hair);padding-right:0}
+  .hero-meta div:last-child{border-bottom:0}
+}
+@media(max-width:720px){
+  code{white-space:normal;overflow-wrap:anywhere}
+  .scrollhint{display:block}
+  .tile-in{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tile-in>svg{min-width:640px}
+  .rxtabs button{flex:1 1 100%;border-right:0;border-bottom:1px solid var(--wire)}
+  figcaption{flex-direction:column;gap:4px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .rev{opacity:1;transform:none}
+  .flow{stroke-dashoffset:0}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="절 목차">
+  <a href="#s0"><i></i><span>여는 글</span></a>
+  <a href="#s1"><i></i><span>6.1 시작하기</span></a>
+  <a href="#s2"><i></i><span>6.2 관계형 API</span></a>
+  <a href="#s2b"><i></i><span>6.2.2 질의 조립</span></a>
+  <a href="#s2c"><i></i><span>6.2.3 SQL 질의</span></a>
+  <a href="#s3"><i></i><span>6.3 pandas</span></a>
+  <a href="#s4"><i></i><span>6.4 UDF</span></a>
+  <a href="#s5"><i></i><span>6.5 Arrow · Polars</span></a>
+  <a href="#s6"><i></i><span>요약</span></a>
+</nav>
+
+<!-- ══════════ 표제부 ══════════ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">
+      <span>DuckDB in Action</span><span>·</span><span>Manning, 2024</span><span>·</span>
+      <b>제6장 정독</b>
+    </div>
+
+    <div class="chapno">
+      <span>6</span>
+      <span>INTEGRATING WITH THE PYTHON ECOSYSTEM<br>원서 123–143쪽</span>
+    </div>
+
+    <h1>오리처럼 헤엄치면 오리다. <em>테이블처럼 보이면</em> 질의할 수 있다</h1>
+
+    <p class="lede">
+      다섯 장을 CLI로 지나왔다. 제6장은 무대를 파이썬 인터프리터로 옮긴다. 그리고 여기서
+      <strong>DuckDB의 파이썬 API는 Python DB-API를 구현하는 데서 한참 더 나아간다.</strong>
+      내 프로세스 안에서 임베디드 데이터베이스를 쓰는 것에 그치지 않고,
+      <em>파이썬 객체를 테이블처럼 질의하게</em> 해준다. pandas 데이터프레임이든 Polars든 Arrow 테이블이든
+      "테이블처럼 보이면" 그것으로 충분하다. 이 장의 제목을 대신할 문장은 저자들이 직접 써두었다.
+      오리 시험(duck test)을 통과하면 오리라는 것이다.
+    </p>
+
+    <dl class="hero-meta">
+      <div><dt>이 장이 다루는 것</dt><dd>Python DB-API 2.0 구현과 관계형 API의 차이 · pandas 데이터프레임과 Apache Arrow 테이블에서 데이터 들이기 · DuckDB 메서드로 데이터프레임 질의 · 여러 데이터프레임 형식과 Arrow 테이블로 내보내기 · 관계형 API로 질의 조립</dd></div>
+      <div><dt>절 구성</dt><dd>6.1 – 6.5 및 하위 절 다섯 개, 요약</dd></div>
+      <div><dt>실린 것</dt><dd>목록 1건 · NOTE 5건 · 사이드바 1건 · <em>도판 없음</em></dd></div>
+      <div><dt>기준 판본</dt><dd>DuckDB Python 패키지 0.10.0 · pandas · Polars · PyArrow</dd></div>
+    </dl>
+  </div>
+
+  <!-- 서명 그림: 하나의 관계로 모이고 다시 흩어진다 -->
+  <div class="wrap plate" id="s0">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 380" role="img" aria-label="파일과 데이터프레임과 테이블이 DuckDBPyRelation 하나로 모였다가 다시 여러 형식으로 나가는 구조도">
+          <defs>
+            <marker id="a6" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 z" fill="#2b7d74"/>
+            </marker>
+            <linearGradient id="hub" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#1f4e9c"/><stop offset="1" stop-color="#0f2a54"/>
+            </linearGradient>
+          </defs>
+
+          <text x="24" y="24" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2" fill="#69788c">IN</text>
+          <g font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#0f2a54">
+            <rect x="24" y="38" width="196" height="34" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/><text x="40" y="60">con.read_csv(…)</text>
+            <rect x="24" y="82" width="196" height="34" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/><text x="40" y="104">read_parquet · read_json</text>
+            <rect x="24" y="126" width="196" height="34" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/><text x="40" y="148">con.table("population")</text>
+            <rect x="24" y="170" width="196" height="34" fill="#fff" stroke="#67d4b4" stroke-width="1.4"/><text x="40" y="192">pandas DataFrame</text>
+            <rect x="24" y="214" width="196" height="34" fill="#fff" stroke="#67d4b4" stroke-width="1.4"/><text x="40" y="236">Polars DataFrame</text>
+            <rect x="24" y="258" width="196" height="34" fill="#fff" stroke="#67d4b4" stroke-width="1.4"/><text x="40" y="280">PyArrow Table</text>
+          </g>
+
+          <g stroke="#2b7d74" stroke-width="1.2" fill="none" marker-end="url(#a6)" opacity=".85">
+            <path class="flow" style="--len:200" d="M226 55 C 300 55 320 140 384 152"/>
+            <path class="flow" style="--len:190;animation-delay:.06s" d="M226 99 C 300 99 320 150 384 160"/>
+            <path class="flow" style="--len:180;animation-delay:.12s" d="M226 143 L384 168"/>
+            <path class="flow" style="--len:180;animation-delay:.18s" d="M226 187 L384 180"/>
+            <path class="flow" style="--len:190;animation-delay:.24s" d="M226 231 C 300 231 320 200 384 190"/>
+            <path class="flow" style="--len:200;animation-delay:.3s" d="M226 275 C 300 275 320 212 384 198"/>
+          </g>
+
+          <!-- 허브 -->
+          <g>
+            <rect x="392" y="120" width="216" height="112" rx="5" fill="url(#hub)"/>
+            <text x="500" y="158" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="14.5" fill="#fff" font-weight="600">DuckDBPyRelation</text>
+            <text x="500" y="182" text-anchor="middle" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#8fb8ff">질의 가능한 관계, 그리고 API</text>
+            <text x="500" y="202" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#e0912a">filter · project · limit</text>
+            <text x="500" y="220" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" fill="#e0912a">aggregate · order</text>
+          </g>
+
+          <g stroke="#2b7d74" stroke-width="1.2" fill="none" marker-end="url(#a6)" opacity=".85">
+            <path class="flow" style="--len:200;animation-delay:.4s" d="M614 150 C 690 150 700 62 764 58"/>
+            <path class="flow" style="--len:190;animation-delay:.46s" d="M614 160 C 690 160 700 106 764 102"/>
+            <path class="flow" style="--len:180;animation-delay:.52s" d="M614 170 L764 146"/>
+            <path class="flow" style="--len:180;animation-delay:.58s" d="M614 182 L764 190"/>
+            <path class="flow" style="--len:190;animation-delay:.64s" d="M614 192 C 690 192 700 230 764 234"/>
+            <path class="flow" style="--len:200;animation-delay:.7s" d="M614 202 C 690 202 700 274 764 278"/>
+          </g>
+
+          <text x="770" y="24" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2" fill="#69788c">OUT</text>
+          <g font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#0f2a54">
+            <rect x="770" y="38" width="200" height="34" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/><text x="786" y="60">.show()</text>
+            <rect x="770" y="82" width="200" height="34" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/><text x="786" y="104">.to_table("…")</text>
+            <rect x="770" y="126" width="200" height="34" fill="#fff" stroke="#1f4e9c" stroke-width="1.2"/><text x="786" y="148">fetchall · fetchone</text>
+            <rect x="770" y="170" width="200" height="34" fill="#fff" stroke="#67d4b4" stroke-width="1.4"/><text x="786" y="192">fetchdf()  → pandas</text>
+            <rect x="770" y="214" width="200" height="34" fill="#fff" stroke="#67d4b4" stroke-width="1.4"/><text x="786" y="236">.pl()  → Polars</text>
+            <rect x="770" y="258" width="200" height="34" fill="#fff" stroke="#67d4b4" stroke-width="1.4"/><text x="786" y="280">.to_arrow_table()</text>
+          </g>
+
+          <line x1="24" y1="316" x2="970" y2="316" stroke="#e9eef4" stroke-width="1.4"/>
+          <text x="24" y="342" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#0f2a54">여기 등장하는 <tspan font-weight="600">어떤 객체도 데이터를 들고 있지 않다.</tspan> 명시적 fetch나 show 같은 트리거 메서드를 부를 때까지 질의는 실행되지 않는다.</text>
+          <text x="24" y="366" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#69788c">그러므로 연산의 순서가 성능에 영향을 주지 않는다. 데이터프레임으로 옮기는 순간부터는 사정이 달라진다.</text>
+        </svg>
+      </div></div>
+      <figcaption><b>덧붙인 그림 1</b><span>6.1~6.5절이 열거한 입구와 출구를 한자리에 모았다. 이 장에는 원서 도판이 없으므로 이 문서에서 작도한 것이다.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════ 여는 글 ══════════ -->
+<section>
+  <div class="col">
+    <p class="dropcap">지금까지는 질의를 관리하고 실행하는 데 줄곧 DuckDB CLI를 썼다. 저자들은 그 도구의 값어치를 인정한다. <em>즉석 분석과 CLI 기반 파이프라인에 대단히 효과적</em>이다. 그러나 많은 데이터 작업 흐름이 파이썬과 그 생태계를 상당한 정도로 끌어들인다. <strong>예컨대 pandas 데이터프레임은 무시할 수 없다.</strong> 이 장에서 배우게 되는 것은 DuckDB의 파이썬 API가 단지 Python DB-API를 구현하는 데서 훨씬 더 나아간다는 사실이다.</p>
+
+    <p>파이썬 API는 두 가지를 해준다. 하나는 <em>내 파이썬 프로세스 안에서 임베디드 데이터베이스를 쓰게</em> 하는 것이고, 다른 하나는 <em>파이썬 객체를 테이블처럼 질의하게</em> 하는 것이다. 동시에 질의 결과를 데이터프레임으로 손쉽게 변환할 수 있다. 이 장은 <strong>DuckDB 파이썬 패키지에 직접 묶여 오는 통합</strong>에 초점을 둔다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p>널리 쓰이는 파이썬 SQL 툴킷 <strong>SQLAlchemy는 다루지 않는다.</strong> SQLAlchemy는 여러 다른 데이터베이스를 추상화해 감싸고, 잘 알려진 엔터프라이즈급 영속화 패턴 한 벌을 파이썬에 들여오는데, 그것은 이 책의 범위를 벗어난다. <code>duckdb_engine</code>이라는 이름으로 SQLAlchemy용 드라이버를 얻을 수 있고, <em>SQLAlchemy 기능의 거의 전부를 지원한다.</em></p>
+    </div>
+
+    <div class="q">
+      오리처럼 보이고, 오리처럼 헤엄치고, 오리처럼 꽥꽥거리면 그것은 아마 오리다. 테이블처럼 보이면 질의할 수 있다.
+      <span>6.2절, 관계의 정의를 대신하는 문장</span>
+    </div>
+  </div>
+
+  <div class="flowstrip rev">
+    <h5>이 장의 작업 순서 — 번호 붙은 목록은 하나뿐이고, 본문 자체가 파이썬 세션 기록이다</h5>
+    <ol>
+      <li><b>6.1</b>패키지를 설치하고, 열 필요조차 없는 연결을 확인한다</li>
+      <li><b>6.2</b>CSV를 관계로 들이고, 메서드를 이어 붙여 질의를 조립한다</li>
+      <li><b>6.3</b>pandas 데이터프레임을 테이블처럼 질의한다</li>
+      <li><b>6.4</b>파이썬 함수를 SQL 함수로 등록해 지저분한 데이터를 고친다</li>
+      <li><b>6.5</b>결과를 Polars와 Arrow로 넘기되, 되도록 늦게 넘긴다</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ══════════ 6.1 ══════════ -->
+<section id="s1">
+  <div class="sechead rev">
+    <span class="num">6.1</span>
+    <h2>시작하기<span class="en">Getting started</span></h2>
+  </div>
+  <div class="col rev">
+    <p>DuckDB 파이썬 패키지를 설치하고 어떤 의존성을 프로그램에 먼저 들여와야 하는지 익히는 것으로 시작한다. 그다음 <em>인메모리 DuckDB 연결을 얻거나 데이터베이스 파일을 여는</em> 서로 다른 선택지를 논한다. 이것을 파악해두는 일이 이 장뿐 아니라 이어지는 장들에도 중요하다. DuckDB와 상호작용하는 파이썬 생태계의 도구를 더 배우게 되기 때문이다.</p>
+
+    <h3>파이썬 패키지 설치 <span class="sub">6.1.1</span></h3>
+    <p>DuckDB 파이썬 패키지는 PyPI에 배포되어 있다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">python — 설치와 확인</span>
+        <span class="tagn">6.1.1</span>
+      </div>
+      <pre><span class="p">$</span> pip install duckdb
+
+<span class="pp">&gt;&gt;&gt;</span> <span class="k">import</span> duckdb
+<span class="pp">&gt;&gt;&gt;</span> duckdb.__version__
+<span class="f">'0.10.0'</span></pre>
+      <div class="term-note catch">
+        원서 본문은 이 패키지가 <b>"PiPI"</b>에 배포된다고 적었다. 파이썬 패키지 색인의 이름은 <b>PyPI</b>다.
+        사소한 오식이지만, 검색해 찾아가려는 독자에게는 걸림돌이 된다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <h3>데이터베이스 연결 열기 <span class="sub">6.1.2</span></h3>
+    <p>어떤 프로그래밍 환경에서 데이터베이스를 쓸 때 흔히 떠오르는 물음 가운데 하나가 <em>연결을 어떻게 여는가</em>다. DuckDB의 경우 답이 간단하다. <strong>열 필요가 없다. 임베디드 데이터베이스로서 이미 여러분의 파이썬 프로세스 안에서 돌고 있기 때문이다.</strong> 패키지를 설치하고 나면 파이썬 인터프리터에서 <code>duckdb</code>를 그냥 써서 인메모리 데이터베이스와 상호작용할 수 있다.</p>
+    <p>여기서 이 장의 두 축이 갈라진다. <code>sql</code>은 <strong>DuckDB의 관계형 파이썬 API로 들어가는 입구</strong>이고, <code>execute</code>는 <strong>Python DB-API 2.0</strong>을 쓴다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">두 개의 입구 — sql과 execute</span>
+        <span class="tagn">6.1.2</span>
+      </div>
+      <pre><span class="c"># ① 관계형 API</span>
+<span class="pp">&gt;&gt;&gt;</span> result = duckdb.sql(<span class="f">'SELECT 42'</span>)   <span class="c"># 객체를 정의하지만 아직 질의를 실행하지 않는다</span>
+<span class="pp">&gt;&gt;&gt;</span> result.show()                    <span class="c"># 질의를 실행하고 결과를 인쇄한다</span>
+
+<span class="c"># ② Python DB-API 2.0. 전통적인 데이터베이스 API처럼 동작한다.</span>
+<span class="pp">&gt;&gt;&gt;</span> result = duckdb.execute(<span class="f">'SELECT 42'</span>)  <span class="c"># 즉시 실행하고 연결 객체를 돌려준다</span>
+<span class="pp">&gt;&gt;&gt;</span> row = result.fetchone()             <span class="c"># 연결에서 한 행을 가져온다</span>
+<span class="pp">&gt;&gt;&gt;</span> <span class="k">print</span>(row)</pre>
+      <div class="term-note">
+        ①에서 SQL 문을 실행한 대상은 <b>우리가 프로그램에 들여온 duckdb 객체 그 자체</b>다.
+        전용 연결 객체를 얻거나 쓰지 않았다. <code>duckdb</code> 객체가 <b>기본 인메모리 연결</b>을 제공해준 것이다.
+      </div>
+      <pre><span class="c"># 물론 전용 연결도 쓸 수 있다.</span>
+<span class="pp">&gt;&gt;&gt;</span> con = duckdb.connect(database=<span class="f">':memory:'</span>)                       <span class="c"># 인메모리 DB 시작</span>
+<span class="pp">&gt;&gt;&gt;</span> con = duckdb.connect(<span class="f">'my-db.duckdb'</span>)                            <span class="c"># DB 파일 사용</span>
+<span class="pp">&gt;&gt;&gt;</span> con = duckdb.connect(database=<span class="f">'my-db.duckdb'</span>, read_only=<span class="k">True</span>)  <span class="c"># 읽기 전용 여부 제어</span>
+
+<span class="c"># 기본 연결은 이 둘로 얻는다. 데이터베이스 이름이 매개변수에 담겨 있는 경우에 요긴하다.</span>
+<span class="pp">&gt;&gt;&gt;</span> duckdb.default_connection
+<span class="pp">&gt;&gt;&gt;</span> duckdb.connect(database=<span class="f">':default:'</span>)</pre>
+      <div class="term-note">
+        여기서 챙겨둘 중요한 사실은 이것이다. <b>별도 설정이 전혀 없으면 DuckDB는 파이썬 모듈 안에 전역으로 저장된 인메모리 데이터베이스를 쓴다.</b>
+        전역 <code>duckdb</code>와 전용 연결 객체 모두 데이터베이스와 상호작용하는 여러 메서드를 제공한다.
+      </div>
+      <div class="term-note">
+        DB-API에도 쓸 자리가 있다. <b>준비된 문장(prepared statement)과 이름 붙은 매개변수를 쓰는 질의</b>가 그렇다.
+        그러나 이 장은 관계형 API에 초점을 둔다. 저자들의 표현이 이 장의 야심을 잘 보여준다.
+        <b>후자는 데이터를 질의하는 독특한 접근이며, 관계형 데이터베이스와 메모리 안의 질의 가능한 객체 사이의 경계를 흐려
+        새롭고 흥미로운 해법으로 가는 길을 낸다.</b>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 6.2 ══════════ -->
+<section id="s2">
+  <div class="sechead rev">
+    <span class="num">6.2</span>
+    <h2>관계형 API 쓰기<span class="en">Using the relational API</span></h2>
+  </div>
+  <div class="col rev">
+    <p>제3·4장에서는 <em>관계</em>라는 수학적 개념을 너무 깊이 파고들지 않고 넘어갈 수 있었다. 이제는 피해 갈 방법이 없다. 이미 배운 대로 테이블만이 아니라 뷰와 함수도 질의할 수 있고, 다른 질의의 결과도 질의할 수 있다. <strong>테이블, 뷰, 사영, 그리고 테이블처럼 행동하는 함수가 모두 관계다.</strong></p>
+    <p>관계는 본질적으로 테이블의 일반화된 형태이며, 행과 컬럼 대신 <em>튜플과 속성</em>으로 이루어진다. 관계형 데이터베이스에서 튜플은 <strong>이름이 붙고 순서가 있는 속성의 목록</strong>으로 정의된다. 관계의 각 튜플이 하나의 레코드에 대응하고, 튜플의 각 속성이 하나의 컬럼에 대응한다. 저자들의 정리가 편하다. <em>관계를 테이블과 거의 같은 것으로 생각하라.</em></p>
+
+    <p>그리고 이 장에서 가장 자주 인용될 문단이 나온다. 요컨대 <strong>관계는 오리 시험을 통과한다.</strong> 오리처럼 보이고 오리처럼 헤엄치고 오리처럼 꽥꽥거리면 아마 오리다. <em>테이블처럼 보이면 질의할 수 있다.</em> 데이터베이스 안에서 질의를 돌릴 때는 이것이 대개 자연스럽게 느껴지고 달리 기대하지도 않는다. <strong>DuckDB 파이썬 패키지는 이 개념을 파이썬 자체에 들여온다.</strong> 서로 다른 객체를 데이터베이스의 테이블이나 뷰인 것처럼 질의하게 해준다. 관계형 스키마를 가진 영속 저장소를 갖는 것과, 그저 관계처럼 행동할 뿐인 객체를 갖는 것 사이의 선이 여기서 상당히 흐려진다.</p>
+
+    <h3>파이썬 API로 CSV 데이터 들이기 <span class="sub">6.2.1</span></h3>
+    <p>제3장과 비슷하게 닭과 달걀의 문제가 있다. <em>데이터가 없으면 질의할 것이 없다.</em> 그래서 다시 데이터를 들이는 것으로 시작한다. 다만 <strong>이번에는 데이터를 위한 관계형 스키마를 만들지 않고, 제공된 객체를 그대로 관계로 쓴다.</strong></p>
+    <p>소재는 제2장에서 소개한 Populations CSV 파일이다. 전과 같이 <code>httpfs</code> 확장을 쓰지만, 이번에는 파일 처리에 DuckDB의 <em>SQL 함수</em> <code>read_csv</code>가 아니라 <strong>파이썬 API의 같은 이름 함수</strong> <code>read_csv</code>를 쓴다. 이 방식이 파이썬 기반 작업 흐름과 매끄럽게 통합되며, <em>"파이썬다운(pythonic)" 데이터 조작 방식</em>을 제공해 SQL 데이터베이스와 파이썬 데이터 구조 사이의 틈을 메워준다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p>예제에서 <code>read_csv</code>를 쓰는 것은 제2장에서 준비한 CSV 파일—나라와 그 관련 통계를 담은—을 재사용하고 싶기 때문이다. <strong>같은 개념과 기법이 <code>read_parquet</code>과 <code>read_json</code>에도 그대로 적용된다.</strong> 이 함수들은 DuckDB에서 <em>SQL 함수로도, 파이썬 함수로도</em> 존재한다.</p>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">CSV 파일 질의하기</span>
+        <span class="tagn">목록 6.1</span>
+      </div>
+      <pre><span class="k">import</span> duckdb
+
+con = duckdb.connect(database=<span class="f">':memory:'</span>)
+
+con.execute(<span class="f">"INSTALL httpfs"</span>)   <span class="c"># httpfs 확장을 설치한다. 한 번만 하면 된다.</span>
+con.execute(<span class="f">"LOAD httpfs"</span>)      <span class="c"># 적재한다. 새 데이터베이스를 초기화할 때마다 해야 한다.</span>
+
+population = \
+  con.read_csv(<span class="f">"https://bit.ly/3KoiZR0"</span>)   <span class="c"># CSV 파일을 읽는다</span>
+
+<span class="pp">&gt;&gt;&gt;</span> <span class="k">type</span>(population)
+<span class="ok">&lt;class 'duckdb.DuckDBPyRelation'&gt;</span></pre>
+      <div class="term-note">
+        데이터는 아무것도 인쇄되지 않고 객체 하나가 돌아온다. 그것이 <b>DuckDBPyRelation</b>이며,
+        저자들의 표현으로는 <b>DuckDB 관계형 API의 중심 조각</b>이다.
+        <b>질의 가능한 관계이면서 동시에 API</b>라는 이중의 정체가 이 장 전체의 열쇠다.
+      </div>
+      <div class="term-note">
+        질의하고 싶다면 파이썬에서 DuckDB에 대고 다른 질의를 실행할 때와 똑같이 <code>execute</code> 메서드를 쓰면 된다.
+        <code>execute</code>는 새 파이썬 DB 연결 객체를 주고, 거기서 결과를 가져온다.
+        더 남은 결과가 없을 때까지 <code>fetchone</code>으로 하나씩 가져오거나 <code>fetchall</code>로 한꺼번에 가져온다.
+        <b>다만 fetchall은 형식이 없고 읽기 어려운 파이썬 튜플의 리스트를 돌려주므로</b> 원서도 그 출력을 싣지 않았다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <p>그러나 관계형 API는 그보다 훨씬 많은 것이며 <strong>SQL 문을 쓰는 것의 대안으로 쓸 수 있다.</strong> 본질적으로 <em>유창한(fluent) API</em>이며 질의를 점진적으로 구성하게 해준다. <code>DuckDBPyRelation</code> 노드와 관계들로 이루어지고, 그것들은 <strong>SQL 질의의 상징적 표상</strong>으로 볼 수 있다. 그 노드의 재사용을 지원하고 집합 연산, 필터, 사영, 집계를 지원한다.</p>
+    <p>그리고 이 API의 성격을 규정하는 한 문장이 여기 있다. <strong>관여하는 어떤 객체도 데이터를 들고 있지 않으며, 명시적 fetch나 보여주기 같은 트리거 메서드가 호출될 때까지 어떤 질의도 실행되지 않는다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">매번 내려받는 관계, 한 번 찍어둔 테이블</span>
+        <span class="tagn">6.2.1</span>
+      </div>
+      <pre><span class="pp">&gt;&gt;&gt;</span> (population
+      .count(<span class="f">"*"</span>)      <span class="c"># SQL의 SELECT count(*)에 해당한다</span>
+      .show()
+    )</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th>count_star()</th></tr>
+            <tr class="type"><th>int64</th></tr>
+          </thead>
+          <tbody><tr><td>227</td></tr></tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        인터넷이 느리면 결과가 돌아오는 데 꽤 오래 걸리는 것을 알아차릴 수 있다.
+        <b>show 함수를 부를 때마다 CSV 파일이 새로 내려받아지기 때문</b>이며, 이상적이지 않다.
+      </div>
+      <pre><span class="c"># to_table로 DuckDB 테이블에 영속화해 이 문제를 고친다.</span>
+<span class="c"># 이 함수는 뒤에서 대신 Create Table as Select 문을 수행해준다.</span>
+<span class="pp">&gt;&gt;&gt;</span> population.to_table(<span class="f">"population"</span>)
+<span class="pp">&gt;&gt;&gt;</span> population_table = con.table(<span class="f">"population"</span>)
+<span class="pp">&gt;&gt;&gt;</span> population_table.count(<span class="f">"*"</span>).show()   <span class="c"># 이번에는 즉시 표시된다</span></pre>
+      <div class="term-note">
+        새겨둘 차이가 있다. <b>목록 6.1에서 만든 population 객체는 언제나 CSV를 새로 내려받아 읽는다.</b>
+        반면 <b>한 번 만들어진 테이블은 그 시점에 존재했던 데이터의 스냅숏을 표상한다.</b>
+        그 테이블을 이제 관계형 API로 접근한다는 사실이 이 점을 바꾸지 않는다.
+        <b>접근할 때마다 다시 계산되는 뷰가 아니다.</b>
+      </div>
+      <div class="term-note">
+        <b>NOTE</b> <code>type(population_table)</code>을 불러보면 그것 역시 <b>DuckDBPyRelation</b>임을 알게 되고,
+        따라서 앞서와 같은 성질과 능력을 갖는다. <b>파일에서 온 관계와 테이블에서 온 관계가 같은 타입</b>이라는 것이
+        오리 시험의 실물 증거다.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 6.2.2 ══════════ -->
+<section id="s2b">
+  <div class="sechead rev">
+    <span class="num">6.2.2</span>
+    <h2>질의 조립하기<span class="en">Composing queries</span></h2>
+  </div>
+  <div class="col rev">
+    <p>지금까지는 주로 관계의 레코드를 세는 법만 살펴보았다. 그것은 능력의 일부만 엿본 것이다. API는 <code>DuckDBPyRelation</code>을 위한 함수 한 벌을 제공한다.</p>
+
+    <div class="tblwrap">
+      <table class="tbl">
+        <caption><b>덧붙인 표 1</b> &nbsp;6.2.2절이 열거한 메서드와 그에 대응하는 SQL. 원서에는 이런 대응표가 없다.</caption>
+        <thead><tr><th>메서드</th><th>하는 일</th><th>SQL의 대응</th></tr></thead>
+        <tbody>
+          <tr><td>filter</td><td>주어진 술어 함수를 만족하는 레코드만 포함한다</td><td class="m">WHERE</td></tr>
+          <tr><td>project</td><td>지정한 컬럼만 돌려준다</td><td class="m">SELECT (사영)</td></tr>
+          <tr><td>limit</td><td>첫 n개 레코드를 돌려준다</td><td class="m">LIMIT</td></tr>
+          <tr><td>aggregate</td><td>주어진 집계 표현식을 적용한다</td><td class="m">SELECT … GROUP BY</td></tr>
+          <tr><td>order</td><td>주어진 컬럼으로 레코드를 정렬한다</td><td class="m">ORDER BY</td></tr>
+          <tr><td>except_</td><td>둘째 관계에 없는 첫째 관계의 모든 행을 돌려준다</td><td class="m">EXCEPT</td></tr>
+          <tr><td>intersect</td><td>두 관계에 모두 나타나는 모든 행을 돌려준다</td><td class="m">INTERSECT</td></tr>
+          <tr><td>join</td><td>주어진 키나 조건으로 관계들을 조인한다</td><td class="m">JOIN</td></tr>
+          <tr><td>union</td><td>관계를 결합해 첫째 관계의 모든 행 다음에 둘째 관계의 모든 행을 돌려준다</td><td class="m">UNION ALL</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>왜 문자열 이어 붙이기보다 나은가</h3>
+    <p>관계형 API를 빌더로 쓰는 것은 평범한 SQL을 쓸 때 부딪히는 문제 몇 가지를 해결해준다. <em>질의가 생성되거나 사용자 입력에 기반하는 경우가 많다.</em> 그런데 <strong>SQL은 값을 표상하는 매개변수는 허용하지만 테이블이나 컬럼 이름을 매개변수화하는 것은 허용하지 않는다.</strong> 그래서 사람들은 동적인 테이블에서 선택하는 질의를 만들기 위해 흔히 어떤 종류의 문자열 이어 붙이기를 쓴다.</p>
+    <p>관계형 API는 그런 질의를 <em>프로그램적으로</em> 만드는 데 이점을 준다. 문자열 이어 붙이기와 씨름하는 대신 <strong>맥락을 아는 전용 메서드를 부를 수 있다.</strong> 그로써 유효하지 않은 질의나 SQL 주입에 취약한 질의를 만들 가능성이 줄고, 코드는 더 읽기 쉽고 조합하기 좋아진다.</p>
+
+    <p>이제 이 메서드들을 조합하면 무엇을 할 수 있는지 본다. 아래는 원서 6.2절이 차례로 보여주는 일곱 가지 조립을, <strong>파이썬 쪽 코드와 그에 대응하는 SQL을 나란히 놓아</strong> 견줄 수 있게 만든 장치다. 결과는 모두 원서에 인쇄된 값을 그대로 옮겼다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="rx" id="rx">
+      <div class="rxtabs" role="group" aria-label="조립 예제 선택">
+        <button data-r="0" aria-pressed="true">count</button>
+        <button data-r="1" aria-pressed="false">filter · project · limit</button>
+        <button data-r="2" aria-pressed="false">aggregate · order</button>
+        <button data-r="3" aria-pressed="false">관계 재사용</button>
+        <button data-r="4" aria-pressed="false">except_</button>
+        <button data-r="5" aria-pressed="false">intersect</button>
+        <button data-r="6" aria-pressed="false">SQL · 매개변수</button>
+      </div>
+      <div class="rxbody">
+        <div class="rxpy" id="rxPy"></div>
+        <div class="rxsql" id="rxSql"></div>
+      </div>
+      <div class="rxres">
+        <h6 id="rxTitle">결과</h6>
+        <div id="rxRes"></div>
+      </div>
+      <div class="rxcap" id="rxCap"></div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>이 장치를 눌러보면 저자들이 짚은 두 가지가 손에 잡힌다. 첫째, <strong>관계형 API를 쓸 때 연산의 순서는 성능에 영향을 주지 않는다. 중간에 어떤 결과도 실체화되지 않기 때문이다.</strong> 이것은 뒤에 논할 pandas 통합과 다르다. 결과 집합이 pandas 데이터프레임으로 변환되면 그 데이터프레임은 pandas의 성질을 갖게 되고, 그것은 통상 <em>값이 즉시 계산된다</em>는 뜻이다.</p>
+    <p>둘째, <code>show</code> 함수가 호출될 때까지 질의는 실행되지 않으며 <strong>메서드가 돌려주는 객체는 여전히 같은 질의 빌더다.</strong> 그러므로 예컨대 <code>limit</code> 뒤에 <code>offset</code>을 더 불러 건너뛸 행 수를 지정할 수도 있다.</p>
+    <p>그리고 <code>over_10m</code>이라는 변수 하나가 이 절의 주인공이 된다. 필터 부분을 복사해 붙이는 대신 <em>잘 정의된 필터를 하나 만들어 여러 질의에서 매끄럽고 일관되게 재사용</em>하는 것이다. <strong><code>over_10m</code> 관계는 테이블이나 뷰, 공통 테이블 표현식이 하는 것과 똑같이 행동한다.</strong> 그것으로 지역별 집계를 구동하기도 하고, 필터를 하나 더 얹어 확장하기도 한다. 두 경우 모두 원래 정의를 손대지 않고 재사용했다.</p>
+
+    <div class="aside">
+      <span class="tag">SIDEBAR</span>
+      <h4>패턴 매칭</h4>
+      <p>동유럽 나라를 골라낼 때 쓴 <code>Region ~ '.*EASTERN EUROPE.*'</code>의 물결표는 <em>정규식으로 필터링하는 POSIX 방식 연산자</em>다. DuckDB는 패턴 매칭을 네 가지 방식으로 지원한다.</p>
+      <ol>
+        <li><b>LIKE</b> — 문자열이 패턴 전체와 일치하는지 검사한다. <code>%</code>와 <code>_</code>를 와일드카드로 쓸 수 있다.</li>
+        <li><b>SIMILAR TO</b> — 문자열이 정규식 전체와 일치하는지 검사한다.</li>
+        <li><b>GLOB</b> — 문자열이 GLOB 패턴과 일치하는지 검사한다. <em>특정 패턴을 따르는 파일 이름을 찾을 때 요긴하다.</em></li>
+        <li><b>함수를 통한 일반적인 정규식</b></li>
+      </ol>
+      <p>그리고 SQL 연산자에는 줄임 기호가 있다. <code>~~</code>가 LIKE, <code>~</code>가 SIMILAR TO, 그리고 GLOB이다.</p>
+      <div class="warn">
+        <p>원서는 줄임 기호를 <strong>"<code>~~</code>가 LIKE, <code>~</code>가 SIMILAR TO, <code>~</code>가 GLOB"</strong>이라고 적었다. 같은 기호 하나가 서로 다른 두 연산자를 동시에 뜻할 수는 없으니 자체로 모순이다. DuckDB에서 GLOB의 줄임 기호는 물결표 <em>셋</em>(<code>~~~</code>)이며, 물결표 하나는 정규식 일치에 쓰인다. 판본에 따라 달라질 수 있는 대목이니 <strong>현재 문서로 확인하고 쓰는 편이 안전하다.</strong></p>
+      </div>
+      <p>참고로 예제가 패턴 앞뒤에 <code>.*</code>를 붙인 이유가 여기서 드러난다. <code>SIMILAR TO</code> 계열은 <em>문자열 전체</em>와의 일치를 요구하므로, 부분 일치를 원하면 양쪽을 열어두어야 한다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 6.2.3 ══════════ -->
+<section id="s2c">
+  <div class="sechead rev">
+    <span class="num">6.2.3</span>
+    <h2>SQL로 질의하기<span class="en">SQL querying</span></h2>
+  </div>
+  <div class="col rev">
+    <p><strong>관계형 객체는 SQL 테이블과 똑같은 유연함으로 다룰 수 있다.</strong> 이 능력이 파이썬 기반 데이터 연산과 SQL식 질의 사이를 유동적으로 넘나들게 해준다. 위 장치의 마지막 탭이 그 실물이다. <code>FROM over_10m</code>이라고 적었지만 <code>over_10m</code>은 <em>테이블이 아니라 파이썬 변수</em>다. 그런데 질의 안에서는 테이블처럼 취급된다.</p>
+
+    <p>관계형 API가 방대한 기능을 제공하기는 하지만, <em>특히 매개변수화된 질의가 관여하는</em> 어떤 시나리오에서는 그 타고난 능력이 제약처럼 느껴질 수 있다. 그 틈을 메우기 위해 DuckDB는 Python DB-API 2.0을 따르는 <code>execute</code> 함수를 제공한다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE — 매개변수화된 질의란</span>
+      <p>문장 텍스트에 <strong>자리표(placeholder)</strong>를 쓰는 질의다. 문장 텍스트와 자리표에 들어갈 실제 값—매개변수—이 <em>서로 독립적으로</em> 엔진에 전달된다. 매개변수를 쓰는 데는 이점이 여럿 있다.</p>
+      <p>예컨대 <strong>사용자 입력은 언제나 매개변수로 전달해야 하고 절대로 문장 텍스트에 직접 넣어서는 안 된다.</strong> 문장의 문자열 조각을 사용자 입력과 그냥 이어 붙이면 이른바 <em>SQL 주입 공격</em>의 위험이 높아진다. 특별히 조작된 텍스트가 질의의 의미를 바꿔버리는 공격이다. 질의 엔진에 매개변수로 전달되면 엔진은 <em>문자열이 결코 질의를 망가뜨리지 않도록</em> 입력을 다룬다.</p>
+      <p>여기에 하나가 더 붙는다. <strong>매개변수화된 문장은 질의 엔진이 한 번만 파싱하면 될 수 있다.</strong> 내용이 상수이고 매개변수만 바뀌기 때문이다.</p>
+    </div>
+
+    <p>그리고 이 절의 마지막 문단이 이 장 전체의 지적 정점이다. 저자들의 논리를 그대로 옮기면 이렇다. <code>execute</code>에 넘긴 질의는 이름 붙은 매개변수를 쓰며 <em>여느 준비된 문장과 똑같이 보인다.</em> 그런데 그것이 질의하는 대상은 실제 테이블이 아니라 <strong>관계형 객체 <code>over_10m</code></strong>이다. 게다가 그 관계형 객체 자체도 <em>사영할 컬럼이나 질의할 밑단 테이블에 매개변수를 쓰는 방식으로</em> 만들어졌을 수 있다. 그래서 <strong>모든 경우에 문자열 이어 붙이기를 피할 수 있다.</strong></p>
+
+    <div class="q">
+      관계형 API와 표준 DB-API는 여기서 서로를 보완한다. DB-API는 잘 짜인 SQL만 실행할 수 있고, 그것은 테이블과 컬럼의 매개변수화를 허용하지 않는다. 관계형 API는 그것을 허용하며, 그렇게 만든 관계형 객체는 다시 여느 테이블처럼 질의될 수 있다.
+      <span>6.2.3절을 맺는 문단</span>
+    </div>
+
+    <p>두 API의 한계가 서로의 빈자리를 정확히 메운다는 이 구도는, 설계가 잘된 도구에서만 볼 수 있는 종류의 균형이다. 어느 한쪽이 다른 쪽을 대체하려 하지 않았기에 얻어진 결과다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 6.3 ══════════ -->
+<section id="s3">
+  <div class="sechead rev">
+    <span class="num">6.3</span>
+    <h2>pandas 데이터프레임 질의하기<span class="en">Querying pandas DataFrames</span></h2>
+  </div>
+  <div class="col rev">
+    <p>데이터 생태계에서 DuckDB가 얻은 인기는 <em>튼튼한 질의 엔진</em>에 크게 힘입은 것이다. 파일 기반 연산에만 국한되지 않고, 이 엔진은 여러 데이터 인프라 도구의 <strong>인메모리 데이터 구조와 매끄럽게 통합된다.</strong> 그 영역에서 두드러진 도구 하나가 pandas다. 데이터 공동체에서 널리 쓰이는, 자리를 굳힌 오픈소스 데이터 분석 라이브러리다. DuckDB와 pandas의 결합은 <em>데이터베이스 엔진의 능력과 데이터 조작 라이브러리의 유연함을 잇는다.</em></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">데이터프레임 하나를 테이블처럼</span>
+        <span class="tagn">6.3</span>
+      </div>
+      <pre><span class="p">$</span> pip install pandas
+
+<span class="pp">&gt;&gt;&gt;</span> <span class="k">import</span> duckdb
+<span class="pp">&gt;&gt;&gt;</span> <span class="k">import</span> pandas <span class="k">as</span> pd
+
+<span class="c"># 이 책의 저자들에 대한 정보를 담은 데이터프레임을 만든다.</span>
+<span class="pp">&gt;&gt;&gt;</span> people = pd.DataFrame({
+        <span class="f">"name"</span>: [<span class="f">"Michael Hunger"</span>, <span class="f">"Michael Simons"</span>, <span class="f">"Mark Needham"</span>],
+        <span class="f">"country"</span>: [<span class="f">"Germany"</span>, <span class="f">"Germany"</span>, <span class="f">"Great Britain"</span>]
+    })
+
+<span class="c"># 등록도 변환도 없다. 변수 이름을 테이블 이름처럼 쓴다.</span>
+<span class="pp">&gt;&gt;&gt;</span> duckdb.sql(<span class="f">"""
+    SELECT *
+    FROM people
+    WHERE country = 'Germany'
+    """</span>)</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">name</th><th class="l">country</th></tr>
+            <tr class="type"><th class="l">varchar</th><th class="l">varchar</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">Michael Hunger</td><td class="l">Germany</td></tr>
+            <tr><td class="l">Michael Simons</td><td class="l">Germany</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        DuckDB의 두드러진 기능 하나가 <b>pandas 데이터프레임과 직접 상호작용하는 능력</b>이다.
+        데이터프레임은 <b>앞서 다룬 어떤 관계와도 똑같이 취급된다.</b>
+        그러므로 여느 데이터베이스 테이블에 하듯 <code>people</code>에 SQL식 질의를 돌릴 수 있다.
+      </div>
+      <div class="term-note">
+        저자들의 정리가 이 절의 핵심이다.
+        <b>관계가 테이블로 만들어졌든, 파일에서 왔든, pandas 데이터프레임으로 표상되었든 상관없다.</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">돌려받는 그릇 고르기 — 커서냐 데이터프레임이냐</span>
+        <span class="tagn">6.3</span>
+      </div>
+      <pre><span class="c"># 독일에 살지 않는 사람을 매개변수화된 질의로 찾는다.</span>
+<span class="c"># fetchall도 fetchone도 아니라 fetchdf를 쓴다는 점을 눈여겨볼 것.</span>
+<span class="pp">&gt;&gt;&gt;</span> params = {<span class="f">"country"</span>: <span class="f">"Germany"</span>}
+<span class="pp">&gt;&gt;&gt;</span> duckdb.execute(<span class="f">"""
+    SELECT *
+    FROM people
+    WHERE country &lt;&gt; $country
+    """</span>, params).fetchdf()
+
+           name        country
+0  Mark Needham  Great Britain
+
+<span class="c"># 관계형 API가 더 맞는다면 데이터프레임을 그렇게 질의해도 된다.</span>
+<span class="pp">&gt;&gt;&gt;</span> (duckdb.sql(<span class="f">"FROM people"</span>)          <span class="c"># 데이터프레임에서 새 관계형 객체를 만든다</span>
+      .filter(<span class="f">"country &lt;&gt; 'Germany'"</span>)
+      .show()
+    )</pre>
+      <div class="term-note">
+        <code>fetchdf</code>는 Python DB-API 커서가 아니라 <b>결과를 데이터프레임으로</b> 돌려준다.
+        커서로 행을 훑을지 데이터프레임을 쓸지는 쓰임에 달렸다.
+        <b>커서가 더 가볍고, 데이터프레임은 pandas로 이어지는 후속 분석에 훨씬 효율적으로 통합된다.</b>
+        <b>DuckDB가 결과 집합에서 데이터프레임을 만들어주는 지루한 일을 대신해준다.</b>
+      </div>
+      <div class="term-note catch">
+        원서에 실린 이 출력은 이름 열이 <b>"Mark"</b>로만 적혀 있다. 데이터프레임에 넣은 값은 <b>"Mark Needham"</b>이고
+        pandas가 기본 설정에서 문자열을 그렇게 자르지도 않는다. 조판 과정에서 잘려나간 것으로 보인다.
+      </div>
+      <div class="term-note">
+        여기서 확장되는 능력이 하나 더 있다. DuckDB는 <b>Polars 데이터프레임과 PyArrow 테이블 같은
+        다른 인메모리 데이터 구조도 질의하게</b> 해준다. 기제는 pandas에서 본 것과 마찬가지이며,
+        상세한 예제와 구현은 책의 깃허브 저장소에 있다.
+      </div>
+    </div>
+  </div>
+
+  <div class="col rev">
+    <div class="note">
+      <span class="tag">NOTE</span>
+      <p>SQLAlchemy 드라이버 <code>duckdb_engine</code>도 데이터프레임 질의를 지원한다. <em>드라이버 인스턴스에 데이터프레임을 등록해서</em> 쓸 수 있다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 6.4 ══════════ -->
+<section id="s4">
+  <div class="sechead rev">
+    <span class="num">6.4</span>
+    <h2>사용자 정의 함수<span class="en">User-defined functions</span></h2>
+  </div>
+  <div class="col rev">
+    <p>데이터를 다루는 사람이라면 <em>기존 데이터베이스 함수가 내 특정한 필요를 채워주지 못하는</em> 상황을 자주 만난다. 그것을 알기에 DuckDB는 강력한 기능을 갖췄다. <strong>파이썬 패키지 안에서 사용자 정의 함수(UDF)를 만드는 능력</strong>이다.</p>
+    <p>UDF의 아름다움은 <em>SQL 언어의 고유 능력을 확장하는</em> 데 있다. 사용자가 자기만의 맞춤 함수를 정의할 수 있고, <strong>파이썬 라이브러리의 방대한 생태계에서 이득을 본다.</strong> 복잡한 데이터 조작이든 수학적 계산이든 외부 도구와 API와의 통합이든, 가능성이 사실상 무한해진다. 실용적으로 말하면 이렇다. <em>DuckDB에서 SQL 질의를 쓰다가 어떤 특정 함수가 있었으면 하고 바란 적이 있다면, 이제 파이썬으로 그것을 만들어 SQL 코드 안에서 불러 쓸 수 있다.</em></p>
+
+    <h3>공백 서른다섯 칸의 문제</h3>
+    <p>데이터 수집은 어떤 분석 파이프라인에서나 기본 단계이지만 그 자체의 어려움을 함께 데려온다. <em>원자료는 지저분할 수 있고, 의미 있는 분석을 하기 전에 바로잡아야 할 오류를 만나는 일이 드물지 않다.</em> 이 장 처음에 수집한 CSV 파일에도 손봐야 할 별스러움이 하나 나타났다.</p>
+    <p>문제는 데이터셋의 <code>Region</code> 필드에 있다. <strong>이 필드가 지나친 공백 문자로 채워져 있어</strong> 데이터 처리와 분석이 번거로워진다. 문제의 크기를 눈으로 보기 위해 유일한 <code>Region</code> 값과 각각의 총 문자 길이를 구해본다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">일곱 글자가 서른다섯 글자로 기록되어 있다</span>
+        <span class="tagn">6.4</span>
+      </div>
+      <pre><span class="pp">&gt;&gt;&gt;</span> con.sql(<span class="f">"""
+    select DISTINCT Region, length(Region) AS numChars
+    from population
+    """</span>)</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">Region</th><th>numChars</th></tr>
+            <tr class="type"><th class="l">varchar</th><th>int64</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l pad">LATIN AMER. &amp; CARIB<i>    </i></td><td>23</td></tr>
+            <tr><td class="l pad">ASIA (EX. NEAR EAST)<i>         </i></td><td>29</td></tr>
+            <tr><td class="l pad">EASTERN EUROPE<i>                     </i></td><td>35</td></tr>
+            <tr><td class="l pad">WESTERN EUROPE<i>                     </i></td><td>35</td></tr>
+            <tr><td class="l pad">NEAR EAST<i>                          </i></td><td>35</td></tr>
+            <tr><td class="l pad">C.W. OF IND. STATES<i> </i></td><td>20</td></tr>
+            <tr><td class="l pad">SUB-SAHARAN AFRICA<i>                 </i></td><td>35</td></tr>
+            <tr><td class="l pad">OCEANIA<i>                            </i></td><td>35</td></tr>
+            <tr><td class="l pad">NORTHERN AFRICA<i>                    </i></td><td>35</td></tr>
+            <tr><td class="l pad">BALTICS<i>                            </i></td><td>35</td></tr>
+            <tr><td class="l pad">NORTHERN AMERICA<i>                   </i></td><td>35</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="2">11 rows &nbsp;&nbsp; 2 columns</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        후행 공백이 많다는 것이 <code>numChars</code> 컬럼으로 확인된다. 위 표에서 <b>연한 색으로 칠한 부분이 공백</b>이다.
+        <b>BALTICS는 일곱 글자뿐인데 후행 공백을 포함한 총 길이가 서른다섯 글자다.</b>
+        길이가 20이나 23, 29로 어중간한 것들도 섞여 있어 규칙성마저 없다.
+      </div>
+      <div class="term-note">
+        물론 DuckDB에는 내장 SQL 함수 <code>trim</code>이 있다. 그런데도 저자들은 자기 버전을 만든다.
+        <b>구현 세부에 정신을 팔지 않고 UDF를 어떻게 정의하는지에 초점을 맞출 수 있는 쉬운 예제</b>이기 때문이다.
+        교재로서 옳은 선택이다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">함수를 정의하고 등록하고 확인하기</span>
+        <span class="tagn">6.4</span>
+      </div>
+      <pre><span class="c"># 타입 주석을 붙인 파이썬 함수를 정의한다.</span>
+<span class="k">def</span> remove_spaces(field:<span class="k">str</span>) -&gt; <span class="k">str</span>:
+  <span class="k">if</span> field:                              <span class="c"># 필드가 널이 아닌지 확인한다</span>
+    <span class="k">return</span> field.lstrip().rstrip()       <span class="c"># 값의 앞뒤에서 공백을 떼어낸다</span>
+  <span class="k">else</span>:
+    <span class="k">return</span> field
+
+<span class="c"># DuckDB에 등록한다.</span>
+<span class="pp">&gt;&gt;&gt;</span> con.create_function(<span class="f">'remove_spaces'</span>, remove_spaces)
+
+<span class="c"># 등록을 확인하려면 duckdb_functions SQL 함수를 질의한다.</span>
+<span class="pp">&gt;&gt;&gt;</span> con.sql(<span class="f">"""
+    SELECT function_name, function_type, parameters, parameter_types, return_type
+    from duckdb_functions()
+    where function_name = 'remove_spaces'
+    """</span>)</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">function_name</th><th class="l">function_type</th><th class="l">parameters</th><th class="l">parameter_types</th><th class="l">return_type</th></tr>
+            <tr class="type"><th class="l">varchar</th><th class="l">varchar</th><th class="l">varchar[]</th><th class="l">varchar[]</th><th class="l">varchar</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">remove_spaces</td><td class="l">scalar</td><td class="l">[col0]</td><td class="l">[VARCHAR]</td><td class="l">VARCHAR</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        이제 <b>함수를 정의한 그 연결에서 내려지는 어떤 SQL 문에서든</b> 이 함수를 부를 수 있다.
+        <code>con.sql("select length(remove_spaces(' foo '))")</code>처럼 <b>length로 감싸 부른</b> 이유가 실용적이다.
+        그러지 않으면 파이썬 프로그램의 출력에서 앞뒤 공백이 잘렸는지 알아보기 어렵기 때문이다.
+      </div>
+      <div class="term-note">
+        <b>SQL은 타입이 있는 언어이므로 DuckDB는 함수의 매개변수 타입과 반환 타입을 모두 알아야 한다.</b>
+        DuckDB는 통상 <b>파이썬 타입 주석에서 그 타입들을 추론</b>할 수 있다.
+        그러나 그 추론이 늘 정확하지는 않을 수 있다. 코드에 파이썬 타입 힌트를 쓰지 않기로 했거나,
+        <b>타입 힌트 없이 배포된 서드파티 라이브러리의 함수</b>라면 그렇다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>타입을 명시하는 것은 <em>명료함을 위해, 타입 추론의 함정을 막기 위해, 그리고 서로 다른 환경에서 일관된 동작을 보장하기 위해</em> 이롭다. 함수를 명시적 타입으로 다시 정의하려면 <strong>충돌을 피하기 위해 먼저 앞서 등록한 판본을 제거해야 한다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">타입을 명시해 다시 등록하기</span>
+        <span class="tagn">6.4</span>
+      </div>
+      <pre><span class="pp">&gt;&gt;&gt;</span> con.remove_function(<span class="f">'remove_spaces'</span>)
+
+<span class="pp">&gt;&gt;&gt;</span> <span class="k">from</span> duckdb.typing <span class="k">import</span> *
+
+<span class="pp">&gt;&gt;&gt;</span> con.create_function(
+      <span class="f">'remove_spaces'</span>,
+      remove_spaces,
+      [(VARCHAR)],   <span class="c"># VARCHAR 입력 매개변수 하나</span>
+      VARCHAR        <span class="c"># VARCHAR를 반환한다</span>
+    )</pre>
+      <div class="term-note">
+        이런 정의에서 명시적이 되는 것은 <b>함수를 어떻게 써야 하고 무엇을 기대할 수 있는지를 규정하는 분명한 계약</b>이 되어,
+        시스템과 개발자가 서로 발을 맞추게 해준다.
+      </div>
+      <div class="term-note catch">
+        <code>[(VARCHAR)]</code>의 괄호는 파이썬에서 아무 일도 하지 않는다. <b>튜플이 아니라 그냥 괄호로 감싼 표현식</b>이므로
+        이 리스트는 <code>[VARCHAR]</code>와 동일하다. 매개변수가 여럿일 때 튜플로 묶어야 한다고 오해할 만한 표기이니,
+        <b>읽을 때 괄호에 뜻을 부여하지 않는 편이 좋다.</b>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">고치기 전과 후를 한 표에 놓고 확인하기</span>
+        <span class="tagn">6.4</span>
+      </div>
+      <pre><span class="pp">&gt;&gt;&gt;</span> con.sql(<span class="f">"""
+    SELECT DISTINCT Region, length(Region) AS len1,
+            remove_spaces(Region) AS cleanRegion,
+            length(cleanRegion) AS len2
+    FROM population
+    WHERE len1 BETWEEN 20 AND 30
+    LIMIT 3
+    """</span>)</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">Region</th><th>len1</th><th class="l">cleanRegion</th><th>len2</th></tr>
+            <tr class="type"><th class="l">varchar</th><th>int64</th><th class="l">varchar</th><th>int64</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l pad">ASIA (EX. NEAR EAST)<i>         </i></td><td>29</td><td class="l">ASIA (EX. NEAR EAST)</td><td class="ok">20</td></tr>
+            <tr><td class="l pad">LATIN AMER. &amp; CARIB<i>    </i></td><td>23</td><td class="l">LATIN AMER. &amp; CARIB</td><td class="ok">19</td></tr>
+            <tr><td class="l pad">C.W. OF IND. STATES<i> </i></td><td>20</td><td class="l">C.W. OF IND. STATES</td><td class="ok">19</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        <code>len1</code>과 <code>len2</code>의 차이를 한눈에 보면 함수가 실제로 그 부당한 공백을 떼어냈음이 분명해진다.
+        <b>WHERE 절에서 선택 목록의 별칭 len1을 쓴 것</b>이 제3장 3.5.3절에서 배운 DuckDB의 확장이다.
+      </div>
+      <pre><span class="c"># 함수가 기대대로 동작한다는 확신이 생겼으니 원본 데이터셋을 갱신한다.</span>
+<span class="pp">&gt;&gt;&gt;</span> con.sql(<span class="f">"""
+    UPDATE population
+    SET Region = remove_spaces(Region);
+    """</span>)</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">Region</th><th>numChars</th></tr>
+            <tr class="type"><th class="l">varchar</th><th>int64</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l">ASIA (EX. NEAR EAST)</td><td class="ok">20</td></tr>
+            <tr><td class="l">EASTERN EUROPE</td><td class="ok">14</td></tr>
+            <tr><td class="l">NORTHERN AFRICA</td><td class="ok">15</td></tr>
+            <tr><td class="l">OCEANIA</td><td class="ok">7</td></tr>
+            <tr><td class="l">WESTERN EUROPE</td><td class="ok">14</td></tr>
+            <tr><td class="l">SUB-SAHARAN AFRICA</td><td class="ok">18</td></tr>
+            <tr><td class="l">LATIN AMER. &amp; CARIB</td><td class="ok">19</td></tr>
+            <tr><td class="l">C.W. OF IND. STATES</td><td class="ok">19</td></tr>
+            <tr><td class="l">NEAR EAST</td><td class="ok">9</td></tr>
+            <tr><td class="l">NORTHERN AMERICA</td><td class="ok">16</td></tr>
+            <tr><td class="l">BALTICS</td><td class="ok">7</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="2">11 rows &nbsp;&nbsp; 2 columns</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        공백이 사라졌다. <b>서른다섯 칸으로 부풀어 있던 열한 개 지역명이 제 길이를 찾았다.</b>
+        더 깔끔한 데이터셋을 갖게 되었고, 각 <code>Region</code> 값을 둘러싼 여분의 공백이 제거되어
+        데이터에 더 나은 구조와 균일함이 생겼다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <h3>쉼표를 점으로 바꾸는 것과 로케일을 이해하는 것</h3>
+    <p>다양한 출처의 데이터를 다루면 <em>지역적 차이에서 비롯되는 어려움</em>이 흔히 끼어든다. 그 훌륭한 예가 <strong>소수의 표기</strong>다. 유럽 지역에서는 다른 지역이 쓰는 마침표(.) 대신 쉼표(,)를 소수 구분자로 쓰는 것이 통상이다. 데이터를 데이터베이스에 들일 때 이런 로케일별 표기법은 복잡함을 불러오며, <em>시스템의 로케일이 데이터의 형식과 맞지 않으면 더욱 그렇다.</em></p>
+    <p>이 데이터셋에서도 소수를 표상하는 필드에서 그런 어려움을 만났다. <strong>유럽식 형식 때문에 DuckDB가 그것들을 VARCHAR로 해석했고, 수치 분석을 방해할 수 있다.</strong> 바로잡기 위해 파이썬의 광범위한 라이브러리 생태계를 활용한다. <code>locale</code> 모듈이 이 특정한 어려움에 해법을 준다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">파이썬 표준 라이브러리를 SQL 함수로 들여오기</span>
+        <span class="tagn">6.4</span>
+      </div>
+      <pre><span class="k">from</span> duckdb.typing <span class="k">import</span> *
+<span class="k">import</span> locale
+
+<span class="k">def</span> convert_locale(field:<span class="k">str</span>) -&gt; <span class="k">float</span>:
+  locale.setlocale(locale.LC_ALL, <span class="f">'de_DE'</span>)
+  <span class="k">return</span> locale.atof(field)
+
+<span class="pp">&gt;&gt;&gt;</span> con.create_function(<span class="f">'convert_locale'</span>, convert_locale)
+
+<span class="pp">&gt;&gt;&gt;</span> con.sql(<span class="f">"""
+    SELECT "Coastline (coast/area ratio)" AS coastline,
+            convert_locale(coastline) as cleanCoastline,
+            "Pop. Density (per sq. mi.)" as popDen,
+            convert_locale(popDen) as cleanPopDen
+    FROM population
+    LIMIT 5
+    """</span>)</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead>
+            <tr><th class="l">coastline</th><th>cleanCoastline</th><th class="l">popDen</th><th>cleanPopDen</th></tr>
+            <tr class="type"><th class="l">varchar</th><th>double</th><th class="l">varchar</th><th>double</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="l hi">0,00</td><td class="ok">0.0</td><td class="l hi">48,0</td><td class="ok">48.0</td></tr>
+            <tr><td class="l hi">1,26</td><td class="ok">1.26</td><td class="l hi">124,6</td><td class="ok">124.6</td></tr>
+            <tr><td class="l hi">0,04</td><td class="ok">0.04</td><td class="l hi">13,8</td><td class="ok">13.8</td></tr>
+            <tr><td class="l hi">58,29</td><td class="ok">58.29</td><td class="l hi">290,4</td><td class="ok">290.4</td></tr>
+            <tr><td class="l hi">0,00</td><td class="ok">0.0</td><td class="l hi">152,1</td><td class="ok">152.1</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        원래 값과 정제된 값의 구분이 분명하다. 함수가 <code>0,00</code> 같은 값을 <code>0.0</code>으로 성공적으로 변환했다.
+        그리고 저자들이 붙인 단서가 이 절의 요점이다.
+        <b>쉼표를 점으로 무턱대고 갈아 끼운 것이 아니라, 지금 다루는 것이 지역화 문제라는 의미론적 자각을 갖고</b> 그렇게 한 것이다.
+      </div>
+      <div class="term-note catch">
+        원서의 그 문장은 <b>"쉼표(comma)를 점으로 무턱대고 갈아 끼운 것이 아니라"</b>가 되어야 하는데
+        <b>"콜론(colon)을 점으로"</b>라고 적혀 있다. 다루는 문제는 소수 구분자이니 콜론이 등장할 자리가 없다. 오식이다.
+      </div>
+      <pre><span class="c"># 함수의 동작에 확신이 생기면 변경을 데이터셋에 영구히 반영하는 것이 현명하다.</span>
+<span class="c"># ALTER TABLE 절은 컬럼 타입 변경과 값 갱신을 동시에 하게 해준다.</span>
+<span class="pp">&gt;&gt;&gt;</span> con.sql(<span class="f">"""
+    ALTER TABLE population
+    ALTER "Coastline (coast/area ratio)"
+    SET DATA TYPE DOUBLE            -- 데이터 타입을 double로 갱신한다
+    USING
+      convert_locale("Coastline (coast/area ratio)")   -- 이 컬럼의 모든 값을 우리 함수로 갱신한다
+    """</span>)</pre>
+      <div class="term-note">
+        <b>SET DATA TYPE … USING …</b>이 이 대목의 백미다. 타입만 바꾸면 기존 문자열을 변환할 수 없고,
+        값만 바꾸면 컬럼 타입이 여전히 VARCHAR로 남는다. 한 문장이 둘을 함께 처리한다.
+        이 과정은 <b>지역적 데이터의 미묘함을 이해하고 그것에 적응하는 일의 중요성</b>을 강조하며,
+        <b>파이썬의 방대한 라이브러리 생태계와 SQL 기반 데이터 조작 사이의 틈을 메우는</b> DuckDB의 유연함을 드러낸다.
+      </div>
+      <div class="term-note catch">
+        이어지는 NOTE는 아직 정제가 필요한 컬럼으로 <b>Pop. Density (per sq. mi.), Coastline (coast/area ratio),
+        Birthrate, Deathrate</b> 넷을 든다. 그런데 <code>Coastline (coast/area ratio)</code>은 바로 위의
+        <code>ALTER TABLE</code>이 방금 처리한 컬럼이다. 목록에서 빠져야 할 이름이 남아 있다.
+        실제로 남은 것은 <b>Pop. Density, Birthrate, Deathrate 셋</b>이다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<!-- ══════════ 6.5 ══════════ -->
+<section id="s5">
+  <div class="sechead rev">
+    <span class="num">6.5</span>
+    <h2>Apache Arrow와 Polars와의 상호운용<span class="en">Interoperability with Apache Arrow and Polars</span></h2>
+  </div>
+  <div class="col rev">
+    <p>데이터 분석의 영역에서 <strong>적응성은 튼튼한 시스템을 규정하는 성질</strong>이다. 서로 다른 형식이나 플랫폼 사이를 매끄럽게 넘나드는 능력이 효율적인 데이터 조작과 저장과 시각화를 가능하게 한다. DuckDB의 강점 하나는 인메모리든 외부든 <em>다양한 데이터 형식과 상호작용하는 능력</em>이다. 이 상호운용성은 특히 다른 도구와 통합하거나 결과를 후속 분석을 위해 내보낼 때 값을 헤아릴 수 없이 요긴하다.</p>
+
+    <h3>Polars, 그리고 그 밑에 깔린 Arrow</h3>
+    <p>데이터 과학 생태계에 도구가 넘쳐나지만, 더 나은 성능이나 독특한 기능을 제공하는 라이브러리가 끊임없이 등장한다. <strong>그 떠오르는 별 하나가 Polars다.</strong> pandas가 오랫동안 파이썬 데이터 분석의 사실상 표준이었지만, Polars는 흥미로운 대안으로 스스로를 내세운다. <em>성능 특성으로 알려진 언어인 Rust로 개발</em>되었고, 빠르면서 메모리 효율적인 데이터프레임 연산을 제공한다.</p>
+    <p>그런데 이 절에서 정말 중요한 것은 Polars가 아니라 <em>그 밑에 깔린 것</em>이다. Polars가 쓰는 메모리 모델은 <strong>Apache Arrow</strong>에 기반한다. Arrow는 인메모리 데이터를 위한 <em>언어 횡단 개발 플랫폼</em>으로, 평면 데이터와 계층 데이터 양쪽에 대해 <strong>표준화되고 언어에 독립적인 컬럼 메모리 형식</strong>을 규정한다. 그리고 그 결과가 이것이다. <strong>Arrow는 무복사(zero-copy) 읽기를 허용하며, 언어와 시스템 사이에 직렬화 부담 없이 빠른 데이터 접근과 교환을 가능하게 한다.</strong></p>
+    <p>사실 Arrow를 인메모리 형식으로 쓰는 프레임워크가 Polars만은 아니다. <em>pandas 데이터프레임과 NumPy, PySpark 같은 다른 파이썬 라이브러리도 그렇다.</em> 그러니 Arrow는 경쟁하는 도구들이 딛고 선 공통의 바닥인 셈이며, DuckDB가 그 바닥에 직접 닿는다는 것이 이 절의 요지다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">Polars로 넘기기 — 그리고 언제 넘길 것인가</span>
+        <span class="tagn">6.5</span>
+      </div>
+      <pre><span class="c"># 실행 중인 파이썬 인터프리터를 나가지 않고 다른 셸에서 실행할 것.</span>
+<span class="c"># 앞서 정의한 객체와 관계를 그대로 살려두어야 한다.</span>
+<span class="p">$</span> pip install polars pyarrow
+
+<span class="pp">&gt;&gt;&gt;</span> <span class="k">import</span> polars
+<span class="pp">&gt;&gt;&gt;</span> population_table = con.table(<span class="f">"population"</span>)
+
+<span class="pp">&gt;&gt;&gt;</span> (population_table
+      .limit(5)                                      <span class="c"># 관계형 API로 첫 다섯 행을 고른다</span>
+      .pl()                                          <span class="c"># population 테이블을 Polars 데이터프레임으로 변환한다</span>
+      [[<span class="f">"Country"</span>, <span class="f">"Region"</span>, <span class="f">"Population"</span>]]     <span class="c"># 세 컬럼을 뽑는다</span>
+    )
+
+shape: (5, 3)
+┌────────────────┬──────────────────────┬────────────┐
+│ Country        │ Region               │ Population │
+│ ---            │ ---                  │ ---        │
+│ str            │ str                  │ i64        │
+╞════════════════╪══════════════════════╪════════════╡
+│ Afghanistan    │ ASIA (EX. NEAR EAST) │ 31056997   │
+│ Albania        │ EASTERN EUROPE       │ 3581655    │
+│ Algeria        │ NORTHERN AFRICA      │ 32930091   │
+│ American Samoa │ OCEANIA              │ 57794      │
+│ Andorra        │ WESTERN EUROPE       │ 71201      │
+└────────────────┴──────────────────────┴────────────┘</pre>
+      <div class="term-note">
+        DuckDB에서 Polars로의 이행이 매끄럽다. 그 데이터프레임은 Polars가 제공하는 어떤 계산에도 참여할 수 있다.
+        <b>그런데 코드에서는 그 이행을 가능한 한 늦추고 싶어질 것이다.</b>
+      </div>
+      <div class="term-note">
+        저자들이 반례를 직접 든다. 데이터프레임으로 먼저 변환한 다음 <code>head(5)</code>로 첫 다섯 행을 얻을 수도 있었다.
+        <b>그러면 모든 행이 파이썬 런타임으로 실체화된 뒤에 클라이언트 쪽 변환이 따라오게 된다.</b>
+        순서 하나가 310만 행을 옮길지 다섯 행을 옮길지를 가른다.
+      </div>
+      <div class="term-note">
+        그래서 권고가 분명하다. <b>Polars든 pandas든, 관계형 API 또는 데이터베이스 API를 가능한 한 오래 고수하고,
+        외부 데이터와 결합해야 하거나 SQL로는 계산이 아예 불가능한 경우에만 데이터프레임으로 변환하라.</b>
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term py bleed">
+      <div class="term-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">Arrow 테이블로 바꾸어 Arrow의 계산 API 쓰기</span>
+        <span class="tagn">6.5</span>
+      </div>
+      <pre><span class="pp">&gt;&gt;&gt;</span> arrow_table = population_table.to_arrow_table()
+
+<span class="pp">&gt;&gt;&gt;</span> <span class="k">import</span> pyarrow.compute <span class="k">as</span> pc
+
+<span class="pp">&gt;&gt;&gt;</span> (arrow_table
+      .filter(pc.field(<span class="f">"Region"</span>) == <span class="f">"NEAR EAST"</span>)          <span class="c"># NEAR EAST 지역의 행만 포함한다</span>
+      .select([<span class="f">"Country"</span>, <span class="f">"Region"</span>, <span class="f">"Population"</span>])         <span class="c"># 세 컬럼을 돌려준다</span>
+      .slice(length=5)                                    <span class="c"># 첫 다섯 행을 돌려준다</span>
+    )
+
+pyarrow.Table
+Country: string
+Region: string
+Population: int64
+------
+Country: [[<span class="f">"Bahrain "</span>,<span class="f">"Cyprus "</span>,<span class="f">"Gaza Strip "</span>,<span class="f">"Iraq "</span>,<span class="f">"Israel "</span>]]
+Region: [[<span class="f">"NEAR EAST"</span>,<span class="f">"NEAR EAST"</span>,<span class="f">"NEAR EAST"</span>,<span class="f">"NEAR EAST"</span>,<span class="f">"NEAR EAST"</span>]]
+Population: [[698585,784301,1428757,26783383,6352117]]</pre>
+      <div class="term-note">
+        DuckDB 테이블을 Arrow 형식으로 변환한 다음에는 <b>Arrow 파이썬 API의 계산 능력을 끌어 쓸 수 있는 처지</b>가 된다.
+        필터링, 컬럼 선택, 행 제한이라는 세 연산을 Arrow 쪽 문법으로 그대로 수행했다.
+        열거된 나라들—<b>바레인, 키프로스, 가자 지구, 이라크, 이스라엘</b>—은 NEAR EAST 지역을 대표한다.
+      </div>
+      <div class="term-note">
+        출력에서 <code>Country</code> 값에 <b>후행 공백이 남아 있다</b>는 점이 눈에 걸린다.
+        6.4절에서 다듬은 것은 <code>Region</code>이었고 <code>Country</code>는 손대지 않았으니, 데이터가 정직하게 그대로 나온 것이다.
+        정제는 컬럼 단위의 노동이라는 사실이 이 한 줄에 남아 있다.
+      </div>
+      <div class="term-note">
+        저자들의 맺음말이 이 절의 값어치를 말한다. 이 예제들은 Arrow와 Polars의 능력을 보여줄 뿐 아니라
+        <b>데이터 저장과 계산 사이의 갈라진 틈을 잇는 잠재력</b>도 보여준다.
+        어떤 결과든 Apache Arrow 객체로 변환할 수 있다는 것은
+        <b>Arrow에 기반한 모든 스트리밍, 직렬화, 프로세스 간 통신(IPC)을 쓸 가능성</b>을 열어준다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<!-- ══════════ 요약 ══════════ -->
+<section class="summary" id="s6">
+  <div class="sechead">
+    <span class="num">SUMMARY</span>
+    <h2>제6장이 남긴 여덟 문장<span class="en">Summary</span></h2>
+  </div>
+  <ol>
+    <li>DuckDB의 파이썬 API는 <b>데이터베이스 안의 테이블·뷰와 밖의 객체 사이의 선을 흐린다.</b></li>
+    <li>DuckDB는 <b>여러 종류의 객체를 균일한 방식으로 질의</b>할 수 있게 해준다.</li>
+    <li><b>Polars 데이터프레임, pandas 데이터프레임, Apache Arrow 테이블</b>과 그 밖의 원천을 SQL 질의 안의 테이블인 것처럼 다룰 수 있다.</li>
+    <li>관계형 API는 <b>재사용 가능한 질의 조각을 활용해 유지보수하기 좋은 애플리케이션</b>을 쓰기 쉽게 만든다.</li>
+    <li>관계형 API는 <b>뷰가 정적으로 하는 일을 동적인 관계로</b> 비슷하게 재사용하게 해준다.</li>
+    <li><b>사용자 정의 함수</b>는 파이썬 생태계의 라이브러리 전체의 기능을 SQL 질의 안에 매끄럽게 통합해 구현하게 해주어, 어떤 데이터 분석 경험에든 더 큰 유연함과 맞춤형 작업 흐름을 가져다준다.</li>
+    <li>데이터는 <b>pandas 데이터프레임, Polars 데이터프레임, Apache Arrow 테이블</b>을 포함한 여러 형식으로 내보낼 수 있다.</li>
+    <li>데이터프레임과 Apache Arrow 테이블과 그 밖의 원천을 <b>똑같은 방식으로 다루는 DuckDB의 변환 능력</b> 덕에, 여러 플랫폼 사이를 넘나드는 일이 훨씬 쉬워진다.</li>
+  </ol>
+</section>
+
+</main>
+
+<footer>
+  <div class="col">
+    <p>이 문서는 <b>Mark Needham · Michael Hunger · Michael Simons, 『DuckDB in Action』 (Manning Publications, 2024)</b>의 제6장 「Integrating with the Python ecosystem」(원서 123–143쪽) 전체를 검토해 한국어로 정리한 해설이다. 절 번호와 목록 번호는 원서를 따랐다.</p>
+    <p><b>이 장에는 원서 도판이 하나도 없고 번호 붙은 목록도 6.1 하나뿐이다.</b> 본문 자체가 파이썬 세션 기록이기 때문이다. 그래서 이 문서의 그림 하나—입구와 출구가 <code>DuckDBPyRelation</code> 하나로 모이는 구조도—와 메서드 대응표는 모두 <em>덧붙인 것</em>임을 표시해두었다. 그림에 적은 메서드 이름은 원서가 실제로 언급한 것들만 골랐다.</p>
+    <p><b>관계형 API ↔ SQL 대응기</b>도 이 문서에서 더한 장치다. 원서 6.2절은 같은 질의를 빌더 체인과 SQL 두 어법으로 번갈아 보여주는데, 그 대응 관계를 나란히 놓지 않으면 잡기가 어렵다. 일곱 조립의 코드와 결과는 모두 원서에 인쇄된 것을 그대로 옮겼다.</p>
+    <p>〈살펴본 김에〉로 표시한 여섯 대목은 원서 안에서 어긋나거나 확인해둘 만한 자리다. PyPI를 PiPI로 적은 곳, 물결표 하나를 SIMILAR TO와 GLOB 두 연산자에 동시에 배정한 사이드바, <code>[(VARCHAR)]</code>의 괄호가 튜플로 오해될 수 있는 표기, 쉼표를 콜론으로 적은 문장, 이미 처리한 컬럼이 남아 있는 연습 과제 목록, 그리고 "Mark Needham"이 "Mark"로 잘린 출력이다.</p>
+    <p>다음 장은 「DuckDB in the cloud with MotherDuck」으로, MotherDuck의 착상, 그 아래에서 아키텍처가 어떻게 작동하는지, 서버리스 SQL 분석의 쓰임새, MotherDuck 데이터베이스를 만들고 관리하고 공유하는 법, 그리고 사용을 최적화하는 요령을 다룬다. 원격에 호스팅된 DuckDB와 내 기계에서 돌아가는 DuckDB를 함께 쓰는 <em>하이브리드 질의 실행</em>이 그 핵심이다.</p>
+    <span class="mono">CH.06 · 5 SECTIONS · 5 SUBSECTIONS · 1 LISTING · 0 PLATES · 8 SUMMARY POINTS</span>
+  </div>
+</footer>
+
+<script>
+/* ── 관계형 API ↔ SQL 대응기 ── */
+(function(){
+  var root=document.getElementById('rx'); if(!root) return;
+
+  function box(head,types,rows,foot,aligns){
+    var h='<table class="duckbox"><thead><tr>';
+    head.forEach(function(c,i){h+='<th'+((aligns&&aligns[i]==='l')?' class="l"':'')+'>'+c+'</th>'});
+    h+='</tr><tr class="type">';
+    types.forEach(function(c,i){h+='<th'+((aligns&&aligns[i]==='l')?' class="l"':'')+'>'+c+'</th>'});
+    h+='</tr></thead><tbody>';
+    rows.forEach(function(r){
+      h+='<tr>';
+      r.forEach(function(c,i){h+='<td'+((aligns&&aligns[i]==='l')?' class="l"':'')+'>'+c+'</td>'});
+      h+='</tr>';
+    });
+    h+='</tbody>';
+    if(foot) h+='<tfoot><tr><td colspan="'+head.length+'">'+foot+'</td></tr></tfoot>';
+    return h+'</table>';
+  }
+
+  var CASES=[
+    {
+      py:'(population_table\n  .count("*")\n  .show()\n)',
+      sql:'SELECT count(*)\nFROM population;',
+      title:'결과 · 1행',
+      res:box(['count_star()'],['int64'],[['227']]),
+      cap:'가장 단순한 조립이다. 빌더 메서드의 이름이 SQL 집계의 이름과 같다. <b>show를 부를 때까지 아무것도 실행되지 않는다.</b>'
+    },
+    {
+      py:'(population_table\n  .filter(\'Population > 10000000\')\n  .project("Country, Population")\n  .limit(5)\n  .show()\n)',
+      sql:'SELECT Country, Population\nFROM population\nWHERE Population > 10000000\nLIMIT 5;',
+      title:'결과 · 5행',
+      res:box(['Country','Population'],['varchar','int64'],[
+        ['Afghanistan','31056997'],['Algeria','32930091'],['Angola','12127071'],
+        ['Argentina','39921833'],['Australia','20264082']
+      ],null,['l','']),
+      cap:'<b>filter는 WHERE 절 안의 필터에 대응하고, project는 결국 SELECT Country, Population이 된다.</b> 후자를 관계 용어로 <b>사영(projection)</b>이라 부른다. 파이썬 쪽은 필터가 먼저 오고 SQL 쪽은 사영이 먼저 적히지만, <b>중간에 아무것도 실체화되지 않으므로 순서가 성능을 바꾸지 않는다.</b>'
+    },
+    {
+      py:'over_10m = population_table \\\n  .filter(\'Population > 10000000\')\n\n(over_10m\n  .aggregate("Region, CAST(avg(Population) AS int) as pop")\n  .order("pop DESC")\n)',
+      sql:'SELECT Region,\n       CAST(avg(Population) AS int) AS pop\nFROM population\nWHERE Population > 10000000\nGROUP BY Region        -- 자동으로 붙는다\nORDER BY pop DESC;',
+      title:'결과 · 10행',
+      res:box(['Region','pop'],['varchar','int32'],[
+        ['ASIA (EX. NEAR EAST)','192779730'],['NORTHERN AMERICA','165771574'],
+        ['LATIN AMER. &amp; CARIB','48643375'],['C.W. OF IND. STATES','48487549'],
+        ['WESTERN EUROPE','38955933'],['NORTHERN AFRICA','38808343'],
+        ['NEAR EAST','32910924'],['SUB-SAHARAN AFRICA','30941436'],
+        ['EASTERN EUROPE','23691959'],['OCEANIA','20264082']
+      ],'10 rows &nbsp;&nbsp; 2 columns',['l','']),
+      cap:'<b>aggregate는 표현식 하나를 받는다.</b> 그 표현식은 SQL 집계 호출 하나 이상과, 집계에 속하지 않은 컬럼 0개 이상으로 이루어질 수 있다. 그러면 <b>DuckDB가 그 컬럼들로 자동으로 그룹을 만든다.</b> 여기서는 Region이 그룹 키가 된다. 결과는 <b>ASIA와 NORTHERN AMERICA의 인구 무게</b>를 드러낸다.'
+    },
+    {
+      py:'# over_10m을 손대지 않고 필터를 하나 더 얹는다\n(over_10m\n  .filter(\'"GDP ($ per capita)" > 10000\')\n  .count("*")\n)',
+      sql:'SELECT count(*)\nFROM population\nWHERE Population > 10000000\n  AND "GDP ($ per capita)" > 10000;',
+      title:'결과 · 1행',
+      res:box(['count_star()'],['int64'],[['20']]),
+      cap:'복사해 붙이는 대신 <b>필터 부분을 변수로 만들어 여러 질의에서 재사용</b>한다. <code>over_10m</code> 관계는 <b>테이블이나 뷰, 공통 테이블 표현식이 하는 것과 똑같이 행동한다.</b> 인구가 많으면서 1인당 GDP도 1만 달러를 넘는 나라가 <b>스무 곳</b>이다.'
+    },
+    {
+      py:'(population_table\n  .except_(over_10m)          # over_10m에 없는 레코드만\n  .aggregate("""\n   Region,\n   CAST(avg(population) AS int) AS population,\n   count(*)\n   """)\n)',
+      sql:'SELECT Region,\n       CAST(avg(population) AS int) AS population,\n       count(*)\nFROM (\n  SELECT * FROM population\n  EXCEPT\n  SELECT * FROM population\n  WHERE Population > 10000000\n)\nGROUP BY Region;',
+      title:'결과 · 11행',
+      res:box(['Region','population','count_star()'],['varchar','int32','int64'],[
+        ['EASTERN EUROPE','5426538','9'],['OCEANIA','643379','20'],
+        ['WESTERN EUROPE','2407190','19'],['LATIN AMER. &amp; CARIB','2154024','35'],
+        ['C.W. OF IND. STATES','5377686','7'],['NEAR EAST','2773978','11'],
+        ['SUB-SAHARAN AFRICA','3322228','30'],['NORTHERN AMERICA','43053','3'],
+        ['ASIA (EX. NEAR EAST)','2796374','9'],['BALTICS','2394991','3'],
+        ['NORTHERN AFRICA','3086881','2']
+      ],'11 rows &nbsp;&nbsp; 3 columns',['l','','']),
+      cap:'인구 1천만 미만 나라를 분석하는 과제다. <b>except_</b>로 <code>over_10m</code>의 나라를 빼고 지역별로 집계했다. <b>EASTERN EUROPE은 아홉 나라에 평균 약 540만으로 두드러지고, OCEANIA는 평균 인구는 작지만 스무 나라를 아우른다.</b> 인구가 적은 나라들이 모인 지역의 결이 드러난다.'
+    },
+    {
+      py:'eastern_europe = population_table \\\n  .filter("Region ~ \'.*EASTERN EUROPE.*\'")\n\n(eastern_europe\n  .intersect(over_10m)              # 양쪽에 모두 있는 관계만\n  .project("Country, Population")   # Country와 Population만\n)',
+      sql:'SELECT Country, Population\nFROM (\n  SELECT * FROM population\n  WHERE Region ~ \'.*EASTERN EUROPE.*\'\n  INTERSECT\n  SELECT * FROM population\n  WHERE Population > 10000000\n);',
+      title:'결과 · 3행',
+      res:box(['Country','Population'],['varchar','int64'],[
+        ['Czech Republic','10235455'],['Poland','38536869'],['Romania','22303552']
+      ],null,['l','']),
+      cap:'동유럽이면서 인구 1천만을 넘는 나라를 찾는다. <b>POSIX 방식 연산자 ~</b>로 정규식 필터를 걸고, <b>intersect</b>로 두 관계의 교집합을 얻는다. <b>체코, 폴란드, 루마니아</b> 셋이다. 관계 둘을 만들어두면 이렇게 조합만으로 새 질문에 답할 수 있다.'
+    },
+    {
+      py:'# 관계형 객체를 SQL 안에서 테이블처럼 쓴다\ncon.sql("""\nSELECT count(*)\nFROM over_10m\nWHERE "GDP ($ per capita)" > 10000\n""")\n\n# 매개변수화가 필요하면 DB-API의 execute를 쓴다\ncon.execute("""\nSELECT count(*)\nFROM over_10m\nWHERE "GDP ($ per capita)" > $gdp\n""", {\n  "gdp":10000\n}).fetchone()',
+      sql:'-- over_10m은 테이블이 아니라 파이썬 변수다.\n-- 그런데 질의 안에서는 테이블처럼 취급된다.\n--\n-- DB-API는 잘 짜인 SQL만 실행할 수 있고,\n-- 그것은 테이블과 컬럼의 매개변수화를 허용하지 않는다.\n-- 관계형 API는 그것을 허용한다.\n-- 그래서 둘이 서로를 보완한다.',
+      title:'결과 · fetchone()이 돌려준 튜플',
+      res:'<div style="font-family:var(--mono);font-size:14px;color:#ffd28a">(20,)</div>',
+      cap:'이 장의 지적 정점이다. <b>execute에 넘긴 질의는 이름 붙은 매개변수를 쓰며 여느 준비된 문장과 똑같이 보인다. 그런데 질의하는 대상은 실제 테이블이 아니라 관계형 객체다.</b> 게다가 그 관계형 객체 자체도 사영할 컬럼이나 밑단 테이블에 매개변수를 쓰는 방식으로 만들어졌을 수 있다. <b>그래서 모든 경우에 문자열 이어 붙이기를 피할 수 있다.</b>'
+    }
+  ];
+
+  function render(i){
+    var c=CASES[i];
+    document.getElementById('rxPy').innerHTML=
+      '<span class="rxlabel">RELATIONAL API · PYTHON</span>'+
+      c.py.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    document.getElementById('rxSql').innerHTML=
+      '<span class="rxlabel">EQUIVALENT SQL</span>'+
+      c.sql.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    document.getElementById('rxTitle').textContent=c.title;
+    document.getElementById('rxRes').innerHTML=c.res;
+    document.getElementById('rxCap').innerHTML=c.cap;
+  }
+
+  [].forEach.call(root.querySelectorAll('.rxtabs button'),function(b){
+    b.addEventListener('click',function(){
+      [].forEach.call(root.querySelectorAll('.rxtabs button'),function(x){
+        x.setAttribute('aria-pressed', x===b?'true':'false');
+      });
+      render(parseInt(b.dataset.r,10));
+    });
+  });
+  render(0);
+})();
+
+/* ── 스크롤 등장 ── */
+(function(){
+  var els=document.querySelectorAll('.rev');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){ if(e.isIntersecting){e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{rootMargin:'0px 0px -10% 0px',threshold:.05});
+  els.forEach(function(e){io.observe(e)});
+})();
+
+/* ── 목차 레일 ── */
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.rail a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))}).filter(Boolean);
+  if(!secs.length) return;
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){
+      if(!e.isIntersecting) return;
+      links.forEach(function(a){a.classList.toggle('on', a.getAttribute('href')==='#'+e.target.id)});
+    });
+  },{rootMargin:'-45% 0px -45% 0px'});
+  secs.forEach(function(s){io.observe(s)});
+})();
+</script>
+</body>
+</html>

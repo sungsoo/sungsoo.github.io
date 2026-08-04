@@ -1,0 +1,1392 @@
+---
+layout: null
+title: "Performing EDA with DuckDB"
+date: 2026-08-08 
+categories: [artificial intelligence]
+tags: [artificial general intelligence, data management]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지도를 펴고 읽는다 — DuckDB 답사기 제5장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 총서의 종이·먹·낙관은 그대로, 구조색은 적자(赤紫)로 바꾼다 */
+  --hoebyeok:#E7E6E0;
+  --hanji:#F3F2EC;
+  --meok:#1B1A18;
+  --meok-soft:#403D3A;
+  --jeokja:#78304A;
+  --jeokja-dk:#5A1F35;
+  --juchil:#A2331F;
+  --chija:#B58218;
+  --line:rgba(27,26,24,.16);
+  --line-soft:rgba(27,26,24,.08);
+  --display:"Gowun Batang",'Nanum Myeongjo',serif;
+  --body:"Noto Sans KR",system-ui,sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",monospace;
+  --maxw:1180px;
+  --colw:720px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--hoebyeok);color:var(--meok);font-family:var(--body);
+  font-weight:300;font-size:17px;line-height:1.95;-webkit-font-smoothing:antialiased;
+  letter-spacing:-.005em}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(rgba(27,26,24,.055) 1px,transparent 1px);
+  background-size:4px 4px;opacity:.7}
+.wrap{position:relative;z-index:1}
+
+/* 표제 */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#EDECE6 0%,var(--hoebyeok) 100%)}
+.hero-in{max-width:var(--maxw);margin:0 auto;
+  padding:clamp(64px,11vw,132px) clamp(22px,5vw,56px) clamp(40px,6vw,64px);position:relative}
+.glyph{position:absolute;right:clamp(-30px,-1vw,0px);top:1%;font-family:var(--display);
+  font-weight:700;font-size:clamp(230px,44vw,560px);line-height:.78;color:var(--jeokja);
+  opacity:.06;pointer-events:none;user-select:none}
+.kicker{font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--jeokja-dk);margin:0 0 26px;display:flex;
+  align-items:center;gap:14px;flex-wrap:wrap}
+.kicker i{display:block;width:52px;height:1px;background:var(--jeokja);opacity:.5}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(36px,6.8vw,76px);line-height:1.14;
+  letter-spacing:-.03em;margin:0 0 22px;max-width:15em}
+h1 em{font-style:normal;color:var(--jeokja-dk);position:relative}
+h1 em::after{content:"";position:absolute;left:0;right:0;bottom:.1em;height:.22em;
+  background:var(--chija);opacity:.22;z-index:-1}
+.lede{font-family:var(--display);font-size:clamp(18px,2.2vw,22px);line-height:1.85;
+  max-width:33em;color:var(--meok-soft);margin:0 0 40px}
+.colophon{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:22px;max-width:900px}
+.colophon div{padding:2px 28px 2px 0;margin-right:28px;border-right:1px solid var(--line-soft)}
+.colophon div:last-child{border-right:0;margin-right:0}
+.colophon dt{font-size:10.5px;letter-spacing:.2em;font-weight:500;color:var(--jeokja-dk);
+  opacity:.75;margin:0 0 4px;text-transform:uppercase}
+.colophon dd{margin:0;font-size:14.5px;font-weight:400}
+
+/* 서명 요소 */
+.radius{max-width:var(--maxw);margin:0 auto;
+  padding:clamp(40px,6vw,72px) clamp(22px,5vw,56px) clamp(48px,7vw,80px)}
+.radius svg,.dia svg{width:100%;height:auto;display:block}
+.cap{font-size:13.5px;color:var(--meok-soft);margin:22px 0 0;padding-left:16px;
+  border-left:2px solid var(--chija);max-width:46em;line-height:1.8}
+.cap b{font-weight:500;color:var(--meok)}
+
+/* 골격 */
+main{max-width:var(--maxw);margin:0 auto;padding:0 clamp(22px,5vw,56px) 120px}
+section{padding:clamp(52px,7vw,96px) 0;border-top:1px solid var(--line)}
+section:first-child{border-top:0}
+.sec-head{display:flex;gap:clamp(16px,3vw,40px);align-items:flex-start;margin-bottom:clamp(26px,4vw,44px)}
+.seal{flex:0 0 auto;width:54px;height:54px;border:1.5px solid var(--juchil);color:var(--juchil);
+  display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:22px;
+  line-height:1;border-radius:3px;background:rgba(162,51,31,.045);margin-top:6px}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(26px,4vw,42px);line-height:1.3;
+  letter-spacing:-.025em;margin:0 0 10px}
+.sub{font-size:13px;letter-spacing:.16em;color:var(--jeokja-dk);font-weight:500;margin:0}
+.col{max-width:var(--colw)}
+p{margin:0 0 1.35em}
+.col p:last-child{margin-bottom:0}
+h3{font-family:var(--display);font-weight:700;font-size:clamp(20px,2.6vw,26px);
+  letter-spacing:-.02em;margin:2.5em 0 .8em;line-height:1.4}
+h3:first-child{margin-top:0}
+h4{font-family:var(--body);font-weight:500;font-size:15px;letter-spacing:.02em;
+  margin:2em 0 .6em;color:var(--jeokja-dk)}
+strong{font-weight:500;color:var(--meok)}
+.tm{font-family:var(--mono);font-size:.88em;background:rgba(120,48,74,.1);padding:.12em .4em;
+  border-radius:2px;color:var(--jeokja-dk);font-weight:500}
+
+/* 카드 */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);margin-top:8px}
+.card{background:var(--hanji);padding:28px 26px 30px;position:relative}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--jeokja);opacity:.22}
+.card .no{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--chija);
+  font-weight:500;display:block;margin-bottom:12px}
+.card h5{font-family:var(--display);font-weight:700;font-size:19.5px;margin:0 0 4px;
+  line-height:1.4;letter-spacing:-.02em}
+.card .en{font-family:var(--mono);font-size:11.5px;color:var(--meok-soft);opacity:.72;
+  display:block;margin-bottom:14px}
+.card p{font-size:15px;line-height:1.85;margin:0;color:var(--meok-soft)}
+
+/* 연쇄 */
+.chain{margin:28px 0 0;padding:0;list-style:none;border-left:1px solid var(--line)}
+.chain li{position:relative;padding:0 0 22px 30px}
+.chain li:last-child{padding-bottom:0}
+.chain li::before{content:"";position:absolute;left:-4.5px;top:11px;width:8px;height:8px;
+  background:var(--hoebyeok);border:1.5px solid var(--jeokja);border-radius:50%}
+.chain b{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--juchil);
+  letter-spacing:.04em;display:block}
+.chain span{font-size:15.5px;color:var(--meok-soft)}
+
+/* 방주 */
+.aside{margin:30px 0;padding:22px 26px;background:var(--hanji);border:1px solid var(--line);
+  border-left:3px solid var(--jeokja);font-size:15px;line-height:1.85;color:var(--meok-soft)}
+.aside.warn{border-left-color:var(--juchil)}
+.aside.tip{border-left-color:var(--chija)}
+.aside .lbl{display:block;font-family:var(--body);font-weight:500;font-size:11px;
+  letter-spacing:.24em;text-transform:uppercase;margin-bottom:10px;color:var(--jeokja-dk)}
+.aside.warn .lbl{color:var(--juchil)}
+.aside.tip .lbl{color:var(--chija)}
+.aside ol,.aside ul{margin:10px 0 0;padding-left:1.2em}
+.aside li{margin-bottom:5px}
+.aside p:last-child{margin-bottom:0}
+
+/* 코드 */
+figure{margin:26px 0}
+.code{background:#181614;color:#DEDBD6;border-radius:4px;overflow:hidden;border:1px solid #0D0B0A}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:9px 16px;
+  background:#12100F;border-bottom:1px solid #262220;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.16em;color:#9A8189;text-transform:uppercase;gap:12px}
+.code pre{margin:0;padding:20px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.4px;
+  line-height:1.78}
+.code .k{color:#D9A0B8}
+.code .s{color:#E2C173}
+.code .c{color:#77706C;font-style:italic}
+.code .f{color:#93C8B4}
+.code .n{color:#D99B84}
+.code .out{color:#9C9691}
+.code .rec{border-bottom:1px dotted rgba(181,130,24,.9);cursor:help}
+.code .cut{color:#C89A2A;font-weight:500;cursor:help}
+figcaption{font-size:13px;color:var(--meok-soft);margin-top:12px;font-family:var(--body)}
+figcaption::before{content:"〈";color:var(--chija)}
+figcaption::after{content:"〉";color:var(--chija)}
+
+/* 결과 표 */
+.rs{margin:24px 0}
+.rs table{border-collapse:collapse;width:100%;max-width:700px;font-family:var(--mono);
+  font-size:12.8px;background:var(--hanji)}
+.rs th{text-align:left;padding:9px 13px;border-bottom:1.5px solid var(--meok);font-weight:500;
+  font-size:11.5px;letter-spacing:.06em;color:var(--jeokja-dk);white-space:nowrap}
+.rs td{padding:7px 13px;border-bottom:1px solid var(--line-soft);color:var(--meok-soft)}
+.rs tr:last-child td{border-bottom:1px solid var(--line)}
+.rs td.num{text-align:right;color:var(--meok)}
+.rs .el{color:rgba(27,26,24,.4)}
+.rs .src{color:var(--meok);font-weight:500}
+.rs figcaption{margin-top:10px}
+
+/* 비교 표 */
+.cmp{margin:28px 0;overflow-x:auto}
+.cmp table{border-collapse:collapse;width:100%;font-size:14.5px;background:var(--hanji);
+  border:1px solid var(--line)}
+.cmp th{text-align:left;padding:12px 15px;background:rgba(120,48,74,.07);
+  border-bottom:1px solid var(--line);font-weight:500;font-size:12.5px;letter-spacing:.08em;
+  color:var(--jeokja-dk);vertical-align:top}
+.cmp td{padding:12px 15px;border-bottom:1px solid var(--line-soft);color:var(--meok-soft);
+  vertical-align:top;line-height:1.75}
+.cmp tr:last-child td{border-bottom:0}
+.cmp td:first-child{font-family:var(--mono);font-size:12.5px;color:var(--meok);white-space:nowrap}
+
+/* 시간대 격자 */
+.slots{margin:32px 0;overflow-x:auto}
+.slots table{border-collapse:collapse;font-family:var(--mono);font-size:12px;
+  background:var(--hanji);border:1px solid var(--line);min-width:560px}
+.slots th{padding:10px 12px;font-weight:500;font-size:11px;letter-spacing:.06em;
+  color:var(--jeokja-dk);border-bottom:1px solid var(--line);text-align:center}
+.slots th:first-child{text-align:left}
+.slots td{padding:10px 12px;text-align:center;border-bottom:1px solid var(--line-soft);
+  color:rgba(27,26,24,.3)}
+.slots td:first-child{text-align:left;color:var(--meok-soft);white-space:nowrap}
+.slots td.long{background:rgba(162,51,31,.16);color:var(--juchil);font-weight:500}
+.slots td.short{background:rgba(120,48,74,.13);color:var(--jeokja-dk);font-weight:500}
+.slots td.best{background:rgba(181,130,24,.22);color:#7A5710;font-weight:500}
+.legend{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--meok-soft)}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend i{width:13px;height:13px;display:block;border:1px solid var(--line)}
+
+.dia{margin:32px 0 0}
+.dia svg{max-width:860px}
+
+/* 맺음 */
+.closing{border-top:1px solid var(--line);background:var(--hanji)}
+.closing-in{max-width:var(--maxw);margin:0 auto;padding:clamp(56px,8vw,96px) clamp(22px,5vw,56px)}
+.closing blockquote{margin:0 0 40px;font-family:var(--display);font-size:clamp(20px,2.8vw,27px);
+  line-height:1.72;letter-spacing:-.02em;max-width:27em}
+.next{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.14em;
+  border:1px solid var(--jeokja);color:var(--jeokja-dk);padding:12px 20px;text-decoration:none}
+footer{max-width:var(--maxw);margin:0 auto;padding:34px clamp(22px,5vw,56px) 60px;font-size:12.5px;
+  color:var(--meok-soft);opacity:.8;border-top:1px solid var(--line-soft);display:flex;
+  justify-content:space-between;gap:20px;flex-wrap:wrap}
+
+.rv{opacity:0;transform:translateY(22px);
+  transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.25,1)}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .pulse{animation:none}
+}
+@keyframes pulse{0%,100%{opacity:.18}50%{opacity:.42}}
+.pulse{animation:pulse 4.5s ease-in-out infinite}
+@media (max-width:720px){
+  body{font-size:16px;line-height:1.9}
+  .colophon div{border-right:0;padding-right:0;margin-right:0;flex:1 0 46%}
+  .seal{width:42px;height:42px;font-size:17px}
+  .sec-head{gap:14px}
+  .rs{overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══════ 표제 ══════ -->
+<header class="hero">
+  <div class="glyph">圖</div>
+  <div class="hero-in">
+    <p class="kicker"><i></i>답사기 · 제5장 정독</p>
+    <h1>지도를 펴고<br><em>읽는다</em></h1>
+    <p class="lede">답사기가 답사기다워지는 장이다. 여기서는 표를 세우거나 문을 넘는 대신 지도를 펴 놓고 묻는다. 마이애미의 한 점에서 가장 가까운 공항은 어디인가. 어느 노선이 가장 붐비는가. 늦지 않으려면 무슨 요일 몇 시에 떠나야 하는가. 데이터에 길을 묻는 일이 곧 이 장의 전부다.</p>
+    <dl class="colophon">
+      <div><dt>원전</dt><dd>DuckDB: Up and Running</dd></div>
+      <div><dt>지은이</dt><dd>Wei-Meng Lee</dd></div>
+      <div><dt>펴낸곳</dt><dd>O'Reilly Media, 2024</dd></div>
+      <div><dt>대상</dt><dd>Chapter 5. Performing EDA with DuckDB</dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ══════ 서명 요소: 마이애미 근방 공항 ══════ -->
+<div class="radius rv">
+  <svg viewBox="0 0 1100 400" role="img" aria-label="마이애미의 한 점을 중심으로 3도와 2도 반경 안의 공항 수를 나타낸 모식도">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#78304A"/>
+      </marker>
+    </defs>
+    <text x="0" y="16" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2.2" fill="#5A1F35">ST_DWITHIN — 반경으로 묻는다</text>
+
+    <!-- 경위선 격자 -->
+    <g stroke="#1B1A18" stroke-opacity=".07">
+      <line x1="0" y1="60" x2="480" y2="60"/><line x1="0" y1="110" x2="480" y2="110"/>
+      <line x1="0" y1="160" x2="480" y2="160"/><line x1="0" y1="210" x2="480" y2="210"/>
+      <line x1="0" y1="260" x2="480" y2="260"/><line x1="0" y1="310" x2="480" y2="310"/>
+      <line x1="40" y1="50" x2="40" y2="320"/><line x1="90" y1="50" x2="90" y2="320"/>
+      <line x1="140" y1="50" x2="140" y2="320"/><line x1="190" y1="50" x2="190" y2="320"/>
+      <line x1="240" y1="50" x2="240" y2="320"/><line x1="290" y1="50" x2="290" y2="320"/>
+      <line x1="340" y1="50" x2="340" y2="320"/><line x1="390" y1="50" x2="390" y2="320"/>
+      <line x1="440" y1="50" x2="440" y2="320"/>
+    </g>
+
+    <!-- 3도 · 2도 반경 -->
+    <circle class="pulse" cx="240" cy="190" r="125" fill="#78304A" fill-opacity=".18"/>
+    <circle cx="240" cy="190" r="125" fill="none" stroke="#78304A" stroke-opacity=".55" stroke-dasharray="4 4"/>
+    <circle cx="240" cy="190" r="83" fill="#78304A" fill-opacity=".14"/>
+    <circle cx="240" cy="190" r="83" fill="none" stroke="#5A1F35" stroke-opacity=".65"/>
+
+    <!-- 2도 안 5곳 -->
+    <g fill="#5A1F35">
+      <circle cx="205" cy="150" r="4.5"/><circle cx="282" cy="168" r="4.5"/>
+      <circle cx="228" cy="235" r="4.5"/><circle cx="176" cy="205" r="4.5"/>
+      <circle cx="268" cy="228" r="4.5"/>
+    </g>
+    <!-- 2~3도 사이 3곳 -->
+    <g fill="#78304A" fill-opacity=".6">
+      <circle cx="150" cy="128" r="4.5"/><circle cx="332" cy="212" r="4.5"/>
+      <circle cx="215" cy="298" r="4.5"/>
+    </g>
+    <!-- 반경 밖 -->
+    <g fill="#1B1A18" fill-opacity=".16">
+      <circle cx="60" cy="80" r="4"/><circle cx="425" cy="95" r="4"/>
+      <circle cx="405" cy="305" r="4"/><circle cx="70" cy="290" r="4"/>
+    </g>
+
+    <!-- 마이애미 점 -->
+    <path d="M233 183 L247 197 M247 183 L233 197" stroke="#A2331F" stroke-width="2.2"/>
+    <text x="240" y="172" text-anchor="middle" font-family="Noto Sans KR,sans-serif"
+          font-size="11.5" font-weight="500" fill="#A2331F">마이애미</text>
+
+    <!-- 반경 눈금 -->
+    <line x1="240" y1="190" x2="365" y2="190" stroke="#78304A" stroke-opacity=".6" marker-end="url(#ar)"/>
+    <text x="300" y="184" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#5A1F35">3°</text>
+    <line x1="240" y1="190" x2="240" y2="107" stroke="#5A1F35" stroke-opacity=".7" marker-end="url(#ar)"/>
+    <text x="252" y="130" font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#5A1F35">2°</text>
+
+    <g font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#403D3A">
+      <text x="0" y="345">-80.2706578, 25.7824017</text>
+      <text x="0" y="366" fill="#5A1F35">3° 안 → 여덟 곳 · 2° 안 → 다섯 곳</text>
+    </g>
+
+    <line x1="530" y1="30" x2="530" y2="370" stroke="#1B1A18" stroke-opacity=".12" stroke-dasharray="2 6"/>
+
+    <!-- 오른쪽: 거리로 묻는다 -->
+    <text x="580" y="16" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2.2" fill="#5A1F35">ST_DISTANCE — 거리로 묻는다</text>
+    <g font-family="Noto Sans KR,sans-serif" font-size="12" fill="#403D3A">
+      <text x="580" y="52">반경은 “몇 곳이 걸리는가”를 미리 알 수 없다.</text>
+      <text x="580" y="76">3도로 여덟 곳, 2도로 다섯 곳. 원하는 개수를 얻으려면</text>
+      <text x="580" y="100">반경을 손으로 조절해야 한다.</text>
+      <text x="580" y="136" font-weight="500" fill="#1B1A18">거리를 열로 만들어 두면 개수를 직접 정할 수 있다.</text>
+    </g>
+    <g font-family="IBM Plex Mono,monospace" font-size="11">
+      <rect x="580" y="156" width="470" height="30" fill="#F3F2EC" stroke="#78304A" stroke-opacity=".4"/>
+      <text x="594" y="176" fill="#5A1F35">ST_Distance(geometry, POINT(...)) as distance</text>
+      <line x1="815" y1="186" x2="815" y2="206" stroke="#78304A" stroke-width="1.2" marker-end="url(#ar)"/>
+      <rect x="580" y="210" width="470" height="30" fill="#F3F2EC" stroke="#78304A" stroke-opacity=".4"/>
+      <text x="594" y="230" fill="#5A1F35">ORDER BY distance</text>
+      <line x1="815" y1="240" x2="815" y2="260" stroke="#78304A" stroke-width="1.2" marker-end="url(#ar)"/>
+      <rect x="580" y="264" width="470" height="30" fill="rgba(181,130,24,.16)" stroke="#B58218" stroke-opacity=".55"/>
+      <text x="594" y="284" fill="#7A5710">LIMIT 3</text>
+    </g>
+    <g font-family="Noto Sans KR,sans-serif" font-size="12" fill="#403D3A">
+      <text x="580" y="326">반경은 <tspan font-style="italic">범위</tspan>를 정하는 물음이고,</text>
+      <text x="580" y="350">거리는 <tspan font-style="italic">순위</tspan>를 정하는 물음이다.</text>
+      <text x="580" y="374" fill="#5A1F35">같은 좌표를 두고 두 가지 다른 질문이 성립한다.</text>
+    </g>
+  </svg>
+  <p class="cap"><b>답사의 물음.</b> 제1장이 기둥의 장, 제2장이 문의 장, 제3장이 칸의 장, 제4장이 때의 장이었다면 제5장은 <b>자리의 장</b>이다. 왼쪽 그림은 실제 공항의 위치가 아니라 <span class="tm">ST_DWithin</span>이 무엇을 세는지 보이는 모식도다. 점의 개수만 원서 본문에 명기된 값(3도 여덟 곳, 2도 다섯 곳)을 따랐다. 오른쪽은 같은 좌표에 다른 방식으로 묻는 길이다. 답사자가 지도 위에서 던질 수 있는 물음이 두 종류라는 사실, 그것이 이 절의 소득이다.</p>
+</div>
+
+<main>
+
+<!-- ══════ 序 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">序</div>
+    <div><h2>EDA란 무엇인가</h2><p class="sub">EXPLORATORY DATA ANALYSIS</p></div>
+  </div>
+  <div class="col">
+    <p>여기까지 왔으면 DuckDB의 기초는 어지간히 손에 잡혔을 것이다. CSV와 Parquet 같은 파일 형식에 담긴 데이터로 DuckDB 데이터베이스를 채우는 법을 보았고, MySQL 같은 데이터베이스 서버에서 채우는 법도 익혔다. 제5장은 DuckDB를 실제 상황에 적용해 <strong>탐색적 데이터 분석</strong>을 수행한다.</p>
+    <p>EDA는 데이터셋의 주요 특성을 요약하기 위해 그것을 분석하고 시각화하는 접근이다. 핵심 목표는 데이터 안의 패턴과 추세와 관계를 이해하는 것이다. EDA에서는 데이터에 다음 기법들을 자주 쓴다.</p>
+  </div>
+  <div class="cards" style="margin-top:26px">
+    <div class="card">
+      <span class="no">法 · 一</span><h5>데이터 요약</h5><span class="en">data summarization</span>
+      <p>평균, 중앙값, 표준편차 같은 기술 통계로 데이터셋의 분포를 이해한다.</p>
+    </div>
+    <div class="card">
+      <span class="no">法 · 二</span><h5>데이터 시각화</h5><span class="en">data visualization</span>
+      <p>Matplotlib과 Seaborn 같은 라이브러리로 막대 차트, 원 차트 등 여러 유형의 도표를 그려, 데이터의 분포와 서로 다른 데이터 유형 사이의 관계를 눈으로 살핀다.</p>
+    </div>
+    <div class="card">
+      <span class="no">法 · 三</span><h5>추세 식별</h5><span class="en">trends identification</span>
+      <p>데이터 안의 패턴과 추세와 이상을 식별하고, 이 관찰에 영향을 주는 잠재적 요인에 관한 통찰을 제공한다.</p>
+    </div>
+  </div>
+  <div class="col">
+    <p style="margin-top:2.2em">이 장에서 다루는 것은 2015 Flight Delays 데이터셋의 탐색과 시각화이며, 두 갈래로 나뉜다.</p>
+  </div>
+  <div class="cmp">
+    <table>
+      <thead><tr><th>갈래</th><th>익히는 것</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>지리공간 분석</td>
+          <td>지도 표시 · 지도에 모든 공항 표시 · DuckDB의 <span class="tm">spatial</span> 확장 사용 · 위도와 경도를 <span class="tm">Point</span> 데이터 유형으로 변환 · 근처 공항 찾기</td>
+        </tr>
+        <tr>
+          <td>기술 분석</td>
+          <td>주와 도시별 공항 찾기 · 주별 공항 총수 집계 · 출발·도착 공항 쌍별 운항 편수 · 항공사의 결항편 · 요일별 운항 편수 · 지연이 가장 잦은 시간대 · 지연이 가장 많은 항공사와 가장 적은 항공사</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="aside tip">
+    <span class="lbl">검토 방법에 관한 밝힘</span>
+    <p>제5장은 앞의 네 장과 성격이 다르다. 결과가 대부분 <strong>지도와 도표 이미지</strong>로 실려 있어, 텍스트로 확인되는 수치가 적다. 그래서 이 페이지는 다음 원칙을 지켰다.</p>
+    <ul>
+      <li>원서 본문에 <strong>명기된 수치만</strong> 인용한다. 이 장에서 그런 값은 열두 개뿐이며, 각각 등장하는 자리에 <span class="rs" style="display:inline"><span class="src">굵은 글자</span></span>로 표시했다.</li>
+      <li>도판 이미지에서만 읽히는 표와 차트의 값은 <strong>옮기지 않는다</strong>. 대신 그 도판이 무엇을 보이는지, 본문이 그것을 어떻게 해석했는지를 적는다.</li>
+      <li>지도 이미지는 재현하지 않는다. 대신 질의가 무엇을 세고 무엇을 정렬하는지를 도해로 옮긴다.</li>
+    </ul>
+    <p style="margin-top:10px">코드의 지면 잘림 표기는 앞 장들과 같다. 복원한 부분은 <code style="font-family:var(--mono);font-size:13px;border-bottom:1px dotted var(--chija)">점선 밑줄</code>, 복원하지 않은 부분은 <code style="font-family:var(--mono);font-size:13px;color:var(--chija)">…</code>다.</p>
+  </div>
+</section>
+
+<!-- ══════ 一 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">載</div>
+    <div><h2>세 개의 표를 올린다</h2><p class="sub">OUR DATASET: THE 2015 FLIGHT DELAYS DATASET</p></div>
+  </div>
+  <div class="col">
+    <p>일관성을 위해 이 장의 모든 예제에는 제2장에서 본 2015 Flight Delays and Cancellations 데이터셋을 쓴다. 세 개의 CSV 파일로 이루어진다는 것을 기억한다. <span class="tm">airlines.csv</span>는 미국 항공사 목록, <span class="tm">airports.csv</span>는 미국 공항 목록, <span class="tm">flights.csv</span>는 2015년 여러 항공사의 항공편 상세 내역이다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>세 표 적재</span></div>
+<pre><span class="k">import</span> duckdb
+conn = duckdb.<span class="f">connect</span>()
+
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> flights
+    <span class="k">as</span>
+    <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">read_csv_auto</span>('flights.csv')
+'''</span>)
+
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> airports
+    <span class="k">as</span>
+    <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">read_csv_auto</span>('airports.csv')
+'''</span>)
+
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">CREATE TABLE</span> airlines
+    <span class="k">as</span>
+    <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">read_csv</span>('airlines.csv')
+'''</span>)
+
+<span class="f">display</span>(conn.<span class="f">execute</span>(<span class="s">'SHOW TABLES'</span>).<span class="f">df</span>())</pre></div>
+  </figure>
+  <div class="rs">
+    <table><thead><tr><th>name</th></tr></thead>
+    <tbody><tr><td>airlines</td></tr><tr><td>airports</td></tr><tr><td>flights</td></tr></tbody></table>
+    <figcaption>도판 5-1 · 데이터베이스의 세 테이블</figcaption>
+  </div>
+  <div class="col">
+    <p>세 문장이 나란히 놓이니 한 가지가 눈에 띈다. <span class="tm">flights</span>와 <span class="tm">airports</span>는 <span class="tm">read_csv_auto()</span>로 읽고, <span class="tm">airlines</span>만 <span class="tm">read_csv()</span>로 읽는다. 제2장에서 <span class="tm">airlines.csv</span>의 첫 행이 헤더로 인식되지 않던 그 문제가 남긴 흔적이다. 함수 하나의 차이가 앞 장의 기록을 증언한다.</p>
+  </div>
+</section>
+
+<!-- ══════ 二 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">圖</div>
+    <div><h2>지도를 펴다 · folium</h2><p class="sub">DISPLAYING A MAP</p></div>
+  </div>
+  <div class="col">
+    <p>지리공간 분석은 공간 분석 또는 지리정보체계(GIS) 분석이라고도 하며, 공간 데이터를 살피고 해석하고 시각화해 지리적 영역 안의 패턴과 관계와 추세를 이해하는 연구 분야다. 흔한 사용 사례는 도시 계획과 교통이다. 예컨대 어느 도시의 대중교통 부서가 효율을 높이고 이동 시간을 줄이기 위해 버스 노선을 최적화하려 한다면, 지리공간 분석으로 도시의 버스 정류장과 교통 패턴과 인구 밀도를 분석한다.</p>
+    <p><span class="tm">airports</span> 테이블에 공항의 위치가 담겨 있으므로 지리공간 분석을 해 볼 좋은 때다. 각 공항의 위치를 지도에 그린다. 이를 위해 <strong>folium</strong> 라이브러리를 쓴다. 대화형 지도를 그리는 자바스크립트 라이브러리 leaflet.js를 감싼 파이썬 래퍼다. folium을 쓰면 Jupyter Notebook 안에서 곧바로 지리공간 시각화를 파이썬 프로젝트에 넣을 수 있다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Jupyter Notebook</span><span>설치</span></div>
+<pre><span class="f">!pip</span> install folium</pre></div>
+  </figure>
+  <div class="col">
+    <p>먼저 folium으로 지도를 표시한다. 미국을 지도 중앙에 놓기 위해 위도 <strong class="src">47.116386</strong>과 경도 <strong class="src">-101.299591</strong>을 골라 folium의 <span class="tm">Map</span> 클래스에 넘긴다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>folium.Map</span></div>
+<pre><span class="k">import</span> folium
+
+mymap = folium.<span class="f">Map</span>(location = [<span class="n">47.116386</span>, <span class="n">-101.29</span><span class="rec" title="원서 지면에서 잘린 부분. 본문에 명기된 경도 -101.299591로 복원했다">9591</span>],
+                   width = <span class="n">950</span>,
+                   height = <span class="n">550</span>,
+                   zoom_start = <span class="n">3</span>,
+                   tiles = <span class="s">'openstreetmap'</span>)
+mymap</pre></div>
+    <figcaption>도판 5-2 · 미국이 지도 중앙에 놓인다</figcaption>
+  </figure>
+  <div class="col">
+    <p>이 코드에서 눈여겨볼 것은 넷이다.</p>
+    <ul class="chain">
+      <li><b>location</b><span> 위도와 경도를 목록으로 넘겨 위치를 지정한다.</span></li>
+      <li><b>width · height</b><span> 지도의 크기를 지정한다.</span></li>
+      <li><b>zoom_start</b><span> 지도의 초기 확대 수준을 정한다. 숫자가 클수록 더 확대된다.</span></li>
+      <li><b>tiles</b><span> 쓸 타일셋을 지정한다. 타일셋은 연속된 지도 화면을 만드는 데 쓰이는 지도 타일의 모음이다. 기본값은 <span class="tm">openstreetmap</span>이다.</span></li>
+    </ul>
+    <p style="margin-top:1.8em"><span class="tm">tiles</span> 매개변수에는 <span class="tm">openstreetmap</span> 외에 내장 타일셋 <span class="tm">cartodbpositron</span>과 <span class="tm">cartodbdark_matter</span>를 쓸 수 있다. 그런데 <span class="tm">tiles</span> 매개변수로 특정 타일셋에 지도를 못박는 대신, <span class="tm">TileLayer</span> 클래스로 여러 타일셋을 지도에 얹을 수도 있다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>TileLayer · LayerControl</span></div>
+<pre><span class="k">import</span> folium
+mymap = folium.<span class="f">Map</span>(location = [<span class="n">47.116386</span>, <span class="n">-101.29</span><span class="rec" title="원서 지면에서 잘린 부분. 본문에 명기된 경도로 복원했다">9591</span>],
+                   width = <span class="n">950</span>,
+                   height = <span class="n">550</span>,
+                   zoom_start = <span class="n">3</span>,
+                   tiles = <span class="s">'openstreetmap'</span>)
+
+folium.<span class="f">TileLayer</span>(<span class="s">'cartodbpositron'</span>,
+                 attr = <span class="s">'cartodbpositron'</span>,
+                 show = <span class="k">False</span>).<span class="f">add_to</span>(mymap)
+folium.<span class="f">TileLayer</span>(<span class="s">'cartodbdark_matter'</span>,
+                 attr = <span class="s">'cartodbdark_matter'</span>,
+                 show = <span class="k">False</span>).<span class="f">add_to</span>(mymap)
+
+folium.<span class="f">LayerControl</span>().<span class="f">add_to</span>(mymap)
+
+mymap</pre></div>
+    <figcaption>도판 5-3 · 지도 오른쪽 위의 타일 아이콘을 눌러 표시할 타일셋을 고를 수 있다</figcaption>
+  </figure>
+  <div class="col">
+    <p>같은 땅을 세 가지 종이에 인쇄해 두고 필요할 때 바꿔 보는 것과 같다. 밑그림을 하나로 고정하지 않는다는 이 선택이, 뒤에 마커가 수백 개 얹힐 때 유용해진다. 밝은 배경에서 잘 보이는 색과 어두운 배경에서 잘 보이는 색이 다르기 때문이다.</p>
+  </div>
+</section>
+
+<!-- ══════ 三 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">標</div>
+    <div><h2>공항마다 표를 꽂다</h2><p class="sub">DISPLAYING ALL AIRPORTS ON THE MAP</p></div>
+  </div>
+  <div class="col">
+    <p>먼저 모든 공항을 뽑아 <span class="tm">df</span> 변수에 담는다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>좌표 추출</span></div>
+<pre>df = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        latitude <span class="k">as</span> lat,
+        longitude <span class="k">as</span> lng,
+        airport <span class="k">as</span> airport
+    <span class="k">FROM</span> airports
+    <span class="k">WHERE</span>
+        (lat <span class="k">is not null</span>) <span class="k">or</span>
+        (lng <span class="k">is not null</span>)
+'''</span>).<span class="f">df</span>()</pre></div>
+  </figure>
+  <div class="aside warn">
+    <span class="lbl">검토자의 주석</span>
+    <p>이 질의의 <span class="tm">WHERE</span> 절은 <span class="tm">or</span>로 이어져 있다. 위도와 경도 <strong>둘 중 하나만</strong> 값이 있어도 통과한다는 뜻이므로, 한쪽이 <span class="tm">NULL</span>인 행이 남을 수 있다. 지도에 점을 찍는 일에는 두 값이 모두 필요하므로 <span class="tm">and</span>가 뜻에 더 맞는다. 원서를 그대로 옮기되 이 점은 적어 둔다. 뒤의 코드가 <span class="tm">math</span> 모듈을 가져오는 것도 이와 무관하지 않아 보인다.</p>
+  </div>
+  <div class="col">
+    <p>그다음 DataFrame의 모든 행을 순회해 위도와 경도, 공항 이름을 뽑아 <span class="tm">CircleMarker</span> 클래스로 지도에 마커를 얹는다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>CircleMarker</span></div>
+<pre><span class="k">import</span> math
+
+<span class="k">for</span> lat, lng, airport <span class="k">in</span> <span class="f">zip</span>(df[<span class="s">'lat'</span>], df[<span class="s">'lng'</span><span class="rec" title="원서 지면에서 잘린 부분. 세 번째 열 airport를 zip에 넘기는 것으로 복원했다">], df['airport']):</span>
+    airport = folium.<span class="f">CircleMarker</span>(
+            location = [lat, lng], <span class="c"># 마커의 위치</span>
+            radius = <span class="n">4</span>,            <span class="c"># 마커의 크기</span>
+            color = <span class="s">'red'</span>,         <span class="c"># 테두리 색</span>
+            fill = <span class="k">True</span>,           <span class="c"># 내부를 채운다</span>
+            fill_color = <span class="s">'yellow'</span>, <span class="c"># 채움 색</span>
+            fill_opacity = <span class="n">0.5</span>,     <span class="c"># 반투명하게</span>
+            popup = airport)       <span class="c"># 말풍선에 넣을 공항 이름</span>
+
+    <span class="c"># 원 마커를 지도에 얹는다</span>
+    airport.<span class="f">add_to</span>(mymap)
+mymap</pre></div>
+    <figcaption>도판 5-4 · 5-5 · 개별 공항이 원 마커로 표시되고, 마커를 누르면 공항 이름이 말풍선으로 나타난다</figcaption>
+  </figure>
+  <div class="col">
+    <p>원 마커 대신 아이콘이 든 기본 Leaflet 마커를 쓸 수도 있다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>folium.Marker · Icon</span></div>
+<pre><span class="k">for</span> lat, lng, airport <span class="k">in</span> <span class="f">zip</span>(df[<span class="s">'lat'</span>], df[<span class="s">'lng'</span><span class="rec" title="원서 지면에서 잘린 부분. 세 번째 열 airport를 zip에 넘기는 것으로 복원했다">], df['airport']):</span>
+    airport = folium.<span class="f">Marker</span>(
+        location = [lat, lng],
+        popup = airport,
+        icon = folium.<span class="f">Icon</span>(color = <span class="s">'lightgray'</span>,
+                           icon = <span class="s">'plane-arrival</span><span class="rec" title="원서 지면에서 잘린 부분. Font Awesome의 아이콘 이름을 닫는 인용부호로 복원했다">'</span>,
+                           prefix = <span class="s">'fa'</span>),
+        )
+
+    airport.<span class="f">add_to</span>(mymap)
+mymap</pre></div>
+    <figcaption>도판 5-6 · 아이콘이 든 마커와 공항 이름 말풍선</figcaption>
+  </figure>
+  <div class="aside tip">
+    <span class="lbl">도움말</span>
+    <p>마커 안에 표시할 수 있는 아이콘의 목록은 Font Awesome에서 볼 수 있다. <span class="tm">prefix = 'fa'</span>가 그 글꼴 집합을 가리킨다.</p>
+  </div>
+</section>
+
+<!-- ══════ 四 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">點</div>
+    <div><h2>좌표를 점으로 바꾸다</h2><p class="sub">USING THE SPATIAL EXTENSION · POINT · GEODATAFRAME</p></div>
+  </div>
+  <div class="col">
+    <p>공항의 위치를 지도에 그리는 일은 쉽고 즐거웠다. 그런데 특정 지점에 가장 가까운 공항을 찾는 일은 어떨까. DuckDB에는 이 일을 산책처럼 만들어 주는 <span class="tm">spatial</span> 확장이 있다. 이 확장으로 다음 같은 공간 처리 과제를 쉽게 수행한다.</p>
+    <ul class="chain">
+      <li><b>거리</b><span> 점 사이의 거리를 구한다.</span></li>
+      <li><b>범위</b><span> 두 위치가 지정한 거리 안에 있는지 판정한다.</span></li>
+    </ul>
+    <p style="margin-top:1.8em">먼저 <span class="tm">airports.csv</span>를 pandas DataFrame으로 읽는다. 그다음 <span class="tm">spatial</span> 확장이 다룰 수 있도록 위도와 경도에 얼마간의 변환을 해야 한다.</p>
+
+    <h3>Point 유형과 WKT</h3>
+    <p><span class="tm">airports</span> 테이블에는 위치에 관한 두 열, <span class="tm">latitude</span>와 <span class="tm">longitude</span>가 있다. <span class="tm">spatial</span> 확장을 쓰려면 DataFrame에 새 열을 더해야 한다. 이 열이 <span class="tm">Point</span> 데이터 유형으로 표현된 위치 값을 담는다.</p>
+  </div>
+  <div class="aside tip">
+    <span class="lbl">도움말 — Point 유형</span>
+    <p><span class="tm">Point</span> 데이터 유형은 데카르트 좌표계, 지리 좌표(경도·위도), 극좌표 등 여러 좌표계로 표현되는 공간의 한 점을 나타낸다.</p>
+  </div>
+  <div class="col">
+    <p>위도와 경도를 <span class="tm">Point</span> 유형으로 바꾸는 길은 두 가지다. <strong>Shapely 라이브러리를 쓰는 길</strong>과 <strong>DuckDB의 <span class="tm">spatial</span> 확장을 쓰는 길</strong>이다. 먼저 Shapely 쪽을 본다. 기하 객체의 조작과 분석을 위한 파이썬 꾸러미다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>① Shapely</span></div>
+<pre><span class="f">!pip</span> install shapely
+
+<span class="k">import</span> pandas <span class="k">as</span> pd
+df = pd.<span class="f">read_csv</span>(<span class="s">'airports.csv'</span>)
+
+<span class="k">from</span> shapely.geometry <span class="k">import</span> Point
+
+df[<span class="s">'geometry'</span>] = df.<span class="f">apply</span>(
+    <span class="k">lambda</span> row: <span class="f">Point</span>(row[<span class="s">'LONGITUDE'</span>], row[<span class="s">'LATI</span><span class="rec" title="원서 지면에서 잘린 부분. 열 이름 LATITUDE와 WKT 변환으로 이어지는 부분이다">TUDE'</span>])<span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. apply의 axis 인수와 WKT 변환 호출이 지면에 나타나지 않는다">…</span>
+df</pre></div>
+    <figcaption>도판 5-7 · geometry 열이 더해진 DataFrame. 좌표를 WKT(well-known text) 형식으로 저장한다</figcaption>
+  </figure>
+  <div class="col">
+    <p>WKT는 기하 객체를 사람이 읽을 수 있는 형태로 표현하는 텍스트 기반 형식이다. 이 예의 위치는 <span class="tm">EPSG:4326</span> 형식으로 저장된다.</p>
+  </div>
+  <div class="aside tip">
+    <span class="lbl">도움말 — EPSG:4326</span>
+    <p><span class="tm">EPSG:4326</span>은 지리공간 응용과 GIS에서 흔히 쓰이는 특정 좌표 참조 체계(CRS)다. EPSG(European Petroleum Survey Group, 현재는 국제 석유·가스 생산자 협회의 지구정보위원회)가 좌표 참조 체계와 관련 매개변수의 데이터베이스를 관리한다. <span class="tm">EPSG:4326</span> 형식의 예는 <strong class="src">POINT (-75.4404 40.65236)</strong>이다. 이 체계는 WGS 84(World Geodetic System 1984)라고도 불린다.</p>
+    <p style="margin-top:10px">이 예시 좌표가 낯익다면 제2장을 떠올려도 좋다. <span class="tm">airports_location.csv</span>의 첫 행에 있던 ABE, 곧 Lehigh Valley 국제공항의 좌표와 같은 값이다. 경도가 앞, 위도가 뒤에 오는 순서를 눈여겨보아야 한다. 일상의 어법과 뒤바뀌어 있다.</p>
+  </div>
+  <div class="col">
+    <p>DataFrame을 고쳤으므로 이를 DuckDB 데이터베이스에 <span class="tm">airports_2</span>라는 이름으로 올린다. 두 번째 길은 <span class="tm">spatial</span> 확장으로 DuckDB 안에서 곧바로 변환하는 것이다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>② spatial 확장</span></div>
+<pre><span class="c"># ① Shapely로 만든 DataFrame을 올리는 경우</span>
+conn.<span class="f">execute</span>(<span class="s">"CREATE TABLE airports_2 AS SELECT *</span><span class="rec" title="원서 지면에서 잘린 부분. DataFrame df를 원천으로 삼는 FROM 절이 이어진다">  FROM df"</span>)
+
+<span class="c"># ② DuckDB의 spatial 확장으로 변환하는 경우</span>
+conn.<span class="f">execute</span>(<span class="s">'INSTALL spatial;'</span>)
+conn.<span class="f">execute</span>(<span class="s">'LOAD spatial;'</span>)
+
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">DROP TABLE IF EXISTS</span> airports_2 ;
+    <span class="k">CREATE TABLE</span> airports_2 <span class="k">as</span>
+    <span class="k">SELECT</span>
+        *,
+        <span class="f">ST_AsText</span>(<span class="f">ST_Point</span>(LONGITUDE,LATITUDE)) a<span class="rec" title="원서 지면에서 잘린 부분. 별칭 as geometry로 복원했다">s geometry</span>
+    <span class="k">FROM</span> airports
+'''</span>)</pre></div>
+    <figcaption>어느 길을 택하든 DuckDB 데이터베이스에 airports_2라는 새 테이블이 생긴다</figcaption>
+  </figure>
+  <div class="aside warn">
+    <span class="lbl">검토자의 주석</span>
+    <p>본문은 이 함수를 <span class="tm">ST_AsPoint()</span>라 부르지만, 실제 코드는 <span class="tm">ST_Point()</span>를 <span class="tm">ST_AsText()</span>로 감싼 형태다. 본문의 표기와 코드가 어긋나므로, 실제로 동작하는 쪽인 코드를 기준으로 읽는 것이 맞다.</p>
+  </div>
+
+  <div class="col">
+    <h3>pandas DataFrame을 GeoDataFrame으로</h3>
+    <p><span class="tm">geometry</span> 열에 공간 분석을 수행하려면 pandas DataFrame을 GeoPandas의 <span class="tm">GeoDataFrame</span>으로 바꿔야 한다.</p>
+  </div>
+  <div class="aside tip">
+    <span class="lbl">도움말 — GeoDataFrame</span>
+    <p><span class="tm">GeoDataFrame</span>은 지리공간 라이브러리 GeoPandas의 표 형식 데이터 구조로, 일반 pandas DataFrame의 능력을 확장해 공간 데이터를 다룬다. GeoPandas는 pandas와 Shapely 위에 세워져, pandas의 표 데이터 조작 능력과 Shapely가 제공하는 기하 연산을 결합한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>leafmap.df_to_gdf</span></div>
+<pre><span class="f">!pip</span> install leafmap
+<span class="f">!pip</span> install mapclassify
+<span class="f">!pip</span> install geopandas
+
+<span class="k">import</span> leafmap
+df_airports_gdf = leafmap.<span class="f">df_to_gdf</span>(
+    conn.<span class="f">execute</span>(<span class="s">'SELECT * FROM airports_2'</span>)<span class="rec" title="원서 지면에서 잘린 부분. 관계 객체를 DataFrame으로 바꾸는 .df(),로 복원했다">.df(),</span>
+    geometry = <span class="s">'geometry'</span>,
+    src_crs=<span class="s">"EPSG:4326"</span>,
+    dst_crs=<span class="s">"EPSG:4326"</span>)</pre></div>
+  </figure>
+  <div class="col">
+    <p>이 문장에서는 원본 위치 형식을 <span class="tm">EPSG:4326</span>으로, 변환할 목적 형식도 <span class="tm">EPSG:4326</span>으로 지정했다. 변환할 열(<span class="tm">geometry</span>)은 <span class="tm">geometry</span> 매개변수로 알린다. 결국 이 연산은 <span class="tm">geometry</span> 열의 데이터 유형을 <span class="tm">object</span>에서 <span class="tm">geometry</span>로 바꾼다.</p>
+    <p>원본과 목적 좌표계가 같은데도 변환을 거치는 까닭이 여기 있다. 좌표계를 옮기는 일이 아니라 <strong>유형을 옮기는 일</strong>이기 때문이다. 글자로 적힌 좌표를 계산 가능한 기하 객체로 승격시키는 절차다.</p>
+    <p>변환을 마쳤으면 <span class="tm">GeoDataFrame</span>의 <span class="tm">explore()</span> 메서드를 불러 folium과 leaflet.js에 기반한 대화형 지도를 만든다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>explore()</span></div>
+<pre>df_airports_gdf.<span class="f">explore</span>()</pre></div>
+    <figcaption>도판 5-8 · 5-9 · 미국의 모든 공항이 원 마커로 표시되고, 마커를 누르면 공항의 상세가 나타난다</figcaption>
+  </figure>
+  <div class="col">
+    <p>한 줄이다. <span class="tm">GeoDataFrame</span>을 쓰면 지도를 만드는 법을 알 필요조차 없이 모든 일이 자동으로 처리된다. 앞 절에서 <span class="tm">Map</span>을 만들고 <span class="tm">CircleMarker</span>를 순회하며 얹던 그 일이 메서드 하나로 접힌다. 도구를 갈아 쥐면 손이 하던 일이 사라진다는 것, 답사에서 흔히 겪는 일이다.</p>
+  </div>
+</section>
+
+<!-- ══════ 五 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">近</div>
+    <div><h2>가까운 공항을 찾다 · 반경과 거리</h2><p class="sub">FINDING NEARBY AIRPORTS</p></div>
+  </div>
+  <div class="col">
+    <p>마이애미의 한 지점, 위도 <strong class="src">25.7824017</strong>, 경도 <strong class="src">-80.2706578</strong>을 놓고 이 지점에 가장 가까운 공항들을 찾는다. DuckDB의 <span class="tm">spatial</span> 확장에는 이 일에 쓸 함수가 여럿 있으며, 원서는 둘을 쓴다.</p>
+  </div>
+  <div class="cmp">
+    <table>
+      <thead><tr><th>함수</th><th>하는 일</th><th>물음의 성격</th></tr></thead>
+      <tbody>
+        <tr><td>ST_DWithin()</td><td>두 기하가 지정한 거리 안에 있는지 판정한다.</td><td>범위를 정한다. 걸리는 개수는 결과로 알게 된다.</td></tr>
+        <tr><td>ST_Distance()</td><td>두 기하 사이의 거리를 계산한다.</td><td>순위를 정한다. 개수를 직접 정할 수 있다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p>먼저 <span class="tm">ST_DWithin()</span>으로 마이애미 지점에서 3도 안에 있는 공항을 찾는다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>ST_DWithin — 3도</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'INSTALL spatial;'</span>)
+conn.<span class="f">execute</span>(<span class="s">'LOAD spatial;'</span>)
+
+<span class="c"># 마이애미</span>
+LOCATION_LNGLAT = (<span class="n">-80.2706578</span>, <span class="n">25.7824017</span>)
+
+<span class="c"># 3도 안</span>
+df_airports_near_miami = conn.<span class="f">sql</span>(<span class="s">f"""
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> airports_2
+    <span class="k">WHERE</span> <span class="f">ST_DWithin</span>(
+        <span class="f">ST_GeomFromText</span>(geometry),
+        <span class="f">ST_GeomFromText</span>('POINT ({LOCATION_LNGLAT<span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 형식 문자열의 좌표 삽입부가 지면에 나타나지 않는다">…</span>
+        <span class="n">3</span>);
+"""</span>).<span class="f">df</span>()
+df_airports_near_miami</pre></div>
+    <figcaption>도판 5-11 · 지정한 지점에서 3도 안에 있는 공항의 목록. 본문에 따르면 여덟 곳이다</figcaption>
+  </figure>
+  <div class="col">
+    <p>이 경우 마이애미의 지점에 가장 가까운 공항이 <strong class="src">여덟 곳</strong>이다. 더 좁은 범위를 원하면 3도를 2도로 바꾼다. 그러면 <strong class="src">다섯 곳</strong>만 얻는다.</p>
+    <p>여기서 반경 방식의 한계가 드러난다. 몇 곳이 걸릴지 미리 알 수 없다. 세 곳을 얻고 싶다면 반경을 손으로 더듬어야 한다. 그럴 때는 <span class="tm">ST_Distance()</span>가 낫다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>ST_Distance — 거리 열</span></div>
+<pre>df_airports_near_miami = conn.<span class="f">sql</span>(<span class="s">f"""
+    <span class="k">SELECT</span> *,
+        <span class="f">ST_Distance</span>(<span class="f">ST_GeomFromText</span>(geometry),
+        <span class="f">ST_GeomFromText</span>('POINT (
+            {LOCATION_LNGLAT[<span class="n">0</span>]}
+            {LOCATION_LNGLAT[<span class="n">1</span>]}))') <span class="k">as</span> distance
+    <span class="k">FROM</span> airports_2;
+"""</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 5-12 · distance라는 새 열이 붙은 DataFrame. 각 공항이 마이애미 지점에서 얼마나 떨어졌는지를 나타낸다</figcaption>
+  </figure>
+  <div class="col">
+    <p>가장 가까운 세 곳을 원하면 <span class="tm">distance</span> 열을 오름차순으로 정렬해 위에서 세 개를 취한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>ORDER BY · LIMIT 3</span></div>
+<pre>df_airports_near_miami = conn.<span class="f">sql</span>(<span class="s">f"""
+    <span class="k">SELECT</span> *,
+        <span class="f">ST_Distance</span>(<span class="f">ST_GeomFromText</span>(geometry),
+        <span class="f">ST_GeomFromText</span>('POINT (
+            {LOCATION_LNGLAT[<span class="n">0</span>]}
+            {LOCATION_LNGLAT[<span class="n">1</span>]}))') <span class="k">as</span> distance
+    <span class="k">FROM</span> airports_2
+    <span class="k">ORDER BY</span> distance
+    <span class="k">LIMIT</span> <span class="n">3</span>
+"""</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 5-13 · 마이애미 지점에 가장 가까운 세 공항</figcaption>
+  </figure>
+  <div class="col">
+    <p>결과를 지도에 그리려면 <span class="tm">GeoDataFrame</span>으로 바꾸고 <span class="tm">explore()</span>를 부른다. 그리고 그 함수가 돌려준 folium 지도의 참조를 써서, 마이애미의 그 지점에도 마커를 하나 얹는다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>지도에 얹기</span></div>
+<pre><span class="k">import</span> leafmap
+
+df_airports_near_miami_gdf = leafmap.<span class="f">df_to_gdf</span>(df<span class="rec" title="원서 지면에서 잘린 부분. 앞서 만든 결과 DataFrame과 geometry 인수가 이어진다">_airports_near_miami, …)</span>
+folium_map = df_airports_near_miami_gdf.<span class="f">explore</span>(<span class="rec" title="원서 지면에서 잘린 부분. 호출을 닫는 괄호로 복원했다">)</span>
+folium_map
+
+<span class="k">import</span> folium
+
+<span class="c"># 마이애미 지점에 말풍선을 얹는다</span>
+folium.<span class="f">Marker</span>(location = [LOCATION_LNGLAT[<span class="n">1</span>],LOCA<span class="rec" title="원서 지면에서 잘린 부분. 경도 원소 LOCATION_LNGLAT[0]로 복원했다">TION_LNGLAT[0]],</span>
+              popup=<span class="s">'Miami'</span>).<span class="f">add_to</span>(folium_map)
+folium_map</pre></div>
+    <figcaption>도판 5-14 · 5-15 · 세 공항과 마이애미 지점이 함께 지도에 놓인다</figcaption>
+  </figure>
+  <div class="aside">
+    <span class="lbl">일러두기 — 순서가 뒤바뀌는 자리</span>
+    <p>같은 좌표가 두 곳에서 서로 다른 순서로 쓰인다. WKT의 <span class="tm">POINT</span>에는 <span class="tm">(경도 위도)</span> 순으로, folium의 <span class="tm">location</span>에는 <span class="tm">[위도, 경도]</span> 순으로 넣는다. 위 코드에서 <span class="tm">LOCATION_LNGLAT[1]</span>이 앞에 오는 것이 그 때문이다. 지리공간 코드에서 가장 흔한 오류가 이 순서를 혼동하는 데서 나온다.</p>
+  </div>
+  <div class="col">
+    <p>여기까지 익힌 것을 원서는 일곱 항목으로 정리한다. folium으로 지도 표시, 여러 타일셋 표시, 마커로 모든 공항 표시, DuckDB의 <span class="tm">spatial</span> 확장 사용, Shapely와 <span class="tm">spatial</span> 확장으로 위도·경도를 <span class="tm">Point</span> 유형으로 변환, <span class="tm">GeoDataFrame</span>으로 공항 위치 표시, 도(度)와 거리로 근처 공항 찾기.</p>
+  </div>
+</section>
+
+<!-- ══════ 六 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">州</div>
+    <div><h2>주와 도시로 공항을 갈라 보다</h2><p class="sub">DESCRIPTIVE ANALYTICS — AIRPORTS BY STATE AND CITY</p></div>
+  </div>
+  <div class="col">
+    <p>기술 분석은 과거 사건에 관한 패턴과 추세와 통찰을 이해하기 위해 역사적 데이터를 해석하고 요약하는 일이다. Flight Delays 데이터셋으로 기술 분석을 수행하면 다음 물음들에 답을 얻는다. 주마다 공항이 몇 개인가. 한 공항에서 다른 공항으로 가는 항공편은 몇 편인가. 어느 요일에 그 노선의 항공편이 가장 적은가. 지연을 피하려면 하루 중 언제 떠나는 것이 가장 좋은가. 결항이 가장 많은 항공사는 어디인가. 지연이 가장 많은 항공사는 어디인가.</p>
+    <p>쉬운 것부터 시작한다. 모든 공항을 주와 도시로 묶는다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>정렬과 다중 인덱스</span></div>
+<pre>df_city_state = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> *
+    <span class="k">FROM</span> airports
+    <span class="k">ORDER BY</span> STATE, CITY
+'''</span>).<span class="f">df</span>()
+
+<span class="c"># 다중 인덱스 DataFrame으로 만든다</span>
+df_city_state.<span class="f">set_index</span>([<span class="s">'STATE'</span>,<span class="s">'CITY'</span>], inplace<span class="rec" title="원서 지면에서 잘린 부분. 제자리 변경 인수 =True)로 복원했다">=True)</span>
+df_city_state
+
+<span class="c"># 캘리포니아의 모든 공항</span>
+df_city_state.loc[<span class="s">'CA'</span>]
+
+<span class="c"># 캘리포니아 샌프란시스코의 공항</span>
+df_city_state.loc[(<span class="s">'CA'</span>,<span class="s">'San Francisco'</span>)]</pre></div>
+    <figcaption>도판 5-16 ~ 5-19 · 주·도시로 정렬한 표, 다중 인덱스로 바꾼 표, 캘리포니아의 공항들, 그리고 샌프란시스코의 공항</figcaption>
+  </figure>
+  <div class="col">
+    <p>SQL로 정렬하고 pandas로 색인한다. 이 절의 구조가 그렇다. <span class="tm">ORDER BY</span>가 순서를 만들고 <span class="tm">set_index()</span>가 그 순서를 <strong>주소</strong>로 바꾼다. 그러면 <span class="tm">loc['CA']</span>처럼 주 이름 하나로, 또는 <span class="tm">loc[('CA','San Francisco')]</span>처럼 튜플 하나로 원하는 자리를 곧바로 집는다. 지명을 색인으로 쓰는 이 방식은 답사기의 목차와 다르지 않다.</p>
+
+    <h3>주별 공항 수와 도표의 윤리</h3>
+    <p>이제 주마다 공항 수를 세고 그 수를 내림차순으로 정렬한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>GROUP BY · ORDER BY DESC</span></div>
+<pre>df_airports_state = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        STATE,
+        <span class="f">count</span>(*) <span class="k">as</span> COUNT
+    <span class="k">FROM</span> airports
+    <span class="k">GROUP BY</span> STATE
+    <span class="k">ORDER BY</span> Count <span class="k">DESC</span>
+'''</span>).<span class="f">df</span>()
+df_airports_state.<span class="f">head</span>()</pre></div>
+    <figcaption>도판 5-20 · 공항 수가 가장 많은 다섯 주</figcaption>
+  </figure>
+  <div class="col">
+    <p>이를 원 차트로 그려 보면 흥미롭다. 그런데 주의 목록이 상당히 길어 원 차트가 어수선해진다. 원서는 이 지점에서 도표를 세 번 고친다. 도표 하나를 놓고 무엇이 문제인지 짚어 가며 다듬는 이 과정이, 이 절에서 실제로 배울 것이다.</p>
+    <ul class="chain">
+      <li><b>첫째 판 · 도판 5-21</b><span> 모든 주를 넣은 원 차트. 조각이 너무 많아 읽을 수 없다.</span></li>
+      <li><b>둘째 판 · 도판 5-22</b><span> <span class="tm">LIMIT 10</span>으로 공항이 가장 많은 열 개 주로 줄인다. 읽을 만해졌다.</span></li>
+      <li><b>셋째 판 · 도판 5-23</b><span> 그래도 개선의 여지가 있다. 조각마다 백분율을 보이는 것은 뜻이 크지 않다. 알고 싶은 것은 <strong>주마다 공항이 몇 개인가</strong>다. 그래서 <span class="tm">fmt()</span> 함수를 정의해 <span class="tm">autopct</span> 매개변수에 넘긴다.</span></li>
+      <li><b>넷째 판 · 도판 5-24</b><span> 원 차트가 보기에 좋아 보이더라도, 원 차트가 문제라는 주장이 있다. 원서는 “Why Pie Charts Are Evil”을 그 논거로 가리키며 <strong>막대 차트</strong>를 대안으로 제시한다.</span></li>
+    </ul>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>fmt() — 백분율을 개수로 되돌린다</span></div>
+<pre><span class="k">import</span> matplotlib.pyplot <span class="k">as</span> plt
+<span class="k">import</span> seaborn
+
+<span class="c"># 공항의 총수</span>
+total = df_airports_state[<span class="s">'COUNT'</span>].<span class="f">sum</span>()
+
+<span class="k">def</span> <span class="f">fmt</span>(x):
+    <span class="k">return</span> <span class="s">'{:.1f}%\n({:.0f} airports)'</span>.<span class="f">format</span>(x<span class="rec" title="원서 지면에서 잘린 부분. 백분율에 총수를 곱해 개수로 되돌리는 두 번째 인수가 이어진다">, total*x/100)</span>
+
+palette_color = seaborn.<span class="f">color_palette</span>(<span class="s">'pastel'</span>)
+plt.<span class="f">figure</span>(figsize = (<span class="n">7</span>, <span class="n">7</span>))
+
+plt.<span class="f">pie</span>(df_airports_state[<span class="s">'COUNT'</span>],
+        labels = df_airports_state[<span class="s">'STATE'</span>],
+        colors = palette_color,
+        autopct = fmt)
+
+plt.<span class="f">legend</span>(df_airports_state[<span class="s">'STATE'</span>], loc = <span class="s">"bes</span><span class="rec" title="원서 지면에서 잘린 부분. 범례 위치 인수 best로 복원했다">t"</span>)</pre></div>
+  </figure>
+  <div class="col">
+    <p>원 차트를 그릴 때 Matplotlib이 조각마다 <span class="tm">fmt()</span> 함수를 부른다. <span class="tm">x</span>의 값은 각 조각의 백분율이다. 그러므로 백분율에 공항 총수를 곱하면 조각마다 실제 공항 수가 나온다. 백분율로 넘어온 것을 다시 개수로 환산해 되돌리는 셈이다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>막대 차트</span></div>
+<pre><span class="c"># 막대 차트를 만든다</span>
+plt.<span class="f">bar</span>(df_airports_state[<span class="s">'STATE'</span>],
+        df_airports_state[<span class="s">'COUNT'</span>],
+        color=<span class="s">'skyblue'</span>)
+
+plt.<span class="f">xlabel</span>(<span class="s">'State'</span>)
+plt.<span class="f">ylabel</span>(<span class="s">'Number of Airports'</span>)
+plt.<span class="f">title</span>(<span class="s">'Top 10 States with Most Airports'</span>)
+plt.<span class="f">xticks</span>(rotation = <span class="n">45</span>)</pre></div>
+    <figcaption>도판 5-24 · 주별 공항 수를 보이는 막대 차트</figcaption>
+  </figure>
+</section>
+
+<!-- ══════ 七 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">路</div>
+    <div><h2>노선의 무게를 재다</h2><p class="sub">FLIGHT COUNTS FOR EACH PAIR OF AIRPORTS</p></div>
+  </div>
+  <div class="col">
+    <p>가장 간단한 것부터 시작한다. 출발 공항별 운항 편수다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>출발 공항별</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        ORIGIN_AIRPORT, <span class="f">COUNT</span>(ORIGIN_AIRPORT) <span class="k">as</span><span class="rec" title="원서 지면에서 잘린 부분. 별칭 COUNT로 복원했다"> COUNT</span>
+    <span class="k">FROM</span> flights
+    <span class="k">GROUP BY</span> ORIGIN_AIRPORT
+    <span class="k">ORDER BY</span> COUNT <span class="k">DESC</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+  </figure>
+  <div class="rs">
+    <table>
+      <thead><tr><th>ORIGIN_AIRPORT</th><th>COUNT</th><th>공항</th></tr></thead>
+      <tbody>
+        <tr><td>ATL</td><td class="num"><span class="src">346,846</span></td><td>Hartsfield–Jackson Atlanta International</td></tr>
+        <tr><td>ORD</td><td class="num"><span class="src">285,884</span></td><td>O'Hare International</td></tr>
+        <tr><td class="el">⋮</td><td class="el">⋮</td><td class="el">⋮</td></tr>
+      </tbody>
+    </table>
+    <figcaption>도판 5-25 · 출발 공항별 총 운항 편수. 두 행만 본문에 명기되어 있어 그 두 행만 옮겼다</figcaption>
+  </div>
+  <div class="col">
+    <p>더 흥미로운 과제는 출발 공항과 도착 공항의 <strong>쌍</strong>마다 운항 편수를 얻는 일이다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>출발·도착 쌍별</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        ORIGIN_AIRPORT, DESTINATION_AIRPORT,
+        <span class="f">COUNT</span>(*) <span class="k">as</span> COUNT
+    <span class="k">FROM</span> flights
+    <span class="k">GROUP BY</span> ORIGIN_AIRPORT, DESTINATION_AIRPORT
+    <span class="k">ORDER BY</span> COUNT <span class="k">DESC</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 5-26 · SFO(샌프란시스코 국제공항)와 LAX(로스앤젤레스 국제공항) 사이의 항공편이 가장 빈번하다</figcaption>
+  </figure>
+  <div class="col">
+    <p>선택을 델타 항공(DL)이 제공하는 항공편으로만 한정하면 어떨까.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>항공사 한정</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        ORIGIN_AIRPORT, DESTINATION_AIRPORT,
+        <span class="f">COUNT</span>(*) <span class="k">as</span> COUNT
+    <span class="k">FROM</span> flights
+    <span class="k">WHERE</span> AIRLINE=<span class="s">'DL'</span>
+    <span class="k">GROUP BY</span> ORIGIN_AIRPORT, DESTINATION_AIRPORT
+    <span class="k">ORDER BY</span> COUNT <span class="k">DESC</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 5-27 · 델타 항공에서 가장 인기 있는 노선은 LGA(라과디아 공항)에서 ATL로 가는 편이다</figcaption>
+  </figure>
+  <div class="col">
+    <p>같은 SQL 문에서 항공사 코드만 바꾸면 어느 항공사의 항공편이든 얻는다. 질의 하나를 잘 세워 두면 열네 번을 다시 쓸 필요가 없다는 것, 이것이 SQL로 분석하는 일의 실질적인 이득이다.</p>
+  </div>
+</section>
+
+<!-- ══════ 八 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">消</div>
+    <div><h2>결항을 세는 법과 견주는 법</h2><p class="sub">GETTING THE CANCELED FLIGHTS FROM AIRLINES</p></div>
+  </div>
+  <div class="col">
+    <p><span class="tm">flights</span> 테이블에서 결항된 모든 항공편은 <span class="tm">CANCELLED</span> 필드가 1로 설정되어 있다. 이를 써서 2015년 델타 항공의 결항 편수를 알아낸다. 그런데 절대 수를 아는 것보다 <strong>결항 비율</strong>을 이해하는 편이 더 뜻이 있다. 원서는 세 단계로 물음을 정교하게 만든다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>세 단계로 정교해지는 물음</span></div>
+<pre><span class="c">-- ① 노선별 결항 편수</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        ORIGIN_AIRPORT, DESTINATION_AIRPORT,
+        <span class="f">COUNT</span>(*) <span class="k">as</span> COUNT
+    <span class="k">FROM</span> flights
+    <span class="k">WHERE</span> AIRLINE=<span class="s">'DL'</span> <span class="k">AND</span> CANCELLED = <span class="n">1</span>
+    <span class="k">GROUP BY</span> ORIGIN_AIRPORT, DESTINATION_AIRPORT
+    <span class="k">ORDER BY</span> COUNT <span class="k">DESC</span>
+'''</span>).<span class="f">df</span>()
+
+<span class="c">-- ② 노선별 결항 비율</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        ORIGIN_AIRPORT, DESTINATION_AIRPORT,
+        (<span class="f">SUM</span>(CANCELLED) * <span class="n">100.0</span>) / <span class="f">COUNT</span>(*) <span class="k">as</span> CA<span class="rec" title="원서 지면에서 잘린 부분. 뒤의 ORDER BY 절에 쓰인 별칭 CANCELLED_PERCENT로 복원했다">NCELLED_PERCENT</span>
+    <span class="k">FROM</span> flights
+    <span class="k">WHERE</span> AIRLINE = <span class="s">'DL'</span>
+    <span class="k">GROUP BY</span> ORIGIN_AIRPORT, DESTINATION_AIRPORT
+    <span class="k">ORDER BY</span> CANCELLED_PERCENT <span class="k">DESC</span>
+'''</span>).<span class="f">df</span>()
+
+<span class="c">-- ③ 항공사 전체의 결항 비율</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        (<span class="f">SUM</span>(CANCELLED) * <span class="n">100.0</span>) / <span class="f">COUNT</span>(*) <span class="k">as</span> CA<span class="rec" title="원서 지면에서 잘린 부분. 같은 별칭 CANCELLED_PERCENT로 복원했다">NCELLED_PERCENT</span>
+    <span class="k">FROM</span> flights
+    <span class="k">WHERE</span> AIRLINE = <span class="s">'DL'</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 5-28 ~ 5-30 · BOS(보스턴 로건 국제공항)와 LGA 사이를 오가는 노선의 결항이 많았고, 델타 항공은 2015년 전체 항공편의 0.44%를 결항했다</figcaption>
+  </figure>
+  <div class="col">
+    <p>델타 항공은 2015년 전체 항공편의 <strong class="src">0.44%</strong>를 결항했다. 그런데 한 항공사의 결항 비율만 보여서는 그 비율이 좋은지 나쁜지 알 수 없다. 모든 항공사에 걸쳐 견줄 수 있어야 유용하다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>주석 한 줄로 조건을 걷어 낸다</span></div>
+<pre><span class="k">import</span> matplotlib.pyplot <span class="k">as</span> plt
+
+df = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> AIRLINE,
+        (<span class="f">SUM</span>(CANCELLED) * <span class="n">100.0</span>) / <span class="f">COUNT</span>(*) <span class="k">as</span> CA<span class="rec" title="원서 지면에서 잘린 부분. 같은 별칭 CANCELLED_PERCENT로 복원했다">NCELLED_PERCENT</span>
+    <span class="k">FROM</span> flights
+    <span class="c">-- WHERE AIRLINE = 'DL'</span>
+    <span class="k">GROUP BY</span> AIRLINE
+    <span class="k">ORDER BY</span> CANCELLED_PERCENT <span class="k">DESC</span>
+'''</span>).<span class="f">df</span>()
+<span class="f">display</span>(df)</pre></div>
+    <figcaption>도판 5-31 · SQL의 --가 WHERE 조건을 주석으로 만들어, 결과가 모든 항공사의 결항 비율이 된다</figcaption>
+  </figure>
+  <div class="col">
+    <p>이 대목의 기법이 소박하지만 실용적이다. <span class="tm">WHERE</span> 절을 지우지 않고 <span class="tm">--</span>로 가려 둔다. 한 항공사만 보는 질의와 전체를 보는 질의를 한 문장에 담아 두고 한 글자로 갈아타는 것이다. 원서는 이렇게 얻은 결과로 델타 항공이 그리 나쁘지 않다고 적는다. 결항 순위에서 <strong>뒤에서 세 번째</strong>다.</p>
+    <p>다음은 막대 차트로 옮기는 일이다. 그런데 x축 눈금이 항공사 코드로 나오므로 이름을 온전히 보이는 편이 낫다. 그러려면 <span class="tm">airlines</span> 테이블과 <span class="tm">JOIN</span> 연산을 해야 한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>JOIN으로 이름 붙이기</span></div>
+<pre>df = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        a.AIRLINE,
+        (<span class="f">SUM</span>(f.CANCELLED) * <span class="n">100.0</span>) / <span class="f">COUNT</span>(*) <span class="k">as</span><span class="rec" title="원서 지면에서 잘린 부분. 뒤의 ORDER BY 절에 쓰인 별칭 CANCELLED_PERCENT로 복원했다"> CANCELLED_PERCENT</span>
+    <span class="k">FROM</span> flights f
+    <span class="k">JOIN</span> airlines a <span class="k">ON</span> f.AIRLINE = a.IATA_CODE
+    <span class="k">GROUP BY</span> a.AIRLINE
+    <span class="k">ORDER BY</span> CANCELLED_PERCENT <span class="k">DESC</span>
+'''</span>).<span class="f">df</span>()
+
+df.<span class="f">plot</span>(kind=<span class="s">'bar'</span>, x=<span class="s">'AIRLINE'</span>, y=<span class="s">'CANCELLED_PER</span><span class="rec" title="원서 지면에서 잘린 부분. 열 이름 CANCELLED_PERCENT로 복원했다">CENT'</span>)
+plt.<span class="f">xlabel</span>(<span class="s">'Airlines'</span>)
+plt.<span class="f">ylabel</span>(<span class="s">'Cancellation Percentage'</span>)
+plt.<span class="f">title</span>(<span class="s">'Cancellation Percentage for Different</span><span class="rec" title="원서 지면에서 잘린 부분. 제목 문자열의 끝이 지면에 나타나지 않는다"> Airlines'</span>)</pre></div>
+    <figcaption>도판 5-32 · 5-33 · 5-34 · 코드로 표시한 막대 차트, 이름으로 바꾼 막대 차트, 그리고 같은 값을 원 차트로 그린 것</figcaption>
+  </figure>
+  <div class="col">
+    <p>제3장에서 익힌 조인이 여기서 쓰인다. 코드 <span class="tm">DL</span>을 이름 Delta Air Lines Inc.로 바꾸는 일, 곧 <strong>사람이 읽을 수 있게 만드는 일</strong>이 조인의 몫이다. 분석의 마지막 한 걸음은 늘 이런 종류의 번역이다.</p>
+  </div>
+</section>
+
+<!-- ══════ 九 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">曜</div>
+    <div><h2>요일을 세다 · 그리고 10월의 이상</h2><p class="sub">FLIGHT COUNT FOR EACH DAY OF THE WEEK</p></div>
+  </div>
+  <div class="col">
+    <p>노선마다 요일별 운항 편수를 알면 특정 요일에 항공편이 적은지 알 수 있다. 모든 노선 조합을 요일로 묶는 DataFrame을 만든다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>요일별 · 결항 제외</span></div>
+<pre>df_flights_day_of_week = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        day_of_week,
+        origin_airport,
+        destination_airport,
+        <span class="f">COUNT</span>(*) <span class="k">AS</span> flight_count
+    <span class="k">FROM</span>
+        flights
+    <span class="k">WHERE</span>
+        CANCELLED = <span class="n">0</span> <span class="c">-- 결항편은 제외한다</span>
+    <span class="k">GROUP BY</span>
+        day_of_week,
+        origin_airport,
+        destination_airport
+    <span class="k">ORDER BY</span>
+        day_of_week,
+        origin_airport,
+        destination_airport;
+'''</span>).<span class="f">df</span>()
+
+df_flights_day_of_week</pre></div>
+    <figcaption>도판 5-35 · 요일로 묶은 노선별 운항 편수</figcaption>
+  </figure>
+
+  <div class="aside warn">
+    <span class="lbl">공항 코드 검증 — 원서의 별면 박스</span>
+    <p>결과를 살펴보면 첫 다섯 행의 <span class="tm">ORIGIN_AIRPORT</span>와 <span class="tm">DESTINATION_AIRPORT</span> 필드가 알파벳이 아니라 <strong>숫자 값</strong>으로 공항 코드를 담고 있음을 알게 된다. 실제로 이 양상은 <strong>2015년 10월 한 달 전체</strong>에 걸쳐 일관되게 나타난다. 두 열에서 알파벳이 아닌 값을 찾는 질의로 이를 확인할 수 있다.</p>
+    <div class="code" style="margin-top:14px"><div class="bar"><span>SQL</span><span>NOT SIMILAR TO</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span> YEAR, MONTH, DAY, ORIGIN_AIRPORT, DEST<span class="rec" title="원서 지면에서 잘린 부분. 열 이름 DESTINATION_AIRPORT로 복원했다">INATION_AIRPORT</span>
+    <span class="k">FROM</span> flights
+    <span class="k">WHERE</span> ORIGIN_AIRPORT <span class="k">NOT SIMILAR TO</span> '[A-Za-z<span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 정규 표현식의 나머지가 지면에 나타나지 않는다">…</span>
+        <span class="k">OR</span> DESTINATION_AIRPORT <span class="k">NOT SIMILAR TO</span> '[A<span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+    <p style="margin-top:14px">도판 5-36이 보이는 대로, 2015년 10월에 두 열이 숫자 값을 담고 있음이 확인된다. 이 두 필드의 숫자 값은 통상 특수한 경우를 나타낸다. 작은 공항이나 화물 전용 거점, 미지정 위치에 대해 체계가 배정한 코드다. 회항이나 운영상 예외로 특정 공항 코드를 쓸 수 없었던 경우에도 나타난다. 여기서는 간결함을 위해 이 숫자 값들을 별개의 공항 코드로 간주한다.</p>
+  </div>
+  <div class="col">
+    <p>이 박스가 이 장에서 가장 값진 대목이다. 원서는 결과를 그대로 받아들이지 않고, 이상한 것이 눈에 띄자 그것을 확인하는 질의를 따로 세웠다. 그리고 그 이상이 <strong>한 달에 국한된 체계적 결손</strong>임을 밝혔다. 탐색적 분석의 본령은 답을 얻는 데 있지 않고 데이터가 어디서 어긋나 있는지를 찾아내는 데 있다. 답사자가 비석의 마멸된 자리를 먼저 살피는 일과 같다.</p>
+    <p>본문으로 돌아온다. 도판 5-35의 결과에는 모든 노선 조합이 담겨 있으므로, SFO에서 LAX로 가는 항공편의 운항 편수만 골라 막대 차트로 그린다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>노선 하나를 골라 그린다</span></div>
+<pre>from_airport = <span class="s">'SFO'</span>
+to_airport = <span class="s">'LAX'</span>
+
+df_flights_result = df_flights_day_of_week.<span class="f">query</span><span class="rec" title="원서 지면에서 잘린 부분. 질의 문자열을 받는 여는 괄호로 복원했다">(</span>
+    <span class="s">f'ORIGIN_AIRPORT=="{from_airport}" &amp; DESTINAT</span><span class="rec" title="원서 지면에서 잘린 부분. 도착 공항 조건과 호출을 닫는 부분이 이어진다">ION_AIRPORT=="{to_airport}"')</span>
+
+df_flights_result.<span class="f">plot</span>(kind=<span class="s">'bar'</span>,
+                       x = <span class="s">'DAY_OF_WEEK'</span>,
+                       y = <span class="s">'flight_count'</span>,
+                       legend = <span class="k">False</span>)
+
+plt.<span class="f">xlabel</span>(<span class="s">'Day of Week'</span>)
+plt.<span class="f">ylabel</span>(<span class="s">'Number of Flights'</span>)
+plt.<span class="f">title</span>(<span class="s">f'Number of Flights from {from_airport}</span><span class="rec" title="원서 지면에서 잘린 부분. 제목 문자열의 나머지가 지면에 나타나지 않는다"> …'</span>)
+plt.<span class="f">xticks</span>(df_flights_result[<span class="s">'DAY_OF_WEEK'</span>] - <span class="n">1</span>,
+           [<span class="s">'Mon'</span>, <span class="s">'Tue'</span>, <span class="s">'Wed'</span>, <span class="s">'Thu'</span>, <span class="s">'Fri'</span>, <span class="s">'S</span><span class="rec" title="원서 지면에서 잘린 부분. 요일 약어 Sat, Sun으로 복원했다">at', 'Sun'])</span>
+plt.<span class="f">show</span>()</pre></div>
+    <figcaption>도판 5-37 · SFO에서 LAX로 가는 항공편은 토요일과 일요일에 적어 보인다</figcaption>
+  </figure>
+  <div class="col">
+    <p>운항 편수를 세는 데 그치지 않고 <strong>백분율</strong>을 계산할 수도 있다. 다음 질의는 결항편을 제외하고 주어진 출발·도착 공항에 대해 요일별 항공편의 백분율을 계산한다. 두 개의 <strong>공통 테이블 표현식(CTE)</strong>으로, 먼저 요일별 운항 편수를 모으고 그다음 출발·도착 쌍별 총 운항 편수를 모아 이를 이룬다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>CTE 두 개로 백분율 만들기</span></div>
+<pre>df_flights_weekday = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">with</span> t1 <span class="k">as</span> (
+        <span class="k">SELECT</span>
+            day_of_week,
+            origin_airport,
+            destination_airport,
+            <span class="f">COUNT</span>(*) <span class="k">AS</span> flight_count_per_weekday
+        <span class="k">FROM</span> flights
+        <span class="k">WHERE</span> CANCELLED = <span class="n">0</span> <span class="c">-- 결항편 제외</span>
+        <span class="k">GROUP BY</span>
+            day_of_week, origin_airport, destination_airport
+        <span class="k">ORDER BY</span>
+            day_of_week, origin_airport, destination_airport
+    ),
+    t2 <span class="k">as</span> (
+        <span class="k">SELECT</span>
+            origin_airport,
+            destination_airport,
+            <span class="f">count</span>(*) <span class="k">as</span> total_flight_count
+        <span class="k">FROM</span> flights
+        <span class="k">WHERE</span> CANCELLED = <span class="n">0</span> <span class="c">-- 결항편 제외</span>
+        <span class="k">GROUP BY</span>
+            origin_airport, destination_airport
+    )
+    <span class="k">SELECT</span>
+        t1.origin_airport,
+        t1.destination_airport,
+        t1.day_of_week,
+        t2.total_flight_count,
+        <span class="n">100.</span> * (t1.flight_count_per_weekday / t2<span class="rec" title="원서 지면에서 잘린 부분. 분모 total_flight_count와 별칭으로 복원했다">.total_flight_count) as</span>
+            percent_flights_on_weekday
+    <span class="k">FROM</span> t1
+    <span class="k">JOIN</span> t2
+    <span class="k">ON</span>
+        t1.origin_airport = t2.origin_airport <span class="k">AND</span>
+        t1.destination_airport = t2.destination_a<span class="rec" title="원서 지면에서 잘린 부분. 열 이름 destination_airport로 복원했다">irport</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 5-38 · 5-39 · 요일별 운항 편수의 백분율. 같은 결과를 막대 차트로도 그린다</figcaption>
+  </figure>
+  <div class="col">
+    <p>CTE 두 개의 역할이 분명하다. <span class="tm">t1</span>은 분자를, <span class="tm">t2</span>는 분모를 만든다. 그리고 둘을 노선으로 조인해 나눈다. 백분율을 구하는 일이 결국 <strong>같은 데이터를 두 가지 굵기로 묶어 견주는 일</strong>임을 이 구조가 보여 준다. 절대 수만 보면 큰 노선이 언제나 이기지만, 비율로 보면 노선의 크기와 무관한 요일의 성질이 드러난다.</p>
+  </div>
+</section>
+
+<!-- ══════ 十 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">時</div>
+    <div><h2>언제 떠나야 늦지 않는가</h2><p class="sub">FINDING THE MOST COMMON TIMESLOT FOR FLIGHT DELAYS</p></div>
+  </div>
+  <div class="col">
+    <p>지연이 가장 잦은 시간을 찾기 위해 하루를 네 개의 시간대로 나눈다. 0시~6시, 6시~12시, 12시~18시, 18시~24시다. 이 시간대로 시간대별 항공편 지연을 찾는 SQL 질의를 만든다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>CASE로 시간대를 만든다</span></div>
+<pre>df_delays_by_week = conn.<span class="f">execute</span>(<span class="s">'''
+<span class="k">SELECT</span>
+    DAY_OF_WEEK,
+    <span class="k">CASE</span>
+        <span class="k">WHEN</span> SCHEDULED_DEPARTURE <span class="k">BETWEEN</span> '0000' A<span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 각 구간의 상한과 THEN 절의 이름표가 지면에 나타나지 않는다">…</span>
+        <span class="k">WHEN</span> SCHEDULED_DEPARTURE <span class="k">BETWEEN</span> '0600' A<span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+        <span class="k">WHEN</span> SCHEDULED_DEPARTURE <span class="k">BETWEEN</span> '1200' A<span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+        <span class="k">WHEN</span> SCHEDULED_DEPARTURE <span class="k">BETWEEN</span> '1800' A<span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+        <span class="k">ELSE</span> 'Other'
+    <span class="k">END</span> <span class="k">AS</span> DEPARTURE_TIME_INTERVAL,
+    <span class="f">AVG</span>(ARRIVAL_DELAY) <span class="k">AS</span> AVG_ARRIVAL_DELAY
+<span class="k">FROM</span> flights
+<span class="k">WHERE</span> ARRIVAL_DELAY &gt; <span class="n">0</span>
+<span class="k">GROUP BY</span>
+    DAY_OF_WEEK,
+    <span class="k">CASE</span>
+        <span class="c">-- SELECT 절과 같은 CASE 식을 되풀이한다</span>
+        <span class="k">ELSE</span> 'Other'
+    <span class="k">END</span>
+<span class="k">ORDER BY</span>
+    DAY_OF_WEEK, DEPARTURE_TIME_INTERVAL;
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 5-40 · 요일로 묶은 시간대별 항공편 지연. WHERE ARRIVAL_DELAY &gt; 0이므로 지연된 항공편만 대상이다</figcaption>
+  </figure>
+  <div class="aside">
+    <span class="lbl">일러두기 — CASE 식의 되풀이</span>
+    <p><span class="tm">GROUP BY</span> 절에 <span class="tm">SELECT</span> 절과 똑같은 <span class="tm">CASE</span> 식을 다시 적는다. 별칭 <span class="tm">DEPARTURE_TIME_INTERVAL</span>을 <span class="tm">GROUP BY</span>에서 쓸 수 없는 표준 SQL의 제약 때문이다. 원한다면 하루를 더 많은 시간대로 나눌 수도 있다.</p>
+  </div>
+  <div class="col">
+    <p>DataFrame만 보아서는 그다지 쓸모가 없다. 그래서 시간대별 지연을 보이는 막대 차트를 그린다. 그러기 전에 DataFrame의 색인이 <span class="tm">DAY_OF_WEEK</span>가 되고 열이 시간대가 되도록 <strong>피벗</strong>해야 한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python</span><span>pivot과 막대 차트</span></div>
+<pre>df_delays_by_week_pivot = df_delays_by_week.<span class="f">pivot</span><span class="rec" title="원서 지면에서 잘린 부분. 인수를 받는 여는 괄호로 복원했다">(</span>
+    index = <span class="s">'DAY_OF_WEEK'</span>,
+    columns = <span class="s">'DEPARTURE_TIME_INTERVAL'</span>,
+    values = <span class="s">'AVG_ARRIVAL_DELAY'</span>)
+df_delays_by_week_pivot
+
+<span class="c"># 막대 차트를 그린다</span>
+df_delays_by_week_pivot.<span class="f">plot</span>(kind=<span class="s">'bar'</span>,
+                              stacked=<span class="k">False</span>,
+                              figsize=(<span class="n">10</span>, <span class="n">6</span>))
+
+<span class="c"># x축 눈금을 요일로 바꾼다</span>
+days_of_week = [<span class="s">'Monday'</span>, <span class="s">'Tuesday'</span>, <span class="s">'Wednesday'</span><span class="rec" title="원서 지면에서 잘린 부분. 목록을 잇는 쉼표로 복원했다">,</span>
+                <span class="s">'Thursday'</span>, <span class="s">'Friday'</span>, <span class="s">'Saturday'</span><span class="rec" title="원서 지면에서 잘린 부분. 나머지 요일 Sunday로 복원했다">, 'Sunday']</span>
+plt.<span class="f">xticks</span>(ticks=<span class="f">range</span>(<span class="f">len</span>(days_of_week)), labels<span class="rec" title="원서 지면에서 잘린 부분. 눈금 이름표로 days_of_week를 넘기는 부분이다">=days_of_week)</span>
+
+plt.<span class="f">title</span>(<span class="s">'Average Arrival Delay by Departure Tim</span><span class="rec" title="원서 지면에서 잘린 부분. 제목 문자열의 나머지가 지면에 나타나지 않는다">e …'</span>)
+plt.<span class="f">xlabel</span>(<span class="s">'Day of Week'</span>)
+plt.<span class="f">ylabel</span>(<span class="s">'Average Arrival Delay (minutes)'</span>)
+plt.<span class="f">legend</span>(title=<span class="s">'Departure Time Interval'</span>, bbox_<span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 범례 위치 인수가 지면에 나타나지 않는다">…</span>
+plt.<span class="f">tight_layout</span>() <span class="c"># 잘림을 피하도록 배치를 조정한다</span>
+plt.<span class="f">show</span>()</pre></div>
+    <figcaption>도판 5-41 · 5-42 · 재구성한 DataFrame과, 요일별 출발 시간대에 따른 평균 도착 지연</figcaption>
+  </figure>
+  <div class="col">
+    <p>도판 5-42는 지연이 있는 모든 항공편에 대해 세 가지를 보인다. 아래 격자는 그 세 문장을 옮긴 것이다. 수치가 아니라 <strong>본문이 내린 판단</strong>을 칸에 표시했다.</p>
+  </div>
+  <div class="slots">
+    <table>
+      <thead>
+        <tr><th>시간대</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th><th>일</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>0시 ~ 6시</td><td>·</td><td>·</td><td>·</td><td class="best">최소</td><td class="best">최소</td><td>·</td><td>·</td></tr>
+        <tr><td>6시 ~ 12시</td><td class="short">짧음</td><td class="short">짧음</td><td class="short">짧음</td><td>·</td><td>·</td><td class="short">짧음</td><td>·</td></tr>
+        <tr><td>12시 ~ 18시</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td><td>·</td></tr>
+        <tr><td>18시 ~ 24시</td><td class="long">가장 김</td><td class="long">가장 김</td><td class="long">가장 김</td><td class="long">가장 김</td><td class="long">가장 김</td><td class="long">가장 김</td><td class="long">가장 김</td></tr>
+      </tbody>
+    </table>
+    <div class="legend">
+      <span><i style="background:rgba(162,51,31,.16)"></i>저녁 시간대가 평균 지연이 가장 길다</span>
+      <span><i style="background:rgba(120,48,74,.13)"></i>목·금·일을 뺀 대부분의 날은 오전 시간대의 평균 지연이 가장 짧다</span>
+      <span><i style="background:rgba(181,130,24,.22)"></i>지연을 최소로 하려면 목요일이나 금요일, 아주 이른 새벽</span>
+    </div>
+    <p class="cap" style="margin-top:18px">이 격자는 도판 5-42의 수치를 옮긴 것이 <b>아니다</b>. 원서 본문이 그 도판에서 읽어 낸 세 문장을 칸에 배치한 것이며, 개별 평균 지연 값은 도판 이미지에만 있어 인용하지 않았다.</p>
+  </div>
+  <div class="col">
+    <p>결론은 실용적이다. 지연을 최소로 하려면 목요일이나 금요일, 그리고 아주 이른 새벽(0시~6시)에 떠난다. 저녁 시간대는 어느 요일이든 가장 길다. 하루 동안 쌓인 지연이 저녁으로 밀려 내려간다는, 항공 운항의 상식이 데이터로 확인되는 자리다.</p>
+  </div>
+</section>
+
+<!-- ══════ 十一 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">遲</div>
+    <div><h2>건수의 함정, 비율의 정직함</h2><p class="sub">AIRLINES WITH THE MOST AND FEWEST DELAYS</p></div>
+  </div>
+  <div class="col">
+    <p>먼저 항공사별 지연 건수를 합산한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>지연 건수</span></div>
+<pre>df_most_delays = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">SELECT</span>
+        <span class="f">count</span>(airlines.AIRLINE) <span class="k">as</span> Count,
+        airlines.AIRLINE
+    <span class="k">FROM</span> flights, airlines
+    <span class="k">WHERE</span> airlines.IATA_CODE = flights.AIRLINE <span class="k">AN</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 지연 조건이 이어지지만 지면에 나타나지 않는다">…</span>
+    <span class="k">GROUP BY</span> airlines.AIRLINE
+    <span class="k">ORDER BY</span> COUNT <span class="k">DESC</span>
+'''</span>).<span class="f">df</span>()
+df_most_delays</pre></div>
+    <figcaption>도판 5-43 · 항공사별 지연 항공편의 총수</figcaption>
+  </figure>
+  <div class="col">
+    <p>그런데 어느 항공사의 지연 항공편 수만 세어 그 수로 지연이 가장 많은 항공사를 정하는 것은 공정하지 않을 수 있다. 어떤 항공사가 하루에 두 편만 운항하고 그중 한 편이 지연되었다고 상상해 본다. 지연 항공편은 한 편뿐이지만 지연 비율은 <strong>50%</strong>다.</p>
+    <p>지연이 가장 많은 항공사를 훨씬 정확하게 정하는 방법은 항공사별 지연 백분율을 계산하는 것이다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>CTE + CASE로 비율 계산</span></div>
+<pre>df_percent_delay = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">WITH</span> flight_delays <span class="k">AS</span> (
+        <span class="k">SELECT</span>
+            AIRLINE,
+            <span class="n">1.0</span> * <span class="f">count</span>(*) <span class="k">as</span> TotalFlights,
+            <span class="n">1.0</span> * <span class="f">sum</span>(<span class="k">case when</span> ARRIVAL_DELAY &gt; <span class="n">0</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. then 1 else 0 end와 별칭이 이어지지만 지면에 나타나지 않는다">…</span>
+            (<span class="n">1.0</span> * <span class="f">sum</span>(<span class="k">case when</span> ARRIVAL_DELAY &gt;<span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+            <span class="f">count</span>(*)) * <span class="n">100</span> <span class="k">as</span> Percentage
+        <span class="k">FROM</span> flights
+        <span class="k">GROUP BY</span> AIRLINE
+    )
+    <span class="k">SELECT</span>
+        flight_delays.Percentage,
+        airlines.IATA_CODE,
+        airlines.AIRLINE
+    <span class="k">FROM</span> flight_delays
+    <span class="k">JOIN</span> airlines <span class="k">ON</span> airlines.IATA_CODE = flight_<span class="rec" title="원서 지면에서 잘린 부분. CTE 이름을 이어 flight_delays.AIRLINE으로 복원했다">delays.AIRLINE</span>
+    <span class="k">ORDER BY</span> flight_delays.Percentage <span class="k">DESC</span>;
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 5-44 · 5-45 · 항공사별 지연 항공편의 백분율과 그 막대 차트</figcaption>
+  </figure>
+  <div class="col">
+    <p>결과의 첫 줄이 이 절의 답이다. 지연에 관해서는 <strong>Spirit Air Lines</strong>가 선두이며, 전체 항공편의 <strong class="src">48.46%</strong>가 정시에 도착하지 못했다.</p>
+    <p>그리고 늘 정시에 도착하는, 심지어 더 일찍 도착하는 항공사를 찾고 싶다면 어떻게 하는가. 쉽다. 부호를 <span class="tm">&gt;</span>에서 <span class="tm">&lt;=</span>로 바꾸기만 하면 된다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>부호 하나를 뒤집는다</span></div>
+<pre>df_percent_on_time = conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">WITH</span> flight_delays <span class="k">AS</span> (
+        <span class="k">SELECT</span>
+            AIRLINE,
+            <span class="n">1.0</span> * <span class="f">count</span>(*) <span class="k">as</span> TotalFlights,
+            <span class="n">1.0</span> * <span class="f">sum</span>(<span class="k">case when</span> ARRIVAL_DELAY &lt;=<span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 0 then 1 else 0 end가 이어진다">…</span>
+                OnTimeFlights,
+            (<span class="n">1.0</span> * <span class="f">sum</span>(<span class="k">case when</span> ARRIVAL_DELAY &lt;=<span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+                <span class="f">count</span>(*)) * <span class="n">100</span> <span class="k">as</span> Percentage
+        <span class="k">FROM</span> flights
+        <span class="k">GROUP BY</span> AIRLINE
+    )
+    <span class="k">SELECT</span>
+        flight_delays.Percentage,
+        airlines.IATA_CODE,
+        airlines.AIRLINE
+    <span class="k">FROM</span> flight_delays
+    <span class="k">JOIN</span> airlines <span class="k">ON</span> airlines.IATA_CODE = flight_<span class="rec" title="원서 지면에서 잘린 부분. flight_delays.AIRLINE으로 복원했다">delays.AIRLINE</span>
+    <span class="k">ORDER BY</span> flight_delays.Percentage <span class="k">DESC</span>;
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 5-46 · 5-47 · 항공사별 정시 도착 항공편의 백분율. Delta Air Lines가 선두이며 항공편의 70.72%가 정시 또는 조기에 도착했다</figcaption>
+  </figure>
+  <div class="rs">
+    <table>
+      <thead><tr><th>물음</th><th>선두</th><th>값</th></tr></thead>
+      <tbody>
+        <tr><td>지연 비율이 가장 높은 항공사</td><td>Spirit Air Lines</td><td class="num"><span class="src">48.46%</span></td></tr>
+        <tr><td>정시 도착 비율이 가장 높은 항공사</td><td>Delta Air Lines</td><td class="num"><span class="src">70.72%</span></td></tr>
+        <tr><td>결항 비율 · 델타 항공 단독</td><td>Delta Air Lines</td><td class="num"><span class="src">0.44%</span></td></tr>
+      </tbody>
+    </table>
+    <figcaption>이 장에서 본문에 명기된 항공사 관련 세 수치. 지연과 정시는 서로 다른 질의의 결과이므로 두 값을 더해 100%가 되지 않는다</figcaption>
+  </div>
+  <div class="col">
+    <p>이 절의 교훈은 부호 하나가 아니라 <strong>분모의 선택</strong>이다. 건수로 세면 큰 항공사가 늘 지연이 많은 항공사가 된다. 비율로 세면 규모가 지워지고 성질이 드러난다. 앞의 요일 백분율 절에서 이미 같은 원리가 나왔고, 결항 비율 절에서도 그랬다. 이 장은 같은 교훈을 세 번 되풀어 가르친다. 무엇을 세는가보다 <strong>무엇으로 나누는가</strong>가 결론을 정한다는 것이다.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════ 맺음 ══════ -->
+<div class="closing rv">
+  <div class="closing-in">
+    <p class="kicker" style="margin-bottom:22px"><i></i>맺음말 · SUMMARY</p>
+    <blockquote>spatial 확장은 수많은 가능성을 제공하며, 이 장은 그 표면을 겨우 긁었을 뿐이다.</blockquote>
+    <div class="col">
+      <p>제5장은 2015 Flight Delays 데이터셋의 탐색적 데이터 분석을 통해 DuckDB의 흥미로운 실용적 응용을 가르쳤다. 여정은 모든 공항의 위치를 folium 지도에 얹는 일에서 시작했다. 그다음 지리공간 분석을 위해 DuckDB의 <span class="tm">spatial</span> 확장을 끌어와, 이 확장의 함수들이 그런 분석을 크게 간결하게 만든다는 것을 확인했다. 후반부는 기술 분석으로 초점을 옮겨, 항공편 지연과 결항, 요일별 운항 빈도에 관한 값진 통찰을 드러냈다.</p>
+      <p>여기서 쓴 방법론과 도구는 다양한 데이터셋에 적용할 수 있으며, 교통 관리와 사업 계획, 여러 산업에 걸친 데이터 기반 전략 같은 분야의 의사 결정에 값진 관점을 제공한다.</p>
+      <p style="margin-top:2.4em;color:var(--meok-soft)">답사를 마치며 이 장의 자리를 적어 둔다. 앞의 네 장이 도구를 익히는 장이었다면 제5장은 <strong>도구를 들고 나가 보는 장</strong>이다. 그래서 이 장에는 새 문법이 거의 없다. <span class="tm">GROUP BY</span>와 <span class="tm">JOIN</span>과 <span class="tm">CASE</span>와 CTE, 모두 제3장에서 익힌 것들이다. 새로운 것은 <span class="tm">spatial</span> 확장의 몇 함수와, 무엇보다 <strong>묻는 법</strong>이다.</p>
+      <p style="color:var(--meok-soft)">그리고 이 장이 가르치는 가장 실질적인 것은 세 번 되풀린 그 교훈이다. 결항 편수가 아니라 결항 비율, 요일별 편수가 아니라 요일별 백분율, 지연 건수가 아니라 지연 비율. 세는 일은 쉽고 나누는 일은 판단을 요구한다. 답사기가 유물의 크기를 재는 데 그치지 않고 그것이 놓인 자리와 견주는 일에 공을 들이는 것과 같다. 10월 한 달의 공항 코드가 숫자로 되어 있음을 발견해 따로 밝혀 둔 그 별면 박스가, 이 장에서 가장 답사기다운 대목이었다.</p>
+    </div>
+    <p style="margin-top:40px"><a class="next" href="#">다음 장 → JSON 파일 다루기</a></p>
+  </div>
+</div>
+
+<footer>
+  <span>DuckDB: Up and Running · Wei-Meng Lee · O'Reilly Media, 2024 — 제5장 「Performing EDA with DuckDB」 검토 기록</span>
+  <span>굵은 글자는 원서 본문에 명기된 수치, 점선 밑줄은 복원한 코드, …는 복원하지 않은 부분이다</span>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    items.forEach(function(el){ el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, {threshold:0.05, rootMargin:'0px 0px -8% 0px'});
+    items.forEach(function(el){ io.observe(el); });
+  }
+})();
+</script>
+</body>
+</html>

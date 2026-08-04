@@ -1,0 +1,916 @@
+---
+layout: null
+title: "Accessing Remote Data Using DuckDB"
+date: 2026-08-11 
+categories: [artificial intelligence]
+tags: [artificial general intelligence, data management]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>돌을 옮기지 않고 탁본을 뜬다 — DuckDB 답사기 제8장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 이 권의 구조색은 동록(銅綠), 곧 금석(金石)에 낀 청동 녹빛이다.
+     비석을 옮기지 않고 탁본을 뜨는 장이므로 금석학의 색을 쓴다 */
+  --hoebyeok:#E5E7E6;
+  --hanji:#F1F3F2;
+  --meok:#171A1A;
+  --meok-soft:#3B4141;
+  --dongrok:#17646E;
+  --dongrok-dk:#0F4A52;
+  --juchil:#A2331F;
+  --chija:#B58218;
+  --line:rgba(23,26,26,.16);
+  --line-soft:rgba(23,26,26,.08);
+  --display:"Gowun Batang",'Nanum Myeongjo',serif;
+  --body:"Noto Sans KR",system-ui,sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",monospace;
+  --maxw:1180px;
+  --colw:720px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--hoebyeok);color:var(--meok);font-family:var(--body);
+  font-weight:300;font-size:17px;line-height:1.95;-webkit-font-smoothing:antialiased;
+  letter-spacing:-.005em}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(rgba(23,26,26,.055) 1px,transparent 1px);
+  background-size:4px 4px;opacity:.7}
+.wrap{position:relative;z-index:1}
+
+/* 표제 */
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#EBEDEC 0%,var(--hoebyeok) 100%)}
+.hero-in{max-width:var(--maxw);margin:0 auto;
+  padding:clamp(64px,11vw,132px) clamp(22px,5vw,56px) clamp(40px,6vw,64px);position:relative}
+.glyph{position:absolute;right:clamp(-30px,-1vw,0px);top:1%;font-family:var(--display);
+  font-weight:700;font-size:clamp(230px,44vw,560px);line-height:.78;color:var(--dongrok);
+  opacity:.07;pointer-events:none;user-select:none}
+.kicker{font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:.34em;
+  text-transform:uppercase;color:var(--dongrok-dk);margin:0 0 26px;display:flex;
+  align-items:center;gap:14px;flex-wrap:wrap}
+.kicker i{display:block;width:52px;height:1px;background:var(--dongrok);opacity:.6}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(33px,6.2vw,70px);line-height:1.16;
+  letter-spacing:-.03em;margin:0 0 22px;max-width:16em}
+h1 em{font-style:normal;color:var(--dongrok-dk);position:relative}
+h1 em::after{content:"";position:absolute;left:0;right:0;bottom:.1em;height:.22em;
+  background:var(--chija);opacity:.24;z-index:-1}
+.lede{font-family:var(--display);font-size:clamp(18px,2.2vw,22px);line-height:1.85;
+  max-width:33em;color:var(--meok-soft);margin:0 0 40px}
+.colophon{display:flex;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:22px;max-width:900px}
+.colophon div{padding:2px 28px 2px 0;margin-right:28px;border-right:1px solid var(--line-soft)}
+.colophon div:last-child{border-right:0;margin-right:0}
+.colophon dt{font-size:10.5px;letter-spacing:.2em;font-weight:500;color:var(--dongrok-dk);
+  opacity:.8;margin:0 0 4px;text-transform:uppercase}
+.colophon dd{margin:0;font-size:14.5px;font-weight:400}
+
+/* 서명 요소 */
+.ranges{max-width:var(--maxw);margin:0 auto;
+  padding:clamp(40px,6vw,72px) clamp(22px,5vw,56px) clamp(48px,7vw,80px)}
+.ranges svg,.dia svg{width:100%;height:auto;display:block}
+.cap{font-size:13.5px;color:var(--meok-soft);margin:22px 0 0;padding-left:16px;
+  border-left:2px solid var(--chija);max-width:46em;line-height:1.8}
+.cap b{font-weight:500;color:var(--meok)}
+
+/* 골격 */
+main{max-width:var(--maxw);margin:0 auto;padding:0 clamp(22px,5vw,56px) 120px}
+section{padding:clamp(52px,7vw,96px) 0;border-top:1px solid var(--line)}
+section:first-child{border-top:0}
+.sec-head{display:flex;gap:clamp(16px,3vw,40px);align-items:flex-start;margin-bottom:clamp(26px,4vw,44px)}
+.seal{flex:0 0 auto;width:54px;height:54px;border:1.5px solid var(--juchil);color:var(--juchil);
+  display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:22px;
+  line-height:1;border-radius:3px;background:rgba(162,51,31,.045);margin-top:6px}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(26px,4vw,42px);line-height:1.3;
+  letter-spacing:-.025em;margin:0 0 10px}
+.sub{font-size:13px;letter-spacing:.16em;color:var(--dongrok-dk);font-weight:500;margin:0}
+.col{max-width:var(--colw)}
+p{margin:0 0 1.35em}
+.col p:last-child{margin-bottom:0}
+h3{font-family:var(--display);font-weight:700;font-size:clamp(20px,2.6vw,26px);
+  letter-spacing:-.02em;margin:2.5em 0 .8em;line-height:1.4}
+h3:first-child{margin-top:0}
+h4{font-family:var(--body);font-weight:500;font-size:15px;letter-spacing:.02em;
+  margin:2em 0 .6em;color:var(--dongrok-dk)}
+strong{font-weight:500;color:var(--meok)}
+.tm{font-family:var(--mono);font-size:.88em;background:rgba(23,100,110,.11);padding:.12em .4em;
+  border-radius:2px;color:var(--dongrok-dk);font-weight:500;word-break:break-all}
+
+/* 카드 */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);margin-top:8px}
+.card{background:var(--hanji);padding:26px 24px 28px;position:relative}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--dongrok);opacity:.3}
+.card .no{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--chija);
+  font-weight:500;display:block;margin-bottom:11px}
+.card h5{font-family:var(--display);font-weight:700;font-size:19px;margin:0 0 4px;
+  line-height:1.4;letter-spacing:-.02em}
+.card .en{font-family:var(--mono);font-size:11.5px;color:var(--meok-soft);opacity:.72;
+  display:block;margin-bottom:12px}
+.card p{font-size:14.5px;line-height:1.82;margin:0;color:var(--meok-soft)}
+
+/* 연쇄 */
+.chain{margin:28px 0 0;padding:0;list-style:none;border-left:1px solid var(--line)}
+.chain li{position:relative;padding:0 0 22px 30px}
+.chain li:last-child{padding-bottom:0}
+.chain li::before{content:"";position:absolute;left:-4.5px;top:11px;width:8px;height:8px;
+  background:var(--hoebyeok);border:1.5px solid var(--dongrok);border-radius:50%}
+.chain b{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--juchil);
+  letter-spacing:.04em;display:block}
+.chain span{font-size:15.5px;color:var(--meok-soft)}
+
+/* 순서 목록 */
+.steps{margin:28px 0 0;padding:0;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;position:relative;padding:0 0 18px 46px;font-size:15.5px;
+  color:var(--meok-soft);line-height:1.85}
+.steps li::before{content:counter(s);position:absolute;left:0;top:4px;width:28px;height:28px;
+  border:1px solid var(--dongrok);color:var(--dongrok-dk);border-radius:50%;
+  display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:500;
+  background:var(--hanji)}
+.steps li:last-child{padding-bottom:0}
+
+/* 방주 */
+.aside{margin:30px 0;padding:22px 26px;background:var(--hanji);border:1px solid var(--line);
+  border-left:3px solid var(--dongrok);font-size:15px;line-height:1.85;color:var(--meok-soft)}
+.aside.warn{border-left-color:var(--juchil)}
+.aside.tip{border-left-color:var(--chija)}
+.aside .lbl{display:block;font-family:var(--body);font-weight:500;font-size:11px;
+  letter-spacing:.24em;text-transform:uppercase;margin-bottom:10px;color:var(--dongrok-dk)}
+.aside.warn .lbl{color:var(--juchil)}
+.aside.tip .lbl{color:var(--chija)}
+.aside ol,.aside ul{margin:10px 0 0;padding-left:1.2em}
+.aside li{margin-bottom:5px}
+.aside p:last-child{margin-bottom:0}
+
+/* 코드 */
+figure{margin:26px 0}
+.code{background:#12181A;color:#D8DEDE;border-radius:4px;overflow:hidden;border:1px solid #080D0E}
+.code .bar{display:flex;justify-content:space-between;align-items:center;padding:9px 16px;
+  background:#0D1214;border-bottom:1px solid #1D2628;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.16em;color:#7E9BA0;text-transform:uppercase;gap:12px}
+.code pre{margin:0;padding:20px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.4px;
+  line-height:1.78}
+.code .k{color:#8CC7CF}
+.code .s{color:#E2C173}
+.code .c{color:#69767A;font-style:italic}
+.code .f{color:#9BD3B8}
+.code .n{color:#D99B84}
+.code .u{color:#B9D9DE}     /* URL */
+.code .out{color:#939A9B}
+.code .rec{border-bottom:1px dotted rgba(181,130,24,.9);cursor:help}
+.code .cut{color:#C8981F;font-weight:500;cursor:help}
+figcaption{font-size:13px;color:var(--meok-soft);margin-top:12px;font-family:var(--body)}
+figcaption::before{content:"〈";color:var(--chija)}
+figcaption::after{content:"〉";color:var(--chija)}
+
+/* 비교 표 */
+.cmp{margin:28px 0;overflow-x:auto}
+.cmp table{border-collapse:collapse;width:100%;font-size:14.5px;background:var(--hanji);
+  border:1px solid var(--line)}
+.cmp th{text-align:left;padding:12px 15px;background:rgba(23,100,110,.08);
+  border-bottom:1px solid var(--line);font-weight:500;font-size:12.5px;letter-spacing:.08em;
+  color:var(--dongrok-dk);vertical-align:top}
+.cmp td{padding:12px 15px;border-bottom:1px solid var(--line-soft);color:var(--meok-soft);
+  vertical-align:top;line-height:1.75}
+.cmp tr:last-child td{border-bottom:0}
+.cmp td:first-child{font-family:var(--mono);font-size:12.5px;color:var(--meok);white-space:nowrap}
+.cmp td.q{white-space:normal;word-break:break-all}
+
+/* 내려받는 양 표 */
+.load{margin:30px 0}
+.load table{border-collapse:collapse;width:100%;background:var(--hanji);border:1px solid var(--line);
+  font-size:14px}
+.load th{text-align:left;padding:11px 14px;background:rgba(23,100,110,.08);
+  border-bottom:1px solid var(--line);font-weight:500;font-size:12px;letter-spacing:.07em;
+  color:var(--dongrok-dk)}
+.load td{padding:11px 14px;border-bottom:1px solid var(--line-soft);color:var(--meok-soft);
+  vertical-align:middle}
+.load tr:last-child td{border-bottom:0}
+.load td:first-child{font-family:var(--mono);font-size:12px;color:var(--meok)}
+.load .bar-wrap{display:block;height:16px;background:rgba(23,26,26,.06);position:relative;min-width:90px}
+.load .bar-fill{position:absolute;left:0;top:0;bottom:0;background:var(--dongrok);opacity:.75}
+.load .bar-fill.full{background:var(--juchil);opacity:.6}
+.load .bar-fill.none{background:transparent;border:1px dashed var(--chija);right:0;width:auto}
+.load .amt{font-family:var(--mono);font-size:11.5px;color:var(--dongrok-dk);white-space:nowrap}
+
+.dia{margin:32px 0 0}
+.dia svg{max-width:860px}
+
+/* 맺음 */
+.closing{border-top:1px solid var(--line);background:var(--hanji)}
+.closing-in{max-width:var(--maxw);margin:0 auto;padding:clamp(56px,8vw,96px) clamp(22px,5vw,56px)}
+.closing blockquote{margin:0 0 40px;font-family:var(--display);font-size:clamp(20px,2.8vw,27px);
+  line-height:1.72;letter-spacing:-.02em;max-width:27em}
+.next{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.14em;
+  border:1px solid var(--dongrok);color:var(--dongrok-dk);padding:12px 20px;text-decoration:none}
+footer{max-width:var(--maxw);margin:0 auto;padding:34px clamp(22px,5vw,56px) 60px;font-size:12.5px;
+  color:var(--meok-soft);opacity:.8;border-top:1px solid var(--line-soft);display:flex;
+  justify-content:space-between;gap:20px;flex-wrap:wrap}
+
+.rv{opacity:0;transform:translateY(22px);
+  transition:opacity .8s ease,transform .8s cubic-bezier(.2,.8,.25,1)}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+}
+@media (max-width:720px){
+  body{font-size:16px;line-height:1.9}
+  .colophon div{border-right:0;padding-right:0;margin-right:0;flex:1 0 46%}
+  .seal{width:42px;height:42px;font-size:17px}
+  .sec-head{gap:14px}
+  .load{overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ══════ 표제 ══════ -->
+<header class="hero">
+  <div class="glyph">拓</div>
+  <div class="hero-in">
+    <p class="kicker"><i></i>답사기 · 제8장 정독</p>
+    <h1>돌을 옮기지 않고<br><em>탁본을 뜬다</em></h1>
+    <p class="lede">금석문을 조사하는 사람은 비석을 뽑아 오지 않는다. 종이를 대고 먹을 두들겨 글자만 떠 온다. 제8장의 기법이 그렇다. 원격 파일을 내 컴퓨터로 내려받지 않고 그 자리에 두고 묻는다. 그리고 놀라운 것은, 필요한 글자 몇 줄만 떠 오는 부분 탁본이 가능하다는 사실이다.</p>
+    <dl class="colophon">
+      <div><dt>원전</dt><dd>DuckDB: Up and Running</dd></div>
+      <div><dt>지은이</dt><dd>Wei-Meng Lee</dd></div>
+      <div><dt>펴낸곳</dt><dd>O'Reilly Media, 2024</dd></div>
+      <div><dt>대상</dt><dd>Chapter 8. Accessing Remote Data Using DuckDB</dd></div>
+    </dl>
+  </div>
+</header>
+
+<!-- ══════ 서명 요소: 내려받는 양의 네 단계 ══════ -->
+<div class="ranges rv">
+  <svg viewBox="0 0 1100 400" role="img" aria-label="같은 원격 파일에 대한 질의에 따라 실제로 내려받는 양이 달라지는 네 단계와 hf 경로의 구성">
+    <defs>
+      <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L10,5 L0,10 z" fill="#17646E"/>
+      </marker>
+    </defs>
+    <text x="0" y="16" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2.2" fill="#0F4A52">얼마나 떠 오는가 · HTTP RANGE</text>
+
+    <!-- 각 단계: 8열 파일 + 라벨 -->
+    <g font-family="IBM Plex Mono,monospace" font-size="10.5">
+      <!-- ① CSV -->
+      <text x="0" y="46" fill="#A2331F">① CSV · SELECT *</text>
+      <g>
+        <rect x="0" y="54" width="21" height="26" fill="#A2331F" fill-opacity=".55"/>
+        <rect x="23" y="54" width="21" height="26" fill="#A2331F" fill-opacity=".55"/>
+        <rect x="46" y="54" width="21" height="26" fill="#A2331F" fill-opacity=".55"/>
+        <rect x="69" y="54" width="21" height="26" fill="#A2331F" fill-opacity=".55"/>
+        <rect x="92" y="54" width="21" height="26" fill="#A2331F" fill-opacity=".55"/>
+        <rect x="115" y="54" width="21" height="26" fill="#A2331F" fill-opacity=".55"/>
+        <rect x="138" y="54" width="21" height="26" fill="#A2331F" fill-opacity=".55"/>
+        <rect x="161" y="54" width="21" height="26" fill="#A2331F" fill-opacity=".55"/>
+      </g>
+      <text x="196" y="72" fill="#A2331F">파일 전부 · 행 기반이므로 쪼갤 수 없다</text>
+
+      <!-- ② Parquet SELECT * -->
+      <text x="0" y="112" fill="#0F4A52">② Parquet · SELECT *</text>
+      <g>
+        <rect x="0" y="120" width="21" height="26" fill="#17646E" fill-opacity=".75"/>
+        <rect x="23" y="120" width="21" height="26" fill="#17646E" fill-opacity=".75"/>
+        <rect x="46" y="120" width="21" height="26" fill="#17646E" fill-opacity=".75"/>
+        <rect x="69" y="120" width="21" height="26" fill="#17646E" fill-opacity=".75"/>
+        <rect x="92" y="120" width="21" height="26" fill="#17646E" fill-opacity=".75"/>
+        <rect x="115" y="120" width="21" height="26" fill="#17646E" fill-opacity=".75"/>
+        <rect x="138" y="120" width="21" height="26" fill="#17646E" fill-opacity=".75"/>
+        <rect x="161" y="120" width="21" height="26" fill="#17646E" fill-opacity=".75"/>
+      </g>
+      <text x="196" y="138" fill="#3B4141">파일 전부 · 모든 열을 달라 했으므로</text>
+
+      <!-- ③ 두 열 -->
+      <text x="0" y="178" fill="#0F4A52">③ Parquet · 두 열</text>
+      <g>
+        <rect x="0" y="186" width="21" height="26" fill="#17646E" fill-opacity=".75"/>
+        <rect x="23" y="186" width="21" height="26" fill="#17646E" fill-opacity=".75"/>
+        <rect x="46" y="186" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+        <rect x="69" y="186" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+        <rect x="92" y="186" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+        <rect x="115" y="186" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+        <rect x="138" y="186" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+        <rect x="161" y="186" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+      </g>
+      <text x="196" y="204" fill="#3B4141">Agency · "Agency Type" 두 열만</text>
+
+      <!-- ④ 한 열 -->
+      <text x="0" y="244" fill="#0F4A52">④ Parquet · avg(age)</text>
+      <g>
+        <rect x="0" y="252" width="21" height="26" fill="#17646E" fill-opacity=".75"/>
+        <rect x="23" y="252" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+        <rect x="46" y="252" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+        <rect x="69" y="252" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+        <rect x="92" y="252" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+        <rect x="115" y="252" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+        <rect x="138" y="252" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+        <rect x="161" y="252" width="21" height="26" fill="#171A1A" fill-opacity=".07"/>
+      </g>
+      <text x="196" y="270" fill="#3B4141">age 한 열만</text>
+
+      <!-- ⑤ 아무것도 -->
+      <text x="0" y="310" fill="#B58218">⑤ Parquet · count(*)</text>
+      <g>
+        <rect x="0" y="318" width="182" height="26" fill="none" stroke="#B58218" stroke-opacity=".7" stroke-dasharray="4 3"/>
+      </g>
+      <text x="196" y="336" fill="#7A5710">아무것도 · 메타데이터만 읽는다</text>
+
+      <line x1="0" y1="364" x2="480" y2="364" stroke="#171A1A" stroke-opacity=".12"/>
+      <text x="0" y="388" font-family="Noto Sans KR,sans-serif" font-size="12" fill="#0F4A52">질의문 한 줄이 통신량을 정한다. 파일은 그 자리에 그대로 있다.</text>
+    </g>
+
+    <line x1="530" y1="26" x2="530" y2="376" stroke="#171A1A" stroke-opacity=".12" stroke-dasharray="2 6"/>
+
+    <!-- 오른쪽: hf:// 경로의 해부 -->
+    <text x="580" y="16" font-family="IBM Plex Mono,monospace" font-size="11" letter-spacing="2.2" fill="#0F4A52">HF:// 경로의 네 토막</text>
+    <g font-family="IBM Plex Mono,monospace" font-size="12">
+      <rect x="580" y="40" width="118" height="30" fill="rgba(23,100,110,.14)" stroke="#17646E" stroke-opacity=".5"/>
+      <text x="592" y="60" fill="#0F4A52">hf://datasets</text>
+      <rect x="700" y="40" width="120" height="30" fill="rgba(23,100,110,.09)" stroke="#17646E" stroke-opacity=".4"/>
+      <text x="712" y="60" fill="#3B4141">{user}</text>
+      <rect x="822" y="40" width="120" height="30" fill="rgba(23,100,110,.09)" stroke="#17646E" stroke-opacity=".4"/>
+      <text x="834" y="60" fill="#3B4141">{dataset}</text>
+      <rect x="944" y="40" width="156" height="30" fill="rgba(181,130,24,.16)" stroke="#B58218" stroke-opacity=".5"/>
+      <text x="956" y="60" fill="#7A5710">{file}</text>
+    </g>
+    <g font-family="Noto Sans KR,sans-serif" font-size="11" fill="#3B4141">
+      <text x="580" y="88">고정된 머리</text>
+      <text x="700" y="88">사용자 이름</text>
+      <text x="822" y="88">데이터셋 이름</text>
+      <text x="944" y="88">파일 · 폴더가 있으면 앞에 붙인다</text>
+    </g>
+
+    <g font-family="IBM Plex Mono,monospace" font-size="10.5" fill="#3B4141">
+      <text x="580" y="126" fill="#0F4A52">실례 셋</text>
+      <text x="580" y="150">hf://datasets/scikit-learn/tips/tips.csv</text>
+      <text x="580" y="174">hf://datasets/AiresPucrs/adult-census-income/</text>
+      <text x="592" y="192">data/train-00000-of-00001-7e70ed54d8cbb057.parquet</text>
+      <text x="580" y="216">hf://datasets/gabrielwu/city_country/*.csv</text>
+    </g>
+
+    <line x1="580" y1="242" x2="1100" y2="242" stroke="#171A1A" stroke-opacity=".12"/>
+    <g font-family="Noto Sans KR,sans-serif" font-size="12" fill="#3B4141">
+      <text x="580" y="268" font-weight="500" fill="#171A1A">비공개 데이터셋에는 열쇠가 하나 더 붙는다</text>
+    </g>
+    <g font-family="IBM Plex Mono,monospace" font-size="11">
+      <rect x="580" y="282" width="248" height="26" fill="#F1F3F2" stroke="#A2331F" stroke-opacity=".45"/>
+      <text x="592" y="299" fill="#A2331F">CONFIG · 토큰을 코드에 적는다</text>
+      <rect x="580" y="314" width="248" height="26" fill="#F1F3F2" stroke="#17646E" stroke-opacity=".6"/>
+      <text x="592" y="331" fill="#0F4A52">CREDENTIAL_CHAIN · 파일에서 찾는다</text>
+      <line x1="828" y1="295" x2="880" y2="295" stroke="#17646E" stroke-width="1.1" marker-end="url(#ar)"/>
+      <line x1="828" y1="327" x2="880" y2="327" stroke="#17646E" stroke-width="1.1" marker-end="url(#ar)"/>
+      <rect x="888" y="282" width="212" height="58" fill="rgba(23,100,110,.1)" stroke="#17646E" stroke-opacity=".45"/>
+      <text x="900" y="304" fill="#0F4A52">CREATE SECRET hf_token (</text>
+      <text x="912" y="322" fill="#0F4A52">TYPE HUGGINGFACE …</text>
+    </g>
+    <text x="580" y="372" font-family="Noto Sans KR,sans-serif" font-size="12" fill="#0F4A52">문법은 하나, 열쇠를 어디에 두는가만 갈린다.</text>
+  </svg>
+  <p class="cap"><b>답사의 눈금.</b> 제1장이 기둥의 장, 제2장이 문의 장, 제3장이 칸의 장, 제4장이 때의 장, 제5장이 자리의 장, 제6장이 겹의 장, 제7장이 야장의 장이었다면 제8장은 <b>탁본의 장</b>이다. 왼쪽 다섯 단계는 같은 원격 파일을 두고 질의문만 바꾼 결과이며, 눈금은 실제로 <b>통신선을 타고 오는 양</b>이다. 마지막 단계에서는 데이터가 한 바이트도 오지 않는다. 비문의 글자 수를 세는 데 굳이 종이를 대지 않아도 되는 것처럼, 그 수는 이미 머릿돌에 적혀 있다.</p>
+</div>
+
+<main>
+
+<!-- ══════ 序 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">序</div>
+    <div><h2>지금까지는 모두 가까운 데이터였다</h2><p class="sub">DUCKDB'S HTTPFS EXTENSION</p></div>
+  </div>
+  <div class="col">
+    <p>앞선 모든 장에서 DuckDB로 다룬 것은 <strong>지역 데이터</strong>였다. MySQL 데이터베이스에 있든 CSV·JSON·Parquet 파일에 있든 모두 내 컴퓨터의 것이었다. 그러나 실제 상황에서 다루는 데이터는 통상 원격 서버에 놓이며, 여러 곳에서 오는 일이 잦다. 다행히 DuckDB는 원격 데이터셋에 접근하게 해 주는 <span class="tm">httpfs</span> 확장을 제공한다. 게다가 DuckDB는 Hugging Face가 호스팅하는 데이터셋에 접근하는 지원까지 제공한다.</p>
+    <p><span class="tm">httpfs</span> 확장은 <strong>자동 적재 가능한(autoloadable)</strong> 확장이며, 원격 파일의 읽기와 쓰기를 허용하는 파일 시스템을 구현한다. 이 확장으로 DuckDB는 HTTP와 HTTPS 프로토콜을 통해 파일을 직접 읽고 쓸 수 있으며, <strong>먼저 지역에 내려받을 필요가 없다</strong>. 다음 상황에서 특히 도움이 된다.</p>
+    <ul class="chain">
+      <li><b>용량을 넘길 때</b><span> 지역 저장 공간을 넘어서는 큰 데이터셋을 다룰 때.</span></li>
+      <li><b>실시간일 때</b><span> 실시간이거나 자주 갱신되는 데이터에 접근할 때.</span></li>
+      <li><b>여러 곳일 때</b><span> 여러 원격 원천에 분산된 데이터에 질의할 때.</span></li>
+      <li><b>클라우드일 때</b><span> 클라우드 저장과 매끄럽게 통합할 때.</span></li>
+    </ul>
+    <p style="margin-top:1.8em">이는 효율적인 원격 데이터 분석을 가능하게 하며, 클라우드 기반 데이터 레이크, 웹 API, 분산 파일 시스템이 얽힌 상황에 이상적이다. <span class="tm">httpfs</span> 확장은 CSV, Parquet을 비롯해 DuckDB가 자체적으로 지원하는 여러 파일 형식을 지원한다.</p>
+  </div>
+  <div class="aside tip">
+    <span class="lbl">도움말 — S3</span>
+    <p><span class="tm">httpfs</span> 확장은 Amazon S3(Simple Storage Service) API를 써서 객체 저장에 대한 읽기와 쓰기, 그리고 파일 글로빙도 지원한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>세션당 한 번</span></div>
+<pre><span class="k">import</span> duckdb
+
+conn = duckdb.<span class="f">connect</span>()
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">INSTALL</span> httpfs;
+    <span class="k">LOAD</span> httpfs;
+'''</span>)</pre></div>
+    <figcaption>httpfs 확장의 설치와 적재는 DuckDB 세션마다 한 번만 하면 된다</figcaption>
+  </figure>
+  <div class="col">
+    <p>제2장에서 엑셀을 읽기 위해 <span class="tm">spatial</span>을, MySQL에 붙기 위해 <span class="tm">mysql</span>을 설치했던 그 자리에 이번에는 <span class="tm">httpfs</span>가 놓인다. DuckDB의 확장 목록을 처음 소개한 대목에서 <span class="tm">httpfs</span>가 맨 앞에 있었던 것을 떠올려도 좋다. 여섯 장을 지나 그 첫 항목의 차례가 온 셈이다.</p>
+  </div>
+  <div class="aside tip">
+    <span class="lbl">검토 방법에 관한 밝힘</span>
+    <p>이 장은 결과가 스크린숏 도판이고, 절차의 절반이 <strong>Hugging Face 웹사이트를 누르는 순서</strong>다. 그래서 이 페이지는 다음을 지켰다. 도판의 표 값은 옮기지 않고, <strong>URL·명령·절차의 순서</strong>를 정확히 옮기는 데 힘을 쏟았다. URL은 원서 지면에서 대부분 오른쪽이 잘려 있으므로, 다른 곳의 인쇄분과 대조해 복원할 수 있는 것만 복원했다.</p>
+    <p style="margin-top:10px">표기 규칙은 앞 일곱 장과 같다. 복원한 부분은 <code style="font-family:var(--mono);font-size:13px;border-bottom:1px dotted var(--chija)">점선 밑줄</code>, 복원하지 않은 부분은 <code style="font-family:var(--mono);font-size:13px;color:var(--chija)">…</code>다. 이 권의 구조색은 금석(金石)에 낀 청동 녹빛, 동록(銅綠)이다.</p>
+  </div>
+</section>
+
+<!-- ══════ 一 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">讀</div>
+    <div><h2>원격 CSV — 결국 전부 온다</h2><p class="sub">ACCESSING CSV FILES</p></div>
+  </div>
+  <div class="col">
+    <p><span class="tm">httpfs</span> 확장이 있으면 원격에 놓인 파일에 접근할 수 있다. 웹 서버에 파일이 있다면 읽거나 쓰려는 파일을 곧바로 가리키는 URL을 그냥 쓰면 되고, DuckDB가 먼저 지역에 내려받지 않고 처리한다. 그런데 GitHub 같은 사이트에 저장된 파일이라면 <strong>원시 파일(raw file)을 담은 URL</strong>을 얻어야 한다.</p>
+    <p>표본 CSV 파일의 URL을 웹 브라우저에 띄우고 Raw 버튼을 누른다. 원시 CSV 파일을 적재하는 페이지로 옮겨지며, 그 페이지의 URL을 복사한다. 이 예에서는 Amazon.com의 과거 주가를 담은 파일이다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>원시 파일의 URL</span><span>도판 8-1</span></div>
+<pre><span class="u">https://raw.githubusercontent.com/weimenglee/DuckDB_Book/main/AMZN.csv</span></pre></div>
+    <figcaption>도판 8-1 · GitHub에서 원시 파일의 URL을 얻는다. DuckDB는 이 URL로 질의를 수행한다</figcaption>
+  </figure>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>원격 CSV 질의와 여과</span></div>
+<pre><span class="c"># 파일 전체를 질의해 pandas DataFrame으로 바꾼다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    *
+  <span class="k">FROM</span>
+    '<span class="u">https://raw.githubusercontent.com/weimenglee</span><span class="rec" title="원서 지면에서 잘린 부분. 앞서 인쇄된 원시 URL로 복원했다"><span class="u">/DuckDB_Book/main/AMZN.csv</span>'</span>
+'''</span>).<span class="f">df</span>()
+
+<span class="c"># 원격 데이터에 여과도 걸 수 있다 — 2018년의 모든 행</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    *
+  <span class="k">FROM</span>
+    '<span class="u">https://raw.githubusercontent.com/weimenglee</span><span class="rec" title="원서 지면에서 잘린 부분. 같은 원시 URL로 복원했다"><span class="u">/DuckDB_Book/main/AMZN.csv</span>'</span>
+  <span class="k">WHERE</span> <span class="f">year</span>(Date) = <span class="n">2018</span>;
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 8-2 · 8-3 · 원격 CSV 파일이 내려와 DataFrame이 되고, 2018년의 행만 골라낸다</figcaption>
+  </figure>
+  <div class="col">
+    <p>여러 CSV 파일을 한꺼번에 읽으려면 <span class="tm">read_csv()</span> 함수에 목록을 넘긴다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>두 파일을 잇는다</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    *
+  <span class="k">FROM</span> <span class="f">read_csv</span>([
+    '<span class="u">https://raw.githubusercontent.com/weimenglee</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 첫 파일의 경로 나머지가 지면에 나타나지 않는다">…</span>
+    '<span class="u">https://raw.githubusercontent.com/weimenglee</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 둘째 파일의 경로가 지면에 나타나지 않는다">…</span>
+  ]);
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 8-4 · GitHub에서 두 CSV 파일을 적재해 내용을 이어 붙인다</figcaption>
+  </figure>
+  <div class="aside warn">
+    <span class="lbl">주의 — 스키마가 다르면 붙지 않는다</span>
+    <p>두 CSV 파일의 스키마가 다르면 내용이 <strong>행 단위로 이어 붙지 않는다</strong>. 제6장에서 여러 JSON 파일을 합칠 때 키 이름으로 열을 맞추고 빈 자리를 <span class="tm">NaN</span>·<span class="tm">None</span>으로 채웠던 그 관용은 여기에 없다.</p>
+  </div>
+  <div class="col">
+    <p>그리고 이 절의 결론이 뜻밖이다. <strong>CSV 파일은 대부분의 경우 지역 기계로 전부 내려온다.</strong> CSV가 데이터를 <strong>행 기반 형식</strong>으로 저장하기 때문이다. 큰 파일을 다룰 때 특히 시간이 걸린다. 원격 데이터를 훨씬 효율적으로 가져오는 길은 Parquet 형식을 쓰는 것이다.</p>
+    <p>제1장의 첫 그림이 여기서 다시 필요해진다. 행 기반 저장에서는 한 행을 읽으려면 그 행의 모든 열이 함께 온다. 이제 그 파일이 통신선 저쪽에 있다면, 같은 사정이 <strong>대역폭의 문제</strong>로 바뀐다. 기둥으로 세워 두지 않은 데이터는 원격에서도 쪼갤 수 없다.</p>
+  </div>
+</section>
+
+<!-- ══════ 二 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">柱</div>
+    <div><h2>원격 Parquet — 필요한 기둥만 뜬다</h2><p class="sub">ACCESSING PARQUET FILES</p></div>
+  </div>
+  <div class="col">
+    <p>Parquet 파일에 대해서 DuckDB는 <strong>Parquet 메타데이터와 HTTP 범위 요청(range request)을 조합</strong>해, 질의가 실제로 요구하는 파일의 부분만 부분적으로 내려받는다. 이 한 문장이 이 장에서 가장 값진 문장이다.</p>
+    <p>CSV 파일에서 변환한 Parquet 파일이 GitHub에 놓여 있는 경우를 본다. 원서는 같은 파일을 놓고 질의문만 바꾸어 가며, 내려받는 양이 어떻게 줄어드는지를 네 걸음으로 보인다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>① 전부 · ② 스키마만</span></div>
+<pre><span class="c"># ① 파일 전체를 내려받아 DataFrame으로 바꾼다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    *
+  <span class="k">FROM</span>
+  '<span class="u">https://github.com/weimenglee/DuckDB_Book/raw/</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 브랜치와 파일 이름이 지면에 나타나지 않는다">…</span>
+'''</span>).<span class="f">df</span>()
+
+<span class="c"># ② 내려받지 않고 원격 파일의 스키마만 얻는다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+    <span class="k">DESCRIBE TABLE</span>
+'<span class="u">https://github.com/weimenglee/DuckDB_Book/raw/ma</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 8-5 · 8-6 · Parquet 파일 전체를 내려받은 DataFrame과, 내려받지 않고 얻은 스키마</figcaption>
+  </figure>
+  <div class="col">
+    <p>순서가 중요하다. 대개는 파일의 모든 열이 필요하지 않다. 더 나은 접근은 <strong>먼저 내려받지 않고 원격 파일의 스키마를 얻고</strong> 그다음 어떤 열을 내려받을지 정하는 것이다. 답사자가 비석 앞에서 먼저 전체 도면을 그리고, 어느 면을 떠 올지 정하는 순서와 같다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>③ 두 열 · ④ 한 열 · ⑤ 아무것도</span></div>
+<pre><span class="c"># ③ Agency와 Agency Type 두 열만 내려받는다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    Agency, "Agency Type"
+  <span class="k">FROM</span>
+    '<span class="u">https://github.com/weimenglee/DuckDB_Book/ra</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+'''</span>).<span class="f">df</span>()
+
+<span class="c"># ④ age 열만 내려받아 평균을 계산한다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+   <span class="k">SELECT</span>
+     <span class="f">avg</span>(age)
+   <span class="k">FROM</span>
+    '<span class="u">https://github.com/weimenglee/DuckDB_Book/ra</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+'''</span>).<span class="f">df</span>()
+
+<span class="c"># ⑤ 데이터를 전혀 내려받지 않는다 — 메타데이터에서 읽는다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    <span class="f">count</span>(*)
+  <span class="k">FROM</span>
+    '<span class="u">https://github.com/weimenglee/DuckDB_Book/ra</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분">…</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 8-7 · 8-8 · 8-9 · 두 열을 담은 DataFrame, age 열의 평균, 그리고 Parquet 파일의 행 수</figcaption>
+  </figure>
+
+  <div class="load">
+    <table>
+      <thead>
+        <tr><th>질의</th><th>실제로 통신선을 타고 오는 것</th><th style="width:34%">내려받는 양</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>CSV · SELECT *</td>
+          <td>파일 전부. 행 기반이므로 쪼갤 수 없다</td>
+          <td><span class="bar-wrap"><span class="bar-fill full" style="width:100%"></span></span></td>
+        </tr>
+        <tr>
+          <td>Parquet · SELECT *</td>
+          <td>파일 전부. 모든 열을 달라 했으므로</td>
+          <td><span class="bar-wrap"><span class="bar-fill" style="width:100%"></span></span></td>
+        </tr>
+        <tr>
+          <td>Parquet · DESCRIBE TABLE</td>
+          <td>스키마. 데이터는 오지 않는다</td>
+          <td><span class="bar-wrap"><span class="bar-fill" style="width:6%"></span></span></td>
+        </tr>
+        <tr>
+          <td>Parquet · 두 열</td>
+          <td>Agency와 "Agency Type"에 해당하는 부분</td>
+          <td><span class="bar-wrap"><span class="bar-fill" style="width:25%"></span></span></td>
+        </tr>
+        <tr>
+          <td>Parquet · avg(age)</td>
+          <td>age 열에 해당하는 부분</td>
+          <td><span class="bar-wrap"><span class="bar-fill" style="width:13%"></span></span></td>
+        </tr>
+        <tr>
+          <td>Parquet · count(*)</td>
+          <td>없음. 메타데이터에 적힌 값을 읽는다</td>
+          <td><span class="bar-wrap"><span class="bar-fill none"></span></span></td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="cap" style="margin-top:16px">눈금의 길이는 <b>정확한 비율이 아니다</b>. 원서는 각 질의의 통신량을 수치로 밝히지 않으므로, 이 눈금은 “전부 · 두 열 · 한 열 · 없음”이라는 <b>서술의 순서를 눈에 보이게 한 것</b>이다. 열 개수만으로도 비율이 정해지지 않는다. Parquet은 열마다 압축이 걸리므로 열의 실제 크기가 서로 다르다.</p>
+  </div>
+  <div class="col">
+    <p>다섯째 줄이 이 장의 정점이다. <span class="tm">count(*)</span>에는 데이터가 필요하지 않다. 행 수는 이미 파일 머리의 메타데이터에 적혀 있다. 비문의 글자 수를 알아내려고 굳이 종이와 먹을 챙겨 가지 않아도 되는 것과 같다. 그 수는 비석을 세울 때 이미 기록되었다.</p>
+    <p>이 절이 제1장·제2장·제4장의 이야기를 한자리에 모은다는 점도 짚어 둘 만하다. 열 기반 저장이라는 한 가지 결정이 제1장에서는 <strong>디스크 읽기</strong>를 줄였고, 제4장에서는 <strong>메모리 적재</strong>를 줄였고, 여기서는 <strong>네트워크 통신</strong>을 줄인다. 같은 구조가 세 층위에서 같은 방식으로 값을 한다.</p>
+  </div>
+</section>
+
+<!-- ══════ 三 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">面</div>
+    <div><h2>Hugging Face라는 큰 서고</h2><p class="sub">QUERYING HUGGING FACE DATASETS</p></div>
+  </div>
+  <div class="col">
+    <p><span class="tm">httpfs</span> 확장으로 HTTP(S) 프로토콜을 통해 원격 데이터셋에 질의하는 것 말고도, DuckDB는 Hugging Face가 호스팅하는 데이터셋에 대한 질의를 지원한다.</p>
+    <p>Hugging Face Datasets는 기계학습과 자연어 처리(NLP) 과제를 위한 대규모 데이터셋의 접근을 간단하게 만드는 라이브러리다. 모형의 훈련과 평가, 성능 견주기에 곧바로 쓸 수 있는 방대한 데이터셋 모음을 제공해, 손으로 데이터를 모으고 전처리할 필요를 없앤다. 아울러 데이터셋의 효율적인 적재·변환·분할을 위한 내장 함수로 사용자 정의 데이터 처리도 지원한다.</p>
+    <p>또한 Hugging Face Datasets는 분산되고 효율적인 데이터 적재에 최적화되어 있어 대규모 프로젝트에 이상적이다. Hugging Face Transformers 라이브러리와의 매끄러운 통합이 작업 흐름을 더욱 간결하게 만들며, NLP와 기계학습 과제에 종사하는 연구자와 개발자에게 값진 도구가 된다.</p>
+  </div>
+  <div class="aside">
+    <span class="lbl">일러두기 — Hugging Face</span>
+    <p>Hugging Face는 NLP와 기계학습에 집중하는 회사이자 오픈소스 공동체다. 다양한 사전 훈련 기계학습 모형을 호스팅하며, 기계학습 프로젝트의 개발과 배포를 돕는 폭넓은 도구와 라이브러리와 자원을 제공한다.</p>
+  </div>
+  <div class="col">
+    <p>DuckDB에서 Hugging Face 데이터셋을 쓰려면 먼저 그것이 어떻게 구성되어 있는지 이해해야 한다. 원서는 scikit-learn 라이브러리와 함께 배포되는 <strong>Tips</strong> 데이터셋을 예로 삼아, 웹 화면에서 URL을 조립하는 순서를 다섯 걸음으로 보인다.</p>
+  </div>
+  <ol class="steps">
+    <li>Hugging Face 데이터셋 페이지에서 쓰려는 데이터셋을 찾고 걸러 낸다.</li>
+    <li>그 데이터셋 페이지에서 <strong>사용자 이름</strong>과 <strong>데이터셋 이름</strong>을 얻는다.</li>
+    <li>같은 페이지에서 <strong>Files</strong> 탭을 눌러 이 데이터셋에서 쓸 수 있는 파일을 드러낸다.</li>
+    <li>내려받으려는 CSV·JSON·Parquet 파일을 찾는다. 이 예에서는 <span class="tm">tips.csv</span>다.</li>
+    <li>얻은 정보로 <span class="tm">hf://</span> 경로를 조립한다.</li>
+  </ol>
+  <div class="aside warn">
+    <span class="lbl">검토자의 주석 — 도판 번호의 어긋남</span>
+    <p>원서는 “도판 8-14가 이 정보로 URL을 조립하는 방법을 보인다”고 적은 다음, 이어지는 절의 첫 문장에서 “<strong>도판 8-13</strong>에 보인 URL 형식을 써서”라고 적는다. 그런데 8-13은 내려받을 파일을 찾는 화면이고 URL을 조립하는 것은 8-14다. 뒤의 “8-13”은 <strong>8-14의 오기</strong>로 보인다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>hf:// 경로로 읽는다</span></div>
+<pre><span class="k">import</span> duckdb
+
+conn = duckdb.<span class="f">connect</span>()
+conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    *
+  <span class="k">FROM</span>
+    '<span class="u">hf://datasets/scikit-learn/tips/tips.csv</span>';
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 8-15 · Hugging Face에서 내려온 tips 파일이 pandas DataFrame이 된다</figcaption>
+  </figure>
+  <div class="col">
+    <p>원저자는 이어서 한 가지를 권한다. <strong>데이터를 DuckDB 표에 저장해 두어, 뒤이은 질의마다 원격 종점에 접근하지 않도록 하라는 것</strong>이다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>한 번만 가져와 표로 둔다</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">CREATE TABLE</span> Tips <span class="k">AS</span>
+  <span class="k">FROM</span>
+    '<span class="u">hf://datasets/scikit-learn/tips/tips.csv</span>';
+'''</span>)
+
+<span class="c"># 이제 표에 질의한다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    *
+  <span class="k">FROM</span>
+    Tips
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>Tips 데이터셋이 Tips 표에 저장된다</figcaption>
+  </figure>
+  <div class="col">
+    <p>이 권고에 이 장의 절충이 담겨 있다. 원격 질의는 편하지만 <strong>매번 통신한다</strong>. 앞 절에서 통신량을 아끼는 기법을 배웠는데, 여기서는 통신 <strong>횟수</strong>를 아끼는 기법이 나온다. 답사자가 같은 비석을 열 번 찾아가지 않고 탁본 한 장을 떠 와 책상에서 열 번 들여다보는 것과 같다.</p>
+  </div>
+</section>
+
+<!-- ══════ 四 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">路</div>
+    <div><h2>폴더와 별표 · 경로를 늘려 잡는다</h2><p class="sub">FOLDERS AND THE GLOB SYNTAX</p></div>
+  </div>
+  <div class="col">
+    <p>Hugging Face 데이터셋의 파일이 특정 폴더에 저장된 경우가 있다. Adult Census Income 데이터셋이 그 예다. Files 탭을 누르면 <span class="tm">data</span> 폴더가 보이며, 그 안에 내려받으려는 파일이 있다. 파일 이름 옆에 표시된 아이콘을 누르고 파일 이름을 복사한다.</p>
+    <p>이 예에서 내려받으려는 것은 Parquet 파일이다. 온전한 URL은 다음과 같다. <strong><span class="tm">data</span> 폴더 이름이 더해진 것</strong>을 눈여겨본다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>hf:// 경로</span><span>폴더가 끼어든다</span></div>
+<pre><span class="u">hf://datasets/AiresPucrs/adult-census-income/data<span class="rec" title="원서 지면에서는 이 줄바꿈 자리에 사선이 인쇄되어 있지 않다. 뒤의 코드 조각이 '/data/train-…'으로 적고 있어 사선을 넣어 복원했다">/</span>
+train-00000-of-00001-7e70ed54d8cbb057.parquet</span></pre></div>
+    <figcaption>원서 본문의 이 URL은 줄이 바뀌는 자리에 사선이 보이지 않는다. 다만 이어지는 코드 조각이 '/data/train-…'으로 적고 있어, 사선이 지면에서 누락된 것으로 읽힌다</figcaption>
+  </figure>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>경로를 두 토막으로 이어 붙인다</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    *
+  <span class="k">FROM</span>
+    '<span class="u">hf://datasets/AiresPucrs/adult-census-income</span><span class="rec" title="원서 지면에서 잘린 부분. 문자열을 닫는 인용부호로 복원했다">'</span>
+    '<span class="u">/data/train-00000-of-00001-7e70ed54d8cbb057</span><span class="rec" title="원서 지면에서 잘린 부분. 확장자 .parquet과 닫는 인용부호로 복원했다">.parquet'</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 8-19 · Hugging Face에서 내려온 Parquet 파일이 DataFrame이 된다. 긴 경로를 두 개의 문자열로 나누어 나란히 두면 SQL이 이어 붙인다</figcaption>
+  </figure>
+
+  <div class="col">
+    <h3>여러 파일을 별표 하나로</h3>
+    <p>제6장에서 다룬 glob 구문으로 여러 파일에 질의할 수 있다. 상기하는 뜻에서 glob 양상의 목록을 다시 옮긴다.</p>
+  </div>
+  <div class="cmp">
+    <table>
+      <thead><tr><th>와일드카드</th><th>하는 일</th></tr></thead>
+      <tbody>
+        <tr><td>*</td><td>임의 개수의 임의 문자와 일치한다. 없는 경우도 포함한다.</td></tr>
+        <tr><td>**</td><td>임의 개수의 하위 디렉터리와 일치한다. 없는 경우도 포함한다.</td></tr>
+        <tr><td>?</td><td>임의의 한 문자와 일치한다.</td></tr>
+        <tr><td>[abc]</td><td>대괄호 안에 주어진 문자 가운데 하나와 일치한다.</td></tr>
+        <tr><td>[a-z]</td><td>대괄호 안에 주어진 범위에서 한 문자와 일치한다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col">
+    <p>어떤 데이터셋에 <span class="tm">geo_test.csv</span>와 <span class="tm">geo_train.csv</span> 두 파일이 있다고 하자. 모든 CSV 파일을 적재하려면 별표를 쓴다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>CSV 여러 개 · 그리고 여과</span></div>
+<pre><span class="c"># 두 CSV 파일을 한꺼번에 적재한다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    *
+  <span class="k">FROM</span>
+    '<span class="u">hf://datasets/gabrielwu/city_country/*.csv</span>'
+'''</span>).<span class="f">df</span>()
+
+<span class="c"># question 열에 'Huaibei'가 든 행을 찾는다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+   <span class="k">SELECT</span>
+     *
+   <span class="k">FROM</span>
+    '<span class="u">hf://datasets/gabrielwu/city_country/*.csv</span>'
+  <span class="k">WHERE</span> question <span class="k">LIKE</span> <span class="s">'%Huaibei%'</span>;
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 8-20 ~ 8-22 · 두 CSV 파일의 목록, 두 파일의 내용을 합친 DataFrame, 그리고 “Huaibei”가 든 한 행</figcaption>
+  </figure>
+  <div class="aside warn">
+    <span class="lbl">주의 — 스키마가 같아야 한다</span>
+    <p>glob 양상으로 적재하는 모든 파일은 <strong>같은 스키마를 가져야</strong> 한다. 그렇지 않으면 예외가 발생한다.</p>
+  </div>
+  <div class="col">
+    <p>그리고 glob 양상이 가장 값을 하는 자리는 <strong>Parquet 파일</strong>이다. 파일 집합 전체를 내려받을 필요가 흔히 없기 때문이다. 두 개의 Parquet 파일을 가진 데이터셋에서 <span class="tm">question</span> 열만 내려받고, 그 가운데 “happened”가 든 행만 표시한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>SQL</span><span>여러 Parquet에서 한 열만</span></div>
+<pre>conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    question
+  <span class="k">FROM</span>
+    '<span class="u">hf://datasets/Stanford/web_questions/data/*</span><span class="cut" title="원서 지면에서 잘려 복원하지 않은 부분. 파일 확장자 양상과 닫는 인용부호가 지면에 나타나지 않는다">…</span>
+  <span class="k">WHERE</span> question <span class="k">LIKE</span> <span class="s">'%happened%'</span>;
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 8-23 · “happened”가 든 모든 질문을 돌려준다. 두 파일에 걸쳐, 그러나 한 열만 통신선을 탄다</figcaption>
+  </figure>
+  <div class="col">
+    <p>여기서 앞 절의 눈금이 여러 파일로 확장된다. 별표 하나가 파일의 수를 늘리고, 열 이름 하나가 통신량을 줄인다. 두 방향이 서로 어긋나지 않는다는 점이 이 기법의 힘이다. 백 개의 비석을 훑으면서도 각 비석에서 한 줄만 떠 온다.</p>
+  </div>
+</section>
+
+<!-- ══════ 五 ══════ -->
+<section class="rv">
+  <div class="sec-head">
+    <div class="seal">私</div>
+    <div><h2>잠긴 서고 · 비공개 데이터셋</h2><p class="sub">WORKING WITH PRIVATE HUGGING FACE DATASETS</p></div>
+  </div>
+  <div class="col">
+    <p>지금까지는 공개 Hugging Face 데이터셋에 접근하는 법이었다. 비공개 데이터셋은 어떤가. 공개와 비공개의 주된 차이는, 비공개 데이터셋에는 접근하기 전에 <strong>해당 자격 증명을 제공해야</strong> 한다는 것이다. 익힐 것은 셋이다.</p>
+    <ul class="chain">
+      <li><b>만든다</b><span> CSV 파일을 Hugging Face에 올려 비공개 데이터셋을 만든다.</span></li>
+      <li><b>열쇠를 얻는다</b><span> 그 비공개 데이터셋에 접근할 액세스 토큰을 만든다.</span></li>
+      <li><b>보인다</b><span> 액세스 토큰을 제공해 DuckDB로 비공개 데이터셋에 원격 접근한다.</span></li>
+    </ul>
+    <p style="margin-top:1.8em">이 모든 일을 하기 전에 Hugging Face에 계정을 만들어야 한다. <span class="tm">https://huggingface.co</span>로 가서 Sign Up 버튼을 누르고, 전자우편 주소와 쓰려는 비밀번호를 넣고 Next를 누른다.</p>
+
+    <h3>비공개 데이터셋을 올린다</h3>
+  </div>
+  <ol class="steps">
+    <li>사용자 아이콘을 누르고 <strong>New Dataset</strong>을 누른다.</li>
+    <li>새 데이터셋의 상세를 채운다. <strong>Owner</strong> 필드는 자신의 사용자 이름이어야 하며, 데이터셋이 <strong>Private</strong>으로 설정되었는지 확인한다. 그리고 <strong>Create dataset</strong> 버튼을 누른다.</li>
+    <li>다음 페이지에서 <strong>Files</strong> 탭을 누르고, <strong>Add file</strong> 버튼을 누르고, <strong>Upload files</strong> 항목을 누른다.</li>
+    <li>올리려는 파일을 끌어다 놓는다. 원서의 예에서는 Amazon.com의 과거 주가를 담은 CSV 파일이다.</li>
+    <li>같은 페이지 아래쪽에서 <strong>“Commit directly to the main branch”</strong>를 고른다. 올린 파일이 Files 탭에 나타난다.</li>
+  </ol>
+  <div class="col">
+    <h3>액세스 토큰을 만든다</h3>
+  </div>
+  <ol class="steps">
+    <li>사용자 아이콘을 누르고 <strong>Settings</strong>를 누른다.</li>
+    <li><strong>Access Tokens</strong>를 누른다.</li>
+    <li><strong>New Token</strong> 버튼을 누른다.</li>
+    <li><strong>Read</strong> 버튼을 누르고, 이 토큰의 쓰임을 설명하는 이름을 넣는다.</li>
+    <li><strong>Create token</strong> 버튼을 누른다. 액세스 토큰이 생성된다.</li>
+    <li>복사 아이콘을 눌러 액세스 토큰을 복사하고 안전한 곳에 붙여 둔다.</li>
+  </ol>
+  <div class="aside warn">
+    <span class="lbl">주의 — 다시 보여 주지 않는다</span>
+    <p>이 토큰은 나중에 다시 와도 <strong>표시되지 않는다</strong>. 액세스 토큰을 잃으면 그것을 무효화하고 갱신해 새 토큰을 생성해야 한다.</p>
+  </div>
+
+  <div class="col">
+    <h3>인증하는 두 가지 길</h3>
+    <p>액세스 토큰이 생성되었으므로 그것으로 DuckDB에서 비공개 데이터셋에 접근할 수 있다. DuckDB가 지원하는 주된 제공자(provider)는 둘이다.</p>
+  </div>
+  <div class="cmp">
+    <table>
+      <thead><tr><th>제공자</th><th>토큰이 놓이는 자리</th><th>알맞은 상황</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>CONFIG</td>
+          <td><span class="tm">CREATE SECRET</span> 문에 액세스 토큰을 <strong>손으로 적는다</strong>. 곧 코드에 토큰이 노출된다.</td>
+          <td>특정하고 이미 아는 토큰으로 인증해야 할 때 이상적이다. 토큰이 자주 교체되는 환경, 또는 서비스마다 자격 증명을 명시적으로 지정해야 하는 환경이다.</td>
+        </tr>
+        <tr>
+          <td>CREDENTIAL_CHAIN</td>
+          <td>지역 컴퓨터의 <strong>디렉터리에서 토큰을 자동으로 찾아온다</strong>. 기본 위치, 환경 변수, 자격 증명 파일 등을 순서대로 확인하고, 유효한 인증 정보를 찾으면 멈춘다.</td>
+          <td>매끄러운 인증을 원할 때 유익하다. 클라우드 기반 가상 기계나, 자격 증명이 자동으로 저장되고 관리되는 지역 개발 환경이다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>① CONFIG — 코드에 적는다</span></div>
+<pre><span class="k">import</span> duckdb
+
+conn = duckdb.<span class="f">connect</span>()
+conn.<span class="f">execute</span>(<span class="s">'''
+   <span class="k">CREATE SECRET</span> hf_token (
+      <span class="k">TYPE</span> HUGGINGFACE,
+      <span class="k">TOKEN</span> '&lt;HuggingFace_Token&gt;'
+ );
+'''</span>)
+
+<span class="c"># 이제 공개 데이터셋의 파일에 접근하듯 쓴다</span>
+conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    *
+  <span class="k">FROM</span>
+    '<span class="u">hf://datasets/Wei-Meng/StockPrices/AMZN.csv</span><span class="rec" title="원서 지면에서 잘린 부분. 문자열을 닫는 인용부호로 복원했다">'</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>도판 8-34 · 비공개 데이터셋의 Amazon 주가가 pandas DataFrame으로 표시된다</figcaption>
+  </figure>
+  <div class="col">
+    <p>비공개 데이터셋에 접근하는 <span class="tm">CONFIG</span> 제공자 방법은 <strong>코드에 액세스 토큰을 노출한다</strong>. 액세스 토큰을 파일에 저장하는 <span class="tm">CREDENTIAL_CHAIN</span> 방법이 훨씬 안전하다. 먼저 Hugging Face Hub 파이썬 꾸러미를 설치하고 로그인 유틸리티를 실행한다.</p>
+  </div>
+  <figure>
+    <div class="code"><div class="bar"><span>Shell</span><span>② CREDENTIAL_CHAIN — 파일에 둔다</span></div>
+<pre><span class="out">$ </span>pip install huggingface_hub
+
+<span class="out">$ </span>huggingface-cli login
+<span class="out">Token: &lt;HuggingFace_Token&gt;</span>
+
+<span class="c"># 액세스 토큰을 붙여 넣는다. 화면에 되비침이 없다.</span>
+<span class="c"># git 자격 증명으로 추가할지 묻는다. n을 넣고 Enter를 누른다.</span>
+
+<span class="out">Add token as git credential? (Y/n) n
+Token is valid (permission: read).
+Your token has been saved to /Users/weimenglee/.c</span><span class="rec" title="원서 지면에서 잘린 부분. 본문 서술에 따라 ~/.cache/huggingface/token 경로로 복원했다">ache/huggingface/token</span>
+<span class="out">Login successful</span></pre></div>
+    <figcaption>액세스 토큰이 ~/.cache/huggingface/ 디렉터리의 token이라는 파일에 저장된다</figcaption>
+  </figure>
+  <figure>
+    <div class="code"><div class="bar"><span>Python + SQL</span><span>토큰 없이 같은 문장</span></div>
+<pre><span class="k">import</span> duckdb
+
+conn = duckdb.<span class="f">connect</span>()
+conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">CREATE SECRET</span> hf_token (
+      <span class="k">TYPE</span> HUGGINGFACE,
+      <span class="k">PROVIDER</span> CREDENTIAL_CHAIN
+   );
+'''</span>)
+conn.<span class="f">execute</span>(<span class="s">'''
+  <span class="k">SELECT</span>
+    *
+  <span class="k">FROM</span>
+    '<span class="u">hf://datasets/Wei-Meng/StockPrices/AMZN.csv</span><span class="rec" title="원서 지면에서 잘린 부분. 문자열을 닫는 인용부호로 복원했다">'</span>
+'''</span>).<span class="f">df</span>()</pre></div>
+    <figcaption>출력은 도판 8-34와 같다. 질의문은 그대로이고 CREATE SECRET의 한 줄만 바뀐다</figcaption>
+  </figure>
+  <div class="aside">
+    <span class="lbl">일러두기 — 토큰의 관리</span>
+    <p>토큰이 무효가 되면, 예컨대 Hugging Face에서 삭제했다면 <span class="tm">~/.cache/huggingface/</span> 디렉터리의 토큰 파일을 그냥 지우면 된다. 토큰이 바뀌면 그 토큰 파일에서 갱신할 수 있다.</p>
+  </div>
+  <div class="col">
+    <p>제7장의 마지막 절이 여기서 되돌아온다. 그때도 세 가지 방법의 차이가 <strong>비밀번호를 어디에 두는가</strong>에 있었고, 운영체제나 파일에 맡기는 쪽이 권장되었다. 여기서도 같다. <span class="tm">CREATE SECRET</span>의 본문 한 줄이 <span class="tm">TOKEN '…'</span>에서 <span class="tm">PROVIDER CREDENTIAL_CHAIN</span>으로 바뀌는 것뿐인데, 그 한 줄이 코드에 열쇠를 박아 두는 일과 열쇠를 밖에 맡기는 일을 가른다. 열쇠를 문설주 밑에 두지 말라는 오래된 말과 다르지 않다.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════ 맺음 ══════ -->
+<div class="closing rv">
+  <div class="closing-in">
+    <p class="kicker" style="margin-bottom:22px"><i></i>맺음말 · SUMMARY</p>
+    <blockquote>Parquet이 내용을 저장하는 방식 때문에, 원격 Parquet 파일을 가져오는 일은 특히 효율적이다. 필요한 열만 지역 기계로 내려받으면 되기 때문이다.</blockquote>
+    <div class="col">
+      <p>제8장에서는 DuckDB가 <span class="tm">httpfs</span> 확장으로 원격 파일(CSV, Parquet, JSON 등)을 손쉽게 가져오도록 돕는 모습을 보았다. Parquet이 내용을 저장하는 방식 때문에 원격 Parquet 파일을 가져오는 일은 특히 효율적이며, 필요한 열만 지역 기계로 내려받으면 된다.</p>
+      <p>아울러 DuckDB는 사전 훈련 기계학습 모형과 훈련 집합의 온라인 저장소인 Hugging Face의 데이터셋 접근을 지원한다. <span class="tm">hf://</span> 경로로 공개와 비공개 양쪽의 Hugging Face 데이터셋 파일에 접근할 수 있다.</p>
+      <p>마지막으로 Hugging Face의 비공개 데이터셋에 접근하는 두 가지 방법, 곧 <span class="tm">CONFIG</span> 제공자 방법과 <span class="tm">CREDENTIAL_CHAIN</span> 제공자 방법을 익혔다.</p>
+      <p style="margin-top:2.4em;color:var(--meok-soft)">답사를 마치며 이 장의 자리를 적어 둔다. 제8장은 <strong>새로운 문법이 가장 적은 장</strong>이다. <span class="tm">INSTALL</span>과 <span class="tm">LOAD</span>는 제2장에서, glob은 제6장에서, 자격 증명을 어디에 두는가는 제7장에서 이미 익혔다. 새로운 것은 <span class="tm">httpfs</span>라는 확장 이름과 <span class="tm">hf://</span>라는 경로 머리, 그리고 <span class="tm">CREATE SECRET</span> 한 문장이 전부다.</p>
+      <p style="color:var(--meok-soft)">그런데 이 장은 총서에서 특별한 자리를 차지한다. <strong>제1장의 주장이 세 번째로 값을 하는 장</strong>이기 때문이다. 데이터를 열 단위 기둥으로 세워 둔다는 그 한 가지 결정이, 제1장에서는 디스크에서 읽는 양을 줄였고, 제4장에서는 메모리에 올리는 양을 줄였고, 여기서는 통신선을 타고 오는 양을 줄인다. 층위가 바뀔 때마다 아끼는 것의 이름이 달라지지만 원리는 하나다. 잘 세운 구조는 어느 층위에서든 값을 한다.</p>
+      <p style="color:var(--meok-soft)">그리고 <span class="tm">count(*)</span>가 한 바이트도 내려받지 않는 그 대목이 이 장의 정점이었다. 좋은 기록은 물건 자체를 뒤지지 않고도 답할 수 있는 물음을 미리 적어 둔다. 비석을 세운 이가 글자 수를 새겨 두었다면, 답사자는 종이를 펴지 않고도 그것을 옮겨 적을 수 있다.</p>
+    </div>
+    <p style="margin-top:40px"><a class="next" href="#">다음 장 → MotherDuck · 클라우드에서 쓰는 DuckDB</a></p>
+  </div>
+</div>
+
+<footer>
+  <span>DuckDB: Up and Running · Wei-Meng Lee · O'Reilly Media, 2024 — 제8장 「Accessing Remote Data Using DuckDB」 검토 기록</span>
+  <span>점선 밑줄은 지면에서 잘려 복원한 부분, …는 복원하지 않은 부분이다. 도판의 수치는 옮기지 않았다</span>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    items.forEach(function(el){ el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, {threshold:0.05, rootMargin:'0px 0px -8% 0px'});
+    items.forEach(function(el){ io.observe(el); });
+  }
+})();
+</script>
+</body>
+</html>

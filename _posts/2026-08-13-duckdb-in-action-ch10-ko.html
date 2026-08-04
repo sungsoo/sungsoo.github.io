@@ -1,0 +1,2038 @@
+---
+layout: null
+title: "Performance considerations for large datasets" 
+date: 2026-08-13 
+categories: [artificial intelligence]
+tags: [artificial general intelligence, data management]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DuckDB 답사기 · 제10장 대용량 데이터셋의 성능 고려사항 — 『DuckDB in Action』 정독</title>
+<meta name="description" content="Mark Needham, Michael Hunger, Michael Simons의 『DuckDB in Action』 제10장을 한 줄도 빠뜨리지 않고 읽어 정리한 해설. 5800만 게시물의 스택 오버플로 덤프와 17억 행의 뉴욕 택시 데이터, 열거형 최적화, 질의 계획과 벡터화, EXPLAIN ANALYZE, Parquet 내보내기.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* 토큰 — 제1~9장과 같은 델프트 도자 계열의 연작. 마지막 장이므로
+   계측값을 드러내는 색(호박)이 가장 자주 쓰인다. */
+:root{
+  --porcelain:#e9eef4; --glaze:#ffffff; --delft:#1f4e9c; --delft-deep:#0f2a54;
+  --shell:#0b1d3a; --ink:#101a28; --bill:#e0912a; --sun:#f2b134; --canal:#2b7d74;
+  --grey:#69788c; --sky:#8fb8ff; --py:#67d4b4; --clay:#a8552b;
+  --hair:rgba(16,26,40,.14); --wire:rgba(143,184,255,.22);
+  --disp:'Fraunces','Gowun Batang',serif;
+  --body:'Noto Sans KR','Fraunces',sans-serif;
+  --mono:'IBM Plex Mono','Menlo','DejaVu Sans Mono','Consolas','Noto Sans KR',monospace;
+  --col:min(720px,100%); --wide:min(1080px,100%);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--porcelain);color:var(--ink);font-family:var(--body);
+  font-weight:300;font-size:17px;line-height:1.95;word-break:keep-all;line-break:strict;
+  background-image:radial-gradient(900px 520px at 86% -6%,rgba(224,145,42,.14),transparent 62%),
+    radial-gradient(1020px 590px at 4% 5%,rgba(31,78,156,.13),transparent 60%);
+  background-attachment:fixed}
+::selection{background:var(--bill);color:#fff}
+a{color:var(--delft);text-decoration:none;border-bottom:1px solid rgba(31,78,156,.35)}
+a:hover{color:var(--canal);border-color:var(--canal)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--bill);outline-offset:3px}
+.wrap{width:var(--wide);margin:0 auto;padding:0 26px}
+.col{width:var(--col);margin:0 auto}
+
+.hero{padding:74px 0 40px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--grey);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.eyebrow b{color:var(--delft);font-weight:500}
+.chapno{display:flex;align-items:baseline;gap:18px;margin:26px 0 6px}
+.chapno span:first-child{font-family:var(--disp);font-size:clamp(52px,11vw,104px);font-weight:800;
+  line-height:.82;color:var(--delft);font-variation-settings:'SOFT' 40,'WONK' 1}
+.chapno span:last-child{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--grey);padding-bottom:10px}
+h1{font-family:var(--disp);font-weight:600;letter-spacing:-.015em;font-size:clamp(33px,6vw,62px);
+  line-height:1.1;margin:0 0 22px;max-width:22ch}
+h1 em{font-style:italic;color:var(--delft);font-weight:400;background:none}
+.lede{width:var(--col);font-size:clamp(17px,2vw,20px);line-height:1.9;color:#243247}
+.lede strong{font-weight:500;color:var(--ink);background:linear-gradient(transparent 62%,rgba(224,145,42,.32) 62%)}
+.hero-meta{margin-top:34px;display:flex;flex-wrap:wrap;border-top:1px solid var(--hair)}
+.hero-meta div{flex:1 1 190px;padding:16px 22px 16px 0;border-right:1px solid var(--hair)}
+.hero-meta div:last-child{border-right:0}
+.hero-meta dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--grey);
+  text-transform:uppercase;margin:0 0 6px}
+.hero-meta dd{margin:0;font-size:14.5px;font-weight:400;line-height:1.65}
+
+.rail{position:fixed;left:20px;top:50%;transform:translateY(-50%);z-index:20;display:none;flex-direction:column;gap:1px}
+.rail a{display:flex;align-items:center;gap:9px;border:0;font-family:var(--mono);font-size:10px;
+  letter-spacing:.1em;color:var(--grey);padding:3px 0}
+.rail i{display:block;width:14px;height:1px;background:var(--grey);opacity:.5;transition:.35s}
+.rail a span{opacity:0;transform:translateX(-4px);transition:.35s}
+.rail a:hover i,.rail a.on i{width:28px;opacity:1;background:var(--bill);height:2px}
+.rail a:hover span,.rail a.on span{opacity:1;transform:none;color:var(--delft-deep)}
+@media(min-width:1320px){.rail{display:flex}}
+
+section{padding:34px 0}
+.sechead{width:var(--col);margin:0 auto 26px}
+.sechead .num{font-family:var(--mono);font-size:12px;letter-spacing:.22em;color:var(--bill);display:block;margin-bottom:10px}
+h2{font-family:var(--disp);font-weight:600;font-size:clamp(26px,3.6vw,38px);line-height:1.25;
+  margin:0;letter-spacing:-.01em;color:var(--delft-deep)}
+h2 .en{display:block;font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:.08em;color:var(--grey);margin-top:9px}
+h3{font-family:var(--body);font-weight:700;font-size:19px;line-height:1.5;margin:46px 0 12px;color:var(--ink)}
+h3::before{content:"";display:inline-block;width:9px;height:9px;background:var(--bill);margin-right:11px;vertical-align:2px}
+h3 .sub{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--grey);letter-spacing:.06em;margin-left:8px}
+p{margin:0 0 20px}
+.dropcap::first-letter{font-family:var(--disp);font-size:3.6em;line-height:.86;float:left;
+  margin:6px 12px 0 0;color:var(--delft);font-weight:600}
+em{font-style:normal;background:linear-gradient(transparent 60%,rgba(43,125,116,.22) 60%)}
+strong{font-weight:500}
+code{font-family:var(--mono);font-size:.86em;background:rgba(31,78,156,.08);padding:.12em .42em;
+  border-radius:2px;color:var(--delft-deep);white-space:nowrap}
+.q{border-left:3px solid var(--bill);padding:2px 0 2px 22px;margin:34px 0;font-family:var(--disp);
+  font-size:20px;line-height:1.75;color:var(--delft-deep)}
+.q span{display:block;font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;color:var(--grey);margin-top:12px}
+ul.plain{list-style:none;padding:0;margin:0 0 24px}
+ul.plain li{position:relative;padding:11px 0 11px 30px;border-bottom:1px solid var(--hair)}
+ul.plain li::before{content:"";position:absolute;left:4px;top:22px;width:12px;height:1px;background:var(--delft);opacity:.6}
+ul.plain li b{font-weight:500;color:var(--delft-deep)}
+
+.plate{margin:46px 0;width:var(--wide)}
+.plate.narrow{width:var(--col);margin-left:auto;margin-right:auto}
+.plate figure{margin:0}
+.tile{background:var(--glaze);border:1px solid var(--hair);
+  box-shadow:0 1px 0 #fff inset,0 18px 40px -30px rgba(15,42,84,.55);padding:14px}
+.tile-in{border:1px solid rgba(31,78,156,.22);padding:20px 14px}
+.plate svg{display:block;width:100%;height:auto}
+figcaption{margin-top:14px;font-family:var(--mono);font-size:12px;color:var(--grey);display:flex;gap:10px;align-items:baseline}
+figcaption b{color:var(--delft-deep);font-weight:500;white-space:nowrap}
+figcaption.added b{color:var(--canal)}
+.shot{background:var(--glaze);border:1px dashed rgba(31,78,156,.4);padding:20px 22px 6px;margin:30px 0}
+.shot .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--delft);display:block;margin-bottom:10px}
+.shot p{font-size:15px;line-height:1.85;margin-bottom:14px;color:#2c3a4e}
+.shot p b{color:var(--delft-deep);font-weight:500}
+
+.term{background:var(--shell);border:1px solid rgba(143,184,255,.28);
+  box-shadow:0 26px 60px -40px rgba(11,29,58,.9);margin:28px 0;overflow:hidden}
+.term.bleed{width:var(--wide)}
+.term-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--wire);
+  background:rgba(143,184,255,.06)}
+.dots{display:flex;gap:6px}
+.dots i{width:9px;height:9px;border-radius:50%;display:block;background:#3a557f}
+.dots i:first-child{background:var(--bill)}
+.term-bar .name{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:#7f9bc7;text-transform:uppercase}
+.term-bar .tagn{margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;
+  color:var(--bill);border:1px solid rgba(224,145,42,.5);padding:2px 8px;white-space:nowrap}
+.term pre{margin:0;padding:20px 22px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.85;color:#d5e3f7}
+.p{color:var(--bill)} .k{color:var(--sky)} .f{color:#ffd28a} .c{color:#6f86a8}
+.err{color:#ff9a7a} .ok{color:#67d4b4} .rt{color:#7f9bc7} .bl{color:#ffcf8d}
+.term-note{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;
+  font-weight:300;color:#a3b8d6;line-height:1.85}
+.term-note b{color:var(--bill);font-weight:500;font-family:var(--mono);font-size:12.5px}
+.term-note.catch{background:rgba(224,145,42,.07)}
+.term-note.catch::before{content:"살펴본 김에";display:block;font-family:var(--mono);font-size:10px;
+  letter-spacing:.22em;color:var(--bill);margin-bottom:7px}
+/* 어두운 패널 안의 코드 조각은 밝은 배경 규칙을 덮어써야 읽힌다 */
+.term-note code,.term code,.bx code{background:rgba(255,255,255,.13);color:#ffd9a3;border-radius:2px}
+
+.duckbox{font-family:var(--mono);font-size:13px;border-collapse:collapse;color:#d5e3f7}
+.duckbox th,.duckbox td{border:1px solid var(--wire);padding:5px 14px;text-align:right;white-space:nowrap}
+.duckbox th{color:#fff;font-weight:500;text-align:center}
+.duckbox tr.type th{color:#7f9bc7;font-weight:400;font-size:12px;font-style:italic}
+.duckbox td.l,.duckbox th.l{text-align:left}
+.duckbox tfoot td{border:1px solid var(--wire);color:#7f9bc7;text-align:right;font-size:12px}
+.duckbox td.hi{color:var(--sun)} .duckbox td.bad{color:#ff9a7a}
+.duckbox td.bar{color:var(--sun);letter-spacing:-1px}
+.duckbox tr.mark td{background:rgba(224,145,42,.13)}
+.dbwrap{padding:20px 22px;overflow-x:auto}
+
+/* 계측 비교기 */
+.bx{background:var(--shell);border:1px solid rgba(143,184,255,.28);margin:36px 0;width:var(--wide);
+  box-shadow:0 26px 60px -40px rgba(11,29,58,.9)}
+.bxtabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--wire);background:rgba(143,184,255,.06)}
+.bxtabs button{appearance:none;background:none;border:0;border-right:1px solid var(--wire);cursor:pointer;
+  font-family:var(--mono);font-size:11px;color:#7f9bc7;padding:11px 12px;transition:.2s;flex:1 1 auto}
+.bxtabs button:hover{color:#fff;background:rgba(143,184,255,.08)}
+.bxtabs button[aria-pressed="true"]{background:var(--bill);color:var(--shell);font-weight:600}
+.bxbody{display:grid;grid-template-columns:1fr}
+@media(min-width:880px){.bxbody{grid-template-columns:1fr 300px}}
+.bxchart{padding:22px}
+.bxside{padding:22px;border-top:1px solid var(--wire)}
+@media(min-width:880px){.bxside{border-top:0;border-left:1px solid var(--wire)}}
+.bxrow{margin-bottom:18px}
+.bxrow:last-child{margin-bottom:0}
+.bxlabel{font-family:var(--mono);font-size:12px;color:#c6d8f2;display:flex;justify-content:space-between;margin-bottom:5px}
+.bxlabel i{font-style:normal;color:var(--sun);font-weight:600}
+.bxtrack{height:22px;background:rgba(143,184,255,.08);border:1px solid var(--wire);position:relative}
+.bxfill{height:100%;transition:width .6s cubic-bezier(.3,0,.2,1);display:flex;align-items:center;
+  justify-content:flex-end;padding-right:7px;font-family:var(--mono);font-size:10.5px;color:var(--shell);font-weight:600}
+.bxfill.slow{background:var(--clay)} .bxfill.mid{background:var(--sky)} .bxfill.fast{background:var(--py)}
+.bxnote{font-family:var(--mono);font-size:10.5px;color:#7f9bc7;margin-top:4px}
+.bxside dt{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:#7f9bc7;margin-bottom:5px}
+.bxside dd{margin:0 0 14px;font-size:13.5px;font-weight:300;color:#c6d8f2;line-height:1.8}
+.bxside dd b{color:var(--bill);font-weight:500}
+.bxbig{font-family:var(--disp);font-size:34px;font-weight:600;color:var(--sun);line-height:1;margin-bottom:4px;display:block}
+.bxcap{border-top:1px solid var(--wire);padding:13px 22px;font-family:var(--body);font-size:13.5px;
+  font-weight:300;color:#a3b8d6;line-height:1.85}
+.bxcap b{color:var(--bill);font-weight:500}
+
+.grid3{display:grid;grid-template-columns:1fr;gap:1px;background:var(--hair);border:1px solid var(--hair);margin:30px 0}
+@media(min-width:640px){.grid3{grid-template-columns:1fr 1fr}}
+@media(min-width:960px){.grid3{grid-template-columns:1fr 1fr 1fr}}
+.cell{background:var(--glaze);padding:20px}
+.cell .t{font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;color:var(--delft);display:block;margin-bottom:8px;font-weight:500}
+.cell p{font-size:14.5px;line-height:1.78;margin:0;color:#2c3a4e}
+.cell .big{font-family:var(--disp);font-size:30px;font-weight:600;color:var(--delft-deep);display:block;line-height:1.1;margin-bottom:6px}
+.tblwrap{overflow-x:auto;margin:20px 0 8px}
+.tbl{width:100%;min-width:620px;border-collapse:collapse;font-size:15px}
+.tbl caption{caption-side:top;text-align:left;font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;color:var(--grey);padding-bottom:10px}
+.tbl caption b{color:var(--canal);font-weight:500}
+.tbl th,.tbl td{padding:10px 14px;border-bottom:1px solid var(--hair);text-align:left;font-size:14.5px;line-height:1.7;vertical-align:top}
+.tbl th{background:var(--delft-deep);color:#fff;font-weight:500;letter-spacing:.04em;border-bottom:0;white-space:nowrap}
+.tbl td.m{font-family:var(--mono);font-size:13px;color:var(--delft);font-weight:500;white-space:nowrap}
+.tbl td.n{text-align:right;font-family:var(--mono);font-size:13.5px;white-space:nowrap}
+.tbl td.up{text-align:right;font-family:var(--mono);font-size:13.5px;color:var(--clay);font-weight:500;white-space:nowrap}
+.tbl tbody tr:nth-child(even){background:rgba(31,78,156,.04)}
+.tbl tfoot td{background:rgba(224,145,42,.12);font-weight:500;border-bottom:0}
+
+.index{width:var(--wide);margin:36px auto;background:var(--glaze);border:1px solid var(--hair);
+  padding:26px 28px 20px;box-shadow:0 16px 40px -34px rgba(15,42,84,.6)}
+.index h5{margin:0 0 18px;font-family:var(--mono);font-size:11px;letter-spacing:.22em;color:var(--grey);font-weight:400}
+.index ol{list-style:none;padding:0;margin:0;columns:1;column-gap:34px;font-size:13.5px;line-height:1.6}
+@media(min-width:660px){.index ol{columns:2}}
+@media(min-width:1000px){.index ol{columns:3}}
+.index li{break-inside:avoid;padding:4px 0 4px 46px;position:relative;color:#33425a}
+.index li span{position:absolute;left:0;top:4px;font-family:var(--mono);font-size:11px;color:var(--bill)}
+
+.note,.tip{padding:22px 24px 6px;margin:34px 0}
+.note{background:linear-gradient(180deg,rgba(224,145,42,.10),rgba(224,145,42,.04));border:1px solid rgba(224,145,42,.4)}
+.tip{background:linear-gradient(180deg,rgba(43,125,116,.09),rgba(43,125,116,.03));border:1px solid rgba(43,125,116,.36)}
+.note .tag,.tip .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;display:block;margin-bottom:10px}
+.note .tag{color:#8a5410} .tip .tag{color:#1e5c55}
+.note p,.tip p{font-size:15.5px;line-height:1.85;margin-bottom:16px}
+.aside{background:var(--glaze);border:1px solid var(--hair);border-left:4px solid var(--canal);
+  padding:24px 26px 8px;margin:38px 0;box-shadow:0 14px 34px -30px rgba(15,42,84,.6)}
+.aside .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:var(--canal);display:block;margin-bottom:12px}
+.aside h4{margin:0 0 12px;font-family:var(--disp);font-size:21px;font-weight:600;color:var(--delft-deep)}
+.aside p{font-size:15.5px;line-height:1.85}
+.aside pre{font-family:var(--mono);font-size:12.5px;background:rgba(16,26,40,.06);padding:14px 16px;
+  overflow-x:auto;line-height:1.8;margin:0 0 18px;color:#2c3a4e}
+
+.summary{background:var(--delft-deep);color:#e6eefb;margin-top:70px;padding:66px 0 58px;position:relative}
+.summary::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px 44px)}
+.summary h2{color:#fff} .summary .num{color:var(--bill)}
+.summary h2 .en{color:rgba(230,238,251,.5)}
+.summary ol{list-style:none;counter-reset:s;padding:0;width:var(--col);margin:0 auto}
+.summary li{counter-increment:s;position:relative;padding:16px 0 16px 52px;border-bottom:1px solid rgba(255,255,255,.13);
+  font-weight:300;font-size:16px;line-height:1.8}
+.summary li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:19px;
+  font-family:var(--mono);font-size:12px;color:var(--bill);letter-spacing:.1em}
+.summary li b{font-weight:500;color:#fff}
+.summary code{background:rgba(255,255,255,.12);color:#ffd9a3}
+
+footer{padding:56px 0 76px;font-size:13.5px;color:var(--grey);line-height:1.85}
+footer .col{border-top:1px solid var(--hair);padding-top:26px}
+footer b{color:var(--delft-deep);font-weight:500}
+footer .mono{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;display:block;margin-top:16px;color:#8494a8}
+
+.rev{opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1)}
+.rev.in{opacity:1;transform:none}
+.flow{stroke-dasharray:var(--len,300);stroke-dashoffset:var(--len,300);animation:draw 1.3s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.grow{transform-origin:left center;transform:scaleX(0);animation:grow 1.1s cubic-bezier(.3,0,.2,1) forwards}
+@keyframes grow{to{transform:scaleX(1)}}
+.scrollhint{display:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--grey);margin-top:8px}
+@media(max-width:759px){
+  .hero-meta div{border-right:0;border-bottom:1px solid var(--hair);padding-right:0}
+  .hero-meta div:last-child{border-bottom:0}
+}
+@media(max-width:720px){
+  code{white-space:normal;overflow-wrap:anywhere}
+  .scrollhint{display:block}
+  .tile-in{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tile-in>svg{min-width:660px}
+  .bxtabs button{flex:1 1 46%;border-right:0;border-bottom:1px solid var(--wire)}
+  figcaption{flex-direction:column;gap:4px}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .rev{opacity:1;transform:none} .flow{stroke-dashoffset:0} .grow{transform:scaleX(1)}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<nav class="rail" aria-label="절 목차">
+  <a href="#s0"><i></i><span>여는 글</span></a>
+  <a href="#s1"><i></i><span>10.1 추출</span></a>
+  <a href="#s1b"><i></i><span>10.1.2 데이터 모델</span></a>
+  <a href="#s1c"><i></i><span>10.1.3 CSV 탐색</span></a>
+  <a href="#s1d"><i></i><span>10.1.4 적재</span></a>
+  <a href="#s1e"><i></i><span>10.1.5 탐색 질의</span></a>
+  <a href="#s1f"><i></i><span>10.1.6 요일</span></a>
+  <a href="#s1g"><i></i><span>10.1.7 열거형</span></a>
+  <a href="#s2"><i></i><span>10.2 질의 계획</span></a>
+  <a href="#s3"><i></i><span>10.3 Parquet</span></a>
+  <a href="#s4"><i></i><span>10.4 택시 17억</span></a>
+  <a href="#s5"><i></i><span>요약</span></a>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">
+      <span>DuckDB in Action</span><span>·</span><span>Manning, 2024</span><span>·</span>
+      <b>제10장 정독 · 마지막 장</b>
+    </div>
+    <div class="chapno">
+      <span>10</span>
+      <span>PERFORMANCE CONSIDERATIONS FOR LARGE DATASETS<br>원서 222–261쪽</span>
+    </div>
+    <h1>노트북 한 대로 <em>17억 행</em>을 상대하는 마지막 장</h1>
+    <p class="lede">
+      이 책의 데이터셋은 대체로 작거나 중간 크기였다. 저자들은 그것이 이상한 일이 아니라고 말한다.
+      <em>일상 업무에서 마주치는 데이터셋을 대표하기 때문이다.</em> 그러나 거대한 데이터셋은 실제로 존재한다.
+      그래서 이 장의 동기가 한 문장으로 정리된다. <strong>그런 것을 만났을 때 다른 데이터 처리 도구를 써야 한다고
+      생각하게 만들고 싶지 않다.</strong> 소재는 둘이다. <strong>5,800만 게시물의 스택 오버플로 덤프</strong>와
+      <strong>17억 행의 뉴욕 택시 데이터</strong>다. 각각을 준비하고 적재하고 질의하고 내보내면서,
+      <em>어디에서 시간이 흐르고 무엇이 그것을 줄이는지</em>를 계측값으로 보여준다.
+    </p>
+    <dl class="hero-meta">
+      <div><dt>이 장이 다루는 것</dt><dd>대용량 데이터를 DuckDB로 들이도록 준비하기 · 메타데이터 질의와 탐색적 데이터 분석(EDA) · 전체 데이터베이스를 동시적으로 Parquet으로 내보내기 · 여러 컬럼에 집계를 걸어 통계 분석 가속 · EXPLAIN과 EXPLAIN ANALYZE로 질의 계획 이해하기</dd></div>
+      <div><dt>절 구성</dt><dd>10.1 – 10.4 및 하위 절 열여섯 개, 요약</dd></div>
+      <div><dt>실린 것</dt><dd>목록 <em>43건</em> · 도판 4점(그중 하나는 화면 갈무리) · NOTE 5건 · 사이드바 1건</dd></div>
+      <div><dt>계측 환경</dt><dd>10코어 랩톱 · 저자들이 권하는 최소 사양은 4–10코어, 8–64GB RAM</dd></div>
+    </dl>
+  </div>
+
+  <div class="wrap plate" id="s0">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 400" role="img" aria-label="제2장 227행에서 제10장 17억 행까지 이 책이 다룬 데이터셋 규모를 로그 눈금으로 비교한 사다리">
+          <text x="24" y="26" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2" fill="#69788c">SCALE LADDER · 이 책이 지나온 규모 (로그 눈금)</text>
+          <g font-family="IBM Plex Mono, monospace" font-size="11.5">
+            <g><text x="24" y="66" fill="#69788c">제2장 · 나라 인구 CSV</text>
+              <rect class="grow" style="animation-delay:0.00s" x="330" y="52" width="27.3" height="20" fill="#8fb8ff" opacity="0.55"/>
+              <text x="367.3" y="67" fill="#0f2a54" font-weight="600">227행</text></g>
+            <g><text x="24" y="104" fill="#69788c">제4장 · 태양광 측정값</text>
+              <rect class="grow" style="animation-delay:0.06s" x="330" y="90" width="244.3" height="20" fill="#8fb8ff" opacity="0.60"/>
+              <text x="584.3" y="105" fill="#0f2a54" font-weight="600">151,879행</text></g>
+            <g><text x="24" y="142" fill="#69788c">제8장 · ATP 테니스 경기</text>
+              <rect class="grow" style="animation-delay:0.12s" x="330" y="128" width="328.8" height="20" fill="#8fb8ff" opacity="0.65"/>
+              <text x="668.8" y="143" fill="#0f2a54" font-weight="600">191만 행</text></g>
+            <g><text x="24" y="180" fill="#69788c">제7장 · 공유된 스택 오버플로</text>
+              <rect class="grow" style="animation-delay:0.18s" x="330" y="166" width="442.8" height="20" fill="#2b7d74" opacity=".75"/>
+              <text x="782.8" y="181" fill="#0f2a54" font-weight="600">5,833만 행</text></g>
+            <g><text x="24" y="218" fill="#8a5410" font-weight="600">제10장 · 스택 오버플로 전체</text>
+              <rect class="grow" style="animation-delay:0.24s" x="330" y="204" width="442.8" height="20" fill="#e0912a"/>
+              <text x="782.8" y="219" fill="#0f2a54" font-weight="600">5,833만 게시물 · 11GB</text></g>
+            <g><text x="24" y="256" fill="#8a5410" font-weight="600">제10장 · 뉴욕 택시 전체</text>
+              <rect class="grow" style="animation-delay:0.30s" x="330" y="242" width="555.7" height="20" fill="#e0912a"/>
+              <text x="895.7" y="257" fill="#0f2a54" font-weight="600">17억 행</text></g>
+          </g>
+          <line x1="330" y1="280" x2="944" y2="280" stroke="#e9eef4" stroke-width="1.4"/>
+          <g font-family="IBM Plex Mono, monospace" font-size="10" fill="#69788c">
+            <text x="330.0" y="296" text-anchor="middle">10²</text><text x="406.8" y="296" text-anchor="middle">10³</text><text x="483.6" y="296" text-anchor="middle">10⁴</text><text x="560.4" y="296" text-anchor="middle">10⁵</text><text x="637.2" y="296" text-anchor="middle">10⁶</text><text x="714.0" y="296" text-anchor="middle">10⁷</text><text x="790.8" y="296" text-anchor="middle">10⁸</text><text x="867.6" y="296" text-anchor="middle">10⁹</text><text x="944.4" y="296" text-anchor="middle">10¹⁰</text>
+          </g>
+          <line x1="24" y1="322" x2="976" y2="322" stroke="#e9eef4" stroke-width="1.4"/>
+          <text x="24" y="344" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#0f2a54">제2장의 227행에서 이 장의 17억 행까지, <tspan font-weight="600">일곱 자릿수를 건너왔다.</tspan> 그런데 도구는 바뀌지 않았다. 같은 단일 바이너리, 같은 SQL이다.</text>
+          <text x="24" y="366" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#69788c">17억 행이 28GB에 담긴다. 행당 17.5바이트, 컬럼값 하나당 0.92바이트다. 컬럼 저장과 압축이 무엇을 하는지 이 한 줄이 말해준다.</text>
+          <text x="24" y="388" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#8a5410">저자들의 판정은 이렇다. "완전히 '빅데이터'는 아니지만, DuckDB의 진면목을 시험할 만큼은 크다."</text>
+        </svg>
+      </div></div>
+      <figcaption class="added"><b>덧붙인 그림 1</b><span>이 책이 지나온 데이터셋의 규모를 한자리에 모았다. 원서에는 이런 그림이 없다.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</header>
+
+<main>
+<section>
+  <div class="col">
+    <p class="dropcap">어떤 데이터셋은 표 형태로 요약되고, 어떤 것은 차트로 그려진다. 그러나 이 장이 다루는 것은 표도 차트도 아니다. <em>초와 기가바이트</em>다. 앞의 아홉 장이 "무엇을 할 수 있는가"를 보여주었다면 이 장은 <strong>"얼마나 걸리는가"</strong>를 보여준다. 그래서 이 장의 본문에는 <code>.timer on</code>이 자주 나오고, 인쇄된 숫자 하나하나가 주장의 근거가 된다.</p>
+    <p>순서는 두 데이터셋에 대해 같다. <strong>준비하고, 들이고, 질의하고, 이식 가능한 형식으로 내보낸다.</strong> 다만 두 번째 데이터셋에서는 마지막 단계가 사라진다. <em>애초에 데이터베이스를 채우지 않고 Parquet 파일을 그 자리에서 질의하기 때문</em>이다. 그 차이가 이 장의 후반부를 이룬다.</p>
+    <div class="q">
+      거대한 데이터셋은 실제로 존재한다. 그런 것을 만났을 때 다른 데이터 처리 도구를 써야 한다고 여러분이 생각하게 만들고 싶지 않다.
+      <span>제10장 도입, 이 장의 동기</span>
+    </div>
+  </div>
+
+  <div class="index rev">
+    <h5>이 장에 실린 목록 43건 — 이 책에서 가장 많다</h5>
+    <ol>
+      <li><span>10.1</span>XML을 JSON을 거쳐 CSV로 변환</li>
+      <li><span>10.2</span>Tags 파일의 메타데이터 서술</li>
+      <li><span>10.3</span>CSV 파일에서 상위 태그 고르기</li>
+      <li><span>10.4</span>태그 빈도를 버킷으로 나누는 질의</li>
+      <li><span>10.5</span>users 테이블 만들기</li>
+      <li><span>10.6</span>posts 테이블 만들기</li>
+      <li><span>10.7</span>컬럼 일부만 SUMMARIZE</li>
+      <li><span>10.8</span>평판 상위 사용자</li>
+      <li><span>10.9</span>일당 평판 증가율 상위 사용자</li>
+      <li><span>10.10</span>막대 차트로 그린 평판 증가율</li>
+      <li><span>10.11</span>연도별 활동량 질의</li>
+      <li><span>10.12</span>SQL 태그 질문의 요일 분포</li>
+      <li><span>10.13</span>Rust 태그 질문의 요일 분포</li>
+      <li><span>10.14</span>열거형 타입 만들기 예제</li>
+      <li><span>10.15</span>tags 테이블에서 태그 열거형 만들기</li>
+      <li><span>10.16</span>열거형 값 몇 개 고르기</li>
+      <li><span>10.17</span>tagNames 컬럼 추가</li>
+      <li><span>10.18</span>tags에서 tagNames 채우기</li>
+      <li><span>10.19</span>tagEnums 컬럼 추가</li>
+      <li><span>10.20</span>tagNames에서 tagEnums 직접 채우기</li>
+      <li><span>10.21</span>java 태그 세기 · 문자열 비교</li>
+      <li><span>10.22</span>java 태그 세기 · 문자열 리스트</li>
+      <li><span>10.23</span>java 태그 세기 · 열거형 리스트</li>
+      <li><span>10.24</span>상위 10 태그 통계 · tags 컬럼</li>
+      <li><span>10.25</span>상위 10 태그 통계 · tagEnums 컬럼</li>
+      <li><span>10.26</span>users를 Parquet으로 내보내기</li>
+      <li><span>10.27</span>posts를 Parquet으로 내보내기</li>
+      <li><span>10.28</span>users를 다중 스레드로 내보내기</li>
+      <li><span>10.29</span>Parquet에서 행 수 읽기</li>
+      <li><span>10.30</span>CSV에서 행 수 읽기</li>
+      <li><span>10.31</span>데이터베이스 전체를 Parquet으로</li>
+      <li><span>10.32</span>schema.sql의 내용</li>
+      <li><span>10.33</span>load.sql의 내용</li>
+      <li><span>10.34</span>S3 비밀 만들기</li>
+      <li><span>10.35</span>httpfs 확장 설치와 적재</li>
+      <li><span>10.36</span>여러 파일에 걸친 뷰 만들기</li>
+      <li><span>10.37</span>SUMMARIZE 명령</li>
+      <li><span>10.38</span>걸러내는 뷰 만들기</li>
+      <li><span>10.39</span>단일 컬럼 요약</li>
+      <li><span>10.40</span>단일 컬럼 집계</li>
+      <li><span>10.41</span>다중 컬럼 집계</li>
+      <li><span>10.42</span>운행 데이터 연도별 집계</li>
+      <li><span>10.43</span>승객 수별 택시 운행</li>
+    </ol>
+  </div>
+</section>
+
+<section id="s1">
+  <div class="sechead rev">
+    <span class="num">10.1</span>
+    <h2>스택 오버플로 전체를 적재하고 질의하기<span class="en">Loading and querying the full Stack Overflow database</span></h2>
+  </div>
+  <div class="col rev">
+    <p>스택 오버플로는 2008년에 만들어진 질의응답 사이트이며 <strong>평판(reputation) 체계</strong>를 쓴다. 유용한 답변과 콘텐츠에 기여하면 점수와 특권을 얻는다. 저자들이 독자에게 던지는 물음이 다정하다. <em>그 유용한 사이트 뒤에 있는 시스템과 데이터를 한 번이라도 생각해본 적이 있는가.</em></p>
+    <p>데이터셋의 규모는 이렇다. <strong>압축된 CSV 형식으로 11GB이며, 5,800만 게시물과 2,000만 사용자와 6만 5천 태그를 담고 있다.</strong> 그리고 저자들이 스스로 등급을 내린다. <em>완전히 "빅데이터"는 아니지만, DuckDB의 진면목을 시험할 만큼은 크다.</em></p>
+
+    <h3>데이터 덤프와 추출 <span class="sub">10.1.1</span></h3>
+    <p>기초적인 탐색이라면 사이트가 제공하는 <em>Stack Exchange Data Explorer</em>로도 된다. 그러나 저자들이 한계를 짚는다. <strong>서비스에 과부하가 걸리지 않도록 실행할 수 있는 질의의 수와 복잡도가 제한되어 있다.</strong> 우리는 우리가 돌리는 질의를 더 통제하고 싶으니 원자료가 필요하다.</p>
+
+    <div class="note">
+      <span class="tag">NOTE — 지루한 부분은 건너뛰어도 된다</span>
+      <p>저자들이 미리 밝혀둔다. <em>"이것이 과정에서 가장 재미있는 부분이 아님을 알고 있으니, 이 절의 모든 걸음을 따라야 한다고 느끼지 않아도 된다."</em> 최종 표 형태 데이터만 원한다면 <strong>S3에서 Parquet 파일을 내려받거나</strong>(<code>s3://us-prd-motherduck-open-datasets/stackoverflow/parquet/2023-05/</code>) <strong>MotherDuck 공유를 붙이면</strong> 된다(<code>md:_share/stackoverflow/6c318917-…</code>).</p>
+      <p>스택 오버플로 데이터가 너무 크다면 <strong>math나 biotechnology 같은 더 작은 스택 익스체인지 커뮤니티</strong>를 골라도 된다. 제7장에서 붙여본 그 공유가 여기서 되돌아온다.</p>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">shell — 27GB XML을 11GB CSV로 옮기는 길</span><span class="tagn">목록 10.1</span></div>
+      <pre><span class="c"># 인터넷 아카이브의 스택 익스체인지 덤프. 크리에이티브 커먼즈 라이선스다.</span>
+<span class="p">$</span> curl -OL <span class="f">"https://archive.org/download/stackexchange/stackoverflow.com-\
+{Comments,Posts,Votes,Users,Badges,PostLinks,Tags}.7z"</span>
+
+<span class="c"># 압축된 XML 일곱 개, 합계 27GB</span>
+ 19G  stackoverflow.com-Posts.7z          343M  stackoverflow.com-Badges.7z
+5.2G  stackoverflow.com-Comments.7z       117M  stackoverflow.com-PostLinks.7z
+1.3G  stackoverflow.com-Votes.7z          903K  stackoverflow.com-Tags.7z
+684M  stackoverflow.com-Users.7z
+
+<span class="c"># 파일은 SQL Server 내보내기 형식이다. Row 원소 하나가 모든 컬럼을 속성으로 갖는다.</span>
+&lt;row Id=<span class="f">"728812"</span> Reputation=<span class="f">"41063"</span> CreationDate=<span class="f">"2011-04-28T07:51:27.387"</span>
+     DisplayName=<span class="f">"Michael Hunger"</span> … Views=<span class="f">"7046"</span> UpVotes=<span class="f">"4712"</span> DownVotes=<span class="f">"24"</span> /&gt;
+
+<span class="c"># DuckDB는 아직 XML 파싱을 지원하지 않으므로 외부 도구를 쓴다.</span>
+<span class="c"># xidel(XML → JSON) → jq(JSON → CSV) → gzip</span>
+<span class="p">$</span> 7z e -so stackoverflow.com-Comments.7z | \
+  xidel -se <span class="f">'//row/[(@Id|@PostId|@Score|@Text|@CreationDate|@UserId)]'</span> - | \
+  (echo <span class="f">"Id,PostId,Score,Text,CreationDate,UserId"</span> &amp;&amp;
+   jq -r <span class="f">'. | @csv'</span>) |
+  gzip -9 &gt; Comments.csv.gz
+
+<span class="c"># 끝나면 압축 CSV 일곱 개, 합계 11GB</span>
+5.0G  Comments.csv.gz     452M  Badges.csv.gz
+3.2G  Posts.csv.gz        137M  PostLinks.csv.gz
+1.6G  Votes.csv.gz        1.1M  Tags.csv.gz
+613M  Users.csv.gz</pre>
+      <div class="term-note">
+        예제 파일에 담긴 사용자가 <b>Id 728812의 Michael Hunger</b>, 곧 이 책의 저자 자신이다.
+        평판 41,063에 업보트 4,712. 자기 데이터를 예제로 내놓는 이 태도가 이 책의 성격을 보여준다.
+      </div>
+      <div class="term-note">
+        <b>인터넷 아카이브의 대역폭이 제한되어 있어 내려받기가 답답하고 느린 과정일 수 있고,
+        접속이 자주 끊길 가능성이 높다.</b> 19GB짜리 파일 하나가 있으니 그럴 만하다.
+      </div>
+      <div class="term-note">
+        저자들이 JSON을 곧바로 쓰지 않은 이유를 밝혀두었다.
+        <b>xidel의 JSON 파일을 DuckDB의 내장 기능으로 바로 적재할 수도 있었지만,
+        JSON을 지원하지 않는 다른 도구를 위해 CSV를 갖고 있는 편이 요긴할 수 있다.</b>
+        게다가 <b>키 이름이 되풀이되지 않으므로 파일이 조금 더 작다.</b>
+      </div>
+      <div class="term-note catch">
+        압축률의 변화가 인상적이다. <b>27GB의 XML이 11GB의 CSV가 되었고, Posts는 19GB에서 3.2GB로 6분의 1이 되었다.</b>
+        XML은 행마다 속성 이름을 되풀이하는데 CSV는 머리글에 한 번만 적는다.
+        <b>형식을 바꾸는 것만으로 6배를 줄인 셈</b>이니, 이 장 후반부의 Parquet 논의를 미리 예고하는 대목이다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<section id="s1b">
+  <div class="sechead rev">
+    <span class="num">10.1.2</span>
+    <h2>데이터 모델<span class="en">The data model</span></h2>
+  </div>
+  <div class="col rev">
+    <p>탐색을 시작하기 전에 데이터 모델을 본다. 내려받아 변환한 파일에 대응하는 엔티티가 이렇다.</p>
+    <ul class="plain">
+      <li><b>질문</b> — <code>postTypeId=1</code>인 Post. title, body, creationDate, ownerUserId, parentId, acceptedAnswerId, answerCount, tags, upvotes, downvotes, views, comments를 갖는다. <em>최대 여섯 개의 태그가 질문의 주제를 정의한다.</em></li>
+      <li><b>사용자</b> — displayName, aboutMe, reputation, 마지막 로그인 날짜 등.</li>
+      <li><b>답변</b> — <code>postTypeId=2</code>인 Post. 자기 ownerUserId, upvotes, downvotes, comments를 갖는다. <em>답변 가운데 하나가 정답으로 채택될 수 있다.</em></li>
+      <li><b>댓글</b> — 질문과 답변이 각각 text, ownerUserId, score를 가진 댓글을 가질 수 있다.</li>
+      <li><b>배지</b> — 기여에 대해 사용자가 얻는 것. class 컬럼을 갖는다.</li>
+      <li><b>게시물 연결</b> — Post가 다른 Post에 연결될 수 있다. 중복이나 관련 질문을 <code>PostLinks</code>로 잇는다.</li>
+    </ul>
+    <p>그리고 이 절에서 가장 실무적인 한 문장. <strong>파일에는 인덱스나 외래 키에 관한 어떤 정보도 없다. 그 참조를 우리가 손으로 다시 세워야 한다.</strong> 관계형 데이터베이스의 스키마가 아니라 <em>표 일곱 장을 받은 것</em>이며, 그것들을 어떻게 잇는지는 도메인 지식에 달렸다.</p>
+  </div>
+
+  <div class="wrap plate rev">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 420" role="img" aria-label="Users, Posts, Comments, Votes, Badges, Tags, PostLinks가 외래 키로 이어진 스택 오버플로 데이터 모델">
+          <defs>
+            <marker id="am" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 L8 4 L0 8 z" fill="#2b7d74"/></marker>
+          </defs>
+          <g font-family="IBM Plex Mono, monospace" font-size="12">
+            <g><rect x="24" y="140" width="180" height="112" fill="#fff" stroke="#1f4e9c" stroke-width="1.4"/>
+              <rect x="24" y="140" width="180" height="26" fill="#0f2a54"/>
+              <text x="114" y="158" text-anchor="middle" fill="#fff" font-weight="600">Users</text>
+              <g font-size="10.5" fill="#33425a">
+                <text x="36" y="182">displayName</text><text x="36" y="198">aboutMe</text>
+                <text x="36" y="214">reputation</text><text x="36" y="230">upVotes · downVotes</text>
+                <text x="36" y="246">creationDate · views</text></g></g>
+
+            <g><rect x="380" y="120" width="200" height="150" fill="rgba(224,145,42,.12)" stroke="#e0912a" stroke-width="1.8"/>
+              <rect x="380" y="120" width="200" height="26" fill="#e0912a"/>
+              <text x="480" y="138" text-anchor="middle" fill="#fff" font-weight="600">Posts</text>
+              <g font-size="10.5" fill="#8a5410">
+                <text x="392" y="162">postTypeId 1 = 질문</text><text x="392" y="178">postTypeId 2 = 답변</text></g>
+              <g font-size="10.5" fill="#33425a">
+                <text x="392" y="200">title · body · tags</text><text x="392" y="216">score · viewCount</text>
+                <text x="392" y="232">answerCount · commentCount</text><text x="392" y="248">acceptedAnswerId</text>
+                <text x="392" y="264">parentId · ownerId</text></g></g>
+
+            <g><rect x="760" y="34" width="216" height="72" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+              <rect x="760" y="34" width="216" height="26" fill="#0f2a54"/>
+              <text x="868" y="52" text-anchor="middle" fill="#fff" font-weight="600">Tags</text>
+              <g font-size="10.5" fill="#33425a"><text x="772" y="76">tagName · count</text>
+                <text x="772" y="92">excerptPostId · wikiPostId</text></g></g>
+
+            <g><rect x="760" y="140" width="216" height="72" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+              <rect x="760" y="140" width="216" height="26" fill="#0f2a54"/>
+              <text x="868" y="158" text-anchor="middle" fill="#fff" font-weight="600">Comments</text>
+              <g font-size="10.5" fill="#33425a"><text x="772" y="182">text · score</text>
+                <text x="772" y="198">creationDate · userId</text></g></g>
+
+            <g><rect x="760" y="246" width="216" height="60" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+              <rect x="760" y="246" width="216" height="26" fill="#0f2a54"/>
+              <text x="868" y="264" text-anchor="middle" fill="#fff" font-weight="600">Votes</text>
+              <g font-size="10.5" fill="#33425a"><text x="772" y="288">voteTypeId · creationDate</text></g></g>
+
+            <g><rect x="760" y="336" width="216" height="60" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+              <rect x="760" y="336" width="216" height="26" fill="#0f2a54"/>
+              <text x="868" y="354" text-anchor="middle" fill="#fff" font-weight="600">PostLinks</text>
+              <g font-size="10.5" fill="#33425a"><text x="772" y="378">postId · relatedPostId</text></g></g>
+
+            <g><rect x="24" y="310" width="180" height="60" fill="#fff" stroke="#1f4e9c" stroke-width="1.3"/>
+              <rect x="24" y="310" width="180" height="26" fill="#0f2a54"/>
+              <text x="114" y="328" text-anchor="middle" fill="#fff" font-weight="600">Badges</text>
+              <g font-size="10.5" fill="#33425a"><text x="36" y="352">class · date · tagBased</text></g></g>
+          </g>
+          <g stroke="#2b7d74" stroke-width="1.4" fill="none" marker-end="url(#am)">
+            <path class="flow" style="--len:190" d="M210 190 L374 176"/>
+            <path class="flow" style="--len:190;animation-delay:.08s" d="M210 330 C 300 330 300 258 374 258"/>
+            <path class="flow" style="--len:200;animation-delay:.16s" d="M586 160 C 660 160 680 82 754 82"/>
+            <path class="flow" style="--len:200;animation-delay:.24s" d="M586 180 L754 180"/>
+            <path class="flow" style="--len:200;animation-delay:.32s" d="M586 230 C 660 230 680 272 754 272"/>
+            <path class="flow" style="--len:200;animation-delay:.4s" d="M586 252 C 660 252 680 362 754 362"/>
+            <path class="flow" style="--len:110;animation-delay:.48s" d="M480 276 C 480 300 500 300 500 276"/>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="10" fill="#69788c">
+            <text x="242" y="176">ownerId</text><text x="232" y="300">userId</text>
+            <text x="644" y="112">tagName</text><text x="644" y="172">postId</text>
+            <text x="644" y="260">postId</text><text x="644" y="330">postId</text>
+            <text x="506" y="296">parentId · acceptedAnswerId</text>
+          </g>
+          <line x1="24" y1="392" x2="740" y2="392" stroke="#e9eef4" stroke-width="1.4"/>
+          <text x="24" y="412" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#0f2a54"><tspan font-weight="600">Posts 하나가 질문도 답변도 된다.</tspan> 답변은 parentId로 질문을 가리키고, 질문은 acceptedAnswerId로 채택 답변을 가리킨다.</text>
+        </svg>
+      </div></div>
+      <figcaption><b>〈도판 10.2〉</b><span>스택 오버플로 데이터 모델. 원서 그림의 구성을 옮겨 새로 작도했다. 원서 〈도판 10.1〉은 사이트 화면 갈무리이므로 재현하지 않았다.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>관계를 정리하면 이렇다. <strong>Post(질문 또는 답변)는 <code>ownerId</code>로 그것을 쓴 User에 연결된다. Comment와 Vote와 Answer는 <code>postId</code>로 원래 Post를 가리킨다. 채택된 Answer-Post는 Question-Post에서 <code>acceptedAnswerId</code>로 이어진다. Badge는 <code>userId</code>로 User에, PostLink는 <code>postId</code>와 <code>relatedPostId</code>로 두 Post를 잇는다.</strong></p>
+    <div class="shot">
+      <span class="tag">〈도판 10.1〉 · 화면 갈무리</span>
+      <p>원서의 이 도판은 <b>사용자의 질문과 채택된 답변이 보이는 스택 오버플로 사이트의 화면 갈무리</b>다. 데이터 모델의 각 필드가 화면의 어느 자리에 나타나는지 대조해보게 하려는 것이다. 화면 갈무리는 이 문서에서 재현하지 않고 서술로 대신한다.</p>
+    </div>
+  </div>
+</section>
+
+<section id="s1c">
+  <div class="sechead rev">
+    <span class="num">10.1.3</span>
+    <h2>CSV 파일 데이터 탐색하기<span class="en">Exploring the CSV file data</span></h2>
+  </div>
+  <div class="col rev">
+    <p>데이터를 준비했으니 <em>익숙한 영역으로 돌아왔다.</em> DuckDB의 <code>read_csv</code> 함수로 <strong>압축된 gzip CSV 파일에서 데이터를 곧바로 적재</strong>할 수 있다. 그리고 <code>read_csv</code>가 컬럼 타입을 자동으로 추론하려 하는데, <em>저자들이 스택 오버플로 데이터셋에서 잘 작동한다고 확인했다.</em></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — 압축 파일을 풀지 않고 곧바로 묻는다</span><span class="tagn">목록 10.2 · 10.3</span></div>
+      <pre><span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span> <span class="f">read_csv</span>(<span class="f">'Tags.csv.gz'</span>);   <span class="c">-- 6만 5천 개에 조금 못 미친다</span>
+
+<span class="p">D</span> <span class="k">DESCRIBE</span>(<span class="k">FROM</span> <span class="f">read_csv</span>(<span class="f">'Tags.csv.gz'</span>));</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th class="l">column_name</th><th class="l">column_type</th></tr>
+            <tr class="type"><th class="l">varchar</th><th class="l">varchar</th></tr></thead>
+          <tbody>
+            <tr><td class="l">Id</td><td class="l">BIGINT</td></tr>
+            <tr class="mark"><td class="l hi">TagName</td><td class="l">VARCHAR</td></tr>
+            <tr class="mark"><td class="l hi">Count</td><td class="l">BIGINT</td></tr>
+            <tr><td class="l">ExcerptPostId</td><td class="l">BIGINT</td></tr>
+            <tr><td class="l">WikiPostId</td><td class="l">BIGINT</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>TagName과 Count가 가장 인기 있는 태그를 알아내는 데 필요한 필드</b>다.
+        저자들의 평이 담백하다. <b>"압축된 큰 파일에서도 그저 완벽하게 빠르게 도는 질의"</b>다.
+      </div>
+      <pre><span class="p">D</span> <span class="k">SELECT</span> TagName, Count
+  <span class="k">FROM</span> <span class="f">read_csv</span>(<span class="f">'Tags.csv.gz'</span>, column_names=[<span class="f">'Id'</span>, <span class="f">'TagName'</span>, <span class="f">'Count'</span>])
+  <span class="k">ORDER BY</span> Count <span class="k">DESC</span> <span class="k">LIMIT</span> 5;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th class="l">TagName</th><th>Count</th></tr>
+            <tr class="type"><th class="l">varchar</th><th>int64</th></tr></thead>
+          <tbody>
+            <tr><td class="l">javascript</td><td class="hi">2479947</td></tr>
+            <tr><td class="l">python</td><td>2113196</td></tr>
+            <tr><td class="l">java</td><td>1889767</td></tr>
+            <tr><td class="l">c#</td><td>1583879</td></tr>
+            <tr><td class="l">php</td><td>1456271</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>제7장 7.3.6절에서 MotherDuck의 AI가 자연어 질문에 답으로 내놓았던 그 숫자들과 한 자리도 다르지 않다.</b>
+        같은 데이터셋이므로 당연하지만, 세 장을 건너 같은 값이 되돌아오는 것을 확인하는 재미가 있다.
+        그때는 LLM이 만든 SQL이 무엇인지 되물어야 했는데, 여기서는 우리가 직접 쓴다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — 10의 거듭제곱으로 버킷을 나눈다</span><span class="tagn">목록 10.4</span></div>
+      <pre><span class="p">D</span> <span class="k">SELECT</span> <span class="k">cast</span>(<span class="f">pow</span>(10,<span class="f">floor</span>(<span class="f">log</span>(Count)/<span class="f">log</span>(10))) <span class="k">AS INT</span>) <span class="k">AS</span> bucket,
+         <span class="f">count</span>(*)
+  <span class="k">FROM</span> <span class="f">read_csv</span>(<span class="f">'Tags.csv.gz'</span>, column_names=[<span class="f">'Id'</span>, <span class="f">'TagName'</span>, <span class="f">'Count'</span>])
+  <span class="k">WHERE</span> Count &gt; 0            <span class="c">-- 사용 횟수가 0인 태그를 걸러낸다</span>
+  <span class="k">GROUP BY</span> bucket
+  <span class="k">ORDER BY</span> bucket <span class="k">ASC</span>;</pre>
+      <div class="term-note">
+        112를 예로 든 여섯 걸음이 본문에 적혀 있다.
+        <b>①</b> 각 개수의 10을 밑으로 한 로그를 구한다(log(112)/log(10) = 2.049).
+        <b>②</b> 그것이 개수의 자릿수 규모를 준다.
+        <b>③</b> 정수 부분을 얻는다(floor(2.049) = 2.0).
+        <b>④</b> 다시 10의 거듭제곱으로 되돌린다(pow(10,2.0) = 100.0).
+        <b>⑤</b> 결과로 원래 값을 10의 거듭제곱 단위로 얻는다.
+        <b>⑥</b> 그룹화를 위해 정수로 캐스팅한다.
+      </div>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th>bucket</th><th>count_star()</th><th class="l">분포</th></tr>
+            <tr class="type"><th>int32</th><th>int64</th><th class="l">— 이 문서에서 더한 열</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>6238</td><td class="l bar">█████</td></tr>
+            <tr><td>10</td><td>23018</td><td class="l bar">███████████████████</td></tr>
+            <tr class="mark"><td class="hi">100</td><td class="hi">23842</td><td class="l bar">████████████████████ ← 최빈</td></tr>
+            <tr><td>1000</td><td>9126</td><td class="l bar">███████</td></tr>
+            <tr><td>10000</td><td>1963</td><td class="l bar">█</td></tr>
+            <tr><td>100000</td><td>252</td><td class="l bar">·</td></tr>
+            <tr><td>1000000</td><td>25</td><td class="l bar">·</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="3">합계 64,464 · 태그 총수 약 65,000 → 사용 횟수 0인 태그가 약 500개</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>결과가 거듭제곱 법칙 분포를 따른다.</b> 쓰임이 적은 태그의 수가 많고, 개수가 큰 태그는 적어서
+        <b>100만 번 넘게 쓰인 태그는 스물다섯 개로 줄어든다.</b>
+      </div>
+      <div class="term-note catch">
+        본문은 <b>"유일한 예외는 한 번만 언급된 드문 태그이며, 예상대로 그 수가 더 적다"</b>고 적었다.
+        그런데 표를 보면 <b>최빈 버킷은 1이 아니라 100</b>이고, 버킷 10(23,018)도 버킷 100(23,842)보다 적다.
+        곧 <b>왼쪽 끝에서 꺾이는 지점이 하나가 아니라 둘</b>이다.
+        차이가 3.5%로 작아 눈에 잘 띄지 않지만, <b>순수한 거듭제곱 법칙이라면 단조 감소해야 한다.</b>
+      </div>
+      <div class="term-note catch">
+        <code>log(Count)/log(10)</code>의 나눗셈이 <b>DuckDB에서는 아무 일도 하지 않는다.</b>
+        DuckDB의 <code>log</code>는 <b>상용로그</b>이므로 <code>log(10)</code>은 1이다.
+        본문의 계산 예시(log(112)/log(10) = 2.049)도 상용로그를 전제하고 있으니 스스로 그것을 확인해준다.
+        자연로그를 쓰는 다른 데이터베이스로 옮길 때를 대비한 방어적 표기로 읽을 수는 있으나,
+        <b>DuckDB에서는 <code>log(Count)</code>만으로 충분하다.</b>
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<section id="s1d">
+  <div class="sechead rev">
+    <span class="num">10.1.4</span>
+    <h2>데이터를 DuckDB로 적재하기<span class="en">Loading the data into DuckDB</span></h2>
+  </div>
+  <div class="col rev">
+    <p>길이 둘이다. <em>테이블을 먼저 만들고 데이터를 들이거나, 데이터를 읽으면서 테이블을 즉석에서 만드는 것</em>이다. 전자가 더 명시적이고 컬럼 이름과 타입을 정의하게 해주지만, <strong>미리 데이터의 스키마를 알고 적어내야 한다.</strong> 그리고 <em>파일 구조나 컬럼 타입이 바뀌면 <code>CREATE TABLE</code> 문도 고쳐야 하며, 그러지 않으면 적재가 실패한다.</em></p>
+    <p>저자들이 <code>CREATE OR REPLACE TABLE</code>을 쓰는 이유도 실무적이다. <strong>시험을 위해 사이에 테이블을 지우지 않고도 적재를 여러 번 돌릴 수 있게 하려는 것</strong>이다. 여기서는 후자를 택한다. <em>관련 컬럼 이름을 고르고, 타입은 CSV를 읽으면서 추론되게 하고, "거기 있는 것"을 얻는다.</em></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — users와 posts 들이기</span><span class="tagn">목록 10.5 · 10.6</span></div>
+      <pre><span class="p">D</span> <span class="k">CREATE OR REPLACE TABLE</span> users <span class="k">AS</span>
+  <span class="k">SELECT</span> * <span class="k">FROM</span> <span class="f">read_csv</span>(<span class="f">'Users.csv.gz'</span>, auto_detect=<span class="k">true</span>,
+      column_names=[<span class="f">'Id'</span>, <span class="f">'Reputation'</span>, <span class="f">'CreationDate'</span>, <span class="f">'DisplayName'</span>,
+                    <span class="f">'LastAccessDate'</span>, <span class="f">'AboutMe'</span>, <span class="f">'Views'</span>, <span class="f">'UpVotes'</span>, <span class="f">'DownVotes'</span>]);
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span> users;      <span class="c">-- 대략 2,000만 사용자</span>
+
+<span class="p">D</span> <span class="k">CREATE OR REPLACE TABLE</span> posts <span class="k">AS</span>
+  <span class="k">FROM</span> <span class="f">read_csv</span>(<span class="f">'Posts.csv.gz'</span>, auto_detect=<span class="k">true</span>,
+      column_names=[
+          <span class="f">'Id'</span>, <span class="f">'PostTypeId'</span>, <span class="f">'AcceptedAnswerId'</span>, <span class="err">'ParentId'</span>, <span class="f">'CreationDate'</span>,
+          <span class="f">'Score'</span>, <span class="f">'ViewCount'</span>, <span class="f">'Body'</span>, <span class="f">'OwnerUserId'</span>, <span class="f">'LastEditorUserId'</span>,
+          <span class="f">'LastEditorDisplayName'</span>, <span class="f">'LastEditDate'</span>, <span class="f">'LastActivityDate'</span>, <span class="f">'Title'</span>,
+          <span class="f">'Tags'</span>, <span class="f">'AnswerCount'</span>, <span class="f">'CommentCount'</span>, <span class="f">'FavoriteCount'</span>,
+          <span class="f">'CommunityOwnedDate'</span>, <span class="f">'ContentLicense'</span>
+      ]);
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span> posts;      <span class="c">-- 5,800만 게시물</span>
+
+<span class="p">D</span> <span class="k">select</span> column_name, column_type <span class="k">from</span> (<span class="k">show table</span> posts);
+<span class="c">-- Id · PostTypeId · AcceptedAnswerId · CreationDate · Score · ViewCount · Body</span>
+<span class="c">-- OwnerUserId · LastEditorUserId · LastEditorDisplayName · LastEditDate</span>
+<span class="c">-- LastActivityDate · Title · Tags · AnswerCount · CommentCount · FavoriteCount</span>
+<span class="c">-- CommunityOwnedDate · ContentLicense</span>
+<span class="rt">-- 19 rows   2 columns</span></pre>
+      <div class="term-note">
+        <b>NOTE</b> <code>Tags</code> 컬럼은 텍스트 컬럼이며 <b>최대 여섯 개의 스택 오버플로 태그를 꺾쇠괄호로 감싸</b> 담는다.
+        예컨대 <code>&lt;sql&gt;&lt;performance&gt;&lt;duckdb&gt;</code>다. 이 표기가 10.1.7절 전체의 발단이 된다.
+      </div>
+      <div class="term-note catch">
+        <b>컬럼 이름을 스무 개 주었는데 만들어진 테이블은 열아홉 개다.</b>
+        사라진 것은 표시해둔 <b><code>ParentId</code></b>이며, 출력의 마지막 줄이 <code>19 rows</code>라고 못 박는다.
+        그리고 이것이 조판 실수가 아님을 <b>같은 장의 목록 10.32가 확증한다.</b>
+        내보낸 <code>schema.sql</code>의 <code>CREATE TABLE posts</code>에도 <code>ParentId</code>가 없다.
+      </div>
+      <div class="term-note catch">
+        무게가 가볍지 않은 누락이다. <b><code>ParentId</code>는 답변이 자기 질문을 가리키는 컬럼</b>이며,
+        〈도판 10.2〉가 그 관계를 화살표로 그려놓았다.
+        이 컬럼이 없으면 <b>답변과 질문을 잇는 조인을 쓸 수 없다.</b>
+        추출 단계(목록 10.1의 Posts 판본)에서 그 속성을 뽑지 않았을 가능성이 크니,
+        답변–질문 관계를 분석하려는 독자는 <b>추출 명령의 속성 목록부터 확인해야 한다.</b>
+      </div>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th class="l">column_name</th><th class="l">column_type</th><th>max</th><th>approx_unique</th><th>avg</th></tr>
+            <tr class="type"><th class="l">varchar</th><th class="l">varchar</th><th>varchar</th><th>varchar</th><th>varchar</th></tr></thead>
+          <tbody>
+            <tr><td class="l">Id</td><td class="l">BIGINT</td><td>21334825</td><td>20113337</td><td>11027766.241</td></tr>
+            <tr><td class="l">Reputation</td><td class="l">BIGINT</td><td class="hi">1389256</td><td>26919</td><td>94.752717160</td></tr>
+            <tr><td class="l">CreationDate</td><td class="l">TIMESTAMP</td><td>2023-03-05</td><td>19557978</td><td></td></tr>
+            <tr><td class="l">Views</td><td class="l">BIGINT</td><td>2214048</td><td>7452</td><td>11.630429738</td></tr>
+            <tr><td class="l">UpVotes</td><td class="l">BIGINT</td><td>591286</td><td>6227</td><td>8.7674283438</td></tr>
+            <tr><td class="l">DownVotes</td><td class="l">BIGINT</td><td>1486341</td><td>2930</td><td>1.1697560125</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        제4장에서 배운 <code>SUMMARIZE</code>를 컬럼 일부에만 걸었다(목록 10.7).
+        모든 컬럼에 걸면 <b>몇 초가 걸리고 출력이 거대해진다.</b> 컬럼이 많고 SUMMARIZE가 지표를 많이 계산하기 때문이다.
+        <b>복잡한 질의를 쓰지 않고도 이 통계를 얻는다</b>는 것이 이 절의 요령이다.
+      </div>
+      <div class="term-note">
+        읽어볼 만한 값이 있다. <b>평판의 평균이 94.75인데 최대가 138만</b>이다.
+        <b>고유값 근사가 26,919</b>에 불과한 것도 눈에 걸리는데, 2,000만 사용자의 평판이
+        <b>스물일곱 가지쯤의 값에 몰려 있다</b>는 뜻이다. 대부분이 1이나 한 자리 수라는 이야기다.
+      </div>
+      <div class="term-note catch">
+        MotherDuck 공유를 붙이는 명령에 <b>백틱 하나가 잘못 남아 있다.</b>
+        <code>ATTACH 'md:_share/stackoverflow/…' AS stackoverflow`;</code>
+        복사해 붙이면 구문 오류가 난다. 백틱을 지우면 된다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<section id="s1e">
+  <div class="sechead rev">
+    <span class="num">10.1.5</span>
+    <h2>큰 테이블에서 빠른 탐색 질의<span class="en">Fast exploratory queries on large tables</span></h2>
+  </div>
+  <div class="col rev">
+    <p>이 절의 설정이 구체적이다. <em>우리가 스택 오버플로 분석가이고, 상위 사용자가 누구이며 그들이 여전히 활동 중인지 확인하고 싶다. 아니라면 플랫폼으로 돌아오도록 설득할 방법을 생각해낼 수 있을지도 모른다.</em> 데이터를 왜 보는지가 있으면 질의가 자연스럽게 따라 나온다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — 2,000만 행을 0.126초에 정렬한다</span><span class="tagn">목록 10.8 · 10.9</span></div>
+      <pre><span class="p">D</span> .timer on
+<span class="p">D</span> <span class="k">SELECT</span> DisplayName, Reputation, LastAccessDate
+  <span class="k">FROM</span> users <span class="k">ORDER BY</span> Reputation <span class="k">DESC</span> <span class="k">LIMIT</span> 5;
+<span class="rt">Run Time (s): real 0.126 user 2.969485 sys 1.696962</span></pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th class="l">DisplayName</th><th>Reputation</th><th class="l">LastAccessDate</th></tr>
+            <tr class="type"><th class="l">varchar</th><th>int64</th><th class="l">timestamp</th></tr></thead>
+          <tbody>
+            <tr><td class="l hi">Jon Skeet</td><td class="hi">1389256</td><td class="l">2023-03-04 19:54:19.74</td></tr>
+            <tr><td class="l">Gordon Linoff</td><td>1228338</td><td class="l">2023-03-04 15:16:02.617</td></tr>
+            <tr><td class="l">VonC</td><td>1194435</td><td class="l">2023-03-05 01:48:58.937</td></tr>
+            <tr><td class="l">BalusC</td><td>1069162</td><td class="l">2023-03-04 12:49:24.637</td></tr>
+            <tr><td class="l">Martijn Pieters</td><td>1016741</td><td class="l">2023-03-03 19:35:13.76</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>분석할 행이 2,000만인데 0.126초</b>에 끝난다. 사용자 시간이 2.97초, 시스템 시간이 1.70초인 것이
+        <b>여러 스레드가 동시에 일했다는 증거</b>다. 벽시계 시간보다 CPU 시간이 크면 병렬 실행이 있었다는 뜻이다.
+      </div>
+      <div class="term-note">
+        스택 오버플로에 익숙하다면 <b>전설적인 Jon Skeet</b>이 첫자리인 것에 놀라지 않을 것이다.
+        그런데 저자들이 곧바로 조건을 붙인다. <b>"Jon은 스택 오버플로를 오랫동안 써왔으니 그 평판을 쌓을 시간이 넉넉했다."</b>
+        총량이 아니라 <b>속도</b>로 보면 어떻게 되는가. 그것이 다음 질의다.
+      </div>
+      <pre><span class="p">D</span> <span class="k">SELECT</span> DisplayName, reputation,
+         <span class="f">round</span>(reputation/<span class="f">day</span>(<span class="f">today</span>()-CreationDate)) <span class="k">as</span> rate,   <span class="c">-- 일당 평판</span>
+         <span class="f">day</span>(<span class="f">today</span>()-CreationDate) <span class="k">as</span> days,
+         CreationDate
+  <span class="k">FROM</span> users
+  <span class="k">WHERE</span> reputation &gt; <span class="bl">1_000_000</span>          <span class="c">-- 숫자 리터럴에 밑줄을 쓸 수 있다</span>
+  <span class="k">ORDER BY</span> rate <span class="k">DESC</span>;
+<span class="rt">Run Time (s): real 0.006 user 0.007980 sys 0.001260</span></pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th class="l">DisplayName</th><th>reputation</th><th>rate</th><th>days</th><th class="l">막대 (bar 150–300, 폭 35)</th></tr>
+            <tr class="type"><th class="l">varchar</th><th>int64</th><th>double</th><th>int64</th><th class="l">varchar</th></tr></thead>
+          <tbody>
+            <tr class="mark"><td class="l hi">Gordon Linoff</td><td>1228338</td><td class="hi">294.0</td><td>4181</td><td class="l bar">█████████████████████████████████</td></tr>
+            <tr><td class="l">Jon Skeet</td><td>1389256</td><td>258.0</td><td>5383</td><td class="l bar">█████████████████████████</td></tr>
+            <tr><td class="l">VonC</td><td>1194435</td><td>221.0</td><td>5396</td><td class="l bar">████████████████</td></tr>
+            <tr><td class="l">BalusC</td><td>1069162</td><td>211.0</td><td>5058</td><td class="l bar">██████████████</td></tr>
+            <tr><td class="l">T.J. Crowder</td><td>1010006</td><td>200.0</td><td>5059</td><td class="l bar">███████████</td></tr>
+            <tr><td class="l">Martijn Pieters</td><td>1016741</td><td>197.0</td><td>5164</td><td class="l bar">██████████</td></tr>
+            <tr><td class="l">Darin Dimitrov</td><td>1014014</td><td>189.0</td><td>5360</td><td class="l bar">█████████</td></tr>
+            <tr><td class="l">Marc Gravell</td><td>1009857</td><td>188.0</td><td>5380</td><td class="l bar">████████</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>Jon이 2위로 내려앉고 Gordon Linoff가 첫자리를 차지한다.</b>
+        Gordon은 4,181일 만에 122만을 쌓았고 Jon은 5,383일에 138만이다.
+        여덟 사람의 값을 모두 검산해보면 <b>인쇄된 rate가 나눗셈과 정확히 맞는다.</b>
+        예컨대 1228338 ÷ 4181 = 293.79 → 294이고, 1009857 ÷ 5380 = 187.71 → 188이다.
+      </div>
+      <div class="term-note">
+        저자들이 붙인 해석이 이 데이터의 성질을 말해준다.
+        <b>"스택 오버플로의 평판은 사람들이 과거 답변에 업보트할 때도 쌓인다.
+        여러분이 준 답변이 유용할수록 시간이 흐르며 사람들이 업보트할 가능성이 높다."</b>
+        곧 평판은 <b>재고가 아니라 이자가 붙는 자산</b>이다.
+      </div>
+      <div class="term-note">
+        <code>bar(rate,150,300,35)</code>는 <b>값과 최소·최대와 폭을 받아 검은 블록으로 그린 문자열</b>을 돌려준다(목록 10.10).
+        읽기 쉽게 만들기 위해 기존 질의를 <b>공통 테이블 표현식(CTE)</b>으로 감싸고 바깥 질의에서 <code>bar</code>를 썼다.
+        제3장에서 배운 CTE가 여기서는 <b>가독성을 위한 도구</b>로 쓰인다.
+      </div>
+      <div class="term-note">
+        <code>1_000_000</code>처럼 <b>숫자 리터럴에 밑줄을 넣어 자릿수를 끊는 표기</b>가 조용히 등장한다.
+        이 책이 앞서 소개하지 않은 DuckDB 편의 기능인데, 백만을 눈으로 확인해야 하는 자리에서 값을 한다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — 5,800만 행의 연도별 활동량</span><span class="tagn">목록 10.11</span></div>
+      <pre><span class="p">D</span> <span class="k">SELECT</span>
+    <span class="f">year</span>(CreationDate) <span class="k">AS</span> year,
+    <span class="f">round</span>(<span class="f">count</span>(*)/1000000,2) <span class="k">as</span> postM,                          <span class="c">-- 게시물(백만)</span>
+    <span class="f">round</span>(<span class="f">count_if</span>(postTypeId = 1)/1000000,2) <span class="k">as</span> questionM,      <span class="c">-- 질문(백만)</span>
+    <span class="f">round</span>(<span class="f">count_if</span>(postTypeId = 2)/1000000,2) <span class="k">as</span> answerM,        <span class="c">-- 답변(백만)</span>
+    <span class="f">round</span>(<span class="f">count_if</span>(postTypeId = 1)/<span class="f">count_if</span>(postTypeId = 2),2) <span class="k">as</span> ratio,
+    <span class="f">round</span>(<span class="f">avg</span>(ViewCount)) <span class="k">as</span> avgViewCount,
+    <span class="f">max</span>(AnswerCount) <span class="k">as</span> maxAnswerCount
+  <span class="k">FROM</span> posts <span class="k">GROUP BY</span> year <span class="k">ORDER BY</span> year <span class="k">DESC</span> <span class="k">LIMIT</span> 10;
+
+<span class="rt">Run Time (s): real 5.977 …  (첫 실행)</span>
+<span class="ok">Run Time (s): real 0.039 …  (두 번째 실행)</span></pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th>year</th><th>postM</th><th>questionM</th><th>answerM</th><th>ratio</th><th>avgViewCount</th><th>maxAnswers</th></tr>
+            <tr class="type"><th>int64</th><th>double</th><th>double</th><th>double</th><th>double</th><th>double</th><th>int64</th></tr></thead>
+          <tbody>
+            <tr class="mark"><td>2023</td><td>0.53</td><td>0.27</td><td>0.26</td><td class="hi">1.03</td><td>44.0</td><td>15</td></tr>
+            <tr><td>2022</td><td>3.35</td><td>1.61</td><td>1.74</td><td>0.93</td><td>265.0</td><td>44</td></tr>
+            <tr><td>2021</td><td>3.55</td><td>1.55</td><td>2.0</td><td>0.78</td><td>580.0</td><td>65</td></tr>
+            <tr><td>2020</td><td>4.31</td><td>1.87</td><td>2.44</td><td>0.77</td><td>847.0</td><td>59</td></tr>
+            <tr><td>2019</td><td>4.16</td><td>1.77</td><td>2.39</td><td>0.74</td><td>1190.0</td><td>60</td></tr>
+            <tr><td>2018</td><td>4.44</td><td>1.89</td><td>2.55</td><td>0.74</td><td>1648.0</td><td>121</td></tr>
+            <tr><td>2017</td><td>5.02</td><td>2.11</td><td>2.9</td><td>0.73</td><td>1994.0</td><td>65</td></tr>
+            <tr><td>2016</td><td>5.28</td><td>2.2</td><td>3.07</td><td>0.72</td><td>2202.0</td><td>74</td></tr>
+            <tr><td>2015</td><td>5.35</td><td>2.2</td><td>3.14</td><td>0.7</td><td>2349.0</td><td>82</td></tr>
+            <tr><td>2014</td><td class="hi">5.34</td><td>2.13</td><td>3.19</td><td>0.67</td><td>2841.0</td><td>92</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>5,800만 행에 걸친 통계인데 첫 실행 5.977초, 두 번째 실행 0.039초다.</b>
+        저자들의 설명은 <b>"디스크에서 데이터가 적재된 뒤"</b>라는 것이다. 곧 운영체제의 페이지 캐시가 일한 것이며,
+        <b>150배 차이</b>가 난다. 성능을 재려면 <b>어느 실행을 재는지부터 정해야 한다</b>는 교훈이 여기 있다.
+      </div>
+      <div class="term-note">
+        읽어낸 것들. <b>2023년 데이터는 완전하지 않으므로 그해 전체를 비교할 수 없다.</b>
+        <b>게시물 총수는 2014년부터 꾸준히 줄고 있다.</b>
+        <b>새 게시물의 조회 수가 적은 것은 존재한 기간이 상대적으로 짧기 때문</b>이고,
+        <b>게시물당 최대 답변 수가 해가 갈수록 조금씩 줄어드는 것도 오래된 질문이 답을 모을 시간이 더 많았기 때문</b>이다.
+        <b>숫자의 방향을 데이터의 나이로 설명해내는</b> 이 절제가 좋다.
+      </div>
+      <div class="term-note catch">
+        다만 한 문장이 표와 어긋난다. 본문은
+        <b>"질문 대 답변의 비율도 나빠져서, 최근 2년은 답변보다 질문이 더 많다"</b>고 적었다.
+        비율이 1을 넘으면 질문이 더 많다는 뜻인데, <b>표에서 1을 넘는 해는 2023년(1.03) 하나뿐</b>이다.
+        <b>2022년은 0.93으로 여전히 답변이 더 많다.</b>
+        게다가 그 하나뿐인 2023년은 <b>본문 자신이 "완전하지 않다"고 밝힌 해</b>다.
+        추세가 나빠지고 있다는 진단은 표가 뒷받침하지만, <b>"최근 2년"이라는 범위는 뒷받침하지 않는다.</b>
+      </div>
+      <div class="term-note">
+        <code>postM</code>과 <code>questionM + answerM</code>을 맞춰보면 2014년만 0.02 어긋난다(5.34 vs 5.32).
+        각 값을 <b>독립적으로 반올림한 뒤 더했기</b> 때문이며, 제4장 4.4절에서 본 것과 같은 현상이다.
+        <b>반올림은 마지막에 한 번만</b> 하는 편이 안전하다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<section id="s1f">
+  <div class="sechead rev">
+    <span class="num">10.1.6</span>
+    <h2>평일에 글을 올리는가<span class="en">Posting on weekdays</span></h2>
+  </div>
+  <div class="col rev">
+    <p>물음이 소박하고 좋다. <em>사람들은 직장에서 질문에 답하려고만 플랫폼을 쓰는가, 아니면 주말에도 쓰는가.</em> 저자들은 이 질문을 먼저 던진 사람의 분석을 재현해보려 한다고 밝히며 출처를 댄다.</p>
+    <div class="note">
+      <span class="tag">살펴본 김에</span>
+      <p>본문은 그 사람의 이름을 <strong>"Evalina Gabova"</strong>로 적고 다시 <em>"Evalina의 분석"</em>이라고 부른다. 그런데 함께 실린 주소는 <code>evelinag.com</code>이다. <strong>이름의 철자가 주소와 어긋난다.</strong> 주소를 믿는다면 <em>Evelina</em>가 맞는 표기다. 남의 분석을 재현하는 절에서 그 사람의 이름이 틀리는 것은 아쉬운 일이니, 인용할 때는 <strong>주소를 따라가 확인하는 편</strong>이 좋다.</p>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — SQL과 Rust, 두 태그의 요일 분포</span><span class="tagn">목록 10.12 · 10.13</span></div>
+      <pre><span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">as</span> freq,
+         <span class="f">dayname</span>(CreationDate) <span class="k">AS</span> day,
+         <span class="f">bar</span>(freq, 0, 150000, 20) <span class="k">AS</span> plot
+  <span class="k">FROM</span> posts <span class="k">WHERE</span> posttypeid = 1
+    <span class="k">AND</span> tags <span class="k">LIKE</span> <span class="f">'%&lt;sql&gt;%'</span>
+  <span class="k">GROUP BY</span> <span class="k">all</span> <span class="k">ORDER BY</span> freq <span class="k">DESC</span>;
+<span class="rt">Run Time (s): real 0.303 …    (질문 2,350만 건 처리)</span></pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th>freq</th><th class="l">day</th><th class="l">plot — SQL</th><th>freq</th><th class="l">plot — Rust</th></tr>
+            <tr class="type"><th>int64</th><th class="l">varchar</th><th class="l">bar(0–150000, 20)</th><th>int64</th><th class="l">bar(0–10000, 20)</th></tr></thead>
+          <tbody>
+            <tr><td>119825</td><td class="l">Wednesday</td><td class="l bar">███████████████</td><td>5205</td><td class="l bar">██████████</td></tr>
+            <tr><td>119514</td><td class="l">Thursday</td><td class="l bar">███████████████</td><td>5160</td><td class="l bar">██████████</td></tr>
+            <tr><td>115575</td><td class="l">Tuesday</td><td class="l bar">███████████████</td><td>5167</td><td class="l bar">██████████</td></tr>
+            <tr><td>103937</td><td class="l">Monday</td><td class="l bar">█████████████</td><td>5054</td><td class="l bar">██████████</td></tr>
+            <tr><td>103445</td><td class="l">Friday</td><td class="l bar">█████████████</td><td>5009</td><td class="l bar">██████████</td></tr>
+            <tr class="mark"><td class="hi">47390</td><td class="l">Sunday</td><td class="l bar">██████</td><td class="hi">4784</td><td class="l bar">█████████</td></tr>
+            <tr class="mark"><td class="hi">47139</td><td class="l">Saturday</td><td class="l bar">██████</td><td class="hi">4667</td><td class="l bar">█████████</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="5">SQL 656,825건 · Rust 35,046건 → 18.7배 · 주말 낙폭 SQL 58.0% vs Rust 7.7%</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>SQL 질문은 대부분 평일, 특히 주중에 올라오고 주말에 가장 적다.</b>
+        저자들의 해석은 <b>"사람들이 주로 일 때문에 SQL을 다루고 근무 시간에 질문한다는 것을 시사할 수 있다"</b>는 것이다.
+        <b>2,350만 건의 질문을 처리하는 데 0.3초</b>가 걸렸다.
+      </div>
+      <div class="term-note">
+        <b>Rust는 회사에 SQL만큼 뿌리내리지 않은 비교적 새로운 언어</b>다.
+        그 질문은 <b>주중에 고르게 분포하고 주말에 약간 떨어질 뿐</b>이다.
+        두 표를 나란히 놓고 재보면 대비가 선명해진다.
+        <b>SQL은 평일 평균 112,459건에서 주말 평균 47,264건으로 58.0% 떨어지는데,
+        Rust는 5,119건에서 4,726건으로 7.7%만 떨어진다.</b>
+        <b>업무로 쓰는 언어와 취미로 배우는 언어가 요일 분포에서 갈린다</b>는 이야기다.
+      </div>
+      <div class="term-note">
+        저자들이 마지막에 덧붙인 한 줄. <b>"Rust에 대한 질문이 SQL보다 10배에서 20배 적다는 점도 짚어두어야 한다."</b>
+        두 표의 합계로 재보면 <b>18.7배</b>이니 범위 안에 들어온다.
+        <code>bar</code>의 최대값을 150,000과 10,000으로 <b>다르게 준 것</b>도 그래서다.
+        같은 눈금으로 그리면 Rust 막대가 보이지 않는다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<section id="s1g">
+  <div class="sechead rev">
+    <span class="num">10.1.7</span>
+    <h2>태그에 열거형 쓰기<span class="en">Using enums for tags</span></h2>
+  </div>
+  <div class="col rev">
+    <p>이 절의 전제가 이 장 전체의 주제를 압축한다. <strong>더 큰 데이터셋에서 DuckDB를 쓸 때는 작은 데이터셋에서라면 필요하지 않았을 최적화를 택하게 되는 일이 있다.</strong> 그 예가 게시물에 배정된 태그 이름이 저장되고 처리되는 방식이다.</p>
+    <p>DuckDB에는 <strong>열거형(enum) 타입</strong>이 있다. <em>이름 붙은 값의 고정된 집합을 표상하며 내부적으로는 정수로 저장된다.</em> 그래서 <strong>많은 양의 문자열 값보다 저장과 처리에 효율적이다.</strong></p>
+    <p>문제는 이렇다. <code>tags</code> 테이블이 따로 있지만 게시물 안에도 최대 여섯 개의 태그가 저장되며, 각 태그가 꺾쇠괄호로 감싸여 있다. <code>&lt;sql&gt;&lt;duckdb&gt;&lt;performance&gt;</code>는 그 게시물이 sql, duckdb, performance 태그를 갖는다는 뜻이다. <strong>이것은 분석 질의에 특히 효율적이지 않고, 여러 태그로 게시물을 찾기 어렵게 만든다.</strong></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — 열거형을 만들고 게시물에 심는 여섯 걸음</span><span class="tagn">목록 10.14 – 10.20</span></div>
+      <pre><span class="c">-- 목록 10.14 · 열거형 타입 만들기의 기본형</span>
+<span class="p">D</span> <span class="k">CREATE TYPE</span> weekday <span class="k">AS</span> <span class="k">enum</span> (
+    <span class="f">'monday'</span>, <span class="f">'tuesday'</span>, <span class="f">'wednesday'</span>, <span class="f">'thursday'</span>, <span class="f">'friday'</span>, <span class="f">'saturday'</span>, <span class="f">'sunday'</span>);
+
+<span class="c">-- 값은 문자열로도 접근하고(  'saturday'  ) 타입을 붙여서도 접근한다( saturday::weekday )</span>
+<span class="c">-- 타입 자체는 NULL 값으로 가리킨다( null::weekday )</span>
+
+<span class="c">-- 목록 10.15 · tags 테이블의 값에서 태그 열거형을 만든다</span>
+<span class="p">D</span> <span class="k">CREATE TYPE</span> tag <span class="k">AS</span> <span class="k">enum</span> (<span class="k">SELECT DISTINCT</span> tagname <span class="k">FROM</span> tags);
+
+<span class="c">-- 목록 10.16 · 열거형 값 몇 개 들여다보기</span>
+<span class="p">D</span> <span class="k">select</span> <span class="f">enum_range</span>(<span class="k">null</span>::tag)[0:5];
+<span class="ok">[textblock, idioms, haskell, flush, etl]</span>
+
+<span class="c">-- 목록 10.17 · 중간 단계로 문자열 배열 컬럼을 먼저 더한다</span>
+<span class="p">D</span> <span class="k">ALTER TABLE</span> posts <span class="k">ADD</span> tagNames <span class="k">VARCHAR</span>[];
+
+<span class="c">-- 목록 10.18 · '&lt;sql&gt;&lt;duckdb&gt;'에서 앞뒤 한 글자를 떼고 '&gt;&lt;'로 쪼갠다</span>
+<span class="p">D</span> <span class="k">UPDATE</span> posts <span class="k">SET</span> tagNames = <span class="f">split</span>(tags[2:-2],<span class="f">'&gt;&lt;'</span>)
+  <span class="k">WHERE</span> posttypeid = 1;
+<span class="rt">-- Run Time (s): real 51.120 …   (질문 2,350만 건)</span>
+
+<span class="c">-- 목록 10.19 · 열거형 배열 컬럼을 더한다</span>
+<span class="p">D</span> <span class="k">ALTER TABLE</span> posts <span class="k">ADD</span> tagEnums tag[];
+
+<span class="c">-- 목록 10.20 · 문자열 배열을 열거형 배열에 그냥 대입한다</span>
+<span class="p">D</span> <span class="k">UPDATE</span> posts <span class="k">SET</span> tagEnums = tagNames <span class="k">WHERE</span> posttypeid = 1;</pre>
+      <div class="term-note">
+        마지막 걸음이 이 절에서 가장 기분 좋은 대목이다.
+        <b>문자열 배열을 열거형 배열에 대입하면 DuckDB가 값을 열거형 타입으로 자동 캐스팅한다.</b>
+        저자들의 감탄이 짧고 정직하다. <b>"그것이 정말 도움이 되고 사용자 친화적이다."</b>
+        <code>list_transform</code>으로 하나씩 변환하는 수고가 필요하지 않다.
+      </div>
+      <div class="term-note">
+        열거형을 다루는 함수가 넷 있다.
+        <b><code>enum_code</code></b>는 열거형의 숫자 코드를,
+        <b><code>enum_range</code></b>는 그 타입의 모든 값을 리스트로 돌려주고,
+        <b><code>enum_first</code>·<code>enum_last</code>·<code>enum_range_boundary</code></b>는 첫 값과 끝 값과 범위를 준다.
+        그리고 <b>DuckDB의 열거형은 필요할 때마다 문자열 타입으로 자동 캐스팅되므로,
+        어떤 문자열 함수에도 쓸 수 있고 열거형과 문자열을 비교할 수 있다.</b>
+      </div>
+      <div class="term-note catch">
+        인쇄된 시간을 본문이 잘못 읽었다. <b><code>51.120</code>초를 두고 "1분이 넘게 걸린다"고 적었다.</b>
+        1분은 60초이니 <b>아직 9초 남았다.</b> 오래 걸린다는 요지는 맞지만 수치와 표현이 어긋난다.
+      </div>
+      <div class="term-note catch">
+        <code>enum_range(null:enum_type)</code>처럼 <b>콜론을 하나만 쓴 표기</b>가 함수 설명에 나오는데,
+        같은 절의 목록 10.16은 <b><code>null::tag</code>로 콜론 둘</b>을 쓴다. 후자가 맞다.
+        그리고 <code>[0:5]</code>의 슬라이싱도 눈에 걸린다. <b>제4장 4.10절이 DuckDB의 리스트는 1부터 센다고 못 박았으니</b>
+        관례로는 <code>[1:5]</code>가 자연스럽다.
+      </div>
+      <div class="term-note catch">
+        본문은 대문자화 같은 <b>추가 변환</b>이 필요하면 이렇게 하라며
+        <code>SET tagEnums = list_transform(tagNames, x -&gt; upper(x)::tag)</code>를 제시한다.
+        그런데 <code>tag</code> 열거형은 <b><code>tags</code> 테이블의 소문자 태그 이름으로 만들어졌다.</b>
+        <code>upper('java')</code>는 <code>'JAVA'</code>이고 그 값은 <b>열거형에 없으므로 캐스팅이 실패한다.</b>
+        변환한 값을 열거형에 담으려면 <b>변환된 값으로 만든 별도의 열거형 타입이 먼저 있어야 한다.</b>
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>문자열 배열을 남겨둔 이유가 실험을 위해서다. <strong>문자열 리스트와 열거형 리스트의 동작과 성능을 견줄 수 있다.</strong> 아래는 이 장에 인쇄된 계측값을 한자리에 모은 장치다. 여섯 가지 대조를 눌러보면, <em>무엇을 바꿀 때 얼마가 줄어드는지</em>가 눈에 들어온다. 배수는 원서의 숫자에서 계산한 것이다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="bx" id="bx">
+      <div class="bxtabs" role="group" aria-label="계측 대조 선택">
+        <button data-b="0" aria-pressed="true">java 태그 세기</button>
+        <button data-b="1" aria-pressed="false">태그 통계</button>
+        <button data-b="2" aria-pressed="false">행 수 세기</button>
+        <button data-b="3" aria-pressed="false">Parquet 내보내기</button>
+        <button data-b="4" aria-pressed="false">같은 질의 두 번</button>
+        <button data-b="5" aria-pressed="false">택시 통계</button>
+      </div>
+      <div class="bxbody">
+        <div class="bxchart" id="bxChart"></div>
+        <div class="bxside">
+          <span class="bxbig" id="bxBig">—</span>
+          <dl>
+            <dt>무엇을 바꿨는가</dt><dd id="bxWhat">—</dd>
+            <dt>왜 빨라지는가</dt><dd id="bxWhy">—</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="bxcap" id="bxCap"></div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>저자들이 이 절을 맺는 판단이 이 장에서 가장 값진 문장이다. 열거형이 단순한 카운트에서는 <em>차이가 무시할 만하지만</em> 리스트의 값 여럿을 다루는 복잡한 연산에서는 <strong>표상의 변화가 문제가 된다.</strong> 그리고 그 대가를 분명히 적는다.</p>
+    <div class="q">
+      이런 종류의 최적화에는 준비와 저장 양쪽에서 미리 더 많은 노력을 들여야 한다. 분석 질의를 여러 번 돌릴 때는 그럴 값어치가 있고, 한 번뿐인 작업이라면 덜하다.
+      <span>10.1.7절을 맺는 문단</span>
+    </div>
+    <p>여기에 한 문장이 더 붙는데, 제8장을 읽은 독자에게는 무게가 다르게 다가온다. <strong>준비 작업도 질의에 맞는 데이터 형태를 보장하기 위해 데이터 처리 파이프라인에 통합되어야 한다.</strong> 곧 <em>열거형 변환은 손으로 한 번 하는 일이 아니라 dbt 모델이나 Dagster 애셋이 되어야 한다는 뜻</em>이다. 최적화가 코드가 되고, 코드가 파이프라인이 된다.</p>
+  </div>
+</section>
+
+<section id="s2">
+  <div class="sechead rev">
+    <span class="num">10.2</span>
+    <h2>질의 계획과 실행<span class="en">Query planning and execution</span></h2>
+  </div>
+  <div class="col rev">
+    <p>이 장에서 다루는 큰 데이터셋에서는 <strong>효율적인 질의 실행이 어느 때보다 중대하다.</strong> DuckDB의 질의 실행 엔진은 <em>현대적 하드웨어와 최신 데이터베이스 연구·구현 기법</em>을 써서 빠르고 효율적이도록 설계되었다. 이 절은 그 내부를 열어 보인다.</p>
+
+    <h3>계획기와 최적화기 <span class="sub">10.2.1</span></h3>
+    <p>DuckDB가 <strong>Postgres에서 파생된 유연한 파서</strong>로 SQL 질의를 파싱하면, 그 결과인 <strong>추상 구문 트리(AST)</strong>를 여러 단계에 걸쳐 변환한다. <em>파스 단계에서는 잘못 쓴 키워드나 빠진 괄호 같은 구문 오류를 잡아낼 수 있다.</em></p>
+    <ul class="plain">
+      <li><b>바인더 binder</b> — 테이블, 뷰, 타입, 컬럼 이름 같은 요소를 해소한다. <em>쓰인 요소가 데이터베이스에 존재하는지, 올바르게 쓰였는지 검사한다.</em></li>
+      <li><b>계획 생성기 plan generator</b> — 그것을 <em>스캔·필터·사영 같은 논리 질의 연산자로 이루어진 기본 논리 질의 계획</em>으로 바꾼다.</li>
+      <li><b>최적화기 optimizer</b> — 계획 과정에서 <strong>저장된 데이터와 인덱스의 통계</strong>를 쓴다. 그것이 타입 변환, <em>조인 순서 최적화</em>, <em>부질의 평탄화</em> 같은 여러 연산을 돕는다.</li>
+      <li><b>물리 계획기 physical planner</b> — 논리 계획을 <em>통계와 캐싱과 그 밖의 요인을 고려해</em> 환경에 가장 알맞은 물리 연산으로 다듬는다.</li>
+    </ul>
+    <p><em>부질어 평탄화(subquery flattening)</em>가 목록에 있는 것이 반갑다. 제4장 4.3절에서 상관 부질의가 어떻게 조인으로 풀리는지 보았는데, 그것을 하는 자리가 바로 여기다.</p>
+  </div>
+
+  <div class="wrap plate rev">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 180" role="img" aria-label="SQL이 파서, 계획기, 최적화기, 물리 계획기를 거쳐 물리 계획이 되는 질의 처리 파이프라인">
+          <defs><marker id="aq" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+            <path d="M0 0 L8 4 L0 8 z" fill="#e0912a"/></marker></defs>
+          <g font-family="Noto Sans KR, sans-serif" font-size="13">
+            <g><rect x="118" y="34" width="150" height="46" rx="3" fill="#fff" stroke="#1f4e9c" stroke-width="1.4"/>
+              <text x="193" y="63" text-anchor="middle" font-weight="600" fill="#0f2a54">파서</text></g>
+            <g><rect x="308" y="34" width="150" height="46" rx="3" fill="#fff" stroke="#1f4e9c" stroke-width="1.4"/>
+              <text x="383" y="63" text-anchor="middle" font-weight="600" fill="#0f2a54">계획기</text></g>
+            <g><rect x="498" y="34" width="150" height="46" rx="3" fill="rgba(224,145,42,.14)" stroke="#e0912a" stroke-width="1.8"/>
+              <text x="573" y="63" text-anchor="middle" font-weight="600" fill="#8a5410">최적화기</text></g>
+            <g><rect x="688" y="34" width="180" height="46" rx="3" fill="#fff" stroke="#1f4e9c" stroke-width="1.4"/>
+              <text x="778" y="63" text-anchor="middle" font-weight="600" fill="#0f2a54">물리 계획기</text></g>
+          </g>
+          <g stroke="#e0912a" stroke-width="1.4" fill="none" marker-end="url(#aq)">
+            <path class="flow" style="--len:50" d="M64 57 L112 57"/>
+            <path class="flow" style="--len:44;animation-delay:.08s" d="M272 57 L302 57"/>
+            <path class="flow" style="--len:44;animation-delay:.16s" d="M462 57 L492 57"/>
+            <path class="flow" style="--len:44;animation-delay:.24s" d="M652 57 L682 57"/>
+            <path class="flow" style="--len:50;animation-delay:.32s" d="M872 57 L922 57"/>
+          </g>
+          <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#69788c">
+            <text x="24" y="61">SQL</text>
+            <text x="248" y="102" text-anchor="middle">Statement</text>
+            <text x="438" y="102" text-anchor="middle">최적화되지 않은</text><text x="438" y="118" text-anchor="middle">논리 계획</text>
+            <text x="628" y="102" text-anchor="middle">최적화된</text><text x="628" y="118" text-anchor="middle">논리 계획</text>
+            <text x="976" y="61" text-anchor="end">물리 계획</text>
+          </g>
+          <line x1="24" y1="146" x2="976" y2="146" stroke="#e9eef4" stroke-width="1.4"/>
+          <text x="24" y="168" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#0f2a54">최적화기 안에서 <tspan font-weight="600">조인 순서 최적화와 부질의 평탄화</tspan>가 일어난다. 제4장의 상관 부질의가 조인으로 풀리는 자리가 여기다.</text>
+        </svg>
+      </div></div>
+      <figcaption><b>〈도판 10.3〉</b><span>질의 처리 파이프라인. 원서 그림의 구성을 옮겨 새로 작도했다.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<section>
+  <div class="sechead rev">
+    <span class="num">10.2.2</span>
+    <h2>런타임과 벡터화<span class="en">Runtime and vectorization</span></h2>
+  </div>
+  <div class="col rev">
+    <p>DuckDB의 런타임은 <em>컬럼 저장이라는 본성에 기반한 벡터화·병렬화 아키텍처</em>로 작동한다. 저장 형식은 데이터를 <strong>행 그룹(row group)</strong>—곧 데이터의 수평 분할—에 담는다. <em>수평 분할은 데이터를 샤딩하는 전략이며, 각 분할이 같은 스키마를 가지고 데이터의 특정 부분집합을 담는다.</em> 그리고 숫자가 하나 나온다. <strong>DuckDB 데이터베이스 형식의 행 그룹 하나는 최대 122,880행으로 이루어진다.</strong></p>
+    <div class="grid3">
+      <div class="cell"><span class="big">122,880</span><span class="t">행 그룹 하나의 최대 행 수</span>
+        <p>수평 분할의 단위. 각 행 그룹이 <b>컬럼마다 필요한 정보를 담는다.</b></p></div>
+      <div class="cell"><span class="big">2,048</span><span class="t">모설 하나의 값 개수</span>
+        <p>병렬 파이프라인을 통과하는 <b>값 덩어리의 배치 크기</b>다.</p></div>
+      <div class="cell"><span class="big">60</span><span class="t">행 그룹당 벡터 개수</span>
+        <p>122,880 ÷ 2,048 = 정확히 60. <b>저장의 단위와 실행의 단위가 딱 맞물린다.</b> 이 문서에서 계산한 값이다.</p></div>
+    </div>
+    <p>컬럼 중심 접근이 주는 이점을 저자들이 세 가지로 짚는다. <strong>컬럼을 고르거나 데이터를 걸러내고 스캔하고 정렬할 때 특히 유리하고, CPU가 한 연산자의 처리를 메모리 안에 유지하게 해주며, CPU 분기 예측을 최적화하고 필요한 데이터를 모두 CPU 캐시에 두게 해준다.</strong></p>
+    <p>그리고 행 기반 엔진과의 근본적인 차이를 한 문장으로 규정한다. <strong>DuckDB는 디스크 저장이나 데이터 전송(I/O) 최적화가 아니라 효율적인 데이터 연산에 맞춰 미세 조정되어 있다.</strong> 어디에 힘을 쏟았는지를 밝히는 문장이며, 제7장에서 클라우드 업로드가 70MB/s로 묶였던 것과 나란히 놓고 볼 만하다.</p>
+    <p>실행 런타임에서 <em>모든 데이터 타입이 벡터, 곧 값의 압축된 배열로 표상된다.</em> 이 타입별 벡터 구현은 <strong>숫자·문자열·배열 같은 여러 데이터 타입과 값에 맞게 최적화되어 있고, 압축과 메타데이터와 추가 인덱스를 써서 데이터 선택과 처리를 단순하게 만든다.</strong></p>
+    <p>데이터가 시스템을 흐를 때 이 벡터들은 <strong>푸시 기반(push-based)</strong>으로 계획 연산자 사이를 매끄럽게 옮겨간다. 실행 모델의 중심은 <strong>파이프라인 설계</strong>이며, <em>연산자가 원천(source)이거나 싱크(sink)이거나 둘 다일 수 있다.</em> 그리고 병렬화는 <strong>모설(morsel) 접근</strong>으로 이루어진다. <em>값의 덩어리—2,048개 값의 배치—를 여러 병렬 파이프라인으로 처리하며, 각 파이프라인의 시작과 끝에 병렬성을 인식하는 연산자를 둔다.</em></p>
+  </div>
+
+  <div class="wrap plate rev">
+    <figure>
+      <div class="tile"><div class="tile-in">
+        <svg viewBox="0 0 1000 300" role="img" aria-label="세 스레드가 각각 다른 파이프라인 단계의 모설을 처리하는 모설 런타임 도해">
+          <text x="24" y="26" font-family="IBM Plex Mono, monospace" font-size="11" letter-spacing="2" fill="#69788c">MORSEL RUNTIME · 파이프라인 셋과 스레드 셋</text>
+          <g font-family="IBM Plex Mono, monospace" font-size="11.5">
+            <g><rect x="24" y="44" width="16" height="16" fill="#8fb8ff"/>
+              <text x="50" y="57" fill="#0f2a54" font-weight="600">0</text>
+              <text x="70" y="57" fill="#33425a">TableScan</text></g>
+            <g><rect x="290" y="44" width="16" height="16" fill="#67d4b4"/>
+              <text x="316" y="57" fill="#0f2a54" font-weight="600">1</text>
+              <text x="336" y="57" fill="#33425a">Join, Filter</text></g>
+            <g><rect x="580" y="44" width="16" height="16" fill="#e0912a"/>
+              <text x="606" y="57" fill="#0f2a54" font-weight="600">2</text>
+              <text x="626" y="57" fill="#33425a">Join, Filter, Projection</text></g>
+          </g>
+          <line x1="24" y1="76" x2="976" y2="76" stroke="#e9eef4" stroke-width="1.4"/>
+          <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#0f2a54" font-weight="600">
+            <text x="150" y="102" text-anchor="middle">Thread A</text>
+            <text x="440" y="102" text-anchor="middle">Thread B</text>
+            <text x="730" y="102" text-anchor="middle">Thread C</text>
+          </g>
+          <g>
+            <rect x="60" y="120" width="180" height="52" rx="3" fill="rgba(143,184,255,.28)" stroke="#1f4e9c" stroke-width="1.4"/>
+            <text x="150" y="151" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#0f2a54">TableScan</text>
+            <g fill="#8fb8ff">
+              <rect class="grow" x="72" y="184" width="20" height="14"/>
+              <rect class="grow" style="animation-delay:.05s" x="96" y="184" width="20" height="14"/>
+              <rect class="grow" style="animation-delay:.1s" x="120" y="184" width="20" height="14"/>
+              <rect class="grow" style="animation-delay:.15s" x="144" y="184" width="20" height="14"/>
+              <rect class="grow" style="animation-delay:.2s" x="168" y="184" width="20" height="14"/>
+              <rect class="grow" style="animation-delay:.25s" x="192" y="184" width="20" height="14"/>
+            </g>
+          </g>
+          <g>
+            <rect x="350" y="120" width="180" height="52" rx="3" fill="rgba(103,212,180,.24)" stroke="#2b7d74" stroke-width="1.4"/>
+            <text x="440" y="151" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#1e5c55">Join+Filter</text>
+            <g fill="#67d4b4">
+              <rect class="grow" style="animation-delay:.1s" x="362" y="184" width="20" height="14"/>
+              <rect class="grow" style="animation-delay:.15s" x="386" y="184" width="20" height="14"/>
+              <rect class="grow" style="animation-delay:.2s" x="410" y="184" width="20" height="14"/>
+              <rect class="grow" style="animation-delay:.25s" x="434" y="184" width="20" height="14"/>
+            </g>
+          </g>
+          <g>
+            <rect x="640" y="120" width="200" height="52" rx="3" fill="rgba(224,145,42,.2)" stroke="#e0912a" stroke-width="1.4"/>
+            <text x="740" y="145" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="#8a5410">Join+Filter</text>
+            <text x="740" y="162" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="12" fill="#8a5410">+Projection</text>
+            <g fill="#e0912a">
+              <rect class="grow" style="animation-delay:.2s" x="652" y="184" width="20" height="14"/>
+              <rect class="grow" style="animation-delay:.25s" x="676" y="184" width="20" height="14"/>
+              <rect class="grow" style="animation-delay:.3s" x="700" y="184" width="20" height="14"/>
+            </g>
+          </g>
+          <text x="24" y="230" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#69788c">작은 사각형 하나가 <tspan font-family="IBM Plex Mono, monospace">모설</tspan> 하나, 곧 값 2,048개의 배치다. 스레드마다 다른 파이프라인 단계를 동시에 밀어낸다.</text>
+          <line x1="24" y1="250" x2="976" y2="250" stroke="#e9eef4" stroke-width="1.4"/>
+          <text x="24" y="272" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#0f2a54"><tspan font-weight="600">SIMD와 데이터 벡터는 다른 것이다.</tspan> 전자는 CPU 명령 하나로 여러 값을 처리하는 기법이고, 후자는 연산자 사이를 흐르는 값의 묶음이다.</text>
+          <text x="24" y="292" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#8a5410">저자들이 "혼동하지 말라"고 못 박아둔 구분이다.</text>
+        </svg>
+      </div></div>
+      <figcaption><b>〈도판 10.4〉</b><span>모설 런타임. 원서 그림의 구성을 옮겨 새로 작도했다. 모설을 표상하는 작은 사각형은 이 문서에서 덧붙였다.</span></figcaption>
+    </figure>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>마지막에 저자들이 혼동을 미리 막는다. <strong>DuckDB는 벡터화 계산도 쓰는데, 그것은 단일 명령 다중 데이터(SIMD)를 써서 하나의 CPU 명령으로 여러 값을 처리하는 것이다. 이것을 데이터 벡터와 혼동해서는 안 된다.</strong> 같은 "벡터"라는 낱말이 두 층위에서 다른 것을 가리키므로, 이 한 문장이 없으면 독자가 헷갈릴 자리다.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead rev">
+    <span class="num">10.2.3</span>
+    <h2>EXPLAIN과 EXPLAIN ANALYZE로 계획 들여다보기<span class="en">Visualizing query plans with Explain and Explain Analyze</span></h2>
+  </div>
+  <div class="col rev">
+    <p>최적화기와 계획기가 만든 질의 계획을 <em>우리도 볼 수 있다.</em> 어떤 SQL 문 앞에 <code>EXPLAIN</code>을 붙이면 <strong>원래 질의가 변환된 연산자의 트리</strong>가 나온다. 대응은 이렇다.</p>
+    <ul class="plain">
+      <li><b>ORDER BY와 LIMIT</b> → <code>TOP_N</code> — 전체를 정렬하지 않고 상위 N개만 유지한다.</li>
+      <li><b>SELECT</b> → <code>PROJECTION</code></li>
+      <li><b>GROUP BY</b> → <code>PERFECT_HASH_GROUP_BY</code></li>
+      <li><b>SELECT + FROM</b> → <code>SEQ_SCAN</code>. 추정 카디널리티(EC)가 함께 붙는다.</li>
+    </ul>
+    <p>그리고 읽는 방향을 알려준다. <strong>계획은 아래에서 위로 실행된다.</strong> <em>저장된 데이터의 <code>SEQ_SCAN</code>에서 시작해, 앞선 연산자의 결과 덩어리에 연산자를 적용해 나간다.</em></p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — EXPLAIN ANALYZE, 아래에서 위로 읽는다</span><span class="tagn">10.2.3</span></div>
+      <pre><span class="p">D</span> <span class="k">EXPLAIN ANALYZE</span>
+  <span class="k">SELECT</span> <span class="f">year</span>(CreationDate) <span class="k">AS</span> year, <span class="f">count</span>(*),
+         <span class="f">round</span>(<span class="f">avg</span>(ViewCount)), <span class="f">max</span>(AnswerCount)
+  <span class="k">FROM</span> posts <span class="k">GROUP BY</span> year <span class="k">ORDER BY</span> year <span class="k">DESC</span> <span class="k">LIMIT</span> 10;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th class="l">연산자 (위 → 아래)</th><th class="l">하는 일</th><th>내보낸 행</th><th>시간</th></tr>
+            <tr class="type"><th class="l">아래에서 위로 실행된다</th><th class="l"></th><th>rows</th><th>s</th></tr></thead>
+          <tbody>
+            <tr><td class="l">TOP_N</td><td class="l">Top 10 · year DESC</td><td>10</td><td>0.00</td></tr>
+            <tr><td class="l">PROJECTION</td><td class="l">count_star() · round(avg) · max</td><td>16</td><td>0.00</td></tr>
+            <tr><td class="l hi">PROJECTION</td><td class="l">__internal_<b>decompress</b>_integral_bigint(#0, 2008)</td><td>16</td><td>0.00</td></tr>
+            <tr class="mark"><td class="l hi">PERFECT_HASH_GROUP_BY</td><td class="l">#0 · count_star() · avg(#1) · max(#2)</td><td class="hi">16</td><td class="hi">0.55</td></tr>
+            <tr><td class="l hi">PROJECTION</td><td class="l">__internal_<b>compress</b>_integral_utinyint(year(CreationDate), 2008)</td><td>58329356</td><td>0.39</td></tr>
+            <tr class="mark"><td class="l">SEQ_SCAN</td><td class="l">posts · CreationDate, ViewCount, AnswerCount · <b>EC: 81865857</b></td><td class="hi">58329356</td><td class="hi">0.98</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="4">연산자 시간 합 1.92s · 벽시계 <span style="color:#67d4b4">real 0.199s</span> → 9.6배 차이</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        본문은 압축·해제 연산자를 <b>"데이터 압축과 해제에 쓰이는 내부 연산자"</b>라고만 지나가는데,
+        이 두 줄이 이 계획에서 가장 흥미로운 자리다.
+        <code>__internal_compress_integral_utinyint(year(CreationDate), <b>2008</b>)</code>은
+        <b>연도에서 2008을 빼 1바이트 정수(utinyint)로 좁힌다.</b>
+        스택 오버플로가 2008년에 만들어졌으니 모든 연도가 <b>0에서 15 사이의 오프셋</b>이 된다.
+      </div>
+      <div class="term-note">
+        그리고 그 압축이 <b>바로 위 연산자의 이름을 결정한다.</b>
+        키의 정의역이 1바이트 범위로 좁아지면 <b>충돌 없는 완전 해시 테이블</b>을 쓸 수 있다.
+        그래서 그냥 <code>HASH_GROUP_BY</code>가 아니라 <b><code>PERFECT_HASH_GROUP_BY</code></b>다.
+        <b>압축이 저장 공간을 줄이는 데서 그치지 않고 알고리즘의 선택을 바꾼 것</b>이며,
+        이것이 컬럼 저장 엔진의 진짜 이점이다.
+        결과 행이 <b>16</b>인 것도 <b>2008년부터 2023년까지 열여섯 해</b>와 정확히 맞는다.
+      </div>
+      <div class="term-note">
+        <b>연산자별 시간을 그냥 더하면 안 된다.</b>
+        0.98 + 0.39 + 0.55 = 1.92초인데 벽시계 시간은 0.199초다.
+        <b>9.6배 차이가 나는 것은 그 시간들이 여러 스레드에 걸쳐 누적된 CPU 시간이기 때문</b>이다.
+        본문이 이 점을 짚지 않으니, <b>EXPLAIN ANALYZE의 숫자를 순차적 소요 시간으로 읽으면 오해한다.</b>
+      </div>
+      <div class="term-note">
+        <b>추정 카디널리티(EC) 81,865,857 대 실제 58,329,356</b>이다.
+        최적화기가 <b>1.40배 과대추정</b>했다.
+        이 정도 오차로도 계획이 옳게 나왔지만, 조인 순서가 걸린 질의라면 추정 오차가 계획을 뒤집을 수 있다.
+        <b>EC와 실제 행 수를 나란히 보는 것이 EXPLAIN ANALYZE를 읽는 첫 요령</b>이다.
+      </div>
+      <div class="term-note">
+        저자들이 이 도구의 쓸모를 정리해둔다.
+        <b>특히 느린 질의에서 어느 연산자가 가장 많은 시간을 쓰고 어느 것이 가장 많은 중간 행을 돌려주는지 알아내는 데 도움이 된다.</b>
+        그리고 그 정보로 <b>인덱스를 더하거나, 질의 힌트를 주거나, 부질의를 쓰거나, 연산 순서를 바꿔</b> 최적화할 수 있다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="sechead rev">
+    <span class="num">10.3</span>
+    <h2>스택 오버플로 데이터를 Parquet으로 내보내기<span class="en">Exporting the Stack Overflow data to Parquet</span></h2>
+  </div>
+  <div class="col rev">
+    <p>테이블을 <em>보관과 더 쉬운 저장, 다른 방식의 처리를 위해</em> Parquet 파일로 내보낼 수 있다. 저자들이 근거를 되짚는다. <strong>컬럼 형식인 Parquet은 더 잘 압축되고, 스키마를 포함하며, 컬럼 선택과 조건 푸시다운으로 최적화된 읽기를 지원한다.</strong> 이 절이 확인하려는 것은 셋이다. <em>내보내기가 얼마나 걸리는가, 어떤 최적화를 적용할 수 있는가, 데이터베이스 전체를 어떻게 내보내는가.</em></p>
+    <p>지원되는 압축 형식은 셋이다. <strong><code>UNCOMPRESSED</code>, <code>SNAPPY</code>, <code>ZSTD</code></strong>. 그리고 이 절의 예제는 모두 <code>SNAPPY</code>를 쓴다. 그 선택이 뒤에서 뜻밖의 결과를 낳는다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — 내보내고, 병렬로 내보내고, 전부 내보낸다</span><span class="tagn">목록 10.26 – 10.33</span></div>
+      <pre><span class="c">-- 목록 10.26 · users</span>
+<span class="p">D</span> <span class="k">COPY</span> (<span class="k">FROM</span> users) <span class="k">TO</span> <span class="f">'users.parquet'</span>
+    (FORMAT PARQUET, CODEC <span class="f">'SNAPPY'</span>, ROW_GROUP_SIZE 100000);
+<span class="rt">-- Run Time (s): real 10.582 …</span>
+
+<span class="c">-- 목록 10.27 · posts</span>
+<span class="p">D</span> <span class="k">COPY</span> (<span class="k">FROM</span> posts) <span class="k">TO</span> <span class="f">'posts.parquet'</span>
+    (FORMAT PARQUET, CODEC <span class="f">'SNAPPY'</span>, ROW_GROUP_SIZE 100000);
+<span class="rt">-- Run Time (s): real 57.314 …</span>
+
+<span class="c">-- 목록 10.28 · 정렬해서 스레드마다 한 파일씩 쓴다</span>
+<span class="p">D</span> <span class="k">COPY</span> (
+      <span class="k">SELECT</span> * <span class="k">FROM</span> users <span class="k">ORDER BY</span> LastAccessDate <span class="k">DESC</span>
+  ) <span class="k">TO</span> <span class="f">'users.parquet'</span>
+    (FORMAT PARQUET, CODEC <span class="f">'SNAPPY'</span>, <span class="ok">PER_THREAD_OUTPUT TRUE</span>);
+
+<span class="c">-- 목록 10.29 · 10.30 · 같은 답을 두 형식에서 얻는 시간</span>
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span> <span class="f">read_parquet</span>(<span class="f">'users.parquet'</span>);
+<span class="ok">19942787   (0.008s)</span>
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span> <span class="f">read_csv_auto</span>(<span class="f">'Users.csv.gz'</span>);
+<span class="err">19942787   (약 7s)</span>
+
+<span class="c">-- 목록 10.31 · 데이터베이스 전체를 내보낸다</span>
+<span class="p">D</span> <span class="k">EXPORT DATABASE</span> <span class="f">'target_directory'</span> (FORMAT PARQUET);
+<span class="c">-- Parquet 파일들 + schema.sql + load.sql 이 만들어진다</span>
+<span class="p">D</span> <span class="k">IMPORT DATABASE</span> <span class="f">'source_directory'</span>;</pre>
+      <div class="term-note">
+        <b>NOTE</b> 직렬 내보내기가 테이블마다 10초에서 60초 걸렸고,
+        저자들은 이것을 <b>단일 스레드에서 약 70MB/s의 쓰기 출력</b>이라고 환산한다.
+        검산해보면 users는 734MB ÷ 10.582s = <b>71.0MB/s</b>, posts는 4.0GB ÷ 57.314s = <b>71.5MB/s</b>다.
+        <b>두 테이블에서 같은 수치가 나오니 환산이 옳다.</b>
+      </div>
+      <div class="term-note">
+        <b>다중 스레드로 쓰면 DuckDB가 스레드마다 파일 하나를 만든다.</b>
+        10코어 시스템에서 <b>users는 10초에서 1.7초로, posts는 57초에서 11초로</b> 나아졌다.
+        배수로는 6.2배와 5.2배이니 <b>10코어 대비 병렬 효율이 62%와 52%</b>다.
+        완전한 선형 확장은 아니지만, 쓰기 작업에서 이 정도면 충분히 좋다.
+      </div>
+      <div class="term-note">
+        목록 10.28이 <b>정렬을 먼저 하는 이유</b>도 밝혀두었다.
+        <b>Parquet 파일을 읽을 때 정렬된 필드의 질의가 더 빨라질 수 있기 때문</b>이다.
+        기제는 제5장에서 배운 것이다. 각 행 그룹의 <b>최소·최대 통계</b>로
+        <b>조건에 맞지 않는 행 그룹을 아예 건너뛴다.</b>
+        정렬되어 있으면 그 최소·최대 구간이 좁아지므로 건너뛸 수 있는 행 그룹이 늘어난다.
+      </div>
+      <div class="term-note">
+        행 수를 세는 데 <b>Parquet은 0.008초, gzip CSV는 약 7초</b>가 걸린다. <b>875배</b>다.
+        그런데 저자들이 곧바로 정직하게 덧붙인다. <b>"이것은 공정한 싸움이 아니다.</b>
+        Parquet 파일은 전체를 스캔하지 않고 <b>메타데이터로 답할 수 있기 때문</b>이다."
+        도구의 우위를 자랑하면서 그 우위가 어디서 오는지 밝히는 이 태도가 이 책의 미덕이다.
+      </div>
+      <div class="term-note catch">
+        본문이 users 테이블을 두고 <b>"2,800만 행"</b>이라고 적는데, 목록 10.29가 방금
+        <b>19,942,787</b>을 돌려주었고 10.1.4절도 <b>"대략 2,000만"</b>이라고 했다.
+        같은 "2,800만"이 10.1.7절에도 나와 게시물 수를 가리키는데, 거기서도
+        <b>질문은 2,350만이고 전체 게시물은 5,833만</b>이니 어느 쪽도 아니다.
+        <b>같은 잘못된 수치가 두 자리에 등장한다.</b>
+      </div>
+      <div class="term-note catch">
+        <code>schema.sql</code>(목록 10.32)과 <code>load.sql</code>(목록 10.33)이 서로 맞지 않는다.
+        <b><code>load.sql</code>에는 <code>COPY post_links FROM …</code>이 있는데
+        <code>schema.sql</code>에는 <code>post_links</code>를 만드는 <code>CREATE TABLE</code>이 없다.</b>
+        스키마에 있는 테이블은 posts·comments·badges·users·tags·votes 여섯 개이고 적재는 일곱 개다.
+        <b>그대로 <code>IMPORT DATABASE</code>를 하면 없는 테이블에 넣으려다 실패한다.</b>
+      </div>
+      <div class="term-note catch">
+        본문은 <code>schema.sql</code>에서 <b>"테이블, 뷰, 열거형이 만들어진다"</b>고 적었다.
+        그런데 인쇄된 <code>schema.sql</code>에는 <b><code>CREATE TYPE</code>이 한 줄도 없고</b>,
+        10.1.7절에서 공들여 더한 <b><code>tagNames</code>와 <code>tagEnums</code> 컬럼도 없다.</b>
+        <code>posts</code> 테이블이 열아홉 컬럼 그대로다.
+        내보내기를 그 절 이전 상태에서 했거나, 열거형이 실제로는 내보내지지 않는다는 뜻이다.
+        <b>어느 쪽이든 "열거형이 만들어진다"는 설명은 실린 출력과 어긋난다.</b>
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <div class="note">
+      <span class="tag">살펴본 김에 — Parquet이 더 잘 압축된다는 말을 파일 크기로 확인해보면</span>
+      <p>이 절은 <strong>"컬럼 형식인 Parquet은 더 잘 압축된다"</strong>는 전제에서 출발한다. 그런데 이 장에는 <em>같은 일곱 테이블의 크기가 두 번 실려 있다.</em> 10.1.1절의 <code>gzip -9</code>로 누른 CSV와, 이 절의 <code>SNAPPY</code>로 누른 Parquet이다. 두 목록을 나란히 놓고 더해보면 결과가 전제를 뒤집는다.</p>
+      <div class="tblwrap">
+        <table class="tbl">
+          <caption><b>덧붙인 표</b> &nbsp;원서 두 곳에 흩어진 파일 크기를 한자리에 모아 대조했다. 원서에는 이런 표가 없다.</caption>
+          <thead><tr><th>테이블</th><th>CSV.gz (10.1.1절)</th><th>Parquet SNAPPY (10.3절)</th><th>변화</th></tr></thead>
+          <tbody>
+            <tr><td class="m">Comments</td><td class="n">5.0 GB</td><td class="n">6.9 GB</td><td class="up">+38.0%</td></tr>
+            <tr><td class="m">Posts</td><td class="n">3.2 GB</td><td class="n">4.0 GB</td><td class="up">+25.0%</td></tr>
+            <tr><td class="m">Votes</td><td class="n">1.6 GB</td><td class="n">2.2 GB</td><td class="up">+37.5%</td></tr>
+            <tr><td class="m">Users</td><td class="n">613 MB</td><td class="n">734 MB</td><td class="up">+19.7%</td></tr>
+            <tr><td class="m">Badges</td><td class="n">452 MB</td><td class="n">518 MB</td><td class="up">+14.6%</td></tr>
+            <tr><td class="m">PostLinks</td><td class="n">137 MB</td><td class="n">164 MB</td><td class="up">+19.7%</td></tr>
+            <tr><td class="m">Tags</td><td class="n">1.1 MB</td><td class="n">1.6 MB</td><td class="up">+45.5%</td></tr>
+          </tbody>
+          <tfoot><tr><td>합계</td><td class="n">11.00 GB</td><td class="n">14.52 GB</td><td class="up">+31.9%</td></tr></tfoot>
+        </table>
+      </div>
+      <p><strong>일곱 테이블이 하나도 빠짐없이 커졌고, 합계로는 32% 커졌다.</strong> 한두 테이블의 예외가 아니라 전면적이다.</p>
+      <p>이유는 <em>압축 형식의 성격</em>에 있다. <strong><code>SNAPPY</code>는 압축률이 아니라 속도에 최적화된 코덱</strong>이고, 비교 대상인 CSV는 <strong><code>gzip -9</code>, 곧 가장 센 설정</strong>으로 눌린 것이다. 저자들이 앞 절에서 그 옵션을 직접 썼다. 애초에 <em>공정한 비교가 아니다.</em></p>
+      <p>그러니 "Parquet이 더 잘 압축된다"는 말은 <strong>같은 급의 코덱을 쓸 때</strong> 성립한다. 이 절이 지원 형식으로 열거한 <code>ZSTD</code>를 쓰면 사정이 달라질 것이다. 이 대조가 알려주는 것은 Parquet이 나쁘다는 것이 아니라, <strong>Parquet의 이점은 크기가 아니라 다른 데—스키마 내장과 메타데이터 통계와 컬럼 단위 읽기—에 있다</strong>는 사실이다. 그리고 그 이점은 같은 절의 875배가 이미 증명해두었다.</p>
+    </div>
+
+    <div class="q">
+      이 스택 오버플로 예제에서 보듯 중간 규모의 데이터셋은 DuckDB에게 아무 문제가 아니다. 현대적 랩톱이나 데스크톱의 메모리와 CPU 자원을 가진 단일 기계에서 매우 합리적인 시간에 들이고 질의하고 처리하고 내보낼 수 있다.
+      <span>10.3절을 맺는 문단 · 저자들이 든 사양은 4–10코어, 8–64GB RAM</span>
+    </div>
+    <p>그리고 다음 절로 넘어가는 문장이 도발적이다. <strong>"그런데 더 크게 갈 수 있을까, 이를테면 수십억 레코드로?"</strong> <em>뉴욕시 택시 데이터셋은 새 데이터베이스 시스템이 빅데이터를 감당할 수 있는지 보려 할 때 으레 찾는 데이터셋이다.</em></p>
+  </div>
+</section>
+
+<section id="s4">
+  <div class="sechead rev">
+    <span class="num">10.4</span>
+    <h2>Parquet 파일에서 뉴욕 택시 데이터셋 탐색하기<span class="en">Exploring the New York Taxi dataset from Parquet files</span></h2>
+  </div>
+  <div class="col rev">
+    <p>뉴욕시 택시 데이터셋은 <em>NYC 택시·리무진 위원회</em>가 발행하고 관리한다. <strong>승하차 날짜와 시각과 위치, 운행 거리, 항목별 요금, 요율 유형, 지불 유형, 기사가 보고한 승객 수</strong>를 담는다. Parquet 형식으로 발행되며 <strong>2009년 1월부터 달마다 파일 하나</strong>씩 계속 갱신된다.</p>
+    <p>규모가 이 책의 최대다. <strong>집필 시점에 17억 행이 넘고, Parquet 파일 175개에 28GB다.</strong> 저자들이 모아 MotherDuck이 호스팅하는 S3 버킷에 올려두었다.</p>
+    <div class="grid3">
+      <div class="cell"><span class="big">17.5 바이트</span><span class="t">행 하나가 차지하는 크기</span>
+        <p>28GB ÷ 17억 행. 컬럼이 열아홉 개이니 <b>컬럼값 하나당 0.92바이트</b>다. 이 문서에서 계산한 값이다.</p></div>
+      <div class="cell"><span class="big">175</span><span class="t">Parquet 파일 개수</span>
+        <p>달마다 하나. 글로브 와일드카드 하나로 전부 훑는다.</p></div>
+      <div class="cell"><span class="big">11초</span><span class="t">17억 행을 세는 시간</span>
+        <p>메타데이터만 읽으므로 데이터를 내려받지 않는다.</p></div>
+    </div>
+    <p>이 절의 방침이 앞 절과 다르다. <strong>Parquet 파일을 질의의 원천으로 쓰며, DuckDB가 실제로 데이터베이스를 채우지 않고도 조건 푸시다운과 사영 푸시다운으로 이 파일들의 질의를 최적화할 수 있음을 보인다.</strong> 쓸 자리도 구체적이다. <em>S3나 구글 클라우드 스토리지 같은 클라우드 저장 버킷에 있는 데이터를 한 번만 분석할 때</em>이며, 예컨대 <em>웹사이트나 애플리케이션의 접근 로그나 다운로드 로그를 분석</em>하는 데 쓸 수 있다.</p>
+    <div class="tip">
+      <span class="tag">TIP — 계산을 데이터가 사는 곳으로 옮긴다</span>
+      <p>이만한 양의 데이터에서는 <strong>질의 계산을 데이터가 사는 곳으로 옮기고 결과만 네트워크로 전송하는 편이 유익하다.</strong> 파일을 로컬 기계에 내려받았다면 거기서 DuckDB를 실행하면 되고, 그렇지 않다면 <em>데이터에 가능한 한 가까운 클라우드 인스턴스에서 DuckDB를 돌리는 것이 합리적이다.</em> S3에 파일이 있다면 <strong>같은 리전의 EC2 인스턴스나 MotherDuck 같은 호스팅 서비스</strong>가 그것이다.</p>
+      <p>그러지 않으면 <strong>이그레스 비용과 네트워크 전송 시간과 지연을 모두 물어야 한다.</strong> 단 <em>Parquet 메타데이터만으로 충족되는 질의는 예외</em>다. 제7장의 <code>MD_RUN</code> 논의가 여기서 인프라 선택의 문제로 되돌아온다.</p>
+    </div>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — 버킷에 붙고, 세고, 스키마를 본다</span><span class="tagn">목록 10.34 – 10.35 · 10.4.2 – 10.4.3</span></div>
+      <pre><span class="c">-- 목록 10.34 · 자기 버킷을 쓸 때만 필요하다. 이 버킷은 공개 읽기가 가능하다.</span>
+<span class="p">D</span> <span class="k">CREATE</span> [PERSISTENT] <span class="k">SECRET</span> (
+      TYPE S3,
+      KEY_ID <span class="f">'AKIA...'</span>,
+      SECRET <span class="err">''</span><span class="f">Sr8VSfK...'</span>,        <span class="c">-- 겹따옴표가 잘못 들어가 있다</span>
+      REGION <span class="f">'us-east-1'</span>);
+
+<span class="c">-- 목록 10.35 · S3 접근에 쓰이는 확장. 필요하면 자동 적재된다.</span>
+<span class="p">D</span> <span class="k">INSTALL</span> httpfs; <span class="k">LOAD</span> httpfs;
+
+<span class="c">-- 파일 하나. 메타데이터로 답하므로 600ms.</span>
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span>
+    <span class="f">'s3://us-prd-md-duckdb-in-action/nyc-taxis/yellow_tripdata_2022-06.parquet'</span>;
+<span class="ok">3,558,124 rows in 600 ms</span>
+
+<span class="c">-- 글로브 와일드카드. 파일 175개, 17억 행을 11초에 센다.</span>
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span>
+    <span class="f">'s3://us-prd-md-duckdb-in-action/nyc-taxis/yellow_tripdata_*.parquet'</span>;
+<span class="ok">1,721,158,822 rows in 11s</span>
+
+<span class="c">-- 특정 파일 몇 개만 고르려면 read_parquet를 직접 부른다.</span>
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*) <span class="k">FROM</span> <span class="f">read_parquet</span>([
+      <span class="f">'…/yellow_tripdata_2021-06.parquet'</span>,
+      <span class="f">'…/yellow_tripdata_2022-06.parquet'</span>]);
+<span class="ok">6,392,388</span>
+
+<span class="c">-- 목록 10.36 · 2020년 이후 파일만 덮는 뷰. 즉시 돌아온다. 데이터를 읽지 않는다.</span>
+<span class="p">D</span> <span class="k">CREATE OR REPLACE VIEW</span> allRidesView <span class="k">AS</span>
+  <span class="k">FROM</span> <span class="f">'s3://us-prd-md-duckdb-in-action/nyc-taxis/yellow_tripdata_202*.parquet'</span>;
+<span class="c">-- 약 1억 1,800만 행</span></pre>
+      <div class="term-note">
+        파일 이름 확장자로부터의 <b>추론이 자동으로 작동</b>한다.
+        파일 하나든 URL이든 <b>여러 파일에 맞는 글로브 와일드카드 패턴이든</b> 마찬가지다.
+        내부적으로 <code>read_parquet</code> 호출로 변환된다.
+        다만 <b>특정한 파일 집합을 고르려면 그 함수를 직접 불러야</b> 한다.
+      </div>
+      <div class="term-note">
+        두 파일을 합친 값에서 한 파일을 빼면 <b>2021년 6월이 2,834,264행</b>이라는 것이 나온다.
+        2022년 6월의 3,558,124행보다 <b>72만 행 적다.</b>
+        2021년 중반이 아직 대유행에서 회복하는 중이었음을 이 뺄셈 하나가 보여준다.
+      </div>
+      <div class="term-note catch">
+        <b>목록 10.34에 겹따옴표가 잘못 들어가 있다.</b>
+        <code>SECRET ''Sr8VSfK...'</code>는 홑따옴표가 셋이므로 구문 오류가 난다.
+        <code>SECRET 'Sr8VSfK...'</code>여야 한다.
+      </div>
+      <div class="term-note catch">
+        본문이 비밀 기능을 두고 <b>"duckdb 버전 0.1.0부터 사용 가능"</b>이라고 적었다.
+        <b>0.10.0의 오기</b>다. 제5장 5.5.2절이 <b>"0.10.0 이전 판본에서는 SECRET 객체를 하나만 가질 수 있다"</b>고
+        적어두었으니 같은 책이 스스로 확증한다.
+        0.1.0은 2019년 무렵의 판본이며 비밀도 <code>httpfs</code>도 그런 형태로 없었다.
+        <b>소수점 자리 하나가 6년을 옮겨놓은 셈</b>이다.
+      </div>
+      <div class="term-note">
+        <b>뷰는 물리적으로 실체화되지 않고 뷰에 대한 질의가 실행될 때마다 밑에 깔린 질의를 돌린다.</b>
+        그리고 제5장에서는 없던 설명이 하나 붙는다.
+        <b>바깥 질의 전체의 계획과 최적화에 통합되며, 공통 테이블 표현식(CTE)과 아주 비슷하다.</b>
+        곧 뷰가 최적화의 장벽이 아니라는 뜻이니, 조건 푸시다운이 뷰를 뚫고 파일까지 내려간다.
+      </div>
+      <div class="term-note">
+        뷰를 쓰는 두 번째 이유도 밝혀두었다. <b>데이터에 대한 안정된 인터페이스를 제공하므로,
+        밑에 깔린 데이터가 바뀌면 뷰를 갱신해 그 변화를 반영하되 뷰를 쓰는 질의는 고치지 않아도 된다.</b>
+        제8장에서 dbt 소스가 하던 구실을 뷰가 SQL 안에서 한다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — parquet_schema로 컬럼과 타입 보기</span><span class="tagn">10.4.3</span></div>
+      <pre><span class="p">D</span> <span class="k">FROM</span> <span class="f">parquet_schema</span>(<span class="f">'…/yellow_tripdata_2022-06.parquet'</span>) <span class="k">SELECT</span> name, type;</pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th class="l">name</th><th class="l">type</th><th class="l">name</th><th class="l">type</th></tr>
+            <tr class="type"><th class="l">varchar</th><th class="l">varchar</th><th class="l">varchar</th><th class="l">varchar</th></tr></thead>
+          <tbody>
+            <tr><td class="l">schema</td><td class="l rt">(루트)</td><td class="l">payment_type</td><td class="l">INT64</td></tr>
+            <tr><td class="l">VendorID</td><td class="l">INT64</td><td class="l">fare_amount</td><td class="l">DOUBLE</td></tr>
+            <tr><td class="l">tpep_pickup_datetime</td><td class="l hi">INT64</td><td class="l">extra</td><td class="l">DOUBLE</td></tr>
+            <tr><td class="l">tpep_dropoff_datetime</td><td class="l hi">INT64</td><td class="l">mta_tax</td><td class="l">DOUBLE</td></tr>
+            <tr><td class="l">passenger_count</td><td class="l hi">DOUBLE</td><td class="l">tip_amount</td><td class="l">DOUBLE</td></tr>
+            <tr><td class="l">trip_distance</td><td class="l">DOUBLE</td><td class="l">tolls_amount</td><td class="l">DOUBLE</td></tr>
+            <tr><td class="l">RatecodeID</td><td class="l">DOUBLE</td><td class="l">improvement_surcharge</td><td class="l">DOUBLE</td></tr>
+            <tr><td class="l">store_and_fwd_flag</td><td class="l">BYTE_ARRAY</td><td class="l">total_amount</td><td class="l">DOUBLE</td></tr>
+            <tr><td class="l">PULocationID</td><td class="l">INT64</td><td class="l">congestion_surcharge</td><td class="l">DOUBLE</td></tr>
+            <tr><td class="l">DOLocationID</td><td class="l">INT64</td><td class="l">airport_fee</td><td class="l">DOUBLE</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="4">20 rows — 루트 하나와 컬럼 열아홉 개</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        저자들이 이 함수를 고른 이유를 밝혀두었다.
+        <b>렌더링되는 필드를 통제할 수 있고, 우리는 주로 이름과 타입에 관심이 있으니 정확히 그것이 필요하다.</b>
+        <code>DESCRIBE</code>도 되지만 <code>parquet_schema</code>는 <b>Parquet의 물리 타입</b>을 보여준다.
+      </div>
+      <div class="term-note">
+        타입 세 가지가 눈에 걸린다.
+        <b>승하차 시각이 <code>INT64</code></b>인 것은 Parquet이 타임스탬프를 정수로 저장하기 때문이며 논리 타입이 따로 붙는다.
+        <b><code>store_and_fwd_flag</code>가 <code>BYTE_ARRAY</code></b>인 것은 문자열의 물리 표현이다.
+        그리고 <b><code>passenger_count</code>가 <code>DOUBLE</code></b>이다.
+        <b>사람 수를 실수로 담는 것</b>인데, 뒤의 통계에서 그 대가가 드러난다.
+      </div>
+      <div class="term-note">
+        <b>NOTE</b> 읽으려는 Parquet 파일들의 <b>스키마가 서로 다르면</b>
+        <code>read_parquet</code>의 <b><code>union_by_name = true</code></b> 옵션으로 하나의 결과로 합칠 수 있다.
+        <b>존재하지 않거나 이름이 다른 컬럼은 NULL로 채워진다.</b>
+        제5장에서 배운 그 옵션이 175개 파일을 다루는 이 절에서 실전 무기가 된다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<section>
+  <div class="sechead rev">
+    <span class="num">10.4.5</span>
+    <h2>데이터 분석하기<span class="en">Analyzing the data</span></h2>
+  </div>
+  <div class="col rev">
+    <p><code>SUMMARIZE</code>를 뷰 전체에 걸면 <em>통계 정보를 모두 얻기 위해 실제 데이터를 읽어야 하므로</em> 시간이 걸린다. <strong>데이터에 가까운 AWS EC2 인스턴스에서 돌려도 1억 1,800만 행에서 결과를 내는 데 30초가 넘게 걸렸다.</strong> 그리고 그 결과가 이 데이터셋의 실상을 드러낸다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — SUMMARIZE가 드러낸 데이터 품질</span><span class="tagn">목록 10.37 · 33.907s</span></div>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th class="l">column_name</th><th class="l">type</th><th>min</th><th>max</th><th>approx_unique</th></tr>
+            <tr class="type"><th class="l">varchar</th><th class="l">varchar</th><th>varchar</th><th>varchar</th><th>varchar</th></tr></thead>
+          <tbody>
+            <tr><td class="l">VendorID</td><td class="l">BIGINT</td><td>1</td><td>6</td><td>4</td></tr>
+            <tr class="mark"><td class="l">tpep_pickup_datetime</td><td class="l">TIMESTAMP</td><td class="bad">2001-01-01</td><td class="bad">2098-09-11</td><td>59777057</td></tr>
+            <tr><td class="l">tpep_dropoff_datetime</td><td class="l">TIMESTAMP</td><td class="bad">2001-01-01</td><td class="bad">2098-09-11</td><td>60115892</td></tr>
+            <tr class="mark"><td class="l">passenger_count</td><td class="l">DOUBLE</td><td>0.0</td><td class="bad">112.0</td><td>12</td></tr>
+            <tr class="mark"><td class="l">trip_distance</td><td class="l">DOUBLE</td><td class="bad">-30.62</td><td class="bad">389678.46</td><td>14254</td></tr>
+            <tr><td class="l">RatecodeID</td><td class="l">DOUBLE</td><td>1.0</td><td>99.0</td><td>7</td></tr>
+            <tr><td class="l">store_and_fwd_flag</td><td class="l">VARCHAR</td><td>N</td><td>Y</td><td>2</td></tr>
+            <tr><td class="l">PULocationID</td><td class="l">BIGINT</td><td>1</td><td>265</td><td>264</td></tr>
+            <tr><td class="l">DOLocationID</td><td class="l">BIGINT</td><td>1</td><td>265</td><td>265</td></tr>
+            <tr><td class="l">payment_type</td><td class="l">BIGINT</td><td>0</td><td>5</td><td>6</td></tr>
+            <tr class="mark"><td class="l">fare_amount</td><td class="l">DOUBLE</td><td class="bad">-133391414</td><td>998310.03</td><td>17618</td></tr>
+            <tr><td class="l">extra</td><td class="l">DOUBLE</td><td>-27.0</td><td class="bad">500000.8</td><td>671</td></tr>
+            <tr><td class="l">mta_tax</td><td class="l">DOUBLE</td><td>-0.55</td><td class="bad">500000.5</td><td>82</td></tr>
+            <tr class="mark"><td class="l">tip_amount</td><td class="l">DOUBLE</td><td>-493.22</td><td class="bad">133391363</td><td>9064</td></tr>
+            <tr><td class="l">tolls_amount</td><td class="l">DOUBLE</td><td>-99.99</td><td>956.55</td><td>3897</td></tr>
+            <tr><td class="l">improvement_surcharge</td><td class="l">DOUBLE</td><td>-1.0</td><td>1.0</td><td>5</td></tr>
+            <tr><td class="l">total_amount</td><td class="l">DOUBLE</td><td>-2567.8</td><td class="bad">1000003.8</td><td>36092</td></tr>
+            <tr><td class="l">congestion_surcharge</td><td class="l">DOUBLE</td><td>-2.5</td><td>3.0</td><td>16</td></tr>
+            <tr><td class="l">airport_fee</td><td class="l hi">INTEGER</td><td>-2</td><td>2</td><td>5</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term-note">
+        표시해둔 값들이 <b>이 데이터셋의 오염 지도</b>다.
+        <b>2098년 9월에 출발한 택시</b>가 있고, <b>승객 112명</b>을 태운 택시가 있으며,
+        <b>거리가 −30.62마일</b>인 운행과 <b>389,678마일</b>—지구를 열다섯 바퀴 도는 거리—을 달린 운행이 있다.
+        <b>공항 수수료가 −2에서 2 사이</b>인 것은 그럴 만하지만,
+        <b>MTA 세금이 50만 달러</b>인 것은 그렇지 않다.
+      </div>
+      <div class="term-note">
+        가장 눈에 걸리는 것은 <b>요금 −133,391,414달러와 팁 +133,391,363달러</b>다.
+        <b>부호만 다른 거울상 한 쌍이고 차이가 51달러</b>다.
+        정정 처리나 오버플로가 만든 짝으로 보이는데, 뒤에서 이 한 쌍의 정체가 밝혀진다.
+      </div>
+      <div class="term-note">
+        <code>airport_fee</code>만 <b><code>INTEGER</code></b>인 것도 눈에 걸린다.
+        방금 <code>parquet_schema</code>가 2022년 6월 파일에서 <b><code>DOUBLE</code></b>이라고 보여주었다.
+        뷰가 <b>2020년 이후 파일 전부</b>를 덮으므로, 어느 해의 파일이 이 컬럼을 다른 타입으로 담았거나
+        아예 없어서 <b>합쳐진 결과의 타입이 달라진 것</b>이다. 175개 파일의 스키마가 한결같지 않다는 증거다.
+      </div>
+      <div class="term-note">
+        <code>PULocationID</code>는 고유값이 264, <code>DOLocationID</code>는 265다.
+        범위가 둘 다 1–265이니, <b>승차지로는 한 번도 쓰이지 않은 구역이 하나 있다.</b>
+        공항 도착 전용 구역 같은 것을 짐작할 수 있다. 근사값이므로 단정할 수는 없다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — 거리 필터 하나가 걷어낸 것들</span><span class="tagn">목록 10.38 – 10.41</span></div>
+      <pre><span class="c">-- 목록 10.38 · 음수 거리를 걸러내도록 뷰를 다시 정의한다</span>
+<span class="p">D</span> <span class="k">CREATE OR REPLACE VIEW</span> allRidesView <span class="k">AS</span>
+  <span class="k">FROM</span> <span class="f">'…/yellow_tripdata_202*.parquet'</span> <span class="k">WHERE</span> trip_distance &gt; 0;
+
+<span class="c">-- 목록 10.39 · 컬럼 하나만 요약하면 3초대로 줄어든다</span>
+<span class="p">D</span> <span class="k">SUMMARIZE</span> (<span class="k">SELECT</span> trip_distance <span class="k">FROM</span> allRidesView);
+<span class="rt">count = 115976028 · avg = 5.4306541 · std = 536.03 · q50 = 1.827  (real 3.033)</span>
+
+<span class="c">-- 목록 10.40 · 집계 함수만 쓰면 1초 아래로 떨어진다</span>
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">min</span>(trip_distance), <span class="f">max</span>(trip_distance), <span class="f">avg</span>(trip_distance),
+         <span class="f">stddev</span>(trip_distance), <span class="f">count</span>(trip_distance) <span class="k">AS</span> nonNull,
+         <span class="f">count</span>(*) <span class="k">as</span> total, 1-(nonNull/total) <span class="k">AS</span> nullPercentage
+  <span class="k">FROM</span> allRidesView;
+<span class="rt">(real 0.747)</span>
+
+<span class="c">-- 목록 10.41 · 컬럼 여럿에 한꺼번에 — 정규식과 람다를 둘 다 쓴다</span>
+<span class="p">D</span> <span class="k">SELECT</span> <span class="f">count</span>(*),
+         <span class="f">min</span>(<span class="f">columns</span>(*)), <span class="f">max</span>(<span class="f">columns</span>(*)),
+         <span class="f">round</span>(<span class="f">avg</span>(<span class="f">columns</span>(<span class="f">'_(distance|amount|tax|surcharge|fee)'</span>)),2),
+         <span class="f">round</span>(<span class="f">stddev</span>(<span class="f">columns</span>(c -&gt;
+             c <span class="k">SIMILAR TO</span> <span class="f">'.+(distance|amount|tax|surcharge|fee)'</span>)),2)
+  <span class="k">FROM</span> allRidesView;
+<span class="rt">(real 6.813)</span></pre>
+      <div class="term-note">
+        <b>거리가 음수인 행 약 200만 개가 걸러졌다.</b>
+        정확히는 1억 1,800만에서 <b>115,976,028</b>로 줄었으니 <b>2,023,972행</b>이다.
+        그리고 통계가 온전해진다. 최소가 0.01마일이 되고 중위값은 1.83마일이다.
+        <b>표준편차가 여전히 536인 것은 389,678마일 하나가 남아 있기 때문</b>이다.
+      </div>
+      <div class="term-note">
+        <b>거리 필터 하나가 다른 컬럼의 극단값까지 함께 걷어냈다.</b>
+        목록 10.41의 출력을 앞의 SUMMARIZE와 대조해보면 그것이 드러난다.
+        <b>요금 최소가 −133,391,414에서 −2,564.0으로,
+        팁 최대가 +133,391,363에서 1,400.16으로,
+        extra 최대가 500,000.8에서 113.01로,
+        mta_tax 최대가 500,000.5에서 53.16으로</b> 바뀐다.
+      </div>
+      <div class="term-note">
+        곧 <b>−1억 3천만 요금과 +1억 3천만 팁이 거리가 0 이하인 행에 실려 있었다는 뜻</b>이다.
+        아까 거울상 한 쌍으로 보였던 그것이 <b>같은 행 또는 같은 무리에 뭉쳐 있었다.</b>
+        <b>데이터 오염이 컬럼별로 흩어져 있지 않고 행 단위로 뭉쳐 있다</b>는 것이 이 대조의 발견이며,
+        조건 하나로 여러 컬럼이 함께 정화되는 이유이기도 하다.
+        <b>정제할 때 어느 컬럼을 볼지가 아니라 어느 행을 뺄지를 먼저 물어야 한다.</b>
+      </div>
+      <div class="term-note catch">
+        본문은 목록 10.40이 빠른 까닭을 <b>"실제 데이터를 읽을 필요가 없기 때문"</b>이라고 적었다.
+        이 설명은 <code>min</code>과 <code>max</code>에는 맞지만 <b><code>avg</code>와 <code>stddev</code>에는 맞지 않는다.</b>
+        Parquet의 컬럼 통계에는 <b>최소·최대·널 개수는 있으나 합계나 제곱합은 없다.</b>
+        평균과 표준편차를 얻으려면 <b>그 컬럼의 값을 실제로 다 읽어야</b> 한다.
+      </div>
+      <div class="term-note catch">
+        그러면 0.747초가 3.033초보다 빠른 진짜 이유는 무엇인가. 둘이다.
+        <b>첫째, 컬럼 하나만 읽는다.</b> 이것이 이 절이 내세운 <b>사영 푸시다운</b>이며 열아홉 컬럼 가운데 하나만 네트워크로 가져온다.
+        <b>둘째, SUMMARIZE가 계산하는 분위수와 근사 고유값을 계산하지 않는다.</b>
+        전자는 t-digest, 후자는 HyperLogLog를 돌려야 하니 값이 비싸다.
+        <b>메타데이터가 아니라 읽는 양과 계산의 종류가 차이를 만든다.</b>
+      </div>
+      <div class="term-note">
+        목록 10.41이 같은 집계를 <b>같은 뜻의 두 표기로</b> 보여주는 것이 친절하다.
+        <b><code>columns('정규식')</code></b>과 <b><code>columns(c -&gt; c SIMILAR TO '패턴')</code></b>이다.
+        저자들이 <b>"시연 목적으로"</b> 둘을 다 썼다고 밝혀두었다.
+        제3장 3.5.1절의 <code>COLUMNS</code> 람다가 <b>열아홉 컬럼의 통계를 한 문장에 담는 도구</b>로 자란 셈이다.
+      </div>
+      <div class="term-note">
+        <b>SIDEBAR</b> DuckDB <b>0.10.0부터 <code>SUMMARIZE</code>를 <code>SELECT</code>의 원천으로 쓸 수 있다.</b>
+        <code>SELECT column_name, column_type, count, max FROM SUMMARIZE allRidesView;</code>처럼
+        관심 있는 컬럼만 고를 수 있다.
+        다만 저자들이 솔직하게 덧붙인다. <b>"집필 시점에도 나머지 컬럼 통계는 여전히 계산하므로 시간이 절약되지는 않는다."</b>
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+</section>
+
+<section>
+  <div class="sechead rev">
+    <span class="num">10.4.6</span>
+    <h2>택시 데이터셋 활용하기<span class="en">Making use of the taxi dataset</span></h2>
+  </div>
+  <div class="col rev">
+    <p>이번 설정은 <em>도시 사람들이 도시를 어떻게 이동하는지 이해하려는 뉴욕의 도시계획가</em>다. 앞의 질의에서 <strong>운행 유형에 상당한 차이가 있다는 것을 배웠다. 어떤 것은 장거리 여행처럼 보이고 어떤 것은 아주 짧은 셔틀 운행이다.</strong> 그것이 해마다 어떻게 달라지는지 파고든다.</p>
+  </div>
+
+  <div class="wrap rev">
+    <div class="term bleed">
+      <div class="term-bar"><span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">duckdb — 연도별 거리와 요금, 그리고 승객 수</span><span class="tagn">목록 10.42 · 10.43</span></div>
+      <pre><span class="p">D</span> <span class="k">SELECT</span> <span class="f">year</span>(tpep_pickup_datetime) <span class="k">AS</span> year,
+         <span class="f">round</span>(<span class="f">avg</span>(trip_distance)) <span class="k">AS</span> dist,
+         <span class="f">round</span>(<span class="f">avg</span>(fare_amount),2) <span class="k">AS</span> fare,
+         <span class="f">round</span>(<span class="k">AVG</span>(fare_amount/trip_distance),2) <span class="k">AS</span> rate,
+         <span class="f">count</span>(*) <span class="k">AS</span> trips
+  <span class="k">FROM</span> allRidesView
+  <span class="k">GROUP BY</span> year
+  <span class="k">HAVING</span> year <span class="k">BETWEEN</span> 2020 <span class="k">AND</span> 2024   <span class="c">-- 그룹화 키이므로 HAVING에서 걸러야 한다</span>
+  <span class="k">ORDER BY</span> year;
+<span class="rt">Run Time (s): real 1.831 …</span></pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th>year</th><th>dist</th><th>fare</th><th>rate</th><th>trips</th><th>fare÷dist</th></tr>
+            <tr class="type"><th>int64</th><th>double</th><th>double</th><th>double</th><th>int64</th><th>이 문서에서 더한 열</th></tr></thead>
+          <tbody>
+            <tr><td>2020</td><td>4.0</td><td>12.49</td><td class="bad">7.57</td><td>24316408</td><td class="hi">3.12</td></tr>
+            <tr><td>2021</td><td>7.0</td><td>13.42</td><td class="bad">7.09</td><td>30496201</td><td class="hi">1.92</td></tr>
+            <tr><td>2022</td><td>6.0</td><td>14.69</td><td class="bad">8.47</td><td>39081642</td><td class="hi">2.45</td></tr>
+            <tr><td>2023</td><td>4.0</td><td>19.15</td><td class="bad">9.82</td><td>22080786</td><td class="hi">4.79</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="6">운행 합계 115,975,037 · 뷰 115,976,028 → 엉뚱한 연도의 행 991개</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>HAVING에서 걸러야 하는 이유</b>를 주석이 밝힌다. <b>연도가 그룹화 키이기 때문</b>이다.
+        제4장 4.6절이 가르친 적용 순서가 여기서 실무적 제약이 된다.
+        <code>WHERE</code>에는 <code>year</code> 별칭이 아직 없다.
+      </div>
+      <div class="term-note">
+        <b>연도를 2020–2024로 제한한 이유</b>도 밝혀두었다.
+        <b>어떤 해의 항목이 잘못된 날짜 값을 가졌으며, 특히 2098년, 2028년, 2001년, 2008년</b>이다.
+        네 해의 행을 모두 더해 뷰의 총계와 비교해보면 <b>걸러진 것이 991행</b>이다.
+        1억 1,600만 가운데 <b>0.00085%</b>가 전체 집계를 망칠 수 있었다.
+      </div>
+      <div class="term-note">
+        저자들이 읽어낸 것. <b>평균 요금이 시간이 갈수록 오르는 것은 인플레이션으로 돈의 가치가 떨어지기 때문</b>이고,
+        <b>2020년의 추가 하락은 코로나19 대유행이 원인일 가능성이 크다.</b>
+        그리고 전체 데이터셋 분석에서는 <b>우버와 리프트 같은 승차 서비스가 등장한 2010년대 중반에도 비슷한 하락</b>이 관찰된다고 덧붙인다.
+      </div>
+      <div class="term-note catch">
+        <code>rate</code> 컬럼을 그대로 "마일당 요금"으로 읽으면 안 된다.
+        <b><code>avg(fare_amount/trip_distance)</code>는 비의 평균이지 평균의 비가 아니다.</b>
+        2020년을 보면 <b>평균 요금 12.49를 평균 거리 4.0으로 나눈 값은 3.12</b>인데 인쇄된 rate는 <b>7.57</b>이다. <b>2.4배</b> 차이다.
+        네 해 모두 2.05배에서 3.70배까지 벌어진다.
+        <b>0.1마일에 5달러를 낸 짧은 운행의 마일당 50달러</b>가 평균을 끌어올리기 때문이다.
+        마일당 요금을 알고 싶다면 <code>sum(fare_amount)/sum(trip_distance)</code>가 맞다.
+      </div>
+      <div class="term-note catch">
+        <code>round(avg(trip_distance))</code>가 <b>소수점 없이 반올림</b>되어 4·7·6·4가 되었다.
+        그런데 목록 10.39가 <b>전체 평균이 5.43마일</b>이라고 알려주었으니,
+        <b>이 반올림이 연도별 차이를 지워버린다.</b> 요금은 소수 두 자리로 반올림했는데 거리만 정수인 것도 고르지 않다.
+        <b>2021년의 7.0이 유독 큰 것</b>이 실제 변화인지 반올림의 결과인지 이 표만으로는 알 수 없다.
+      </div>
+      <pre><span class="c">-- 목록 10.43 · 승객 수별 운행</span>
+<span class="p">D</span> <span class="k">SELECT</span> passenger_count, <span class="f">count</span>(*)
+  <span class="k">FROM</span> allRidesView
+  <span class="k">WHERE</span> passenger_count &lt; 10
+  <span class="k">GROUP BY</span> passenger_count
+  <span class="k">ORDER BY</span> <span class="f">count</span>(*) <span class="k">DESC</span>;
+<span class="rt">Run Time (s): real 0.897 …</span></pre>
+      <div class="dbwrap">
+        <table class="duckbox">
+          <thead><tr><th>passenger_count</th><th>count_star()</th><th class="l">분포</th></tr>
+            <tr class="type"><th>double</th><th>int64</th><th class="l">이 문서에서 더한 열</th></tr></thead>
+          <tbody>
+            <tr class="mark"><td class="hi">1.0</td><td class="hi">5366688</td><td class="l bar">████████████████████</td></tr>
+            <tr><td>2.0</td><td>1580495</td><td class="l bar">██████</td></tr>
+            <tr><td>3.0</td><td>370175</td><td class="l bar">█</td></tr>
+            <tr><td>4.0</td><td>193333</td><td class="l bar">▏</td></tr>
+            <tr><td>5.0</td><td>149485</td><td class="l bar">▏</td></tr>
+            <tr><td class="bad">0.0</td><td>118751</td><td class="l bar">▏</td></tr>
+            <tr><td>6.0</td><td>102836</td><td class="l bar">▏</td></tr>
+            <tr><td>8.0</td><td>65</td><td class="l bar">·</td></tr>
+            <tr><td>7.0</td><td>60</td><td class="l bar">·</td></tr>
+            <tr><td>9.0</td><td>40</td><td class="l bar">·</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="3">합계 7,881,928 — 뷰 115,976,028의 <span style="color:#ff9a7a">6.8%</span>에 불과하다</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="term-note">
+        <b>거듭제곱 법칙 분포이며 대부분의 운행이 승객 한 명뿐</b>이다.
+        <code>passenger_count</code>가 <b><code>DOUBLE</code>이라 값이 1.0, 2.0으로 찍히는 것</b>이
+        앞에서 짚은 물리 타입의 대가다. 사람 수인데 실수다.
+        그리고 <b>승객 0명인 운행이 118,751건</b>인 것도 눈에 걸린다.
+        기사가 입력하지 않은 것으로 보이며, 8명과 7명보다 훨씬 많다.
+      </div>
+      <div class="term-note catch">
+        본문은 이 목록을 소개하며 <b>"10마일보다 긴 운행에, 승객 10명 미만으로 초점을 맞춘다"</b>고 적었다.
+        그런데 <b>인쇄된 질의에는 거리 조건이 없다.</b> <code>WHERE passenger_count &lt; 10</code>뿐이다.
+        그리고 합계를 내보면 그 누락이 드러난다. <b>7,881,928은 뷰 전체 1억 1,600만의 6.8%</b>다.
+        승객 수 조건만으로는 거의 모든 행이 남아야 하니 <b>이 숫자가 나올 수 없다.</b>
+        <b>거리 필터가 실제로는 적용되었으나 인쇄된 질의에서 빠진 것</b>으로 보아야 앞뒤가 맞는다.
+        따라 하는 독자는 <code>AND trip_distance &gt; 10</code>을 더해야 같은 표를 얻는다.
+      </div>
+    </div>
+    <span class="scrollhint">← 좌우로 밀어 보기 →</span>
+  </div>
+
+  <div class="col rev">
+    <p>저자들이 이 절과 이 장을 함께 맺는다. <strong>이것은 이 데이터셋으로 돌릴 수 있는 질의의 표면을 긁은 것에 지나지 않지만, 쓰임을 더 깊이 파기보다 이 정도 데이터 양에서 질의의 성능을 살펴보는 데 초점을 두려 했다.</strong> 그리고 앞의 장들을 가리킨다. <em>이런 종류의 데이터셋과 원천 위에 앱이나 API나 대시보드를 지을 수도 있고, 노트북에서 분석해 결과를 내보내 더 처리할 수도 있다.</em> 제9장이 지은 것이 이 데이터 위에도 올라갈 수 있다는 말이다.</p>
+  </div>
+</section>
+
+<section class="summary" id="s5">
+  <div class="sechead">
+    <span class="num">SUMMARY</span>
+    <h2>제10장이 남긴 아홉 문장<span class="en">Summary</span></h2>
+  </div>
+  <ol>
+    <li><code>SUMMARIZE</code> 절로 데이터셋의 개요를 얻는 것이 <b>데이터셋 탐색을 시작하는 좋은 방법</b>이다.</li>
+    <li><b>문자열을 열거형으로 바꾸는 것</b>은 질의를 빠르게 하는 데 유용한 기법이다.</li>
+    <li>DuckDB의 현대적 분석 아키텍처는 <b>벡터 표상과 질의 내 병렬성</b>을 활용한다.</li>
+    <li>실행 중에 SQL 질의는 실행 계획으로 바뀌며, <b><code>EXPLAIN</code>으로 들여다볼 수 있다.</b></li>
+    <li>클라우드 버킷에 있는 데이터셋은 <b>저장된 곳에 가까운 기계에서 분석</b>해 네트워크 전송 비용과 지연을 피해야 한다.</li>
+    <li>DuckDB는 <b>조건 푸시다운과 사영 푸시다운</b>으로 Parquet 파일의 질의를 최적화할 수 있으며, <b>실제로 데이터베이스를 채우지 않아도</b> 된다.</li>
+    <li>파일을 읽을 때 <b>Parquet 메타데이터를 쓸 수 있다는 점</b>이 대용량 데이터에서 대단히 유용하다. 질의에 필요하지 않은 데이터를 네트워크로 읽는 일을 피하기 때문이다.</li>
+    <li><code>SELECT</code> 절 안의 <b>컬럼 표현식</b>이 여러 집계를 많은 컬럼에 한꺼번에 적용하게 해준다.</li>
+    <li>DuckDB는 <b>수억, 심지어 수십억 레코드를 담은 데이터셋도 편안히 질의</b>할 수 있다.</li>
+  </ol>
+</section>
+
+<section>
+  <div class="col rev">
+    <div class="note">
+      <span class="tag">이 장을 덮으며 — 계측값이 논증이 되는 방식</span>
+      <p>이 장은 성능을 다루면서 <strong>단 한 번도 "빠르다"로 끝내지 않는다.</strong> 언제나 초와 배수를 적고, 왜 그런지를 붙이고, 공정하지 않은 비교에는 <em>공정하지 않다고 스스로 밝힌다.</em> 행 수 세기의 875배 앞에서 <strong>"이것은 공정한 싸움이 아니다"</strong>라고 적은 대목, 열거형의 1.4배 앞에서 <strong>"이 정도 짧은 실행 시간에서는 덜 중요하다"</strong>고 적은 대목이 그렇다.</p>
+      <p>그래서 이 장에서 걸린 어긋남들도 대체로 <em>계측값 자체가 아니라 그것을 서술한 문장</em>에 있다. 51.120초를 "1분이 넘는다"고 부르고, 2,000만 행을 "2,800만"이라 하고, 비율이 1을 넘는 해가 하나인데 "최근 2년"이라 하고, 평균과 표준편차를 메타데이터로 답한다고 한다. <strong>숫자는 정확하고 문장이 성급하다.</strong> 계측값을 인쇄해두었기 때문에 우리가 그것을 확인할 수 있다는 사실이, 역설적으로 이 장의 미덕이다.</p>
+      <p>그리고 마지막 장에 어울리는 대조가 하나 남는다. <strong>제2장의 227행에서 이 장의 17억 행까지 일곱 자릿수를 건너왔는데, 그동안 도구는 바뀌지 않았다.</strong> 같은 단일 바이너리, 같은 <code>FROM</code> 절, 같은 <code>SUMMARIZE</code>다. 달라진 것은 <em>어디에 시간이 흐르는지를 우리가 알게 되었다는 것</em>뿐이다. 그것이 이 장의 제목이 말하는 "고려사항"의 뜻이다.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="col">
+    <p>이 문서는 <b>Mark Needham · Michael Hunger · Michael Simons, 『DuckDB in Action』 (Manning Publications, 2024)</b>의 제10장 「Performance considerations for large datasets」(원서 222–261쪽) 전체를 검토해 한국어로 정리한 해설이다. 절 번호와 목록 번호, 도판 번호는 원서를 따랐다. 이 책의 <b>마지막 장</b>이며, 뒤에는 회고를 담은 제11장 「Conclusion」과 부록이 이어진다.</p>
+    <p>도판 네 점 가운데 <b>〈도판 10.2〉 데이터 모델, 〈도판 10.3〉 질의 처리 파이프라인, 〈도판 10.4〉 모설 런타임 셋을 원서 구성을 옮겨 새로 작도</b>했다. 〈도판 10.1〉은 스택 오버플로 사이트의 화면 갈무리이므로 점선 상자에 서술로 대신했다. 모설 도해의 작은 사각형과 데이터 모델의 관계 표시는 이 문서에서 덧붙인 것이다.</p>
+    <p><b>덧붙인 것이 넷</b>이다. 표제부의 <b>규모 사다리</b>는 제2장의 227행에서 이 장의 17억 행까지 이 책이 지나온 데이터셋을 로그 눈금에 모은 것이다. <b>계측 비교기</b>는 이 장에 흩어진 계측값을 여섯 대조로 묶었고, 배수는 하드코딩하지 않고 원서의 초 단위 숫자에서 계산한다. <b>Parquet ↔ CSV 크기 대조표</b>는 10.1.1절과 10.3절에 흩어진 두 파일 목록을 한자리에 모은 것이다. 그리고 표 몇 곳에 <b>분포 막대와 유도한 값</b>(마일당 요금, 게시물당 점수 등)을 한 열씩 더하고 그것이 이 문서에서 더한 것임을 표기했다.</p>
+    <p>〈살펴본 김에〉로 표시한 열네 대목은 원서 안에서 어긋나거나 확인해둘 만한 자리다. 무게가 다른 셋을 먼저 꼽는다. <b>첫째, "Parquet이 더 잘 압축된다"는 전제가 실린 파일 크기와 어긋난다.</b> 두 목록을 더해보면 Parquet 14.52GB가 <code>gzip -9</code> CSV 11.00GB보다 <b>32% 크며 일곱 테이블이 하나도 빠짐없이 커졌다.</b> <code>SNAPPY</code>가 속도 최적화 코덱이기 때문이다. <b>둘째, 목록 10.6이 컬럼 이름 스무 개를 주었는데 만들어진 테이블은 열아홉 개다.</b> 사라진 <code>ParentId</code>는 답변이 질문을 가리키는 컬럼이며, 목록 10.32의 <code>schema.sql</code>이 그 누락을 확증한다. <b>셋째, <code>load.sql</code>은 <code>post_links</code>를 적재하는데 <code>schema.sql</code>에는 그 테이블을 만드는 문장이 없다.</b> 그대로는 <code>IMPORT DATABASE</code>가 실패한다.</p>
+    <p>나머지는 이렇다. <b>목록 10.43의 "10마일 넘는 운행" 필터가 질의에 없고</b> 합계가 뷰의 6.8%에 불과해 그 누락을 드러낸다. <b><code>avg(fare_amount/trip_distance)</code>는 비의 평균</b>이라 평균의 비보다 2.05–3.70배 크다. <b>평균과 표준편차를 메타데이터로 답한다는 설명</b>은 Parquet 통계에 합계가 없으므로 성립하지 않는다. <b>"최근 2년은 답변보다 질문이 많다"</b>지만 비율이 1을 넘는 해는 2023년 하나뿐이고 그해는 본문 자신이 불완전하다고 밝힌 해다. <b>같은 "2,800만 행"이 두 자리에 등장</b>하는데 users는 1,994만이고 질문은 2,350만이다. 그 밖에 <b>51.120초를 "1분이 넘는다"</b>고 한 것, <b>비밀 기능을 "0.1.0부터"</b>라고 한 것(0.10.0의 오기이며 제5장이 확증한다), <b><code>SECRET ''Sr8VSfK...'</code>의 겹따옴표</b>와 <b><code>AS stackoverflow`;</code>의 백틱</b>, <b><code>log(Count)/log(10)</code>의 무의미한 나눗셈</b>, <b><code>upper(x)::tag</code>가 기존 열거형에 없는 값이라 실패하는 문제</b>, <b><code>schema.sql</code>에 <code>CREATE TYPE</code>과 <code>tagNames</code>·<code>tagEnums</code>가 없는데 "열거형이 만들어진다"고 적은 것</b>, <b>거듭제곱 법칙의 최빈 버킷이 1이 아니라 100인 것</b>, 그리고 <b>"Evalina Gabova"라는 이름이 함께 실린 주소 <code>evelinag.com</code>과 어긋나는 것</b>이다.</p>
+    <p>반대로 원서가 지나가듯 적었으나 눌러볼 만한 대목도 표시해두었다. <b><code>__internal_compress_integral_utinyint(year(CreationDate), 2008)</code>이 연도를 1바이트 오프셋으로 좁혀 <code>PERFECT_HASH_GROUP_BY</code>를 가능하게 한다</b>는 것—압축이 저장이 아니라 알고리즘 선택을 바꾼 자리다. <b>EXPLAIN ANALYZE의 연산자 시간 합 1.92초가 벽시계 0.199초의 9.6배</b>인 것—스레드에 걸쳐 누적된 CPU 시간이므로 더하면 안 된다. <b>행 그룹 122,880을 벡터 2,048로 나누면 정확히 60</b>인 것. <b>거리 필터 하나가 −1억 3천만 요금과 +1억 3천만 팁을 함께 걷어낸</b> 것—데이터 오염이 행 단위로 뭉쳐 있었다는 증거다. 그리고 <b>git 태그가 게시물당 11.28점으로 javascript의 2.10점의 다섯 배</b>인 것, <b>SQL 질문의 주말 낙폭 58.0%와 Rust의 7.7%</b>가 업무 언어와 취미 언어를 가른다는 것이다.</p>
+    <span class="mono">CH.10 · 4 SECTIONS · 16 SUBSECTIONS · 43 LISTINGS · 3 PLATES REDRAWN · 9 SUMMARY POINTS · FINAL CHAPTER</span>
+  </div>
+</footer>
+
+<script>
+/* ── 계측 비교기 · 숫자는 모두 원서에 인쇄된 초 단위 값이며 배수는 계산한다 ── */
+(function(){
+  var root=document.getElementById('bx'); if(!root) return;
+
+  var SETS=[
+    { big:'1.76배',
+      what:'<code>tags LIKE</code> 문자열 비교 → <code>list_contains</code> 문자열 리스트 → <b>열거형 리스트</b>',
+      why:'열거형은 <b>내부적으로 정수로 저장</b>되므로 비교가 문자열 검색이 아니라 정수 비교가 된다.',
+      cap:'목록 10.21–10.23. 저자들이 정직하게 덧붙인다. <b>"이 정도 짧은 실행 시간에서는 덜 중요하다. 단순한 카운트 연산에서는 차이가 무시할 만하다."</b> 그래도 <b>총 1.76배</b>이며, 다음 대조에서 진짜 차이가 나온다.',
+      rows:[
+        {n:'LIKE \'%&lt;java&gt;%\'', v:0.30, c:'slow'},
+        {n:'list_contains(tagNames, …)', v:0.24, c:'mid', note:'−0.06s · 20.0% 감소'},
+        {n:'list_contains(tagEnums, …)', v:0.17, c:'fast', note:'−0.07s · 29.2% 감소'}
+      ]},
+    { big:'1.89배',
+      what:'상위 10 태그의 개수와 점수 합계를 <code>tags</code> 문자열에서 → <b><code>tagEnums</code> 열거형에서</b>',
+      why:'<code>split</code>과 <code>unnest</code>로 <b>2,350만 행의 문자열을 매번 쪼개는 일</b>이 사라진다. 열거형 리스트는 이미 쪼개져 있다.',
+      cap:'목록 10.24–10.25. <b>리스트의 값 여럿을 다루는 복잡한 연산에서는 표상의 변화가 문제가 된다.</b> 이 대조가 열거형 변환에 51초를 쓴 이유를 정당화한다. 곁들여 발견되는 것도 있다. <b>git은 게시물 147,408개로 점수 166만을 얻어 게시물당 11.28점</b>인데, javascript는 2.10점이다.',
+      rows:[
+        {n:'tags 문자열 · split + unnest', v:6.698, c:'slow'},
+        {n:'tagEnums 열거형 · unnest', v:3.546, c:'fast', note:'−3.152s · 47.1% 감소'}
+      ]},
+    { big:'875배',
+      what:'같은 <code>count(*)</code>를 <code>gzip</code> CSV에서 → <b>Parquet에서</b>',
+      why:'<b>Parquet은 메타데이터에 행 수를 담고 있다.</b> 파일을 열어 머리말만 읽으면 답이 나온다. CSV는 압축을 풀어 끝까지 세어야 한다.',
+      cap:'목록 10.29–10.30. 둘 다 <b>19,942,787</b>을 돌려준다. 저자들이 곧바로 밝힌다. <b>"이것은 공정한 싸움이 아니다."</b> 그리고 그것이 요점이다. <b>Parquet의 이점은 크기가 아니라 메타데이터에 있다.</b> 실제로 이 장의 파일 크기를 더해보면 Parquet이 CSV보다 32% 크다.',
+      rows:[
+        {n:'read_csv_auto(\'Users.csv.gz\')', v:7.0, c:'slow'},
+        {n:'read_parquet(\'users.parquet\')', v:0.008, c:'fast', note:'메타데이터로 답한다'}
+      ]},
+    { big:'6.2배 · 5.2배',
+      what:'직렬 <code>COPY</code> → <b><code>PER_THREAD_OUTPUT TRUE</code></b>. 스레드마다 파일 하나를 쓴다.',
+      why:'쓰기를 <b>10개 코어에 나눈다.</b> 직렬 쓰기는 두 테이블 모두 <b>약 70MB/s</b>에서 묶여 있었다.',
+      cap:'목록 10.26–10.28. 10코어 대비 <b>병렬 효율은 62%와 52%</b>이니 선형 확장은 아니다. 직렬 처리량을 검산해보면 users는 71.0MB/s, posts는 71.5MB/s로 <b>저자들이 환산한 70MB/s가 두 테이블에서 모두 확인된다.</b>',
+      rows:[
+        {n:'users · 직렬', v:10.582, c:'slow'},
+        {n:'users · 스레드별 출력', v:1.7, c:'fast', note:'6.2배'},
+        {n:'posts · 직렬', v:57.314, c:'slow'},
+        {n:'posts · 스레드별 출력', v:11.0, c:'fast', note:'5.2배'}
+      ]},
+    { big:'153배',
+      what:'같은 질의를 <b>두 번 돌린다.</b> 코드는 한 글자도 바꾸지 않는다.',
+      why:'첫 실행에서 <b>디스크에서 데이터가 적재되고</b>, 두 번째에는 운영체제의 <b>페이지 캐시</b>에서 읽는다.',
+      cap:'목록 10.11. 5,800만 행의 연도별 집계다. <b>성능을 재려면 어느 실행을 재는지부터 정해야 한다.</b> 벤치마크에서 첫 실행을 버리는 관행이 왜 있는지를 이 한 쌍이 보여준다. 반대로 <b>운영에서 중요한 것은 대개 두 번째 이후</b>다.',
+      rows:[
+        {n:'첫 실행 · 디스크에서', v:5.977, c:'slow'},
+        {n:'두 번째 실행 · 캐시에서', v:0.039, c:'fast', note:'153배'}
+      ]},
+    { big:'45배',
+      what:'1억 1,600만 행에서 <b>무엇을 얼마나 계산하는가.</b> 전체 요약 → 컬럼 하나 요약 → 컬럼 하나 집계 → 컬럼 여럿 집계.',
+      why:'<b>사영 푸시다운</b>이 열아홉 컬럼 가운데 필요한 것만 네트워크로 가져오고, 분위수(t-digest)와 근사 고유값(HyperLogLog) 계산을 건너뛴다.',
+      cap:'목록 10.37·10.39·10.40·10.41. 본문은 목록 10.40이 빠른 까닭을 <b>"실제 데이터를 읽을 필요가 없기 때문"</b>이라 적었는데, <b>Parquet 통계에는 합계가 없으므로 <code>avg</code>와 <code>stddev</code>는 데이터를 읽어야 한다.</b> 진짜 이유는 <b>읽는 컬럼 수와 계산의 종류</b>다. 맨 아래가 다시 느려지는 것이 그 증거다. 컬럼 열아홉 개를 모두 읽기 때문이다.',
+      rows:[
+        {n:'SUMMARIZE 뷰 전체 · 19컬럼', v:33.907, c:'slow'},
+        {n:'SUMMARIZE 단일 컬럼', v:3.033, c:'mid', note:'11.2배'},
+        {n:'집계 함수 · 단일 컬럼', v:0.747, c:'fast', note:'45.4배'},
+        {n:'집계 함수 · 19컬럼 전부', v:6.813, c:'mid', note:'다시 느려진다'}
+      ]}
+  ];
+
+  function fmt(v){ return v>=1 ? v.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')+'s' : (v*1000).toFixed(0)+'ms'; }
+
+  function render(i){
+    var s=SETS[i];
+    var max=Math.max.apply(null,s.rows.map(function(r){return r.v}));
+    var h='';
+    s.rows.forEach(function(r){
+      var w=Math.max(r.v/max*100,0.7);
+      h+='<div class="bxrow">'+
+           '<div class="bxlabel"><span>'+r.n+'</span><i>'+fmt(r.v)+'</i></div>'+
+           '<div class="bxtrack"><div class="bxfill '+r.c+'" style="width:'+w.toFixed(2)+'%"></div></div>'+
+           (r.note?'<div class="bxnote">'+r.note+'</div>':'')+
+         '</div>';
+    });
+    document.getElementById('bxChart').innerHTML=h;
+    document.getElementById('bxBig').textContent=s.big;
+    document.getElementById('bxWhat').innerHTML=s.what;
+    document.getElementById('bxWhy').innerHTML=s.why;
+    document.getElementById('bxCap').innerHTML=s.cap;
+  }
+
+  [].forEach.call(root.querySelectorAll('.bxtabs button'),function(b){
+    b.addEventListener('click',function(){
+      [].forEach.call(root.querySelectorAll('.bxtabs button'),function(x){
+        x.setAttribute('aria-pressed', x===b?'true':'false');
+      });
+      render(parseInt(b.dataset.b,10));
+    });
+  });
+  render(0);
+})();
+
+/* ── 스크롤 등장 ── */
+(function(){
+  var els=document.querySelectorAll('.rev');
+  if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('in')});return;}
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){ if(e.isIntersecting){e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{rootMargin:'0px 0px -10% 0px',threshold:.05});
+  els.forEach(function(e){io.observe(e)});
+})();
+
+/* ── 목차 레일 ── */
+(function(){
+  var links=[].slice.call(document.querySelectorAll('.rail a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'))}).filter(Boolean);
+  if(!secs.length) return;
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){
+      if(!e.isIntersecting) return;
+      links.forEach(function(a){a.classList.toggle('on', a.getAttribute('href')==='#'+e.target.id)});
+    });
+  },{rootMargin:'-45% 0px -45% 0px'});
+  secs.forEach(function(s){io.observe(s)});
+})();
+</script>
+</body>
+</html>
