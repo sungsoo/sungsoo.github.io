@@ -1,0 +1,645 @@
+---
+layout: null
+title: "Hybrid Search, Reranking, and Query Transformation" 
+date: 2026-08-09
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>하이브리드 검색, 재순위화, 질의 변환 — Agentic RAG Systems 제5장</title>
+<meta name="description" content="Raymond Norman, 『Agentic RAG Systems』 제5장 답사기 — 하이브리드 검색, RRF 융합, 크로스 인코더 재순위화, 질의 변환, 메타데이터 필터링과 완전한 검색 캐스케이드">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --porcelain:#F3F3F6;      /* 남빛이 스민 옥양목 */
+  --ink:#1D1F2C;            /* 쪽물 든 밤의 청람 */
+  --indigo:#3B4166;         /* 쪽빛 남 — 본문 격자 잉크 */
+  --indigo-soft:#6A6F92;
+  --gold:#A8851F;           /* 금실의 치자빛 — 경보와 강조 */
+  --gold-deep:#7C6112;
+  --mist:#E2E3EA;           /* 패널 배경 */
+  --line:#C8CAD6;
+  --paper-card:#FBFBFC;
+  --danger:#97382F;
+  --serif:'Gowun Batang', serif;
+  --sans:'Noto Sans KR', sans-serif;
+  --mono:'IBM Plex Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--porcelain);color:var(--ink);
+  font-family:var(--sans);font-weight:400;
+  line-height:1.95;font-size:17px;letter-spacing:-0.011em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--indigo);color:var(--porcelain)}
+
+.wrap{max-width:880px;margin:0 auto;padding:0 28px}
+.wrap-wide{max-width:1080px;margin:0 auto;padding:0 28px}
+section{padding:96px 0}
+p{margin-bottom:1.6em}
+em{font-style:normal;color:var(--indigo);font-weight:500}
+strong{font-weight:700;color:var(--ink)}
+.mono{font-family:var(--mono)}
+
+.rv{opacity:0;transform:translateY(26px);transition:opacity .85s cubic-bezier(.22,.7,.3,1),transform .85s cubic-bezier(.22,.7,.3,1)}
+.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .pulse{animation:none !important}
+  .sweep{animation:none !important;stroke-dasharray:none !important;stroke-dashoffset:0 !important}
+}
+
+/* ---------- 히어로 ---------- */
+header.hero{
+  background:linear-gradient(168deg, #14151F 0%, #21243A 46%, #2B2F4C 100%);
+  color:#ECEDF2;padding:120px 0 100px;position:relative;overflow:hidden;
+}
+header.hero::after{
+  content:"";position:absolute;inset:0;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 30px, rgba(236,237,242,.035) 30px 31px),
+    repeating-linear-gradient(90deg, transparent 0 30px, rgba(236,237,242,.028) 30px 31px);
+  pointer-events:none;
+}
+.hero-kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.32em;color:#9CA0C0;text-transform:uppercase;margin-bottom:26px}
+.hero-kicker b{color:#DEB960;font-weight:600}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(34px,5.4vw,58px);line-height:1.34;letter-spacing:-0.015em;margin-bottom:30px}
+h1 .thin{display:block;font-size:.52em;font-weight:400;color:#AFB3CC;margin-top:14px;letter-spacing:.01em}
+.hero-lede{max-width:640px;font-size:18px;line-height:2.05;color:#CCCFE0;font-family:var(--serif)}
+.hero-meta{margin-top:44px;font-family:var(--mono);font-size:13px;color:#888CAC;display:flex;gap:28px;flex-wrap:wrap}
+.hero-meta span::before{content:"— ";color:#565A7C}
+
+/* ---------- 프롤로그 ---------- */
+.incident{background:var(--ink);color:#E2E4EA;padding:100px 0;position:relative}
+.count{
+  display:flex;align-items:baseline;gap:26px;flex-wrap:wrap;
+  font-family:var(--mono);line-height:1;margin-bottom:10px;
+}
+.count .n1{font-size:clamp(56px,10vw,110px);font-weight:600;color:#D97A5B}
+.count .of{font-size:clamp(22px,4vw,36px);color:#7F83A2}
+.count .n2{font-size:clamp(56px,10vw,110px);font-weight:600;color:#8FB8DF}
+.incident .prose{max-width:700px;font-family:var(--serif);font-size:17.5px;line-height:2.1;margin-top:44px}
+.incident .prose p{margin-bottom:1.7em}
+.dose{display:flex;gap:24px;flex-wrap:wrap;margin:52px 0 20px}
+.dose-card{flex:1;min-width:240px;border:1px solid rgba(226,228,234,.18);padding:28px 26px;font-family:var(--mono)}
+.dose-card .lbl{font-size:12px;letter-spacing:.24em;text-transform:uppercase;margin-bottom:14px;color:#888CAC}
+.dose-card .val{font-size:36px;font-weight:600;line-height:1.15}
+.dose-card .sub{font-size:13px;margin-top:12px;color:#A9ADC5;line-height:1.7;font-family:var(--sans)}
+.dose-bad .val{color:#D97A5B}
+.dose-bad{border-color:rgba(217,122,91,.45)}
+.dose-good .val{color:#8FB8DF}
+.dose-good{border-color:rgba(143,184,223,.4)}
+.pulse{animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* ---------- 섹션 공통 ---------- */
+.sec-head{margin-bottom:48px}
+.sec-no{font-family:var(--mono);font-size:13px;letter-spacing:.28em;color:var(--gold-deep);margin-bottom:16px;display:block}
+h2{font-family:var(--serif);font-weight:700;font-size:clamp(26px,3.6vw,38px);line-height:1.42;color:var(--ink)}
+h3{font-family:var(--serif);font-weight:700;font-size:21px;margin:2.4em 0 .9em;color:var(--indigo)}
+.prose-serif{font-family:var(--serif);font-size:17.5px;line-height:2.08}
+
+.panel{background:var(--mist);border-left:4px solid var(--indigo);padding:34px 36px;margin:52px 0}
+.panel .tag{font-family:var(--mono);font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--indigo);margin-bottom:16px;display:block}
+.panel h4{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:14px}
+.panel p{font-size:15.5px;line-height:1.95;margin-bottom:1em}
+.panel p:last-child{margin-bottom:0}
+.panel.gold{border-left-color:var(--gold);background:#F0EADA}
+.panel.gold .tag{color:var(--gold-deep)}
+
+/* ---------- SVG 도해 ---------- */
+.figure{margin:56px 0;text-align:center}
+.figure svg{max-width:100%;height:auto}
+.figure figcaption{font-family:var(--sans);font-size:14px;color:#565A6E;margin-top:18px;line-height:1.8}
+.figure figcaption::before{content:"⟨"}
+.figure figcaption::after{content:"⟩"}
+.sweep{stroke-dasharray:900;stroke-dashoffset:900;animation:sweep 2.2s ease-out forwards .4s}
+@keyframes sweep{to{stroke-dashoffset:0}}
+
+/* ---------- 리랭커 표 ---------- */
+.rr-table{margin:56px 0}
+.rr-row{
+  display:grid;grid-template-columns:190px 150px 1fr 1fr;gap:16px;align-items:center;
+  padding:18px 0;border-top:1px solid var(--line);
+}
+.rr-row.head{border-top:none;padding-bottom:8px}
+.rr-row.head span{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--indigo-soft)}
+.rr-row:last-child{border-bottom:1px solid var(--line)}
+.rr-name{font-family:var(--mono);font-weight:600;font-size:13.5px;color:var(--indigo);line-height:1.5}
+.rr-cell{font-size:13px;line-height:1.7;color:#3B3E52}
+.rr-cell b{font-family:var(--mono);font-weight:600;color:var(--gold-deep);font-size:13px}
+
+/* ---------- 변환 4패턴 / 필터링 ---------- */
+.diag{counter-reset:diag;margin:56px 0}
+.diag-item{border-top:1px solid var(--line);padding:28px 0 28px 76px;position:relative;counter-increment:diag}
+.diag-item:last-child{border-bottom:1px solid var(--line)}
+.diag-item::before{
+  content:counter(diag,decimal-leading-zero);
+  position:absolute;left:0;top:28px;
+  font-family:var(--mono);font-size:16px;font-weight:600;color:var(--gold-deep);
+}
+.diag-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:8px;color:var(--indigo)}
+.diag-item h4 .en{font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--indigo-soft);display:block;margin-top:4px}
+.diag-item p{font-size:15px;line-height:1.9;color:#3B3E52;margin:0}
+
+/* ---------- 필터링 3지점 카드 ---------- */
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;margin:56px 0}
+.flt{
+  background:var(--paper-card);border:1px solid var(--line);border-top:3px solid var(--indigo);
+  padding:32px 30px;transition:transform .35s ease, box-shadow .35s ease;
+}
+.flt:hover{transform:translateY(-5px);box-shadow:0 18px 40px -22px rgba(29,31,44,.35)}
+.flt h4{font-family:var(--serif);font-size:18.5px;font-weight:700;margin-bottom:6px;color:var(--indigo)}
+.flt .when{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--gold-deep);margin-bottom:16px}
+.flt p{font-size:14.5px;line-height:1.85;color:#3B3E52;margin:0}
+
+/* ---------- 코드 ---------- */
+pre.code{
+  background:var(--ink);color:#CFD2DC;
+  font-family:var(--mono);font-size:13px;line-height:1.85;
+  padding:32px 34px;margin:48px 0;overflow-x:auto;
+  border-left:4px solid var(--gold);
+}
+pre.code .cm{color:#8B8FA9}
+pre.code .kw{color:#DEB960}
+pre.code .st{color:#A4C7AE}
+.code-cap{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-deep);margin:-36px 0 48px;padding-left:2px}
+
+/* ---------- 안티패턴 ---------- */
+.anti{counter-reset:anti;margin:56px 0}
+.anti-item{
+  border:1px solid var(--line);border-left:4px solid var(--danger);
+  background:var(--paper-card);padding:34px 36px 34px 92px;
+  margin-bottom:22px;position:relative;counter-increment:anti;
+}
+.anti-item::before{
+  content:counter(anti,decimal-leading-zero);
+  position:absolute;left:30px;top:34px;
+  font-family:var(--mono);font-size:17px;font-weight:600;color:var(--danger);
+}
+.anti-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:10px}
+.anti-item h4 .en{font-family:var(--mono);font-weight:400;font-size:12px;color:#8B6058;display:block;margin-top:4px}
+.anti-item p{font-size:15px;line-height:1.9;color:#3B3E52;margin-bottom:.9em}
+.anti-item p:last-child{margin-bottom:0}
+.anti-item .fix{font-weight:700;color:var(--indigo)}
+
+/* ---------- 다섯 요지 ---------- */
+.takeaways{background:var(--ink);color:#E2E4EA;padding:100px 0}
+.takeaways h2{color:#F0F1F5}
+.takeaways .sec-no{color:#DEB960}
+.take{counter-reset:take;margin-top:52px}
+.take-item{display:grid;grid-template-columns:72px 1fr;gap:26px;padding:30px 0;border-top:1px solid rgba(226,228,234,.14);counter-increment:take}
+.take-item::before{content:counter(take);font-family:var(--serif);font-size:44px;font-weight:700;color:#3B3F5E;line-height:1}
+.take-item p{font-size:16px;line-height:2;color:#C4C8D8;margin:0}
+.take-item p b{color:#F0F1F5}
+
+/* ---------- 문헌/다리/푸터 ---------- */
+.refs{margin:52px 0}
+.ref{padding:22px 0 22px 34px;border-top:1px solid var(--line);position:relative;font-size:15px;line-height:1.85;color:#3B3E52}
+.ref::before{content:"▸";position:absolute;left:6px;color:var(--gold-deep)}
+.ref b{font-weight:700;color:var(--ink)}
+.ref i{font-style:italic;font-family:var(--serif)}
+.ref:last-child{border-bottom:1px solid var(--line)}
+.bridge{background:var(--mist);padding:88px 0}
+.bridge .prose-serif{max-width:700px}
+.bridge .next{margin-top:40px;font-family:var(--mono);font-size:13px;letter-spacing:.2em;color:var(--indigo)}
+footer{padding:56px 0;text-align:center;font-family:var(--mono);font-size:12px;color:#7E819A;border-top:1px solid var(--line);line-height:2}
+.note{font-size:13.5px;color:#5B5E74;margin-top:28px;line-height:1.9}
+.note::before{content:"※ ";color:var(--gold-deep)}
+
+@media(max-width:680px){
+  section{padding:72px 0}
+  .rr-row{grid-template-columns:1fr 1fr;row-gap:8px}
+  .rr-row.head{display:none}
+  .rr-name{grid-column:1 / -1}
+  .take-item{grid-template-columns:48px 1fr;gap:18px}
+  .take-item::before{font-size:32px}
+  .anti-item{padding:28px 24px 28px 68px}
+  .anti-item::before{left:22px}
+  .diag-item{padding-left:52px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 히어로 ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-kicker rv">AGENTIC RAG SYSTEMS · RAYMOND NORMAN · <b>제 5 장</b></div>
+    <h1 class="rv">하이브리드 검색, 재순위화, 질의 변환<span class="thin">— 두 물줄기가 합쳐져야 강이 된다</span></h1>
+    <p class="hero-lede rv">4장이 들보를 올렸다면 5장은 문살을 짜 넣는 장이다. 베 짜는 이가 날실만으로는 옷감을 못 짜듯, 검색도 벡터 하나만으로는 완성되지 않는다. 벡터의 씨실에 어휘의 날실을 엮고, 재순위화로 올을 고르고, 질의 변환으로 실 끝을 다듬는다 — 2026년의 프로덕션 검색이란 이 다섯 단의 베틀 위에서 짜이는 것이다.</p>
+    <div class="hero-meta rv">
+      <span>원서 97–115쪽</span>
+      <span>Part II · Core Architecture</span>
+      <span>합류의 공학</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 프롤로그: 애초에 없었던 재현율 ============ -->
+<section class="incident">
+  <div class="wrap">
+    <div class="count rv pulse">
+      <span class="n1">8</span>
+      <span class="of">/</span>
+      <span class="n2">47</span>
+    </div>
+    <div style="font-family:var(--mono);font-size:13px;color:#888CAC;letter-spacing:.2em" class="rv">2026년 2월 · 어느 조달 인텔리전스 플랫폼 · 시스템이 찾은 계약 대 실재하던 계약</div>
+    <div class="prose">
+      <p class="rv">대기업을 고객으로 둔 한 조달 인텔리전스 플랫폼이 창업자들이 대표 기능으로 여기던 것 — 공급업체 계약과 구매 주문 전반에 걸친 자연어 검색 — 을 안고 정식 출시에 나섰다. 셀링 포인트는 단순했다. 질문을 평이한 영어로 치면 관련 계약 조항이 돌아온다, PDF 더미를 몇 시간씩 뒤지지 마라. 베타는 시리즈 B를 닫을 만큼 성공적이었고, 프로덕션 출시는 모든 것이 하나로 모이는 순간이어야 했다.</p>
+      <p class="rv">출시 사흘 뒤, 고객사의 최고조달책임자가 질의를 친다. "팬데믹 사태를 배제하는 불가항력 조항이 든 우리 계약을 전부 보여 달라." 시스템은 여덟 건을 자신 있게 내놓았다. 이십 년 경력의 그는 목록에서 뭔가 어긋남을 알아챘고, 팀을 시켜 문서 관리 시스템에서 불가항력 조항이 든 계약을 손으로 전부 뽑게 했다. 실제 수는 <strong>마흔일곱</strong>. 시스템은 여덟을 돌려주었다.</p>
+      <p class="rv">돌아온 여덟은 조항에 "force majeure"라는 문구가 그대로 들어 있으면서 임베딩 모델이 질의와 의미적으로 가깝다고 여긴 언어를 곁들인 계약들이었다. 나머지 서른아홉 — "act of God", "impossibility of performance", "frustration of contract", 혹은 그저 "unforeseen circumstances"라는 등가 표현을 쓴 — 은 벡터 유사도에 보이지 않았다. 질의와 계약이 같은 법률적 내용을 다른 어휘로 말하고 있었고, 순수 벡터 검색은 그 간극을 잇지 못했다. 반대로 "force majeure"라는 문구를 전혀 무관한 맥락에 담은 계약들 — 이를테면 접객 벤더 MSA에 박힌 호텔 예약 정책의 불가항력 배제 — 이 자신만만한 일치로 회수되었다.</p>
+    </div>
+    <div class="dose">
+      <div class="dose-bad dose-card rv">
+        <div class="lbl">출시 당시 — 벡터 단독</div>
+        <div class="val">재현율 15~20%</div>
+        <div class="sub">관련 계약의 80%가 사용자에게 보이지 않음 — 시스템은 시끄럽게가 아니라 조용히, 실재하는 정보를 감추며 실패했다</div>
+      </div>
+      <div class="dose-good dose-card rv">
+        <div class="lbl">2주 뒤 — 하이브리드 + 재순위화</div>
+        <div class="val">재현율 90%+</div>
+        <div class="sub">모든 질의를 벡터와 BM25 양쪽으로 돌려 융합하고, 법률 텍스트로 훈련된 크로스 인코더로 재순위화</div>
+      </div>
+    </div>
+    <div class="prose">
+      <p class="rv">피해를 가늠하러 불려 온 고객사 변호사들은 지난 6주 동안 조달 팀이 불가항력 익스포저의 전모를 보고 있었다면 다르게 내려졌을 상업적 결정을 적어도 셋 찾아냈다. 그 결정들의 계약 가치는 고객사 스스로의 표현으로 "중대(material)"했다. 수습은 2주가 걸렸고 내용은 아키텍처 변경 하나 — <strong>하이브리드 검색</strong> — 였다. 불가항력 질의군의 재현율은 20% 아래에서 90% 위로 올라섰다. 벡터 단독의 실패는 임베딩 모델의 실패도, 벡터 데이터베이스의 실패도, 청킹의 실패도 아니었다. <em>아키텍처적 완결성의 실패</em>였다. 팀은 검색 시스템의 절반을 지었던 것이고, 나머지 절반을 짓기 전까지는 가진 절반을 아무리 조율해도 간극이 닫히지 않았을 것이다.</p>
+      <p class="rv">이 장이 그 나머지 절반이다. 임베딩 모델과 인덱스와 청크가 다 잘 공학되어 있어도 벡터 검색 단독은 프로덕션에 구조적으로 불충분하다. 2026년에 하이브리드 검색은 최적화가 아니라 <strong>아키텍처의 기본값</strong>이다. 재순위화는 융합된 후보 집합을 하류가 의지하는 정밀한 top-k로 바꾸고, 질의 변환은 남은 간극을 질의 쪽에서 닫는다. 이 장을 마칠 즈음, 조달 플랫폼의 2주짜리 수습은 오후 한나절의 아키텍처 결정 — 출시 전에 내렸어야 할 — 으로 보일 것이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5.1 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">5.1 · HYBRID RETRIEVAL</span>
+      <h2>하이브리드 검색 — 벡터 검색 단독은 왜 불충분한가</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">하이브리드 검색은 벡터 유사도 검색과 어휘 검색 — 통상 BM25 — 을 하나의 검색 시스템으로 결합해 두 방법의 융합으로 결과 집합을 내는 패턴이다. 2026년 프로덕션 RAG의 아키텍처 기본값이며, 그 근거는 이론이 아니라 <strong>경험</strong>이다. 벤치마크와 프로덕션 배포를 가로질러 하이브리드 검색은 어느 단독 방법보다 도메인에 따라 검색 재현율 기준 10~40%를 꾸준히 앞선다. 벡터 단독으로 출시하는 팀은 상당한 재현율을 탁자 위에 버려두는 것이고, 대개 조달 책임자가 찾았어야 할 계약을 세어 보기 전까지는 그 사실을 모른다.</p>
+      <p class="rv">하이브리드가 통하는 이유는 <strong>두 검색이 다르게 실패하기 때문</strong>이다. 벡터 검색은 임베딩 모델이 질의 어휘와 말뭉치 어휘의 등가성을 배우지 못했을 때 — 2장이 깊이 살핀 의미적 간극에서 — 실패한다. 어휘 검색은 뜻이 같아도 낱말이 다를 때 실패한다. 두 실패 양식은 대체로 독립적이며, 바로 그 성질이 결합을 어느 단독보다 훨씬 강하게 만든다. 벡터가 놓친 관련 문서를 어휘가 자주 붙잡고, 어휘가 놓친 환언을 벡터가 자주 찾는다. 결합은 각자가 찾을 수 있는 것의 <em>합집합</em>을 붙잡는다.</p>
+    </div>
+    <figure class="figure rv">
+      <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="벡터와 어휘 검색이 RRF에서 합류하는 도해">
+        <defs>
+          <marker id="ah5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#A8851F"/></marker>
+        </defs>
+        <!-- query -->
+        <rect x="290" y="20" width="140" height="38" fill="none" stroke="#3B4166" stroke-width="1.8"/>
+        <text x="360" y="44" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#3B4166" text-anchor="middle" font-weight="700">사용자 질의</text>
+        <!-- two streams -->
+        <path class="sweep" d="M 330 58 C 250 100, 190 130, 170 170" fill="none" stroke="#3B4166" stroke-width="2.5"/>
+        <path class="sweep" d="M 390 58 C 470 100, 530 130, 550 170" fill="none" stroke="#A8851F" stroke-width="2.5"/>
+        <!-- vector box -->
+        <rect x="80" y="172" width="180" height="64" fill="none" stroke="#3B4166" stroke-width="1.8"/>
+        <text x="170" y="198" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#3B4166" text-anchor="middle" font-weight="700">벡터 유사도</text>
+        <text x="170" y="218" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#6A6F92" text-anchor="middle">환언·동의어에 강함 / 식별자·부정에 약함</text>
+        <!-- lexical box -->
+        <rect x="460" y="172" width="180" height="64" fill="none" stroke="#A8851F" stroke-width="1.8"/>
+        <text x="550" y="198" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#7C6112" text-anchor="middle" font-weight="700">어휘 BM25</text>
+        <text x="550" y="218" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#8B8259" text-anchor="middle">정확 일치에 강함 / 환언·동의어에 약함</text>
+        <!-- confluence -->
+        <path class="sweep" d="M 190 236 C 230 280, 300 296, 340 298" fill="none" stroke="#3B4166" stroke-width="2.5"/>
+        <path class="sweep" d="M 530 236 C 490 280, 420 296, 380 298" fill="none" stroke="#A8851F" stroke-width="2.5" marker-end="url(#ah5)"/>
+        <rect x="290" y="280" width="140" height="40" fill="#E2E3EA" stroke="#3B4166" stroke-width="1.8"/>
+        <text x="360" y="305" font-family="IBM Plex Mono, monospace" font-size="13" fill="#3B4166" text-anchor="middle" font-weight="600">RRF 융합</text>
+        <text x="360" y="338" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#565A6E" text-anchor="middle">다르게 실패하는 두 물줄기의 합류 — 각자가 찾는 것의 합집합</text>
+        <text x="60" y="128" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#6A6F92">"act of God"를 놓침</text>
+        <text x="530" y="128" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#8B8259">"act of God"를 붙잡음</text>
+      </svg>
+      <figcaption>하이브리드 검색의 원리 — 어느 한쪽에서 잘 순위되는 문서는 관련되기 쉽고, 양쪽 모두에서 잘 순위되는 문서는 거의 확실히 관련된다</figcaption>
+    </figure>
+    <div class="prose-serif">
+      <p class="rv">조달 플랫폼의 불가항력 실패가 정전의 예다. 벡터 검색은 "팬데믹 사태를 배제하는 불가항력 조항"에 의미적으로 가까운 언어의 계약 — 사실상 "force majeure" 문구를 그대로 쓴 계약 — 만 찾았다. 법률 어휘의 제대로 된 동의어 확장을 곁들인 어휘 검색이었다면 "act of God"과 "impossibility of performance" 등 어휘 변형을 쓴 계약들을 찾았을 것이다. 어느 방법도 단독으로는 재현율 90%에 닿지 못했고, 결합은 닿았다.</p>
+      <p class="rv"><strong>두 구성요소를 보자.</strong> 벡터 검색은 2026년쯤 대부분의 팀이 이해하는 쪽이다. 질의를 임베딩하고, 근사 최근접 탐색으로 인덱싱된 말뭉치 임베딩과 견주고, 코사인 유사도 상위 k개를 돌려준다. 환언·동의어·개념 대응에는 잘 통하고, 정확한 식별자·희귀 용어·극성 민감 질의에는 서툴다. 어휘 검색 — 통상 BM25, 다중 필드 문서에는 그 변형 BM25F — 은 많은 팀이 과소평가하는 쪽이다. BM25는 항 빈도, 역문서 빈도, 문서 길이 정규화의 가중 결합으로 점수를 매긴다. 질의에 "acetaminophen"이 있으면 BM25는 "acetaminophen"이 든 문서를 찾는다. 질의와 결과 사이에 끼어드는 임베딩 모델도, 용어를 소리 없이 잃을 압축층도 없다. 대가는 동의어와 환언을 스스로 잇지 못한다는 것이다.</p>
+      <p class="rv">현대의 어휘 검색은 원래의 BM25 명세가 시사하는 것보다 유능하다. 어간 추출, 표제어 추출, 불용어 처리는 표준 전처리이고, 선별된 사전을 통한 동의어 확장 — 용어의 등가성이 안정된 도메인 특화 응용에서 특히 중요하다 — 은 어휘 검색의 실효 재현율을 몇 배로 불린다. 일부 프로덕션 시스템은 SPLADE 같은 <em>학습된 희소 검색기</em>를 쓴다 — 정확 일치와 학습된 확장을 하나의 희소 벡터에 담는 것이다. 알아 둘 가치가 있는 확장들이되, 바탕의 아키텍처 논점은 같다. <strong>어휘 검색은 벡터 검색의 보완이고, 현대의 프로덕션은 둘을 결합한다.</strong></p>
+      <p class="rv">결합이 가장 극적으로 이기는 곳은 질의 어휘와 말뭉치 어휘가 구조적으로 갈라지는 도메인 — 법률, 의료, 금융, 기술, 그리고 상당한 전문 용어를 지닌 모든 분야 — 이다. 임베딩 모델이 의미적으로 변별적임을 알아보지 못하는 식별자·코드·고유명사가 낀 질의에서도, 극성이 관건인데 임베딩이 그 구별을 뭉개는 부정 민감 질의에서도, 어떤 면은 정확 일치가 어떤 면은 의미 유사가 가장 잘 섬기는 다면 질의에서도 이긴다. 요컨대 <em>대부분의 프로덕션 질의에서 이기며</em>, 그 이득은 추가 공학 투자가 손익분기에 근접하는 일조차 드물 만큼 크다.</p>
+    </div>
+    <div class="panel rv">
+      <span class="tag">Key Definition</span>
+      <h4>하이브리드 검색, 형식적으로</h4>
+      <p>하이브리드 검색은 둘 이상의 검색 방법 — 통상 벡터 유사도와 어휘 BM25 — 을 융합 알고리즘이 만드는 단일 결과 집합으로 결합하는 것이다. 두 방법은 병렬로 돌고, 출력은 통합된 순위로 병합된다.</p>
+      <p>하이브리드 검색의 정의적 성질은 <strong>방법들이 다르게 실패한다</strong>는 것이다. 벡터 결과가 나쁜 질의가 어휘 결과는 좋기 일쑤고, 그 반대도 마찬가지다. 융합 알고리즘은 이 독립성을 활용한다 — 어느 한쪽에서 잘 순위되는 문서는 관련되기 쉽고, 양쪽 모두에서 잘 순위되는 문서는 거의 확실히 관련된다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5.2 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">5.2 · FUSION ALGORITHMS</span>
+      <h2>융합 알고리즘 — 두 순위를 하나로 엮는 법</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">벡터와 어휘를 둘 다 돌리기로 했다면 다음 물음은 결과를 어떻게 합치느냐다. 프로덕션을 지배하는 방법은 둘이고, 저마다 트레이드오프가 있으며, 옳은 선택은 점수 보정 데이터가 있는지와 조율에 얼마나 공학을 들일지에 달렸다.</p>
+      <p class="rv"><strong>상호 순위 융합(RRF)</strong>이 둘 중 더 단순하고 더 강건하다. 어느 결과 목록에든 나타나는 각 문서에 대해, 목록에서의 순위 위치에 기반한 점수를 계산해 목록들에 걸쳐 합산한다. 공식은 간명하다 — 각 목록에서 순위 r의 문서는 총점에 1/(k+r)을 보태며, k는 점수가 순위에 따라 얼마나 가파르게 떨어지는지를 다스리는 상수(통상 60)다. 양쪽 목록의 위쪽에 나타나는 문서가 가장 높은 총점을 쌓는다. RRF의 핵심 성질은 <strong>점수 보정 없이 작동한다</strong>는 것이다. 바탕 점수가 아니라 순위 위치만 쓰므로, 벡터 코사인 유사도와 BM25가 비교 불가능한 척도의 점수를 낸다는 사실에 면역이다. 그래서 RRF가 대부분의 프로덕션에 옳은 기본값이다 — 상자에서 꺼내자마자 돌고, 조율이 필요 없고, 거동을 추론하기 쉽다. 2026년의 프로덕션 하이브리드 검색 대부분이 RRF나 그 근연 변형을 쓴다.</p>
+    </div>
+    <pre class="code rv"><span class="cm"># 상호 순위 융합 — 프로덕션의 기본값</span>
+<span class="kw">from</span> collections <span class="kw">import</span> defaultdict
+
+<span class="kw">def</span> reciprocal_rank_fusion(result_lists, k=60):
+    <span class="st">"""
+    result_lists: (doc_id, score) 튜플이 순위순(최고 먼저)으로 담긴
+                  목록들의 목록.
+    k: 평활 상수, 통상 60. 클수록 뒷순위 문서의 영향이 커진다.
+    반환: fused_score 내림차순의 (doc_id, fused_score) 목록.
+    """</span>
+    fused_scores = defaultdict(float)
+    <span class="kw">for</span> results <span class="kw">in</span> result_lists:
+        <span class="kw">for</span> rank, (doc_id, _) <span class="kw">in</span> enumerate(results, start=1):
+            fused_scores[doc_id] += 1.0 / (k + rank)
+    <span class="kw">return</span> sorted(fused_scores.items(), key=<span class="kw">lambda</span> x: x[1], reverse=True)
+
+<span class="cm"># 하이브리드 검색 파이프라인에서의 사용</span>
+vector_results  = vector_store.search(query, k=50)
+lexical_results = bm25_index.search(query, k=50)
+fused = reciprocal_rank_fusion([vector_results, lexical_results], k=60)
+top_candidates = fused[:20]   <span class="cm"># 리랭커로 보낸다</span></pre>
+    <div class="code-cap">원서 5.2절 — 순위 r의 문서가 1/(k+r)을 보태는 융합</div>
+    <div class="prose-serif">
+      <p class="rv"><strong>가중 점수 융합</strong>은 보정 데이터가 있을 때 쓸 수 있는 더 강력한 대안이다. 순위 위치에 기대는 대신, 각 방법의 원점수를 공통 척도로 정규화(통상 후보 집합에 대한 최소-최대 정규화)한 뒤 명시적 가중치로 결합한다. 결합 점수는 가중합 — 정규화된 벡터 점수의 α배에 정규화된 어휘 점수의 (1−α)배를 더한 것으로, α는 0과 1 사이의 조율 파라미터다. 장점은 순위 순서만이 아니라 <em>점수 크기</em>를 활용할 수 있다는 것 — 임베딩 모델이 한 문서에 매우 높은 유사도를, 다른 문서에 중간 유사도를 냈을 때 그 정보가 가중 융합에서는 살고 RRF에서는 죽는다. 단점은 조율이 필요하고 — α와 정규화 방법의 선택 — 그 조율이 도메인 특정적이라는 것이다. 잘못된 α는 가중 융합을 어느 순수 방법보다도 못하게 만든다.</p>
+      <p class="rv">실무에서 가중 융합이 옳은 것은 α를 조율할 레이블된 평가 집합이 있을 때, 근소하게 높은 정밀도의 값어치가 공학 투자를 정당화할 때, 조율된 가중치가 유효하게 남을 만큼 도메인 특성이 안정적일 때다. 그 밖의 모든 경우에는 RRF가 옳고 — 오늘의 프로덕션에서 그것은 대부분의 팀이다.</p>
+    </div>
+    <div class="panel rv">
+      <span class="tag">Production Insight</span>
+      <h4>RRF로 시작하고, 데이터가 정당화할 때만 가중으로 졸업하라</h4>
+      <p>프로덕션 배포들을 가로지르는 경험적 패턴은 이렇다. RRF는 조율 노력 없이 최적 하이브리드 검색의 80~90%까지 데려다주고, 제대로 조율된 가중 점수 융합이 나머지 10~20%를 채운다. 대부분의 팀에게는 그 80~90%로 족하며, 제대로 된 조율에 들일 공학은 대개 더 큰 이득을 내는 재순위화와 질의 변환에 쓰는 편이 낫다. <strong>RRF로 시작하라.</strong> RRF로 검색 성능을 재고, 잔여 격차가 응용에 중요함을 확인하고, 제대로 조율할 평가 인프라를 갖췄을 때만 가중 융합으로 옮겨라.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5.3 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">5.3 · RERANKING</span>
+      <h2>재순위화 — 상위 결과의 정밀도를 끌어올리기</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">하이브리드 검색이 후보 50~100건을 돌려준 뒤에도 일은 남아 있다. 후보 집합의 재현율은 높지만(관련 문서가 그 안에 있을 공산이 크지만) 정밀도는 중간이다(최상위 문서들이 가장 관련된 것이 아닐 수 있다). 이 집합을 소비하는 언어 모델은 상위 몇 건만 본다 — 순위 5나 10 너머는 사실상 보이지 않는다. 재순위화는 후보 집합을 받아 가장 관련된 문서가 꼭대기로 오도록 재정렬하는 연산이다. 중간 정밀도의 검색을 생성이 실제로 의지하는 고정밀 입력으로 바꾸는 2단 필터다.</p>
+      <p class="rv"><strong>바이 인코더 대 크로스 인코더.</strong> 지금까지의 검색 방법 — 벡터 검색과 BM25 — 이 계산상 싼 것은 질의와 각 문서를 직접 견주기를 피하기 때문이다. 벡터 검색은 미리 계산된 임베딩을 비교하고, BM25는 항 통계를 조회한다. 어느 쪽도 질의와 후보 문서를 <em>함께</em> 처리하는 신경망을 돌리지 않는다. 그래서 수백만 문서 위의 1단 검색에 충분히 빠르다. 재순위화는 이 트레이드오프를 뒤집는다. 크로스 인코더 리랭커는 질의와 각 후보 문서를 이어 붙여 트랜스포머를 그 결합쌍 위에 돌려 관련성 점수를 낸다. 모델이 질의와 문서에 <em>함께</em> 주의를 기울일 수 있으므로 바이 인코더(벡터 검색)와 어휘 방법이 놓치는 미묘한 관련 신호를 잡아낸다. 대가는 계산이다 — 후보 50건 위의 크로스 인코더는 문서 100만 건 위의 벡터 검색보다 수백 배 비싸다. 이 거래가 성립하는 것은 오직 크로스 인코더가 1단 검색이 무거운 여과를 끝낸 뒤의 <em>작은</em> 후보 집합 위에서 돌기 때문이다.</p>
+      <p class="rv"><strong>프로덕션의 리랭커 선택지</strong>는 2026년에 세 갈래가 지배한다. 첫째, 상용 API — Cohere Rerank, Voyage Rerank, 그리고 점점 Anthropic과 OpenAI도 재순위화 엔드포인트를 낸다. 편리하고 고품질이며 속도 제한이 있다. 지연이 완만해도 되고, API 비용이 예산에 맞고, ML 인프라 자체 운영이 팀의 강점이 아닐 때 옳다. 둘째, 오픈소스 크로스 인코더 — BAAI의 BGE Reranker 계열과 Sentence-BERT의 크로스 인코더가 지배한다. 공개 벤치마크 대부분에서 상용 API에 필적하고, 상용 GPU에 자체 호스팅하면 규모에서 질의당 비용이 훨씬 싸다. 볼륨으로 운영하며 모델 서빙 스택을 유지할 공학 역량이 있는 팀에 옳다. 셋째, ColBERT류 후기 상호작용 모델 — 검색과 재순위화의 경계에 걸터앉아, 토큰별 임베딩을 만들고 토큰 수준 최댓값의 합으로 관련성을 계산한다. 바이 인코더 검색에 가까운 속도로 리랭커급 정밀도를 내며, 전용 인프라 투자(저장이 더 들고 서빙이 다소 커스텀)가 정당화되는 고위험 응용에 옳다.</p>
+    </div>
+    <div class="rr-table">
+      <div class="rr-row head rv"><span>리랭커</span><span>품질</span><span>지연 (후보 50건당)</span><span>적소</span></div>
+      <div class="rr-row rv"><div class="rr-name">Cohere Rerank v3</div><div class="rr-cell">탁월</div><div class="rr-cell"><b>60–120ms</b> · API 경유</div><div class="rr-cell">관리형 서비스, 중간 볼륨</div></div>
+      <div class="rr-row rv"><div class="rr-name">BGE Reranker v2-m3</div><div class="rr-cell">탁월 (오픈소스)</div><div class="rr-cell"><b>80–200ms</b> · T4 GPU</div><div class="rr-cell">자체 호스팅, 고볼륨</div></div>
+      <div class="rr-row rv"><div class="rr-name">Cross-Encoder MiniLM</div><div class="rr-cell">양호 (경량)</div><div class="rr-cell"><b>30–80ms</b> · CPU</div><div class="rr-cell">지연 결정적, 낮은 품질 허용</div></div>
+      <div class="rr-row rv"><div class="rr-name">ColBERT v2</div><div class="rr-cell">탁월 (후기 상호작용)</div><div class="rr-cell"><b>20–50ms</b> · 전용 인프라</div><div class="rr-cell">고위험, 커스텀 인프라 가능</div></div>
+      <div class="rr-row rv"><div class="rr-name">LLM-as-Reranker</div><div class="rr-cell">가변적 · 고비용</div><div class="rr-cell"><b>1000–3000ms</b></div><div class="rr-cell">특수 목적, 저볼륨, 복잡 질의</div></div>
+    </div>
+    <div class="prose-serif">
+      <p class="rv"><strong>파이프라인 속의 재순위화.</strong> 표준 프로덕션 파이프라인은 1단 검색과 최종 문서 선택 사이에서 재순위화를 돌린다. 하이브리드 1단 검색이 재현율 높은 후보 50~100건을 돌려주면, 리랭커가 전부를 질의에 대해 채점해 정밀도 높은 상위 5~20건을 돌려주고, 그것이 언어 모델의 컨텍스트 창에 들어간다. 캐스케이드를 다스리는 파라미터는 둘이다 — 재순위화로 보내는 후보 집합 크기 <em>k1</em>(클수록 리랭커에 재료가 많아져 상위 정밀도가 오르되 재순위화 지연이 커지며, 대부분의 프로덕션에 50~100이 최적 지대)과, 재순위화가 돌려주는 최종 top-k <em>k2</em>(언어 모델이 실제로 보는 것으로, 컨텍스트 창과 추가 맥락의 한계 효용에 제약된다).</p>
+      <p class="rv">재순위화는 대부분의 프로덕션 말뭉치에서 1단 검색 단독 대비 top-k 정밀도를 <strong>20~50%</strong> 끌어올린다. 하이브리드 1단과 결합하면 개선이 복리로 붙는다 — 하이브리드 검색과 재순위화를 함께 쓰는 파이프라인은, 벡터 단독이 top-5 정밀도 40~50%를 내던 말뭉치에서 80~90% 범위를 예사로 낸다. 이 복리 개선이 2부의 기초와 3부의 고급 패턴 사이에 놓인 <em>가장 큰 단일 아키텍처 지렛대</em>다.</p>
+    </div>
+    <div class="panel gold rv">
+      <span class="tag">Common Pitfall</span>
+      <h4>프로덕션 파이프라인에서 재순위화 건너뛰기</h4>
+      <p>벡터나 하이브리드 검색을 재순위화 없이 돌리는 많은 팀이 자기들에게는 필요 없다고 믿는다. 1단 결과가 대충 훑어보기에 그럴듯하고, 언어 모델이 그럴듯한 답을 내기 때문이다. 현재 성능과 재순위화가 가져다줄 성능 사이의 격차는 <em>비교 대상이 없어서</em> 보이지 않는다. 격차는 실재하고, 크고, 거의 모든 프로덕션 배포에서 공학 투자의 값어치가 있다. 리랭커를 배포하지 않았다면 <strong>검색 정밀도의 3분의 1을 탁자 위에 버려두고 있는 것이다.</strong> 이를 입증하는 이틀짜리 평가는 프로덕션 RAG를 운영하는 모든 팀이 해 볼 가치가 있다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5.4 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">5.4 · QUERY TRANSFORMATION</span>
+      <h2>질의 변환 — 간극을 질의 쪽에서 닫기</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">하이브리드 검색과 재순위화는 문서 쪽에서 일한다 — 주어진 질의에 문서를 더 잘 맞추는 것이다. 질의 변환은 질의 쪽에서 일한다 — 검색 전에 질의를 고쳐, 고쳐진 질의가 말뭉치와 더 효과적으로 만나게 하는 것이다. 두 접근은 상보적이며, 프로덕션급 시스템은 둘 다 쓴다.</p>
+    </div>
+    <div class="diag">
+      <div class="diag-item rv">
+        <h4>질의 재작성<span class="en">Query Rewriting</span></h4>
+        <p>가장 단순한 변환 — 언어 모델이 사용자 질의를 더 검색 친화적인 변형 하나 이상으로 고쳐 쓴다. "구독을 어떻게 해지하나"라는 자연어 질의가 "구독 해지 정책 절차"라는 검색 표적형 정식화가 된다. 재작성은 대화체 틀을 벗기고, 줄인 어휘를 펼치고, 말뭉치가 내용을 표현할 법한 형태에 가깝게 질의를 구조화한다. 통하는 이유는 사용자 질의와 말뭉치 내용이 <em>다른 문체</em>로 쓰이기 때문이다 — 사용자는 대화체 군더더기와 인칭대명사가 섞인 질문으로 묻고, 말뭉치는 권위적인 3인칭 산문으로 쓰인다. 현대 프로덕션 대부분은 재작성을 빠른 언어 모델에의 작은 프롬프트 호출로 구현한다 — 수백 밀리초의 지연, 질의당 1센트 미만의 비용, 흔히 5~15%의 재현율 개선.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>질의 확장<span class="en">Query Expansion</span></h4>
+        <p>재작성보다 더 나아간다 — 재작성된 질의 하나가 아니라 여러 변형을 만들어 각각 독립적으로 검색하고 결과를 융합한다. 확장은 동의어, 관련어, 대안 표현을 보탤 수 있다. 이 장 서두의 조달 플랫폼이라면 "force majeure"를 "act of God", "impossibility of performance", "frustration of contract"로 넓히는 확장 — 검색 쪽에 맡기는 대신 질의 쪽에서 어휘 간극을 잇는 도메인 확장 — 의 덕을 봤을 것이다. 확장은 선별 가능한 안정된 용어 등가성이 있는 도메인에서 가장 강력하다 — 법률 확장 어휘집, 의료 동의어 목록(UMLS가 정전의 예), 금융 용어 매핑. 언어 모델을 통한 범용 동의어 확장도 유용하되 품질이 들쭉날쭉하다. 프로덕션은 흔히 둘을 결합한다 — 팀이 이해하는 고위험 용어에는 선별 확장, 긴 꼬리에는 언어 모델 확장.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>HyDE — 가설 문서 임베딩<span class="en">Hypothetical Document Embeddings</span></h4>
+        <p>벡터 검색의 구조적 문제를 겨눈 영리한 변환이다. 문제는 이것 — 질문의 임베딩과 그 답의 임베딩은 같은 내용을 다뤄도 구문·담화 구조가 달라 벡터 공간에서 그리 가깝지 않은 일이 잦다. HyDE는 언어 모델로 질문에 대한 <em>가설적 답</em>을 생성하고, 그 가설 답을 임베딩해, 질문 임베딩 대신 가설 답 임베딩으로 검색한다. 직관은 이렇다 — 가설 답은 세부가 틀렸더라도 말뭉치의 실제 답들과 <em>구조적으로 닮았고</em>, 따라서 그 임베딩이 질문의 임베딩보다 실제 답들에 가깝다. 놀랄 만큼 잘 통하며, 질문과 답의 표면형이 크게 다른 도메인에서 특히 그렇다. 비용은 질의당 언어 모델 호출 한 번, 통상 수백 밀리초. 이득은 더 단순한 재작성 기법을 흔히 웃도는 재현율 개선이다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>멀티쿼리 검색<span class="en">Multi-Query Retrieval</span></h4>
+        <p>여러 변환을 하나의 검색 연산으로 묶는다. 사용자 질의를 서너다섯 변형 — 서로 다른 재작성, 확장판, HyDE판 — 으로 고쳐 각각 독립 검색하고, RRF류로 융합한다. 검색은 각 변형이 찾을 것의 합집합이 된다. 계산은 단일 질의보다 비싸지만 — 통상 1단 검색 비용의 3~5배 — 검색들이 병렬로 돌 수 있어 지연 영향은 완만하다. 어느 한 표현도 검색 의도 전체를 담지 못하는 복잡한 질의에서 재현율 개선이 상당하다. 대부분의 프로덕션은 멀티쿼리를 선별적으로 쓴다 — 복잡한 질의에는 발동하고, 단순 조회에는 더 싼 단일 질의 검색을 쓴다.</p>
+      </div>
+    </div>
+    <pre class="code rv"><span class="cm"># 멀티쿼리 검색 — 프로덕션 패턴</span>
+<span class="kw">from</span> concurrent.futures <span class="kw">import</span> ThreadPoolExecutor
+
+<span class="kw">def</span> generate_query_variants(query, llm):
+    <span class="st">"""사용자 질의의 검색 표적형 변형 3개를 생성한다."""</span>
+    prompt = f<span class="st">"""Generate 3 alternative phrasings of this question
+that would be useful for searching a document corpus.
+Cover different vocabulary, granularity, and phrasing styles.
+Question: {query}
+Return as a JSON list of strings."""</span>
+    response = llm.complete(prompt)
+    <span class="kw">return</span> json.loads(response)   <span class="cm"># 변형 질의 3개의 목록</span>
+
+<span class="kw">def</span> multi_query_retrieve(query, llm, retriever, k_per_query=20):
+    variants = [query] + generate_query_variants(query, llm)
+    <span class="kw">with</span> ThreadPoolExecutor(max_workers=len(variants)) <span class="kw">as</span> pool:
+        <span class="cm"># 각 변형이 병렬로 질의한다</span>
+        futures = [pool.submit(retriever.search, v, k=k_per_query)
+                   <span class="kw">for</span> v <span class="kw">in</span> variants]
+        result_lists = [f.result() <span class="kw">for</span> f <span class="kw">in</span> futures]
+    <span class="cm"># 네 개의 순위 목록을 하나로 융합한다</span>
+    fused = reciprocal_rank_fusion(result_lists, k=60)
+    <span class="kw">return</span> fused</pre>
+    <div class="code-cap">원서 5.4절 — 변형 질의의 병렬 검색과 RRF 융합</div>
+  </div>
+</section>
+
+<!-- ============ 5.5 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">5.5 · THE COMPLETE RETRIEVAL CASCADE</span>
+      <h2>메타데이터 필터링과 완전한 검색 캐스케이드</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">검색 파이프라인에는 이제 여러 단이 있다 — 질의 변환, 하이브리드 1단 검색, 재순위화, 최종 선택. 그림을 완성하는 한 층이 더 있다. <strong>메타데이터 필터링</strong>이다. 필터링은 유사도 점수와 무관하게 특정 기준을 만족하는 문서로 결과를 제한하는 하드 제약을 검색에 건다. 범용 검색을 응용 인지 검색으로 바꾸는 기제이며, 전적으로 4장에서 설계한 메타데이터 스키마에 의지한다. 필터링은 파이프라인의 세 지점에 걸 수 있고, 저마다 트레이드오프가 다르다.</p>
+    </div>
+    <div class="filters">
+      <div class="flt rv">
+        <h4>사전 필터링</h4>
+        <div class="when">필터가 고도로 선택적일 때 — 말뭉치 대부분을 지울 때</div>
+        <p>유사도 검색 전에 제약을 걸어 벡터·어휘 검색이 도는 후보 공간을 줄인다. 특정 문서 유형이나 특정 시간 창으로 제한된 질의는 말뭉치의 1% 미만에 해당할 수 있고, 사전 필터링은 유사도 검색이 그 작은 부분집합에 집중하게 한다. 단점 — 일부 벡터 데이터베이스에서 사전 필터링과 근사 벡터 검색의 궁합이 나쁘다. 인덱스가 전체 말뭉치에 최적화되어 있어 작은 부분집합으로의 제한이 재현율을 해칠 수 있다. Qdrant와 Weaviate는 고선택 사전 필터링을 잘 다루고, 어떤 것들은 이 패턴에서 크게 퇴화한다.</p>
+      </div>
+      <div class="flt rv">
+        <h4>사후 필터링</h4>
+        <div class="when">필터가 중간 선택적일 때 — 의미 있는 부분을 지우되 대부분은 아닐 때</div>
+        <p>유사도 검색 뒤에 제약을 걸어 메타데이터 기준에 어긋나는 일치 문서를 제거한다. 유사도 검색은 전체 인덱스를 돌고, 필요보다 많은 후보를 돌려주고, 필터가 탈락자를 걸러 낸다. 표준 패턴은 1단에서의 과잉 회수 — 상위 50 대신 100을 가져와 후보 집합에 필터를 걸어 사후 필터링된 top-k가 여전히 넉넉히 차 있게 하는 것이다.</p>
+      </div>
+      <div class="flt rv">
+        <h4>하이브리드 필터링</h4>
+        <div class="when">제약들의 선택성이 뒤섞였을 때</div>
+        <p>어떤 필터는 검색 전에, 어떤 필터는 검색 후에 건다. 문서 유형(고선택 — 사전)과 최근성(저선택 — 사후)으로 거르는 질의가 양쪽의 장점을 다 얻는다. 필터 차원이 여럿이 되면 대부분의 프로덕션 시스템이 결국 하이브리드 필터링 패턴에 이른다.</p>
+      </div>
+    </div>
+    <figure class="figure rv">
+      <svg viewBox="0 0 720 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="다섯 단의 검색 캐스케이드 깔때기">
+        <defs>
+          <marker id="ah5b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#3B4166"/></marker>
+        </defs>
+        <!-- stage 1 -->
+        <rect x="120" y="20" width="480" height="46" fill="#E2E3EA" stroke="#3B4166" stroke-width="1.6"/>
+        <text x="360" y="42" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#3B4166" text-anchor="middle" font-weight="700">① 질의 변환 — 재작성 · 확장 · HyDE · 멀티쿼리</text>
+        <text x="360" y="59" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#6A6F92" text-anchor="middle">질의를 고치고, 때로 여럿으로 불린다</text>
+        <line class="sweep" x1="360" y1="66" x2="360" y2="88" stroke="#3B4166" stroke-width="2" marker-end="url(#ah5b)"/>
+        <!-- stage 2 -->
+        <rect x="150" y="92" width="420" height="46" fill="none" stroke="#3B4166" stroke-width="1.6"/>
+        <text x="360" y="114" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#3B4166" text-anchor="middle" font-weight="700">② 하이브리드 1단 검색 — 벡터 + 어휘, RRF 융합</text>
+        <text x="360" y="131" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#6A6F92" text-anchor="middle">고재현율 후보 50~100건</text>
+        <line class="sweep" x1="360" y1="138" x2="360" y2="160" stroke="#3B4166" stroke-width="2" marker-end="url(#ah5b)"/>
+        <!-- stage 3 -->
+        <rect x="185" y="164" width="350" height="46" fill="none" stroke="#A8851F" stroke-width="1.6"/>
+        <text x="360" y="186" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#7C6112" text-anchor="middle" font-weight="700">③ 메타데이터 필터링 — 사전·사후</text>
+        <text x="360" y="203" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#8B8259" text-anchor="middle">스키마의 하드 제약 — 최근성·권위·관할</text>
+        <line class="sweep" x1="360" y1="210" x2="360" y2="232" stroke="#3B4166" stroke-width="2" marker-end="url(#ah5b)"/>
+        <!-- stage 4 -->
+        <rect x="220" y="236" width="280" height="46" fill="none" stroke="#3B4166" stroke-width="1.6"/>
+        <text x="360" y="258" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#3B4166" text-anchor="middle" font-weight="700">④ 재순위화 — 크로스 인코더</text>
+        <text x="360" y="275" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#6A6F92" text-anchor="middle">중간 정밀도 → 고정밀 top-k</text>
+        <line class="sweep" x1="360" y1="282" x2="360" y2="304" stroke="#3B4166" stroke-width="2" marker-end="url(#ah5b)"/>
+        <!-- stage 5 -->
+        <rect x="265" y="308" width="190" height="46" fill="#3B4166"/>
+        <text x="360" y="330" font-family="Noto Sans KR, sans-serif" font-size="13" fill="#F3F3F6" text-anchor="middle" font-weight="700">⑤ 최종 선택</text>
+        <text x="360" y="347" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#B8BBD4" text-anchor="middle">언어 모델이 소비할 5~20건</text>
+        <text x="360" y="392" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#565A6E" text-anchor="middle">한 단이라도 건너뛰면 시스템은 저마다의 특징적 방식으로 부진해진다</text>
+        <text x="360" y="412" font-family="IBM Plex Mono, monospace" font-size="11" fill="#8B8FA9" text-anchor="middle">2026 production retrieval architecture</text>
+      </svg>
+      <figcaption>완전한 검색 캐스케이드 — 각 단은 독립적으로 공학 가능하되, 다섯이 함께 2026년의 프로덕션 검색 아키텍처를 이룬다</figcaption>
+    </figure>
+    <div class="panel rv">
+      <span class="tag">Key Definition</span>
+      <h4>완전한 검색 캐스케이드</h4>
+      <p><strong>질의 변환</strong>(재작성, 확장, HyDE) → 질의를 고치고 때로 여럿으로 불린다. <strong>1단 검색</strong>(하이브리드 벡터+어휘, RRF 융합) → 고재현율 후보 50~100건을 낸다. <strong>메타데이터 필터링</strong>(사전·사후) → 스키마의 하드 제약을 강제한다. <strong>재순위화</strong>(크로스 인코더) → 후보 집합을 고정밀 top-k로 재정렬한다. <strong>최종 선택</strong> → 언어 모델이 소비할 상위 5~20건을 돌려준다.</p>
+      <p>각 단은 독립적으로 공학 가능하며, 함께 2026년의 프로덕션 검색 아키텍처를 이룬다.</p>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">이 5단 캐스케이드가 조달 플랫폼이 처음부터 출시했어야 할 프로덕션 아키텍처다. 각 단이 최종 품질에 독립적으로 기여하며, 어느 단을 건너뛰든 시스템은 저마다의 특징적 방식으로 부진해진다. 질의 변환을 건너뛰면 사용자가 말뭉치 친화적 표현으로 물어 주기를 시스템이 기대게 된다. 하이브리드를 건너뛰면 의미 유사가 이을 수 없는 어휘 일치를 놓친다. 필터링을 건너뛰면 낡거나 범위 밖의 문서가 현행 관련 콘텐츠와 경쟁한다. 재순위화를 건너뛰면 언어 모델에 전달되는 top-k가 고정밀이 아니라 중간 정밀에 머문다.</p>
+      <p class="rv">캐스케이드의 조율은 노련한 검색 엔지니어의 일이다. 중요한 파라미터들 — k1(1단 후보 집합 크기), k2(재순위화 후 최종 top-k), 융합 알고리즘의 선택, 리랭커 모델, 질의 변환의 공격성, 필터 순서 — 은 모두 상호작용한다. 옳은 조율은 구체적인 말뭉치, 구체적인 질의 분포, 구체적인 지연·비용 제약에 달렸다. 9장이 이 조율을 어림짐작이 아니라 체계로 만드는 평가 방법론을 세운다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 안티패턴 ============ -->
+<section style="background:var(--mist)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">COMMON PITFALLS</span>
+      <h2>겹치며 불어나는 검색 캐스케이드의 실수들 — 세 가지 안티패턴</h2>
+    </div>
+    <div class="anti">
+      <div class="anti-item rv">
+        <h4>프로덕션의 벡터 단독 검색<span class="en">Vector-Only Retrieval in Production</span></h4>
+        <p>벡터 단독 검색으로 프로덕션 RAG를 출시하는 것은 이 분야에서 가장 흔한 단일 아키텍처 실수다. 흔한 질의에서는 그런대로 돌아 격차가 보이지 않다가, 도메인 전문가가 재현율을 감사하고 나서야 용어 민감 질의에서 관련 문서의 80%를 놓치고 있음이 드러난다.</p>
+        <p><span class="fix">처방</span> — 하이브리드 검색은 어떤 프로덕션 배포에서도 협상의 여지가 없다. 할 수 있는 가장 싼 개선의 하나이자 가장 임팩트 큰 개선의 하나다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>임베딩과 같은 모델 계열로 재순위화하기<span class="en">Reranking with the Same Model Family as Embedding</span></h4>
+        <p>임베딩 모델과 리랭커가 같은 모델 계열 — 비슷한 훈련 데이터, 비슷한 트랜스포머 구조 — 이면 리랭커가 가져올 수 있는 새 정보가 줄어든다. 둘이 <em>같은 실수</em>를 하기 때문이다.</p>
+        <p><span class="fix">처방</span> — 임베딩 모델과 다른 계열이거나 다른 데이터로 훈련된 리랭커를 써서 두 단이 독립적인 실패 양식을 갖게 하라. 다른 혈통의 크로스 인코더가 가장 중요한 사례들에서 같은 계열 리랭커를 통상 앞선다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>단순 질의에 대한 공격적 질의 변환<span class="en">Aggressive Query Transformation on Simple Queries</span></h4>
+        <p>변환을 무차별로 적용하는 것 — 모든 질의를 재작성·확장·HyDE에 다 통과시키는 것 — 은 필요 없던 단순 질의에 지연을 낭비하고, 이미 잘 만들어진 질의를 왜곡할 위험을 진다.</p>
+        <p><span class="fix">처방</span> — 질의 특성에 따라 선별 적용하라. 짧은 키워드 질의에는 대개 변환이 아니라 어휘 검색이 필요하고, 긴 자연어 질의는 재작성의 덕을 자주 보고, 복잡한 다면 질의는 멀티쿼리 확장의 덕을 본다. <strong>라우팅 로직을 지어라. 모든 변환을 모든 질의에 걸지 마라.</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 다섯 요지 ============ -->
+<section class="takeaways">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">CHAPTER SUMMARY</span>
+      <h2>답사를 마치며 — 다섯 가지 요지</h2>
+    </div>
+    <div class="take">
+      <div class="take-item rv"><p><b>하이브리드 검색</b> — 벡터 유사도와 어휘 BM25의 결합 — 이 2026년 프로덕션 RAG의 아키텍처 기본값이다. 두 방법은 다르게 실패하고, 결합은 각자가 찾을 수 있는 것의 합집합을 붙잡는다. 벡터 단독 검색은 프로덕션에 구조적으로 불충분하며, 그 격차는 결과에 실질적으로 영향을 줄 만큼 크다.</p></div>
+      <div class="take-item rv"><p><b>상호 순위 융합(RRF)</b>이 서로 다른 검색의 순위 목록을 합치는 옳은 기본값이다. 점수 보정 없이 돌고, 비교 불가능한 점수 척도에 강건하며, 가중 점수 융합이 줄 수 있는 이득의 80~90%를 조율 비용 0에 낸다. 잔여 격차가 중요함이 측정으로 드러날 때만 가중으로 옮겨라.</p></div>
+      <div class="take-item rv"><p>크로스 인코더 <b>재순위화</b>는 1단 검색 단독 대비 top-k 정밀도를 20~50% 끌어올린다. 계산 비용은 실재하지만 1단 여과 뒤의 작은 후보 집합 위에서 돌므로 거래가 유리하다. 재순위화 없는 프로덕션급 RAG는 상당한 정밀도를 탁자 위에 버려두고 있다.</p></div>
+      <div class="take-item rv"><p><b>질의 변환</b>은 의미적 간극을 질의 쪽에서 닫는다. 재작성, 확장, HyDE, 멀티쿼리가 저마다 간극의 다른 면을 겨눈다. 무차별이 아니라 질의 특성에 따라 선별 적용하라 — 짧은 키워드 질의에 맞는 변환과 복잡한 자연어 질문에 맞는 변환은 다르다.</p></div>
+      <div class="take-item rv"><p><b>완전한 검색 캐스케이드</b> — 질의 변환, 하이브리드 1단, 메타데이터 필터링, 재순위화, 최종 선택 — 가 2026년의 프로덕션 아키텍처다. 각 단이 독립적으로 기여하고, 어느 하나를 건너뛰면 특징적인 실패 양식이 나타난다. 조달 플랫폼의 2주짜리 수습이 실제로 지은 것이 이 캐스케이드이며, 처음부터 지었어야 할 것도 이것이다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 문헌 & 다리 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">FURTHER READING</span>
+      <h2>더 읽을거리</h2>
+    </div>
+    <div class="refs">
+      <div class="ref rv"><b>Cormack, Clarke &amp; Buettcher</b>, <i>"Reciprocal Rank Fusion outperforms Condorcet and individual rank learning methods"</i> (SIGIR, 2009) — RRF를 소개한 기초 논문. 이 알고리즘이 왜 통하고 언제 통하지 않는지에 대한 여전히 가장 명료한 해설이다.</div>
+      <div class="ref rv"><b>Gao et al.</b>, <i>"Precise Zero-Shot Dense Retrieval without Relevance Labels"</i> (HyDE 논문, ACL 2023) — HyDE의 원전. 기법과 그 적정 범위를 이해하는 필독서.</div>
+      <div class="ref rv"><b>Nogueira &amp; Cho</b>, <i>"Passage Re-ranking with BERT"</i> (arXiv, 2019) — 크로스 인코더 재순위화를 프로덕션 패턴으로 세운 논문. 구조는 진화했으나 기초 추론은 유효하다.</div>
+      <div class="ref rv"><b>Formal, Lassance, Piwowarski &amp; Clinchant</b>, <i>"SPLADE: Sparse Lexical and Expansion Model for First Stage Ranking"</i> (SIGIR, 2021) — 학습된 희소 검색기의 준거. 현대 하이브리드 시스템에서 BM25의 점점 중요한 대안이다.</div>
+      <div class="ref rv"><b>Anthropic</b>, <i>"Contextual Retrieval"</i> (2024) — 이 장의 하이브리드 캐스케이드와 짝이 잘 맞는 기법. 수집 시점에 청크에 요약 맥락을 붙여 검색을 개선한다. 가장 강한 1단 성능을 위해 이 장의 패턴들과 결합할 것.</div>
+    </div>
+    <p class="note rv">위 문헌 목록은 원서 5장의 Further Reading을 그대로 옮긴 것이다. 서지 사항의 최종 확인은 원 출처를 통해 하는 것이 옳다.</p>
+  </div>
+</section>
+
+<section class="bridge">
+  <div class="wrap">
+    <div class="sec-head rv" style="margin-bottom:32px">
+      <span class="sec-no">CHAPTER BRIDGE · PART III</span>
+      <h2>다음 답사지 — GraphRAG, 지식 그래프로 확장된 검색</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">6장은 3부의 문을 연다 — 프로덕션 RAG를 하이브리드 검색 파이프라인에서 이 책의 제목이 약속하는 <strong>에이전틱 시스템</strong>으로 끌어올리는 고급 패턴들이다. 출발은 GraphRAG — 문서 자체에서 추출한 지식 그래프로 말뭉치를 보강해 멀티홉 불충분의 한계를 겨누는 아키텍처 패턴이다. 이 장에서 지은 검색 캐스케이드는 그대로 토대로 남고, GraphRAG는 텍스트 단독 방법이 따를 수 없는 구조적 검색 능력으로 그것을 확장한다. 3부의 세 장은 2부의 캐스케이드를 지식 그래프, 자기교정, 오케스트레이션된 멀티 에이전트 검색으로 승격시킨다 — 검색이 마침내 <em>시스템</em>이 되는 곳이다. 문살을 짜 넣었으니 이제 단청을 올릴 차례다.</p>
+    </div>
+    <div class="next rv">NEXT ▸ CHAPTER 6 · GRAPHRAG: KNOWLEDGE GRAPH-ENHANCED RETRIEVAL</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Raymond Norman, <span style="color:var(--indigo)">Agentic RAG Systems</span> (2026) · Chapter 5 요약 웹페이지<br>
+    원서 97–115쪽 전체 내용 기반 · 본 페이지는 학습·검토 목적의 2차 정리물이다
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    els.forEach(function(e){e.classList.add('on')});
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        en.target.classList.add('on');
+        io.unobserve(en.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>

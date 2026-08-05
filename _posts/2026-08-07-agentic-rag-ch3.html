@@ -1,0 +1,754 @@
+---
+layout: null
+title: "Vector Search and Embedding Engineering at Scale" 
+date: 2026-08-07
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>규모의 벡터 검색과 임베딩 엔지니어링 — Agentic RAG Systems 제3장</title>
+<meta name="description" content="Raymond Norman, 『Agentic RAG Systems』 제3장 답사기 — ANN 알고리즘, 벡터 데이터베이스 선택, 임베딩 파이프라인, 저장 계층화, 운영 규율">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --porcelain:#F3F3F1;      /* 무광의 강판 회백 */
+  --ink:#211F1D;            /* 기계실의 탄소흑 */
+  --gunmetal:#35424A;       /* 무쇠 청회 — 본문 격자 잉크 */
+  --gunmetal-soft:#5E6E78;
+  --copper:#AD5F28;         /* 구리 배선의 적동색 — 경보와 강조 */
+  --copper-deep:#82441A;
+  --mist:#E3E4E1;           /* 패널 배경 */
+  --line:#CBCDC8;
+  --paper-card:#FBFBFA;
+  --danger:#96382E;
+  --serif:'Gowun Batang', serif;
+  --sans:'Noto Sans KR', sans-serif;
+  --mono:'IBM Plex Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--porcelain);color:var(--ink);
+  font-family:var(--sans);font-weight:400;
+  line-height:1.95;font-size:17px;letter-spacing:-0.011em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--gunmetal);color:var(--porcelain)}
+
+.wrap{max-width:880px;margin:0 auto;padding:0 28px}
+.wrap-wide{max-width:1080px;margin:0 auto;padding:0 28px}
+section{padding:96px 0}
+p{margin-bottom:1.6em}
+em{font-style:normal;color:var(--gunmetal);font-weight:500}
+strong{font-weight:700;color:var(--ink)}
+.mono{font-family:var(--mono)}
+
+.rv{opacity:0;transform:translateY(26px);transition:opacity .85s cubic-bezier(.22,.7,.3,1),transform .85s cubic-bezier(.22,.7,.3,1)}
+.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .pulse{animation:none !important}
+  .sweep{animation:none !important;stroke-dasharray:none !important;stroke-dashoffset:0 !important}
+}
+
+/* ---------- 히어로 ---------- */
+header.hero{
+  background:linear-gradient(168deg, #17191B 0%, #22282C 46%, #2B343A 100%);
+  color:#ECEDEB;padding:120px 0 100px;position:relative;overflow:hidden;
+}
+header.hero::after{
+  content:"";position:absolute;inset:0;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 30px, rgba(236,237,235,.035) 30px 31px),
+    repeating-linear-gradient(90deg, transparent 0 30px, rgba(236,237,235,.028) 30px 31px);
+  pointer-events:none;
+}
+.hero-kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.32em;color:#9AAAB3;text-transform:uppercase;margin-bottom:26px}
+.hero-kicker b{color:#D89B5F;font-weight:600}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(34px,5.4vw,58px);line-height:1.34;letter-spacing:-0.015em;margin-bottom:30px}
+h1 .thin{display:block;font-size:.52em;font-weight:400;color:#AEBBC2;margin-top:14px;letter-spacing:.01em}
+.hero-lede{max-width:640px;font-size:18px;line-height:2.05;color:#CBD4D8;font-family:var(--serif)}
+.hero-meta{margin-top:44px;font-family:var(--mono);font-size:13px;color:#8697A0;display:flex;gap:28px;flex-wrap:wrap}
+.hero-meta span::before{content:"— ";color:#54646D}
+
+/* ---------- 프롤로그 ---------- */
+.incident{background:var(--ink);color:#E1E3E0;padding:100px 0;position:relative}
+.latency{
+  display:flex;align-items:baseline;gap:26px;flex-wrap:wrap;
+  font-family:var(--mono);line-height:1;margin-bottom:10px;
+}
+.latency .before{font-size:clamp(40px,7vw,72px);font-weight:600;color:#8FBFA8}
+.latency .arrow{font-size:clamp(24px,4vw,40px);color:#75838C}
+.latency .after{font-size:clamp(56px,10vw,110px);font-weight:600;color:#D96B54}
+.latency small{font-size:13px;color:#93A1A9;letter-spacing:.2em;display:block;margin-top:14px;font-weight:400}
+.incident .prose{max-width:700px;font-family:var(--serif);font-size:17.5px;line-height:2.1;margin-top:44px}
+.incident .prose p{margin-bottom:1.7em}
+.dose{display:flex;gap:24px;flex-wrap:wrap;margin:52px 0 20px}
+.dose-card{flex:1;min-width:240px;border:1px solid rgba(225,227,224,.18);padding:28px 26px;font-family:var(--mono)}
+.dose-card .lbl{font-size:12px;letter-spacing:.24em;text-transform:uppercase;margin-bottom:14px;color:#93A1A9}
+.dose-card .val{font-size:38px;font-weight:600;line-height:1.15}
+.dose-card .sub{font-size:13px;margin-top:12px;color:#AEB9BF;line-height:1.7;font-family:var(--sans)}
+.dose-good .val{color:#8FBFA8}
+.dose-good{border-color:rgba(143,191,168,.4)}
+.dose-bad .val{color:#D96B54}
+.dose-bad{border-color:rgba(217,107,84,.45)}
+.pulse{animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* ---------- 섹션 공통 ---------- */
+.sec-head{margin-bottom:48px}
+.sec-no{font-family:var(--mono);font-size:13px;letter-spacing:.28em;color:var(--copper-deep);margin-bottom:16px;display:block}
+h2{font-family:var(--serif);font-weight:700;font-size:clamp(26px,3.6vw,38px);line-height:1.42;color:var(--ink)}
+h3{font-family:var(--serif);font-weight:700;font-size:21px;margin:2.4em 0 .9em;color:var(--gunmetal)}
+.prose-serif{font-family:var(--serif);font-size:17.5px;line-height:2.08}
+
+.panel{background:var(--mist);border-left:4px solid var(--gunmetal);padding:34px 36px;margin:52px 0}
+.panel .tag{font-family:var(--mono);font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--gunmetal);margin-bottom:16px;display:block}
+.panel h4{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:14px}
+.panel p{font-size:15.5px;line-height:1.95;margin-bottom:1em}
+.panel p:last-child{margin-bottom:0}
+.panel.copper{border-left-color:var(--copper);background:#F1E8DD}
+.panel.copper .tag{color:var(--copper-deep)}
+
+/* ---------- SVG 도해 ---------- */
+.figure{margin:56px 0;text-align:center}
+.figure svg{max-width:100%;height:auto}
+.figure figcaption{font-family:var(--sans);font-size:14px;color:#565E56;margin-top:18px;line-height:1.8}
+.figure figcaption::before{content:"⟨"}
+.figure figcaption::after{content:"⟩"}
+.sweep{stroke-dasharray:900;stroke-dashoffset:900;animation:sweep 2.2s ease-out forwards .4s}
+@keyframes sweep{to{stroke-dashoffset:0}}
+
+/* ---------- ANN 알고리즘 표 ---------- */
+.ann-table{margin:56px 0}
+.ann-row{
+  display:grid;grid-template-columns:130px 1fr 1fr 1fr;gap:18px;align-items:center;
+  padding:20px 0;border-top:1px solid var(--line);
+}
+.ann-row.head{border-top:none;padding-bottom:10px}
+.ann-row.head span{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gunmetal-soft)}
+.ann-row:last-child{border-bottom:1px solid var(--line)}
+.ann-name{font-family:var(--mono);font-weight:600;font-size:15px;color:var(--gunmetal)}
+.ann-cell{font-size:13.5px;line-height:1.7;color:#3D4540}
+.ann-cell b{font-family:var(--mono);font-weight:600;color:var(--copper-deep);font-size:14px}
+
+/* ---------- 벡터 DB 카드 ---------- */
+.dbs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;margin:56px 0}
+.db{
+  background:var(--paper-card);border:1px solid var(--line);border-top:3px solid var(--gunmetal);
+  padding:32px 30px;transition:transform .35s ease, box-shadow .35s ease;
+}
+.db:hover{transform:translateY(-5px);box-shadow:0 18px 40px -22px rgba(33,31,29,.35)}
+.db h4{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:6px;color:var(--gunmetal)}
+.db .fit{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--copper-deep);margin-bottom:16px}
+.db p{font-size:14.5px;line-height:1.85;color:#3D4540;margin-bottom:.9em}
+.db .verdict{font-size:13.5px;line-height:1.8;margin:0}
+.db .verdict b{color:#1E5B41;font-weight:700}
+.db .verdict i{color:#96382E;font-style:normal;font-weight:700}
+
+/* ---------- 코드 ---------- */
+pre.code{
+  background:var(--ink);color:#CDD3CE;
+  font-family:var(--mono);font-size:13px;line-height:1.85;
+  padding:32px 34px;margin:48px 0;overflow-x:auto;
+  border-left:4px solid var(--copper);
+}
+pre.code .cm{color:#8A97A0}
+pre.code .kw{color:#D89B5F}
+pre.code .st{color:#A3C9A8}
+.code-cap{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--copper-deep);margin:-36px 0 48px;padding-left:2px}
+
+/* ---------- 계층화 3패턴 ---------- */
+.tiers{margin:56px 0}
+.tier{
+  border-top:1px solid var(--line);padding:30px 0 30px 0;
+  display:grid;grid-template-columns:190px 1fr;gap:26px;
+}
+.tier:last-child{border-bottom:1px solid var(--line)}
+.tier h4{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--gunmetal);line-height:1.5}
+.tier h4 .en{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--gunmetal-soft);margin-top:5px;letter-spacing:.04em}
+.tier p{font-size:15px;line-height:1.9;color:#3D4540;margin-bottom:.7em}
+.tier .rule{font-size:13.5px;color:var(--copper-deep);font-weight:700;margin:0}
+.tier .rule::before{content:"규칙 — ";font-weight:400;color:var(--gunmetal-soft)}
+.heatbar{display:flex;height:10px;margin:52px 0 8px;overflow:hidden}
+.heatbar div{height:100%}
+.heat-hot{background:var(--copper);flex:1.4}
+.heat-warm{background:#C8996B;flex:2.2}
+.heat-cold{background:#8FA1AC;flex:6.4}
+.heat-legend{display:flex;font-family:var(--mono);font-size:11.5px;color:#565E56;gap:0;margin-bottom:48px}
+.heat-legend span{flex:1.4;padding-top:6px}
+.heat-legend span:nth-child(2){flex:2.2}
+.heat-legend span:nth-child(3){flex:6.4}
+.heat-legend span::before{content:"";display:inline-block;width:10px;height:10px;margin-right:8px;vertical-align:-1px}
+.heat-legend span:nth-child(1)::before{background:var(--copper)}
+.heat-legend span:nth-child(2)::before{background:#C8996B}
+.heat-legend span:nth-child(3)::before{background:#8FA1AC}
+
+/* ---------- 운영 다섯 규율 ---------- */
+.diag{counter-reset:diag;margin:56px 0}
+.diag-item{border-top:1px solid var(--line);padding:28px 0 28px 76px;position:relative;counter-increment:diag}
+.diag-item:last-child{border-bottom:1px solid var(--line)}
+.diag-item::before{
+  content:counter(diag,decimal-leading-zero);
+  position:absolute;left:0;top:28px;
+  font-family:var(--mono);font-size:16px;font-weight:600;color:var(--copper-deep);
+}
+.diag-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:8px;color:var(--gunmetal)}
+.diag-item h4 .en{font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--gunmetal-soft);display:block;margin-top:4px}
+.diag-item p{font-size:15px;line-height:1.9;color:#3D4540;margin:0}
+
+/* ---------- 안티패턴 ---------- */
+.anti{counter-reset:anti;margin:56px 0}
+.anti-item{
+  border:1px solid var(--line);border-left:4px solid var(--danger);
+  background:var(--paper-card);padding:34px 36px 34px 92px;
+  margin-bottom:22px;position:relative;counter-increment:anti;
+}
+.anti-item::before{
+  content:counter(anti,decimal-leading-zero);
+  position:absolute;left:30px;top:34px;
+  font-family:var(--mono);font-size:17px;font-weight:600;color:var(--danger);
+}
+.anti-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:10px}
+.anti-item h4 .en{font-family:var(--mono);font-weight:400;font-size:12px;color:#8A6058;display:block;margin-top:4px}
+.anti-item p{font-size:15px;line-height:1.9;color:#3D4540;margin-bottom:.9em}
+.anti-item p:last-child{margin-bottom:0}
+.anti-item .fix{font-weight:700;color:var(--gunmetal)}
+
+/* ---------- 다섯 요지 ---------- */
+.takeaways{background:var(--ink);color:#E1E3E0;padding:100px 0}
+.takeaways h2{color:#EEF0ED}
+.takeaways .sec-no{color:#D89B5F}
+.take{counter-reset:take;margin-top:52px}
+.take-item{display:grid;grid-template-columns:72px 1fr;gap:26px;padding:30px 0;border-top:1px solid rgba(225,227,224,.14);counter-increment:take}
+.take-item::before{content:counter(take);font-family:var(--serif);font-size:44px;font-weight:700;color:#3E4A47;line-height:1}
+.take-item p{font-size:16px;line-height:2;color:#C6CDC7;margin:0}
+.take-item p b{color:#EEF0ED}
+
+/* ---------- 문헌/다리/푸터 ---------- */
+.refs{margin:52px 0}
+.ref{padding:22px 0 22px 34px;border-top:1px solid var(--line);position:relative;font-size:15px;line-height:1.85;color:#3D4540}
+.ref::before{content:"▸";position:absolute;left:6px;color:var(--copper-deep)}
+.ref b{font-weight:700;color:var(--ink)}
+.ref i{font-style:italic;font-family:var(--serif)}
+.ref:last-child{border-bottom:1px solid var(--line)}
+.bridge{background:var(--mist);padding:88px 0}
+.bridge .prose-serif{max-width:700px}
+.bridge .next{margin-top:40px;font-family:var(--mono);font-size:13px;letter-spacing:.2em;color:var(--gunmetal)}
+footer{padding:56px 0;text-align:center;font-family:var(--mono);font-size:12px;color:#7B837C;border-top:1px solid var(--line);line-height:2}
+.note{font-size:13.5px;color:#5C645C;margin-top:28px;line-height:1.9}
+.note::before{content:"※ ";color:var(--copper-deep)}
+
+@media(max-width:680px){
+  section{padding:72px 0}
+  .heat-legend{flex-direction:column;gap:6px}
+  .heat-legend span{flex:none !important;padding-top:0}
+  .ann-row{grid-template-columns:1fr 1fr;row-gap:8px}
+  .ann-row.head{display:none}
+  .ann-name{grid-column:1 / -1}
+  .tier{grid-template-columns:1fr;gap:12px}
+  .take-item{grid-template-columns:48px 1fr;gap:18px}
+  .take-item::before{font-size:32px}
+  .anti-item{padding:28px 24px 28px 68px}
+  .anti-item::before{left:22px}
+  .diag-item{padding-left:52px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 히어로 ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-kicker rv">AGENTIC RAG SYSTEMS · RAYMOND NORMAN · <b>제 3 장</b></div>
+    <h1 class="rv">규모의 벡터 검색과 임베딩 엔지니어링<span class="thin">— 노트북의 검색과 기계실의 검색은 다른 학문이다</span></h1>
+    <p class="hero-lede rv">2장이 주춧돌 — 임베딩이라는 의미의 기하학 — 을 살폈다면, 3장은 기둥을 세우는 장이다. 그 벡터들을 어디에 둘 것인가, 어떻게 빨리 찾을 것인가, 문서가 변할 때 어떻게 최신으로 지킬 것인가. 답사로 치면 전각의 마루 밑으로 내려가 기둥뿌리와 초석을 살피는 일이니, 화려한 단청은 없어도 건물의 수명은 죄다 여기서 결정된다.</p>
+    <div class="hero-meta rv">
+      <span>원서 60–77쪽</span>
+      <span>Part II · Core Architecture</span>
+      <span>기계실의 규율</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 프롤로그: 서버를 넘어선 인덱스 ============ -->
+<section class="incident">
+  <div class="wrap">
+    <div class="latency rv pulse">
+      <span class="before">32<span style="font-size:.45em">ms</span></span>
+      <span class="arrow">→</span>
+      <span class="after">19<span style="font-size:.45em">s</span></span>
+    </div>
+    <div style="font-family:var(--mono);font-size:13px;color:#93A1A9;letter-spacing:.2em" class="rv">2025년 9월 · 어느 리걸테크 스타트업 · 검색 지연의 594배 폭주</div>
+    <div class="prose">
+      <p class="rv">계약 분석 플랫폼을 운영하던 한 리걸테크 스타트업이 RAG 시스템을 프로세스 메모리 안의 단일 FAISS 인덱스 위에 배포했다. 베타 기간 내내 아키텍처는 아름답게 돌아갔다. 로펌 스무 곳, 계약서 약 40만 건 — 16기가바이트 서버 한 대의 메모리에 넉넉히 들어갔고, 검색 지연 중앙값은 32밀리초, 평가 집합에서 k=10 재현율은 93%였다. 엔지니어링 팀이 자부심을 가질 만했다.</p>
+      <p class="rv">정식 출시 6주 뒤, 고객사 하나 — 대형 국제 로펌 — 가 주말 하루 사이에 문서 400만 건을 플랫폼으로 이전했다. 12기가바이트에 머물던 인덱스가 서버의 메모리 천장을 뚫었다. 프로세스는 극적으로 죽지 않았다. 대신 <em>스래싱</em>을 시작했다 — 질의 때마다 벡터 데이터를 디스크로 내보냈다가 도로 불러들이고 다시 내보내기를 반복한 것이다. 검색 지연은 32밀리초에서 19초로 기어올랐다. 모니터링에는 다운으로 잡히지 않았다. 그저 쓸 수 없을 만큼 느릴 뿐이었다. 고객용 대시보드의 헬스체크는 온통 초록불이었다. 새벽 두 시, 고객 에스컬레이션에 깨어난 당직 엔지니어는 네 시간을 헤매고서야 — 누군가 호스트의 스왑 사용량을 확인해 보자고 하고서야 — 원인에 닿았다.</p>
+    </div>
+    <div class="dose">
+      <div class="dose-good dose-card rv">
+        <div class="lbl">베타의 세계</div>
+        <div class="val">40만 건 · 12GB</div>
+        <div class="sub">단일 16GB 서버의 인프로세스 FAISS — 32ms 중앙값, 재현율 93%, 초록불 대시보드</div>
+      </div>
+      <div class="dose-bad dose-card rv">
+        <div class="lbl">주말 하루 뒤의 세계</div>
+        <div class="val">400만 건 · 스왑</div>
+        <div class="sub">메모리 천장 돌파 → 스래싱 → 19초 지연 — 그러나 헬스체크는 여전히 초록불</div>
+      </div>
+    </div>
+    <div class="prose">
+      <p class="rv">수습에는 3주가 걸렸다. 인프로세스 FAISS를 샤딩이 제대로 되는 관리형 벡터 데이터베이스로 이전하고, 높아진 처리량을 감당하도록 수집 파이프라인을 재설계하고, 임베딩 저장소를 뜨거운 벡터와 차가운 벡터로 분리하고, 그동안 필요 없었던 운영 계층 전체 — 인덱스 무결성 헬스체크, 지연 백분위 모니터링, 벡터 스토어 비용 대시보드, 방금 몸으로 배운 실패 양식들의 런북 — 를 새로 써야 했다. 그 3주 동안, 사건을 촉발한 고객사는 계약 해지를 저울질했다.</p>
+      <p class="rv">이 이야기가 시시한 까닭은 진지한 RAG 시스템을 출시해 본 모든 팀이 겪은 일이기 때문이다. 교훈도 돌이켜보면 시시하다. <strong>단일 인프로세스 인덱스는 안 될 때까지는 되고, 되는 것과 안 되는 것의 경계는 넘기 전까지 보이지 않는다.</strong> 규모의 벡터 검색은 노트북의 벡터 검색과는 다른 공학이다. 10만 벡터에서 내린 아키텍처 결정은 1,000만에서 살아남지 못하고, 1,000만의 결정은 1억에서 살아남지 못한다. 저 3주의 허둥지둥을 막아 주는 규율들 — 샤딩 전략, 인덱스 알고리즘 선택, 핫/콜드 계층화, 운영 계측 — 이 이 장의 주제다. 이 장은 의도적으로 프레임워크 중립이다. Qdrant든 Weaviate든 Pinecone이든 pgvector든 원리는 같다. <em>패턴이 중요하지, 상자에 붙은 상표는 중요하지 않다.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3.1 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">3.1 · APPROXIMATE NEAREST NEIGHBOUR</span>
+      <h2>근사 최근접 이웃 검색 — 벡터 검색은 실제로 어떻게 규모를 감당하는가</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">프로덕션이 요구하는 규모의 벡터 검색은 순진하게 접근하면 수학적으로 불가능하다. 질의 벡터 하나를 문서 벡터 1,000만 개와 정확한 코사인 유사도로 비교하려면 질의당 1,000만 번의 부동소수점 연산이 든다. 초당 질의 1,000건이면 매초 100억 번 — 어떤 인프라도 경제적으로 감당할 수 없다. 프로덕션 벡터 검색은 약간의 재현율을 내주고 몇 자릿수의 성능을 얻는 <strong>근사 알고리즘</strong> 위에 서 있으며, 이 알고리즘들을 이해하는 것이 어떤 벡터 데이터베이스든 고르고 운영하는 전제가 된다.</p>
+      <p class="rv">2026년의 지배적 알고리즘은 <strong>HNSW</strong> — 계층적 항행 가능 스몰월드 그래프 — 다. 직관은 검색 엔진이 역사적으로 규모를 감당해 온 방식에서 빌려 왔다. 모든 문서를 뒤지는 대신, 옳은 동네로 재빨리 건너뛰게 해 주는 항행 가능한 색인을 짓고, 그 동네 안에서만 샅샅이 뒤지는 것이다. HNSW는 다층 그래프를 짓는다. 꼭대기 층에는 장거리 간선으로 이어진 성긴 벡터 부분집합이, 아래로 내려갈수록 단거리 간선으로 이어진 점점 많은 벡터가 산다. 검색은 꼭대기에서 출발해 질의를 향해 탐욕적으로 항행하고, 다음 층으로 내려가고, 맨 아래 층이 최종 후보 집합을 내놓을 때까지 계속한다.</p>
+    </div>
+    <figure class="figure rv">
+      <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="HNSW 계층 그래프의 탐욕적 하강 경로">
+        <defs>
+          <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#AD5F28"/></marker>
+        </defs>
+        <!-- Layer 2 (top, sparse) -->
+        <text x="60" y="52" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#5E6E78">Layer 2 — 성긴 장거리 간선</text>
+        <line x1="120" y1="80" x2="380" y2="76" stroke="#CBCDC8" stroke-width="1.5"/>
+        <line x1="380" y1="76" x2="620" y2="84" stroke="#CBCDC8" stroke-width="1.5"/>
+        <circle cx="120" cy="80" r="7" fill="#35424A"/>
+        <circle cx="380" cy="76" r="7" fill="#35424A"/>
+        <circle cx="620" cy="84" r="7" fill="#35424A"/>
+        <!-- Layer 1 -->
+        <text x="60" y="152" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#5E6E78">Layer 1 — 중거리 간선</text>
+        <line x1="120" y1="180" x2="250" y2="176" stroke="#CBCDC8" stroke-width="1.2"/>
+        <line x1="250" y1="176" x2="380" y2="182" stroke="#CBCDC8" stroke-width="1.2"/>
+        <line x1="380" y1="182" x2="500" y2="174" stroke="#CBCDC8" stroke-width="1.2"/>
+        <line x1="500" y1="174" x2="620" y2="180" stroke="#CBCDC8" stroke-width="1.2"/>
+        <circle cx="120" cy="180" r="5.5" fill="#5E6E78"/>
+        <circle cx="250" cy="176" r="5.5" fill="#5E6E78"/>
+        <circle cx="380" cy="182" r="5.5" fill="#5E6E78"/>
+        <circle cx="500" cy="174" r="5.5" fill="#5E6E78"/>
+        <circle cx="620" cy="180" r="5.5" fill="#5E6E78"/>
+        <!-- Layer 0 (dense) -->
+        <text x="60" y="252" font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#5E6E78">Layer 0 — 전체 벡터, 단거리 간선</text>
+        <g stroke="#D8DAD5" stroke-width="1">
+          <line x1="100" y1="284" x2="160" y2="280"/><line x1="160" y1="280" x2="220" y2="286"/>
+          <line x1="220" y1="286" x2="280" y2="280"/><line x1="280" y1="280" x2="340" y2="285"/>
+          <line x1="340" y1="285" x2="400" y2="279"/><line x1="400" y1="279" x2="460" y2="286"/>
+          <line x1="460" y1="286" x2="520" y2="280"/><line x1="520" y1="280" x2="580" y2="285"/>
+          <line x1="580" y1="285" x2="640" y2="281"/>
+        </g>
+        <g fill="#9AA5A0">
+          <circle cx="100" cy="284" r="4"/><circle cx="160" cy="280" r="4"/><circle cx="220" cy="286" r="4"/>
+          <circle cx="280" cy="280" r="4"/><circle cx="340" cy="285" r="4"/><circle cx="400" cy="279" r="4"/>
+          <circle cx="460" cy="286" r="4"/><circle cx="520" cy="280" r="4"/><circle cx="580" cy="285" r="4"/>
+          <circle cx="640" cy="281" r="4"/>
+        </g>
+        <!-- greedy descent path -->
+        <path class="sweep" d="M 120 80 L 380 76 L 380 182 L 500 174 L 460 286 L 520 280"
+          fill="none" stroke="#AD5F28" stroke-width="2.5" marker-end="url(#ah3)"/>
+        <circle cx="520" cy="280" r="8" fill="none" stroke="#AD5F28" stroke-width="2.5"/>
+        <text x="548" y="308" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#82441A">최근접 이웃</text>
+        <text x="128" y="66" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#82441A">진입점</text>
+        <text x="360" y="332" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#565E56" text-anchor="middle">꼭대기에서 탐욕적으로 항행하고, 층을 내려가며 좁혀 간다 — 전수 비교 없이 옳은 동네에 닿는 길</text>
+      </svg>
+      <figcaption>HNSW의 다층 항행 — 상층의 성긴 장거리 간선으로 크게 건너뛰고, 하층의 촘촘한 단거리 간선으로 정밀하게 좁힌다</figcaption>
+    </figure>
+    <div class="prose-serif">
+      <p class="rv">HNSW의 재현율은 놀랍다 — 참 최근접 이웃의 통상 95~99% — 그리고 검색 지연은 전수 검색보다 몇 자릿수 빠르다. 768차원 벡터 1,000만 개의 말뭉치에서 전수 검색은 질의당 수백 밀리초, HNSW는 한 자릿수 밀리초다. 대가는 메모리다. 그래프 구조를 임베딩과 별도로 들고 있어야 하므로 HNSW 인덱스는 원시 벡터보다 통상 30~50% 크다.</p>
+      <p class="rv">두 번째 주요 계열은 <strong>IVF</strong> — 역파일 인덱스 — 다. IVF는 벡터 공간을 군집(100만~1억 벡터 말뭉치라면 통상 수천 개)으로 분할하고 각 벡터를 최근접 군집 중심에 배정한다. 질의 시점에는 질의에 가까운 소수의 군집만 골라 그 안에서만 검색하고 나머지는 무시한다. HNSW보다 오래되었고, 같은 재현율 목표에서 다소 부정확하지만, 메모리 효율이 좋다. 트레이드오프 곡선이 다른 것이다 — 메모리가 제약이고 재현율 요구가 완만하면 IVF가, 지연이 제약이고 재현율 요구가 엄격하면 HNSW가 이기는 경향이 있다.</p>
+      <p class="rv"><strong>곱 양자화(PQ)</strong>는 HNSW나 IVF의 대안이 아니라 어느 쪽과도 결합할 수 있는 압축 기법이다. 각 벡터를 부분 벡터로 쪼개고 부분 벡터마다 작은 코드북에 대해 양자화해, 원래의 부동소수점 값을 저비트 코드로 대체한다. 결과는 극적인 저장 절감 — 흔히 8~32배 — 이고 대가는 약간의 정확도다. 저장 비용이 지배하는 배포라면 PQ는 필수이며, IVFPQ 조합(분할은 IVF, 압축은 PQ)은 10억 벡터급 말뭉치를 굴리는 회사들의 일꾼이다.</p>
+    </div>
+    <div class="ann-table">
+      <div class="ann-row head rv"><span>알고리즘</span><span>재현율 @ p99 지연 (1,000만 벡터)</span><span>메모리 오버헤드</span><span>적소</span></div>
+      <div class="ann-row rv"><div class="ann-name">HNSW</div><div class="ann-cell"><b>97%</b> @ 5ms</div><div class="ann-cell">원시 벡터 대비 +40%</div><div class="ann-cell">지연 결정적, 중소 규모 말뭉치</div></div>
+      <div class="ann-row rv"><div class="ann-name">IVF</div><div class="ann-cell"><b>92%</b> @ 8ms</div><div class="ann-cell">원시 벡터 대비 +5%</div><div class="ann-cell">메모리 제약, 완만한 재현율 요구</div></div>
+      <div class="ann-row rv"><div class="ann-name">IVF + PQ</div><div class="ann-cell"><b>85%</b> @ 12ms</div><div class="ann-cell">원시 벡터의 −75% 압축</div><div class="ann-cell">거대 말뭉치, 비용 민감</div></div>
+      <div class="ann-row rv"><div class="ann-name">HNSW + PQ</div><div class="ann-cell"><b>94%</b> @ 6ms</div><div class="ann-cell">−50% 압축 + 그래프 오버헤드</div><div class="ann-cell">대형 말뭉치, 지연 민감</div></div>
+      <div class="ann-row rv"><div class="ann-name">DiskANN</div><div class="ann-cell"><b>95%</b> @ 15ms (1억+ 벡터)</div><div class="ann-cell">디스크 기반, 낮은 RAM</div><div class="ann-cell">10억 규모, 단일 머신</div></div>
+    </div>
+    <div class="prose-serif">
+      <p class="rv"><strong>DiskANN</strong>은 따로 언급할 가치가 있다. Microsoft Research에서 개발되어 여러 오픈소스 프로젝트에 편입된 DiskANN은 HNSW도 IVFPQ도 RAM에 들어가지 않는 규모를 위해 설계되었다. 인덱스를 SSD에 두고 작은 인메모리 항행 구조만 유지해, 10억 벡터 이상의 말뭉치에서 프로덕션급 지연을 달성한다. 대부분의 팀에게는 과잉이지만, 그 규모를 운영하는 소수의 팀에게는 2026년 현재 유일하게 성립하는 단일 머신 알고리즘이다.</p>
+      <p class="rv">벡터 데이터베이스를 만들지도 않을 RAG 엔지니어에게 이것이 왜 중요한가. 인덱스 알고리즘의 선택 — 벡터 데이터베이스들이 근본적 아키텍처 결정이 아니라 설정 옵션인 양 내미는 그것 — 이 시스템의 재현율, 지연, 메모리 비용, 저장 비용을 <em>직접</em> 결정하기 때문이다. 기본값은 대개 합리적이지만 최적인 경우는 드물다. 프로덕션에서 최고의 가격 대비 성능을 얻는 팀들은 인덱스 알고리즘을 명시적으로 골랐고, 하이퍼파라미터를 자기 말뭉치에 맞춰 조율했으며, 결과 재현율을 평가 집합으로 검증했다. 기본값을 그대로 받아 쓴 팀들은 몇 달 뒤, 마땅한 성능보다 못한 검색에 필요한 것의 두 배를 치르고 있음을 발견하곤 한다.</p>
+    </div>
+    <figure class="figure rv">
+      <svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="재현율, 지연, 메모리의 삼각 트레이드오프">
+        <polygon points="360,40 120,280 600,280" fill="none" stroke="#35424A" stroke-width="2"/>
+        <circle cx="360" cy="40" r="6" fill="#AD5F28"/>
+        <circle cx="120" cy="280" r="6" fill="#AD5F28"/>
+        <circle cx="600" cy="280" r="6" fill="#AD5F28"/>
+        <text x="360" y="24" font-family="Noto Sans KR, sans-serif" font-size="14" font-weight="700" fill="#35424A" text-anchor="middle">재현율 Recall</text>
+        <text x="104" y="306" font-family="Noto Sans KR, sans-serif" font-size="14" font-weight="700" fill="#35424A" text-anchor="middle">지연 Latency</text>
+        <text x="612" y="306" font-family="Noto Sans KR, sans-serif" font-size="14" font-weight="700" fill="#35424A" text-anchor="middle">메모리 Memory</text>
+        <text x="360" y="185" font-family="Gowun Batang, serif" font-size="15" fill="#82441A" text-anchor="middle" font-weight="700">셋을 동시에 최적화할 수는 없다</text>
+        <text x="360" y="210" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#565E56" text-anchor="middle">어느 둘이 내 응용에 가장 중한지 정하고</text>
+        <text x="360" y="230" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#565E56" text-anchor="middle">그에 맞춰 인덱스를 조율하는 것이 프로덕션 공학이다</text>
+        <text x="222" y="150" font-family="IBM Plex Mono, monospace" font-size="11" fill="#5E6E78" text-anchor="middle" transform="rotate(-45 222 150)">고위험 검색 시스템의 축</text>
+        <text x="500" y="150" font-family="IBM Plex Mono, monospace" font-size="11" fill="#5E6E78" text-anchor="middle" transform="rotate(45 500 150)">고처리량 소비자 시스템의 축</text>
+      </svg>
+      <figcaption>모든 벡터 인덱스가 놓인 삼각의 저울 — 고위험 시스템은 재현율과 지연을 우선하며 메모리 비용을 받아들이고, 고처리량 소비자 시스템은 지연과 메모리를 우선하며 낮은 재현율을 받아들인다</figcaption>
+    </figure>
+    <div class="panel rv">
+      <span class="tag">Key Definition</span>
+      <h4>재현율, 지연, 메모리 — 세 방향의 트레이드오프</h4>
+      <p>모든 벡터 인덱스는 <strong>재현율</strong>(참 최근접 이웃을 얼마나 자주 찾는가), <strong>지연</strong>(각 질의가 얼마나 빨리 돌아오는가), <strong>메모리</strong>(인덱스가 얼마나 저장을 요구하는가) 사이의 세 방향 트레이드오프를 내리고 있다.</p>
+      <p>셋을 동시에 최적화할 수는 없다. 어느 둘이 내 응용에 가장 중한지 결정하고 그에 맞춰 인덱스를 조율하는 것이 프로덕션 공학이라는 규율이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3.2 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap-wide">
+    <div class="wrap" style="padding:0">
+      <div class="sec-head rv">
+        <span class="sec-no">3.2 · CHOOSING A VECTOR DATABASE</span>
+        <h2>벡터 데이터베이스 고르기 — 인기가 아니라 제약 적합으로</h2>
+      </div>
+      <div class="prose-serif">
+        <p class="rv">2026년의 벡터 데이터베이스 시장은 한 줌의 프로덕션급 선택지로 정리되었고, 저마다 뚜렷한 성격을 지닌다. 이 가운데 고르는 일은 지렛대가 큰 아키텍처 결정이다 — 잘못 고르면 모든 하류 결정이 제약되고, 잘 고르면 수년의 진화를 받칠 안정된 기초를 얻는다. 인기나 좋아하는 블로그의 추천으로 고르고 싶은 유혹은 이겨 내야 한다. 옳은 방법은 각 후보를 <strong>자기의 구체적 제약</strong>에 견주어 평가하는 것이다. 2026년에 가장 중요한 제약은 여섯이다 — 말뭉치 규모(벡터와 메타데이터 크기), 질의 처리량(지속 QPS), 지연 예산(p50·p95·p99), 갱신 빈도(읽기 위주냐 읽기·쓰기 혼합이냐 쓰기 과중이냐), 운영 성격(관리형이냐 자체 호스팅이냐), 통합 발자국(기존 인프라와 팀 역량). 데이터베이스마다 이 제약들에 다르게 최적화되어 있다. 보편적 최선은 없고, <em>내 상황의 최선</em>이 있을 뿐이다.</p>
+      </div>
+    </div>
+    <div class="dbs">
+      <div class="db rv">
+        <h4>Pinecone</h4>
+        <div class="fit">관리형의 지배자 — 시장 최단 프로덕션 도달</div>
+        <p>완전 호스팅으로 팀의 인프라 운영이 필요 없고, 수십억 벡터까지 수평 확장하며, 대부분의 질의율에서 50밀리초 미만의 지연을 안정적으로 낸다. 팀의 강점이 인프라 운영이 아니라 애플리케이션 개발일 때, 운영 단순성의 대가로 상대적으로 높은 질의당 비용을 감당할 수 있을 때, 컴플라이언스나 주권 문제로 벡터를 자기 하드웨어에 둘 필요가 없을 때 옳은 선택이다.</p>
+        <p class="verdict"><b>이긴다</b> — 프로덕션 도달 시간, 운영 단순성.<br><i>진다</i> — 규모에서의 질의당 비용, 커스텀 인덱싱 전략의 유연성.</p>
+      </div>
+      <div class="db rv">
+        <h4>Weaviate</h4>
+        <div class="fit">하이브리드 검색 최강 — 자체 호스팅의 유연성</div>
+        <p>일급 하이브리드 검색을 갖춘 가장 강한 자체 호스팅 선택지다. 벡터 검색에 BM25를 결합하고, 쓰기에 진정 즐거운 GraphQL풍 질의 인터페이스를 제공한다. 관리형 클라우드로도, 자체 호스팅 Kubernetes 배포로도 돌아간다. 하이브리드 검색 구현은 오픈소스 벡터 데이터베이스 중 최고인데, 5장이 깊이 전개하듯 하이브리드 검색은 프로덕션에서 협상의 여지가 없으므로 이것이 중요하다.</p>
+        <p class="verdict"><b>적소</b> — 하이브리드 검색이 중할 때, 자체 호스팅 유연성을 원할 때, 팀이 Kubernetes를 운영할 수 있을 때.</p>
+      </div>
+      <div class="db rv">
+        <h4>Qdrant</h4>
+        <div class="fit">성능 최적화의 선택 — Rust의 속도</div>
+        <p>오픈소스 벡터 데이터베이스 가운데 꾸준히 최고의 벤치마크 수치를 낸다 — 같은 재현율에서 대안보다 통상 20~40% 빠르다. 필터링 능력도 어느 데이터베이스보다 강해, 검색 시점의 복잡한 메타데이터 필터링을 과도한 비용 없이 감당한다. 관리형(Qdrant Cloud)으로도, 단일 바이너리 자체 호스팅으로도 돌아 Weaviate보다 운영이 단순하다.</p>
+        <p class="verdict"><b>적소</b> — 지연이 결정적일 때, 복잡한 필터링이 중할 때, 팀이 자체 호스팅할 수 있을 때.</p>
+      </div>
+      <div class="db rv">
+        <h4>pgvector</h4>
+        <div class="fit">통합의 선택 — 이미 PostgreSQL을 굴린다면</div>
+        <p>표준 PostgreSQL에 벡터 저장과 근사 최근접 검색을 더하는 확장이다. 이미 PostgreSQL을 규모 있게 운영하는 팀이라면 별도 데이터베이스 없이 벡터 검색을 얹을 수 있다. 대가는 성능 — 전용 벡터 데이터베이스보다 의미 있게 느리고, 말뭉치가 수백만 벡터를 넘어서면 격차가 벌어진다.</p>
+        <p class="verdict"><b>적소</b> — 200만 벡터 이하의 읽기 위주 워크로드에서는 흔히 실용적 정답. 그 너머에서는 통합의 운영 이득이 성능 벌금에 밀리기 시작한다.</p>
+      </div>
+      <div class="db rv">
+        <h4>ChromaDB · FAISS</h4>
+        <div class="fit">프로토타이핑과 임베디드 — 프로덕션의 함정</div>
+        <p>ChromaDB는 프로토타이핑의 선택이다. 시작하기에 즐겁고 Python API가 깔끔하며 인프로세스와 클라이언트-서버 양쪽을 지원하지만, 운영 이야기가 얇아 규모의 프로덕션에는 좀처럼 맞지 않고, Chroma로 시작한 팀 대부분이 성장하며 떠난다. 현대 벡터 검색 시대를 연 FAISS는 이제 독립 데이터베이스보다 큰 시스템 안의 임베디드 라이브러리로 쓰인다.</p>
+        <p class="verdict"><i>경고</i> — 이 장을 연 리걸테크 스타트업이 쓰던 것이 인프로세스 FAISS였고, 그들이 겪은 실패 양식이 이 패턴의 전형이다.</p>
+      </div>
+      <div class="db rv">
+        <h4>그 밖의 지형</h4>
+        <div class="fit">2023~24년의 주역들과 클라우드 빅3</div>
+        <p>2023~2024년에 두드러졌던 Milvus, Vespa, Vald는 여전히 성립하지만 위의 통합 집합에 기세를 내주었다. 클라우드 벤더의 자체 제품군(AWS, GCP Vertex AI Vector Search 등)은 나아지고 있으나 기능과 질의당 비용에서 전용 벤더에 통상 뒤진다.</p>
+        <p class="verdict"><b>판단</b> — 대부분의 팀에게 답은 위의 다섯 중 하나다. 클라우드 벤더 제품은 기존 클라우드 인프라와의 통합이 기능 격차를 상회할 때만 고려할 가치가 있다.</p>
+      </div>
+    </div>
+    <div class="wrap" style="padding:0">
+      <div class="panel rv">
+        <span class="tag">Production Insight</span>
+        <h4>세 질문의 결정 프레임워크</h4>
+        <p><strong>하나.</strong> 팀이 Kubernetes급 인프라를 운영할 수 있는가? 못 하면 Pinecone이나 Qdrant Cloud. 할 수 있으면 메뉴가 열린다.</p>
+        <p><strong>둘.</strong> 하이브리드 검색이 필요한가? 좁은 사용처를 빼면 프로덕션 배포에서는 <em>그렇다</em>. Weaviate, Qdrant, pgvector 쪽으로 기운다.</p>
+        <p><strong>셋.</strong> 말뭉치의 성장 궤적은? 200만 벡터 이하의 읽기 위주면 pgvector가 흔히 실용적이고, 1,000만 이상 또는 쓰기 과중이면 전용 데이터베이스(Weaviate, Qdrant, Pinecone)다. <strong>이 세 질문에 정직하게 답하면 대부분의 결정이 옳게 인도된다.</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3.3 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">3.3 · THE EMBEDDING PIPELINE</span>
+      <h2>임베딩 파이프라인의 공학 — 처리량, 재시도, 멱등성</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">규모의 임베딩 생성은 교과서의 서술보다 어렵다. 교과서의 서술이란 청크마다 임베딩 제공자를 한 번 호출하는 것이다. 프로덕션의 현실에는 처리량 한도, 일시적 장애, 멱등성 요구, 비용 관리, 그리고 수백만 청크를 몇 시간에서 며칠에 걸쳐 처리하는 파이프라인을 굴리는 운영 규율이 끼어든다. 임베딩 생성을 제대로 된 데이터 엔지니어링 파이프라인이 아니라 대수롭지 않은 절차 한 단계로 취급하는 것 — 프로덕션 RAG가 무너지는 가장 흔한 길의 하나다.</p>
+      <p class="rv"><strong>처리량</strong>에서 시작하자. OpenAI, Cohere, Voyage AI 등 상용 임베딩 제공자는 모두 분당 토큰 또는 분당 요청으로 표현되는 속도 한도를 강제한다. 청크당 평균 500토큰인 문서 100만 건의 말뭉치라면, 순진한 임베딩 생성은 몇 초 안에 한도에 부딪혀 한도가 풀릴 때까지 멎는다. 처방은 <strong>배칭</strong>이다. 제공자마다 한 번의 API 호출에 여러 입력 — 통상 최대 96개 — 을 담을 수 있다. 프로덕션 파이프라인은 언제나 배칭해야 한다. 입력을 낱개로 내는 것은 한 자릿수의 처리량을 탁자 위에 버려두는 짓이다. 배칭 너머의 처리량은 <strong>동시성</strong>이 좌우한다. 단일 스레드가 배치 요청을 순차로 내면 제공자까지의 왕복 지연에서 포화한다. 동시 워커 풀 — 통상 8~32개 — 을 유지하며 배치를 병렬로 내는 파이프라인이라야 제공자 측 한도까지 도달한다. 알맞은 동시성은 계정별 한도, 엔드포인트까지의 네트워크 지연, 요청 간 지연 변동에 달렸으므로, 대부분의 프로덕션 파이프라인은 이론적 계산 대신 경험적으로 벤치마크한다.</p>
+      <p class="rv"><strong>재시도</strong>가 중요한 까닭은 임베딩 제공자가 실패하기 때문이다. 타임아웃이 나고, 한도 초과에 429를 돌려주고, 자기네 장애 중에는 500번대 오류를 낸다. 제대로 된 재시도 처리가 없으면 100만 입력을 도는 파이프라인은 <em>어딘가에서</em> 실패한다 — 문제는 그 실패가 회복 가능한 딸꾹질이냐 파국적 데이터 유실이냐다. 표준 패턴은 지터를 곁들인 지수 백오프다. 영구 실패(429를 제외한 4xx)는 기록하고 건너뛰고, 일시 실패(타임아웃, 429, 5xx)는 성공하거나 설정된 최대 횟수에 이를 때까지 지연을 늘려 가며 재시도한다.</p>
+      <p class="rv"><strong>멱등성</strong>은 중복 작업과 오염된 상태를 막는 규율이다. 배치가 도중에 실패해 재시도될 때, 이미 성공적으로 임베딩된 입력을 다시 임베딩해서는 안 된다. 표준 패턴은 내용 주소화 임베딩 저장 — 각 입력의 결정론적 해시(통상 입력 텍스트에 임베딩 모델 버전을 붙인 것의 SHA-256)를 계산해 저장 키로 삼고, 재생성 전에 이미 존재하는지 확인하는 것이다. 이 패턴은 증분 수집도 가능하게 한다. 말뭉치에 문서가 더해지면 새 청크만 임베딩하고, 이미 있는 것은 전부 건너뛴다.</p>
+    </div>
+    <pre class="code rv"><span class="cm"># 프로덕션급 임베딩 파이프라인 패턴</span>
+<span class="kw">import</span> hashlib
+<span class="kw">import</span> time
+<span class="kw">from</span> concurrent.futures <span class="kw">import</span> ThreadPoolExecutor, as_completed
+
+BATCH_SIZE  = 96   <span class="cm"># 제공자별 최대치</span>
+WORKERS     = 16   <span class="cm"># 동시에 날아가는 배치 수</span>
+MAX_RETRIES = 5
+
+<span class="kw">def</span> content_hash(text: str, model: str) -&gt; str:
+    <span class="kw">return</span> hashlib.sha256(f<span class="st">'{model}::{text}'</span>.encode()).hexdigest()
+
+<span class="kw">def</span> embed_batch_with_retries(texts, model, attempt=0):
+    <span class="kw">try</span>:
+        <span class="kw">return</span> embedding_client.embed(texts, model=model)
+    <span class="kw">except</span> RateLimitError:
+        <span class="kw">if</span> attempt &gt;= MAX_RETRIES: <span class="kw">raise</span>
+        wait = (2 ** attempt) + (0.1 * attempt)  <span class="cm"># 지수 백오프 + 지터</span>
+        time.sleep(wait)
+        <span class="kw">return</span> embed_batch_with_retries(texts, model, attempt + 1)
+    <span class="kw">except</span> TransientError:
+        <span class="kw">if</span> attempt &gt;= MAX_RETRIES: <span class="kw">raise</span>
+        time.sleep(2 ** attempt)
+        <span class="kw">return</span> embed_batch_with_retries(texts, model, attempt + 1)
+
+<span class="kw">def</span> embed_corpus(chunks, model):
+    <span class="cm"># 이미 임베딩된 청크는 건너뛴다 (멱등성)</span>
+    pending = [(c, content_hash(c.text, model)) <span class="kw">for</span> c <span class="kw">in</span> chunks
+               <span class="kw">if not</span> vector_store.exists(content_hash(c.text, model))]
+    batches = [pending[i:i+BATCH_SIZE]
+               <span class="kw">for</span> i <span class="kw">in</span> range(0, len(pending), BATCH_SIZE)]
+    <span class="kw">with</span> ThreadPoolExecutor(max_workers=WORKERS) <span class="kw">as</span> pool:
+        futures = {pool.submit(embed_batch_with_retries,
+                               [c.text <span class="kw">for</span> c, _ <span class="kw">in</span> batch], model): batch
+                   <span class="kw">for</span> batch <span class="kw">in</span> batches}
+        <span class="kw">for</span> future <span class="kw">in</span> as_completed(futures):
+            batch = futures[future]
+            embeddings = future.result()
+            <span class="kw">for</span> (chunk, key), emb <span class="kw">in</span> zip(batch, embeddings):
+                vector_store.upsert(key, emb, metadata=chunk.metadata)</pre>
+    <div class="code-cap">원서 3.3절 — 배칭 · 동시성 · 재시도 · 멱등성을 갖춘 파이프라인 골격</div>
+    <div class="prose-serif">
+      <p class="rv">파이프라인 역학 너머에서 <strong>비용 관리</strong>가 명시적 주의를 요한다. 2026년 상용 임베딩 가격 기준으로, 500토큰 청크 1,000만 개의 말뭉치를 한 번 임베딩하는 데 모델에 따라 50~500달러가 든다. 임베딩 모델이 바뀔 때 말뭉치 전체를 다시 임베딩하는 것은 무시 못 할 비용이다. 표준 관리 패턴은 <em>버전 붙인 임베딩</em> — 각 임베딩 곁에 모델 버전을 저장하고 필요할 때만 재임베딩하는 것이다. 일부 프로덕션 시스템은 전환기 동안 두 버전을 동시에 유지한다. 옛것이 프로덕션 질의를 계속 받치는 사이 새것을 생성하고 검증한 뒤 전환하는 식이다.</p>
+      <p class="rv">오픈소스 자체 호스팅 임베딩 모델은 다른 비용 곡선을 그린다. 단일 GPU 인스턴스의 BGE나 GTE 모델은 전기료 수준의 비용으로 몇 시간 안에 청크 100만 개를 임베딩할 수 있어, 규모 있게 운영하는 팀이라면 임베딩 비용을 한 자릿수 줄일 수 있다. 대가는 임베딩 서비스를 운영하는 공학 — 로드밸런싱, 오토스케일링, 모니터링 — 과, 최고 상용 모델 대비 대체로 낮은 품질이다. 고volume·지연 관용 워크로드에는 자체 호스팅이 점점 정답이 되어 가고, 저volume·품질 결정적 워크로드에는 상용 임베딩이 여전히 나은 경제다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3.4 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">3.4 · HOT, WARM, AND COLD TIERS</span>
+      <h2>핫·웜·콜드 계층 — 자라나는 말뭉치를 위한 저장 아키텍처</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">말뭉치가 수천만, 수억 벡터로 자라면 모든 것을 단일 저장 계층에 두는 것이 경제적 낭비가 된다. 대부분의 질의는 말뭉치의 작은 조각 — 최근 추가된 것, 자주 인용되는 것, 최근 관련된 것 — 만 건드린다. 나머지는 검색 가능해야 하되 가장 빠른 계층에 있을 필요는 없다. 저장을 핫·웜·콜드 계층으로 나누는 규율은 프로덕션 RAG가 손에 넣을 수 있는 가장 영향력 큰 비용 최적화의 하나이며, 대부분의 팀이 너무 늦게 발견하는 것이기도 하다. 원리는 단순하다 — <strong>최근 접근되고 자주 관련되는 벡터는 빠른 저장에, 묵은 벡터는 싼 저장에 두고, 콜드 계층이 필요한 질의의 다소 높은 지연은 받아들인다.</strong> 구현은 더 미묘하며, 2026년에는 세 가지 아키텍처 패턴이 지배한다.</p>
+    </div>
+    <div class="heatbar rv"><div class="heat-hot"></div><div class="heat-warm"></div><div class="heat-cold"></div></div>
+    <div class="heat-legend rv">
+      <span>HOT — 인메모리 · 밀리초</span>
+      <span>WARM — 디스크 기반 · 다소 높은 지연</span>
+      <span>COLD — 압축 저장 · 수 초 · 한 자릿수 싼 비용</span>
+    </div>
+    <div class="tiers">
+      <div class="tier rv">
+        <h4>시간 기반 계층화<span class="en">Time-Based Tiering</span></h4>
+        <div>
+          <p>가장 단순한 패턴 — 최근성으로 벡터를 분할한다. 최근 90일의 문서는 핫 계층(인메모리 고성능 벡터 데이터베이스)에, 90일~12개월은 웜 계층(디스크 기반)에, 12개월 이상은 콜드 계층(질의에 몇 초 걸릴 수 있는 압축 저장)에 둔다. 질의는 응용의 최근성 요구에 따라 알맞은 계층으로 라우팅된다. 뉴스, 소셜, 콘텐츠 큐레이션처럼 최근성이 본질적으로 중요한 응용에 옳고, 옛 콘텐츠가 새것보다 더 관련될 수 있는 법률 계약·과학 문헌·참조 문서에는 그르다.</p>
+          <p class="rule">내 응용에서 최근성이 관련성의 믿을 만한 대리 지표일 때만 쓴다.</p>
+        </div>
+      </div>
+      <div class="tier rv">
+        <h4>접근 빈도 계층화<span class="en">Access-Frequency Tiering</span></h4>
+        <div>
+          <p>더 유연한 패턴 — 실제 접근 패턴에 따라 벡터를 계층 사이로 옮긴다. 시스템이 벡터별 검색 빈도를 추적해, 최근 N일간 자주 검색된 벡터는 핫으로 승격하고 M일간 검색되지 않은 벡터는 차가운 계층으로 강등한다. 접근 통계 유지와 주기적 계층 이동 작업이 필요하지만, 최근성이라는 부과된 가정 대신 실제 질의 패턴에 적응한다. 범용 기업 검색과 지식 베이스 응용의 지배적 패턴으로, 구현 부담은 완만하고 절감은 대개 상당하다. 이 패턴을 도입한 팀들은 흔히 벡터의 10~20%가 검색의 80~90%를 감당함을 발견한다 — 나머지 70~90%의 벡터는 핫 계층보다 한 자릿수 싼 계층에 앉아 있어도 된다는 뜻이다.</p>
+          <p class="rule">범용 기업 검색과 지식 베이스의 기본 선택.</p>
+        </div>
+      </div>
+      <div class="tier rv">
+        <h4>중요도 가중 계층화<span class="en">Importance-Weighted Tiering</span></h4>
+        <div>
+          <p>가장 정교한 패턴 — 계층 결정에 문서의 중요도를 반영한다. 중요도는 여러 신호에서 끌어낼 수 있다. 콘텐츠 관리자가 부여한 명시적 우선순위, 말뭉치 내 인용 수, 최근성 가중 접근 수, 사용자 피드백 점수. 고중요 문서는 접근 빈도와 무관하게 핫 계층에 머물고, 저중요 문서는 이따금 접근되더라도 콜드로 강등된다. 문서 품질이 의미 있게 갈리고 고품질 부분집합을 식별할 신호가 있는 응용에 옳다 — 판례의 이정표는 언제나 빨리 검색되어야 하는 법률 응용, 정전(正典) 논문은 언제나 핫에 있어야 하는 과학 응용, 현행 규정은 접근 패턴과 무관하게 결코 강등되어선 안 되는 컴플라이언스 응용.</p>
+          <p class="rule">품질 신호가 있는 고위험 도메인의 선택.</p>
+        </div>
+      </div>
+    </div>
+    <div class="panel copper rv">
+      <span class="tag">Common Pitfall</span>
+      <h4>너무 이른 계층화의 안티패턴</h4>
+      <p>대부분의 팀은 말뭉치가 500만~1,000만 벡터를 넘기 전에는 계층화가 필요 없다. 그 아래에서는 계층화의 운영 복잡성이 비용 절감을 웃돈다. 100만 벡터 말뭉치에 계층화를 구현하는 것은 <strong>공학의 연극</strong>이다. 의미 있는 비용 절감은 없고, 더해진 복잡성(계층 인지 라우팅, 이동 작업, 모니터링)은 이후 모든 운영에 매기는 세금이다. 계층화는 규모에 따라 졸업하는 규율이다. 말뭉치가 실제로 요구할 때 적용하라.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3.5 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">3.5 · OPERATING IN PRODUCTION</span>
+      <h2>프로덕션의 벡터 검색 운영 — 모니터링, 건강, 복구</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">이 장의 마지막 규율은 운영이다. 프로덕션 벡터 검색 인프라에는 전통적 데이터베이스 모니터링이 잡지 못하는 실패 양식이 있다. 벡터 인덱스는 디스크 수준 무결성 검사를 통과하는 방식으로 오염될 수 있다. 검색 재현율은 인덱스가 최적 설정에서 벗어나며 소리 없이 퇴화할 수 있다. 지연은 말뭉치가 알고리즘의 조율 지점을 지나 자라면서 서서히 기어오를 수 있다. 벡터 검색을 믿음직하게 운영하는 팀들은 고유한 운영 도구함을 길렀고, 그렇지 못한 팀들은 이 장을 연 리걸테크 스타트업처럼 — 한밤중에, 고객 에스컬레이션과 함께 — 이 실패 양식들을 발견한다. 필수 모니터링 규율은 다섯이다.</p>
+    </div>
+    <div class="diag">
+      <div class="diag-item rv">
+        <h4>평균이 아니라 지연 백분위<span class="en">Latency Percentiles, Not Averages</span></h4>
+        <p>평균 질의 지연은 오도하는 지표다. 중앙값 50밀리초가 말끔한데 질의의 10%가 500밀리초씩 걸릴 수 있다 — 대시보드는 건강해 보여도 실제 사용자는 참기 어려운 지연을 빈번히 겪는 프로파일이다. 프로덕션 모니터링은 언제나 p50, p95, p99를 따로 추적해야 한다. 특히 p99가 최악의 사용자 경험이 실제로 어떤지를 말해 준다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>참조 집합에 대한 재현율 감시<span class="en">Recall Monitoring Against a Reference Set</span></h4>
+        <p>근사 검색이 참 최근접 이웃을 실제로 찾는 비율인 재현율은 시간이 가며 소리 없이 퇴화할 수 있다. 100만 벡터에서 최적이던 인덱스 파라미터가 1,000만에서는 아닐 수 있고, 인덱스 재구축이 조율을 무심코 바꿀 수 있다. 재현율 표류를 잡으려면 정답 최근접 이웃이 알려진 작은 참조 질의 집합을 유지하고, 주기적으로(통상 매일) 프로덕션 시스템이 참 이웃을 몇이나 돌려주는지 잰다. 수용 문턱 아래로의 지속적 하락은 경보를 울려야 한다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>인덱스 무결성 검증<span class="en">Index Integrity Verification</span></h4>
+        <p>벡터 인덱스는 디스크·메모리 무결성 검사가 놓치는 방식으로 오염될 수 있다. 표준 검증 패턴은 인덱스 구조에 대한 체크섬을 유지하고 주기적으로 재계산하는 것이다. 더 정교한 검증은 기대 결과가 알려진 합성 질의를 던져 응답이 기대와 일치하는지 확인한다. 많은 프로덕션 시스템이 이 검사를 모든 복제본에서 상시로 돌리며, 어느 복제본의 거동이 다른 것들과 갈라지면 경보한다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>임베딩 서비스의 건강<span class="en">Embedding Service Health</span></h4>
+        <p>질의 시점에 임베딩을 생성한다면 — 이를테면 말뭉치를 검색하기 전에 사용자 질의를 임베딩한다면 — 임베딩 서비스는 크리티컬 패스 위에 있다. 그 가용성, 지연, 오류율이 종단 간 검색 경험에 직접 닿는다. 주 데이터베이스를 감시하는 것과 같은 엄격함으로 감시하고, 주 임베딩 서비스가 퇴화했을 때의 폴백 경로 — 통상 보조 제공자나 자체 호스팅 백업 모델 — 를 유지하라.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>비용 대시보드<span class="en">Cost Dashboards</span></h4>
+        <p>벡터 저장과 검색은 공짜가 아니고, 그 비용은 말뭉치 크기·질의량·인프라 선택에 따라 놓치기 쉬운 방식으로 불어난다. 임베딩 생성 비용, 벡터 저장 비용, 질의 비용, 질의 1,000건당 총비용을 추적하는 단순한 대시보드가 시스템의 경제를 보이게 만든다. 많은 팀이 검색 비용의 90%가 질의의 10% — 대개 소수의 병리적 접근 패턴 — 에서 나옴을 발견하며, 그 패턴을 손보는 것이 인프라 증설보다 싸다.</p>
+      </div>
+    </div>
+    <pre class="code rv"><span class="cm"># 참조 집합 재현율 감시 — 스케줄 작업으로 돌린다</span>
+REFERENCE_QUERIES = [
+    {<span class="st">'query'</span>: <span class="st">'maximum acetaminophen dose hepatic impairment'</span>,
+     <span class="st">'expected_doc_ids'</span>: [<span class="st">'cdn-457'</span>, <span class="st">'cdn-892'</span>, <span class="st">'cdn-1204'</span>]},
+    {<span class="st">'query'</span>: <span class="st">'cancellation policy enterprise subscription'</span>,
+     <span class="st">'expected_doc_ids'</span>: [<span class="st">'kb-67'</span>, <span class="st">'kb-201'</span>]},
+    <span class="cm"># ... 프로덕션을 대표하는 참조 질의 50~200개</span>
+]
+
+<span class="kw">def</span> measure_recall(k=10):
+    recalls = []
+    <span class="kw">for</span> q <span class="kw">in</span> REFERENCE_QUERIES:
+        results = vector_store.search(q[<span class="st">'query'</span>], k=k)
+        retrieved_ids = {r.doc_id <span class="kw">for</span> r <span class="kw">in</span> results}
+        expected = set(q[<span class="st">'expected_doc_ids'</span>])
+        recall = len(retrieved_ids &amp; expected) / len(expected)
+        recalls.append(recall)
+    <span class="kw">return</span> {
+        <span class="st">'mean_recall'</span>: sum(recalls) / len(recalls),
+        <span class="st">'min_recall'</span>: min(recalls),
+        <span class="st">'queries_below_threshold'</span>: sum(1 <span class="kw">for</span> r <span class="kw">in</span> recalls <span class="kw">if</span> r &lt; 0.8),
+    }
+
+<span class="cm"># 평균 재현율이 과거 기준선보다 5%p 넘게 떨어지면 경보</span>
+metrics = measure_recall(k=10)
+metric_emit(<span class="st">'rag.recall.mean'</span>, metrics[<span class="st">'mean_recall'</span>])
+<span class="kw">if</span> metrics[<span class="st">'mean_recall'</span>] &lt; HISTORICAL_BASELINE - 0.05:
+    alert(<span class="st">'Retrieval recall degradation detected'</span>, metrics)</pre>
+    <div class="code-cap">원서 3.5절 — 소리 없는 재현율 표류를 잡는 일일 감시 작업</div>
+    <div class="prose-serif">
+      <p class="rv">모니터링 너머에서, 프로덕션급 벡터 검색을 이 장 서두의 스타트업급 사고와 가르는 운영 규율은 <strong>연습된 복구</strong>다. 인덱스 오염에서 어떻게 복구할지, 보조 데이터베이스로 어떻게 넘어갈지, 필요하면 말뭉치를 처음부터 어떻게 재임베딩할지, 재현율을 떨어뜨린 임베딩 모델 변경을 어떻게 되돌릴지 — 팀은 이것을 <em>사고가 나기 전에</em> 알아야 한다. 이 런북들은 써 두고, 시험하고, 분기마다 연습해야 한다. 쓰는 비용은 엔지니어 이틀이고, 없을 때의 비용은 — 마침내 사고가 닥쳤을 때 — 고객 수로 계량된다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 안티패턴 ============ -->
+<section style="background:var(--mist)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">COMMON PITFALLS</span>
+      <h2>겹치며 불어나는 벡터 인프라의 실수들 — 세 가지 안티패턴</h2>
+    </div>
+    <div class="anti">
+      <div class="anti-item rv">
+        <h4>프로덕션 규모의 인프로세스 FAISS<span class="en">FAISS-In-Process at Production Scale</span></h4>
+        <p>애플리케이션 프로세스에 FAISS를 임베드해 돌리는 것은 프로토타이핑과 소규모 배포까지는 아름답게 통하다가, 인덱스가 서버 메모리를 넘어서는 경계에서 파국적으로 실패한다. 실패는 점진적이고, 프로세스 밖에서는 감지하기 어려우며, 사용자가 19초짜리 질의를 겪는 동안 온통 초록불인 헬스체크를 만들어 낸다.</p>
+        <p><span class="fix">처방</span> — 말뭉치가 수백만 벡터를 넘을 수 있다면 첫날부터 제대로 된 벡터 데이터베이스를 골라라. 이전은 비싸고 파괴적이며, 이전할 필요를 없애는 것은 싸다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>규모에서의 기본 인덱스 파라미터<span class="en">Default Index Parameters at Scale</span></h4>
+        <p>모든 벡터 데이터베이스는 중간 규모 워크로드에 합리적인 기본 파라미터를 싣고 나온다. 그것이 당신의 말뭉치에 최적인 경우는 드물다. 기본값은 평균적인 차원 수, 평균적인 말뭉치 크기, 평균적인 질의 패턴을 가정한다.</p>
+        <p><span class="fix">처방</span> — HNSW의 M과 efConstruction, IVF의 nlist와 nprobe를 명시적으로 조율한 팀들은 기본값으로 도는 팀의 2~3배에 이르는 재현율-지연 성능을 예사로 얻는다. 조율에는 엔지니어 하루가 들고, 절감은 시스템의 수명 내내 붇는다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>스크립트로서의 임베딩 파이프라인<span class="en">Embedding-Pipeline-as-Script</span></h4>
+        <p>대부분의 팀은 첫 임베딩 파이프라인을 스크립트로 짓는다 — 청크를 돌며 임베딩 API를 부르고 벡터 스토어에 쓰는 수백 줄의 Python. 스크립트는 청크 천 개에서는 멀쩡히 돌고, 백만 개에서는 수십 가지 방식으로 무너진다. 속도 한도 고갈, 재시도 없는 일시 장애, 재실행 시 중복 작업, 진행 추적 부재, 멱등성 부재.</p>
+        <p><span class="fix">처방</span> — 프로덕션 임베딩 생성은 스크립팅이 아니라 <strong>데이터 엔지니어링</strong>이다. 첫 몇 스프린트는 스크립트로 버틸 수 있더라도, 처음부터 그렇게 대접하라.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 다섯 요지 ============ -->
+<section class="takeaways">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">CHAPTER SUMMARY</span>
+      <h2>답사를 마치며 — 다섯 가지 요지</h2>
+    </div>
+    <div class="take">
+      <div class="take-item rv"><p><b>근사 최근접 이웃 알고리즘</b>이 프로덕션 규모의 벡터 검색을 경제적으로 가능하게 만든다. 지연 결정적 응용은 HNSW가, 메모리 제약이나 거대 규모 배포는 IVF와 곱 양자화가 지배한다. 재현율–지연–메모리의 세 방향 곡선은 모든 프로덕션 시스템이 의도적으로 항행해야 할 저울이다.</p></div>
+      <div class="take-item rv"><p>벡터 데이터베이스는 인기가 아니라 <b>제약 적합</b>으로 골라야 한다. 중요한 제약은 말뭉치 규모, 질의 처리량, 지연 예산, 갱신 빈도, 운영 성격, 통합 발자국의 여섯이며, Kubernetes 역량·하이브리드 검색 필요·성장 궤적의 세 질문이 대부분의 결정을 옳게 인도한다.</p></div>
+      <div class="take-item rv"><p>규모의 임베딩 생성은 <b>데이터 엔지니어링의 규율</b>이다. 프로덕션 파이프라인에는 배칭, 동시성, 지수 백오프 재시도, 내용 주소화 저장을 통한 멱등성, 명시적 비용 관리가 필요하다. 임베딩 생성을 대수롭지 않은 스크립트로 취급하는 것이 부하 아래서 시스템이 무너지는 가장 흔한 길의 하나다.</p></div>
+      <div class="take-item rv"><p><b>저장 계층화</b> — 핫·웜·콜드 — 는 규모에 따라 졸업하는 비용 최적화다. 500만~1,000만 벡터 아래에서는 시기상조이고, 그 위에서는 알맞은 패턴(시간 기반, 접근 빈도, 중요도 가중)이 인프라 비용을 통상 한 자릿수 줄인다.</p></div>
+      <div class="take-item rv"><p>프로덕션의 벡터 검색 운영에는 전통적 데이터베이스 운영에 없는 감시 규율이 필요하다 — <b>평균이 아닌 지연 백분위, 참조 집합 재현율, 인덱스 무결성 검증, 임베딩 서비스 건강, 명시적 비용 대시보드.</b> 이것 없이는 실패가 조용하고 사고 대응이 느리며, 이것과 함께라면 시스템은 관측 가능하고 복구 가능하다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 문헌 & 다리 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">FURTHER READING</span>
+      <h2>더 읽을거리</h2>
+    </div>
+    <div class="refs">
+      <div class="ref rv"><b>Malkov &amp; Yashunin</b>, <i>"Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs"</i> (TPAMI, 2018) — HNSW의 원전. 프로덕션에서 인덱스 알고리즘 결정을 내리는 이라면 필독.</div>
+      <div class="ref rv"><b>Jégou, Douze &amp; Schmid</b>, <i>"Product Quantization for Nearest Neighbor Search"</i> (TPAMI, 2011) — 곱 양자화의 효시. 압축 벡터 전략을 규모 있게 배포하기 전에 읽어야 한다.</div>
+      <div class="ref rv"><b>Subramanya et al.</b>, <i>"DiskANN: Fast Accurate Billion-Point Nearest Neighbor Search on a Single Node"</i> (Microsoft Research, NeurIPS 2019) — 10억 규모 단일 머신 벡터 검색의 준거. 말뭉치 규모의 최상단에서 짓고 있다면 결정적이다.</div>
+      <div class="ref rv"><b>Aumüller, Bernhardsson &amp; Faithfull</b>, <i>"ANN-Benchmarks: A Benchmarking Tool for Approximate Nearest Neighbor Algorithms"</i> (Information Systems, 2020) — 벡터 검색 알고리즘·데이터베이스 비교의 표준 벤치마크. ann-benchmarks.com을 참고로 삼되 자기 평가를 대체하게 하지는 말 것.</div>
+      <div class="ref rv"><b>Qdrant Engineering Blog</b>, <i>"How We Built a Production Vector Database"</i> (2024–2026 연재) — 프로덕션급 벡터 데이터베이스 구축의 운영 현실을 공개적으로 파고든 드문 기록. 내 벡터 데이터베이스가 밑에서 무엇을 하고 있는지 이해하는 데 유용하다.</div>
+    </div>
+    <p class="note rv">위 문헌 목록은 원서 3장의 Further Reading을 그대로 옮긴 것이다. 서지 사항의 최종 확인은 원 출처를 통해 하는 것이 옳다.</p>
+  </div>
+</section>
+
+<section class="bridge">
+  <div class="wrap">
+    <div class="sec-head rv" style="margin-bottom:32px">
+      <span class="sec-no">CHAPTER BRIDGE</span>
+      <h2>다음 답사지 — 청킹, 인덱싱, 문서 파이프라인 설계</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">4장은 저장 계층에서 수집 계층으로 눈을 옮긴다. 원본 문서를 받아 검색이 딛고 설 임베딩된 인덱스 청크로 바꾸는 실무 공학 — 의미를 보존하는 청킹 전략, PDF와 구조화 형식의 문서 파싱, 메타데이터 엔지니어링, 기업 문서의 지저분한 현실을 감당하는 수집 파이프라인 패턴 — 이다. 좋은 수집 없이는 어떤 영리한 검색도 시스템을 구하지 못하고, 좋은 검색 인프라 — 이 장의 주제 — 없이는 완벽한 수집조차 헛일이 된다. 기둥을 세웠으니 이제 들보를 올릴 차례다.</p>
+    </div>
+    <div class="next rv">NEXT ▸ CHAPTER 4 · CHUNKING, INDEXING, AND DOCUMENT PIPELINE DESIGN</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Raymond Norman, <span style="color:var(--gunmetal)">Agentic RAG Systems</span> (2026) · Chapter 3 요약 웹페이지<br>
+    원서 60–77쪽 전체 내용 기반 · 본 페이지는 학습·검토 목적의 2차 정리물이다
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    els.forEach(function(e){e.classList.add('on')});
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        en.target.classList.add('on');
+        io.unobserve(en.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,711 @@
+---
+layout: null
+title: "Chunking, Indexing, and Document Pipeline Design" 
+date: 2026-08-08
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>청킹, 인덱싱, 문서 파이프라인 설계 — Agentic RAG Systems 제4장</title>
+<meta name="description" content="Raymond Norman, 『Agentic RAG Systems』 제4장 답사기 — 여섯 청킹 전략, 문서 파싱, 메타데이터 엔지니어링, 구조 보존, 수집 파이프라인">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --porcelain:#F6F3EF;      /* 한지의 미색 */
+  --ink:#261D22;            /* 자묵(紫墨) — 재단실의 밤 */
+  --mulberry:#5E2F45;       /* 오디빛 — 본문 격자 잉크 */
+  --mulberry-soft:#8A5F73;
+  --persimmon:#BC6524;      /* 감빛 — 재단 초크의 경보색 */
+  --persimmon-deep:#8C4715;
+  --mist:#EAE3DE;           /* 패널 배경 */
+  --line:#D4C9C3;
+  --paper-card:#FCFAF8;
+  --danger:#993630;
+  --serif:'Gowun Batang', serif;
+  --sans:'Noto Sans KR', sans-serif;
+  --mono:'IBM Plex Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--porcelain);color:var(--ink);
+  font-family:var(--sans);font-weight:400;
+  line-height:1.95;font-size:17px;letter-spacing:-0.011em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--mulberry);color:var(--porcelain)}
+
+.wrap{max-width:880px;margin:0 auto;padding:0 28px}
+.wrap-wide{max-width:1080px;margin:0 auto;padding:0 28px}
+section{padding:96px 0}
+p{margin-bottom:1.6em}
+em{font-style:normal;color:var(--mulberry);font-weight:500}
+strong{font-weight:700;color:var(--ink)}
+.mono{font-family:var(--mono)}
+
+.rv{opacity:0;transform:translateY(26px);transition:opacity .85s cubic-bezier(.22,.7,.3,1),transform .85s cubic-bezier(.22,.7,.3,1)}
+.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .pulse{animation:none !important}
+  .sweep{animation:none !important;stroke-dasharray:none !important;stroke-dashoffset:0 !important}
+}
+
+/* ---------- 히어로 ---------- */
+header.hero{
+  background:linear-gradient(168deg, #1D1519 0%, #2E1F29 46%, #3B2833 100%);
+  color:#F0EAE8;padding:120px 0 100px;position:relative;overflow:hidden;
+}
+header.hero::after{
+  content:"";position:absolute;inset:0;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 30px, rgba(240,234,232,.035) 30px 31px),
+    repeating-linear-gradient(90deg, transparent 0 30px, rgba(240,234,232,.028) 30px 31px);
+  pointer-events:none;
+}
+.hero-kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.32em;color:#B295A2;text-transform:uppercase;margin-bottom:26px}
+.hero-kicker b{color:#E0A264;font-weight:600}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(34px,5.4vw,58px);line-height:1.34;letter-spacing:-0.015em;margin-bottom:30px}
+h1 .thin{display:block;font-size:.52em;font-weight:400;color:#C3ABB5;margin-top:14px;letter-spacing:.01em}
+.hero-lede{max-width:640px;font-size:18px;line-height:2.05;color:#DCCCD2;font-family:var(--serif)}
+.hero-meta{margin-top:44px;font-family:var(--mono);font-size:13px;color:#A0838F;display:flex;gap:28px;flex-wrap:wrap}
+.hero-meta span::before{content:"— ";color:#6B4E5B}
+
+/* ---------- 프롤로그 ---------- */
+.incident{background:var(--ink);color:#E9E1E4;padding:100px 0;position:relative}
+.yeargap{
+  display:flex;align-items:baseline;gap:26px;flex-wrap:wrap;
+  font-family:var(--mono);line-height:1;margin-bottom:10px;
+}
+.yeargap .y1{font-size:clamp(52px,9vw,100px);font-weight:600;color:#D97A5B}
+.yeargap .arrow{font-size:clamp(22px,4vw,36px);color:#8A7580}
+.yeargap .y2{font-size:clamp(52px,9vw,100px);font-weight:600;color:#8FBFA8;text-decoration:line-through;text-decoration-thickness:5px;text-decoration-color:rgba(217,122,91,.7)}
+.incident .prose{max-width:700px;font-family:var(--serif);font-size:17.5px;line-height:2.1;margin-top:44px}
+.incident .prose p{margin-bottom:1.7em}
+.dose{display:flex;gap:24px;flex-wrap:wrap;margin:52px 0 20px}
+.dose-card{flex:1;min-width:240px;border:1px solid rgba(233,225,228,.18);padding:28px 26px;font-family:var(--mono)}
+.dose-card .lbl{font-size:12px;letter-spacing:.24em;text-transform:uppercase;margin-bottom:14px;color:#A0838F}
+.dose-card .val{font-size:30px;font-weight:600;line-height:1.35}
+.dose-card .sub{font-size:13px;margin-top:12px;color:#BFA9B2;line-height:1.7;font-family:var(--sans)}
+.dose-good .val{color:#D97A5B}
+.dose-good{border-color:rgba(217,122,91,.45)}
+.dose-bad .val{color:#8FBFA8}
+.dose-bad{border-color:rgba(143,191,168,.4)}
+.pulse{animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* ---------- 섹션 공통 ---------- */
+.sec-head{margin-bottom:48px}
+.sec-no{font-family:var(--mono);font-size:13px;letter-spacing:.28em;color:var(--persimmon-deep);margin-bottom:16px;display:block}
+h2{font-family:var(--serif);font-weight:700;font-size:clamp(26px,3.6vw,38px);line-height:1.42;color:var(--ink)}
+h3{font-family:var(--serif);font-weight:700;font-size:21px;margin:2.4em 0 .9em;color:var(--mulberry)}
+.prose-serif{font-family:var(--serif);font-size:17.5px;line-height:2.08}
+
+.panel{background:var(--mist);border-left:4px solid var(--mulberry);padding:34px 36px;margin:52px 0}
+.panel .tag{font-family:var(--mono);font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--mulberry);margin-bottom:16px;display:block}
+.panel h4{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:14px}
+.panel p{font-size:15.5px;line-height:1.95;margin-bottom:1em}
+.panel p:last-child{margin-bottom:0}
+.panel.persimmon{border-left-color:var(--persimmon);background:#F2E7D9}
+.panel.persimmon .tag{color:var(--persimmon-deep)}
+
+/* ---------- SVG 도해 ---------- */
+.figure{margin:56px 0;text-align:center}
+.figure svg{max-width:100%;height:auto}
+.figure figcaption{font-family:var(--sans);font-size:14px;color:#5F5158;margin-top:18px;line-height:1.8}
+.figure figcaption::before{content:"⟨"}
+.figure figcaption::after{content:"⟩"}
+.sweep{stroke-dasharray:900;stroke-dashoffset:900;animation:sweep 2.2s ease-out forwards .4s}
+@keyframes sweep{to{stroke-dashoffset:0}}
+
+/* ---------- 여섯 전략 ---------- */
+.strategies{counter-reset:strat;margin:56px 0}
+.strat{
+  border-top:1px solid var(--line);
+  padding:30px 0 30px 0;
+  display:grid;grid-template-columns:210px 1fr;gap:26px;
+  counter-increment:strat;
+}
+.strat:last-child{border-bottom:1px solid var(--line)}
+.strat h4{font-family:var(--serif);font-size:18px;font-weight:700;color:var(--mulberry);line-height:1.5;position:relative;padding-left:44px}
+.strat h4::before{
+  content:counter(strat,decimal-leading-zero);
+  position:absolute;left:0;top:2px;
+  font-family:var(--mono);font-size:14px;font-weight:600;color:var(--persimmon-deep);
+}
+.strat h4 .en{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--mulberry-soft);margin-top:5px;letter-spacing:.04em}
+.strat p{font-size:15px;line-height:1.9;color:#463A40;margin-bottom:.7em}
+.strat .fit{font-size:13.5px;margin:0;line-height:1.8}
+.strat .fit b{color:#1E5B41;font-weight:700}
+.strat .fit i{color:#993630;font-style:normal;font-weight:700}
+
+/* 전략 요약표 */
+.strat-table{margin:56px 0}
+.st-row{
+  display:grid;grid-template-columns:160px 1fr 130px 1fr;gap:16px;align-items:center;
+  padding:18px 0;border-top:1px solid var(--line);
+}
+.st-row.head{border-top:none;padding-bottom:8px}
+.st-row.head span{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mulberry-soft)}
+.st-row:last-child{border-bottom:1px solid var(--line)}
+.st-name{font-weight:700;font-size:14.5px;color:var(--mulberry)}
+.st-cell{font-size:13px;line-height:1.7;color:#463A40}
+.st-cost{font-family:var(--mono);font-size:12px;color:var(--persimmon-deep)}
+
+/* ---------- 다섯 형식 카드 ---------- */
+.formats{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;margin:56px 0}
+.fmt{
+  background:var(--paper-card);border:1px solid var(--line);border-top:3px solid var(--mulberry);
+  padding:32px 30px;transition:transform .35s ease, box-shadow .35s ease;
+}
+.fmt:hover{transform:translateY(-5px);box-shadow:0 18px 40px -22px rgba(38,29,34,.35)}
+.fmt h4{font-family:var(--serif);font-size:18.5px;font-weight:700;margin-bottom:6px;color:var(--mulberry)}
+.fmt .sub{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--persimmon-deep);margin-bottom:16px}
+.fmt p{font-size:14.5px;line-height:1.85;color:#463A40;margin-bottom:.9em}
+.fmt p:last-child{margin-bottom:0}
+.fmt .tools{font-family:var(--mono);font-size:12px;color:var(--mulberry-soft);line-height:1.8}
+
+/* ---------- 코드 ---------- */
+pre.code{
+  background:var(--ink);color:#DCD1D6;
+  font-family:var(--mono);font-size:13px;line-height:1.85;
+  padding:32px 34px;margin:48px 0;overflow-x:auto;
+  border-left:4px solid var(--persimmon);
+}
+pre.code .cm{color:#9C8590}
+pre.code .kw{color:#E0A264}
+pre.code .st{color:#A8C9A4}
+.code-cap{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--persimmon-deep);margin:-36px 0 48px;padding-left:2px}
+
+/* ---------- 메타데이터 5범주 / 수집 6관심사 ---------- */
+.diag{counter-reset:diag;margin:56px 0}
+.diag-item{border-top:1px solid var(--line);padding:28px 0 28px 76px;position:relative;counter-increment:diag}
+.diag-item:last-child{border-bottom:1px solid var(--line)}
+.diag-item::before{
+  content:counter(diag,decimal-leading-zero);
+  position:absolute;left:0;top:28px;
+  font-family:var(--mono);font-size:16px;font-weight:600;color:var(--persimmon-deep);
+}
+.diag-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:8px;color:var(--mulberry)}
+.diag-item h4 .en{font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--mulberry-soft);display:block;margin-top:4px}
+.diag-item p{font-size:15px;line-height:1.9;color:#463A40;margin:0}
+
+/* ---------- 안티패턴 ---------- */
+.anti{counter-reset:anti;margin:56px 0}
+.anti-item{
+  border:1px solid var(--line);border-left:4px solid var(--danger);
+  background:var(--paper-card);padding:34px 36px 34px 92px;
+  margin-bottom:22px;position:relative;counter-increment:anti;
+}
+.anti-item::before{
+  content:counter(anti,decimal-leading-zero);
+  position:absolute;left:30px;top:34px;
+  font-family:var(--mono);font-size:17px;font-weight:600;color:var(--danger);
+}
+.anti-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:10px}
+.anti-item h4 .en{font-family:var(--mono);font-weight:400;font-size:12px;color:#8C6058;display:block;margin-top:4px}
+.anti-item p{font-size:15px;line-height:1.9;color:#463A40;margin-bottom:.9em}
+.anti-item p:last-child{margin-bottom:0}
+.anti-item .fix{font-weight:700;color:var(--mulberry)}
+
+/* ---------- 다섯 요지 ---------- */
+.takeaways{background:var(--ink);color:#E9E1E4;padding:100px 0}
+.takeaways h2{color:#F3EDEF}
+.takeaways .sec-no{color:#E0A264}
+.take{counter-reset:take;margin-top:52px}
+.take-item{display:grid;grid-template-columns:72px 1fr;gap:26px;padding:30px 0;border-top:1px solid rgba(233,225,228,.14);counter-increment:take}
+.take-item::before{content:counter(take);font-family:var(--serif);font-size:44px;font-weight:700;color:#4A3540;line-height:1}
+.take-item p{font-size:16px;line-height:2;color:#D2C3C9;margin:0}
+.take-item p b{color:#F3EDEF}
+
+/* ---------- 문헌/다리/푸터 ---------- */
+.refs{margin:52px 0}
+.ref{padding:22px 0 22px 34px;border-top:1px solid var(--line);position:relative;font-size:15px;line-height:1.85;color:#463A40}
+.ref::before{content:"▸";position:absolute;left:6px;color:var(--persimmon-deep)}
+.ref b{font-weight:700;color:var(--ink)}
+.ref i{font-style:italic;font-family:var(--serif)}
+.ref:last-child{border-bottom:1px solid var(--line)}
+.bridge{background:var(--mist);padding:88px 0}
+.bridge .prose-serif{max-width:700px}
+.bridge .next{margin-top:40px;font-family:var(--mono);font-size:13px;letter-spacing:.2em;color:var(--mulberry)}
+footer{padding:56px 0;text-align:center;font-family:var(--mono);font-size:12px;color:#8A7A81;border-top:1px solid var(--line);line-height:2}
+.note{font-size:13.5px;color:#6B5C63;margin-top:28px;line-height:1.9}
+.note::before{content:"※ ";color:var(--persimmon-deep)}
+
+@media(max-width:680px){
+  section{padding:72px 0}
+  .strat{grid-template-columns:1fr;gap:12px}
+  .st-row{grid-template-columns:1fr 1fr;row-gap:8px}
+  .st-row.head{display:none}
+  .st-name{grid-column:1 / -1}
+  .take-item{grid-template-columns:48px 1fr;gap:18px}
+  .take-item::before{font-size:32px}
+  .anti-item{padding:28px 24px 28px 68px}
+  .anti-item::before{left:22px}
+  .diag-item{padding-left:52px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 히어로 ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-kicker rv">AGENTIC RAG SYSTEMS · RAYMOND NORMAN · <b>제 4 장</b></div>
+    <h1 class="rv">청킹, 인덱싱, 문서 파이프라인 설계<span class="thin">— 수집 시점에 파괴된 정보는 어떤 검색도 되살리지 못한다</span></h1>
+    <p class="hero-lede rv">3장이 기둥을 세웠다면 4장은 들보를 올리는 장이다. 원단을 마름질하는 재단사의 가위질이 옷의 격을 정하듯, 문서를 청크로 마름질하는 손끝이 검색 품질의 상한을 정한다. 하류의 모든 부품은 제가 딛고 선 청크의 한계를 물려받는 법 — 이 장은 그 마름질을 설정 파라미터가 아니라 설계 결정으로 대접하는 법을 배우는 답사다.</p>
+    <div class="hero-meta rv">
+      <span>원서 78–96쪽</span>
+      <span>Part II · Core Architecture</span>
+      <span>마름질의 규율</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 프롤로그: 세 조각이 된 테이블 ============ -->
+<section class="incident">
+  <div class="wrap">
+    <div class="yeargap rv pulse">
+      <span class="y1">2017</span>
+      <span class="arrow">이 이겼다,</span>
+      <span class="y2">2026</span>
+    </div>
+    <div style="font-family:var(--mono);font-size:13px;color:#A0838F;letter-spacing:.2em" class="rv">2025년 11월 · 어느 생명보험사 · 아홉 해 묵은 사망률표의 승리</div>
+    <div class="prose">
+      <p class="rv">한 중견 생명보험사의 계리 팀이 컴플라이언스 책임자 앞에 서서 해명하고 있었다. 새로 배포한 RAG 시스템이 2026년 신상품의 보험료 권고를 생성하며 어째서 <em>2017년 사망률표</em>를 인용했는가. 사내 말뭉치에는 분명 현행 2026년 표가 들어 있었다. 시스템이 그것을 찾지 못했을 뿐이다 — 적어도 <em>표로서는</em> 찾지 못했다.</p>
+      <p class="rv">계리 플랫폼에서 각 32열짜리 PDF로 내보낸 현행 표들은 기본값 1,000토큰 전략의 청킹 파이프라인을 지나며 <strong>표마다 세 조각으로 잘려 나갔다.</strong> 열 머리글을 담은 청크는 데이터 행을 담은 청크들과 생이별했고, 데이터 행 청크들은 머리글 없이는 의미를 알 수 없는 익명의 숫자 격자가 되었다. 더 나쁜 것은, 역사적 참고용으로 말뭉치에 포함된 2017년 표들이었다. 팀이 파이프라인에 OCR 단계를 넣기 <em>전에</em> 수집된 그 표들은 평문 텍스트로 처리되어 머리글과 행이 한 청크 안의 연속 산문으로 보존되어 있었다. 검색 시스템의 눈에 2017년 표는 완결되고 조리 있는 문서로, 2026년 표는 끊어진 세 파편으로 보였다. 언어 모델이 현행 사망률 가정을 물었을 때 검색에 잡힌 유일하게 조리 있는 표는 2017년 것이었고, 모델은 그것을 썼다. 계리 팀의 보험료 권고는 아홉 해 묵은 데이터 위에 서 있었으며, 시스템은 그것이 최신 표라고 주장하는 자신만만한 인용까지 달아 주었다.</p>
+    </div>
+    <figure class="figure rv" style="margin-top:48px">
+      <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2026년 표가 세 조각 나고 2017년 표가 통짜로 남은 도해">
+        <!-- 2026 table sliced -->
+        <text x="180" y="30" font-family="Noto Sans KR, sans-serif" font-size="13.5" font-weight="700" fill="#D97A5B" text-anchor="middle">2026년 표 — 세 조각의 파편</text>
+        <!-- chunk 1: headers -->
+        <rect x="60" y="48" width="240" height="40" fill="none" stroke="#D97A5B" stroke-width="1.8"/>
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#E9E1E4">
+          <text x="72" y="72">AGE│SEX│SMOKER│qx│...32열 머리글</text>
+        </g>
+        <text x="312" y="72" font-family="IBM Plex Mono, monospace" font-size="10" fill="#A0838F">청크 1 — 고아가 된 머리글</text>
+        <!-- slice marks -->
+        <line class="sweep" x1="50" y1="98" x2="310" y2="98" stroke="#D97A5B" stroke-width="2" stroke-dasharray="7 5"/>
+        <!-- chunk 2 -->
+        <rect x="60" y="108" width="240" height="52" fill="none" stroke="#8A7580" stroke-width="1.4"/>
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#BFA9B2">
+          <text x="72" y="128">35│M│N│0.00081│0.00089│...</text>
+          <text x="72" y="146">36│M│N│0.00085│0.00094│...</text>
+        </g>
+        <text x="312" y="136" font-family="IBM Plex Mono, monospace" font-size="10" fill="#A0838F">청크 2 — 익명의 숫자 격자</text>
+        <line class="sweep" x1="50" y1="170" x2="310" y2="170" stroke="#D97A5B" stroke-width="2" stroke-dasharray="7 5"/>
+        <!-- chunk 3 -->
+        <rect x="60" y="180" width="240" height="52" fill="none" stroke="#8A7580" stroke-width="1.4"/>
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#BFA9B2">
+          <text x="72" y="200">61│F│Y│0.00512│0.00548│...</text>
+          <text x="72" y="218">62│F│Y│0.00549│0.00588│...</text>
+        </g>
+        <text x="312" y="208" font-family="IBM Plex Mono, monospace" font-size="10" fill="#A0838F">청크 3 — 역시 익명</text>
+        <text x="180" y="266" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#BFA9B2" text-anchor="middle">1,000토큰 경계가 머리글과 행을 갈라놓았다</text>
+        <!-- 2017 table intact -->
+        <text x="560" y="30" font-family="Noto Sans KR, sans-serif" font-size="13.5" font-weight="700" fill="#8FBFA8" text-anchor="middle">2017년 표 — 통짜 산문 한 덩이</text>
+        <rect x="450" y="48" width="220" height="184" fill="none" stroke="#8FBFA8" stroke-width="1.8"/>
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#C9DACF">
+          <text x="462" y="72">Mortality Table 2017.</text>
+          <text x="462" y="90">Age 35 male nonsmoker</text>
+          <text x="462" y="108">qx 0.00092 ... Age 36</text>
+          <text x="462" y="126">male nonsmoker qx</text>
+          <text x="462" y="144">0.00097 ... (머리글과</text>
+          <text x="462" y="162">행이 한 청크의 연속</text>
+          <text x="462" y="180">산문으로 보존됨)</text>
+          <text x="462" y="212" fill="#8FBFA8">→ 검색의 눈에는 '조리 있는 문서'</text>
+        </g>
+        <text x="560" y="266" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#BFA9B2" text-anchor="middle">OCR 도입 전에 평문으로 수집된 옛 표</text>
+        <text x="360" y="304" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#BFA9B2" text-anchor="middle">현행 표는 파편이 되고 묵은 표는 온전했다 — 그래서 아홉 해 묵은 데이터가 이겼다</text>
+      </svg>
+      <figcaption>같은 말뭉치, 두 개의 운명 — 청킹은 설정이 아니라 설계이며, 잘못 든 가위는 최신 데이터를 검색 불가능한 파편으로 만든다</figcaption>
+    </figure>
+    <div class="prose">
+      <p class="rv">컴플라이언스 책임자는 직업적 기준으로 보아 놀랄 만큼 절제했다. 수습에는 6주가 걸렸다. 기본 청커를 문서 유형 인지 수집 시스템으로 갈아 끼우고, 표 추출을 일급 연산으로 도입하고, 문서의 최근성과 권위를 추적하는 메타데이터 필드를 더하고, 말뭉치를 원본에서 다시 지어야 했다. 끝났을 때 그들은 컴플라이언스 책임자가 서명하는 시스템을 얻었다. 그러나 사후 분석을 떠나지 않은 물음은 이것이었다. 유능한 엔지니어링 팀이 어떻게 토대 데이터 계층이 이토록 구조적으로 부서진 시스템을 출시하게 되었는가. 답은, 민망하게도, <strong>청킹을 설계 결정이 아니라 설정 파라미터로 취급했기 때문</strong>이었다.</p>
+      <p class="rv">이 장은 청킹과 수집을 그것들이 실제로 그러한 바, 곧 설계 결정으로 대접하는 장이다. 검색 엔진은 수집 시점에 파괴된 정보를 검색하지 못한다. 임베딩 모델은 임베딩이 시작되기 전에 맥락에서 잘려 나간 의미를 임베딩하지 못한다. 리랭커는 구조적으로 기형이라 애초에 관련될 수 없었던 청크를 재순위화하지 못한다. RAG 시스템의 모든 하류 부품은 제가 딛고 선 청크의 한계를 물려받으며, 프로덕션 실패의 대부분은 파이프라인을 거슬러 올라가면 몇 달 전 무심코 내린 청킹 결정에 닿는다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4.1 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">4.1 · SIX CHUNKING STRATEGIES</span>
+      <h2>청킹 전략 — 여섯 갈래의 마름질과 각각의 자리</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">청킹은 원본 문서를 임베딩되고 인덱싱되고 검색될 조각으로 가르는 연산이다. 사소하게 들리지만 사소하지 않다. 2026년의 프로덕션 시스템을 지배하는 전략은 여섯이며, 저마다 트레이드오프가 다르고 맞는 문서 유형이 다르다. 어느 전략을 고르느냐가 이후 모든 질의에 대한 검색 품질의 상한을 정한다. 잘못 고르는 것이 프로덕션 RAG에서 가장 흔한 아키텍처 실수이고, 잘 고르는 것이 가장 지렛대 큰 결정의 하나다. 목수가 나뭇결을 보고 톱을 대듯, 마름질도 문서의 결을 보고 가위를 대야 하는 법이다.</p>
+    </div>
+    <div class="strategies">
+      <div class="strat rv">
+        <h4>고정 크기 청킹<span class="en">Fixed-Size</span></h4>
+        <div>
+          <p>가장 단순한 전략 — 문장 경계도, 문단 구조도, 의미적 결도 아랑곳없이 고정 토큰 수(통상 512 또는 1024)로 자른다. 대부분의 튜토리얼의 기본값이자 프로덕션 청킹 아티팩트 대부분의 근원이다. 빠르고 결정론적이고 구현이 하찮을 만큼 쉽다. 그리고 거의 모든 진지한 응용에 그르다. 실패 양식은 1장의 MedCentral 임상 어시스턴트를 무너뜨린 바로 그것 — 고정 경계가 문장 중간, 표 중간, 관계 중간을 갈라 한정하는 맥락과 한정되는 정보를 생이별시키는 것이다.</p>
+          <p class="fit"><b>적소</b> — 구조적 단절이 예측 가능한 고도로 균질한 문서, 프로덕션 전에 교체될 프로토타이핑, 중간 절단의 대가가 무의미한 응용뿐. <i>프로덕션 기본값이어서는 안 된다.</i></p>
+        </div>
+      </div>
+      <div class="strat rv">
+        <h4>재귀 청킹<span class="en">Recursive</span></h4>
+        <div>
+          <p>고정 크기에 대한 실용적 개선. 고정 토큰 경계 대신 정해진 우선순위 — 문단, 그다음 문장, 그다음 구, 그다음 단어 — 로 자연스러운 구조 경계에서 자르기를 시도하고, 앞 수준이 목표 크기를 넘는 청크를 낳을 때만 다음 수준으로 물러선다. 대부분의 경우 문장과 문단의 온전함을 지키면서 전체 크기 예산도 지킨다. LangChain의 RecursiveCharacterTextSplitter와 LlamaIndex의 SentenceSplitter가 이 패턴의 변형을 합리적인 기본 구분자 집합과 함께 구현한다.</p>
+          <p class="fit"><b>적소</b> — 산문 위주 문서(기사, 책, 보고서, 사내 문서)의 옳은 기본값. 첫 프로덕션 시스템의 옳은 출발점. <i>표·코드·계층 제목 등 재귀 분할이 존중할 수 없는 구조 요소를 담은 문서에서는 그르다.</i></p>
+        </div>
+      </div>
+      <div class="strat rv">
+        <h4>시맨틱 청킹<span class="en">Semantic</span></h4>
+        <div>
+          <p>절단점을 구조 경계에서 <em>의미 경계</em>로 옮긴다. 청커가 문서를 문장 단위로 걸으며 각 문장을 임베딩하고, 연속 문장 사이 임베딩 거리가 문턱을 넘는 전환점을 찾아 의미 경계로 삼고, 같은 의미 영역의 문장들을 묶어 청크를 만든다. 장점은 인상적이다 — 청크가 임의의 절편이 아니라 의미적으로 조리 있는 내용을 자연히 담는다. 단점은 비용(모든 문장을 청킹 때와 인덱싱 때 두 번 임베딩)과 비일관성(임베딩 모델의 확률성에 따라 같은 문서가 실행마다 다른 청크를 낳을 수 있음)이다.</p>
+          <p class="fit"><b>적소</b> — 화제 전환이 유의미하고 실행 간 청크 일관성이 운영상 중요하지 않은 서사·논설형 문서. <i>참조 문서, 규제 텍스트, 재현 가능한 청킹이 중요한 말뭉치에는 그르다.</i></p>
+        </div>
+      </div>
+      <div class="strat rv">
+        <h4>문장 윈도 청킹<span class="en">Sentence-Window</span></h4>
+        <div>
+          <p>다른 길을 택한다 — 개별 문장을 임베딩하되, 검색 시점에는 일치한 문장과 함께 주변 문장의 창(窓)을 돌려준다. 임베딩은 정밀하고(문장 단위 입도) 회수되는 맥락은 넓다(문장과 그 이웃들). 가장 검색 가능한 신호는 문장 수준에 있으되 가장 유용한 맥락은 여러 문장에 걸치는 문서에서 강력하며, 컨텍스트 오염도 줄인다 — 무관한 문장은 임베딩 표상에서 걸러지되 검색 중 관련이 드러나면 여전히 쓸 수 있다.</p>
+          <p class="fit"><b>적소</b> — 사실형 콘텐츠의 질의응답, 문장 하나가 특정 질문에 답하곤 하는 고객지원 말뭉치, 다문장 개념의 재현율보다 검색 정밀도가 중한 응용.</p>
+        </div>
+      </div>
+      <div class="strat rv">
+        <h4>문서 구조 청킹<span class="en">Document-Structure</span></h4>
+        <div>
+          <p>구조와 무관하게 청킹을 부과하는 대신, 원본 문서의 명시적 구조 표지 — 제목, 절, 목록 항목, 표 경계 — 를 존중한다. Markdown이면 제목 경계에서, HTML이면 요소 경계에서, PDF면 감지 가능한 절이나 쪽 경계에서, Office 문서면 개요로 식별되는 제목 스타일 경계에서 가른다. 원저자가 부호화해 둔 관계를 보존하는데, 그것은 토큰 기반 청킹이 감지할 수 있는 어떤 관계보다 거의 언제나 더 유의미하다.</p>
+          <p class="fit"><b>적소</b> — 의미 있는 내부 구조를 지닌 모든 말뭉치: 기술 문서, 법률 계약, 과학 논문, 구조화 보고서. 재귀·고정 크기보다 정교한 파싱이 필요하지만, 구조화 콘텐츠에서의 검색 품질 이득은 대개 극적이다.</p>
+        </div>
+      </div>
+      <div class="strat rv">
+        <h4>계층적 청킹<span class="en">Hierarchical</span></h4>
+        <div>
+          <p>가장 정교한 패턴 — 한 문서에서 서로 다른 입도의 청크를 여럿 만든다. 세밀한 검색용 문단 수준 청크, 넓은 맥락용 절 수준 청크, 방향 잡기용 문서 수준 요약. 검색 시점에 시스템은 순위 매김에는 세밀한 청크를 쓰되 질의가 요구하는 대로 점점 굵은 맥락을 돌려줄 수 있다.</p>
+          <p class="fit"><b>적소</b> — 질의가 여러 추상 수준의 정보를 필요로 할 수 있는 복잡한 말뭉치: 특정 조항도 절 전체도 필요할 수 있는 법률 계약, 문장 하나도 방법론 절 전체도 필요할 수 있는 과학 논문, 파라미터 하나도 서브시스템 전체도 필요할 수 있는 기술 명세. <i>구현 부담(문서당 다중 임베딩, 복잡한 검색 로직)은 무시 못 하나, 맞는 말뭉치에서의 품질 이득이 비용을 정당화한다.</i></p>
+        </div>
+      </div>
+    </div>
+    <div class="strat-table">
+      <div class="st-row head rv"><span>전략</span><span>적소</span><span>구현 비용</span><span>트레이드오프</span></div>
+      <div class="st-row rv"><div class="st-name">고정 크기</div><div class="st-cell">프로토타이핑 전용</div><div class="st-cost">하찮음</div><div class="st-cell">구조 파괴, 고아 콘텐츠 양산</div></div>
+      <div class="st-row rv"><div class="st-name">재귀</div><div class="st-cell">산문 위주 일반 말뭉치</div><div class="st-cost">낮음</div><div class="st-cell">합리적 기본값, 구조 콘텐츠에 약함</div></div>
+      <div class="st-row rv"><div class="st-name">시맨틱</div><div class="st-cell">화제 전환 뚜렷한 서사 문서</div><div class="st-cost">높음(임베딩)</div><div class="st-cell">탁월한 응집성, 비결정론적</div></div>
+      <div class="st-row rv"><div class="st-name">문장 윈도</div><div class="st-cell">사실형 Q&amp;A, 고객지원</div><div class="st-cost">중간</div><div class="st-cell">높은 정밀도, 검색 시 윈도 로직 필요</div></div>
+      <div class="st-row rv"><div class="st-name">문서 구조</div><div class="st-cell">기술·법률·과학 문서</div><div class="st-cost">중상(파싱)</div><div class="st-cell">원본 충실도 최고, 형식 의존적</div></div>
+      <div class="st-row rv"><div class="st-name">계층적</div><div class="st-cell">다중 입도 참조 말뭉치</div><div class="st-cost">높음(다중 임베딩)</div><div class="st-cell">품질 최강, 저장·비용 부담</div></div>
+    </div>
+    <figure class="figure rv">
+      <svg viewBox="0 0 720 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="청크 크기와 중첩의 원리">
+        <!-- document strip -->
+        <rect x="50" y="50" width="620" height="34" fill="#EAE3DE" stroke="#D4C9C3"/>
+        <text x="60" y="42" font-family="IBM Plex Mono, monospace" font-size="11" fill="#8A5F73">원본 문서의 토큰 흐름 →</text>
+        <!-- critical relationship spanning boundary -->
+        <rect x="290" y="50" width="130" height="34" fill="#BC6524" opacity=".28"/>
+        <text x="355" y="72" font-family="Noto Sans KR, sans-serif" font-size="11" fill="#8C4715" text-anchor="middle">경계에 걸친 핵심 관계</text>
+        <!-- chunk A -->
+        <rect x="50" y="110" width="310" height="30" fill="none" stroke="#5E2F45" stroke-width="1.8"/>
+        <text x="60" y="130" font-family="IBM Plex Mono, monospace" font-size="11" fill="#5E2F45">청크 A (512 tokens)</text>
+        <!-- chunk B with overlap -->
+        <rect x="290" y="158" width="380" height="30" fill="none" stroke="#5E2F45" stroke-width="1.8"/>
+        <text x="440" y="178" font-family="IBM Plex Mono, monospace" font-size="11" fill="#5E2F45">청크 B (512 tokens)</text>
+        <!-- overlap zone -->
+        <rect x="290" y="110" width="70" height="78" fill="#BC6524" opacity=".16"/>
+        <line class="sweep" x1="290" y1="102" x2="290" y2="196" stroke="#BC6524" stroke-width="2" stroke-dasharray="5 4"/>
+        <line class="sweep" x1="360" y1="102" x2="360" y2="196" stroke="#BC6524" stroke-width="2" stroke-dasharray="5 4"/>
+        <text x="325" y="215" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#8C4715" text-anchor="middle">중첩 50~200 tokens</text>
+        <text x="540" y="228" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#5F5158" text-anchor="middle">→ 경계에 걸친 관계가 적어도 한 청크에는 온전히 산다</text>
+      </svg>
+      <figcaption>중첩(overlap)의 원리 — MedCentral을 무너뜨린 경계 문제의 완화책. 프로덕션 시스템은 거의 언제나 중첩을 쓰고, 튜토리얼은 거의 언제나 쓰지 않는다</figcaption>
+    </figure>
+    <div class="panel rv">
+      <span class="tag">Key Definition</span>
+      <h4>청크 크기와 중첩 — 중요한 두 파라미터</h4>
+      <p>전략 너머에서 청킹 품질을 좌우하는 파라미터는 둘이다. <strong>목표 크기</strong>는 각 청크가 나르는 내용의 양을 정한다 — 통상 256, 512, 1024토큰이며 512가 가장 흔한 프로덕션 기본값이다.</p>
+      <p><strong>중첩</strong>은 연속 청크가 공유하는 토큰 수 — 통상 50~200토큰 — 다. 중첩은 MedCentral의 임상 어시스턴트를 망친 경계 문제를 완화한다. 핵심 관계가 청크 경계에 걸릴 때, 중첩은 그 관계가 적어도 한 청크에서는 살아남게 한다. <em>프로덕션 시스템은 거의 언제나 중첩을 쓰고, 튜토리얼은 거의 언제나 쓰지 않는다.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4.2 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap-wide">
+    <div class="wrap" style="padding:0">
+      <div class="sec-head rv">
+        <span class="sec-no">4.2 · DOCUMENT PARSING</span>
+        <h2>문서 파싱 — 기업 문서 형식이라는 현실에서 살아남기</h2>
+      </div>
+      <div class="prose-serif">
+        <p class="rv">프로덕션 말뭉치는 깨끗한 텍스트 파일이 아니다. 실물 문서를 스캔한 PDF, 스프레드시트가 박힌 Word 파일, 마크업이 들쭉날쭉한 HTML, PowerPoint 내보내기, 구식 형식의 규제 서류, 범용 파싱을 거부하는 구조의 기계 생성 보고서 — 이것이 현실이다. 이 형식들을 깨끗하고 검색 가능한 콘텐츠로 바꾸는 규율은 어떤 RAG 프로젝트에서든 가장 과소평가되는 일이다. <strong>대부분의 팀이 파싱에 일주일을 배정하고 석 달을 쓴다.</strong> 기업 말뭉치를 지배하는 형식은 다섯이고, 각각 제 나름의 파싱 난제와 프로덕션이 쓰는 대응 패턴을 지닌다.</p>
+      </div>
+    </div>
+    <div class="formats">
+      <div class="fmt rv">
+        <h4>PDF</h4>
+        <div class="sub">사라지지 않는 최악의 형식</div>
+        <p>PDF는 콘텐츠 추출이 아니라 시각적 표현을 위해 설계되었다. 문서의 의미 구조가 아니라 인쇄된 쪽의 배치를 보존하므로, 깨끗한 텍스트를 뽑으려면 배치 단서에서 논리 구조를 재구성해야 한다 — 근본적으로 손실이 있는 과정이다. 지배적 전략은 둘. <strong>배치 기반 파서</strong>는 글자의 기하학적 배열을 분석해 텍스트를 뽑는다. 일관된 배치의 디지털 태생 PDF에는 잘 통하고, 읽기 순서가 모호한 다단 배치, 줄 감지를 혼란시키는 내장 표, 텍스트 층 자체가 없는 스캔 PDF에는 쩔쩔맨다. <strong>OCR 기반 파서</strong>는 쪽을 래스터화해 광학 문자 인식을 적용한다. 배치 파서가 읽지 못하는 스캔·이미지 PDF에 통하지만 제 나름의 오류 — 혼동된 글자, 잃어버린 서식, 이따금의 조작된 텍스트 — 를 들여온다. 현대의 프로덕션 파이프라인은 흔히 둘 다 쓴다. 배치 파싱을 먼저, OCR을 폴백으로.</p>
+        <p class="tools">pdfplumber · PyMuPDF · pdfminer.six / Tesseract · AWS Textract · Azure Document Intelligence</p>
+      </div>
+      <div class="fmt rv">
+        <h4>HTML</h4>
+        <div class="sub">거짓말하는 구조</div>
+        <p>HTML은 파싱을 쉽게 해 줄 명시적 구조 마크업을 지녔다. 실제의 HTML은 구조적 거짓말로 가득하다 — 무관한 내용을 한데 감싼 div, CSS 클래스 뒤에 숨은 의미 관계, 본문에 끼어든 내비게이션과 푸터, 정적 HTML에는 아예 존재하지 않는 JavaScript 렌더링 콘텐츠. 프로덕션 HTML 파싱은 통상 여러 단계를 거친다. 헤드리스 브라우저로 렌더링해 JS 생성 콘텐츠를 붙잡고, 본문 영역을 추출하고, 정제된 HTML을 파싱해 제목 계층과 목록 구조를 보존하고, 청킹에 영향을 주어선 안 될 인라인 요소를 벗기거나 변환한다. 지름길은 문서 콘텐츠에 내비게이션 장식이 대량으로 박힌 말뭉치를 낳는다.</p>
+        <p class="tools">Playwright · Puppeteer / readability-lxml · trafilatura / BeautifulSoup · lxml</p>
+      </div>
+      <div class="fmt rv">
+        <h4>Office 문서</h4>
+        <div class="sub">내장된 구조 — 버리지 말 것</div>
+        <p>Word와 PowerPoint는 바탕의 XML 형식으로 풍부한 구조 정보를 나른다. 이를 제대로 뽑으려면 구조를 잃는 범용 텍스트 추출기가 아니라 형식을 아는 라이브러리가 필요하다. 핵심 통찰은 이것 — Word의 제목 스타일과 PowerPoint의 슬라이드 구조는 스타일링 결정이 아니라 문서 구조 청킹이 의지하는 <em>의미 표지</em>다. 흔한 실패 양식은 PDF 파싱 인프라가 더 성숙하다는 이론으로 Word를 PDF로 변환해 전처리하는 것이다. 거의 언제나 그르다 — Word 형식이 나르던 구조 정보를 내버리고, 이미 명시적이던 것을 파이프라인이 재구성하게 강요한다. <strong>Word 문서는 Word 문서로 파싱하라.</strong></p>
+        <p class="tools">python-docx · python-pptx</p>
+      </div>
+      <div class="fmt rv">
+        <h4>표</h4>
+        <div class="sub">모든 것을 부수는 특수 사례</div>
+        <p>표는 따로 논할 자격이 있다. PDF, HTML, Office, 그 밖의 거의 모든 문서 유형을 관통하는 실패 양식이기 때문이다. 표는 2차원 구조로 정보를 나르며, 산문으로 직렬화되는 순간 참담하게 납작해진다. 이 장을 연 계리 팀의 사망률표 참사가 정전(正典)의 예이되, 실패 양식은 재무 보고서·과학 데이터·제품 명세·규제 서류 어디서나 보편적이다. 프로덕션 시스템은 표를 일급 객체로 다룬다 — 추출 라이브러리로 직렬화된 텍스트가 아니라 구조화된 표상(행의 목록, 각 행은 셀의 목록)을 얻고, 이를 검색 친화적 형태로 바꾼다. Markdown 표(2차원 관계를 텍스트 형태로 보존), JSON 객체(구조화 검색용), 서술형 산문(산문만이 유일한 검색 경로일 때).</p>
+        <p class="tools">Camelot · pdfplumber 내장 표 추출기 · Office 라이브러리</p>
+      </div>
+      <div class="fmt rv">
+        <h4>스캔 문서와 OCR</h4>
+        <div class="sub">품질 감시가 규율이다</div>
+        <p>스캔 문서 — 역사 기록, 실물 보관 계약서, 팩스 양식 — 는 많은 기업 말뭉치의 상당 부분을 차지하고, OCR이 유일한 검색 경로다. 현대의 OCR은 몇 해 전보다도 극적으로 나아져, 2026년의 AWS Textract와 Azure Document Intelligence는 깨끗한 스캔에서 문자 오류율 1% 미만을 예사로 달성하고, docTR·PaddleOCR 같은 오픈소스 대안도 훨씬 싼 비용에 대부분의 과제에서 경쟁력이 있다. 프로덕션 팀이 기르는 규율은 <strong>OCR 품질 감시</strong>다 — 모든 OCR 문서에 엔진과 영역별 신뢰도 점수를 태그하고, 표본 쪽을 추출 텍스트와 시각적으로 대조해 체계적 오류를 찾고, 고오류 문서는 오염된 채 검색 말뭉치에 조용히 합류시키는 대신 재처리나 수동 검토로 돌린다.</p>
+        <p class="tools">AWS Textract · Azure Document Intelligence / docTR · PaddleOCR</p>
+      </div>
+    </div>
+    <div class="wrap" style="padding:0">
+      <div class="panel persimmon rv">
+        <span class="tag">Common Pitfall</span>
+        <h4>'전부 텍스트로 취급' 안티패턴</h4>
+        <p>가장 흔한 파싱 실수는 모든 문서 유형을 똑같이 다루는 것 — 원본 형식의 실제 구조와 무관하게 모든 소스를 범용 텍스트 추출기에 넣어 산문 한 줄기로 뽑는 것이다. 이 패턴은 표를 파괴하고(읽을 수 없는 토큰 흐름으로 납작하게), 제목 계층을 내버리고(균질한 문단 죽으로), 검색이 쓸 수 있었을 서식 단서(굵기, 목록, 들여쓰기)를 잃는다. 처방은 <strong>형식 인지 파싱</strong> — 형식마다 그 구조를 아는 파서를 두고, 파싱 계층이 하류 청킹이 존중할 수 있는 구조화 출력을 내게 하는 것이다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4.3 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">4.3 · METADATA ENGINEERING</span>
+      <h2>메타데이터 엔지니어링 — 이기는 쪽은 늘 수수한 기반이다</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">메타데이터는 검색 시스템을 벡터 검색 엔진에서 쓸 만한 프로덕션 도구로 바꾸는 기반이다. 메타데이터가 있어야 <strong>필터링 검색</strong>이 가능하다 — 특정 시기의 문서만, 권위 있다고 표시된 문서만, 특정 언어나 관할의 문서만 찾는 것. <strong>출처 추적</strong>도 가능해진다 — 어느 소스가 어느 청크를 낳았는지, 검색 시점의 현행 버전이 무엇이었는지. <strong>운영 관리</strong>도 가능해진다 — 묵은 콘텐츠 식별, 수집 계보 추적, 변하는 문서의 생애주기 관리. 메타데이터를 사려 깊게 설계한 팀은 그렇지 않은 팀보다 나은 시스템을 출시하며, 그 격차는 흔히 어떤 단일 알고리즘 개선보다 크다. 절집의 격은 화려한 단청보다 주춧돌 놓는 솜씨에서 갈리는 법 — 프로덕션의 격도 이 수수한 기반에서 갈린다.</p>
+      <p class="rv">프로덕션에서 중요한 메타데이터는 다섯 범주다. <strong>소스</strong> 메타데이터는 청크의 출신을 밝힌다 — 문서 ID, URL이나 경로, 소스 시스템, 원본 파일명, 수집 시각. <strong>권위</strong> 메타데이터는 소스의 신뢰성을 가리킨다 — 공식 대 초안, 내부 대 외부, 승인 대 검토 대기, 최근성 등급. <strong>구조</strong> 메타데이터는 청크가 부모 문서 안 어디에 있는지를 담는다 — 절 제목, 쪽 번호, 문단 색인, 계층 청킹 콘텐츠의 계층 수준. <strong>도메인</strong> 메타데이터는 필터링이 필요로 할 도메인 고유 속성을 부호화한다 — 법률 콘텐츠의 관할, 의료 콘텐츠의 치료 영역, 기업 콘텐츠의 사업부, 시간 민감 콘텐츠의 시기. <strong>생애주기</strong> 메타데이터는 운영 상태를 추적한다 — 임베딩 모델 버전, 임베딩 시각, 마지막 검증 시각, 폐기 플래그.</p>
+      <p class="rv">수집이 시작되기 전에 스키마를 설계하는 것은 협상의 여지가 없다. 나중에 설계된 스키마는 원래 담지 않은 필드를 더하려고 말뭉치 전체를 재수집해야 하는데, 이는 운영상 고통스럽고 원본이 원형대로 남아 있지 않으면 아예 불가능하다. 규율은 시스템이 지원해야 할 필터링·순위·운영 질의를 미리 내다보고, 그 질의를 가능케 하는 메타데이터를 수집 시점에 담는 것이다.</p>
+    </div>
+    <pre class="code rv"><span class="cm"># 규제 준수 말뭉치를 위한 프로덕션 메타데이터 스키마</span>
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+<span class="kw">from</span> typing <span class="kw">import</span> Optional, List
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> ChunkMetadata:
+    <span class="cm"># 소스 메타데이터 — 어디서 왔는가</span>
+    document_id: str
+    document_path: str
+    source_system: str            <span class="cm"># 'sharepoint' | 's3' | 'confluence'</span>
+    ingestion_timestamp: datetime
+    document_hash: str            <span class="cm"># 원본 문서의 SHA-256</span>
+
+    <span class="cm"># 권위 메타데이터 — 얼마나 믿을 만한가</span>
+    authority_tier: str           <span class="cm"># 'official' | 'draft' | 'historical'</span>
+    document_status: str          <span class="cm"># 'current' | 'superseded' | 'deprecated'</span>
+    effective_date: Optional[datetime]
+    expiration_date: Optional[datetime]
+
+    <span class="cm"># 구조 메타데이터 — 문서 안 어디인가</span>
+    section_heading: Optional[str]
+    section_path: List[str]       <span class="cm"># ['Part I', 'Chapter 3', 'Section 3.2']</span>
+    page_number: Optional[int]
+    chunk_index: int
+    hierarchy_level: int          <span class="cm"># 0=문서, 1=절, 2=문단, ...</span>
+
+    <span class="cm"># 도메인 메타데이터 — 규제 준수 고유</span>
+    jurisdiction: str             <span class="cm"># 'EU' | 'US' | 'UK' ...</span>
+    regulation_family: str        <span class="cm"># 'GDPR' | 'CCPA' | 'SOX' ...</span>
+    last_amended: Optional[datetime]
+
+    <span class="cm"># 생애주기 메타데이터 — 운영 상태</span>
+    embedding_model: str
+    embedding_version: str
+    embedded_at: datetime
+    validated_at: Optional[datetime]</pre>
+    <div class="code-cap">원서 4.3절 — 소스 · 권위 · 구조 · 도메인 · 생애주기의 다섯 범주</div>
+    <div class="prose-serif">
+      <p class="rv">이 예시 스키마는 규제 준수 말뭉치에 일부러 특화되어 있다. 다섯 범주는 모든 프로덕션 말뭉치에 적용되지만 구체적 필드는 응용마다 다르다. 의료 말뭉치에는 치료 영역, ICD-10 코드, 환자군 필드가 필요하다. 법률 말뭉치에는 관할, 심급, 사건 상태 필드가. 과학 말뭉치에는 게재지, 동료 심사 상태, 인용 메타데이터가. 자기 응용에 맞는 스키마 설계는 이삼일의 선행 작업이고, 시스템의 수명 동안 몇 주치의 운영 효율로 돌아온다.</p>
+      <p class="rv">메타데이터는 순수 벡터 검색이 못 하는 강력한 검색 패턴도 가능케 한다 — <strong>필터링 검색</strong>이다. 대부분의 프로덕션 벡터 데이터베이스는 질의 시점 메타데이터 필터링을 지원한다. 세무 지침 질의를 '관할=US, 상태=current'로, 임상 권고 질의를 '권위=official, 발효일=최근'으로 좁힐 수 있다. 필터링은 검색 공간을 줄이고 정밀도를 높이며, 벡터 순위에서 현행 권위 콘텐츠와 경쟁했을 낡거나 저권위 콘텐츠의 회수를 막는다. 5장이 하이브리드 검색의 일부로 필터링을 상세히 전개한다.</p>
+    </div>
+    <div class="panel rv">
+      <span class="tag">Production Insight</span>
+      <h4>메타데이터는 수집 시점에, 언제나</h4>
+      <p>미래에 유용할지 모를 모든 메타데이터 필드는 <strong>수집 시점에</strong> 담아야 한다. 원본 문서는 옮겨지고 바뀌고 사라진다. 메타데이터를 뽑을 기회는 문서가 처음 처리될 때뿐이다. 나중에 채워 넣으려던 팀들은 그 비용이 애초에 담는 비용의 몇 배임을 어김없이 발견한다. 규율은 수집 시점의 <em>과잉 수집</em>이다. 안 쓰는 메타데이터는 작은 저장 비용이고, 없는 메타데이터는 아키텍처의 족쇄다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4.4 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">4.4 · PRESERVING STRUCTURED CONTENT</span>
+      <h2>구조화 콘텐츠 보존하기 — 표, 코드, 그리고 수식</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">대부분의 프로덕션 말뭉치에는 산문식 청킹을 거부하는 콘텐츠 — 표, 코드 블록, 수학 공식, 도식 — 가 들어 있다. 이를 보통 텍스트로 다루면 의미가 파괴되고, 저마다의 특성에 맞춘 파서와 청킹 패턴을 갖춘 일급 구조 객체로 다루면 그것에 의존하는 질의의 검색이 극적으로 좋아진다. 규율은 파싱 중에 구조화 콘텐츠를 알아보고 파이프라인 내내 산문과 다르게 다루는 것이다.</p>
+      <p class="rv"><strong>표.</strong> 표는 2차원 구조로 정보를 나른다 — 행은 개체나 시점을, 열은 속성을 표상하고, 어느 셀의 의미든 행과 열의 머리글에 달려 있다. 산문으로 납작하게 만드는 것은 이 구조를 파괴한다. 프로덕션의 처리는 세 패턴이다. 첫째, <em>Markdown 표 형식으로 보존</em> — 2차원 관계를 언어 모델이 해석할 수 있는 텍스트 표상으로 지킨다. 둘째, <em>구조화 추출</em> — 각 표를 JSON류의 구조화 표상으로 바꿔 텍스트 검색 파이프라인과 독립적으로 질의할 수 있게 한다. 셋째, 2026년에 점점 흔해지는 <em>이중 표상</em> — 각 표를 구조화 객체(구조화 질의용)와 산문형 서술(서사 검색용)로 둘 다 청킹한다. 어느 조합이 옳은지는 응용의 질의가 주로 서사형이냐 데이터형이냐에 달렸다.</p>
+      <p class="rv"><strong>코드 블록.</strong> 기술 문서 속 코드도 비슷한 난제다. 코드의 의미는 들여쓰기, 괄호 짝, 문장 경계라는 구문 구조에 달려 있고, 임의의 청킹은 이를 파괴한다. 함수 한가운데서 잘린 코드 블록은 양쪽 다 해석 불능이 된다. 프로덕션 기술 콘텐츠 파이프라인은 코드 블록을 일반 청킹이 갈라서는 안 될 <em>원자 단위</em>로 다루고, 검색이 코드를 그 설명과 함께 돌려줄 수 있도록 주변 맥락과 함께 임베딩한다. 코드는 언어 인지 처리의 덕도 본다 — 구문 강조 라이브러리로 함수명·클래스명 등 의미 있는 토큰을 식별해 검색과 순위를 모두 개선할 수 있고, 일부 프로덕션 시스템은 코드 의미론과 자연어 의미론이 하나의 임베딩 모델로 둘 다 잘 섬기기 어려울 만큼 다름을 인정하고 코드 말뭉치로 훈련된 별도의 코드 전용 임베딩 모델을 유지한다.</p>
+      <p class="rv"><strong>수학 콘텐츠.</strong> 수식 — 방정식, 표현식, 유도 — 은 과학·공학·금융 말뭉치에 빈번하며, 통상 세 형태로 도착한다. LaTeX 소스는 텍스트로 보존할 수 있고 현대 언어 모델이 해석할 수 있으나 임베딩 모델의 LaTeX 구문 처리 능력은 들쭉날쭉하다. 이미지는 수학 전용 OCR(Mathpix나 오픈소스 대안)이 필요하다 — 범용 OCR은 수식을 망가뜨린다. MathML은 파이프라인 내내 보존할 수 있는 구조 정보를 주되 커스텀 파싱을 요구한다. 전략적 물음은 <em>수학 검색이 이 응용에 중요한가</em>다. 과학 논문 검색 엔진이라면 필수다 — 연구자는 산문만큼이나 수식 구조로 질의한다. 일반 기술 지식 베이스라면 수식을 둘러싼 설명에 대한 산문 검색으로 대개 족하다. 어느 쪽인지 알아보는 것이 한편의 과잉 공학과 다른 편의 과소 공학을 막는다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4.5 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">4.5 · THE INGESTION PIPELINE</span>
+      <h2>수집 파이프라인 — 변하는 말뭉치를 위한 프로덕션 아키텍처</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">프로덕션 말뭉치는 변한다. 문서가 더해지고, 갱신되고, 폐기되고, 삭제된다. 새 문서 유형이 들어오고, 임베딩 모델이 업그레이드된다. 오늘의 말뭉치는 다음 분기의 말뭉치가 아니다. 수집 파이프라인은 인덱싱된 표상을 원본 진실(source-of-truth)과 동기화된 채로 지키는 운영 기계이며, 이 계층의 아키텍처 선택이 시스템이 시간이 가도 일관성을 지킬지, 더는 존재하지 않는 문서들을 표상하는 벡터의 뒤죽박죽으로 퇴락할지를 가른다. 프로덕션 수집 아키텍처를 지배하는 관심사는 여섯이다.</p>
+    </div>
+    <div class="diag">
+      <div class="diag-item rv">
+        <h4>증분 처리<span class="en">Incremental Processing</span></h4>
+        <p>문서가 더해지거나 갱신되면 파이프라인은 변경분만 처리해야지 말뭉치 전체를 재수집해서는 안 된다. 마지막 실행 이후 실제로 변한 문서를 식별하는 변경 감지 기제 — 통상 내용 해싱과 소스 시스템 타임스탬프의 결합 — 가 필요하다. 증분 처리가 없으면 수집 비용이 변경 크기가 아니라 말뭉치 크기에 비례해 불어나고, 말뭉치가 수백만 문서를 넘으면 경제적으로 감당 불능이 된다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>삭제 전파<span class="en">Deletion Propagation</span></h4>
+        <p>원본 진실에서 문서가 제거되면 그 청크들도 벡터 스토어에서 제거되어야 한다. 단순하게 들리지만 운영상 가장 흔한 실패 지점의 하나다. 문서는 여러 방식으로 사라진다 — 명시적 삭제, 새 버전으로의 교체, 다른 시스템으로의 이관, 조직 개편 — 그리고 그 변화가 모두 수집 파이프라인에 보이지는 않는다. 프로덕션 시스템은 원본 진실의 현재 내용과 벡터 스토어의 내용을 주기적으로 대조해 고아를 제거하는 명시적 대사(對査) 작업을 유지한다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>버전 추적<span class="en">Version Tracking</span></h4>
+        <p>문서가 갱신될 때, 옛 버전(현재 벡터 스토어에)과 새 버전(수집 직전)이 시스템에 잠시 공존한다. 파이프라인은 이 전환을 말끔히 다뤄야 한다 — 통상 새 버전을 먼저 수집하고, 인덱스 반영이 확인된 뒤 옛 버전을 제거한다. 변경 처리 중 문서가 검색에 보이지 않는 공백을 막는 패턴이다. 일부 응용은 두 버전을 의도적으로 함께 보존한다 — 역사 검색은 대체된 버전에의 접근이 이롭다 — 이때는 버전 메타데이터가 현행과 역사를 가르는 판별자가 된다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>장애 처리<span class="en">Failure Handling</span></h4>
+        <p>수백만 문서를 도는 수집 파이프라인은 개별 문서의 실패 — 손상된 PDF, OCR 중 네트워크 타임아웃, 스캔 콘텐츠의 문자 인코딩 문제 — 를 반드시 만난다. 파이프라인은 일시 실패(재시도)와 영구 실패(건너뛰고 기록)를 구별하고, 첫 오류에서 멈추는 대신 나머지 말뭉치를 계속 처리하고, 지속 실패를 조용히 버리는 대신 운영에 드러내야 한다. 표준 패턴은 실패 문서의 데드레터 큐, 문서 유형별 실패율을 보이는 운영 대시보드, 재시도 한도를 넘긴 문서의 인간 검토 큐다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>처리량<span class="en">Throughput</span></h4>
+        <p>프로덕션 수집 파이프라인은 하루 수만에서 수백만 문서를 처리해야 할 수 있고, 병목은 통상 임베딩 생성이다. 3장의 동시 배치 임베딩 패턴이 그대로, 규모를 키워 적용된다 — 파싱·청킹·임베딩 생성·인덱싱마다 전용 워커 풀을 두고, 어느 단계도 다음 단계를 압도하지 못하게 하는 배압(backpressure) 기제를 갖춘다. 워크플로 오케스트레이션은 Apache Beam, Airflow, 그리고 점점 더 Prefect가 받친다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>관측 가능성<span class="en">Observability</span></h4>
+        <p>배경에서 조용히 도는 수집 파이프라인은 실패가 늦게 발견되는 파이프라인이다. 프로덕션급 수집에는 시간당 처리 문서 수, 문서당 평균 처리 시간, 문서 유형별 파서 실패율, 청킹 분포(문서당 청크 수), 임베딩 지연 백분위, 현재 적체를 보이는 대시보드가 있다. 이 지표들이 표류와 퇴화를 사용자 가시적 사고가 되기 전에 드러낸다.</p>
+      </div>
+    </div>
+    <div class="panel persimmon rv">
+      <span class="tag">Common Pitfall</span>
+      <h4>'세상을 다시 처리하기' 안티패턴</h4>
+      <p>많은 팀이 수집 파이프라인을 매 실행마다 말뭉치 전체를 처음부터 재처리하는 배치 작업으로 짓는다. 작은 말뭉치에는 통하지만 규모를 감당하지 못한다. 수백만 문서를 넘어서면 전체 재처리는 자주 돌리기에 너무 느려지고 — 인덱싱된 표상이 원본 진실에 몇 시간, 며칠씩 뒤처진다는 뜻이다. <strong>규모에서 증분 처리는 협상의 여지가 없다.</strong> 운영 비용이 아파진 뒤에 개조하지 말고 처음부터 지어라.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 안티패턴 ============ -->
+<section style="background:var(--mist)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">COMMON PITFALLS</span>
+      <h2>토대를 좀먹는 수집의 실수들 — 세 가지 안티패턴</h2>
+    </div>
+    <div class="anti">
+      <div class="anti-item rv">
+        <h4>청킹을 한 번 설정하고 영원히 두기<span class="en">Configuring Chunking Once, Forever</span></h4>
+        <p>대부분의 팀은 파이프라인을 처음 지을 때 청킹 전략과 파라미터를 정해 배포하고 다시는 그 결정을 돌아보지 않는다. 초기 말뭉치에 적절했던 청킹이 말뭉치가 세 배로 붇고 새 문서 유형이 더해진 뒤에도 적절한 경우는 드물다.</p>
+        <p><span class="fix">처방</span> — 청킹은 현행 검색 지표에 견주어 <strong>분기마다 재평가</strong>해야 한다. 비용은 하루치 평가 작업이고, 이득은 진화하는 말뭉치 위에서 묵은 청킹을 돌리다 오는 검색 품질의 완만한 침식을 막는 것이다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>파싱 중에 원본 형식 내버리기<span class="en">Discarding Source Format During Parsing</span></h4>
+        <p>문서 구조를 내버리는 범용 텍스트 추출 — Word를 평문으로 변환하고, 표를 CSV로 내보내고, HTML을 산문으로 납작하게 만드는 것 — 은 수집 시점에는 편하고 이후로는 영원히 비싸다. 구조 정보는 원본에 있었고 고의로 버려졌다. 되찾으려면 모든 문서를 다시 파싱해야 하는데, 원본 형식이 더는 없는 경우가 흔하다.</p>
+        <p><span class="fix">처방</span> — 구조를 수집 내내 보존하라. Word 문서에 제목이 있으면 제목 계층이 인덱싱된 표상까지 살아남아야 하고, PDF에 표가 있으면 표 구조가 살아남아야 한다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>메타데이터 스키마 없음<span class="en">No Metadata Schema</span></h4>
+        <p>명시적 스키마가 없는 팀은 수집 시점에 마침 쉬웠던 필드 — 파일 경로, 수집 시각, 어쩌면 소스 시스템 식별자 — 만 담기 마련이다. 석 달 뒤 문서 최근성이나 관할 필터링이 요구사항이 되었을 때, 그것을 받칠 메타데이터는 거기 없다. 수습은 새 스키마로 말뭉치를 재수집하는 것인데, 운영상 고통스럽거나 아예 불가능할 수 있다.</p>
+        <p><span class="fix">처방</span> — 첫 문서를 수집하기 전에 스키마를 설계하라. <strong>과소 수집보다 과잉 수집이다.</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 다섯 요지 ============ -->
+<section class="takeaways">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">CHAPTER SUMMARY</span>
+      <h2>답사를 마치며 — 다섯 가지 요지</h2>
+    </div>
+    <div class="take">
+      <div class="take-item rv"><p><b>청킹은 설정 파라미터가 아니라 설계 결정이다.</b> 여섯 전략 — 고정 크기, 재귀, 시맨틱, 문장 윈도, 문서 구조, 계층적 — 은 트레이드오프가 뚜렷이 다르고 맞는 말뭉치가 다르다. 의도적으로 골라라. 청킹 결정이 하류 전체의 검색 품질 상한을 정한다.</p></div>
+      <div class="take-item rv"><p>프로덕션 문서 파싱은 <b>형식별 처리</b>를 요구한다. PDF는 배치 파싱에 OCR 폴백을, HTML은 JavaScript 렌더링과 본문 추출을, Office 문서는 구조 표지를 보존하는 형식 인지 파서를, 표는 2차원 구조를 지키는 전용 추출을. 범용 텍스트 추출은 검색이 의지하는 정보를 파괴한다.</p></div>
+      <div class="take-item rv"><p><b>메타데이터</b>는 프로토타입과 프로덕션급을 가르는 수수한 기반이다. 소스·권위·구조·도메인·생애주기의 다섯 범주를 수집 시작 전에 설계하고, 수집 시점에 담고, 필터링 검색과 운영 관리에 써야 한다. 늦은 스키마 설계는 운영상 고통스럽고 때로 불가능하다.</p></div>
+      <div class="take-item rv"><p><b>구조화 콘텐츠</b> — 표, 코드 블록, 수식 — 는 산문으로 납작하게 만들지 말고 일급 객체로 다뤄야 한다. 형식마다 제 보존 전략이 필요하며, 서사 질의와 구조화 질의가 둘 다 콘텐츠를 찾을 수 있도록 흔히 이중 표상(구조화 + 산문)이 쓰인다.</p></div>
+      <div class="take-item rv"><p><b>수집 파이프라인은 스크립트가 아니라 프로덕션 데이터 엔지니어링이다.</b> 여섯 관심사 — 증분 처리, 삭제 전파, 버전 추적, 장애 처리, 처리량, 관측 가능성 — 가 지배한다. 수집을 대수롭지 않은 절차로 취급한 팀은 인덱싱된 표상이 원본 진실에서 서서히 갈라지는 시스템을 출시한다 — 가시적 사고를 낳기 전까지는 보이지 않는 퇴화다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 문헌 & 다리 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">FURTHER READING</span>
+      <h2>더 읽을거리</h2>
+    </div>
+    <div class="refs">
+      <div class="ref rv"><b>LlamaIndex Documentation</b>, <i>"Node Parsers and Text Splitters"</i> (상시 갱신) — 프로덕션 청킹 전략에 관한 가장 철저한 오픈소스 레퍼런스. 문장 윈도와 계층적 청킹 패턴의 구현이 여기 있다.</div>
+      <div class="ref rv"><b>Greg Kamradt</b>, <i>"5 Levels of Text Splitting"</i> (YouTube 및 노트북, 2024) — 청킹 지형의 가장 명료한 입문. 이 장의 전략들에 곧바로 대응하는 코드 예제가 딸려 있다.</div>
+      <div class="ref rv"><b>Anthropic</b>, <i>"Contextual Retrieval"</i> (2024) — 임베딩 전에 각 청크에 요약 맥락을 붙이는 패턴을 소개한다. 1장의 MedCentral 사건이 보여 준 고아 청크 문제를 겨눈다. 고위험 검색을 출시하는 팀에 강력 추천.</div>
+      <div class="ref rv"><b>Microsoft Research</b>, <i>"Unstructured.io and the State of Document Processing"</i> (2025) — 문서 파싱 패턴의 포괄적 취급. PDF, Office, 웹 콘텐츠 추출을 깊이 다룬다.</div>
+      <div class="ref rv"><b>LangChain Documentation</b>, <i>"Document Loaders"</i> (상시 갱신) — 흔한 문서 형식 파서들의 레퍼런스 카탈로그. 출발점으로 삼되, 운영상 중요한 형식이라면 커스텀 파서를 쓰게 될 것을 각오할 것.</div>
+    </div>
+    <p class="note rv">위 문헌 목록은 원서 4장의 Further Reading을 그대로 옮긴 것이다. 서지 사항의 최종 확인은 원 출처를 통해 하는 것이 옳다.</p>
+  </div>
+</section>
+
+<section class="bridge">
+  <div class="wrap">
+    <div class="sec-head rv" style="margin-bottom:32px">
+      <span class="sec-no">CHAPTER BRIDGE</span>
+      <h2>다음 답사지 — 하이브리드 검색, 재순위화, 질의 변환</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">5장은 수집에서 검색 그 자체로 눈을 옮긴다 — 질의가 도착했을 때 어느 청크를 띄울지 정하는 기법들이다. 벡터 유사도와 BM25를 결합하는 하이브리드 검색, 상위 결과의 정밀도를 끌어올리는 재순위화 아키텍처, 의미적 간극을 질의 쪽에서 잇는 질의 변환 패턴, 그리고 이 장에서 설계한 스키마가 가능케 하는 메타데이터 필터링. 여기서 마름질한 청크가 바탕감이라면, 5장의 검색 공학은 시스템이 실제로 그것을 찾아내는 솜씨다. 들보를 올렸으니 이제 문살을 짜 넣을 차례다.</p>
+    </div>
+    <div class="next rv">NEXT ▸ CHAPTER 5 · HYBRID SEARCH, RERANKING, AND QUERY TRANSFORMATION</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Raymond Norman, <span style="color:var(--mulberry)">Agentic RAG Systems</span> (2026) · Chapter 4 요약 웹페이지<br>
+    원서 78–96쪽 전체 내용 기반 · 본 페이지는 학습·검토 목적의 2차 정리물이다
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    els.forEach(function(e){e.classList.add('on')});
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        en.target.classList.add('on');
+        io.unobserve(en.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>

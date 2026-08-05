@@ -1,0 +1,761 @@
+---
+layout: null
+title: "How Retrieval Actually Works: First Principles for RAG Builders" 
+date: 2026-08-06
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>검색은 실제로 어떻게 작동하는가 — RAG 빌더를 위한 제1원리</title>
+<meta name="description" content="Raymond Norman, 『Agentic RAG Systems』 제2장 답사기 — 기하학으로서의 의미, 의미적 간극, 유사도의 세 갈래, 임베딩 모델 선택과 진단">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --porcelain:#F2F4F6;      /* 푸른 기가 도는 장부 종이 */
+  --ink:#18222E;            /* 한겨울 맨해튼의 청묵 */
+  --cobalt:#1F4066;         /* 원장(元帳)의 잉크 블루 — 본문 격자 */
+  --cobalt-soft:#4A6B8F;
+  --brass:#A97E1C;          /* 금장부의 놋빛 — 경보와 강조 */
+  --brass-deep:#7E5C10;
+  --mist:#E0E5EB;           /* 패널 배경 */
+  --line:#C5CEDA;
+  --paper-card:#FAFBFC;
+  --danger:#963433;         /* 4배 오차의 색 */
+  --serif:'Gowun Batang', serif;
+  --sans:'Noto Sans KR', sans-serif;
+  --mono:'IBM Plex Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--porcelain);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-weight:400;
+  line-height:1.95;
+  font-size:17px;
+  letter-spacing:-0.011em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--cobalt);color:var(--porcelain)}
+
+/* ---------- 공통 ---------- */
+.wrap{max-width:880px;margin:0 auto;padding:0 28px}
+.wrap-wide{max-width:1080px;margin:0 auto;padding:0 28px}
+section{padding:96px 0}
+p{margin-bottom:1.6em}
+em{font-style:normal;color:var(--cobalt);font-weight:500}
+strong{font-weight:700;color:var(--ink)}
+.mono{font-family:var(--mono)}
+
+.rv{opacity:0;transform:translateY(26px);transition:opacity .85s cubic-bezier(.22,.7,.3,1),transform .85s cubic-bezier(.22,.7,.3,1)}
+.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .pulse{animation:none !important}
+  .bar-fill{transition:none !important}
+  .sweep{animation:none !important;stroke-dasharray:none !important;stroke-dashoffset:0 !important}
+}
+
+/* ---------- 히어로 ---------- */
+header.hero{
+  background:linear-gradient(168deg, #0F1826 0%, #16273C 46%, #1C3048 100%);
+  color:#E8EDF3;
+  padding:120px 0 100px;
+  position:relative;overflow:hidden;
+}
+header.hero::after{
+  content:"";position:absolute;inset:0;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 30px, rgba(232,237,243,.035) 30px 31px),
+    repeating-linear-gradient(90deg, transparent 0 30px, rgba(232,237,243,.028) 30px 31px);
+  pointer-events:none;
+}
+.hero-kicker{
+  font-family:var(--mono);font-size:12.5px;letter-spacing:.32em;
+  color:#8FA9C7;text-transform:uppercase;margin-bottom:26px;
+}
+.hero-kicker b{color:#DCB25E;font-weight:600}
+h1{
+  font-family:var(--serif);font-weight:700;
+  font-size:clamp(34px,5.4vw,58px);line-height:1.34;
+  letter-spacing:-0.015em;margin-bottom:30px;
+}
+h1 .thin{display:block;font-size:.52em;font-weight:400;color:#A5B9CF;margin-top:14px;letter-spacing:.01em}
+.hero-lede{
+  max-width:640px;font-size:18px;line-height:2.05;
+  color:#C4D2E0;font-family:var(--serif);
+}
+.hero-meta{
+  margin-top:44px;font-family:var(--mono);font-size:13px;color:#7C93AE;
+  display:flex;gap:28px;flex-wrap:wrap;
+}
+.hero-meta span::before{content:"— ";color:#48607B}
+
+/* ---------- 프롤로그 ---------- */
+.incident{background:var(--ink);color:#DDE4EB;padding:100px 0;position:relative}
+.ticker{
+  font-family:var(--mono);
+  font-size:clamp(30px,6vw,54px);
+  font-weight:600;color:#DCB25E;letter-spacing:.04em;line-height:1.25;
+  margin-bottom:10px;word-break:break-all;
+}
+.ticker small{font-size:.3em;color:#8B9DB3;letter-spacing:.2em;display:block;margin-top:12px;font-weight:400}
+.incident .prose{max-width:700px;font-family:var(--serif);font-size:17.5px;line-height:2.1;margin-top:44px}
+.incident .prose p{margin-bottom:1.7em}
+.dose{display:flex;gap:24px;flex-wrap:wrap;margin:52px 0 20px}
+.dose-card{
+  flex:1;min-width:240px;
+  border:1px solid rgba(221,228,235,.18);
+  padding:28px 26px;font-family:var(--mono);
+}
+.dose-card .lbl{font-size:12px;letter-spacing:.24em;text-transform:uppercase;margin-bottom:14px;color:#8B9DB3}
+.dose-card .val{font-size:40px;font-weight:600;line-height:1}
+.dose-card .sub{font-size:13px;margin-top:12px;color:#A6B6C7;line-height:1.7;font-family:var(--sans)}
+.dose-wrong .val{color:#D96B5B}
+.dose-wrong{border-color:rgba(217,107,91,.45)}
+.dose-right .val{color:#7FB8DF}
+.dose-right{border-color:rgba(127,184,223,.4)}
+.pulse{animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* ---------- 섹션 헤더/패널 ---------- */
+.sec-head{margin-bottom:48px}
+.sec-no{font-family:var(--mono);font-size:13px;letter-spacing:.28em;color:var(--brass-deep);margin-bottom:16px;display:block}
+h2{font-family:var(--serif);font-weight:700;font-size:clamp(26px,3.6vw,38px);line-height:1.42;color:var(--ink)}
+h3{font-family:var(--serif);font-weight:700;font-size:21px;margin:2.4em 0 .9em;color:var(--cobalt)}
+.prose-serif{font-family:var(--serif);font-size:17.5px;line-height:2.08}
+
+.panel{background:var(--mist);border-left:4px solid var(--cobalt);padding:34px 36px;margin:52px 0}
+.panel .tag{font-family:var(--mono);font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--cobalt);margin-bottom:16px;display:block}
+.panel h4{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:14px}
+.panel p{font-size:15.5px;line-height:1.95;margin-bottom:1em}
+.panel p:last-child{margin-bottom:0}
+.panel.brass{border-left-color:var(--brass);background:#F1EBDC}
+.panel.brass .tag{color:var(--brass-deep)}
+
+/* ---------- SVG 도해 ---------- */
+.figure{margin:56px 0;text-align:center}
+.figure svg{max-width:100%;height:auto}
+.figure figcaption{
+  font-family:var(--sans);font-size:14px;color:#4E607A;margin-top:18px;line-height:1.8;
+}
+.figure figcaption::before{content:"⟨"}
+.figure figcaption::after{content:"⟩"}
+.sweep{stroke-dasharray:900;stroke-dashoffset:900;animation:sweep 2.2s ease-out forwards .4s}
+@keyframes sweep{to{stroke-dashoffset:0}}
+
+/* ---------- 간극 유형 표 ---------- */
+.gap-table{margin:56px 0}
+.gap-row{
+  display:grid;grid-template-columns:150px 1fr 150px;
+  gap:20px;align-items:center;
+  padding:20px 0;border-top:1px solid var(--line);
+}
+.gap-row:last-child{border-bottom:1px solid var(--line)}
+.gap-type{font-weight:700;font-size:15px;line-height:1.5}
+.gap-type .en{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--cobalt-soft);margin-top:3px}
+.gap-ex{font-family:var(--mono);font-size:13px;line-height:1.75;color:#33455C}
+.gap-ex .vs{color:var(--brass-deep);padding:0 6px}
+.chip{
+  display:inline-block;font-family:var(--mono);font-size:11.5px;font-weight:600;
+  letter-spacing:.06em;padding:7px 14px;text-align:center;
+}
+.chip.hi{background:#DCE9E0;color:#1E5B41}
+.chip.md{background:#EFE6CE;color:#7E5C10}
+.chip.lo{background:#F0DCDA;color:#963433}
+.chip.vlo{background:#963433;color:#FBEFEE}
+
+/* ---------- 세 갈래 유사도 ---------- */
+.families{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;margin:56px 0}
+.family{
+  background:var(--paper-card);border:1px solid var(--line);border-top:3px solid var(--cobalt);
+  padding:34px 30px;transition:transform .35s ease, box-shadow .35s ease;
+}
+.family:hover{transform:translateY(-5px);box-shadow:0 18px 40px -22px rgba(24,34,46,.35)}
+.family .glyph{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--brass-deep);margin-bottom:14px}
+.family h4{font-family:var(--serif);font-size:19.5px;font-weight:700;margin-bottom:6px;color:var(--cobalt)}
+.family .algo{font-family:var(--mono);font-size:12px;color:var(--cobalt-soft);margin-bottom:16px}
+.family p{font-size:14.5px;line-height:1.85;color:#33455C;margin-bottom:.9em}
+.family .plusminus{font-size:13.5px;line-height:1.8;margin:0}
+.family .plusminus b{color:#1E5B41;font-weight:700}
+.family .plusminus i{color:#963433;font-style:normal;font-weight:700}
+
+/* ---------- 코드 블록 ---------- */
+pre.code{
+  background:var(--ink);color:#C7D6E4;
+  font-family:var(--mono);font-size:13px;line-height:1.85;
+  padding:32px 34px;margin:48px 0;overflow-x:auto;
+  border-left:4px solid var(--brass);
+}
+pre.code .cm{color:#7C93AE}
+pre.code .kw{color:#DCB25E}
+pre.code .st{color:#9FCBA8}
+.code-cap{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--brass-deep);margin:-36px 0 48px;padding-left:2px;
+}
+
+/* ---------- 모델 3계급 ---------- */
+.models{margin:56px 0}
+.model-row{
+  display:grid;grid-template-columns:170px 1fr 190px;gap:22px;align-items:start;
+  padding:26px 0;border-top:1px solid var(--line);
+}
+.model-row:last-child{border-bottom:1px solid var(--line)}
+.model-name{font-family:var(--serif);font-weight:700;font-size:17.5px;color:var(--cobalt);line-height:1.5}
+.model-name .cost{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:var(--brass-deep);margin-top:6px;letter-spacing:.06em}
+.model-desc{font-size:14.5px;line-height:1.85;color:#33455C}
+.model-lift{font-family:var(--mono);text-align:right}
+.model-lift .n{font-size:24px;font-weight:600;color:var(--brass-deep);display:block;line-height:1.3}
+.model-lift small{font-size:11px;color:#6E8098;letter-spacing:.06em}
+
+/* ---------- 진단 다섯 기법 ---------- */
+.diag{counter-reset:diag;margin:56px 0}
+.diag-item{
+  border-top:1px solid var(--line);
+  padding:28px 0 28px 76px;position:relative;counter-increment:diag;
+}
+.diag-item:last-child{border-bottom:1px solid var(--line)}
+.diag-item::before{
+  content:counter(diag,decimal-leading-zero);
+  position:absolute;left:0;top:28px;
+  font-family:var(--mono);font-size:16px;font-weight:600;color:var(--brass-deep);
+}
+.diag-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:8px;color:var(--cobalt)}
+.diag-item h4 .en{font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--cobalt-soft);display:block;margin-top:4px}
+.diag-item p{font-size:15px;line-height:1.9;color:#33455C;margin:0}
+
+/* ---------- 안티패턴 ---------- */
+.anti{counter-reset:anti;margin:56px 0}
+.anti-item{
+  border:1px solid var(--line);border-left:4px solid var(--danger);
+  background:var(--paper-card);
+  padding:34px 36px 34px 92px;margin-bottom:22px;position:relative;counter-increment:anti;
+}
+.anti-item::before{
+  content:counter(anti,decimal-leading-zero);
+  position:absolute;left:30px;top:34px;
+  font-family:var(--mono);font-size:17px;font-weight:600;color:var(--danger);
+}
+.anti-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:10px}
+.anti-item h4 .en{font-family:var(--mono);font-weight:400;font-size:12px;color:#8A6560;display:block;margin-top:4px}
+.anti-item p{font-size:15px;line-height:1.9;color:#33455C;margin-bottom:.9em}
+.anti-item p:last-child{margin-bottom:0}
+.anti-item .fix{font-weight:700;color:var(--cobalt)}
+
+/* ---------- 다섯 요지 ---------- */
+.takeaways{background:var(--ink);color:#DDE4EB;padding:100px 0}
+.takeaways h2{color:#EAF0F5}
+.takeaways .sec-no{color:#DCB25E}
+.take{counter-reset:take;margin-top:52px}
+.take-item{
+  display:grid;grid-template-columns:72px 1fr;gap:26px;
+  padding:30px 0;border-top:1px solid rgba(221,228,235,.14);counter-increment:take;
+}
+.take-item::before{
+  content:counter(take);
+  font-family:var(--serif);font-size:44px;font-weight:700;color:#2C425C;line-height:1;
+}
+.take-item p{font-size:16px;line-height:2;color:#C0CFDD;margin:0}
+.take-item p b{color:#EAF0F5}
+
+/* ---------- 문헌/다리/푸터 ---------- */
+.refs{margin:52px 0}
+.ref{
+  padding:22px 0 22px 34px;border-top:1px solid var(--line);
+  position:relative;font-size:15px;line-height:1.85;color:#33455C;
+}
+.ref::before{content:"▸";position:absolute;left:6px;color:var(--brass-deep)}
+.ref b{font-weight:700;color:var(--ink)}
+.ref i{font-style:italic;font-family:var(--serif)}
+.ref:last-child{border-bottom:1px solid var(--line)}
+.bridge{background:var(--mist);padding:88px 0}
+.bridge .prose-serif{max-width:700px}
+.bridge .next{margin-top:40px;font-family:var(--mono);font-size:13px;letter-spacing:.2em;color:var(--cobalt)}
+footer{
+  padding:56px 0;text-align:center;
+  font-family:var(--mono);font-size:12px;color:#6E8098;
+  border-top:1px solid var(--line);line-height:2;
+}
+.note{font-size:13.5px;color:#54677E;margin-top:28px;line-height:1.9}
+.note::before{content:"※ ";color:var(--brass-deep)}
+
+@media(max-width:680px){
+  section{padding:72px 0}
+  .gap-row{grid-template-columns:1fr;gap:10px}
+  .chip{justify-self:start}
+  .model-row{grid-template-columns:1fr;gap:12px}
+  .model-lift{text-align:left}
+  .take-item{grid-template-columns:48px 1fr;gap:18px}
+  .take-item::before{font-size:32px}
+  .anti-item{padding:28px 24px 28px 68px}
+  .anti-item::before{left:22px}
+  .diag-item{padding-left:52px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 히어로 ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-kicker rv">AGENTIC RAG SYSTEMS · RAYMOND NORMAN · <b>제 2 장</b></div>
+    <h1 class="rv">검색은 실제로 어떻게 작동하는가<span class="thin">— RAG 빌더를 위한 제1원리</span></h1>
+    <p class="hero-lede rv">1장이 폐허를 보여 주었다면, 2장은 그 폐허 밑의 지반을 파 보는 장이다. 임베딩이라는 말없는 부품 — 애초에 어느 문서가 검색 후보가 될지를 결정해 온 그 부품 — 을 열어 보지 않고서는 어떤 검색 실패도 진단할 수 없다. 유물의 가치는 아는 만큼 보이고, 임베딩 공간의 실패도 읽을 줄 아는 만큼 보인다.</p>
+    <div class="hero-meta rv">
+      <span>원서 39–59쪽</span>
+      <span>Part I · Foundations</span>
+      <span>의미의 기하학</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 프롤로그: 똑같아 보였던 채권 ============ -->
+<section class="incident">
+  <div class="wrap">
+    <div class="ticker rv pulse">ARARGE5202E6<small>2026년 1월 말 · 뉴욕의 어느 헤지펀드 · 아르헨티나 2030 국채</small></div>
+    <div class="prose">
+      <p class="rv">한 퀀트 애널리스트가 사내 리서치 RAG 시스템에 묻는다. "아르헨티나 2030 국채에 대한 우리의 익스포저는 얼마인가." 시스템은 세 개 펀드에 걸친 포지션을 인용하며 명목가치 약 4,700만 달러라는 자신만만한 요약을 돌려준다. 애널리스트는 그 수치를 리스크 메모에 적어 그날 아침 포트폴리오 매니저들에게 배포하고 다음 일로 넘어갔다.</p>
+      <p class="rv"><strong>그 수치는 네 배 가까이 어긋나 있었다.</strong> 실제 익스포저는 1억 8,200만 달러 — 채권의 ISIN 코드를 트레이딩 북과 대조해야만 확인되는 숫자였다. 시스템은 흔히 회자되는 "아르헨티나 2030"을 논한 문서들을 찾아 소액 보유 세 개 펀드의 포지션을 합산했을 뿐, 네 번째 펀드에 앉아 있던 훨씬 큰 포지션 — 내부 문서에서 통칭 대신 ISIN 코드로 기재된 — 은 별개의 결과로 검색해 <em>아예 다른 채권</em>으로 보고했다. 임베딩 모델에게 "Argentina 2030 sovereign bond"와 "ARARGE5202E6"은 의미적으로 유사하지 않았다. 가깝지도 않았다.</p>
+    </div>
+    <div class="dose">
+      <div class="dose-card dose-wrong rv">
+        <div class="lbl">시스템이 보고한 익스포저</div>
+        <div class="val">$47<span style="font-size:.4em">M</span></div>
+        <div class="sub">통칭 "아르헨티나 2030"으로 기재된 세 개 펀드의 소액 포지션만 합산</div>
+      </div>
+      <div class="dose-card dose-right rv">
+        <div class="lbl">트레이딩 북 대조 후 실제 익스포저</div>
+        <div class="val">$182<span style="font-size:.4em">M</span></div>
+        <div class="sub">ISIN 코드로만 기재된 네 번째 펀드의 대형 포지션 포함 — 별개 채권으로 오인됨</div>
+      </div>
+    </div>
+    <div class="prose">
+      <p class="rv">오류는 자기 기록과의 불일치를 알아챈 한 포트폴리오 매니저가 긴급 대조를 강행하면서 잡혔고, 피해는 봉쇄되었다. 그러나 사후 분석이 드러낸 문제는 청커나 리랭커나 프롬프트보다 깊은 곳에 있었다. 임베딩 모델 자체 — 애초에 어느 문서가 검색 후보가 될지를 결정해 온 말없는 부품 — 에게 채권의 이름과 ISIN의 등가성이라는 개념이 없었던 것이다. 시스템의 "유사성" 정의 전체가 이 도메인에는 <em>틀린 정의</em>였다.</p>
+      <p class="rv">이것은 고칠 수 있는 버그가 아니라, 임베딩 모델이 표상하는 의미와 회사가 실제로 쓰는 의미 사이의 <strong>건축적 불일치</strong>였다. 진지한 프로덕션 RAG를 출시해 본 팀이라면 누구나 언젠가 같은 벽에 부딪힌다. 임베딩 모델은 관련성에 관한 결정을 내리고 있는데, 시스템을 지은 엔지니어들은 그 결정을 검사한 적도, 검증한 적도, 흔히는 이해한 적도 없다는 벽 말이다. 이 장은 그 결정들을 이해하는 장이다. 대부분의 RAG 튜토리얼이 건너뛰는 장 — "문서를 임베딩하라"에서 "상위 k개를 검색하라"로 곧장 건너뛰며, 임베딩이 실제로 무엇을 하는지, 같은 뜻의 두 어구가 왜 멀리 떨어져 임베딩될 수 있는지는 살피지 않는 — 이기도 하다. 이 제1원리 없이는 2부와 3부의 기법들이 주문(呪文)에 지나지 않는다. 이것을 갖추면 모든 검색 실패가 진단 가능해지고, 모든 아키텍처 결정이 기본값이 아니라 의도된 트레이드오프가 된다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2.1 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">2.1 · MEANING AS GEOMETRY</span>
+      <h2>임베딩이란 실제로 무엇인가 — 기하학으로서의 의미</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">임베딩은 텍스트 한 조각을 표상하는 고정 길이의 실수 벡터다. 이것이 기술적 정의이고, 이것만으로는 아무 쓸모가 없다. 임베딩이 왜 작동하는지 — 그리고 어디서 실패하는지 — 를 이해하려면 그 숫자들이 무엇을 뜻하는지, 어디서 왔는지, 의미 자체에 대해 어떤 가정을 품고 있는지를 알아야 한다.</p>
+      <p class="rv">기하학에서 시작하자. 언어 모델이 문장 하나를 이를테면 1,536차원으로 임베딩할 때, 모델은 그 문장을 1,536차원 공간의 한 점에 놓는 것이다. 모델이 지금껏 임베딩한 모든 문장과 앞으로 임베딩할 모든 문장이 바로 이 하나의 공간 어딘가에 산다. 임베딩 모델의 근본 주장은 이렇다. <strong>이 공간에서 두 점 사이의 거리가 두 문장의 관계에 대해 유용한 것을 말해 준다.</strong> 가까운 문장은 더 관련되어 있고, 먼 문장은 덜 관련되어 있다는 것이다.</p>
+      <p class="rv">이 주장이 모든 벡터 검색 시스템의 주춧돌이다. 그리고 모델의 "관련됨"이 당신의 "관련됨"과 어긋날 때 모든 실패의 근원이 된다. 모델은 자신의 관련성 개념을 훈련 말뭉치 — 대개 웹, 책, 공개 자료에서 긁어모은 방대한 텍스트 — 에서 배웠다. "관련됨"이란 그 말뭉치에서 관찰된 공기(共起)와 문맥적 용법의 패턴, 딱 그만큼이다. 두 어구가 훈련 데이터에서 자주 함께 나타났으면 가깝게 임베딩되고, 그렇지 않았으면 도메인 전문가가 아무리 등가로 여기든 멀리 임베딩된다.</p>
+      <p class="rv">헤지펀드의 시스템이 "Argentina 2030 sovereign bond"와 "ARARGE5202E6"을 잇지 못한 까닭이 여기 있다. 두 어구가 모델의 훈련 말뭉치에 함께 등장했을 가능성은 거의 없다. 거래 시스템과 규제 서류에 쓰이는 구조화 식별자인 ISIN은 공개 임베딩 모델이 학습하는 일반 영어 텍스트에서 희귀하다. 채권의 통칭은 흔하다. 모델에게 하나는 거의 무의미한 코드이고 다른 하나는 익숙한 금융 용어다. 등가성을 세워 주는 훈련 데이터가 주어지지 않는 한, 둘이 같은 상품을 가리킨다는 것을 모델이 배울 방도는 없다.</p>
+      <p class="rv">애초에 이 벡터는 어떻게 만들어지는가. 현대의 임베딩 모델은 트랜스포머다 — 그것이 곁들여 쓰이는 대형 언어 모델과 같은 건축 계열이다. 트랜스포머는 토큰열을 읽고 여러 층의 어텐션과 순전파 연산으로 정보를 흘려 보내 모든 층의 모든 토큰에 대한 표상을 만든다. 이를 시퀀스 전체에 대한 하나의 고정 길이 임베딩으로 바꾸기 위해 풀링 연산 — 대개 마지막 층 토큰 표상의 평균, 또는 시퀀스를 요약하는 전용 분류 토큰 — 을 쓴다. 결과는 일반적으로 384에서 3,072차원 사이의 단일 벡터, 모델이 입력의 의미를 요약한다고 주장하는 그 벡터다.</p>
+      <p class="rv">이 과정에는 깊은 한계가 묻혀 있다. 모델은 <strong>임의 길이의 텍스트를 고정 길이 벡터로 압축</strong>하고 있다. 세 단어짜리 문장도, 삼백 단어짜리 문서도 같은 차원 수로 환원된다. 정보는 사라진다. 무엇을 남기고 무엇을 버릴지는 — 훈련 방식에 의해 암묵적으로 — 모델이 정한다. 대부분의 범용 질의에서 모델은 상위 주제를 남기고 세부를 버린다. "아르헨티나 국가부채에 대해 알려 달라"는 질의라면 괜찮다. "ISIN ARARGE5202E6에 대한 우리의 익스포저는 얼마인가"라는 질의라면 파국적이다. 세부가 관건인데, 임베딩은 그것을 이미 내다 버렸기 때문이다.</p>
+      <p class="rv">이 압축을 이해하는 것이 임베딩이 통할 때와 통하지 않을 때를 가르는 열쇠다. 임베딩은 의미적 주제, 넓은 화제, 흔한 생각의 환언, 훈련 데이터에 있던 개념적 관계를 잡아내는 데 탁월하다. 정밀한 식별자, 희귀 용어, 수치 관계, 부정문, 훈련 데이터에 없던 도메인 특유의 등가성을 잡아내는 데는 미덥지 못하다. 프로덕션급 RAG 시스템은 바로 이 구별 위에 지어진다 — <em>임베딩이 잘하는 일에는 임베딩을 쓰고, 그 밖의 모든 것에는 다른 기제(키워드 검색, 구조화 조회, 지식 그래프)를 쓴다.</em></p>
+    </div>
+    <figure class="figure rv">
+      <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="임베딩 공간과 코사인 유사도 도해">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#1F4066"/></marker>
+          <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#A97E1C"/></marker>
+        </defs>
+        <!-- axes -->
+        <line x1="80" y1="270" x2="690" y2="270" stroke="#C5CEDA" stroke-width="1.5"/>
+        <line x1="80" y1="270" x2="80" y2="30" stroke="#C5CEDA" stroke-width="1.5"/>
+        <text x="685" y="292" font-family="IBM Plex Mono, monospace" font-size="11" fill="#6E8098" text-anchor="end">1,536차원 공간의 2차원 투영</text>
+        <!-- cluster: sovereign debt topic -->
+        <circle cx="300" cy="120" r="4" fill="#4A6B8F" opacity=".55"/>
+        <circle cx="330" cy="100" r="4" fill="#4A6B8F" opacity=".55"/>
+        <circle cx="345" cy="135" r="4" fill="#4A6B8F" opacity=".55"/>
+        <circle cx="310" cy="150" r="4" fill="#4A6B8F" opacity=".55"/>
+        <text x="330" y="78" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#33455C" text-anchor="middle">"아르헨티나 국채" 화제 군집</text>
+        <!-- vectors -->
+        <line class="sweep" x1="80" y1="270" x2="320" y2="120" stroke="#1F4066" stroke-width="2.5" marker-end="url(#ah)"/>
+        <text x="200" y="178" font-family="IBM Plex Mono, monospace" font-size="12" fill="#1F4066">"Argentina 2030 bond"</text>
+        <line class="sweep" x1="80" y1="270" x2="600" y2="220" stroke="#A97E1C" stroke-width="2.5" marker-end="url(#ahb)"/>
+        <text x="415" y="258" font-family="IBM Plex Mono, monospace" font-size="12" fill="#7E5C10">"ARARGE5202E6"</text>
+        <!-- angle arc -->
+        <path d="M 160 220 A 95 95 0 0 1 175 261" fill="none" stroke="#963433" stroke-width="2"/>
+        <text x="196" y="224" font-family="IBM Plex Mono, monospace" font-size="12.5" fill="#963433">θ 큼 → cos θ 작음</text>
+        <text x="80" y="305" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#4E607A">같은 상품, 그러나 훈련 말뭉치에서 함께 나타난 적 없는 두 표기 — 모델에게 둘은 남남이다</text>
+      </svg>
+      <figcaption>코사인 유사도는 크기가 아니라 방향의 각도를 잰다. 채권의 통칭과 ISIN 코드는 같은 상품을 가리키지만 임베딩 공간에서는 큰 각도로 갈라선다</figcaption>
+    </figure>
+    <div class="panel rv">
+      <span class="tag">Key Definition</span>
+      <h4>임베딩인 것과, 임베딩이 아닌 것</h4>
+      <p><strong>임베딩은</strong> 텍스트 한 조각을 기하 공간의 한 점에 놓는 고정 길이 벡터 — 통상 384~3,072차원 — 다. 두 점 사이의 거리는 두 텍스트가 얼마나 관련되어 있는지에 대한 모델의 추정치다.</p>
+      <p><strong>임베딩은</strong> 어떤 절대적 의미에서의 의미 표상이 <strong>아니다.</strong> 그것은 모델의 훈련 말뭉치에 나타난 공기와 문맥적 용법의 패턴을 반영하는 학습된 압축이다. 당신의 말뭉치가 지닌 관련성 개념이 훈련 말뭉치의 그것과 다를 때, 임베딩은 순수 벡터 검색으로는 탐지할 수 없는 방식으로 실패한다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2.2 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">2.2 · THE SEMANTIC GAP</span>
+      <h2>같은 뜻이 왜 멀리 임베딩되는가 — 의미적 간극</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">의미적 간극은 프로덕션 검색 실패의 단일 최대 원인이다. 사람이라면 뜻이 같다고 여길 두 어구가, 벡터 검색이 무관하다고 취급하는 임베딩을 낳을 수 있다. 그 이유를 — 그리고 대책을 — 아는 것이 데모에서 도는 시스템과 프로덕션에서 버티는 시스템의 갈림길이다.</p>
+      <p class="rv">헤지펀드 사례는 간극의 가장 극단적인 형태 — 한쪽은 구조화 식별자, 다른 쪽은 통칭 — 를 보여 주었다. 그러나 간극은 훨씬 일상적인 모습으로도 나타난다. "구독을 어떻게 해지하나"와 "계정 해지 절차"는 표면 어휘를 하나도 공유하지 않는다. "경증 간기능 장애"와 "Child-Pugh Class A"는 임상적 동의어지만 전혀 다른 용어를 쓴다. "3분기 매출이 전망을 상회했다"와 "매출이 3분기 시장 기대치를 웃돌았다"는 단어를 거의 공유하지 않는 환언이다. 모든 경우에 사용자의 어휘와 말뭉치의 어휘가 같은 개념을 다르게 표현한다. 임베딩 모델은 그 간극을 이어 주기로 되어 있고 — 이을 때도 있고, 잇지 못할 때도 있다.</p>
+      <p class="rv">모델이 간극을 잇느냐는 두 표현의 등가성이 훈련 데이터에 나타났느냐에 달렸다. "car"와 "automobile", "physician"과 "doctor"처럼 그 텍스트에 자주 나오는 등가성은 잘 학습된다. 도메인 전문 용어, 사내 용어, 구조화 식별자, 갓 만들어진 용어처럼 나오지 않는 것들은 학습되지 않는다. 그 경계는 흐릿하고, 문서화되어 있지 않으며, 임베딩 모델마다 사실상 예측 불가능하게 다르다. 여기서 대부분의 팀이 부딪히기 전에는 실감하지 못하는 실무적 함의가 나온다. <strong>임베딩 모델은 블로그 글이나 벤치마크로 고를 수 없다.</strong> 벤치마크는 당신의 도메인을 반영하지 않았을 것이고, 블로그 글의 필자는 당신의 말뭉치를 가져 본 적이 없다. 믿을 만한 유일한 방법은 실제 말뭉치 위에서 대표 질의로 시험하고 고정된 k에서 검색 재현율을 재는 것이다. 원칙은 이렇다 — 모든 프로덕션 RAG 시스템은 대표 질의 집합에 대해 k=10과 k=50에서의 재현율을 알아야 하고, 임베딩 모델이나 말뭉치가 바뀔 때마다 다시 재야 한다.</p>
+      <p class="rv">의미적 간극에는 세 개의 수원(水源)이 있고, 따로 다루는 편이 더 나은 공학적 결정으로 이끈다. 첫째는 <em>어휘</em> — 같은 개념, 다른 낱말. 임베딩 모델이 잇도록 설계된 종류이고, 흔한 용어라면 자주 잇는다. 둘째는 <em>구조</em> — 같은 개념, 다른 표상 형식(이름 대 코드, 질문 대 진술, 환언 대 인용). 임베딩 모델이 미덥지 못한 종류다. 셋째는 <em>입도(粒度)</em> — 같은 개념, 다른 추상 수준. 임베딩이 눈에 띄지 않게 실패하는 곳으로, 임베딩끼리 그럴듯하게 닮아서 검색이 그럴싸한 결과를 돌려주지만 실제 의미 대응은 엉뚱한 척도에서 일어난다.</p>
+    </div>
+    <div class="gap-table">
+      <div class="gap-row rv">
+        <div class="gap-type">어휘<span class="en">Vocabulary</span></div>
+        <div class="gap-ex">"physician"<span class="vs">vs</span>"doctor"</div>
+        <span class="chip hi">신뢰도 높음 — 흔한 동의어는 잘 학습됨</span>
+      </div>
+      <div class="gap-row rv">
+        <div class="gap-type">어휘 (도메인)<span class="en">Vocabulary · Domain</span></div>
+        <div class="gap-ex">"hepatic impairment"<span class="vs">vs</span>"Child-Pugh A"</div>
+        <span class="chip lo">낮음 — 훈련 데이터의 도메인 포괄에 좌우</span>
+      </div>
+      <div class="gap-row rv">
+        <div class="gap-type">구조 (식별자)<span class="en">Structure · Identifier</span></div>
+        <div class="gap-ex">"Argentina 2030 bond"<span class="vs">vs</span>"ARARGE5202E6"</div>
+        <span class="chip vlo">매우 낮음 — 코드는 이름과 병기되는 일이 드묾</span>
+      </div>
+      <div class="gap-row rv">
+        <div class="gap-type">구조 (형식)<span class="en">Structure · Form</span></div>
+        <div class="gap-ex">"How do I cancel?"<span class="vs">vs</span>"Cancellation policy"</div>
+        <span class="chip md">중간 — 훈련 말뭉치의 다양성에 좌우</span>
+      </div>
+      <div class="gap-row rv">
+        <div class="gap-type">입도<span class="en">Granularity</span></div>
+        <div class="gap-ex">"machine learning"<span class="vs">vs</span>"random forest classifier"</div>
+        <span class="chip md">중간 — 추상 수준이 검색을 자주 헷갈리게 함</span>
+      </div>
+      <div class="gap-row rv">
+        <div class="gap-type">부정<span class="en">Negation</span></div>
+        <div class="gap-ex">"side effects"<span class="vs">vs</span>"no known side effects"</div>
+        <span class="chip vlo">매우 낮음 — 임베딩은 부정을 자주 무시함</span>
+      </div>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">부정의 경우는 특별히 눈여겨보아야 한다. 대조 학습으로 훈련된 임베딩 모델 — 요즘 모델 대부분이 그렇다 — 은 "이 약에는 알려진 부작용이 있다"와 "이 약에는 알려진 부작용이 없다"를 매우 가까운 위치에 임베딩하는 경향이 있다. 모델은 두 문장이 모두 부작용에 <em>관한</em> 것임을 배웠고, 진술의 극성(極性)은 압축 속에서 유실된다. 극성이 관건인 프로덕션 시스템 — 의약 금기, 법적 배제 조항, 금융 제한 — 에서 순수 벡터 검색은 정확히 <strong>반대의 문서</strong>를 높은 확신으로 돌려줄 수 있다. 이것이 5장에서 전개할 하이브리드 검색을 지지하는 가장 강력한 논거의 하나다.</p>
+      <p class="rv">그렇다면 의미적 간극은 실제로 어떻게 우회하는가. 비용과 효과가 커지는 순서로 다섯 가지다. 첫째, <strong>질의 재작성</strong> — 사용자의 질문을 말뭉치 어휘에 닿기 쉬운 하나 이상의 재구성으로 변환한다. 둘째, <strong>질의 확장</strong> — 동의어, 관련어, 도메인 별칭을 질의에 보탠다. 셋째, <strong>하이브리드 검색</strong> — 임베딩이 실패할 때 정확 일치가 놓치지 않도록 벡터 유사도에 키워드 검색을 결합한다. 넷째, <strong>도메인 적응 임베딩</strong> — 범용 모델의 도메인 특화판 또는 미세조정판을 쓴다. 다섯째, <strong>수집 시점의 구조화 등가성 구축</strong> — 식별자를 이름에, 코드를 설명에 잇는 조회 테이블을 만들어 검색이 알아야 할 도메인 등가성을 명시한다. 대부분의 프로덕션 시스템은 이 중 서너 개를 결합해 쓴다. 하이브리드 검색은 진지한 배포라면 협상의 여지가 없고, 도메인 적응은 말뭉치가 전문 분야일 때마다 필수이며, 구조화 등가성은 식별자·코드·희귀 고유명사가 중요할 때마다 필수다. 질의 재작성과 확장은 가장자리를 다듬는 유용한 보탬이다.</p>
+    </div>
+    <div class="panel brass rv">
+      <span class="tag">Common Pitfall</span>
+      <h4>범용 임베딩의 덫</h4>
+      <p>프로덕션에서 가장 흔한 임베딩 실수는 전문 도메인에 범용 임베딩 모델(text-embedding-3-small, all-MiniLM-L6-v2 등)을 쓰고 잘되기를 <em>바라는</em> 것이다. 의료·법률·금융·공학 말뭉치에서 범용 임베딩의 검색 재현율은 도메인 적응 대안보다 통상 15~30% 낮다. 서너 개 모델을 대표 질의로 평가하는 비용은 며칠이고, 잘못된 모델로 출시하고 나중에 발견하는 비용은 몇 달의 수습이다. <strong>확정 전에 반드시 평가하라.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2.3 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">2.3 · THREE FAMILIES OF SIMILARITY</span>
+      <h2>유사도의 세 갈래 — 어휘적, 의미적, 구조적</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">프로덕션 검색 공학은 "유사도"가 하나가 아님을 아는 데서 출발한다. 유사도에는 적어도 세 갈래의 뚜렷한 가계(家系)가 있고, 각각 쓰일 자리가 다르며, 각각 제 나름의 강점과 실패 양식을 지닌다. 한 갈래만 쓰는 시스템은 나머지 두 갈래가 감당하도록 설계된 상황에서 반드시 실패한다. 건축가의 안목이란 자기 응용이 실제로 어느 갈래를 — 혹은 어떤 조합을 — 필요로 하는지 알아보는 눈이다. 절집의 아름다움이 기둥 하나에 있지 않고 배흘림과 공포와 지붕 물매의 어울림에 있듯, 검색의 힘도 세 갈래의 어울림에서 나온다.</p>
+    </div>
+    <div class="families">
+      <div class="family rv">
+        <div class="glyph">FAMILY 01</div>
+        <h4>어휘적 유사도</h4>
+        <div class="algo">TF-IDF · BM25 — 가장 오래된 가계</div>
+        <p>같은 낱말을 공유하면 유사하다. 어간 추출과 활용을 어느 정도 허용하되, 기준은 표면 어휘다. 반세기 동안 다듬어진 BM25 — 항 빈도, 역문서 빈도, 문서 길이 정규화의 가중 결합 — 가 2026년에도 지배적 알고리즘이며, 모든 검색 시스템이 견주어야 할 기준선으로 남아 있다.</p>
+        <p class="plusminus"><b>강점</b> — 정확하고, 해석 가능하고, 예측 가능하다. "acetaminophen"을 물으면 그 낱말을 담은 문서를 찾는다. 끝. 질의와 결과 사이에 보이지 않게 실패할 압축층이 없다.<br><i>약점</i> — 동의어, 환언, 의미 관계를 전적으로 놓친다. "구독 해지"로는 "계정 해지"만 쓰는 말뭉치에서 아무것도 찾지 못하며, 어휘 패러다임 안에서는 고칠 길이 없다.</p>
+      </div>
+      <div class="family rv">
+        <div class="glyph">FAMILY 02</div>
+        <h4>의미적 유사도</h4>
+        <div class="algo">임베딩 · 코사인 유사도 — 현대 RAG의 주류</div>
+        <p>표면 어휘와 무관하게 관련 개념을 표현하면 유사하다. 표준 척도는 코사인 유사도 — 두 벡터 사이 각의 코사인, −1(반대)에서 1(같은 방향) 사이의 값 — 로, 크기가 아니라 <em>방향</em>이 관건이라는 기하학적 직관이다. 코사인 기반 대조 손실로 훈련된 현대 모델 대부분에 맞는 선택이다.</p>
+        <p class="plusminus"><b>강점</b> — 어휘가 실패하는 바로 그곳에서 빛난다. 환언, 동의어, 개념 관계, 언어 간 대응. "구독을 어떻게 해지하나"가 "계정 해지 정책"과 만나는 것은 두 어구가 임베딩 공간의 이웃 동네에 살기 때문이다.<br><i>약점</i> — 어휘가 성공하는 곳에서 실패한다. 정확한 식별자 대응, 희귀 용어, 극성 민감 질의, 일반 화제보다 특정 낱말이 중한 모든 경우.</p>
+      </div>
+      <div class="family rv">
+        <div class="glyph">FAMILY 03</div>
+        <h4>구조적 유사도</h4>
+        <div class="algo">지식 그래프 · GraphRAG — 가장 홀대받는 가계</div>
+        <p>표면 텍스트나 개별 구절의 의미와 무관하게, 서술하는 엔티티·관계·역할이 겹치면 유사하다. 지식 그래프가 포착하는 가계이고, GraphRAG가 그 위에 서 있다.</p>
+        <p class="plusminus"><b>강점</b> — "우리 공급업체 중 최근 제재받은 경쟁사와 이사를 공유하는 곳은?" 어휘도 의미도 이 질문에 답하지 못한다. 답은 어느 구절에도 없고 공급업체 명부, 이사회 명단, 규제 조치 공고 <em>사이의 관계</em>에만 있다. 수사형 질의, 컴플라이언스 질의, 공급망 질의, 대부분의 멀티홉 질문이 이 가계의 영토다.<br><i>약점</i> — 그래프를 지어야 쓸 수 있다. 6장이 구현 깊이로 전개한다.</p>
+      </div>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">세 가계를 나란히 세워 보는 짧은 실험 하나가 원서에 실려 있다. MedCentral을 닮은 세 문장의 말뭉치에 "Child-Pugh Class A 환자의 안전 용량은?"을 묻는 것이다.</p>
+    </div>
+    <pre class="code rv"><span class="cm"># 세 갈래 유사도 가계의 간단한 시연</span>
+<span class="kw">from</span> rank_bm25 <span class="kw">import</span> BM25Okapi
+<span class="kw">from</span> sentence_transformers <span class="kw">import</span> SentenceTransformer
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+corpus = [
+    <span class="st">"The patient was prescribed acetaminophen 4000 mg daily."</span>,
+    <span class="st">"For mild hepatic impairment, maximum daily dose is 2000 mg."</span>,
+    <span class="st">"The drug is contraindicated in liver disease."</span>,
+]
+query = <span class="st">"What is the safe dose for Child-Pugh Class A patients?"</span>
+
+<span class="cm"># 어휘적: 표면 어휘가 겹치지 않아 BM25는 아무것도 찾지 못한다</span>
+tokenized = [doc.lower().split() <span class="kw">for</span> doc <span class="kw">in</span> corpus]
+bm25 = BM25Okapi(tokenized)
+lexical_scores = bm25.get_scores(query.lower().split())
+<span class="kw">print</span>(f<span class="st">"Lexical: {lexical_scores}"</span>)   <span class="cm"># 모두 0에 가깝다</span>
+
+<span class="cm"># 의미적: 임베딩이 '경증 간기능 장애'와 'Child-Pugh A'를 잇는다</span>
+model = SentenceTransformer(<span class="st">'all-MiniLM-L6-v2'</span>)
+doc_embs = model.encode(corpus)
+query_emb = model.encode([query])[0]
+semantic_scores = np.dot(doc_embs, query_emb) / (
+    np.linalg.norm(doc_embs, axis=1) * np.linalg.norm(query_emb))
+<span class="kw">print</span>(f<span class="st">"Semantic: {semantic_scores}"</span>)  <span class="cm"># 대개 두 번째 문서가 최고점 — 옳게</span>
+
+<span class="cm"># 구조적 유사도라면 'Child-Pugh A'와 '경증 간기능 장애'를 임상 동의어로</span>
+<span class="cm"># 잇는 지식 그래프가 필요하다 — 6장에서 다룬다.</span></pre>
+    <div class="code-cap">원서 2.3절 예제 코드 — 세 가계의 응답 비교</div>
+    <div class="prose-serif">
+      <p class="rv">이 코드의 교훈은 어느 가계가 이긴다는 것이 아니다. <strong>각 가계가 말뭉치의 서로 다른 면을 비춘다</strong>는 것이다. 어휘 검색은 사용자가 정확한 용어를 알 때, 의미 검색은 일상어로 전문 내용을 물을 때, 구조 검색은 멀티홉과 수사형 질의에서 제 몫을 한다. 세 갈래를 하나의 파이프라인 — 그래프 탐색으로 확장된 하이브리드 검색 — 에 결합한 프로덕션 시스템, 그것이 이 책의 나머지가 지어 나가는 목적지다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2.4 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">2.4 · CHOOSING AN EMBEDDING MODEL</span>
+      <h2>임베딩 모델 고르기 — 범용, 도메인, 미세조정</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">임베딩 모델 선택은 어느 프로덕션 RAG 시스템에서든 가장 지렛대가 큰 결정에 속한다. 잘못 고르면 하류 전체가 그 한계에 갇히고, 잘 고르면 파이프라인의 다른 어떤 것도 바꾸지 않고 검색 재현율을 15~30% 끌어올릴 수 있다. 그런데도 대부분의 팀은 이 결정을 대수롭지 않게 내린다 — 인기 튜토리얼이 쓰던 것, 이미 계정이 있는 제공자의 것으로 기본값을 삼는 식이다. 2026년에 고려할 만한 계급은 셋이고, 제대로 들여다보면 선택이 아슬아슬한 경우는 드물다.</p>
+    </div>
+    <div class="models">
+      <div class="model-row rv">
+        <div class="model-name">범용 임베딩<span class="cost">비용 낮음 — API 또는 기성품</span></div>
+        <div class="model-desc">OpenAI text-embedding-3 계열, Cohere embed-v3, 오픈소스 BGE·GTE 계열. 넓은 웹·서적 말뭉치로 훈련되어 흔한 개념, 환언, 일상 영어의 등가성에 강하다. 소비자 제품의 고객지원 FAQ, 대외 문서, 마케팅 콘텐츠, 일반 지식 베이스처럼 말뭉치가 일반 영어와 대체로 정렬될 때 옳은 선택이다. 약점은 전문 도메인 — 격차는 도메인이 전문화될수록 벌어진다. 일반 상식 위키라면 5%, 종양학 연구 데이터베이스라면 35%에 이를 수 있다.</div>
+        <div class="model-lift"><span class="n">기준선</span><small>Baseline</small></div>
+      </div>
+      <div class="model-row rv">
+        <div class="model-name">도메인 적응 임베딩<span class="cost">비용 낮음~중간 — 선별 노력</span></div>
+        <div class="model-desc">특정 분야 텍스트로 훈련·미세조정된 모델. 2026년 기준 가장 성숙한 예는 의료(BiomedBERT 계열, MedCPT), 법률(LegalBERT 계열), 금융(FinBERT, FinE5)이다. 범용 모델이 놓치는 도메인 동의어 — "간기능 장애"와 "Child-Pugh Class A" — 를 잇고, 모든 도메인을 감당할 필요가 없어 대체로 더 작고 빠르다. 결정 규칙은 단순하다. 해당 분야의 도메인 모델이 존재하면 자기 말뭉치 위에서 범용 대안과 견주어 평가하라. 평가에는 이틀이 들고, 결과를 보면 결정은 자명해진다.</div>
+        <div class="model-lift"><span class="n">+15~30%</span><small>범용 대비 재현율</small></div>
+      </div>
+      <div class="model-row rv">
+        <div class="model-name">미세조정 임베딩<span class="cost">비용 중간~높음 — 엔지니어링 노력</span></div>
+        <div class="model-desc">범용 또는 도메인 모델을 자기 말뭉치와 질의 패턴으로 한 번 더 훈련한 것. 관련/무관 쌍에 대한 대조 학습으로, 상용 GPU에서 몇 시간이면 된다. 관련성 레이블이 달린 질의–문서 쌍 2,000개 이상의 학습 데이터가 있을 때 지렛대가 가장 크다. 대가는 학습 데이터 구축과 미세조정의 공수, 그리고 커스텀 모델을 프로덕션에서 유지하는 운영 부담이다. 문서 천 건에 사용자 오백 명인 사내 시스템에는 과잉이고, 문서 오백만 건에 애널리스트 오천 명인 규제 준수 시스템에는 필수다.</div>
+        <div class="model-lift"><span class="n">+5~15%</span><small>도메인 모델 대비</small></div>
+      </div>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">모델 계급 너머로 구현 결정이 둘 남는다. 첫째는 <strong>차원 수</strong>다. 임베딩 모델은 384차원(작고 빠르고 품질 낮음)에서 3,072차원(크고 느리고 품질 최고)에 걸친다. 차원이 높을수록 뉘앙스를 더 담지만 저장과 검색 비용이 커진다. 문서 백만 건 이하의 말뭉치라면 768~1,536차원이 최적 지대이고, 그보다 크면 고차원 벡터의 저장·검색 비용이 지배하기 시작해 차원 축소 기법(Matryoshka 표상, PCA, 학습된 투영층)을 저울질할 가치가 생긴다.</p>
+      <p class="rv">둘째는 <strong>문서당 단일 벡터냐 다중 벡터냐</strong>다. ColBERT, DRAGON 등 후기 상호작용(late-interaction) 계열의 다중 벡터 접근은 토큰이나 청크를 따로 임베딩하고 질의 시점에 더 정교한 매칭을 수행해, 검색 벤치마크에서 단일 벡터를 흔히 10~15% 앞선다. 대가는 전용 인프라(대부분의 벡터 데이터베이스는 단일 벡터용으로 설계되었다)와 더 느리고 비싼 서빙이다. 검색이 병목인 고위험 시스템에서는 다중 벡터가 점점 정답이 되어 가고, 대부분의 시스템에서는 단일 벡터에 재순위화(5장)를 얹는 편이 그 이득의 대부분을 훨씬 싼값에 얻는다.</p>
+    </div>
+    <div class="panel rv">
+      <span class="tag">Production Insight</span>
+      <h4>임베딩 선택은 이틀짜리 투자다</h4>
+      <p>임베딩 모델을 고르는 옳은 방법은 대표 질의 오십 개로 서너 후보를 말뭉치의 대표 단면 위에서 평가하는 것이다. 미세조정도, 인프라 변경도, 질의 집합 이상의 학습 데이터도 필요 없다. 이 평가를 건너뛴 팀은 프로젝트 수개월 차에, 자기들이 고칠 수 있는 무엇도 아닌 임베딩 모델이 검색의 상한이었음을 발견하곤 한다. <strong>시작의 이틀이 중반의 두 달을 아낀다. 반드시 평가하라.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2.5 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">2.5 · DIAGNOSING RETRIEVAL</span>
+      <h2>검색을 진단하기 — 임베딩 공간을 읽는 법</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">이 장의 마지막 규율은 진단이다. 프로덕션에서 검색이 실패할 때, 실패는 임베딩 공간에서 일어난다 — 그리고 그것을 이해하는 유일한 길은 임베딩 자체를 들여다보는 것이다. 대부분의 팀이 끝내 기르지 못하는 안목인데, 임베딩이 블랙박스처럼 <em>느껴지기</em> 때문이다. 그러나 그것은 블랙박스가 아니다. 벡터다. 검사할 수 있고, 시각화할 수 있고, 추론할 수 있다. 이 안목을 기른 팀은 검색 실패를 몇 시간 만에 진단하고, 기르지 못한 팀은 몇 주씩 증상만 뒤쫓는다. 개발할 가치가 있는 진단 기법은 다섯이며, 어느 것도 고급 전문성을 요구하지 않는다.</p>
+    </div>
+    <figure class="figure rv">
+      <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="이봉 분포와 단봉 분포의 비교">
+        <!-- left: bimodal (healthy) -->
+        <text x="180" y="28" font-family="Noto Sans KR, sans-serif" font-size="13.5" font-weight="700" fill="#1E5B41" text-anchor="middle">건강한 검색 — 이봉(二峰) 분포</text>
+        <line x1="40" y1="240" x2="330" y2="240" stroke="#C5CEDA" stroke-width="1.5"/>
+        <path class="sweep" d="M 45 238 C 70 160, 95 130, 115 140 C 135 152, 150 210, 175 232 C 200 244, 230 240, 250 220 C 268 200, 285 175, 300 165 C 312 158, 320 190, 326 236"
+          fill="none" stroke="#155A4B" stroke-width="2.5"/>
+        <text x="100" y="118" font-family="IBM Plex Mono, monospace" font-size="11" fill="#33455C" text-anchor="middle">무관 문서의 긴 꼬리</text>
+        <text x="100" y="133" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#6E8098" text-anchor="middle">sim &lt; 0.3</text>
+        <text x="298" y="146" font-family="IBM Plex Mono, monospace" font-size="11" fill="#33455C" text-anchor="middle">소수의 고관련 문서</text>
+        <text x="298" y="161" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#6E8098" text-anchor="middle">sim &gt; 0.7</text>
+        <text x="212" y="262" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#6E8098" text-anchor="middle">사이의 골 = 판별력</text>
+        <!-- right: unimodal (failing) -->
+        <text x="540" y="28" font-family="Noto Sans KR, sans-serif" font-size="13.5" font-weight="700" fill="#963433" text-anchor="middle">실패하는 검색 — 단봉(單峰) 분포</text>
+        <line x1="400" y1="240" x2="690" y2="240" stroke="#C5CEDA" stroke-width="1.5"/>
+        <path class="sweep" d="M 405 236 C 440 220, 480 120, 545 110 C 610 120, 650 220, 685 236"
+          fill="none" stroke="#963433" stroke-width="2.5"/>
+        <text x="545" y="92" font-family="IBM Plex Mono, monospace" font-size="11" fill="#33455C" text-anchor="middle">모든 문서가 중간 점수에 몰림</text>
+        <text x="545" y="262" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#6E8098" text-anchor="middle">판별 실패 — 검색은 사실상 무작위</text>
+        <text x="365" y="292" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#4E607A" text-anchor="middle">질의–말뭉치 코사인 유사도의 분포 — 검색을 디버깅할 때 가장 먼저 그려 볼 그림</text>
+      </svg>
+      <figcaption>거리 분포 분석 — 이봉이면 모델이 관련과 무관을 가르고 있는 것이고, 단봉이면 임베딩이 도메인을 판별하지 못하고 있는 것이다</figcaption>
+    </figure>
+    <div class="diag">
+      <div class="diag-item rv">
+        <h4>거리 분포 분석<span class="en">Distance Distribution Analysis</span></h4>
+        <p>어느 질의든, 질의와 말뭉치 사이 코사인 유사도의 분포가 말해 주는 것이 있다. 건강한 시스템의 분포는 이봉이다 — 높은 유사도(통상 0.7 이상)의 고관련 문서 소수, 낮은 유사도(통상 0.3 이하)의 무관 문서의 긴 꼬리, 그리고 둘 사이의 골. 분포가 단봉 — 모든 문서가 비슷한 중간 점수 — 이면 임베딩 모델이 판별에 실패하고 있는 것이고, 검색은 사실상 무작위다. 대표 질의 열~스무 개의 분포를 그려 보는 것이 검색 디버깅에서 가장 많은 정보를 주는 단 하나의 행위다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>최근접 이웃 검사<span class="en">Nearest-Neighbour Sanity Checks</span></h4>
+        <p>말뭉치에서 확실히 좋은 답 문서 하나를 골라 임베딩하고 그 최근접 이웃들을 찾아본다. 도메인 전문가인 당신이 관련 있다고 여길 문서들이어야 한다. 그렇지 않다면 — 임상 가이드라인의 이웃이 임상 세부라곤 없는 환자 교육 자료뿐이라면 — 임베딩 모델이 당신의 도메인에서 실패하고 있다는 직접 증거다. 몇 분이면 되고, 즉시 행동으로 옮길 통찰을 준다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>질의–문서 정렬<span class="en">Query–Document Alignment</span></h4>
+        <p>대표 질의 집합에 대해, 질의 임베딩과 정답을 담은 문서의 임베딩 사이 간격을 잰다. 간격이 크다면 — 정답 문서가 최근접 오십 안에도 없다면 — 어떤 재순위화도 구원하지 못한다. 재순위화가 시작되기도 전에 검색이 이미 실패한 것이다. 이 진단이 검색 실패와 순위 실패를 가르며, 둘의 처방은 다르다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>차원 분산 분석<span class="en">Dimensional Variance</span></h4>
+        <p>말뭉치 임베딩 전체에 걸쳐 각 차원의 분산을 계산한다. 분산이 극히 낮은 차원은 이 말뭉치에 대해 정보를 나르지 않으며 때로 버릴 수 있다. 분산이 매우 높은 차원이 판별 작업의 대부분을 한다. 소수의 차원만이 분산의 대부분을 진다면 임베딩이 제 능력을 놀리고 있는 것 — 대개 모델이 도메인에 비해 너무 범용이라는 신호다.</p>
+      </div>
+      <div class="diag-item rv">
+        <h4>임베딩 공간 시각화<span class="en">Embedding Space Visualisation</span></h4>
+        <p>UMAP이나 t-SNE로 말뭉치 임베딩을 2~3차원에 투영해 그려 본다. 관련 문서의 군집, 잘못 분류되었을 수 있는 고립 문서, 화제 영역 간의 기하학적 관계 — 말뭉치의 거시 구조가 드러난다. 시각화가 정량 분석을 대신하지는 못하지만, 정량 분석만으로는 놓칠 구조적 패턴을 어김없이 드러낸다.</p>
+      </div>
+    </div>
+    <pre class="code rv"><span class="cm"># 진단 레시피 — 검색이 이상하다 싶을 때마다 돌린다</span>
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">from</span> sentence_transformers <span class="kw">import</span> SentenceTransformer
+<span class="kw">import</span> umap
+
+model = SentenceTransformer(<span class="st">'all-MiniLM-L6-v2'</span>)
+doc_embs = model.encode(corpus)      <span class="cm"># corpus: 청크 목록</span>
+query_embs = model.encode(queries)   <span class="cm"># queries: 테스트 질의 집합</span>
+
+<span class="cm"># 1. 거리 분포 — 기대하는 이봉 패턴이 보이는가?</span>
+<span class="kw">for</span> q_emb <span class="kw">in</span> query_embs:
+    sims = doc_embs @ q_emb / (np.linalg.norm(doc_embs, axis=1) *
+                               np.linalg.norm(q_emb))
+    plt.hist(sims, bins=40)
+    plt.title(<span class="st">'Similarity distribution — expect bimodal'</span>)
+    plt.show()
+
+<span class="cm"># 2. 차원 분산 — 몇 차원이 실제로 정보를 나르는가?</span>
+variances = np.var(doc_embs, axis=0)
+<span class="kw">print</span>(f<span class="st">'Effective dimensions (variance &gt; 0.001): '</span>
+      f<span class="st">'{(variances &gt; 0.001).sum()} / {len(variances)}'</span>)
+
+<span class="cm"># 3. 말뭉치 시각화 — 거시 구조는 어떤 모양인가?</span>
+reducer = umap.UMAP(n_components=2, random_state=42)
+coords = reducer.fit_transform(doc_embs)
+plt.scatter(coords[:, 0], coords[:, 1], alpha=0.3)
+plt.title(<span class="st">'Corpus structure — look for clean clusters or noise'</span>)
+plt.show()</pre>
+    <div class="code-cap">원서 2.5절 진단 레시피 — 오후 한나절이면 구조적 건전성을 판정한다</div>
+    <div class="prose-serif">
+      <p class="rv">이 다섯 진단을 함께 돌리면, 검색 시스템이 구조적으로 건전한지 임베딩이 발목을 잡고 있는지가 오후 한나절 안에 드러난다. 이것이 진단의 전부는 아니다 — 10장이 더 완전한 관측 가능성 프레임워크를 세운다 — 그러나 모든 RAG 엔지니어가 언제든 돌릴 수 있어야 할 것들이다. 돌리는 비용은 몇 시간이고, 돌리지 않는 비용은 프로젝트 일정을 무너뜨리는 석 달짜리 디버깅의 수렁이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 안티패턴 ============ -->
+<section style="background:var(--mist)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">COMMON PITFALLS</span>
+      <h2>검색을 소리 없이 좀먹는 임베딩의 실수들 — 세 가지 안티패턴</h2>
+    </div>
+    <div class="anti">
+      <div class="anti-item rv">
+        <h4>기본 임베딩 모델을 그냥 믿기<span class="en">Trusting Default Embedding Models</span></h4>
+        <p>가장 흔한 임베딩 관련 실수는 처음 잡은 프레임워크의 기본 모델을 말뭉치에 대한 시험 한 번 없이 쓰는 것이다. LangChain의 기본값은 OpenAI text-embedding-3-small이고 LlamaIndex도 비슷하다. 일반 영어 콘텐츠에는 합리적인 기본값이지만, 의료·법률·금융·과학, 그리고 대부분의 기업 말뭉치에는 <em>틀린</em> 기본값이다.</p>
+        <p><span class="fix">처방</span> — 확정 전에 시험하라. 비용은 이틀이다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>코사인 유사도를 진리로 취급하기<span class="en">Treating Cosine Similarity as Ground Truth</span></h4>
+        <p>두 문서의 코사인 유사도가 0.92라면 매우 관련되어 있다고 여기는 것이 자연스러운 반사다. 아닐 수 있다. 코사인 유사도는 관련성에 대한 <em>임베딩 모델의 믿음</em>을 반영할 뿐, 실제로 참인 것을 반영하지 않는다.</p>
+        <p><span class="fix">처방</span> — 고위험 도메인에서는 어떤 결정이 걸리기 전에 모든 검색 결과를 실제 문서 내용에 대조해 검증하라. 유사도 점수는 결론이 아니라 <strong>가설</strong>이다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>부정, 숫자, 극성을 무시하기<span class="en">Ignoring Negation, Numbers, and Polarity</span></h4>
+        <p>임베딩 모델은 의미가 정반대인 진술을 예사로 가깝게 임베딩한다. "이 약에는 알려진 부작용이 있다"와 "없다"는 통상 코사인 유사도 90%를 넘고, "환자는 페니실린에 알레르기가 있다"와 "없다"도 같은 병을 앓는다.</p>
+        <p><span class="fix">처방</span> — 극성·부정·수치 정확성이 관건인 시스템 — 의료, 법률, 금융, 안전 필수 공학 — 에서 순수 벡터 검색은 근본적으로 불충분하다. 하이브리드 검색과 구조화 검증은 협상의 여지가 없다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 다섯 요지 ============ -->
+<section class="takeaways">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">CHAPTER SUMMARY</span>
+      <h2>답사를 마치며 — 다섯 가지 요지</h2>
+    </div>
+    <div class="take">
+      <div class="take-item rv"><p>임베딩은 텍스트를 기하 공간의 한 점에 놓는 고정 길이 벡터이며, 모델의 '관련됨'이란 <b>훈련 데이터에서 관찰한 공기 패턴 그 자체</b>다. 그 개념이 당신의 것과 다를 때, 검색은 순수 벡터 유사도로는 탐지할 수 없는 방식으로 실패한다.</p></div>
+      <div class="take-item rv"><p><b>의미적 간극</b> — 사용자 어휘와 말뭉치 어휘의 단절 — 이 검색 실패의 최다 원인이다. 어휘·구조·입도의 세 형태가 있고, 각각 다른 공학적 응답을 요구하며, 대부분의 프로덕션 시스템은 하이브리드 검색·도메인 적응·구조화 등가성의 조합을 필요로 한다.</p></div>
+      <div class="take-item rv"><p>유사도는 하나가 아니다. <b>어휘적·의미적·구조적</b>의 세 가계가 있고 각각 쓰일 자리가 다르다. 프로덕션급 검색 시스템은 어느 하나에 기대지 않고 셋을 결합한다.</p></div>
+      <div class="take-item rv"><p>임베딩 모델 선택은 RAG 시스템에서 <b>가장 지렛대가 크면서 가장 저평가된 결정</b>이다. 범용 임베딩은 전문 말뭉치에서 도메인 적응 대안에 15~30% 뒤진다. 그 차이를 드러내는 평가의 비용은 이틀이다. 확정 전에 반드시 평가하라.</p></div>
+      <div class="take-item rv"><p>검색 진단은 블랙박스가 아니라 <b>기술</b>이다. 거리 분포 분석, 최근접 이웃 검사, 질의–문서 정렬, 차원 분산, 임베딩 공간 시각화 — 모든 RAG 엔지니어가 언제든 돌릴 수 있어야 할 다섯 도구가 몇 주짜리 디버깅의 수렁을 오후 한나절의 조사로 바꾼다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 문헌 & 다리 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">FURTHER READING</span>
+      <h2>더 읽을거리</h2>
+    </div>
+    <div class="refs">
+      <div class="ref rv"><b>Reimers &amp; Gurevych</b>, <i>"Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks"</i> (EMNLP, 2019) — 현대적 문장 임베딩 접근을 확립하고 대부분의 프로덕션 임베딩 모델에 영감을 준 논문. 기초 훈련 방법론을 위해 읽는다.</div>
+      <div class="ref rv"><b>Karpukhin et al.</b>, <i>"Dense Passage Retrieval for Open-Domain Question Answering"</i> (Facebook AI Research, 2020) — 범용 의미 유사도와 구별되는, 검색 전용 임베딩 모델 훈련에 관한 첫 영향력 있는 논문. 현대 밀집 검색기를 이해하는 필수 맥락.</div>
+      <div class="ref rv"><b>Khattab &amp; Zaharia</b>, <i>"ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT"</i> (SIGIR, 2020) — 다중 벡터 검색의 효시. 여기서 소개된 패턴이 2026년 고위험 배포에서 여전히 지배적이다.</div>
+      <div class="ref rv"><b>Robertson &amp; Zaragoza</b>, <i>"The Probabilistic Relevance Framework: BM25 and Beyond"</i> (Foundations and Trends in Information Retrieval, 2009) — BM25와 어휘 검색의 결정판. 현대의 모든 하이브리드 시스템이 딛고 선 토대다. 하이브리드 검색기를 짓기 전에 읽어야 한다.</div>
+      <div class="ref rv"><b>Muennighoff et al.</b>, <i>"MTEB: Massive Text Embedding Benchmark"</i> (EACL, 2023) — 임베딩 모델 비교의 표준 벤치마크. huggingface.co/spaces/mteb/leaderboard의 라이브 리더보드를 모델 선별의 출발점으로 삼되, 자기 말뭉치 위의 평가를 대신하는 것으로는 결코 삼지 말 것.</div>
+    </div>
+    <p class="note rv">위 문헌 목록은 원서 2장의 Further Reading을 그대로 옮긴 것이다. 서지 사항의 최종 확인은 원 출처를 통해 하는 것이 옳다.</p>
+  </div>
+</section>
+
+<section class="bridge">
+  <div class="wrap">
+    <div class="sec-head rv" style="margin-bottom:32px">
+      <span class="sec-no">CHAPTER BRIDGE</span>
+      <h2>다음 답사지 — 규모의 벡터 검색과 임베딩 엔지니어링</h2>
+    </div>
+    <div class="prose-serif">
+      <p class="rv">3장은 임베딩의 이론에서 임베딩의 공학으로 건너간다. 말뭉치를 규모 있게 임베딩하는 실무적 결정들 — 벡터 데이터베이스의 선택, 호스팅과 자체 운영 사이의 트레이드오프, 임베딩 생성과 저장의 운영 관심사, 문서가 변할 때 임베딩을 최신으로 유지하는 패턴 — 을 다룬다. 이 장의 개념적 기초가 있으면 그 공학적 결정들이 손에 잡히고, 없으면 어림짐작이 된다. 주춧돌을 보았으니 이제 기둥을 세울 차례다.</p>
+    </div>
+    <div class="next rv">NEXT ▸ CHAPTER 3 · VECTOR SEARCH AND EMBEDDING ENGINEERING AT SCALE</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Raymond Norman, <span style="color:var(--cobalt)">Agentic RAG Systems</span> (2026) · Chapter 2 요약 웹페이지<br>
+    원서 39–59쪽 전체 내용 기반 · 본 페이지는 학습·검토 목적의 2차 정리물이다
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    els.forEach(function(e){e.classList.add('on')});
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        en.target.classList.add('on');
+        io.unobserve(en.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>
