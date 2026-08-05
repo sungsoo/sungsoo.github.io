@@ -1,0 +1,650 @@
+---
+layout: null
+title: "RAG Evaluation: RAGAS, LLM-as-Judge, and Production Metrics" 
+date: 2026-08-13
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG 평가 — RAGAS, LLM-as-Judge, 프로덕션 지표 · Agentic RAG Systems 제9장</title>
+<meta name="description" content="Raymond Norman, 『Agentic RAG Systems』 제9장 — 두 갈래 평가, RAGAS 네 지표, LLM-as-judge의 편향, 평가 집합의 구축과 유지, 지속적 프로덕션 평가">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --hanji:#F7F4EE;          /* 한지 */
+  --meok:#33322F;           /* 먹빛 */
+  --meok-soft:#6E6C66;
+  --meok-pale:#9A978F;
+  --inju:#A83B2A;           /* 인주 — 아껴 찍는다 */
+  --inju-deep:#7E2A1D;
+  --cheongja:#3F6060;       /* 청자빛 — 재는 자의 서늘함 */
+  --cheongja-deep:#2C4747;
+  --mist:#EDE8E0;
+  --line:#D8D2C7;
+  --paper-card:#FCFAF6;
+  --serif:'Gowun Batang', serif;
+  --sans:'Noto Sans KR', sans-serif;
+  --mono:'IBM Plex Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--hanji);color:var(--meok);
+  font-family:var(--serif);font-weight:400;
+  line-height:2.12;font-size:17.5px;letter-spacing:-0.008em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--meok);color:var(--hanji)}
+
+.wrap{max-width:760px;margin:0 auto;padding:0 30px}
+.wrap-wide{max-width:1000px;margin:0 auto;padding:0 30px}
+section{padding:118px 0}
+p{margin-bottom:1.75em}
+em{font-style:normal;color:var(--inju-deep);font-weight:400}
+strong{font-weight:700;color:var(--meok)}
+.mono{font-family:var(--mono)}
+.sans{font-family:var(--sans)}
+
+.rv{opacity:0;transform:translateY(20px);transition:opacity 1s cubic-bezier(.2,.7,.3,1),transform 1s cubic-bezier(.2,.7,.3,1)}
+.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .brush{animation:none !important;stroke-dasharray:none !important;stroke-dashoffset:0 !important}
+  .quiet{animation:none !important}
+}
+
+/* ---------- 표제 ---------- */
+header.hero{padding:150px 0 118px;background:var(--hanji);border-bottom:1px solid var(--line)}
+.hero-kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--meok-pale);text-transform:uppercase;margin-bottom:42px}
+.hero-kicker b{color:var(--inju);font-weight:600}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(30px,4.6vw,48px);line-height:1.5;letter-spacing:-0.012em;margin-bottom:20px;color:var(--meok)}
+h1 .thin{display:block;font-size:.5em;font-weight:400;color:var(--meok-soft);margin-top:20px;letter-spacing:.005em;line-height:1.7}
+.seal{
+  display:inline-block;margin:0 0 40px;padding:10px 13px;
+  border:1.5px solid var(--inju);color:var(--inju);
+  font-family:var(--serif);font-size:13px;font-weight:700;letter-spacing:.2em;line-height:1.3;
+}
+.hero-lede{max-width:620px;font-size:17.5px;line-height:2.16;color:#494741}
+.hero-meta{margin-top:56px;font-family:var(--mono);font-size:12.5px;color:var(--meok-pale);display:flex;gap:26px;flex-wrap:wrap}
+.hero-meta span::before{content:"— ";color:var(--line)}
+
+/* ---------- 여는 이야기 ---------- */
+.incident{background:var(--mist);padding:118px 0;border-bottom:1px solid var(--line)}
+.twofig{display:flex;gap:52px;flex-wrap:wrap;align-items:flex-end;margin-bottom:24px}
+.tf{font-family:var(--mono)}
+.tf .n{font-size:clamp(42px,7.6vw,80px);font-weight:600;line-height:1}
+.tf .u{font-size:.42em;font-weight:400}
+.tf .lbl{font-family:var(--sans);font-size:13px;color:#494741;line-height:1.7;margin-top:14px;max-width:230px}
+.tf-up .n{color:var(--cheongja)}
+.tf-down .n{color:var(--inju)}
+.tally-cap{font-family:var(--mono);font-size:12.5px;color:var(--meok-soft);letter-spacing:.16em;line-height:1.9;margin-top:22px}
+.incident .prose{max-width:660px;margin-top:52px}
+.pullquote{margin:60px 0;padding:0 0 0 30px;border-left:2px solid var(--inju);font-size:20px;line-height:1.95;color:var(--inju-deep)}
+.quiet{animation:quiet 4.6s ease-in-out infinite}
+@keyframes quiet{0%,100%{opacity:1}50%{opacity:.62}}
+
+/* ---------- 절 공통 ---------- */
+.sec-head{margin-bottom:60px}
+.sec-no{font-family:var(--mono);font-size:12.5px;letter-spacing:.26em;color:var(--inju-deep);margin-bottom:20px;display:block}
+h2{font-family:var(--serif);font-weight:700;font-size:clamp(24px,3.3vw,34px);line-height:1.55;color:var(--meok)}
+h3{font-family:var(--serif);font-weight:700;font-size:20px;margin:2.6em 0 1em;color:var(--cheongja)}
+h3::before{content:"· ";color:var(--inju)}
+
+.panel{background:var(--paper-card);border:1px solid var(--line);padding:40px 42px;margin:60px 0}
+.panel .tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--inju-deep);margin-bottom:18px;display:block}
+.panel h4{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:16px}
+.panel p{font-size:16px;line-height:2.02;margin-bottom:1.1em}
+.panel p:last-child{margin-bottom:0}
+.panel.cj{border-left:2px solid var(--cheongja)}
+.panel.cj .tag{color:var(--cheongja-deep)}
+.panel.inju{border-left:2px solid var(--inju)}
+
+/* ---------- 도해 ---------- */
+.figure{margin:70px 0;text-align:center}
+.figure svg{max-width:100%;height:auto}
+.figure figcaption{font-family:var(--sans);font-size:13.5px;color:var(--meok-soft);margin-top:22px;line-height:1.85}
+.figure figcaption::before{content:"⟨"}
+.figure figcaption::after{content:"⟩"}
+.brush{stroke-dasharray:1200;stroke-dashoffset:1200;animation:brush 2.5s ease-out forwards .35s}
+@keyframes brush{to{stroke-dashoffset:0}}
+
+/* ---------- RAGAS 네 지표 ---------- */
+.metrics{margin:60px 0;border-top:1px solid var(--line)}
+.metric{display:grid;grid-template-columns:52px 172px 1fr;gap:22px;align-items:baseline;padding:30px 0;border-bottom:1px solid var(--line)}
+.metric .num{font-family:var(--mono);font-size:13px;color:var(--inju);padding-top:4px}
+.metric h4{font-family:var(--serif);font-size:17.5px;font-weight:700;color:var(--cheongja);line-height:1.6}
+.metric h4 .en{display:block;font-family:var(--mono);font-weight:400;font-size:10.5px;color:var(--meok-pale);margin-top:5px;letter-spacing:.05em}
+.metric p{font-size:15.5px;line-height:1.95;color:#494741;margin:0}
+.metric p .catch{display:block;margin-top:8px;font-size:14px;color:var(--inju-deep)}
+.metric p .catch::before{content:"잡아내는 실패 — ";color:var(--meok-pale)}
+
+/* ---------- 편향 네 가지 ---------- */
+.bias{margin:56px 0}
+.bi{display:grid;grid-template-columns:150px 1fr;gap:22px;padding:26px 0;border-top:1px solid var(--line);align-items:start}
+.bi:last-child{border-bottom:1px solid var(--line)}
+.bi h4{font-family:var(--serif);font-size:16.5px;font-weight:700;color:var(--cheongja);line-height:1.5}
+.bi h4 .en{display:block;font-family:var(--mono);font-weight:400;font-size:10.5px;color:var(--meok-pale);margin-top:5px}
+.bi p{font-size:15px;line-height:1.95;color:#494741;margin:0}
+.bi p .fix{display:block;margin-top:8px;color:var(--cheongja-deep)}
+.bi p .fix::before{content:"완화 — ";color:var(--meok-pale)}
+
+/* ---------- 조건·계층 목록 ---------- */
+.conds{margin:56px 0}
+.cond{padding:32px 0;border-top:1px solid var(--line)}
+.cond:last-child{border-bottom:1px solid var(--line)}
+.cond h4{font-family:var(--serif);font-size:17.5px;font-weight:700;margin-bottom:10px;color:var(--cheongja)}
+.cond h4 span{font-family:var(--mono);font-size:11px;color:var(--meok-pale);font-weight:400;margin-left:10px;letter-spacing:.06em}
+.cond p{font-size:15.5px;line-height:1.98;color:#494741;margin:0}
+
+/* ---------- 세 원칙 카드 ---------- */
+.tenets{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:24px;margin:56px 0}
+.tenet{background:var(--paper-card);border:1px solid var(--line);border-top:2px solid var(--cheongja);padding:32px 30px}
+.tenet .no{font-family:var(--mono);font-size:12px;color:var(--inju);margin-bottom:14px}
+.tenet p{font-size:15px;line-height:1.96;color:#494741;margin:0}
+.tenet p b{color:var(--meok)}
+
+/* ---------- 코드 ---------- */
+pre.code{
+  background:var(--meok);color:#DAD6CD;
+  font-family:var(--mono);font-size:12.5px;line-height:1.9;
+  padding:34px 36px;margin:56px 0;overflow-x:auto;
+}
+pre.code .cm{color:#948F84}
+pre.code .kw{color:#D9A57F}
+pre.code .st{color:#A9BFA8}
+.code-cap{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--meok-pale);margin:-42px 0 56px;padding-left:2px}
+
+/* ---------- 안티패턴 ---------- */
+.anti{counter-reset:anti;margin:60px 0}
+.anti-item{padding:36px 0 36px 66px;position:relative;counter-increment:anti;border-top:1px solid var(--line)}
+.anti-item:last-child{border-bottom:1px solid var(--line)}
+.anti-item::before{
+  content:counter(anti);position:absolute;left:0;top:36px;
+  width:34px;height:34px;line-height:32px;text-align:center;
+  border:1.5px solid var(--inju);color:var(--inju);
+  font-family:var(--mono);font-size:13px;
+}
+.anti-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:12px}
+.anti-item h4 .en{font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--meok-pale);display:block;margin-top:5px}
+.anti-item p{font-size:15.5px;line-height:1.98;color:#494741;margin-bottom:1em}
+.anti-item p:last-child{margin-bottom:0}
+.anti-item .fix{font-weight:700;color:var(--inju-deep)}
+
+/* ---------- 다섯 요지 ---------- */
+.takeaways{background:var(--meok);color:#E6E2D9;padding:118px 0}
+.takeaways h2{color:#F2EEE6}
+.takeaways .sec-no{color:#D9A57F}
+.take{counter-reset:take;margin-top:58px}
+.take-item{display:grid;grid-template-columns:58px 1fr;gap:24px;padding:34px 0;border-top:1px solid rgba(230,226,217,.13);counter-increment:take}
+.take-item::before{content:counter(take);font-family:var(--serif);font-size:34px;font-weight:700;color:#605C53;line-height:1.2}
+.take-item p{font-size:16px;line-height:2.08;color:#CBC5B9;margin:0}
+.take-item p b{color:#F2EEE6}
+
+/* ---------- 문헌·다리·꼬리 ---------- */
+.refs{margin:58px 0}
+.ref{padding:26px 0 26px 30px;border-top:1px solid var(--line);position:relative;font-size:15.5px;line-height:1.95;color:#494741}
+.ref::before{content:"—";position:absolute;left:0;color:var(--inju)}
+.ref b{font-weight:700;color:var(--meok)}
+.ref i{font-style:italic}
+.ref:last-child{border-bottom:1px solid var(--line)}
+.bridge{background:var(--mist);padding:104px 0;border-top:1px solid var(--line)}
+.bridge .next{margin-top:44px;font-family:var(--mono);font-size:12.5px;letter-spacing:.18em;color:var(--cheongja)}
+footer{padding:64px 0;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--meok-pale);border-top:1px solid var(--line);line-height:2.1}
+.note{font-family:var(--sans);font-size:13.5px;color:var(--meok-soft);margin-top:32px;line-height:1.95}
+.note::before{content:"※ ";color:var(--inju)}
+
+@media(max-width:680px){
+  section{padding:82px 0}
+  header.hero{padding:104px 0 82px}
+  .metric{grid-template-columns:1fr;gap:8px}
+  .metric .num{padding-top:0}
+  .bi{grid-template-columns:1fr;gap:8px}
+  .twofig{gap:34px}
+  .take-item{grid-template-columns:42px 1fr;gap:16px}
+  .take-item::before{font-size:26px}
+  .anti-item{padding-left:52px}
+  .anti-item::before{width:30px;height:30px;line-height:28px;font-size:12px}
+  .pullquote{font-size:18px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 표제 ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-kicker rv">AGENTIC RAG SYSTEMS · RAYMOND NORMAN · <b>제 9 장 · PART IV</b></div>
+    <div class="seal rv">度量</div>
+    <h1 class="rv">RAG 평가 — RAGAS, LLM-as-Judge, 그리고 프로덕션 지표<span class="thin">잘못된 측정은 측정하지 않는 것보다 위험하다. 거짓된 확신을 주기 때문이다.</span></h1>
+    <p class="hero-lede rv">4부가 여기서 열리는 까닭은, 뒤따르는 모든 규율 — 관측 가능성, 비용 공학, 운영의 생애주기 — 이 품질을 믿음직하게 <em>재는 능력</em>에 의지하기 때문이다. 그런데 재는 일에는 한 겹의 물음이 더 있다. 우리가 쓰는 자가 아직도 우리가 재려는 것을 재고 있는가. 이 장은 지표를 다루는 장이면서, <em>자를 다시 재는 일</em>을 다루는 장이다.</p>
+    <div class="hero-meta rv">
+      <span>원서 170–186쪽</span>
+      <span>Part IV · Production Engineering</span>
+      <span>헤아림의 공학</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 여는 이야기 ============ -->
+<section class="incident">
+  <div class="wrap">
+    <div class="twofig rv quiet">
+      <div class="tf tf-up">
+        <div class="n">+27<span class="u">%</span></div>
+        <div class="lbl">사내 벤치마크에서의 개선 — 검색 정밀도, 답변 관련성, 맥락 충실도 모두 초록불</div>
+      </div>
+      <div class="tf tf-down">
+        <div class="n">+8<span class="u">%</span></div>
+        <div class="lbl">배포 6주 뒤 고객 불만의 증가 — 같은 벤치마크는 여전히 초록불이었다</div>
+      </div>
+    </div>
+    <div class="tally-cap rv">2026년 5월 · 어느 이커머스 플랫폼<br>지표는 나아졌다 하고 고객은 나빠졌다 했다. 두 진술은 동시에 참이었다.</div>
+    <div class="prose">
+      <p class="rv">한 이커머스 플랫폼의 AI 팀이 최신 RAG 개선을 경영위원회에 보고했다. 상품 검색 어시스턴트의 새 판 — 넉 달이 걸리고 공학 시간으로 60만 달러가량을 쓴 재구축 — 이 사내 벤치마크 모음에서 27% 개선을 이루었다. 검색 정밀도가 올랐다. 답변 관련성 점수가 올랐다. 맥락 충실도가 올랐다. 대시보드는 전면 초록이었다. 팀은 그 벤치마크가 자기들의 프로덕션 질의 분포를 대표한다고 믿는 바에 맞춰 몇 주를 들여 보정해 두었고, 숫자는 모호하지 않았다. 경영진은 배포를 승인했다.</p>
+      <p class="rv">배포 여섯 주 뒤, 팀은 고객 불만이 유별난 속도로 늘고 있음을 알아차렸다. 파국적이지는 않았다. 이전 기준선보다 8% 정도, 어시스턴트와 대화하는 고객을 둔 수천 판매자에 걸쳐 흩어져 있었다. 같은 벤치마크 모음에 대해 여전히 상시로 돌던 RAG 품질 지표는 여전히 초록이었다. 벤치마크는 이 시스템이 이전 판보다 낫다고 말했다. 고객 불만은 더 나쁘다고 말했다. 두 진술은 동시에 참이었고, 팀은 외부 평가 컨설턴트를 불러 자기 방법론을 감사할 때까지 어떻게 그럴 수 있는지 이해하지 못했다.</p>
+      <p class="rv">감사는 실패를 외과적 정밀함으로 짚었다. 팀의 벤치마크 모음은 열두 달 전 프로덕션 질의 표본으로 지어진 것이었다. 그 사이 한 해 동안 플랫폼의 상품 카탈로그가 자랐고, 고객층이 다른 인구 구성으로 옮겨 갔고, 질의 패턴이 팀이 알아차리지 못한 방식으로 표류했다. 벤치마크 모음은 자기가 모형화하도록 설계되었던 그 프로덕션 질의 분포를 더는 대표하지 않았다. 팀은 <strong>고객이 더는 묻지 않는 질의에서 27% 더 잘하는 시스템</strong>을 지었던 것이다. 그러면서 고객이 지금 실제로 묻는 질의에서는 — 조금이지만 실질적으로 — 뒷걸음질했다.</p>
+      <div class="pullquote rv">벤치마크는 거짓말하지 않았다. 팀이, 그 벤치마크가 아직도 자기가 잰다고 주장하는 것을 재고 있는지 묻기를 그만두었을 뿐이다.</div>
+      <p class="rv">이것이 평가를 잘못했을 때 가능해지는 실패 양식이다. 팀의 지표는 엄정했다. 방법론은 추상적으로 보아 방어 가능했다. 대시보드는 아름다웠다. 없던 것은 <em>평가 체계 자신을 프로덕션 산출물로 대접하는 규율</em>이었다. 유지되고 검증되고 끊임없이 의심받아야 하는 산출물, 왜냐하면 그것이 현실을 대표하기를 멈추는 순간 아예 재지 않는 것보다 나빠지기 때문이다. 잘못된 측정이 측정 없음보다 위험한 까닭은 그것이 <strong>거짓된 확신</strong>을 주기 때문이다.</p>
+      <p class="rv">수습에는 석 달이 걸렸다. 팀은 평가 방법론을 처음부터 다시 지었고, 세 가지 원칙을 명시했다.</p>
+      <div class="tenets">
+        <div class="tenet rv">
+          <div class="no">원칙 하나</div>
+          <p>평가 집합은 <b>현재의 프로덕션 질의에서 분기마다 갱신</b>되어야 한다.</p>
+        </div>
+        <div class="tenet rv">
+          <div class="no">원칙 둘</div>
+          <p>평가에는 자동 지표와 함께 <b>사람이 채점한 사례</b>가 들어가야 한다. 사람의 채점을 정답으로, 자동 지표는 그 정답에 끊임없이 검증되어야 하는 <b>대리 지표</b>로 다룬다.</p>
+        </div>
+        <div class="tenet rv">
+          <div class="no">원칙 셋</div>
+          <p>평가는 평균 성능만이 아니라 <b>질의 유형에 걸친 성능 분포</b>를 담아, 평균이 가리는 퇴행을 드러내야 한다.</p>
+        </div>
+      </div>
+      <p class="rv">다시 지은 뒤 새 판을 재시험했다. 과연, 실제 프로덕션 분포에서 그것은 조금 더 나빴다. 팀은 롤백하여 이전 판으로 돌아갔고, 넉 달의 재구축을 <em>평가란 산출물이 아니라 그 자체로 공학의 규율임을 배운 값</em>으로 여겼다. 이 장을 마치면 그 석 달의 수습은 불운한 차질이 아니라, 평가를 한 번의 활동으로 대접한 데서 오는 예측 가능한 귀결로 보일 것이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9.1 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">9.1 · TWO KINDS OF EVALUATION</span>
+      <h2>두 갈래의 평가 — 검색 단계와 종단 간</h2>
+    </div>
+    <p class="rv">진지한 RAG 평가의 첫 개념적 걸음은 <strong>서로 다른 두 평가 문제가 있고 그들이 다른 방법을 요구한다</strong>는 것을 알아보는 일이다. 하나는 검색 단계 평가다 — 주어진 질의에 대해 검색 파이프라인이 옳은 청크를 띄우는가. 다른 하나는 종단 간 평가다 — 시스템이 사용자의 질문에 좋은 답을 내는가. 두 문제는 상관되지만 같지 않다. 검색이 성공했는데도 생성이 나쁜 답을 낼 수 있다. 검색이 실패했는데도 생성이 사용자가 받아들일 그럴듯한 답을 낼 수 있다. 실패 양식마다 자기 몫의 방법론을 요구한다.</p>
+    <p class="rv"><strong>검색 단계 평가</strong>는 질의에 답할 정보를 담은 문서를 시스템이 찾는지를 잰다. 지표는 본질적으로 정보 검색의 지표 — 재현율, 정밀도, 그 변형들 — 를 청크 수준에 적용한 것이다. 상위 k개에 정답을 담은 청크가 들어 있었는가. 상위 k개 가운데 실제로 관련된 것의 비율은 얼마인가. 가장 관련된 청크는 몇 번째 순위에 나타났는가. 레이블된 데이터가 있다면 이 물음들에는 측정 가능한 정답이 있다.</p>
+    <p class="rv">레이블된 검색 데이터를 짓는 일은, 대표적인 질의 집합에 대해 말뭉치의 <em>어느 청크가</em> 답을 옳게 받칠지를 식별하는 일이다. 이 레이블 작업은 지루하고 비싸다 — 통상 자기 분야에서 옳은 증거를 식별할 수 있는 도메인 전문가를 요구한다 — 그러나 토대다. 검색 정답이 없으면 하류의 모든 지표가 타당성을 검증할 수 없는 어림에 의지한다. 프로덕션급 평가는 검색 정답을 <strong>일급 공학 산출물로</strong> 투자하며, 프로덕션 코드를 최신으로 유지하는 것과 같은 정성으로 그것을 최신으로 유지한다.</p>
+    <p class="rv"><strong>종단 간 평가</strong>는 시스템이 내놓는 최종 답의 품질을 잰다. 사용자가 실제로 겪는 것이며, 끝내 시스템의 값어치를 정하는 것이다. 지표가 검색 지표와 다르다. 답이 옳은지, 회수된 증거에 충실한지, 사용자의 실제 물음에 응답하는지, 사용자가 믿을 수 있는지를 붙잡는다. 재는 방법도 다르다. 재현율이 검색의 포괄을 붙잡는 식으로 답의 품질을 붙잡는 단순한 구조적 성질이 없기에, 사람의 판단이나 정교한 자동 대리 지표를 흔히 요구한다.</p>
+    <p class="rv">이커머스 팀의 벤치마크가 실제로 잰 것이 종단 간이었다. 대시보드는 수천 평가 질의를 가로질러 집계된 답 품질 점수를 보고했다. <em>지표는 온전했고 질의가 묵었다.</em> 교훈은 종단 간 평가가 평가 집합의 대표성에 결정적으로 의지한다는 것이다. 답 품질 지표 자체가 믿음직한 것은 오직 그 지표가 측정되는 질의들이 시스템이 프로덕션에서 실제로 받는 질의를 닮은 만큼이다.</p>
+    <div class="panel cj rv">
+      <span class="tag">Key Definition</span>
+      <h4>두 평가 문제</h4>
+      <p><strong>검색 평가</strong>는 묻는다 — 시스템이 옳은 증거를 찾았는가. 레이블된 검색 정답에 대해 청크 수준의 재현율과 정밀도와 순위를 잰다.</p>
+      <p><strong>종단 간 평가</strong>는 묻는다 — 시스템이 좋은 답을 냈는가. 사람의 판단이나 신중히 검증된 자동 대리 지표에 대해 답의 품질을 잰다.</p>
+      <p>둘 다 필요하고, 어느 쪽도 다른 쪽을 대신하지 않는다. 하나만 재는 팀은 이커머스 팀이 자기 간극을 발견한 방식으로 자기 간극을 발견한다 — <em>지표가 예측하지 못한 고객 사고를 통해서.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9.2 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">9.2 · RAGAS</span>
+      <h2>RAGAS — 자동 지표를 옳게 쓰는 법</h2>
+    </div>
+    <p class="rv">RAGAS(Retrieval-Augmented Generation Assessment)는 2023년에 나타나 자동 RAG 평가의 가장 영향력 있는 틀이 되었고 2026년에도 사실상의 표준으로 남아 있다. 이 틀의 기여는 RAG 품질의 서로 다른 차원을 붙잡는 네 지표 — 맥락 정밀도, 맥락 재현율, 충실도, 답변 관련성 — 를 운용 가능하게 만든 것이다. 각 지표는 시스템 거동의 특정 측면에 대한 심판으로 언어 모델을 써서 계산되며, 프롬프트는 재려는 차원만 떼어 내도록 설계된다. 결과는 자동으로, 규모 있게 돌 수 있고, 보정이 옳게 되었을 때 사람의 판단과 상당히 잘 상관하는 지표의 한 벌이다.</p>
+    <div class="metrics">
+      <div class="metric rv">
+        <div class="num">01</div>
+        <h4>맥락 정밀도<span class="en">context precision</span></h4>
+        <p>회수된 청크 가운데 실제로 질문에 관련된 것의 비율을 잰다. 높으면 대체로 쓸모 있는 청크를 돌려주고 있다는 뜻이고, 낮으면 상위 k개가 언어 모델이 걸러 내야 할 청크로 오염되어 있다는 뜻이다. 5장에서 세운 규율 — 재순위화와 필터링은 재현율 높은 후보 집합이 아니라 <em>정밀도 높은 상위 k</em>를 내야 한다는 — 를 곧바로 잰다.<span class="catch">신호를 희석하는 어수선한 맥락</span></p>
+      </div>
+      <div class="metric rv">
+        <div class="num">02</div>
+        <h4>맥락 재현율<span class="en">context recall</span></h4>
+        <p>회수된 청크가 질문에 답할 정보를 담고 있는지를 잰다. 참조 답변의 주장들을 추출해 각 주장이 회수된 맥락에 의해 받쳐지는지 확인하는 방식으로 계산된다. 높으면 필요한 증거를 찾고 있다는 뜻이고, 낮으면 검색이 결정적 정보를 놓치고 있어 생성이 그것을 지어내거나 내놓지 못한다는 뜻이다. <strong>2부의 검색 실패를 진단하는 가장 중요한 지표</strong>다.<span class="catch">환각을 강요하는 정보의 결손</span></p>
+      </div>
+      <div class="metric rv">
+        <div class="num">03</div>
+        <h4>충실도<span class="en">faithfulness</span></h4>
+        <p>생성된 답이 회수된 맥락에 의해 받쳐지는지를 잰다. 답에서 주장을 추출해 각각을 회수된 청크에 견준다. 충실한 답은 맥락이 받치는 주장만 하고, 충실하지 않은 답은 맥락이 받치지 않는 주장을 한다 — 애초에 RAG를 낳은 그 고전적 환각 양식이다. 사용자가 시스템의 주장을 믿어야 하는 고위험 응용에 필수적이다.<span class="catch">증거에 접지되지 않은 지어낸 사실</span></p>
+      </div>
+      <div class="metric rv">
+        <div class="num">04</div>
+        <h4>답변 관련성<span class="en">answer relevance</span></h4>
+        <p>생성된 답이 요점을 벗어난 기술적으로 옳은 내용이 아니라 <em>사용자의 질문에 실제로 응답하는지</em>를 잰다. 그 답이 응답할 법한 가설적 질문들을 생성해, 그것이 원 질문과 얼마나 가까운지를 재는 방식으로 작동한다. 관련된 답은 물어진 것에 응답하고, 관련 없는 답은 그 옆의 무엇에 응답한다 — 시스템이 물어진 질문이 아니라 <em>자기가 찾은 질문</em>에 답하는 흔한 실패 양식이다.<span class="catch">인접한 질문에 대한 엉뚱한 응답</span></p>
+      </div>
+    </div>
+    <h3 class="rv">사람의 판단에 대한 보정</h3>
+    <p class="rv">RAGAS 지표는 심판으로 행동하는 언어 모델이 계산한다. 그래서 자동이고 규모를 감당하며 사람 채점에 비해 싸다. 그리고 그래서 순수한 구조적 지표가 그렇지 않은 방식으로 <em>본래 잡음이 많고 편향될 수 있다</em>. 언어 모델 심판은 실행마다 일관되지 않을 수 있고, 특정 표현이나 형식을 편애할 수 있고, 평가 집합 전체로 번지는 체계적 오류를 낼 수 있다. 프로덕션급 RAGAS와 순진한 사용을 가르는 규율은 <strong>사람의 판단에 대한 지속적 보정</strong>이다.</p>
+    <p class="rv">보정 패턴은 원리상 곧바르다. 주기적으로 — 통상 매달 — 평가 질의의 표본을 RAGAS 지표와 사람 검토자가 함께 채점한다. 자동 점수와 사람 점수의 상관을 계산한다. 상관이 높으면 자동 지표를 사람 판단의 대리로 신뢰하고 나머지 평가를 그것으로 계속한다. 상관이 수용 문턱 아래로 떨어지면 팀이 조사한다. 자동 지표가 어떤 질의 부류에서 체계적으로 편향되어 있는가. 프로덕션 질의 분포가 이전 보정을 무효로 만드는 방식으로 옮겨 갔는가. 조사는 지표에서, 사람 채점 방법론에서, 또는 평가 집합 자체에서 문제를 찾아낼 수 있다.</p>
+    <p class="rv">이 보정이 없으면 RAGAS 지표는 조용히 사람의 판단에서 멀어지고, 팀은 원래 재려던 것을 더는 대표하지 않는 지표에 맞춰 계속 최적화한다. 이커머스 팀의 실패에는 이 차원도 있었다. 자동 지표가 거의 한 해 동안 사람 판단에 보정된 적이 없었고, 그 기간에 상관은 지표가 팀이 믿는 것과 <em>다른 무엇을</em> 재는 지점까지 퇴화해 있었다.</p>
+    <pre class="code rv"><span class="cm"># 사람 보정을 곁들인 RAGAS 방식 평가 파이프라인</span>
+<span class="kw">from</span> ragas <span class="kw">import</span> evaluate
+<span class="kw">from</span> ragas.metrics <span class="kw">import</span> (context_precision, context_recall,
+                          faithfulness, answer_relevance)
+
+<span class="kw">def</span> evaluate_rag_system(queries, system, human_labelled_subset):
+    <span class="cm"># 1. 모든 평가 질의에 대해 답을 생성한다</span>
+    results = [system.answer(q[<span class="st">'question'</span>]) <span class="kw">for</span> q <span class="kw">in</span> queries]
+    eval_data = [{
+        <span class="st">'question'</span>:     q[<span class="st">'question'</span>],
+        <span class="st">'answer'</span>:       r[<span class="st">'answer'</span>],
+        <span class="st">'contexts'</span>:     r[<span class="st">'retrieved_chunks'</span>],
+        <span class="st">'ground_truth'</span>: q.get(<span class="st">'reference_answer'</span>),
+    } <span class="kw">for</span> q, r <span class="kw">in</span> zip(queries, results)]
+
+    <span class="cm"># 2. 자동 지표를 돌린다</span>
+    auto_scores = evaluate(eval_data,
+        metrics=[context_precision, context_recall,
+                 faithfulness, answer_relevance])
+
+    <span class="cm"># 3. 사람이 채점한 부분집합에 견주어 보정한다</span>
+    human_subset_indices = [i <span class="kw">for</span> i, q <span class="kw">in</span> enumerate(queries)
+                            <span class="kw">if</span> q[<span class="st">'id'</span>] <span class="kw">in</span> human_labelled_subset]
+    human_scores = [human_labelled_subset[queries[i][<span class="st">'id'</span>]]
+                    <span class="kw">for</span> i <span class="kw">in</span> human_subset_indices]
+    auto_subset  = [auto_scores[i] <span class="kw">for</span> i <span class="kw">in</span> human_subset_indices]
+
+    correlation = spearman_correlation(auto_subset, human_scores)
+    <span class="kw">if</span> correlation &lt; 0.7:
+        alert(<span class="st">'Auto-metric calibration degraded; investigate before trusting'</span>)
+
+    <span class="kw">return</span> auto_scores, correlation</pre>
+    <div class="code-cap">원서 9.2절 — 상관이 문턱 아래로 떨어지면, 신뢰하기 전에 조사한다</div>
+  </div>
+</section>
+
+<!-- ============ 9.3 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">9.3 · LLM-AS-JUDGE</span>
+      <h2>LLM-as-Judge — 힘과 함정, 그리고 프로덕션의 규율</h2>
+    </div>
+    <p class="rv">언어 모델로 다른 언어 모델의 출력을 평가하는 패턴 — LLM-as-judge — 은 특정 RAGAS 지표를 넘어 더 일반적인 평가 작업으로 뻗는다. 잘 설계된 심판 프롬프트는 어떤 자동 구조 지표도 붙잡지 못하는 차원에서 답의 품질을 채점할 수 있다. 포괄성, 명료함, 도움됨, 어조의 적절함. 강력하고, 프로덕션에서 점점 흔해지며, 팀들이 예사로 과소평가하는 실패 양식들에 취약한 패턴이다.</p>
+    <p class="rv"><strong>왜 통하는가.</strong> 2026년의 프런티어 모델은 많은 평가 과업에서 유능한 채점자다. 답과 질문과 명료한 채점 기준을 주면, 대부분의 일반 평가 과업에서 사람의 판단과 상당히 상관하는 점수를 낸다. 기제는 언어 모델을 어떤 추론 과업에든 쓸모 있게 만드는 그 기제와 본질적으로 같다 — 좋은 답이 무엇인지에 대해 배운 패턴을 눈앞의 사례에 적용하는 것이다. 사람 채점이 엄두 못 낼 만큼 비싼 규모의 평가에서, 이 상관이 지속적 평가를 경제적으로 성립하게 만든다.</p>
+    <p class="rv">생산성은 실재한다. 팀은 평가 사례 천 건을 언어 모델 호출 몇 달러 값으로 하룻밤에 채점할 수 있는데, 같은 일을 사람이 하면 전문가 시간 몇 주와 수천 달러가 든다. 이 규모가 그러지 않았으면 불가능했을 방법론을 가능하게 한다. 프로덕션 질의 분포 전체에 대한 지속적 평가, 여러 시스템 변형의 비교 평가, 배포마다의 회귀 시험. LLM-as-judge가 가능하게 하는 이 물량이 대부분의 팀에게 진지한 지속적 평가를 운영상 성립하게 만든다.</p>
+    <h3 class="rv">네 가지 함정</h3>
+    <p class="rv">여러 체계적 편향이 이 평가에 작용한다. 실재하고 상당하며, 완화할 수 있으나 없앨 수는 없다.</p>
+    <div class="bias">
+      <div class="bi rv">
+        <h4>위치 편향<span class="en">position bias</span></h4>
+        <p>두 답을 나란히 놓고 채점할 때 심판은 <em>먼저 제시된</em> 답을 편애하는 경향이 있다.<span class="fix">비교되는 답의 순서를 무작위화하고 두 순서를 평균한다</span></p>
+      </div>
+      <div class="bi rv">
+        <h4>길이 편향<span class="en">length bias</span></h4>
+        <p>심판은 더 길고 더 정교한 답을 편애하는 경향이 있다. 짧은 답이 사실관계로 더 나을 때조차 그렇다.<span class="fix">길이와 무관한 차원으로 명시적으로 채점하거나 점수를 길이로 정규화한다</span></p>
+      </div>
+      <div class="bi rv">
+        <h4>자기 편향<span class="en">self-bias</span></h4>
+        <p>심판은 자기와 같은 계열의 언어 모델이 생성한 답을 편애하는 경향이 있다. 때로는 놀랄 만한 차이로.<span class="fix">평가 대상과 다른 모델 계열의 심판을 쓴다 — 어떤 모델이 자기 답을 홀로 심판하게 두어서는 결코 안 된다</span></p>
+      </div>
+      <div class="bi rv">
+        <h4>문체 편향<span class="en">style bias</span></h4>
+        <p>심판은 특정 수사 패턴 — 자신 있게 들리는 답, 잘 구성된 문단, 특정한 어휘 선택 — 에 대한 학습된 선호를 지녔고, 그것이 실제 품질과 상관하지 않을 수 있다.<span class="fix">가장 다루기 어렵다. 감지하려면 주기적인 사람 보정이 필요하다</span></p>
+      </div>
+    </div>
+    <h3 class="rv">프로덕션의 세 규율</h3>
+    <p class="rv">프로덕션급 LLM-as-judge 평가는 세 규율을 따른다. <strong>첫째, 여러 심판을 병렬로 쓴다.</strong> 통상 다른 계열의 언어 모델 둘이나 셋을 두고 점수를 집계한다. 어떤 단일 심판에도 내재하는 잡음을 줄이고, 심판들이 어긋나는 사례를 드러낸다. 그 사례들은 사람 검토자들도 어긋날 사례와 흔히 겹친다. <strong>둘째, 점수 전에 명시적 추론을 요구하도록 프롬프트를 구성한다.</strong> 심판이 왜 그 답이 좋은지 나쁜지 분석을 먼저 써 내고 그다음 점수를 매긴다. 채점 품질을 높이는 동시에 점수가 왜 그렇게 매겨졌는지에 대한 감사 흔적을 남긴다. <strong>셋째, 심판 프롬프트 자체를 버전 관리하고 사람 채점에 보정하며, 한 번의 프롬프트 공학 연습이 아니라 유지가 필요한 공학 산출물로 대접한다.</strong></p>
+    <div class="panel cj rv">
+      <span class="tag">Production Insight</span>
+      <h4>다중 심판 집계 — 품질의 바닥</h4>
+      <p>LLM-as-judge 평가에 가장 임팩트 큰 개선 하나는 <strong>다른 모델 계열의 심판 여럿을 써서 점수를 집계하는 것</strong>이다. 비용은 단일 심판의 두세 배이고, 이득은 극적으로 더 강건한 채점이다.</p>
+      <p>심판들이 합의하면 점수는 믿을 만하다. 심판들이 어긋나면 그 사례는 사람 검토로 표시된다. 그리고 그렇게 드러나는 사례들은 <em>채점이 실제로 중요한 바로 그 사례들</em>인 경향이 있다. 다중 심판 집계가 LLM-as-judge를 잡음 섞인 근사에서 프로덕션급 평가 기반으로 바꾸는 운영 패턴이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9.4 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">9.4 · EVALUATION SETS</span>
+      <h2>프로덕션을 대표하는 평가 집합을 짓고 지키기</h2>
+    </div>
+    <p class="rv">가장 중대한 평가 결정은 <em>어느 지표를 쓰느냐</em>가 아니라 <strong>무엇에 견주어 재느냐</strong>다. 프로덕션 질의 분포를 대표하지 않는 평가 집합은 쓸모없는 것보다 나쁘다. 시스템이 실제로 중요한 질의에서 실패하고 있는데 좋다고 믿게 만드는 자신 있는 지표를 낳기 때문이다. 이커머스 팀의 실패는 근본에서 평가 집합의 구축과 유지의 실패였다. 지표는 온전했고 질의가 틀렸다.</p>
+    <figure class="figure rv">
+      <svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="열두 달에 걸쳐 프로덕션 분포가 옮겨 가는 동안 얼어붙은 벤치마크">
+        <defs>
+          <marker id="a9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#A83B2A"/></marker>
+        </defs>
+        <!-- axes -->
+        <line x1="70" y1="238" x2="660" y2="238" stroke="#9A978F" stroke-width="1.2"/>
+        <text x="70" y="262" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#9A978F">12개월 전</text>
+        <text x="660" y="262" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#9A978F" text-anchor="end">지금</text>
+
+        <!-- frozen benchmark distribution (bell, static) -->
+        <path d="M 120 238 C 168 238, 168 96, 216 96 C 264 96, 264 238, 312 238" fill="#EDE8E0" stroke="#3F6060" stroke-width="1.8"/>
+        <text x="216" y="84" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#2C4747" text-anchor="middle" font-weight="700">벤치마크 집합</text>
+        <text x="216" y="66" font-family="IBM Plex Mono, monospace" font-size="10" fill="#3F6060" text-anchor="middle">12개월 전에 얼어붙었다</text>
+        <line x1="216" y1="100" x2="216" y2="238" stroke="#3F6060" stroke-width="1" stroke-dasharray="4 4"/>
+
+        <!-- drifted production distribution -->
+        <path class="brush" d="M 372 238 C 424 238, 424 122, 476 122 C 528 122, 528 238, 580 238" fill="none" stroke="#A83B2A" stroke-width="2.2"/>
+        <text x="476" y="110" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#7E2A1D" text-anchor="middle" font-weight="700">지금의 프로덕션 질의</text>
+        <text x="476" y="92" font-family="IBM Plex Mono, monospace" font-size="10" fill="#A83B2A" text-anchor="middle">카탈로그·고객층·표현이 옮겨 갔다</text>
+        <line x1="476" y1="126" x2="476" y2="238" stroke="#A83B2A" stroke-width="1" stroke-dasharray="4 4"/>
+
+        <!-- divergence arrow -->
+        <path d="M 224 216 C 300 202, 396 202, 466 214" fill="none" stroke="#A83B2A" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#a9)"/>
+        <text x="344" y="176" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#7E2A1D" text-anchor="middle">알아차리지 못한 표류</text>
+
+        <!-- overlap sliver -->
+
+        <text x="360" y="300" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#494741" text-anchor="middle">27%의 개선은 고객이 더는 묻지 않는 질의 위에서 이룬 개선이었다</text>
+        <text x="360" y="322" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#7E2A1D" text-anchor="middle">자는 그대로였고 재려던 세상이 옮겨 갔다</text>
+      </svg>
+      <figcaption>벤치마크 표류 — 지표가 나빠진 것이 아니라, 지표가 딛고 선 질의들이 현실에서 떨어져 나간 것이다</figcaption>
+    </figure>
+    <h3 class="rv">질의를 어디서 얻는가</h3>
+    <p class="rv">평가 집합은 팀이 사용자가 물을 것이라 <em>상상하는</em> 질의가 아니라 실제 프로덕션 질의에서 끌어와야 한다. 상상된 질의는 팀의 사용자 심상 모형을 반영하는데, 그것은 사용자가 실제로 질문을 어떻게 표현하고 무엇에 마음을 쓰며 어느 범주에 얼마의 질의가 떨어지는지에 대한 대개 나쁜 근사다. 제대로 표집되고 제대로 익명화되고 제대로 레이블된 프로덕션 질의만이 믿음직한 평가 데이터의 원천이다.</p>
+    <p class="rv">프로덕션 질의의 표집에는 어느 정도의 세련이 필요하다. 순수 무작위 표집은 드물지만 그럼에도 중요한 질의 유형을 과소 대표한다. 어떤 컴플라이언스 질의는 프로덕션 트래픽의 1%에만 나타나면서 사업 리스크의 90%를 표상할 수 있다. 드물지만 중요한 질의 유형을 명시적으로 과대 표집하는 <strong>층화 표집</strong>이 표준 패턴이다. 팀은 중요한 층(주제별, 사용자 세그먼트별, 사업 영향별)을 식별하고, 층마다 표본 크기를 정하고, 각 층에서 대표적 질의를 뽑는다.</p>
+    <p class="rv">표집된 질의에 레이블을 붙이는 것이 다음 병목이다. 질의마다 평가 집합에는 이상적으로 정답, 그 답을 받치려면 회수되어야 하는 청크, 이 질의가 왜 중요한지에 대한 메타데이터가 들어가야 한다. 레이블링은 도메인 전문가를 요구하고 비싸다. 대부분의 팀은 이를 점차 키운다. 한꺼번에 전부 레이블하려 들지 않고, 작지만 잘 레이블된 집합에서 시작해 평가 요구가 자라는 대로 넓혀 간다.</p>
+    <h3 class="rv">시간을 견디게 지키는 일</h3>
+    <p class="rv">평가 집합은 프로덕션 질의 분포가 진화하는 대로 갱신되어야 한다. 규율은 갱신을 반응적 대응이 아니라 <em>일정된 작업</em>으로 대접하는 것이다. 안정된 응용에는 분기가, 빠르게 진화하는 응용에는 월간이 통상의 주기다. 갱신마다 현재 프로덕션 분포에서 새 질의를 뽑고, 더는 현재 사용을 대표하지 않는 질의를 물리고, 말뭉치나 도메인이 진화하며 정답이 옮겨 갔을 질의를 다시 레이블한다.</p>
+    <p class="rv">갱신 주기 사이의 운영 안전장치는 <strong>표류 감지</strong>다. 팀은 프로덕션 질의의 분포를 현재 평가 집합이 표상하는 분포에 견주어 상시 감시한다. 두 분포가 의미 있게 갈라지면 — 통상 주제 분포나 질의 유형 분포에 대한 쿨백-라이블러 발산으로 잰다 — 일정된 주기를 기다리지 않고 조기 갱신을 발동한다. 이커머스 팀의 실패는 이 표류 감지의 부재였다. 정적인 평가 집합을 지어 놓고, 그것이 프로덕션의 현실을 대표하기를 그만둔 때를 알아차리지 못했다.</p>
+    <div class="panel inju rv">
+      <span class="tag">Common Pitfall</span>
+      <h4>골라 담은 평가 집합</h4>
+      <p>많은 팀이 시스템이 잘 다루는 질의 쪽으로 기운 평가 집합을 짓는다. 그 편향은 대개 의도적이지 않다. 개발 중에 팀이 이해하고 정답이 분명한 질의를 고르는 것이다. 그러나 효과는 같다. 가장 어려운 사례가 표상되지 않으므로 <strong>평가가 성능을 과장한다.</strong></p>
+      <p>교정은 평가 질의를 프로덕션 표집에서 끌어오는 것이다. 팀이 어렵거나 모호하다고 여기는 질의까지 포함해서. 현재 판에서 이따금 실패를 내는 질의가 평가 집합에 들어 있지 않다면, 변경이 그 질의들의 성능을 떨어뜨렸을 때 <em>퇴행을 감지할 수 없다.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9.5 ============ -->
+<section>
+  <div class="wrap-wide">
+    <div class="wrap" style="padding:0">
+      <div class="sec-head rv">
+        <span class="sec-no">9.5 · CONTINUOUS PRODUCTION EVALUATION</span>
+        <h2>지속적 프로덕션 평가 — 표집, 사람의 손, 퇴행의 감지</h2>
+      </div>
+      <p class="rv">배포 전 평가는 아무리 엄정해도 배포 시점에 존재했던 평가 집합에서 팀이 <em>측정한</em> 성능만을 붙잡는다. 프로덕션의 현실은 더 변덕스럽다. 질의 분포가 표류한다. 말뭉치가 변한다. 임베딩 모델이 업그레이드된다. 리랭커의 거동이 옮겨 간다. 지속적 프로덕션 평가는 이 변화들이 사용자 가시적 사고가 되기 전에 잡아내는 규율이며, 이커머스 팀의 정적 벤치마크 접근에 온전히 없던 규율이다.</p>
+    </div>
+    <figure class="figure rv">
+      <svg viewBox="0 0 720 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="지속적 프로덕션 평가의 고리">
+        <defs>
+          <marker id="a9b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#3F6060"/></marker>
+          <marker id="a9c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#A83B2A"/></marker>
+        </defs>
+        <!-- production traffic -->
+        <rect x="26" y="112" width="104" height="42" fill="none" stroke="#33322F" stroke-width="1.3"/>
+        <text x="78" y="132" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#33322F" text-anchor="middle">프로덕션</text>
+        <text x="78" y="148" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#33322F" text-anchor="middle">트래픽</text>
+        <line x1="130" y1="133" x2="166" y2="133" stroke="#3F6060" stroke-width="1.3" marker-end="url(#a9b)"/>
+        <!-- sampling -->
+        <rect x="172" y="112" width="104" height="42" fill="#EDE8E0" stroke="#3F6060" stroke-width="1.6"/>
+        <text x="224" y="132" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#2C4747" text-anchor="middle" font-weight="700">표집</text>
+        <text x="224" y="149" font-family="IBM Plex Mono, monospace" font-size="10" fill="#3F6060" text-anchor="middle">1~5% of traffic</text>
+        <!-- two branches -->
+        <path class="brush" d="M 276 124 C 306 116, 312 92, 340 88" fill="none" stroke="#3F6060" stroke-width="1.3" marker-end="url(#a9b)"/>
+        <path class="brush" d="M 276 142 C 306 152, 312 182, 340 188" fill="none" stroke="#A83B2A" stroke-width="1.3" marker-end="url(#a9c)"/>
+        <rect x="346" y="66" width="132" height="42" fill="none" stroke="#3F6060" stroke-width="1.3"/>
+        <text x="412" y="86" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#2C4747" text-anchor="middle">자동 지표 전량</text>
+        <text x="412" y="102" font-family="IBM Plex Mono, monospace" font-size="10" fill="#3F6060" text-anchor="middle">RAGAS · 다중 심판</text>
+        <rect x="346" y="166" width="132" height="42" fill="none" stroke="#A83B2A" stroke-width="1.5"/>
+        <text x="412" y="186" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#7E2A1D" text-anchor="middle">사람의 채점</text>
+        <text x="412" y="202" font-family="IBM Plex Mono, monospace" font-size="10" fill="#A83B2A" text-anchor="middle">표본의 10~20%</text>
+        <!-- calibration two-way -->
+        <path d="M 412 160 L 412 114" fill="none" stroke="#9A978F" stroke-width="1.1" stroke-dasharray="4 4"/>
+        <path d="M 404 122 L 412 112 L 420 122" fill="none" stroke="#9A978F" stroke-width="1.1"/>
+        <path d="M 404 152 L 412 162 L 420 152" fill="none" stroke="#9A978F" stroke-width="1.1"/>
+        <text x="488" y="136" font-family="Noto Sans KR, sans-serif" font-size="10" fill="#6E6C66">사람 = 정답</text>
+        <text x="488" y="151" font-family="Noto Sans KR, sans-serif" font-size="10" fill="#6E6C66">자동 = 대리</text>
+        <text x="412" y="140" font-family="IBM Plex Mono, monospace" font-size="9" fill="#9A978F" text-anchor="middle">보정</text>
+        <!-- regression detection -->
+        <path d="M 478 84 C 528 84, 540 108, 574 122" fill="none" stroke="#3F6060" stroke-width="1.3" marker-end="url(#a9b)"/>
+        <path d="M 478 188 C 528 188, 540 160, 574 146" fill="none" stroke="#A83B2A" stroke-width="1.3" marker-end="url(#a9c)"/>
+        <rect x="580" y="110" width="112" height="46" fill="#EDE8E0" stroke="#33322F" stroke-width="1.4"/>
+        <text x="636" y="130" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#33322F" text-anchor="middle" font-weight="700">퇴행 감지</text>
+        <text x="636" y="147" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#6E6C66" text-anchor="middle">세그먼트별 · 시간창</text>
+        <!-- back to system -->
+        <path class="brush" d="M 636 156 C 636 250, 78 258, 78 158" fill="none" stroke="#A83B2A" stroke-width="1.4" stroke-dasharray="6 5" marker-end="url(#a9c)"/>
+        <text x="360" y="272" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#7E2A1D" text-anchor="middle">경보는 구체적 질의를 가리켜야 하고, 되짚어 행동으로 이어져야 한다</text>
+        <text x="360" y="294" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#494741" text-anchor="middle">한철의 벤치마크가 아니라, 늘 도는 고리로</text>
+      </svg>
+      <figcaption>지속적 평가의 고리 — 표집에서 시작해 자동 지표와 사람의 채점이 서로를 보정하고, 세그먼트별 퇴행 감지가 행동으로 되돌아온다</figcaption>
+    </figure>
+    <div class="wrap" style="padding:0">
+      <h3 class="rv">프로덕션 질의의 표집</h3>
+      <p class="rv">프로덕션 평가는 실제 프로덕션 질의와 그 응답을 표집하는 데서 시작한다. 프로덕션 트래픽의 작은 몫 — 통상 1~5% — 을 평가 목적으로 붙잡는다. 표집된 질의는 시스템의 응답, 회수된 맥락, 사용자와 시각에 대한 메타데이터와 함께 저장된다. 이 표집된 흐름이 역사적 벤치마크가 아니라 <em>현재의 프로덕션 거동에</em> 대해 상시로 도는 자동·사람 평가의 바탕이 된다.</p>
+      <p class="rv">표집률은 거래다. 너무 낮으면 평가 흐름이 잡음투성이가 되고 드문 실패 양식이 감지되지 않는다. 너무 높으면 저장 비용이 의미 있어지고 사람 검토 대기열이 감당 못 할 만큼 쌓인다. 알맞은 비율은 트래픽 양에 달렸다. 고volume 시스템은 1%로도 하루 수백 사례를 얻고, 저volume 시스템은 의미 있는 평가 흐름을 얻으려면 5~10%까지 표집해야 할 수 있다. 규율은 <strong>중요한 실패 양식을 감지하는 데 필요한 물량에 근거해 비율을 명시적으로 고르는 것</strong>이다.</p>
+      <h3 class="rv">사람의 손이 닿는 자리</h3>
+      <p class="rv">자동 지표는 자기가 잡도록 설계된 실패 양식을 잡는다. 사람이 개입하는 채점은 <em>아직 아무도 지표를 설계하지 않은</em> 실패 양식을 잡는다. 팀이 아직 본 적 없는, 프로덕션 사용에서 떠오르는 새로운 실패 패턴이다. 표집된 질의의 부분집합 — 통상 표본의 10~20% — 이 사람 검토자에게 배정되어, 구조화된 루브릭에 따라 채점되고 루브릭이 다루지 못하는 실패 양식을 보이는 응답에 표시가 붙는다.</p>
+      <p class="rv">이 패턴은 도구에 대한 투자를 요구한다. 질의를 효율적으로 띄우는 채점 인터페이스, 채점된 질의를 평가 집합으로 되돌리는 워크플로, 루브릭이 붙잡지 못하는 자유 서술 관찰을 담는 기제. 투자는 의미 있다 — 진지한 채점 플랫폼을 짓는 데 통상 엔지니어 한두 달 — 그러나 순수한 자동화가 잡을 수 없는 실패를 잡는 운영 규율이다. 에이전틱 RAG를 한 해 넘게 운영해 본 팀 대부분은 어느 시점에, <strong>자동 지표가 온전히 놓쳤던 심각한 실패 양식을 사람의 채점을 통해 발견한 경험</strong>을 지녔다.</p>
+      <h3 class="rv">퇴행의 감지</h3>
+      <p class="rv">지속적 평가의 출력은 질의별 품질 점수의 흐름이며, 질의 유형과 그 밖의 메타데이터로 갈라져 있다. 이 흐름의 운영적 용도는 퇴행 감지다. 프로덕션 분포의 어느 부분에서 품질이 역사적 기준선 아래로 떨어질 때 자동으로 경보하는 것이다. 효과적인 퇴행 감지에는 세 성질이 있다.</p>
+      <div class="conds">
+        <div class="cond rv">
+          <h4>세그먼트로 갈라져 있다<span>segmented</span></h4>
+          <p>전체 집계 지표가 안정적일 때에도 드물지만 중요한 질의 유형의 퇴행이 드러나야 한다.</p>
+        </div>
+        <div class="cond rv">
+          <h4>시간창을 쓴다<span>time-windowed</span></h4>
+          <p>비교는 느린 표류에 적응하는 이동 기준선에 대해 이루어진다. 분포가 진화할 때 거짓 경보를 내는 고정 문턱이 아니다.</p>
+        </div>
+        <div class="cond rv">
+          <h4>행동으로 이어진다<span>actionable</span></h4>
+          <p>모든 경보는 퇴화한 구체적 질의를 가리키며, 엔지니어가 실패 패턴을 처음부터 재구성하지 않고 조사할 만큼의 메타데이터를 지닌다.</p>
+        </div>
+      </div>
+      <p class="rv">제대로 설계된 지속적 평가 체계는 품질 감시를 주기적인 벤치마크 실행에서 실시간의 운영 규율로 바꾼다. 이커머스 팀이 실패한 배포 뒤 평가를 다시 지었을 때, 재구축을 값지게 만든 아키텍처적 추가가 바로 이것이었다. 정적 벤치마크 모음이 지속적 평가 파이프라인이 되었다. 분기 갱신이 상시 표집이 되었다. 하나의 품질 점수가, 퇴행을 집계 지표로 가리는 대신 <em>일어나는 대로 드러내는</em> 세그먼트별 지표 흐름이 되었다.</p>
+      <p class="rv">그리고 문화의 전환이 그만큼 중요했다. 팀은 평가를 데이터과학 팀이 주기적으로 소유하는 무엇으로 대접하기를 그만두고, 공학 조직 전체가 참여하는 지속적 운영 규율로 대접하기 시작했다. 당직 엔지니어가 평가 경보를 지연 경보나 오류율 경보와 같은 방식으로 해석할 것이 기대되었다. <strong>어떤 특정한 기술적 추가가 아니라 그 문화의 전환이, 새 방법론으로 하여금 이전에 놓쳤던 종류의 실패를 실제로 잡아내게 만든 것이었다.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 안티패턴 ============ -->
+<section style="background:var(--mist);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">COMMON PITFALLS</span>
+      <h2>실패를 가리는 평가의 실수 — 세 가지</h2>
+    </div>
+    <div class="anti">
+      <div class="anti-item rv">
+        <h4>활동을 측정으로 착각하기<span class="en">Confusing Activity With Measurement</span></h4>
+        <p>많은 팀이 평가를 <em>돌리는 것</em>과 품질을 <em>재는 것</em>을 혼동한다. 대시보드를 짓고, 매일 밤 평가를 돌리고, 추세 도표를 낸다. 활동은 활발하다. 측정은 빈약하다. 대시보드는 점수를 보이는데 그 점수는 사람의 판단에 검증된 적이 없고, 실제 사용자 경험과 잘 상관하지 않는다.</p>
+        <p><span class="fix">처방</span> — 측정이 정말로 자기가 잰다고 주장하는 것을 재는지 시험하라. 품질 지표가 지난 분기에 사람의 판단에 보정된 적이 없다면 그것은 측정이 아니라 <strong>연극</strong>이다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>분포가 중요한데 평균을 최적화하기<span class="en">Optimising for Average When Distribution Matters</span></h4>
+        <p>평가 집합을 가로지른 평균 점수는 가장 중요한 사례를 가린다. 답변 관련성 평균이 0.85인 시스템이 흔한 질의에서는 탁월하고 드물지만 중요한 질의에서는 파국적일 수 있다. 이커머스 팀의 실패에도 이 차원이 있었다. 평균은 나아지는 동안 고객이 실제로 묻던 질의의 성능은 퇴화했다.</p>
+        <p><span class="fix">처방</span> — 분포를 아는 평가, 곧 질의 유형별·사용자 세그먼트별·사업 영향별로 점수를 갈라 보는 일이 이 패턴을 드러낸다. 평균만 보는 평가는 그것을 감춘다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>행동 없는 평가<span class="en">Evaluation Without Action</span></h4>
+        <p>어떤 팀은 출력이 공학적 결정으로 흘러 들어가지 않는 정교한 평가 체계를 짓는다. 지표는 월간 검토에서 보고되고, 검토는 품질이 좋다거나 나쁘다고 적고, 아무것도 바뀌지 않는다. 공학적 결정을 움직이지 않는 평가는 순수한 부담이다.</p>
+        <p><span class="fix">처방</span> — 평가를 짓기 <em>전에</em> 각 결과가 어떤 행동을 촉발할지 정의하라. 어느 점수 변화가 롤백을 촉발하는가, 어느 퇴행 패턴이 조사를 촉발하는가, 사람 채점의 어떤 발견이 지표 재설계를 촉발하는가. 그 결정 규칙 없이는 평가가 <strong>변화 없는 정보</strong>만을 낸다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 다섯 요지 ============ -->
+<section class="takeaways">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">CHAPTER SUMMARY</span>
+      <h2>이 장에서 남는 다섯</h2>
+    </div>
+    <div class="take">
+      <div class="take-item rv"><p>RAG 평가에는 다른 방법을 요구하는 <b>두 문제 — 검색 단계와 종단 간</b> — 가 있다. 어느 하나만으로는 다른 쪽이 잡는 실패 양식을 놓치므로 프로덕션은 둘 다 지어야 한다. 검색 평가는 레이블된 검색 정답을, 종단 간 평가는 대표적인 질의와 사람의 판단(또는 신중히 검증된 자동 대리 지표)을 요구한다.</p></div>
+      <div class="take-item rv"><p>RAGAS의 네 지표 — <b>맥락 정밀도, 맥락 재현율, 충실도, 답변 관련성</b> — 은 2026년 자동 평가의 프로덕션 표준이다. 사람의 판단에 끊임없이 보정되어야 한다. 보정되지 않은 자동 지표는 사람의 평가에서 표류하고, 그 표류가 이커머스 팀의 배포를 무너뜨린 그 자신 있으면서 틀린 평가를 낳는다.</p></div>
+      <div class="take-item rv"><p><b>LLM-as-judge</b>가 규모 있는 평가를 경제적으로 성립하게 만드는 운영 패턴이다. 위치·길이·자기·문체의 체계적 편향을 들여오므로, 다중 심판 집계와 구조화된 프롬프트와 무작위화와 주기적 사람 보정으로 명시적으로 완화해야 한다.</p></div>
+      <div class="take-item rv"><p><b>평가 집합은 프로덕션 질의 분포를 대표해야 하고</b> 그 분포가 진화하는 대로 유지되어야 한다. 층화 표집이 드물지만 중요한 유형을 붙잡고, 표류 감지가 갱신 주기를 발동한다. 골라 담은 벤치마크는 실제 실패 양식을 감추는 자신 있는 지표를 낸다. 집합을 짓는 규율은 지표의 선택만큼 중요하다.</p></div>
+      <div class="take-item rv"><p><b>지속적 프로덕션 평가</b>가 품질 감시를 주기적 벤치마크에서 실시간 운영 규율로 바꾼다. 프로덕션 질의 표집, 부분집합에 대한 사람의 채점, 세그먼트별 퇴행 감지가 함께 품질 퇴화를 고객 사고가 되기 전에 잡는다. 그것 없이는 아무리 정교한 벤치마크 방법론도 끝내 그 자신 있으면서 묵은 측정을 낸다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 문헌 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">FURTHER READING</span>
+      <h2>더 읽을 것</h2>
+    </div>
+    <div class="refs">
+      <div class="ref rv"><b>Es et al.</b>, <i>"RAGAS: Automated Evaluation of Retrieval-Augmented Generation"</i> (2023) — 네 지표를 소개한 기초 논문. RAGAS를 프로덕션에 올리기 전 필독서이며, 사람 판단에 대한 지표 검증을 논한 부분은 보정 문제에 관한 여전히 가장 명료한 취급이다.</div>
+      <div class="ref rv"><b>Zheng et al.</b>, <i>"Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena"</i> (2023) — LLM-as-judge 편향과 완화 전략에 관한 가장 철저한 분석. 어떤 LLM 심판이든 프로덕션에 올리기 전에 읽어야 한다. 이 논문이 기록한 체계적 편향들이 그러지 않으면 마주칠 실패 양식이다.</div>
+      <div class="ref rv"><b>RAGAS Documentation</b> (상시 갱신) — 현재 구현의 준거. 지표 정의, 보정 패턴, 주요 평가 오케스트레이션 틀과의 통합을 담는다. 이론적 근거는 원 논문과, 현재의 실무 사용법은 이 문서와 짝지어 볼 것.</div>
+      <div class="ref rv"><b>Multi-Agent AI Systems Handbook</b>, <i>Chapter 10 — Evaluation and Testing</i> (Norman, 2026) — 자매편의 에이전트 평가 취급. 궤적 기반 시험과, 검색만이 아니라 모든 에이전틱 체계에 적용되는 LLM 심판 패턴을 담는다. 단일 에이전트와 멀티 에이전트를 가로지르는 평가의 온전한 그림을 위해 이 장과 함께 읽을 것.</div>
+      <div class="ref rv"><b>Dibia, V.</b>, <i>Designing Multi-Agent Systems</i>, 평가와 신뢰성 장 (Manning, 2025) — 이 장의 지표 기반 접근을 보완하는 궤적 기반 평가의 제일원리적 취급. 최종 답만큼이나 체계를 지나온 <em>경로</em>가 중요한 에이전틱 검색을 짓는 팀에 특히 값지다.</div>
+    </div>
+    <p class="note rv">위 문헌 목록은 원서 9장의 Further Reading을 그대로 옮긴 것이다. 서지 사항의 최종 확인은 원 출처를 통해 하는 것이 옳다.</p>
+  </div>
+</section>
+
+<!-- ============ 다리 ============ -->
+<section class="bridge">
+  <div class="wrap">
+    <div class="sec-head rv" style="margin-bottom:36px">
+      <span class="sec-no">CHAPTER BRIDGE</span>
+      <h2>다음 장 — 검색의 관측 가능성</h2>
+    </div>
+    <p class="rv">10장은 4부를 검색의 관측 가능성으로 이어 간다. 프로덕션 검색 체계를 불투명한 것이 아니라 <em>디버깅할 수 있는 것</em>으로 만드는 계측과 대시보드와 운영 도구다. 평가는 시스템이 좋은지를 알려 주고, 관측 가능성은 어떤 특정 질의에서 시스템이 <em>왜</em> 그렇게 하고 있는지를 알려 준다. 두 규율은 상보적이며 프로덕션급 RAG는 둘 모두에 의지한다. 검색 파이프라인의 분산 추적, 검색 실패와 생성 실패를 가르는 지표, 날 것의 원격 측정을 행동 가능한 통찰로 바꾸는 운영 대시보드를 다룰 것이다.</p>
+    <p class="rv">돌아보면 이 장의 이야기는 자에 관한 이야기였다. 우리는 무엇을 재는지에 마음을 쓰면서, 재는 자가 여전히 성한지는 좀처럼 묻지 않는다. 이커머스 팀의 지표는 정직했다. 다만 그 자가 열두 달 전의 세상에 맞춰 새겨진 것이었고, 세상은 그동안 조용히 옮겨 갔다. 그러니 평가란 한 번의 산출물이 아니라 <em>끊임없이 자기를 의심하는 태도</em>일 수밖에 없다. 도량(度量)이란 본디 재는 자와 되를 함께 이르는 말이니, 재는 일에는 언제나 <strong>자를 다시 재는 일</strong>이 함께 있어야 한다.</p>
+    <div class="next rv">NEXT — CHAPTER 10 · RETRIEVAL OBSERVABILITY AND DEBUGGING PIPELINES</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Raymond Norman, Agentic RAG Systems (2026) · Chapter 9<br>
+    원서 170–186쪽 전체 내용 기반 · 본 페이지는 학습·검토 목적의 2차 정리물이다
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    els.forEach(function(e){e.classList.add('on')});
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        en.target.classList.add('on');
+        io.unobserve(en.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>

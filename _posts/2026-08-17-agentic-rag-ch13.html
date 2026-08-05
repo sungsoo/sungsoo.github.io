@@ -1,0 +1,622 @@
+---
+layout: null
+title: "Financial Compliance RAG: A Production Case Study" 
+date: 2026-08-17
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>금융 컴플라이언스 RAG — 프로덕션 사례 연구 · Agentic RAG Systems 제13장</title>
+<meta name="description" content="Raymond Norman, 『Agentic RAG Systems』 제13장 — 권위 계층 메타데이터, 인용 인지 검색, 관할 간 오케스트레이션, 구조적 가드레일, 개정 워크플로">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --hanji:#F7F4EE;
+  --meok:#33322F;
+  --meok-soft:#6E6C66;
+  --meok-pale:#9A978F;
+  --inju:#A83B2A;
+  --inju-deep:#7E2A1D;
+  --jahoe:#48394C;          /* 자회 — 법도의 무거운 자색 */
+  --jahoe-deep:#332639;
+  --mist:#EDE8E0;
+  --line:#D8D2C7;
+  --paper-card:#FCFAF6;
+  --serif:'Gowun Batang', serif;
+  --sans:'Noto Sans KR', sans-serif;
+  --mono:'IBM Plex Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--hanji);color:var(--meok);
+  font-family:var(--serif);font-weight:400;
+  line-height:2.12;font-size:17.5px;letter-spacing:-0.008em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--meok);color:var(--hanji)}
+
+.wrap{max-width:760px;margin:0 auto;padding:0 30px}
+.wrap-wide{max-width:1000px;margin:0 auto;padding:0 30px}
+section{padding:118px 0}
+p{margin-bottom:1.75em}
+em{font-style:normal;color:var(--inju-deep);font-weight:400}
+strong{font-weight:700;color:var(--meok)}
+.mono{font-family:var(--mono)}
+.sans{font-family:var(--sans)}
+
+.rv{opacity:0;transform:translateY(20px);transition:opacity 1s cubic-bezier(.2,.7,.3,1),transform 1s cubic-bezier(.2,.7,.3,1)}
+.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .brush{animation:none !important;stroke-dasharray:none !important;stroke-dashoffset:0 !important}
+  .quiet{animation:none !important}
+}
+
+/* ---------- 표제 ---------- */
+header.hero{padding:150px 0 118px;background:var(--hanji);border-bottom:1px solid var(--line)}
+.hero-kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--meok-pale);text-transform:uppercase;margin-bottom:42px}
+.hero-kicker b{color:var(--inju);font-weight:600}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(30px,4.6vw,48px);line-height:1.5;letter-spacing:-0.012em;margin-bottom:20px;color:var(--meok)}
+h1 .thin{display:block;font-size:.5em;font-weight:400;color:var(--meok-soft);margin-top:20px;letter-spacing:.005em;line-height:1.7}
+.seal{
+  display:inline-block;margin:0 0 40px;padding:10px 13px;
+  border:1.5px solid var(--inju);color:var(--inju);
+  font-family:var(--serif);font-size:13px;font-weight:700;letter-spacing:.2em;line-height:1.3;
+}
+.hero-lede{max-width:620px;font-size:17.5px;line-height:2.16;color:#494741}
+.hero-meta{margin-top:56px;font-family:var(--mono);font-size:12.5px;color:var(--meok-pale);display:flex;gap:26px;flex-wrap:wrap}
+.hero-meta span::before{content:"— ";color:var(--line)}
+
+/* ---------- 여는 이야기 ---------- */
+.incident{background:var(--mist);padding:118px 0;border-bottom:1px solid var(--line)}
+.cite-box{
+  font-family:var(--mono);border:1.5px solid var(--inju);
+  padding:26px 28px;max-width:520px;margin-bottom:26px;background:#F4E9E5;
+}
+.cite-box .sec{font-size:clamp(24px,4.6vw,40px);font-weight:600;color:var(--inju-deep);line-height:1.2}
+.cite-box .verdict{font-family:var(--sans);font-size:13.5px;color:#5C3B34;margin-top:16px;line-height:1.8}
+.cite-box .verdict b{color:var(--inju-deep)}
+.tally-cap{font-family:var(--mono);font-size:12.5px;color:var(--meok-soft);letter-spacing:.16em;line-height:1.9}
+.incident .prose{max-width:660px;margin-top:52px}
+.pullquote{margin:60px 0;padding:0 0 0 30px;border-left:2px solid var(--inju);font-size:20px;line-height:1.95;color:var(--inju-deep)}
+.quiet{animation:quiet 4.6s ease-in-out infinite}
+@keyframes quiet{0%,100%{opacity:1}50%{opacity:.62}}
+
+/* 다섯 국면 */
+.five{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:20px;margin:52px 0 0}
+.fv{border-top:2px solid var(--jahoe);padding-top:18px}
+.fv .no{font-family:var(--mono);font-size:11px;color:var(--inju);letter-spacing:.14em;margin-bottom:8px}
+.fv p{font-family:var(--sans);font-size:13.5px;line-height:1.85;color:#494741;margin:0}
+.fv p b{font-family:var(--serif);font-size:15.5px;color:var(--jahoe-deep);display:block;margin-bottom:6px}
+
+/* ---------- 절 공통 ---------- */
+.sec-head{margin-bottom:60px}
+.sec-no{font-family:var(--mono);font-size:12.5px;letter-spacing:.26em;color:var(--inju-deep);margin-bottom:20px;display:block}
+h2{font-family:var(--serif);font-weight:700;font-size:clamp(24px,3.3vw,34px);line-height:1.55;color:var(--meok)}
+h3{font-family:var(--serif);font-weight:700;font-size:20px;margin:2.6em 0 1em;color:var(--jahoe)}
+h3::before{content:"· ";color:var(--inju)}
+
+.panel{background:var(--paper-card);border:1px solid var(--line);padding:40px 42px;margin:60px 0}
+.panel .tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--inju-deep);margin-bottom:18px;display:block}
+.panel h4{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:16px}
+.panel p{font-size:16px;line-height:2.02;margin-bottom:1.1em}
+.panel p:last-child{margin-bottom:0}
+.panel.jh{border-left:2px solid var(--jahoe)}
+.panel.jh .tag{color:var(--jahoe-deep)}
+.panel.inju{border-left:2px solid var(--inju)}
+
+/* ---------- 도해 ---------- */
+.figure{margin:70px 0;text-align:center}
+.figure svg{max-width:100%;height:auto}
+.figure figcaption{font-family:var(--sans);font-size:13.5px;color:var(--meok-soft);margin-top:22px;line-height:1.85}
+.figure figcaption::before{content:"⟨"}
+.figure figcaption::after{content:"⟩"}
+.brush{stroke-dasharray:1600;stroke-dashoffset:1600;animation:brush 2.8s ease-out forwards .35s}
+@keyframes brush{to{stroke-dashoffset:0}}
+
+/* ---------- 권위 5계층 표 ---------- */
+.tbl{margin:60px 0}
+.tr{display:grid;gap:18px;padding:22px 0;border-top:1px solid var(--line);align-items:start}
+.tr.head{border-top:none;padding-bottom:10px}
+.tr.head span{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--meok-pale)}
+.tr:last-child{border-bottom:1px solid var(--line)}
+.tbl-auth .tr{grid-template-columns:88px 1fr 116px 1fr}
+.tc-tier{font-family:var(--mono);font-weight:600;font-size:14px;color:var(--jahoe)}
+.tc{font-size:14px;line-height:1.85;color:#494741}
+.tc.low{color:var(--meok-pale)}
+
+/* ---------- 가드레일 3항 ---------- */
+.guards{margin:56px 0}
+.gd{padding:32px 0;border-top:1px solid var(--line)}
+.gd:last-child{border-bottom:1px solid var(--line)}
+.gd h4{font-family:var(--serif);font-size:17.5px;font-weight:700;margin-bottom:10px;color:var(--jahoe)}
+.gd h4 span{font-family:var(--mono);font-size:11px;color:var(--meok-pale);font-weight:400;margin-left:10px;letter-spacing:.06em}
+.gd p{font-size:15.5px;line-height:1.98;color:#494741;margin-bottom:.9em}
+.gd p:last-child{margin-bottom:0}
+
+/* ---------- 개정 워크플로 단계 ---------- */
+.flow{margin:56px 0;counter-reset:fl}
+.fl{display:grid;grid-template-columns:44px 1fr;gap:20px;padding:24px 0;border-top:1px solid var(--line);counter-increment:fl}
+.fl:last-child{border-bottom:1px solid var(--line)}
+.fl::before{content:counter(fl,decimal-leading-zero);font-family:var(--mono);font-size:12px;color:var(--inju);padding-top:5px}
+.fl p{font-size:15px;line-height:1.95;color:#494741;margin:0}
+.fl p b{font-family:var(--serif);color:var(--jahoe-deep);font-size:16px}
+
+/* ---------- 코드 ---------- */
+pre.code{
+  background:var(--meok);color:#DAD6CD;
+  font-family:var(--mono);font-size:12.5px;line-height:1.9;
+  padding:34px 36px;margin:56px 0;overflow-x:auto;
+}
+pre.code .cm{color:#948F84}
+pre.code .kw{color:#D9A57F}
+pre.code .st{color:#A9BFA8}
+.code-cap{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--meok-pale);margin:-42px 0 56px;padding-left:2px}
+
+/* ---------- 안티패턴 ---------- */
+.anti{counter-reset:anti;margin:60px 0}
+.anti-item{padding:36px 0 36px 66px;position:relative;counter-increment:anti;border-top:1px solid var(--line)}
+.anti-item:last-child{border-bottom:1px solid var(--line)}
+.anti-item::before{
+  content:counter(anti);position:absolute;left:0;top:36px;
+  width:34px;height:34px;line-height:32px;text-align:center;
+  border:1.5px solid var(--inju);color:var(--inju);
+  font-family:var(--mono);font-size:13px;
+}
+.anti-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:12px}
+.anti-item h4 .en{font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--meok-pale);display:block;margin-top:5px}
+.anti-item p{font-size:15.5px;line-height:1.98;color:#494741;margin-bottom:1em}
+.anti-item p:last-child{margin-bottom:0}
+.anti-item .fix{font-weight:700;color:var(--inju-deep)}
+
+/* ---------- 다섯 요지 ---------- */
+.takeaways{background:var(--meok);color:#E6E2D9;padding:118px 0}
+.takeaways h2{color:#F2EEE6}
+.takeaways .sec-no{color:#D9A57F}
+.take{counter-reset:take;margin-top:58px}
+.take-item{display:grid;grid-template-columns:58px 1fr;gap:24px;padding:34px 0;border-top:1px solid rgba(230,226,217,.13);counter-increment:take}
+.take-item::before{content:counter(take);font-family:var(--serif);font-size:34px;font-weight:700;color:#605C53;line-height:1.2}
+.take-item p{font-size:16px;line-height:2.08;color:#CBC5B9;margin:0}
+.take-item p b{color:#F2EEE6}
+
+/* ---------- 문헌·다리·꼬리 ---------- */
+.refs{margin:58px 0}
+.ref{padding:26px 0 26px 30px;border-top:1px solid var(--line);position:relative;font-size:15.5px;line-height:1.95;color:#494741}
+.ref::before{content:"—";position:absolute;left:0;color:var(--inju)}
+.ref b{font-weight:700;color:var(--meok)}
+.ref i{font-style:italic}
+.ref:last-child{border-bottom:1px solid var(--line)}
+.bridge{background:var(--mist);padding:104px 0;border-top:1px solid var(--line)}
+.bridge .next{margin-top:44px;font-family:var(--mono);font-size:12.5px;letter-spacing:.18em;color:var(--jahoe)}
+footer{padding:64px 0;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--meok-pale);border-top:1px solid var(--line);line-height:2.1}
+.note{font-family:var(--sans);font-size:13.5px;color:var(--meok-soft);margin-top:32px;line-height:1.95}
+.note::before{content:"※ ";color:var(--inju)}
+
+@media(max-width:680px){
+  section{padding:82px 0}
+  header.hero{padding:104px 0 82px}
+  .figure.scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .figure.scrollx svg{min-width:660px;max-width:none}
+  .tbl-auth .tr{grid-template-columns:1fr 1fr;row-gap:8px}
+  .tr.head{display:none}
+  .tc-tier{grid-column:1 / -1}
+  .fl{grid-template-columns:1fr;gap:6px}
+  .fl::before{padding-top:0}
+  .take-item{grid-template-columns:42px 1fr;gap:16px}
+  .take-item::before{font-size:26px}
+  .anti-item{padding-left:52px}
+  .anti-item::before{width:30px;height:30px;line-height:28px;font-size:12px}
+  .pullquote{font-size:18px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 표제 ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-kicker rv">AGENTIC RAG SYSTEMS · RAYMOND NORMAN · <b>제 13 장 · PART V</b></div>
+    <div class="seal rv">無徵不信</div>
+    <h1 class="rv">금융 컴플라이언스 RAG — 프로덕션 사례 연구<span class="thin">권장된 규범이 아니라 구조로 강제된 계약. 규제 도메인의 검색을 짓는 팀이 끝내 이르게 되는 규율이다.</span></h1>
+    <p class="hero-lede rv">5부는 1부에서 4부까지의 규율을 구체적인 규제 산업의 제약 아래에서 시험한다. 첫 사례는 금융 컴플라이언스다. 이 장이 다루는 체계는 <em>중단되었던 것과 다른 아키텍처가 아니다.</em> 같은 아키텍처에 이음마다 엄정한 규율을 댄 것이다. 인용 검증이 규범에서 구조가 되었고, 성찰이 확신 신호에서 거부를 지닌 단단한 가드레일이 되었고, 감사 기록이 최선의 노력에서 아키텍처적 완결성이 되었다.</p>
+    <div class="hero-meta rv">
+      <span>원서 240–257쪽</span>
+      <span>Part V · Enterprise Case Studies</span>
+      <span>법도의 공학</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 여는 이야기 ============ -->
+<section class="incident">
+  <div class="wrap">
+    <div class="cite-box rv quiet">
+      <div class="sec">§ 4.2.3</div>
+      <div class="verdict">조항 번호는 <b>실재했다.</b><br>조항의 내용은 <b>일치하지 않았다.</b><br>인용문은 유창하고 자신 있고 <b>온전히 지어낸 것</b>이었다.</div>
+    </div>
+    <div class="tally-cap rv">2026년 3월 · 어느 글로벌 투자은행<br>출시 3주 전, 법률고문 검토 둘째 주에 드러난 일</div>
+    <div class="prose">
+      <p class="rv">2026년 3월, 어느 글로벌 투자은행의 컴플라이언스 기술 팀은 대표 사내 AI 어시스턴트의 출시를 3주 앞두고 있었다. 은행이 영업하는 23개 관할에 걸쳐 점점 조각나는 바젤 IV 이후 은행 규제의 지형을, 2천 명의 컴플라이언스 담당자가 항행하도록 돕는 규제 조사 체계였다. 개발에 열넉 달이 걸렸다. 사내 평가를 통과했다. 외부 레드팀 검토도 통과했다. 팀은 출시 전 법률고문의 최종 규제 검토에 네 주를 잡아 두었다.</p>
+      <p class="rv">법률고문의 검토는 둘째 주에 그 실패를 찾아냈다. 한 선임 변호사가 바젤 IV의 특정 국가 이행 아래 기본자본(Tier 1) 요건에 관한 질문으로 체계를 시험했고, 체계가 해당 국가 규정 4.2.3조라고 밝힌 곳에서 온 직접 인용을 담은 답을 받았다. 인용은 구체적이고 그럴듯하고 권위 있게 들렸다. 문구가 자기 기억과 맞지 않아 의심이 든 변호사가 실제 규정을 꺼내 확인했고, 의심은 사실이었다. <strong>조항 번호는 실재했다. 조항의 내용은 일치하지 않았다.</strong> 인용문은 환각이었다 — 유창하고 자신 있고 온전히 지어낸 것이었다.</p>
+      <p class="rv">법률고문의 대응은 명확했다. 출시는 무기한 중단되었다. 컴플라이언스 담당자가 지어낸 규제 인용에 근거해 행동했다면 — 특히 규제 검사 중이거나 감독당국과의 서면에서 — 은행이 지게 될 노출은 계량하기 어렵되 명백히 파국적이었다. 잘못된 규제 해석에 근거한 컴플라이언스 실패의 과징금은 예사로 수천만 달러에 이르고, 이목을 끄는 규제 분쟁의 평판 손실은 그보다 클 수 있다. 팀은 규제 금융 도메인에 <em>거의 프로덕션급이되 아주 그렇지는 않은</em> 정교한 체계를 지었고, 그 간극은 하마터면 파국이었다.</p>
+      <div class="pullquote rv">수습은 다섯 달이 걸렸고, 결과는 다른 아키텍처가 아니었다. 같은 아키텍처에 이음마다 엄정한 규율을 댄 것이었다.</div>
+      <p class="rv">2026년 8월 마침내 출시된 체계는 3월에 중단된 그 아키텍처였다. 달라진 것은 규율이다. 인용 검증이 강제되지 않는 규범이 아니라 생성 파이프라인의 <em>구조적 성질</em>이 되었다. 성찰이 확신 신호가 아니라 거부를 지닌 단단한 가드레일이 되었다. 감사 기록이 최선의 노력이 아니라 아키텍처적으로 완결되었다. 출처의 권위가 암묵적 차원이 아니라 명시적 메타데이터가 되었다. 기술적 변경은 상당했으나 새롭지 않았다. <strong>새로웠던 것은 모든 변경이 시간이 가며 퇴화하지 않고 프로덕션에서 실제로 지켜지도록 하는 운영의 규율이었다.</strong></p>
+      <p class="rv">은행은 익명화되었고, 관할의 세부는 추상화되었고, 일부 독자적 아키텍처 선택은 사례를 위해 단순화되었다. 그러나 체계의 구조적 형태와 운영 실천은 2026년에 실제 컴플라이언스 담당자를 섬긴 실제 프로덕션 배포를 반영한다. 팀이 끝내 기른 규율 — <em>모든 부품을 거동으로 권장된 규범이 아니라 구조로 강제된 계약으로 대접하는 것</em> — 은 규제 환경의 프로덕션 검색을 짓는 어느 팀이든 결국 기르게 되는 규율이다. 스스로의 아슬아슬한 경험을 통해서든, 이런 사례에서 배워서든.</p>
+      <div class="five">
+        <div class="fv rv"><div class="no">하나</div><p><b>말뭉치와 수집</b>믿음직한 진실의 원천을 만든 규율.</p></div>
+        <div class="fv rv"><div class="no">둘</div><p><b>검색과 재순위화</b>옳은 규정을 꾸준히 띄운 아키텍처.</p></div>
+        <div class="fv rv"><div class="no">셋</div><p><b>에이전틱 오케스트레이션</b>실무를 지배하는 관할 간 질의를 다룬 방식.</p></div>
+        <div class="fv rv"><div class="no">넷</div><p><b>구조적 가드레일</b>규제 환경에 배포해도 안전하게 만든 것.</p></div>
+        <div class="fv rv"><div class="no">다섯</div><p><b>운영의 생애주기</b>규정이 바뀌고 말뭉치가 진화해도 체계를 지키는 일.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 13.1 ============ -->
+<section>
+  <div class="wrap-wide">
+    <div class="wrap" style="padding:0">
+      <div class="sec-head rv">
+        <span class="sec-no">13.1 · CORPUS AND INGESTION</span>
+        <h2>말뭉치와 수집 — 권위, 최신성, 인용 가능한 메타데이터</h2>
+      </div>
+      <p class="rv">규제 도메인의 검색은 말뭉치의 규율에서 시작한다. 은행의 컴플라이언스 체계는 23개 관할에 걸친 약 <strong>8만 건</strong>의 규제 문서에서 끌어온다. 1차 은행법에서 감독 지침, 집행 조치까지다. 프로덕션 체계와 실패한 출시 전 체계를 가르는 것은 말뭉치의 크기가 아니다 — 그것은 변하지 않았다 — <em>메타데이터 스키마와 그것을 채우는 수집 과정</em>이다.</p>
+      <h3 class="rv">명시적 메타데이터로서의 출처 권위</h3>
+      <p class="rv">규제 금융에서 모든 문서가 동등하게 권위 있지 않으며, 체계는 어느 것이 어느 것인지 알아야 한다. 국가 은행법은 <em>구속력 있는 법</em>이다. 감독당국의 감독 지침은 그 법을 해석하되 그것을 넘어서지 못한다. 감독당국의 집행 조치는 해석을 시사할 수 있는 선례이되 그 자체로 법이 아니다. 감독당국 실무자의 워킹 페이퍼는 앞날의 방향을 알릴 수 있으나 현재의 권위는 없다. 출시 전 체계는 이것들을 대략 같은 무게의 문서로 다루었다. 프로덕션 체계는 각각에 <strong>명시적 권위 등급</strong>을 태그하고, 그 등급이 검색과 재순위화와 생성을 타고 번져 간다.</p>
+    </div>
+    <figure class="figure scrollx rv">
+      <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="권위 다섯 등급의 계층과 그것이 생성에서 다루어지는 방식">
+        <defs>
+          <marker id="a13" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#48394C"/></marker>
+        </defs>
+        <text x="24" y="26" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#9A978F" letter-spacing="1.5">AUTHORITY HIERARCHY</text>
+
+        <!-- pyramid of five tiers -->
+        <g font-family="Noto Sans KR, sans-serif" font-size="12">
+          <rect x="248" y="44" width="220" height="36" fill="#48394C"/>
+          <text x="358" y="67" fill="#F7F4EE" text-anchor="middle" font-weight="700">Tier 1 · 구속력 있는 법률</text>
+
+          <rect x="218" y="86" width="280" height="36" fill="#5E4C63"/>
+          <text x="358" y="109" fill="#F7F4EE" text-anchor="middle" font-weight="700">Tier 2 · 해석 규정</text>
+
+          <rect x="188" y="128" width="340" height="36" fill="#7E6C84"/>
+          <text x="358" y="151" fill="#FFFFFF" text-anchor="middle">Tier 3 · 감독 지침</text>
+
+          <rect x="158" y="170" width="400" height="36" fill="#A093A6"/>
+          <text x="358" y="193" fill="#FFFFFF" text-anchor="middle">Tier 4 · 집행 선례</text>
+
+          <rect x="128" y="212" width="460" height="36" fill="#C9C0CC"/>
+          <text x="358" y="235" fill="#48394C" text-anchor="middle">Tier 5 · 워킹 페이퍼 · 논평</text>
+        </g>
+
+        <!-- side annotations -->
+        <text x="604" y="67" font-family="IBM Plex Mono, monospace" font-size="10" fill="#48394C">우선순위 최상</text>
+        <text x="604" y="151" font-family="IBM Plex Mono, monospace" font-size="10" fill="#7E6C84">중간</text>
+        <text x="604" y="235" font-family="IBM Plex Mono, monospace" font-size="10" fill="#9A978F">명시적 요청 시에만</text>
+
+        <line x1="112" y1="52" x2="112" y2="240" stroke="#48394C" stroke-width="1.4" marker-end="url(#a13)"/>
+        <text x="112" y="40" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#48394C" text-anchor="middle">법적 무게</text>
+
+        <text x="358" y="282" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#494741" text-anchor="middle">"구속력 있는 법률은 X를 정하고, 감독 지침은 그것을 Y로 해석한다"</text>
+        <text x="358" y="304" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#7E2A1D" text-anchor="middle">— 이렇게 말할 수 있게 하는 것이 계층이다. 둘을 나란한 주장으로 내놓지 않게 하는 것.</text>
+      </svg>
+      <figcaption>권위의 계층 — 등급이 검색과 재순위화와 생성을 타고 번져야 체계가 무엇이 지배하는 권위이고 무엇이 그에 대한 논평인지 말할 수 있다</figcaption>
+    </figure>
+    <div class="wrap" style="padding:0">
+      <div class="tbl tbl-auth">
+        <div class="tr head rv"><span>권위 등급</span><span>출처 부류</span><span>검색 우선순위</span><span>생성에서의 취급</span></div>
+        <div class="tr rv"><div class="tc-tier">Tier 1</div><div class="tc">구속력 있는 법률</div><div class="tc">최상</div><div class="tc">지배하는 법으로 인용</div></div>
+        <div class="tr rv"><div class="tc-tier">Tier 2</div><div class="tc">해석 규정</div><div class="tc">높음</div><div class="tc">구속력 있는 해석으로 인용</div></div>
+        <div class="tr rv"><div class="tc-tier">Tier 3</div><div class="tc">감독 지침</div><div class="tc">중간</div><div class="tc">감독당국의 해석으로 인용</div></div>
+        <div class="tr rv"><div class="tc-tier">Tier 4</div><div class="tc">집행 선례</div><div class="tc">중간</div><div class="tc">집행의 신호로 인용</div></div>
+        <div class="tr rv"><div class="tc-tier">Tier 5</div><div class="tc low">워킹 페이퍼 · 비공식 논평</div><div class="tc low">낮음</div><div class="tc low">명시적 요청이 있을 때만 인용</div></div>
+      </div>
+      <h3 class="rv">규제 개정을 가로지르는 버전 관리</h3>
+      <p class="rv">규정은 끊임없이 변하고, 체계는 <em>지정된 시점에 그 규정이 어떠했는지를</em> 반영하는 답을 내놓아야 한다. 1월의 사건에 관한 컴플라이언스 질문은 현행 문면이 아니라 1월의 규정에 견주어 답해져야 한다. 따라서 말뭉치는 모든 규정의 모든 버전을 저장한다. 통상 발효일과 대체 관계를 지닌 개정의 연속으로 유지된다. 검색은 질의가 지정한 날짜에 유효했던 버전으로 필터링하고, 날짜가 지정되지 않으면 현행을 기본으로 삼는다.</p>
+      <p class="rv">이 버전 관리는 12장의 일반적 버전 관리보다 까다롭다. 규정은 은행이 통제하지 못하는 입법·규제 절차가 정하는 일정으로 개정되기 때문이다. 수집 파이프라인에는 공식 출처 — 국가 관보, 감독당국 웹사이트, 공식 개정 고시 — 를 감시하는 일일 절차가 있어, 개정이 공표되면 새 버전을 자동으로 수집하고, 그 새 버전이 프로덕션 말뭉치에서 권위를 얻기 전에 <strong>사람의 검토 단계</strong>를 둔다. 자동 감지와 사람의 승인의 결합이, 검증되지 않은 개정이 프로덕션 데이터 흐름에 들어오게 하지 않으면서 말뭉치를 최신으로 지키는 운영 패턴이다.</p>
+      <h3 class="rv">인용 가능한 청킹</h3>
+      <p class="rv">출시 전 체계의 실패 양식 — 지어낸 조항 인용 — 은 <em>인용 구조를 보존하지 않은</em> 청킹 전략이 가능하게 한 것이었다. 청크는 규제 문면을 담았으나, 생성이 검증 가능한 인용을 지을 수 있게 해 줄 조항 번호와 항의 경로를 늘 지니고 있지는 않았다. 프로덕션 체계는 4장의 원칙에서 청킹을 다시 지었고, 명시적 추가 제약을 두었다. 모든 청크가 자기의 <strong>완전한 인용 경로</strong>를 보존한다 — 관할, 규정 식별자, 조 번호, 항, 해당되면 목, 그리고 발효일.</p>
+      <p class="rv">이 메타데이터가 13.4절의 인용 검증이 작동하게 만드는 것이다. 체계가 "국가 규정 X의 4.2.3조 아래 요건은 Y다"라고 말하는 답을 낼 수 있는 것은, 그 답을 받치는 청크가 실제로 조항 식별자를 구조화된 메타데이터로 지니고 있을 때뿐이다. 그러면 검증이 인용된 식별자가 말뭉치의 실재하는 청크와 맞는지, 인용된 문면이 그 청크에 있는지 확인한다. <em>청킹의 규율이 구조적 인용 검증을 애초에 가능하게 만드는 것이다.</em></p>
+      <div class="panel jh rv">
+        <span class="tag">Key Definition</span>
+        <h4>권위가 새겨진 메타데이터</h4>
+        <p>규제 도메인 말뭉치의 모든 청크는 자기 출처의 법적 무게를 반영하는 권위 등급을 지닌다. 그 등급이 검색과 재순위화와 생성을 타고 번져, 체계가 구속력 있는 법과 해석을 구별하고 각각을 알맞게 다루도록 한다.</p>
+        <p>권위가 새겨지지 않으면 체계는 회수된 두 출처 가운데 어느 것이 지배하는 권위이고 어느 것이 그에 대한 논평일 뿐인지 믿음직하게 말할 수 없다. <strong>이 구별은 규제 도메인에서 구조적이다.</strong> 그것을 뭉개면 은행의 출시를 중단시킨 그 자신 있으면서 틀린 답이 나온다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 13.2 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">13.2 · RETRIEVAL AND RERANKING</span>
+      <h2>규제 문면을 위한 검색과 재순위화</h2>
+    </div>
+    <p class="rv">규제 문면에는 일반 문서 말뭉치와 구별되는 언어적 성질이 있다. 어휘는 전문적이고 일관된다 — 'Tier 1 capital', 'risk-weighted assets', 'supervisory review process' 같은 용어는 특정 규제 틀 안에서 정의된 뜻을 지닌다. 인용 구조는 촘촘하고 <em>의미론적으로 중요하다</em> — "Article 92 CRR"에 관한 질의는 유럽 자본요건규정의 92조를 믿음직하게 회수해야 하며, 다른 조항이나 무관한 규정이 아니어야 한다. 검색과 재순위화 아키텍처는 5장의 패턴을 이 성질에 맞춰 적응시킨 것이다.</p>
+    <h3 class="rv">인용을 아는 어휘 검색을 곁들인 하이브리드</h3>
+    <p class="rv">순수 벡터 검색은 개념적 질의 — "시스템적으로 중요한 은행의 자본 요건은 무엇인가" — 에서 잘하지만, 인용이 촘촘한 질의 — "Article 92 CRR이 무엇을 요구하나" — 에서는 못한다. 이유는 구조적이다. 벡터 검색은 의미 유사도를 맞추는데, 특정 인용을 담은 질의는 <em>그 정확한 인용을 담은 문서</em>와 만나야지 비슷한 주제를 논하는 문서와 만나야 하는 것이 아니다. 프로덕션 체계는 5장에서 세운 대로 하이브리드 검색을 돌리되, 어휘 성분을 <strong>인용 토큰에 무게를 크게 두도록</strong> 특별히 조율한다.</p>
+    <p class="rv">어휘 검색기는 인용 토큰 가중을 곁들인 BM25를 쓴다. 일반 토큰은 표준 BM25 가중을 지니고, 인용 토큰(조 번호, 규정 식별자, 관할 코드)은 <strong>두 배에서 네 배</strong> 높은 가중을 지닌다. 이 가중이 특정 인용을 언급한 질의가 그 인용을 담은 청크를 믿음직하게 회수하게 하면서, 명시적 인용이 없는 개념적 질의는 벡터 검색이 다루게 둔다. 두 검색기의 융합은 5장의 상호 순위 융합을 쓰며, 인용 가중이 인용된 질의의 어휘 결과가 의미 결과에 파묻히지 않게 한다.</p>
+    <h3 class="rv">권위를 아는 재순위화</h3>
+    <p class="rv">5장에서 세운 리랭커 — 질의와 문서의 관련성을 함께 채점하는 크로스 인코더 — 가 기본적인 관련성 물음을 다룬다. 은행의 배포는 그 신호를 13.1절의 권위 메타데이터로 확장한다. 두 청크의 관련성 점수가 비슷할 때 권위 등급이 높은 청크가 승격된다. 결합 점수는 크로스 인코더 관련성과 권위 등급의 가중합이며, 정답이 알려진 컴플라이언스 질의의 보류 평가 집합에 견주어 가중치를 조율한다.</p>
+    <p class="rv">이 권위 인지 재순위화는 운영상 중요하다. 많은 컴플라이언스 질의가 여러 출처에서 부분적으로 답해질 수 있다 — 구속력 있는 법률과 해석 지침, 또는 서로 다른 관할의 두 집행 조치. 권위 인지가 없으면 리랭커는 권위 무게와 무관하게 표면적으로 가장 관련된 출처를 승격해, 구속력 있는 법률이 있는데도 해석 논평을 인용하는 답을 낼 수 있다. 권위 인지와 함께라면 체계는 <em>구속력 있는 출처가 있을 때 꾸준히 그것을 앞세우고, 구속력 있는 출처가 그 물음에 침묵할 때에만 해석 출처로 물러난다.</em></p>
+    <pre class="code rv"><span class="cm"># 규제 문면을 위한 권위 인지 재순위화</span>
+<span class="kw">def</span> authority_aware_rerank(query, candidates: list, weights: dict) -&gt; list:
+    <span class="cm"># 1. 크로스 인코더 관련성 점수 (5장 패턴)</span>
+    relevance_scores = cross_encoder.score(query, candidates)
+
+    <span class="cm"># 2. 권위 등급 신호 — 등급이 높을수록 가중이 크다</span>
+    authority_weights = {1: 1.00, 2: 0.85, 3: 0.65, 4: 0.55, 5: 0.30}
+
+    <span class="cm"># 3. 최근성 신호 — 날짜가 지정되지 않으면 현행 버전을 앞세운다</span>
+    recency_factor = compute_recency(candidates, query.effective_date)
+
+    <span class="cm"># 4. 복합 점수: 관련성이 지배하고, 권위와 최근성이 조정한다</span>
+    composite = []
+    <span class="kw">for</span> c, rel, rec <span class="kw">in</span> zip(candidates, relevance_scores, recency_factor):
+        auth = authority_weights[c.metadata[<span class="st">'authority_tier'</span>]]
+        score = (weights[<span class="st">'relevance'</span>] * rel +
+                 weights[<span class="st">'authority'</span>] * auth +
+                 weights[<span class="st">'recency'</span>]   * rec)
+        composite.append((c, score))
+
+    <span class="cm"># 5. 내림차순 정렬 후 상위 k개</span>
+    composite.sort(key=<span class="kw">lambda</span> x: x[1], reverse=True)
+    <span class="kw">return</span> [c <span class="kw">for</span> c, _ <span class="kw">in</span> composite[:10]]</pre>
+    <div class="code-cap">원서 13.2절 — 관련성이 지배하되 권위와 최근성이 저울을 바로잡는다</div>
+    <h3 class="rv">규제 어휘를 위한 질의 변환</h3>
+    <p class="rv">5장의 질의 변환 패턴은 규제 배포에서 <strong>어휘 정규화</strong> 단계로 확장된다. 컴플라이언스 담당자는 격식과 비격식이 섞인 용어로 묻는다. "자본 적정성"이 "우리가 자본을 얼마나 들고 있어야 하나"로 물어지고, "고객 확인 의무"가 "KYC 요건"으로 물어진다. 질의 변환기는 비격식 용어를 격식 등가로 펼치는 어휘 매핑을 유지하고, 그 확장을 원 질의와 나란히 검색 질의에 더한다. 확장은 <em>보수적이다</em> — 잘 확립된 등가만 매핑한다. 적극적 확장의 재현율 개선을 인접 주제의 정밀도 퇴행이라는 값으로 사지 않기 위해서다.</p>
+  </div>
+</section>
+
+<!-- ============ 13.3 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">13.3 · CROSS-JURISDICTIONAL ORCHESTRATION</span>
+      <h2>관할을 넘나드는 질의를 위한 에이전틱 오케스트레이션</h2>
+    </div>
+    <p class="rv">컴플라이언스 질의의 의미 있는 몫 — 은행의 측정으로는 프로덕션 트래픽의 약 <strong>35%</strong> — 이 여러 관할에 걸친다. 23개국에서 영업하는 다국적 은행은 "독일에 본사를 두고 싱가포르와 브라질에 자회사를 운영하는 법인 고객의 온보딩 요건은 무엇인가" 같은 질문을 마주하며, 그 답은 <em>비자명하게 상호작용하는</em> 세 관할 체제의 요건을 구성해야 한다. 단일 관할 질의를 그럭저럭 다루는 단일 에이전트 검색은 이런 경우에 불충분하다. 프로덕션 체계는 8장의 멀티 에이전트 패턴을 쓴다.</p>
+    <p class="rv">오케스트레이터 에이전트가 사용자 질의를 받아 관할별 하위 질의로 쪼갠다. 독일 하위 질의, 싱가포르 하위 질의, 브라질 하위 질의가 각각 자기 관할의 규제 말뭉치와 조율된 재순위화 가중으로 설정된 <em>관할 특화 검색 에이전트</em>가 다룬다. 전문가 에이전트들이 발견을 오케스트레이터에 돌려주면, 오케스트레이터가 각 관할의 요건을 식별하고 그들 사이의 상호작용을 드러내고 요건이 충돌하는 듯한 경우나 추가 분석이 필요한 경우를 표시하는 복합 답을 종합한다.</p>
+    <p class="rv">각 전문가 에이전트는 그 자체로 온전한 검색 캐스케이드다 — 하이브리드 검색, 재순위화, 성찰 — 자기 관할 말뭉치 부분 위에서 돈다. 오케스트레이터의 일은 분해와 종합이지 검색이 아니며, 말뭉치를 직접 질의하지 않는다. 이 관심사의 분리가 각 에이전트의 프롬프트를 자기 과업에 집중하게 하고, 앞선 단일체적 접근이 겪던 <em>관할 맥락의 교차 오염</em>을 막는다.</p>
+    <h3 class="rv">충돌의 감지와 드러냄</h3>
+    <p class="rv">결정적인 정련은 충돌 감지다. 두 관할의 요건이 충돌이나 진정한 모호를 낳는 방식으로 상호작용할 때, 오케스트레이터는 그것을 그럴듯하게 들리는 종합 답 뒤에 감추는 대신 <strong>드러내야</strong> 한다. 패턴은 구조화된 비교로 구현된다. 전문가 에이전트들이 발견을 돌려준 뒤, 오케스트레이터가 요건들이 일관되는지 보완적인지 긴장 관계인지 명시적으로 살피는 비교 단계를 돌린다. 충돌이 감지되면 답은 그 충돌을 명시적으로 제시하고, 어느 관할의 요건이 어떤 상황에서 지배할 공산이 큰지 식별하며, 사건별 사실 없이는 확정적으로 답할 수 없는 물음에는 알맞게 유보를 둔다.</p>
+    <p class="rv">이 명시적 충돌 드러냄이 쓸모 있는 컴플라이언스 어시스턴트와 오해를 낳는 것을 가른다. <em>충돌을 감춰 해소한 그른 답은, 불확실을 인정하는 옳은 답보다 훨씬 나쁘다.</em> 컴플라이언스 담당자는 어디서 법률 자문이 필요한지, 어디서 은행이 어느 관할의 요건을 따를지 정책 결정을 내려야 하는지 알아야 한다. 그런 경우를 하나의 답으로 매끄럽게 덮어 자신 있게 내놓는 어시스턴트는 그들의 일을 <strong>더 쉽게가 아니라 더 어렵게</strong> 만든다.</p>
+  </div>
+</section>
+
+<!-- ============ 13.4 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap-wide">
+    <div class="wrap" style="padding:0">
+      <div class="sec-head rv">
+        <span class="sec-no">13.4 · STRUCTURAL GUARDRAILS</span>
+        <h2>구조적 가드레일 — 인용 검증, 거부를 지닌 성찰, 감사 기록</h2>
+      </div>
+      <p class="rv">중단된 출시 전 체계와 프로덕션 체계를 가르는 가장 중요한 차이가 구조적 가드레일 계층이다. 출시 전 체계는 확신 기반 어림에 의지했다. 언어 모델이 불확실하면 거부할 것이고, 팀은 그 자기평가를 믿었다. 프로덕션 체계는 <strong>모델의 내성(內省)에 의지하지 않고 제약을 알고리즘으로 강제하는</strong> 구조적 가드레일을 쓴다. 셋이 본질적이다.</p>
+    </div>
+    <figure class="figure scrollx rv">
+      <svg viewBox="0 0 720 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="생성 뒤 인용 검증의 세 구조적 검사와 통과·기각 경로">
+        <defs>
+          <marker id="a13b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#48394C"/></marker>
+          <marker id="a13r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#A83B2A"/></marker>
+        </defs>
+        <text x="24" y="26" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#9A978F" letter-spacing="1.5">CITATION VERIFICATION GATE</text>
+
+        <!-- generation -->
+        <rect x="24" y="60" width="112" height="46" fill="#EDE8E0" stroke="#48394C" stroke-width="1.4"/>
+        <text x="80" y="82" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#332639" text-anchor="middle">생성</text>
+        <text x="80" y="99" font-family="IBM Plex Mono, monospace" font-size="9" fill="#48394C" text-anchor="middle">답 + 인용 명세</text>
+        <line x1="136" y1="83" x2="170" y2="83" stroke="#48394C" stroke-width="1.3" marker-end="url(#a13b)"/>
+
+        <!-- three checks -->
+        <g font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#33322F">
+          <rect x="176" y="40" width="214" height="28" fill="none" stroke="#48394C" stroke-width="1.1"/>
+          <text x="186" y="59">① 인용된 청크가 회수 맥락에 있는가</text>
+          <rect x="176" y="72" width="214" height="28" fill="none" stroke="#48394C" stroke-width="1.1"/>
+          <text x="186" y="91">② 조항 식별자가 메타데이터와 맞는가</text>
+          <rect x="176" y="104" width="214" height="28" fill="none" stroke="#48394C" stroke-width="1.1"/>
+          <text x="186" y="123">③ 인용된 문면이 청크에 실제로 있는가</text>
+        </g>
+
+        <!-- pass -->
+        <line x1="390" y1="60" x2="428" y2="60" stroke="#48394C" stroke-width="1.3" marker-end="url(#a13b)"/>
+        <rect x="434" y="42" width="122" height="36" fill="none" stroke="#48394C" stroke-width="1.4"/>
+        <text x="495" y="65" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#332639" text-anchor="middle">셋 다 통과 → 제시</text>
+
+        <!-- fail -->
+        <line x1="390" y1="118" x2="428" y2="140" stroke="#A83B2A" stroke-width="1.4" marker-end="url(#a13r)"/>
+        <rect x="434" y="124" width="122" height="36" fill="#F4E9E5" stroke="#A83B2A" stroke-width="1.6"/>
+        <text x="495" y="147" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#7E2A1D" text-anchor="middle" font-weight="700">하나라도 실패 → 기각</text>
+
+        <!-- two recovery paths -->
+        <g font-family="Noto Sans KR, sans-serif" font-size="11.5">
+          <rect x="576" y="104" width="120" height="30" fill="none" stroke="#48394C" stroke-width="1.1"/>
+          <text x="636" y="124" fill="#33322F" text-anchor="middle">실패를 알려 재시도</text>
+          <rect x="576" y="146" width="120" height="30" fill="none" stroke="#A83B2A" stroke-width="1.4"/>
+          <text x="636" y="166" fill="#7E2A1D" text-anchor="middle">질의를 거부</text>
+        </g>
+        <line x1="556" y1="136" x2="570" y2="124" stroke="#48394C" stroke-width="1.2" marker-end="url(#a13b)"/>
+        <line x1="556" y1="146" x2="570" y2="158" stroke="#A83B2A" stroke-width="1.2" marker-end="url(#a13r)"/>
+
+        <!-- the fabricated citation -->
+        <rect x="24" y="212" width="332" height="58" fill="none" stroke="#A83B2A" stroke-width="1.3" stroke-dasharray="5 4"/>
+        <text x="36" y="234" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#7E2A1D">§ 4.2.3 — 조항 번호는 실재했다 (② 통과)</text>
+        <text x="36" y="256" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#7E2A1D">인용 문면은 어느 청크에도 없었다 (③ 실패)</text>
+        <line x1="192" y1="208" x2="240" y2="140" stroke="#A83B2A" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#a13r)"/>
+
+        <text x="360" y="300" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#494741" text-anchor="middle">모델은 여전히 환각할 수 있다. 다만 구조적 검사가 사용자에 닿기 전에 그것을 잡는다.</text>
+        <text x="360" y="322" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#7E2A1D" text-anchor="middle">인용의 정확함이 모델에게 <tspan font-style="italic">부탁하는</tspan> 성질에서 체계가 <tspan font-weight="700">강제하는</tspan> 성질이 된다</text>
+      </svg>
+      <figcaption>인용 검증의 관문 — 조항 번호가 실재하는 것만으로는 통과하지 못한다. 인용된 문면이 그 청크에 실제로 있어야 한다</figcaption>
+    </figure>
+    <div class="wrap" style="padding:0">
+      <div class="guards">
+        <div class="gd rv">
+          <h4>인용 검증<span>citation verification</span></h4>
+          <p>생성된 답의 모든 인용문이나 구체적 사실 주장은 회수된 맥락의 특정 청크로 되짚어져야 한다. 검증 패턴은 구조적이다. 생성은 답과 함께, 답의 각 인용을 그것이 온 특정 청크에 대응시키는 <em>구조화된 인용 명세</em>를 낸다. 그다음 생성 후 검증 단계가 각 인용을 검사한다. 인용된 청크가 회수 맥락에 있는가. 인용된 조항 식별자가 그 청크의 메타데이터와 맞는가. 인용된 문면이 그 청크에 실제로 나타나는가. 어느 검사든 실패하면 답은 기각되고, 체계는 실패를 명시해 재시도하거나 질의를 거부한다.</p>
+          <p>이 검증이 출시를 중단시킨 그 4.2.3조 인용을 잡았을 것이다. 인용된 식별자 아래 그 문면을 담은 청크가 회수 맥락에 없었으므로 구조적 검사가 표시했을 것이다. 구현은 13.1절의 청킹 규율과 긴밀히 맞물려야 하되 — 검증이 견줄 무언가를 지니려면 청크가 인용 식별자를 구조화된 메타데이터로 보존해야 한다 — 검증 자체는 수백 밀리초에 도는 작은 추가 부품이며, 그것이 주는 안전 성질에 비해 질의당 예산에 무시할 만한 비용을 더한다.</p>
+        </div>
+        <div class="gd rv">
+          <h4>거부를 지닌 성찰<span>reflection with refusal</span></h4>
+          <p>7장의 성찰 패턴이 컴플라이언스 체계에서는 <strong>거부를 단단한 선택지로</strong> 지닌 채 배포된다. 확신 신호에 그치지 않는다. 검색과 인용 검증 뒤, 성찰 단계가 회수된 맥락이 물어진 대로의 질의에 확신 있는 답을 실제로 받치는지 평가한다. 결과는 셋이다. 확신 있는 답(생성으로 나아감), 명시적 범위를 밝힌 부분적 답(생성하되 다루지 못한 것을 밝힘), 또는 거부(추측적 답을 생성하는 대신 무엇이 없었는지 설명하는 거부를 돌려줌).</p>
+          <p>거부 경로가 운영상 결정적이다. 많은 컴플라이언스 질의는 참으로 어렵다. 규정이 그 구체적 사안에 침묵하거나, 여러 해석이 방어 가능하거나, 물음이 체계가 알 수 없는 방식으로 사실 특정적이다. 이 모든 경우에 옳은 답은 <em>"가용한 규제 출처는 이 물음을 확정적으로 다루지 않는다. 이 사안은 구체적 사실에 익숙한 변호인의 법률 자문을 요한다"</em>이다. 이런 거부를 내놓는 체계가 자신 있게 들리는 추측을 내놓는 체계보다 담당자에게 <strong>더 쓸모 있다.</strong> 거부는 그들을 옳은 다음 걸음으로 인도하고, 추측은 부족한 권위 위에서 행동하도록 오도한다.</p>
+        </div>
+        <div class="gd rv">
+          <h4>감사 기록<span>audit logging</span></h4>
+          <p>모든 질의, 검색 결과, 성찰 판정, 생성 출력, 인용 검증 결과가 <em>불변 감사 저장소</em>에 기록된다. 기록은 포괄적이다. 제출된 정확한 질의, 사용자 신원과 역할, 체계 버전, 회수된 청크와 그 메타데이터, 재순위화 점수, 성찰 판정, 인용 명세를 지닌 생성된 답, 검증 결과, 그리고 실제로 사용자에게 보인 응답. 감사 저장소가 규제 검사의 운영적 바탕이다. 감독당국이 체계가 특정 사안을 어떻게 다루었는지 물을 때, 감사 기록이 완전하고 검증 가능한 기록을 준다.</p>
+          <p>감사 기록은 사후 검토와 이어지는 개선의 바탕이기도 하다. 컴플라이언스 담당자가 어떤 답이 오해를 낳았다고 신고할 때, 감사 기록이 무슨 일이 있었는지 — 무엇이 회수되고 무엇이 기각되고 무엇이 생성되고 무엇이 보였는지 — 정확히 재구성하게 해 준다. 이 흔적이 없으면 팀은 효과적으로 조사하거나 수습할 수 없고, 있으면 <strong>신고된 모든 문제가 발굴의 어림짐작이 아니라 구체적 진단 작업이 된다.</strong></p>
+        </div>
+      </div>
+      <div class="panel jh rv">
+        <span class="tag">Production Insight</span>
+        <h4>구조적 가드레일이 확신 어림을 이긴다</h4>
+        <p>출시 전 체계는 언어 모델의 확신 자기평가를 믿었다. 프로덕션 체계는 모델의 내성에 의지하지 않는 구조적 검증을 쓴다. 그 차이는 <em>이따금 지어낸 인용을 내는 배포</em>와 <em>구조적으로 그것을 내보낼 수 없는 배포</em>의 차이다.</p>
+        <p>고위험 규제 도메인에서 팀이 마음 쓰는 모든 안전 성질은 가능한 한 구조적으로 강제되어야 한다. 인용 검증은 구조적이다. 권위 계층은 구조적이다. 감사 기록은 구조적이다. 구조적 가드레일의 누적 효과는, 안전 성질이 <strong>언어 모델의 계속되는 협조에 달린 것이 아니라 감독당국에 입증 가능한</strong> 배포다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 13.5 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">13.5 · OPERATIONAL LIFECYCLE</span>
+      <h2>운영의 생애주기 — 개정, 재검증, 이어지는 준법</h2>
+    </div>
+    <p class="rv">규제 컴플라이언스 체계는 정적인 배포가 아니다. 규정은 끊임없이 변한다. 새 집행 조치가 새 선례를 만든다. 감독 지침이 발간되고 개정된다. 규제 지형이 진화해도 프로덕션 체계를 믿음직하게 지키는 운영의 생애주기가 12장 RAGOps를 규제 금융의 구체적 요구에 적용한 것이다.</p>
+    <h3 class="rv">개정 워크플로</h3>
+    <p class="rv">13.1절의 수집 감시가 규정 개정을 감지하면, 뒤따르는 워크플로는 엄정하다.</p>
+    <div class="flow">
+      <div class="fl rv"><p><b>파싱과 영향 식별</b><br>개정을 파싱해 말뭉치의 영향받는 조항들을 식별한다.</p></div>
+      <div class="fl rv"><p><b>차이의 생성</b><br>이전 버전과 새 버전 사이의 변경을 보이는 diff를 낸다.</p></div>
+      <div class="fl rv"><p><b>비프로덕션 스테이징</b><br>말뭉치 갱신을 비프로덕션 환경에 올리고, 개정된 조항을 건드리는 질의를 포함한 대표 시험 집합의 트래픽을 섬기게 한다.</p></div>
+      <div class="fl rv"><p><b>거동의 비교</b><br>개정된 조항에서의 체계 거동을 이전 말뭉치 버전과 새 버전 사이에서 견준다.</p></div>
+      <div class="fl rv"><p><b>사람 전문가의 검증</b><br>컴플라이언스 주제 전문가가 답의 차이를 검토하고, 새 거동이 개정을 옳게 반영하는지 검증한다.</p></div>
+      <div class="fl rv"><p><b>카나리 승격</b><br>이 검증 뒤에만 개정이 프로덕션으로 승격된다. 12장의 카나리 전개를 써서 새 말뭉치 버전이 처음에는 트래픽의 작은 몫을 섬기고, 확신이 쌓이는 대로 몫이 오른다. 카나리가 뜻밖의 거동을 드러내면 전개는 멈추고 개정은 더 조사된다.</p></div>
+    </div>
+    <p class="rv">이 엄정한 개정 워크플로가, 담당자들이 체계의 답에 두는 신뢰를 허물 오류를 들이지 않으면서 체계를 규제 변경에 맞춰 최신으로 지키게 한다.</p>
+    <h3 class="rv">이어지는 준법 평가</h3>
+    <p class="rv">9장의 평가 규율은 규제 금융 배포에서 프로덕션 체계에 대해 <strong>매일</strong> 도는 이어지는 준법 평가로 확장된다. 정답이 알려진 약 <strong>3천 건</strong>의 컴플라이언스 질의를 선별해 프로덕션 체계에 돌리고, 답을 알려진 정답 기준선과 견준다. 이 집합에서의 퇴행은 조사를 촉발하고, 유의미한 퇴행은 이전 버전으로의 되돌림을 촉발한다.</p>
+    <p class="rv">평가 집합 자체가 규제 산출물로 관리된다. 분기마다 선임 컴플라이언스 인력이 검토하고, 현재의 규제 우선순위를 반영해 갱신하고, 프로덕션 트래픽에서 새 질문 패턴이 떠오르면 보강한다. 그 관리자들은 이 집합을 프로덕션 말뭉치와 같은 엄정함으로 대접한다. <em>평가의 품질이 프로덕션 체계의 시간에 걸친 신뢰성을 곧바로 정한다는 것을 알기 때문이다.</em></p>
+    <h3 class="rv">검사에 대한 준비</h3>
+    <p class="rv">13.4절의 감사 기록이 운영적으로 완결되어 있다. 개정 워크플로가 문서화되어 있다. 평가 방법론이 선별되고 버전 관리되어 있다. 운영 생애주기가 기록되어 있다. 그 누적 효과는, 은행이 감독당국에 요구가 있을 때 <strong>체계가 어떻게 작동하는지, 어느 기간에 걸쳐 어떻게 변했는지, 그 답들이 어떻게 검증되었는지, 특정 과거 답이 어떻게 만들어졌는지를 정확히 입증할 수 있다</strong>는 것이다. 이 검사 준비성이 규제 금융의 프로덕션 배포를 일반 기업 배포와 가른다. 체계는 쓸모 있게만이 아니라 <em>감사 가능하게</em> 지어진 것이다.</p>
+    <p class="rv">출시 약 넉 달 뒤 은행의 주된 국가 감독당국이 수행한 이 프로덕션 체계의 첫 규제 검사는 사흘이 걸렸고, 통상적 권고를 넘는 지적 사항을 내지 않았다. 감독당국의 주임 검사관은 종결 회의에서, 체계의 구조적 감사 가능성이 이 검사를 은행의 더 오래되고 덜 엄정하게 계측된 모델 배포들에 대한 비슷한 검사들보다 <em>실질적으로 수월하게</em> 만들었다고 특별히 언급했다. 은행 팀은 그 말을 이 사례가 서술한 규율들의 <strong>운영적 입증</strong>으로 받아들였다.</p>
+  </div>
+</section>
+
+<!-- ============ 안티패턴 ============ -->
+<section style="background:var(--mist);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">COMMON PITFALLS</span>
+      <h2>규제 금융 RAG의 실수 — 세 가지</h2>
+    </div>
+    <div class="anti">
+      <div class="anti-item rv">
+        <h4>모델의 확신을 안전 신호로 믿기<span class="en">Trusting Model Confidence as a Safety Signal</span></h4>
+        <p>출시 전 체계는 언어 모델이 불확실할 때 거부하리라 믿었다. 모델은 불확실을 알아봐야 했을 질의에서 거부하지 않는 일이 잦았고, 지어낸 인용을 담은 자신 있게 들리는 답을 냈다. <strong>모델의 확신은 규제 도메인에서 믿음직한 안전 신호가 아니다.</strong> 구조적 검사와 나란한 쓸모 있는 입력이되 유일한 관문이 될 수는 없다.</p>
+        <p><span class="fix">처방</span> — 안전 성질을 구조적으로 강제하라. 인용 검증, 권위 계층, 거부 경로. 모델의 내성에 의지하는 대신.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>모든 출처를 동등하게 권위 있는 것으로 다루기<span class="en">Treating All Sources as Equally Authoritative</span></h4>
+        <p>많은 규제 도메인 배포가 말뭉치를 균질한 문면의 덩이로 다루고, 모든 문서를 검색과 생성에서 동등하게 무게 매긴다. 그 결과는 구속력 있는 법과 해석 논평을 혼동하고, 감독 지침을 지배하는 권위로 제시하고, 워킹 페이퍼를 확립된 선례처럼 인용하는 답이다.</p>
+        <p><span class="fix">처방</span> — 13.1절의 권위 등급 메타데이터를 검색과 생성으로 번져 가게 해, 체계가 자기 출처들의 법적 무게를 꾸준히 구별하게 하라.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>동적인 규제 환경에 정적인 말뭉치<span class="en">Static Corpora in Dynamic Regulatory Environments</span></h4>
+        <p>규정은 끊임없이 변하고, 배포 시점에 최신이던 말뭉치는 점점 묵는다. 개정 워크플로가 없는 체계는 현재 상태가 아니라 <em>말뭉치를 실은 시점의</em> 규제 상태를 반영하는 답을 내며, 그 어긋남은 몇 달, 몇 해에 걸쳐 자란다.</p>
+        <p><span class="fix">처방</span> — 13.5절의 이어지는 개정 워크플로다. 감시된 감지, 통제된 스테이징, 사람의 검증, 카나리 전개. <strong>검증되지 않은 개정이 프로덕션 데이터 흐름에 들어오게 하지 않으면서 말뭉치를 최신으로 지키는 것.</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 다섯 요지 ============ -->
+<section class="takeaways">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">CHAPTER SUMMARY</span>
+      <h2>이 장에서 남는 다섯</h2>
+    </div>
+    <div class="take">
+      <div class="take-item rv"><p>규제 도메인 말뭉치는 일반 검색이 요구하는 것을 넘는 <b>메타데이터의 규율</b>을 요구한다. 권위 등급, 발효일을 지닌 버전 이력, 구조화된 조항 식별자를 지닌 인용 가능한 청킹이 토대의 성질이며, 그것 없이는 하류의 가드레일이 작동할 수 없다. 은행의 출시를 중단시킨 그 지어낸 4.2.3조 인용은 이 메타데이터 규율의 부재가 가능하게 한 것이었다.</p></div>
+      <div class="take-item rv"><p>규제 금융의 하이브리드 검색과 재순위화는 5장의 패턴을 <b>인용 인지 어휘 가중과 권위 인지 재순위화</b>로 확장한다. 확장은 완만하되 운영상 결정적이다. 규제 문면의 인용 촘촘함과 권위 층화라는 성질이 믿음직한 답을 내려면 이 적응을 요구한다.</p></div>
+      <div class="take-item rv"><p>관할을 넘나드는 컴플라이언스 질의 — 실무 트래픽의 대략 3분의 1 — 는 8장의 <b>멀티 에이전트 오케스트레이션</b>을 요구한다. 관할 특화 검색 에이전트가 자기 도메인을 다루고, 오케스트레이터가 쪼개고 종합하며, <em>충돌 감지 단계가 상호작용을 그럴듯한 종합 뒤에 감추는 대신 명시적으로 드러낸다.</em></p></div>
+      <div class="take-item rv"><p><b>구조적 가드레일</b> — 인용 검증, 거부를 지닌 성찰, 포괄적 감사 기록 — 이 출시 전 체계의 지어낸 인용을 내보내게 한 확신 어림을 대체한다. 고위험 규제 도메인에서 안전 성질은 모델의 내성에 의지하는 대신 구조적으로 강제되어야 한다. 그 구조적 강제가 체계를 감독당국에 <em>입증 가능하게</em> 만든다.</p></div>
+      <div class="take-item rv"><p>규제 금융의 운영 생애주기는 12장 RAGOps를 특화된 규율로 적용한다. 말뭉치를 최신으로 지키는 <b>개정 워크플로</b>, 퇴행을 매일 감지하는 <b>이어지는 준법 평가</b>, 그리고 체계가 어떻게 작동하며 어느 과거 답이 어떻게 만들어졌는지 요구가 있을 때 입증하게 하는 <b>검사 준비성</b>이다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 문헌 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">FURTHER READING</span>
+      <h2>더 읽을 것</h2>
+    </div>
+    <div class="refs">
+      <div class="ref rv"><b>Basel Committee on Banking Supervision</b>, <i>"Principles for the Sound Management of Operational Risk"</i> (상시 갱신) — AI 기반 컴플라이언스 체계가 그 안에서 작동해야 하는 운영 리스크 틀을 이해하는 기초 문서. 규제 은행업의 프로덕션 검색을 짓는 팀에 본질적인 맥락이다.</div>
+      <div class="ref rv"><b>Multi-Agent AI Systems Handbook</b>, <i>Chapter 13 — Regulated-Industry Deployments</i> (Norman, 2026) — 자매편의 규제 산업 프로덕션 배포 취급. 이 사례가 검색에 특화해 적용한 거버넌스 패턴을 담으며, 규제 도메인의 에이전틱 체계 전반으로 일반화된다.</div>
+      <div class="ref rv"><b>Financial Stability Board</b>, <i>"Artificial Intelligence and Machine Learning in Financial Services"</i> (FSB, 상시 갱신) — 금융 서비스의 AI 배포에 대한 규제 당국의 관점. 규제 대상 회사의 AI 체계에 감독자들이 거버넌스와 검증과 지속 감시에 관해 지니는 기대를 담는다.</div>
+      <div class="ref rv"><b>US Office of the Comptroller of the Currency</b>, <i>"Model Risk Management"</i> (OCC Bulletin 2011-12 및 이어지는 감독 지침) — 미국 감독당국이 은행의 모델 리스크에 적용하는 감독 틀이며, 점점 AI 체계에도 적용된다. 미국 규제 대상 배포에 중요한 읽을거리다.</div>
+      <div class="ref rv"><b>European Banking Authority</b>, <i>"Guidelines on Internal Governance"</i> (EBA, 상시 갱신) — 유럽 은행의 AI·분석 체계 거버넌스를 다루는 유럽 감독 틀. 투명성과 설명 가능성 요구가 EU 규제 대상 배포가 충족해야 할 기준을 세운다.</div>
+    </div>
+    <p class="note rv">위 문헌 목록은 원서 13장의 Further Reading을 그대로 옮긴 것이다. 서지 사항의 최종 확인은 원 출처를 통해 하는 것이 옳다.</p>
+  </div>
+</section>
+
+<!-- ============ 다리 ============ -->
+<section class="bridge">
+  <div class="wrap">
+    <div class="sec-head rv" style="margin-bottom:36px">
+      <span class="sec-no">CHAPTER BRIDGE</span>
+      <h2>다음 장 — 의료와 법률, 두 개의 사례</h2>
+    </div>
+    <p class="rv">14장은 5부를 두 사례로 이어 간다. 의료와 법률, 저마다의 제약을 지닌 도메인이다. 의료 사례는 그른 답이 환자를 직접 해칠 수 있는 임상 의사결정 지원을 다루고, 법률 사례는 그른 답이 과오 책임 노출을 낳을 수 있는 관할 인용의 정밀성을 다룬다. 두 사례 모두 이 장이 세운 구조를 따른다. 말뭉치의 규율, 검색과 재순위화의 적응, 도메인의 구성적 질의를 위한 에이전틱 오케스트레이션, 구조적 가드레일, 그리고 체계를 시간에 걸쳐 믿음직하게 지키는 운영의 생애주기다.</p>
+    <p class="rv">돌아보면 이 장의 이야기는 <em>믿음의 근거</em>에 관한 것이었다. 출시 전의 체계는 스스로의 확신을 근거로 삼았다. 확신은 근거가 아니다. 조항 번호가 실재한다는 것도 근거가 아니다. 그 번호 아래에 그 문면이 실제로 있는지 <strong>확인한 것만이</strong> 근거다. 무징불신(無徵不信)이라 하였으니, 증거 없는 것을 믿지 않는 태도는 옛 학문의 예의이면서 오늘 규제 도메인 공학의 최소 요건이다.</p>
+    <p class="rv">한 가지 더 남는다. 이 장에서 달라진 것은 아키텍처가 아니라 <em>규범을 계약으로 바꾼 일</em>이었다. 잘하자는 다짐은 시간이 가면 흐려지고, 구조로 박아 둔 것은 흐려지지 않는다. 사람의 성실을 의심해서가 아니다. 성실만으로 지켜지기를 바라는 것이 오히려 사람에게 무거운 짐이기 때문이다. <strong>지켜야 할 것을 구조에 맡기고, 사람은 판단해야 할 것을 판단하는 것이 옳은 분담이다.</strong></p>
+    <div class="next rv">NEXT — CHAPTER 14 · HEALTHCARE AND LEGAL RAG: TWO MORE PRODUCTION CASE STUDIES</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Raymond Norman, Agentic RAG Systems (2026) · Chapter 13<br>
+    원서 240–257쪽 전체 내용 기반 · 본 페이지는 학습·검토 목적의 2차 정리물이다
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    els.forEach(function(e){e.classList.add('on')});
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        en.target.classList.add('on');
+        io.unobserve(en.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>

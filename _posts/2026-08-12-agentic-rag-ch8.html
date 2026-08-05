@@ -1,0 +1,761 @@
+---
+layout: null
+title: "Multi-Agent RAG: Orchestrating Specialised Retrievers" 
+date: 2026-08-12
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>멀티 에이전트 RAG — 전문 검색기의 오케스트레이션 · Agentic RAG Systems 제8장</title>
+<meta name="description" content="Raymond Norman, 『Agentic RAG Systems』 제8장 — 전문화 문턱, 전문 검색 에이전트, 오케스트레이션 패턴, 종합 계층, 프로덕션 운영">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --hanji:#F7F4EE;          /* 한지 — 오래 두어 누렇게 든 종이 */
+  --meok:#33322F;           /* 먹빛 */
+  --meok-soft:#6E6C66;
+  --meok-pale:#9A978F;
+  --inju:#A83B2A;           /* 인주 — 낙관의 붉은빛, 아껴 쓴다 */
+  --inju-deep:#7E2A1D;
+  --nam:#46566E;            /* 청람 — 여럿을 아우르는 서늘한 기운 */
+  --nam-deep:#334156;
+  --mist:#EDE8E0;
+  --line:#D8D2C7;
+  --paper-card:#FCFAF6;
+  --serif:'Gowun Batang', serif;
+  --sans:'Noto Sans KR', sans-serif;
+  --mono:'IBM Plex Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--hanji);color:var(--meok);
+  font-family:var(--serif);font-weight:400;
+  line-height:2.12;font-size:17.5px;letter-spacing:-0.008em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--meok);color:var(--hanji)}
+
+.wrap{max-width:760px;margin:0 auto;padding:0 30px}
+.wrap-wide{max-width:1000px;margin:0 auto;padding:0 30px}
+section{padding:118px 0}
+p{margin-bottom:1.75em}
+em{font-style:normal;color:var(--inju-deep);font-weight:400}
+strong{font-weight:700;color:var(--meok)}
+.mono{font-family:var(--mono)}
+.sans{font-family:var(--sans)}
+
+.rv{opacity:0;transform:translateY(20px);transition:opacity 1s cubic-bezier(.2,.7,.3,1),transform 1s cubic-bezier(.2,.7,.3,1)}
+.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .brush{animation:none !important;stroke-dasharray:none !important;stroke-dashoffset:0 !important}
+  .quiet{animation:none !important}
+}
+
+/* ---------- 표제 ---------- */
+header.hero{
+  padding:150px 0 118px;position:relative;
+  background:var(--hanji);border-bottom:1px solid var(--line);
+}
+.hero-kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--meok-pale);text-transform:uppercase;margin-bottom:42px}
+.hero-kicker b{color:var(--inju);font-weight:600}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(30px,4.6vw,48px);line-height:1.5;letter-spacing:-0.012em;margin-bottom:20px;color:var(--meok)}
+h1 .thin{display:block;font-size:.5em;font-weight:400;color:var(--meok-soft);margin-top:20px;letter-spacing:.005em;line-height:1.7}
+.seal{
+  display:inline-block;margin:0 0 40px;padding:10px 13px;
+  border:1.5px solid var(--inju);color:var(--inju);
+  font-family:var(--serif);font-size:13px;font-weight:700;letter-spacing:.2em;line-height:1.3;
+}
+.hero-lede{max-width:620px;font-size:17.5px;line-height:2.16;color:#494741}
+.hero-meta{margin-top:56px;font-family:var(--mono);font-size:12.5px;color:var(--meok-pale);display:flex;gap:26px;flex-wrap:wrap}
+.hero-meta span::before{content:"— ";color:var(--line)}
+
+/* ---------- 여는 이야기 ---------- */
+.incident{background:var(--mist);padding:118px 0;border-bottom:1px solid var(--line)}
+.score{display:flex;gap:40px;flex-wrap:wrap;margin-bottom:26px}
+.score-col{font-family:var(--mono)}
+.score-col .lbl{font-size:11.5px;letter-spacing:.2em;color:var(--meok-soft);margin-bottom:16px;text-transform:uppercase}
+.score-col .row{display:flex;align-items:baseline;gap:12px;line-height:1.5}
+.score-col .n{font-size:29px;font-weight:600;width:38px;text-align:right}
+.score-col .t{font-family:var(--sans);font-size:13px;color:#494741}
+.s-good .n{color:var(--nam)}
+.s-part .n{color:var(--meok-soft)}
+.s-bad .n{color:var(--inju)}
+.score-col.after .n{font-size:34px}
+.score-arrow{align-self:center;font-family:var(--mono);font-size:22px;color:var(--meok-pale)}
+.tally-cap{font-family:var(--mono);font-size:12.5px;color:var(--meok-soft);letter-spacing:.16em;line-height:1.9}
+.incident .prose{max-width:660px;margin-top:52px}
+.pullquote{
+  margin:60px 0;padding:0 0 0 30px;border-left:2px solid var(--inju);
+  font-size:20px;line-height:1.95;color:var(--inju-deep);
+}
+.quiet{animation:quiet 4.6s ease-in-out infinite}
+@keyframes quiet{0%,100%{opacity:1}50%{opacity:.62}}
+
+/* ---------- 절 공통 ---------- */
+.sec-head{margin-bottom:60px}
+.sec-no{font-family:var(--mono);font-size:12.5px;letter-spacing:.26em;color:var(--inju-deep);margin-bottom:20px;display:block}
+h2{font-family:var(--serif);font-weight:700;font-size:clamp(24px,3.3vw,34px);line-height:1.55;color:var(--meok)}
+h3{font-family:var(--serif);font-weight:700;font-size:20px;margin:2.6em 0 1em;color:var(--nam)}
+h3::before{content:"· ";color:var(--inju)}
+
+.panel{background:var(--paper-card);border:1px solid var(--line);padding:40px 42px;margin:60px 0}
+.panel .tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--inju-deep);margin-bottom:18px;display:block}
+.panel h4{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:16px}
+.panel p{font-size:16px;line-height:2.02;margin-bottom:1.1em}
+.panel p:last-child{margin-bottom:0}
+.panel.nam{border-left:2px solid var(--nam)}
+.panel.nam .tag{color:var(--nam-deep)}
+.panel.inju{border-left:2px solid var(--inju)}
+
+/* ---------- 도해 ---------- */
+.figure{margin:70px 0;text-align:center}
+.figure svg{max-width:100%;height:auto}
+.figure figcaption{font-family:var(--sans);font-size:13.5px;color:var(--meok-soft);margin-top:22px;line-height:1.85}
+.figure figcaption::before{content:"⟨"}
+.figure figcaption::after{content:"⟩"}
+.brush{stroke-dasharray:1200;stroke-dashoffset:1200;animation:brush 2.5s ease-out forwards .35s}
+@keyframes brush{to{stroke-dashoffset:0}}
+
+/* ---------- 네 문서 유형이 보답하는 것 ---------- */
+.rewards{margin:60px 0;border-top:1px solid var(--line)}
+.reward{
+  display:grid;grid-template-columns:186px 1fr;gap:24px;align-items:baseline;
+  padding:28px 0;border-bottom:1px solid var(--line);
+}
+.reward h4{font-family:var(--serif);font-size:17px;font-weight:700;color:var(--nam);line-height:1.6}
+.reward h4 .en{display:block;font-family:var(--mono);font-weight:400;font-size:10.5px;color:var(--meok-pale);margin-top:5px;letter-spacing:.05em}
+.reward p{font-size:15.5px;line-height:1.95;color:#494741;margin:0}
+.reward p b{color:var(--inju-deep);font-weight:700}
+
+/* ---------- 세 신호 ---------- */
+.signals{margin:56px 0}
+.sig{padding:30px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:44px 1fr;gap:20px}
+.sig:last-child{border-bottom:1px solid var(--line)}
+.sig .no{font-family:var(--mono);font-size:12.5px;color:var(--inju);padding-top:5px}
+.sig h4{font-family:var(--serif);font-size:17.5px;font-weight:700;margin-bottom:8px;color:var(--nam)}
+.sig p{font-size:15.5px;line-height:1.96;color:#494741;margin:0}
+
+/* ---------- 전문가 유형 표 ---------- */
+.sp-table{margin:60px 0}
+.sp-row{display:grid;grid-template-columns:168px 118px 1fr 1fr;gap:18px;padding:22px 0;border-top:1px solid var(--line);align-items:start}
+.sp-row.head{border-top:none;padding-bottom:10px}
+.sp-row.head span{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--meok-pale)}
+.sp-row:last-child{border-bottom:1px solid var(--line)}
+.sp-name{font-family:var(--serif);font-weight:700;font-size:16px;color:var(--nam);line-height:1.5}
+.sp-cell{font-size:14px;line-height:1.9;color:#494741}
+.sp-cell.fail{color:var(--inju-deep)}
+
+/* ---------- 오케스트레이션 3패턴 ---------- */
+.orch{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:26px;margin:60px 0}
+.orc{background:var(--paper-card);border:1px solid var(--line);padding:36px 34px}
+.orc h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:6px;color:var(--nam)}
+.orc .en{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--meok-pale);margin-bottom:20px}
+.orc p{font-size:15px;line-height:1.98;color:#494741;margin-bottom:1em}
+.orc p:last-child{margin-bottom:0}
+.orc .risk{font-size:14px;color:var(--inju-deep);line-height:1.85}
+.orc .risk::before{content:"대가 — ";color:var(--meok-pale)}
+
+/* ---------- 코드 ---------- */
+pre.code{
+  background:var(--meok);color:#DAD6CD;
+  font-family:var(--mono);font-size:12.5px;line-height:1.9;
+  padding:34px 36px;margin:56px 0;overflow-x:auto;
+}
+pre.code .cm{color:#948F84}
+pre.code .kw{color:#D9A57F}
+pre.code .st{color:#A9BFA8}
+.code-cap{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--meok-pale);margin:-42px 0 56px;padding-left:2px}
+
+/* ---------- 조건·계층 목록 ---------- */
+.conds{margin:56px 0}
+.cond{padding:32px 0;border-top:1px solid var(--line)}
+.cond:last-child{border-bottom:1px solid var(--line)}
+.cond h4{font-family:var(--serif);font-size:17.5px;font-weight:700;margin-bottom:10px;color:var(--nam)}
+.cond h4 span{font-family:var(--mono);font-size:11px;color:var(--meok-pale);font-weight:400;margin-left:10px;letter-spacing:.06em}
+.cond p{font-size:15.5px;line-height:1.98;color:#494741;margin:0}
+
+/* ---------- 안티패턴 ---------- */
+.anti{counter-reset:anti;margin:60px 0}
+.anti-item{padding:36px 0 36px 66px;position:relative;counter-increment:anti;border-top:1px solid var(--line)}
+.anti-item:last-child{border-bottom:1px solid var(--line)}
+.anti-item::before{
+  content:counter(anti);position:absolute;left:0;top:36px;
+  width:34px;height:34px;line-height:32px;text-align:center;
+  border:1.5px solid var(--inju);color:var(--inju);
+  font-family:var(--mono);font-size:13px;
+}
+.anti-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:12px}
+.anti-item h4 .en{font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--meok-pale);display:block;margin-top:5px}
+.anti-item p{font-size:15.5px;line-height:1.98;color:#494741;margin-bottom:1em}
+.anti-item p:last-child{margin-bottom:0}
+.anti-item .fix{font-weight:700;color:var(--inju-deep)}
+
+/* ---------- 다섯 요지 ---------- */
+.takeaways{background:var(--meok);color:#E6E2D9;padding:118px 0}
+.takeaways h2{color:#F2EEE6}
+.takeaways .sec-no{color:#D9A57F}
+.take{counter-reset:take;margin-top:58px}
+.take-item{display:grid;grid-template-columns:58px 1fr;gap:24px;padding:34px 0;border-top:1px solid rgba(230,226,217,.13);counter-increment:take}
+.take-item::before{content:counter(take);font-family:var(--serif);font-size:34px;font-weight:700;color:#605C53;line-height:1.2}
+.take-item p{font-size:16px;line-height:2.08;color:#CBC5B9;margin:0}
+.take-item p b{color:#F2EEE6}
+
+/* ---------- 문헌·다리·꼬리 ---------- */
+.refs{margin:58px 0}
+.ref{padding:26px 0 26px 30px;border-top:1px solid var(--line);position:relative;font-size:15.5px;line-height:1.95;color:#494741}
+.ref::before{content:"—";position:absolute;left:0;color:var(--inju)}
+.ref b{font-weight:700;color:var(--meok)}
+.ref i{font-style:italic}
+.ref:last-child{border-bottom:1px solid var(--line)}
+.bridge{background:var(--mist);padding:104px 0;border-top:1px solid var(--line)}
+.bridge .next{margin-top:44px;font-family:var(--mono);font-size:12.5px;letter-spacing:.18em;color:var(--nam)}
+footer{padding:64px 0;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--meok-pale);border-top:1px solid var(--line);line-height:2.1}
+.note{font-family:var(--sans);font-size:13.5px;color:var(--meok-soft);margin-top:32px;line-height:1.95}
+.note::before{content:"※ ";color:var(--inju)}
+
+@media(max-width:680px){
+  section{padding:82px 0}
+  header.hero{padding:104px 0 82px}
+  .reward{grid-template-columns:1fr;gap:8px}
+  .sp-row{grid-template-columns:1fr 1fr;row-gap:8px}
+  .sp-row.head{display:none}
+  .sp-name{grid-column:1 / -1}
+  .score{gap:26px}
+  .score-arrow{display:none}
+  .take-item{grid-template-columns:42px 1fr;gap:16px}
+  .take-item::before{font-size:26px}
+  .anti-item{padding-left:52px}
+  .anti-item::before{width:30px;height:30px;line-height:28px;font-size:12px}
+  .pullquote{font-size:18px}
+  .sig{grid-template-columns:1fr;gap:6px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 표제 ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-kicker rv">AGENTIC RAG SYSTEMS · RAYMOND NORMAN · <b>제 8 장</b></div>
+    <div class="seal rv">和而不同</div>
+    <h1 class="rv">멀티 에이전트 RAG — 전문 검색기의 오케스트레이션<span class="thin">하나가 모든 것을 잘하려 하면 어느 것도 잘하지 못한다. 다름을 없애지 않고 아우르는 것이 이 장의 일이다.</span></h1>
+    <p class="hero-lede rv">7장이 검색에 스스로를 비추는 거울을 하나 들였다면, 8장은 <em>여럿이 서로를 비추는 자리</em>를 짓는다. 서로 다른 결의 말뭉치를 하나의 파이프라인으로 감당하려는 순간 모든 선택은 타협이 된다. 타협을 그만두고, 각자의 자리에서 뛰어난 전문가들을 세우고, 그들을 조정하는 계층을 두는 일 — 홀로 서는 나무가 아니라 더불어 서는 숲의 구조다.</p>
+    <div class="hero-meta rv">
+      <span>원서 151–169쪽</span>
+      <span>Part III · Advanced Patterns</span>
+      <span>더불어의 공학</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 여는 이야기 ============ -->
+<section class="incident">
+  <div class="wrap">
+    <div class="score rv quiet">
+      <div class="score-col s-before">
+        <div class="lbl">단일 에이전트 · 열 문항</div>
+        <div class="row s-good"><span class="n">3</span><span class="t">옳고 근거도 갖춘 답</span></div>
+        <div class="row s-part"><span class="n">4</span><span class="t">부분적으로만 옳은 답</span></div>
+        <div class="row s-bad"><span class="n">3</span><span class="t">자신 있게 틀린 답</span></div>
+      </div>
+      <div class="score-arrow">→</div>
+      <div class="score-col after">
+        <div class="lbl">네 전문가 체제 · 석 달 뒤</div>
+        <div class="row s-good"><span class="n">8</span><span class="t">깔끔한 답</span></div>
+        <div class="row s-part"><span class="n">2</span><span class="t">부분적</span></div>
+        <div class="row s-bad"><span class="n">0</span><span class="t">자신 있게 틀린 답</span></div>
+      </div>
+    </div>
+    <div class="tally-cap rv">2026년 4월 · 어느 글로벌 제약사 의학부<br>같은 열 문항, 같은 지식 베이스, 다른 아키텍처</div>
+    <div class="prose">
+      <p class="rv">한 글로벌 제약사의 의학부 팀이 조용한 실험을 했다. 지난 한 해 배포해 온 RAG 기반 연구 어시스턴트 — 임상시험 보고서, 규제 서류, 과학 문헌, 사내 과학 각서를 아우르는 지식 베이스 전체를 검색하는 단일 에이전트 시스템 — 가 그것이 대체한 이전 워크플로보다 정말로 연구자들을 더 잘 섬기고 있는지 알고 싶었다. 실험은 단순했다. 신약 발견 과학자들이 예사로 던지는 복잡한 연구 질문 열 개를 고른다. RAG 시스템이 각각에 답하게 한다. 같은 지식 베이스에 온전히 접근할 수 있는 주제 전문가 세 사람이 각자 독립적으로 답하게 한다. 견주어 본다.</p>
+      <p class="rv">결과는 불편했다. 열 문항 가운데 셋에서 시스템은 옳고 근거도 잘 갖춘 답을 냈다. 넷에서는 부분적으로만 옳은 답을 냈다 — 답의 일부는 붙잡았으나 인간 전문가들이 잡아낸 결정적 미묘함을 놓쳤다. 남은 셋에서는 자신 있게 틀린 답을 냈다. 세 전문가 중 누구라도 당연하게 여겼을 맥락을 놓친 답이었다. 전문가들 사이에서 정답에 대한 합의는 높았다. 시스템은 전문가들이 이미 아는 것에 이르는 속도가 느린 데 그치지 않았다. <strong>전문 연구자들이 본능적으로 결합하는 종류의 정보를 체계적으로 결합하지 못하고 있었다.</strong></p>
+      <p class="rv">사후 분석에서 드러난 진단이 시사적이다. 전문가들에게 어떻게 답에 이르렀는지 물었을 때, 하나같이 비슷한 과정을 이야기했다. 그들은 지식 베이스를 <em>하나의 말뭉치로</em> 검색하지 않았다. 특정한 하위 영역을 특정한 순서로 찾아 읽었다. 먼저 직접 증거를 얻으려 임상시험 보고서를, 다음으로 규제 지형의 맥락을 얻으려 규제 서류를, 그다음 회사 자신의 앞선 해석을 얻으려 사내 과학 각서를, 마지막으로 넓은 과학적 합의를 얻으려 외부 문헌을 읽었다. 이 하위 영역들은 저마다 고유한 관례와 어휘와 불확실성 표현법을 지녔다. 전문가들은 각 영역을 <em>다른 심상 모형으로</em> 읽었다.</p>
+      <div class="pullquote rv">그들은 사실상 한 사람 안에 든 네 명의 전문가였다.</div>
+      <p class="rv">반면 RAG 시스템은 말뭉치 전체를 구별 없는 내용으로 다루었다. 모든 종류의 문서에 같은 검색 전략, 같은 청킹, 같은 임베딩 모델, 같은 생성 프롬프트를 적용했다. 구조화된 유효성 데이터와 표준화된 통계 보고를 담은 임상시험 보고서가, 같은 용어가 전혀 다른 함의를 지닐 수 있는 문헌 리뷰와 나란히 회수되었다. 회사 고유의 약어와 진행 중인 프로젝트 참조로 가득한 사내 각서가, 격식 있는 규제 서류와 같은 벡터 공간에 임베딩되었다. 이 모든 문서 유형을 가로지르는 단일 에이전트의 <em>평균적 유능함</em>은 각 유형에 전문화된 검색이 낼 성과보다 크게 못했고, 워크플로를 통해 사실상 전문화된 검색을 수행한 인간 전문가들보다도 크게 못했다.</p>
+      <p class="rv">처방은 구조적이었다. 팀은 시스템을 네 개의 전문 검색 에이전트 — 임상시험 전문가, 규제 전문가, 사내 과학 전문가, 외부 문헌 전문가 — 로 다시 지었다. 각각은 자기 말뭉치의 관례에 맞춰 조율된 자기만의 검색 캐스케이드를 지녔고, 오케스트레이터가 연구 질문마다 하위 질문으로 쪼개어 해당 전문가에게 배정했다. 그다음 오케스트레이터는 전문가들의 응답을 조리 있는 답으로 종합했다. 어느 전문가가 어느 증거를 보탰는지 명시적으로 밝히면서였다. 다시 지은 뒤 석 달, 같은 열 문항으로 후속 평가를 하자 깔끔한 답 여덟, 부분적 둘, 자신 있게 틀린 답 <strong>영</strong>이 나왔다. 시스템은 사실상 <em>협력하는 네 명의 전문가</em>가 되었다.</p>
+      <p class="rv">멀티 에이전트 RAG는 3부를 닫는 패턴이다. 7장의 에이전틱 패턴 — 성찰, 자기교정, 멀티홉 분해 — 위에 곧바로 서서, 그것을 오케스트레이션의 규율과 결합한다. 7장이 각 검색 에이전트를 스스로 고쳐 나가게 만들었다면, 이 장은 그런 에이전트 여럿을 어느 하나도 홀로는 할 수 없는 일을 하는 체계로 조정한다. 이 장을 마치면 이 책 앞 세 부의 건축적 호(弧)가 완성된다. 검색이 왜 중요한가의 기초에서, 어떻게 잘 검색하는가의 핵심 아키텍처를 지나, 프로덕션급 검색을 가능하게 하는 고급 패턴까지.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8.1 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">8.1 · THE SPECIALISATION ARGUMENT</span>
+      <h2>하나로는 부족할 때 — 전문화의 논거</h2>
+    </div>
+    <p class="rv">이 책이 지금까지 살펴본 모든 검색 아키텍처 — 벡터 검색, 하이브리드 융합, GraphRAG, 자기교정 루프 — 는 하나의 말뭉치 위에서 도는 하나의 파이프라인을 가정한다. 하나의 청킹 전략, 하나의 임베딩 모델, 한 벌의 검색 파라미터, 하나의 생성 프롬프트. 설명하기에 편하고 많은 응용에 충분한 가정이다. 그러나 상당한 부류의 프로덕션 배포에는 구조적으로 불충분하다. 제약사 연구 어시스턴트의 실패는 파이프라인의 어느 개별 부품의 실패가 아니었다. <strong>하나의 파이프라인이 시스템이 검색해야 할 모든 종류의 콘텐츠를 섬길 수 있다는 가정의 실패였다.</strong></p>
+    <p class="rv">전문화의 논거는 이질적인 말뭉치를 다루는 숙련된 사람을 관찰할 때에야 보이는 성질에 기댄다. <em>문서 유형이 다르면 보답하는 검색 전략도 다르다는 것</em>이다.</p>
+    <div class="rewards">
+      <div class="reward rv">
+        <h4>임상시험 보고서<span class="en">clinical trial reports</span></h4>
+        <p>표준화된 절 구성, 통계 관례, 일관된 어휘를 지닌 고도로 구조화된 문서다. <b>절 경계를 존중하는 청킹</b>, 생의학 텍스트로 훈련된 임베딩, 이를 서사가 아니라 증거로 다루는 검색 프롬프트에 보답한다.</p>
+      </div>
+      <div class="reward rv">
+        <h4>과학 문헌 리뷰<span class="en">literature reviews</span></h4>
+        <p>독특한 논증 구조와 옮겨 다니는 개념적 강조를 지닌 비구조 산문이다. <b>서사를 아는 청킹</b>, 범용 과학 임베딩, 증거의 열거가 아니라 개념적 포괄을 붙잡는 검색에 보답한다.</p>
+      </div>
+      <div class="reward rv">
+        <h4>사내 과학 각서<span class="en">internal memoranda</span></h4>
+        <p>짧고 밀도 높으며 회사 고유의 약칭과 진행 중인 프로젝트 참조로 가득하다. <b>작은 청크 크기</b>, 사내 용어로 미세조정된 임베딩, 포괄성보다 최근성을 앞세우는 검색에 보답한다.</p>
+      </div>
+      <div class="reward rv">
+        <h4>규제 서류<span class="en">regulatory filings</span></h4>
+        <p>법률 어휘와 완고한 구조 관례를 지닌 격식 있는 문서다. <b>구조를 아는 청킹</b>, 법률 도메인 임베딩, 모든 진술을 잠재적으로 구속력 있는 것으로 다루는 검색에 보답한다.</p>
+      </div>
+    </div>
+    <p class="rv">하나의 검색 파이프라인은 이 모든 문서 유형에 대해 <em>하나의</em> 설정을 골라야 한다. 무엇을 고르든 그것은 타협이다. 임상시험에 맞는 청킹 전략은 서사형 리뷰를 조각낸다. 생의학 동의어를 붙잡는 임베딩 모델은 법률적 미묘함을 놓친다. 증거 열거를 요구하는 생성 프롬프트는 개념적 자료의 딱딱한 요약을 낳는다. 평균적 유능함은 실재하지만 도메인별 탁월함은 이룰 수 없다. 이질적 말뭉치 위의 프로덕션 시스템은 전문화된 검색이 낼 성과에 꾸준히 못 미치며, 그 폭은 이질성에 따라 다르되 <strong>가장 중요한 질의들에서 예사로 20%를 넘는다.</strong></p>
+    <p class="rv">멀티 에이전트의 답은 단일 파이프라인 가정을 버리는 것이다. 모든 문서 유형을 가로질러 타협하는 검색기 하나를 짓는 대신, 각각 특정 문서 유형이나 도메인에 조율된 전문 검색기 여럿을 짓고 오케스트레이션 계층으로 그들을 조정한다. 오케스트레이터가 들어온 질의를 쪼개고, 하위 질의를 알맞은 전문가에게 배정하고, 전문가들의 응답을 최종 답으로 종합한다. 각 전문가는 자기 도메인 안에서 탁월하고, 조정 계층은 그 탁월함을 어느 단일 파이프라인도 따를 수 없는 시스템 수준의 성능으로 <em>구성한다</em>.</p>
+    <p class="rv">전문화는 공짜가 아니다. 전문가마다 자기 몫의 공학이 필요하다 — 자기 청킹 결정, 자기 임베딩 평가, 자기 캐스케이드 조율, 자기 평가 집합. 오케스트레이션 계층은 신중한 설계를 요구한다. 너무 적극적인 분해는 불필요한 조각남을 낳고, 너무 보수적인 배정은 전문가를 놀리게 만든다. 운영 부담은 실재하고, 많은 응용에서 그것은 정당화되지 않는다. 규율은 전문화가 그 투자를 되갚기 시작하는 문턱을 알아보고 아키텍처의 약속을 그에 맞게 정하는 것이다. 문턱에 이르렀음을 알리는 신호는 셋이다.</p>
+    <div class="signals">
+      <div class="sig rv">
+        <div class="no">01</div>
+        <div>
+          <h4>말뭉치의 이질성</h4>
+          <p>관례와 어휘와 구조가 참으로 다른 문서 유형을 가로질러 검색해야 할 때, 단일 파이프라인의 타협은 이질성이 커질수록 점점 아파진다.</p>
+        </div>
+      </div>
+      <div class="sig rv">
+        <div class="no">02</div>
+        <div>
+          <h4>질의의 복잡성</h4>
+          <p>전형적인 질의가 여러 문서 유형의 정보를 결합해야 할 때 — 내용을 회수하는 데 그치지 않고 범주를 가로질러 구성해야 할 때 — 단일 검색기는 그 구성을 효과적으로 조율할 수 없다.</p>
+        </div>
+      </div>
+      <div class="sig rv">
+        <div class="no">03</div>
+        <div>
+          <h4>답의 무게</h4>
+          <p>오답이 의미 있는 비용을 지닐 때, 전문화에 드는 한계 투자는 오답의 한계 감소로 정당화된다.</p>
+        </div>
+      </div>
+    </div>
+    <p class="rv">제약사 연구 어시스턴트는 세 신호를 모두 보였고, 그래서 멀티 에이전트로 다시 지은 것이 성공했다. 셋 가운데 어느 것도 보이지 않는 응용은 대개 앞 장들의 더 단순한 아키텍처가 낫다.</p>
+    <div class="panel nam rv">
+      <span class="tag">Key Definition</span>
+      <h4>전문화의 문턱</h4>
+      <p>멀티 에이전트 RAG 아키텍처가 정당한 것은, 말뭉치가 <strong>어떤 단일 검색 설정도 의미 있는 타협이 될 만큼</strong> 이질적일 때, 전형적 질의가 그 이질성을 가로질러 정보를 구성해야 할 때, 그리고 답의 무게가 추가 공학 투자를 정당화할 때다.</p>
+      <p>세 기준을 모두 충족하는 응용 — 규제 산업의 지식 시스템 대부분, 부서를 넘나드는 기업 검색 대부분, 전문 서비스의 연구 도구 대부분 — 은 전문화로 검색 품질에서 통상 <em>20~40%</em>를 얻는다. 두 기준에 못 미치는 응용은 통상 얻지 못한다.</p>
+    </div>
+    <figure class="figure rv">
+      <svg viewBox="0 0 720 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="단일 파이프라인의 타협과 네 전문가 체제의 비교">
+        <defs>
+          <marker id="b8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#46566E"/></marker>
+          <marker id="b8r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#A83B2A"/></marker>
+        </defs>
+        <!-- 위: 단일 -->
+        <text x="30" y="24" font-family="IBM Plex Mono, monospace" font-size="11" fill="#9A978F" letter-spacing="2">SINGLE — 하나의 설정, 네 겹의 타협</text>
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#6E6C66">
+          <rect x="30" y="40" width="96" height="22" fill="none" stroke="#D8D2C7"/><text x="78" y="55" text-anchor="middle">임상시험</text>
+          <rect x="30" y="66" width="96" height="22" fill="none" stroke="#D8D2C7"/><text x="78" y="81" text-anchor="middle">문헌 리뷰</text>
+          <rect x="30" y="92" width="96" height="22" fill="none" stroke="#D8D2C7"/><text x="78" y="107" text-anchor="middle">사내 각서</text>
+          <rect x="30" y="118" width="96" height="22" fill="none" stroke="#D8D2C7"/><text x="78" y="133" text-anchor="middle">규제 서류</text>
+        </g>
+        <g stroke="#9A978F" stroke-width="1.1" fill="none">
+          <line x1="126" y1="51" x2="196" y2="84" marker-end="url(#b8)"/>
+          <line x1="126" y1="77" x2="196" y2="88" marker-end="url(#b8)"/>
+          <line x1="126" y1="103" x2="196" y2="92" marker-end="url(#b8)"/>
+          <line x1="126" y1="129" x2="196" y2="96" marker-end="url(#b8)"/>
+        </g>
+        <rect x="202" y="66" width="132" height="48" fill="#EDE8E0" stroke="#6E6C66" stroke-width="1.3"/>
+        <text x="268" y="86" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#33322F" text-anchor="middle">하나의 캐스케이드</text>
+        <text x="268" y="104" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#A83B2A" text-anchor="middle">one chunking · one embedding</text>
+        <line x1="334" y1="90" x2="400" y2="90" stroke="#9A978F" stroke-width="1.1" marker-end="url(#b8)"/>
+        <text x="412" y="82" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#7E2A1D">평균적 유능함</text>
+        <text x="412" y="103" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#6E6C66">도메인별 탁월함은 이룰 수 없다</text>
+
+        <line x1="30" y1="166" x2="690" y2="166" stroke="#D8D2C7" stroke-width="1"/>
+
+        <!-- 아래: 멀티 -->
+        <text x="30" y="196" font-family="IBM Plex Mono, monospace" font-size="11" fill="#9A978F" letter-spacing="2">MULTI-AGENT — 각자의 자리에서 탁월하게</text>
+        <rect x="30" y="284" width="86" height="34" fill="none" stroke="#33322F" stroke-width="1.3"/>
+        <text x="73" y="306" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#33322F" text-anchor="middle">질의</text>
+        <line x1="116" y1="301" x2="152" y2="301" stroke="#46566E" stroke-width="1.3" marker-end="url(#b8)"/>
+        <rect x="158" y="278" width="104" height="46" fill="#EDE8E0" stroke="#46566E" stroke-width="1.6"/>
+        <text x="210" y="298" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#334156" text-anchor="middle" font-weight="700">오케스트레이터</text>
+        <text x="210" y="315" font-family="IBM Plex Mono, monospace" font-size="9" fill="#46566E" text-anchor="middle">쪼개고 배정한다</text>
+        <!-- 네 전문가 -->
+        <g font-family="Noto Sans KR, sans-serif" font-size="11" fill="#33322F">
+          <rect x="316" y="214" width="132" height="30" fill="none" stroke="#46566E" stroke-width="1.2"/><text x="382" y="234" text-anchor="middle">임상시험 전문가</text>
+          <rect x="316" y="254" width="132" height="30" fill="none" stroke="#46566E" stroke-width="1.2"/><text x="382" y="274" text-anchor="middle">문헌 전문가</text>
+          <rect x="316" y="294" width="132" height="30" fill="none" stroke="#46566E" stroke-width="1.2"/><text x="382" y="314" text-anchor="middle">사내 과학 전문가</text>
+          <rect x="316" y="334" width="132" height="30" fill="none" stroke="#46566E" stroke-width="1.2"/><text x="382" y="354" text-anchor="middle">규제 전문가</text>
+        </g>
+        <g stroke="#46566E" stroke-width="1.2" fill="none">
+          <path class="brush" d="M 262 292 C 288 268, 292 232, 310 229" marker-end="url(#b8)"/>
+          <path class="brush" d="M 262 297 C 288 288, 292 270, 310 269" marker-end="url(#b8)"/>
+          <path class="brush" d="M 262 305 C 288 310, 292 308, 310 309" marker-end="url(#b8)"/>
+          <path class="brush" d="M 262 310 C 288 332, 292 346, 310 349" marker-end="url(#b8)"/>
+        </g>
+        <text x="452" y="202" font-family="IBM Plex Mono, monospace" font-size="9" fill="#6E6C66" text-anchor="middle">각자 자기 청킹 · 자기 임베딩 · 자기 캐스케이드</text>
+        <!-- 종합 -->
+        <g stroke="#46566E" stroke-width="1.2" fill="none">
+          <path d="M 448 229 C 478 240, 486 274, 508 288" marker-end="url(#b8)"/>
+          <path d="M 448 269 C 478 276, 486 284, 508 290" marker-end="url(#b8)"/>
+          <path d="M 448 309 C 478 306, 486 300, 508 296" marker-end="url(#b8)"/>
+          <path d="M 448 349 C 478 340, 486 310, 508 300" marker-end="url(#b8)"/>
+        </g>
+        <rect x="514" y="272" width="90" height="44" fill="#EDE8E0" stroke="#33322F" stroke-width="1.3"/>
+        <text x="559" y="292" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#33322F" text-anchor="middle">종합</text>
+        <text x="559" y="308" font-family="IBM Plex Mono, monospace" font-size="9" fill="#6E6C66" text-anchor="middle">출처를 밝혀</text>
+        <line x1="604" y1="294" x2="632" y2="294" stroke="#A83B2A" stroke-width="1.3" marker-end="url(#b8r)"/>
+        <text x="668" y="290" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#7E2A1D" text-anchor="middle">종합</text>
+        <text x="668" y="306" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#7E2A1D" text-anchor="middle">검증</text>
+        <text x="360" y="388" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#6E6C66" text-anchor="middle">다름을 하나로 뭉개지 않고, 다른 채로 아우른다</text>
+      </svg>
+      <figcaption>단일 파이프라인은 네 겹의 타협을 하나의 설정에 담고, 멀티 에이전트는 각자의 탁월함을 조정 계층으로 구성한다</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 8.2 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">8.2 · DESIGNING SPECIALIST AGENTS</span>
+      <h2>전문 검색 에이전트의 설계</h2>
+    </div>
+    <p class="rv">전문 검색 에이전트는 아키텍처의 말로 하면 앞 장들에서 세운 온전한 검색 파이프라인 — 청킹, 임베딩, 인덱싱, 검색 캐스케이드, 선택적 성찰 — 을 말뭉치의 특정 부분이나 특정 종류의 질의로 <em>범위 지은 것</em>이다. 전문화는 파라미터를 조금 손보는 일이 아니다. 각 전문가는 마치 자기가 섬기는 말뭉치의 유일한 검색기인 듯 공학되며, 그 설계 선택은 여러 말뭉치를 가로지르는 타협이 아니라 그 말뭉치의 특성으로 정당화된다. 전문가를 작동하게 만드는 규율은 어떤 검색 파이프라인이든 작동하게 만드는 그 규율이다. 다만 전면적 일반성이 아니라 <strong>초점</strong>과 함께 적용된 것이다.</p>
+    <p class="rv">범위를 짓는 축은 넷이다. <em>도메인 전문가</em>는 말뭉치의 주제로 범위를 짓는다. 제약사의 네 전문가가 그러했다. 법률 연구 시스템이라면 판례, 법령, 규제 지침, 사내 각서의 전문가를 둘 것이고, 금융 컴플라이언스라면 SEC 서류, 사내 정책, 시장 데이터, 과거 집행 조치의 전문가를 둘 것이다. 도메인 전문화가 통하는 까닭은 한 도메인 안의 관례가 대개 내적으로 일관되기 때문이다 — 임상시험 보고서는 연구를 가로질러 일관된 통계 어휘를 쓰고, 규제 서류는 구조 관례를 공유하며, 과학 문헌은 안정된 분과 규범을 지닌다 — 반면 다른 도메인의 관례와는 의미 있게 다르다. 전문가의 임베딩 모델과 청킹 전략과 캐스케이드는 이질성을 평균 내는 대신 <em>도메인 안의 일관성</em>에 맞춰 조율될 수 있다.</p>
+    <p class="rv"><em>문서 유형 전문가</em>는 주제가 아니라 구조적 형식으로 범위를 짓는다. 다형식 말뭉치라면 구조화된 표(PDF·엑셀·데이터베이스 내보내기에서 추출된), 서사형 산문(기사·각서·보고서), 대화 기록(채팅 전사, 회의록, 고객지원 응대), 코드(기술 문서, 소스 파일, 시스템 로그)의 전문가를 둘 수 있다. 이 전문화는 같은 도메인이 여러 구조 형식에 걸칠 때 특히 강력하다. 고객지원 말뭉치는 사용자용 문서(서사형 산문), 내부 제품 문서(기술 레퍼런스), 과거 티켓 기록(대화형), 코드 예제(형식 코드)를 함께 담을 수 있다. 이를 하나의 말뭉치로 다루면 타협이 나오고, 네 문서 유형으로 다루어 각각에 전문가를 두면 극적으로 나은 검색이 나온다. 그리고 종합 계층이 답의 각 부분이 어디서 왔는지 설명해야 할 때 출처가 훨씬 명료해진다.</p>
+    <p class="rv"><em>과업 전문가</em>는 문서의 종류가 아니라 <strong>질문의 종류</strong>로 범위를 짓는다. 금융 연구 시스템이라면 과거 조회("2024년 3분기에 우리가 무엇을 보고했나"), 비교 분석, 추세 탐지("열두 달에 걸쳐 어떻게 변했나"), 엔티티 판별("우리가 말하는 Apple이 어느 Apple인가")의 전문가를 둘 수 있다. 과업마다 검색 요구가 다르다 — 과거 조회는 정밀한 날짜 필터링을, 비교 분석은 병렬 다중 말뭉치 검색을, 추세 탐지는 시계열을 아는 청킹을, 엔티티 판별은 신중한 식별자 해소를 요구한다. 과업 전문화는 이 요구들을 붙잡되 그 덕을 보지 않는 과업에 강요하지 않는다. 통상 오케스트레이션 계층의 과업 라우팅 로직과 짝을 이룬다 — 오케스트레이터가 질의의 과업 유형을 분류해 알맞은 전문가에게 넘긴다.</p>
+    <p class="rv">프로덕션은 흔히 전략들을 결합한다. <em>복합 전문가</em>는 도메인과 문서 유형 양쪽으로 범위를 지을 수 있다 — 이를테면 임상시험 구조화 데이터 표의 전문가를 임상시험 서사 요약의 전문가와 구별하는 것이다. 복합 전문화는 더 잘게 나뉜 전문가 집합을 낳고 각자가 더 집중할 수 있게 하지만, 오케스트레이션 계층이 더 큰 전문가 명부로 배정해야 하므로 라우팅 결정의 비용과 복잡성이 커진다. 성숙한 멀티 에이전트 RAG 시스템 대부분은 <strong>최상위 전문가 셋에서 일곱</strong>으로 수렴하고, 복합 범위는 이득이 조각남을 정당화하는 곳에만 선별적으로 쓴다.</p>
+    <div class="sp-table">
+      <div class="sp-row head rv"><span>전문화 전략</span><span>범위의 축</span><span>알맞은 곳</span><span>흔한 실패 양식</span></div>
+      <div class="sp-row rv">
+        <div class="sp-name">도메인 전문가</div><div class="sp-cell">주제</div>
+        <div class="sp-cell">여러 도메인이 섞인 기업 말뭉치</div>
+        <div class="sp-cell fail">도메인의 경계가 가정보다 흐릿하다</div>
+      </div>
+      <div class="sp-row rv">
+        <div class="sp-name">문서 유형 전문가</div><div class="sp-cell">구조적 형식</div>
+        <div class="sp-cell">한 도메인 안의 다형식 말뭉치</div>
+        <div class="sp-cell fail">형식과 도메인이 뒤섞이고, 구조가 예상보다 더 들쭉날쭉하다</div>
+      </div>
+      <div class="sp-row rv">
+        <div class="sp-name">과업 전문가</div><div class="sp-cell">질문의 종류</div>
+        <div class="sp-cell">과업 패턴이 안정된 워크플로 특화 시스템</div>
+        <div class="sp-cell fail">과업이 흐려지거나 시간이 가며 변한다</div>
+      </div>
+      <div class="sp-row rv">
+        <div class="sp-name">복합 전문가</div><div class="sp-cell">여러 축의 결합</div>
+        <div class="sp-cell">이질성이 높은 고위험 시스템</div>
+        <div class="sp-cell fail">라우팅이 복잡해지고 오케스트레이션 부담이 커진다</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8.3 ============ -->
+<section>
+  <div class="wrap-wide">
+    <div class="wrap" style="padding:0">
+      <div class="sec-head rv">
+        <span class="sec-no">8.3 · ORCHESTRATION PATTERNS</span>
+        <h2>오케스트레이션 — 여럿을 조정하는 세 가지 형식</h2>
+      </div>
+      <p class="rv">전문 검색기 여럿을 갖추면 물음은 그들을 어떻게 조정하느냐가 된다. 오케스트레이션 계층이 독립적 전문가들의 모음을 멀티 에이전트 <em>체계</em>로 바꾸는 것이다. 프로덕션을 지배하는 패턴은 셋이고, 저마다 맞는 시스템의 꼴이 다르다.</p>
+    </div>
+    <div class="orch">
+      <div class="orc rv">
+        <h4>중앙 오케스트레이터</h4>
+        <div class="en">central orchestrator</div>
+        <p>조정하는 에이전트 하나를 체계의 중심에 둔다. 오케스트레이터가 질의를 받아 어느 전문가를 부를지 결정하고, 하위 질의를 병렬이나 순차로 내보내고, 응답을 모아 최종 답을 종합한다. 전문가들끼리는 이야기하지 않으며 모든 조정이 오케스트레이터를 지난다.</p>
+        <p>대부분의 멀티 에이전트 RAG에 옳은 패턴이다. 추론하기 가장 단순하고 감시하기 가장 쉬우며, 평가와 관측 가능성이 가장 곧바르다. 오케스트레이터가 <em>시스템이 무엇을 했고 왜 했으며 각 전문가가 무엇을 보탰는지에 대한 단일한 진실의 자리</em>가 된다.</p>
+        <p class="risk">오케스트레이터가 병목이 된다. 처리량에서도(전문가 배정은 병렬이어도 질의는 시간상 순차로 흐른다), 장애에서도(오케스트레이터가 멎으면 체계 전체가 멎는다). 대부분의 응용에서 이 대가는 받아들일 만하다. 단순함이 대안 패턴의 한계적 처리량 이득보다 값지다.</p>
+      </div>
+      <div class="orc rv">
+        <h4>동료 협력</h4>
+        <div class="en">peer collaboration</div>
+        <p>전문가들이 오케스트레이터를 통해서만이 아니라 서로 직접 이야기하게 한다. 규제 사항을 언급한 결과를 회수한 임상시험 전문가가 중앙을 거치지 않고 규제 전문가에게 곧바로 맥락을 물을 수 있다.</p>
+        <p>전문가들 사이의 워크플로가 단단히 얽혀 있을 때 — 한 전문가의 출력이 다른 전문가의 질의를 중앙이 미리 내다보기 어려운 방식으로 체계적으로 규정할 때 — 알맞다. 그러나 좀처럼 출발점으로 옳지 않다. 이를 채택한 팀은 대개 먼저 중앙 오케스트레이터 체계를 짓고, 직접 소통이 값어치를 내는 구체적 패턴을 식별한 뒤, 그 패턴에만 선별적으로 동료 상호작용을 들인다.</p>
+        <p class="risk">감시하고 평가하고 믿음직하게 운영하기가 훨씬 어렵다. 신설 시스템을 동료 협력으로 시작하면 거동을 예측하기 어렵고 실패를 진단하기 어려운 체계가 되기 쉽다.</p>
+      </div>
+      <div class="orc rv">
+        <h4>계층적 위임</h4>
+        <div class="en">hierarchical delegation</div>
+        <p>중앙 오케스트레이션을 여러 층으로 늘린다. 최상위 오케스트레이터가 질의를 넓은 영역으로 쪼개고, 영역마다 하위 오케스트레이터가 자기 안의 전문가들을 조정한다. 제약사의 네 전문가라면 '내부 증거'(임상시험, 사내 각서)와 '외부 증거'(규제 서류, 외부 문헌)의 하위 오케스트레이터가 최상위 연구 질문 오케스트레이터에게 보고하는 꼴이 된다.</p>
+        <p>전문가 명부가 하나의 오케스트레이터로 잘 감당하기에 너무 클 때 — 통상 여덟 이상, 또는 전문가들이 자연스레 조리 있는 무리로 뭉칠 때 — 옳은 패턴이다. 조직 구조(서로 다른 팀이 서로 다른 전문가 무리를 소유하는)와도, 규모 요구(개별 하위 오케스트레이터를 자기 영역의 패턴에 최적화하는)와도 잘 맞는다.</p>
+        <p class="risk">조정 계층이 하나 늘어난 만큼 지연이 더하고 평가가 복잡해진다. 대부분의 체계에서 계층적 위임은 전문가 수가 평평한 오케스트레이터가 깔끔히 감당할 수준을 넘기까지는 과잉 공학이다.</p>
+      </div>
+    </div>
+    <div class="wrap" style="padding:0">
+      <figure class="figure rv">
+        <svg viewBox="0 0 720 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="중앙·동료·계층 세 오케스트레이션 패턴의 구조 비교">
+          <!-- 중앙 -->
+          <text x="112" y="24" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#9A978F" text-anchor="middle" letter-spacing="1.5">CENTRAL</text>
+          <circle cx="112" cy="92" r="19" fill="#EDE8E0" stroke="#46566E" stroke-width="1.8"/>
+          <text x="112" y="96" font-family="Noto Sans KR, sans-serif" font-size="10.5" fill="#334156" text-anchor="middle">조정</text>
+          <g fill="none" stroke="#46566E" stroke-width="1.2">
+            <line class="brush" x1="112" y1="73" x2="112" y2="46"/>
+            <line class="brush" x1="95" y1="103" x2="58" y2="132"/>
+            <line class="brush" x1="112" y1="111" x2="112" y2="140"/>
+            <line class="brush" x1="129" y1="103" x2="166" y2="132"/>
+          </g>
+          <g fill="#46566E">
+            <circle cx="112" cy="42" r="7"/><circle cx="54" cy="137" r="7"/><circle cx="112" cy="145" r="7"/><circle cx="170" cy="137" r="7"/>
+          </g>
+          <text x="112" y="186" font-family="Noto Sans KR, sans-serif" font-size="11" fill="#494741" text-anchor="middle">모든 조정이 가운데를 지난다</text>
+          <text x="112" y="208" font-family="Noto Sans KR, sans-serif" font-size="10.5" fill="#7E2A1D" text-anchor="middle">단순하고 감시하기 쉽다</text>
+          <text x="112" y="226" font-family="Noto Sans KR, sans-serif" font-size="10.5" fill="#7E2A1D" text-anchor="middle">— 거의 언제나 여기서 시작한다</text>
+
+          <line x1="246" y1="20" x2="246" y2="230" stroke="#D8D2C7" stroke-width="1"/>
+
+          <!-- 동료 -->
+          <text x="360" y="24" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#9A978F" text-anchor="middle" letter-spacing="1.5">PEER</text>
+          <g fill="#46566E">
+            <circle cx="360" cy="46" r="7"/><circle cx="306" cy="96" r="7"/><circle cx="414" cy="96" r="7"/><circle cx="360" cy="146" r="7"/>
+          </g>
+          <g fill="none" stroke="#46566E" stroke-width="1.1">
+            <line x1="360" y1="53" x2="308" y2="90"/><line x1="360" y1="53" x2="412" y2="90"/>
+            <line x1="306" y1="103" x2="358" y2="140"/><line x1="414" y1="103" x2="362" y2="140"/>
+            <line x1="313" y1="96" x2="407" y2="96"/>
+            <line x1="356" y1="52" x2="356" y2="140" stroke-dasharray="3 3"/>
+          </g>
+          <text x="360" y="186" font-family="Noto Sans KR, sans-serif" font-size="11" fill="#494741" text-anchor="middle">전문가끼리 곧바로 묻는다</text>
+          <text x="360" y="208" font-family="Noto Sans KR, sans-serif" font-size="10.5" fill="#7E2A1D" text-anchor="middle">유연하되 감시·진단이 어렵다</text>
+          <text x="360" y="226" font-family="Noto Sans KR, sans-serif" font-size="10.5" fill="#7E2A1D" text-anchor="middle">— 중앙을 겪은 뒤 선별적으로</text>
+
+          <line x1="474" y1="20" x2="474" y2="230" stroke="#D8D2C7" stroke-width="1"/>
+
+          <!-- 계층 -->
+          <text x="598" y="24" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#9A978F" text-anchor="middle" letter-spacing="1.5">HIERARCHICAL</text>
+          <circle cx="598" cy="48" r="16" fill="#EDE8E0" stroke="#46566E" stroke-width="1.8"/>
+          <text x="598" y="52" font-family="Noto Sans KR, sans-serif" font-size="9.5" fill="#334156" text-anchor="middle">상위</text>
+          <g fill="none" stroke="#46566E" stroke-width="1.2">
+            <line class="brush" x1="586" y1="60" x2="554" y2="82"/>
+            <line class="brush" x1="610" y1="60" x2="642" y2="82"/>
+          </g>
+          <circle cx="548" cy="96" r="14" fill="#EDE8E0" stroke="#46566E" stroke-width="1.4"/>
+          <text x="548" y="100" font-family="Noto Sans KR, sans-serif" font-size="9" fill="#334156" text-anchor="middle">내부</text>
+          <circle cx="648" cy="96" r="14" fill="#EDE8E0" stroke="#46566E" stroke-width="1.4"/>
+          <text x="648" y="100" font-family="Noto Sans KR, sans-serif" font-size="9" fill="#334156" text-anchor="middle">외부</text>
+          <g fill="none" stroke="#46566E" stroke-width="1.1">
+            <line x1="540" y1="108" x2="524" y2="134"/><line x1="556" y1="108" x2="572" y2="134"/>
+            <line x1="640" y1="108" x2="624" y2="134"/><line x1="656" y1="108" x2="672" y2="134"/>
+          </g>
+          <g fill="#46566E">
+            <circle cx="520" cy="140" r="6"/><circle cx="576" cy="140" r="6"/><circle cx="620" cy="140" r="6"/><circle cx="676" cy="140" r="6"/>
+          </g>
+          <text x="598" y="186" font-family="Noto Sans KR, sans-serif" font-size="11" fill="#494741" text-anchor="middle">무리마다 하위 조정자를 둔다</text>
+          <text x="598" y="208" font-family="Noto Sans KR, sans-serif" font-size="10.5" fill="#7E2A1D" text-anchor="middle">전문가 여덟 이상일 때 값을 한다</text>
+          <text x="598" y="226" font-family="Noto Sans KR, sans-serif" font-size="10.5" fill="#7E2A1D" text-anchor="middle">— 그 전에는 과잉 공학이다</text>
+        </svg>
+        <figcaption>가운데를 지나는 조정, 서로를 향하는 조정, 층을 이루는 조정 — 정교함이 아니라 감시 가능함이 먼저다</figcaption>
+      </figure>
+      <pre class="code rv"><span class="cm"># 멀티 에이전트 RAG의 중앙 오케스트레이터 패턴</span>
+<span class="kw">from</span> concurrent.futures <span class="kw">import</span> ThreadPoolExecutor
+<span class="kw">from</span> typing <span class="kw">import</span> Dict, List
+
+<span class="kw">class</span> Specialist:
+    <span class="kw">def</span> __init__(self, name, scope_description, retrieval_pipeline):
+        self.name = name
+        self.scope = scope_description       <span class="cm"># 오케스트레이터 라우팅에 쓰인다</span>
+        self.pipeline = retrieval_pipeline   <span class="cm"># 5·6·7장의 온전한 캐스케이드</span>
+
+    <span class="kw">def</span> answer(self, sub_query) -&gt; Dict:
+        <span class="kw">return</span> self.pipeline.retrieve_and_generate(sub_query)
+
+<span class="kw">class</span> Orchestrator:
+    <span class="kw">def</span> __init__(self, specialists: List[Specialist], planner_llm):
+        self.specialists = {s.name: s <span class="kw">for</span> s <span class="kw">in</span> specialists}
+        self.planner = planner_llm
+
+    <span class="kw">def</span> route_and_synthesise(self, query):
+        <span class="cm"># 1. 질의를 쪼개고 어느 전문가를 부를지 정한다</span>
+        plan = self.planner.plan(query, list(self.specialists.values()))
+
+        <span class="cm"># 2. 하위 질의를 전문가들에게 병렬로 내보낸다</span>
+        <span class="kw">with</span> ThreadPoolExecutor(max_workers=len(plan.assignments)) <span class="kw">as</span> pool:
+            futures = {a.specialist_name:
+                       pool.submit(self.specialists[a.specialist_name].answer,
+                                   a.sub_query)
+                       <span class="kw">for</span> a <span class="kw">in</span> plan.assignments}
+            specialist_results = {n: f.result() <span class="kw">for</span> n, f <span class="kw">in</span> futures.items()}
+
+        <span class="cm"># 3. 출처를 명시해 전문가들의 기여를 종합한다</span>
+        <span class="kw">return</span> self.planner.synthesise(query, plan, specialist_results)</pre>
+      <div class="code-cap">원서 8.3절 — 전문가는 온전한 캐스케이드를 품고, 오케스트레이터는 쪼개고 모으고 종합한다</div>
+      <div class="panel nam rv">
+        <span class="tag">Production Insight</span>
+        <h4>중앙 오케스트레이션으로 시작하라 — 언제나</h4>
+        <p>동료 협력이나 계층적 위임으로 시작한 프로덕션 팀은 압도적으로 그것을 후회하고, 중앙 오케스트레이션으로 시작해 선별적으로 다른 패턴으로 졸업한 팀은 압도적으로 후회하지 않는다.</p>
+        <p>중앙 오케스트레이션은 초기 프로덕션 배포가 필요로 하는 관측 가능성과 운영의 단순함을 준다. 체계가 안정되고 실제 워크로드 데이터로 자기의 진짜 조정 패턴을 이해한 뒤라면, 동료나 계층 패턴을 선별적으로 들이는 것은 <em>통제된 개선</em>이다. 더 정교한 패턴으로 시작하는 것은 초기 프로덕션에 감당할 수 없는 조정 문제를 안는 일이다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8.4 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">8.4 · THE SYNTHESIS LAYER</span>
+      <h2>종합 계층 — 여럿의 기여를 하나의 답으로</h2>
+    </div>
+    <p class="rv">멀티 에이전트 검색은 그 종합만큼만 좋다. 오케스트레이터가 질의를 쪼개고, 전문가에게 배정하고, 응답을 받았다. 사용자가 기대하는 것은 하나의 조리 있는 답이다. 네 전문가의 독립적 응답을 이어 붙인 것이 아니다. 종합 계층이 전문가들의 기여를 그 조리 있는 답으로 바꾸는 자리이며, 다른 데는 잘 지어진 멀티 에이전트 체계가 조용히 실패하는 자리도 여기다.</p>
+    <h3 class="rv">출처의 명시와 증거의 통합</h3>
+    <p class="rv">종합의 첫 규율은 <strong>명시적 출처</strong>다. 종합된 답이 어떤 주장을 할 때, 사용자(또는 상류의 감사 체계)는 어느 전문가가 그 증거를 주었고 그 전문가가 어느 문서에서 끌어왔는지 되짚을 수 있어야 한다. 프로덕션 멀티 에이전트 체계가 의지하는 출처의 사슬이 이것이다. 그것이 없으면 종합된 답은 불투명한 단언이고, 있으면 감사하고 반박하고 고칠 수 있는 <em>검증 가능한 구성물</em>이 된다.</p>
+    <p class="rv">구현은 통상 출처를 파이프라인 전체에 실로 꿰어 나간다. 각 전문가가 자기 응답에 이름, 자기가 답한 하위 질의, 끌어온 원문 청크를 식별하는 메타데이터를 태그한다. 종합 프롬프트가 그 태그를 포함하고, 언어 모델에 최종 답에서 출처를 보존하라고 지시한다 — 통상 인라인 참조나 대괄호 인용의 형태다. 규율은 출처를 감사 시점에 뒤늦게 만들어 내는 부산물이 아니라 <em>종합 출력의 일급 기능</em>으로 만드는 것이다.</p>
+    <h3 class="rv">불일치의 해소</h3>
+    <p class="rv">전문가들은 예사로 어긋난다. 임상시험 전문가가 특정 용량에서 약의 유효성을 받치는 증거를 찾는데, 외부 문헌 전문가가 그 유효성에 의문을 던지는 더 최근의 리뷰를 띄울 수 있다. 종합 계층은 이 불일치를 의도적으로 다뤄야 한다. <strong>거짓 합의로 뭉개서는 안 된다.</strong> 지배적인 전략은 셋이다.</p>
+    <div class="conds">
+      <div class="cond rv">
+        <h4>우선순위 해소<span>preference</span></h4>
+        <p>우선순위를 매긴다. 전문가 범주 사이에 어느 쪽이 우선하는지를 종합기에 알려 두고, 발견이 충돌할 때 그에 따른다. 일관된 목소리를 지켜야 하는 고객 대면 응용이 대개 이것을 필요로 하며, 불일치는 사용자에게 유관할 때만 드러낸다.</p>
+      </div>
+      <div class="cond rv">
+        <h4>증거 가중 해소<span>evidence-weighted</span></h4>
+        <p>각 전문가가 내놓은 증거의 강도를 쓴다. 종합이 바탕 출처의 품질로 각 기여의 무게를 잰다.</p>
+      </div>
+      <div class="cond rv">
+        <h4>공개 해소<span>disclosure</span></h4>
+        <p>불일치를 사용자에게 명시적으로 내놓는다. 종합된 답이 전문가들이 어긋났음을 밝히고, 어느 편을 고르는 대신 그 어긋남을 요약한다. 연구 지원이 흔히 이 덕을 본다. 연구자는 문헌이 어디서 갈라지는지 알고 싶어 한다.</p>
+      </div>
+    </div>
+    <p class="rv">옳은 전략은 응용이 모호함을 얼마나 견딜 수 있는지에 달렸다. 임상 의사결정 지원은 모든 불일치를 임상의에게 올릴 수 없으므로 해소 규칙을 결정론적으로 적용해야 한다. 프로덕션 대부분은 여러 전략을 구현해 충돌 유형에 따라 골라 쓴다.</p>
+    <h3 class="rv">종합의 검증</h3>
+    <p class="rv">마지막 규율은 종합이 <em>사용자의 원래 질의에 실제로 답하는지</em> 검증하는 일이다. 오케스트레이터가 쪼갰고, 전문가들이 응답했고, 종합기가 결합했다. 이 지점의 위험은, 종합이 모든 하위 질의에 아름답게 답하고서도 어쩐 일인지 원 질문에는 답하지 못하는 것이다. 분해가 한 측면을 놓쳤거나, 종합이 실제로 물어진 것을 겨누지 않는 방식으로 부분들을 결합했기 때문이다. 프로덕션은 명시적 검증을 넣는다. 종합 뒤에 별도의 모델 호출(또는 학습된 분류기)이 종합된 답이 원 질의에 응답하는지 확인하고, 아니면 회복 행동으로 인도한다.</p>
+    <p class="rv">종합 검증은 7장 성찰 단계의 멀티 에이전트 대응물이다. 철저해 보이지만 실은 사용자의 질문을 섬기지 않는 답을 시스템이 자신 있게 내놓는 것을 막는 반복적 점검이다. 그것이 없으면 멀티 에이전트 RAG는 단일 에이전트 RAG보다 <strong>더 정교하게 틀린 답</strong>을 낼 수 있다. 나아진 실패 양식이 아니라 나빠진 실패 양식이다.</p>
+  </div>
+</section>
+
+<!-- ============ 8.5 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">8.5 · OPERATING MULTI-AGENT RAG</span>
+      <h2>운영 — 관측 가능성, 비용, 그리고 장애</h2>
+    </div>
+    <p class="rv">프로덕션의 멀티 에이전트 RAG는 분산 시스템 공학의 과제다. 앞 장들의 단일 파이프라인 규율은 각 전문가 <em>안에서</em> 여전히 유효하되, 체계 전체는 새로운 장애 양식과 새로운 관측 요구와 새로운 비용 역학을 지닌다. 이를 잘 운영하는 팀은 처음부터 분산 시스템으로 대접하고, 오케스트레이터를 공유하는 검색 파이프라인 몇 개로 대접하는 팀은 프로덕션 첫 몇 달에 걸쳐 그 결과를 발견한다.</p>
+    <h3 class="rv">전문가를 가로지르는 관측 가능성</h3>
+    <p class="rv">각 전문가의 거동이 관측되어야 하고, 체계의 거동도 <em>전체로서</em> 관측되어야 한다. 관측 틀에는 세 계층이 필요하다. <strong>전문가별 지표</strong> — 검색 재현율, 지연 백분위, 질의당 비용 — 는 각 부품이 홀로 어떻게 하고 있는지 알려 준다. <strong>오케스트레이션 지표</strong> — 분해 품질, 라우팅 정확도, 종합 충실도 — 는 조정 계층이 어떻게 하고 있는지 알려 준다. <strong>종단 간 지표</strong> — 질의 만족도, 답의 정확성, 답까지의 시간 — 는 사용자의 눈에서 체계 전체가 어떻게 하고 있는지 알려 준다. 세 계층 모두 계측되어야 한다. 종단 간만 보면 장애를 진단할 수 없고, 전문가별만 보면 조정에서 창발하는 체계적 문제를 놓친다.</p>
+    <h3 class="rv">비용의 공학</h3>
+    <p class="rv">멀티 에이전트 RAG는 질의당 비용이 단일 에이전트보다 의미 있게 비싸다. 오케스트레이터의 계획 단계가 모델 호출 하나를 더하고, 종합 단계가 또 하나를 더하며, 부름을 받은 전문가마다 자기 검색·생성 비용을 더한다. 전문가 넷을 건드리는 질의는 같은 질의가 단일 에이전트에서 들 비용의 <strong>5~10배</strong>가 될 수 있다. 고volume 응용에서 이 규율은 존재의 문제가 된다. 질의당 경제를 다스릴 수 없는 체계는 규모를 감당할 수 없다.</p>
+    <p class="rv">비용 공학을 지배하는 패턴은 둘이다. <em>선별적 전문가 호출</em> — 오케스트레이터가 모두를 부르는 대신 이 질의에 정말 필요한 전문가를 정하는 것 — 은 답에 기여하지 않을 일을 피해 비용을 극적으로 줄인다. <em>전문가 계층화</em> — 1차 검색에는 빠르고 싼 전문가를, 1차 증거가 불충분할 때만 느리고 유능한 전문가를 부르는 것 — 은 어려운 질의의 품질을 지키면서 비용을 줄인다. 둘 모두 신중한 오케스트레이터 설계를 요구한다. 라우팅을 잘못 잡으면 순진한 멀티 에이전트보다 더 비싸면서 그에 상응하는 품질 개선은 못 내는 체계가 나온다.</p>
+    <h3 class="rv">장애 양식</h3>
+    <p class="rv">멀티 에이전트 체계는 단일 에이전트가 겪지 않는 방식으로 실패한다. <strong>전문가의 부재</strong> — 한 전문가가 느리거나 닿지 않는 것 — 가 체계 전체를 멎게 해서는 안 된다. 오케스트레이터에게는 응답한 전문가들만으로 종합하는 퇴화 운영 경로가 필요하다. <strong>조정의 표류</strong> — 개별 설정이 서로 갈라져 전문가들의 출력이 더는 깔끔히 결합되지 않는 것 — 는 시간이 가며 떠오르고 주기적 정렬 감사를 요구한다. <strong>분해의 실패</strong> — 오케스트레이터가 중요한 측면을 놓치는 방식으로 질의를 쪼개는 것 — 는 모든 전문가가 자기가 받은 하위 질의에 옳게 응답해도 체계적으로 틀린 답을 낳는다.</p>
+    <p class="rv">프로덕션 팀은 각 장애 양식에 대한 런북을 기른다. 전문가의 부재는 우아한 퇴화로 다룬다 — 어느 전문가가 응답했고 어느 전문가가 응답하지 않았는지 종합기에 알려, 부분적임을 표시한 답을 내거나 재시도를 위해 질의를 올린다. 조정의 표류는 정기적인 교차 전문가 평가로 다룬다 — 종합 계층을 훈련하는 주기적 시험 집합과, 문제가 전문가 수준인지 오케스트레이션 수준인지 종합 수준인지 식별하는 진단이다. 분해의 실패는 8.4절의 종합 검증이 잡는다 — 종합이 원 질의에 실제로 답하지 않을 때, 실패는 대개 검색이 아니라 분해에 있다.</p>
+    <div class="panel inju rv">
+      <span class="tag">Common Pitfall</span>
+      <h4>전문가 난립이라는 안티패턴</h4>
+      <p>전문가 몇을 지어 품질 개선을 본 팀에게, 구별되는 말뭉치 부분마다 전문가를 더하고 싶은 유혹은 강하다. 이것이 전문가 난립으로 가는 길이다. 오케스트레이터가 효과적으로 배정할 수 없는 열다섯 전문가, 원래 체계의 열 배가 드는 비용, 그러면서 잘 고른 다섯 전문가의 체계를 눈에 띄게 앞서지 못하는 결과.</p>
+      <p>규율은 현재의 전문가 집합이 특정 질의 범주에서 의미 있는 품질을 탁자에 버려두고 있음을 <strong>측정이 보여 줄 때만</strong> 전문가를 더하는 것이다. 새 전문가는 측정을 통해 자기 존재를 정당화해야 한다. 그러지 않으면 수확은 줄어드는데 영원히 운영하고 감사해야 하는 복잡성을 짓는 셈이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 안티패턴 ============ -->
+<section style="background:var(--mist);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">COMMON PITFALLS</span>
+      <h2>멀티 에이전트 아키텍처의 실수 — 세 가지</h2>
+    </div>
+    <div class="anti">
+      <div class="anti-item rv">
+        <h4>단일 에이전트 문제에 멀티 에이전트를 쓰기<span class="en">Multi-Agent for Single-Agent Problems</span></h4>
+        <p>가장 흔한 멀티 에이전트 실수는 잘 조율된 단일 에이전트로 족했을 곳에 이 아키텍처를 채택하는 것이다. 팀은 에이전틱 패턴에 들떠 전문가 서넷을 짓고 오케스트레이터를 얹은 뒤, 체계가 단일 파이프라인보다 나을 것이 없음을 발견한다 — 운영 비용은 다섯 배, 복잡성은 열 배를 치르고서.</p>
+        <p><span class="fix">처방</span> — 8.1절의 전문화 문턱이 진단 도구다. 세 기준을 모두 충족하지 않는다면 멀티 에이전트는 <strong>이른 최적화</strong>다. 단일 에이전트로 시작하고, 데이터가 뒷받침할 때 졸업하라.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>검증 없는 종합<span class="en">Synthesis Without Validation</span></h4>
+        <p>종합된 답을 원 질의에 견주어 검증하지 않는 멀티 에이전트 체계는, 자기가 대체한 단일 에이전트 체계보다 더 정교하게 틀린 답을 예사로 낸다. 여러 전문가의 기여를 결합했기에 종합은 철저하게 들리지만, 그 정교한 구성이 체계가 물어진 것에 실제로 답하지 않았다는 사실을 가릴 수 있다.</p>
+        <p><span class="fix">처방</span> — 종합 검증, 곧 최종 답이 원 질의를 겨누는지에 대한 명시적 점검은 협상의 여지가 없다. 그것 없이는 전문가라는 추가 기계가 <em>오답의 확신 증폭기</em>가 된다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>암묵적인 전문가 권위<span class="en">Implicit Specialist Authority</span></h4>
+        <p>전문가들이 어긋날 때 초기 구현들은 충돌을 암묵적으로 해소한다 — 종합기가 더 자신 있게 들리는 전문가, 프롬프트에서 먼저 나온 전문가, 청크가 더 많은 전문가를 고르는 것이다. 이런 암묵적 해소는 일관되지 않은 체계 거동을 낳는다. 같은 질의를 두 번 물으면 전문가 응답 순서의 미묘한 차이에 따라 다른 답이 나올 수 있다.</p>
+        <p><span class="fix">처방</span> — 충돌 해소는 명시적이어야 한다. 우선순위 규칙이든 증거 가중이든 공개 전략이든, 의도적으로 정의하고 일관되게 적용할 일이다. <strong>암묵적 해소는 프로덕션에서 예측 불가능하게 떠오르는 신뢰성 결함이다.</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 다섯 요지 ============ -->
+<section class="takeaways">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">CHAPTER SUMMARY</span>
+      <h2>이 장에서 남는 다섯</h2>
+    </div>
+    <div class="take">
+      <div class="take-item rv"><p>멀티 에이전트 RAG는 <b>말뭉치의 이질성, 질의의 복잡성, 답의 무게</b>가 함께 단일 파이프라인이 타협으로 감당할 수 있는 바를 넘어설 때 정당하다. 전문화의 문턱에 이르는 응용은 비교적 적지만, 그 응용들은 이 아키텍처로 검색 품질에서 20~40%를 얻는다.</p></div>
+      <div class="take-item rv"><p>전문 검색 에이전트는 특정 말뭉치 부분, 문서 유형, 과업 부류로 <b>범위 지어진 온전한 검색 파이프라인</b>이다. 각 전문가는 자기 범위의 유일한 검색기인 듯 공학된다. 전문화는 파라미터를 손보는 데서 오지 않고 초점에서 온다.</p></div>
+      <div class="take-item rv"><p><b>중앙 오케스트레이션</b>이 거의 모든 멀티 에이전트 RAG의 옳은 출발점이다. 동료 협력과 계층적 위임은 중앙 오케스트레이션이 체계를 제약하고 있음을 측정이 보여 준 뒤에 채택할 정교함이지, 그 전에 채택할 것이 아니다.</p></div>
+      <div class="take-item rv"><p><b>종합 계층</b>이 명시적 출처, 의도적 충돌 해소, 종합 검증을 통해 전문가들의 기여를 조리 있는 답으로 바꾼다. 규율 있는 종합이 없으면 멀티 에이전트 체계는 단일 에이전트보다 더 정교하게 틀린 답을 낸다 — 나아진 실패 양식이 아니라 나빠진 실패 양식이다.</p></div>
+      <div class="take-item rv"><p>멀티 에이전트 RAG는 <b>분산 시스템 공학의 과제</b>다. 세 계층의 관측 가능성(전문가별·오케스트레이션·종단 간), 선별적 호출과 전문가 계층화를 통한 명시적 비용 공학, 전문가 수준과 조정 수준 장애 양식의 런북 — 이 운영 규율이 프로덕션에서 작동하는 멀티 에이전트 RAG와 유지보수의 짐이 되어 버린 멀티 에이전트 RAG를 가른다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 문헌 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">FURTHER READING</span>
+      <h2>더 읽을 것</h2>
+    </div>
+    <div class="refs">
+      <div class="ref rv"><b>Norman, R.</b>, <i>Multi-Agent AI Systems: Design, Build, and Deploy Production-Ready Autonomous Agents</i> (Independent, 2026) — 이 책의 자매편. 5장(조정 패턴)과 8장(분산 시스템)이 이 장에서 응용한 오케스트레이션 패턴을 일반형으로 전개하며, 검색에 초점을 둔 여기의 서술을 구현의 깊이로 보완한다.</div>
+      <div class="ref rv"><b>Yao et al.</b>, <i>"ReAct: Synergizing Reasoning and Acting in Language Models"</i> (ICLR, 2023) — 대부분의 오케스트레이션 패턴이 딛고 선 추론-행동 루프의 기초 논문. 계획 에이전트가 질의를 어떻게 쪼개고 배정하는지 이해하는 데 필수적 맥락이다.</div>
+      <div class="ref rv"><b>Wu et al.</b>, <i>"AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation"</i> (Microsoft Research, 2023) — 현대 프레임워크에서 멀티 에이전트 협력의 준거 아키텍처. 이것이 개척한 대화 패턴이 많은 프로덕션 멀티 에이전트 검색 체계의 바탕에 있다.</div>
+      <div class="ref rv"><b>LangGraph Documentation</b>, <i>"Multi-Agent Patterns"</i> (상시 갱신) — 이 장의 패턴들을 프로덕션 코드로 구현하는 가장 철저한 실무 안내. 상태 기계 모형이 멀티 에이전트 오케스트레이션과 잘 맞는다.</div>
+      <div class="ref rv"><b>Anthropic Engineering Blog</b>, <i>"How We Build and Operate Multi-Agent Systems"</i> (2024–2026) — 멀티 에이전트 체계를 규모 있게 운영하는 현실을 다룬 연재. 이 장에서 세운 비용 공학과 장애 처리 패턴을 포함한다.</div>
+    </div>
+    <p class="note rv">위 문헌 목록은 원서 8장의 Further Reading을 그대로 옮긴 것이다. 서지 사항의 최종 확인은 원 출처를 통해 하는 것이 옳다.</p>
+  </div>
+</section>
+
+<!-- ============ 다리 ============ -->
+<section class="bridge">
+  <div class="wrap">
+    <div class="sec-head rv" style="margin-bottom:36px">
+      <span class="sec-no">CHAPTER BRIDGE · PART IV</span>
+      <h2>다음 장 — 평가, 그리고 프로덕션 공학</h2>
+    </div>
+    <p class="rv">9장은 4부를 연다. 2부와 3부의 아키텍처를 규모 있게 믿음직하게 도는 체계로 바꾸는 프로덕션 공학의 규율이다. 시작은 평가다. 검색 품질을 체계적으로 재는 법, 사용자보다 먼저 실패를 감지하는 법, 그리고 다른 모든 프로덕션 규율을 가능하게 하는 평가 기반을 짓는 법. <em>캐스케이드는 이제 온전하다. 다음 물음은 그것이 잘 돌고 있음을 우리가 어떻게 아는가다.</em></p>
+    <p class="rv">3부를 지나며 배운 것을 돌아보면, 결국 하나의 이야기였다. 6장은 답이 문서 안이 아니라 문서 사이의 <em>관계</em>에 있음을 배웠고, 7장은 시스템이 자기를 돌아보는 자리를 배웠고, 8장은 다름을 지운 평균이 아니라 다른 채로 어우러지는 구성을 배웠다. 하나로 모든 것을 하려 할 때 잃는 것을 알아보는 눈, 그리고 여럿이 서로를 비추게 하는 손이 여기까지의 공부였다. 화이부동(和而不同)이라 하였으니, 어우러지되 같아지지 않는 것이 이 아키텍처의 이름이기도 하다.</p>
+    <div class="next rv">NEXT — CHAPTER 9 · RAG EVALUATION: RAGAS, LLM-AS-JUDGE, AND PRODUCTION METRICS</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Raymond Norman, Agentic RAG Systems (2026) · Chapter 8<br>
+    원서 151–169쪽 전체 내용 기반 · 본 페이지는 학습·검토 목적의 2차 정리물이다
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    els.forEach(function(e){e.classList.add('on')});
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        en.target.classList.add('on');
+        io.unobserve(en.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>

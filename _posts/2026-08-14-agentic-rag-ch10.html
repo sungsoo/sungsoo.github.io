@@ -1,0 +1,663 @@
+---
+layout: null
+title: "Retrieval Observability and Debugging Pipelines" 
+date: 2026-08-14
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>검색 관측 가능성과 디버깅 파이프라인 · Agentic RAG Systems 제10장</title>
+<meta name="description" content="Raymond Norman, 『Agentic RAG Systems』 제10장 — 관측의 세 기둥, OpenTelemetry 분산 추적, 단계별 지표, 디버깅 대시보드, 책임 있는 관측 운영">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --hanji:#F7F4EE;
+  --meok:#33322F;
+  --meok-soft:#6E6C66;
+  --meok-pale:#9A978F;
+  --inju:#A83B2A;
+  --inju-deep:#7E2A1D;
+  --gambyeok:#2F5561;       /* 감벽 — 비추어 보는 깊은 청 */
+  --gambyeok-deep:#22414B;
+  --mist:#EDE8E0;
+  --line:#D8D2C7;
+  --paper-card:#FCFAF6;
+  --serif:'Gowun Batang', serif;
+  --sans:'Noto Sans KR', sans-serif;
+  --mono:'IBM Plex Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--hanji);color:var(--meok);
+  font-family:var(--serif);font-weight:400;
+  line-height:2.12;font-size:17.5px;letter-spacing:-0.008em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--meok);color:var(--hanji)}
+
+.wrap{max-width:760px;margin:0 auto;padding:0 30px}
+.wrap-wide{max-width:1000px;margin:0 auto;padding:0 30px}
+section{padding:118px 0}
+p{margin-bottom:1.75em}
+em{font-style:normal;color:var(--inju-deep);font-weight:400}
+strong{font-weight:700;color:var(--meok)}
+.mono{font-family:var(--mono)}
+.sans{font-family:var(--sans)}
+
+.rv{opacity:0;transform:translateY(20px);transition:opacity 1s cubic-bezier(.2,.7,.3,1),transform 1s cubic-bezier(.2,.7,.3,1)}
+.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .brush{animation:none !important;stroke-dasharray:none !important;stroke-dashoffset:0 !important}
+  .quiet{animation:none !important}
+}
+
+/* ---------- 표제 ---------- */
+header.hero{padding:150px 0 118px;background:var(--hanji);border-bottom:1px solid var(--line)}
+.hero-kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--meok-pale);text-transform:uppercase;margin-bottom:42px}
+.hero-kicker b{color:var(--inju);font-weight:600}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(30px,4.6vw,48px);line-height:1.5;letter-spacing:-0.012em;margin-bottom:20px;color:var(--meok)}
+h1 .thin{display:block;font-size:.5em;font-weight:400;color:var(--meok-soft);margin-top:20px;letter-spacing:.005em;line-height:1.7}
+.seal{
+  display:inline-block;margin:0 0 40px;padding:10px 13px;
+  border:1.5px solid var(--inju);color:var(--inju);
+  font-family:var(--serif);font-size:13px;font-weight:700;letter-spacing:.2em;line-height:1.3;
+}
+.hero-lede{max-width:620px;font-size:17.5px;line-height:2.16;color:#494741}
+.hero-meta{margin-top:56px;font-family:var(--mono);font-size:12.5px;color:var(--meok-pale);display:flex;gap:26px;flex-wrap:wrap}
+.hero-meta span::before{content:"— ";color:var(--line)}
+
+/* ---------- 여는 이야기 ---------- */
+.incident{background:var(--mist);padding:118px 0;border-bottom:1px solid var(--line)}
+.span-cmp{display:flex;align-items:baseline;gap:24px;flex-wrap:wrap;font-family:var(--mono);line-height:1;margin-bottom:22px}
+.span-cmp .a{font-size:clamp(46px,8.4vw,92px);font-weight:600;color:var(--inju)}
+.span-cmp .arrow{font-size:clamp(20px,3.4vw,32px);color:var(--meok-pale)}
+.span-cmp .b{font-size:clamp(46px,8.4vw,92px);font-weight:600;color:var(--gambyeok)}
+.span-cmp .u{font-size:.4em;font-weight:400}
+.tally-cap{font-family:var(--mono);font-size:12.5px;color:var(--meok-soft);letter-spacing:.16em;line-height:1.9}
+.incident .prose{max-width:660px;margin-top:52px}
+.pullquote{margin:60px 0;padding:0 0 0 30px;border-left:2px solid var(--inju);font-size:20px;line-height:1.95;color:var(--inju-deep)}
+.quiet{animation:quiet 4.6s ease-in-out infinite}
+@keyframes quiet{0%,100%{opacity:1}50%{opacity:.62}}
+
+/* 사흘의 일지 */
+.days{margin:52px 0}
+.day{display:grid;grid-template-columns:96px 1fr;gap:24px;padding:26px 0;border-top:1px solid var(--line)}
+.day:last-child{border-bottom:1px solid var(--line)}
+.day .d{font-family:var(--mono);font-size:12px;color:var(--inju);letter-spacing:.14em;padding-top:6px}
+.day p{font-size:15.5px;line-height:1.98;color:#494741;margin:0}
+
+/* ---------- 절 공통 ---------- */
+.sec-head{margin-bottom:60px}
+.sec-no{font-family:var(--mono);font-size:12.5px;letter-spacing:.26em;color:var(--inju-deep);margin-bottom:20px;display:block}
+h2{font-family:var(--serif);font-weight:700;font-size:clamp(24px,3.3vw,34px);line-height:1.55;color:var(--meok)}
+h3{font-family:var(--serif);font-weight:700;font-size:20px;margin:2.6em 0 1em;color:var(--gambyeok)}
+h3::before{content:"· ";color:var(--inju)}
+
+.panel{background:var(--paper-card);border:1px solid var(--line);padding:40px 42px;margin:60px 0}
+.panel .tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--inju-deep);margin-bottom:18px;display:block}
+.panel h4{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:16px}
+.panel p{font-size:16px;line-height:2.02;margin-bottom:1.1em}
+.panel p:last-child{margin-bottom:0}
+.panel.gb{border-left:2px solid var(--gambyeok)}
+.panel.gb .tag{color:var(--gambyeok-deep)}
+.panel.inju{border-left:2px solid var(--inju)}
+
+/* ---------- 도해 ---------- */
+.figure{margin:70px 0;text-align:center}
+.figure svg{max-width:100%;height:auto}
+.figure figcaption{font-family:var(--sans);font-size:13.5px;color:var(--meok-soft);margin-top:22px;line-height:1.85}
+.figure figcaption::before{content:"⟨"}
+.figure figcaption::after{content:"⟩"}
+.brush{stroke-dasharray:1200;stroke-dashoffset:1200;animation:brush 2.5s ease-out forwards .35s}
+@keyframes brush{to{stroke-dashoffset:0}}
+
+/* ---------- 세 기둥 ---------- */
+.pillars{margin:60px 0;border-top:1px solid var(--line)}
+.pillar{display:grid;grid-template-columns:52px 150px 1fr;gap:22px;align-items:baseline;padding:30px 0;border-bottom:1px solid var(--line)}
+.pillar .num{font-family:var(--mono);font-size:13px;color:var(--inju);padding-top:4px}
+.pillar h4{font-family:var(--serif);font-size:17.5px;font-weight:700;color:var(--gambyeok);line-height:1.6}
+.pillar h4 .en{display:block;font-family:var(--mono);font-weight:400;font-size:10.5px;color:var(--meok-pale);margin-top:5px;letter-spacing:.05em}
+.pillar p{font-size:15.5px;line-height:1.95;color:#494741;margin:0}
+
+/* ---------- 단계 지표 표 ---------- */
+.stg-table{margin:60px 0}
+.stg-row{display:grid;grid-template-columns:132px 1fr 1fr;gap:20px;padding:22px 0;border-top:1px solid var(--line);align-items:start}
+.stg-row.head{border-top:none;padding-bottom:10px}
+.stg-row.head span{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--meok-pale)}
+.stg-row:last-child{border-bottom:1px solid var(--line)}
+.stg-name{font-family:var(--serif);font-weight:700;font-size:16px;color:var(--gambyeok);line-height:1.5}
+.stg-cell{font-size:14px;line-height:1.9;color:#494741}
+.stg-cell.fail{color:var(--inju-deep)}
+
+/* ---------- 네 대시보드 ---------- */
+.dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin:60px 0}
+.db{background:var(--paper-card);border:1px solid var(--line);border-top:2px solid var(--gambyeok);padding:34px 32px}
+.db .no{font-family:var(--mono);font-size:11.5px;color:var(--inju);margin-bottom:12px;letter-spacing:.14em}
+.db h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:6px;color:var(--gambyeok)}
+.db .en{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--meok-pale);margin-bottom:18px}
+.db p{font-size:14.5px;line-height:1.96;color:#494741;margin-bottom:.9em}
+.db p:last-child{margin-bottom:0}
+.db .q{font-family:var(--mono);font-size:12px;color:var(--gambyeok-deep);line-height:1.8}
+.db .q::before{content:"묻는 것 — ";color:var(--meok-pale)}
+
+/* ---------- 조건 목록 ---------- */
+.conds{margin:56px 0}
+.cond{padding:32px 0;border-top:1px solid var(--line)}
+.cond:last-child{border-bottom:1px solid var(--line)}
+.cond h4{font-family:var(--serif);font-size:17.5px;font-weight:700;margin-bottom:10px;color:var(--gambyeok)}
+.cond h4 span{font-family:var(--mono);font-size:11px;color:var(--meok-pale);font-weight:400;margin-left:10px;letter-spacing:.06em}
+.cond p{font-size:15.5px;line-height:1.98;color:#494741;margin:0}
+
+/* ---------- 코드 ---------- */
+pre.code{
+  background:var(--meok);color:#DAD6CD;
+  font-family:var(--mono);font-size:12.5px;line-height:1.9;
+  padding:34px 36px;margin:56px 0;overflow-x:auto;
+}
+pre.code .cm{color:#948F84}
+pre.code .kw{color:#D9A57F}
+pre.code .st{color:#A9BFA8}
+.code-cap{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--meok-pale);margin:-42px 0 56px;padding-left:2px}
+
+/* ---------- 안티패턴 ---------- */
+.anti{counter-reset:anti;margin:60px 0}
+.anti-item{padding:36px 0 36px 66px;position:relative;counter-increment:anti;border-top:1px solid var(--line)}
+.anti-item:last-child{border-bottom:1px solid var(--line)}
+.anti-item::before{
+  content:counter(anti);position:absolute;left:0;top:36px;
+  width:34px;height:34px;line-height:32px;text-align:center;
+  border:1.5px solid var(--inju);color:var(--inju);
+  font-family:var(--mono);font-size:13px;
+}
+.anti-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:12px}
+.anti-item h4 .en{font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--meok-pale);display:block;margin-top:5px}
+.anti-item p{font-size:15.5px;line-height:1.98;color:#494741;margin-bottom:1em}
+.anti-item p:last-child{margin-bottom:0}
+.anti-item .fix{font-weight:700;color:var(--inju-deep)}
+
+/* ---------- 다섯 요지 ---------- */
+.takeaways{background:var(--meok);color:#E6E2D9;padding:118px 0}
+.takeaways h2{color:#F2EEE6}
+.takeaways .sec-no{color:#D9A57F}
+.take{counter-reset:take;margin-top:58px}
+.take-item{display:grid;grid-template-columns:58px 1fr;gap:24px;padding:34px 0;border-top:1px solid rgba(230,226,217,.13);counter-increment:take}
+.take-item::before{content:counter(take);font-family:var(--serif);font-size:34px;font-weight:700;color:#605C53;line-height:1.2}
+.take-item p{font-size:16px;line-height:2.08;color:#CBC5B9;margin:0}
+.take-item p b{color:#F2EEE6}
+
+/* ---------- 문헌·다리·꼬리 ---------- */
+.refs{margin:58px 0}
+.ref{padding:26px 0 26px 30px;border-top:1px solid var(--line);position:relative;font-size:15.5px;line-height:1.95;color:#494741}
+.ref::before{content:"—";position:absolute;left:0;color:var(--inju)}
+.ref b{font-weight:700;color:var(--meok)}
+.ref i{font-style:italic}
+.ref:last-child{border-bottom:1px solid var(--line)}
+.bridge{background:var(--mist);padding:104px 0;border-top:1px solid var(--line)}
+.bridge .next{margin-top:44px;font-family:var(--mono);font-size:12.5px;letter-spacing:.18em;color:var(--gambyeok)}
+footer{padding:64px 0;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--meok-pale);border-top:1px solid var(--line);line-height:2.1}
+.note{font-family:var(--sans);font-size:13.5px;color:var(--meok-soft);margin-top:32px;line-height:1.95}
+.note::before{content:"※ ";color:var(--inju)}
+
+@media(max-width:680px){
+  section{padding:82px 0}
+  .figure.scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .figure.scrollx svg{min-width:660px;max-width:none}
+  .figure.scrollx figcaption{position:sticky;left:0}
+  header.hero{padding:104px 0 82px}
+  .pillar{grid-template-columns:1fr;gap:8px}
+  .pillar .num{padding-top:0}
+  .stg-row{grid-template-columns:1fr;row-gap:6px}
+  .stg-row.head{display:none}
+  .day{grid-template-columns:1fr;gap:8px}
+  .take-item{grid-template-columns:42px 1fr;gap:16px}
+  .take-item::before{font-size:26px}
+  .anti-item{padding-left:52px}
+  .anti-item::before{width:30px;height:30px;line-height:28px;font-size:12px}
+  .pullquote{font-size:18px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 표제 ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-kicker rv">AGENTIC RAG SYSTEMS · RAYMOND NORMAN · <b>제 10 장</b></div>
+    <div class="seal rv">照見</div>
+    <h1 class="rv">검색 관측 가능성과 디버깅 파이프라인<span class="thin">시스템이 나아졌는가가 아니라, 알 수 있게 되었는가. 성숙의 문턱은 거기에 있다.</span></h1>
+    <p class="hero-lede rv">9장의 평가가 시스템이 좋은지를 알려 준다면, 관측 가능성은 어떤 특정한 질의에서 시스템이 <em>왜 그렇게 하고 있는지</em>를 알려 준다. 이 장에 새로운 알고리즘은 없다. 화려하지 않은 기반 공사가 있을 뿐이다. 그러나 믿음직하게 도는 검색 체계와 알 수 없이 실패한 뒤 사흘을 들여 해명하는 체계를 가르는 것이 바로 그 화려하지 않은 일이다.</p>
+    <div class="hero-meta rv">
+      <span>원서 187–204쪽</span>
+      <span>Part IV · Production Engineering</span>
+      <span>비추어 봄의 공학</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 여는 이야기 ============ -->
+<section class="incident">
+  <div class="wrap">
+    <div class="span-cmp rv quiet">
+      <span class="a">3<span class="u">일</span></span>
+      <span class="arrow">→</span>
+      <span class="b">40<span class="u">분</span></span>
+    </div>
+    <div class="tally-cap rv">2025년 11월 · 어느 의료 기술 회사<br>같은 종류의 사고, 두 번의 진단. 그 사이에 놓인 것은 알고리즘이 아니었다.</div>
+    <div class="prose">
+      <p class="rv">2025년 11월 말, 어느 의료 기술 회사의 선임 플랫폼 엔지니어가 밤 9시 14분에 최고의료책임자(CMO)로부터 슬랙 메시지를 받았다. 여섯 달 전 배포한 임상 의사결정 지원 어시스턴트가 어느 의사에게 소아 패혈증 관리의 최신 임상 지침과 <em>어긋나는</em> 답을 주었다는 것이다. CMO는 지침을 직접 읽어 답이 틀렸음을 확인했고, 질의를 재생해 시스템이 그 답을 냈음을 확인했다. 그리고 아침이 되기 전에 알고 싶어 했다. 이 일이 어떻게 일어났는지, 같은 범주의 다른 답들도 틀렸는지.</p>
+      <p class="rv">사흘 뒤, 그는 여전히 조사 중이었다. 검색 체계는 정교한 에이전틱 RAG 파이프라인이었다. 하이브리드 검색, 재순위화, 자기교정 성찰 — 2부와 3부의 모든 패턴이 들어 있었다. 주당 임상 질의 4만 건을 처리했다. 공들여 지어졌고 폭넓게 시험되었다. 다만 함께 지어지지 않은 것이 있었다. <strong>프로덕션급 관측 가능성.</strong> 그에게 로그는 있었다. 방대한 로그가 일곱 개 서비스에 흩어져 저마다의 형식으로 쓰였고, 어느 것도 질의 ID로 엮이지 않았다. 지표도 있었다. 평균 지연, 오류율, 집계된 품질 점수를 보여 주는 대시보드가 있었다. 없던 것은 CMO의 물음에 답하는 데 실제로 필요한 것이었다. <em>그 의사의 특정 질의가 처리될 때 무슨 일이 있었는지에 대한, 하나의 조리 있는 추적(trace).</em></p>
+      <div class="days">
+        <div class="day rv">
+          <div class="d">첫째 날</div>
+          <p>손으로 시간선을 재구성했다. 한 클러스터에서 임베딩 서비스 로그를 끌어오고, 다른 데서 벡터 데이터베이스 질의 로그를, 또 다른 데서 리랭커 로그를 끌어왔다. 서비스 사이에 어긋난 타임스탬프를 맞추었다. 어느 청크가 실제로 회수되었고, 어느 청크가 성찰을 살아남았고, 언어 모델이 그 틀린 답을 낼 때 무엇을 맥락으로 받았는지 식별했다. 하루가 저물 무렵 부분적 그림이 나왔다. 임베딩 모델은 현행 지침을 포함한 청크 집합을 회수했으나, <strong>리랭커가 그것을 끌어내리고 질의의 표면 어휘를 더 많이 담은 옛 지침 문서를 올렸다.</strong> 성찰 계층은 그 옛 지침을 충분하다 판정하고 생성으로 나아갔다. 시스템은 환각하지 않았다. <em>더는 권위 없는 문서에 충실히 접지되어 있었다.</em></p>
+        </div>
+        <div class="day rv">
+          <div class="d">둘째 날</div>
+          <p>이것이 한 번의 실패인지 패턴인지 조사하는 데 썼다. 분산 추적도 질의 수준 상관도 없었으므로 "지난 한 달간 리랭커가 폐기된 문서를 현행 문서 위로 올린 모든 질의를 보여 달라" 같은 질의를 던질 수 없었다. 정보는 로그에 있었으나 <em>질의 가능하지 않았다.</em> 여러 로그 스트림을 긁고 독자 형식을 파싱하고 대략의 시각으로 레코드를 이어 붙이는 스크립트를 직접 써야 했다. 하루가 저물 무렵 지난 3주간의 유사 사례 <strong>열일곱 건</strong>을 찾아냈다. 어느 것도 어떤 감시에도 걸리지 않았고, 각각이 임상적으로 유관한 오답을 실제 의사에게 전달한 사례였다.</p>
+        </div>
+        <div class="day rv">
+          <div class="d">셋째 날</div>
+          <p>보고서를 썼다. 찾아낸 것, 데이터가 없어 밝힐 수 없었던 것, 이 범주의 실패가 되풀이되지 않게 하려면 필요한 변경. 가장 큰 변경은 알고리즘적인 것이 아니라 <strong>기반적인 것</strong>이었다. 질의별 분산 추적, 추적 ID로 엮인 구조화 로그, 검색 실패와 재순위화 실패와 생성 실패를 가르는 검색 고유 지표, 집계만이 아니라 패턴을 드러내는 대시보드. 그것들이 없다면 앞으로의 모든 사고가 또 한 번의 사흘짜리 발굴 작업을 요구할 것이었다.</p>
+        </div>
+      </div>
+      <p class="rv">회사는 이후 두 달을 정확히 그 관측 스택을 짓는 데 썼다. 다음 사고가 왔을 때 — 넉 달 뒤, 임베딩 서비스가 업그레이드되고 좁은 범주의 임상 질의에서 재현율이 퇴행했을 때 — 사흘 걸렸던 진단 작업이 <strong>마흔 분</strong>이 되었다. 당직 엔지니어는 신고된 실패 질의의 추적을 끌어와 임베딩 단계의 퇴행을 식별하고, 같은 시간창에서 같은 검색 패턴을 보이는 다른 질의를 추적 저장소에 질의하고, 패턴을 확인하고, 임베딩 서비스를 롤백했다. 사용자에게 닿은 영향은 퇴행의 시작과 롤백 사이에 처리된 소수의 질의로 한정되었다. 관측에 들인 투자는 그날 점심때까지 이미 제 값을 했고, 이후 모든 사고에서 계속 값을 할 것이었다.</p>
+      <p class="rv">원래의 사흘짜리 조사를 촉발한 그 CMO는 나중에 사후 검토에서 이렇게 말했다. 두 사고의 차이는 시스템이 나아졌다는 데 있지 않다 — 두 사고 모두 실재하는 결함을 드러냈다 — 차이는 두 번째 것이 같은 업무일 안에 <em>알 수 있고, 진단할 수 있고, 회복할 수 있는</em> 일이었다는 데 있다고.</p>
+      <div class="pullquote rv">그것이, 회사가 넘으려 애쓰던 운영 성숙의 문턱이었다. 그리고 빠져 있던 조각이 관측 가능성이었다.</div>
+      <p class="rv">관측 가능성은 검색을 블랙박스에서 계측된 체계로 바꾸는 운영 규율이다. 그것이 없으면 디버깅은 <em>발굴 고고학</em>이다. 느리고 비싸고 불완전하다. 있으면 디버깅은 <em>질의 가능한 분석</em>이다. 빠르고 포괄적이며, 집계 지표가 가리는 패턴을 드러낼 수 있다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10.1 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">10.1 · THE THREE PILLARS</span>
+      <h2>검색에 적용한 세 기둥 — 추적, 지표, 로그</h2>
+    </div>
+    <p class="rv">일반 소프트웨어의 관측 가능성은 세 기둥 위에 서 있다. 특정 요청에 무슨 일이 있었는지 보여 주는 분산 추적, 여러 요청에 걸친 거동을 집계하는 지표, 특정 지점의 상세 사건을 담는 로그. 기둥은 잘 확립되었고 도구는 성숙했으며 전통적 서비스에 대한 패턴은 잘 기록되어 있다. 검색 체계는 표준 패턴이 상자에서 꺼내자마자 다루어 주지 않는 복잡함을 더한다. <strong>검색 관측 가능성의 무엇이 고유한지 이해하는 것이 계측을 제대로 짓는 전제다.</strong></p>
+    <div class="pillars">
+      <div class="pillar rv">
+        <div class="num">01</div>
+        <h4>추적 — 질의의 여정<span class="en">traces</span></h4>
+        <p>검색 체계의 추적은 하나의 질의를 처리의 모든 단계에 걸쳐 따라간다. 질의가 도착한다. 질의 변환이 검색 표적형 변형을 낸다. 임베딩이 변형마다 벡터를 만든다. 벡터 데이터베이스가 후보 청크를 돌려준다. 리랭커가 순서를 고친다. 성찰 계층이 충분함을 평가한다. 생성이 답을 낸다. 추적은 이 전부를 구조화된 스팬으로, 시각과 입력과 출력과 <em>결정</em>과 함께 담아야 한다.</p>
+      </div>
+      <div class="pillar rv">
+        <div class="num">02</div>
+        <h4>지표 — 질의를 가로지른 집계<span class="en">metrics</span></h4>
+        <p>지표는 질의별 추적 데이터를 패턴을 드러내는 통계로 집계한다. 단계별 지연 백분위, 참조 질의 집합에 대한 재현율, 리랭커의 승격률, 성찰 판정 분포, 생성 토큰 소비. 지표 설계는 추적이 담는 단계 분해를 반영해야 한다. 지표가 움직였을 때 팀이 해당 추적으로 파고들 수 있어야 하기 때문이다. 종단 간 지연은 보이면서 단계별 지연은 보이지 않는 대시보드로는 느린 임베딩과 느린 생성을 구별할 수 없다.</p>
+      </div>
+      <div class="pillar rv">
+        <div class="num">03</div>
+        <h4>로그 — 추적이 나를 수 없는 상세<span class="en">logs</span></h4>
+        <p>로그는 스팬 속성으로 넣으면 추적을 부풀릴 상세 사건이 가는 곳이다. 회수된 청크의 전문, 언어 모델 응답 전문, 중간 추론 흔적. 규율은 모든 로그 줄을 추적 ID와 스팬 ID로 부모 추적에 <strong>상관시키는</strong> 것이다. 그러면 팀은 추적을 끌어와 수동 대조 없이 상세 로그까지 따라갈 수 있다. 앞의 첫 사고는 로그가 없어서가 아니라 <em>엮이지 않아서</em> 생긴 문제였다. 데이터는 있었으나 이어 붙일 수 없었다.</p>
+      </div>
+    </div>
+    <p class="rv">추적에서 검색 고유의 관심사는 각 스팬에 <em>어떤 데이터를</em> 담느냐다. 임베딩 스팬에는 입력 텍스트와 결과 벡터(적어도 상관을 위한 벡터의 해시)가 필요하다. 검색 스팬에는 돌려준 청크의 ID만이 아니라 유사도 점수를 지닌 후보 집합이 필요하다. 재순위화 스팬에는 재순위화 <em>전과 후</em>의 순서가 모두 필요하다. 그래야 퇴행 분석이 검색 실패와 재순위화 실패를 가를 수 있다. 성찰 스팬에는 판정 — 확신, 모호, 오류 — 과 그 판정을 이끈 청크가 필요하다. 생성 스팬에는 언어 모델에 최종적으로 주어진 맥락과 모델의 응답이 필요하다. 규율은 시스템의 외부 경계만이 아니라 <strong>단계 사이의 경계에서 계측하는 것</strong>이다. 내부 단계 지표가, "시스템에 뭔가 문제가 있다"가 아니라 "리랭커가 이 부류의 질의에 X를 하고 있다"고 말할 수 있게 만드는 진단 능력이다.</p>
+    <div class="panel gb rv">
+      <span class="tag">Key Definition</span>
+      <h4>검색 고유의 관측 가능성</h4>
+      <p><strong>추적</strong>은 임베딩·검색·재순위화·성찰·생성의 구조화 스팬으로 질의별 여정을 담는다. 각 스팬은 자기 단계에 고유한 입력과 출력과 결정을 나른다.</p>
+      <p><strong>지표</strong>는 추적 데이터를 단계별 통계로 집계한다 — 지연 백분위, 참조 집합 대비 재현율, 리랭커 승격률, 성찰 판정. 단계 수준 지표는 외과적 디버깅을 가능하게 하고, 시스템 수준만의 지표는 전체론적 디버깅을 강요한다.</p>
+      <p><strong>로그</strong>는 추적을 부풀릴 상세를 나르며, 추적 ID와 스팬 ID로 추적에 상관되어 진단 작업이 수동 대조 없이 질의를 종단 간으로 따라갈 수 있게 한다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10.2 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap-wide">
+    <div class="wrap" style="padding:0">
+      <div class="sec-head rv">
+        <span class="sec-no">10.2 · DISTRIBUTED TRACING</span>
+        <h2>검색의 분산 추적 — 실무의 OpenTelemetry</h2>
+      </div>
+      <p class="rv">OpenTelemetry는 업계를 가로지르는 분산 추적의 사실상 표준이 되었고, 2026년의 프로덕션급 RAG는 거의 예외 없이 이를 추적의 바탕으로 쓴다. 표준화의 이점은 호환 백엔드의 넓은 생태계 — Jaeger, Tempo, Honeycomb, Datadog, New Relic 등이 모두 OpenTelemetry 형식을 소비한다 — 와 그 형식을 내는 계측 라이브러리의 넓은 생태계다.</p>
+      <p class="rv"><strong>스팬 구조.</strong> 표준 패턴은 사용자 질의마다 하나의 루트 스팬을 두고, 처리 단계마다 자식 스팬을 두는 것이다. 루트 스팬은 질의 텍스트, 사용자 식별자(또는 세션 ID), 라우팅 결정(어느 에이전트나 파이프라인이 처리했는지), 최종 응답을 나른다. 자식 스팬마다 한 처리 단계를 담는다. 각 단계 안에서, 그 자체로 관찰할 만한 하위 연산이 다시 스팬을 갖는다. 하이브리드 검색을 돌린다면 검색 단계에 벡터 검색과 어휘 검색의 자식 스팬이 있을 수 있고, 성찰 단계에는 청크별 관련성 평가의 자식 스팬이 있을 수 있다.</p>
+      <p class="rv">스팬 중첩의 깊이는 각 층이 주는 진단 값어치에 달렸다. 과잉 계측은 저장이 비싸고 항행하기 어려운 추적을 낳고, 과소 계측은 사고가 요구하는 진단 물음에 답할 수 없는 추적을 낳는다. 쓸모 있는 어림 규칙은 이렇다. <em>지연이나 거동이 독립적으로 퇴행할 수 있는 하위 연산은 자기 스팬을 가질 값어치가 있다.</em> 부모와 늘 함께 성공하거나 함께 실패하는 연산은 따로 스팬을 둘 필요가 좀처럼 없고 추적의 크기만 부풀린다.</p>
+    </div>
+    <figure class="figure scrollx rv">
+      <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="질의 하나의 추적 폭포 — 단계별 스팬과 실패가 시작된 지점">
+        <!-- root span -->
+        <text x="24" y="26" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#9A978F" letter-spacing="1.5">TRACE · rag.query</text>
+        <rect x="24" y="36" width="672" height="20" fill="#EDE8E0" stroke="#2F5561" stroke-width="1.3"/>
+        <text x="34" y="50" font-family="IBM Plex Mono, monospace" font-size="10" fill="#22414B">root — 1,240ms · trace_id=7f3a…</text>
+
+        <!-- stage spans (waterfall) -->
+        <g font-family="IBM Plex Mono, monospace" font-size="10">
+          <rect x="44" y="70" width="72" height="18" fill="none" stroke="#2F5561" stroke-width="1.1"/>
+          <text x="124" y="83" fill="#494741">query_transform · 180ms</text>
+
+          <rect x="118" y="98" width="120" height="18" fill="none" stroke="#2F5561" stroke-width="1.1"/>
+          <text x="246" y="111" fill="#494741">embed · 96ms — 현행 지침 포함해 회수</text>
+
+          <rect x="240" y="126" width="104" height="18" fill="none" stroke="#2F5561" stroke-width="1.1"/>
+          <text x="352" y="139" fill="#494741">retrieve · 42ms — 후보 50건, 점수 기록</text>
+
+          <!-- failing span -->
+          <rect x="346" y="154" width="112" height="18" fill="#F0DFDA" stroke="#A83B2A" stroke-width="1.6"/>
+          <text x="466" y="167" fill="#7E2A1D">rerank · 118ms — 폐기 문서를 1위로 승격</text>
+
+          <rect x="460" y="182" width="96" height="18" fill="none" stroke="#2F5561" stroke-width="1.1"/>
+          <text x="564" y="195" fill="#494741">reflect · confident</text>
+
+          <rect x="558" y="210" width="120" height="18" fill="none" stroke="#2F5561" stroke-width="1.1"/>
+          <text x="446" y="223" fill="#494741" text-anchor="end">generate · 704ms — 충실하게, 그러나 틀린 답</text>
+        </g>
+
+        <!-- marker of origin -->
+        <line class="brush" x1="402" y1="176" x2="402" y2="262" stroke="#A83B2A" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <text x="402" y="280" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#7E2A1D" text-anchor="middle" font-weight="700">실패가 태어난 자리</text>
+        <text x="402" y="300" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#494741" text-anchor="middle">환각이 아니라 — 권위 없는 문서에 충실했던 것</text>
+        <text x="360" y="328" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#6E6C66" text-anchor="middle">추적 하나가 사흘의 발굴을 마흔 분의 조회로 바꾼다</text>
+      </svg>
+      <figcaption>질의 하나의 추적 — 단계마다 스팬이 있고, 재순위화 전후의 순서가 함께 담겨 있어야 실패가 태어난 자리를 짚을 수 있다</figcaption>
+    </figure>
+    <div class="wrap" style="padding:0">
+      <pre class="code rv"><span class="cm"># 검색 파이프라인의 OpenTelemetry 계측 패턴</span>
+<span class="kw">from</span> opentelemetry <span class="kw">import</span> trace
+<span class="kw">from</span> opentelemetry.trace <span class="kw">import</span> Status, StatusCode
+
+tracer = trace.get_tracer(<span class="st">'rag.pipeline'</span>)
+
+<span class="kw">def</span> answer_query(query: str, user_id: str) -&gt; dict:
+    <span class="kw">with</span> tracer.start_as_current_span(<span class="st">'rag.query'</span>) <span class="kw">as</span> root:
+        root.set_attribute(<span class="st">'rag.query.text'</span>, query)
+        root.set_attribute(<span class="st">'rag.user.id'</span>, user_id)
+
+        <span class="cm"># 1. 질의 변환</span>
+        <span class="kw">with</span> tracer.start_as_current_span(<span class="st">'rag.query_transform'</span>) <span class="kw">as</span> span:
+            variants = query_transformer.transform(query)
+            span.set_attribute(<span class="st">'rag.variants.count'</span>, len(variants))
+
+        <span class="cm"># 2. 하이브리드 검색</span>
+        <span class="kw">with</span> tracer.start_as_current_span(<span class="st">'rag.retrieve'</span>) <span class="kw">as</span> span:
+            candidates = retriever.search(variants, k=50)
+            span.set_attribute(<span class="st">'rag.candidates.count'</span>, len(candidates))
+            span.set_attribute(<span class="st">'rag.candidates.ids'</span>,
+                               [c.id <span class="kw">for</span> c <span class="kw">in</span> candidates[:10]])
+            span.set_attribute(<span class="st">'rag.candidates.scores'</span>,
+                               [c.score <span class="kw">for</span> c <span class="kw">in</span> candidates[:10]])
+
+        <span class="cm"># 3. 재순위화 — 전후의 순서 변화를 함께 남긴다</span>
+        <span class="kw">with</span> tracer.start_as_current_span(<span class="st">'rag.rerank'</span>) <span class="kw">as</span> span:
+            reranked = reranker.rerank(query, candidates)
+            span.set_attribute(<span class="st">'rag.rerank.promotions'</span>,
+                               compute_promotions(candidates, reranked))
+
+        <span class="cm"># 4. 성찰</span>
+        <span class="kw">with</span> tracer.start_as_current_span(<span class="st">'rag.reflect'</span>) <span class="kw">as</span> span:
+            verdict = reflector.evaluate(query, reranked[:10])
+            span.set_attribute(<span class="st">'rag.reflect.verdict'</span>, verdict.verdict)
+            span.set_attribute(<span class="st">'rag.reflect.confidence'</span>, verdict.confidence)
+            <span class="kw">if</span> verdict.verdict == <span class="st">'incorrect'</span>:
+                root.set_status(Status(StatusCode.ERROR, <span class="st">'evidence_insufficient'</span>))
+                <span class="kw">return</span> refusal_response(verdict)
+
+        <span class="cm"># 5. 생성</span>
+        <span class="kw">with</span> tracer.start_as_current_span(<span class="st">'rag.generate'</span>) <span class="kw">as</span> span:
+            answer = generator.generate(query, reranked[:10])
+            span.set_attribute(<span class="st">'rag.tokens.used'</span>, answer.token_count)
+
+        <span class="kw">return</span> answer.to_dict()</pre>
+      <div class="code-cap">원서 10.2절 — 단계마다 스팬, 스팬마다 그 단계의 결정</div>
+      <h3 class="rv">표집 전략</h3>
+      <p class="rv">추적은 공짜가 아니다. 트래픽이 많은 프로덕션은 하루 수백만 스팬을 낼 수 있고 전부 저장하는 것은 운영상 비싸다. 표준 패턴은 <strong>지혜로운 표집</strong>이다. 특정 성질을 보이는 질의(오류, 거부, 높은 지연, 낮은 확신)는 추적을 100% 붙잡고, 평범한 질의는 더 작은 비율로 붙잡는다. 현대 추적 체계 대부분이 받치는 <em>꼬리 기반 표집</em>은 추적이 끝난 뒤에 표집 결정을 내리게 해 준다. 흥미로운 거동을 보인 추적을 지키고 나머지를 버리는 것이다.</p>
+      <p class="rv">검색 체계에서 표집 결정은 흔히 검색 고유의 신호에 달린다. 성찰 판정이 '모호'나 '오류'였던 질의는 언제나 추적해야 한다. 재순위화가 후보 집합을 극적으로 재배열한 질의는 지킬 값어치가 있다. 생성이 거부나 경고를 낸 질의는 보존해야 한다. 확신 판정과 안정된 순위를 지닌 평범한 질의는 1~5%로 표집할 수 있다. 이 선별적 보존이 저장 비용을 묶어 두면서, 앞의 첫 사고에 없던 진단 값어치를 지킨다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10.3 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">10.3 · STAGE-LEVEL METRICS</span>
+      <h2>검색 고유 지표 — 단계로 실패를 분해하기</h2>
+    </div>
+    <p class="rv">종단 간 지연이나 전체 답 품질 같은 집계 지표는 <em>무언가 잘못되었다</em>고 알려 주지, <em>무엇이 잘못되었다</em>고 알려 주지 않는다. 프로덕션급 관측 가능성은 단계 사이의 경계에서 재는 지표를 요구한다. 실패를 그것을 들여온 특정 부품으로 국소화할 수 있는 지표다.</p>
+    <p class="rv"><strong>임베딩 단계.</strong> 가용성, 지연 백분위, 처리량, 오류율에 더해 검색 고유의 추가가 있다. <em>임베딩 일관성</em> — 같은 입력이 시간이 가도 같은 임베딩을 내는가. 일관성은 모델 버전을 가로질러 보장되지 않으며, 소리 없는 임베딩 표류는 기록된 프로덕션 실패 양식이다. 완화책은 임베딩을 주기적으로 재생성해 과거 기준선과 견주는 참조 입력 집합을 유지하는 것이다. 허용 문턱을 넘어 변하면 경보가 울린다.</p>
+    <p class="rv"><strong>검색 단계.</strong> 참조 질의 집합에 대한 재현율이 토대 지표다. 3장에서 인덱스 건강 감시로 세운 것이 여기서 프로덕션 런타임 지표로 이어진다. 재현율 너머로, 프로덕션 관측은 돌려준 후보 집합의 <em>유사도 점수 분포</em>를 추적한다. 상위 1위 유사도가 시간이 가며 아래로 옮겨 간 체계는 인덱스 퇴화나 임베딩 표류나 말뭉치 분포 변화를 겪고 있을 수 있다. 각각 처방이 다르되 모두 점수 분포에 드러난다.</p>
+    <p class="rv"><strong>재순위화 단계.</strong> 리랭커가 후보 집합에 무엇을 하고 있는지 드러낸다. <em>승격 분포</em> — 평균적 후보가 전후로 몇 자리를 움직이는가. <em>1위 안정성</em> — 재순위화 전후로 1위가 같은 청크인 질의의 비율은 얼마인가. 이것은 재순위화가 아무 효과가 없는 경우(리랭커 오설정이거나 1단 검색이 이미 잘 순위된 경우)를 드러낸다. 그리고 <strong>리랭커와 임베딩 모델의 불일치</strong> — 리랭커가 최고 유사도 청크를 상위 k 밖으로 밀어내는 빈도 — 가 바로 앞의 첫 사고를 잡아냈을 지표다. 리랭커가 체계적으로 옛 문서를 새 문서 위로 올리고 있었던 그 사고다.</p>
+    <p class="rv"><strong>성찰과 생성.</strong> 성찰 판정 분포 — 확신·모호·오류의 비율 — 는 부적절한 사례를 우아하게 거부하는 체계와 부실한 증거로 과신하며 생성하는 체계를 가르는 운영 신호다. 이 분포의 갑작스러운 이동은 흔히 문제를 알린다. 오류 판정이 뛰면 말뭉치 변화나 검색 퇴행을 시사할 수 있다. 확신 판정이 뛰면 성찰 계층의 보정이 <em>느슨한 쪽으로</em> 표류했음을 시사할 수 있는데, 처리량 지표는 나아지므로 이는 감춰진 품질 위험이다. 생성 지표는 토큰 사용량, 지연, 거부율에 9장의 답 품질 지표를 프로덕션 트래픽에 걸쳐 표집한 것을 더한다.</p>
+    <div class="stg-table">
+      <div class="stg-row head rv"><span>단계</span><span>핵심 지표</span><span>드러나는 실패 패턴</span></div>
+      <div class="stg-row rv"><div class="stg-name">임베딩</div><div class="stg-cell">지연, 일관성, 오류율</div><div class="stg-cell fail">서비스 퇴화 · 소리 없는 임베딩 표류</div></div>
+      <div class="stg-row rv"><div class="stg-name">검색</div><div class="stg-cell">재현율, 유사도 점수 분포</div><div class="stg-cell fail">인덱스 퇴화 · 말뭉치 분포 이동</div></div>
+      <div class="stg-row rv"><div class="stg-name">재순위화</div><div class="stg-cell">승격 분포, 1위 안정성</div><div class="stg-cell fail">리랭커 오설정 · 폐기 문서의 승격</div></div>
+      <div class="stg-row rv"><div class="stg-name">성찰</div><div class="stg-cell">판정 분포</div><div class="stg-cell fail">보정 표류 · 말뭉치의 불충분</div></div>
+      <div class="stg-row rv"><div class="stg-name">생성</div><div class="stg-cell">토큰 사용량, 거부율, 품질 표본</div><div class="stg-cell fail">비용 퇴행 · 품질 퇴화 · 신뢰의 실패</div></div>
+    </div>
+    <div class="panel gb rv">
+      <span class="tag">Production Insight</span>
+      <h4>집계가 감추는 것을 단계 지표가 드러낸다</h4>
+      <p>집계된 종단 간 지표 — 총 지연, 전체 품질 — 는 많은 질의를 평균하기에 느리게 움직인다. 질의의 10%에 영향을 주는 단계 수준 퇴행은 종단 간 지표를 1퍼센트의 몇 분의 일만큼 움직일 수 있고, 그것은 통상 변동의 잡음 바닥에 한참 묻힌다. <strong>집계 지표는 움직이지 않고, 실패는 감지되지 않는다.</strong></p>
+      <p>단계 수준 지표는 같은 퇴행을 곧바로 드러낸다. 리랭커가 질의의 일부에서 오작동하고 있다면, 종단 간 지표가 움직이지 않을 때에도 리랭커 지표는 분명히 움직인다. 아키텍처의 규율은 <em>부분집합의 퇴행이 그것이 실제로 태어난 단계에서 보이도록</em> 단계 경계에서 계측하는 것이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10.4 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap-wide">
+    <div class="wrap" style="padding:0">
+      <div class="sec-head rv">
+        <span class="sec-no">10.4 · DEBUGGING DASHBOARDS</span>
+        <h2>디버깅 대시보드 — 원격 측정에서 통찰로</h2>
+      </div>
+      <p class="rv">원격 측정은 원재료다. 대시보드는 팀이 그것을 운영적 통찰로, 결정을 움직이는 패턴과 대응을 촉발하는 경보로 바꾸는 방식이다. 프로덕션급 검색 관측 가능성에는 운영상 중요한 패턴을 드러내는 <strong>작은 한 벌</strong>의 대시보드가 있다. 모든 것을 보이려다 결국 쓸모 있는 아무것도 보이지 못하는 잡동사니 대시보드가 아니다. 네 범주가 대부분의 프로덕션 필요를 덮는다.</p>
+    </div>
+    <div class="dash">
+      <div class="db rv">
+        <div class="no">첫째</div>
+        <h4>건강 대시보드</h4>
+        <div class="en">health</div>
+        <p>호출을 받은 당직 엔지니어가 가장 먼저 보는 한눈 대시보드다. 건강한 체계와 그렇지 않은 체계를 가르는 소수의 지표만 보인다. 종단 간 p95 지연, 오류율, 질의 물량, 거부율.</p>
+        <p>규율은 이것을 <strong>최소로 유지하는 것</strong>이다. 지표를 더하면 진단 값어치가 희석되고, 빼면 실패 신호를 놓칠 수 있다. 대부분의 팀은 운영 첫 몇 달에 걸쳐 내용을 다듬는다. 의미 있는 신호를 낸 적 없는 지표를 덜어 내고, 없어서 사고 감지가 어려웠던 지표를 더하는 식이다.</p>
+        <p class="q">지금 체계는 성한가</p>
+      </div>
+      <div class="db rv">
+        <div class="no">둘째</div>
+        <h4>단계 분해 대시보드</h4>
+        <div class="en">stage decomposition</div>
+        <p>체계를 단계로 분해해 보인다. 임베딩 지연과 일관성, 검색 재현율과 점수 분포, 재순위화 승격 패턴, 성찰 판정 분포, 생성 비용과 품질.</p>
+        <p>목적은 진단이다. 건강 대시보드가 무언가 잘못되었음을 보일 때, 이 대시보드가 엔지니어에게 <em>어느 단계를 조사할지</em> 알려 준다. 앞의 사흘짜리 디버깅에서 엔지니어가 가장 필요로 했고 갖지 못했던 것이 바로 이것이다.</p>
+        <p class="q">실패는 어디서 태어났나</p>
+      </div>
+      <div class="db rv">
+        <div class="no">셋째</div>
+        <h4>코호트 비교 대시보드</h4>
+        <div class="en">cohort comparison</div>
+        <p>코호트를 가로질러 성능을 견준다. 질의 유형, 사용자 세그먼트, 문서 범주, 관할. 집계 지표가 안정적인 동안 특정 코호트가 퇴화할 수 있다. 9장 이커머스 플랫폼의 벤치마크가 좋아 보이는 동안 한 세그먼트의 품질이 퇴행했던 그 방식으로.</p>
+        <p>표준 구현은 추적 구조를 타고 번지는 지표 태그를 쓴다. 모든 스팬이 질의 유형과 사용자 세그먼트, 그 밖에 잘라 볼 만한 차원의 메타데이터를 나르므로, 같은 바탕 지표를 어느 차원으로든 집계할 수 있다.</p>
+        <p class="q">누가 영향을 받고 있나</p>
+      </div>
+      <div class="db rv">
+        <div class="no">넷째</div>
+        <h4>파고들기 대시보드</h4>
+        <div class="en">drill-down</div>
+        <p>지표의 이상에서 그것을 낳은 구체적 추적으로 데려가는 인터페이스다. 대시보드라기보다 질의 인터페이스이며, 통상 추적 체계의 고유 질의 UI에 흔한 진단 물음을 미리 담아 둔 것이다.</p>
+        <p><em>"지난 한 시간 동안 성찰 판정이 '오류'였던 추적을 보여 달라." "최상위 재순위 청크가 폐기 문서였던 추적을 보여 달라." "생성이 답을 거부한 추적을 보여 달라."</em></p>
+        <p class="q">"무언가 잘못됐다"를 "이 질의들이다"로</p>
+      </div>
+    </div>
+    <div class="wrap" style="padding:0">
+      <figure class="figure scrollx rv">
+        <svg viewBox="0 0 720 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="건강에서 단계, 코호트, 개별 추적으로 좁혀 가는 진단의 길">
+          <defs>
+            <marker id="a10" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#2F5561"/></marker>
+          </defs>
+          <rect x="20" y="52" width="140" height="52" fill="#EDE8E0" stroke="#2F5561" stroke-width="1.4"/>
+          <text x="90" y="74" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#22414B" text-anchor="middle" font-weight="700">건강</text>
+          <text x="90" y="92" font-family="Noto Sans KR, sans-serif" font-size="10.5" fill="#494741" text-anchor="middle">무언가 잘못됐다</text>
+
+          <rect x="196" y="52" width="140" height="52" fill="none" stroke="#2F5561" stroke-width="1.4"/>
+          <text x="266" y="74" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#22414B" text-anchor="middle" font-weight="700">단계 분해</text>
+          <text x="266" y="92" font-family="Noto Sans KR, sans-serif" font-size="10.5" fill="#494741" text-anchor="middle">재순위화 단계다</text>
+
+          <rect x="372" y="52" width="140" height="52" fill="none" stroke="#2F5561" stroke-width="1.4"/>
+          <text x="442" y="74" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#22414B" text-anchor="middle" font-weight="700">코호트 비교</text>
+          <text x="442" y="92" font-family="Noto Sans KR, sans-serif" font-size="10.5" fill="#494741" text-anchor="middle">소아 임상 질의에서다</text>
+
+          <rect x="548" y="52" width="152" height="52" fill="#F0DFDA" stroke="#A83B2A" stroke-width="1.6"/>
+          <text x="624" y="74" font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#7E2A1D" text-anchor="middle" font-weight="700">파고들기</text>
+          <text x="624" y="92" font-family="Noto Sans KR, sans-serif" font-size="10.5" fill="#7E2A1D" text-anchor="middle">이 열일곱 건이다</text>
+
+          <line class="brush" x1="160" y1="78" x2="190" y2="78" stroke="#2F5561" stroke-width="1.4" marker-end="url(#a10)"/>
+          <line class="brush" x1="336" y1="78" x2="366" y2="78" stroke="#2F5561" stroke-width="1.4" marker-end="url(#a10)"/>
+          <line class="brush" x1="512" y1="78" x2="542" y2="78" stroke="#2F5561" stroke-width="1.4" marker-end="url(#a10)"/>
+
+          <text x="360" y="30" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#9A978F" text-anchor="middle" letter-spacing="1.5">DIAGNOSTIC PATH</text>
+          <text x="360" y="146" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#494741" text-anchor="middle">네 대시보드는 나란한 선택지가 아니라, 좁혀 가는 하나의 길이다</text>
+          <text x="360" y="176" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#7E2A1D" text-anchor="middle">어느 한 칸이 비어 있으면 그 다음 칸으로 건너갈 수 없다</text>
+        </svg>
+        <figcaption>진단의 길 — 건강에서 단계로, 단계에서 코호트로, 코호트에서 개별 추적으로. 이 길이 이어져 있을 때 사흘이 마흔 분이 된다</figcaption>
+      </figure>
+      <div class="panel inju rv">
+        <span class="tag">Common Pitfall</span>
+        <h4>대시보드 난립</h4>
+        <p>많은 팀이 검색 체계가 진화하며 수십 개의 대시보드를 짓는다. 서비스마다 하나, 팀마다 하나, 언젠가 특정 질문을 했던 임원마다 하나. 대시보드는 늘어나고, 어느 것도 잘 관리되지 않고, 사고 때 어느 것을 봐야 옳은지 분명하지 않으며, 당직 엔지니어는 대시보드를 믿을 수 없어 결국 로그를 grep 한다.</p>
+        <p>규율은 정전(正典)의 작은 한 벌 — 건강, 단계 분해, 코호트 비교, 파고들기 — 을 명시적 소유자와 정기 검토 주기와 함께 유지하는 것이다. <strong>몇 달간 아무도 열어 보지 않은 대시보드는 언젠가 쓸모 있을지 모른다는 이유로 보존하지 말고 지워야 한다.</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10.5 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">10.5 · OPERATING RESPONSIBLY</span>
+      <h2>책임 있게 운영하기 — 개인정보, 표집, 보존</h2>
+    </div>
+    <p class="rv">검색 관측 가능성은 민감한 데이터를 붙잡는다. 질의에 개인정보가 담길 수 있고, 회수된 청크에 기밀 문서가 들어 있을 수 있고, 생성된 답이 민감한 내용을 재현할 수 있다. 진단 작업을 가능하게 하는 그 관측이 동시에 공격면과 준법 의무를 만든다. 이 장을 닫는 규율은 관측을 책임 있게 운영하는 일이다. <strong>쓸모 있을 만큼 담고, 필요 이상은 담지 않고, 데이터의 생애주기를 의도적으로 관리하는 것.</strong></p>
+    <div class="conds">
+      <div class="cond rv">
+        <h4>추적 속의 개인정보<span>PII redaction</span></h4>
+        <p>검색 관측의 기본 가정은 <em>질의와 회수된 내용에 개인식별정보가 담길 수 있다</em>는 것이어야 한다. 응용이 그것을 다루도록 설계되지 않았더라도 그렇다. 사용자는 응용이 청하지 않았어도 질의에 이름과 주소와 식별자와 건강 정보와 금융 정보를 예사로 적는다. 표준 패턴은 계측 계층에서의 마스킹이다. 질의 텍스트가 스팬에 붙기 전에 마스킹 함수를 지나며 패턴이 유형별 토큰(NAME_REDACTED, ADDRESS_REDACTED)으로 바뀐다. 진단에 필요한 구조는 남기고 실제 민감 내용은 덜어 내는 것이다. 완벽하지 않다 — 어떤 자동 탐지도 재현율 100%에 이르지 못한다 — 그러나 관측 데이터에 대한 엄격한 접근 통제와 결합하면 위험을 상당히 줄인다. 고위험 규제 환경이라면 관측 스택도 바탕 응용과 <em>같은</em> 준법 검토를 받아야 한다.</p>
+      </div>
+      <div class="cond rv">
+        <h4>비용을 위한 표집<span>sampling</span></h4>
+        <p>프로덕션 물량에서 모든 질의의 모든 추적을 저장하는 것은 비싸다. 표집이 비용을 줄이지만, 진단 작업이 의지하는 추적을 버리지 않도록 신중해야 한다. 이 장에서 세운 꼬리 기반 표집이 표준이다. 그리고 관측 자체의 비용 감시가 하나의 규율이다. 포괄적 관측을 배포한 뒤 <strong>관측 기반이 그것이 관측하는 체계보다 더 비싸다는 것을 발견한</strong> 팀이 많다. 처방은 관측 비용을 체계의 다른 비용과 같은 방식으로 계측하고, 관측 예산을 일급 공학 제약으로 대접하는 것이다. 추적 저장 비용, 로그 저장 비용, 관측 백엔드 비용이 모두 바탕 검색 체계와 같은 비용 대시보드에 나타나야 한다.</p>
+      </div>
+      <div class="cond rv">
+        <h4>보존과 접근 통제<span>retention &amp; access</span></h4>
+        <p>추적을 얼마나 오래 두느냐는 진단 필요와 준법 제약에 달렸다. 진단 창 — 추적이 디버깅에 쓸모 있을 수 있는 기간 — 은 대부분의 검색 체계에서 통상 30~90일이다. 그보다 묵은 추적이 현재의 디버깅을 밝힐 공산은 낮다. 준법 제약은 특정 데이터 범주에 대해 이를 늘릴 수도 있고(의료의 임상 추적, 규제 금융의 금융 추적) 특정 시점의 삭제를 요구할 수도 있다. 패턴은 보존 계층(최근 추적의 뜨거운 보존, 묵은 추적의 찬 보존, 알맞은 시점의 삭제)을 정의하고 관리되는 생애주기로 운영하는 것이다.<br><br>관측 데이터의 접근 통제는 바탕 체계 데이터의 접근 통제만큼은 엄격해야 한다. 추적은 내부 질의와 내부 문서와 체계 거동이라는 운영 정보를 담고 있어 널리 접근 가능해서는 안 된다. 이것 없이는 <em>관측 스택이 응용의 보안 모형을 우회하는 또 하나의 데이터 노출면이 된다.</em></p>
+      </div>
+    </div>
+    <p class="rv">이 규율을 받치는 문화의 패턴은 공학 팀 안에 <strong>관측의 주인</strong>을 지명하는 것이다. 관측 스택의 신뢰성과 비용과 보안에 책임을 지는 구체적인 사람들을 두는 것이지, 관측을 모두의 책임으로 두어 결국 아무의 책임도 아니게 만들지 않는 것이다. 이름 붙은 주인이 있는 팀은 그렇지 않은 팀보다 관측을 꾸준히 더 잘 운영한다. 그 주인들이 비슷한 중요도의 프로덕션 서비스에 적용할 공학적 엄정함을 관측 스택에도 적용하기 때문이다.</p>
+  </div>
+</section>
+
+<!-- ============ 안티패턴 ============ -->
+<section style="background:var(--mist);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">COMMON PITFALLS</span>
+      <h2>디버깅을 무너뜨리는 관측의 실수 — 세 가지</h2>
+    </div>
+    <div class="anti">
+      <div class="anti-item rv">
+        <h4>상관 없는 로그<span class="en">Logs Without Correlation</span></h4>
+        <p>가장 흔한 관측 실패는 상관 없는 로그를 가진 것이다. 서비스마다 자기 형식과 자기 타임스탬프로 자기 로그를 쓰고, 하나의 질의에 대한 레코드를 서비스를 가로질러 엮는 것이 아무것도 없다. 데이터는 있으나 그것을 손으로 이어 붙이는 진단 작업이 어떤 합리적인 당직 순번의 인내도 넘어선다.</p>
+        <p><span class="fix">처방</span> — 모든 부품에 추적 ID를 흘려보내고 모든 로그 줄에 추적 ID를 담아라. 추적 ID 상관이 없으면 로그는 발굴의 원재료이고, 있으면 로그는 <strong>질의 가능한 진단 기반</strong>이다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>뒤늦게 붙인 관측<span class="en">Observability as Afterthought</span></h4>
+        <p>많은 검색 체계가 개발 과정의 끝에 관측을 더해 지어진다. 아키텍처가 확정된 뒤, 통합이 다 쓰인 뒤, 체계가 거의 프로덕션 준비를 마친 뒤에. 사후에 끼워 넣은 관측은 처음부터 설계된 관측보다 꾸준히 못하다. 아키텍처가 옳은 신호를 드러내도록 설계되지 않았으므로 계측이 불완전하다.</p>
+        <p><span class="fix">처방</span> — 무엇을 추적에 담고 어떤 지표를 드러내고 어떤 대시보드를 둘지를 기능 아키텍처와 <em>나란히</em>, 후속 작업이 아니라 처음부터 설계하라.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>모든 것을 담기<span class="en">Capturing Everything</span></h4>
+        <p>너무 적게 담는 것의 반대편 실패다. 어떤 팀은 모든 내부 연산을 계측하고, 가능한 모든 속성을 모든 스팬에 붙이고, 모든 중간 계산을 기록한다. 그 결과의 원격 측정은 방대하고, 저장이 비싸고, 항행하기 어렵다. 당직 엔지니어는 상세를 찾을 수 없는 것이 아니라 <em>상세에 빠져 익사한다.</em></p>
+        <p><span class="fix">처방</span> — 포괄적으로가 아니라 <strong>의도적으로</strong> 계측하라. 진단 작업이 실제로 의지하는 지표와 추적과 로그만을. 목적이 문서 보관의 완전함이 아니라 운영적 통찰일 때, 적은 것이 많은 것이다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 다섯 요지 ============ -->
+<section class="takeaways">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">CHAPTER SUMMARY</span>
+      <h2>이 장에서 남는 다섯</h2>
+    </div>
+    <div class="take">
+      <div class="take-item rv"><p>검색 관측 가능성은 일반 관측의 세 기둥 — <b>추적, 지표, 로그</b> — 위에 검색 고유의 계측을 얹어 지어진다. 앞의 사흘짜리 디버깅은 이 계측의 부재가 낳은 것이었고, 넉 달 뒤의 마흔 분짜리 해결은 그것의 존재가 가능하게 한 것이었다.</p></div>
+      <div class="take-item rv"><p><b>OpenTelemetry 분산 추적</b>이 2026년의 프로덕션 표준이다. 질의마다 루트 스팬과 단계별 자식 스팬 — 임베딩, 검색, 재순위화, 성찰, 생성 — 을 낸다. 지혜로운 표집이 흥미로운 성질(오류·거부·이상)을 지닌 추적을 지키고 평범한 질의를 표집해 비용을 다스린다.</p></div>
+      <div class="take-item rv"><p><b>단계 수준 지표가 집계 지표가 감추는 실패를 드러낸다.</b> 임베딩 일관성, 참조 집합 대비 검색 재현율, 리랭커 승격 패턴, 성찰 판정 분포, 생성 품질 표본이 각각 파이프라인의 다른 단계를 비춘다. 단계 경계에서 계측하는 것이 어림짐작 대신 외과적 디버깅을 가능하게 한다.</p></div>
+      <div class="take-item rv"><p>프로덕션 대시보드는 네 범주다 — <b>건강</b>(한눈의 상태), <b>단계 분해</b>(실패가 어디인가), <b>코호트 비교</b>(누가 영향받는가), <b>파고들기</b>(그 패턴을 낳은 구체적 추적). 대시보드 난립이 실패 양식이고, 명시적 소유자를 둔 정전의 작은 한 벌이 그 교정이다.</p></div>
+      <div class="take-item rv"><p>관측은 민감한 데이터를 붙잡으므로 바탕 응용과 <b>같은 거버넌스의 규율</b>로 운영되어야 한다. 계측 계층의 개인정보 마스킹, 비용을 위한 꼬리 기반 표집, 의도적인 보존 계층, 관측 데이터에 대한 엄격한 접근 통제는 규제 도메인의 프로덕션급 체계에서 협상의 여지가 없다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 문헌 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">FURTHER READING</span>
+      <h2>더 읽을 것</h2>
+    </div>
+    <div class="refs">
+      <div class="ref rv"><b>OpenTelemetry Documentation</b>, <i>"Distributed Tracing Concepts and Implementation"</i> (상시 갱신) — 프로덕션 검색 관측이 딛고 선 바탕의 준거. 추적과 스팬의 모형을 몸에 익히려면 개념 절을 먼저 읽고, 그다음 자기 언어와 백엔드의 실무 안내로.</div>
+      <div class="ref rv"><b>Multi-Agent AI Systems Handbook</b>, <i>Chapter 9 — Observability</i> (Norman, 2026) — 자매편의 에이전틱 관측 취급. 더 넓은 OpenTelemetry 패턴, FinOps 비용 귀속, 모든 에이전틱 체계에 적용되는 다섯 기둥 틀을 담는다.</div>
+      <div class="ref rv"><b>Beyer, Jones, Petoff &amp; Murphy</b>, <i>Site Reliability Engineering</i> (O'Reilly, 2016) — 프로덕션 신뢰성과 관측의 기초 텍스트. 패턴은 현대 AI 체계보다 앞서지만 원칙 — 서비스 수준 목표, 원인이 아니라 증상에 경보하기, 노역 감축의 철학 — 은 검색 관측에 곧바로 적용된다.</div>
+      <div class="ref rv"><b>Honeycomb Engineering Blog and Documentation</b> (상시 갱신) — 꼬리 기반 표집, 고카디널리티 추적, 그리고 좋은 관측과 데이터 축장(蓄藏)을 가르는 운영 패턴에 관한 가장 접근하기 쉬운 실무 취급. 관측 백엔드를 고르는 팀에 특히 유관하다.</div>
+      <div class="ref rv"><b>Charity Majors, Liz Fong-Jones &amp; George Miranda</b>, <i>Observability Engineering</i> (O'Reilly, 2022) — 전통적 지표·로그 감시를 넘어선 관측의 현행 정전. 고카디널리티 추적과 사건 주도 디버깅의 취급이 검색 관측의 필요에 곧바로 대응한다.</div>
+    </div>
+    <p class="note rv">위 문헌 목록은 원서 10장의 Further Reading을 그대로 옮긴 것이다. 서지 사항의 최종 확인은 원 출처를 통해 하는 것이 옳다.</p>
+  </div>
+</section>
+
+<!-- ============ 다리 ============ -->
+<section class="bridge">
+  <div class="wrap">
+    <div class="sec-head rv" style="margin-bottom:36px">
+      <span class="sec-no">CHAPTER BRIDGE</span>
+      <h2>다음 장 — RAG FinOps, 비용의 공학</h2>
+    </div>
+    <p class="rv">11장은 4부를 RAG FinOps로 이어 간다. 에이전틱 검색이 프로토타입에서 프로덕션 규모로 옮겨 갈 때 결정적이 되는 비용 공학의 규율이다. 이 장에서 지은 관측 기반이 곧 비용 공학의 바탕이다. <em>재지 못하는 비용은 최적화할 수 없고</em>, 외과적 디버깅을 가능하게 한 단계별 계측이 그대로 외과적 비용 귀속을 가능하게 한다. 임베딩 비용 최적화, 벡터 저장소의 비용 역학, 검색 캐스케이드의 비용 공학, 의미 캐싱, 그리고 프로덕션 에이전틱 검색을 규모가 커져도 경제적으로 지속 가능하게 지키는 운영 규율을 다룰 것이다.</p>
+    <p class="rv">돌아보면 이 장의 이야기는 <em>보이지 않던 것을 보이게 하는 일</em>에 관한 것이었다. 두 사고 사이에 시스템이 나아진 것은 없었다. 두 번 모두 실재하는 결함이 있었다. 달라진 것은 그 결함을 볼 수 있게 되었다는 것뿐이다. 그런데 성숙이란 대개 그런 것이다. 잘못을 없애는 데 있지 않고, <strong>잘못을 알아볼 수 있는 자리를 마련해 두는 데 있다.</strong> 등불을 든 사람이 밤을 없애지는 못한다. 다만 발밑을 보고 걸을 수 있다. 조견(照見)이란 비추어 본다는 말이니, 비추는 일이 곧 고치는 일의 시작이다.</p>
+    <div class="next rv">NEXT — CHAPTER 11 · RAG FINOPS: COST ENGINEERING FOR PRODUCTION RETRIEVAL</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Raymond Norman, Agentic RAG Systems (2026) · Chapter 10<br>
+    원서 187–204쪽 전체 내용 기반 · 본 페이지는 학습·검토 목적의 2차 정리물이다
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    els.forEach(function(e){e.classList.add('on')});
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        en.target.classList.add('on');
+        io.unobserve(en.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,688 @@
+---
+layout: null
+title: "RAGOps: Versioning, Deployment, and Continuous Improvement" 
+date: 2026-08-16
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAGOps — 버전 관리, 배포, 그리고 이어지는 개선 · Agentic RAG Systems 제12장</title>
+<meta name="description" content="Raymond Norman, 『Agentic RAG Systems』 제12장 — 버전 관리와 재현성, 배포 패턴, 검색의 A/B 시험, 이어지는 개선의 고리, RAGOps 성숙도 모형">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --hanji:#F7F4EE;
+  --meok:#33322F;
+  --meok-soft:#6E6C66;
+  --meok-pale:#9A978F;
+  --inju:#A83B2A;
+  --inju-deep:#7E2A1D;
+  --not:#5E5230;            /* 놋빛 — 손때 묻은 연장의 빛 */
+  --not-deep:#463D22;
+  --mist:#EDE8E0;
+  --line:#D8D2C7;
+  --paper-card:#FCFAF6;
+  --serif:'Gowun Batang', serif;
+  --sans:'Noto Sans KR', sans-serif;
+  --mono:'IBM Plex Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--hanji);color:var(--meok);
+  font-family:var(--serif);font-weight:400;
+  line-height:2.12;font-size:17.5px;letter-spacing:-0.008em;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--meok);color:var(--hanji)}
+
+.wrap{max-width:760px;margin:0 auto;padding:0 30px}
+.wrap-wide{max-width:1000px;margin:0 auto;padding:0 30px}
+section{padding:118px 0}
+p{margin-bottom:1.75em}
+em{font-style:normal;color:var(--inju-deep);font-weight:400}
+strong{font-weight:700;color:var(--meok)}
+.mono{font-family:var(--mono)}
+.sans{font-family:var(--sans)}
+
+.rv{opacity:0;transform:translateY(20px);transition:opacity 1s cubic-bezier(.2,.7,.3,1),transform 1s cubic-bezier(.2,.7,.3,1)}
+.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .brush{animation:none !important;stroke-dasharray:none !important;stroke-dashoffset:0 !important}
+  .quiet{animation:none !important}
+}
+
+/* ---------- 표제 ---------- */
+header.hero{padding:150px 0 118px;background:var(--hanji);border-bottom:1px solid var(--line)}
+.hero-kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--meok-pale);text-transform:uppercase;margin-bottom:42px}
+.hero-kicker b{color:var(--inju);font-weight:600}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(30px,4.6vw,48px);line-height:1.5;letter-spacing:-0.012em;margin-bottom:20px;color:var(--meok)}
+h1 .thin{display:block;font-size:.5em;font-weight:400;color:var(--meok-soft);margin-top:20px;letter-spacing:.005em;line-height:1.7}
+.seal{
+  display:inline-block;margin:0 0 40px;padding:10px 13px;
+  border:1.5px solid var(--inju);color:var(--inju);
+  font-family:var(--serif);font-size:13px;font-weight:700;letter-spacing:.2em;line-height:1.3;
+}
+.hero-lede{max-width:620px;font-size:17.5px;line-height:2.16;color:#494741}
+.hero-meta{margin-top:56px;font-family:var(--mono);font-size:12.5px;color:var(--meok-pale);display:flex;gap:26px;flex-wrap:wrap}
+.hero-meta span::before{content:"— ";color:var(--line)}
+
+/* ---------- 여는 이야기 ---------- */
+.incident{background:var(--mist);padding:118px 0;border-bottom:1px solid var(--line)}
+.clock{display:flex;align-items:baseline;gap:22px;flex-wrap:wrap;font-family:var(--mono);line-height:1;margin-bottom:20px}
+.clock .t{font-size:clamp(40px,7.4vw,80px);font-weight:600;color:var(--inju)}
+.clock .sep{font-size:clamp(18px,3vw,26px);color:var(--meok-pale)}
+.clock .w{font-size:clamp(40px,7.4vw,80px);font-weight:600;color:var(--not)}
+.clock .u{font-size:.38em;font-weight:400}
+.tally-cap{font-family:var(--mono);font-size:12.5px;color:var(--meok-soft);letter-spacing:.16em;line-height:1.9}
+.incident .prose{max-width:660px;margin-top:52px}
+.pullquote{margin:60px 0;padding:0 0 0 30px;border-left:2px solid var(--inju);font-size:20px;line-height:1.95;color:var(--inju-deep)}
+.quiet{animation:quiet 4.6s ease-in-out infinite}
+@keyframes quiet{0%,100%{opacity:1}50%{opacity:.62}}
+
+/* 다섯 규율 예고 */
+.five{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;margin:52px 0 0}
+.fv{border-top:2px solid var(--not);padding-top:18px}
+.fv .no{font-family:var(--mono);font-size:11px;color:var(--inju);letter-spacing:.14em;margin-bottom:8px}
+.fv p{font-family:var(--sans);font-size:14px;line-height:1.85;color:#494741;margin:0}
+.fv p b{font-family:var(--serif);font-size:15.5px;color:var(--not-deep);display:block;margin-bottom:6px}
+
+/* ---------- 절 공통 ---------- */
+.sec-head{margin-bottom:60px}
+.sec-no{font-family:var(--mono);font-size:12.5px;letter-spacing:.26em;color:var(--inju-deep);margin-bottom:20px;display:block}
+h2{font-family:var(--serif);font-weight:700;font-size:clamp(24px,3.3vw,34px);line-height:1.55;color:var(--meok)}
+h3{font-family:var(--serif);font-weight:700;font-size:20px;margin:2.6em 0 1em;color:var(--not)}
+h3::before{content:"· ";color:var(--inju)}
+
+.panel{background:var(--paper-card);border:1px solid var(--line);padding:40px 42px;margin:60px 0}
+.panel .tag{font-family:var(--mono);font-size:11.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--inju-deep);margin-bottom:18px;display:block}
+.panel h4{font-family:var(--serif);font-size:19px;font-weight:700;margin-bottom:16px}
+.panel p{font-size:16px;line-height:2.02;margin-bottom:1.1em}
+.panel p:last-child{margin-bottom:0}
+.panel.nt{border-left:2px solid var(--not)}
+.panel.nt .tag{color:var(--not-deep)}
+.panel.inju{border-left:2px solid var(--inju)}
+
+/* ---------- 도해 ---------- */
+.figure{margin:70px 0;text-align:center}
+.figure svg{max-width:100%;height:auto}
+.figure figcaption{font-family:var(--sans);font-size:13.5px;color:var(--meok-soft);margin-top:22px;line-height:1.85}
+.figure figcaption::before{content:"⟨"}
+.figure figcaption::after{content:"⟩"}
+.brush{stroke-dasharray:1600;stroke-dashoffset:1600;animation:brush 2.8s ease-out forwards .35s}
+@keyframes brush{to{stroke-dashoffset:0}}
+
+/* ---------- 여섯 산출물 ---------- */
+.arts{margin:60px 0;border-top:1px solid var(--line)}
+.art{display:grid;grid-template-columns:52px 168px 1fr;gap:22px;align-items:baseline;padding:26px 0;border-bottom:1px solid var(--line)}
+.art .num{font-family:var(--mono);font-size:12.5px;color:var(--inju);padding-top:4px}
+.art h4{font-family:var(--serif);font-size:16.5px;font-weight:700;color:var(--not);line-height:1.6}
+.art h4 .en{display:block;font-family:var(--mono);font-weight:400;font-size:10px;color:var(--meok-pale);margin-top:5px;letter-spacing:.05em}
+.art p{font-size:15px;line-height:1.94;color:#494741;margin:0}
+
+/* ---------- 배포 3패턴 ---------- */
+.deploys{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin:60px 0}
+.dp{background:var(--paper-card);border:1px solid var(--line);border-top:2px solid var(--not);padding:34px 32px}
+.dp h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:6px;color:var(--not)}
+.dp .en{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--meok-pale);margin-bottom:18px}
+.dp p{font-size:14.5px;line-height:1.96;color:#494741;margin-bottom:.9em}
+.dp p:last-child{margin-bottom:0}
+.dp .fit{font-size:13.5px;color:var(--not-deep);line-height:1.85}
+.dp .fit::before{content:"알맞은 때 — ";color:var(--meok-pale)}
+
+/* ---------- 표 공통 ---------- */
+.tbl{margin:60px 0}
+.tr{display:grid;gap:18px;padding:22px 0;border-top:1px solid var(--line);align-items:start}
+.tr.head{border-top:none;padding-bottom:10px}
+.tr.head span{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--meok-pale)}
+.tr:last-child{border-bottom:1px solid var(--line)}
+.tbl-4 .tr{grid-template-columns:150px 1fr 1fr 1fr}
+.tbl-lv .tr{grid-template-columns:168px 1fr 1fr 1fr}
+.tc-name{font-family:var(--serif);font-weight:700;font-size:15.5px;color:var(--not);line-height:1.5}
+.tc{font-size:13.5px;line-height:1.85;color:#494741}
+.tc.warn{color:var(--inju-deep)}
+
+/* ---------- 네 단계 고리 ---------- */
+.phases{margin:56px 0}
+.ph{display:grid;grid-template-columns:126px 1fr;gap:24px;padding:28px 0;border-top:1px solid var(--line);align-items:start}
+.ph:last-child{border-bottom:1px solid var(--line)}
+.ph h4{font-family:var(--serif);font-size:16.5px;font-weight:700;color:var(--not);line-height:1.5}
+.ph h4 .en{display:block;font-family:var(--mono);font-weight:400;font-size:10.5px;color:var(--meok-pale);margin-top:5px}
+.ph p{font-size:15px;line-height:1.95;color:#494741;margin:0}
+
+/* ---------- 코드 ---------- */
+pre.code{
+  background:var(--meok);color:#DAD6CD;
+  font-family:var(--mono);font-size:12.5px;line-height:1.9;
+  padding:34px 36px;margin:56px 0;overflow-x:auto;
+}
+pre.code .cm{color:#948F84}
+pre.code .kw{color:#D9A57F}
+pre.code .st{color:#A9BFA8}
+.code-cap{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--meok-pale);margin:-42px 0 56px;padding-left:2px}
+
+/* ---------- 안티패턴 ---------- */
+.anti{counter-reset:anti;margin:60px 0}
+.anti-item{padding:36px 0 36px 66px;position:relative;counter-increment:anti;border-top:1px solid var(--line)}
+.anti-item:last-child{border-bottom:1px solid var(--line)}
+.anti-item::before{
+  content:counter(anti);position:absolute;left:0;top:36px;
+  width:34px;height:34px;line-height:32px;text-align:center;
+  border:1.5px solid var(--inju);color:var(--inju);
+  font-family:var(--mono);font-size:13px;
+}
+.anti-item h4{font-family:var(--serif);font-size:18px;font-weight:700;margin-bottom:12px}
+.anti-item h4 .en{font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--meok-pale);display:block;margin-top:5px}
+.anti-item p{font-size:15.5px;line-height:1.98;color:#494741;margin-bottom:1em}
+.anti-item p:last-child{margin-bottom:0}
+.anti-item .fix{font-weight:700;color:var(--inju-deep)}
+
+/* ---------- 다섯 요지 ---------- */
+.takeaways{background:var(--meok);color:#E6E2D9;padding:118px 0}
+.takeaways h2{color:#F2EEE6}
+.takeaways .sec-no{color:#D9A57F}
+.take{counter-reset:take;margin-top:58px}
+.take-item{display:grid;grid-template-columns:58px 1fr;gap:24px;padding:34px 0;border-top:1px solid rgba(230,226,217,.13);counter-increment:take}
+.take-item::before{content:counter(take);font-family:var(--serif);font-size:34px;font-weight:700;color:#605C53;line-height:1.2}
+.take-item p{font-size:16px;line-height:2.08;color:#CBC5B9;margin:0}
+.take-item p b{color:#F2EEE6}
+
+/* ---------- 문헌·다리·꼬리 ---------- */
+.refs{margin:58px 0}
+.ref{padding:26px 0 26px 30px;border-top:1px solid var(--line);position:relative;font-size:15.5px;line-height:1.95;color:#494741}
+.ref::before{content:"—";position:absolute;left:0;color:var(--inju)}
+.ref b{font-weight:700;color:var(--meok)}
+.ref i{font-style:italic}
+.ref:last-child{border-bottom:1px solid var(--line)}
+.bridge{background:var(--mist);padding:104px 0;border-top:1px solid var(--line)}
+.bridge .next{margin-top:44px;font-family:var(--mono);font-size:12.5px;letter-spacing:.18em;color:var(--not)}
+footer{padding:64px 0;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--meok-pale);border-top:1px solid var(--line);line-height:2.1}
+.note{font-family:var(--sans);font-size:13.5px;color:var(--meok-soft);margin-top:32px;line-height:1.95}
+.note::before{content:"※ ";color:var(--inju)}
+
+@media(max-width:680px){
+  section{padding:82px 0}
+  header.hero{padding:104px 0 82px}
+  .figure.scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .figure.scrollx svg{min-width:660px;max-width:none}
+  .art{grid-template-columns:1fr;gap:8px}
+  .art .num{padding-top:0}
+  .tbl-4 .tr,.tbl-lv .tr{grid-template-columns:1fr 1fr;row-gap:8px}
+  .tr.head{display:none}
+  .tc-name{grid-column:1 / -1}
+  .ph{grid-template-columns:1fr;gap:8px}
+  .clock{gap:14px}
+  .take-item{grid-template-columns:42px 1fr;gap:16px}
+  .take-item::before{font-size:26px}
+  .anti-item{padding-left:52px}
+  .anti-item::before{width:30px;height:30px;line-height:28px;font-size:12px}
+  .pullquote{font-size:18px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 표제 ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-kicker rv">AGENTIC RAG SYSTEMS · RAYMOND NORMAN · <b>제 12 장</b></div>
+    <div class="seal rv">日日新</div>
+    <h1 class="rv">RAGOps — 버전 관리, 배포, 그리고 이어지는 개선<span class="thin">검색 체계를 출시하는 팀과 그것을 운영하는 팀을 가르는 것이 이 규율이다.</span></h1>
+    <p class="hero-lede rv">9장의 평가와 10장의 관측 가능성과 11장의 비용 공학은 각각 훌륭한 실천이다. 그러나 낱낱의 실천은 <em>시간을 견디는 하나의 방식</em>으로 엮이지 않으면 체계를 지켜 주지 못한다. RAGOps는 그 셋을 이어 붙여, 프로덕션 검색을 돌리고 감시하고 고쳐 나가는 이어지는 실천으로 만드는 운영의 생애주기다. 4부는 여기서 닫힌다.</p>
+    <div class="hero-meta rv">
+      <span>원서 221–239쪽</span>
+      <span>Part IV · Production Engineering</span>
+      <span>날마다 새로워지는 일</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 여는 이야기 ============ -->
+<section class="incident">
+  <div class="wrap">
+    <div class="clock rv quiet">
+      <span class="t">23:48</span>
+      <span class="sep">·</span>
+      <span class="w">26<span class="u">번째 주말</span></span>
+    </div>
+    <div class="tally-cap rv">2026년 7월 · 어느 핀테크 플랫폼<br>배포한 것도 없고 바꾼 것도 없었다. 그런데 검색이 멎었다.</div>
+    <div class="prose">
+      <p class="rv">2026년 7월, 토요일 밤 11시 48분, 어느 핀테크 플랫폼의 당직 엔지니어가 회사의 규제 조사 어시스턴트가 질의의 90%에 빈 결과를 돌려주고 있다는 경보를 받았다. 마흔 분 전까지 체계는 완벽히 돌고 있었다. 배포된 것이 없었다. 바뀐 것이 없었다. 그런데도 팀이 볼 수 있는 모든 지표에서 검색은 사실상 기능을 멈추었다. 당직 엔지니어가 선임 검색 엔지니어를 부르고, 선임이 플랫폼 책임자를 부르고, 일요일 새벽 1시 15분에는 당직 팀 전체가 화상 회의에 모여 무엇이 부서졌는지 이해하려 애쓰고 있었다.</p>
+      <p class="rv">부서진 것은, 알고 보니 당직 팀의 누구도 존재를 기억하지 못한 <strong>예정 작업</strong>이었다. 여섯 달 전 팀은 벡터 인덱스를 처음부터 다시 짓는 주간 작업을 걸어 두었다. 삭제된 벡터가 차지한 공간을 회수하고 인덱스의 내부 구조를 정돈하는 위생 작업이었다. 그 작업은 스물다섯 주 동안 주말마다 성공적으로 돌았다. 스물여섯 번째 주말, 최근의 말뭉치 확장이 데이터셋을 어떤 문턱 너머로 밀어 올렸고, 재구축의 메모리 요구가 프로덕션 벡터 데이터베이스 인스턴스가 줄 수 있는 것을 넘어섰다. 재구축은 부분적으로 완료되어 인덱스를 미묘하게 오염시켰고, 질의가 후보를 돌려주기는 하되 그 후보가 구조적으로 기형이어서 쓸 수 있는 결과를 내지 못하는 상태로 체계를 남겨 두었다.</p>
+      <p class="rv">진단에 세 시간이 걸렸다. 회복 — 지난주 백업에서 인덱스를 복원하고, 그사이의 말뭉치 갱신을 증분으로 재생하고, 대표 질의 집합에 걸쳐 검색이 옳게 작동하는지 검증하는 일 — 에 또 네 시간이 걸렸다. 일요일 아침 8시에 체계는 다시 살아났다. 10시에 팀은 사후 검토에 앉았고, 그 검토는 지난 몇 달 회사의 모든 사후 검토가 내놓던 결론과 같은 결론을 냈다. 플랫폼이 <em>지난달의 규모에서는 통하고 이달의 규모에서는 소리 없이 실패하는</em> 운영 관행의 모음 위에서 돌고 있으며, 팀에게는 이 규모 주도의 실패들을 장애가 되기 전에 잡아내는 체계적 규율이 없다는 것이었다.</p>
+      <p class="rv">검색 체계 자체는 성했다. 아키텍처는 이 책 2부와 3부에서 세운 그 캐스케이드였다. 하이브리드 검색, 재순위화, 성찰, 관할을 넘나드는 질의를 위한 멀티 에이전트 오케스트레이션. 9장의 평가 규율이 갖춰져 있었다. 10장의 관측 가능성이 실패를 몇 분 안에 감지했다. 11장의 비용 규율이 FinOps 사고를 막고 있었다. 팀에게 없던 것은 그 <em>낱낱의 실천들을 시간을 견디는 하나의 방식으로 엮는</em> 운영 생애주기의 규율이었다. 자기 환경에 더는 맞지 않게 된 예정 작업을 잡아내고, 백업이 실제로 복원되는지 검증하고, 모든 부품이 자기 버전을 알며 무언가 부서졌을 때 팀이 <strong>"무엇이 바뀌었나"</strong>에 확정적으로 답할 수 있게 하는 규율이다.</p>
+      <div class="pullquote rv">그 규율의 부재가 토요일 밤 11시 48분의 사고를 만들고, 그 존재가 그것을 막는다.</div>
+      <p class="rv">이 장은 성숙한 RAGOps를 이루는 다섯 규율을 세우며 4부를 닫는다.</p>
+      <div class="five">
+        <div class="fv rv"><div class="no">하나</div><p><b>버전 관리</b>매 순간 무엇이 돌고 있는지 알고, 어느 과거 상태로도 되돌아갈 수 있는 것.</p></div>
+        <div class="fv rv"><div class="no">둘</div><p><b>배포 패턴</b>프로덕션 트래픽을 흔들지 않고 변경을 실어 보내는 방식들.</p></div>
+        <div class="fv rv"><div class="no">셋</div><p><b>A/B 시험</b>제안된 개선이 실제로 프로덕션 거동을 개선하는지 널리 출시하기 전에 검증하는 방법론.</p></div>
+        <div class="fv rv"><div class="no">넷</div><p><b>이어지는 개선</b>프로덕션의 관찰을 측정된 변경으로 바꾸는 운영의 고리.</p></div>
+        <div class="fv rv"><div class="no">다섯</div><p><b>성숙도 모형</b>팀이 지금 어디에서 일하고 있으며 다음 성숙이 어떤 모습인지 아는 틀.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12.1 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">12.1 · VERSIONING</span>
+      <h2>버전 관리 — 무엇이 돌고 있는지 알고, 되돌릴 수 있는 것</h2>
+    </div>
+    <p class="rv">프로덕션 검색 체계는 저마다 버전을 지닌 부품들로 이루어지며, 팀이 체계를 운영할 수 있는 능력은 그 버전을 명시적으로 추적하는 데 달려 있다. 핀테크 팀의 사고 대응은 단순하지만 중대한 물음 하나에 발이 묶였다. <em>재구축 작업은 어느 인덱스 형식 버전을 겨냥해 쓰였고, 그 가정이 지금의 말뭉치 규모에서도 유효한가.</em> 그 물음이 존재한 것은 팀이 버전을 추적하지 않았기 때문이다. 버전 관리의 규율이 있었다면 몇 초 안에 답할 수 있는 물음이었다.</p>
+    <p class="rv">어떤 프로덕션 검색 체계에서든 명시적 버전 추적이 필요한 산출물은 여섯 범주다.</p>
+    <div class="arts">
+      <div class="art rv">
+        <div class="num">01</div>
+        <h4>임베딩 모델<span class="en">embedding model</span></h4>
+        <p>각 임베딩 배치를 만든 구체적 모델 버전과 제공자 리비전. 외부 제공자가 소유하되 <strong>체계가 고정(pin)해야</strong> 한다. 제공자 측의 소리 없는 변경을 막기 위해서다.</p>
+      </div>
+      <div class="art rv">
+        <div class="num">02</div>
+        <h4>리랭커 모델<span class="en">reranker model</span></h4>
+        <p>어느 시점에 후보 집합을 채점한 구체적 리랭커 버전.</p>
+      </div>
+      <div class="art rv">
+        <div class="num">03</div>
+        <h4>프롬프트 템플릿<span class="en">prompt template</span></h4>
+        <p>질의 재작성, 성찰, 종합, 그 밖의 모든 모델 호출에 쓰인 프롬프트의 <em>정확한 문면</em>. 팀이 소유하되 반복 중에 끊임없이 변하므로 특히 추적이 필요하다.</p>
+      </div>
+      <div class="art rv">
+        <div class="num">04</div>
+        <h4>말뭉치 스냅숏<span class="en">corpus snapshot</span></h4>
+        <p>주어진 검색 순간의 문서 말뭉치 상태 — 어느 문서가 있었고, 현행이었고, 폐기되었고, 대체되었는지. 이산이 아니라 연속이므로 시점 재구성을 받치는 타임스탬프 기반 버전 관리를 요구한다.</p>
+      </div>
+      <div class="art rv">
+        <div class="num">05</div>
+        <h4>벡터 인덱스 설정<span class="en">index config</span></h4>
+        <p>활성 인덱스마다의 알고리즘 파라미터, 차원 수, 조율 설정.</p>
+      </div>
+      <div class="art rv">
+        <div class="num">06</div>
+        <h4>오케스트레이션 로직<span class="en">orchestration</span></h4>
+        <p>파이프라인 단계들이 어떻게 이어지는지를 정의하는 코드의 버전. 소스 관리와 배포 태깅이라는 표준 실천으로 버전 관리된다.</p>
+      </div>
+    </div>
+    <h3 class="rv">재현성이라는 시험</h3>
+    <p class="rv">버전 관리 규율의 운영적 시험은 <strong>재현성</strong>이다. 어느 과거 질의에 대해서든 그것이 처리될 때 체계가 정확히 무엇을 했는지 재구성할 수 있는 능력이다. 세 주 전의 질의 ID가 주어졌을 때 팀은 식별할 수 있어야 한다. 어느 임베딩 모델이 질의를 임베딩했는지, 어느 인덱스 버전이 질의되었는지, 그 인덱스가 어느 말뭉치 상태를 반영했는지, 어느 리랭커가 후보를 채점했는지, 어느 프롬프트 템플릿이 모델 호출을 다스렸는지, 어느 버전의 오케스트레이션 코드가 전체를 조정했는지. 이 사실 가운데 하나라도 되찾을 수 없다면, 팀은 그 질의에서 체계가 왜 그렇게 거동했는지 온전히 설명할 수 없다. 그것은 곧 <em>사고를 믿음직하게 조사할 수도, 실험을 검증할 수도, 체계적으로 개선할 수도 없다</em>는 뜻이다.</p>
+    <p class="rv">재현성은 모든 연산의 추적과 모든 캐시된 답과 모든 기록된 사건에 버전 메타데이터를 붙임으로써 가능해진다. 10장에서 세운 규율 — 구조화된 스팬의 분산 추적 — 이 그 바탕이고, 버전 관리는 모든 스팬이 관여한 부품의 버전 식별자를 나르게 함으로써 그것을 확장한다. 이 규율과 함께라면 어느 과거 질의든 현재 체계에 다시 돌려 그 차이를 특정 부품의 변경에 귀속시킬 수 있다. 없으면 디버깅은 발굴의 어림짐작이다.</p>
+    <pre class="code rv"><span class="cm"># 모든 질의 추적과 함께 남기는 프로덕션 버전 명세</span>
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, asdict
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+
+<span class="kw">@dataclass</span>
+<span class="kw">class</span> ComponentVersions:
+    embedding_model: str        <span class="cm"># 'openai/text-embedding-3-large@2025-09'</span>
+    reranker_model: str         <span class="cm"># 'cohere/rerank-v3@2025-11'</span>
+    prompt_version: str         <span class="cm"># 프롬프트 템플릿의 git 형식 해시</span>
+    corpus_snapshot_at: datetime <span class="cm"># 시점 말뭉치 상태 참조</span>
+    index_config_id: str        <span class="cm"># (알고리즘, 파라미터, 차원)의 해시</span>
+    orchestrator_commit: str    <span class="cm"># 오케스트레이션 코드의 git 커밋 SHA</span>
+
+<span class="kw">def</span> emit_query_trace(query_id, query, response,
+                     components: ComponentVersions):
+    tracer.current_span().set_attribute(
+        <span class="st">'rag.versions'</span>,
+        json.dumps(asdict(components), default=str))
+    <span class="cm"># 추적 저장소에 남는다 — 어느 과거 조사에든 질의 가능하다</span>
+
+<span class="cm"># 세 주 뒤, 사고를 디버깅하며:</span>
+trace = trace_store.get(query_id)
+versions = json.loads(trace.attributes[<span class="st">'rag.versions'</span>])
+<span class="cm"># 이제 이 질의가 처리될 때 무엇이 배포되어 있었는지 정확히 안다</span></pre>
+    <div class="code-cap">원서 12.1절 — 여섯 부품의 버전이 질의마다의 추적에 실려 남는다</div>
+    <div class="panel nt rv">
+      <span class="tag">Key Definition</span>
+      <h4>재현성이 버전 관리의 시험이다</h4>
+      <p>충분한 버전 관리의 운영적 정의는 재현성이다. <strong>어느 과거 질의에 대해서든 팀이 체계가 무엇을 했는지 재구성할 수 있는 것.</strong> 처리에 관여한 모든 부품이 자기 버전을 식별받아 그 질의의 추적에 기록되어야 한다.</p>
+      <p>과거 질의를 재구성할 수 없는 팀은 사고를 믿음직하게 조사할 수도, 실험을 검증할 수도, 확신을 갖고 체계를 개선할 수도 없다. 버전 관리는 다른 모든 RAGOps 실천이 딛고 서는 <em>토대의 규율</em>이다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12.2 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap-wide">
+    <div class="wrap" style="padding:0">
+      <div class="sec-head rv">
+        <span class="sec-no">12.2 · DEPLOYMENT PATTERNS</span>
+        <h2>배포 패턴 — 그림자, 카나리, 기능 플래그</h2>
+      </div>
+      <p class="rv">버전 관리가 되돌림을 가능하게 한다. 배포 패턴은 되돌림이 <em>필요해지기는 하는지</em>, 필요해질 때 얼마나 파괴적인지를 정한다. 2026년 프로덕션을 지배하는 패턴은 셋이며, 저마다 맞는 변경의 부류가 다르다. 규율은 배포하려는 변경의 위험 성격에 <strong>알맞은 패턴을 고르는 것</strong>이지, 모든 것에 한 패턴을 기본으로 쓰는 것이 아니다.</p>
+    </div>
+    <div class="deploys">
+      <div class="dp rv">
+        <h4>그림자 배포</h4>
+        <div class="en">shadow deployment</div>
+        <p>새 버전을 현행 프로덕션 버전 곁에서 돌리며 모든 프로덕션 질의를 양쪽에 보내되, 사용자에게는 현행 버전의 응답만 돌려준다. 새 버전의 응답은 붙잡아 두고 나중에 현행과 견준다. 사용자 경험은 그대로이고, 팀은 새 버전이 어느 사용자를 섬기기 <em>전에</em> 그것을 평가할 실제 프로덕션 트래픽을 얻는다.</p>
+        <p>비용은 실재한다. 그림자 기간 동안 양쪽을 돌리므로 연산 부하가 갑절이 된다. 그러나 위험 감축은 극적이다. 핀테크 팀의 인덱스 재구축이, 새 말뭉치 규모에 견주어 메모리 요구를 잰 별도 인덱스 인스턴스에 그림자 배포되었다면, <strong>프로덕션이 아니라 그림자 환경에서 실패했을 것이다.</strong></p>
+        <p class="fit">고위험 변경 — 새 임베딩 모델, 대규모 리랭커 업그레이드, 오케스트레이션 로직의 구조적 변경</p>
+      </div>
+      <div class="dp rv">
+        <h4>카나리 전개</h4>
+        <div class="en">canary rollout</div>
+        <p>새 버전을 프로덕션 트래픽의 작은 몫 — 통상 1~5% — 에 노출하고, 확신이 쌓이는 대로 그 몫을 점진적으로 늘린다. 새 버전이 소수의 질의를 다루는 동안 품질 지표와 비용 지표와 오류율을 상시 감시한다. 지표가 나빠지면 카나리는 자동으로 되돌려진다. 그대로거나 나아지면 전개 비율이 오른다.</p>
+        <p>그림자 배포보다 빠르다 — 사용자가 새 버전을 실제로 본다 — 그러나 직접 배포보다 느리다. 그 거래가 <em>영향 반경이 유의미할 수 있으나 위험 성격이 제한된 노출을 받아들일 만큼 묶여 있는</em> 변경에 알맞다.</p>
+        <p class="fit">중위험 변경 — 프롬프트 템플릿 갱신, 리랭커 조율, 하이브리드 검색 가중치 조정</p>
+      </div>
+      <div class="dp rv">
+        <h4>기능 플래그 배포</h4>
+        <div class="en">feature flag</div>
+        <p>새 코드 경로를 프로덕션에 실어 보내되 기본으로는 꺼 두고, 설정 가능한 플래그 뒤에 둔다. 특정 코호트 — 사내 사용자, 베타 고객, 특정 질의 유형 — 만 선별적으로 새 경로를 쓰게 할 수 있고, 나머지는 기존 경로를 계속 쓴다. 플래그는 재배포 없이 켜고 끌 수 있다.</p>
+        <p><em>누가 그것을 겪을지에 관한 운영의 결정이 언제 실어 보낼지에 관한 공학의 결정과 떼어져야 할</em> 변경에 알맞다. 비용은 플래그 기반을 유지하는 운영 복잡성과, 주기적으로 쳐내야 하는 묵은 플래그의 필연적 누적이다.</p>
+        <p class="fit">코호트 특화 또는 실험적 변경 — 사용자 동의가 필요한 새 캐스케이드, 특정 등급에만 도는 실험적 패턴</p>
+      </div>
+    </div>
+    <div class="wrap" style="padding:0">
+      <div class="tbl tbl-4">
+        <div class="tr head rv"><span>패턴</span><span>위험 성격</span><span>사용자 노출</span><span>회복 속도</span></div>
+        <div class="tr rv"><div class="tc-name">그림자 배포</div><div class="tc">고위험 · 구조적 변경</div><div class="tc">없음 (승격까지)</div><div class="tc">즉시 — 새 버전이 사용자를 대면하지 않는다</div></div>
+        <div class="tr rv"><div class="tc-name">카나리 전개</div><div class="tc">중위험 · 영향 반경이 묶인 변경</div><div class="tc">점진적 (1% → 100%)</div><div class="tc">수 초 — 되돌림이 트래픽을 되돌린다</div></div>
+        <div class="tr rv"><div class="tc-name">기능 플래그</div><div class="tc">코호트 특화 또는 실험적</div><div class="tc">선별적 (코호트별)</div><div class="tc">즉시 — 플래그를 내리면 경로가 닫힌다</div></div>
+        <div class="tr rv"><div class="tc-name">직접 배포</div><div class="tc">저위험 · 잘 이해된 변경</div><div class="tc">즉시 100%</div><div class="tc warn">느림 — 전면 재배포를 요구한다</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12.3 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">12.3 · A/B TESTING</span>
+      <h2>검색 변경의 A/B 시험 — 실험의 엄정함</h2>
+    </div>
+    <p class="rv">배포 패턴은 변경을 안전하게 프로덕션에 들여놓는다. A/B 시험은 그 변경이 <em>실제로 프로덕션 거동을 개선하는지</em>를 정한다. 두 규율은 상보적이다. 검증 없는 안전한 배포는 안전하게 배포된 그른 변경을 낳고, 안전한 배포 없는 검증은 잘 평가되었으나 출시될 때 사용자를 흔드는 변경을 낳는다.</p>
+    <p class="rv"><strong>순진한 A/B 시험이 검색에서 모자란 까닭.</strong> 표준 A/B 방법론은 최적화하려는 지표 — 클릭률 같은 것 — 가 직접 관측되는 제품 기능을 위해 발전했다. 검색 품질은 그런 방식으로 직접 관측되지 않는다. 그른 답을 받은 사용자는 그것을 받아들일 수도, 스스로 알아채고 고칠 수도, 검토를 요청할 수도, 그저 알아채지 못할 수도 있다. 성공한 검색과 실패한 검색을 가르는 신호는 흔히 지연되거나 간접적이거나 아예 없다. 방법론을 적응시키지 않고 표준 A/B를 검색에 적용하면, <em>대리 지표를 재면서 실제 품질 차이는 놓치는</em> 연구가 나온다.</p>
+    <p class="rv">A/B 시험이 검색에서 통하게 만드는 적응은, 얻을 수 있는 <strong>직접적 사용자 피드백 지표</strong> — 명시적 좋아요/싫어요 평가, 불만을 시사하는 후속 질의 패턴, 사람 지원으로의 에스컬레이션 — 를 각 변형이 다룬 질의에 대해 9장의 자동 품질 지표와 <em>결합하는</em> 것이다. 결합은 삼각 측량을 준다. 직접 피드백과 자동 지표가 모두 한 변형을 편들면 팀은 확신을 갖고 출시할 수 있다. 어긋나면, 그 어긋남 자체가 정보이며 어떤 결정보다 먼저 조사를 요구한다.</p>
+    <h3 class="rv">통계적 검정력과 표본 크기</h3>
+    <p class="rv">검색 변경은 흔히 작은 효과 크기를 낸다. 잘 수행된 변경의 전형적인 답 품질 개선은 <strong>1~3%</strong>다. 이 크기의 효과를 통계적 확신과 함께 감지하려면 팔마다 수천에서 수만 질의의 표본이 필요하다. 팔마다 수백 질의로 A/B 시험을 돌리는 팀은 예사로 결론 없는 결과를 낸 뒤, 부족한 증거 위에서 출시 여부를 결정한다.</p>
+    <p class="rv">규율은 실험이 시작되기 <em>전에</em> 필요한 표본 크기를 계산하는 것이다. 감지해야 하는 최소 효과 크기와 원하는 검정력에 근거해서다. 대부분의 검색 A/B 시험에서 요구되는 표본 크기는 실험이 시간이 아니라 <strong>며칠에서 몇 주</strong>를 돌아야 할 만큼 크다. 빠르게 반복해야 하는 압박 아래의 팀은 실험을 일찍 끊고 싶은 유혹을 받고, 그것이 잡음 섞인 증거와 믿을 수 없는 출시 결정을 낳는다. 규율은 실험 전에 표본 크기와 성공 기준을 <em>미리 등록하고</em>, 계획된 표본이 쌓일 때까지 기다려 결정하는 것이다.</p>
+    <h3 class="rv">사전 등록과 다중 비교</h3>
+    <p class="rv">검색 A/B 시험을 흔히 괴롭히는 실패 양식은 둘이다. 첫째는 <em>선택적 보고</em>다. 팀이 여러 시험을 돌리고, 바라던 결과를 보인 하나를 찾아, 나머지는 보고하지 않은 채 그 하나에 근거해 출시한다. 둘째는 한 시험 안의 <em>다중 비교</em>다. 팀이 많은 지표를 재고, 유의한 효과를 보인 하나를 찾아, 여러 지표를 비교하면 거짓 긍정률이 곱해진다는 사실을 셈하지 않고 그 하나에 근거해 출시한다.</p>
+    <p class="rv">사전 등록이 둘 모두를 다룬다. 실험이 시작되기 전에 팀은 무엇을 시험하는 가설인지, 어느 지표가 (소수의) 주(主) 지표이고 어느 것이 참고인지, 어떤 표본 크기가 필요한지, 결정 규칙이 무엇일지 적어 둔다. 그다음 실험은 계획대로 돌고, 분석은 사전 등록된 방법론을 따르고, 결정은 사전 등록된 기준으로 내려진다. <strong>이렇게 일하는 팀은 믿음직한 증거를 낸다. 즉흥으로 하는 팀은 흔히 거짓 긍정을 내고 실제로는 통하지 않는 변경을 출시한다.</strong></p>
+    <div class="panel nt rv">
+      <span class="tag">Production Insight</span>
+      <h4>직접 피드백과 자동 지표의 결합</h4>
+      <p>검색 A/B 시험에서 가장 믿음직한 신호는 실험 트래픽에 적용된 <strong>직접적 사용자 피드백과 자동 품질 지표의 결합</strong>이다. 어느 쪽도 홀로 충분하지 않다. 사용자 피드백은 잡음이 많고 쉽게 눈에 띄는 문제 쪽으로 기울고, 자동 지표는 사용자 경험을 완벽히 따르지 못할 수 있는 대리물을 잰다.</p>
+      <p>두 신호가 모두 한 변형을 편들 때 증거는 강하고 팀은 확신을 갖고 출시할 수 있다. 어긋날 때 그 어긋남은 그 자체로 정보다 — 출시 전에 왜 그런지 조사할 일이다. <em>검색에서 가장 비싼 실수는 한 신호에서는 좋아 보이면서 다른 신호에서는 퇴행을 내는 변경이다.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12.4 ============ -->
+<section style="background:var(--paper-card);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap-wide">
+    <div class="wrap" style="padding:0">
+      <div class="sec-head rv">
+        <span class="sec-no">12.4 · THE IMPROVEMENT LOOP</span>
+        <h2>이어지는 개선의 고리</h2>
+      </div>
+      <p class="rv">버전 관리와 배포 패턴과 A/B 시험은 프로덕션 검색을 안전하게 <em>바꾸는</em> 역학이다. 이어지는 개선의 고리는 <strong>무엇을 바꿀지 정하는</strong> 규율이다. 이 고리는 9장에서 11장까지의 평가 데이터와 관측 신호와 비용 지표의 흐름을 우선순위 매겨진 측정된 개선의 목록으로 바꾼다. 이 고리가 없으면 프로덕션 검색은 표류한다. 아무도 체계적으로 들여다보지 않아 평가 지표가 소리 없이 퇴화하고, 관측이 드러낸 실패 패턴을 아무도 조사하지 않고, 비용 추세가 어떤 최적화도 촉발하지 않은 채 나빠진다.</p>
+    </div>
+    <figure class="figure scrollx rv">
+      <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="관찰·우선순위·실행·측정의 네 단계 고리와 예측 대 실제의 되먹임">
+        <defs>
+          <marker id="a12" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#5E5230"/></marker>
+          <marker id="a12r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#A83B2A"/></marker>
+        </defs>
+        <text x="24" y="26" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#9A978F" letter-spacing="1.5">OBSERVE · PRIORITISE · EXECUTE · MEASURE</text>
+
+        <!-- inputs -->
+        <g font-family="IBM Plex Mono, monospace" font-size="10" fill="#6E6C66">
+          <text x="24" y="112">9장 · 평가</text>
+          <text x="24" y="134">10장 · 관측</text>
+          <text x="24" y="156">11장 · 비용</text>
+        </g>
+        <g stroke="#9A978F" stroke-width="1.1" fill="none">
+          <line x1="96" y1="108" x2="128" y2="122" marker-end="url(#a12)"/>
+          <line x1="96" y1="130" x2="128" y2="130" marker-end="url(#a12)"/>
+          <line x1="96" y1="152" x2="128" y2="138" marker-end="url(#a12)"/>
+        </g>
+
+        <!-- four phases -->
+        <g font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#33322F">
+          <rect x="134" y="108" width="112" height="46" fill="#EDE8E0" stroke="#5E5230" stroke-width="1.5"/>
+          <text x="190" y="130" text-anchor="middle" font-weight="700">관찰</text>
+          <text x="190" y="147" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#5E5230">주간 검토</text>
+
+          <rect x="292" y="108" width="112" height="46" fill="none" stroke="#5E5230" stroke-width="1.4"/>
+          <text x="348" y="130" text-anchor="middle" font-weight="700">우선순위</text>
+          <text x="348" y="147" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#5E5230">영향×확신÷노력</text>
+
+          <rect x="450" y="108" width="112" height="46" fill="none" stroke="#5E5230" stroke-width="1.4"/>
+          <text x="506" y="130" text-anchor="middle" font-weight="700">실행</text>
+          <text x="506" y="147" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#5E5230">2~4주 창</text>
+
+          <rect x="580" y="200" width="112" height="46" fill="#EDE8E0" stroke="#A83B2A" stroke-width="1.6"/>
+          <text x="636" y="222" text-anchor="middle" font-weight="700" fill="#7E2A1D">측정</text>
+          <text x="636" y="239" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#A83B2A">예측 대 실제</text>
+        </g>
+
+        <g stroke="#5E5230" stroke-width="1.4" fill="none">
+          <line class="brush" x1="246" y1="131" x2="286" y2="131" marker-end="url(#a12)"/>
+          <line class="brush" x1="404" y1="131" x2="444" y2="131" marker-end="url(#a12)"/>
+          <path class="brush" d="M 562 140 C 600 150, 620 176, 630 194" marker-end="url(#a12)"/>
+        </g>
+
+        <!-- feedback arc to prioritise -->
+        <path class="brush" d="M 580 223 C 460 292, 300 288, 320 160" fill="none" stroke="#A83B2A" stroke-width="1.5" stroke-dasharray="6 5" marker-end="url(#a12r)"/>
+        <text x="430" y="306" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#7E2A1D" text-anchor="middle">예측과 실제의 간극이 다음 우선순위의 정확도를 기른다</text>
+
+        <text x="190" y="90" font-family="Noto Sans KR, sans-serif" font-size="11" fill="#494741" text-anchor="middle">무엇이 퇴화했나</text>
+        <text x="348" y="90" font-family="Noto Sans KR, sans-serif" font-size="11" fill="#494741" text-anchor="middle">무엇을 먼저 할까</text>
+        <text x="506" y="90" font-family="Noto Sans KR, sans-serif" font-size="11" fill="#494741" text-anchor="middle">고쳐 내보낸다</text>
+        <text x="360" y="332" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#6E6C66" text-anchor="middle">고리가 닫히지 않으면 개선은 활동이 되고, 활동은 성과와 다르다</text>
+      </svg>
+      <figcaption>네 단계의 고리 — 예측 대 실제의 되먹임이 우선순위로 돌아올 때에야 개선의 속도가 실제로 빨라진다</figcaption>
+    </figure>
+    <div class="wrap" style="padding:0">
+      <div class="phases">
+        <div class="ph rv">
+          <h4>관찰<span class="en">observe</span></h4>
+          <p>정해진 주기로 평가 데이터와 관측 신호와 비용 지표를 검토한다. 통상 공학 검토는 주간, 부서를 넘는 검토는 월간이다. 지난 검토 이후 어느 질의 유형이 퇴화했는지, 어느 평가 지표가 표류했는지, 어느 관측 패턴이 떠오르는 문제를 시사하는지, 어느 비용 추세가 가속하는지를 살핀다.</p>
+        </div>
+        <div class="ph rv">
+          <h4>우선순위<span class="en">prioritise</span></h4>
+          <p>관찰을 개선 후보의 목록으로 옮기고, 기대 영향과 공학 노력과 위험으로 순서를 정한다. 대부분의 팀은 정교한 틀 대신 <em>영향 × 확신 ÷ 노력</em>의 단순한 점수를 쓴다. 단순함이 미덕이다. 오래 걸리는 우선순위 결정은 그 자체로 고리를 늦추는 부담이 된다. 규율은 우선순위를 정교하게 만드는 것이 아니라 <strong>명시적이고 검토 간에 일관되게</strong> 만드는 것이다.</p>
+        </div>
+        <div class="ph rv">
+          <h4>실행<span class="en">execute</span></h4>
+          <p>우선순위 매겨진 개선을 설계하고 구현하고 A/B 시험하고, 12.2·12.3절의 패턴으로 배포한다. 대부분의 프로덕션 팀은 개선마다 2~4주의 실행 창을 둔다.</p>
+        </div>
+        <div class="ph rv">
+          <h4>측정<span class="en">measure</span></h4>
+          <p>배포 뒤, 각 변경의 실제 영향을 <em>예측된 영향에 견주어</em> 잰다. 그리고 그 간극을 우선순위 정확도로 되먹인다.</p>
+        </div>
+      </div>
+      <p class="rv">주기가 중요하다. 너무 느린 고리 — 개선이 주가 아니라 분기 단위로 걸리는 — 는 문제가 다뤄지는 속도보다 빠르게 쌓이게 둔다. 너무 빠른 고리 — 충분한 검증 없이 실어 보내는 — 는 개선을 웃도는 퇴행을 낳는다. 알맞은 주기는 팀의 성숙도와 체계의 위험 성격에 달렸다.</p>
+      <h3 class="rv">예측과 실제, 그 간극</h3>
+      <p class="rv">성숙한 개선과 <em>흉내만 낸 개선</em>을 가르는 규율은 예측 정확도에 대해 고리를 닫는 일이다. 우선순위 매겨진 모든 개선은 예측된 영향과 함께 출시된다 — "이 변경은 관할 특화 질의의 재현율을 대략 5% 개선할 것이다." 배포 뒤 실제 영향이 예측에 견주어 측정된다. 실제가 예측을 크게 넘어선 경우는 흔히 비슷한 변경을 더 적극적으로 실어 보낼 기회를 드러낸다. 실제가 예측에 크게 못 미친 경우는 팀의 체계 이해에 있는 모형의 빈틈을 드러낸다.</p>
+      <p class="rv">시간이 가며 이 닫힌 고리의 측정이 우선순위의 정확도를 기른다. 팀은 어느 부류의 변경이 꾸준히 예측을 넘어서는지(그래서 앞으로 더 높이 두어야 하는지), 어느 부류가 꾸준히 못 미치는지(그래서 낮추거나 더 회의적으로 다가가야 하는지)를 배운다. 이 측정이 없으면 팀의 우선순위는 나아지지 않고, 있으면 <strong>우선순위의 정확도가 복리로 붇고 개선의 고리가 점점 효율적이 된다.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12.5 ============ -->
+<section>
+  <div class="wrap-wide">
+    <div class="wrap" style="padding:0">
+      <div class="sec-head rv">
+        <span class="sec-no">12.5 · THE MATURITY MODEL</span>
+        <h2>RAGOps 성숙도 모형 — 지금 어디에 있고, 다음은 무엇인가</h2>
+      </div>
+      <p class="rv">프로덕션 검색 팀들은 매우 다른 운영 성숙의 수준에서 일한다. 어떤 팀은 불을 끄고 있다. 사고가 나면 반응하고, 공학의 기본을 넘는 체계적 규율은 거의 없다. 어떤 팀은 실험의 엄정함과 예측적 비용 관리를 갖춘 이어지는 개선의 고리를 돌린다. 네 수준의 모형은 팀이 지금 어디에서 일하고 있으며 다음 성숙이 어떤 모습인지 이해하는 틀을 준다.</p>
+    </div>
+    <figure class="figure scrollx rv">
+      <svg viewBox="0 0 720 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="네 수준의 RAGOps 성숙도 계단">
+        <text x="24" y="26" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#9A978F" letter-spacing="1.5">RAGOPS MATURITY</text>
+
+        <!-- rising steps -->
+        <g stroke="#5E5230" stroke-width="2" fill="none">
+          <path class="brush" d="M 40 264 L 190 264 L 190 212 L 350 212 L 350 160 L 510 160 L 510 108 L 680 108"/>
+        </g>
+
+        <!-- level labels -->
+        <g font-family="Noto Sans KR, sans-serif" font-size="12.5" fill="#33322F">
+          <text x="112" y="290" text-anchor="middle" font-weight="700">1 · 반응</text>
+          <text x="270" y="238" text-anchor="middle" font-weight="700">2 · 계측</text>
+          <text x="430" y="186" text-anchor="middle" font-weight="700">3 · 이어지는 개선</text>
+          <text x="592" y="134" text-anchor="middle" font-weight="700">4 · 자기 최적화</text>
+        </g>
+        <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="#6E6C66">
+          <text x="112" y="308" text-anchor="middle">사고가 변경을 이끈다</text>
+          <text x="270" y="256" text-anchor="middle">관측·배포가 갖춰졌다</text>
+          <text x="430" y="204" text-anchor="middle">고리를 체계로 돌린다</text>
+          <text x="592" y="152" text-anchor="middle">고리 자체를 자동화한다</text>
+        </g>
+
+        <!-- fintech marker -->
+        <circle cx="112" cy="264" r="7" fill="#A83B2A"/>
+        <text x="112" y="248" font-family="Noto Sans KR, sans-serif" font-size="11" fill="#7E2A1D" text-anchor="middle">핀테크 팀은 여기</text>
+
+        <!-- the big jump -->
+        <path d="M 300 196 C 320 176, 336 170, 352 166" fill="none" stroke="#A83B2A" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <text x="330" y="122" font-family="Noto Sans KR, sans-serif" font-size="11.5" fill="#7E2A1D" text-anchor="middle">가장 큰 도약</text>
+        <text x="330" y="140" font-family="Noto Sans KR, sans-serif" font-size="10.5" fill="#7E2A1D" text-anchor="middle">기술만이 아니라 문화가 바뀐다</text>
+
+        <text x="600" y="72" font-family="Noto Sans KR, sans-serif" font-size="11" fill="#494741" text-anchor="middle">2026년 현재의 최전선</text>
+        <text x="600" y="88" font-family="Noto Sans KR, sans-serif" font-size="11" fill="#494741" text-anchor="middle">— 한 체계 안에서도 부분마다 다르다</text>
+      </svg>
+      <figcaption>성숙도의 계단 — 수준은 서로를 딛고 서며, 한 체계의 여러 부분이 서로 다른 수준에서 돌 수 있다</figcaption>
+    </figure>
+    <div class="wrap" style="padding:0">
+      <p class="rv"><strong>1수준 — 반응.</strong> 사고가 변경을 이끌고, 지표는 추적되되 체계적으로 검토되지 않고, 배포는 계획된 주기가 아니라 기능이 준비될 때 일어나고, 버전 이력이 불완전해 되돌림이 때로 불가능하다. 이 장을 연 핀테크 팀이 1수준에서 일하고 있었다. <em>아키텍처는 정교했으나 운영 관행은 그렇지 않았고, 그 간극이 예측 가능한 사고를 낳고 있었다.</em> 첫 프로덕션 검색을 막 출시한 팀에게 1수준은 정상적인 출발점이다. 2수준으로 올리는 것은 토대의 규율들이다. 모든 부품의 명시적 버전 관리, 기본적 배포 패턴(최소한 고위험 변경의 카나리 전개), 사후 검토를 갖춘 구조화된 사고 대응, 그리고 그때그때가 아니라 정기적으로 도는 평가 모음.</p>
+      <p class="rv"><strong>2수준 — 계측.</strong> 관측 가능성과 평가와 기본 배포 규율이 갖춰져 있다. 무엇이 배포되었는지 알고, 되돌릴 수 있고, 대부분의 사고를 사용자 신고가 아니라 감시로 잡는다. 아직 없는 것은 이어지는 개선이다. 관찰–우선순위–실행–측정의 고리가 간헐적이며, 체계적 절차가 아니라 개인의 발의에 달려 있다. 대부분의 팀이 오래 2수준에 머문다. 토대의 규율들이 그럭저럭 잘 통하므로, 체계의 복잡성이 팀이 그때그때 감당할 수 있는 능력을 넘어서기까지는 추가 투자가 급하게 느껴지지 않는다.</p>
+      <p class="rv"><strong>3수준 — 이어지는 개선.</strong> 고리를 체계적으로 돌린다. 정기 검토 주기가 평가와 관측 신호를 우선순위 매겨진 목록으로 바꾼다. A/B 시험이 변경이 널리 출시되기 전에 그것이 통하는지에 대한 믿음직한 증거를 낸다. 비용 공학이 이따금이 아니라 이어진다. 예측 대 실제 측정이 우선순위 정확도를 시간에 걸쳐 기른다. <strong>2수준에서 3수준으로의 이행이 이 모형에서 가장 큰 도약이다.</strong> 기술적 실천만이 아니라 문화적 패턴 — 공학 검토 주기, 부서를 넘는 지표 검토, 사전 등록된 실험의 규율 — 을 요구한다. 이 이행을 이룬 팀들은 통상 체계를 운영하는 일이 훨씬 덜 스트레스가 된다고 보고한다. 추세를 일찍 잡아 사고가 드물어지고, 실험이 배포 전에 검증하므로 놀라움이 드물어지고, 공학의 일이 불 끄기에서 <em>의도된 개선</em>으로 옮겨 간다.</p>
+      <p class="rv"><strong>4수준 — 자기 최적화.</strong> 개선의 고리 자체의 일부를 자동화했다. 체계가 자기 품질 퇴행을 감지해 조사 워크플로를 촉발한다. 관찰된 질의 패턴에 근거해 비용 최적화가 자동으로 제안된다. 검색 파라미터가 평가 모음에 대한 자동 최적화 과정으로 조율된다. 팀의 공학 노력은 고리를 <em>돌리는</em> 데서 고리를 <em>개선하는</em> 데로 옮겨 간다. 4수준은 2026년 현재의 최전선이다. 꾸준히 이 수준에서 일하는 프로덕션 팀은 드물고, 그런 팀조차 체계의 어떤 면은 4수준으로, 어떤 면은 여전히 3수준으로 운영한다. 성숙도 모형은 팀이 함께 오르는 하나의 사다리가 아니다. 같은 체계의 다른 면이 다른 수준에서 돌 수 있고, <strong>팀의 일은 가장 낮은 성숙의 면을 가장 높은 면에 맞춰 끌어올리는 것이다.</strong></p>
+      <div class="tbl tbl-lv">
+        <div class="tr head rv"><span>수준</span><span>정의적 성질</span><span>흔한 실패 양식</span><span>다음 수준으로 가는 길</span></div>
+        <div class="tr rv"><div class="tc-name">1 — 반응</div><div class="tc">사고가 변경을 이끈다</div><div class="tc warn">규모 주도 실패로 인한 되풀이되는 장애</div><div class="tc">버전 관리 + 기본 배포 규율</div></div>
+        <div class="tr rv"><div class="tc-name">2 — 계측</div><div class="tc">관측과 배포가 갖춰졌다</div><div class="tc warn">개선이 개인의 발의에 달려 있다</div><div class="tc">주기가 있는 검토를 갖춘 이어지는 개선의 고리</div></div>
+        <div class="tr rv"><div class="tc-name">3 — 이어지는 개선</div><div class="tc">관찰–우선순위–실행–측정을 체계로</div><div class="tc warn">공학 역량이 고리의 처리량을 제한한다</div><div class="tc">감지와 최적화의 자동화</div></div>
+        <div class="tr rv"><div class="tc-name">4 — 자기 최적화</div><div class="tc">체계가 스스로 문제를 감지하고 처방을 제안한다</div><div class="tc warn">자동화의 표류, 자동 결정에 대한 과의존</div><div class="tc">최전선 — 체계의 면마다 수준이 다르다</div></div>
+      </div>
+      <div class="panel inju rv">
+        <span class="tag">Common Pitfall</span>
+        <h4>'한 수준 건너뛰기'라는 안티패턴</h4>
+        <p>많은 팀이 3수준이나 4수준의 실천을 읽고 2수준을 지나지 않은 채 곧바로 채택하려 한다. 그 결과는 <strong>약한 토대 위에 세운 정교한 실천</strong>이다. 제대로 된 버전 관리 없는 A/B 시험, 믿음직한 관측 없는 개선의 고리, 검증되지 않은 지표에 대한 자동 최적화.</p>
+        <p>성숙의 수준은 서로를 딛고 선다. 각 수준의 실천은 앞 수준의 토대에 의지한다. 수준을 건너뛴 팀은 통상 빠진 토대를 <em>실패로써</em> 발견한다. 핀테크 팀이 토요일 밤 11시 48분에 자기의 빠진 버전 관리 규율을 발견한 그 방식으로. 성숙은 차례로 쌓아 갈 일이다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 안티패턴 ============ -->
+<section style="background:var(--mist);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">COMMON PITFALLS</span>
+      <h2>겹쳐 붇는 RAGOps의 실수 — 세 가지</h2>
+    </div>
+    <div class="anti">
+      <div class="anti-item rv">
+        <h4>예정 작업을 걸어 두고 잊기<span class="en">Treating Scheduled Jobs as Set-and-Forget</span></h4>
+        <p>핀테크 팀의 사고는 자기 환경에 더는 맞지 않게 된 예정 작업이 낳았다. 예정 작업은 검색 체계에서 가장 흔한 프로덕션 사고의 원천 가운데 하나다. 몇 달을 소리 없이 돌다가, 지금의 팀 누구도 가능하다고 기억하지 못하는 방식으로 실패하기 때문이다.</p>
+        <p><span class="fix">처방</span> — 예정 작업을 <strong>프로덕션 서비스로</strong> 대접하라. 감시와 경보와 버전 추적과 주기적 검토를 요구한다. 여섯 달 검토되지 않은 예정 작업은 <em>다음 사고 뒤가 아니라 다음 실행 전에</em> 검토되어야 한다.</p>
+      </div>
+      <div class="anti-item rv">
+        <h4>되돌림 계획 없이 실어 보내기<span class="en">Shipping Without Rollback Plans</span></h4>
+        <p>많은 팀이 명시적 되돌림 계획 없이 검색 변경을 실어 보낸다. 잘못되면 그때 회복 방법을 찾아내리라는 가정 위에서다. 그 가정은 실제로 잘못될 때 예측 가능하게 무너진다. 회복이 문서화된 절차가 아니라 발굴 작업이 되고, 사용자 영향이 회복 시간 내내 이어진다.</p>
+        <p><span class="fix">처방</span> — 되돌림 계획을 배포 <em>전에</em> 쓰라. 모든 변경은 넷과 함께 나간다. 무엇이 되돌림을 촉발하는가, 누가 그것을 실행할 권한을 지니는가, 어떤 명령이 실제로 그것을 수행하는가, 얼마나 걸리는가. <strong>이것들이 없으면 되돌림은 운영 능력이 아니라 소망이다.</strong></p>
+      </div>
+      <div class="anti-item rv">
+        <h4>측정 없는 개선<span class="en">Improvement Without Measurement</span></h4>
+        <p>어떤 팀은 도움이 된다고 믿기는 하나 실제 프로덕션 영향에 견주어 측정된 적 없는 개선을 계속 실어 보낸다. 팀은 생산적으로 느낀다. 기능이 나가고 대시보드에 활동이 보인다. 그러나 프로덕션 체계는 시간이 가도 측정 가능하게 나아지지 않는다. <em>실어 보낸 변경이 예측된 바를 실제로 했는지에 대해 아무도 고리를 닫지 않기 때문이다.</em></p>
+        <p><span class="fix">처방</span> — 12.4절의 예측 대 실제 측정 규율이다. 실어 보내는 모든 개선이 예측을 지니고, 예측은 결과에 견주어 측정되고, 그 간극이 앞날의 우선순위를 밝힌다. 이것이 없으면 <strong>개선의 속도는 높게 느껴지고 체계의 실제 개선율은 낮다.</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 다섯 요지 ============ -->
+<section class="takeaways">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">CHAPTER SUMMARY</span>
+      <h2>이 장에서 남는 다섯</h2>
+    </div>
+    <div class="take">
+      <div class="take-item rv"><p><b>버전 관리가 RAGOps의 토대 규율이다.</b> 검색 파이프라인의 모든 부품 — 임베딩 모델, 리랭커, 프롬프트, 말뭉치 스냅숏, 인덱스 설정, 오케스트레이션 코드 — 이 명시적으로 추적되고 버전 메타데이터가 모든 질의 추적에 기록되어야 한다. 충분한 버전 관리의 운영적 시험은 재현성이다. <em>어느 과거 질의에 대해서든 체계가 무엇을 했는지 재구성할 수 있는가.</em></p></div>
+      <div class="take-item rv"><p><b>배포 패턴이 변경의 영향 반경과 회복 성격을 정한다.</b> 고위험 구조 변경에는 그림자 배포, 영향 반경이 묶인 중위험 변경에는 카나리 전개, 코호트 특화나 실험적 변경에는 기능 플래그. 그때그때의 배포 결정이 아니라 기본이 되는 패턴을 두어야 한다.</p></div>
+      <div class="take-item rv"><p>검색의 <b>A/B 시험</b>은 일반 A/B 문헌이 늘 주지는 않는 실험의 엄정함을 요구한다. 사전 등록된 가설, 계산된 표본 크기, 직접적 사용자 피드백과 자동 품질 지표의 결합, 사전 등록된 결정 기준이 함께 변경이 통하는지에 대한 믿음직한 증거를 낸다.</p></div>
+      <div class="take-item rv"><p><b>이어지는 개선의 고리</b> — 관찰, 우선순위, 실행, 측정 — 가 평가와 관측과 비용 데이터를 측정된 개선의 흐름으로 바꾼다. 예측 대 실제 영향의 측정이 팀의 우선순위 정확도를 시간에 걸쳐 기르고, 흉내만 낸 개선을 <em>의도된 공학</em>으로 바꾼다.</p></div>
+      <div class="take-item rv"><p><b>네 수준의 성숙도 모형</b>이 팀이 어디에서 일하며 다음이 어떤 모습인지 이해하는 틀을 준다. 반응하는 팀은 불을 끄고, 계측된 팀은 토대를 지녔고, 이어지는 개선의 팀은 고리를 체계로 돌리고, 자기 최적화의 팀은 고리 자체의 일부를 자동화했다. 수준은 서로를 딛고 서니, 건너뛰면 약한 토대 위의 정교한 실천과 예측 가능한 실패를 낳는다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 문헌 ============ -->
+<section>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="sec-no">FURTHER READING</span>
+      <h2>더 읽을 것</h2>
+    </div>
+    <div class="refs">
+      <div class="ref rv"><b>Multi-Agent AI Systems Handbook</b>, <i>Chapter 12 — LLMOps and AgentOps</i> (Norman, 2026) — 자매편의 에이전틱 체계 운영 생애주기 취급. 이 장이 검색에 특화해 적용한 네 수준 성숙도 모형을 담는다. 패턴은 에이전틱 체계 전반으로 일반화되고, 검색 고유의 관심사는 그 넓은 틀 안에 앉는다.</div>
+      <div class="ref rv"><b>Sculley et al.</b>, <i>"Hidden Technical Debt in Machine Learning Systems"</i> (NeurIPS, 2015) — 프로덕션 ML 체계의 운영적 난제를 다룬 기초 논문. 이 논문이 기록한 기술 부채 패턴 상당수가 검색 체계에 곧바로 적용된다. RAGOps 규율이 왜 중요한지 이해하는 맥락으로 쓸모 있다.</div>
+      <div class="ref rv"><b>Beyer, Jones, Petoff &amp; Murphy</b>, <i>Site Reliability Engineering</i> (O'Reilly, 2016) — 프로덕션 운영 실천의 정전. 서비스 수준 목표, 오류 예산, 사후 검토, 노역 감축의 철학 — 그 패턴들이 RAGOps로 곧바로 옮겨 온다.</div>
+      <div class="ref rv"><b>MLOps Continuous Delivery and Automation Pipelines</b> 문서 (Google Cloud · AWS · Azure, 상시 갱신) — ML 배포 패턴의 벤더별 안내. 이 장의 배포 패턴을 특정 클라우드 플랫폼에 구현할 때의 참조 자료로 쓸모 있다.</div>
+      <div class="ref rv"><b>Kohavi, Tang &amp; Xu</b>, <i>Trustworthy Online Controlled Experiments</i> — 이 장의 A/B 규율이 적용하는 넓은 실험 설계 문헌. 2026년 현재 얻을 수 있는 가장 포괄적인 실무 취급이다.</div>
+    </div>
+    <p class="note rv">위 문헌 목록은 원서 12장의 Further Reading을 그대로 옮긴 것이다. 서지 사항의 최종 확인은 원 출처를 통해 하는 것이 옳다.</p>
+  </div>
+</section>
+
+<!-- ============ 다리 ============ -->
+<section class="bridge">
+  <div class="wrap">
+    <div class="sec-head rv" style="margin-bottom:36px">
+      <span class="sec-no">CHAPTER BRIDGE · PART V</span>
+      <h2>다음 장 — 5부, 기업 사례 연구</h2>
+    </div>
+    <p class="rv">13장은 5부를 연다. 1부에서 4부까지의 모든 것을 구체적인 고위험 프로덕션 도메인에 적용하는 사례 연구들이다. 첫 사례는 금융 컴플라이언스 RAG다. 앞선 장들에서 내린 모든 아키텍처 결정이 규제 감독과 감사 요구, 그리고 <em>틀린 값이 규제 과징금으로 계량되는</em> 제약 아래에서 시험된다. 사례는 말뭉치 설계에서 배포까지 온전한 프로덕션 체계를 따라 걸으며, 앞의 열두 장에서 세운 패턴들이 규제 금융 도메인의 엄정한 요구를 충족하는 배포로 어떻게 어우러지는지 보인다.</p>
+    <p class="rv">4부를 지나며 배운 것을 돌아보면 하나의 이야기였다. 9장은 재는 자를 다시 재는 일을, 10장은 보이지 않던 것을 비추어 보는 일을, 11장은 들어오는 것을 헤아려 나가는 것을 정하는 일을, 그리고 12장은 <em>그 모두를 시간 속에서 이어 가는 일</em>을 배웠다. 핀테크 팀의 체계는 성했다. 다만 지난달의 규모에 맞던 관행이 이달의 규모에 맞지 않게 되었을 때 그것을 알아차릴 자리가 없었다.</p>
+    <p class="rv">운영이란 결국 그런 일이다. 한 번 잘 지어 놓고 두는 일이 아니라, <strong>어제 맞던 것이 오늘도 맞는지 날마다 다시 묻는 일</strong>이다. 일일신(日日新)이라 하였으니, 새로워진다는 것은 없던 것을 만드는 일이기보다 있던 것을 다시 살피는 일에 가깝다. 연장은 쓰는 동안 손때가 묻고, 손때 묻은 연장을 날마다 닦는 손이 오래 일한다.</p>
+    <div class="next rv">NEXT — CHAPTER 13 · FINANCIAL COMPLIANCE RAG: A PRODUCTION CASE STUDY</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Raymond Norman, Agentic RAG Systems (2026) · Chapter 12<br>
+    원서 221–239쪽 전체 내용 기반 · 본 페이지는 학습·검토 목적의 2차 정리물이다
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var els = document.querySelectorAll('.rv');
+  if(reduce || !('IntersectionObserver' in window)){
+    els.forEach(function(e){e.classList.add('on')});
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        en.target.classList.add('on');
+        io.unobserve(en.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e)});
+})();
+</script>
+</body>
+</html>
