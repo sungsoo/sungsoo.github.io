@@ -1,0 +1,1354 @@
+---
+layout: null
+title: "Case study of returning docking results to a knowledge graph" 
+date: 2026-08-07
+categories: [artificial intelligence]
+tags: [artificial general intelligence, drug discovery]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>닫히지 않은 고리 — Docking 결과를 지식 그래프에 되돌린 사례 조사</title>
+<meta name="description" content="2026년 8월 5일까지의 공개 문헌 조사. Docking 결과를 바이오메디컬 지식 그래프에 다시 저장해 다음 계산을 개선하는 완전한 폐루프는 아직 연구 공백에 가깝다.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@500;700;900&family=IBM+Plex+Sans+KR:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════
+   닫히지 않은 고리 — 조사보고 design system
+   흑연 바탕 · 단 하나의 흰 카드 · 충족(녹)/부분(황)/미충족(적)
+   ══════════════════════════════════════════════ */
+:root{
+  --void:    #0F1113;
+  --panel:   #16191C;
+  --panel-2: #1D2126;
+  --line:    #2B3036;
+  --line-2:  #3A4148;
+  --paper:   #F4F3F0;
+
+  --fg:      #D9DCDF;
+  --fg-dim:  #9BA3AA;
+  --fg-mute: #6E767E;
+
+  --yes:     #4FA88B;
+  --part:    #C99A3E;
+  --no:      #B8443C;
+  --ink:     #101215;
+
+  --fd: "Gothic A1","IBM Plex Sans KR",-apple-system,sans-serif;
+  --fb: "IBM Plex Sans KR","Gothic A1",-apple-system,"Malgun Gothic",sans-serif;
+  --fm: "Space Mono","D2Coding",ui-monospace,monospace;
+
+  --measure: 40rem;
+  --wide: 70rem;
+  --gut: clamp(1.15rem,4vw,3rem);
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+@media (prefers-reduced-motion:reduce){
+  html{ scroll-behavior:auto; }
+  *,*::before,*::after{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+body{
+  margin:0; background:var(--void); color:var(--fg);
+  font-family:var(--fb); font-size:1.03rem; line-height:1.85;
+  letter-spacing:-.004em; word-break:keep-all; overflow-wrap:break-word;
+  font-weight:300;
+}
+::selection{ background:var(--part); color:var(--ink); }
+a{ color:inherit; }
+:focus-visible{ outline:2px solid var(--part); outline-offset:3px; }
+strong,b{ font-weight:600; color:#F0F2F4; }
+
+/* ── 방안지 바탕 ── */
+.k-grid{
+  background-image:
+    linear-gradient(to right, rgba(155,163,170,.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(155,163,170,.055) 1px, transparent 1px);
+  background-size:44px 44px;
+}
+
+/* ══════ 표제 ══════ */
+.k-hero{ position:relative; padding:clamp(3rem,7vw,5.5rem) var(--gut) clamp(2.5rem,5vw,4rem); overflow:hidden; }
+.k-hero::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(115% 80% at 22% 0%, rgba(15,17,19,0) 34%, rgba(15,17,19,.88) 100%);
+}
+.k-hero__in{ position:relative; z-index:2; max-width:var(--wide); margin:0 auto; }
+.k-eyebrow{
+  font-family:var(--fm); font-size:.68rem; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--part); display:flex; align-items:center; gap:.85rem; flex-wrap:wrap; margin:0 0 1.7rem;
+}
+.k-eyebrow::after{ content:""; flex:1 1 2rem; height:1px; background:linear-gradient(to right,#5A4A24,transparent); }
+.k-hero h1{
+  font-family:var(--fd); font-weight:900;
+  font-size:clamp(2rem,5.6vw,3.9rem); line-height:1.14; letter-spacing:-.045em;
+  margin:0 0 .55rem; color:#F4F6F8; text-wrap:balance;
+}
+.k-hero__sub{ font-family:var(--fm); font-size:.85rem; color:var(--fg-mute); margin:0 0 2.4rem; letter-spacing:.02em; }
+.k-hero__lede{ max-width:38rem; font-size:clamp(1rem,2vw,1.18rem); line-height:1.85; color:var(--fg-dim); margin:0; }
+.k-hero__lede b{ color:#F4F6F8; font-weight:600; }
+
+/* 도해 */
+.k-fig{ margin:2.2rem 0 2.6rem; }
+.k-fig svg{ width:100%; height:auto; display:block; }
+.k-cap{ font-family:var(--fm); font-size:.68rem; color:var(--fg-mute); margin-top:.85rem; letter-spacing:.02em; }
+@media (max-width:780px){
+  .k-fig{ overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:.4rem; }
+  .k-fig svg{ min-width:660px; }
+  .k-cap::after{ content:" · 가로로 밀어서 볼 것"; color:var(--part); }
+}
+.n-box{ fill:var(--panel-2); stroke:var(--line-2); stroke-width:1.2; }
+.n-box-lit{ fill:var(--paper); stroke:var(--paper); }
+.n-t{ font-family:var(--fb); font-size:13px; font-weight:600; fill:#EAEDEF; text-anchor:middle; }
+.n-t-dk{ fill:var(--ink); }
+.n-s{ font-family:var(--fm); font-size:8.5px; fill:var(--fg-mute); text-anchor:middle; }
+.n-s-dk{ fill:#5A6068; }
+.e-solid{ stroke:#7B858E; stroke-width:1.3; fill:none; marker-end:url(#kah); }
+.e-break{ stroke:var(--no); stroke-width:1.4; fill:none; stroke-dasharray:6 5; }
+.e-break-h{ stroke:var(--no); stroke-width:1.4; fill:none; stroke-dasharray:6 5; marker-end:url(#kar); }
+.e-ok{ stroke:var(--yes); stroke-width:1.5; fill:none; marker-end:url(#kag); }
+.gap-t{ font-family:var(--fm); font-size:10px; fill:var(--no); text-anchor:middle; font-weight:700; letter-spacing:.06em; }
+.ok-t{ font-family:var(--fm); font-size:10px; fill:var(--yes); text-anchor:middle; font-weight:700; letter-spacing:.05em; }
+
+/* ══════ 판정 ══════ */
+.k-verdict{ background:var(--panel); border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:clamp(2.25rem,5vw,3.5rem) var(--gut); }
+.k-verdict__in{ max-width:var(--wide); margin:0 auto; }
+.k-verdict h2{ font-family:var(--fd); font-weight:900; font-size:1.35rem; letter-spacing:-.035em; margin:0 0 1.5rem; color:#F4F6F8; }
+
+.k-tally{ display:grid; gap:1px; background:var(--line); border:1px solid var(--line); }
+.k-tally__row{
+  display:grid; grid-template-columns:1fr minmax(9rem,15rem) 3rem;
+  gap:1rem; align-items:center; background:var(--panel-2); padding:.85rem 1.1rem;
+}
+@media (max-width:700px){
+  .k-tally__row{ grid-template-columns:1fr 2.4rem; gap:.35rem 1rem; }
+  .k-tally__row .k-tally__n{ grid-column:1 / -1; font-size:.78rem; }
+}
+.k-tally__k{ font-size:.95rem; color:var(--fg); font-weight:400; }
+.k-tally__n{ font-family:var(--fm); font-size:.78rem; color:var(--fg-dim); }
+.k-tally__m{ text-align:center; font-family:var(--fm); font-size:1.05rem; font-weight:700; }
+.m-no{ color:var(--no); } .m-part{ color:var(--part); } .m-yes{ color:var(--yes); }
+
+.k-note{
+  margin:1.6rem 0 0; padding:1rem 1.2rem;
+  border-left:2px solid var(--line-2); background:rgba(155,163,170,.035);
+  font-size:.92rem; color:var(--fg-dim); line-height:1.8; max-width:46rem;
+}
+
+/* ══════ 차례 ══════ */
+.k-toc{ padding:clamp(2rem,4vw,3rem) var(--gut); border-bottom:1px solid var(--line); }
+.k-toc__in{ max-width:var(--wide); margin:0 auto; }
+.k-toc h2{ font-family:var(--fm); font-size:.66rem; letter-spacing:.2em; text-transform:uppercase; color:var(--part); margin:0 0 1.1rem; font-weight:700; }
+.k-toc ol{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,1fr); gap:.1rem 1.75rem; }
+@media (max-width:860px){ .k-toc ol{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:540px){ .k-toc ol{ grid-template-columns:1fr; } }
+.k-toc a{
+  display:flex; gap:.8rem; align-items:baseline; text-decoration:none; color:var(--fg-dim);
+  padding:.4rem .25rem; border-bottom:1px solid rgba(155,163,170,.09); font-size:.9rem;
+  transition:color .15s ease, background .15s ease;
+}
+.k-toc a:hover{ color:#F4F6F8; background:rgba(155,163,170,.06); }
+.k-toc .kn{ font-family:var(--fm); font-size:.7rem; color:var(--fg-mute); min-width:1.3rem; }
+
+/* ══════ 본문 ══════ */
+main{ padding:0 var(--gut); }
+.k-ch{ max-width:var(--wide); margin:0 auto; padding:clamp(2.75rem,6vw,4.5rem) 0; border-top:1px solid var(--line); }
+.k-ch:first-of-type{ border-top:none; }
+.k-ch__head{ position:relative; margin:0 0 2rem; }
+.k-ch__no{
+  display:inline-grid; place-items:center; width:44px; height:44px;
+  border:1px solid var(--line-2); color:var(--part);
+  font-family:var(--fm); font-size:.95rem; font-weight:700; margin:0 0 .9rem;
+}
+@media (min-width:1240px){ .k-ch__no{ position:absolute; left:-70px; top:.45rem; margin:0; } }
+.k-ch__lab{ font-family:var(--fm); font-size:.65rem; letter-spacing:.19em; text-transform:uppercase; color:var(--fg-mute); margin:0 0 .4rem; }
+.k-ch__head h2{ font-family:var(--fd); font-weight:900; font-size:clamp(1.45rem,3.4vw,2.05rem); letter-spacing:-.04em; line-height:1.28; margin:0; color:#F4F6F8; }
+
+.k-col{ max-width:var(--measure); }
+.k-ch p{ margin:0 0 1.05rem; }
+
+/* 사례 카드 */
+.k-case{
+  background:var(--panel); border:1px solid var(--line);
+  border-left:3px solid var(--line-2);
+  padding:1.5rem 1.6rem; margin:1.5rem 0;
+}
+.k-case--lit{ background:var(--paper); color:#20242A; border-color:var(--paper); border-left-color:var(--yes); }
+.k-case--lit strong,.k-case--lit b{ color:#0F1113; }
+.k-case--lit .k-case__t{ color:#0F1113; }
+.k-case--lit .k-case__id{ color:#5A6068; }
+.k-case--lit .k-sub{ color:#3A4148; border-bottom-color:rgba(16,18,21,.22); }
+.k-case--lit .k-li li::before{ background:var(--yes); }
+.k-case--lit .k-links{ color:#5A6068; }
+.k-case--lit .k-links a{ color:#2E6E5C; border-bottom-color:rgba(46,110,92,.35); }
+.k-case--yes{ border-left-color:var(--yes); }
+.k-case--part{ border-left-color:var(--part); }
+.k-case--no{ border-left-color:var(--no); }
+
+.k-case__id{ font-family:var(--fm); font-size:.68rem; letter-spacing:.15em; color:var(--fg-mute); margin:0 0 .3rem; text-transform:uppercase; }
+.k-case__t{ font-family:var(--fd); font-weight:700; font-size:1.18rem; letter-spacing:-.03em; margin:0 0 .9rem; color:#F4F6F8; line-height:1.35; }
+.k-case p:last-child{ margin-bottom:0; }
+
+/* 충족도 스트립 */
+.k-crit{ display:flex; gap:.34rem; flex-wrap:wrap; margin:0 0 1rem; align-items:center; }
+.k-crit__d{
+  width:1.55rem; height:1.55rem; display:grid; place-items:center;
+  font-family:var(--fm); font-size:.62rem; font-weight:700; line-height:1;
+  border:1px solid var(--line-2); color:var(--fg-mute); cursor:help;
+}
+.k-case--lit .k-crit__d{ border-color:rgba(16,18,21,.18); color:#7C838B; }
+.k-crit__d.y{ background:rgba(79,168,139,.16); border-color:var(--yes); color:var(--yes); }
+.k-crit__d.p{ background:rgba(201,154,62,.15); border-color:var(--part); color:var(--part); }
+.k-crit__d.n{ background:rgba(184,68,60,.12); border-color:rgba(184,68,60,.55); color:var(--no); }
+.k-crit__l{ font-family:var(--fm); font-size:.6rem; letter-spacing:.09em; color:var(--fg-mute); margin-left:.4rem; text-transform:uppercase; }
+.k-case--lit .k-crit__l{ color:#7C838B; }
+
+/* 소제목 */
+.k-sub{
+  font-family:var(--fm); font-size:.67rem; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--part); margin:1.5rem 0 .6rem; font-weight:700;
+  border-bottom:1px solid rgba(201,154,62,.22); padding-bottom:.35rem; display:block;
+}
+.k-ch h3{
+  font-family:var(--fd); font-weight:700; font-size:1.1rem; letter-spacing:-.025em;
+  margin:2.3rem 0 .8rem; padding-bottom:.4rem; border-bottom:1px solid var(--line-2);
+  max-width:var(--measure); color:#F0F2F4;
+}
+
+/* 목록 */
+.k-li{ list-style:none; margin:0 0 1.1rem; padding:0; }
+.k-li li{ position:relative; padding-left:1.05rem; margin:0 0 .34rem; }
+.k-li li::before{ content:""; position:absolute; left:0; top:.82em; width:5px; height:5px; background:var(--fg-mute); }
+.k-li2{ columns:2; column-gap:1.8rem; }
+@media (max-width:620px){ .k-li2{ columns:1; } }
+.k-li2 li{ break-inside:avoid; }
+
+/* 링크 줄 */
+.k-links{ font-family:var(--fm); font-size:.72rem; line-height:2; color:var(--fg-mute); margin:0 0 1.1rem; letter-spacing:.01em; }
+.k-links a{ color:var(--fg-dim); text-decoration:none; border-bottom:1px solid rgba(155,163,170,.28); }
+.k-links a:hover{ color:var(--part); border-bottom-color:var(--part); }
+
+/* 인용 */
+.k-quote{
+  margin:1.4rem 0; padding:.1rem 0 .1rem 1.25rem; border-left:2px solid var(--part);
+  font-size:1.02rem; line-height:1.85; color:#E4E7EA; font-weight:300; max-width:var(--measure);
+}
+.k-quote p{ margin:0 0 .65rem; } .k-quote p:last-child{ margin:0; }
+.k-quote--no{ border-left-color:var(--no); }
+.k-quote--yes{ border-left-color:var(--yes); }
+.k-quote--wide{ max-width:none; }
+.k-quote--lit{ border-left-color:var(--yes); color:#20242A; max-width:none; }
+
+/* 트리플 블록 */
+.k-triples{
+  background:var(--void); border:1px solid var(--line);
+  font-family:var(--fm); font-size:.75rem; line-height:2.05;
+  padding:1.1rem 1.25rem; margin:1.3rem 0; overflow-x:auto; white-space:pre;
+  color:#B9C0C7;
+}
+.k-triples .rel{ color:var(--part); }
+.k-triples .obj{ color:var(--yes); }
+.k-triples .cm{ color:var(--fg-mute); }
+
+/* 표 */
+.k-tw{ overflow-x:auto; margin:1.6rem 0; -webkit-overflow-scrolling:touch; }
+table{ width:100%; border-collapse:collapse; font-size:.85rem; line-height:1.6; min-width:48rem; }
+thead th{
+  text-align:left; font-family:var(--fm); font-size:.62rem; font-weight:700;
+  letter-spacing:.11em; text-transform:uppercase; color:var(--part);
+  padding:0 .75rem .55rem 0; border-bottom:1px solid var(--line-2); white-space:nowrap; vertical-align:bottom;
+}
+thead th.c{ text-align:center; padding-right:0; }
+tbody td{ padding:.6rem .75rem .6rem 0; border-bottom:1px solid var(--line); vertical-align:middle; }
+tbody td.c{ text-align:center; padding-right:0; font-family:var(--fm); font-size:.76rem; }
+tbody tr:last-child td{ border-bottom:none; }
+tbody td:first-child{ font-weight:500; color:#E4E7EA; white-space:nowrap; }
+
+/* 매트릭스 마크 */
+.mk{ display:inline-grid; place-items:center; width:1.5rem; height:1.5rem; font-family:var(--fm); font-size:.7rem; font-weight:700; line-height:1; }
+.mk.y{ color:var(--yes); background:rgba(79,168,139,.14); }
+.mk.n{ color:var(--no); background:rgba(184,68,60,.1); }
+.mk.p{ color:var(--part); background:rgba(201,154,62,.13); }
+.mkt{ font-family:var(--fm); font-size:.66rem; white-space:nowrap; }
+.mkt.y{ color:var(--yes); } .mkt.n{ color:var(--no); } .mkt.p{ color:var(--part); }
+
+/* 범례 */
+.k-legend{ display:flex; gap:1.4rem; flex-wrap:wrap; font-family:var(--fm); font-size:.68rem; color:var(--fg-mute); margin:1rem 0 0; letter-spacing:.04em; align-items:center; }
+.k-legend span{ display:inline-flex; align-items:center; gap:.45rem; }
+
+/* 그리드 */
+.k-g2{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1.5rem 0; }
+.k-g3{ display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin:1.5rem 0; }
+.k-g4{ display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin:1.5rem 0; }
+.k-g2>*,.k-g3>*,.k-g4>*{ min-width:0; }
+@media (max-width:980px){ .k-g4{ grid-template-columns:repeat(2,1fr); } .k-g3{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:640px){ .k-g2,.k-g3,.k-g4{ grid-template-columns:1fr; } }
+
+.k-box{ background:var(--panel); border:1px solid var(--line); padding:1.15rem 1.25rem; }
+.k-box__l{ font-family:var(--fm); font-size:.62rem; letter-spacing:.15em; text-transform:uppercase; color:var(--part); margin:0 0 .65rem; font-weight:700; }
+.k-box p:last-child,.k-box ul:last-child{ margin-bottom:0; }
+.k-box--y{ border-top:2px solid var(--yes); }
+.k-but{ color:var(--no); font-size:.9rem; margin:0; }
+.k-but b{ color:var(--no); }
+
+/* 결핍 슬롯 — 없는 것을 그린다 */
+.k-void{ display:grid; gap:.4rem; margin:1.3rem 0; max-width:44rem; }
+.k-void__i{
+  display:flex; gap:.8rem; align-items:baseline;
+  border:1px dashed rgba(184,68,60,.4); padding:.5rem .85rem;
+  font-size:.9rem; color:var(--fg-dim);
+}
+.k-void__x{ font-family:var(--fm); font-size:.68rem; color:var(--no); font-weight:700; white-space:nowrap; letter-spacing:.05em; }
+
+/* 맺음 */
+.k-fin{ border-top:1px solid var(--line); padding:clamp(3rem,7vw,5rem) var(--gut); margin-top:clamp(2rem,5vw,3.5rem); }
+.k-fin__in{ max-width:var(--measure); margin:0 auto; }
+.k-fin h2{ font-family:var(--fd); font-weight:900; font-size:clamp(1.5rem,3.8vw,2.2rem); letter-spacing:-.04em; margin:.35rem 0 1.4rem; color:#F4F6F8; }
+.k-thesis{
+  border:1px solid var(--yes); border-left-width:3px;
+  background:rgba(79,168,139,.06); padding:1.5rem 1.6rem; margin:2rem 0 0;
+}
+.k-thesis__l{ font-family:var(--fm); font-size:.62rem; letter-spacing:.17em; text-transform:uppercase; color:var(--yes); margin:0 0 .8rem; font-weight:700; }
+.k-thesis p{ margin:0; font-size:1.05rem; line-height:1.85; color:#EFF2F4; font-weight:400; }
+.k-colo{
+  border-top:1px solid var(--line); margin-top:2.5rem; padding-top:1.4rem;
+  font-family:var(--fm); font-size:.67rem; line-height:2; color:var(--fg-mute);
+  display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+}
+
+/* 등장 */
+.k-rv{ opacity:0; transform:translateY(12px); transition:opacity .55s ease, transform .55s ease; }
+.k-rv.k-in{ opacity:1; transform:none; }
+@media (prefers-reduced-motion:reduce){ .k-rv{ opacity:1; transform:none; } }
+
+/* 위로 */
+.k-top{
+  position:fixed; right:1rem; bottom:1rem; z-index:60; width:42px; height:42px;
+  background:var(--panel-2); color:var(--fg); border:1px solid var(--line-2);
+  display:grid; place-items:center; cursor:pointer; font-family:var(--fm); font-size:.72rem;
+  opacity:0; pointer-events:none; transition:opacity .25s ease;
+}
+.k-top.k-show{ opacity:.95; pointer-events:auto; }
+</style>
+</head>
+<body>
+
+<!-- ══════════ 표제 ══════════ -->
+<header class="k-hero k-grid">
+  <div class="k-hero__in">
+    <p class="k-eyebrow">조사 종료일 2026.08.05 · 공개 문헌 범위</p>
+    <h1>닫히지 않은 고리</h1>
+    <p class="k-hero__sub">Docking 결과를 지식 그래프에 되돌린 사례 조사 — 확인된 것과 확인되지 않은 것</p>
+
+    <figure class="k-fig">
+      <svg viewBox="0 0 920 216" role="img" aria-label="지식 그래프에서 후보 예측, 도킹 실행, 결과 검증으로 이어지는 흐름은 존재하지만 검증 결과가 지식 그래프로 되돌아가는 화살표는 끊겨 있다">
+        <defs>
+          <marker id="kah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#7B858E"/></marker>
+          <marker id="kar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#B8443C"/></marker>
+          <marker id="kag" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#4FA88B"/></marker>
+        </defs>
+
+        <rect class="n-box" x="14" y="40" width="184" height="60"/>
+        <text class="n-t" x="106" y="66">바이오메디컬 KG</text>
+        <text class="n-s" x="106" y="84">DISEASE · GENE · DRUG</text>
+
+        <rect class="n-box" x="248" y="40" width="184" height="60"/>
+        <text class="n-t" x="340" y="66">후보 · 표적 예측</text>
+        <text class="n-s" x="340" y="84">EMBEDDING · REASONING</text>
+
+        <rect class="n-box" x="482" y="40" width="184" height="60"/>
+        <text class="n-t" x="574" y="66">Molecular docking</text>
+        <text class="n-s" x="574" y="84">VINA · SMINA · QVINA</text>
+
+        <rect class="n-box" x="716" y="40" width="190" height="60"/>
+        <text class="n-t" x="811" y="66">결과 보고 · 실험 검증</text>
+        <text class="n-s" x="811" y="84">CSV · SDF · PAPER</text>
+
+        <path class="e-solid" d="M198 70H244"/>
+        <path class="e-solid" d="M432 70H478"/>
+        <path class="e-solid" d="M666 70H712"/>
+
+        <path class="e-break" d="M811 100V178H596"/>
+        <path class="e-break-h" d="M326 178H106V104"/>
+        <circle cx="596" cy="178" r="3" fill="#B8443C"/>
+        <circle cx="326" cy="178" r="3" fill="#B8443C"/>
+        <text class="gap-t" x="461" y="174">대 부 분  미 구 현</text>
+        <text class="gap-t" x="461" y="196" style="font-size:8.5px;fill:#7E5450;letter-spacing:.03em">WRITE-BACK NOT IMPLEMENTED</text>
+      </svg>
+      <figcaption class="k-cap">〈그림 1〉 문헌에서 가장 흔한 구조. 앞의 세 화살표는 잘 갖춰져 있고, 되돌아오는 화살표만 없다.</figcaption>
+    </figure>
+
+    <p class="k-hero__lede">
+      2026년 8월 5일까지 공개된 논문·프로젝트·코드 저장소를 폭넓게 조사했다.
+      결론은 이렇다. <b>과거 docking 결과를 바이오메디컬 지식 그래프에 다시 저장해
+      후속 docking이나 후보 선정을 개선하는 사례는 예상보다 매우 적다.</b>
+      많은 것이 아니라 적다. 이 점을 먼저 분명히 해 둔다.
+    </p>
+  </div>
+</header>
+
+<!-- ══════════ 판정 ══════════ -->
+<section class="k-verdict">
+  <div class="k-verdict__in">
+    <h2>엄격하게 구분하면 이렇다</h2>
+
+    <div class="k-tally">
+      <div class="k-tally__row">
+        <span class="k-tally__k">Docking 결과를 실제 KG 속성·관계로 저장</span>
+        <span class="k-tally__n">명확히 확인된 논문 1건</span>
+        <span class="k-tally__m m-part">1</span>
+      </div>
+      <div class="k-tally__row">
+        <span class="k-tally__k">점수·pose·프로토콜·실행 환경까지 KG로 이력 관리</span>
+        <span class="k-tally__n">공개 사례를 확인하지 못함</span>
+        <span class="k-tally__m m-no">0</span>
+      </div>
+      <div class="k-tally__row">
+        <span class="k-tally__k">과거 docking 데이터를 DB·ML 학습 데이터로 재사용</span>
+        <span class="k-tally__n">다수 존재</span>
+        <span class="k-tally__m m-yes">多</span>
+      </div>
+      <div class="k-tally__row">
+        <span class="k-tally__k">KG로 후보를 찾고 docking으로 검증</span>
+        <span class="k-tally__n">다수 존재 · 대부분 되돌리지 않음</span>
+        <span class="k-tally__m m-part">多</span>
+      </div>
+      <div class="k-tally__row">
+        <span class="k-tally__k">Docking 이력 관리를 위한 기반 기술</span>
+        <span class="k-tally__n">ProDock · PLIP · ProLIF · PROV-O · CAESAR</span>
+        <span class="k-tally__m m-yes">有</span>
+      </div>
+    </div>
+
+    <div class="k-quote k-quote--no k-quote--wide" style="margin-top:1.8rem">
+      <p>따라서 “Docking 실행 → 결과 KG 반영 → 다음 docking 계획 개선”이라는 완전한 폐루프는 아직 <b>명확한 연구 공백</b>에 가깝다.</p>
+    </div>
+
+    <p class="k-note">
+      여기서 ‘모든 사례’란 논문 검색엔진, 저널, arXiv, GitHub, 공개 프로젝트·상용 플랫폼 페이지에서 검증할 수 있는 범위를 뜻한다.
+      비공개 제약회사 내부 시스템까지 포함하는 절대적 전수조사는 불가능하다.
+      조사의 한계를 먼저 밝히지 않으면, 뒤에 오는 “없다”는 말이 근거 없는 단정이 된다.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 차례 ══════════ -->
+<nav class="k-toc" aria-label="차례">
+  <div class="k-toc__in">
+    <h2>차례</h2>
+    <ol>
+      <li><a href="#s1"><span class="kn">01</span><span>KG에 실제로 반영한 직접 사례</span></a></li>
+      <li><a href="#s2"><span class="kn">02</span><span>이력은 남기되 KG는 아닌 사례</span></a></li>
+      <li><a href="#s3"><span class="kn">03</span><span>대규모 이력을 공개 자산으로</span></a></li>
+      <li><a href="#s4"><span class="kn">04</span><span>방법과 pose 이력의 표준화</span></a></li>
+      <li><a href="#s5"><span class="kn">05</span><span>결합했으나 되돌리지 않은 사례</span></a></li>
+      <li><a href="#s6"><span class="kn">06</span><span>pose를 KG로 바꾸는 기반 도구</span></a></li>
+      <li><a href="#s7"><span class="kn">07</span><span>범용 provenance 사례</span></a></li>
+      <li><a href="#s8"><span class="kn">08</span><span>사례별 충족도 비교</span></a></li>
+      <li><a href="#s9"><span class="kn">09</span><span>가장 중요한 연구 공백</span></a></li>
+      <li><a href="#s10"><span class="kn">10</span><span>차별화할 수 있는 방향</span></a></li>
+      <li><a href="#fin"><span class="kn">11</span><span>최종 판단</span></a></li>
+    </ol>
+  </div>
+</nav>
+
+<main>
+
+<!-- ══════════ 1 ══════════ -->
+<section class="k-ch k-rv" id="s1">
+  <div class="k-ch__head">
+    <div class="k-ch__no">1</div>
+    <p class="k-ch__lab">Direct evidence · 확인된 사례 1건</p>
+    <h2>Docking 데이터를 실제 지식 그래프에 반영한 직접 사례</h2>
+  </div>
+
+  <div class="k-col">
+    <p>
+      이 장에는 사례가 하나뿐이다. 하나뿐이라는 사실 자체가 이 조사의 첫 번째 결과다.
+      아래 카드만 다른 색으로 표시한 이유도 그것이다. 이 페이지 전체에서 흰 카드는 이것 하나다.
+    </p>
+  </div>
+
+  <div class="k-case k-case--lit">
+    <p class="k-case__id">1.1 · Engineering Proceedings 2023</p>
+    <p class="k-case__t">당뇨병 약물재창출용 Enhanced Knowledge Graph</p>
+
+    <div class="k-crit">
+      <span class="k-crit__d y" title="과거 docking 결과 재사용: 충족">재</span>
+      <span class="k-crit__d y" title="실제 지식 그래프: 충족">KG</span>
+      <span class="k-crit__d p" title="Pose·상호작용: 제한적">Po</span>
+      <span class="k-crit__d n" title="실행 provenance: 미충족">Pv</span>
+      <span class="k-crit__d n" title="KG 피드백 폐루프: 미충족">루프</span>
+      <span class="k-crit__l">재사용 / KG / POSE / PROVENANCE / 폐루프</span>
+    </div>
+
+    <p class="k-links">
+      논문 <a href="https://www.mdpi.com/2673-4591/50/1/9" target="_blank" rel="noopener">Data-Driven Drug Repurposing in Diabetes Mellitus through an Enhanced Knowledge Graph</a> ·
+      DOI <a href="https://doi.org/10.3390/engproc2023050009" target="_blank" rel="noopener">10.3390/engproc2023050009</a> ·
+      <a href="https://www.mdpi.com/2673-4591/50/1/9/pdf" target="_blank" rel="noopener">PDF</a>
+    </p>
+
+    <p>
+      현재 조사에서 요구사항과 가장 직접적으로 일치하는 사례다.
+      저자들은 논문에서 <b>“molecular docking data were used to enrich the knowledge graph”</b>라고 명시했다.
+      해석의 여지가 없는 문장이다.
+    </p>
+
+    <span class="k-sub">수행 내용</span>
+    <ul class="k-li">
+      <li>약 7,955개 생리활성 화합물과 529개 단백질 표적을 대상으로 AutoDock Vina 기반 virtual screening을 수행했다.</li>
+      <li>docking score를 표적별로 정규화했다.</li>
+      <li>정규화된 docking score를 기존 biomedical knowledge graph에 추가했다.</li>
+    </ul>
+    <p style="margin-bottom:.5rem">그래프에는 다음 정보가 함께 통합되었다.</p>
+    <ul class="k-li k-li2">
+      <li>약물–단백질 관계</li><li>단백질–단백질 관계</li><li>약물–질환 관계</li><li>약물–약물 관계</li>
+      <li>CYP450 저해 예측</li><li>임상시험 및 특허 정보</li><li>약물유전체학 정보</li><li>정규화 docking score</li>
+    </ul>
+    <p>
+      예를 들어 DPP-4 표적에 대해 기준 약물보다 우수한 docking score를 가진 후보들을 선별한 뒤,
+      CYP450, 구조 유사성, 임상시험, 특허, pharmacogenomics 정보를 그래프에서 함께 검색해 최종 후보를 축소했다.
+    </p>
+
+    <span class="k-sub">이 사례가 의미하는 것</span>
+    <p>
+      일반적인 docking 시스템에서는 결과가 CSV나 SDF 파일에 남고, 분석이 끝나면 독립된 결과물로 묻힌다.
+      이 사례는 docking score를 지식 그래프에 추가함으로써 다음과 같은 복합 질문에 답할 수 있게 했다.
+    </p>
+    <div class="k-quote k-quote--lit">
+      <p>“DPP-4에 강하게 결합할 가능성이 있으면서, 기존 당뇨병 약물과 구조적으로 너무 유사하지 않고, CYP450 위험이 낮으며, 임상·특허 근거까지 존재하는 화합물은 무엇인가?”</p>
+    </div>
+    <p>
+      요컨대 docking score를 단순 순위가 아니라, 다른 생물학적·임상적 근거와 연결된 <b>의사결정 근거</b>로 바꾸었다.
+    </p>
+
+    <span class="k-sub">그러나 여기까지다 — 한계</span>
+    <p>
+      완전한 “docking 수행 이력 KG”라고 보기는 어렵다.
+      논문에서 확인되는 주요 KG 반영 데이터는 정규화된 docking score다.
+      아래 항목까지 독립적인 노드와 관계로 저장했다는 근거는 제시되지 않았다.
+    </p>
+  </div>
+
+  <div class="k-void">
+    <div class="k-void__i"><span class="k-void__x">근거 없음</span><span>DockingRun 실행 노드</span></div>
+    <div class="k-void__i"><span class="k-void__x">근거 없음</span><span>docking 엔진 및 버전</span></div>
+    <div class="k-void__i"><span class="k-void__x">근거 없음</span><span>random seed와 exhaustiveness</span></div>
+    <div class="k-void__i"><span class="k-void__x">근거 없음</span><span>receptor 구조 버전·전처리 방법</span></div>
+    <div class="k-void__i"><span class="k-void__x">근거 없음</span><span>protonation 및 tautomer 상태</span></div>
+    <div class="k-void__i"><span class="k-void__x">근거 없음</span><span>grid box 좌표</span></div>
+    <div class="k-void__i"><span class="k-void__x">근거 없음</span><span>개별 pose와 pose rank</span></div>
+    <div class="k-void__i"><span class="k-void__x">근거 없음</span><span>잔기별 상호작용</span></div>
+    <div class="k-void__i"><span class="k-void__x">근거 없음</span><span>계산 실패와 재실행 기록</span></div>
+    <div class="k-void__i"><span class="k-void__x">근거 없음</span><span>MD·FEP·실험 결과에 의한 사후 검증</span></div>
+  </div>
+
+  <div class="k-col">
+    <p>
+      따라서 이 사례는 <b>“docking 결과의 KG 반영”에는 해당하지만, “상세한 docking 실행 이력 전체의 KG 관리”에는 부분적으로만 해당한다.</b>
+      둘을 같은 것으로 뭉뚱그리면 조사 결과가 실제보다 풍성해 보인다. 그렇게 해서는 안 된다.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 2 ══════════ -->
+<section class="k-ch k-rv" id="s2">
+  <div class="k-ch__head">
+    <div class="k-ch__no">2</div>
+    <p class="k-ch__lab">History without a graph</p>
+    <h2>이력은 체계적으로 저장하지만 KG는 아닌 사례</h2>
+  </div>
+
+  <div class="k-case k-case--part">
+    <p class="k-case__id">2.1 · arXiv 2604.21828</p>
+    <p class="k-case__t">ProDock — 재현 가능한 도킹을 위한 provenance 프레임워크</p>
+
+    <div class="k-crit">
+      <span class="k-crit__d y" title="과거 docking 결과 재사용: 충족">재</span>
+      <span class="k-crit__d n" title="실제 지식 그래프: 아님 · SQLite">KG</span>
+      <span class="k-crit__d y" title="Pose·상호작용: 충족">Po</span>
+      <span class="k-crit__d y" title="실행 provenance: 충족">Pv</span>
+      <span class="k-crit__d n" title="KG 피드백 폐루프: 미충족">루프</span>
+    </div>
+
+    <p class="k-links">
+      <a href="https://arxiv.org/abs/2604.21828" target="_blank" rel="noopener">논문</a> ·
+      <a href="https://arxiv.org/html/2604.21828v1" target="_blank" rel="noopener">arXiv HTML</a> ·
+      <a href="https://github.com/Medicine-Artificial-Intelligence/ProDock" target="_blank" rel="noopener">GitHub</a> ·
+      <a href="https://prodock.readthedocs.io/en/latest/" target="_blank" rel="noopener">Documentation</a>
+    </p>
+
+    <p>
+      ProDock은 현재 공개된 시스템 중 <b>요구하는 docking 이력 KG에 가장 가까운 데이터 구조</b>를 갖고 있다.
+      다만 그래프 DB가 아니라 SQLite 관계형 DB를 쓴다. 이 한 가지 선택이 모든 차이를 만든다.
+    </p>
+
+    <span class="k-sub">저장하는 정보</span>
+    <ul class="k-li k-li2">
+      <li>receptor 구조</li><li>ligand 구조</li><li>docking engine</li><li>engine별 score</li>
+      <li>pose ID와 순위</li><li>residue-level interaction</li><li>random seed</li><li>exhaustiveness</li>
+      <li>생성할 pose 수</li><li>CPU 할당</li><li>실행 설정과 provenance</li><li>실패 및 후처리 결과</li>
+    </ul>
+    <p>
+      Vina, smina, qvina 등 여러 docking 엔진의 결과를 하나의 캠페인 단위로 관리하고,
+      ProLIF를 이용해 pose별 단백질–리간드 상호작용 fingerprint까지 추출한다.
+    </p>
+
+    <span class="k-sub">거의 그대로 KG가 된다</span>
+    <p>ProDock의 관계형 스키마는 다음과 같이 거의 손대지 않고 KG로 옮길 수 있다.</p>
+    <div class="k-triples">DockingRun  <span class="rel">─USED_RECEPTOR→</span>  <span class="obj">ReceptorState</span>
+DockingRun  <span class="rel">─USED_LIGAND→</span>    <span class="obj">LigandState</span>
+DockingRun  <span class="rel">─USED_ENGINE→</span>    <span class="obj">Vina_1.x</span>
+DockingRun  <span class="rel">─GENERATED→</span>      <span class="obj">DockingPose</span>
+DockingPose <span class="rel">─INTERACTS_WITH→</span> <span class="obj">ASP855</span>
+DockingPose <span class="rel">─HAS_SCORE→</span>      <span class="obj">-9.2 kcal/mol</span></div>
+
+    <span class="k-sub">한계</span>
+    <ul class="k-li">
+      <li>SQLite에 저장하므로 semantic KG는 아니다.</li>
+      <li>질환, pathway, phenotype, 임상시험, 부작용 등의 biomedical KG와 연결되지 않는다.</li>
+      <li>과거 결과를 이용해 agent가 다음 docking 전략을 자동 결정하는 구조가 아니다.</li>
+    </ul>
+    <p>
+      그럼에도 <b>ProDock의 실행 이력 스키마를 RDF·Neo4j·Property Graph로 변환하는 접근</b>은 가장 현실적인 출발점이다.
+      바닥부터 새로 설계할 필요가 없다는 뜻이다.
+    </p>
+  </div>
+
+  <div class="k-case k-case--no">
+    <p class="k-case__id">2.2 · arXiv 2111.09502</p>
+    <p class="k-case__t">Multi-Task Learning — 이전 표적의 docking 데이터를 재사용한다</p>
+
+    <div class="k-crit">
+      <span class="k-crit__d y" title="과거 docking 결과 재사용: 충족">재</span>
+      <span class="k-crit__d n" title="실제 지식 그래프: 미충족">KG</span>
+      <span class="k-crit__d n" title="Pose·상호작용: 미충족">Po</span>
+      <span class="k-crit__d n" title="실행 provenance: 미충족">Pv</span>
+      <span class="k-crit__d p" title="피드백: 모델 학습에 한정">루프</span>
+    </div>
+
+    <p class="k-links">
+      <a href="https://arxiv.org/abs/2111.09502" target="_blank" rel="noopener">논문</a> ·
+      <a href="https://arxiv.org/pdf/2111.09502" target="_blank" rel="noopener">PDF</a>
+    </p>
+
+    <p>이 연구는 하나의 질문에서 출발한다. “새로운 표적마다 docking과 학습을 처음부터 다시 해야 하는가?”</p>
+
+    <span class="k-sub">핵심 접근</span>
+    <ul class="k-li">
+      <li>과거 다른 표적들에서 축적된 docking score를 보조 학습 데이터로 사용한다.</li>
+      <li>분자 GNN이 여러 표적의 docking score를 동시에 예측하도록 multi-task learning을 적용한다.</li>
+      <li>새 표적의 제한된 docking 결과와 기존 표적들의 대규모 이력을 결합한다.</li>
+      <li>과거 표적들에서 학습한 공통 화학 패턴을 새로운 표적으로 전이한다.</li>
+    </ul>
+
+    <span class="k-sub">의미와 한계</span>
+    <p>
+      과거 docking 이력이 일회성 결과가 아니라 <b>재사용 가능한 조직 자산</b>이라는 점을 보여준다.
+      비슷한 pocket이나 chemical series를 가진 표적에서는 이전 결과가 새 표적의 screening 비용을 줄일 수 있다.
+    </p>
+    <ul class="k-li">
+      <li>docking 결과는 학습 테이블로 쓰인다.</li>
+      <li>표적 간 관계, pocket 유사성, assay 조건, pose 상호작용을 semantic KG로 표현하지 않는다.</li>
+      <li>어떤 과거 run이 현재 예측에 영향을 주었는지 설명하기 어렵다.</li>
+    </ul>
+    <p>따라서 이것은 <b>이력 재사용 사례이지 KG 사례가 아니다.</b> 두 낱말을 섞어 쓰면 안 된다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 3 ══════════ -->
+<section class="k-ch k-rv" id="s3">
+  <div class="k-ch__head">
+    <div class="k-ch__no">3</div>
+    <p class="k-ch__lab">Data assets</p>
+    <h2>대규모 과거 docking 결과를 공개 데이터 자산으로 만든 사례</h2>
+  </div>
+
+  <div class="k-case k-case--no">
+    <p class="k-case__id">3.1</p>
+    <p class="k-case__t">DOCKSTRING — 26만 분자 × 58개 표적</p>
+    <div class="k-crit">
+      <span class="k-crit__d y" title="재사용: 충족">재</span><span class="k-crit__d n" title="KG: 미충족">KG</span>
+      <span class="k-crit__d y" title="Pose·상호작용: 충족">Po</span><span class="k-crit__d p" title="provenance: 일부">Pv</span>
+      <span class="k-crit__d n" title="폐루프: 미충족">루프</span>
+    </div>
+    <p class="k-links">
+      <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9364321/" target="_blank" rel="noopener">논문</a> ·
+      <a href="https://github.com/dockstring/dockstring" target="_blank" rel="noopener">GitHub</a> ·
+      <a href="https://dockstring.github.io/" target="_blank" rel="noopener">프로젝트</a>
+    </p>
+    <p>
+      약 26만 개 분자를 58개 단백질 표적에 docking한 대규모 데이터셋이다.
+      AutoDock Vina score와 pose를 제공하며 docking score 예측, virtual screening,
+      multi-objective molecule optimization, GNN 학습, 생성모델 평가, uncertainty estimation에 쓰인다.
+    </p>
+    <p>
+      전형적인 <b>docking 이력 재사용 데이터셋</b>이다.
+      그러나 데이터가 표와 파일 형태이며, 질환·유전자·경로·실험근거와 연결된 KG는 아니다.
+    </p>
+    <span class="k-sub">KG로 확장한다면 — 추가해야 할 관계</span>
+    <ul class="k-li k-li2">
+      <li>표적–질환 연관성</li><li>표적–pathway 관계</li><li>분자–유사 골격 관계</li>
+      <li>pose–결합잔기 관계</li><li>score–engine/version 관계</li><li>예측 결과–후속 assay 관계</li>
+    </ul>
+  </div>
+
+  <div class="k-g2">
+    <div class="k-case k-case--no" style="margin:0">
+      <p class="k-case__id">3.2</p>
+      <p class="k-case__t">Graph Neural Processes for Molecules</p>
+      <div class="k-crit">
+        <span class="k-crit__d y" title="재사용: 충족">재</span><span class="k-crit__d n" title="KG: 미충족">KG</span>
+        <span class="k-crit__d p" title="분자 그래프에 한정">Po</span><span class="k-crit__d n" title="provenance: 미충족">Pv</span>
+        <span class="k-crit__d p" title="피드백: 모델 학습에 한정">루프</span>
+      </div>
+      <p class="k-links">
+        <a href="https://link.springer.com/article/10.1186/s13321-024-00904-2" target="_blank" rel="noopener">논문</a> ·
+        <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11515514/" target="_blank" rel="noopener">전문</a>
+      </p>
+      <p>DOCKSTRING의 축적된 docking score로 graph neural process를 학습했다.</p>
+      <ul class="k-li">
+        <li>분자를 molecular graph로 표현한다.</li>
+        <li>일부 분자의 score만 관측된 상황에서 나머지 score를 예측한다.</li>
+        <li>새 표적이나 소규모 데이터 환경에 적응하는 few-shot·meta-learning 가능성을 평가한다.</li>
+        <li>예측값과 함께 uncertainty를 추정한다.</li>
+      </ul>
+      <p>
+        여기서 “graph”는 분자의 원자–결합 그래프이지 biomedical knowledge graph가 아니다.
+        같은 낱말이 전혀 다른 것을 가리킨다.
+      </p>
+    </div>
+
+    <div class="k-case k-case--no" style="margin:0">
+      <p class="k-case__id">3.3</p>
+      <p class="k-case__t">Smiles2Dock — 2,500만 건의 score</p>
+      <div class="k-crit">
+        <span class="k-crit__d y" title="재사용: 충족">재</span><span class="k-crit__d n" title="KG: 미충족">KG</span>
+        <span class="k-crit__d p" title="Pose: 제한적">Po</span><span class="k-crit__d p" title="provenance: 일부">Pv</span>
+        <span class="k-crit__d n" title="폐루프: 미충족">루프</span>
+      </div>
+      <p class="k-links">
+        <a href="https://arxiv.org/abs/2406.05738" target="_blank" rel="noopener">논문</a> ·
+        <a href="https://arxiv.org/pdf/2406.05738" target="_blank" rel="noopener">PDF</a>
+      </p>
+      <p>약 170만 개 ChEMBL 화합물을 15개 AlphaFold 구조에 docking해 2,500만 건 이상의 score를 구축했다.</p>
+      <ul class="k-li">
+        <li>SMILES로부터 docking score를 직접 예측하는 모델 학습</li>
+        <li>GNN, transformer, CNN 비교</li>
+        <li>실제 docking 없이 대규모 라이브러리를 사전 선별</li>
+        <li>고비용 docking을 상위 후보에만 집중</li>
+      </ul>
+      <p style="margin-bottom:.4rem">다만 다음이 semantic KG로 연결되지 않는다.</p>
+      <ul class="k-li">
+        <li>AlphaFold 구조의 신뢰도</li><li>단백질 도메인과 pocket 근거</li>
+        <li>docking protocol provenance</li><li>pose별 residue interaction</li>
+        <li>질환·pathway·임상 근거</li><li>후속 실험 결과</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="k-g2">
+    <div class="k-case k-case--no" style="margin:0">
+      <p class="k-case__id">3.4</p>
+      <p class="k-case__t">RNAmigos2 — RNA 표적의 120만 건</p>
+      <div class="k-crit">
+        <span class="k-crit__d y" title="재사용: 충족">재</span><span class="k-crit__d n" title="KG: 미충족">KG</span>
+        <span class="k-crit__d p" title="RNA 구조 그래프">Po</span><span class="k-crit__d n" title="provenance: 미충족">Pv</span>
+        <span class="k-crit__d p" title="피드백: 모델 학습에 한정">루프</span>
+      </div>
+      <p class="k-links"><a href="https://www.biorxiv.org/content/10.1101/2023.11.23.568394v2" target="_blank" rel="noopener">논문</a></p>
+      <p>약 120만 건의 RNA–리간드 docking 결과를 synthetic training data로 활용한다.</p>
+      <ul class="k-li">
+        <li>RNA binding site를 그래프로 표현한다.</li>
+        <li>docking score를 학습용 약한 감독 신호로 쓴다.</li>
+        <li>실험 데이터가 부족한 RNA 표적에서 docking 이력으로 학습 데이터를 보강한다.</li>
+      </ul>
+      <p>
+        그러나 RNA 구조 그래프와 biomedical KG는 다른 개념이다.
+        docking score를 질환·RNA 기능·pathway·assay provenance와 연결한 KG가 아니다.
+      </p>
+    </div>
+
+    <div class="k-case k-case--part" style="margin:0">
+      <p class="k-case__id">3.5</p>
+      <p class="k-case__t">HIDDEN GEM — 생성모델로 되먹임한다</p>
+      <div class="k-crit">
+        <span class="k-crit__d y" title="재사용: 충족">재</span><span class="k-crit__d n" title="KG: 미충족">KG</span>
+        <span class="k-crit__d p" title="Pose: 제한적">Po</span><span class="k-crit__d p" title="provenance: 제한적">Pv</span>
+        <span class="k-crit__d p" title="피드백: 생성모델에 한정">루프</span>
+      </div>
+      <p class="k-links"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11156482/" target="_blank" rel="noopener">논문</a></p>
+      <p>생성모델이 만든 분자를 docking으로 평가하고, 그 결과를 다시 생성모델 개선에 사용하는 반복 구조다.</p>
+      <div class="k-triples">분자 생성 <span class="rel">──→</span> Docking 평가 <span class="rel">──→</span> 우수 후보 선택
+   <span class="cm">↑</span>                                    <span class="cm">│</span>
+   <span class="cm">└────────</span> 생성모델 재학습 <span class="cm">◄────────┘</span></div>
+      <p>
+        중요한 점은 docking 결과를 수동 보고서로 끝내지 않고 <b>다음 생성 라운드의 학습 피드백</b>으로 쓴다는 것이다.
+        이 조사에서 “고리”에 가장 가까이 간 사례다.
+        다만 피드백은 학습 데이터로 들어갈 뿐, DockingRun·Pose·Protocol·Validation을 지식 그래프로 구성하지는 않는다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 4 ══════════ -->
+<section class="k-ch k-rv" id="s4">
+  <div class="k-ch__head">
+    <div class="k-ch__no">4</div>
+    <p class="k-ch__lab">Standardization</p>
+    <h2>여러 docking 방법과 pose 이력을 표준화한 프로젝트</h2>
+  </div>
+
+  <div class="k-g2">
+    <div class="k-case k-case--no" style="margin:0">
+      <p class="k-case__id">4.1</p>
+      <p class="k-case__t">PoseBench</p>
+      <div class="k-crit">
+        <span class="k-crit__d y" title="재사용: 충족">재</span><span class="k-crit__d n" title="KG: 미충족">KG</span>
+        <span class="k-crit__d y" title="Pose: 충족">Po</span><span class="k-crit__d p" title="provenance: 일부">Pv</span>
+        <span class="k-crit__d n" title="폐루프: 미충족">루프</span>
+      </div>
+      <p class="k-links">
+        <a href="https://www.nature.com/articles/s42256-025-01160-1" target="_blank" rel="noopener">논문</a> ·
+        <a href="https://github.com/BioinfoMachineLearning/PoseBench" target="_blank" rel="noopener">GitHub</a>
+      </p>
+      <p>전통적 docking과 AI 기반 co-folding·pose prediction을 같은 데이터셋과 평가 기준으로 비교한다.</p>
+      <ul class="k-li k-li2">
+        <li>Astex</li><li>PoseBusters</li><li>DockGen-E</li><li>CASP15</li>
+        <li>conventional docking</li><li>deep-learning docking</li><li>protein–ligand co-folding</li>
+      </ul>
+      <p>여러 방법의 pose와 평가 결과를 일관된 구조로 축적한다는 점에서 “수행 이력 표준화” 사례다. 다만 biomedical KG에 연결하지는 않는다.</p>
+    </div>
+
+    <div class="k-case k-case--no" style="margin:0">
+      <p class="k-case__id">4.2</p>
+      <p class="k-case__t">PoseX</p>
+      <div class="k-crit">
+        <span class="k-crit__d y" title="재사용: 충족">재</span><span class="k-crit__d n" title="KG: 미충족">KG</span>
+        <span class="k-crit__d y" title="Pose: 충족">Po</span><span class="k-crit__d p" title="provenance: 일부">Pv</span>
+        <span class="k-crit__d n" title="폐루프: 미충족">루프</span>
+      </div>
+      <p class="k-links"><a href="https://github.com/CataAI/PoseX" target="_blank" rel="noopener">GitHub</a></p>
+      <p>
+        self-docking과 cross-docking 조건에서 여러 pose prediction 방법을 비교하기 위한 공개 benchmark 프로젝트다.
+        기존 실행 결과와 방법별 성능을 보존하므로 다음 연구자가 어떤 방법을 고를지 판단하는 데 도움이 된다.
+        그러나 benchmark 결과를 표적·질환·분자·실험 근거 KG와 연결하는 시스템은 아니다.
+      </p>
+    </div>
+  </div>
+
+  <div class="k-case k-case--part">
+    <p class="k-case__id">4.3 · arXiv 2411.12597</p>
+    <p class="k-case__t">GNNAS-Dock — 과거 성능으로 엔진을 고른다</p>
+    <div class="k-crit">
+      <span class="k-crit__d y" title="재사용: 충족">재</span><span class="k-crit__d n" title="KG: 미충족">KG</span>
+      <span class="k-crit__d p" title="Pose: 제한적">Po</span><span class="k-crit__d p" title="성능 이력 보존">Pv</span>
+      <span class="k-crit__d p" title="피드백: 알고리즘 선택에 한정">루프</span>
+    </div>
+    <p class="k-links">
+      <a href="https://arxiv.org/abs/2411.12597" target="_blank" rel="noopener">논문</a> ·
+      <a href="https://arxiv.org/html/2411.12597v1" target="_blank" rel="noopener">전문</a>
+    </p>
+    <p>
+      과거 docking benchmark 결과를 학습해, 주어진 단백질–리간드 쌍에 가장 적합한 docking 알고리즘을 선택하려는 연구다.
+      모든 표적에 같은 엔진을 들이대지 않고 과거 성능을 근거로 고른다.
+    </p>
+    <ul class="k-li">
+      <li>pocket이 깊고 rigid하면 방법 A</li>
+      <li>receptor flexibility가 크면 방법 B</li>
+      <li>특정 ligand 크기와 회전결합 수에서는 방법 C</li>
+      <li>유사한 복합체에서 성공률이 높았던 engine 우선</li>
+    </ul>
+    <p>
+      과거 이력을 <b>계산 전략 선택에 활용</b>한다는 점에서 Agentic Docking에 가장 가까운 발상이다.
+      다만 이력은 ML 학습 데이터일 뿐, KG 기반 추론은 아니다.
+    </p>
+  </div>
+
+  <div class="k-case k-case--no">
+    <p class="k-case__id">4.4</p>
+    <p class="k-case__t">DockBox2 — 버려지던 하위 pose를 쓴다</p>
+    <p class="k-links"><a href="https://pubs.rsc.org/en/content/articlelanding/2025/sc/d4sc07875f" target="_blank" rel="noopener">Pose Ensemble Graph Neural Networks to Improve Docking Performances</a></p>
+    <p>하나의 최상위 pose만 고르지 않고, 여러 docking pose를 ensemble로 GNN에 입력한다.</p>
+    <p style="margin-bottom:.4rem">기존 docking에서 버려지는 하위 pose도 다음 정보를 갖고 있다.</p>
+    <ul class="k-li k-li2">
+      <li>다른 binding mode</li><li>핵심 잔기와의 부분 상호작용</li><li>induced-fit 가능성</li>
+      <li>docking engine의 불확실성</li><li>ligand conformation 다양성</li>
+    </ul>
+    <p>
+      따라서 여러 pose의 이력을 보존하면 affinity나 올바른 pose를 더 정확히 평가할 가능성이 있다.
+      다만 여기서도 “graph”는 단백질–리간드 계산 그래프이며 semantic KG가 아니다.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 5 ══════════ -->
+<section class="k-ch k-rv" id="s5">
+  <div class="k-ch__head">
+    <div class="k-ch__no">5</div>
+    <p class="k-ch__lab">The common shape</p>
+    <h2>KG와 docking을 결합했지만 결과를 KG에 되돌리지 않은 사례</h2>
+  </div>
+
+  <div class="k-col">
+    <p>
+      <b>이 부류가 문헌에서 가장 흔하다.</b>
+      구조는 언제나 같다. KG가 후보를 좁히고, docking이 그 후보를 검증하고, 거기서 끝난다.
+      맨 앞의 그림 1이 바로 이 구조다.
+    </p>
+  </div>
+
+  <div class="k-g3">
+    <div class="k-case k-case--no" style="margin:0">
+      <p class="k-case__id">5.1</p>
+      <p class="k-case__t">COVID-19 약물재창출 KG + docking</p>
+      <p class="k-links">
+        <a href="https://www.nature.com/articles/s41598-023-30095-z" target="_blank" rel="noopener">논문</a> ·
+        <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9985643/" target="_blank" rel="noopener">전문</a>
+      </p>
+      <p>
+        KG embedding으로 재창출 후보를 순위화하고, docking으로 SARS-CoV-2 단백질 결합 가능성을 평가했다.
+        Fosinopril–nsp13 등을 KG 경로와 docking 결과로 설명한다.
+        그러나 docking 결과가 다시 DockingRun·Pose·Score 관계로 KG에 적재되었다는 근거는 없다.
+      </p>
+    </div>
+    <div class="k-case k-case--no" style="margin:0">
+      <p class="k-case__id">5.2</p>
+      <p class="k-case__t">PPIKG 기반 표적 규명</p>
+      <p class="k-links">
+        <a href="https://www.nature.com/articles/s41598-025-86166-w" target="_blank" rel="noopener">논문</a> ·
+        <a href="https://github.com/Xiong-Jing/PPIKG" target="_blank" rel="noopener">GitHub</a>
+      </p>
+      <p>
+        단백질–단백질 상호작용 KG로 UNBS5162의 후보 표적을 1,088개에서 35개로 줄이고,
+        docking과 실험으로 USP7을 직접 표적으로 제안했다.
+        KG가 검색 공간을 크게 줄인 것은 분명한 장점이다.
+        그러나 USP7 docking 결과와 후속 실험 결과를 provenance가 포함된 관계로 PPIKG에 되돌리지는 않는다.
+      </p>
+    </div>
+    <div class="k-case k-case--no" style="margin:0">
+      <p class="k-case__id">5.3</p>
+      <p class="k-case__t">KPGT</p>
+      <p class="k-links"><a href="https://www.nature.com/articles/s41467-023-43214-1" target="_blank" rel="noopener">논문</a></p>
+      <p>
+        분자 그래프와 화학적 지식을 결합한 사전학습 모델이다.
+        약물재창출 사례에서 모델이 제안한 후보를 docking으로 분석한다.
+        다만 docking은 proof-of-concept 평가 단계이며, 과거 실행 이력이 KG의 새로운 관계로 환류되는 구조가 아니다.
+      </p>
+    </div>
+  </div>
+
+  <div class="k-g3">
+    <div class="k-case k-case--no" style="margin:0">
+      <p class="k-case__id">5.4</p>
+      <p class="k-case__t">K-DREAM</p>
+      <p class="k-links">
+        <a href="https://arxiv.org/abs/2510.09914" target="_blank" rel="noopener">논문</a> ·
+        <a href="https://arxiv.org/pdf/2510.09914" target="_blank" rel="noopener">PDF</a>
+      </p>
+      <p>biomedical KG의 지식을 분자 생성 과정에 활용하고 docking score로 생성 후보를 평가한다.</p>
+      <ul class="k-li">
+        <li>KG가 생성모델에 질환–표적–약물 맥락을 제공</li>
+        <li>생성모델이 새로운 분자를 제안</li>
+        <li>docking이 구조적 결합 가능성을 평가</li>
+      </ul>
+      <p>그러나 docking 결과를 다시 KG에 저장해 다음 생성 라운드의 graph reasoning에 쓰는 완전한 폐루프는 공개 내용에서 확인되지 않는다.</p>
+    </div>
+    <div class="k-case k-case--no" style="margin:0">
+      <p class="k-case__id">5.5</p>
+      <p class="k-case__t">GADRC</p>
+      <p class="k-links"><a href="https://link.springer.com/article/10.1007/s10822-025-00691-4" target="_blank" rel="noopener">논문</a></p>
+      <p>
+        그래프 기반 모델이 약물재창출 후보를 예측하고 docking으로 구조적 타당성을 검증한다.
+        여기서도 docking은 최종 검증 수단이며, pose·score·protocol이 그래프 이력으로 환류되는 구조가 아니다.
+      </p>
+    </div>
+    <div class="k-case k-case--part" style="margin:0">
+      <p class="k-case__id">5.6 · 상용</p>
+      <p class="k-case__t">MedGraph-Rubie</p>
+      <p class="k-links"><a href="https://www.medvolt.ai/platform/medgraph-rubie-for-drug-repurposing-and-virtual-screening" target="_blank" rel="noopener">프로젝트 페이지</a></p>
+      <p style="margin-bottom:.4rem">공개 페이지는 다음 요소의 통합을 주장한다.</p>
+      <ul class="k-li">
+        <li>biomedical knowledge graph</li><li>target docking 및 reverse docking</li>
+        <li>post-docking refinement</li><li>free-energy calculation</li>
+        <li>대규모 virtual screening</li><li>HPC 기반 계산</li>
+      </ul>
+      <p>상용 시스템 중에서는 요구사항과 상당히 가까워 보인다. 그러나 공개된 논문, KG 스키마, 소스코드가 없다.</p>
+    </div>
+  </div>
+
+  <div class="k-col">
+    <p style="margin-bottom:.4rem">MedGraph-Rubie에 대해 검증할 수 없는 것은 다음 넷이다.</p>
+  </div>
+  <div class="k-void">
+    <div class="k-void__i"><span class="k-void__x">확인 불가</span><span>docking 결과가 실제 KG에 write-back되는지</span></div>
+    <div class="k-void__i"><span class="k-void__x">확인 불가</span><span>score만 저장하는지, pose와 provenance까지 저장하는지</span></div>
+    <div class="k-void__i"><span class="k-void__x">확인 불가</span><span>과거 실행 이력이 다음 작업 계획에 사용되는지</span></div>
+    <div class="k-void__i"><span class="k-void__x">확인 불가</span><span>성능 주장이 독립적으로 재현되었는지</span></div>
+  </div>
+  <div class="k-col">
+    <p>
+      따라서 <b>관련 상용 주장</b>으로는 포함할 수 있지만, 검증된 연구 사례와 같은 무게로 취급해서는 안 된다.
+      주장과 근거를 구분하지 않으면 조사는 홍보가 된다.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 6 ══════════ -->
+<section class="k-ch k-rv" id="s6">
+  <div class="k-ch__head">
+    <div class="k-ch__no">6</div>
+    <p class="k-ch__lab">Enabling tools</p>
+    <h2>Docking pose를 KG 데이터로 바꿀 수 있는 기반 도구</h2>
+  </div>
+
+  <div class="k-col">
+    <p>
+      앞 장까지가 “없다”는 이야기였다면, 이 장부터는 “재료는 이미 있다”는 이야기다.
+      없는 것은 재료가 아니라 조립이다.
+    </p>
+  </div>
+
+  <div class="k-case k-case--yes">
+    <p class="k-case__id">6.1</p>
+    <p class="k-case__t">PLIP — pose에서 상호작용을 뽑아낸다</p>
+    <p class="k-links"><a href="https://academic.oup.com/nar/article/43/W1/W443/2467865" target="_blank" rel="noopener">PLIP: Fully Automated Protein–Ligand Interaction Profiler</a></p>
+    <p style="margin-bottom:.4rem">docking pose나 결정구조에서 다음 상호작용을 자동 추출한다.</p>
+    <ul class="k-li k-li2">
+      <li>hydrogen bond</li><li>hydrophobic interaction</li><li>π-stacking</li>
+      <li>salt bridge</li><li>halogen bond</li><li>metal coordination</li>
+    </ul>
+    <p>이를 이용하면 단순 score보다 설명력이 훨씬 높은 KG를 만들 수 있다.</p>
+    <div class="k-triples">Pose17  <span class="rel">─HYDROGEN_BOND→</span>  <span class="obj">ASP855</span>
+Pose17  <span class="rel">─PI_STACKING→</span>    <span class="obj">PHE856</span>
+Pose17  <span class="rel">─SALT_BRIDGE→</span>    <span class="obj">LYS745</span></div>
+    <p>PLIP 자체는 KG 시스템이 아니다. 그러나 pose를 KG triple로 바꾸는 유용한 추출기다.</p>
+  </div>
+
+  <div class="k-case k-case--yes">
+    <p class="k-case__id">6.2</p>
+    <p class="k-case__t">ProLIF — 상호작용을 fingerprint로</p>
+    <p class="k-links"><a href="https://link.springer.com/article/10.1186/s13321-021-00548-6" target="_blank" rel="noopener">ProLIF: A Library to Encode Molecular Interactions as Fingerprints</a></p>
+    <p>
+      docking pose나 MD trajectory에서 residue-level interaction fingerprint를 생성한다.
+      ProDock의 post-processing에도 쓰인다.
+      ProLIF의 fingerprint를 KG로 변환하면 다음 질문이 가능해진다.
+    </p>
+    <div class="k-quote k-quote--yes" style="max-width:none">
+      <p>“과거 EGFR docking에서 MET793과 hydrogen bond를 만들고, C797과 hydrophobic contact를 형성하면서, 이후 MD에서도 유지된 화합물은 무엇인가?”</p>
+    </div>
+    <p>
+      이 질문에 답할 수 있느냐 없느냐가 갈림길이다.
+      ProLIF는 <b>pose 이력을 검색 가능한 구조적 지식으로 바꾸는 연결 계층</b>으로 쓸 수 있다.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 7 ══════════ -->
+<section class="k-ch k-rv" id="s7">
+  <div class="k-ch__head">
+    <div class="k-ch__no">7</div>
+    <p class="k-ch__lab">General provenance</p>
+    <h2>계산 실행 이력을 KG로 관리하는 범용 사례</h2>
+  </div>
+
+  <div class="k-case k-case--yes">
+    <p class="k-case__id">7.1</p>
+    <p class="k-case__t">CAESAR 및 REPRODUCE-ME · W3C PROV-O</p>
+    <p class="k-links">
+      <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9044346/" target="_blank" rel="noopener">CAESAR: A Platform for Capturing and Querying Computational Experiment Provenance</a> ·
+      <a href="https://www.w3.org/TR/prov-o/" target="_blank" rel="noopener">W3C PROV-O</a>
+    </p>
+    <p>docking 전용은 아니다. 그러나 계산 실험의 실행 과정을 RDF 기반 provenance graph로 표현한다.</p>
+    <p style="margin-bottom:.4rem">저장 가능한 항목은 다음과 같다.</p>
+    <ul class="k-li k-li2">
+      <li>어떤 데이터가 입력되었는가</li><li>어떤 소프트웨어와 버전이 사용되었는가</li>
+      <li>어떤 parameter로 실행되었는가</li><li>누가 언제 실행했는가</li>
+      <li>어떤 결과 파일이 생성되었는가</li><li>어떤 이전 실행을 재현하거나 수정한 것인가</li>
+    </ul>
+    <p>이 구조에 docking domain ontology를 결합하면 이렇게 표현된다.</p>
+    <div class="k-triples">DockingRun_102  <span class="rel">─wasAssociatedWith→</span>  <span class="obj">AutoDockVina_1.x</span>
+Pose_102_1      <span class="rel">─wasGeneratedBy→</span>     <span class="obj">DockingRun_102</span>
+DockingRun_102  <span class="rel">─used→</span>                <span class="obj">ReceptorState_EGFR_3</span>
+DockingRun_103  <span class="rel">─wasRevisionOf→</span>       <span class="obj">DockingRun_102</span></div>
+    <p>
+      정리하면 이렇다.
+      <b>CAESAR와 PROV-O는 실행 이력 KG의 방법을 제공하고, ProDock은 docking 세부 스키마를 제공한다.
+      그런데 이 둘을 실제로 결합한 공개 시스템은 아직 확인되지 않았다.</b>
+      부품은 다 있는데 조립한 사람이 없다는 뜻이다.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 8 ══════════ -->
+<section class="k-ch k-rv" id="s8">
+  <div class="k-ch__head">
+    <div class="k-ch__no">8</div>
+    <p class="k-ch__lab">The matrix</p>
+    <h2>사례별 충족도 비교 — 표 하나가 결론이다</h2>
+  </div>
+
+  <div class="k-col">
+    <p>
+      아래 표를 눈으로 훑기만 해도 이 조사의 결론이 보인다.
+      마지막 열, 즉 <b>KG 피드백 폐루프</b> 칸이 거의 전부 비어 있다.
+      그 빈칸이 이 문서가 존재하는 이유다.
+    </p>
+  </div>
+
+  <div class="k-tw">
+    <table>
+      <thead>
+        <tr>
+          <th>사례</th>
+          <th class="c">과거 결과<br>재사용</th>
+          <th class="c">실제 KG</th>
+          <th class="c">Pose·<br>상호작용</th>
+          <th class="c">실행<br>provenance</th>
+          <th class="c">KG 피드백<br>폐루프</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Diabetes Enhanced KG</td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mkt p">제한적</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mk n">✕</span></td></tr>
+        <tr><td>ProDock</td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mkt n">✕ SQLite</span></td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mk n">✕</span></td></tr>
+        <tr><td>Docking MTL</td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mkt p">모델 학습만</span></td></tr>
+        <tr><td>DOCKSTRING</td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mkt p">일부</span></td><td class="c"><span class="mk n">✕</span></td></tr>
+        <tr><td>Graph Neural Processes</td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mkt p">분자 그래프</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mkt p">모델 학습만</span></td></tr>
+        <tr><td>Smiles2Dock</td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mkt p">제한적</span></td><td class="c"><span class="mkt p">일부</span></td><td class="c"><span class="mk n">✕</span></td></tr>
+        <tr><td>RNAmigos2</td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mkt p">RNA 구조 그래프</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mkt p">모델 학습만</span></td></tr>
+        <tr><td>HIDDEN GEM</td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mkt p">제한적</span></td><td class="c"><span class="mkt p">제한적</span></td><td class="c"><span class="mkt p">생성모델 피드백</span></td></tr>
+        <tr><td>PoseBench</td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mkt p">일부</span></td><td class="c"><span class="mk n">✕</span></td></tr>
+        <tr><td>GNNAS-Dock</td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mkt p">제한적</span></td><td class="c"><span class="mkt p">성능 이력</span></td><td class="c"><span class="mkt p">알고리즘 선택</span></td></tr>
+        <tr><td>COVID-19 KG+docking</td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mkt p">docking 평가</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mk n">✕</span></td></tr>
+        <tr><td>PPIKG</td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mkt p">docking 평가</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mk n">✕</span></td></tr>
+        <tr><td>KPGT / K-DREAM / GADRC</td><td class="c"><span class="mkt p">부분적</span></td><td class="c"><span class="mkt p">O 또는 KG 활용</span></td><td class="c"><span class="mkt p">docking 평가</span></td><td class="c"><span class="mk n">✕</span></td><td class="c"><span class="mkt n">대부분 ✕</span></td></tr>
+        <tr><td>CAESAR / PROV-O</td><td class="c"><span class="mkt p">범용</span></td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mkt n">docking 전용 아님</span></td><td class="c"><span class="mk y">●</span></td><td class="c"><span class="mkt p">설계 가능</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="k-legend">
+    <span><span class="mk y">●</span> 충족</span>
+    <span><span class="mkt p" style="padding:.2rem .45rem;background:rgba(201,154,62,.13)">제한적 · 일부</span> 부분 충족은 내용을 그대로 적었다</span>
+    <span><span class="mk n">✕</span> 미충족</span>
+  </div>
+</section>
+
+<!-- ══════════ 9 ══════════ -->
+<section class="k-ch k-rv" id="s9">
+  <div class="k-ch__head">
+    <div class="k-ch__no">9</div>
+    <p class="k-ch__lab">The gap</p>
+    <h2>가장 중요한 연구 공백 — 세 조각으로 흩어져 있다</h2>
+  </div>
+
+  <div class="k-col">
+    <p>
+      기존 연구는 세 조각으로 분리돼 있다. 각 조각은 저마다 훌륭하다.
+      문제는 조각들이 서로를 모른다는 것이다.
+    </p>
+  </div>
+
+  <div class="k-g3">
+    <div class="k-box k-box--y">
+      <p class="k-box__l">조각 1 · Biomedical KG 연구</p>
+      <p style="margin:0 0 .7rem">질환, 유전자, 단백질, 약물, pathway 관계를 잘 표현한다.</p>
+      <p class="k-but"><b>그러나</b> docking 실행 세부사항이 없다.</p>
+    </div>
+    <div class="k-box k-box--y">
+      <p class="k-box__l">조각 2 · Docking DB·프레임워크</p>
+      <p style="margin:0 0 .7rem">ProDock, DOCKSTRING처럼 score, pose, protocol을 잘 보존한다.</p>
+      <p class="k-but"><b>그러나</b> biomedical context와 semantic reasoning이 없다.</p>
+    </div>
+    <div class="k-box k-box--y">
+      <p class="k-box__l">조각 3 · ML·생성모델 피드백</p>
+      <p style="margin:0 0 .7rem">과거 docking 결과를 새로운 예측과 분자 생성에 활용한다.</p>
+      <p class="k-but"><b>그러나</b> 어떤 실행과 구조적 근거가 예측에 기여했는지 추적하기 어렵다.</p>
+    </div>
+  </div>
+
+  <div class="k-col">
+    <p>세 요소를 결합하는 것이 명확한 연구개발 기회다. 고리를 닫으면 이런 모양이 된다.</p>
+  </div>
+
+  <figure class="k-fig">
+    <svg viewBox="0 0 920 268" role="img" aria-label="바이오메디컬 KG에서 에이전트 계획, 계산 실행, 도킹 이력 KG로 이어지고 이력이 다시 계획으로, 실험 검증이 다시 지식 그래프로 돌아오는 닫힌 순환 도해">
+      <rect class="n-box" x="14" y="40" width="176" height="60"/>
+      <text class="n-t" x="102" y="66">Biomedical KG</text>
+      <text class="n-s" x="102" y="84">DISEASE · TARGET · DRUG</text>
+
+      <rect class="n-box" x="248" y="40" width="176" height="60"/>
+      <text class="n-t" x="336" y="66">Agent 후보·실행 계획</text>
+      <text class="n-s" x="336" y="84">GRAPH RAG · AGENTIC RAG</text>
+
+      <rect class="n-box" x="482" y="40" width="176" height="60"/>
+      <text class="n-t" x="570" y="66">Docking · MD · FEP</text>
+      <text class="n-s" x="570" y="84">EXECUTION</text>
+
+      <rect class="n-box-lit" x="716" y="40" width="190" height="60"/>
+      <text class="n-t n-t-dk" x="811" y="66">Docking History KG</text>
+      <text class="n-s n-s-dk" x="811" y="84">RUN · POSE · PROVENANCE</text>
+
+      <rect class="n-box" x="482" y="188" width="176" height="56"/>
+      <text class="n-t" x="570" y="211">실험 검증</text>
+      <text class="n-s" x="570" y="228">ASSAY · ACTIVITY</text>
+
+      <path class="e-solid" d="M190 70H244"/>
+      <path class="e-solid" d="M424 70H478"/>
+      <path class="e-solid" d="M658 70H712"/>
+
+      <path class="e-ok" d="M811 100V142H336V104"/>
+      <text class="ok-t" x="574" y="162">다음 계산 방법 · 구조 · 파라미터 선택</text>
+
+      <path class="e-ok" d="M886 100V216H662"/>
+      <path class="e-ok" d="M482 216H102V104"/>
+      <text class="ok-t" x="292" y="236">검증 결과 환류</text>
+    </svg>
+    <figcaption class="k-cap">〈그림 2〉 그림 1과 같은 고리를 닫으면 이렇게 된다. 흰 상자가 지금 비어 있는 자리다.</figcaption>
+  </figure>
+</section>
+
+<!-- ══════════ 10 ══════════ -->
+<section class="k-ch k-rv" id="s10">
+  <div class="k-ch__head">
+    <div class="k-ch__no">10</div>
+    <p class="k-ch__lab">What to build</p>
+    <h2>새 시스템에서 차별화할 수 있는 구체적인 방향</h2>
+  </div>
+
+  <div class="k-col">
+    <p>
+      가장 설득력 있는 구현은 새로운 것을 발명하는 게 아니라 <b>이미 검증된 네 조각을 이어 붙이는 것</b>이다.
+      당뇨병 Enhanced KG의 score 통합 방식, ProDock의 provenance 스키마,
+      PLIP·ProLIF의 잔기 상호작용, PROV-O의 실행 이력 모델.
+      이 넷이면 된다.
+    </p>
+    <p>최소한 다음 엔터티를 KG에 포함해야 한다.</p>
+  </div>
+
+  <div class="k-g4">
+    <div class="k-box">
+      <p class="k-box__l">실행 계층</p>
+      <ul class="k-li" style="margin:0">
+        <li>DockingCampaign</li><li>DockingRun</li><li>DockingEngine</li><li>Protocol</li>
+        <li>ComputeEnvironment</li><li>ParameterSet</li><li>FailureEvent</li>
+      </ul>
+    </div>
+    <div class="k-box">
+      <p class="k-box__l">구조 계층</p>
+      <ul class="k-li" style="margin:0">
+        <li>ProteinStructure</li><li>ReceptorState</li><li>BindingPocket</li><li>LigandState</li>
+        <li>ProtonationState</li><li>Tautomer</li><li>Conformer</li><li>DockingPose</li>
+      </ul>
+    </div>
+    <div class="k-box">
+      <p class="k-box__l">결과 계층</p>
+      <ul class="k-li" style="margin:0">
+        <li>raw docking score</li><li>normalized score</li><li>consensus score</li><li>pose rank</li>
+        <li>RMSD</li><li>strain energy</li><li>residue interaction</li><li>pocket coverage</li><li>score uncertainty</li>
+      </ul>
+    </div>
+    <div class="k-box">
+      <p class="k-box__l">검증 계층</p>
+      <ul class="k-li" style="margin:0">
+        <li>MD stability</li><li>MM/GBSA</li><li>FEP</li><li>biochemical assay</li>
+        <li>cellular assay</li><li>activity value</li><li>experimental condition</li><li>positive·negative validation</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="k-col">
+    <p>
+      이렇게 구축하면 agent가 다음과 같은 판단을 내릴 수 있다.
+      추상적인 이야기가 아니다. 아래 두 문장이 실제로 시스템이 출력해야 할 결과물이다.
+    </p>
+  </div>
+
+  <div class="k-quote k-quote--yes">
+    <p>“이 표적에서는 Vina 점수만 높고 MD에서 무너진 pose가 반복되었으므로, 이번에는 해당 pocket 상태를 제외하고 ensemble docking과 induced-fit docking을 먼저 수행하라.”</p>
+  </div>
+  <div class="k-quote k-quote--yes">
+    <p>“MET793 hydrogen bond가 유지된 과거 pose들은 실험 활성과 높은 상관을 보였으므로, 단순 docking score보다 이 상호작용을 후보 선택에서 우선하라.”</p>
+  </div>
+
+  <div class="k-col">
+    <p>이 두 문장을 말할 수 있는 시스템과, 말할 수 없는 시스템의 차이가 이 조사가 겨눈 지점이다.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════════ 최종 판단 ══════════ -->
+<footer class="k-fin k-grid" id="fin">
+  <div class="k-fin__in">
+    <p class="k-ch__lab">Final judgement</p>
+    <h2>최종 판단</h2>
+
+    <p>
+      공개 문헌에서 확인된 가장 직접적인 사례는 <strong>당뇨병 약물재창출 Enhanced Knowledge Graph</strong>다.
+      실제로 docking score를 KG에 통합했다. 그러나 상세 실행 이력까지 포함하지는 않았다.
+    </p>
+    <p>
+      반대로 <strong>ProDock</strong>은 필요한 docking provenance를 거의 전부 저장하지만 KG가 아니다.
+      <strong>CAESAR와 PROV-O</strong>는 provenance KG를 제공하지만 docking 전용이 아니다.
+    </p>
+    <p>
+      세 사례가 각각 필요한 것의 3분의 1씩을 갖고 있다. 그리고 셋을 합친 것은 아직 없다.
+      그러므로 다음 연구 주제는 기존 사례의 단순 반복이 아니라 충분한 독창성이 있다.
+      없는 것을 만드는 일이기 때문이다.
+    </p>
+
+    <div class="k-thesis">
+      <p class="k-thesis__l">Research subject</p>
+      <p>
+        Docking·MD·FEP·실험 검증의 전체 이력을 바이오메디컬 지식 그래프에 구조화하고,
+        Graph RAG와 Agentic RAG가 이를 검색·추론하여
+        다음 계산 방법, 표적 구조, 파라미터 및 후보 화합물을 자동 선택하는
+        <strong>폐루프형 In-silico 신약개발 시스템</strong>.
+      </p>
+    </div>
+
+    <div class="k-colo">
+      <span>조사 종료 2026.08.05 · 공개 문헌·코드 저장소 범위</span>
+      <span>비공개 내부 시스템은 조사 범위 밖 · 절대적 전수조사는 불가능</span>
+    </div>
+  </div>
+</footer>
+
+<button class="k-top" id="ktop" aria-label="맨 위로">↑</button>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var rv = document.querySelectorAll(".k-rv");
+  if ("IntersectionObserver" in window && !reduce){
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add("k-in"); io.unobserve(e.target); }
+      });
+    }, { rootMargin:"0px 0px -6% 0px", threshold:0.03 });
+    rv.forEach(function(el){ io.observe(el); });
+  } else {
+    rv.forEach(function(el){ el.classList.add("k-in"); });
+  }
+
+  var btn = document.getElementById("ktop"), tick = false;
+  window.addEventListener("scroll", function(){
+    if (tick) return; tick = true;
+    window.requestAnimationFrame(function(){
+      btn.classList.toggle("k-show", window.scrollY > 800); tick = false;
+    });
+  }, { passive:true });
+  btn.addEventListener("click", function(){
+    window.scrollTo({ top:0, behavior: reduce ? "auto" : "smooth" });
+  });
+})();
+</script>
+</body>
+</html>
