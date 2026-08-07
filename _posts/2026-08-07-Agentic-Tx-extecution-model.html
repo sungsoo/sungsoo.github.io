@@ -1,0 +1,1760 @@
+---
+layout: null
+title: "Drug Development Execution Agent: Design and Implementation" 
+date: 2026-08-07
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E2E-Tx 반상기 · Agentic-Tx형 신약개발 실행 에이전트의 구체적 구현 방안</title>
+<meta name="description" content="Agentic-Tx형 신약개발 실행 에이전트를 가설 중심 과학 의사결정 시스템으로 구현하는 설계 답사기.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+/* ─────────────────────────────────────────────
+   E2E-Tx 반상기 — 棋譜 design system
+   먹(ink) · 장지(paper) · 비자나무(board) · 인주(seal) · 비색(celadon)
+   ───────────────────────────────────────────── */
+:root{
+  --ink:        #131519;
+  --ink-soft:   #1D2026;
+  --ink-line:   #2C313A;
+  --jangji:     #E9EAE4;
+  --baekdol:    #FCFBF7;
+  --bija:       #C2913F;
+  --bija-dim:   #8A6829;
+  --inju:       #A8291F;
+  --bisaek:     #4E7F70;
+  --text:       #1A1C20;
+  --text-mute:  #5A5F68;
+  --text-faint: #8B9099;
+  --rule:       #CFD0C8;
+
+  --f-disp: "Gowun Batang", "Nanum Myeongjo", "Apple SD Gothic Neo", serif;
+  --f-body: "Pretendard", "Pretendard Variable", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --f-mono: "IBM Plex Mono", "D2Coding", ui-monospace, monospace;
+
+  --measure: 40rem;
+  --gutter: clamp(1.25rem, 4vw, 3rem);
+}
+
+*,*::before,*::after{ box-sizing:border-box; }
+html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  *,*::before,*::after{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+}
+body{
+  margin:0;
+  background:var(--jangji);
+  color:var(--text);
+  font-family:var(--f-body);
+  font-size:1.0625rem;
+  line-height:1.85;
+  letter-spacing:-.005em;
+  word-break:keep-all;
+  overflow-wrap:break-word;
+}
+::selection{ background:var(--bija); color:var(--ink); }
+a{ color:inherit; }
+:focus-visible{ outline:2px solid var(--bija); outline-offset:3px; }
+
+/* ── 반상 격자 배경 ── */
+.board-bg{
+  background-color:var(--ink);
+  background-image:
+    linear-gradient(to right, rgba(194,145,63,.13) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(194,145,63,.13) 1px, transparent 1px);
+  background-size:38px 38px;
+  background-position:center;
+}
+
+/* ═══ 표제 ═══ */
+.hero{
+  position:relative;
+  color:var(--baekdol);
+  padding:clamp(3.5rem,9vw,7rem) var(--gutter) clamp(3rem,7vw,5rem);
+  border-bottom:1px solid var(--ink-line);
+  overflow:hidden;
+}
+.hero::after{
+  content:"";
+  position:absolute; inset:0;
+  background:radial-gradient(125% 95% at 50% 0%, rgba(19,21,25,0) 42%, rgba(19,21,25,.82) 100%);
+  pointer-events:none;
+}
+.hero__inner{ position:relative; z-index:2; max-width:66rem; margin:0 auto; }
+.hero__eyebrow{
+  font-family:var(--f-mono);
+  font-size:.72rem; letter-spacing:.24em; text-transform:uppercase;
+  color:var(--bija);
+  display:flex; align-items:center; gap:.9rem; flex-wrap:wrap;
+  margin:0 0 1.6rem;
+}
+.hero__eyebrow::after{ content:""; flex:1 1 3rem; height:1px; background:linear-gradient(to right,var(--bija-dim),transparent); }
+.hero h1{
+  font-family:var(--f-disp); font-weight:700;
+  font-size:clamp(2.1rem, 6.2vw, 4.2rem);
+  line-height:1.16; letter-spacing:-.03em;
+  margin:0 0 .5rem;
+  text-wrap:balance;
+}
+.hero h1 em{ font-style:normal; color:var(--bija); }
+.hero__sub{
+  font-family:var(--f-mono); font-size:.9rem; letter-spacing:.04em;
+  color:var(--text-faint); margin:0 0 2.2rem;
+}
+.hero__thesis{
+  font-family:var(--f-disp);
+  font-size:clamp(1.05rem,2.3vw,1.45rem);
+  line-height:1.85;
+  max-width:41rem;
+  color:#D8D6CE;
+  border-left:2px solid var(--bija);
+  padding-left:1.4rem;
+  margin:0;
+}
+.hero__thesis strong{ color:var(--baekdol); font-weight:700; }
+
+/* ═══ 기보 · 목차 ═══ */
+.gibo{
+  background:var(--ink);
+  color:var(--baekdol);
+  padding:clamp(3rem,7vw,5.5rem) var(--gutter);
+  border-bottom:1px solid var(--ink-line);
+}
+.gibo__inner{
+  max-width:66rem; margin:0 auto;
+  display:grid; grid-template-columns:minmax(0,520px) minmax(0,1fr);
+  gap:clamp(2rem,5vw,4rem); align-items:start;
+}
+.gibo__board{ width:100%; }
+.gibo__board svg{ width:100%; height:auto; display:block; }
+.stone-b circle.s{ fill:#0B0C0E; stroke:#3A3F49; stroke-width:1; }
+.stone-w circle.s{ fill:#F1EEE4; stroke:#9A9689; stroke-width:1; }
+.stone-b text{ fill:#EDEAE0; }
+.stone-w text{ fill:#15171B; }
+.stone{ cursor:pointer; }
+.stone text{ font-family:var(--f-mono); font-size:13px; font-weight:600; text-anchor:middle; dominant-baseline:central; }
+.stone circle.halo{ fill:none; stroke:var(--bija); stroke-width:2; opacity:0; transition:opacity .18s ease; }
+.stone:hover circle.halo, .stone:focus-visible circle.halo{ opacity:1; }
+.gibo__legend{
+  display:flex; gap:1.5rem; flex-wrap:wrap;
+  font-family:var(--f-mono); font-size:.72rem; letter-spacing:.06em;
+  color:var(--text-faint); margin-top:1.4rem;
+}
+.gibo__legend span{ display:inline-flex; align-items:center; gap:.5rem; }
+.dot{ width:11px; height:11px; border-radius:50%; display:inline-block; }
+.dot--b{ background:#0B0C0E; border:1px solid #4A505B; }
+.dot--w{ background:#F1EEE4; }
+
+.gibo h2{
+  font-family:var(--f-disp); font-weight:700;
+  font-size:1.5rem; letter-spacing:-.02em; margin:0 0 .4rem;
+}
+.gibo__note{ color:var(--text-faint); font-size:.9rem; line-height:1.8; margin:0 0 1.8rem; max-width:32rem; }
+.toc{ list-style:none; margin:0; padding:0; columns:2; column-gap:2rem; }
+@media (max-width:640px){ .toc{ columns:1; } }
+.toc li{ break-inside:avoid; margin:0 0 .55rem; }
+.toc a{
+  display:flex; gap:.7rem; align-items:baseline;
+  text-decoration:none; color:#C9C7BE;
+  font-size:.925rem; line-height:1.55;
+  padding:.22rem .4rem .22rem .1rem;
+  border-radius:2px;
+  transition:color .16s ease, background .16s ease;
+}
+.toc a:hover{ color:var(--baekdol); background:rgba(194,145,63,.1); }
+.toc .n{ font-family:var(--f-mono); font-size:.72rem; color:var(--bija); min-width:1.5rem; }
+
+/* ═══ 본문 ═══ */
+main{ padding:0 var(--gutter); }
+.wrap{ max-width:66rem; margin:0 auto; }
+
+.foreword{
+  max-width:var(--measure);
+  margin:clamp(3.5rem,8vw,6rem) auto clamp(3rem,7vw,5rem);
+}
+.foreword .ilreo{
+  font-family:var(--f-mono); font-size:.7rem; letter-spacing:.22em;
+  color:var(--bija-dim); text-transform:uppercase; margin:0 0 1rem;
+}
+.foreword p{ margin:0 0 1.15rem; }
+
+section.mv{
+  max-width:var(--measure);
+  margin:0 auto;
+  padding:clamp(2.75rem,6vw,4.25rem) 0;
+  border-top:1px solid var(--rule);
+}
+section.mv.wide{ max-width:66rem; }
+
+/* 착점 머리 */
+.mv__head{ position:relative; display:block; margin:0 0 1.75rem; }
+.mv__stone{
+  width:44px; height:44px; border-radius:50%;
+  display:grid; place-items:center;
+  font-family:var(--f-mono); font-size:.9rem; font-weight:600;
+  margin:0 0 .95rem;
+}
+@media (min-width:1180px){
+  .mv__stone{ position:absolute; left:-70px; top:.45rem; margin:0; }
+}
+.mv__stone--b{ background:#0B0C0E; color:#EDEAE0; box-shadow:0 2px 0 rgba(0,0,0,.18); }
+.mv__stone--w{ background:#FBF9F1; color:#15171B; border:1px solid #C6C3B7; box-shadow:0 2px 0 rgba(0,0,0,.07); }
+.mv__titles{ min-width:0; }
+.mv__kicker{
+  font-family:var(--f-mono); font-size:.68rem; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--bija-dim); margin:0 0 .35rem;
+}
+.mv__head h2{
+  font-family:var(--f-disp); font-weight:700;
+  font-size:clamp(1.45rem,3.4vw,2rem); line-height:1.3;
+  letter-spacing:-.025em; margin:0;
+}
+
+section.mv h3{
+  font-family:var(--f-disp); font-weight:700;
+  font-size:1.15rem; letter-spacing:-.015em;
+  margin:2.4rem 0 .85rem;
+  padding-bottom:.4rem;
+  border-bottom:1px solid var(--rule);
+}
+section.mv h4{
+  font-family:var(--f-body); font-weight:600;
+  font-size:.98rem; color:var(--bija-dim);
+  letter-spacing:.01em; margin:1.7rem 0 .6rem;
+}
+section.mv p{ margin:0 0 1.1rem; }
+section.mv > p:first-of-type{ }
+
+ul.dots, ol.nums{ margin:0 0 1.2rem; padding-left:0; list-style:none; }
+ul.dots li{ position:relative; padding-left:1.15rem; margin:0 0 .38rem; }
+ul.dots li::before{
+  content:""; position:absolute; left:0; top:.72em;
+  width:5px; height:5px; border-radius:50%; background:var(--bija);
+}
+ol.nums{ counter-reset:n; }
+ol.nums li{ position:relative; padding-left:1.9rem; margin:0 0 .5rem; counter-increment:n; }
+ol.nums li::before{
+  content:counter(n); position:absolute; left:0; top:.05em;
+  font-family:var(--f-mono); font-size:.78rem; color:var(--bija-dim);
+  border:1px solid var(--rule); border-radius:50%;
+  width:1.3rem; height:1.3rem; display:grid; place-items:center;
+}
+strong{ font-weight:600; }
+.term{ font-family:var(--f-mono); font-size:.9em; letter-spacing:-.01em; }
+.en{ color:var(--text-mute); font-family:var(--f-mono); font-size:.86em; }
+
+/* 인용 — 답사기의 목소리 */
+blockquote.say{
+  margin:1.5rem 0;
+  padding:.15rem 0 .15rem 1.35rem;
+  border-left:2px solid var(--bija);
+  font-family:var(--f-disp);
+  font-size:1.06rem; line-height:1.85;
+  color:#33383F;
+}
+blockquote.say p{ margin:0 0 .6rem; }
+blockquote.say p:last-child{ margin:0; }
+blockquote.say.contra{ border-left-color:var(--inju); }
+blockquote.say.pass{ border-left-color:var(--bisaek); }
+
+/* 카드 · 패널 */
+.panel{
+  background:var(--baekdol);
+  border:1px solid var(--rule);
+  border-radius:3px;
+  padding:1.35rem 1.5rem;
+  margin:1.5rem 0;
+}
+.panel__label{
+  font-family:var(--f-mono); font-size:.66rem; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--bija-dim); margin:0 0 .7rem;
+}
+.panel--dark{
+  background:var(--ink-soft); border-color:var(--ink-line); color:#D3D1C8;
+}
+.panel--dark .panel__label{ color:var(--bija); }
+.panel--dark strong{ color:var(--baekdol); }
+
+/* 반상 코드 블록 */
+pre.ban{
+  background:var(--ink); color:#CFCDC4;
+  border:1px solid var(--ink-line); border-radius:3px;
+  font-family:var(--f-mono); font-size:.8rem; line-height:1.9;
+  padding:1.2rem 1.35rem; margin:1.4rem 0;
+  overflow-x:auto; white-space:pre;
+  letter-spacing:.01em;
+}
+pre.ban .k{ color:var(--bija); }
+pre.ban .r{ color:#D97066; }
+pre.ban .g{ color:#7FB3A2; }
+pre.ban .m{ color:#787D87; }
+
+/* 표 */
+.tablewrap{ overflow-x:auto; margin:1.5rem 0; -webkit-overflow-scrolling:touch; }
+table{
+  width:100%; border-collapse:collapse;
+  font-size:.9rem; line-height:1.65; min-width:34rem;
+}
+thead th{
+  text-align:left; font-family:var(--f-mono);
+  font-size:.68rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--bija-dim); font-weight:500;
+  padding:0 .9rem .6rem 0;
+  border-bottom:1.5px solid var(--ink);
+  white-space:nowrap;
+}
+tbody td{
+  padding:.72rem .9rem .72rem 0;
+  border-bottom:1px solid var(--rule);
+  vertical-align:top;
+}
+tbody tr:last-child td{ border-bottom:none; }
+tbody td:first-child{ font-weight:600; }
+
+/* 수식 */
+.formula{
+  background:var(--ink); color:var(--baekdol);
+  border-radius:3px; padding:1.9rem 1.35rem;
+  margin:1.6rem 0; text-align:center;
+  font-family:var(--f-mono); font-size:1rem;
+  display:flex; align-items:center; justify-content:center; gap:.55rem;
+  flex-wrap:wrap; overflow-x:auto;
+}
+.frac{ display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; }
+.frac .num{ padding:0 .45rem .25rem; }
+.frac .den{ padding:.25rem .45rem 0; border-top:1px solid var(--bija); }
+.formula .op{ color:var(--bija); }
+.formula .star{ font-size:.7em; vertical-align:super; color:var(--bija); }
+
+/* 도해 */
+figure.dia{ margin:1.9rem 0; }
+figure.dia svg{ width:100%; height:auto; display:block; }
+figcaption{
+  font-family:var(--f-mono); font-size:.72rem; letter-spacing:.05em;
+  color:var(--text-mute); margin-top:.8rem; text-align:center;
+}
+.dia-node{ fill:var(--baekdol); stroke:var(--ink); stroke-width:1.2; }
+.dia-node--k{ fill:var(--ink); }
+.dia-label{ font-family:var(--f-body); font-size:13px; font-weight:600; fill:var(--text); text-anchor:middle; }
+.dia-label--i{ fill:var(--baekdol); }
+.dia-sub{ font-family:var(--f-mono); font-size:9.5px; fill:var(--text-mute); text-anchor:middle; }
+.dia-sub--i{ fill:#8B9099; }
+.dia-arrow{ stroke:var(--ink); stroke-width:1.2; fill:none; marker-end:url(#ah); }
+.dia-arrow--back{ stroke:var(--inju); stroke-dasharray:5 4; marker-end:url(#ah-r); }
+
+/* 깔때기 */
+.funnel{ display:grid; gap:.4rem; margin:1.6rem 0; }
+.funnel__row{
+  display:grid; grid-template-columns:minmax(5.5rem,auto) 1fr minmax(4.5rem,auto);
+  align-items:center; gap:1rem;
+  font-family:var(--f-mono); font-size:.78rem;
+}
+.funnel__bar{ height:26px; background:var(--ink); border-radius:1px; }
+.funnel__bar.s2{ background:#3B414C; }
+.funnel__bar.s3{ background:var(--bija-dim); }
+.funnel__bar.s4{ background:var(--inju); }
+.funnel__n{ text-align:right; color:var(--text-mute); }
+.funnel__k{ color:var(--text); font-weight:600; }
+
+/* 대비 그리드 */
+.duo > *, .trio > *, .quad > *{ min-width:0; }
+.panel{ min-width:0; }
+pre.ban{ max-width:100%; }
+.duo{ display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1.5rem 0; }
+@media (max-width:620px){ .duo{ grid-template-columns:1fr; } }
+.trio{ display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin:1.5rem 0; }
+@media (max-width:780px){ .trio{ grid-template-columns:1fr; } }
+.quad{ display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin:1.5rem 0; }
+@media (max-width:1000px){ .quad{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:620px){ .quad{ grid-template-columns:1fr; } }
+
+.novel{ display:grid; gap:.1rem; margin:1.6rem 0; }
+.novel__item{
+  display:grid; grid-template-columns:2.6rem 1fr; gap:1rem;
+  padding:1.05rem 0; border-bottom:1px solid var(--rule);
+}
+.novel__item:first-child{ border-top:1px solid var(--rule); }
+.novel__no{ font-family:var(--f-mono); font-size:.75rem; color:var(--bija-dim); padding-top:.2rem; }
+.novel__t{ font-family:var(--f-disp); font-weight:700; font-size:1.02rem; margin:0 0 .3rem; }
+.novel__d{ margin:0; font-size:.94rem; color:var(--text-mute); line-height:1.75; }
+
+/* 복기 — 맺음 */
+.bokgi{
+  margin-top:clamp(3rem,7vw,5rem);
+  color:var(--baekdol);
+  padding:clamp(3rem,8vw,6rem) var(--gutter);
+  border-top:1px solid var(--ink-line);
+}
+.bokgi__inner{ max-width:var(--measure); margin:0 auto; }
+.bokgi .mv__kicker{ color:var(--bija); }
+.bokgi h2{
+  font-family:var(--f-disp); font-weight:700;
+  font-size:clamp(1.6rem,4vw,2.4rem); letter-spacing:-.025em;
+  margin:.3rem 0 1.6rem;
+}
+.bokgi p{ color:#C5C3BA; margin:0 0 1.15rem; }
+.bokgi strong{ color:var(--baekdol); }
+.bokgi blockquote.say{ color:#E2E0D7; border-left-color:var(--bija); }
+.bokgi ul.dots li{ color:#C5C3BA; }
+.bokgi ul.dots li::before{ background:var(--bija); }
+
+.colophon{
+  border-top:1px solid var(--ink-line);
+  margin-top:3rem; padding-top:1.6rem;
+  font-family:var(--f-mono); font-size:.72rem; line-height:2;
+  color:var(--text-faint);
+  display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+}
+.colophon a{ color:var(--bija); text-decoration:none; border-bottom:1px solid rgba(194,145,63,.35); }
+.colophon a:hover{ color:var(--baekdol); }
+
+/* 인용 출처 */
+.refs{ font-size:.86rem; color:var(--text-mute); }
+.refs a{ color:var(--bija-dim); text-decoration:none; border-bottom:1px solid rgba(138,104,41,.35); }
+.refs a:hover{ color:var(--text); }
+
+/* 등장 */
+.reveal{ opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease; }
+.reveal.in{ opacity:1; transform:none; }
+@media (prefers-reduced-motion: reduce){ .reveal{ opacity:1; transform:none; } }
+
+/* 위로 */
+.totop{
+  position:fixed; right:1.1rem; bottom:1.1rem; z-index:50;
+  width:44px; height:44px; border-radius:50%;
+  background:var(--ink); color:var(--baekdol);
+  border:1px solid var(--bija-dim);
+  display:grid; place-items:center; cursor:pointer;
+  font-family:var(--f-mono); font-size:.7rem;
+  opacity:0; pointer-events:none; transition:opacity .25s ease;
+}
+.totop.show{ opacity:.92; pointer-events:auto; }
+.totop:hover{ opacity:1; }
+
+@media (max-width:900px){
+  .gibo__inner{ grid-template-columns:1fr; }
+  .gibo__board{ display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ 표제 ══════════ -->
+<header class="hero board-bg">
+  <div class="hero__inner">
+    <p class="hero__eyebrow">E2E-Tx · Evidence-to-Experiment Agentic-Tx</p>
+    <h1>Agentic-Tx형 신약개발<br>실행 에이전트의 <em>구체적 구현 방안</em></h1>
+    <p class="hero__sub">반상기(盤上記) — 정석을 버리고 급한 곳을 먼저 두는 법</p>
+    <p class="hero__thesis">
+      핵심은 Agentic-Tx를 “여러 프로그램을 순서대로 호출하는 챗봇”이 아니라
+      <strong>가설 중심 과학 의사결정 시스템</strong>으로 구현하는 것이다.
+      에이전트는 현재 가설의 불확실성을 분석하고, docking·MD·FEP·ADMET·합성·실험 중에서
+      다음 결정을 가장 명확하게 해 줄 행동을 선택하며, 그 결과를 지식 그래프에 축적한 뒤 계획을 다시 세운다.
+    </p>
+  </div>
+</header>
+
+<!-- ══════════ 기보 · 목차 ══════════ -->
+<nav class="gibo" aria-label="목차">
+  <div class="gibo__inner">
+    <div class="gibo__board">
+      <svg viewBox="0 0 720 720" role="img" aria-label="열여덟 수의 착점으로 구성한 목차 기보">
+        <defs>
+          <clipPath id="bclip"><rect x="0" y="0" width="720" height="720"/></clipPath>
+        </defs>
+        <rect x="0" y="0" width="720" height="720" fill="#191C21" stroke="#2C313A"/>
+        <g stroke="#C2913F" stroke-opacity=".22" stroke-width="1" clip-path="url(#bclip)">
+          <!-- 19 vertical -->
+          <path d="M40 40V680M75.6 40V680M111.1 40V680M146.7 40V680M182.2 40V680M217.8 40V680M253.3 40V680M288.9 40V680M324.4 40V680M360 40V680M395.6 40V680M431.1 40V680M466.7 40V680M502.2 40V680M537.8 40V680M573.3 40V680M608.9 40V680M644.4 40V680M680 40V680"/>
+          <path d="M40 40H680M40 75.6H680M40 111.1H680M40 146.7H680M40 182.2H680M40 217.8H680M40 253.3H680M40 288.9H680M40 324.4H680M40 360H680M40 395.6H680M40 431.1H680M40 466.7H680M40 502.2H680M40 537.8H680M40 573.3H680M40 608.9H680M40 644.4H680M40 680H680"/>
+        </g>
+        <g fill="#C2913F" fill-opacity=".55">
+          <circle cx="182.2" cy="182.2" r="3.5"/><circle cx="360" cy="182.2" r="3.5"/><circle cx="537.8" cy="182.2" r="3.5"/>
+          <circle cx="182.2" cy="360" r="3.5"/><circle cx="360" cy="360" r="4.5"/><circle cx="537.8" cy="360" r="3.5"/>
+          <circle cx="182.2" cy="537.8" r="3.5"/><circle cx="360" cy="537.8" r="3.5"/><circle cx="537.8" cy="537.8" r="3.5"/>
+        </g>
+        <g id="stones"></g>
+      </svg>
+      <div class="gibo__legend">
+        <span><i class="dot dot--b"></i> 흑 — 설계·판단·기억의 수</span>
+        <span><i class="dot dot--w"></i> 백 — 실제 계산·실험의 수</span>
+      </div>
+    </div>
+
+    <div>
+      <h2>기보 — 이 글이 놓는 열여덟 수</h2>
+      <p class="gibo__note">
+        착수의 순서가 곧 목차다. 흑은 가설을 세우고 판단하고 기억하는 수이며,
+        백은 반상 위에서 실제로 계산하고 합성하고 측정하는 수다.
+        둘이 번갈아 놓이지 않으면 이 판은 성립하지 않는다.
+      </p>
+      <ol class="toc" id="toc"></ol>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+<!-- ══════════ 일러두기 ══════════ -->
+<div class="wrap">
+<section class="foreword reveal">
+  <p class="ilreo">일러두기</p>
+  <p>
+    답사를 다니다 보면 절터에 초석만 남은 곳을 자주 만난다. 기둥은 없고 주춧돌만 있는데,
+    그 배치를 읽을 줄 아는 사람에게는 사라진 금당의 규모와 향(向)과 시대가 모두 보인다.
+    <strong>아는 만큼 보인다</strong>는 말은 그런 자리에서 나온 말이다.
+    신약개발의 계산 결과도 마찬가지다. docking score 한 줄, RMSD 한 그래프는 그 자체로는 초석에 지나지 않는다.
+    그것이 어떤 가설의 어느 대목을 지지하고 어느 대목을 무너뜨리는지 읽어내지 못하면 숫자는 끝내 숫자로 남는다.
+  </p>
+  <p>
+    이 글은 그 읽는 법에 관한 설계도다. 여기서 제안하는 개념을
+    <strong>Evidence-to-Experiment Agentic-Tx, 줄여서 E2E-Tx</strong>라 부른다.
+    기존 연구를 토대로 확장한 연구 설계이며, 실제 학술·특허 신규성은 별도의 선행기술 조사로 확인해야 한다.
+    이 점을 먼저 못 박아 둔다.
+  </p>
+  <p class="refs">
+    토대가 된 연구 —
+    <a href="https://arxiv.org/abs/2504.06196" target="_blank" rel="noopener">Agentic-Tx (arXiv:2504.06196)</a>,
+    <a href="https://aclanthology.org/2025.findings-emnlp.367/" target="_blank" rel="noopener">MADD (Findings of EMNLP 2025)</a>,
+    <a href="https://arxiv.org/abs/2605.12784" target="_blank" rel="noopener">ToolMol (arXiv:2605.12784)</a>,
+    <a href="https://www.nature.com/articles/s41586-026-10652-y" target="_blank" rel="noopener">Robin (Nature)</a>.
+  </p>
+</section>
+</div>
+
+<!-- ══════════ 1 ══════════ -->
+<section class="mv wide reveal" id="mv1">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--b">1</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">First principles</p>
+      <h2>전체 설계 원칙 — 순서가 아니라 판단이다</h2>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;margin:0 auto 0 0;">
+  <p>
+    에이전트는 세 가지를 되풀이한다. 이 셋이 한 바퀴 도는 것이 곧 한 수(手)다.
+  </p>
+  <ol class="nums">
+    <li>현재 가설에서 무엇이 불확실한지 판단한다.</li>
+    <li>그 불확실성을 가장 경제적으로 줄일 계산이나 실험을 선택한다.</li>
+    <li>결과가 나오면 가설의 신뢰도를 갱신하고 다음 행동을 다시 선택한다.</li>
+  </ol>
+  </div>
+
+  <figure class="dia">
+    <svg viewBox="0 0 900 250" role="img" aria-label="가설에서 출발해 계획·실행·검증·지식그래프를 거쳐 다시 계획으로 돌아오는 순환 도해">
+      <defs>
+        <marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+          <path d="M0 0L9 4.5L0 9z" fill="#131519"/>
+        </marker>
+        <marker id="ah-r" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+          <path d="M0 0L9 4.5L0 9z" fill="#A8291F"/>
+        </marker>
+      </defs>
+      <g>
+        <rect class="dia-node dia-node--k" x="8" y="66" width="140" height="58" rx="3"/>
+        <text class="dia-label dia-label--i" x="78" y="90">가설 · 연구목표</text>
+        <text class="dia-sub dia-sub--i" x="78" y="108">Hypothesis</text>
+
+        <rect class="dia-node" x="188" y="66" width="150" height="58" rx="3"/>
+        <text class="dia-label" x="263" y="90">가설 컴파일러</text>
+        <text class="dia-sub" x="263" y="108">Hypothesis Compiler</text>
+
+        <rect class="dia-node" x="378" y="66" width="150" height="58" rx="3"/>
+        <text class="dia-label" x="453" y="90">그래프 기반 계획기</text>
+        <text class="dia-sub" x="453" y="108">Graph-native Planner</text>
+
+        <rect class="dia-node" x="568" y="56" width="160" height="78" rx="3"/>
+        <text class="dia-label" x="648" y="80">Docking · MD · FEP</text>
+        <text class="dia-label" x="648" y="99">ADMET · 합성 · 실험</text>
+        <text class="dia-sub" x="648" y="118">Execution</text>
+
+        <rect class="dia-node" x="768" y="66" width="124" height="58" rx="3"/>
+        <text class="dia-label" x="830" y="90">검증 · 반대가설</text>
+        <text class="dia-sub" x="830" y="108">Falsification</text>
+
+        <rect class="dia-node dia-node--k" x="378" y="186" width="150" height="52" rx="3"/>
+        <text class="dia-label dia-label--i" x="453" y="207">실행 · 실패 이력 KG</text>
+        <text class="dia-sub dia-sub--i" x="453" y="225">Memory Graph</text>
+      </g>
+      <path class="dia-arrow" d="M148 95H184"/>
+      <path class="dia-arrow" d="M338 95H374"/>
+      <path class="dia-arrow" d="M528 95H564"/>
+      <path class="dia-arrow" d="M728 95H764"/>
+      <path class="dia-arrow--back dia-arrow" d="M830 124V212H532"/>
+      <path class="dia-arrow" d="M453 186V130"/>
+      <text class="dia-sub" x="600" y="205" style="text-anchor:end;fill:#A8291F">결과 축적</text>
+      <text class="dia-sub" x="470" y="160" style="text-anchor:start">재계획</text>
+    </svg>
+    <figcaption>〈도해 1〉 E2E-Tx의 폐루프. 붉은 점선은 실패를 포함한 모든 결과가 기억으로 되돌아가는 경로다.</figcaption>
+  </figure>
+
+  <div style="max-width:40rem;">
+  <p>
+    따라서 고정된 다음 순서만 실행해서는 안 된다. 바둑에서 정석을 외운 사람이 그 정석대로만 두어 지는 것과 같은 이치다.
+  </p>
+  </div>
+
+  <div class="duo">
+    <div>
+      <div class="panel">
+        <p class="panel__label">두어서는 안 될 수 — 고정 파이프라인</p>
+        <pre class="ban" style="margin:0"><span class="m">Docking → MD → FEP → ADMET → 합성 → 실험</span></pre>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <p class="panel__label">두어야 할 수 — 후보별 적응 경로</p>
+<pre class="ban" style="margin:0">후보 A: Docking → 짧은 MD → <span class="r">제거</span>
+후보 B: ADMET → <span class="r">독성 위험으로 제거</span>
+후보 C: Docking → MD → FEP → <span class="g">합성</span>
+후보 D: 기존 실험근거 충분 → <span class="g">바로 assay</span>
+후보 E: 구조 불확실 → <span class="k">AlphaFold 3 co-folding</span>부터</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 2 ══════════ -->
+<section class="mv wide reveal" id="mv2">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--b">2</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Hypothesis Compiler</p>
+      <h2>자연어 가설을 실행 가능한 계획으로 옮긴다</h2>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <p>사용자가 다음과 같이 입력했다고 하자.</p>
+  <blockquote class="say">
+    <p>“질환 D에서 X를 억제하면 pathway P의 과도한 활성이 줄고 phenotype Y가 개선될 것이다.”</p>
+  </blockquote>
+  <p>
+    한 문장이지만 그 안에는 서로 다른 층위의 주장이 아홉 겹으로 포개져 있다.
+    Hypothesis Compiler가 하는 일은 이 포개진 겹을 낱장으로 떼어내는 것이다.
+    떼어내야 각각을 따로 검증할 수 있고, 따로 무너뜨릴 수 있다.
+  </p>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>하위 가설</th><th>검증 질문</th><th>적합한 도구</th></tr></thead>
+      <tbody>
+        <tr><td>질환기전 가설</td><td>P가 실제로 Y의 원인인가?</td><td class="en">Graph RAG, omics, 문헌</td></tr>
+        <tr><td>표적 가설</td><td>X가 P의 상위 조절자인가?</td><td class="en">KG, PPI, CRISPR</td></tr>
+        <tr><td>구조 가설</td><td>X에 약물 결합 가능한 pocket이 있는가?</td><td class="en">PDB, AlphaFold 3, pocket 탐색</td></tr>
+        <tr><td>결합 가설</td><td>후보물질이 X에 결합하는가?</td><td class="en">docking, co-folding</td></tr>
+        <tr><td>안정성 가설</td><td>결합 pose가 동적 환경에서도 유지되는가?</td><td class="en">MD</td></tr>
+        <tr><td>상대효능 가설</td><td>어떤 analog가 더 강하게 결합하는가?</td><td class="en">FEP</td></tr>
+        <tr><td>개발 가능성 가설</td><td>흡수·대사·독성이 허용 가능한가?</td><td class="en">ADMET</td></tr>
+        <tr><td>제조 가능성 가설</td><td>실제로 합성 가능한가?</td><td class="en">retrosynthesis</td></tr>
+        <tr><td>생물학적 가설</td><td>X 결합이 Y 개선으로 이어지는가?</td><td class="en">biochemical·cellular assay</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="max-width:40rem;">
+  <p>
+    이 분해 결과는 자유로운 문장이 아니라 기계가 처리할 수 있는
+    <span class="term">Research Intent Specification</span>으로 만들어야 한다.
+  </p>
+  </div>
+
+<pre class="ban">{
+  <span class="k">"disease"</span>: "D",
+  <span class="k">"target"</span>: "X",
+  <span class="k">"target_action"</span>: "inhibition",
+  <span class="k">"pathway"</span>: "P",
+  <span class="k">"desired_phenotype"</span>: "reverse Y",
+  <span class="k">"required_evidence"</span>: [
+    "causal_target_evidence",
+    "binding_evidence",
+    "dynamic_stability",
+    "admet",
+    "synthetic_feasibility",
+    "experimental_validation"
+  ],
+  <span class="k">"budget"</span>: {},
+  <span class="k">"safety_constraints"</span>: {},
+  <span class="k">"human_approval_points"</span>: []
+}</pre>
+
+  <div style="max-width:40rem;">
+  <p>이것이 전체 agent workflow의 계약서 역할을 한다. 계약서 없이 시작한 공사가 어떻게 끝나는지는 굳이 말할 필요가 없다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 3 ══════════ -->
+<section class="mv wide reveal" id="mv3">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--b">3</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Graph-Native Planner</p>
+      <h2>지식 그래프를 검색기가 아니라 계획의 기억으로 쓴다</h2>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <p>
+    기존 RAG는 검색한 문서를 현재 대화에 넣고 끝난다. 한 번 쓰고 버리는 기억이다.
+    제안하는 방식에서는 지식 그래프에 세 종류의 지식을 함께 저장한다.
+    사실만 남기고 과정을 버리는 기록은 기록이 아니라 목록에 지나지 않는다.
+  </p>
+  </div>
+
+  <div class="trio">
+    <div class="panel">
+      <p class="panel__label">3.1 사실 그래프</p>
+      <ul class="dots" style="margin:0">
+        <li>질환–유전자</li><li>단백질–pathway</li><li>약물–표적</li>
+        <li>mutation–resistance</li><li>assay–activity</li><li>임상시험–결과</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <p class="panel__label">3.2 실행 그래프</p>
+      <ul class="dots" style="margin:0">
+        <li>어떤 구조를 사용했는가</li><li>어떤 docking engine을 사용했는가</li>
+        <li>어떤 파라미터였는가</li><li>어떤 pose가 생성되었는가</li>
+        <li>MD에서 pose가 유지되었는가</li><li>어떤 FEP network가 실패했는가</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <p class="panel__label">3.3 판단 그래프</p>
+      <ul class="dots" style="margin:0">
+        <li>왜 이 후보를 선택했는가</li><li>어떤 근거가 가설을 지지했는가</li>
+        <li>무엇이 반박했는가</li><li>어떤 전문가가 결정을 수정했는가</li>
+        <li>어떤 결과 때문에 다음 계획이 변경되었는가</li>
+      </ul>
+    </div>
+  </div>
+
+<pre class="ban">Hypothesis_H1        <span class="k">─REQUIRES_TEST→</span>  BindingHypothesis
+DockingRun_23        <span class="k">─TESTED→</span>         BindingHypothesis
+DockingRun_23        <span class="k">─GENERATED→</span>      Pose_7
+Pose_7               <span class="k">─INTERACTS_WITH→</span> Residue_MET793
+MDRun_11             <span class="r">─DESTABILIZED→</span>   Pose_7
+BindingHypothesis    <span class="r">─STATUS→</span>         Contradicted
+PlannerDecision_8    <span class="k">─TRIGGERED_BY→</span>   MDRun_11
+PlannerDecision_8    <span class="g">─SELECTED→</span>       Alternative_Receptor_State</pre>
+
+  <div style="max-width:40rem;">
+  <p>
+    이렇게 해야 에이전트가 단순히 결과를 읽는 것을 넘어 과거의 실패로부터 계획을 개선할 수 있다.
+    기보를 남기지 않은 대국은 복기할 수 없다.
+  </p>
+  </div>
+</section>
+
+<!-- ══════════ 4 ══════════ -->
+<section class="mv wide reveal" id="mv4">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--b">4</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Value of Information</p>
+      <h2>고정 순서 대신 ‘정보가치’로 다음 도구를 고른다</h2>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <p>
+    바둑에 “큰 곳보다 급한 곳”이라는 격언이 있다. 반상에서 가장 큰 자리가 지금 두어야 할 자리는 아니라는 뜻이다.
+    에이전트도 가장 정확한 도구부터 무조건 실행해서는 안 된다. 비용이 큰 FEP를 모든 후보에 수행하면 비효율적이다.
+    다음 행동은 정보가치, 비용, 시간, 위험을 함께 고려해 선택한다.
+  </p>
+  </div>
+
+  <div class="formula" style="max-width:40rem;">
+    <span>a<span class="star">*</span></span>
+    <span class="op">=</span>
+    <span>arg max<sub style="font-size:.7em">a</sub></span>
+    <span class="op">[</span>
+    <span class="frac">
+      <span class="num">E[ ΔU(H) | a ]</span>
+      <span class="den">C(a) + α·T(a)</span>
+    </span>
+    <span class="op">−</span>
+    <span>β·R(a)</span>
+    <span class="op">]</span>
+  </div>
+
+  <div style="max-width:40rem;">
+  <ul class="dots">
+    <li><span class="term">ΔU(H)</span> — 행동 <span class="term">a</span>가 가설의 불확실성을 얼마나 줄이는가</li>
+    <li><span class="term">C(a)</span> — 계산·실험 비용</li>
+    <li><span class="term">T(a)</span> — 소요시간</li>
+    <li><span class="term">R(a)</span> — 안전·실패 위험</li>
+  </ul>
+
+  <blockquote class="say">
+    <p>“가장 정교한 계산”이 아니라 “현재 결정을 가장 많이 명확하게 만드는 계산”을 먼저 선택한다.</p>
+  </blockquote>
+
+  <h3>실제로는 이런 판단이 된다</h3>
+  <ul class="dots">
+    <li>후보가 10만 개라면 FEP보다 TxGemma·GNN screening이 적합하다.</li>
+    <li>docking pose가 명백히 불합리하다면 MD를 실행할 필요가 없다.</li>
+    <li>두 analog 사이의 미세한 차이가 중요하면 FEP가 적합하다.</li>
+    <li>결합력은 좋지만 hERG 위험이 매우 높다면 구조계산보다 ADMET 개선이 우선이다.</li>
+    <li>합성경로가 없으면 더 정밀한 affinity 계산보다 구조 재설계가 우선이다.</li>
+  </ul>
+
+  <p>
+    이러한 방식을 <strong>Value-of-Information 기반 Adaptive Escalation</strong>이라고 정의할 수 있다.
+  </p>
+  </div>
+</section>
+
+<!-- ══════════ 5 ══════════ -->
+<section class="mv wide reveal" id="mv5">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--w">5</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Docking Agent</p>
+      <h2>도킹 — 점수를 믿기 전에 조건을 의심한다</h2>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <h3>5.1 단순 구현의 위험</h3>
+  <p>일반적인 agent는 이 정도만 수행한다.</p>
+  <blockquote class="say contra">
+    <p>“Vina를 실행하고 점수가 가장 낮은 화합물을 선택한다.”</p>
+  </blockquote>
+  <p>
+    이는 위험하다. docking score는 receptor 구조, protonation, grid, ligand state와 엔진에 크게 의존하기 때문이다.
+    같은 유물을 두고 조명을 바꿔가며 사진을 찍은 뒤 가장 잘 나온 한 장으로 연대를 판정하는 것과 다르지 않다.
+  </p>
+
+  <h3>5.2 제안하는 구현</h3>
+  <p>Docking Agent는 먼저 실행 조건에 대한 가설을 생성한다.</p>
+  <blockquote class="say pass">
+    <p>“이 표적은 flexible loop를 가지므로 하나의 정적 구조보다 receptor ensemble을 사용하는 것이 적절하다.”</p>
+  </blockquote>
+  <p>그런 다음 세 갈래로 계획을 세운다.</p>
+  </div>
+
+  <div class="trio">
+    <div class="panel">
+      <p class="panel__label">구조 선택</p>
+      <ul class="dots" style="margin:0">
+        <li>crystal structure</li><li>AlphaFold 구조</li><li>AlphaFold 3 co-folding 구조</li>
+        <li>wild type · mutant</li><li>active · inactive state</li><li>apo · holo structure</li><li>receptor ensemble</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <p class="panel__label">구조 전처리</p>
+      <ul class="dots" style="margin:0">
+        <li>결손 잔기</li><li>protonation</li><li>tautomer</li><li>metal</li>
+        <li>cofactor</li><li>구조수</li><li>결합부위 water</li><li>ligand stereochemistry</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <p class="panel__label">실행 전략</p>
+      <ul class="dots" style="margin:0">
+        <li>Vina, smina, Glide, DiffDock 등 엔진 선택</li>
+        <li>blind docking 또는 pocket docking</li>
+        <li>constraint docking</li><li>consensus docking</li><li>ensemble docking</li>
+        <li>decoy 및 known ligand를 이용한 protocol 검증</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <h3>5.3 과거 이력에 기대어 엔진을 고른다</h3>
+  <p>실행 KG에서 표적군·pocket 특성이 비슷한 과거 작업을 검색한다.</p>
+  <blockquote class="say">
+    <p>“과거 kinase hinge pocket에서는 엔진 A의 score가 assay와 낮은 상관을 보였지만, 엔진 B의 MET793 hydrogen-bond pose는 MD와 실험에서 더 잘 유지되었다.”</p>
+  </blockquote>
+  <p>Agent는 이 정보를 이용해 엔진과 제약조건을 선택한다. 경험이 쌓인 답사자가 어느 각도에서 봐야 명문이 읽히는지 아는 것과 같다.</p>
+
+  <h3>5.4 도킹 통과 조건</h3>
+  <p>단순 score 대신 다음 여덟 항목을 함께 본다.</p>
+  <ul class="dots">
+    <li>여러 엔진의 pose 일치</li>
+    <li>알려진 핵심 잔기와의 상호작용</li>
+    <li>ligand strain</li>
+    <li>pocket 충돌</li>
+    <li>decoy 대비 enrichment</li>
+    <li>receptor state 간 일관성</li>
+    <li>score uncertainty</li>
+    <li>과거 assay와의 calibration</li>
+  </ul>
+  <p>통과하지 못한 후보는 제거하거나 대체 receptor state에서 다시 평가한다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 6 ══════════ -->
+<section class="mv wide reveal" id="mv6">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--w">6</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">MD Agent</p>
+      <h2>분자동역학 — 모든 후보에 같은 시간을 쓰지 않는다</h2>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <h3>6.1 MD를 실행하는 조건</h3>
+  <p>MD Agent는 다음 질문에 답할 필요가 있을 때만 실행한다. 질문 없는 시뮬레이션은 전기요금일 뿐이다.</p>
+  <ul class="dots">
+    <li>docking pose가 실제 동적 환경에서도 유지되는가</li>
+    <li>flexible loop가 결합에 영향을 주는가</li>
+    <li>핵심 hydrogen bond가 안정적인가</li>
+    <li>물 분자가 결합을 매개하는가</li>
+    <li>mutation이 pocket 구조를 바꾸는가</li>
+    <li>서로 다른 pose 중 어느 것이 더 안정적인가</li>
+  </ul>
+
+  <h3>6.2 적응형 MD</h3>
+  </div>
+
+  <div class="trio">
+    <div class="panel">
+      <p class="panel__label">1단계 · 짧은 sentinel MD</p>
+      <p style="margin:0 0 .6rem;font-size:.94rem;color:var(--text-mute)">상위 후보들에 짧은 독립 replica를 수행한다.</p>
+      <ul class="dots" style="margin:0">
+        <li>pose가 즉시 붕괴하는 후보 제거</li>
+        <li>심각한 steric clash 발견</li>
+        <li>불안정한 protonation 확인</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <p class="panel__label">2단계 · 불확실 후보 선택</p>
+      <p style="margin:0;font-size:.94rem;color:var(--text-mute)">짧은 MD 결과가 애매한 후보만 추가 simulation으로 보낸다. 명확한 것은 더 볼 필요가 없다.</p>
+    </div>
+    <div class="panel">
+      <p class="panel__label">3단계 · 집중 샘플링</p>
+      <ul class="dots" style="margin:0">
+        <li>여러 replica</li><li>metadynamics</li><li>umbrella sampling</li>
+        <li>enhanced sampling</li><li>mutation 비교</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <h3>6.3 MD 결과의 해석</h3>
+  <p>Agent는 ligand RMSD 하나만 보지 않고 아홉 가지를 종합한다.</p>
+  <ul class="dots">
+    <li>핵심 contact occupancy</li><li>pocket RMSF</li><li>ligand RMSD</li>
+    <li>hydrogen-bond lifetime</li><li>water bridge</li><li>solvent exposure</li>
+    <li>protein conformational change</li><li>replicate 간 일치도</li><li>trajectory clustering</li>
+  </ul>
+
+  <h3>6.4 Cross-Fidelity Consistency Check</h3>
+  <p>다음과 같은 충돌을 자동으로 감지한다.</p>
+  </div>
+
+<pre class="ban" style="max-width:40rem">TxGemma affinity   : <span class="g">높음</span>
+Docking score      : <span class="g">높음</span>
+MD pose stability  : <span class="r">낮음</span>   ← 모순</pre>
+
+  <div style="max-width:40rem;">
+  <p>이 경우 Agent는 “강한 결합 후보”라고 결론내리지 않고 다음 가설을 생성한다. 평균을 내는 것은 판단이 아니라 회피다.</p>
+  <blockquote class="say contra">
+    <p>“TxGemma와 docking은 정적 구조에서는 결합 가능성을 높게 평가하지만, MD에서 pose가 붕괴하므로 receptor state 또는 protonation이 잘못되었을 가능성이 있다.”</p>
+  </blockquote>
+  <p>다음 행동은 다른 구조 상태에서의 재-docking이나 ligand state 재생성이다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 7 ══════════ -->
+<section class="mv wide reveal" id="mv7">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--w">7</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">FEP Agent</p>
+      <h2>자유에너지 섭동 — 비교할 수 있는 것만 비교한다</h2>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <h3>7.1 FEP를 사용할 조건</h3>
+  <ul class="dots">
+    <li>동일 scaffold의 유사 analog 비교</li>
+    <li>작은 치환기의 potency 영향 비교</li>
+    <li>합성 우선순위 결정</li>
+    <li>mutation에 따른 affinity 변화</li>
+    <li>실험값 일부가 있는 chemical series 보정</li>
+  </ul>
+  <p>전혀 다른 scaffold들을 FEP로 직접 비교하는 것은 피해야 한다. 청자와 백자를 같은 자로 재려는 것과 같다.</p>
+
+  <h3>7.2 섭동 네트워크의 자동 설계</h3>
+  <p>FEP Agent는 후보쌍을 임의로 연결하지 않고 일곱 가지를 고려해 신뢰도 높은 perturbation network를 구성한다.</p>
+  <ul class="dots">
+    <li>최대 공통부분</li><li>원자 매핑의 안정성</li><li>전하 변화</li><li>ring 변화</li>
+    <li>stereochemistry</li><li>예상 계산 난이도</li><li>cycle closure 가능성</li>
+  </ul>
+  </div>
+
+<pre class="ban" style="max-width:40rem">Compound A <span class="k">↔</span> Compound B <span class="k">↔</span> Compound C
+    <span class="k">↕</span>                             <span class="k">↕</span>
+Compound D <span class="k">↔</span> Compound E <span class="k">↔</span> Compound F</pre>
+
+  <div style="max-width:40rem;">
+  <h3>7.3 품질 게이트</h3>
+  <ul class="dots">
+    <li>replica 간 분산</li><li>cycle-closure error</li><li>hysteresis</li>
+    <li>phase-space overlap</li><li>experimental anchor와의 차이</li><li>force-field applicability</li>
+  </ul>
+  <p>임계치를 넘으면 결과를 확정값으로 사용하지 않고 재계산하거나 다른 방법으로 보낸다.</p>
+
+  <h3>7.4 FEP 결과의 활용</h3>
+  <p>에이전트는 “B가 A보다 1 kcal/mol 좋다”에서 끝내지 않고 다음 SAR 가설로 옮긴다. 숫자를 가설로 바꾸는 이 대목이 이 설계의 백미다.</p>
+  <blockquote class="say pass">
+    <p>“B의 para 치환기가 pocket의 소수성 공간을 더 안정적으로 점유하는 것으로 보인다. 동일 위치에 크기가 다른 치환기를 도입하면 이 가설을 검증할 수 있다.”</p>
+  </blockquote>
+  </div>
+</section>
+
+<!-- ══════════ 8 ══════════ -->
+<section class="mv wide reveal" id="mv8">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--w">8</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">ADMET Agent</p>
+      <h2>흡수·대사·독성 — 평균으로 상쇄해서는 안 되는 위험이 있다</h2>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <h3>8.1 단일 모델 대신 다중 근거</h3>
+  <p>
+    TxGemma는 독성, BBB, lipophilicity 등 여러 태스크를 예측할 수 있지만,
+    최종 판단을 TxGemma 하나에 맡겨서는 안 된다.
+    <span class="refs">(<a href="https://developers.google.com/health-ai-developer-foundations/txgemma/model-card" target="_blank" rel="noopener">공식 모델 카드</a>)</span>
+  </p>
+  <p>다음 예측을 결합한다.</p>
+  <ul class="dots">
+    <li>TxGemma</li><li>descriptor QSAR</li><li>molecular GNN</li><li>유사화합물 실험값</li>
+    <li>toxicophore alert</li><li>metabolite predictor</li><li>외부 ADMET predictor</li>
+  </ul>
+
+  <h3>8.2 적용영역 판정 에이전트</h3>
+  <p>예측값과 함께 “이 모델이 이 화합물을 얼마나 잘 아는가”를 평가한다.</p>
+  <ul class="dots">
+    <li>training set과 구조적으로 가까운가</li><li>새로운 scaffold인가</li>
+    <li>unusual element가 있는가</li><li>zwitterion·macrocycle인가</li>
+    <li>전하 상태가 복잡한가</li><li>모델 간 예측이 일치하는가</li>
+  </ul>
+  <p>모델 적용영역 밖의 후보에는 낮은 신뢰도를 부여한다.</p>
+  </div>
+
+  <div class="panel panel--dark" style="max-width:40rem">
+    <p class="panel__label">8.3 Safety Veto — 상쇄 불가 항목</p>
+    <p style="margin:0 0 .8rem">일부 위험은 평균점수로 상쇄하면 안 된다.</p>
+    <ul class="dots" style="margin:0">
+      <li>genotoxicity</li><li>심각한 hERG risk</li><li>reactive metabolite</li>
+      <li>강한 CYP inhibition</li><li>구조적 폭발성·반응성</li><li>치명적 off-target</li>
+    </ul>
+    <p style="margin:.9rem 0 0">이러한 신호가 일정 수준을 넘으면 <strong>독립된 Safety Agent</strong>가 후보를 중단시키거나 필수 검증을 요구한다.</p>
+  </div>
+
+  <div style="max-width:40rem;">
+  <h3>8.4 ADMET 기반 역방향 구조설계</h3>
+  <p>ADMET Agent는 위험을 보고하는 데 그치지 않고 원인이 되는 부분구조를 Chemistry Agent에 전달한다.</p>
+  </div>
+
+<pre class="ban" style="max-width:40rem">문제      : 높은 microsomal clearance
+가능 원인 : benzylic oxidation
+제안      : <span class="g">fluorination, bioisostere, steric shielding</span>
+보존 조건 : <span class="k">hinge-binding pharmacophore 유지</span></pre>
+
+  <div style="max-width:40rem;">
+  <p>이를 <strong>Risk-to-Edit Feedback</strong>이라고 정의할 수 있다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 9 ══════════ -->
+<section class="mv reveal" id="mv9">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--w">9</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Chemistry &amp; Synthesis Agent</p>
+      <h2>합성 — 만들 수 없는 분자는 설계가 아니다</h2>
+    </div>
+  </div>
+
+  <h3>9.1 합성 가능성을 마지막에 확인하지 않는다</h3>
+  <p>
+    기존 방식은 최적화가 끝난 후에야 합성경로를 찾는다.
+    설계도를 다 그린 뒤에 그 목재를 구할 수 없다는 사실을 아는 목수와 같다.
+    제안 방식에서는 생성·최적화 단계부터 합성 가능성을 고려한다.
+  </p>
+
+  <h3>9.2 합성경로 평가</h3>
+  <ul class="dots">
+    <li>retrosynthesis confidence</li><li>reaction step 수</li><li>starting material 재고</li>
+    <li>가격</li><li>예상 수율</li><li>정제 난이도</li><li>stereochemistry</li>
+    <li>보호기 사용</li><li>위험 시약</li><li>특수장비</li><li>특허 충돌</li>
+  </ul>
+
+  <h3>9.3 경로를 아는 분자 재설계</h3>
+  <p>좋은 활성을 가진 후보가 합성하기 어렵다면 단순 폐기하지 않는다. 합성 Agent가 어려운 결합과 부분구조를 식별하고 Chemistry Agent에 조건을 보낸다.</p>
+  <blockquote class="say">
+    <p>“이 활성을 유지하면서 반응 단계가 8단계에서 4단계 이하가 되도록 linker와 ring system을 변경하라.”</p>
+  </blockquote>
+  <p>Chemistry Agent는 다음을 수행한다.</p>
+  <ol class="nums">
+    <li>합성 병목 구조 식별</li>
+    <li>기능적으로 유사한 bioisostere 검색</li>
+    <li>reaction template 기반 구조 수정</li>
+    <li>potency·ADMET 재평가</li>
+    <li>새로운 합성경로 생성</li>
+  </ol>
+  <p>
+    이를 <strong>Synthesis-aware Backpropagation</strong>이라고 부를 수 있다.
+    최종 결과에서 발생한 합성 문제를 분자 생성 단계까지 역으로 전달한다는 뜻이다.
+  </p>
+</section>
+
+<!-- ══════════ 10 ══════════ -->
+<section class="mv reveal" id="mv10">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--w">10</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Experiment Design Agent</p>
+      <h2>실험설계 — 가장 좋은 후보만 실험하지 않는다</h2>
+    </div>
+  </div>
+
+  <h3>10.1 배치는 세 종류를 포함한다</h3>
+  <p>최고점 후보만 실험하면 비슷한 scaffold와 비슷한 가설만 검증하게 된다. 잘 나온 자리만 골라 파는 발굴은 결국 자기가 기대한 것만 찾아낸다.</p>
+  <ul class="dots">
+    <li>성능이 가장 좋을 것으로 예상되는 후보</li>
+    <li>모델 불확실성을 가장 많이 줄이는 후보</li>
+    <li>현재 가설을 반박할 수 있는 후보</li>
+  </ul>
+
+  <h3>10.2 실험 선택 기준</h3>
+  <div class="formula">
+    <span>Experiment Priority</span>
+    <span class="op">=</span>
+    <span>Expected Information Gain</span>
+    <span class="op">+</span><span>Decision Impact</span>
+    <span class="op">−</span><span>Cost</span>
+    <span class="op">−</span><span>Risk</span>
+  </div>
+  <p>
+    예를 들어 후보 A와 B가 모두 유망하지만 A에 대한 예측모델 간 합의가 높고 B는 불일치가 크다면,
+    B의 실험이 더 많은 정보를 준다.
+  </p>
+
+  <h3>10.3 필수 실험 구성</h3>
+  <ul class="dots">
+    <li>positive control</li><li>negative control</li><li>vehicle control</li>
+    <li>concentration range</li><li>replicate</li><li>orthogonal assay</li>
+    <li>target-engagement assay</li><li>counterscreen</li>
+    <li>cytotoxicity assay</li><li>assay interference 검사</li>
+  </ul>
+
+  <h3>10.4 가설 반증 조건</h3>
+  <p>실험 전에 실패 기준을 정의한다. 이것이 없으면 결과는 언제나 성공으로 해석된다.</p>
+  <blockquote class="say contra">
+    <p>“결합 assay에서 활성이 나타나더라도 target-engagement assay가 음성이면, 직접 결합 가설은 지지되지 않은 것으로 판단한다.”</p>
+  </blockquote>
+  <p>이렇게 해야 에이전트가 사후적으로 어떤 결과든 성공처럼 해석하는 것을 방지할 수 있다.</p>
+</section>
+
+<!-- ══════════ 11 ══════════ -->
+<section class="mv reveal" id="mv11">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--b">11</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Dissenting Scientist Agent</p>
+      <h2>반대하는 에이전트 — 의도적으로 딴지를 거는 자리</h2>
+    </div>
+  </div>
+
+  <p>
+    창의적이면서 중요한 기법은 별도의 <strong>Dissenting Scientist Agent</strong>를 두는 것이다.
+    이 Agent는 가설을 지지하는 근거를 찾지 않는다. 오직 무너뜨릴 방법만 찾는다.
+  </p>
+  <ul class="dots">
+    <li>반대 논문 검색</li><li>실패한 임상시험 검색</li><li>off-target 가능성 제안</li>
+    <li>docking artifact 탐색</li><li>assay interference 경고</li>
+    <li>모델 시스템의 한계 제시</li><li>대안 기전 생성</li>
+  </ul>
+
+  <div class="duo">
+    <div class="panel">
+      <p class="panel__label">주가설</p>
+      <p style="margin:0;font-family:var(--f-disp);font-size:1.02rem">“후보 A는 X를 억제해 Y를 개선한다.”</p>
+    </div>
+    <div class="panel" style="border-color:#D3A9A5">
+      <p class="panel__label" style="color:var(--inju)">반대가설</p>
+      <p style="margin:0;font-family:var(--f-disp);font-size:1.02rem">“후보 A의 효과는 X 억제가 아니라 세포독성 때문에 나타났을 수 있다.”</p>
+    </div>
+  </div>
+
+  <h4>필요한 반증 실험</h4>
+  <ul class="dots">
+    <li>X knockout cell에서 후보 효과 비교</li>
+    <li>target engagement 측정</li>
+    <li>세포독성과 phenotype 분리</li>
+    <li>구조적으로 다른 X inhibitor 비교</li>
+  </ul>
+  <p>최종 가설은 주가설과 반대가설을 모두 통과해야 다음 단계로 이동한다.</p>
+</section>
+
+<!-- ══════════ 12 ══════════ -->
+<section class="mv wide reveal" id="mv12">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--b">12</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Scientific Tool Contract</p>
+      <h2>도구 계약 — LLM의 자유로운 실행을 제한한다</h2>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <p>
+    Agentic-Tx의 LLM이 shell 명령이나 전문도구를 자유롭게 작성해 실행하도록 두면 재현성과 안전성이 낮아진다.
+    모든 도구는 형식이 정해진 API로 제공해야 한다.
+  </p>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>등록 항목</th><th>의미</th></tr></thead>
+      <tbody>
+        <tr><td class="en">Tool name · version</td><td>프로그램과 버전</td></tr>
+        <tr><td class="en">Input schema</td><td>허용 입력과 타입</td></tr>
+        <tr><td class="en">Output schema</td><td>반환 결과와 단위</td></tr>
+        <tr><td class="en">Applicability domain</td><td>언제 사용 가능한가</td></tr>
+        <tr><td class="en">Cost · latency</td><td>예상 계산비용과 시간</td></tr>
+        <tr><td class="en">Preconditions</td><td>실행 전 필요한 조건</td></tr>
+        <tr><td class="en">Failure codes</td><td>실패 유형</td></tr>
+        <tr><td class="en">Validator</td><td>결과 검증법</td></tr>
+        <tr><td class="en">Safety level</td><td>자동 실행 또는 승인 필요</td></tr>
+        <tr><td class="en">Provenance policy</td><td>저장해야 할 실행 정보</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="max-width:40rem;">
+  <p>
+    LLM은 “MD를 수행하라”는 결정을 내릴 수 있지만 실제 파라미터는 schema validator와 domain rule engine을 통과해야 한다.
+    이를 통해 역할이 다섯으로 갈린다.
+  </p>
+  <ul class="dots">
+    <li><strong>LLM</strong> — 왜 실행할지 판단</li>
+    <li><strong>Policy engine</strong> — 실행 가능 여부 판단</li>
+    <li><strong>전문도구</strong> — 실제 계산 수행</li>
+    <li><strong>Validator</strong> — 결과가 유효한지 검사</li>
+    <li><strong>KG</strong> — 과정과 결과 저장</li>
+  </ul>
+  </div>
+</section>
+
+<!-- ══════════ 13 ══════════ -->
+<section class="mv wide reveal" id="mv13">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--b">13</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Shadow Planning</p>
+      <h2>수읽기 — 비싼 실행 전에 여러 계획을 가상으로 겨룬다</h2>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <p>
+    Planner가 하나의 계획을 바로 실행하지 않고 세 개 정도의 대안 계획을 만든다.
+    기사(棋士)가 착수 전에 변화도를 여러 갈래 그려보는 것과 같다.
+  </p>
+  </div>
+
+  <div class="trio">
+    <div class="panel">
+      <p class="panel__label">계획 A</p>
+      <pre class="ban" style="margin:0;font-size:.76rem">TxGemma
+  → Docking
+  → MD
+  → FEP</pre>
+    </div>
+    <div class="panel">
+      <p class="panel__label">계획 B</p>
+      <pre class="ban" style="margin:0;font-size:.76rem">GNN ensemble
+  → ADMET
+  → Docking
+  → 합성</pre>
+    </div>
+    <div class="panel">
+      <p class="panel__label">계획 C</p>
+      <pre class="ban" style="margin:0;font-size:.76rem">AlphaFold 3 co-folding
+  → pocket validation
+  → Docking
+  → MD</pre>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <p>
+    Shadow Planner는 각 계획의 예상 비용, 실패위험, 정보가치를 비교한다.
+    이후 저비용 sentinel calculation을 일부 실행해 가장 유망한 계획을 선택한다.
+    이는 복잡한 장기 workflow에서 초기에 잘못된 경로를 선택해 GPU 시간과 실험비를 낭비하는 문제를 줄인다.
+  </p>
+  </div>
+</section>
+
+<!-- ══════════ 14 ══════════ -->
+<section class="mv reveal" id="mv14">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--b">14</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Candidate Digital Twin</p>
+      <h2>후보의 분신 — 같은 화합물도 단계마다 다른 것이다</h2>
+    </div>
+  </div>
+
+  <p>같은 화합물이라도 계산 단계마다 상태가 달라진다.</p>
+  <ul class="dots">
+    <li>원래 SMILES</li><li>표준화된 구조</li><li>protonation state</li><li>tautomer</li>
+    <li>stereoisomer</li><li>conformer</li><li>docking pose</li>
+    <li>solvated MD complex</li><li>합성된 실제 batch</li><li>assay sample</li>
+  </ul>
+  <p>
+    이를 하나의 “Compound” 노드로 뭉치면 결과가 잘못 연결된다.
+    탁본과 원비(原碑)와 복제비를 한 항목에 밀어넣고 연대를 논하는 것과 같다.
+    따라서 각 후보에 <strong>Research Digital Twin</strong>을 생성한다.
+  </p>
+
+<pre class="ban">Compound
+ ├─ <span class="k">ChemicalState</span>
+ │   ├─ ProtonationState
+ │   ├─ Tautomer
+ │   └─ Stereoisomer
+ ├─ <span class="k">StructuralState</span>
+ │   ├─ Conformer
+ │   ├─ DockingPose
+ │   └─ MDState
+ ├─ <span class="k">MaterialState</span>
+ │   ├─ SynthesisBatch
+ │   └─ Purity
+ └─ <span class="k">EvidenceState</span>
+     ├─ Prediction
+     ├─ Assay
+     └─ Decision</pre>
+
+  <p>이 구조는 docking 결과와 실제 assay 물질의 정체성이 어긋나는 문제를 막는다.</p>
+</section>
+
+<!-- ══════════ 15 ══════════ -->
+<section class="mv wide reveal" id="mv15">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--b">15</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Replanning Policy</p>
+      <h2>결과가 충돌할 때의 구체적인 재계획 규칙</h2>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>관찰 결과</th><th>가능한 원인</th><th>Agent의 다음 행동</th></tr></thead>
+      <tbody>
+        <tr><td>TxGemma는 강한 결합, docking은 약함</td><td>OOD, 잘못된 구조 상태</td><td>receptor·ligand 상태 검토</td></tr>
+        <tr><td>Docking은 강함, MD에서 붕괴</td><td>docking artifact</td><td>재-docking 또는 제거</td></tr>
+        <tr><td>MD는 안정적, FEP는 불리</td><td>pose는 가능하지만 상대결합력 낮음</td><td>analog 재설계</td></tr>
+        <tr><td>FEP는 좋음, ADMET가 나쁨</td><td>효능–개발성 trade-off</td><td>Risk-to-Edit 수행</td></tr>
+        <tr><td>ADMET는 좋음, 합성 불가능</td><td>구조적 제조 병목</td><td>route-aware redesign</td></tr>
+        <tr><td>계산은 모두 좋음, assay는 음성</td><td>기전·세포 접근성·모델 오류</td><td>반대가설 및 모델 보정</td></tr>
+        <tr><td>biochemical assay 양성, cellular assay 음성</td><td>permeability·efflux 문제</td><td>세포 노출 분석</td></tr>
+        <tr><td>세포효능 양성, target engagement 음성</td><td>off-target 또는 assay artifact</td><td>counterscreen</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="max-width:40rem;">
+  <p>이 규칙은 LLM prompt에만 넣기보다 명시적인 decision policy와 학습 가능한 policy를 결합해야 한다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 16 ══════════ -->
+<section class="mv wide reveal" id="mv16">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--w">16</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Walkthrough</p>
+      <h2>전체 실행 예시 — 백만 개에서 한 배치까지</h2>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <p>초기 라이브러리가 100만 개라고 가정하자. 숫자는 설명을 위한 예시다.</p>
+  </div>
+
+  <div class="funnel" style="max-width:44rem">
+    <div class="funnel__row"><span class="funnel__k">1단계 · 사전선별</span><span class="funnel__bar"></span><span class="funnel__n">1,000,000</span></div>
+    <div class="funnel__row"><span class="funnel__k">2단계 · 구조 기반</span><span class="funnel__bar s2" style="width:52%"></span><span class="funnel__n">10,000</span></div>
+    <div class="funnel__row"><span class="funnel__k">3단계 · 짧은 MD</span><span class="funnel__bar s3" style="width:26%"></span><span class="funnel__n">500</span></div>
+    <div class="funnel__row"><span class="funnel__k">4단계 이후</span><span class="funnel__bar s4" style="width:10%"></span><span class="funnel__n">20~30</span></div>
+  </div>
+
+  <div class="trio">
+    <div class="panel">
+      <p class="panel__label">1단계 · 저비용 사전선별</p>
+      <ul class="dots" style="margin:0">
+        <li>KG 근거와 target relevance 검사</li>
+        <li>TxGemma affinity·toxicity 예측</li>
+        <li>GNN·QSAR ensemble</li>
+        <li>chemical validity·PAINS 필터</li>
+      </ul>
+      <p style="margin:.8rem 0 0;font-size:.88rem;color:var(--text-mute)">100만 → 약 1만</p>
+    </div>
+    <div class="panel">
+      <p class="panel__label">2단계 · 구조 기반 선별</p>
+      <ul class="dots" style="margin:0">
+        <li>receptor ensemble 구성</li>
+        <li>1만 개 후보 docking</li>
+        <li>pose interaction 분석</li>
+        <li>scaffold diversity 유지</li>
+      </ul>
+      <p style="margin:.8rem 0 0;font-size:.88rem;color:var(--text-mute)">1만 → 약 500</p>
+    </div>
+    <div class="panel">
+      <p class="panel__label">3단계 · 짧은 MD</p>
+      <ul class="dots" style="margin:0">
+        <li>즉시 붕괴하는 pose 제거</li>
+        <li>핵심 contact 유지 후보 선택</li>
+        <li>불확실한 후보는 추가 replica</li>
+      </ul>
+      <p style="margin:.8rem 0 0;font-size:.88rem;color:var(--text-mute)">상위 50~100 → 약 20~30</p>
+    </div>
+    <div class="panel">
+      <p class="panel__label">4단계 · FEP·고급 계산</p>
+      <ul class="dots" style="margin:0">
+        <li>동일 scaffold analog series 구성</li>
+        <li>cycle closure 실패 후보 재계산</li>
+        <li>uncertainty가 큰 edge 제거</li>
+        <li>실험값이 있으면 calibration</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <p class="panel__label">5단계 · ADMET·off-target</p>
+      <ul class="dots" style="margin:0">
+        <li>TxGemma와 전문모델 ensemble</li>
+        <li>applicability-domain 검사</li>
+        <li>Safety Agent veto</li>
+        <li>metabolite·CYP·hERG 분석</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <p class="panel__label">6단계 · 합성경로</p>
+      <ul class="dots" style="margin:0">
+        <li>공급 가능한 starting material</li>
+        <li>합성 단계와 예상 수율</li>
+        <li>위험반응·비용</li>
+        <li>route-aware redesign</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="duo">
+    <div class="panel panel--dark">
+      <p class="panel__label">7단계 · 실험 batch 설계</p>
+      <ul class="dots" style="margin:0">
+        <li>최고성능 후보</li>
+        <li>다른 scaffold 대표</li>
+        <li>불확실성이 큰 후보</li>
+        <li>주가설을 반박할 negative control</li>
+        <li>known positive control</li>
+      </ul>
+    </div>
+    <div class="panel panel--dark">
+      <p class="panel__label">8단계 · 결과 환류</p>
+      <ul class="dots" style="margin:0">
+        <li>TxGemma·QSAR calibration</li>
+        <li>docking score 보정</li>
+        <li>실패한 interaction 가설 기록</li>
+        <li>다음 analog batch 제안</li>
+      </ul>
+      <p style="margin:.9rem 0 0">실험 결과는 KG로 되돌아가 다음 판의 첫 수가 된다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 17 ══════════ -->
+<section class="mv reveal" id="mv17">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--b">17</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Novelty</p>
+      <h2>잠재적 학술 신규성 — 무엇을 기여로 내세울 것인가</h2>
+    </div>
+  </div>
+
+  <p>
+    단순히 여러 도구를 연결했다는 사실만으로는 신규성이 약하다.
+    다음 여덟 요소를 연구기여로 명확히 정의하는 편이 좋다.
+  </p>
+
+  <div class="novel">
+    <div class="novel__item">
+      <span class="novel__no">17.1</span>
+      <div><p class="novel__t">Graph-Native Scientific Planning</p>
+      <p class="novel__d">문헌 KG뿐 아니라 계산, 실패, 판단, 전문가 수정 이력까지 그래프에 저장하고 다음 계획에 이용한다.</p></div>
+    </div>
+    <div class="novel__item">
+      <span class="novel__no">17.2</span>
+      <div><p class="novel__t">Value-of-Information Adaptive Escalation</p>
+      <p class="novel__d">고정 파이프라인이 아니라 현재 불확실성·비용·위험을 기준으로 docking, MD, FEP, 실험 중 다음 행동을 선택한다.</p></div>
+    </div>
+    <div class="novel__item">
+      <span class="novel__no">17.3</span>
+      <div><p class="novel__t">Cross-Fidelity Contradiction Reasoning</p>
+      <p class="novel__d">TxGemma–GNN–docking–MD–FEP–assay 결과가 충돌할 때 이를 평균내지 않고 원인 가설과 추가 검증 계획을 생성한다.</p></div>
+    </div>
+    <div class="novel__item">
+      <span class="novel__no">17.4</span>
+      <div><p class="novel__t">Risk-to-Edit 및 Synthesis-aware Backpropagation</p>
+      <p class="novel__d">ADMET·합성 단계에서 발견된 문제를 분자 생성 단계의 구체적인 구조변경 명령으로 역전파한다.</p></div>
+    </div>
+    <div class="novel__item">
+      <span class="novel__no">17.5</span>
+      <div><p class="novel__t">Dissenting Scientist Agent</p>
+      <p class="novel__d">모든 가설에 대해 반대가설과 반증실험을 의무적으로 생성한다.</p></div>
+    </div>
+    <div class="novel__item">
+      <span class="novel__no">17.6</span>
+      <div><p class="novel__t">Negative-Result Memory</p>
+      <p class="novel__d">실패한 docking, 불안정한 MD, 합성 실패, assay 음성을 장기기억으로 사용해 같은 실패를 반복하지 않는다.</p></div>
+    </div>
+    <div class="novel__item">
+      <span class="novel__no">17.7</span>
+      <div><p class="novel__t">Hypothesis Portfolio Experiment Design</p>
+      <p class="novel__d">최고점 후보만 고르지 않고 성능, 화학적 다양성, 정보가치, 반증력을 함께 최대화하는 실험 batch를 설계한다.</p></div>
+    </div>
+    <div class="novel__item">
+      <span class="novel__no">17.8</span>
+      <div><p class="novel__t">Causal Credit Assignment</p>
+      <p class="novel__d">최종 assay 결과가 나왔을 때 어떤 데이터, 모델, tool call, agent 판단이 성공 또는 실패에 기여했는지 추적하고 각 구성요소의 신뢰도를 갱신한다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 18 ══════════ -->
+<section class="mv wide reveal" id="mv18">
+  <div class="mv__head">
+    <div class="mv__stone mv__stone--b">18</div>
+    <div class="mv__titles">
+      <p class="mv__kicker">Roadmap</p>
+      <h2>구현 우선순위 — 순서를 지켜야 할 유일한 대목</h2>
+    </div>
+  </div>
+
+  <div style="max-width:40rem;">
+  <p>
+    앞에서 내내 고정 순서를 경계했지만, 시스템을 짓는 순서만큼은 지켜야 한다.
+    기초 없이 올린 누각은 단청이 아무리 화려해도 한 철을 못 넘긴다.
+  </p>
+  </div>
+
+  <div class="quad">
+    <div class="panel">
+      <p class="panel__label">1단계 · 안전한 실행 기반</p>
+      <ul class="dots" style="margin:0">
+        <li>typed tool registry</li><li>hypothesis schema</li>
+        <li>workflow state machine</li><li>provenance 저장</li>
+        <li>budget·permission gate</li><li>deterministic validator</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <p class="panel__label">2단계 · Docking–MD 폐루프</p>
+      <ul class="dots" style="margin:0">
+        <li>receptor·ligand state 관리</li><li>docking history KG</li>
+        <li>PLIP·ProLIF interaction</li><li>sentinel MD</li>
+        <li>결과 충돌 감지</li><li>자동 재계획</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <p class="panel__label">3단계 · FEP–ADMET–합성</p>
+      <ul class="dots" style="margin:0">
+        <li>FEP network planner</li><li>ADMET ensemble</li>
+        <li>applicability domain</li><li>Risk-to-Edit</li>
+        <li>retrosynthesis와 starting-material 검색</li><li>Pareto optimization</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <p class="panel__label">4단계 · 실험 폐루프</p>
+      <ul class="dots" style="margin:0">
+        <li>assay recommendation</li><li>control·replicate 설계</li>
+        <li>실험결과 자동 수집</li><li>negative-result KG</li>
+        <li>모델 calibration</li><li>다음 batch active learning</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════════ 복기 ══════════ -->
+<footer class="bokgi board-bg">
+  <div class="bokgi__inner">
+    <p class="mv__kicker">復棋 · 최종 정리</p>
+    <h2>도구를 많이 연결하는 것이 핵심이 아니다</h2>
+
+    <blockquote class="say">
+      <p>
+        가설을 검증 가능한 하위 문제로 분해하고, 현재 불확실성을 가장 효율적으로 줄일 도구를 선택하며,
+        계산 간 모순을 해석하고, ADMET·합성 문제를 구조설계 단계로 되돌리고,
+        <strong>성공과 실패를 모두 지식 그래프에 축적하는 능력</strong>이 핵심이다.
+      </p>
+    </blockquote>
+
+    <p>이 구조에서 각자의 자리는 다음과 같다.</p>
+    <ul class="dots">
+      <li><strong>TxGemma</strong>는 빠른 예측과 과학적 설명을 담당하고,</li>
+      <li><strong>Graph RAG</strong>는 근거와 과거 경험을 제공하며,</li>
+      <li><strong>Agentic Planner</strong>는 다음 계산을 결정하고,</li>
+      <li><strong>docking·MD·FEP·ADMET·합성 도구</strong>는 실제 과학 계산을 수행하며,</li>
+      <li><strong>Dissenting Agent</strong>는 반대가설을 만들고,</li>
+      <li><strong>실험 결과</strong>는 전체 시스템을 다시 학습시킨다.</li>
+    </ul>
+
+    <p>
+      이렇게 구현하면 Agentic-Tx는 단순한 “신약개발 도구 호출 agent”를 넘어,
+      <strong>근거·비용·불확실성·반증 가능성을 함께 고려하는 가설 중심 AI 공동연구자</strong>로 발전할 수 있다.
+    </p>
+
+    <p>
+      끝으로 한마디 덧붙인다. 절터에서 초석의 배치를 읽어내는 능력은 초석을 많이 본 데서 오지 않는다.
+      무엇을 물어야 하는지 아는 데서 온다. 이 설계의 전부가 거기에 있다.
+      <strong>아는 만큼 보이고, 묻는 만큼 알게 된다.</strong>
+    </p>
+
+    <div class="colophon">
+      <span>E2E-Tx · Evidence-to-Experiment Agentic-Tx</span>
+      <span>토대 연구 —
+        <a href="https://arxiv.org/abs/2504.06196" target="_blank" rel="noopener">Agentic-Tx</a> ·
+        <a href="https://aclanthology.org/2025.findings-emnlp.367/" target="_blank" rel="noopener">MADD</a> ·
+        <a href="https://arxiv.org/abs/2605.12784" target="_blank" rel="noopener">ToolMol</a> ·
+        <a href="https://www.nature.com/articles/s41586-026-10652-y" target="_blank" rel="noopener">Robin</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<button class="totop" id="totop" aria-label="맨 위로">↑</button>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ── 착점 데이터: 목차이자 기보 ── */
+  var MOVES = [
+    { n:1,  c:9,  r:9,  s:"b", t:"전체 설계 원칙" },
+    { n:2,  c:6,  r:6,  s:"b", t:"Hypothesis Compiler" },
+    { n:3,  c:12, r:6,  s:"b", t:"Graph-Native Planner" },
+    { n:4,  c:9,  r:4,  s:"b", t:"정보가치 기반 도구 선택" },
+    { n:5,  c:4,  r:9,  s:"w", t:"Docking Agent" },
+    { n:6,  c:4,  r:13, s:"w", t:"MD Agent" },
+    { n:7,  c:8,  r:15, s:"w", t:"FEP Agent" },
+    { n:8,  c:12, r:14, s:"w", t:"ADMET Agent" },
+    { n:9,  c:15, r:11, s:"w", t:"합성 Agent" },
+    { n:10, c:15, r:6,  s:"w", t:"실험설계 Agent" },
+    { n:11, c:11, r:10, s:"b", t:"Contradiction Agent" },
+    { n:12, c:7,  r:11, s:"b", t:"Scientific Tool Contract" },
+    { n:13, c:9,  r:7,  s:"b", t:"Shadow Planning" },
+    { n:14, c:13, r:9,  s:"b", t:"Candidate Digital Twin" },
+    { n:15, c:10, r:12, s:"b", t:"결과 충돌 시 재계획 규칙" },
+    { n:16, c:5,  r:16, s:"w", t:"전체 실행 예시" },
+    { n:17, c:3,  r:4,  s:"b", t:"잠재적 학술 신규성" },
+    { n:18, c:16, r:16, s:"b", t:"구현 우선순위" }
+  ];
+
+  var ORIGIN = 40, STEP = 35.555, R = 15.5;
+  var g = document.getElementById("stones");
+  var toc = document.getElementById("toc");
+  var NS = "http://www.w3.org/2000/svg";
+
+  MOVES.forEach(function(m, i){
+    var x = ORIGIN + m.c * STEP, y = ORIGIN + m.r * STEP;
+
+    if (g) {
+      var a = document.createElementNS(NS, "a");
+      a.setAttribute("href", "#mv" + m.n);
+      a.setAttribute("class", "stone stone-" + m.s);
+      a.setAttribute("tabindex", "-1");
+
+      var halo = document.createElementNS(NS, "circle");
+      halo.setAttribute("cx", x); halo.setAttribute("cy", y);
+      halo.setAttribute("r", R + 5); halo.setAttribute("class", "halo");
+
+      var c = document.createElementNS(NS, "circle");
+      c.setAttribute("cx", x); c.setAttribute("cy", y);
+      c.setAttribute("r", R); c.setAttribute("class", "s");
+
+      var tx = document.createElementNS(NS, "text");
+      tx.setAttribute("x", x); tx.setAttribute("y", y + 0.5);
+      tx.textContent = m.n;
+
+      var ti = document.createElementNS(NS, "title");
+      ti.textContent = m.n + ". " + m.t;
+
+      a.appendChild(halo); a.appendChild(c); a.appendChild(tx); a.appendChild(ti);
+      a.style.opacity = "0";
+      g.appendChild(a);
+
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        setTimeout(function(){
+          a.style.transition = "opacity .45s ease";
+          a.style.opacity = "1";
+        }, 260 + i * 85);
+      } else {
+        a.style.opacity = "1";
+      }
+    }
+
+    if (toc) {
+      var li = document.createElement("li");
+      li.innerHTML = '<a href="#mv' + m.n + '"><span class="n">' +
+        (m.n < 10 ? "0" + m.n : m.n) + '</span><span>' + m.t + '</span></a>';
+      toc.appendChild(li);
+    }
+  });
+
+  /* ── 스크롤 등장 ── */
+  var reveals = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+      });
+    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.04 });
+    reveals.forEach(function(el){ io.observe(el); });
+  } else {
+    reveals.forEach(function(el){ el.classList.add("in"); });
+  }
+
+  /* ── 맨 위로 ── */
+  var btn = document.getElementById("totop");
+  var tick = false;
+  window.addEventListener("scroll", function(){
+    if (tick) return;
+    tick = true;
+    window.requestAnimationFrame(function(){
+      btn.classList.toggle("show", window.scrollY > 900);
+      tick = false;
+    });
+  }, { passive: true });
+  btn.addEventListener("click", function(){
+    window.scrollTo({ top: 0, behavior:
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  });
+})();
+</script>
+</body>
+</html>
