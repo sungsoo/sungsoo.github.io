@@ -1,0 +1,1072 @@
+---
+layout: null
+title: "AI for predicting drug-likeness and bioavailability" 
+date: 2026-08-10
+categories: [artificial intelligence]
+tags: [artificial general intelligence, drug discovery]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>약물유사성과 생체이용률을 예측하는 인공지능 | 제7장 정독</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#DCE2E1;
+  --panel:#EEF2F1;
+  --panel2:#CFD7D6;
+  --ink:#152224;
+  --dark:#0E3238;
+  --dark2:#164046;
+  --muted:#576466;
+  --faint:#8B9698;
+
+  --teal:#0E7C7B;      /* 통과 · 예측 */
+  --teal-l:#5FBDBB;
+  --umber:#8A5524;     /* 탈락 · 독성 */
+  --umber-l:#D3A366;
+
+  --rule:rgba(21,34,36,.14);
+  --rule-s:rgba(21,34,36,.30);
+  --rule-d:rgba(255,255,255,.16);
+
+  --display:'Black Han Sans',sans-serif;
+  --body:'IBM Plex Sans KR','Noto Sans KR',sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+
+  --wrap:1140px;
+  --read:700px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);
+  font-size:17px;line-height:1.92;letter-spacing:-.005em;overflow-x:hidden}
+::selection{background:var(--teal);color:#fff}
+
+#prog{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;
+  background:linear-gradient(90deg,var(--teal),var(--umber))}
+
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 28px}
+.read{max-width:var(--read)}
+section{padding:96px 0}
+section+section{border-top:1px solid var(--rule)}
+
+/* ═══ 히어로 ═══ */
+.hero{background:var(--dark);color:#B7C6C7;padding:104px 0 86px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.19em;text-transform:uppercase;
+  color:#6F8688;line-height:2.1}
+.hero h1{font-family:var(--display);font-weight:400;color:#F1F6F5;
+  font-size:clamp(38px,6.6vw,76px);line-height:1.18;letter-spacing:-.02em;margin:26px 0 0}
+.hero h1 em{font-style:normal;color:var(--teal-l)}
+.hero-sub{font-size:clamp(16px,2vw,19px);line-height:1.94;color:#93A3A5;
+  max-width:660px;margin-top:28px}
+
+/* 시그니처: 독성 종점 정확도 띠 */
+.bands{margin-top:62px}
+.bands .bh{display:flex;justify-content:space-between;align-items:baseline;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.19em;text-transform:uppercase;
+  color:#6F8688;padding-bottom:18px;border-bottom:1px solid var(--rule-d)}
+.brow{display:grid;grid-template-columns:190px 1fr;gap:30px;align-items:center;
+  padding:20px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.brow .bk b{display:block;font-family:var(--display);font-size:20px;color:#EAF1F0;
+  letter-spacing:-.01em;line-height:1.3}
+.brow .bk span{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  color:#6F8688;text-transform:uppercase;margin-top:5px}
+.track{position:relative;height:30px;background:rgba(255,255,255,.06)}
+.track .band{position:absolute;top:0;bottom:0;transform:scaleX(0);transform-origin:left;
+  transition:transform .95s cubic-bezier(.16,.8,.3,1)}
+.hero.on .track .band{transform:scaleX(1)}
+.brow:nth-child(2) .band{transition-delay:.15s}
+.brow:nth-child(3) .band{transition-delay:.32s}
+.brow:nth-child(4) .band{transition-delay:.49s}
+.brow:nth-child(5) .band{transition-delay:.66s}
+.track .lab{position:absolute;top:0;height:30px;line-height:30px;font-family:var(--mono);
+  font-size:13px;font-weight:600;white-space:nowrap;padding-right:10px}
+.track .lo{color:#9FB4B5}
+.track .hi{color:#EAF1F0}
+.axis{display:flex;justify-content:space-between;margin-top:12px;
+  font-family:var(--mono);font-size:10.5px;color:#6F8688;letter-spacing:.08em}
+.axis span:first-child{margin-left:220px}
+.bnote{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:#617779;
+  margin-top:18px;line-height:1.9}
+@media(max-width:820px){
+  .bands .bh{display:block}
+  .bands .bh span:last-child{display:block;margin-top:6px}
+  .brow{grid-template-columns:1fr;gap:10px}
+  .axis span:first-child{margin-left:0}
+}
+
+.hero-meta{margin-top:52px;padding-top:24px;border-top:1px solid var(--rule-d);
+  display:flex;flex-wrap:wrap;gap:12px 44px;font-family:var(--mono);font-size:11.5px;
+  letter-spacing:.05em;color:#6F8688}
+.hero-meta b{color:#BCCBCC;font-weight:500}
+
+/* ═══ 섹션 헤더 ═══ */
+.shead{display:flex;gap:22px;align-items:baseline;margin-bottom:16px}
+.snum{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;
+  color:var(--faint);flex:none;padding-top:12px}
+h2{font-family:var(--display);font-weight:400;font-size:clamp(28px,4.6vw,48px);
+  line-height:1.24;letter-spacing:-.02em;color:var(--ink)}
+.lede{font-size:18.5px;line-height:1.95;color:#293638;margin-top:22px;
+  padding-left:42px;border-left:3px solid var(--teal);max-width:700px}
+@media(max-width:640px){.lede{padding-left:0;border-left:0;border-top:3px solid var(--teal);padding-top:18px}}
+h3{font-family:var(--body);font-weight:700;font-size:21px;color:var(--ink);
+  margin:52px 0 14px;line-height:1.45;letter-spacing:-.02em}
+h3 .no{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--faint);
+  margin-right:12px;letter-spacing:.1em}
+h3 .tb{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--faint);
+  letter-spacing:.1em;margin-left:10px}
+p{margin:0 0 20px}
+em.t{font-style:normal;box-shadow:inset 0 -8px 0 rgba(14,124,123,.18)}
+em.u{font-style:normal;box-shadow:inset 0 -8px 0 rgba(138,85,36,.18)}
+.pull{font-family:var(--display);font-size:clamp(21px,2.9vw,29px);line-height:1.6;color:var(--ink);
+  letter-spacing:-.02em;border-top:3px solid var(--umber);border-bottom:1px solid var(--rule-s);
+  padding:28px 0;margin:44px 0;max-width:720px}
+
+/* ═══ 비용 수치 ═══ */
+.costs{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);
+  border:1px solid var(--rule);margin-top:42px}
+.cost{background:var(--panel);padding:28px 24px 30px}
+.cost .v{font-family:var(--mono);font-size:clamp(24px,3.2vw,34px);font-weight:600;
+  color:var(--umber);letter-spacing:-.02em;line-height:1.2}
+.cost .l{font-size:14px;line-height:1.72;color:var(--muted);margin-top:12px}
+@media(max-width:760px){.costs{grid-template-columns:1fr}}
+
+/* ═══ 규칙 필터 ═══ */
+.rules{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--rule);
+  border:1px solid var(--rule);margin-top:42px}
+.rl{background:var(--panel);padding:0 0 26px}
+.rl .bar{display:block;height:5px;background:var(--teal)}
+.rl .in{padding:22px 20px 0}
+.rl .yr{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--faint)}
+.rl h4{font-family:var(--body);font-weight:700;font-size:18px;color:var(--ink);
+  margin:10px 0 10px;line-height:1.38;letter-spacing:-.02em}
+.rl p{font-size:14px;line-height:1.76;color:#333F41;margin:0}
+@media(max-width:900px){.rules{grid-template-columns:1fr}}
+
+/* ═══ 임계값 게이지 ═══ */
+.gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);
+  border:1px solid var(--rule);margin-top:34px}
+.ga{background:var(--panel);padding:26px 24px 28px}
+.ga .gl{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--faint)}
+.ga .gv{font-family:var(--mono);font-size:clamp(22px,2.8vw,30px);font-weight:600;color:var(--teal);
+  letter-spacing:-.02em;margin:10px 0 8px;line-height:1.2}
+.ga .gd{font-size:14px;line-height:1.75;color:var(--muted)}
+@media(max-width:760px){.gauges{grid-template-columns:1fr}}
+
+/* ═══ 한계 목록 ═══ */
+.limits{margin-top:40px;border-top:1px solid var(--rule-s)}
+.li{display:grid;grid-template-columns:60px 1fr;gap:28px;padding:24px 0;
+  border-bottom:1px solid var(--rule)}
+.li .n{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--umber);padding-top:5px}
+.li h4{font-family:var(--body);font-weight:700;font-size:18px;color:var(--ink);margin:0 0 9px;
+  letter-spacing:-.02em}
+.li p{font-size:16px;line-height:1.88;color:#293638;margin:0}
+@media(max-width:640px){.li{grid-template-columns:1fr;gap:8px}}
+
+/* ═══ beyond Ro5 ═══ */
+.beyond{margin-top:40px;background:var(--dark);color:#B7C6C7;padding:36px 34px 38px}
+.beyond .bl{font-family:var(--mono);font-size:10.5px;letter-spacing:.19em;text-transform:uppercase;
+  color:var(--umber-l)}
+.beyond h4{font-family:var(--display);font-weight:400;font-size:clamp(22px,3vw,30px);color:#F1F6F5;
+  margin:12px 0 16px;letter-spacing:-.02em;line-height:1.35}
+.beyond p{font-size:16px;line-height:1.9;color:#9EAEAF;margin:0 0 18px;max-width:720px}
+.beyond p:last-of-type{margin-bottom:0}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.tags span{font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--umber-l);
+  border:1px solid rgba(211,163,102,.4);padding:7px 13px}
+
+/* ═══ 종점 카드 ═══ */
+.endpoints{margin-top:46px;border-top:2px solid var(--umber)}
+.ep{display:grid;grid-template-columns:236px 1fr;gap:42px;padding:36px 0;
+  border-bottom:1px solid var(--rule)}
+.ep .nm{font-family:var(--display);font-weight:400;font-size:26px;color:var(--ink);
+  line-height:1.3;letter-spacing:-.02em}
+.ep .sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;color:var(--faint);
+  text-transform:uppercase;margin-top:10px;line-height:1.9}
+.ep .bd p{font-size:16.5px;line-height:1.92;color:#293638}
+.ep .bd p:last-child{margin-bottom:0}
+.mets{display:flex;flex-wrap:wrap;gap:1px;background:var(--rule);border:1px solid var(--rule);
+  margin:24px 0}
+.met{background:var(--panel);padding:18px 22px 20px;flex:1 1 148px}
+.met .v{font-family:var(--mono);font-size:clamp(18px,2.4vw,25px);font-weight:600;color:var(--teal);
+  letter-spacing:-.02em;line-height:1.2}
+.met .v.u{color:var(--umber)}
+.met .l{font-size:12.5px;line-height:1.6;color:var(--muted);margin-top:8px}
+@media(max-width:820px){.ep{grid-template-columns:1fr;gap:14px}}
+
+/* ═══ 표 목록 ═══ */
+.tbl{margin-top:38px;border-top:1px solid var(--rule-s)}
+.trow{display:grid;grid-template-columns:236px 1fr;gap:32px;padding:20px 0;
+  border-bottom:1px solid var(--rule)}
+.trow .tk{font-family:var(--body);font-weight:700;font-size:16.5px;color:var(--ink);
+  letter-spacing:-.02em;line-height:1.5}
+.trow .tk small{display:block;font-family:var(--mono);font-size:11px;font-weight:400;
+  color:var(--umber);letter-spacing:.02em;margin-top:5px}
+.trow .tv{font-size:15px;line-height:1.82;color:#333F41}
+.trow .tv b{color:var(--ink);font-weight:600}
+@media(max-width:700px){.trow{grid-template-columns:1fr;gap:8px}}
+
+/* ═══ 카드 그리드 ═══ */
+.grid{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:40px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--panel);padding:28px 24px 30px}
+.card .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--faint)}
+.card h4{font-family:var(--body);font-weight:700;font-size:18.5px;color:var(--ink);
+  margin:11px 0 12px;line-height:1.42;letter-spacing:-.02em}
+.card p{font-size:15px;line-height:1.82;color:#333F41;margin:0}
+.card p+p{margin-top:11px}
+@media(max-width:1000px){.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.g4,.g3,.g2{grid-template-columns:1fr}}
+
+/* ═══ 어두운 절 ═══ */
+.dark-s{background:var(--dark);color:#A9BABB;border:0}
+.dark-s h2{color:#F1F6F5}
+.dark-s .snum{color:#65797B}
+.dark-s .lede{color:#93A3A5;border-left-color:var(--umber-l)}
+@media(max-width:640px){.dark-s .lede{border-top-color:var(--umber-l)}}
+.dark-s h3{color:#E5EDEC}
+.dark-s p{color:#9EAEAF}
+.dark-s .grid{background:var(--rule-d);border-color:var(--rule-d)}
+.dark-s .card{background:var(--dark2)}
+.dark-s .card .tag{color:#65797B}
+.dark-s .card h4{color:#E5EDEC}
+.dark-s .card p{color:#9EAEAF}
+.dark-s .tbl{border-top-color:var(--rule-d)}
+.dark-s .trow{border-bottom-color:var(--rule-d)}
+.dark-s .trow .tk{color:#E5EDEC}
+.dark-s .trow .tk small{color:var(--umber-l)}
+.dark-s .trow .tv{color:#9EAEAF}
+.dark-s .trow .tv b{color:#E5EDEC}
+.dark-s em.t{box-shadow:inset 0 -8px 0 rgba(95,189,187,.24)}
+
+/* ═══ 주석 ═══ */
+.notes{background:#D0D8D7}
+.note{display:grid;grid-template-columns:44px 1fr;gap:20px;padding:22px 0;
+  border-bottom:1px dotted var(--rule-s);max-width:840px}
+.note:last-child{border-bottom:0}
+.note .mk{font-family:var(--mono);font-size:12px;color:var(--umber);font-weight:600;padding-top:4px}
+.note .bd{font-size:15.5px;line-height:1.9;color:#293638}
+.note .bd b{color:var(--ink);font-weight:600}
+.note .bd code{font-family:var(--mono);font-size:.9em;background:rgba(21,34,36,.09);
+  padding:2px 6px;border-radius:2px}
+
+/* ═══ 푸터 ═══ */
+footer{background:var(--dark);color:#6F8688;padding:70px 0 82px;border:0}
+footer .bib{font-size:14.5px;line-height:2;max-width:790px}
+footer .bib b{color:#BCCBCC;font-weight:500}
+footer .fine{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:#5B7072;
+  margin-top:34px;padding-top:22px;border-top:1px solid var(--rule-d);line-height:2}
+
+.reveal{opacity:0;transform:translateY(20px);
+  transition:opacity .8s cubic-bezier(.2,.7,.3,1),transform .8s cubic-bezier(.2,.7,.3,1)}
+.reveal.on{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none;transition:none}
+  .track .band{transform:scaleX(1);transition:none}
+}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--teal-l);outline-offset:3px}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+
+<!-- ══════════ 히어로 ══════════ -->
+<header class="hero" id="hero">
+  <div class="wrap">
+    <div class="eyebrow">
+      Artificial Intelligence in Precision Drug Design · Volume 1<br>
+      Chapter 7 &nbsp;/&nbsp; Predicting Drug-likeness and Bioavailability
+    </div>
+    <h1>약이 될 만한가,<br><em>몸에 닿을 것인가</em></h1>
+    <p class="hero-sub">
+      약물유사성과 생체이용률은 후보 물질을 거르는 첫 번째 체다.
+      오랫동안 그 체는 몇 줄의 규칙이었다. 이 장은 그 규칙이 무엇을 놓쳤는지를 짚고,
+      그 자리를 대신하려는 인공지능 모형들이 실제로 어느 정도의 정확도에 이르렀는지를 헤아린다.
+    </p>
+
+    <div class="bands">
+      <div class="bh"><span>Toxicity Endpoints &nbsp;·&nbsp; 독성 종점 예측 정확도</span>
+        <span>본문에 보고된 범위</span></div>
+
+      <div class="brow">
+        <div class="bk"><b>hERG 심독성</b><span>Cardiac · hERG</span></div>
+        <div class="track">
+          <span class="band" style="left:80%;width:18.4%;background:linear-gradient(90deg,#0E7C7B,#5FBDBB)"></span>
+          <span class="lab lo" style="right:calc(100% - 80%)">80%</span>
+          <span class="lab hi" style="right:calc(100% - 98.4%)">98.4%</span>
+        </div>
+      </div>
+
+      <div class="brow">
+        <div class="bk"><b>LD50 급성독성</b><span>Lethal Dose 50</span></div>
+        <div class="track">
+          <span class="band" style="left:70%;width:14%;background:linear-gradient(90deg,#8A5524,#D3A366)"></span>
+          <span class="lab lo" style="right:calc(100% - 70%)">70%</span>
+          <span class="lab hi" style="right:calc(100% - 84%)">84%</span>
+        </div>
+      </div>
+
+      <div class="brow">
+        <div class="bk"><b>약물유발 간손상</b><span>DILI</span></div>
+        <div class="track">
+          <span class="band" style="left:75%;width:20%;background:linear-gradient(90deg,#0E7C7B,#5FBDBB)"></span>
+          <span class="lab lo" style="right:calc(100% - 75%)">75%</span>
+          <span class="lab hi" style="right:calc(100% - 95%)">95%</span>
+        </div>
+      </div>
+
+      <div class="brow">
+        <div class="bk"><b>발암성</b><span>Carcinogenicity</span></div>
+        <div class="track">
+          <span class="band" style="left:71%;width:4%;background:linear-gradient(90deg,#8A5524,#D3A366)"></span>
+          <span class="lab lo" style="right:calc(100% - 71%)">~75%</span>
+        </div>
+      </div>
+
+      <div class="axis"><span>0%</span><span>50%</span><span>100%</span></div>
+      <div class="bnote">
+        ※ 각 범위는 서로 다른 연구·데이터셋·지표에서 보고된 값을 본문 서술대로 모은 것이다.
+        같은 축에 놓았다고 해서 직접 비교할 수 있는 수치는 아니다.
+      </div>
+    </div>
+
+    <div class="hero-meta">
+      <span><b>Bikash Kumar Rajak · Priyanka Rani</b></span>
+      <span>Elsevier / Academic Press, <b>2026</b></span>
+      <span>본문 <b>pp. 101–120</b></span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════ 01 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">01</span><h2>열에 아홉은 실패한다</h2></div>
+    <p class="lede">
+      신약 개발은 길고 오래 걸리며 값비싼 과정이다. 표적 식별, 히트 발굴, 리드 최적화,
+      전임상 시험, 엄정한 임상시험을 차례로 통과해야 한다.
+      숫자는 냉정하다.
+    </p>
+
+    <div class="costs">
+      <div class="cost"><div class="v">$2.6 B</div>
+        <div class="l">약 하나를 시장에 내놓기까지 드는 평균 투자액</div></div>
+      <div class="cost"><div class="v">10–14년</div>
+        <div class="l">표적 식별에서 규제 승인까지 걸리는 기간</div></div>
+      <div class="cost"><div class="v">≈ 90%</div>
+        <div class="l">질, 효능, 예상치 못한 독성 문제로 임상시험에서 탈락하는 후보의 비율</div></div>
+    </div>
+
+    <div class="read" style="margin-top:44px">
+      <p>
+        이 실패는 여러 국면에서 발생한다. 표적의 검증과 식별이 미흡하거나,
+        고속 대량 스크리닝(HTS)이 비효율적이거나, 리드 최적화가 난항을 겪는 식이다.
+        고속 대량 스크리닝은 방대한 화학 라이브러리를 빠르게 훑어 생물학적 활성을 찾는 데 성공해왔으나,
+        초기의 <em class="u">‘히트’</em>를 유망한 리드로 바꾸는 일의 전반적 효과와 정밀도에는
+        의문이 제기되어왔다.
+      </p>
+      <p>
+        발견된 화합물의 상당수가 <em class="t">약물유사성(drug-likeness)</em>의 요건을 충족하지 못하기 때문이다.
+        약물유사성이란 경구 활성 의약품에 필요한 물리화학적 성질을 지니려는 화합물의 내재적 경향을
+        반영하는 결정적 기준이다. 유망한 치료 후보를 찾으려면 분자량, 극성, 방향족성, 친유성, 용해도 같은
+        기본적 물리화학 특성을 이르게, 그리고 정확하게 평가해야 한다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 02 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">02</span><h2>낡은 자로 재는 일</h2></div>
+    <p class="lede">
+      규칙 기반의 전통적 접근, 특히 리핀스키의 5의 법칙과 베버의 규칙은
+      초기 화합물 선별에 근본적인 권고를 제공해왔다.
+      특정 물리화학적 기준을 지키는 화합물이 좋은 경구 생체이용률을 보일 가능성이 크다는 발상이다.
+      단순하되 강력한 이 추정 기법은 가상 스크리닝 파이프라인의 표준 필터로 자리 잡았다.
+    </p>
+
+    <div class="rules">
+      <div class="rl"><span class="bar"></span><div class="in">
+        <span class="yr">Lipinski, 2001</span><h4>5의 법칙<br>Rule of Five</h4>
+        <p>잠재적 화합물의 약물유사성을 선별하는 가장 널리 쓰이는 규칙이다.</p></div></div>
+      <div class="rl"><span class="bar"></span><div class="in">
+        <span class="yr">Veber, 2002</span><h4>베버 규칙</h4>
+        <p>위상학적 극성 표면적과 분자 유연성에 초점을 맞춘다.
+          경구 생체이용률과 효능에 직접 영향을 주는 두 기술자다.</p></div></div>
+      <div class="rl"><span class="bar"></span><div class="in">
+        <span class="yr">Ghose, 1999</span><h4>고즈 필터</h4>
+        <p>물리화학적 기준과 기술자에 근거해 약물다운 성질을 지닌 화합물을 선별한다.</p></div></div>
+      <div class="rl"><span class="bar"></span><div class="in">
+        <span class="yr">Egan, 2000</span><h4>이건 규칙</h4>
+        <p>같은 계열의 물리화학적 필터로 약물유사성 평가에 기여한다.</p></div></div>
+      <div class="rl"><span class="bar"></span><div class="in">
+        <span class="yr">Muegge, 2001</span><h4>뮈게 기준</h4>
+        <p>물리화학적 기준을 통한 약물유사성 평가의 또 하나의 축이다.</p></div></div>
+    </div>
+
+    <h3>베버 규칙이 그은 선</h3>
+    <div class="gauges">
+      <div class="ga"><span class="gl">Rotatable Bonds</span>
+        <div class="gv">≤ 10</div>
+        <div class="gd">회전 가능 결합의 수. 분자의 유연성을 가늠한다.</div></div>
+      <div class="ga"><span class="gl">TPSA</span>
+        <div class="gv">≤ 140 Å²</div>
+        <div class="gd">위상학적 극성 표면적.</div></div>
+      <div class="ga"><span class="gl">H-bond D + A</span>
+        <div class="gv">≤ 12</div>
+        <div class="gd">수소결합 공여체와 수용체의 합.</div></div>
+    </div>
+    <p class="read" style="margin-top:24px;font-size:15.5px;color:var(--muted)">
+      이 기준을 만족하는 화합물이 경구로 생체이용될 가능성이 더 크다는 것이 베버 규칙의 요지다.
+    </p>
+
+    <h3 style="margin-top:60px">그런데 이 자는 무엇을 놓치는가</h3>
+    <div class="limits">
+      <div class="li"><div class="n">i</div><div>
+        <h4>데이터베이스의 편향</h4>
+        <p>규칙의 근거가 된 데이터가 거대분자를 표적으로 하는 작고 경구 투여되는 의약품 쪽으로
+          기울어 있다. 규칙 자체가 편향을 물려받은 셈이다.</p></div></div>
+      <div class="li"><div class="n">ii</div><div>
+        <h4>능동 수송과 대사와 유출의 누락</h4>
+        <p>전통적 기준은 대개 수동 확산에만 집중하고, 생체 내 약물 거동에 깊은 영향을 주는
+          능동 수송, 대사, 유출 기제를 고려하지 않는다.
+          극도로 극성인 화합물도 활발히 운반되면 흡수될 수 있고,
+          낮은 LogP 값을 지닌 분자도 특정 채널을 통해 세포막을 통과할 수 있다.</p></div></div>
+      <div class="li"><div class="n">iii</div><div>
+        <h4>복잡한 요소의 예측 불가</h4>
+        <p>거친 물리화학적 필터로는 독성, 표적 외 효과, 대사 분해 같은 요소를
+          신뢰할 만하게 내다볼 수 없다.</p></div></div>
+      <div class="li"><div class="n">iv</div><div>
+        <h4>리드 최적화의 휴리스틱한 성격</h4>
+        <p>구조 변형의 범위와 예측 가능성은 리드 최적화의 반복적이고 흔히 어림에 기대는 성격 탓에
+          본래 제한된다. 의약화학자의 직관과 시행착오가 그 동력이기 때문이다.</p></div></div>
+      <div class="li"><div class="n">v</div><div>
+        <h4>제초제 같은 다른 분야에는 맞지 않음</h4>
+        <p>제초제는 인체 의약품과 달리 경구 투여를 통한 생체이용률에 제약받지 않아
+          뚜렷이 다른 물리화학적 프로필을 보인다. 제초제 분자는 흔히 분자량과 수소결합 수용체 수가 더 크고
+          공여체 값은 더 낮아, 통상적 약물유사성 문턱에서 크게 벗어난다.
+          표적에 특이적인 제초제 리드를 설계하려면 별도의 인 실리코 선별 필터가 필요하다.</p></div></div>
+    </div>
+
+    <div class="beyond">
+      <div class="bl">Beyond Rule of Five</div>
+      <h4>규칙 바깥에서 약이 되는 것들</h4>
+      <p>
+        굳어버린 규칙은 통상적이지 않은 특징을 지닌 분자를 무심코 건너뛸 수 있다.
+        규칙에 부합하지 않으면서도 탁월한 치료 잠재력을 지닌 것들이다.
+        이 사정이 <em class="t">‘5의 법칙 너머’</em>라는 화학 공간의 개념을 낳았다.
+        제안된 매개변수 가운데 하나 이상을 위반하면서도 미국 식품의약국의 승인을 받은 의약품이
+        점점 늘고 있다는 사실을 인정하는 개념이다.
+      </p>
+      <div class="tags">
+        <span>거대고리 화합물</span><span>천연물</span><span>펩타이드</span><span>바이오의약품</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 03 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">03</span><h2>사람의 손이 닿아야 하던 자리</h2></div>
+    <p class="lede">
+      기술이 진보하면서 연구자들은 수백만 개의 소분자를 약물로서의 잠재적 활성에 따라 선별하는
+      인 실리코 기법을 도입했고, 그것이 신약 발굴을 크게 앞당겼다.
+      그러나 합리적 접근을 쓰더라도 각 단계의 끝에서 판단을 내리고 다음 단계에 입력을 주는 일에는
+      여전히 사람의 개입이 필요했다. 이 허들을 넘는 방법이 <em class="t">과정의 자동화</em>다.
+    </p>
+
+    <div class="read">
+      <p>
+        기계학습은 심층학습, 랜덤 포레스트(RF), 베이즈 네트워크(BN), 서포트 벡터 머신(SVM), 군집화 같은
+        여러 알고리즘을 써서 신약 발굴 파이프라인 전반에 널리 쓰이고 있다.
+        이 알고리즘들은 거대한 화학 라이브러리 더미에서 리드 화합물의 식별을 강화했고,
+        표적 외 상호작용 화합물이 일으키는 독성 문제를 푸는 데 기여했다.
+      </p>
+      <p>
+        인공지능의 등장으로 방대한 생물학 데이터셋에서 질환 관련 유전자와 단백질을 추출하고
+        검증하는 일이 한결 수월해졌다. 표적 식별, 잠재적 소분자 식별, 펩타이드 합성과 발굴,
+        물리화학적 성질 평가, 약동학적 성질 분석, 약물 모니터링, 효능·독성·유효성 평가,
+        생물활성 예측, 단백질–단백질 상호작용, 단백질 접힘과 오접힘 분석,
+        구조 기반 및 리간드 기반 고속 가상 스크리닝, 정량적 구조–활성 관계(QSAR) 모델링,
+        약물 재창출에 이르기까지 그 목록은 길다.
+      </p>
+      <p>
+        알고리즘마다 맡은 자리가 있다. 베이즈 네트워크는 생물활성과 독성, 치료 반응을 예측하는 데,
+        랜덤 포레스트는 분자 표적을 선별하고 특징을 고르며 데이터의 패턴과 상관을 군집화하는 데 쓰인다.
+        서포트 벡터 머신 같은 지도학습 알고리즘은 데이터를 여러 범주로 분류하고 가상 스크리닝을 수행하며
+        약동학적·독성학적 성질을 예측하는 데 활용된다.
+      </p>
+      <p>
+        새 분자의 발굴과 설계 너머에서도 인공지능은 시험 프로토콜을 최적화하고 결과를 예측함으로써
+        임상시험을 돕는다. 실세계 데이터를 통합해 데이터 주도 의사결정을 강화하며,
+        임상시험 이후 특허 데이터를 다루는 맥락에서 데이터 품질과 알고리즘 훈련,
+        윤리적 고려까지 함께 다룬다.
+      </p>
+    </div>
+
+    <h3>펩타이드 발굴과 약물 시너지에 적용된 도구 <span class="tb">TABLE 7.1</span></h3>
+    <div class="tbl">
+      <div class="trow"><div class="tk">Deep-AmPEP30<small>심층학습 기반 플랫폼</small></div>
+        <div class="tv">짧은 항균 펩타이드(AMP)의 식별에 쓰인다.</div></div>
+      <div class="trow"><div class="tk">ACP-DL<small>LSTM 알고리즘 기반</small></div>
+        <div class="tv">새로운 항암 펩타이드의 발굴에 쓰인다.</div></div>
+      <div class="trow"><div class="tk">AI-PRS<small>신경망 주도 방법론</small></div>
+        <div class="tv">약물 조합과 용량을 효능에 연결한다.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 04 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">04</span><h2>독성을 미리 읽는 네 개의 창</h2></div>
+    <p class="lede">
+      인공지능의 진전은 방대한 생물활성 화합물 데이터셋으로부터 모형이 배우게 함으로써 이 지형을 바꾸었다.
+      물리화학적 성질, 구조적 특징, ADMET 프로필을 아우르는 수많은 분자 기술자에 근거해
+      약물유사성을 예측한다. 앙상블 모형, CNN, GNN, 오토인코더에 어텐션 기제까지 더해지면서
+      심독성, 반수치사량, 간손상, 발암성 같은 종점의 예측 정확도가 눈에 띄게 개선되었고,
+      동물 실험에 대한 의존도 줄었다.
+    </p>
+
+    <div class="endpoints">
+      <div class="ep">
+        <div>
+          <div class="nm">hERG 심독성</div>
+          <div class="sub">Cardiac Side Effects<br>NB · RF · SVM · kNN · PLS · GB · XGB</div>
+        </div>
+        <div class="bd">
+          <p>
+            hERG 유전자는 심장의 칼륨 이온 통로를 부호화하며 심장의 전기적 활동,
+            특히 심박 이후 재분극 단계에서 결정적 역할을 한다.
+            어떤 약물은 의도치 않게 이 통로를 막고 저해해 <em class="u">토르사드 드 푸앵트</em>라는
+            부정맥과 급성 심정지로 이어진다. 초기 단계의 주요 안전성 관심사가 된 까닭이다.
+          </p>
+          <div class="mets">
+            <div class="met"><div class="v">80%</div><div class="l">다중 결정트리를 병합한 ADMET 예측 랜덤 포레스트 모형</div></div>
+            <div class="met"><div class="v">98.4%</div><div class="l">ECFP4 구조 지문과 NSGA-II로 고른 72개 기술자를 쓴 SVM 모형</div></div>
+            <div class="met"><div class="v u">80–92%</div><div class="l">RF · MLP · DMPNN 계열 모형들</div></div>
+            <div class="met"><div class="v u">90–98%</div><div class="l">HergSpred, Interpretable-ADMET 같은 도구</div></div>
+          </div>
+          <p>
+            모든 모형과 도구 가운데 <em class="t">ADMETLab 2.0</em>이 13,845개 화합물로 이루어진
+            대규모 hERG 데이터셋에서 시험되어 가장 높은 정확도를 보였다.
+            ADMET 성질 예측에 다중작업 그래프 어텐션 프레임워크(MGAF)를 쓴다.
+          </p>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div>
+          <div class="nm">LD50<br>급성 독성</div>
+          <div class="sub">Lethal Dose 50<br>NB · kNN · Binned-Neighbors · ECFP</div>
+        </div>
+        <div class="bd">
+          <p>
+            반수치사량은 시험 개체군의 50%를 사망에 이르게 하는 용량으로,
+            시험 물질의 독성을 재는 표준 척도다.
+          </p>
+          <div class="mets">
+            <div class="met"><div class="v">84% / 81%</div><div class="l">8,992개 화학물질에서의 민감도와 특이도<br>(독성 물질 식별 / 비독성 물질 식별)</div></div>
+            <div class="met"><div class="v u">70% · 80%</div><div class="l">QSAR 기반 모형의 다중분류·이진 종점 정확도<br>RMSE 0.477</div></div>
+            <div class="met"><div class="v u">R² 0.5</div><div class="l">80,081개 화합물로 만든 다중작업 심층학습 합의 모형<br>RMSE 0.65</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div>
+          <div class="nm">약물유발<br>간손상</div>
+          <div class="sub">DILI<br>GNN · DL · CNN</div>
+        </div>
+        <div class="bd">
+          <p>
+            약물유발 간손상은 처방약과 일반의약품, 생약 제품, 심지어 일부 보조제까지 포함하는
+            약물에 의해 발생한다. <em class="u">약물 회수의 32%</em>를 차지해 의료진과 연구자의 근심거리다.
+            시험관 임상 연구로 예측하는 방법이 있으나 비용과 시간이 만만치 않아
+            인공지능 쪽으로 시선이 옮겨졌다.
+          </p>
+          <div class="mets">
+            <div class="met"><div class="v">80–95%</div><div class="l">최근 연구가 보고한 인공지능 모형의 정확도 범위</div></div>
+            <div class="met"><div class="v u">~75%</div><div class="l">GNN 계열</div></div>
+            <div class="met"><div class="v u">~78%</div><div class="l">DL 계열</div></div>
+            <div class="met"><div class="v u">~89%</div><div class="l">CNN 계열</div></div>
+            <div class="met"><div class="v">79%</div><div class="l">ADMETLab 2.0 · FP-ADMET · InterpretableADMET</div></div>
+          </div>
+          <p>
+            이런 합리적 방법이 정확한 간손상 예측을 통해 약물 회수의 발생을 줄여왔다.
+          </p>
+        </div>
+      </div>
+
+      <div class="ep">
+        <div>
+          <div class="nm">발암성</div>
+          <div class="sub">Carcinogenesis<br>CapsCarcino · DeepCarc</div>
+        </div>
+        <div class="bd">
+          <p>
+            미국 식품의약국의 승인을 받은 여러 약물이 발암성 때문에 철회되고 있다.
+            현재는 단기 생물학적 시험과 이론 모형으로 화합물을 검증하지만,
+            앞으로는 심층학습과 기계학습 기반 기법이 비용 효율적이면서 이런 연구를 대체하거나
+            강화하리라 기대된다.
+          </p>
+          <div class="mets">
+            <div class="met"><div class="v u">~75%</div><div class="l">CapsCarcino, DeepCarc 등 인공지능 기반 발암성 예측 모형의 정확도</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:60px">약물유사성 예측 도구 <span class="tb">TABLE 7.2</span></h3>
+    <div class="tbl">
+      <div class="trow"><div class="tk">SwissADME<small>무료 · 웹</small></div>
+        <div class="tv">약물유사성(리핀스키·베버·고즈 규칙), BOILED-Egg 모형, 생체이용률.
+          <b>빠른 선별과 쉬운 사용자 인터페이스</b>에 적합하다.</div></div>
+      <div class="trow"><div class="tk">ADMETlab 2.0<small>무료 · 웹</small></div>
+        <div class="tv">약물유사성, ADMET 프로필, 시각화, 독성 예측.
+          <b>포괄적인 초기 단계 선별</b>에 적합하다.</div></div>
+      <div class="trow"><div class="tk">pkCSM<small>무료 · 웹 / API</small></div>
+        <div class="tv">그래프 기반 서명을 통한 약물유사성과 ADMET 성질.
+          <b>단순한 SMILES 입력으로 고속 예측</b>을 수행한다.</div></div>
+      <div class="trow"><div class="tk">MolSoft<small>제한적 무료 / 상용 · 웹 &amp; 로컬</small></div>
+        <div class="tv">분자 물성 예측, 약동학, 기술자.
+          <b>설정을 조정할 수 있는 심층 프로파일링</b>에 적합하다.</div></div>
+      <div class="trow"><div class="tk">DeepChem<small>오픈소스 · 로컬(파이썬)</small></div>
+        <div class="tv">신약 발굴을 위한 인공지능·기계학습 프레임워크, 생물활성 예측, 심층학습.
+          <b>맞춤 모형 구축과 연구 워크플로 통합</b>에 적합하다.</div></div>
+      <div class="trow"><div class="tk">QikProp<small>상용(Schrödinger) · 로컬</small></div>
+        <div class="tv">50개가 넘는 ADME 성질과 약물유사성, 대사를 예측한다.
+          <b>산업 수준의 대규모 모델링</b>에 적합하다.</div></div>
+      <div class="trow"><div class="tk">PreADMET<small>상용 · 웹 &amp; 로컬</small></div>
+        <div class="tv">약물유사성, ADMET, 독성 예측.
+          <b>규제 대응과 독성 중심 워크플로</b>에 적합하다.</div></div>
+      <div class="trow"><div class="tk">ChemDes<small>무료 · 웹</small></div>
+        <div class="tv">기술자 계산과 약물유사성 필터의 통합.
+          <b>기계학습 모형을 위한 기술자 생성</b>에 적합하다.</div></div>
+      <div class="trow"><div class="tk">ChemAxon Marvin &amp; JChem<small>상용 · 웹 &amp; 로컬</small></div>
+        <div class="tv">약물유사성, 물리화학적 예측, 파이프라인 통합.
+          <b>기업 수준의 모듈형 통합</b>에 적합하다.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 05 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">05</span><h2>몸에 닿기까지의 네 관문</h2></div>
+    <p class="lede">
+      생체이용률의 예측은 전통적으로 자원이 많이 들고 흔히 늦은 단계에 이루어지는 일이었다.
+      인공지능의 등장은 이 문제에 접근하는 방식을 바꾸어, 개발 과정의 더 이른 시점에
+      생체이용률 매개변수를 예측할 정교한 도구를 제공한다.
+      약물이 몸에 닿기까지 넘어야 할 관문은 넷이다.
+    </p>
+
+    <div class="grid g4">
+      <div class="card" style="border-top:4px solid var(--teal)">
+        <span class="tag">01 &nbsp;Solubility</span>
+        <h4>용해도</h4>
+        <p>경구 생체이용률에 영향을 주는 근본적 물성이자 첫 번째 장벽이다.
+          약물은 먼저 위장관 액에 녹아야 한다. 잘 녹지 않는 화합물은 흡수가 제한되어
+          치료 효능이 떨어진다.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--teal)">
+        <span class="tag">02 &nbsp;Permeability</span>
+        <h4>막 투과성</h4>
+        <p>세포벽과 세포막, 그리고 장 막을 가로질러 혈류로 들어가는 능력이다.
+          용해도, 친유성, 분자 크기, 수소결합 능력이 이를 좌우한다.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--umber)">
+        <span class="tag">03 &nbsp;Metabolic Stability</span>
+        <h4>대사 안정성</h4>
+        <p>초회 통과 대사는 전신 순환에 들어가는 활성 약물의 양을 크게 줄일 수 있다.
+          효소에 의한 파괴에 대한 저항성과 낮은 대사 안정성이 그 원인이다.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--umber)">
+        <span class="tag">04 &nbsp;ADMET</span>
+        <h4>흡수·분포·대사·배설·독성</h4>
+        <p>이 넷에 독성을 더한 다섯이 함께 작동해 후보 물질의 성패를 가른다.
+          초기 단계에서 방대한 데이터베이스로부터 분자를 선별해
+          히트율과 선별의 효율을 높이는 데 쓰인다.</p>
+      </div>
+    </div>
+
+    <h3><span class="no">05.1</span>용해도 — SolTranNet과 그래프 합성곱</h3>
+    <div class="read">
+      <p>
+        최근의 심층학습은 분자 그래프 구조를 직접 이용해 용해도를 지배하는 복잡한 원자 수준 상호작용을
+        학습하는 그래프 합성곱 신경망(GCN) 같은 강력한 대안을 제공한다.
+        이 모형들은 분자 구조 데이터로 용해도를 예측하며,
+        수작업 특징 공학의 필요를 없애면서 더 나은 예측 성능을 낸다.
+      </p>
+      <div class="mets" style="max-width:var(--read)">
+        <div class="met"><div class="v">≈ 3,400</div><div class="l">SolTranNet의 매개변수 수 — 경량 분자 어텐션 트랜스포머</div></div>
+        <div class="met"><div class="v">0.948</div><div class="l">불용성 화합물 분류의 민감도</div></div>
+      </div>
+      <p>
+        프랑쾨르와 코스가 제안한 SolTranNet은 SMILES 문자열에서 곧바로 수용해도를 예측한다.
+        약 3400개의 매개변수만으로 불용성 화합물을 0.948의 민감도로 분류해내,
+        <em class="t">잘 녹지 않는 후보를 걸러내는 데 알맞은 모형</em>임을 입증했다.
+        잘 정제된 화학 구조와 검증된 용해도를 갖춘 소분자 데이터베이스는
+        정량적 구조–물성 관계(QSPR) 기반 모형을 훈련하는 데 널리 쓰이고 있다.
+      </p>
+    </div>
+
+    <h3><span class="no">05.2</span>투과성 — Caco-2와 PAMPA</h3>
+    <p class="read">
+      투과성을 예측하기 위해 랜덤 포레스트, 서포트 벡터 머신, 신경망 같은 방법이 자주 쓰이며,
+      Caco-2 세포 검정이나 병렬 인공막 투과성 검정(PAMPA)의 데이터를 활용한다.
+      이 모형들은 막 수송을 촉진하거나 방해하는 중요한 화학적 특징을 식별함으로써
+      의약화학자가 최적의 투과성 프로필을 지닌 화합물을 만들도록 돕는다.
+    </p>
+
+    <h3><span class="no">05.3</span>대사 안정성 — 사이토크롬 P450</h3>
+    <p class="read">
+      대사의 위치와 속도를 예측하는 일이 필수다.
+      의약품 대부분의 대사를 담당하는 사이토크롬 P450(CYP) 효소와의 상호작용을 예측하는
+      인공지능 모형이 만들어지고 있다.
+      아이소폼 특이성과 CYP 저해를 예측하는 일, 그리고 분자에서 대사 공격이 일어날 수 있는 위치를
+      짚어내 대사적으로 더 안정한 분자를 설계하도록 돕는 기법이 여기에 속한다.
+    </p>
+
+    <h3><span class="no">05.4</span>ADMET 예측 플랫폼과 PBPK</h3>
+    <div class="read">
+      <p>
+        2018년에 만들어진 ADMETlab 같은 웹 서버는 질 높은 데이터의 ADMET 성질과 물리화학적 예측,
+        의약적 성질 매개변수, ADME 관련 종점, 독성 예측을 수행하는 모듈 도구를 만들어낼 수 있다.
+        비교 분석에 따르면 이 플랫폼의 최신 판은 SwissADME, admetSAR 2.0, pkCSM, vNN-ADMET 같은
+        다른 널리 쓰이는 ADMET 예측 플랫폼보다 나은 성능을 보인다.
+        포괄적인 데이터 지원, 평가 성능, 일괄 평가 능력, 불확실성 추정의 통합이 그 강점이다.
+      </p>
+      <p>
+        생리학 기반 약동학(PBPK) 모형은 계 특이적 생리 매개변수를 써서 약물의 흡수·분포·대사·배설을
+        모사함으로써 생체이용률 예측을 한층 보강한다.
+        인공지능이 예측한 약물 성질을 PBPK 모형에 넣으면
+        소아, 노인, 특정 질환 상태를 포함한 여러 집단에 걸쳐 강한 예측을 얻을 수 있다.
+      </p>
+    </div>
+
+    <h3><span class="no">05.5</span>새 기술과 실제 성과</h3>
+    <div class="grid g3">
+      <div class="card">
+        <span class="tag">XAI</span><h4>설명가능 인공지능</h4>
+        <p>대부분의 인공지능 모형이 지닌 블랙박스 성격을 없애고 예측 결과에 대한
+          이해 가능한 설명을 제공한다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">AutoML</span><h4>자동 기계학습</h4>
+        <p>코딩 전문성이 거의 없는 연구자도 효과적인 예측 도구를 만들 수 있게 하여
+          모형 구축을 민주화한다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Active Learning</span><h4>능동 학습</h4>
+        <p>가장 정보량이 큰 새 데이터 점을 선택적으로 질의함으로써
+          모형이 점진적으로 학습하게 한다.</p>
+      </div>
+    </div>
+
+    <div class="pull">
+      높은 분자량과 낮은 용해도 탓에 애초 생체이용률이 낮던 한 화합물이
+      인공지능의 도움을 받은 구조 변형으로 최적화되었다.
+      최적화된 화합물은 용해도가 <em class="t">6배</em> 높아졌고 경구 생체이용률도 크게 개선되었다.
+    </div>
+
+    <p class="read">
+      또 다른 응용에서는 인공지능 모형이 한 제네릭 의약품의 여러 제형에 대해
+      생체이용률을 정확히 예측했고, 그 예측 성능이 관찰된 임상 결과와 밀접히 부합했다.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 06 ══════════ -->
+<section class="dark-s reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">06</span><h2>블랙박스를 열어야 하는 이유</h2></div>
+    <p class="lede">
+      수많은 소분자 데이터베이스와 심층학습 방법론의 개선에 힘입어 인공지능 모형의 성능은
+      복잡한 과제에서 인간의 효율을 넘어섰다. 그러나 이 모형들은 자신의 정확한 예측 방법에 대한
+      정보를 대개 갖고 있지 않아 <em class="t">블랙박스</em>로 적용된다.
+      이는 투명성을 가로막으며, 의료와 제약과 분석 분야에서는 중대한 결함이 된다.
+    </p>
+
+    <h3 style="margin-top:52px">설명가능성과 해석가능성</h3>
+    <div class="grid g2">
+      <div class="card">
+        <span class="tag">Explainability</span><h4>설명가능성</h4>
+        <p>인공지능 시스템의 의사결정 과정과 배후의 작동을 <em class="t">인간의 언어로 설명할 수 있는 정도</em>다.
+          복잡한 모형이 블랙박스로 기능하는 상황에서 결정과 예측에 대한 통찰을 제공함으로써
+          사용자와 이해당사자 사이에 신뢰를 쌓는 데 기여한다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Interpretability</span><h4>해석가능성</h4>
+        <p>인공지능 모형의 내부 역학과 입력에서 출력으로의 변환을
+          <em class="t">인간이 이해할 수 있는 정도</em>다.</p>
+      </div>
+    </div>
+
+    <p class="read" style="margin-top:36px">
+      설명가능성은 데이터 프라이버시를 다루는 GDPR이나 신약 발굴을 감독하는 미국 식품의약국 규정처럼
+      엄격한 정책이 작동하는 영역에서 규제 준수를 보장하는 데 없어서는 안 된다.
+      미국 식품의약국과 유럽 의약품청 같은 제약 규제기관은 치료와 임상과 처치의 결정에 영향을 미치는
+      인공지능 예측의 배후에 명확하고 정당한 근거가 있을 것을 요구한다.
+    </p>
+
+    <div class="grid g2">
+      <div class="card">
+        <span class="tag">SHAP</span><h4>섀플리 가법 설명</h4>
+        <p>예측에 중요한 특징에 기여도를 배정한다.
+          전역적 해석과 국소적 해석을 모두 제공하며,
+          경사 부스팅이나 심층 신경망 같은 복잡한 모형에 널리 쓰인다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">LIME</span><h4>국소 해석 가능 모형 독립 설명</h4>
+        <p>예측 주변에서 국소적으로 해석 가능한 모형을 세운다.
+          모형 전체가 아니라 <em class="t">특정한 예측</em>을 이해하는 데 특히 유용하다.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:60px">해석가능성 도구 <span class="tb">TABLE 7.3</span></h3>
+    <div class="tbl">
+      <div class="trow"><div class="tk">적분 경사<small>Integrated Gradients</small></div>
+        <div class="tv">기준 입력과 실제 입력 사이의 예측 차이를 개별 특징에 귀속시킨다.
+          더 정확한 경사 기반 귀속을 제공하며, 컴퓨터 비전과 생물정보학의 구조화된 데이터에서 널리 쓰인다.</div></div>
+      <div class="trow"><div class="tk">DeepLIFT<small>유전체학·생물정보학의 심층학습 모형</small></div>
+        <div class="tv">뉴런 활성화를 기준값과 비교해 기여 점수를 배정한다.
+          경사만 쓰는 방법보다 포화된 뉴런을 잘 다룬다.</div></div>
+      <div class="trow"><div class="tk">Anchors<small>규칙 기반 설명</small></div>
+        <div class="tv">정확하고 해석하기 쉬운 if-then 규칙 형태의 설명을 만들어낸다.
+          분류 과제에서 LIME보다 안정적이고 직관적이다.</div></div>
+      <div class="trow"><div class="tk">특징 순열 중요도<small>랜덤 포레스트 · XGBoost 등 앙상블</small></div>
+        <div class="tv">어떤 특징의 값을 무작위로 섞었을 때 모형 정확도가 얼마나 떨어지는지를 잰다.
+          모형이 각 특징에 얼마나 의존하는지를 알려준다.</div></div>
+      <div class="trow"><div class="tk">반사실적 설명<small>Counterfactual</small></div>
+        <div class="tv">예측을 바꾸려면 입력에 어떤 최소한의 변화가 필요한지를 분석한다.
+          “어떤 화합물에 극성기가 하나 더 있었다면 생체이용 가능한 것으로 예측되었을 것”과 같은 식이다.
+          결정 경계와 모형 거동을 이해하는 데 도움이 된다.</div></div>
+      <div class="trow"><div class="tk">돌출 지도 · Grad-CAM<small>CNN 등 시각 모형</small></div>
+        <div class="tv">입력 이미지에서 예측에 가장 크게 기여한 영역을 강조한다.</div></div>
+      <div class="trow"><div class="tk">플랫폼 제공 XAI 도구<small>Google Cloud AI Explanations · Microsoft InterpretML · IBM AIX360 · Amazon SageMaker Clarify</small></div>
+        <div class="tv">모형 투명성을 위한 설명가능성 알고리즘과 지표 모음을 제공한다.
+          편향 탐지와 플랫폼을 가로지르는 예측 설명에 유용하다.</div></div>
+      <div class="trow"><div class="tk">대리 모형<small>Surrogate Models</small></div>
+        <div class="tv">결정트리나 선형 모형처럼 더 단순하고 해석 가능한 모형으로
+          블랙박스 모형의 예측을 모방한다. 복잡한 모형의 설명을 단순하게 만든다.</div></div>
+      <div class="trow"><div class="tk">부분 의존도 그래프 · ICE<small>PDP &amp; Individual Conditional Expectation</small></div>
+        <div class="tv">특징이 예측 결과에 어떻게 영향을 미치는지를 시각화한다.
+          모형 안에서 특징의 영향과 상호작용을 이해하는 데 도움이 된다.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 07 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">07</span><h2>앞으로의 전망</h2></div>
+    <p class="lede">
+      인공지능은 잠재적 약물의 식별에 드는 시간을 크게 줄여 합리적 신약 발굴을 보강했다.
+      기계학습과 심층학습의 잠재력을 극대화함으로써 거대한 데이터베이스를 비교적 빠르게 선별하고
+      초기 단계의 과정을 간소화해, 오래 걸리는 실험적 선별을 줄인다.
+      그러나 이 가속에는 여러 한계와 난제가 따른다.
+    </p>
+
+    <div class="grid g2">
+      <div class="card" style="border-top:4px solid var(--umber)">
+        <span class="tag">난제 01</span><h4>데이터의 품질</h4>
+        <p>불완전하고 잡음이 섞이며 편향된 데이터셋은 부정확한 예측으로 이어져
+          파이프라인의 효능을 훼손한다.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--umber)">
+        <span class="tag">난제 02</span><h4>새로운 데이터에서의 성능</h4>
+        <p>인공지능 모형이 본 적 없는 새 데이터에서 뛰어난 성능을 내지 못하는 문제다.
+          실험적 시험을 통해 예측을 검증하고 일반화해야 할 필요를 강조한다.
+          데이터의 품질 평가와 모형의 검증을 사용 전에 다루는 일이 정확성과 신뢰성 확보에 결정적이다.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--teal)">
+        <span class="tag">전망 01</span><h4>개인 맞춤 의약</h4>
+        <p>환자 특이적 데이터, 곧 건강 이력과 유전 정보를 분석함으로써
+          개인의 정확한 필요에 맞춘 약물과 처방이 가능해진다.
+          효능을 최적화하고 부작용을 최소화하여 약물 투여의 미래를 빚을 것이다.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--teal)">
+        <span class="tag">전망 02</span><h4>시스템 생물학과 다중오믹스</h4>
+        <p>약리학 부문을 넘어 시스템 생물학과 다중오믹스 기법에 통합되어,
+          약물의 투여와 작용에 관련된 생물학적 계와 대사 경로, 분자 기전에 대한
+          더 깊은 통찰을 얻을 수 있다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 08 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">08</span><h2>맺으며</h2></div>
+    <div class="read">
+      <p style="margin-top:26px">
+        정해진 규칙으로 소분자의 물리화학적 매개변수를 규정하는 전통적 접근은
+        <em class="t">일차적인 여과의 체</em>를 제공하지만, 복잡한 분자와 분자 상호작용,
+        통상적이지 않은 약물 후보를 다룰 때 한계를 드러낸다.
+      </p>
+      <p>
+        인공지능 주도 모형은 대규모 소분자 데이터베이스를 한층 높은 정확도로 분석할 대안을 제공한다.
+        여러 연구가 보고하듯, 인공지능의 통합은 약화학적·약동학적 성질과
+        발암성·LD50·hERG 저해·간손상 같은 독성, 그리고 ADMET 프로필의 예비 선별을 수월하게 하여
+        신약 발굴 파이프라인을 돕는다.
+      </p>
+      <p>
+        모형 바깥에서도, 분자의 내구성을 규정하는 인공지능 주도 도구가 여럿 개발되었다.
+        SwissADME, QikProp, ADMETlab 2.0이 그러하며 분자의 물리화학적 매개변수를
+        높은 정확도로 예측함을 보여준다.
+      </p>
+      <p>
+        모형 생성의 여러 난제와 데이터 품질에 관한 불확실성에도 불구하고,
+        인공지능 주도의 현대적 접근은 개선되고 건전한 의사결정, 높아진 예측 정확도,
+        줄어든 개발 비용, 커진 임상적 성공의 가능성으로 신약 발굴 파이프라인을 다시 짜고 있다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 여백의 주 ══════════ -->
+<section class="notes reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">※</span><h2>여백에 적은 주(註)</h2></div>
+    <p class="lede">
+      정확도를 다루는 장일수록 그 수치가 어떤 조건에서 나왔는지를 함께 밝혀야 한다.
+      원문을 옮기며 눈에 걸린 대목을 감추지 않고 적어둔다. 인용 시 유의할 지점의 목록이다.
+    </p>
+
+    <div class="note"><span class="mk">주 1</span><span class="bd">
+      4.4절(발암성)의 마지막 문단이 이렇게 끝난다 —
+      <b>“Let me know if you want a visual comparison or recommendation tailored to a specific
+      model or dataset.”</b> 학술 서적의 본문에 남을 문장이 아니며,
+      대화형 생성 도구의 응답이 편집 과정에서 걸러지지 않고 그대로 인쇄된 것으로 보인다.
+      본 요약에서는 옮기지 않았다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 2</span><span class="bd">
+      1절과 2절이 <b>거의 같은 내용을 두 번</b> 서술한다.
+      5의 법칙과 베버 규칙의 소개, ‘5의 법칙 너머’ 개념, 능동 수송·대사·유출의 누락,
+      리드 최적화의 휴리스틱한 성격에 관한 문단이 두 절에 걸쳐 반복된다.
+      본 요약에서는 하나로 합쳐 옮겼다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 3</span><span class="bd">
+      비용과 기간의 수치가 절마다 다르다. 1절과 2절은 <b>10–14년, 26억 달러</b>(DiMasi et al., 2016)라 적고,
+      3절은 <b>약 15년, 10–20억 달러</b>(Hinkson et al., 2020)라 적는다.
+      본 요약은 1·2절의 수치를 히어로에 썼으며, 인용 시에는 출처 절을 함께 밝히는 편이 안전하다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 4</span><span class="bd">
+      4.1절에서 랜덤 포레스트 모형의 <b>80%</b>와 SVM 모형의 <b>98.4%</b>라는
+      성격이 다른 두 결과가 <b>동일하게 (Venkatraman, 2021)</b>로 인용된다.
+      두 번째 인용은 다른 문헌을 가리켜야 할 것으로 보인다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 5</span><span class="bd">
+      4.2절의 “이상적 모형 RMSE <code>0.477%</code>”는 RMSE를 백분율로 표기해 단위가 어색하고,
+      다중작업 심층학습 합의 모형의 “<code>RMDs</code> 0.65”는 <code>RMSE</code>의 오식으로 보인다.
+      본 요약에서는 백분율 기호를 빼고 RMSE로 옮겼다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 6</span><span class="bd">
+      2절은 고속 대량 스크리닝이 “<b>비싸지 않으나</b>(are not expensive) 효율과 정확도에 의문이 있다”고 적는데,
+      1절의 서술 및 문맥과 어긋난다. “not only expensive”의 오식으로 읽는 편이 자연스러워
+      본 요약에서는 비용에 관한 판정을 옮기지 않았다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 7</span><span class="bd">
+      5절에 오식이 잦다. “resonance-intensive”(resource-intensive), “recolonized”(revolutionized),
+      “ADMElab 3.0”(ADMETlab) 등이다. 또 ADMETlab을 “2018년에 Xiong et al.이 만들었다”고 적으면서
+      (Dong et al., 2018; Xiong et al., 2021)을 함께 인용하는데,
+      2018년 판의 저자는 Dong et al.이고 Xiong et al.(2021)은 후속 판에 해당한다.
+      본 요약에서는 저자 귀속을 특정하지 않고 연도와 판만 옮겼다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 8</span><span class="bd">
+      표의 제목과 내용이 어긋나는 곳이 있다. <b>Table 7.3</b>의 제목은
+      “Integrated gradients as an interpretability tool…”이지만 표에는 아홉 가지 방법이 실려 있고
+      적분 경사는 그중 첫 행에 불과하다. <b>Table 7.1</b>은 제목이
+      “치료용 펩타이드 식별과 약물 시너지 연구”여서 이 장의 주제인 약물유사성·생체이용률과는 다소 떨어져 있다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 9</span><span class="bd">
+      2절의 제초제 관련 논의는 저자들의 선행 연구(Rani et al., 2023, 2024; Rajak et al., 2025b)를 인용한
+      <b>자기 인용성 여담</b>이다. 약물유사성 규칙의 적용 한계를 보이는 예시로는 유효하나,
+      장의 주제인 인체 의약품에서는 벗어난 대목임을 감안해 읽는 편이 좋다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 10</span><span class="bd">
+      히어로의 정확도 띠는 원문에 있는 그래픽이 아니다. 4절 본문에 흩어진 수치를
+      종점별 <b>보고 범위</b>로 모아 본 요약에서 구성한 것이다.
+      각 값은 서로 다른 연구, 데이터셋, 지표(정확도·민감도·특이도·R²)에서 나온 것이므로
+      같은 축 위에 놓였다고 해서 직접 비교할 수 있는 수치가 아니다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 11</span><span class="bd">
+      본 요약은 첨부 PDF의 제7장(pp. 101–120) 본문과 Table 7.1~7.3, Fig. 7.1~7.2만을 근거로 작성했다.
+      원문에 없는 사례·수치·주장은 더하지 않았으며, 판단이 개입된 대목은 위 주에 따로 적었다.
+    </span></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="bib">
+      <b>Bikash Kumar Rajak, Priyanka Rani.</b>
+      “Artificial Intelligence for predicting drug-likeness and bioavailability.”
+      In <b>Khalid Raza (ed.), <i>Artificial Intelligence in Precision Drug Design, Volume 1:
+      Foundations and Core Techniques</i></b>, Academic Press / Elsevier, 2026, pp. 101–120.
+      ISBN 978-0-443-44415-9. DOI 10.1016/B978-0-443-44415-9.00011-9
+    </div>
+    <div class="fine">
+      소속 · Department of Bioinformatics, School of Earth, Biological and Environmental Sciences,
+      Central University of South Bihar, Gaya, Bihar, India<br>
+      본 웹페이지는 제7장의 국문 정독 요약이며, 원문의 저작권은 Elsevier에 있다.
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var bar = document.getElementById('prog');
+  function onScroll(){
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  var hero = document.getElementById('hero');
+  if (reduce) { hero.classList.add('on'); }
+  else { requestAnimationFrame(function(){ setTimeout(function(){ hero.classList.add('on'); }, 240); }); }
+
+  var els = document.querySelectorAll('.reveal');
+  if (reduce || !('IntersectionObserver' in window)) {
+    els.forEach(function(e){ e.classList.add('on'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (en.isIntersecting){ en.target.classList.add('on'); io.unobserve(en.target); }
+    });
+  }, {rootMargin:'0px 0px -12% 0px', threshold:0.06});
+  els.forEach(function(e){ io.observe(e); });
+})();
+</script>
+</body>
+</html>

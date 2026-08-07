@@ -1,0 +1,971 @@
+---
+layout: null
+title: "Counterfactual explainability in AI-driven drug discovery" 
+date: 2026-08-15
+categories: [artificial intelligence]
+tags: [artificial general intelligence, drug discovery]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>반사실적 설명 — 가지 않은 길을 묻는 일 | 제19장 정독</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E9E5DD;
+  --paper2:#F3F0EA;
+  --paper3:#DBD6CC;
+  --ink:#211E1A;
+  --ink2:#2E2A25;
+
+  --moss:#4A5D5A;      /* 반사실 · 가지 않은 길 */
+  --moss-l:#8FA39F;
+  --dry:#8C7A5E;       /* 사실 · 지나온 길 */
+
+  --muted:#5F594F;
+  --faint:#918A7E;
+  --rule:rgba(33,30,26,.15);
+  --rule-s:rgba(33,30,26,.30);
+  --rule-d:rgba(255,255,255,.16);
+
+  --body:'Nanum Myeongjo',serif;
+  --mono:'IBM Plex Mono',monospace;
+
+  --wrap:1100px;
+  --read:660px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink2);font-family:var(--body);
+  font-size:18px;line-height:2.05;letter-spacing:-.006em;overflow-x:hidden}
+::selection{background:var(--moss);color:var(--paper)}
+
+#prog{position:fixed;top:0;left:0;height:2px;width:0;z-index:99;background:var(--moss)}
+
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 30px}
+.read{max-width:var(--read)}
+section{padding:110px 0}
+section+section{border-top:1px solid var(--rule)}
+
+/* ═══ 히어로 ═══ */
+.hero{padding:118px 0 96px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--faint);line-height:2.2}
+.hero h1{font-weight:400;color:var(--ink);
+  font-size:clamp(32px,5.2vw,58px);line-height:1.44;letter-spacing:-.03em;margin:32px 0 0}
+.hero h1 em{font-style:normal;font-weight:800;color:var(--moss)}
+.hero-sub{font-size:clamp(17px,2vw,20px);line-height:2.0;color:var(--muted);
+  max-width:620px;margin-top:34px}
+
+/* 시그니처: 세 개의 만약 */
+.ifs{margin-top:70px}
+.ifs .ih{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--faint);padding-bottom:20px;border-bottom:1px solid var(--rule-s);
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px 20px}
+.ifrow{display:grid;grid-template-columns:170px 1fr 240px;gap:32px;align-items:start;
+  padding:30px 0;border-bottom:1px solid var(--rule);
+  opacity:0;transform:translateY(10px);
+  transition:opacity .8s cubic-bezier(.2,.7,.3,1),transform .8s cubic-bezier(.2,.7,.3,1)}
+.hero.on .ifrow{opacity:1;transform:none}
+.hero.on .ifrow:nth-of-type(1){transition-delay:.2s}
+.hero.on .ifrow:nth-of-type(2){transition-delay:.42s}
+.hero.on .ifrow:nth-of-type(3){transition-delay:.64s}
+.ifrow .fk{font-weight:700;font-size:19px;color:var(--ink);letter-spacing:-.03em;line-height:1.5}
+.ifrow .fk span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+  color:var(--faint);text-transform:uppercase;margin-top:7px;font-weight:400}
+.ifrow .fq{font-size:17px;line-height:1.9;color:var(--muted)}
+.ifrow .fq b{color:var(--ink);font-weight:700}
+.ifrow .fa{border-left:2px solid var(--moss);padding-left:20px}
+.ifrow .fa.nil{border-left-color:var(--dry)}
+.ifrow .fa .dv{font-family:var(--mono);font-size:clamp(19px,2.4vw,25px);font-weight:600;
+  color:var(--moss);letter-spacing:-.02em;line-height:1.3}
+.ifrow .fa.nil .dv{color:var(--dry)}
+.ifrow .fa .dl{font-size:14.5px;line-height:1.8;color:var(--faint);margin-top:8px}
+@media(max-width:860px){.ifrow{grid-template-columns:1fr;gap:14px}
+  .ifrow .fa{border-left:0;border-top:2px solid var(--moss);padding-left:0;padding-top:14px}
+  .ifrow .fa.nil{border-top-color:var(--dry)}}
+.ifs .refl{margin-top:34px;font-size:clamp(19px,2.4vw,25px);line-height:1.72;color:var(--ink);
+  letter-spacing:-.03em;max-width:660px}
+.ifs .refl b{font-weight:800;color:var(--moss)}
+.ifs .inote{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--faint);
+  margin-top:26px;line-height:2}
+
+.hero-meta{margin-top:56px;padding-top:26px;border-top:1px solid var(--rule);
+  display:flex;flex-wrap:wrap;gap:12px 44px;font-family:var(--mono);font-size:11px;
+  letter-spacing:.05em;color:var(--faint)}
+.hero-meta b{color:var(--muted);font-weight:500}
+
+/* ═══ 섹션 ═══ */
+.shead{margin-bottom:26px}
+.snum{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.2em;
+  color:var(--faint);display:block;margin-bottom:16px}
+h2{font-weight:700;font-size:clamp(26px,4vw,40px);line-height:1.42;letter-spacing:-.035em;
+  color:var(--ink);max-width:760px}
+h2 em{font-style:normal;font-weight:800;color:var(--moss)}
+.lede{font-size:19px;line-height:2.0;color:var(--muted);margin-top:26px;max-width:var(--read)}
+h3{font-weight:700;font-size:22px;color:var(--ink);margin:56px 0 16px;line-height:1.6;
+  letter-spacing:-.03em}
+h3 .no{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--faint);
+  margin-right:14px;letter-spacing:.14em}
+h3 .tb{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--faint);
+  letter-spacing:.12em;margin-left:12px}
+p{margin:0 0 22px}
+em.m{font-style:normal;box-shadow:inset 0 -9px 0 rgba(74,93,90,.16)}
+em.d{font-style:normal;box-shadow:inset 0 -9px 0 rgba(140,122,94,.18)}
+.quiet{font-size:clamp(20px,2.6vw,28px);line-height:1.66;color:var(--ink);letter-spacing:-.035em;
+  padding:40px 0;margin:48px 0;border-top:1px solid var(--rule-s);border-bottom:1px solid var(--rule-s);
+  max-width:700px}
+.quiet b{font-weight:800;color:var(--moss)}
+
+/* ═══ 대조 ═══ */
+.contrast{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);
+  border:1px solid var(--rule);margin-top:44px}
+.ct{background:var(--paper2);padding:32px 30px 34px}
+.ct .cl{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--faint)}
+.ct h4{font-weight:700;font-size:23px;color:var(--ink);margin:14px 0 18px;letter-spacing:-.035em;
+  line-height:1.44}
+.ct p{font-size:16px;line-height:1.92;color:var(--muted);margin:0}
+.ct p+p{margin-top:14px}
+.ct.b{background:var(--paper3)}
+.ct.b h4{color:var(--moss)}
+@media(max-width:760px){.contrast{grid-template-columns:1fr}}
+
+/* ═══ 표 ═══ */
+.tbl{margin-top:40px;border-top:1px solid var(--rule-s)}
+.trow{display:grid;grid-template-columns:170px 1fr;gap:34px;padding:24px 0;
+  border-bottom:1px solid var(--rule)}
+.trow .tk{font-weight:700;font-size:17px;color:var(--ink);letter-spacing:-.03em;line-height:1.55}
+.trow .tk small{display:block;font-family:var(--mono);font-size:10px;font-weight:400;
+  color:var(--faint);letter-spacing:.1em;margin-top:6px;text-transform:uppercase}
+.trow .tv{font-size:16.5px;line-height:1.92;color:var(--muted)}
+.trow .tv b{color:var(--ink);font-weight:700}
+@media(max-width:700px){.trow{grid-template-columns:1fr;gap:10px}}
+
+/* ═══ 카드 ═══ */
+.grid{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:42px}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--paper2);padding:28px 26px 30px}
+.card .tag{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--faint)}
+.card h4{font-weight:700;font-size:19px;color:var(--ink);margin:13px 0 14px;line-height:1.5;
+  letter-spacing:-.03em}
+.card p{font-size:15.5px;line-height:1.9;color:var(--muted);margin:0}
+.card p+p{margin-top:13px}
+@media(max-width:1000px){.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.g4,.g3,.g2{grid-template-columns:1fr}}
+
+/* ═══ 어두운 절 ═══ */
+.dark-s{background:var(--ink);color:#B5AEA3;border:0}
+.dark-s h2{color:#F0ECE4}
+.dark-s h2 em{color:var(--moss-l)}
+.dark-s .snum{color:#736C61}
+.dark-s .lede{color:#A79F94}
+.dark-s h3{color:#E4DFD6}
+.dark-s p{color:#ABA398}
+.dark-s .grid{background:var(--rule-d);border-color:var(--rule-d)}
+.dark-s .card{background:#2B2721}
+.dark-s .card .tag{color:#736C61}
+.dark-s .card h4{color:#E4DFD6}
+.dark-s .card p{color:#ABA398}
+.dark-s .quiet{color:#F0ECE4;border-color:var(--rule-d)}
+.dark-s .quiet b{color:var(--moss-l)}
+.dark-s em.m{box-shadow:inset 0 -9px 0 rgba(143,163,159,.24)}
+.dark-s .tbl{border-top-color:var(--rule-d)}
+.dark-s .trow{border-bottom-color:var(--rule-d)}
+.dark-s .trow .tk{color:#E4DFD6}
+.dark-s .trow .tv{color:#ABA398}
+.dark-s .trow .tv b{color:#E4DFD6}
+
+/* ═══ 성능 표 ═══ */
+.perf{display:flex;flex-wrap:wrap;gap:1px;background:var(--rule);border:1px solid var(--rule);
+  margin:34px 0}
+.pf{background:var(--paper2);padding:22px 24px 24px;flex:1 1 140px}
+.pf .v{font-family:var(--mono);font-size:clamp(20px,2.6vw,26px);font-weight:600;color:var(--dry);
+  letter-spacing:-.02em;line-height:1.3}
+.pf .v.ok{color:var(--moss)}
+.pf .l{font-size:13.5px;line-height:1.75;color:var(--faint);margin-top:9px}
+
+/* ═══ 의사코드 ═══ */
+.code{margin:36px 0;background:var(--paper3);border-left:2px solid var(--moss);
+  padding:26px 28px;font-family:var(--mono);font-size:13.5px;line-height:2;color:var(--ink2);
+  max-width:var(--read);overflow-x:auto}
+.code .cl{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);
+  display:block;margin-bottom:14px}
+
+/* ═══ 주석 ═══ */
+.notes{background:var(--paper3)}
+.note{display:grid;grid-template-columns:46px 1fr;gap:22px;padding:26px 0;
+  border-bottom:1px dotted var(--rule-s);max-width:820px}
+.note:last-child{border-bottom:0}
+.note .mk{font-family:var(--mono);font-size:11.5px;color:var(--moss);font-weight:600;padding-top:6px}
+.note .bd{font-size:16.5px;line-height:2;color:var(--ink2)}
+.note .bd b{color:var(--ink);font-weight:700}
+.note .bd code{font-family:var(--mono);font-size:.88em;background:rgba(33,30,26,.09);
+  padding:2px 7px;border-radius:2px}
+
+/* ═══ 푸터 ═══ */
+footer{background:var(--ink);color:#8A8378;padding:80px 0 92px;border:0}
+footer .bib{font-size:15px;line-height:2.1;max-width:760px}
+footer .bib b{color:#C0B9AD;font-weight:700}
+footer .fine{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:#6B655B;
+  margin-top:36px;padding-top:24px;border-top:1px solid var(--rule-d);line-height:2.1}
+
+.reveal{opacity:0;transform:translateY(18px);
+  transition:opacity .9s cubic-bezier(.2,.7,.3,1),transform .9s cubic-bezier(.2,.7,.3,1)}
+.reveal.on{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .reveal,.ifrow{opacity:1;transform:none;transition:none}
+}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--moss);outline-offset:3px}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+
+<!-- ══════════ 히어로 ══════════ -->
+<header class="hero" id="hero">
+  <div class="wrap">
+    <div class="eyebrow">
+      Artificial Intelligence in Precision Drug Design · Volume 1<br>
+      Chapter 19 &nbsp;/&nbsp; Counterfactual Explainability in AI-driven Drug Discovery
+    </div>
+    <h1>왜 그런가를 묻는 일과<br><em>무엇을 바꾸면 되는가</em>를 묻는 일은 다르다</h1>
+    <p class="hero-sub">
+      앞의 물음은 이해를 구한다. 뒤의 물음은 길을 구한다.
+      반사실적 설명은 뒤의 물음 위에 선다.
+      가장 작은 변화로 결과를 바꿀 수 있는 자리가 어디인가.
+      그것을 묻는 일이다.
+    </p>
+
+    <div class="ifs">
+      <div class="ih"><span>Three Counterfactuals &nbsp;·&nbsp; 세 개의 만약</span>
+        <span>당뇨 표적 · 비활성으로 판정된 한 화합물</span></div>
+
+      <div class="ifrow">
+        <div class="fk">지질친화도<span>LogP</span></div>
+        <div class="fq">이 값을 <b>150%까지</b> 올린다면.
+          0.0332에서 0.083으로.
+          모형이 전체에서 가장 중요하다고 꼽은 성질이다.</div>
+        <div class="fa nil">
+          <div class="dv">Δp = 0</div>
+          <div class="dl">아무것도 달라지지 않았다.
+            이 분자는 여전히 비활성으로 남았다.</div>
+        </div>
+      </div>
+
+      <div class="ifrow">
+        <div class="fk">분자량<span>Molecular Weight</span></div>
+        <div class="fq">이 값을 <b>50%에서 150%까지</b> 올린다면.
+          두 번째로 중요하다고 꼽힌 성질이다.</div>
+        <div class="fa">
+          <div class="dv">Δp = 0.02 – 0.08</div>
+          <div class="dl">조금 움직였다.
+            판정을 뒤집지는 못했으나 확률은 서서히 옮겨 갔다.</div>
+        </div>
+      </div>
+
+      <div class="ifrow">
+        <div class="fk">몰굴절률<span>Molar Refractivity</span></div>
+        <div class="fq">이 값을 <b>50%</b> 올린다면.
+          21.64에서 32.46으로.
+          분자의 부피와 분극 능력을 가늠하는 값이다.</div>
+        <div class="fa">
+          <div class="dv">Δp = +0.08</div>
+          <div class="dl">가장 크게 움직였다.
+            결합 자리에 들어맞는 부피를 키우는 일이 여기서 뜻을 지닌다.</div>
+        </div>
+      </div>
+
+      <p class="refl">
+        전체에서 가장 중요하다던 것이 <b>이 하나에게는 아무 말도 하지 않았다.</b>
+        일반의 무게와 개별의 무게는 같지 않다.
+      </p>
+
+      <div class="inote">※ 위 세 항목은 원문 6.2절과 6.3.3절이 제시한 값이다.
+        다만 이 값들이 나온 모형의 성능은 뒤의 다섯째 절에서 따로 밝힌다.</div>
+    </div>
+
+    <div class="hero-meta">
+      <span><b>Abdullahi Isa · Souley Boukari · Muhammad Aliyu</b></span>
+      <span>Elsevier / Academic Press, <b>2026</b></span>
+      <span>본문 <b>pp. 357–378</b></span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════ 01 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">하나</span>
+      <h2>답을 얻었으나 움직일 수 없을 때</h2></div>
+    <p class="lede">
+      인공지능은 신약을 찾는 방식을 바꾸었다.
+      화학 라이브러리와 생물학적 프로필과 환자 데이터를 뒤져
+      후보 물질을 빠르게 짚어낸다.
+      그러나 널리 받아들여지는 일은 더디다. 까닭이 있다.
+    </p>
+
+    <div class="read">
+      <p>
+        깊은 신경망은 대체로 검은 상자다.
+        데이터를 넣으면 답이 나오지만, 어떻게 그 답에 이르렀는지는 보이지 않는다.
+        어떤 분자가 유망하다고 모형이 말한다. 그런데 왜 그런지를 알 수 없다.
+        그러면 우리는 그 말을 믿을 수 있는가.
+      </p>
+      <p>
+        투명하지 않다는 것은 기술의 문제만이 아니다.
+        의약화학자와 임상의와 규제기관이 저마다 근거를 요구한다.
+        유럽 의약품청과 미국 식품의약국은 모형의 투명성을
+        인공지능이 관여한 후보 물질의 승인에 앞선 <em class="m">기본 요건</em>으로 삼는다.
+        유럽연합의 일반개인정보보호법과 인공지능법도 마찬가지다.
+        의료와 금융처럼 결과가 무거운 자리에서는
+        명확하고 이해할 수 있는 결과를 내놓아야 한다고 못 박는다.
+      </p>
+      <p>
+        투명성은 이제 기술적 과제가 아니라 <em class="m">법적 필요</em>다.
+      </p>
+    </div>
+
+    <div class="quiet">
+      설명 가능한 인공지능은 더 이상 있으면 좋은 성질이 아니다.
+      재현할 수 있고, 책임질 수 있고, 끝내 믿을 수 있기 위한 <b>기본</b>이다.
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 02 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">둘</span>
+      <h2>가지 않은 길을 <em>그려 보이는 일</em></h2></div>
+    <p class="lede">
+      반사실적 추론은 새로운 것이 아니다.
+      사람은 본래 그렇게 생각한다.
+      결정을 내릴 때 우리는 가보지 않은 쪽을 함께 헤아린다.
+      그때 그렇게 하지 않았더라면 어떠했을까 하고 되짚는다.
+    </p>
+
+    <div class="read">
+      <p>
+        인과 모형의 언어로 옮기면 이렇게 된다.
+        입력을 조금 건드려 보고 예측이 어떻게 흔들리는지 살핀다.
+        모형 전체를 다시 짓지 않고도 그렇게 할 수 있다.
+        <em class="m">현실을 부드럽게 흔들어 대비되고 실행 가능한 통찰을 얻는 일</em>이다.
+      </p>
+      <p>
+        모형의 출력을 변호하는 것이 아니다.
+        가지 않은 길을 그려 보이는 것이다.
+        입력이 달랐다면 결말이 어떻게 다시 쓰였을지를 보이는 것이다.
+        전문가가 아닌 사람에게는 이편이 훨씬 낫다.
+        어려운 말 없이, 손에 잡히는 깨달음이 온다.
+      </p>
+    </div>
+
+    <div class="contrast">
+      <div class="ct">
+        <span class="cl">왜 &nbsp;·&nbsp; Why</span>
+        <h4>중요도를 알려주는 설명</h4>
+        <p>
+          섀플리 가법 설명이나 국소 해석 가능 설명은
+          어떤 변수가 영향력이 큰지를 잘 짚어낸다.
+          그러나 진짜 인과에 대해서는 말을 아낀다.
+        </p>
+        <p>
+          변수들이 서로 얽혀 있을 때 흔들리고,
+          배경 데이터에 예민하게 반응한다.
+          남는 것은 흐릿한, 때로는 오도하는 부스러기다.
+        </p>
+        <p>
+          돌출 지도는 보기에는 선명하나 의미가 비어 있고,
+          규칙 기반 체계는 투명하되
+          모형의 정교함을 거친 어림으로 뭉개기 쉽다.
+        </p>
+      </div>
+      <div class="ct b">
+        <span class="cl">무엇을 바꾸면 &nbsp;·&nbsp; What if</span>
+        <h4>길을 알려주는 설명</h4>
+        <p>
+          반사실은 왜 그런 예측이 나왔는지를 낱낱이 해부하지 않는다.
+          대신 <em class="m">만약</em>을 묻는다.
+        </p>
+        <p>
+          모형의 충실함을 그대로 지키면서
+          여기를 고치라는 지시를 준다.
+          사람이 정말로 묻고 있는 물음에 곧바로 답한다.
+          이 결과를 어떻게 바꿀 수 있습니까.
+        </p>
+        <p>
+          그래서 섞어 쓰는 방식이 자라난다.
+          섀플리의 가중치가 무엇이 중요한지를 말하고
+          반사실이 무엇을 바꿔야 하는지를 말한다.
+          <em class="m">중요한 것을 아는 데서 바꿀 것을 아는 데로</em> 건너가는 것이다.
+        </p>
+      </div>
+    </div>
+
+    <div class="quiet">
+      설명은 독백이 아니다.
+      여러 기법이 서로의 맹점을 메우는 <b>여러 목소리의 대화</b>다.
+    </div>
+
+    <h3>네 갈래로 견주어 보면 <span class="tb">TABLE 19.1</span></h3>
+    <div class="tbl">
+      <div class="trow"><div class="tk">설명의 성격<small>Explanation type</small></div>
+        <div class="tv">반사실은 가정에 근거한 대비적이고 실행 가능한 만약의 시나리오를 준다.
+          특징 귀속은 입력 특징이 예측에 기여한 몫을 부각하고,
+          돌출 지도는 중요한 입력 영역을 그림으로 보이며,
+          규칙 기반 모형은 데이터에서 도출된 투명한 규칙을 준다.</div></div>
+      <div class="trow"><div class="tk">해석 가능성<small>Interpretability</small></div>
+        <div class="tv">반사실은 매우 직관적이고 사람의 추론과 결이 맞으며 곧바로 실행할 정보를 준다.
+          특징 귀속은 중요도를 설명하지만 인과적 의미가 없을 수 있다.
+          돌출 지도는 흔히 불안정하고 의미가 비어 있다.
+          규칙 기반은 본래 투명하나 복잡하거나 제한적일 수 있다.</div></div>
+      <div class="trow"><div class="tk">인과의 추론<small>Causal inference</small></div>
+        <div class="tv">반사실은 인과 관계를 크게 강조하며 <b>내가 X를 했다면 어떠했을까</b>에 답한다.
+          특징 귀속은 인과를 전하지 못하는 일이 잦고,
+          돌출 지도는 직접적인 인과 추론이 없다.</div></div>
+      <div class="trow"><div class="tk">실행 가능성<small>Actionability</small></div>
+        <div class="tv">반사실은 높다. 원하는 결과를 얻으려면 무엇을 바꾸어야 하는지 곧바로 제시한다.
+          특징 귀속은 낮다. 무엇이 중요한지는 보여주되 어떻게 바꿀지는 말하지 않는다.
+          규칙 기반은 높으나 모형의 복잡도가 그 한계를 짓는다.</div></div>
+      <div class="trow"><div class="tk">계산의 비용<small>Computational cost</small></div>
+        <div class="tv">반사실은 최적화 문제이므로 비쌀 수 있다.
+          돌출 지도는 특정 모형에서 대체로 더 빠르다.</div></div>
+      <div class="trow"><div class="tk">모형에 대한 충실함<small>Fidelity</small></div>
+        <div class="tv">반사실은 이해 가능성을 높이면서도 모형의 충실함을 보존한다.
+          특징 귀속은 원래 모형에 충실하지 못할 수 있다.</div></div>
+    </div>
+
+    <h3>좋은 반사실이 갖추어야 할 넷</h3>
+    <div class="grid g4">
+      <div class="card"><span class="tag">Validity</span><h4>타당함</h4>
+        <p>제안한 변화가 실제로 결과를 바꾸어야 한다.</p></div>
+      <div class="card"><span class="tag">Sparsity</span><h4>적음</h4>
+        <p>바꾸는 것을 되도록 적게 해야 한다.</p></div>
+      <div class="card"><span class="tag">Actionability</span><h4>할 수 있음</h4>
+        <p>사람이 실제로 바꿀 수 있는 것이어야 한다.</p></div>
+      <div class="card"><span class="tag">Plausibility</span><h4>있음직함</h4>
+        <p>제안이 현실에 있음직해야 한다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 03 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">셋</span>
+      <h2>여러 자리에서 쓰인다</h2></div>
+    <p class="lede">
+      반사실은 이미 여러 곳에서 제 몫을 하고 있다.
+      그 쓰임의 폭 자체가, 투명할 뿐 아니라 책임질 수 있고 실행할 수 있는 인공지능을
+      우리가 얼마나 바라고 있는지를 보여준다.
+    </p>
+
+    <div class="grid g2">
+      <div class="card"><span class="tag">금융</span><h4>거절의 이유가 아니라 승인의 길</h4>
+        <p>신용 평가에서 반사실은 거절의 결정을 설명하는 데 그치지 않는다.
+          승인에 이르기 위해 필요한 <em class="m">최소한의 실행 가능한 변화</em>를 밝힌다.
+          소비자의 이해를 돕는 데서 나아가 규제의 물살을 헤쳐 가는 데도 크게 이롭다.</p></div>
+      <div class="card"><span class="tag">자율 주행</span><h4>일어나지 않은 사고를 미리 겪기</h4>
+        <p>기술자들을 밤에 잠 못 들게 하는 극단의 상황을 미리 모사할 수 있다.
+          안전을 위해 판을 바꾸는 일이며, 공중의 신뢰를 쌓고 과도한 규제를 피하는 데도 돕는다.</p></div>
+      <div class="card"><span class="tag">공공 정책</span><h4>차별의 실제 원인을 찾기</h4>
+        <p>정부가 인공지능 체계의 편향을 찾고 고치는 데 쓴다.
+          단순한 통계의 차이를 넘어 알고리즘 안에 숨은 차별의 실제 원인을 찾아낸다.</p></div>
+      <div class="card"><span class="tag">의료</span><h4>더 안전하고 더 잘 듣는 분자로</h4>
+        <p>소아 뇌종양의 자기공명영상 분석을 개선하고, 환자 개개인에게 맞춘 통찰을 준다.
+          신약 발굴에서는 분자를 더 안전하고 효과적으로 고치도록 돕는다.
+          몸에서 일어나는 작은 변화와 약의 전체 효과를 이어 붙여
+          <em class="m">약이 어떻게 듣는지</em>를 이해하게 한다.</p></div>
+    </div>
+
+    <p class="read" style="margin-top:38px">
+      약물 발굴에 국한해도 사례가 쌓여 있다.
+      분자 반사실로 화학 예측 모형이 실제로 무엇을 하고 있는지 읽어낸 연구가 있다.
+      이 분자를 다른 결과로 이끄는 가장 작은 변화가 무엇이냐고 모형에게 묻는 일과 같다.
+      설명 가능한 인공지능으로 신약 발굴의 집계 편향을 다룬 연구도 있고,
+      화학에 쓰이는 그래프 신경망 안에서 무슨 일이 일어나는지 설명하는 기법을 만들어
+      부분 구조가 활성에 기여하는 몫을 밝혀낸 연구도 있다.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 04 ══════════ -->
+<section class="dark-s reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">넷</span>
+      <h2>다만, <em>조심해야 할 것들</em></h2></div>
+    <p class="lede">
+      쓸모가 있다고 해서 어려움이 없는 것은 아니다.
+      기술의 어려움과 윤리의 어려움이 함께 있다.
+      네 가지를 짚어 둔다.
+    </p>
+
+    <div class="grid g2">
+      <div class="card"><span class="tag">01</span><h4>계산이 비싸다</h4>
+        <p>큰 데이터셋에서 만약의 시나리오를 찾는 일은 매우 어렵다.
+          경사에 기반한 최적화 같은 새 방법이 이 계산을 효율적으로 만들고 있다.</p></div>
+      <div class="card"><span class="tag">02</span><h4>있음직해야 하고, 할 수 있어야 한다</h4>
+        <p>현실적이지 않거나 사람이 실제로 할 수 없는 제안이라면 소용이 없다.
+          그런 제안은 신뢰를 갉아먹고 설명을 쓸모없게 만든다.
+          사람들은 계산상 이상적인 <em class="m">간결함</em>보다
+          실현 가능성과 신뢰를 먼저 본다는 것이 거듭 확인되었다.</p></div>
+      <div class="card"><span class="tag">03</span><h4>편향을 이어받을 수 있다</h4>
+        <p>어떤 집단에 대해 늘 비현실적이거나 불공정한 변화를 처방한다면,
+          반사실은 훈련 데이터의 편향을 뜻하지 않게 물려받는다.</p>
+        <p>설명 가능한 인공지능이 <em class="m">윤리의 만병통치약이 아니라는</em> 비판은 옳다.
+          오히려 사용자를 오도하거나 편향된 출력에 대한 의존을 키울 수 있다.
+          설명이 겉보기에 논리적으로 보이면 편향의 채택이 되레 늘어난다는 연구도 있다.</p></div>
+      <div class="card"><span class="tag">04</span><h4>사생활이 새어 나갈 수 있다</h4>
+        <p>건강이나 금융처럼 민감한 영역에서 반사실을 만들다 보면
+          사적인 정보나 모형의 내부가 뜻하지 않게 드러날 수 있다.
+          데이터나 모형 자체를 훔치려는 공격에 열리게 되는 것이다.</p>
+        <p>투명해지려는 노력이 프라이버시를 줄이는 데로 가지 않도록
+          조심해야 한다.</p></div>
+    </div>
+
+    <div class="quiet">
+      더 밝히려는 일이 더 드러내는 일이 되지 않도록.
+      <b>투명함과 지켜줌은 함께 가야 한다.</b>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 05 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">다섯</span>
+      <h2>스무 개의 화합물로 지은 사례</h2></div>
+    <p class="lede">
+      이 장은 실제 사례를 하나 든다.
+      당뇨와 관련된 표적, 이를테면 글루카곤 유사 펩타이드-1 수용체나
+      디펩티딜 펩티다아제-4에 대한 분자의 생물활성을 예측하는 분류기를 만들었다.
+      그 과정과 결과를 여기 그대로 옮긴다.
+    </p>
+
+    <div class="read">
+      <p>
+        원자료는 ChEMBL에서 왔다. <em class="d">화합물 스무 개</em>의 생물활성 데이터다.
+        각 화합물을 정규 SMILES 문자열로 나타내고,
+        RDKit으로 분자량, 지질친화도, 수소결합 공여체와 수용체의 수,
+        위상학적 극성 표면적, 몰굴절률, 회전 가능 결합의 수를 뽑았다.
+      </p>
+      <p>
+        기술자를 표준화한 뒤 층화하여 훈련 8할과 시험 2할로 나누고,
+        척도를 맞춘 다음 랜덤 포레스트 분류기를 훈련했다.
+      </p>
+    </div>
+
+    <div class="perf">
+      <div class="pf"><div class="v">0.50</div><div class="l">시험 정확도</div></div>
+      <div class="pf"><div class="v">0.50</div><div class="l">정밀도</div></div>
+      <div class="pf"><div class="v">0.50</div><div class="l">재현율</div></div>
+      <div class="pf"><div class="v">0.50</div><div class="l">F1 점수</div></div>
+      <div class="pf"><div class="v ok">0.75</div><div class="l">ROC-AUC</div></div>
+    </div>
+
+    <div class="quiet">
+      이진 분류에서 정확도 0.50은 <b>동전을 던지는 것과 같다.</b>
+      원문은 표본이 작은 탓이라 적으면서도
+      같은 문장에서 이 모형이 견고함과 신뢰성을 입증했다고 쓴다.
+      두 서술은 함께 설 수 없다.
+    </div>
+
+    <p class="read">
+      그러므로 이 아래에 오는 반사실의 결과는
+      <em class="d">방법을 보이는 예시</em>로 읽는 것이 옳다.
+      화학의 결론으로 받아들이기에는 근거가 얇다.
+      이 점을 먼저 밝히고 나머지를 옮긴다.
+    </p>
+
+    <h3><span class="no">5.1</span>모형은 무엇을 보았는가</h3>
+    <div class="read">
+      <p>
+        전역적 특징 중요도에서 가장 높은 것은 지질친화도(0.232)와 분자량(0.221)이었다.
+        몰굴절률(0.200)도 그에 못지않았다.
+      </p>
+      <p>
+        이 순서는 약물 설계의 오랜 상식과 어긋나지 않는다.
+        지질친화도는 약이 흡수되고 몸 안을 도는 방식을 좌우한다.
+        리핀스키의 5의 법칙에 따르면 경구 투여 약물은 이 값이 5보다 작아야 잘 흡수된다.
+        너무 높으면 잘 녹지 않고 지방 조직에 갇히며, 듣지 않거나 되레 독이 될 수 있다.
+      </p>
+      <p>
+        분자량 역시 그렇다. 같은 법칙은 500 Da보다 가벼울 것을 말한다.
+        무거운 분자는 막을 통과하기 어렵고 제대로 흡수되지 못한다.
+        몰굴절률이 중요하게 꼽힌 것은 모형이 분자의 부피와 전자의 배치까지 보고 있다는 뜻이다.
+        그 값은 표적에 어떻게 결합하는지에 곧바로 영향을 준다.
+      </p>
+      <p>
+        모형이 짚어낸 것과 의약화학이 오래 알아 온 것이 서로 맞는다.
+        <em class="m">이 일치가 모형의 논리에 대한 믿음을 더한다.</em>
+      </p>
+    </div>
+
+    <h3><span class="no">5.2</span>어떻게 물었는가</h3>
+    <div class="code">
+      <span class="cl">Pseudocode · 반사실 생성</span>
+중요한 특징 f 각각에 대하여:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;delta 가 [−30% … +30%] 안에서:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instance[f] 를 delta 만큼 바꾼다<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;새 확률을 예측한다<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;영향 = Δ예측 을 기록한다<br>
+순위를 매긴 수정 목록을 돌려준다
+    </div>
+
+    <p class="read">
+      물음은 단순하다. 하나씩 조금 바꾸어 보고, 무엇이 얼마나 달라지는지 적어 둔다.
+      그리고 가장 많이 달라지게 하는 것이 무엇이었는지 순서대로 내놓는다.
+      앞의 히어로에 실은 세 개의 만약이 그 답이다.
+    </p>
+
+    <h3><span class="no">5.3</span>가장 중요하다던 것이 아무 말도 하지 않을 때</h3>
+    <div class="read">
+      <p>
+        지질친화도는 전체에서 가장 중요한 특징으로 꼽혔다.
+        그런데 이 한 분자에서는 값을 150%까지 올려도 판정이 바뀌지 않았다.
+        모순처럼 보이지만 그렇지 않다.
+      </p>
+      <p>
+        전역적 중요도는 <em class="d">데이터 전체에 걸친 기여</em>를 가리킬 뿐,
+        특정한 하나에 대한 민감함을 뜻하지는 않는다.
+        이 분자에 대해서는 모형의 결정 경계가 그 방향으로 매우 너그러웠거나,
+        그 영향이 맥락에 달려 있어 다른 성질이 함께 움직여야 비로소 판정이 넘어가는 것일 수 있다.
+      </p>
+      <p>
+        여기서 얻는 것이 크다.
+        <em class="m">전체적으로 중요한 하나만 붙들고 고치는 일은 헛수고가 될 수 있다.</em>
+        다른 성질을 함께 다루지 않는다면 그렇다.
+      </p>
+      <p>
+        분자량과 몰굴절률은 달랐다.
+        판정을 온전히 뒤집지는 못했으나 확률을 조금씩 옮겼다.
+        결정을 가르지는 못해도 미세하게 조율하는 자리에 있다는 뜻이다.
+        몰굴절률을 다듬는 일은 표적의 결합 주머니 안에서
+        입체적 맞음새와 전자적 상호작용을 가다듬는 데 쓸 수 있다.
+      </p>
+    </div>
+
+    <div class="grid g3">
+      <div class="card"><span class="tag">6.3.1</span><h4>지질친화도의 최적화</h4>
+        <p>경구로 주는 디펩티딜 펩티다아제-4 저해제에서는
+          균형 잡힌 값(대략 1에서 3 사이)이 흡수에 결정적이다.
+          다만 이 값만 바꾸어서는 예측이 움직이지 않았으므로,
+          수소 결합이나 극성 표면적 같은 다른 요인이 함께 필요하다는 뜻이 된다.</p></div>
+      <div class="card"><span class="tag">6.3.2</span><h4>크기와 유연함</h4>
+        <p>분자량과 몰굴절률의 영향은 완만했다.
+          글루카곤 유사 펩타이드-1 수용체 조절자에 대한 앞선 발견과도 어긋나지 않는다.
+          분자량이 알맞게 커지면 역가가 오를 수 있으나
+          지나치게 커지면 대사 안정성이 떨어진다.</p></div>
+      <div class="card"><span class="tag">6.3.3</span><h4>의약화학자를 위한 안내</h4>
+        <p>몰굴절률을 50% 키우자 확률이 0.08 올랐다.
+          입체적 부피를 키우는 일이 표적과의 맞물림을 개선할 수 있음을 시사한다.
+          반면 분자량은 수확이 줄어드는 모습을 보였다.
+          어느 선을 넘어서면 크기를 더 키워도 그만큼 얻지 못한다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 06 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">여섯</span>
+      <h2>사람과 기계가 <em>함께 일한다는 것</em></h2></div>
+    <p class="lede">
+      반사실은 설명에 그치지 않는다.
+      사람과 기계가 함께 일하는 방식을 바꾼다.
+      무엇이 결과를 달라지게 했을지를 짚어 보일 때,
+      연구자는 그 통찰에 훨씬 쉽게 기댄다.
+    </p>
+
+    <div class="read">
+      <p>
+        만약의 시나리오는 진단의 도구이기도 하다.
+        모형이 엉뚱하거나 오해를 부르는 정보에 매달리고 있을 때
+        반사실이 그것을 드러낸다. 그러면 모형의 논리를 고칠 수 있다.
+      </p>
+      <p>
+        다만 조심스럽게 설계하지 않으면 있던 편향을 키우거나 새 편향을 만든다.
+        현실적이고 믿을 만한 만약을 만드는 일이 중요한 까닭이다.
+        그것이 사람과 기계의 좋은 동행을 짓는 열쇠다.
+      </p>
+      <p>
+        연구자가 만약의 시나리오를 시험해 보는 화면을 생각해 볼 수 있다.
+        예측이 어떻게 달라지는지 보고 디지털로 평가할 수 있다면,
+        실험대 위에서 치러야 할 시간과 비용을 아낄 수 있다.
+        이런 도구는 의료와 채용 같은 영역에서 이미 효과가 확인되었다.
+        의심을 줄이고 결정의 투명함을 크게 높였다.
+      </p>
+    </div>
+
+    <div class="quiet">
+      전문가와 기계 사이를 오가는 되먹임이
+      <b>서로에게 맞추어 가는 배움</b>을 낳는다.
+    </div>
+
+    <h3>규제 앞에 설 때</h3>
+    <div class="read">
+      <p>
+        규제기관은 세계 곳곳에서 설명 가능성을 요건으로 삼고 있다.
+        미국 식품의약국의 우수 기계학습 실무와 유럽연합의 인공지능법이 그렇다.
+        이 틀들은 위험의 완화와 감사 가능성과 추적 가능성을 강조하는데,
+        반사실은 본래 그 셋을 뒷받침하는 성질을 지녔다.
+      </p>
+      <p>
+        저자들은 반사실적 설명이 규제 제출 서류의 일부,
+        곧 모형 검증 문서로 쓰일 수 있으리라 제안한다.
+        유럽연합 인공지능법과 일반개인정보보호법 제22조는
+        자동화된 결정이 어떻게 내려졌는지 설명할 수 있어야 한다고 요구한다.
+        반사실을 쓰면 신약 발굴의 흐름이
+        <em class="m">감사할 수 있는 명확한 증거</em>를 내놓을 수 있다.
+      </p>
+      <p>
+        네 단계의 계획이 제시된다.
+        반사실적 추론으로 예측 모형이 이해할 만하고 논리에 맞으며
+        생물학의 관점에서 말이 되는지를 확인한다.
+        확인을 마친 모형은 규제기관에 보낼 수 있다.
+        이것이 하나의 착상을 임상의 자리로 옮기는 결정적인 걸음이다.
+        이 걸음이 없다면 그저 흥미로우나 쓸 수 없는 개념으로 남는다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 07 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">일곱</span>
+      <h2>남은 자리들</h2></div>
+    <p class="lede">
+      아직 이르지 못한 곳이 있고, 넘지 못한 문턱이 있다.
+      저자들이 짚는 것을 나누어 적는다.
+    </p>
+
+    <h3>넘어야 할 문턱</h3>
+    <div class="grid g3">
+      <div class="card"><span class="tag">규모</span><h4>계산의 값</h4>
+        <p>큰 분자 데이터셋에서 반사실을 만드는 비용이 커
+          산업의 규모로 키우기 어렵다.</p></div>
+      <div class="card"><span class="tag">이해</span><h4>보이지 않으면 믿지 않는다</h4>
+        <p>구조의 변화를 직관적으로 보여주는 화학적 그림이 함께 오지 않으면
+          임상의와 연구자가 받아들이기를 주저한다.</p></div>
+      <div class="card"><span class="tag">제도</span><h4>표준이 아직 없다</h4>
+        <p>미국 식품의약국과 유럽 의약품청의 현행 제출 틀에는
+          설명 가능한 인공지능을 위한 표준 지침이 아직 없다.</p></div>
+      <div class="card"><span class="tag">데이터</span><h4>범위의 한계</h4>
+        <p>ChEMBL에서 온 훈련 데이터가 당뇨 특이 표적의 비선형 관계를
+          온전히 담지 못할 수 있다. 표적 특이적 생물활성 데이터를 넣어야 한다.</p></div>
+      <div class="card"><span class="tag">상호작용</span><h4>하나씩만 바꾸어 보았다</h4>
+        <p>지금의 분석은 한 번에 한 특징만 흔든다.
+          실제 최적화는 여러 성질을 함께 조율하는 일이므로,
+          여러 매개변수의 반사실로 넓혀야 한다.</p></div>
+      <div class="card"><span class="tag">검증</span><h4>실험대 위로</h4>
+        <p>모형이 물리화학적 경향을 짚어낸다 해도
+          시험관과 생체 내의 검증이 있어야
+          임상으로 옮길 수 있는지를 확인할 수 있다.</p></div>
+    </div>
+
+    <h3 style="margin-top:60px">앞으로 자라날 자리</h3>
+    <div class="tbl">
+      <div class="trow"><div class="tk">다중 양식의 통합<small>Multimodal</small></div>
+        <div class="tv">분자 그래프와 생의학 영상, 다중오믹스처럼 성격이 다른 데이터를 함께 쓰면
+          설명의 토대가 넉넉해진다. 다만 서로 다른 양식을 가로지르는 인과 관계를
+          풀어내려면 더 정교한 반사실 기법이 필요하다.</div></div>
+      <div class="trow"><div class="tk">연합 학습<small>Federated Learning</small></div>
+        <div class="tv">데이터를 한곳에 모으지 않고 프라이버시를 지키며 모형을 훈련하는 길이다.
+          확장성과 사생활 보호를 함께 얻지만 <b>설명하기는 여전히 어렵다.</b>
+          분산된 체계를 투명하게 만드는 방법이 연구되고 있다.</div></div>
+      <div class="trow"><div class="tk">생성 모형의 설명<small>Diffusion · VAE</small></div>
+        <div class="tv">생성형 인공지능은 처음부터 새 분자를 만들어낸다.
+          그러나 검은 상자인 탓에 임상의가 믿기 어렵고 규제기관이 승인하기 어렵다.
+          특히 확산 모형은 잡음을 천천히 걷어내며 분자를 짓기에
+          그 내부를 이해하기가 더욱 까다롭다.</div></div>
+      <div class="trow"><div class="tk">정밀의료<small>Precision Medicine</small></div>
+        <div class="tv">환자 고유의 생물학적 데이터로 치료 결과를 모사하는 <b>만약의 기계</b>가 된다.
+          이 환자에게 다른 약을 준다면 어떻게 될까를 의사가 물을 수 있게 된다.
+          이상반응의 가능성을 예측하고 대안을 제시하는 임상 의사결정 지원에도 쓰일 수 있다.
+          다만 연구실에서 병원으로 옮기는 일은 또 다른 이야기다.</div></div>
+    </div>
+
+    <h3 style="margin-top:60px">세 가지 권고</h3>
+    <div class="grid g3">
+      <div class="card"><span class="tag">가</span><h4>모형을 문서로 남긴다</h4>
+        <p>모형이 어떻게 작동하는지 설명하는 모형 카드와 데이터시트를 만든다.</p></div>
+      <div class="card"><span class="tag">나</span><h4>사람을 고리 안에 둔다</h4>
+        <p>위험이 큰 응용에서는 사람이 언제나 그 결정을 검증할 수 있어야 한다.</p></div>
+      <div class="card"><span class="tag">다</span><h4>재는 법을 표준으로 삼는다</h4>
+        <p>생의학 영역에서 설명 가능성을 재는 표준적인 방법을 만든다.</p></div>
+    </div>
+
+    <div class="quiet">
+      인공지능이 흔한 것이 될수록
+      반사실은 <b>맑고 윤리적이며 쓸 수 있는</b> 신약 발굴을 짓는 데 없어서는 안 될 도구가 된다.
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 여백의 주 ══════════ -->
+<section class="notes reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">주</span>
+      <h2>여백에 적어 두는 말</h2></div>
+    <p class="lede">
+      옮기면서 걸린 것을 감추지 않고 적는다.
+      흠을 들추려는 것이 아니다.
+      이 글을 인용할 사람이 같은 곳에서 넘어지지 않기를 바라서다.
+    </p>
+
+    <div class="note"><span class="mk">하나</span><span class="bd">
+      <b>가장 먼저 말해 둘 것.</b>
+      6절 사례의 모형은 화합물 <b>스무 개</b>로 훈련되었고,
+      시험 정확도와 정밀도와 재현율과 F1 점수가 모두 <code>0.50</code>이다.
+      이진 분류에서 0.50은 동전을 던지는 것과 다르지 않다.
+      시험셋은 스무 개의 2할, 곧 <b>네 개</b>이므로 ROC-AUC 0.75도 통계적으로 뜻을 얻기 어렵다.
+      그런데 원문은 같은 문장에서 “표본이 작은 탓”이라 하면서
+      동시에 “<b>견고함과 신뢰성을 함께 입증했다</b>”고 적는다.
+      두 서술은 함께 설 수 없다.
+      본 요약은 이 수치를 그대로 옮기되, 이 사례를 <b>방법의 예시</b>로 읽어야 하며
+      화학의 결론으로 받아들이기 어렵다는 점을 본문에도 밝혀 두었다.
+    </span></div>
+
+    <div class="note"><span class="mk">둘</span><span class="bd">
+      <b>학술 서적의 문체가 아닌 대목이 많다.</b>
+      “I mean, think about it”, “It’s almost hard to wrap my head around”,
+      “dare I say”, “if you ask me”, “It’s a win-win”,
+      “What I think is really cool is…” 같은 구어체 일인칭이 본문 전체에 걸쳐 있다.
+      특히 2.2절은 문단 끝에
+      “<code>What do you think are some of the most promising areas for further research
+      in combining counterfactuals with other XAI techniques?</code>”라는
+      <b>독자에게 던지는 물음</b>으로 끝난다.
+      학술 서적의 본문에 남을 문장이 아니며,
+      대화형 생성 도구의 관용구가 걸러지지 않은 것으로 보인다.
+      제7장 4.4절에서도 같은 성격의 문장이 발견되었다.
+    </span></div>
+
+    <div class="note"><span class="mk">셋</span><span class="bd">
+      <b>그림 참조가 어긋난다.</b>
+      6.2절은 반사실 분석의 결과를 두고
+      “<code>Fig. 19.1 (right panel)</code>”과 “<code>Fig. 19.1, normalized important score of 0.232</code>”를 참조한다.
+      그러나 Fig. 19.1은 <b>규제 절차를 그린 도식</b>이며 오른쪽 패널이라는 것이 없다.
+      특징 중요도와 반사실 분석은 Fig. 19.2에 있다.
+      본 요약에서는 그림 번호를 인용하지 않고 값만 옮겼다.
+    </span></div>
+
+    <div class="note"><span class="mk">넷</span><span class="bd">
+      <b>이 글이 리뷰인지 제안인지 분명하지 않다.</b>
+      1절 끝은 “이 장은 반사실적 설명가능성에 관한 <b>리뷰</b>를 제시한다”고 밝힌다.
+      그런데 2.3절 끝은 “이는 <b>우리가 제안한 틀</b>을 강하게 뒷받침한다”고 적고,
+      5.3절도 “우리는 ~를 제안한다”로 이어진다.
+      리뷰와 제안이 뒤섞여 있어, 어느 대목이 이 글의 기여인지 가려내기 어렵다.
+    </span></div>
+
+    <div class="note"><span class="mk">다섯</span><span class="bd">
+      <b>같은 내용이 두 번 나온다.</b>
+      6.4절과 7.4절 끝이 거의 같은 문장으로 되풀이된다.
+      계산 비용, 임상의의 수용, 규제 통합이라는 세 난제를 들고
+      “<code>Addressing these challenges is essential for translating counterfactual methods
+      from experimental demonstrations to practical tools in drug discovery.</code>”로 맺는 대목이다.
+      본 요약에서는 한 번만 옮겼다.
+    </span></div>
+
+    <div class="note"><span class="mk">여섯</span><span class="bd">
+      <b>인용에 어긋나는 곳이 있다.</b>
+      2.3절은 <em>peer-induced fairness</em>를 <code>Fang et al. (2024)</code>로 인용하는데
+      2.4절은 같은 개념을 <code>Kuhl et al. (2025)</code>로 인용한다.
+      2.2절에는 <code>(Albini et al., 2022; Albini et al., 2022)</code>처럼
+      같은 인용이 두 번 겹쳐 붙어 있고,
+      참고문헌에는 <code>Lawrence Anebi Enyejo Lawrence Anebi Enyejo, 2024</code>처럼
+      저자명이 두 번 반복된 항목이 있다.
+    </span></div>
+
+    <div class="note"><span class="mk">일곱</span><span class="bd">
+      <b>문장이 끊기거나 부호가 잘못 찍힌 곳이 있다.</b>
+      1절의 “bridging observed statistical correlations with potential underlying
+      mechanistic hypotheses <code>lows</code>”는 뒤에 붙은 낱말의 뜻이 통하지 않고,
+      4.2절의 “proximity, which checks if the new molecule is structurally similar to
+      the original one<code>?</code> and actionability check…”는 물음표가 잘못 놓였다.
+      본 요약에서는 맥락에서 뜻이 확인되는 대목만 옮겼다.
+    </span></div>
+
+    <div class="note"><span class="mk">여덟</span><span class="bd">
+      지질친화도의 값이 <code>0.0332</code>에서 <code>0.083</code>으로 옮겨 갔다고 적혀 있다.
+      두 값 사이의 차이는 150% 증가가 맞다.
+      다만 뒤이어 리핀스키의 규칙을 들며 “5보다 작아야 한다”고 논하는 대목과 견주면
+      <b>척도가 서로 맞지 않는다.</b>
+      원 데이터의 값이 정규화된 것인지 원래 값인지 원문에 밝혀져 있지 않다.
+      몰굴절률의 21.64에서 32.46으로의 변화는 서술대로 약 50% 증가가 맞다.
+    </span></div>
+
+    <div class="note"><span class="mk">아홉</span><span class="bd">
+      히어로에 실은 세 개의 만약은 원문에 있는 그림이 아니다.
+      6.2절과 6.3.3절이 서술하는 값을
+      <b>물음과 답</b>의 짝으로 본 요약에서 다시 놓은 것이다.
+      값 자체는 원문 그대로이며 더하거나 고치지 않았다.
+    </span></div>
+
+    <div class="note"><span class="mk">열</span><span class="bd">
+      본 요약은 첨부 PDF의 제19장(pp. 357–378) 본문과 Table 19.1,
+      Fig. 19.1~19.3만을 근거로 삼았다.
+      원문에 없는 사례와 수치와 주장은 더하지 않았고,
+      판단이 들어간 자리는 위에 따로 적었다.
+    </span></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="bib">
+      <b>Abdullahi Isa, Souley Boukari, Muhammad Aliyu.</b>
+      “Counterfactual explainability in AI-driven drug discovery: Enhancing transparency and decision-making.”
+      In <b>Khalid Raza (ed.), <i>Artificial Intelligence in Precision Drug Design, Volume 1:
+      Foundations and Core Techniques</i></b>, Academic Press / Elsevier, 2026, pp. 357–378.
+      ISBN 978-0-443-44415-9. DOI 10.1016/B978-0-443-44415-9.00012-0
+    </div>
+    <div class="fine">
+      소속 · Department of Computer Science, Abubakar Tafawa Balewa University, Bauchi /
+      Federal Polytechnic, Bauchi, Nigeria<br>
+      본 웹페이지는 제19장의 국문 정독 요약이며, 원문의 저작권은 Elsevier에 있다.
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var bar = document.getElementById('prog');
+  function onScroll(){
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  var hero = document.getElementById('hero');
+  if (reduce) { hero.classList.add('on'); }
+  else { requestAnimationFrame(function(){ setTimeout(function(){ hero.classList.add('on'); }, 260); }); }
+
+  var els = document.querySelectorAll('.reveal');
+  if (reduce || !('IntersectionObserver' in window)) {
+    els.forEach(function(e){ e.classList.add('on'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (en.isIntersecting){ en.target.classList.add('on'); io.unobserve(en.target); }
+    });
+  }, {rootMargin:'0px 0px -12% 0px', threshold:0.06});
+  els.forEach(function(e){ io.observe(e); });
+})();
+</script>
+</body>
+</html>

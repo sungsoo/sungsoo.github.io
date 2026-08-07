@@ -1,0 +1,1426 @@
+---
+layout: null
+title: "AI for predicting pharmacokinetics and pharmacodynamics" 
+date: 2026-08-09
+categories: [artificial intelligence]
+tags: [artificial general intelligence, drug discovery]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>약동학과 약력학을 예측하는 인공지능 | 제6장 정독</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --oat:#E2DFD6;
+  --panel:#F2F0EA;
+  --panel2:#D5D2C7;
+  --ink:#20231C;
+  --dark:#262A1E;
+  --dark2:#313626;
+  --muted:#61655C;
+  --faint:#918D82;
+
+  --pk:#4A5A22;     /* 약동학 — 몸이 약에 하는 일 */
+  --pk-l:#9AB061;
+  --pd:#7C2D57;     /* 약력학 — 약이 몸에 하는 일 */
+  --pd-l:#CE8FB2;
+
+  --rule:rgba(32,35,28,.14);
+  --rule-s:rgba(32,35,28,.30);
+  --rule-d:rgba(255,255,255,.15);
+
+  --display:'Noto Serif KR',serif;
+  --body:'IBM Plex Sans KR','Noto Sans KR',sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+
+  --wrap:1140px;
+  --read:700px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--oat);color:var(--ink);font-family:var(--body);
+  font-size:17px;line-height:1.92;letter-spacing:-.005em;overflow-x:hidden}
+::selection{background:var(--pk);color:#F2F0EA}
+
+#prog{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;
+  background:linear-gradient(90deg,var(--pk),var(--pd))}
+
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 28px}
+.read{max-width:var(--read)}
+section{padding:96px 0}
+section+section{border-top:1px solid var(--rule)}
+
+/* ═══ 히어로 ═══ */
+.hero{background:var(--dark);color:#C3C7B8;padding:104px 0 84px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.19em;text-transform:uppercase;
+  color:#83886F;line-height:2.1}
+.hero h1{font-family:var(--display);font-weight:900;color:#F4F3EC;
+  font-size:clamp(34px,5.6vw,64px);line-height:1.24;letter-spacing:-.035em;margin:26px 0 0}
+.hero h1 em{font-style:normal;color:var(--pk-l)}
+.hero h1 i{font-style:normal;color:var(--pd-l)}
+.hero-sub{font-size:clamp(16px,2vw,19px);line-height:1.94;color:#9BA08D;
+  max-width:660px;margin-top:30px}
+
+/* 시그니처: 혈장 농도–시간 곡선 */
+.curve{margin-top:62px;display:grid;grid-template-columns:1fr 292px;gap:40px;align-items:start}
+.curvebox{border:1px solid var(--rule-d);background:rgba(255,255,255,.03);padding:22px 20px 12px}
+.curvebox .ct{font-family:var(--mono);font-size:10.5px;letter-spacing:.19em;text-transform:uppercase;
+  color:#83886F;margin-bottom:8px}
+.curvebox svg{width:100%;height:auto;display:block}
+.cpath{stroke-dasharray:1600;stroke-dashoffset:1600;
+  transition:stroke-dashoffset 1.6s cubic-bezier(.3,.7,.3,1) .3s}
+.hero.on .cpath{stroke-dashoffset:0}
+.carea{opacity:0;transition:opacity 1s ease 1.2s}
+.hero.on .carea{opacity:1}
+.cmark{opacity:0;transition:opacity .7s ease 1.5s}
+.hero.on .cmark{opacity:1}
+.params dl{margin:0}
+.params dt{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--pk-l);
+  letter-spacing:.02em;margin-top:16px}
+.params dt:first-child{margin-top:0}
+.params dd{font-size:14px;line-height:1.7;color:#9BA08D;margin:4px 0 0}
+.params .hd{font-family:var(--mono);font-size:10.5px;letter-spacing:.19em;text-transform:uppercase;
+  color:#83886F;padding-bottom:14px;margin-bottom:18px;border-bottom:1px solid var(--rule-d)}
+@media(max-width:860px){.curve{grid-template-columns:1fr;gap:28px}}
+
+.hero-meta{margin-top:52px;padding-top:24px;border-top:1px solid var(--rule-d);
+  display:flex;flex-wrap:wrap;gap:12px 44px;font-family:var(--mono);font-size:11.5px;
+  letter-spacing:.05em;color:#83886F}
+.hero-meta b{color:#C8CCBC;font-weight:500}
+
+/* ═══ 섹션 헤더 ═══ */
+.shead{display:flex;gap:22px;align-items:baseline;margin-bottom:16px}
+.snum{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;
+  color:var(--faint);flex:none;padding-top:11px}
+h2{font-family:var(--display);font-weight:900;font-size:clamp(26px,4.2vw,42px);
+  line-height:1.3;letter-spacing:-.035em;color:var(--ink)}
+.lede{font-size:18.5px;line-height:1.95;color:#333828;margin-top:22px;
+  padding-left:42px;border-left:3px solid var(--pk);max-width:700px}
+@media(max-width:640px){.lede{padding-left:0;border-left:0;border-top:3px solid var(--pk);padding-top:18px}}
+h3{font-family:var(--display);font-weight:700;font-size:22px;color:var(--ink);
+  margin:52px 0 14px;line-height:1.45;letter-spacing:-.025em}
+h3 .no{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--faint);
+  margin-right:12px;letter-spacing:.1em}
+h3 .tb{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--faint);
+  letter-spacing:.1em;margin-left:10px}
+p{margin:0 0 20px}
+em.k{font-style:normal;box-shadow:inset 0 -8px 0 rgba(74,90,34,.17)}
+em.p{font-style:normal;box-shadow:inset 0 -8px 0 rgba(124,45,87,.16)}
+.eq{font-family:var(--mono);font-size:22px;letter-spacing:.08em;color:var(--ink);
+  text-align:center;padding:30px 0;margin:34px 0;border-top:1px solid var(--rule-s);
+  border-bottom:1px solid var(--rule-s);max-width:var(--read)}
+.eq small{display:block;font-family:var(--body);font-size:13.5px;letter-spacing:0;
+  color:var(--muted);margin-top:14px;line-height:1.75}
+
+/* ═══ PK ↔ PD 상호 ═══ */
+.recip{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--rule);
+  border:1px solid var(--rule);margin-top:44px}
+.rc{background:var(--panel);padding:30px 28px 32px}
+.rc .dir{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+.rc.a{border-top:4px solid var(--pk)}
+.rc.b{border-top:4px solid var(--pd)}
+.rc.a .dir{color:var(--pk)}
+.rc.b .dir{color:var(--pd)}
+.rc h4{font-family:var(--display);font-weight:900;font-size:25px;margin:12px 0 6px;
+  letter-spacing:-.03em;color:var(--ink);line-height:1.3}
+.rc .en{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--faint);
+  text-transform:uppercase}
+.rc p{font-size:15.5px;line-height:1.85;color:#333828;margin:18px 0 0}
+.rc ul{list-style:none;margin-top:16px}
+.rc li{position:relative;padding-left:20px;font-size:15px;line-height:1.8;color:#333828;
+  margin-bottom:7px}
+.rc li::before{content:"—";position:absolute;left:0;color:var(--faint)}
+@media(max-width:760px){.recip{grid-template-columns:1fr}}
+
+/* ═══ 일반 카드 그리드 ═══ */
+.grid{display:grid;gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:40px}
+.g5{grid-template-columns:repeat(5,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--panel);padding:26px 22px 28px}
+.card .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--faint)}
+.card h4{font-family:var(--display);font-weight:700;font-size:18px;color:var(--ink);
+  margin:11px 0 11px;line-height:1.42;letter-spacing:-.02em}
+.card p{font-size:14.5px;line-height:1.8;color:#3B4034;margin:0}
+.card p+p{margin-top:10px}
+@media(max-width:1000px){.g5,.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.g5,.g4,.g3,.g2{grid-template-columns:1fr}}
+
+/* ═══ 대비 표 (ODE vs SDE) ═══ */
+.duel{margin-top:42px;border:1px solid var(--rule);background:var(--rule)}
+.duel-hd,.drow{display:grid;grid-template-columns:1fr 1fr;gap:1px}
+.duel-hd span{background:var(--oat);padding:15px 22px;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.17em;text-transform:uppercase}
+.duel-hd .a{color:var(--pk)}
+.duel-hd .b{color:var(--pd)}
+.drow>*{background:var(--panel);padding:22px;font-size:15.5px;line-height:1.82;color:#333828}
+@media(max-width:760px){
+  .duel-hd{display:none}
+  .duel-hd,.drow{grid-template-columns:1fr}
+  .drow>*:first-child::before{content:"ODE";display:block;font-family:var(--mono);font-size:10px;
+    letter-spacing:.16em;color:var(--pk);margin-bottom:8px}
+  .drow>*:last-child::before{content:"SDE";display:block;font-family:var(--mono);font-size:10px;
+    letter-spacing:.16em;color:var(--pd);margin-bottom:8px}
+}
+
+/* ═══ 표 목록 ═══ */
+.tbl{margin-top:38px;border-top:1px solid var(--rule-s)}
+.trow{display:grid;grid-template-columns:250px 1fr;gap:32px;padding:20px 0;
+  border-bottom:1px solid var(--rule)}
+.trow .tk{font-family:var(--display);font-weight:700;font-size:16.5px;color:var(--ink);
+  letter-spacing:-.02em;line-height:1.5}
+.trow .tk small{display:block;font-family:var(--mono);font-size:11px;font-weight:400;
+  color:var(--pd);letter-spacing:.02em;margin-top:5px}
+.trow .tv{font-size:15px;line-height:1.82;color:#3B4034}
+.trow .tv a,.trow .tv .url{font-family:var(--mono);font-size:12.5px;color:var(--muted);
+  word-break:break-all}
+@media(max-width:700px){.trow{grid-template-columns:1fr;gap:8px}}
+
+/* ═══ 수치 ═══ */
+.nums{display:flex;flex-wrap:wrap;gap:1px;background:var(--rule);border:1px solid var(--rule);
+  margin:28px 0}
+.nm{background:var(--panel);padding:20px 22px 22px;flex:1 1 160px}
+.nm .v{font-family:var(--mono);font-size:clamp(19px,2.4vw,26px);font-weight:600;color:var(--pk);
+  letter-spacing:-.02em;line-height:1.2}
+.nm .v.pd{color:var(--pd)}
+.nm .l{font-size:12.5px;line-height:1.62;color:var(--muted);margin-top:8px}
+
+/* ═══ 연구 목록 ═══ */
+.studies{margin-top:44px;border-top:2px solid var(--pk)}
+.st{display:grid;grid-template-columns:230px 1fr;gap:40px;padding:32px 0;
+  border-bottom:1px solid var(--rule)}
+.st .nm2{font-family:var(--display);font-weight:900;font-size:21px;color:var(--ink);
+  line-height:1.36;letter-spacing:-.03em}
+.st .sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;color:var(--faint);
+  text-transform:uppercase;margin-top:9px;line-height:1.9}
+.st .bd p{font-size:16px;line-height:1.9;color:#333828}
+.st .bd p:last-child{margin-bottom:0}
+@media(max-width:820px){.st{grid-template-columns:1fr;gap:14px}}
+
+/* ═══ 어두운 절 ═══ */
+.dark-s{background:var(--dark);color:#B2B8A4;border:0}
+.dark-s h2{color:#F4F3EC}
+.dark-s .snum{color:#7A8069}
+.dark-s .lede{color:#9BA08D;border-left-color:var(--pd-l)}
+@media(max-width:640px){.dark-s .lede{border-top-color:var(--pd-l)}}
+.dark-s h3{color:#EAEADF}
+.dark-s p{color:#AAB09C}
+.dark-s .grid{background:var(--rule-d);border-color:var(--rule-d)}
+.dark-s .card{background:var(--dark2)}
+.dark-s .card .tag{color:#7A8069}
+.dark-s .card h4{color:#EAEADF}
+.dark-s .card p{color:#AAB09C}
+.dark-s em.p{box-shadow:inset 0 -8px 0 rgba(206,143,178,.24)}
+
+/* ═══ 여섯 갈래 ═══ */
+.ways{margin-top:46px;border-top:1px solid var(--rule-s)}
+.way{display:grid;grid-template-columns:74px 1fr;gap:34px;padding:32px 0;
+  border-bottom:1px solid var(--rule)}
+.way .n{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--pd);padding-top:8px}
+.way h4{font-family:var(--display);font-weight:900;font-size:23px;color:var(--ink);
+  margin:0 0 6px;line-height:1.35;letter-spacing:-.03em}
+.way .en{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:14px}
+.way p{font-size:16px;line-height:1.9;color:#333828;margin:0 0 14px}
+.way p:last-child{margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.chips span{font-family:var(--mono);font-size:11px;letter-spacing:.02em;color:var(--pk);
+  border:1px solid rgba(74,90,34,.34);padding:5px 10px;white-space:nowrap}
+@media(max-width:640px){.way{grid-template-columns:1fr;gap:10px}}
+
+/* ═══ 주석 ═══ */
+.notes{background:#D6D3C9}
+.note{display:grid;grid-template-columns:44px 1fr;gap:20px;padding:22px 0;
+  border-bottom:1px dotted var(--rule-s);max-width:840px}
+.note:last-child{border-bottom:0}
+.note .mk{font-family:var(--mono);font-size:12px;color:var(--pd);font-weight:600;padding-top:4px}
+.note .bd{font-size:15.5px;line-height:1.9;color:#333828}
+.note .bd b{color:var(--ink);font-weight:600}
+
+/* ═══ 푸터 ═══ */
+footer{background:var(--dark);color:#83886F;padding:70px 0 82px;border:0}
+footer .bib{font-size:14.5px;line-height:2;max-width:790px}
+footer .bib b{color:#C8CCBC;font-weight:500}
+footer .fine{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:#6B7060;
+  margin-top:34px;padding-top:22px;border-top:1px solid var(--rule-d);line-height:2}
+
+.reveal{opacity:0;transform:translateY(20px);
+  transition:opacity .8s cubic-bezier(.2,.7,.3,1),transform .8s cubic-bezier(.2,.7,.3,1)}
+.reveal.on{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .reveal{opacity:1;transform:none;transition:none}
+  .cpath{stroke-dashoffset:0;transition:none}
+  .carea,.cmark{opacity:1;transition:none}
+}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--pk-l);outline-offset:3px}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+
+<!-- ══════════ 히어로 ══════════ -->
+<header class="hero" id="hero">
+  <div class="wrap">
+    <div class="eyebrow">
+      Artificial Intelligence in Precision Drug Design · Volume 1<br>
+      Chapter 6 &nbsp;/&nbsp; AI for Predicting Pharmacokinetics and Pharmacodynamics
+    </div>
+    <h1><em>몸이 약에 하는 일</em>,<br><i>약이 몸에 하는 일</i></h1>
+    <p class="hero-sub">
+      약동학은 신체가 약물에 무엇을 하는지를, 약력학은 약물이 신체에 무엇을 하는지를 기술한다.
+      이 두 방향이 만나 노출–반응 관계를 이루고, 거기서 용량과 안전과 효능이 결정된다.
+      이 장은 그 관계를 예측하려는 인공지능의 시도를 훑는다.
+    </p>
+
+    <div class="curve">
+      <div class="curvebox">
+        <div class="ct">Plasma Concentration–Time Profile &nbsp;·&nbsp; 혈장 농도–시간 곡선</div>
+        <svg viewBox="0 0 720 306" role="img" aria-label="혈장 농도-시간 곡선과 주요 약동학 파라미터">
+          <!-- 축 -->
+          <line x1="62" y1="258" x2="700" y2="258" stroke="rgba(255,255,255,.30)" stroke-width="1"/>
+          <line x1="62" y1="24" x2="62" y2="258" stroke="rgba(255,255,255,.30)" stroke-width="1"/>
+          <text x="700" y="282" text-anchor="end" font-family="IBM Plex Mono, monospace"
+                font-size="12" fill="#83886F">시간 &nbsp;time →</text>
+          <text x="62" y="16" font-family="IBM Plex Mono, monospace"
+                font-size="12" fill="#83886F">농도 conc.</text>
+
+          <!-- AUC 영역 -->
+          <path class="carea"
+                d="M62,258 C112,256 158,120 208,66 C310,152 452,204 700,232 L700,258 Z"
+                fill="rgba(154,176,97,.20)"/>
+          <!-- 곡선 -->
+          <path class="cpath"
+                d="M62,258 C112,256 158,120 208,66 C310,152 452,204 700,232"
+                fill="none" stroke="#9AB061" stroke-width="2.6" stroke-linecap="round"/>
+
+          <g class="cmark">
+            <!-- Cmax -->
+            <line x1="62" y1="66" x2="208" y2="66" stroke="#CE8FB2" stroke-width="1"
+                  stroke-dasharray="4 4"/>
+            <line x1="208" y1="66" x2="208" y2="258" stroke="#CE8FB2" stroke-width="1"
+                  stroke-dasharray="4 4"/>
+            <circle cx="208" cy="66" r="4.5" fill="#CE8FB2"/>
+            <text x="220" y="56" font-family="IBM Plex Mono, monospace" font-size="14"
+                  fill="#CE8FB2" font-weight="600">Cmax</text>
+            <!-- 반감기 -->
+            <line x1="292" y1="128" x2="292" y2="258" stroke="rgba(255,255,255,.28)"
+                  stroke-width="1" stroke-dasharray="3 5"/>
+            <line x1="430" y1="194" x2="430" y2="258" stroke="rgba(255,255,255,.28)"
+                  stroke-width="1" stroke-dasharray="3 5"/>
+            <line x1="292" y1="246" x2="430" y2="246" stroke="rgba(255,255,255,.45)" stroke-width="1"/>
+            <text x="361" y="238" text-anchor="middle" font-family="IBM Plex Mono, monospace"
+                  font-size="13" fill="#C3C7B8">t½</text>
+            <!-- AUC 라벨 -->
+            <text x="222" y="228" font-family="IBM Plex Mono, monospace" font-size="15"
+                  fill="#9AB061" font-weight="600">AUC</text>
+            <text x="222" y="246" font-family="IBM Plex Sans KR, sans-serif" font-size="11.5"
+                  fill="#83886F">총 노출량</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="params">
+        <div class="hd">주요 파라미터</div>
+        <dl>
+          <dt>AUC</dt>
+          <dd>곡선 아래 면적. 총 노출량을 나타낸다.</dd>
+          <dt>t½</dt>
+          <dd>반감기. 투여 간격을 좌우한다.</dd>
+          <dt>F</dt>
+          <dd>생체이용률. 혈관외 투여 후 전신 순환에 도달하는 활성 약물의 비율이다.</dd>
+          <dt>V</dt>
+          <dd>분포용적. 약물이 흩어지는 이론적 공간이다.</dd>
+          <dt>K = CL / V</dt>
+          <dd>소실을 지배하는 거시상수. 소실 속도는 남아 있는 약물량에 비례한다.</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="hero-meta">
+      <span><b>Amrita Thakur · S. Anil Kumar · Sreeharsha Nagaraja</b></span>
+      <span>Elsevier / Academic Press, <b>2026</b></span>
+      <span>본문 <b>pp. 75–100</b></span>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════ 01 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">01</span><h2>전임상이라는 관문</h2></div>
+    <p class="lede">
+      신약 개발은 본질적으로 복잡하고 오래 걸리며 비용이 크다.
+      더 큰 효율이 필요하다는 인식 아래 제약회사와 규제기관은 이 파이프라인의 각 단계를
+      최적화하는 데 점점 더 무게를 두어왔다.
+    </p>
+
+    <div class="read">
+      <p>
+        전임상 연구는 시험관(in vitro)과 동물 모형(in vivo)에서 화합물의 효능과 안전성 프로필,
+        그리고 해를 끼칠 가능성을 평가하는 실험 과정이다.
+        독성 평가와 나란히 약동학(PK)과 약력학(PD) 평가가 결정적인데,
+        약물이 체내에서 어떻게 거동하는지(ADME: 흡수·분포·대사·배설·독성)와
+        어떻게 치료 효과를 내는지(작용 기전·역가·반응)를 규정하기 때문이다.
+      </p>
+      <p>
+        약물의 치료 효과는 최적의 혈장 농도에 도달하고 그것을 유지하는 일과 밀접히 연결되어 있다.
+        그 농도는 흡수와 대사와 청소율 같은 여러 약동학적 요인, 그리고 유전과 건강 상태 같은
+        환자별 변수의 영향을 받는다. 약력학은 <em class="p">용량–반응 관계</em>를 크게 강조하며,
+        시간에 따른 약물 농도를 치료 효과나 독성 효과와 연결한다.
+      </p>
+      <p>
+        이 상호작용의 이해는 투여 요법을 최적화하고 효능과 안전 사이의 균형을 이루는 데 결정적이다.
+        약동학과 약력학 연구는 제형 설계, 투여 전략, 투여 경로를 이끄는 핵심 데이터를 제공하며,
+        미국 식품의약국의 우수실험실운영기준(GLP) 같은 엄격한 규제 틀을 따른다.
+        유리한 전임상 결과는 화합물이 인체 임상시험으로 나아가기 위한 필수 전제이며,
+        후속 성공의 확률을 크게 높인다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 02 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">02</span><h2>서로 마주 보는 두 방향</h2></div>
+    <p class="lede">
+      약동학과 약력학은 같은 사건을 반대 방향에서 본다.
+      한쪽은 노출 프로필을 정의하고, 다른 한쪽은 그 노출이 낳는 생화학적·생리학적 효과를 다룬다.
+      둘이 함께 <em class="k">노출–반응 관계</em>를 이루어야 비로소 약물의 거동과 임상 결과를 예측할 수 있다.
+    </p>
+
+    <div class="recip">
+      <div class="rc a">
+        <span class="dir">몸 &nbsp;→&nbsp; 약</span>
+        <h4>약동학</h4>
+        <div class="en">Pharmacokinetics · PK</div>
+        <p>신체가 약물에 무엇을 하는지를 기술한다. 흡수, 분포, 대사, 배설이 그것이다.
+          제형, 투여 경로, 생리적 장벽 같은 요인의 영향을 받으며, 대사는 흔히 초회 통과 효과에 좌우된다.</p>
+        <ul>
+          <li>노출 프로필의 정의</li>
+          <li>흡수·소실 속도의 평가</li>
+          <li>제형 간 비교와 변동성 평가</li>
+        </ul>
+      </div>
+      <div class="rc b">
+        <span class="dir">약 &nbsp;→&nbsp; 몸</span>
+        <h4>약력학</h4>
+        <div class="en">Pharmacodynamics · PD</div>
+        <p>약물이 신체에 무엇을 하는지를 살핀다. 농도를 치료 효과나 이상반응과 연결한다.
+          생화학적·생리학적 효과에 초점을 맞추며, 질량작용의 법칙을 따르는
+          리간드–수용체 상호작용으로 흔히 모형화된다.</p>
+        <ul>
+          <li>농도와 치료 효과의 연결</li>
+          <li>안전성과 유효성의 한계 설정</li>
+          <li>용량 조정의 지침</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="eq">
+      L &nbsp;+&nbsp; R &nbsp;⇌&nbsp; LR
+      <small>LR은 약물–수용체 복합체를 나타낸다.
+        이 상호작용이 하류의 세포 반응을 촉발한다.</small>
+    </div>
+
+    <div class="read">
+      <p>
+        대부분의 약물은 체내의 정상적·병리적 과정을 모방하거나 저해함으로써,
+        혹은 미생물과 기생충의 필수 생물학적 기능을 교란함으로써 효과를 낸다.
+        약물의 효과는 흔히 네 부류의 단백질 표적과의 상호작용에서 비롯한다 —
+        <em class="k">효소, 막 운반체, 이온 통로, 그리고 특히 수용체</em>다.
+        수용체에서 약물은 리간드로 작용해 작용제·길항제·역작용제 반응을 촉발한다.
+      </p>
+      <p>
+        높은 신약 개발 실패율은 예측하지 못한 안전성과 효능, 그리고 환자 변동성 문제에서 나온다.
+        약동학·약력학 데이터를 모델링과 연구 설계에 통합하면 개발을 앞당기고 용량을 최적화하며,
+        전통적이고 비용이 크며 대표성이 떨어지는 방법보다 승인 성공률을 높일 수 있다.
+      </p>
+      <p>
+        인공지능, 특히 기계학습과 심층학습은 신약 개발과 개인 맞춤 의료를 바꾸고 있다.
+        약동학에서는 물리화학적 속성과 분자 구조, 환자 특성을 분석해 ADME를 예측하고,
+        투여 요법을 최적화하며, 약물 상호작용을 탐지한다.
+        약력학에서는 약물–수용체 상호작용을 모형화하고 효능과 독성을 예상한다.
+        기계학습은 유전체·단백체·대사체 같은 복잡한 오믹스 데이터를 해석해
+        개인화된 치료 전략을 가능케 하는 바이오마커와 분자 표적을 발견한다.
+      </p>
+      <p>
+        다만 데이터 품질, 모형의 해석 가능성, 규제 측면의 난제는 여전히 남아 있다.
+        그래서 <em class="p">기초 원리에 대한 깊은 이해</em>가 먼저 요구된다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 03 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">03</span><h2>몸을 칸으로 나누다</h2></div>
+    <p class="lede">
+      약동학 모델링은 약물이 몸속을 어떻게 이동하는지를, 영역별 농도를 지도로 그려 규정하려 한다.
+      혈액은 농도를 재기 편하고 끊임없는 순환 덕에 혈류 안에서는 균일 분포를 가정할 수 있지만,
+      약물이 다른 조직으로 즉시 퍼지는 것은 아니다.
+      그래서 몸을 약물 거동이 일정하다고 볼 수 있는 <em class="k">‘구획’</em>으로 개념적으로 나눈다.
+      측정이 이루어지는 혈류, 곧 중심 구획이 특히 중요하다.
+    </p>
+
+    <div class="grid g5">
+      <div class="card">
+        <span class="tag">One-compartment</span>
+        <h4>1구획 모형</h4>
+        <p>약물이 몸 전체에 즉시 균일하게 분포한다고 가정한다.
+          분석은 간단해지지만 조직 특이적 동태를 놓친다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Multicompartment</span>
+        <h4>다구획 모형</h4>
+        <p>약물이 서로 다른 조직으로 서로 다른 속도로 분포함을 감안해
+          더 현실적인 표상을 제공하고, 복잡한 처치 양상을 잘 포착한다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">NCA</span>
+        <h4>비구획 분석</h4>
+        <p>특정한 구획 구조를 가정하지 않고 통계적 적률 이론으로
+          실험 데이터에서 파라미터를 직접 추정한다. 빠른 평가에 유용하다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">PBPK</span>
+        <h4>생리학 기반 모형</h4>
+        <p>몸을 생리학적으로 유의한 구획으로 나누고 혈류로 연결하며,
+          해부·생리·생화학 파라미터를 상세히 포함한다.
+          집단과 종을 가로지르는 예측을 가능케 하는 기전적 접근이다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Population PK</span>
+        <h4>집단 약동학</h4>
+        <p>비선형 혼합효과 방법으로 개인 사이의 파라미터 변동성을 분석하고,
+          나이·체중·장기 기능 같은 공변량을 식별한다.</p>
+      </div>
+    </div>
+
+    <p class="read" style="margin-top:36px">
+      이 전략들은 서로를 보완하며 신약 개발과 용량 최적화, 규제 평가에 함께 쓰인다.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 04 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">04</span><h2>효과를 무엇으로 잴 것인가</h2></div>
+    <p class="lede">
+      약력학에서는 종속변수를 정하는 일부터 간단치 않다.
+      약동학은 대개 약물의 양이나 농도를 종속변수로 삼지만,
+      약력학이 다루는 것은 약물의 <em class="p">효과</em>이고 그것은 폭이 넓으며 늘 직접 측정되지도 않는다.
+    </p>
+
+    <div class="grid g4">
+      <div class="card"><span class="tag">연속형</span>
+        <h4>혈압 · 체온</h4>
+        <p>항고혈압제나 해열제의 효과는 혈압이나 체온의 감소로 정량화된다.</p></div>
+      <div class="card"><span class="tag">계수형</span>
+        <h4>발작 빈도</h4>
+        <p>뇌전증 치료에서 효과는 발작 횟수의 감소로 측정되어 계수 기반 결과가 된다.</p></div>
+      <div class="card"><span class="tag">순서형</span>
+        <h4>통증 척도</h4>
+        <p>통증 완화의 효과는 흔히 주관적 척도로 측정되어 반응 변수가 순서형이 된다.</p></div>
+      <div class="card"><span class="tag">난제</span>
+        <h4>보편적 접근의 부재</h4>
+        <p>가능한 결과가 이토록 다양하다는 사실 자체가
+          약력학 모델링에 보편적 접근을 세우는 일을 어렵게 만든다.</p></div>
+    </div>
+
+    <div class="read" style="margin-top:40px">
+      <p>
+        수용체 이론은 이렇게 말한다. 약물이 약력학적 효과를 내려면 먼저 세포 안에서 어떤 작용을 보여야 한다.
+        세포막에는 여러 수용체가 늘어서 있고, 각각은 어떤 분자가 결합할 수 있는지를 결정하는 고유한 구조를 지닌다.
+        공학의 관점에서 보면 수용체 단백질은 하나의 <em class="k">도킹 스테이션</em>이다.
+        생리활성 화합물이 수용체에 결합하면 수용체에 구조적 변화가 일어나고, 그것이 다시 세포막을 바꾼다.
+      </p>
+      <p>
+        약물은 수용체에 미치는 방식에 따라 대체로 둘로 나뉜다.
+        <em class="k">작용제</em>는 수용체에 결합해 세포 반응으로 이어지는 구조 변화를 개시한다.
+        <em class="p">길항제</em>는 반대로 수용체에 결합하되 아무 반응도 촉발하지 않는다.
+        대신 수용체를 막아 다른 분자가 결합하지 못하게 한다. ‘차단제’라 불리는 까닭이다.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 05 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">05</span><h2>결정론과 확률론 사이</h2></div>
+    <p class="lede">
+      약동학·약력학 모델링에서 잡음과 변동성 — 측정 오차, 개인차, 계의 요동 — 을 감안하는 일은
+      정확한 예측과 추론에 필수다. 여기서 두 갈래의 수학이 갈린다.
+    </p>
+
+    <div class="read">
+      <p>
+        전통적 약동학 모델링은 흔히 결정론적 상미분방정식(ODE)을 쓰며,
+        편차가 오직 측정 오차 탓이고 모형이 개인의 생리 상태를 온전히 표상한다고 가정한다.
+        이런 상태공간 모형은 현재 조건에서 미래 상태를 예측하지만 현실의 변동성을 포착하지 못할 수 있다.
+        확률미분방정식(SDE)은 무작위 요동을 도입해 이를 다루며,
+        생물학적 복잡성과 불확실성을 더 잘 반영하는 확률적 상태공간 모형을 만든다.
+      </p>
+    </div>
+
+    <div class="duel">
+      <div class="duel-hd">
+        <span class="a">ODE &nbsp;· 상미분방정식 모형</span>
+        <span class="b">SDE &nbsp;· 확률미분방정식 모형</span>
+      </div>
+      <div class="drow">
+        <div>계가 결정론적 궤적을 따른다고 가정하며, 모든 변이를 측정 오차에 귀속시킨다.</div>
+        <div>확률적 변이를 계의 동역학에 직접 도입해, 생물학적 변동성과 모형 단순화,
+          입력 측정 오차를 함께 포착한다.</div>
+      </div>
+      <div class="drow">
+        <div>계 수준의 확률적 변이를 무시하는 탓에 측정 잡음을 과대평가할 수 있다.</div>
+        <div>계가 무작위 요동을 보일 때 더 현실적인 오차 구조를 제공한다.</div>
+      </div>
+      <div class="drow">
+        <div>데이터가 성길 때는 편차를 탐지하기 어려우므로 대개 이것으로 충분하다.</div>
+        <div>잦은 표본 추출로 ODE 모형이 설명할 수 없는 잔차 패턴이 드러나는 상황에 더 적합하다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 06 ══════════ -->
+<section class="dark-s reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">06</span><h2>도구의 목록</h2></div>
+    <p class="lede">
+      제약 부문의 데이터 디지털화가 크게 늘면서, 이 방대한 정보를 복잡한 임상 문제에
+      효과적으로 쓰는 일이 난제가 되었다. 인공지능의 중요성이 커지는 배경이다.
+      WinNonlin, NONMEM, Monolix, GastroPlus 같은 전통적 도구가 오랫동안 약동학 분석을 뒷받침해왔으나,
+      이제 인공지능 방법이 복잡한 데이터셋을 더 빠르고 정확하게 분석한다.
+      <em class="p">정적인 모델링 소프트웨어에서 적응적 인공지능 시스템으로</em>의 이행이다.
+    </p>
+
+    <h3 style="margin-top:56px">인공지능·기계학습 모형과 그 쓰임 <span class="tb">TABLE 6.2</span></h3>
+    <div class="grid g5">
+      <div class="card"><span class="tag">GAN</span><h4>생성적 적대 신경망</h4>
+        <p>새로운 화학 화합물을 만들고 그 속성을 개선한다. 새 분자를 제안하는 생성기와
+          그 질을 평가하는 판별기로 이루어져, 다양하고 최적화된 후보를 낳는다.</p></div>
+      <div class="card"><span class="tag">RNN</span><h4>순환 신경망</h4>
+        <p>단백질 구조 예측, 유전체 분석, 펩타이드 설계 같은 서열 기반 과제를 다룬다.
+          생물학적 서열의 패턴을 포착해 새롭고 유의한 서열을 만들어낸다.</p></div>
+      <div class="card"><span class="tag">CNN</span><h4>합성곱 신경망</h4>
+        <p>분자 구조 분석과 약물 표적 식별 같은 이미지 기반 과제에 쓰인다.
+          분자 이미지에서 핵심 특징을 추출해 설계를 뒷받침한다.</p></div>
+      <div class="card"><span class="tag">LSTM</span><h4>장단기 기억망</h4>
+        <p>순환 신경망의 한 종류로 시계열 데이터를 효과적으로 모형화한다.
+          약동학·약력학에서 농도–시간 프로필을 예측하고 시간에 따른 약물 반응을 평가한다.</p></div>
+      <div class="card"><span class="tag">Transformer</span><h4>트랜스포머</h4>
+        <p>BERT 같은 모형이 자연어처리에 쓰여 과학 문헌·특허·임상시험 데이터에서
+          가치 있는 통찰을 뽑아내 개발 의사결정을 돕는다.</p></div>
+      <div class="card"><span class="tag">RL</span><h4>강화학습</h4>
+        <p>약물 투여와 치료 전략을 개인화하는 데 적용된다.
+          환경과의 상호작용에서 배워 치료 결과를 개선하도록 투여 요법을 최적화한다.</p></div>
+      <div class="card"><span class="tag">Bayesian</span><h4>베이즈 모형</h4>
+        <p>베이즈 네트워크와 가우시안 과정을 포함하며, 확률적 모델링을 통해
+          불확실성 정량화, 위험 평가, 실험 설계 최적화를 뒷받침한다.</p></div>
+      <div class="card"><span class="tag">DQN</span><h4>심층 Q 네트워크</h4>
+        <p>심층학습과 강화학습을 결합해 신약 발굴을 강화한다.
+          화합물의 활성을 예측하고 추가 시험에 유망한 후보를 추천한다.</p></div>
+      <div class="card"><span class="tag">Autoencoder</span><h4>오토인코더</h4>
+        <p>차원 축소와 특징 추출에 쓰이며, 핵심 분자 특성을 포착해
+          화합물 선별과 가상 스크리닝을 돕는다.</p></div>
+      <div class="card"><span class="tag">GNN</span><h4>그래프 신경망</h4>
+        <p>분자 구조를 그래프로 분석하는 데 탁월하다.
+          분자 물성을 예측하고 가상 스크리닝을 뒷받침하며 신규 설계를 돕는다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 07 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">07</span><h2>데이터는 어디서 오는가</h2></div>
+    <p class="lede">
+      약동학·약력학 데이터는 개발 전 과정에 걸쳐 다양한 출처에서 모인다.
+      인 실리코와 시험관 연구가 약물–표적 상호작용과 투과성, 대사 안정성을 예측하며 첫 통찰을 준다.
+      전임상 동물 연구가 흡수·분포·대사·배설과 약리 반응 데이터를 제공하고,
+      임상시험이 규제 승인에 가장 결정적이다.
+      1상은 인체 약동학과 안전성·내약성을, 2상은 용량과 효능을, 3상은 이를 더 큰 집단에서 확인한다.
+    </p>
+
+    <div class="nums">
+      <div class="nm"><div class="v">~1,400</div><div class="l">인체 약동학 데이터가 존재하는 화합물 수</div></div>
+      <div class="nm"><div class="v">최대 60,000</div><div class="l">동물 약동학 데이터의 화합물 수</div></div>
+      <div class="nm"><div class="v pd">1,352</div><div class="l">Obach et al.이 정리한 정맥 투여 약동학 데이터셋의 약물 수</div></div>
+    </div>
+
+    <p class="read">
+      기계학습과 인공지능을 인체 약동학 모델링에 적용하는 데는 난관이 있다.
+      인체 데이터는 양이 적고 좋은 물성을 지닌 약물 쪽으로 <em class="p">편향</em>되어 있다.
+      집단 변동성과 일관되지 않은 측정 탓에 복잡도도 더 높아, 효과적인 모형 개발을 위해서는
+      신중한 정제가 필요하다.
+    </p>
+    <p class="read">
+      한편 원 문헌과 규제 자료에서 취합한 1352개 약물의 정맥 투여 약동학 데이터셋에는
+      혈장 단백질 결합 데이터가 더해져 약물 대사와 약리 연구를 뒷받침한다.
+      약동학 파라미터를 물리화학적 성질 및 화합물 공개 시점과 함께 분석함으로써
+      이 데이터셋은 경향을 식별하고 여러 약동학 예측 연구에 근거를 제공했다.
+    </p>
+
+    <h3>약동학·약력학 모델링에 쓰이는 데이터베이스 <span class="tb">TABLE 6.3</span></h3>
+    <div class="tbl">
+      <div class="trow"><div class="tk">DrugBank</div>
+        <div class="tv"><span class="url">go.drugbank.com</span></div></div>
+      <div class="trow"><div class="tk">ChEMBL</div>
+        <div class="tv"><span class="url">ebi.ac.uk/chembl</span></div></div>
+      <div class="trow"><div class="tk">ClinicalTrials.gov</div>
+        <div class="tv"><span class="url">clinicaltrials.gov</span></div></div>
+      <div class="trow"><div class="tk">IUPHAR</div>
+        <div class="tv"><span class="url">guidetopharmacology.org</span></div></div>
+      <div class="trow"><div class="tk">PKKB<small>약동학 지식 기반</small></div>
+        <div class="tv"><span class="url">ngdc.cncb.ac.cn/databasecommons</span></div></div>
+      <div class="trow"><div class="tk">PK-DB</div>
+        <div class="tv"><span class="url">pk-db.com</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 08 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">08</span><h2>동물의 약동학을 예측하다</h2></div>
+    <p class="lede">
+      인공지능·기계학습 모형은 다목적 리드 최적화와 신규 분자 설계를 이끌어
+      균형 잡힌 약동학 프로필을 지닌 화합물을 낳고 탈락을 줄인다.
+      최적 후보를 찾기까지 필요한 설계–제작–시험–분석(DMTA) 순환의 횟수를 줄일 수 있다는 뜻이다.
+      전임상 생체 내 연구에서 가장 자주 쓰이는 종은 쥐, 생쥐, 개이며,
+      인공지능 모형을 훈련할 풍부한 데이터가 여기서 나온다.
+    </p>
+
+    <p class="read" style="margin-top:34px">
+      표준적인 모델링 흐름은 데이터 정제, 특징 추출, 알고리즘 적용으로 이루어진다.
+      용해도, 친유성, 투과성, 혈장 단백질 결합, 고유 청소율, 간세포 비결합 분율 같은
+      시험관 ADME와 물리화학적 성질, 그리고 분자 기술자를 함께 넣으면 성능이 개선된다.
+      이 데이터로부터 농도–시간 프로필과 CL, Vd, F, t½, AUC, Cmax 같은 파라미터를 직접 도출할 수 있다.
+    </p>
+
+    <div class="studies">
+      <div class="st">
+        <div>
+          <div class="nm2">경구 생체이용률<br>예측의 한계</div>
+          <div class="sub">Paixao 2012 · Yoshida &amp; Topliss<br>Martin 2005 · Wenlock &amp; Carlsson 2015</div>
+        </div>
+        <div class="bd">
+          <p>
+            경구 생체이용률의 예측 모형을 탐색한 연구는 많았으나 성공은 대체로 제한적이었다.
+            시험관 데이터를 포함하면 예측이 나아지고, 인 실리코 특징에만 의존하는 모형은 성능이 떨어진다.
+          </p>
+          <div class="nums">
+            <div class="nm"><div class="v">84% → 53%</div><div class="l">인 실리코 변수를 늘릴수록 낮아진 정확도(±20% 오차 범위 기준)</div></div>
+            <div class="nm"><div class="v">67% / 60%</div><div class="l">Yoshida–Topliss 4분류 모형의 leave-one-out / 시험셋 정확도</div></div>
+          </div>
+          <p>
+            Yoshida와 Topliss는 친유성·전하·대사 반응성 같은 분자 기술자에 근거한 초기 4분류 모형을 만들었으나,
+            새로운 화학적 특징에 대한 일반화가 제한됨을 스스로 인정했다.
+            쥐에서 생체이용률이 10%를 넘을 확률을 추정하는 예측 점수 방법도 개발되어
+            5의 법칙, log P, 극성 표면적 같은 전통적 지표만 쓰는 것보다 나은 성능을 보였다.
+          </p>
+          <p>
+            문제는 모형의 정식화가 아니라 위장관 용해도, 투과성, 대사, 단백질 결합 같은 변수를
+            정량화하는 데 있다는 것이 이 분야의 인식이다.
+            웬록과 칼슨은 계통 오차와 무작위 실험 오차가 예측에 크게 영향을 미친다고 강조하며,
+            <em class="k">하나의 보편 모형을 쓰기보다 생체이용률의 결정 요인을 각각 따로 모형화한 뒤
+            통합하는 편</em>이 더 효과적일 수 있다고 제안했다.
+          </p>
+        </div>
+      </div>
+
+      <div class="st">
+        <div>
+          <div class="nm2">다중작업 GCN</div>
+          <div class="sub">Obrezanova et al., 2022<br>3,000+ 화합물 · 쥐 9개 파라미터</div>
+        </div>
+        <div class="bd">
+          <p>
+            구조와 시험관 ADME 데이터를 함께 써서 3000종이 넘는 다양한 화합물에 대해
+            쥐의 아홉 가지 약동학 파라미터와 농도–시간 프로필을 예측했다.
+            시험관 데이터의 포함이 정확도를 높였다.
+          </p>
+          <div class="nums">
+            <div class="nm"><div class="v">R² = 0.55</div><div class="l">경구 생체이용률<br>RMSE 0.46 · 2배 오차 이내 65%</div></div>
+            <div class="nm"><div class="v">R² = 0.63</div><div class="l">청소율(CL)<br>RMSE 0.26 · 2배 오차 이내 78%</div></div>
+            <div class="nm"><div class="v pd">중앙값 R² = 0.82</div><div class="l">정맥 투여 농도–시간 곡선<br>경구 예측은 이보다 낮았다</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="st">
+        <div>
+          <div class="nm2">데이터 크기는<br>답이 아니다</div>
+          <div class="sub">Aleksić et al., 2022<br>Boehringer Ingelheim 사내 데이터</div>
+        </div>
+        <div class="bd">
+          <p>
+            23개 ADMET·약동학 종점에 대해 데이터셋 크기와 알고리즘 선택이 예측 성능에 미치는 영향을 조사했다.
+            결과는 뜻밖이었다. 여러 예측 알고리즘 사이에 유의한 성능 차이가 없었고,
+            시간이 지나며 데이터셋이 커진 것에서 비롯한 실질적 개선도 없었다.
+          </p>
+          <p>
+            종점당 데이터셋 규모는 2500~8000개 화합물이었고, 5년의 연구 기간에 20~60% 증가가 관찰되었다.
+            생체 내 쥐와 생쥐의 CL과 Vd 종점에서는 각각 약 9000개와 4000개 화합물에 근거한
+            4분류 모형이 매튜스 상관계수 기준으로 무난한 성능을 보였다.
+            그러나 전체 결론은 <em class="p">데이터 양과 알고리즘 복잡도를 넘어선 요인</em>이
+            ADMET·약동학 모델링의 예측 정확도를 좌우할 수 있다는 쪽이었다.
+          </p>
+        </div>
+      </div>
+
+      <div class="st">
+        <div>
+          <div class="nm2">경구 AUC 예측</div>
+          <div class="sub">Wajima et al., 2003 · Kosugi &amp; Hosea, 2021<br>PLS · RF · 가우시안 과정</div>
+        </div>
+        <div class="bd">
+          <p>
+            경구 투여 후 혈장 농도–시간 곡선 아래 면적(AUC<sub>p,oral</sub>)은 핵심 파라미터이면서도
+            청소율과 생체이용률 양쪽의 영향을 받아 예측이 복잡하다.
+            동물의 청소율·생체이용률 데이터와 분자 기술자를 쓰는 PLS 모형,
+            커널 다중작업 잠재 분석(KMLA), 알로메트리 스케일링, 생리학 기반 IVIVE 등이 적용되어왔다.
+          </p>
+          <p>
+            한 회귀 기반 모형은 쥐와 개의 경구 청소율 데이터에 분자량·cLogP·수소결합 수용체 수 같은
+            기술자를 결합해 구조와 약리가 다양한 87개 약물의 인체 경구 청소율을 예측했다.
+            다변량 회귀, 다중 선형 회귀, PLS 세 접근을 알로메트리 스케일링과 비교한 결과
+            <em class="k">3차 상호작용 항을 포함한 PLS 모형</em>이 가장 높은 예측 정확도를 냈다.
+            제한된 종간 청소율 데이터에 단순한 분자 기술자와 상호작용 항을 결합해도
+            견고한 예측이 가능함을 보인 것이다.
+          </p>
+          <p>
+            다른 접근은 분자 구조만에 근거한 인 실리코 모형으로 쥐의 경구 AUC 예측 모형을 세우고
+            IVIVE와 비교했다. 400그루의 랜덤 포레스트 회귀와 가우시안 과정 모형 두 기법을 쓰고,
+            시간 분할·군집 분할·5겹 교차검증으로 검증했다.
+            가우시안 과정 모형은 고유 청소율(CL<sub>int</sub>), 비결합 혈장 분율(f<sub>u,p</sub>), 용해도 같은
+            시험관 파라미터를 입력으로 넣어 더 강화했다.
+          </p>
+          <div class="nums">
+            <div class="nm"><div class="v">R² 0.381–0.685</div><div class="l">구조만 쓴 기계학습 모형</div></div>
+            <div class="nm"><div class="v">R² 0.554–0.743</div><div class="l">CL<sub>int</sub> · f<sub>u,p</sub> · 용해도를 더한 경우</div></div>
+            <div class="nm"><div class="v pd">R² 0.354–0.487</div><div class="l">전통적 IVIVE 접근<br>(well-stirred 모형 · 간 청소율 가정)</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="st">
+        <div>
+          <div class="nm2">심층학습과<br>그래프 합성곱</div>
+          <div class="sub">Feinberg et al., 2020<br>PotentialNet · MT-PotentialNet</div>
+        </div>
+        <div class="bd">
+          <p>
+            전통적 기계학습은 전문가가 정의한 분자 기술자에 의존하는데, 여기에는 주관이 개입할 수 있고
+            분자 상호작용의 복잡성을 온전히 담지 못할 수 있다.
+            ADME 과정을 모형화할 때 이 한계는 특히 두드러진다.
+            심층 신경망은 원자료에서 복잡한 고차 특징을 자동으로 추출해 이 문제를 다룬다.
+          </p>
+          <p>
+            그래프 합성곱 신경망(GCNN), 그중에서도 PotentialNet과 그 다중작업 변형인 MT-PotentialNet은
+            31개 ADMET 관련 종점에서 고정 원자쌍 기술자를 쓰는 랜덤 포레스트 같은 전통적 모형보다
+            나은 예측력을 보였다. 다중작업 학습을 도입해 여러 검정에서 통찰을 끌어옴으로써
+            더 견고하고 일반화 가능한 분자 표상을 만들어낸다.
+          </p>
+          <div class="nums">
+            <div class="nm"><div class="v">+64%</div><div class="l">31개 사내 데이터셋에서 랜덤 포레스트 대비 GCN의 평균 성능 향상</div></div>
+            <div class="nm"><div class="v pd">r² = 0.28</div><div class="l">쥐 청소율 모형(시간 분할) — 생체 내 종점에서의 향상은 미미했다</div></div>
+          </div>
+          <p>
+            시간 분할이나 분자량 기반 분할 같은 엄격한 검증 전략 아래에서 특히 랜덤 포레스트를 앞섰으나,
+            생체 내 약동학 종점에서의 개선은 여전히 완만했다.
+            <em class="p">복잡한 생물학적 반응을 모형화하는 일의 어려움</em>이 그대로 드러난 대목이다.
+          </p>
+        </div>
+      </div>
+
+      <div class="st">
+        <div>
+          <div class="nm2">양자역학 기술자와<br>전이학습</div>
+          <div class="sub">Lim et al., 2022 · QM9-extended · ANI-2x</div>
+        </div>
+        <div class="bd">
+          <p>
+            양자역학(QM) 기술자를 심층학습 틀에 통합해 약동학 종점의 예측 성능을 높이려는 시도가 있다.
+            탄소·수소·질소·산소·불소로 이루어진 중원자 9개 이하의 분자 약 13만 4천 개를 담은
+            QM9 데이터셋의 제한된 화학적 다양성을 넘어서기 위해,
+            황과 염소처럼 약물다운 화학 공간을 더 잘 대표하는 원소를 포함한
+            약 2만 개의 분자를 더해 QM9-extended 데이터셋을 만들었다.
+          </p>
+          <p>
+            이 확장 데이터셋으로 훈련한 심층학습 모형, 그중 ANI-2x 모형은
+            12개 양자역학 바닥상태 물성 가운데 <em class="k">11개를 무난한 정확도로 추정</em>할 수 있었다.
+            예측된 양자역학 기술자는 이어 쥐의 마이크로솜 청소율, 간 청소율, 총 청소율,
+            P-당단백질 유출 같은 ADME 종점에 대한 GCNN 모형을 보강하는 데 쓰였다.
+            성능 향상의 정도는 종점마다 달랐고, 특히 <em class="p">P-당단백질 유출</em>의 예측에서 두드러졌다.
+            전자적 성질이 약물 처치와 관련된 미세한 분자 특징에 대한 모형의 민감도를 높일 수 있음을 시사한다.
+          </p>
+          <p>
+            약동학 모델링의 중요한 제약 하나는 질 높은 과제 특이적 데이터의 희소성이며,
+            이것이 심층학습의 성능을 자주 옭아맨다. <em class="k">전이학습</em>은 대규모 관련 데이터셋의
+            지식을 끌어와 이 장벽을 넘는 효과적 전략이다.
+            수천만 개의 데이터 점으로 이루어진 방대한 분자 생물활성 데이터베이스에서 사전훈련된 모형은
+            널리 적용 가능한 근본적 화학 패턴과 표상을 학습한다.
+            이런 사전훈련 모형을 작고 과제 특이적인 ADME 데이터셋에 미세조정하면
+            경구 생체이용률, 청소율, 분포용적 같은 종점의 예측 정확도를
+            새 모형을 처음부터 훈련하지 않고도 크게 높일 수 있다.
+          </p>
+          <p>
+            여기에 <em class="k">다중작업 학습</em>이 더해지면 여러 약동학·약력학 종점을 동시에 훈련하게 되어,
+            관련 과제들에 공통으로 깔린 패턴을 모형이 찾아내며 일반화 성능이 개선된다.
+            전이학습과 다중작업 학습은 함께 모형의 견고함을 높이고 실험 데이터에 대한 수요를 줄인다.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 09 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">09</span><h2>사례 — DeepPharm</h2></div>
+    <p class="lede">
+      전이학습에 기반한 다중작업 심층 신경망으로 네 개의 약동학 파라미터를 동시에 예측한 모형이다.
+      생체이용률(BA), 혈장 단백질 결합률(PPBR), 정상상태 분포용적(VDss), 반감기(HL)가 그것이다.
+    </p>
+
+    <div class="read">
+      <p>
+        데이터 불균형과 결측 라벨을 다루기 위해 동적 가중 비용함수를 도입했다.
+        네 파라미터의 가중치는 각각 <code style="font-family:var(--mono);font-size:.9em">3 : 1 : 9 : 1</code>이었다.
+        이 다중작업 접근만으로도 부분최소제곱 회귀(PLSR), SVM, 인공신경망, 랜덤 포레스트, k-최근접이웃 등
+        다섯 가지 전통적 기계학습 알고리즘보다 시험셋에서 우수한 정확도를 보였다.
+      </p>
+      <p>
+        이어 대규모 생물활성 데이터셋으로 전이학습 원리에 따라 사전훈련 모형을 만들었다.
+        11층 신경망을 가중 비용함수로 훈련했는데, 활성 항목이 전체의 1.4%에 불과한
+        극심한 불균형을 감안해 활성 대 음성 데이터의 가중치를 100 대 1로 두었다.
+        그 결과 훈련에서 87.42%, 시험에서 85.05%의 높은 재현율을 얻었다.
+        이 사전훈련 모형의 특징 추출층 가중치가 DeepPharm 모형으로 옮겨졌다.
+      </p>
+      <p>
+        최종 모형은 DeepPharm-BA, DeepPharm-PPBR, DeepPharm-VDss &amp; HL의 세 개
+        11층 심층 신경망으로 구성되었고, 합의 모형이 이 셋에서 네 파라미터 각각의 최적 예측을 골랐다.
+      </p>
+    </div>
+
+    <div class="nums">
+      <div class="nm"><div class="v">27.78%</div><div class="l">BA — 시험셋 최고 정확도</div></div>
+      <div class="nm"><div class="v">44.22%</div><div class="l">PPBR — 시험셋 최고 정확도</div></div>
+      <div class="nm"><div class="v">63.33%</div><div class="l">VDss — 시험셋 최고 정확도</div></div>
+      <div class="nm"><div class="v pd">66.67%</div><div class="l">HL — 다중작업 모형의 68.39%에 근접, 전통적 방법은 모두 크게 앞섰다</div></div>
+    </div>
+
+    <p class="read">
+      통합된 이 접근은 인 실리코 약동학 파라미터 예측에 더 정확하고 견고하며 일반화 가능한 도구를 제공하여,
+      초기 신약 발굴과 개발에서 실질적 이점을 준다는 것이 저자들의 평가다.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 10 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">10</span><h2>약물–표적 상호작용을 예측하다</h2></div>
+    <p class="lede">
+      약물의 효능은 근본적으로 생물학적 표적과의 상호작용에 달려 있다.
+      전통적으로 약물–표적 상호작용(DTI)의 이해는 습식 실험에 크게 기댔다.
+      그러나 최근의 진전은 새로운 패러다임을 열었다.
+      실험적 검증에 앞서는 필수 단계로 인공지능 기반의 초기 DTI 예측이 빠르게 자리 잡는 중이다.
+    </p>
+
+    <div class="read">
+      <p>
+        기술의 궤적은 분명하다. 전통적 도킹 시뮬레이션과 통계 모형에서 기계학습으로,
+        다시 심층학습으로, 이제는 대규모 기반 모형 시대의 <em class="k">AI4Science</em>로 이어진다.
+        인공지능 기반 DTI 연구의 중심 난제는 약물과 표적 사이의 관계를 정의하고 모형화하는 일이다.
+        현대의 모형은 단일 양식(예: 서열 기반)이나 다중 양식 데이터를 입력으로 쓸 수 있다.
+      </p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card" style="border-top:4px solid var(--pk)">
+        <span class="tag">i. Classification</span>
+        <h4>분류 접근 — 정성적 예측</h4>
+        <p>약물과 표적 사이에 상호작용이 존재하는지를 식별하는 데 초점을 맞추어
+          이진 분류 문제로 다룬다. 상호작용 없음은 0, 있음은 1이다.
+          이진 분류기나, 잠재적 약물–표적 쌍의 우선순위를 매기는 순위 모형이 해법이 된다.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--pd)">
+        <span class="tag">ii. Regression</span>
+        <h4>회귀 접근 — 정량적 예측</h4>
+        <p>상호작용의 세기를 평가하며, 대개 친화도 점수로 표현된다.
+          친화도 값을 0과 1 사이로 정규화하면 회귀 과제가 되어
+          결합 강도를 한층 섬세하게 예측할 수 있다.</p>
+      </div>
+    </div>
+
+    <p class="read" style="margin-top:36px">
+      이 구별은 모형 구조와 손실함수, 평가 지표의 선택에 영향을 준다.
+      두 접근 모두 네 종류의 복잡한 입력을 처리해야 한다 —
+      약물(화학 구조, 분자 지문, SMILES 문자열), 표적(단백질 서열, 3차원 구조, 아미노산 잔기),
+      알려진 DTI(실험으로 검증된 상호작용 데이터셋), 그리고 상관관계(약물 사이·표적 사이의 관계)다.
+    </p>
+
+    <h3>분자 표상을 위한 도구 <span class="tb">TABLE 6.4</span></h3>
+    <div class="tbl">
+      <div class="trow"><div class="tk">PaDEL<small>특징 벡터 계산</small></div>
+        <div class="tv">1차원·2차원·3차원을 아우르는 1875개 분자 기술자와 12종 지문을 계산한다.
+          구조 파일이나 SMILES 문자열을 입력으로 받는다.</div></div>
+      <div class="trow"><div class="tk">ProtDCal<small>특징 벡터 계산</small></div>
+        <div class="tv">서열과 3차원 구조 각각에서 999개씩, 모두 1998개의 단백질 특징을 생성한다.</div></div>
+      <div class="trow"><div class="tk">ProtParam<small>특징 벡터 계산</small></div>
+        <div class="tv">분자량, 원자 조성, 아미노산 조성 같은 단백질 특징을 계산하는 웹 서버다.
+          아미노산 서열만 입력으로 받는다.</div></div>
+      <div class="trow"><div class="tk">PubChemPy<small>특징 벡터 계산</small></div>
+        <div class="tv">PubChem의 파이썬 인터페이스로 화학 지문과 물성을 가져온다.
+          계산은 PubChem 서버에서 수행된다.</div></div>
+      <div class="trow"><div class="tk">SIMCOMP<small>구조 유사도 계산</small></div>
+        <div class="tv">최대 공통 부분구조를 이용해 화학 구조를 비교하는 그래프 기반 도구다.
+          화합물을 원자–결합 그래프로 표상한다.</div></div>
+      <div class="trow"><div class="tk">Rcpi<small>구조 유사도 계산</small></div>
+        <div class="tv">R 패키지로, 화합물의 유사도(지문과 최대 공통 부분구조)와
+          단백질의 유사도(서열 정렬과 유전자 온톨로지 용어)를 계산한다.</div></div>
+      <div class="trow"><div class="tk">Open Babel<small>구조 생성</small></div>
+        <div class="tv">SMILES로부터 2차원·3차원 분자 구조를 생성한다. 형식 변환도 지원한다.</div></div>
+      <div class="trow"><div class="tk">RDKit<small>구조 생성</small></div>
+        <div class="tv">2차원·3차원 구조 생성, 분자 특징 계산, 유사도 측정을 아우르는 케모인포매틱스 툴킷이다.
+          C++와 파이썬을 지원한다.</div></div>
+    </div>
+
+    <h3>약물·표적 관련 데이터베이스 <span class="tb">TABLE 6.5</span></h3>
+    <div class="tbl">
+      <div class="trow"><div class="tk">DrugBank<small>약물 중심 · 17,085종</small></div>
+        <div class="tv">화학 구조, 약제학적 성질, 단백질 서열, 분자 구조, 작용 기전과
+          관련 생의학 데이터를 아우르는 종합 데이터베이스다.</div></div>
+      <div class="trow"><div class="tk">ChEMBL<small>약물 중심 · 240만 종</small></div>
+        <div class="tv">약물다운 성질을 지닌 생리활성 분자를 사람이 직접 정제해 모은 데이터베이스로,
+          결합과 활성에 관한 데이터를 담는다.</div></div>
+      <div class="trow"><div class="tk">ZINC20</div>
+        <div class="tv">상업적으로 구입 가능하고 주석이 달린 화합물을 담는다.</div></div>
+      <div class="trow"><div class="tk">PubChem</div>
+        <div class="tv">분자 물성, 구조, 그 밖의 관련 특징을 담는다.</div></div>
+      <div class="trow"><div class="tk">DrugCentral</div>
+        <div class="tv">용법, 용량, ADMET 성질 등 약물에 관한 서술을 담는다.</div></div>
+      <div class="trow"><div class="tk">SIDER</div>
+        <div class="tv">시판 의약품의 부작용과 이상반응을 담는다.</div></div>
+      <div class="trow"><div class="tk">BindingDB<small>표적 중심</small></div>
+        <div class="tv">리간드–단백질 복합체의 실험적 결합 친화도를 담는다.</div></div>
+      <div class="trow"><div class="tk">PDBbind<small>표적 중심</small></div>
+        <div class="tv">PDB에 등록된 리간드–단백질의 실험적 측정 결합 친화도 데이터를 담는다.</div></div>
+      <div class="trow"><div class="tk">UniProt<small>2억 4,500만 단백질</small></div>
+        <div class="tv">단백질 기능에 관한 정확하고 일관되며 상세한 주석을 모은 중심 허브다.</div></div>
+      <div class="trow"><div class="tk">Protein Data Bank<small>3차원 구조 20만 건</small></div>
+        <div class="tv">X선 결정학과 핵자기공명 분광법으로 얻은 단백질 구조 데이터를 담는다.</div></div>
+      <div class="trow"><div class="tk">AlphaFold DB<small>예측 구조 2억 1,400만 건</small></div>
+        <div class="tv">AlphaFold2가 예측한 단백질 구조를 담는다.</div></div>
+    </div>
+
+    <p class="read" style="margin-top:40px">
+      인공지능 모형을 DTI 예측에 적용하는 일은 대개 데이터셋 처리, 모형 훈련, 예측의 세 단계를 밟는다.
+      데이터셋은 훈련·검증·시험의 세 부분으로 나뉜다. 훈련셋으로 모형을 훈련하고,
+      검증셋으로 초매개변수를 조율하며, 시험셋으로 본 적 없는 데이터에 대한 성능을 평가한다.
+      데이터 주도 모형에서는 은닉층 수와 활성화 함수 같은 구조, 학습률과 에폭 수 같은 최적화 전략을 고르지만,
+      네트워크 기반 같은 <em class="p">지식 기반 모형</em>에서는 약물–표적 상호작용을 지배하는 논리와
+      상호작용 네트워크의 위상적 성질 같은 지식 특이적 초매개변수를 조율해야 한다.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ 11 ══════════ -->
+<section class="reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">11</span><h2>모델링의 여섯 갈래</h2></div>
+    <p class="lede">
+      전통적 기계학습은 사람이 손으로 빚은 특징에 의존해왔다.
+      이중 국소 모형이나 최근접 이웃 같은 유사도 기반 모형, 서포트 벡터 머신 같은 특징 벡터 기반 모형,
+      제한 볼츠만 머신이나 그래프 정칙화 기법 같은 준지도 접근이 그것이다.
+      이들은 초기 통찰을 주었으나 약물과 단백질의 원 표상에서 고차의 숨은 특징을
+      자동으로 추출하지 못한다는 한계를 안았다.
+      최근의 접근은 특징 학습을 모형 구조 안에 직접 통합해 이 한계를 넘는다.
+    </p>
+
+    <div class="ways">
+      <div class="way">
+        <div class="n">12.1</div>
+        <div>
+          <h4>지문 기반</h4>
+          <div class="en">Fingerprint-based</div>
+          <p>
+            약물과 표적에 대해 원형·MACCS·PubChem 같은 물리화학적 지문을 계산하는 데서 시작한다.
+            효율을 높이고 중복을 줄이기 위해 PCA, t-SNE, UMAP, NMF, SVD 같은 차원 축소가 흔히 적용된다.
+            이 특징들은 상호작용의 유무를 예측하는 분류 모형(SVM, 랜덤 포레스트)이나
+            결합 친화도를 예측하는 회귀 모형(베이즈 회귀, 로지스틱 회귀)에 쓰인다.
+          </p>
+          <p>
+            초기 연구는 단일 모형을 썼으나 최근에는 일반화와 견고함이 나은 앙상블 모형을 선호한다.
+            작고 구조화된 데이터셋에 효율적이지만 특징의 선택과 질에 민감하다.
+            특징이 너무 많으면 과적합이, 너무 적으면 과소적합이 온다.
+          </p>
+          <p>
+            <b>ArkDTA</b>는 다중 헤드 어텐션으로 비공유 상호작용 지식을 통합해 정확도를 높인다.
+            단백질 서열에는 ESM 임베딩을, 약물에는 모건 지문을 쓰며,
+            다중 헤드 어텐션 풀링(PMA)과 다중 헤드 어텐션 블록(MAB) 같은 새 모듈을 둔다.
+            <b>TEFDTA</b>는 약물의 MACCS 지문 표상에 트랜스포머 인코더를 적용하고
+            라벨 인코딩된 FASTA 단백질 서열에 CNN을 적용해 결합·비결합 상호작용을 함께 포착한다.
+            <b>DeepConv-DTI</b>는 길이가 다양한 단백질 부분서열에 합성곱층을 적용해
+            일반화된 단백질 부류를 가로지르는 국소 잔기 패턴을 탐지한다.
+          </p>
+          <div class="chips"><span>ArkDTA</span><span>TEFDTA</span><span>DeepConv-DTI</span></div>
+        </div>
+      </div>
+
+      <div class="way">
+        <div class="n">12.2</div>
+        <div>
+          <h4>유사도 기반</h4>
+          <div class="en">Similarity-based</div>
+          <p>
+            비슷한 약물은 비슷한 표적과 상호작용하리라는 원리에서 출발한다.
+            약물의 유사도 행렬(구조·부작용·유전자 발현 기반)과 표적의 유사도 행렬(서열·단백질 상호작용망·유전자 온톨로지 기반)
+            두 개를 계산한 뒤, k-최근접이웃, SVM, 이중 국소 모형(BLM), 정칙화 최소제곱(RLS),
+            커널화 베이즈 행렬분해 같은 고전적 알고리즘으로 상호작용을 예측한다.
+          </p>
+          <p>
+            명시적 특징 구성이 필요 없어 특징 벡터 기반보다 계산 효율이 좋다.
+            그러나 약물이나 표적이 충분한 유사성을 갖지 못할 때 성능이 제한된다.
+            비슷한 개체가 비슷한 상호작용을 공유한다는 가정에 크게 기대기 때문이다.
+          </p>
+          <p>
+            <b>BiComp-DTA</b>는 스미스–워터먼(SW) 점수만으로는 성능이 미흡하던 문제를 다룬다.
+            SW 점수와 렘펠–지브–마르코프 연쇄 알고리즘(LZMA)을 결합한 혼성 유사도 틀을 도입하고,
+            정규화된 SW 유사도 행렬과 정규화 압축 거리(NCD) 행렬의 아다마르 곱을 계산하는
+            BiComp 인코딩 모듈을 핵심 혁신으로 삼는다.
+          </p>
+          <div class="chips"><span>BiComp-DTA</span></div>
+        </div>
+      </div>
+
+      <div class="way">
+        <div class="n">12.3</div>
+        <div>
+          <h4>서열 기반</h4>
+          <div class="en">Sequence-based</div>
+          <p>
+            약물을 SMILES 문자열로, 단백질을 아미노산 서열로 다루어 자연어처리 기법을 끌어온다.
+            초기 모형은 RNN과 LSTM을 썼으나 순차 처리의 한계 탓에 긴 서열에서 어려움을 겪었다.
+            이를 넘기 위해 어텐션 기제와 트랜스포머 구조가 도입되어
+            병렬 처리와 장거리 의존의 처리를 가능케 했다.
+          </p>
+          <p>
+            장점은 둘이다. 손으로 빚은 특징이나 유사도 행렬이 필요 없어 <em class="k">데이터 준비가 단순</em>하고,
+            1차원 서열 데이터는 3차원 구조보다 자원 소모가 적어 <em class="k">계산 비용이 낮다</em>.
+            다만 입체화학 같은 3차원 구조 정보를 담지 못한다는 결정적 한계가 있다.
+          </p>
+          <p>
+            <b>GANsDTA</b>는 약물 서열용과 단백질 서열용 두 개의 생성적 적대 신경망으로 특징을 추출한다.
+            각 신경망은 잡음 섞인 합성 데이터를 만드는 생성기와, 현실적인 서열 특징을 학습하게 돕는 판별기로 이루어지고,
+            추출된 특징은 회귀 신경망으로 넘겨져 친화도를 예측한다.
+          </p>
+          <div class="chips"><span>WideDTA</span><span>SMILES2Vec</span><span>AttentionDTA</span><span>MT-DTI</span><span>SMILES-BERT</span><span>GANsDTA</span></div>
+        </div>
+      </div>
+
+      <div class="way">
+        <div class="n">12.4</div>
+        <div>
+          <h4>네트워크 기반</h4>
+          <div class="en">Network-based</div>
+          <p>
+            약물·표적·질병·유전자를 그래프의 노드로, 그들의 생물학적·약리학적 관계를 간선으로 표상하고
+            그래프 심층학습으로 숨은 연관을 밝힌다.
+            복잡한 관계 데이터를 통합할 수 있다는 것이 강점이라, 기존 약물을 새 표적이나 질병에 견주어보는
+            <em class="p">약물 재창출</em>에 특히 유용하다.
+            코로나19, 각종 암, 심방세동, 통증 같은 조건에서 성공적으로 적용되었다.
+          </p>
+          <p>
+            다만 네트워크가 수백만 개의 노드와 상호작용으로 확장될수록 계산 복잡도가 커지는 것이 난제다.
+            <b>DeepCDA</b>는 CNN과 LSTM을 결합해 국소 구조 패턴과 장거리 의존을 함께 다루며,
+            해석 가능성을 높이는 양면 어텐션 기제를 새로움으로 삼는다.
+            본 적 없는 약물이나 표적을 예측하는 콜드 스타트 상황을 위해
+            적대적 판별 도메인 적응도 채택했다.
+          </p>
+          <div class="chips"><span>GCN-DTI</span><span>DTI-GAT</span><span>DTI-HETA</span><span>DTI-GTN</span><span>deepDTnet</span><span>deepDR</span><span>AI-Bind</span><span>DeepCDA</span></div>
+        </div>
+      </div>
+
+      <div class="way">
+        <div class="n">12.5</div>
+        <div>
+          <h4>이미지 기반</h4>
+          <div class="en">Image-based</div>
+          <p>
+            컴퓨터 비전의 발전에 힘입어 약물의 2차원 분자 이미지를 활용하는 신흥 접근이다.
+            SMILES 같은 1차원 표상과 달리 2차원 이미지는 원자 배열, 결합 유형, 각도 같은
+            더 풍부한 구조 정보를 담는다. 공간 특징 추출에 강한 CNN을 주로 쓴다.
+          </p>
+          <p>
+            최근에는 사전훈련으로 성능을 높인다. <b>ImageMol</b>은 수백만 개의 분자 이미지로 훈련되었고,
+            <b>LISA-CPI</b>는 여기에 사전훈련된 AlphaFold2 모듈을 통합했다.
+            단백질 구조와 생체분자 상호작용 예측에서 더 높은 정확도를 제공하는 AlphaFold3의 등장으로
+            이미지 기반 모형의 성능이 한층 개선되리라 기대된다.
+          </p>
+          <p>
+            <b>MPS2IT-DTI</b>는 약물과 단백질 서열의 정규화된 k-mer 계수 벡터를 재배열해 이미지로 바꾸고
+            각각을 2차원 CNN으로 처리한다. <b>MCL-DTI</b>는 분자 이미지와 약물 속성을 통합하며,
+            다중 헤드 자기 어텐션과 교차 어텐션 모듈로 보강된 특징 인코더–디코더 틀을 둔다.
+          </p>
+          <div class="chips"><span>DEEPScreen</span><span>Chemception</span><span>DrugCNN</span><span>ImageMol</span><span>LISA-CPI</span><span>MPS2IT-DTI</span><span>MCL-DTI</span></div>
+        </div>
+      </div>
+
+      <div class="way">
+        <div class="n">12.6</div>
+        <div>
+          <h4>구조 기반</h4>
+          <div class="en">Structure-based</div>
+          <p>
+            3차원 구조를 활용한다. 분자를 그래프로 표상하되 노드는 원자나 단백질 잔기에,
+            간선은 공유결합이나 펩타이드 결합에 대응시킨다.
+            MolCLR, N-gram graph, MGCN 같은 모형은 약물 구조만 다루고,
+            DGraphDTA와 WGNN-DTA는 약물과 표적의 구조를 함께 넣는다.
+            1차원 서열이나 2차원 이미지, 화학 지문을 쓰는 모형에 비해 원자·아미노산의 연결성을 포착해
+            더 포괄적인 구조 표상을 제공하며, 계산 효율도 좋아 자원이 제한된 환경에 적합하다.
+          </p>
+          <p>
+            한계도 있다. 결합각과 결합 길이 같은 중요한 기하 정보는 대개 부호화되지 않는다.
+            이를 다루기 위해 <b>VideoMol</b>이 제안되었는데, 여러 각도와 조건에서 분자의 동적 형태를
+            포착하는 <em class="p">비디오 데이터</em>를 쓴다. 동적 3차원 모델링이 예측 정확도를
+            크게 높일 수 있음을 시사한다.
+          </p>
+          <p>
+            <b>MSGNN-DTA</b>는 원자 수준과 모티프 수준의 두 가지 약물 그래프를 만들고,
+            ESM-1b로 표적 서열의 접촉 지도에서 도출한 가중 단백질 그래프를 함께 둔다.
+            각 그래프를 독립적으로 그래프 신경망으로 처리한 뒤 어텐션으로 여러 규모의 구조 특징을 융합한다.
+          </p>
+          <div class="chips"><span>MolCLR</span><span>N-gram graph</span><span>MGCN</span><span>DGraphDTA</span><span>WGNN-DTA</span><span>VideoMol</span><span>MSGNN-DTA</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 12 ══════════ -->
+<section class="dark-s reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">12</span><h2>난제와 앞길</h2></div>
+    <p class="lede">
+      인공지능은 신약 발굴에서 변혁적 역할을 맡아 약물–표적 상호작용의 모델링과 약동학 예측,
+      약력학 평가에 유망한 해법을 제공한다. 그러나 그 잠재력을 온전히 펼치는 것을 막는
+      몇 가지 난제가 여전히 남아 있다.
+    </p>
+
+    <h3 style="margin-top:52px">남아 있는 난제</h3>
+    <div class="grid g2">
+      <div class="card">
+        <span class="tag">Data Scarcity</span>
+        <h4>데이터의 희소와 불균형</h4>
+        <p>알려진 약물–표적 상호작용은 알려지지 않은 것에 비해 압도적으로 적어,
+          데이터셋이 음성이나 불확실한 표본 쪽으로 편향되고 모형의 일반화가 제한된다.</p>
+        <p>인체 약동학 데이터 역시 약 1400개 화합물에 그치고 성공한 후보 쪽으로 기울어 있으며,
+          개인·질환 상태에 따른 변동성과 일관되지 않은 측정이 사정을 더 복잡하게 만든다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Multimodal Integration</span>
+        <h4>다중 양식 데이터의 통합</h4>
+        <p>분자 구조와 단백질 서열에서 임상 결과와 부작용 프로필에 이르는 복잡한 데이터를 통합하는 일은
+          기술적으로 까다롭다. 텍스트 정보와 AlphaFold 같은 출처의 3차원 단백질 구조를 함께 넣을 때 특히 그렇다.</p>
+        <p>이 통합의 난점은 데이터 조화, 전처리, 특징 추출에 영향을 주고
+          결국 모형의 해석 가능성과 정확도로 되돌아온다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Black Box</span>
+        <h4>블랙박스</h4>
+        <p>심층학습 모형은 강력하지만 흔히 블랙박스로 작동한다.
+          기전적 통찰을 개선하려면 SHAP이나 등각 예측 같은 설명가능 인공지능 방법이 필요하다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Clinical Uncertainty</span>
+        <h4>임상적 불확실성</h4>
+        <p>인공지능은 임상 종점을 직접 관찰할 수 없으므로 불확실성이 여전히 크다.
+          시험관에서 유망해 보이던 약동학적 성질도 예기치 못한 약력학적 반응이나
+          안전성 문제 탓에 전이되지 못할 수 있다.</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:60px">앞으로의 방향</h3>
+    <div class="grid g3">
+      <div class="card">
+        <span class="tag">PBPK / PD</span>
+        <h4>기전적 접근과의 결합</h4>
+        <p>생리학 기반 약동학·약력학 모형 같은 기전적 접근과 인공지능을 결합하면
+          전임상 발견을 인체 예측으로 옮기는 일이 개선되어 탈락률을 낮출 수 있다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">GAI · Quantum</span>
+        <h4>생성형 인공지능과 양자 컴퓨팅</h4>
+        <p>신규 후보 설계를 위한 신흥 도구다. 생성형 인공지능이 실현 가능한 화학 구조를 제안하고,
+          양자 방법이 분자의 형태와 상호작용을 정련한다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">LLM</span>
+        <h4>대형 언어모형</h4>
+        <p>방대한 생의학 말뭉치를 가로질러 가설 생성, 지식 검색, 데이터 통합을
+          가속할 채비를 갖추고 있다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Transfer Learning</span>
+        <h4>종간 전이학습</h4>
+        <p>특히 동물 약동학 데이터로부터의 전이학습은 종을 가로지르는 예측 모델링을 가능케 하여
+          인체 데이터의 희소성을 다룰 수 있다. 바이오의약품에서 특히 그렇다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Curated Data</span>
+        <h4>표준화된 데이터</h4>
+        <p>인공지능 주도 신약 발굴의 진전은 표준화되고 정제되며 대표성 있는 데이터셋에
+          크게 의존할 것이다.</p>
+      </div>
+      <div class="card">
+        <span class="tag">RWD</span>
+        <h4>실세계 데이터와 라벨 기준</h4>
+        <p>실세계 데이터(RWD)와 견고한 라벨링 기준이 이를 보완해,
+          다양한 치료 영역을 가로지르는 모형의 견고함과 적용 가능성을 보장해야 한다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 여백의 주 ══════════ -->
+<section class="notes reveal">
+  <div class="wrap">
+    <div class="shead"><span class="snum">※</span><h2>여백에 적은 주(註)</h2></div>
+    <p class="lede">
+      수치가 많은 장일수록 그 수치의 조건을 함께 밝혀야 한다.
+      원문을 옮기며 눈에 걸린 대목을 감추지 않고 적어둔다. 인용 시 유의할 지점의 목록이다.
+    </p>
+
+    <div class="note"><span class="mk">주 1</span><span class="bd">
+      9절(본 요약 08절)에서 Feinberg et al.의 성과가 <b>연달아 두 번 서술</b>된다.
+      “64% 평균 성능 향상”과 “쥐 청소율 r² = 0.28”이 앞 문장과 뒷 문장에 거의 그대로 반복된다.
+      본 요약에서는 한 번만 옮겼다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 2</span><span class="bd">
+      같은 문단에 각주 번호 <b>[35]</b>가 본문에 그대로 남아 있다.
+      이 장의 나머지 인용은 모두 저자–연도 방식이므로 편집 과정의 잔재로 보인다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 3</span><span class="bd">
+      7절(본 요약 06절)은 순환 신경망의 피드백 루프를 설명하며
+      “feedback loops like <b>Boltzmann constants</b>, Hopfield networks”라 적는다.
+      볼츠만 <b>상수</b>는 물리 상수이며, 여기서 의도된 것은 볼츠만 <b>머신</b>이다.
+      같은 책 제1장 4.1절은 이를 “Boltzmann machines”로 바르게 적는다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 4</span><span class="bd">
+      7절의 인공신경망 서술(MLP·RNN·CNN과 Kohonen·RBF·LVQ·counter-propagation·ADALINE 목록)은
+      제1장 4.1절의 서술과 거의 같은 문장으로 겹친다. 같은 책 안의 중복이다.
+      또한 이 목록을 <b>Huang et al. (2006)</b>에 귀속하는데, 해당 문헌은
+      극한학습기계(Extreme Learning Machine) 논문이므로 귀속이 정확하지 않다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 5</span><span class="bd">
+      10절 DeepPharm의 정확도 수치(BA 27.78%, PPBR 44.22%, VDss 63.33%, HL 66.67%)는
+      “가장 높은 정확도”로 서술되지만 절대값 자체는 낮다.
+      <b>어떤 기준의 ‘정확도’인지</b>(예: 2배 오차 이내, 분류 정확도 등) 원문에 명시가 없어,
+      다른 연구의 R²나 2배 오차 이내 비율과 직접 비교할 수 없다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 6</span><span class="bd">
+      11.1절의 유사도 계산 도구 목록이 “SIMCOMP(SIMilar COMPound), Compound.”로 문장이 끊긴다.
+      표 6.4에는 Rcpi가 함께 실려 있으므로 본문 목록이 불완전하다.
+      본 요약은 표를 기준으로 여덟 개 도구를 모두 옮겼다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 7</span><span class="bd">
+      Gabrielsson &amp; Weiner가 <b>1995년</b>과 <b>2001년</b> 두 항목으로 참고문헌에 올라 있다.
+      1995년 항목은 <i>Trends in Pharmacological Sciences</i> 16(4), 143으로 단일 페이지여서
+      서평이나 초록으로 보이는 반면, 본문은 이를 약력학 모델링의 실질적 근거로 인용한다.
+      실질적 전거는 2001년 단행본으로 읽는 편이 자연스럽다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 8</span><span class="bd">
+      12.1절의 “recent work <b>F</b>avors ensemble models”처럼 대문자 오식이 남아 있고,
+      Fig. 6.3과 6.5의 캡션에는 Obrezanova(2023)의 서지가 한 캡션 안에서 두 번 반복된다.
+      편집 정리가 덜 된 흔적이다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 9</span><span class="bd">
+      히어로의 혈장 농도–시간 곡선은 원문 Fig. 6.3을 그대로 옮긴 것이 아니다.
+      해당 그림은 Obrezanova(2023)에서 라이선스를 받아 재수록된 것이라 재현하지 않았고,
+      대신 <b>3절 본문이 서술하는 파라미터</b>(AUC, t½, F, V, K = CL/V)와 9절의 C<sub>max</sub>를
+      근거로 본 요약에서 새로 그린 <b>모식도</b>다. 실제 데이터가 아니다.
+    </span></div>
+
+    <div class="note"><span class="mk">주 10</span><span class="bd">
+      본 요약은 첨부 PDF의 제6장(pp. 75–100) 본문과 Table 6.1~6.5, Fig. 6.1~6.8만을 근거로 작성했다.
+      원문에 없는 사례·수치·주장은 더하지 않았으며, 판단이 개입된 대목은 위 주에 따로 적었다.
+    </span></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="bib">
+      <b>Amrita Thakur, S. Anil Kumar, Sreeharsha Nagaraja.</b>
+      “AI for predicting pharmacokinetics and pharmacodynamics.”
+      In <b>Khalid Raza (ed.), <i>Artificial Intelligence in Precision Drug Design, Volume 1:
+      Foundations and Core Techniques</i></b>, Academic Press / Elsevier, 2026, pp. 75–100.
+      ISBN 978-0-443-44415-9. DOI 10.1016/B978-0-443-44415-9.00003-X
+    </div>
+    <div class="fine">
+      소속 · Department of Physical Sciences, Amrita School of Engineering, Amrita Vishwa Vidyapeetham, Bengaluru /
+      Department of Pharmaceutical Sciences, College of Clinical Pharmacy, King Faisal University, Al-Ahsa<br>
+      연구비 · King Faisal University, Grant No. KFU253620<br>
+      본 웹페이지는 제6장의 국문 정독 요약이며, 원문의 저작권은 Elsevier에 있다.
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var bar = document.getElementById('prog');
+  function onScroll(){
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  var hero = document.getElementById('hero');
+  if (reduce) { hero.classList.add('on'); }
+  else { requestAnimationFrame(function(){ setTimeout(function(){ hero.classList.add('on'); }, 240); }); }
+
+  var els = document.querySelectorAll('.reveal');
+  if (reduce || !('IntersectionObserver' in window)) {
+    els.forEach(function(e){ e.classList.add('on'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (en.isIntersecting){ en.target.classList.add('on'); io.unobserve(en.target); }
+    });
+  }, {rootMargin:'0px 0px -12% 0px', threshold:0.06});
+  els.forEach(function(e){ io.observe(e); });
+})();
+</script>
+</body>
+</html>
