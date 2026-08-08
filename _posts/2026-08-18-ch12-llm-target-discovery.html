@@ -1,0 +1,952 @@
+---
+layout: null
+title: "Large-scale language models and drug target discovery" 
+date: 2026-08-18
+categories: [artificial intelligence]
+tags: [artificial general intelligence, drug discovery]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제12장 · 대규모 언어모형과 약물 표적 발굴 — 읽는 일을 기계에 맡긴다</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&family=Gowun+Batang:wght@400;700&family=Chivo+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   계보(系譜)의 색 체계
+   2017년 트랜스포머 하나에서 두 갈래가 갈라졌다.
+   인코더 계열은 읽고 이해하는 쪽으로, 디코더 계열은 쓰고 만드는 쪽으로.
+   이 장에 등장하는 열여덟 개의 신약 발굴 모형은 거의 전부
+   그 두 갈래 가운데 하나에 속한다. 색은 그 갈래를 가른다.
+     청록 teal   = 인코더 계보 · 이해와 예측 (BERT)
+     보라 violet = 디코더 계보 · 생성과 설계 (GPT)
+     슬레이트   = 공통 조상 · 그 밖의 트랜스포머
+     황금 amber = 어텐션 · 강조
+   ============================================================ */
+:root{
+  --paper:#E9E7EC;
+  --paper-2:#F5F4F7;
+  --white:#FFFFFF;
+  --ink:#171620;
+  --ink-soft:#464552;
+  --ink-mute:#787684;
+  --enc:#1F6B6B;
+  --enc-dim:rgba(31,107,107,.11);
+  --dec:#6B3FA0;
+  --dec-dim:rgba(107,63,160,.11);
+  --root:#3A4250;
+  --root-dim:rgba(58,66,80,.10);
+  --attn:#B0801A;
+  --rule:#CFCBD5;
+  --rule-soft:#DFDCE4;
+  --disp:"Nanum Gothic", sans-serif;
+  --sans:"Gowun Batang", serif;
+  --mono:"Chivo Mono", monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-weight:400;
+  font-size:17px;line-height:1.94;
+  -webkit-font-smoothing:antialiased;
+  word-break:keep-all;overflow-wrap:break-word;
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+#progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:90;
+  background:linear-gradient(90deg,var(--root),var(--enc) 45%,var(--dec))}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 26px}
+.col{max-width:722px;margin:0 auto}
+.wide{max-width:966px;margin:0 auto}
+
+/* ---------- 표제 ---------- */
+header.hero{position:relative;overflow:hidden;padding:86px 0 52px;border-bottom:1px solid var(--rule)}
+header.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(720px 400px at 4% -12%, rgba(31,107,107,.15), transparent 62%),
+             radial-gradient(560px 320px at 97% 2%, rgba(107,63,160,.13), transparent 62%)}
+#heroTok{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.5}
+.hero-inner{position:relative;z-index:1}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-mute);display:flex;gap:11px;align-items:center;flex-wrap:wrap;margin-bottom:24px}
+.kicker .dot{width:3px;height:3px;border-radius:50%;background:var(--rule)}
+.kicker .k2{flex-basis:100%;margin-top:6px;color:var(--enc);font-weight:600}
+.chapnum{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--dec);font-weight:600}
+h1{font-family:var(--disp);font-weight:800;font-size:clamp(31px,4.8vw,55px);
+  line-height:1.28;letter-spacing:-.028em;margin:14px 0 0;max-width:15em}
+h1 .e{color:var(--enc)}
+h1 .d{color:var(--dec)}
+.sub{font-weight:400;font-size:clamp(15px,1.6vw,18.5px);line-height:1.86;
+  color:var(--ink-soft);margin:26px 0 0;max-width:33em}
+.legend{display:flex;gap:20px;flex-wrap:wrap;margin:42px 0 0;padding:18px 0 0;border-top:1px solid var(--rule)}
+.legend .li{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--ink-mute)}
+.legend .sw{width:18px;height:8px;flex:0 0 auto;border-radius:2px}
+.byline{margin-top:26px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:12.5px;line-height:1.84;color:var(--ink-mute);max-width:52em}
+.byline b{color:var(--ink-soft);font-weight:700}
+
+/* ---------- 테제 ---------- */
+.thesis{padding:58px 0 6px}
+.lede{font-weight:400;font-size:clamp(18px,2.2vw,23px);line-height:1.88;margin:0}
+.lede b{font-family:var(--disp);font-weight:800;letter-spacing:-.02em}
+.lede .q{color:var(--dec)}
+.lede .u{background:linear-gradient(transparent 70%, rgba(176,128,26,.28) 70%)}
+
+/* ---------- 본문 ---------- */
+main{padding:20px 0 30px}
+section.sec{padding:70px 0}
+section.sec + section.sec{border-top:1px solid var(--rule)}
+.sechead{margin-bottom:28px}
+.secno{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink-mute);
+  display:block;margin-bottom:6px}
+h2{font-family:var(--disp);font-weight:800;font-size:clamp(24px,3.1vw,33px);
+  line-height:1.34;letter-spacing:-.03em;margin:0}
+.h2sub{font-size:13px;color:var(--ink-mute);margin-top:8px}
+h3{font-family:var(--disp);font-weight:800;font-size:20px;line-height:1.46;
+  margin:44px 0 12px;display:flex;align-items:baseline;gap:10px;letter-spacing:-.026em}
+h3 .hn{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--attn);flex:0 0 auto}
+h4{font-family:var(--disp);font-weight:700;font-size:15px;margin:28px 0 9px;color:var(--enc);letter-spacing:-.02em}
+p{margin:0 0 19px}
+a{color:var(--enc)}
+strong{font-weight:700}
+em.mk{font-style:normal;background:linear-gradient(transparent 72%, rgba(176,128,26,.26) 72%)}
+code{font-family:var(--mono);font-size:.86em;background:var(--white);
+  border:1px solid var(--rule-soft);padding:1px 5px;color:var(--dec)}
+
+/* ---------- 판단 ---------- */
+.judge{margin:32px 0;padding:21px 23px;background:var(--white);
+  border:1px solid var(--rule-soft);border-left:3px solid var(--attn)}
+.judge .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--attn);display:block;margin-bottom:10px;font-weight:600}
+.judge p{margin:0;font-size:15.5px;line-height:1.9;color:var(--ink-soft)}
+.judge p + p{margin-top:13px}
+.pull{margin:40px 0;padding:0 0 0 24px;border-left:2px solid var(--enc);
+  font-weight:400;font-size:clamp(18px,2.1vw,22px);line-height:1.86}
+
+/* ---------- 목록 ---------- */
+ul.gm{list-style:none;padding:0;margin:20px 0}
+ul.gm li{position:relative;padding-left:22px;margin-bottom:12px}
+ul.gm li::before{content:"";position:absolute;left:0;top:.82em;width:10px;height:2px;background:var(--enc)}
+ol.rn{list-style:none;counter-reset:rr;padding:0;margin:22px 0}
+ol.rn li{counter-increment:rr;position:relative;padding-left:38px;margin-bottom:15px}
+ol.rn li::before{content:counter(rr);position:absolute;left:0;top:.2em;
+  font-family:var(--mono);font-size:11.5px;color:#fff;background:var(--enc);
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:600}
+
+/* ---------- 카드 ---------- */
+.grid{display:grid;gap:13px;margin:28px 0}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:840px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--white);border:1px solid var(--rule-soft);padding:19px 20px 17px}
+.card .cno{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--dec);
+  display:block;margin-bottom:8px;font-weight:600}
+.card h5{font-family:var(--disp);font-weight:800;font-size:17px;margin:0 0 8px;letter-spacing:-.026em}
+.card p{font-size:14.5px;line-height:1.86;margin:0;color:var(--ink-soft)}
+.card .meta{font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);margin-top:11px;
+  padding-top:9px;border-top:1px dashed var(--rule);line-height:1.7}
+.card.e{border-top:3px solid var(--enc)}
+.card.d{border-top:3px solid var(--dec)}
+
+/* ---------- 표 ---------- */
+.tablewrap{overflow-x:auto;margin:26px 0;border:1px solid var(--rule-soft);background:var(--white)}
+table.tb{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+table.tb th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-mute);text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);font-weight:600}
+table.tb td{padding:10px 12px;border-bottom:1px solid var(--rule-soft);vertical-align:top;
+  line-height:1.7;color:var(--ink-soft)}
+table.tb tr:last-child td{border-bottom:0}
+table.tb td.k{font-family:var(--mono);font-weight:600;white-space:nowrap;color:var(--ink);font-size:13px}
+table.tb td.n{font-family:var(--mono);font-size:13px;color:var(--enc);white-space:nowrap;font-weight:600}
+table.tb td.g{font-size:13px;color:var(--ink-mute)}
+
+/* ---------- 시그니처: 계보 ---------- */
+.lin{margin:38px 0 12px;border:1px solid var(--rule);background:var(--white)}
+.lin-head{padding:18px 22px;border-bottom:1px solid var(--rule);display:flex;
+  justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.lin-head .t{font-family:var(--disp);font-weight:800;font-size:20px;letter-spacing:-.03em}
+.lin-head .s{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-mute)}
+.lin-svg{padding:14px 10px 4px;background:var(--paper-2);border-bottom:1px solid var(--rule-soft);
+  overflow-x:auto;position:relative}
+.lin-hint{display:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  color:var(--ink-mute);padding:0 22px 10px;background:var(--paper-2);
+  border-bottom:1px solid var(--rule-soft)}
+@media(max-width:760px){.lin-hint{display:block}}
+.lin-svg svg{width:100%;min-width:640px;height:auto;display:block}
+.mnode{cursor:pointer}
+.mnode rect{transition:fill .25s, stroke-width .25s}
+.mnode:hover rect{stroke-width:2.4}
+.mnode:focus-visible rect{stroke-width:3;outline:none}
+.lin-body{padding:22px 24px}
+.lin-body .bk{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;display:block;
+  margin-bottom:7px;font-weight:600}
+.lin-body h6{font-family:var(--disp);font-weight:800;font-size:23px;margin:0 0 4px;letter-spacing:-.03em}
+.lin-body .dev{font-family:var(--mono);font-size:11.5px;color:var(--ink-mute);margin-bottom:16px}
+.lin-body .use{font-size:15px;line-height:1.88;color:var(--ink-soft);margin:0 0 16px}
+.lin-body .bc{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.lin-body .bc div{padding:12px 14px;border-left:3px solid}
+.lin-body .bc .ben{border-color:var(--enc);background:var(--enc-dim)}
+.lin-body .bc .cha{border-color:var(--attn);background:rgba(176,128,26,.09)}
+.lin-body .bc span{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  display:block;margin-bottom:5px;font-weight:600}
+.lin-body .bc .ben span{color:var(--enc)} .lin-body .bc .cha span{color:var(--attn)}
+.lin-body .bc p{margin:0;font-size:14px;line-height:1.8;color:var(--ink-soft)}
+.lin-body .ref{font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);margin-top:14px;
+  padding-top:11px;border-top:1px dashed var(--rule)}
+@media(max-width:640px){.lin-body .bc{grid-template-columns:1fr}}
+
+/* ---------- 지표 ---------- */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule-soft);
+  border:1px solid var(--rule-soft);margin:26px 0}
+.metrics div{background:var(--white);padding:15px 14px}
+.metrics .mv{font-family:var(--mono);font-weight:600;font-size:19px;color:var(--dec)}
+.metrics .ml{font-size:11.5px;color:var(--ink-mute);margin-top:5px;line-height:1.55}
+@media(max-width:640px){.metrics{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- 그림 ---------- */
+figcaption{font-size:12.5px;line-height:1.78;color:var(--ink-mute);margin-top:11px;margin-bottom:30px}
+figcaption b{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--dec);
+  text-transform:uppercase;font-weight:600;margin-right:8px}
+
+/* ---------- 목차 ---------- */
+nav.rail{position:fixed;left:calc(50% - 556px);top:50%;transform:translateY(-50%);z-index:40;
+  display:none;opacity:0;pointer-events:none;transition:opacity .45s}
+nav.rail.show{opacity:1;pointer-events:auto}
+@media(min-width:1280px){nav.rail{display:block}}
+nav.rail ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--rule)}
+nav.rail a{display:block;text-decoration:none;font-size:11.5px;color:var(--ink-mute);
+  padding:5px 0 5px 13px;transition:.2s;position:relative;
+  max-width:146px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav.rail a::before{content:"";position:absolute;left:-1px;top:50%;height:0;width:3px;
+  background:var(--dec);transform:translateY(-50%);transition:height .25s}
+nav.rail a:hover{color:var(--ink)}
+nav.rail a.act{color:var(--dec);font-weight:700}
+nav.rail a.act::before{height:16px}
+
+/* ---------- 결론 ---------- */
+.closing{border:1px solid var(--enc);background:var(--white);margin:30px 0}
+.closing .ci{padding:18px 24px;border-bottom:1px solid var(--rule-soft)}
+.closing .ci:last-child{border-bottom:0}
+.closing .ck{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--enc);
+  display:block;margin-bottom:6px;font-weight:600}
+.closing .ci p{margin:0;font-size:15px;line-height:1.88;color:var(--ink-soft)}
+
+footer{border-top:1px solid var(--rule);padding:48px 0 84px;margin-top:32px}
+.src{font-size:12.5px;line-height:1.92;color:var(--ink-mute)}
+.src b{color:var(--ink-soft);font-weight:700}
+.src .note{margin-top:20px;padding-top:16px;border-top:1px dashed var(--rule);font-size:12px}
+
+.reveal{opacity:0;transform:translateY(14px);
+  transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.on{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<nav class="rail" aria-label="장 목차"><ol id="railList"></ol></nav>
+
+<header class="hero">
+  <svg id="heroTok" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+  <div class="wrap"><div class="wide hero-inner">
+    <div class="kicker">
+      <span>Artificial Intelligence in Precision Drug Design</span><span class="dot"></span>
+      <span>Volume 2 · Advanced Applications</span>
+      <b class="k2">Elsevier / Academic Press, 2026</b>
+    </div>
+    <div class="chapnum">CHAPTER 12</div>
+    <h1>대규모 언어모형과 약물 표적 발굴:<br><span class="e">읽는 일</span>을 기계에 맡긴다</h1>
+    <p class="sub">데이터는 이미 있다. 문제는 흩어져 있고, 일관되지 않고,
+    읽어 낼 도구 없이는 사실상 접근할 수 없다는 것이다.
+    이 장은 그 병목을 &lsquo;읽기&rsquo;의 문제로 규정하고, 언어모형을 그 해법으로 놓는다.</p>
+
+    <div class="legend" aria-label="이 문서의 색 규약">
+      <span class="li"><span class="sw" style="background:#1F6B6B"></span>인코더 계보 · 이해와 예측 (BERT)</span>
+      <span class="li"><span class="sw" style="background:#6B3FA0"></span>디코더 계보 · 생성과 설계 (GPT)</span>
+      <span class="li"><span class="sw" style="background:#3A4250"></span>공통 조상 · 그 밖의 트랜스포머</span>
+    </div>
+
+    <div class="byline">
+      <b>원저자</b> Syed Naseer Ahmad Shah, Javed Aalam, Rafat Parveen<br>
+      <b>소속</b> Department of Computer Science, Jamia Millia Islamia (New Delhi) ·
+      Department of Information Technology, SOB, Galgotias University (Greater Noida, Uttar Pradesh)<br>
+      <b>편저</b> Khalid Raza (Jamia Millia Islamia) &nbsp;·&nbsp; <b>DOI</b> 10.1016/B978-0-443-44430-2.00016-5
+    </div>
+  </div></div>
+</header>
+
+<div class="wrap">
+<div class="wide thesis reveal">
+  <p class="lede">신약 하나를 시장에 올리는 데 10년에서 15년, 20억 달러가 넘게 든다.
+  그런데도 후보의 <b>90퍼센트 이상</b>이 규제 관문에 이르지 못한다.
+  차세대 시퀀싱, 전사체, 단백체, 대사체가 쏟아 내는 데이터와
+  끝없이 불어나는 과학 문헌이 있는데도 그렇다.
+  <span class="q">데이터가 없어서가 아니다.</span>
+  <span class="u">흩어져 있고, 일관되지 않고, 해석하고 종합할 도구 없이는 접근할 수 없기 때문이다.</span>
+  이 장은 그 도구로 언어모형을 지목한다.</p>
+</div>
+</div>
+
+<main class="wrap">
+
+<!-- ================= 1 ================= -->
+<section class="sec" id="s1">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 01</span>
+    <h2>병목은 데이터가 아니라 읽기다</h2>
+    <div class="h2sub">서론 · 세 단계의 파이프라인과 언어모형의 자리</div></div>
+
+  <p>신약 발굴은 전통적으로 세 단계로 나뉜다.
+  <b>질병 이해와 표적 선정</b>, <b>선정된 표적을 겨냥한 치료 전략 개발</b>,
+  그리고 <b>안전성과 효능을 확인하는 임상시험</b>이다.
+  각 단계가 시간과 자원을 잡아먹는다. 생물 시스템이 복잡하고
+  연구와 검증의 모든 단계에서 소모적인 검토 절차가 따르기 때문이다.</p>
+
+  <p>높은 탈락률의 중심에는 <b>유효한 약물 표적을 찾는 일</b>이 있다.
+  조절했을 때 치료 효과가 나타나는 특정 유전자, 단백질, 분자 경로 말이다.
+  이 작업이 복잡하고 위험하다.</p>
+
+  <h4>이미 나와 있는 사례들</h4>
+  <ul class="gm">
+    <li><b>Geneformer</b> &mdash; 어텐션과 맥락 인식을 갖춘 딥러닝 모형으로
+    <em class="mk">약 3천만 개의 단일세포 전사체</em>로 사전학습되었다.
+    데이터가 부족한 네트워크 생물학 환경에서 맥락 의존적 예측을 가능하게 한다.</li>
+    <li><b>ChemCrow</b> &mdash; 유기 합성, 신약 발굴, 소재 설계 작업을 수행하는 LLM 화학 에이전트다.</li>
+    <li><b>LLM4SD</b> &mdash; 언어모형이 원시 실험 데이터로부터 과학적 종합, 추론, 설명을 수행해
+    <b>인간 전문가의 분석과 일치하는 가설을 생성</b>할 수 있음을 보였다.</li>
+    <li><b>Med-PaLM</b> &mdash; 임상 지식을 담은 언어모형으로
+    USMLE 형식 문제에서 처음으로 인간 전문가의 성능에 도달했다.</li>
+  </ul>
+
+  <p>세 단계 각각에서 언어모형이 할 일이 다르다.
+  첫 단계에서는 광범위한 문헌 검토와 특허 분석으로 질병에 관여하는 생물학적 경로를 조사하고,
+  기능유전체학 분석으로 표적 유전자를 고른다.
+  생체 내·시험관 연구 결과를 포함한 유전자 문헌을 훑어 <b>가장 좋은 작용 기전이나
+  가장 높은 표적 잠재력을 가진 유전자</b>를 제안한다.</p>
+  <p>둘째 단계에서는 화학 반응을 학습해 실험을 자동화하고 로봇 장치를 제어한다.
+  분자 편집과 조립 전략을 제안하는 상호작용 시스템을 제공하며,
+  아데노 연관 바이러스(AAV) 벡터 설계처럼 유전자 치료 전략에도 관여한다.
+  셋째 단계에서는 환자 프로파일을 시험 요건과 대조해
+  <b>환자–시험 매칭과 프로토콜 작성의 부담</b>을 줄인다.</p>
+
+  <div class="judge">
+    <span class="lab">서론이 이미 적어 둔 세 가지 난점</span>
+    <p><b>해석가능성.</b> 결정론적 알고리즘은 같은 입력에 늘 같은 출력을 내지만
+    언어모형은 확률 모형이라 <b>결과를 정확한 출처나 근거로 귀속시키기 어렵다.</b>
+    실수의 여파가 오래가는 신약 개발 같은 고위험 영역에서 이것은 무거운 문제다.</p>
+    <p><b>도메인 적응.</b> 범용 모형은 도메인 특화 데이터셋으로 미세조정하지 않으면
+    생의학 과제에서 최적 성능에 이르지 못한다.
+    고품질 생의학 말뭉치에 대한 지속적 학습과 큐레이션과 검증이 필요하다.</p>
+    <p><b>학습 데이터의 편향.</b> 집중적으로 연구된 질환이나 유전자 표적이 과다대표되면
+    결과가 치우치고 <em class="mk">동등하게 중요하지만 덜 연구된 생물학적 현상이 가려진다.</em></p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="sec" id="s2">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 02</span>
+    <h2>두 계보</h2>
+    <div class="h2sub">2017년 트랜스포머에서 갈라진 열여덟 개의 모형</div></div>
+
+  <p>인공지능의 발전은 점진적이었다. 1950년 앨런 튜링의 튜링 테스트,
+  1959년 기계학습 알고리즘, 1966년 최초의 챗봇 ELIZA.
+  그러다 <b>2017년 트랜스포머 구조</b>가 등장하면서 판이 바뀐다.
+  자기 어텐션 기제로 텍스트의 장거리 의존성을 표현하고,
+  토큰 기반 수치 표현으로 문장과 문서를 <b>병렬 처리</b>할 수 있게 되었다.</p>
+
+  <p>여기서 두 갈래가 갈린다. 구글의 <code>BERT</code>는 <b>양방향 인코딩</b>으로
+  더 깊은 맥락 이해를 가능하게 했다. OpenAI의 <code>GPT-3</code>는 2020년
+  <b>1,750억 개의 매개변수</b>와 거의 1조 개의 단어로 학습되어
+  텍스트 생성, 번역, 요약, 질의응답에서 언어모형의 잠재력을 보였다.
+  <em class="mk">전자는 읽는 쪽으로, 후자는 쓰는 쪽으로 갔다.</em></p>
+
+  <p>이 장에 등장하는 신약 발굴 모형 열여덟 개는 거의 전부 그 두 갈래 가운데 하나에 속한다.
+  아래는 그 계보를 그린 것이다.</p>
+
+  <div class="lin reveal" id="linPanel">
+    <div class="lin-head">
+      <span class="t">모형 계보</span>
+      <span class="s">Table 12.1 · 18 models</span>
+    </div>
+    <div class="lin-svg">
+      <svg id="linSvg" viewBox="0 0 880 486" role="img"
+           aria-label="트랜스포머에서 갈라진 인코더 계보와 디코더 계보, 그리고 그 밖의 트랜스포머 모형들의 계보도"></svg>
+    </div>
+    <div class="lin-hint">← 계보도를 옆으로 밀어 보세요 →</div>
+    <div class="lin-body" id="linBody" role="region" aria-live="polite"></div>
+  </div>
+  <figcaption><b>표 12.1 · 그림 1</b> 원문 표 12.1의 18개 모형을 &lsquo;쓰인 알고리즘&rsquo; 열에 따라
+  세 계보로 나누고, 본문에 등장하는 기반 모형들을 위에 얹었다.
+  <b>계보 분류는 원문이 명시한 것이 아니라 &lsquo;쓰인 알고리즘&rsquo; 항목을 근거로 이 정리본에서 나눈 것이다.</b>
+  각 노드를 누르면 표 12.1의 쓸모·이점·과제가 나온다.</figcaption>
+
+  <div class="judge">
+    <span class="lab">계보를 나란히 놓으면 보이는 것</span>
+    <p>인코더 계보는 <b>기존 데이터에서 무엇을 읽어 낼 것인가</b>를 묻는다.
+    분자 지문에서 약–표적 상호작용을 예측하고, SMILES 표현에서 특징을 추출하고,
+    긴 비암호화 RNA를 해석한다. 답이 이미 데이터 안에 있다고 전제한다.</p>
+    <p>디코더 계보는 <b>없던 것을 만들어 낼 것인가</b>를 묻는다.
+    새 분자를 설계하고, 시너지 조합을 제안하고, 문헌을 생성한다.</p>
+    <p>둘의 차이는 기술적 선택이 아니라 <em class="mk">질문의 차이</em>다.
+    그리고 검증의 난이도도 다르다. 읽어 낸 것은 데이터와 대조할 수 있지만,
+    만들어 낸 것은 <b>실험실에 가져가야만 확인된다.</b></p>
+  </div>
+
+  <h3><span class="hn">2.0</span> 생의학 특화 모형</h3>
+  <p>생의학 텍스트의 언어적 복잡성에 대응하기 위해 도메인 특화 모형이 만들어졌다.
+  <code>BioBERT</code>, <code>PubMedBERT</code>, <code>SciBERT</code>, <code>ClinicalBERT</code>가 그것이다.
+  PubMed 초록, PubMed Central 전문 논문, <code>MIMIC-III</code> 데이터베이스의 임상 기록 같은
+  생의학 말뭉치로 사전학습한 뒤,
+  개체명 인식, 유전자–질환 관계 추출, 임상 문서 분류, 의학 질의응답 같은 과제에 맞춰 미세조정한다.</p>
+  <p>초기 자연어처리 시스템 &mdash; 규칙 기반 시스템, n-gram과 은닉 마르코프 모형 같은 통계 모형 &mdash; 은
+  <b>의미적 맥락과 장거리 언어 의존성을 담아내지 못했다.</b>
+  트랜스포머 기반 언어모형이 그 제약을 넘었다.</p>
+  <p>텍스트 중심 모형과 나란히 <b>다중양식 대규모 언어모형(MLLM)</b>도 나왔다.
+  텍스트, 이미지, 분자 구조, 소리, 영상 같은 이질적 데이터 유형을 함께 다룬다.
+  오믹스 데이터, 화학 구조, 임상 영상을 결합하면 다차원적 관점이 열리므로 신약 발굴에 특히 유용하다.</p>
+ </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="sec" id="s3">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 02.1&ndash;02.5</span>
+    <h2>무엇을 얼마나 하는가</h2>
+    <div class="h2sub">벤치마크 수치 · 구조 기반 설계 · 드노보 · 표적 발굴 · ADMET</div></div>
+
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>모형</th><th>규모 · 학습</th><th>보고된 성능</th></tr></thead>
+      <tbody>
+        <tr><td class="k">GPT-3 (2020)</td><td class="g">매개변수 1,750억 · 거의 1조 단어</td>
+          <td>범용 자연어처리 과제 전반</td></tr>
+        <tr><td class="k">Med-PaLM 2</td><td class="g">PaLM 구조 · 매개변수 5,400억 · 일반 및 큐레이션 임상 데이터</td>
+          <td class="n">MedQA(USMLE) 85.4% · PubMedQA 75.0%</td></tr>
+        <tr><td class="k">BioGPT</td><td class="g">GPT-2 변형 · PubMed 초록 약 1,500만 편</td>
+          <td class="n">BC5CDR F1 44.9% · KD-DTI F1 38.4% · PubMedQA 78.2%</td></tr>
+        <tr><td class="k">MolGPT</td><td class="g">트랜스포머 디코더 · ZINC와 ChEMBL의 SMILES</td>
+          <td class="n">GuacaMol 유효성 &gt;97% · 고유성 90% · 신규성 88%</td></tr>
+        <tr><td class="k">Geneformer</td><td class="g">단일세포 전사체 약 3,000만 개</td>
+          <td>심근병증 치료 표적 식별</td></tr>
+        <tr><td class="k">QuoteTarget</td><td class="g">서열 기반 트랜스포머 단백질 언어모형 + Grad-CAM</td>
+          <td class="n">약물 표적 가능 단백질 1,200개 이상 식별</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption>본문에 흩어져 있는 벤치마크 수치를 모았다.
+  Med-PaLM 2는 전문가 평가자가 장문 답변을 <b>65퍼센트의 경우에 선호</b>했다는 보고도 함께 있다.</figcaption>
+
+  <div class="judge">
+    <span class="lab">이 표에서 함께 봐야 할 두 숫자</span>
+    <p>BioGPT의 <b>BC5CDR F1 44.9퍼센트</b>와 <b>KD-DTI F1 38.4퍼센트</b>다.
+    원문은 이것을 &ldquo;PubMedBERT를 능가했다&rdquo;고 적는다. 사실이다.</p>
+    <p>그런데 <b>절대값으로 보면 F1이 40퍼센트 안팎이라는 것은
+    관계 추출에서 절반 이상을 놓친다는 뜻이다.</b>
+    같은 표의 PubMedQA 78.2퍼센트나 MedQA 85.4퍼센트와는 성격이 다른 수치다.
+    질의응답은 보기 중에서 고르는 문제이고, 관계 추출은 문장에서 캐내는 문제다.</p>
+    <p><em class="mk">비교 우위와 절대 성능은 다른 이야기다.</em>
+    &ldquo;능가했다&rdquo;는 서술만 인용하면 이 차이가 사라진다.</p>
+  </div>
+
+  <h3><span class="hn">2.2</span> 구조 기반 치료제 개발</h3>
+  <p>사전학습된 언어모형이 화학적으로 유의미한 질문에 답하고 분자 특성을 밝혀낼 수 있다는 것이 확인되었다.
+  분자 그래프로부터 <code>SMILES</code> 문자열 같은 분자 표현을 생성해 새 화합물 라이브러리를 여는 작업 &mdash;
+  이것을 <b>구조 기반 약물 분자 설계</b>라 부른다.</p>
+  <ul class="gm">
+    <li><b>LLaMA와 GPT의 비교</b> &mdash; 약물–약물 상호작용 예측과 분자 특성 추론 과제에서 평가되었고
+    LLaMA가 더 나은 성능을 보였다. 언어모형이 <b>SMILES 임베딩</b> &mdash;
+    화학적 특징을 기계가 읽을 수 있는 형태로 담은 분자 구조의 수치 벡터 표현 &mdash; 을
+    효과적으로 이해하고 활용할 수 있다는 뜻이다.</li>
+    <li><b>Transmol</b> &mdash; 분자 생성과 리드 화합물 식별을 지원한다.
+    기계학습으로 생성한 분자를 담은 <code>cheML.io</code> 데이터베이스가 뒷받침한다.</li>
+    <li><b>그룹 분자 표현(GMR)</b> &mdash; DrugLLM이 도입한 기법이다.
+    분자를 개별 원자가 아니라 <b>묶인 조각(fragment) 단위로 표현</b>해
+    더 높은 수준의 화학적 패턴을 포착하게 한다. 생성 정확도가 개선된다.</li>
+    <li><b>Token-Mol 1.0</b> &mdash; 토큰화 아래에서 3차원 분자 구조를 이해하게 하고,
+    새로운 <b>가우시안 교차 엔트로피(GCE) 손실 함수</b>를 도입했다.</li>
+  </ul>
+
+  <h3><span class="hn">2.3</span> 드노보 설계</h3>
+  <p>기존 분자 주형에 기대지 않고 약물다운 분자를 처음부터 설계하는 일이다.
+  언어모형과 <b>화학 언어모형(CLM)</b>이 이 과정에 들어오면서
+  화학 공간의 탐색 범위와 분자 정제의 속도가 함께 개선되었다.</p>
+  <div class="grid g2">
+    <div class="card d"><span class="cno">cMolGPT</span><h5>물성 조건부 생성</h5>
+      <p>주어진 분자 특성으로부터 SMILES 기술을 생성하는 물성 조건부 GPT 모형이다.
+      물성 지향 최적화로 드노보 생성을 앞당기고 <b>리드 분자의 최적화 시간을 크게 줄인다.</b></p></div>
+    <div class="card e"><span class="cno">CLM</span><h5>구조–활성 관계 모형화</h5>
+      <p><code>PI3Kγ</code> 리간드로 학습한 화학 언어모형이
+      분자 구조와 생물활성의 상관을 모형화하고
+      <b>원하는 생물학적 활성 수준을 가진 새 리간드를 설계</b>할 수 있음을 보였다.</p></div>
+    <div class="card d"><span class="cno">FSM-DDTR</span><h5>다목적 트랜스포머</h5>
+      <p>여러 약동학적·물리화학적 특징을 동시에 겨냥한 분자를 만든다.
+      <b>합성 접근성, 분자량, 지용성, 위상학적 극성 표면적</b>을 최적화해
+      약물다움과 합성 가능성을 함께 확보한다.</p></div>
+    <div class="card d"><span class="cno">DrugAssist</span><h5>반복 최적화</h5>
+      <p>학습된 구조 패턴을 이용해 분자 후보를 반복적으로 개선한다.
+      드노보 생성이 아니라 <b>이미 있는 약물 분자의 최적화</b>에 초점이 있다.</p></div>
+  </div>
+
+  <h3><span class="hn">2.4</span> 표적 발굴과 약–표적 상호작용</h3>
+  <p>관습적 실험 방법 &mdash; 고속 대량 스크리닝과 습식 상호작용 분석 &mdash; 은 노동집약적이고 오래 걸린다.
+  언어모형은 방대한 생의학 문헌 데이터베이스를 질의하고, 유전체 데이터를 결합하고,
+  질환 연관 생물학적 경로를 순회함으로써 표적 발굴을 돕는다.</p>
+  <ul class="gm">
+    <li><b>DrugGen</b> &mdash; 약물과 그 잠재적 표적 상호작용을 공동으로 모형화한다.
+    <b>히트에서 리드로 넘어가는 최적화의 핵심 모듈</b>이다.</li>
+    <li><b>TransDTI</b> &mdash; 언어모형 기반 추론에 분자 도킹과 시뮬레이션 분석을 결합해
+    약–표적 상호작용 예측의 정확도를 높인다. 값비싼 시험관 스크리닝의 인실리코 대안이다.</li>
+    <li><b>단백질 언어모형(PLM)</b> &mdash; 알려진 약물 표적의 대부분은 단백질이다.
+    G단백질 연결 수용체(GPCR), 이온 채널, 효소, 수송 단백질.
+    <code>QuoteTarget</code>은 자기지도 사전학습과 <b>Grad-CAM</b> 어텐션 시각화를 쓴다.
+    Grad-CAM은 <em class="mk">서열에서 모형의 예측에 가장 강하게 영향을 준 영역을 짚어 주는</em>
+    시각화 방법으로, 해석가능성을 높인다.
+    이 모형이 약물 표적 가능성이 있는 단백질 <b>1,200개 이상</b>을 찾아냈다.</li>
+  </ul>
+
+  <h3><span class="hn">2.5</span> ADME와 ADMET 프로파일링</h3>
+  <p>흡수·분포·대사·배설, 여기에 독성을 더한 프로파일이 나쁘다는 것은
+  <b>후기 임상시험 실패의 가장 흔한 이유 가운데 하나</b>다.
+  관습적 ADMET 연구는 실험실과 생체 내 실험을 요구하므로 오래 걸리고 자원이 많이 들며 윤리 문제도 따른다.</p>
+  <ul class="gm">
+    <li><b>질의응답 시스템</b> &mdash; ADMET 분석에 맞춰진 언어모형이 복잡한 약리 데이터를 해석해
+    화합물의 흡수·분포·대사·배설·독성 가능성에 대한 일관된 정보를 제공한다.
+    <b>전문가의 추론을 모사</b>해 초기 단계에서 후보의 실현 가능성을 판단하게 돕는다.</li>
+    <li><b>다중 에이전트 시스템</b> &mdash; 서로 다른 AI 모듈이 각각의 ADMET 특성을 평가한다.
+    여러 예측 도구, 벤치마크 데이터셋, 분자 기술자를 결합해 정확도와 재현성을 높인다.</li>
+    <li><b>하이브리드 토큰화</b> &mdash; SMILES 문자열을 의미 있는 조각으로 나누고
+    이중 사전학습 전략을 더한다. 모형이 <b>화학의 구문과 의미를 함께 학습</b>하게 된다.</li>
+    <li><b>벤치마킹 프레임워크</b> &mdash; 여러 언어모형과 AI 모형의 성능을
+    다양한 약리 데이터셋에서 비교·평가한다.
+    예측의 해석가능성을 높이고 신약 발굴 과정 전반의 일관성을 확보한다.</li>
+  </ul>
+ </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="sec" id="s4">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 03</span>
+    <h2>윤리와 규제</h2>
+    <div class="h2sub">책임 · 프라이버시 · 접근의 형평 · 규제 수용</div></div>
+
+  <div class="grid g2">
+    <div class="card"><span class="cno">책임</span><h5>누가 책임지는가</h5>
+      <p>언어모형이 영향을 준 결정은 대개 <b>불투명한 추론</b>에서 나온다.
+      임상이나 규제 맥락에서 오류가 생겼을 때 책임 소재를 정하기 어렵다.
+      언어모형의 출력이 생의학 연구의 중요한 결정에 더 깊이 관여할수록 이 문제는 커진다.</p></div>
+    <div class="card"><span class="cno">프라이버시</span><h5>재식별의 위험</h5>
+      <p>환자 유래 다중오믹스 데이터 같은 민감 정보로 학습하거나 적용할 때 특히 중요하다.
+      <b>비식별화를 해도 언어모형이 학습 데이터에서 개인 특정 정보를 추론하거나 재현할 위험</b>이 남는다.
+      강한 데이터 거버넌스와 재식별을 막는 모형 구조가 필요하다.</p></div>
+    <div class="card"><span class="cno">형평</span><h5>접근의 문제</h5>
+      <p>대부분의 언어모형 플랫폼이 공평한 접근을 위해 <b>속도 제한(rate limiting)</b>을 쓴다.
+      그런데 이 방식은 작업 부하가 변할 때 계산 자원의 준최적화를 유발하고 효율을 떨어뜨린다.
+      입력 길이가 계속 달라지고 배치 요건이 복잡해 <b>스케줄링 자체가 어렵다.</b></p></div>
+    <div class="card"><span class="cno">규제</span><h5>기술적 성능만으로는 부족하다</h5>
+      <p>FDA는 <b>우수 기계학습 실무(GMLP)</b>를 강조한다.
+      학습 데이터, 검증, 모형 갱신의 투명성을 요구한다.
+      언어모형을 포함한 AI 시스템이 시험 설계나 진단 맥락에서 고려되려면 이 조건을 충족해야 한다.
+      <em class="mk">규제 준수와 설명가능성이 기술적 성능만큼 중요하다.</em></p></div>
+  </div>
+
+  <div class="pull">
+    이 절의 마지막 문장이 이 장 전체의 유보다.
+    <b>&ldquo;기술적 성능만으로는 충분하지 않다.&rdquo;</b>
+    벤치마크에서 몇 퍼센트를 더 얻는 일과 그 모형이 규제 아래 쓰이는 일은 다른 문제다.
+  </div>
+ </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="sec" id="s5">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 03.1</span>
+    <h2>앞으로</h2>
+    <div class="h2sub">표적 발굴 · 드노보 · 시너지 · 약물감시 · 임상의사결정</div></div>
+
+  <ol class="rn">
+    <li><b>표적 발굴과 검증의 가속</b> &mdash; 비정형 생의학 텍스트에서 통찰을 뽑고,
+    다중오믹스 데이터의 통찰을 결합하고, 질병 기전과 치료 경로에 관한 가설을 생성한다.
+    <b>암, 신경퇴행성 질환, 감염병처럼 생물학이 다요인적이고 복잡한 질환</b>에서 특히 값지다.</li>
+    <li><b>드노보 발굴</b> &mdash; SMILES 문자열과 분자 그래프 같은 화학 표현으로 학습한 모형이
+    원하는 성질을 가진 새 약물다운 분자를 만든다.
+    골격 기반 생성, 리드 최적화, 미탐색 화학 공간의 탐색이 가능하다.
+    <em class="mk">전통적 약물 라이브러리가 통하지 않는 희귀질환이나 치료 저항성 질환</em>에서 중요해진다.</li>
+    <li><b>시너지와 오프라벨</b> &mdash; 시너지 있는 약물 상호작용을 예측하고,
+    알려진 화합물의 허가 외 용도를 찾아내고, 효능은 최대화하면서 독성은 최소화하는 접근을 짚어낸다.
+    내성 기전 때문에 다제 요법이 필요한 감염병과 암에서 특히 중요하다.</li>
+    <li><b>규제 과학과 약물감시</b> &mdash; 이상사례 보고를 해석하고,
+    약물 안전성 프로파일을 실시간으로 평가하고, 시판 후 감시 데이터에서 새 안전성 신호를 추적한다.</li>
+    <li><b>임상의사결정지원과 디지털 치료제</b> &mdash; 언어모형 기반 대화형 에이전트가
+    치료 선택, 용량 결정, 근거 기반 의학에서 임상의를 돕는다.</li>
+  </ol>
+ </div>
+</section>
+
+<!-- ================= 결론 ================= -->
+<section class="sec" id="s6">
+ <div class="col">
+  <div class="sechead"><span class="secno">CLOSING</span>
+    <h2>이 장이 남기는 것</h2>
+    <div class="h2sub">결론 · 그리고 읽고 난 뒤의 판단</div></div>
+
+  <div class="closing">
+    <div class="ci"><span class="ck">01 · 문제의 재정의</span>
+      <p>이 장이 첫 문단에서 한 일은 병목을 다시 정의한 것이다.
+      데이터가 없는 것이 아니라 <b>흩어져 있고 일관되지 않고 읽어 낼 도구가 없다.</b>
+      그렇게 규정하면 언어모형이 해법의 자리에 정확히 들어온다.</p></div>
+    <div class="ci"><span class="ck">02 · 두 갈래의 질문</span>
+      <p>인코더 계보는 &lsquo;이 데이터에서 무엇을 읽어 낼 것인가&rsquo;를 묻고,
+      디코더 계보는 &lsquo;없던 것을 만들어 낼 것인가&rsquo;를 묻는다.
+      <b>기술의 차이가 아니라 질문의 차이이며, 검증의 난이도도 다르다.</b></p></div>
+    <div class="ci"><span class="ck">03 · 이점과 과제가 짝을 이룬다</span>
+      <p>표 12.1의 18개 모형은 모두 이점 한 줄과 과제 한 줄을 함께 갖는다.
+      데이터셋 민감도, 높은 계산 요구, 과적합 위험, 서열만 입력받는 한계.
+      <b>어느 모형도 조건 없이 좋다고 적혀 있지 않다.</b></p></div>
+    <div class="ci"><span class="ck">04 · 성능만으로는 부족하다</span>
+      <p>3절이 짚는 대로, 책임 소재, 재식별 위험, 접근의 형평, GMLP 준수가 남는다.
+      벤치마크에서 몇 퍼센트를 더 얻는 일과 그 모형이 규제 아래 쓰이는 일은 다른 문제다.</p></div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">옮긴이의 판단</span>
+    <p>이 장은 목록이다. 열여덟 개의 모형을 소개하고 각각의 쓸모를 적는다.
+    개별 모형에 대한 설명은 대개 두세 문장이고, 그 이상 파고들지 않는다.
+    <b>깊이가 아니라 지형을 그리는 것이 목적인 글</b>이다.
+    그런 글로서는 잘 작성되었다. 신약 발굴에 언어모형을 붙이려는 사람이
+    무엇부터 살펴야 하는지를 한 번에 볼 수 있다.</p>
+    <p>다만 목록의 성격상 <b>수치의 맥락이 얇다.</b>
+    BioGPT의 F1 44.9퍼센트가 &ldquo;PubMedBERT를 능가했다&rdquo;고만 적히면,
+    관계 추출에서 절반 이상을 놓친다는 사실은 드러나지 않는다.
+    MolGPT의 유효성 97퍼센트, 고유성 90퍼센트, 신규성 88퍼센트도
+    <em class="mk">생성된 분자가 화학적으로 타당하고 서로 다르고 새롭다는 뜻이지,
+    약효가 있다는 뜻은 아니다.</em>
+    이 책의 5장부터 10장까지 반복해 확인한 대로, 예측과 검증 사이에는 여전히 거리가 있다.</p>
+    <p>그럼에도 이 장이 짚은 것 하나는 오래 남을 것 같다.
+    서론이 인용한 문헌 가운데 <b>&ldquo;대규모 언어모형은 지식 데이터베이스가 아니라
+    과학적 추론 엔진으로 써야 한다&rdquo;</b>는 주장이 있다.
+    이 구분이 중요하다. 데이터베이스는 저장한 것을 정확히 돌려주지만,
+    추론 엔진은 <b>틀릴 수 있는 대신 새로운 것을 제안한다.</b>
+    언어모형에 전자를 기대하면 환각이 결함이 되고, 후자를 기대하면 검증이 의무가 된다.
+    이 장의 열여덟 개 모형은 전부 후자다.</p>
+  </div>
+ </div>
+</section>
+
+</main>
+
+<footer>
+ <div class="wrap"><div class="col">
+  <div class="src">
+    <b>원전</b><br>
+    Shah, S. N. A., Aalam, J., &amp; Parveen, R. (2026).
+    <i>Large language models for automated drug target discovery and literature mining.</i>
+    In K. Raza (Ed.), <b>Artificial Intelligence in Precision Drug Design, Volume 2: Advanced Applications</b>
+    (Chapter 12, pp. 263&ndash;278). Academic Press / Elsevier. ISBN 978-0-443-44430-2.
+    https://doi.org/10.1016/B978-0-443-44430-2.00016-5
+    <div class="note">
+      이 문서는 원저 제12장만을 대상으로 한 한국어 정리본이다. 표 12.1의 내용, 벤치마크 수치,
+      모형 이름, 인용 문헌은 모두 원문에서 가져왔고, 절 구성과 도해는 읽기 편하도록 재배열했다.<br><br>
+      <b>「모형 계보」에 관하여</b> &mdash; 표 12.1의 18개 모형을 &lsquo;쓰인 알고리즘&rsquo; 열에 따라
+      인코더(BERT) 계보, 디코더(GPT) 계보, 그 밖의 트랜스포머로 나누고,
+      본문에 등장하는 기반 모형(Transformer, BERT, GPT-3, 생의학 특화 BERT 계열)을 위에 얹었다.
+      <b>이 계보 분류는 원문이 명시한 것이 아니라 표의 알고리즘 항목을 근거로 이 정리본에서 나눈 것이다.</b>
+      원문에 이런 계보도는 없다.<br><br>
+      <b>수치에 관하여</b> &mdash; 원문은 BioGPT의 BC5CDR F1 44.9퍼센트와 KD-DTI F1 38.4퍼센트를
+      &ldquo;PubMedBERT를 능가했다&rdquo;고 서술한다. 비교 우위는 사실이지만
+      절대값으로는 관계 추출에서 절반 이상을 놓치는 수준이라는 점을 본문에 표시했다.
+      MolGPT의 유효성·고유성·신규성 지표는 화학적 타당성에 관한 것이지 약효에 관한 것이 아니다.<br><br>
+      &lsquo;판단&rsquo;으로 표시한 블록은 원문의 유보 조항을 정리하거나 옮긴이의 해석을 덧붙인 부분이므로
+      원문 서술과 구분해서 읽어야 한다.
+    </div>
+  </div>
+ </div></div>
+</footer>
+
+<script>
+(function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var bar = document.getElementById('progress');
+  var rail = document.querySelector('nav.rail');
+  var hero = document.querySelector('header.hero');
+  function onScroll(){
+    var h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+    rail.classList.toggle('show', h.scrollTop > hero.offsetHeight - 80);
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section.sec'));
+  var list = document.getElementById('railList');
+  var links = secs.map(function(s){
+    var no = s.querySelector('.secno').textContent.replace('SECTION','').trim();
+    var tt = s.querySelector('h2').textContent.trim();
+    var a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.textContent = (no === 'CLOSING' ? '—' : no) + '  ' + tt;
+    var li = document.createElement('li'); li.appendChild(a); list.appendChild(li);
+    return a;
+  });
+
+  if ('IntersectionObserver' in window){
+    var navObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var i = secs.indexOf(e.target);
+        links.forEach(function(a, j){ a.classList.toggle('act', j === i); });
+      });
+    }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+    secs.forEach(function(s){ navObs.observe(s); });
+
+    var revObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add('on'); revObs.unobserve(e.target); }
+      });
+    }, {threshold:.12});
+    document.querySelectorAll('.reveal').forEach(function(el){
+      if (reduce) el.classList.add('on'); else revObs.observe(el);
+    });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('on'); });
+  }
+
+  function mk(seed){
+    var s = seed;
+    return function(){ s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  }
+
+  /* ---------- 표제 배경: 토큰 열 ---------- */
+  (function(){
+    var svg = document.getElementById('heroTok');
+    var r = mk(121212), f = document.createDocumentFragment();
+    var cols = ['#1F6B6B', '#6B3FA0', '#3A4250'];
+    for (var row = 0; row < 20; row++){
+      var y = 10 + row * 26, x = 0;
+      while (x < 1200){
+        var w = 16 + r() * 66;
+        var rc = document.createElementNS(NS, 'rect');
+        rc.setAttribute('x', x.toFixed(1)); rc.setAttribute('y', y);
+        rc.setAttribute('width', w.toFixed(1)); rc.setAttribute('height', 11);
+        rc.setAttribute('rx', '2.5');
+        var t = r();
+        rc.setAttribute('fill', t < .06 ? '#B0801A' : cols[Math.floor(r() * 3)]);
+        rc.setAttribute('opacity', (t < .06 ? .22 : 0.05 + r() * 0.09).toFixed(3));
+        f.appendChild(rc);
+        x += w + 5 + r() * 9;
+      }
+    }
+    svg.appendChild(f);
+  })();
+
+  /* ---------- 시그니처: 모형 계보 ---------- */
+  (function(){
+    var M = [
+      /* --- 인코더 계보 --- */
+      { n:'DTI-BERT', br:0, dev:'Zheng et al. · BERT for drug–target interaction',
+        use:'분자 지문을 이용해 약물 표적을 예측한다.',
+        ben:'지문 기반 예측에서 강한 성능을 보인다.',
+        cha:'분자 지문의 품질에 크게 의존한다.' },
+      { n:'SMILES-BERT', br:0, dev:'Zheng &amp; Tomiura · BERT on SMILES representation',
+        use:'대규모 단백질 모형과 약–표적 쌍에서 특징을 추출한다.',
+        ben:'상세한 특징 추출이 가능하다.',
+        cha:'광범위한 미세조정이 필요하다.' },
+      { n:'LSCPP-BERT', br:0, dev:'UKPLab · BERT for long noncoding RNA',
+        use:'약물 및 농업 응용을 위해 lncRNA의 짧은 열린 해독틀(sORF)을 예측한다.',
+        ben:'유전체학과 신약 개발을 잇는다.',
+        cha:'개발이 아직 초기 단계에 있다.' },
+      { n:'K-BERT', br:0, dev:'Wu et al. · Knowledge graph-enhanced BERT',
+        use:'대조학습을 위해 원자와 분자의 특징을 학습한다.',
+        ben:'제약 데이터셋 전반에 확장 가능하다.',
+        cha:'복잡한 데이터 조화 작업이 필요하다.' },
+      /* --- 디코더 계보 --- */
+      { n:'BioGPT', br:1, dev:'Microsoft Research · GPT-2 변형 · PubMed 초록 약 1,500만 편',
+        use:'생의학 텍스트 생성과 마이닝을 수행한다.',
+        ben:'PubMedQA 78.2퍼센트로 PubMedBERT를 앞섰다.',
+        cha:'관계 추출 F1은 BC5CDR 44.9퍼센트, KD-DTI 38.4퍼센트로 절대값이 낮다.' },
+      { n:'MolGPT', br:1, dev:'Bagal et al. · GPT-based transformer decoder',
+        use:'조건부 토큰 모형화로 새로운 약물 분자를 예측한다. ZINC와 ChEMBL의 SMILES로 학습했다.',
+        ben:'신규 분자 생성을 지원한다. GuacaMol에서 유효성 97퍼센트 이상, 고유성 90퍼센트, 신규성 88퍼센트.',
+        cha:'충분히 학습하지 않으면 과적합 위험이 있다.' },
+      { n:'cMolGPT', br:1, dev:'Wang, Zhao et al. · Conditional GPT for SMILES generation',
+        use:'드노보 설계와 분자 최적화를 가속한다.',
+        ben:'분자 설계 주기 시간을 줄인다.',
+        cha:'미묘한 생물활성 특징을 놓칠 수 있다.' },
+      { n:'DrugLLM', br:1, dev:'Liu, Guo et al. · GPT + 그룹 분자 표현(GMR)',
+        use:'적은 표본만으로 예측 가능한 성질을 가진 새 분자를 생성한다.',
+        ben:'데이터가 제한적일 때에도 효과적이다.',
+        cha:'생성된 약물에 대한 추가 검증이 필요하다.' },
+      { n:'SynerGPT', br:1, dev:'OpenAI · GPT-based architecture',
+        use:'약물 시너지 관계를 학습하고 개인 맞춤 구조를 설계한다.',
+        ben:'개인 맞춤 시너지 모형화를 가능하게 한다.',
+        cha:'데이터셋 민감도가 일반화를 떨어뜨린다.' },
+      { n:'CancerGPT', br:1, dev:'Li et al. · GPT 변형 + 도메인 특화 튜닝',
+        use:'데이터가 부족한 희귀 조직에서 약물 시너지를 예측한다.',
+        ben:'희귀 조직 시나리오에서 효과적이다.',
+        cha:'흔한 조직에서는 효과가 제한적이다.' },
+      /* --- 그 밖의 트랜스포머 --- */
+      { n:'Med-PaLM 2', br:2, dev:'Google · PaLM · 매개변수 5,400억',
+        use:'문헌과 임상시험 데이터를 분석해 신약 발굴에 활용한다.',
+        ben:'문헌 분석과 표적 식별을 가속한다. MedQA 85.4퍼센트, PubMedQA 75.0퍼센트.',
+        cha:'계산 자원 요구가 높다.' },
+      { n:'Tx-LLM', br:2, dev:'Google · Transformer-based multimodal LLM',
+        use:'발굴 단계 전반에서 다양한 생물학적·화학적 개체를 다룬다.',
+        ben:'다중 개체 데이터셋을 효율적으로 처리한다.',
+        cha:'해석가능성이 부족할 수 있다.' },
+      { n:'Geneformer', br:2, dev:'Theodoris et al. · 단일세포 전사체 약 3,000만 개',
+        use:'심근병증 치료 표적을 식별한다.',
+        ben:'공개 데이터셋으로 효율적인 식별이 가능하다.',
+        cha:'특정 질환에 한정된다.' },
+      { n:'GenePT', br:2, dev:'Chen et al. · Transformer-based gene embeddings',
+        use:'약물–유전자 상호작용과 유전자 특성을 예측한다.',
+        ben:'유전자–약물 관계 모형화에서 높은 정확도를 보인다.',
+        cha:'고품질의 유전자 주석을 요구한다.' },
+      { n:'C2P2', br:2, dev:'Nguyen et al. · Transformer + contrastive learning',
+        use:'단백질–단백질 및 화합물–화합물 상호작용과 친화도를 예측한다.',
+        ben:'친화도 예측 과제에서 효과적이다.',
+        cha:'상호작용 데이터셋의 품질에 의존한다.' },
+      { n:'DrugAssist', br:2, dev:'Ye et al. · Transformer for molecule optimization',
+        use:'신약 발굴 파이프라인에서 분자를 최적화한다.',
+        ben:'정밀한 분자 최적화를 돕는다.',
+        cha:'복잡한 모형 튜닝이 필요하다.' },
+      { n:'FSM-DDTR', br:2, dev:'Monteiro et al. · Transformer-based multiobjective model',
+        use:'새 분자 생성을 위해 방대한 화학 공간을 탐색한다.',
+        ben:'다양성과 약리학적 성질을 함께 높인다.',
+        cha:'화학 공간의 복잡성이 정밀도를 떨어뜨릴 수 있다.' },
+      { n:'QuoteTarget', br:2, dev:'Chen et al. · Sequence-based transformer + Grad-CAM',
+        use:'서열에 근거해 약물 표적을 식별한다. 표적 가능 단백질 1,200개 이상을 찾아냈다.',
+        ben:'단백질 결합 부위 예측에 효과적이다.',
+        cha:'서열만 입력받는 형식이라는 한계가 있다.' }
+    ];
+
+    var BR = [
+      { t:'인코더 계보', s:'BERT · 이해와 예측', col:'#1F6B6B', x:150 },
+      { t:'디코더 계보', s:'GPT · 생성과 설계', col:'#6B3FA0', x:440 },
+      { t:'그 밖의 트랜스포머', s:'PaLM · 임베딩 · 대조학습', col:'#3A4250', x:730 }
+    ];
+
+    var svg = document.getElementById('linSvg');
+    var body = document.getElementById('linBody');
+    var nodes = [];
+    var ROOT_Y = 34, HEAD_Y = 100, TOP = 150, GAP = 42, W = 176, H = 30;
+
+    function txt(x, y, s, o){
+      var t = document.createElementNS(NS, 'text');
+      t.setAttribute('x', x); t.setAttribute('y', y);
+      t.setAttribute('font-family', (o && o.sans) ? 'Gowun Batang, serif' : 'Chivo Mono, monospace');
+      t.setAttribute('font-size', (o && o.size) || 11);
+      t.setAttribute('fill', (o && o.fill) || '#787684');
+      if (o && o.weight) t.setAttribute('font-weight', o.weight);
+      if (o && o.anchor) t.setAttribute('text-anchor', o.anchor);
+      if (o && o.ls) t.setAttribute('letter-spacing', o.ls);
+      t.textContent = s;
+      return t;
+    }
+
+    /* 뿌리 */
+    var rr = document.createElementNS(NS, 'rect');
+    rr.setAttribute('x', 340); rr.setAttribute('y', ROOT_Y - 18);
+    rr.setAttribute('width', 200); rr.setAttribute('height', 32);
+    rr.setAttribute('rx', 3); rr.setAttribute('fill', '#3A4250');
+    svg.appendChild(rr);
+    svg.appendChild(txt(440, ROOT_Y + 3, 'TRANSFORMER  2017',
+      {size:12.5, fill:'#FFFFFF', anchor:'middle', weight:'600', ls:'.06em'}));
+
+    /* 가지 머리 */
+    BR.forEach(function(b){
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', 'M440,' + (ROOT_Y + 16) + ' C440,' + (HEAD_Y - 34) + ' '
+                    + b.x + ',' + (HEAD_Y - 44) + ' ' + b.x + ',' + (HEAD_Y - 18));
+      p.setAttribute('fill', 'none'); p.setAttribute('stroke', b.col);
+      p.setAttribute('stroke-width', '1.6'); p.setAttribute('opacity', '.6');
+      svg.appendChild(p);
+
+      var hr = document.createElementNS(NS, 'rect');
+      hr.setAttribute('x', b.x - W / 2); hr.setAttribute('y', HEAD_Y - 18);
+      hr.setAttribute('width', W); hr.setAttribute('height', 34);
+      hr.setAttribute('rx', 3); hr.setAttribute('fill', b.col);
+      svg.appendChild(hr);
+      svg.appendChild(txt(b.x, HEAD_Y - 2, b.t,
+        {sans:true, size:14, fill:'#FFFFFF', anchor:'middle', weight:'700'}));
+      svg.appendChild(txt(b.x, HEAD_Y + 12, b.s,
+        {size:9.5, fill:'rgba(255,255,255,.72)', anchor:'middle'}));
+
+      /* 세로 줄기 */
+      var cnt = M.filter(function(m){ return m.br === BR.indexOf(b); }).length;
+      var vl = document.createElementNS(NS, 'line');
+      vl.setAttribute('x1', b.x); vl.setAttribute('y1', HEAD_Y + 16);
+      vl.setAttribute('x2', b.x); vl.setAttribute('y2', TOP + (cnt - 1) * GAP + 4);
+      vl.setAttribute('stroke', b.col); vl.setAttribute('stroke-width', '1.2');
+      vl.setAttribute('opacity', '.35');
+      svg.appendChild(vl);
+    });
+
+    /* 모형 노드 */
+    var counters = [0, 0, 0];
+    M.forEach(function(m, i){
+      var b = BR[m.br];
+      var k = counters[m.br]++;
+      var y = TOP + k * GAP;
+
+      var g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'mnode');
+      g.setAttribute('tabindex', '0');
+      g.setAttribute('role', 'button');
+      g.setAttribute('aria-label', m.n);
+
+      var r2 = document.createElementNS(NS, 'rect');
+      r2.setAttribute('x', b.x - W / 2); r2.setAttribute('y', y - H / 2);
+      r2.setAttribute('width', W); r2.setAttribute('height', H);
+      r2.setAttribute('rx', 3);
+      r2.setAttribute('fill', '#FFFFFF');
+      r2.setAttribute('stroke', b.col); r2.setAttribute('stroke-width', '1.3');
+      g.appendChild(r2);
+      g.appendChild(txt(b.x, y + 4.5, m.n,
+        {size:12.5, fill:b.col, anchor:'middle', weight:'600'}));
+
+      g.addEventListener('click', function(){ sel(i); });
+      g.addEventListener('keydown', function(ev){
+        if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); sel(i); }
+        var d = ev.key === 'ArrowDown' ? 1 : ev.key === 'ArrowUp' ? -1 : 0;
+        if (d){ ev.preventDefault(); var n = (i + d + M.length) % M.length;
+          nodes[n].focus(); sel(n); }
+      });
+      svg.appendChild(g);
+      nodes.push(g);
+      m._rect = r2; m._col = b.col; m._brt = b.t;
+    });
+
+    function sel(i){
+      M.forEach(function(m, j){
+        m._rect.setAttribute('fill', j === i ? m._col : '#FFFFFF');
+        m._rect.parentNode.querySelector('text').setAttribute('fill', j === i ? '#FFFFFF' : m._col);
+      });
+      var m = M[i];
+      body.innerHTML =
+        '<span class="bk" style="color:' + m._col + '">' + m._brt + ' · '
+        + String(i + 1).padStart(2, '0') + ' / 18</span>'
+        + '<h6>' + m.n + '</h6>'
+        + '<div class="dev">' + m.dev + '</div>'
+        + '<p class="use">' + m.use + '</p>'
+        + '<div class="bc">'
+        + '<div class="ben"><span>이점</span><p>' + m.ben + '</p></div>'
+        + '<div class="cha"><span>과제</span><p>' + m.cha + '</p></div>'
+        + '</div>';
+    }
+    sel(5);   /* MolGPT */
+  })();
+})();
+</script>
+</body>
+</html>

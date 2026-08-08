@@ -1,0 +1,1041 @@
+---
+layout: null
+title: "Patient Stratification and Precision Medicine" 
+date: 2026-08-17
+categories: [artificial intelligence]
+tags: [artificial general intelligence, drug discovery]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제11장 · 환자 층화와 정밀의료 — 한 벌의 옷을 벗는다</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sunflower:wght@300;500;700&family=Nanum+Gothic:wght@400;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   층(層)의 색 체계
+   이 장의 뼈대는 표 11.6이다. 질환마다 네 칸을 채운다 —
+   어떤 데이터를 넣었고, 어떤 모형으로 나눴고, 어떤 하위집단이 나왔고,
+   그래서 치료가 어떻게 달라졌는가.
+   색은 그 네 칸을 그대로 옮긴 것이다.
+     감청 slate  = 데이터   · 무엇을 넣는가
+     청록 teal   = 모형     · 어떻게 나누는가
+     황토 ochre  = 하위집단 · 무엇이 나오는가
+     장미 rose   = 치료     · 무엇이 달라지는가
+   ============================================================ */
+:root{
+  --paper:#F6F5F3;
+  --paper-2:#FFFFFF;
+  --shade:#ECEBE8;
+  --ink:#191A1D;
+  --ink-soft:#454850;
+  --ink-mute:#7A7D84;
+  --data:#26405E;
+  --data-dim:rgba(38,64,94,.10);
+  --model:#2F7A73;
+  --model-dim:rgba(47,122,115,.10);
+  --group:#A8762A;
+  --group-dim:rgba(168,118,42,.11);
+  --tx:#9A3E5C;
+  --tx-dim:rgba(154,62,92,.10);
+  --rule:#DAD8D3;
+  --rule-soft:#E7E5E1;
+  --disp:"Sunflower", sans-serif;
+  --sans:"Nanum Gothic", sans-serif;
+  --mono:"Fira Code", monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-weight:400;
+  font-size:16px;line-height:1.98;
+  -webkit-font-smoothing:antialiased;
+  word-break:keep-all;overflow-wrap:break-word;
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+#progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:90;
+  background:linear-gradient(90deg,var(--data),var(--model) 36%,var(--group) 68%,var(--tx))}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 26px}
+.col{max-width:722px;margin:0 auto}
+.wide{max-width:966px;margin:0 auto}
+
+/* ---------- 표제 ---------- */
+header.hero{position:relative;overflow:hidden;padding:86px 0 52px;border-bottom:1px solid var(--rule)}
+header.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(720px 400px at 4% -12%, rgba(38,64,94,.14), transparent 62%),
+             radial-gradient(560px 320px at 97% 2%, rgba(154,62,92,.11), transparent 62%)}
+#heroStrata{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.55}
+.hero-inner{position:relative;z-index:1}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-mute);display:flex;gap:11px;align-items:center;flex-wrap:wrap;margin-bottom:24px}
+.kicker .dot{width:3px;height:3px;border-radius:50%;background:var(--rule)}
+.kicker .k2{flex-basis:100%;margin-top:6px;color:var(--data);font-weight:600}
+.chapnum{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--tx);font-weight:600}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(32px,5vw,58px);
+  line-height:1.24;letter-spacing:-.026em;margin:14px 0 0;max-width:15em}
+h1 .o{color:var(--ink-mute)}
+h1 .s{color:var(--tx)}
+.sub{font-weight:400;font-size:clamp(15px,1.6vw,18px);line-height:1.86;
+  color:var(--ink-soft);margin:26px 0 0;max-width:33em}
+.legend{display:flex;gap:20px;flex-wrap:wrap;margin:42px 0 0;padding:18px 0 0;border-top:1px solid var(--rule)}
+.legend .li{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--ink-mute)}
+.legend .sw{width:18px;height:9px;flex:0 0 auto}
+.byline{margin-top:26px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:12.5px;line-height:1.84;color:var(--ink-mute);max-width:52em}
+.byline b{color:var(--ink-soft);font-weight:700}
+
+/* ---------- 테제 ---------- */
+.thesis{padding:58px 0 6px}
+.lede{font-weight:400;font-size:clamp(18px,2.2vw,23px);line-height:1.86;margin:0}
+.lede b{font-family:var(--disp);font-weight:700}
+.lede .q{color:var(--tx)}
+.lede .u{background:linear-gradient(transparent 72%, rgba(38,64,94,.18) 72%)}
+
+/* ---------- 본문 ---------- */
+main{padding:20px 0 30px}
+section.sec{padding:70px 0}
+section.sec + section.sec{border-top:1px solid var(--rule)}
+.sechead{margin-bottom:28px;position:relative;padding-left:0;display:flex;gap:16px;align-items:flex-start}
+.sechead .bars{display:flex;flex-direction:column;gap:2px;flex:0 0 auto;padding-top:8px}
+.sechead .bars i{display:block;width:22px;height:4px}
+.secno{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink-mute);
+  display:block;margin-bottom:5px}
+h2{font-family:var(--disp);font-weight:700;font-size:clamp(24px,3.1vw,33px);
+  line-height:1.32;letter-spacing:-.026em;margin:0}
+.h2sub{font-size:13px;color:var(--ink-mute);margin-top:7px;font-weight:400}
+h3{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1.44;
+  margin:44px 0 12px;display:flex;align-items:baseline;gap:10px;letter-spacing:-.02em}
+h3 .hn{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--tx);flex:0 0 auto}
+h4{font-weight:700;font-size:14.5px;margin:28px 0 9px;color:var(--data)}
+p{margin:0 0 19px}
+a{color:var(--data)}
+strong{font-weight:700}
+em.mk{font-style:normal;background:linear-gradient(transparent 72%, rgba(168,118,42,.24) 72%)}
+code{font-family:var(--mono);font-size:.88em;background:var(--paper-2);
+  border:1px solid var(--rule-soft);padding:1px 5px;color:var(--model)}
+
+/* ---------- 판단 ---------- */
+.judge{margin:32px 0;padding:21px 23px;background:var(--paper-2);
+  border:1px solid var(--rule-soft);border-left:3px solid var(--group)}
+.judge .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--group);display:block;margin-bottom:10px;font-weight:600}
+.judge p{margin:0;font-size:15px;line-height:1.92;color:var(--ink-soft)}
+.judge p + p{margin-top:13px}
+.pull{margin:40px 0;padding:0 0 0 24px;border-left:2px solid var(--data);
+  font-weight:400;font-size:clamp(17.5px,2vw,21px);line-height:1.86}
+
+/* ---------- 목록 ---------- */
+ul.gm{list-style:none;padding:0;margin:20px 0}
+ul.gm li{position:relative;padding-left:22px;margin-bottom:12px}
+ul.gm li::before{content:"";position:absolute;left:0;top:.84em;width:11px;height:3px;background:var(--data)}
+ol.rn{list-style:none;counter-reset:rr;padding:0;margin:22px 0}
+ol.rn li{counter-increment:rr;position:relative;padding-left:38px;margin-bottom:15px}
+ol.rn li::before{content:counter(rr);position:absolute;left:0;top:.2em;
+  font-family:var(--mono);font-size:11.5px;color:#fff;background:var(--data);
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:600}
+
+/* ---------- 카드 ---------- */
+.grid{display:grid;gap:13px;margin:28px 0}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:840px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--paper-2);border:1px solid var(--rule-soft);padding:19px 20px 17px}
+.card .cno{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--model);
+  display:block;margin-bottom:8px;font-weight:600}
+.card h5{font-family:var(--disp);font-weight:700;font-size:17px;margin:0 0 8px;letter-spacing:-.02em}
+.card p{font-size:14.2px;line-height:1.86;margin:0;color:var(--ink-soft)}
+.card .meta{font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);margin-top:11px;
+  padding-top:9px;border-top:1px dashed var(--rule);line-height:1.7}
+
+/* ---------- 연표 ---------- */
+.tl{margin:28px 0;border-left:2px solid var(--rule)}
+.tl .ev{position:relative;padding:0 0 20px 26px}
+.tl .ev:last-child{padding-bottom:0}
+.tl .ev::before{content:"";position:absolute;left:-7px;top:9px;width:12px;height:12px;
+  border-radius:50%;background:var(--paper);border:2px solid var(--data)}
+.tl .ev.g::before{border-color:var(--model)}
+.tl .ev.o::before{border-color:var(--group)}
+.tl .ev.a::before{border-color:var(--tx)}
+.tl .yr{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink-mute);letter-spacing:.06em}
+.tl .ti{font-family:var(--disp);font-weight:700;font-size:16px;margin-top:2px;letter-spacing:-.02em}
+.tl .tp{font-size:14.2px;line-height:1.8;color:var(--ink-soft);margin-top:4px}
+
+/* ---------- 표 ---------- */
+.tablewrap{overflow-x:auto;margin:26px 0;border:1px solid var(--rule-soft);background:var(--paper-2)}
+table.tb{width:100%;border-collapse:collapse;font-size:13.5px;min-width:600px}
+table.tb th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-mute);text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);font-weight:600}
+table.tb td{padding:10px 12px;border-bottom:1px solid var(--rule-soft);vertical-align:top;
+  line-height:1.7;color:var(--ink-soft)}
+table.tb tr:last-child td{border-bottom:0}
+table.tb td.k{font-weight:700;white-space:nowrap;color:var(--ink)}
+table.tb td.g{font-family:var(--mono);font-size:12px;color:var(--ink-mute)}
+table.tb td.t{color:var(--tx);font-weight:700}
+table.tb tr.grp td{background:var(--shade);font-weight:700;color:var(--ink);
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:8px 12px}
+
+/* ---------- 시그니처: 층화 지도 ---------- */
+.map{margin:38px 0 12px;border:1px solid var(--rule);background:var(--paper-2)}
+.map-head{padding:18px 22px;border-bottom:1px solid var(--rule);display:flex;
+  justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.map-head .t{font-family:var(--disp);font-weight:700;font-size:20px;letter-spacing:-.024em}
+.map-head .s{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-mute)}
+.map-nav{display:flex;flex-wrap:wrap;gap:0;border-bottom:1px solid var(--rule-soft);background:var(--shade)}
+.map-nav button{appearance:none;border:0;background:transparent;cursor:pointer;font-family:inherit;
+  font-size:13px;color:var(--ink-mute);padding:10px 14px;border-bottom:3px solid transparent;
+  margin-bottom:-1px;transition:.2s}
+.map-nav button:hover{color:var(--ink);background:var(--paper-2)}
+.map-nav button[aria-selected="true"]{color:var(--ink);background:var(--paper-2);
+  border-bottom-color:var(--tx);font-weight:700}
+.map-nav button:focus-visible{outline:2px solid var(--data);outline-offset:-2px}
+.map-body{padding:22px 24px}
+.map-body h6{font-family:var(--disp);font-weight:700;font-size:22px;margin:0 0 4px;letter-spacing:-.024em}
+.map-body .sci{font-family:var(--mono);font-size:11.5px;color:var(--ink-mute);margin-bottom:18px}
+.lay{border-left:3px solid;padding:12px 0 12px 15px;margin-bottom:11px}
+.lay:last-of-type{margin-bottom:0}
+.lay.d{border-color:var(--data);background:linear-gradient(90deg,var(--data-dim),transparent 62%)}
+.lay.m{border-color:var(--model);background:linear-gradient(90deg,var(--model-dim),transparent 62%)}
+.lay.g{border-color:var(--group);background:linear-gradient(90deg,var(--group-dim),transparent 62%)}
+.lay.t{border-color:var(--tx);background:linear-gradient(90deg,var(--tx-dim),transparent 62%)}
+.lay .lk{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  display:block;margin-bottom:5px;font-weight:600}
+.lay.d .lk{color:var(--data)} .lay.m .lk{color:var(--model)}
+.lay.g .lk{color:var(--group)} .lay.t .lk{color:var(--tx)}
+.lay p{margin:0;font-size:14.5px;line-height:1.84;color:var(--ink-soft)}
+.lay p b{color:var(--ink)}
+.map-body .note{font-family:var(--mono);font-size:11px;color:var(--ink-mute);margin-top:14px;
+  padding-top:11px;border-top:1px dashed var(--rule);line-height:1.8}
+
+/* ---------- 지표 ---------- */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule-soft);
+  border:1px solid var(--rule-soft);margin:26px 0}
+.metrics div{background:var(--paper-2);padding:15px 14px}
+.metrics .mv{font-family:var(--mono);font-weight:600;font-size:18px;color:var(--tx)}
+.metrics .ml{font-size:11.5px;color:var(--ink-mute);margin-top:5px;line-height:1.55}
+@media(max-width:640px){.metrics{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- 한계 ---------- */
+.limits{margin:26px 0;border:1px solid var(--group);background:var(--paper-2)}
+.limits .lh{padding:13px 20px;border-bottom:1px solid var(--rule-soft);background:var(--group-dim);
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--group);font-weight:600}
+.limits .li2{padding:16px 20px;border-bottom:1px solid var(--rule-soft)}
+.limits .li2:last-child{border-bottom:0}
+.limits h6{font-family:var(--disp);font-weight:700;font-size:16.5px;margin:0 0 6px;letter-spacing:-.02em}
+.limits p{margin:0;font-size:14.3px;line-height:1.86;color:var(--ink-soft)}
+
+/* ---------- 그림 ---------- */
+figcaption{font-size:12.5px;line-height:1.78;color:var(--ink-mute);margin-top:11px;margin-bottom:30px}
+figcaption b{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--tx);
+  text-transform:uppercase;font-weight:600;margin-right:8px}
+
+/* ---------- 목차 ---------- */
+nav.rail{position:fixed;left:calc(50% - 556px);top:50%;transform:translateY(-50%);z-index:40;
+  display:none;opacity:0;pointer-events:none;transition:opacity .45s}
+nav.rail.show{opacity:1;pointer-events:auto}
+@media(min-width:1280px){nav.rail{display:block}}
+nav.rail ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--rule)}
+nav.rail a{display:block;text-decoration:none;font-size:11.5px;color:var(--ink-mute);
+  padding:5px 0 5px 13px;transition:.2s;position:relative;
+  max-width:146px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav.rail a::before{content:"";position:absolute;left:-1px;top:50%;height:0;width:3px;
+  background:var(--tx);transform:translateY(-50%);transition:height .25s}
+nav.rail a:hover{color:var(--ink)}
+nav.rail a.act{color:var(--tx);font-weight:700}
+nav.rail a.act::before{height:16px}
+
+/* ---------- 결론 ---------- */
+.closing{border:1px solid var(--data);background:var(--paper-2);margin:30px 0}
+.closing .ci{padding:18px 24px;border-bottom:1px solid var(--rule-soft)}
+.closing .ci:last-child{border-bottom:0}
+.closing .ck{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--data);
+  display:block;margin-bottom:6px;font-weight:600}
+.closing .ci p{margin:0;font-size:14.8px;line-height:1.88;color:var(--ink-soft)}
+
+footer{border-top:1px solid var(--rule);padding:48px 0 84px;margin-top:32px}
+.src{font-size:12.5px;line-height:1.92;color:var(--ink-mute)}
+.src b{color:var(--ink-soft);font-weight:700}
+.src .note{margin-top:20px;padding-top:16px;border-top:1px dashed var(--rule);font-size:12px}
+
+.reveal{opacity:0;transform:translateY(14px);
+  transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.on{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<nav class="rail" aria-label="장 목차"><ol id="railList"></ol></nav>
+
+<header class="hero">
+  <svg id="heroStrata" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+  <div class="wrap"><div class="wide hero-inner">
+    <div class="kicker">
+      <span>Artificial Intelligence in Precision Drug Design</span><span class="dot"></span>
+      <span>Volume 2 · Advanced Applications</span>
+      <b class="k2">Elsevier / Academic Press, 2026</b>
+    </div>
+    <div class="chapnum">CHAPTER 11</div>
+    <h1>환자 층화와 정밀의료:<br><span class="o">한 벌의 옷</span>을 <span class="s">벗는다</span></h1>
+    <p class="sub">의학의 치료는 대개 &lsquo;모두에게 하나&rsquo;로 시행되어 왔다.
+    그런데 같은 병명을 받은 환자들이 종양 생물학도, 예후도, 치료 반응도 크게 다르다.
+    층화는 그 이질성을 정면으로 다루는 일이다. 이 장은 그 방법을 정리한다.</p>
+
+    <div class="legend" aria-label="이 문서의 색 규약">
+      <span class="li"><span class="sw" style="background:#26405E"></span>데이터 · 무엇을 넣는가</span>
+      <span class="li"><span class="sw" style="background:#2F7A73"></span>모형 · 어떻게 나누는가</span>
+      <span class="li"><span class="sw" style="background:#A8762A"></span>하위집단 · 무엇이 나오는가</span>
+      <span class="li"><span class="sw" style="background:#9A3E5C"></span>치료 · 무엇이 달라지는가</span>
+    </div>
+
+    <div class="byline">
+      <b>원저자</b> Pratham Kaushik, Shatakshi Bhardwaj<br>
+      <b>소속</b> School of Allied Health Sciences and Management (SAHSM),
+      Delhi Pharmaceutical Sciences and Research University (New Delhi) ·
+      Central Council for Research in Homoeopathy, Ministry of AYUSH, Govt. of India (New Delhi)<br>
+      <b>편저</b> Khalid Raza (Jamia Millia Islamia) &nbsp;·&nbsp; <b>DOI</b> 10.1016/B978-0-443-44430-2.00018-9
+    </div>
+  </div></div>
+</header>
+
+<div class="wrap">
+<div class="wide thesis reveal">
+  <p class="lede">환자 층화는 <span class="u">수백 년 동안 임상의와 연구자를 괴롭혀 온 임상적 이질성</span>을 다루려는 시도다.
+  같은 조직학적 진단을 받은 암 환자들이 종양 생물학과 예후와 치료 반응에서 크게 다르다.
+  <span class="q">그러면 무엇을 기준으로 나눌 것인가.</span>
+  이 장의 답은 <b>임상 소견, 유전 변이, 다중오믹스 바이오마커, 생활 요인을 함께 써서
+  세밀한 하위집단을 만든다</b>는 것이다.
+  그리고 그 작업의 규모와 분석력을 AI가 감당한다.</p>
+</div>
+</div>
+
+<main class="wrap">
+
+<!-- ================= 1 ================= -->
+<section class="sec" id="s1">
+ <div class="col">
+  <div class="sechead">
+    <div class="bars"><i style="background:var(--data)"></i><i style="background:var(--model)"></i></div>
+    <div><span class="secno">SECTION 01</span>
+    <h2>경험에서 유전체로, 유전체에서 AI로</h2>
+    <div class="h2sub">서론 · 정밀의료의 계보</div></div></div>
+
+  <p>인간 게놈 프로젝트가 질병 유발 유전 변이의 식별을 가능하게 했고,
+  트라스투주맙과 이마티닙 같은 표적 억제제의 길이 열렸다.
+  경험의학의 긴 시대에서 유전체와 빅데이터의 시대로 넘어오면서
+  <b>질병 감수성과 치료 결과를 함께 예측</b>할 수 있게 되었다.</p>
+
+  <div class="tl reveal">
+    <div class="ev"><div class="yr">1747</div>
+      <div class="ti">경험 치료와 관찰 기반 방법</div>
+      <div class="tp">제임스 린드의 괴혈병 연구가 최초의 무작위 대조시험의 토대가 되었다.
+      관찰이 이끄는 접근, 초기 임상시험의 시작이다.</div></div>
+    <div class="ev"><div class="yr">1948</div>
+      <div class="ti">생물통계와 인구 기반 의학</div>
+      <div class="tp">프레이밍햄 심장 연구가 통계적 엄밀성을 갖추고 출범했다.
+      무작위 대조시험과 NIH 지원 연구가 인구 기반 의학을 세웠다.</div></div>
+    <div class="ev g"><div class="yr">1962</div>
+      <div class="ti">약물유전학과 분자 표적화</div>
+      <div class="tp">베르너 칼로가 &lsquo;약물유전학&rsquo;이라는 말을 만들었다.
+      <code>TPMT</code> 유전형 검사가 개인별 용량 결정을 검증했다.</div></div>
+    <div class="ev g"><div class="yr">2003</div>
+      <div class="ti">인간 게놈 프로젝트 완료</div>
+      <div class="tp">위험 예측과 표적 의학이 근본적으로 바뀌었다.</div></div>
+    <div class="ev o"><div class="yr">2005–2015</div>
+      <div class="ti">다중오믹스와 시스템 생물학</div>
+      <div class="tp">TCGA와 UK Biobank가 출범했다.
+      바이오마커 주도의 층화, 프로테오지노믹스가 자리 잡았다.</div></div>
+    <div class="ev o"><div class="yr">2017</div>
+      <div class="ti">디지털 헬스와 웨어러블</div>
+      <div class="tp">애플 하트 스터디가 시작되었다.
+      전자의무기록, 웨어러블, 실세계 데이터가 정밀 건강에 통합되었다.</div></div>
+    <div class="ev a"><div class="yr">2018–2024</div>
+      <div class="ti">AI와 환자 층화</div>
+      <div class="tp">BERT 같은 AI 모형이 자연어처리 기반 하위집단 발견을 가능하게 했다.
+      층화된 결과 예측이 시작되었다.</div></div>
+    <div class="ev a"><div class="yr">2023</div>
+      <div class="ti">디지털 트윈과 시뮬레이션</div>
+      <div class="tp">FDA가 AI 기반 임상시험 설계와 디지털 트윈에 관한 초안 지침을 냈다.
+      예측 검증을 위한 모의 환자 트윈이다.</div></div>
+    <div class="ev a"><div class="yr">2024–25</div>
+      <div class="ti">연합학습과 윤리적 AI</div>
+      <div class="tp">스웜 학습과 연합 AI가 확산되었다.
+      희귀질환 층화의 형평을 높인다.</div></div>
+    <div class="ev a"><div class="yr">2025–</div>
+      <div class="ti">CDSS와 통합 정밀 생태계</div>
+      <div class="tp">실시간 임상의사결정지원 시스템이 임상 전환을 강화한다.
+      다중양식 입력을 결합한 개인 맞춤 병상 통합이다.</div></div>
+  </div>
+  <figcaption><b>표 11.1</b> 정밀의료의 진화 연표. 원문 표를 옮겼다.
+  1747년에서 2025년까지 278년이 걸린 여정이며, 마지막 세 줄은 아직 오지 않은 미래다.</figcaption>
+
+  <h3><span class="hn">1.1.1</span> 정밀의료와 개인 맞춤 의료는 어떻게 다른가</h3>
+  <div class="grid g2">
+    <div class="card"><span class="cno">PRECISION</span><h5>정밀의료</h5>
+      <p>유전체학, 분자 프로파일링, 계산 분석을 결합한 <b>지식 주도의 접근</b>이다.
+      특정 치료에 잘 반응할 환자 하위집단을 식별한다.
+      <em class="mk">시간적·분자적 층(strata)을 제공하는 쪽이다.</em></p></div>
+    <div class="card"><span class="cno">PERSONALIZED</span><h5>개인 맞춤 의료</h5>
+      <p>그 발견을 임상에 적용하는 일이다.
+      개인의 생물학적·환경적·생활 특성에 맞춰 치료를 조정한다.
+      <b>둘 다 &lsquo;모두에게 하나&rsquo;를 대체하려 하지만, 앞의 것은 층을 나누고 뒤의 것은 적용한다.</b>
+      HER2 양성 유방암의 트라스투주맙이 두 지식을 짝지은 예다.</p></div>
+  </div>
+
+  <h3><span class="hn">1.2</span> 층화란 무엇인가</h3>
+  <p>층화는 임상 소견, 생활 요인, 유전 정보, 바이오마커에 근거해 환자를 하위집단으로 묶는 일이다.
+  더 정확한 치료 배정과 예후 판단을 위해서다.
+  <b>표적 치료의 효과는 환자를 생물학적으로 유의미한 하위집단으로 분류하려는 노력에 달려 있다.</b></p>
+  <p>백반증, 유방암, 다발성 경화증이 좋은 사례다.
+  층화가 협대역 자외선B(NB-UVB) 광선치료, PARP 억제제, 질병조절치료제의 적격 여부를 결정한다.
+  근거가 되는 바이오마커는 <code>DEFB1</code> 다형성이나 신경섬유 경쇄(NfL) 같은 것들이다.</p>
+ </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="sec" id="s2">
+ <div class="col">
+  <div class="sechead">
+    <div class="bars"><i style="background:var(--data)"></i></div>
+    <div><span class="secno">SECTION 02</span>
+    <h2>무엇을 기준으로 나누는가</h2>
+    <div class="h2sub">층화의 일곱 가지 축</div></div></div>
+
+  <p>이 장에서 가장 실용적인 부분이 표 11.2다.
+  층화의 기준을 일곱 유형으로 나누고, 각각에 질환 사례와 임상적 쓸모를 붙였다.</p>
+
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>기준 유형 · 사례</th><th>임상적 쓸모</th></tr></thead>
+      <tbody>
+        <tr class="grp"><td colspan="2">임상 CLINICAL</td></tr>
+        <tr><td class="k">분절형 vs 비분절형 백반증</td><td>예후를 판단하고 광선치료 적합성을 가른다</td></tr>
+        <tr><td class="k">삼중음성 유방암 (TNBC)</td><td>PARP 억제제 또는 면역치료 대상을 층화한다</td></tr>
+        <tr><td class="k">재발완화형 vs 진행형 다발성 경화증</td><td>고효능 질병조절치료제의 적격 여부를 결정한다</td></tr>
+        <tr class="grp"><td colspan="2">유전 GENETIC</td></tr>
+        <tr><td class="k">BRCA1/2 변이 (유방·난소암)</td><td>PARP 억제제 반응을 예측하고 위험 감소 전략을 알려 준다</td></tr>
+        <tr><td class="k">DEFB1-44 C/G 다형성 (백반증)</td><td>NB-UVB 치료 반응을 예측한다</td></tr>
+        <tr><td class="k">HLA-B*15:02 대립유전자 (아시아인 뇌전증)</td>
+          <td>카바마제핀의 금기 사유. <b>스티븐스-존슨 증후군 위험을 줄인다</b></td></tr>
+        <tr class="grp"><td colspan="2">바이오마커 BIOMARKER</td></tr>
+        <tr><td class="k">CXCL10 혈청 수치 (백반증, 루푸스)</td>
+          <td>염증 활동을 나타낸다. JAK 억제제나 항인터페론 치료의 사용을 이끈다</td></tr>
+        <tr><td class="k">HER2 과발현 (유방암)</td><td>트라스투주맙 등 HER2 표적 치료의 적격을 결정한다</td></tr>
+        <tr><td class="k">혈청 신경섬유 경쇄 (다발성 경화증)</td>
+          <td>신경 손상을 예측한다. 조기 질병 감시에 쓰인다</td></tr>
+        <tr class="grp"><td colspan="2">전사체 · 오믹스 TRANSCRIPTOMIC</td></tr>
+        <tr><td class="k">PAM50 유전자 시그니처 (유방암)</td>
+          <td>내재적 아형을 층화해 개인 맞춤 항암화학요법을 결정한다</td></tr>
+        <tr><td class="k">T세포 수용체(TCR) 다양성 (흑색종, 자가면역)</td>
+          <td>면역 반응성을 평가해 면역치료 반응 가능성을 층화한다</td></tr>
+        <tr class="grp"><td colspan="2">생활 · 심리사회 LIFESTYLE</td></tr>
+        <tr><td class="k">삶의 질에 미치는 영향 (백반증, 건선)</td>
+          <td>공유 의사결정과 치료 선택(전신 vs 국소)을 이끈다</td></tr>
+        <tr><td class="k">순응 가능성과 건강 문해력 (만성질환)</td>
+          <td>장기 요법의 성공을 예측하고 디지털 개입 선택을 이끈다</td></tr>
+        <tr class="grp"><td colspan="2">영상 IMAGING</td></tr>
+        <tr><td class="k">MRI 기반 뇌 위축 측정 (알츠하이머, MS)</td>
+          <td>신경보호 치료와 임상시험 코호트를 층화한다</td></tr>
+        <tr><td class="k">방사선체학 종양 특징 (폐, 교모세포종)</td>
+          <td>조직병리 아형과 치료 결과를 예측한다</td></tr>
+        <tr class="grp"><td colspan="2">환경 · 노출 ENVIRONMENTAL</td></tr>
+        <tr><td class="k">자외선 노출력 (백반증, 피부암)</td>
+          <td>질병 위험을 조정하고 광선치료 계획에 영향을 준다</td></tr>
+        <tr><td class="k">흡연 여부 (류마티스관절염, COPD, 크론병)</td>
+          <td>중증도를 예측하고 생물학제제 사용 여부를 이끈다</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>표 11.2</b> 층화 변수의 일곱 축. 원문 표를 유형별로 묶어 옮겼다.</figcaption>
+
+  <div class="judge">
+    <span class="lab">이 표에서 눈여겨볼 항목</span>
+    <p><b>HLA-B*15:02</b>는 다른 항목들과 성격이 다르다.
+    나머지가 &lsquo;어떤 약이 들을 것인가&rsquo;를 말한다면, 이것은 <b>어떤 약을 쓰면 안 되는가</b>를 말한다.
+    아시아인 인구에서 이 대립유전자를 가진 환자에게 카바마제핀을 쓰면
+    스티븐스-존슨 증후군이라는 치명적 피부 반응이 올 수 있다.</p>
+    <p>층화의 이득이 늘 &lsquo;더 나은 치료&rsquo;인 것은 아니다.
+    <em class="mk">때로는 해로운 치료를 피하는 것이 더 큰 이득이다.</em>
+    이 표의 여러 항목 &mdash; HLA-B*57:01과 아바카비르도 뒤에 나온다 &mdash; 이 그 유형이다.</p>
+  </div>
+
+  <h3><span class="hn">2.2</span> 백반증이라는 사례</h3>
+  <p>이 장은 백반증을 반복해서 예로 든다. 층화의 여러 축이 한 질환에서 어떻게 겹치는지 보여 주기 때문이다.</p>
+  <ul class="gm">
+    <li><b>임상</b> &mdash; 비분절형은 갑상선 질환 같은 자가면역 질환과 자주 동반되고,
+    분절형은 국소적 면역 반응과 관련되는 경우가 많다. 자가면역 동반이 덜하다.</li>
+    <li><b>유전</b> &mdash; <code>DEFB1-44 C/G</code>의 <b>GG 유전형</b>이 백반증 발생 위험을 높이고
+    광선치료에 잘 반응할 가능성을 낮춘다.</li>
+    <li><b>miRNA</b> &mdash; <code>miR-145</code>와 <code>miR-155</code>가 티로시나아제 관련 단백질과 <code>MITF</code>를 표적해
+    멜라닌세포 증식과 색소침착 경로에 영향을 준다.
+    <code>miR-1</code>과 <code>miR-135a</code>는 산화 스트레스 반응에 관여해 세포자멸사와 염증에 작용한다.</li>
+    <li><b>면역</b> &mdash; 인터페론감마 케모카인 축과 연관된 <code>CXCL10</code>이
+    활동성 질환에서 높고, 진행 및 치료 무반응과 연결된다.</li>
+  </ul>
+
+  <div class="judge">
+    <span class="lab">2.3절이 지적하는 함정</span>
+    <p>표현형만 보고 분자 데이터를 통합하지 않으면 결정적인 구별 특징이 가려진다.
+    <b>분절형과 비분절형이라는 이분법은 유용하지만, 자가면역 질환의 내재적 다양성을 놓친다.</b></p>
+    <p>해법으로 제시되는 것은 비지도 기계학습과 다중양식 통합,
+    그리고 종단 데이터와 환자 보고 결과의 결합이다. 재현성이 개선된다.</p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="sec" id="s3">
+ <div class="col">
+  <div class="sechead">
+    <div class="bars"><i style="background:var(--model)"></i></div>
+    <div><span class="secno">SECTION 03</span>
+    <h2>나누는 기술</h2>
+    <div class="h2sub">ML/DL · 자연어처리 · 다중양식과 대조학습 · 설명가능 AI</div></div></div>
+
+  <div class="grid g2">
+    <div class="card"><span class="cno">3.1 · ML/DL</span><h5>인구 분할</h5>
+      <p>다중오믹스, 영상, 임상 데이터로 환자 아형을 구분한다.
+      CNN이 조직병리 아형을 분류했고, 군집화 알고리즘이 자가면역 질환의 면역학적 아형을 찾아냈다.
+      백반증에서는 <code>DEFB1</code> 변이와 전사체·임상 프로파일을 함께 분석해
+      치료 반응이 다른 하위집단을 찾는다.</p>
+      <div class="meta">학습–검증–시험 분할 70:15:15 · AUC, 민감도, 특이도, F1, 교차검증</div></div>
+    <div class="card"><span class="cno">3.2 · NLP</span><h5>전자의무기록 마이닝</h5>
+      <p>비정형 임상 서술을 구조화된 데이터로 바꾼다.
+      백반증의 &ldquo;색종이 조각 모양 탈색(confetti depigmentation)&rdquo; 같은
+      <b>NLP가 뽑아낸 병변 기술어</b>가 환자 하위집단의 정밀한 기술을 가능하게 한다.
+      비정형 임상 기록에서 실세계 근거를 만들고 임상시험 코호트 선정을 개선한다.</p></div>
+    <div class="card"><span class="cno">3.3 · MULTIMODAL</span><h5>다중양식과 대조학습</h5>
+      <p>유전체 서열, 영상, 임상 데이터를 함께 넣어 통합 예측 모형을 만든다.
+      대조학습은 <em class="mk">같은 환자의 방사선체학 종양 특징과 유전체 시그니처를 정렬하고
+      서로 다른 환자를 구별</em>해 미묘한 하위집단 차이를 잡아낸다.</p></div>
+    <div class="card"><span class="cno">3.4 · XAI</span><h5>설명가능 AI와 위험 점수</h5>
+      <p>SHAP과 LIME이 어느 특징이 모형 예측을 이끄는지 임상의가 이해하게 한다.
+      신뢰를 만들고 규제 준수를 뒷받침하며 위험 층화 점수의 근거를 제공한다.</p></div>
+  </div>
+
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>AI 기술</th><th>적용 영역</th><th>사례</th></tr></thead>
+      <tbody>
+        <tr><td class="k">ML/DL 군집화</td><td class="g">인구 분할</td>
+          <td>오믹스 데이터로 백반증 하위집단 식별</td></tr>
+        <tr><td class="k">EHR 마이닝 NLP</td><td class="g">표현형 추출</td>
+          <td>진료 기록에서 병변 기술어 추출</td></tr>
+        <tr><td class="k">다중양식 학습</td><td class="g">통합 환자 모형화</td>
+          <td>유전체와 영상을 결합한 아형 분류</td></tr>
+        <tr><td class="k">설명가능 AI (XAI)</td><td class="g">모형 투명성과 위험 예측</td>
+          <td>치료 선택의 위험 점수에 SHAP/LIME 적용</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>표 11.4</b> 층화에 쓰이는 AI 기술의 요약.</figcaption>
+ </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="sec" id="s4">
+ <div class="col">
+  <div class="sechead">
+    <div class="bars"><i style="background:var(--data)"></i><i style="background:var(--model)"></i>
+      <i style="background:var(--group)"></i><i style="background:var(--tx)"></i></div>
+    <div><span class="secno">SECTION 04</span>
+    <h2>층화 지도</h2>
+    <div class="h2sub">질환마다 네 칸을 채운다 &mdash; 데이터, 모형, 하위집단, 치료</div></div></div>
+
+  <p>이 장의 뼈대는 표 11.6이다. 질환마다 <b>어떤 데이터를 넣었고, 어떤 모형으로 나눴고,
+  어떤 하위집단이 나왔고, 그래서 치료가 어떻게 달라졌는가</b>를 네 칸에 적는다.
+  아래는 그 표에 표 11.3(바이오마커)과 표 11.5(하위집단별 치료)의 내용을 더해 정리한 것이다.</p>
+
+  <div class="map reveal" id="mapPanel">
+    <div class="map-head">
+      <span class="t">층화 지도</span>
+      <span class="s">Table 11.3 · 11.5 · 11.6</span>
+    </div>
+    <div class="map-nav" role="tablist" aria-label="질환 목록"></div>
+    <div class="map-body" id="mapBody" role="tabpanel"></div>
+  </div>
+  <figcaption><b>표 11.3 · 11.5 · 11.6 · 그림 1</b> 원문 세 표를 질환 단위로 합쳤다.
+  네 칸의 색은 문서 전체의 규약을 따른다.
+  <b>백반증은 표 11.6에 없지만 이 장이 가장 자세히 다루는 사례</b>여서 본문 서술을 근거로 추가했다.</figcaption>
+
+  <h3><span class="hn">4.1</span> 하위집단을 겨냥한 약물 재창출</h3>
+  <p>층화된 코호트를 찾아내면 기존 약이 들을 만한 자리를 찾을 수 있다.
+  완전히 새 약을 개발하는 것보다 싸고 빠르다.</p>
+  <p>백반증에서는 전사체·면역 프로파일링으로 하위집단을 나누고,
+  <code>IFN-γ</code>와 <code>CXCL10</code> 케모카인 분비 같은 질병 악화 표지가 그 기준이 된다.
+  그 결과 <b>JAK 억제제 &mdash; 룩솔리티닙, 토파시티닙, 바리시티닙 &mdash;</b> 가
+  이 경로에 작용하는 유망한 재창출 치료제로 지목되었다.</p>
+  <p>같은 맥락에서 <b>화학적 WNT 작용제</b>가 분자 경로 분석을 통해 도출되었다.
+  멜라닌세포 줄기세포의 분화와 부착을 촉진해,
+  백반증 피부에서 자주 관찰되는 E-카데린 발현 이상을 교정한다.</p>
+
+  <h3><span class="hn">4.2</span> 치료 개인화의 실제</h3>
+  <p>백반증 치료의 목표는 진행을 막고 재색소침착을 유도하는 것이다.
+  재색소침착은 인접한 멜라닌세포의 수평 이동이나 모낭 멜라닌세포의 수직 이동으로 일어난다.
+  이 장은 개인화 알고리즘을 이렇게 정리한다.</p>
+  <ul class="gm">
+    <li>모낭 주위 색소침착이 있고 백모증이 없는 <b>안정된 병변</b> &rarr; 국소 치료와 광선치료</li>
+    <li>백모증을 동반한 <b>1cm 초과의 융기 병변</b> &rarr; 이식술</li>
+    <li><code>CXCL10</code>이 높은 <b>고활동성 병변</b> &rarr; 면역조절제(JAK 억제제)</li>
+  </ul>
+  <div class="pull">
+    AI의 쓸모는 여기서 한 번 더 나타난다.
+    <b>치료가 얼마나 오래 걸릴지, 환자가 저항성을 갖게 될지를 예측</b>해
+    불필요한 치료를 피하게 한다.
+    이 장이 드는 사례는 광선치료 <b>96회차</b>에 이르면 비반응자를 확신 있게 예측할 수 있다는 것이다.
+  </div>
+
+  <h3><span class="hn">4.3</span> 세 개의 사례 연구</h3>
+  <div class="grid g3">
+    <div class="card"><span class="cno">암 · ONCOLOGY</span><h5>실행 가능한 하위집단</h5>
+      <p><code>OncodynamiX</code> 같은 정밀종양학 플랫폼이 RNA-seq, 단백체, 변이 프로파일을
+      지도 기계학습과 결합해 실행 가능한 변이와 병용 요법을 찾는다.
+      <b>비소세포폐암의 RET 융합 양성</b>과 <b>KRAS 야생형 췌장 종양</b>이
+      AI로 발견된 하위집단이며, RET 억제제와 키나아제 표적 치료가 전향적으로 쓰였다.</p>
+      <div class="meta">응답률 개선 · 불필요한 독성 최소화</div></div>
+    <div class="card"><span class="cno">MS · 신경</span><h5>조기 반응자와 후기 반응자</h5>
+      <p>MRI, EHR, 사이토카인 프로파일의 비지도 군집화와 랜덤포레스트로
+      조기 반응자와 후기 반응자를 구분한다.
+      조기 반응자는 1차 치료로 이익을 얻고, 후기 반응자는 고효능 약제로의 상승이 필요할 수 있다.</p>
+      <div class="meta">재발 감소 · 삶의 질 개선</div></div>
+    <div class="card"><span class="cno">루푸스 · 자가면역</span><h5>IFN-hi와 IFN-lo</h5>
+      <p>NLP로 전사체와 EHR 데이터를 분석해 인터페론 고발현군과 저발현군을 찾아냈다.
+      <b>IFN-hi 환자는 항인터페론 생물학제제로 이익을 얻을 가능성이 크고,</b>
+      IFN-lo 환자는 다른 접근이 필요하다.
+      DNA 메틸화 양상 같은 후성유전 표지가 하위집단 식별을 더 정밀하게 만든다.</p>
+      <div class="meta">관해 촉진 · 장기 손상 제한</div></div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">원문의 편집 오류 하나</span>
+    <p>루푸스 사례의 &lsquo;논의&rsquo;와 &lsquo;결론&rsquo;(4.3.3.5&ndash;4.3.3.6)이
+    <b>다발성 경화증 사례의 해당 절(4.3.2.5&ndash;4.3.2.6)과 글자 그대로 같다.</b>
+    루푸스를 다루는 자리에 다발성 경화증 이야기가 그대로 들어가 있다.</p>
+    <p>내용의 신뢰도와는 별개의 문제이지만, 이 장을 인용할 때는
+    <em class="mk">절 번호가 아니라 실제 내용을 확인하는 편이 안전하다.</em></p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="sec" id="s5">
+ <div class="col">
+  <div class="sechead">
+    <div class="bars"><i style="background:var(--tx)"></i></div>
+    <div><span class="secno">SECTION 05</span>
+    <h2>통찰에서 행동으로</h2>
+    <div class="h2sub">임상의사결정지원 시스템(CDSS)</div></div></div>
+
+  <p>층화 결과는 그 자체로 진료가 되지 않는다. 임상의가 진료 현장에서 쓸 수 있는
+  권고로 번역되어야 한다. 그 다리가 CDSS다.</p>
+  <ul class="gm">
+    <li><b>층화 결과의 운용</b> &mdash; 유전 변이, 바이오마커 프로파일, 표현형 군집을 결합해
+    환자별 위험 평가와 치료 제안을 만든다.
+    약물유전체(PGx) 정보를 넣으면 <b>&lsquo;맞는 약을, 맞는 용량으로, 맞는 때에&rsquo;</b>가 가능해진다.
+    새 임상·분자 데이터가 쌓이면 위험 점수와 제안이 동적으로 갱신된다.</li>
+    <li><b>EMR 통합</b> &mdash; 유전자 검사 결과, 검사 수치, 임상 기록을 자동으로 불러와
+    업무 흐름을 끊지 않고 지속적 위험 층화와 의사결정 지원을 제공한다.
+    <code>HL7 FHIR</code> 같은 표준 기반 데이터 교환 규약이 이질적 데이터를 조화시킨다.</li>
+    <li><b>사람의 문제</b> &mdash; CDSS 채택의 성패는 사용자 중심 설계와 해석가능성에 달려 있다.
+    의사들은 인지 부담을 줄이고 오류를 줄이는 CDSS를 반긴다.
+    다만 <b>AI에 대한 과의존, 기술 퇴화, 업무 흐름 방해</b>에 대한 우려가 남아 있다.
+    맞춤형 알림, AI 출력의 명료한 설명, 임상의 피드백 루프가 대응책으로 제시된다.</li>
+  </ul>
+ </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="sec" id="s6">
+ <div class="col">
+  <div class="sechead">
+    <div class="bars"><i style="background:var(--group)"></i></div>
+    <div><span class="secno">SECTION 06</span>
+    <h2>윤리와 운영</h2>
+    <div class="h2sub">공정성 · 해석가능성 · 희귀질환 · 국제 형평 · 그리고 다섯 개의 한계</div></div></div>
+
+  <h3><span class="hn">6.1</span> 공정성, 편향, 프라이버시</h3>
+  <p>대표성 없는 데이터로 학습한 AI 모형은 건강 격차를 유지하거나 악화시킬 수 있다.
+  <b>고소득 인구가 지배하는 학습 코호트로 만든 모형은
+  역사적으로 과소대표된 인구 &mdash; 인종적 소수자, 농촌 인구 &mdash; 에서 제대로 작동하지 않는다.</b></p>
+  <div class="judge">
+    <span class="lab">이 장이 짚는 개념적 오류</span>
+    <p>유전적으로 규명된 <b>조상(ancestry)</b> 대신 <b>인종(race)</b> 같은 사회적 범주를 쓰면
+    오분류가 생기고 효과 없는 진료로 이어질 수 있다.</p>
+    <p>이 지적은 이 책의 다른 장들이 &lsquo;데이터가 유럽계에 치우쳤다&rsquo;고만 말한 것보다 한 걸음 더 나간다.
+    <em class="mk">문제는 데이터의 구성만이 아니라 변수를 정의하는 방식에도 있다.</em></p>
+  </div>
+
+  <h3><span class="hn">6.3&ndash;6.4</span> 희귀질환과 저·중소득국</h3>
+  <div class="grid g2">
+    <div class="card"><span class="cno">희귀질환</span><h5>데이터가 너무 적다</h5>
+      <p>희귀질환은 데이터셋이 극히 작고 파편화되어 있어 층화의 기회 자체가 막힌다.
+      가능한 돌파구로 <b>합성 데이터 생성, 연합 모형화, 국제 희귀질환 컨소시엄</b>이 제시된다.</p>
+      <div class="meta">RareX · Simulacrum · NIH NCATS 플랫폼</div></div>
+    <div class="card"><span class="cno">LMIC</span><h5>저·중소득국의 실제 사례</h5>
+      <p>모바일 헬스 플랫폼이 당뇨와 결핵 같은 질환에서 대규모 환자 보고 결과 수집을 가능하게 했다.
+      <b>인도&ndash;아프리카 유전체 협력</b>(HIV, 결핵, 결핵/HIV 중복감염을 다루는
+      인도&ndash;남아프리카 공동연구 프로그램)이 연합학습의 실제 사례로 제시된다.
+      개인 식별 정보를 옮기지 않고 분산 데이터로 모형을 학습한다.</p>
+      <div class="meta">저자원 환경에서도 형평한 층화가 가능하다는 증거</div></div>
+  </div>
+
+  <h3><span class="hn">6.5</span> 다섯 개의 한계</h3>
+  <div class="limits reveal">
+    <div class="lh">AI limitations in patient stratification</div>
+    <div class="li2"><h6>일반화</h6>
+      <p>좁은 데이터셋으로 학습한 기계는 다양한 인구집단에서 실패한다.
+      그 결과 임상 진료에서 나오는 권고의 신뢰성이 무너진다.</p></div>
+    <div class="li2"><h6>데이터셋 편향</h6>
+      <p>특정 집단이 과다대표되면 &mdash; 유전체 연구에서 유럽계 비히스패닉 백인의 비율이 높은 것처럼 &mdash;
+      모형이 부정확한 예측을 내놓는다.</p></div>
+    <div class="li2"><h6>과적합</h6>
+      <p>부적절한 학습&ndash;검증&ndash;시험 분할과 외부 검증의 부재가
+      내부 데이터에서 지나치게 낙관적인 성능 지표를 낳고, 실세계 예측 정확도를 떨어뜨린다.</p></div>
+    <div class="li2"><h6>블랙박스의 복잡성</h6>
+      <p>딥러닝 모형은 복잡성을 다루지만 해석가능성이 없다.
+      학습에는 유리하지만 임상 워크플로에서 위험&ndash;편익 판단에 대한 불신을 낳고 규제 승인을 어렵게 만든다.</p></div>
+    <div class="li2"><h6>자원 부담</h6>
+      <p>다중양식 데이터로 구축한 AI는 상당한 학습 계산 자원을 요구한다.
+      <b>저·중소득국 의료 체계에서는 실현 가능하지 않을 수 있다.</b></p></div>
+  </div>
+
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>과제 영역</th><th>대응 전략</th><th>사용 중인 도구</th></tr></thead>
+      <tbody>
+        <tr><td class="k">공정성과 편향</td>
+          <td>다양한 인구를 데이터셋에 포함, 편향 감사, 하위집단별 성능 보고, 공정성 인식 알고리즘</td>
+          <td class="g">AI Fairness 360 (IBM) · Google What-If · 하위집단 보고 대시보드</td></tr>
+        <tr><td class="k">프라이버시와 데이터 보안</td>
+          <td>비식별화, 동적 동의, 연합학습, 암호화된 데이터 파이프라인</td>
+          <td class="g">GA4GH · OpenMined · NVIDIA Clara · 연합 병원 컨소시엄</td></tr>
+        <tr><td class="k">해석가능성과 신뢰</td>
+          <td>설명가능 AI 기법 적용, 임상의 참여형 시스템 설계, 임상 대시보드에 모형 근거 통합</td>
+          <td class="g">SHAP · LIME · ELI5 · Glassbox · MIT Model Cards</td></tr>
+        <tr><td class="k">규제와 법적 준수</td>
+          <td>적응형 규제 모형 채택, 투명한 문서화, 지속적 시판 후 감시</td>
+          <td class="g">FDA 디지털헬스 소프트웨어 사전인증 프로그램 · EMA 적응형 경로</td></tr>
+        <tr><td class="k">희귀질환과 과소대표 집단</td>
+          <td>합성 데이터, 연합 모형화, 환자 유래 오가노이드, 국제 희귀질환 레지스트리 확대</td>
+          <td class="g">RareX · Simulacrum · NIH NCATS 플랫폼</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>표 11.7</b> 윤리·운영 과제와 실무적 대응. 원문 표의 &lsquo;이해관계자&rsquo; 열은 지면상 생략했다.</figcaption>
+ </div>
+</section>
+
+<!-- ================= 7 ================= -->
+<section class="sec" id="s7">
+ <div class="col">
+  <div class="sechead">
+    <div class="bars"><i style="background:var(--data)"></i><i style="background:var(--tx)"></i></div>
+    <div><span class="secno">SECTION 07&ndash;08</span>
+    <h2>다음 지평</h2>
+    <div class="h2sub">합성 코호트 · 디지털 트윈 · 국제 형평</div></div></div>
+
+  <div class="grid g3">
+    <div class="card"><span class="cno">SYNTHETIC</span><h5>합성 코호트</h5>
+      <p>GAN과 VAE 같은 생성 AI가 만든 환자 데이터셋이다.
+      실제 환자 집단의 성질을 유지하면서 개인의 프라이버시를 보호한다.
+      <b>코호트 구성의 균형을 맞춰 편향을 줄이고, 윤리적 제약 없이 시나리오를 시험</b>할 수 있다.
+      실제 데이터가 부족해 불가능했던 인실리코 실험의 문을 연다.</p></div>
+    <div class="card"><span class="cno">DIGITAL TWIN</span><h5>디지털 트윈</h5>
+      <p>종단 다중오믹스, 임상, 영상, 생활 데이터를 담은 고해상도 가상 모형이다.
+      질병 궤적과 약물 반응을 인실리코로 모형화한다.
+      <b>&ldquo;만약 이렇게 하면&rdquo;이라는 질문</b>을 던지고,
+      변경의 결과와 잠재적 부작용, 약물 상호작용을 미리 볼 수 있다.</p></div>
+    <div class="card"><span class="cno">EQUITY</span><h5>국제 형평</h5>
+      <p>정밀의료의 약속은 세계적이고 형평한 접근을 통해서만 실현된다.
+      국제적 데이터 공유, 기술 이전, 저자원 환경을 위한 문화 민감적 워크플로가 필요하다.
+      <em class="mk">정밀의료는 건강의 사회적 결정 요인과 환경 요인까지 함께 다뤄야 한다.</em></p></div>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 결론 ================= -->
+<section class="sec" id="s8">
+ <div class="col">
+  <div class="sechead">
+    <div class="bars"><i style="background:var(--data)"></i><i style="background:var(--model)"></i>
+      <i style="background:var(--group)"></i><i style="background:var(--tx)"></i></div>
+    <div><span class="secno">CLOSING</span>
+    <h2>이 장이 남기는 것</h2>
+    <div class="h2sub">결론 · 그리고 읽고 난 뒤의 판단</div></div></div>
+
+  <div class="closing">
+    <div class="ci"><span class="ck">01 · 네 칸의 구조</span>
+      <p>이 장의 가장 유용한 형식은 표 11.6의 네 칸이다.
+      <b>데이터 → 모형 → 하위집단 → 치료 조정.</b>
+      질환이 무엇이든 이 네 칸을 채울 수 있으면 층화가 성립하고,
+      한 칸이라도 비면 성립하지 않는다.</p></div>
+    <div class="ci"><span class="ck">02 · 피하는 것도 이득이다</span>
+      <p>HLA-B*15:02와 카바마제핀, HLA-B*57:01과 아바카비르.
+      층화의 이득이 늘 &lsquo;더 나은 약&rsquo;인 것은 아니다.
+      <b>해로운 약을 피하는 것</b>이 더 큰 이득인 경우가 있다.</p></div>
+    <div class="ci"><span class="ck">03 · 인종이 아니라 조상</span>
+      <p>6.1절의 지적이 이 장에서 가장 날카롭다.
+      사회적 범주인 인종을 유전적 조상 대신 쓰면 오분류가 생긴다.
+      <b>문제는 데이터의 구성만이 아니라 변수를 정의하는 방식에도 있다.</b></p></div>
+    <div class="ci"><span class="ck">04 · 백반증이라는 축</span>
+      <p>이 장은 백반증을 반복해서 예로 든다.
+      임상형, 유전 다형성, miRNA, 면역 바이오마커, 삶의 질, 자외선 노출력이
+      한 질환에서 모두 만난다. <b>층화의 일곱 축을 한 번에 보여 주는 사례</b>다.</p></div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">옮긴이의 판단</span>
+    <p>이 장은 이 책에서 표가 가장 많다. 일곱 개다.
+    그리고 그 표들이 이 장의 실제 내용이다. 본문은 표를 설명하는 역할에 가깝다.</p>
+    <p>편집은 고르지 않다. 루푸스 사례의 논의와 결론이 다발성 경화증 절과 글자 그대로 같고,
+    8.1절 마지막에는 &ldquo;정밀 농업 생태계(precision-farming ecosystem)&rdquo;라는 말이 나온다.
+    6.2절의 문체는 갑자기 구어체로 바뀐다.
+    표 11.1에는 실제 문서에 없는 아이콘을 설명하는 열이 남아 있다.
+    <b>서둘러 마무리한 흔적이다.</b></p>
+    <p>그럼에도 이 장이 이 책 안에서 갖는 자리는 분명하다.
+    앞의 열 장이 각각 하나의 질환이나 하나의 기술을 다뤘다면,
+    이 장은 <b>그 모든 것을 관통하는 공통 문법</b>을 제시한다.
+    5장의 암 이질성도, 6장의 뇌 질환 이질성도, 10장의 알츠하이머 하위집단도
+    결국 같은 네 칸으로 정리된다.
+    <em class="mk">이 책을 하나로 묶는 문법이 있다면 그것은 층화다.</em></p>
+    <p>다만 마지막 문장 하나는 짚어야겠다.
+    이 장은 &ldquo;환자 층화는 더 이상 연구 사업이 아니며 운영 수준에서 삶의 방식이 되어야 한다&rdquo;고 끝맺는다.
+    그런데 6.5절이 방금 나열한 다섯 한계 &mdash; 일반화 실패, 데이터 편향, 과적합, 블랙박스, 자원 부담 &mdash;
+    는 아직 그대로 남아 있다. <b>선언과 진단 사이의 거리가 이 장에도 있다.</b>
+    표 11.6의 네 칸을 채울 수 있는 질환이 아직 열 개 남짓이라는 사실이 그 거리의 크기다.</p>
+  </div>
+ </div>
+</section>
+
+</main>
+
+<footer>
+ <div class="wrap"><div class="col">
+  <div class="src">
+    <b>원전</b><br>
+    Kaushik, P., &amp; Bhardwaj, S. (2026).
+    <i>Patient stratification and precision medicine approaches&mdash;key to identifying patient subgroups
+    for personalized treatment.</i>
+    In K. Raza (Ed.), <b>Artificial Intelligence in Precision Drug Design, Volume 2: Advanced Applications</b>
+    (Chapter 11, pp. 233&ndash;260). Academic Press / Elsevier. ISBN 978-0-443-44430-2.
+    https://doi.org/10.1016/B978-0-443-44430-2.00018-9
+    <div class="note">
+      이 문서는 원저 제11장만을 대상으로 한 한국어 정리본이다. 표 11.1&ndash;11.7의 내용, 수치,
+      인용 문헌은 모두 원문에서 가져왔고, 절 구성과 도해는 읽기 편하도록 재배열했다.<br><br>
+      <b>「층화 지도」에 관하여</b> &mdash; 원문 표 11.6을 뼈대로 삼고,
+      표 11.3(질환별 바이오마커)과 표 11.5(하위집단별 치료)의 내용을 같은 질환끼리 합쳤다.
+      <b>백반증은 표 11.6에 없지만 이 장이 본문에서 가장 자세히 다루는 사례여서
+      서술을 근거로 추가했다.</b> 원문에 이런 통합 표는 없다.<br><br>
+      <b>원문의 편집 오류에 관하여</b> &mdash; 4.3.3.5절(루푸스 논의)과 4.3.3.6절(루푸스 결론)이
+      4.3.2.5&ndash;4.3.2.6절(다발성 경화증)과 글자 그대로 같다.
+      8.1절에는 &ldquo;precision-farming ecosystem&rdquo;이라는 표현이 남아 있고,
+      표 11.1에는 실제 문서에 없는 아이콘을 설명하는 &lsquo;Visual&rsquo; 열이 있다.
+      이 정리본에서는 해당 부분을 본문에 표시하거나 생략했다.<br><br>
+      &lsquo;판단&rsquo;으로 표시한 블록은 원문의 유보 조항을 정리하거나 옮긴이의 해석을 덧붙인 부분이므로
+      원문 서술과 구분해서 읽어야 한다.
+    </div>
+  </div>
+ </div></div>
+</footer>
+
+<script>
+(function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var bar = document.getElementById('progress');
+  var rail = document.querySelector('nav.rail');
+  var hero = document.querySelector('header.hero');
+  function onScroll(){
+    var h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+    rail.classList.toggle('show', h.scrollTop > hero.offsetHeight - 80);
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section.sec'));
+  var list = document.getElementById('railList');
+  var links = secs.map(function(s){
+    var no = s.querySelector('.secno').textContent.replace('SECTION','').trim();
+    var tt = s.querySelector('h2').textContent.trim();
+    var a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.textContent = (no === 'CLOSING' ? '—' : no) + '  ' + tt;
+    var li = document.createElement('li'); li.appendChild(a); list.appendChild(li);
+    return a;
+  });
+
+  if ('IntersectionObserver' in window){
+    var navObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var i = secs.indexOf(e.target);
+        links.forEach(function(a, j){ a.classList.toggle('act', j === i); });
+      });
+    }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+    secs.forEach(function(s){ navObs.observe(s); });
+
+    var revObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add('on'); revObs.unobserve(e.target); }
+      });
+    }, {threshold:.12});
+    document.querySelectorAll('.reveal').forEach(function(el){
+      if (reduce) el.classList.add('on'); else revObs.observe(el);
+    });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('on'); });
+  }
+
+  function mk(seed){
+    var s = seed;
+    return function(){ s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  }
+
+  /* ---------- 표제 배경: 층이 갈라진다 ---------- */
+  (function(){
+    var svg = document.getElementById('heroStrata');
+    var r = mk(111111), f = document.createDocumentFragment();
+    var cols = ['#26405E', '#2F7A73', '#A8762A', '#9A3E5C'];
+    for (var row = 0; row < 13; row++){
+      var y = 12 + row * 40, x = 0;
+      /* 왼쪽은 한 덩어리, 오른쪽으로 갈수록 잘게 나뉜다 */
+      while (x < 1200){
+        var t = x / 1200;
+        var w = (150 - t * 128) * (0.6 + r() * 0.8);
+        var rc = document.createElementNS(NS, 'rect');
+        rc.setAttribute('x', x.toFixed(1)); rc.setAttribute('y', y);
+        rc.setAttribute('width', Math.max(4, w - 3).toFixed(1)); rc.setAttribute('height', 16);
+        rc.setAttribute('fill', t < .18 ? '#7A7D84' : cols[Math.floor(r() * 4)]);
+        rc.setAttribute('opacity', (0.05 + t * 0.13).toFixed(3));
+        f.appendChild(rc);
+        x += w;
+      }
+    }
+    svg.appendChild(f);
+  })();
+
+  /* ---------- 시그니처: 층화 지도 ---------- */
+  (function(){
+    var D = [
+      { n:'암', sci:'Cancer · 표 11.6 · 11.5 · 11.3',
+        d:'RNA-seq, 단백체. 바이오마커로는 <b>EGFR, KRAS, PD-L1</b>이 표적 치료 선택에 쓰인다.',
+        m:'지도 기계학습과 군집화. <code>OncodynamiX</code> 같은 정밀종양학 플랫폼이 다중오믹스와 변이 프로파일을 결합한다.',
+        g:'<b>HER2+, ER+, 삼중음성(TNBC), BRCA 변이, RET 융합.</b> 여기에 KRAS 야생형 췌장 종양, ' +
+          '전립선암 AR-V7 양성, 흑색종 BRAF 변이, 대장암 MSI-high가 더해진다.',
+        t:'표적 치료와 재창출. TNBC는 <b>PARP 억제제와 면역치료</b>, AR-V7 양성 전립선암은 <b>비AR 표적 화학요법</b>, ' +
+          'BRAF 변이 흑색종은 <b>BRAF/MEK 억제제</b>, MSI-high 대장암은 <b>면역관문억제제(펨브롤리주맙)</b>.',
+        note:'RET 융합 양성 비소세포폐암에 RET 억제제가 전향적으로 쓰였다 · 반응률 개선, 불필요한 독성 최소화' },
+      { n:'다발성 경화증', sci:'Multiple Sclerosis',
+        d:'MRI, EHR, 사이토카인 데이터. 바이오마커는 <b>신경섬유 경쇄(NfL), MRI 병변, 올리고클론 밴드</b>.',
+        m:'비지도 군집화와 랜덤포레스트. 데이터를 조화시킨 뒤 군집화와 예측 모형화를 적용한다.',
+        g:'<b>조기 반응자 vs 후기 반응자.</b> 임상형으로는 재발완화형 vs 진행형.',
+        t:'치료 단계 상승 계획. 조기 반응자는 1차 치료로 이익을 얻고, 후기 반응자는 고효능 약제가 필요하다. ' +
+          '활동성 재발형에는 <b>항CD20 치료(오크렐리주맙)</b>.',
+        note:'재발 감소와 삶의 질 개선 · 과제는 영상·분자 데이터의 통합과 종단 데이터셋의 확보' },
+      { n:'루푸스', sci:'Systemic Lupus Erythematosus (SLE)',
+        d:'전사체, EHR. 바이오마커는 <b>anti-dsDNA, 인터페론 유전자 시그니처, BlyS</b>.',
+        m:'자연어처리와 대조학습. 원시 전사체 데이터에서 특징을 추출해 군집화한다.',
+        g:'<b>IFN-hi vs IFN-lo 프로파일.</b> DNA 메틸화 양상 같은 후성유전 표지가 하위집단 식별을 더 정밀하게 만든다.',
+        t:'개인 맞춤 생물학제제 선택. IFN 고발현군에는 <b>아니프롤루맙(항인터페론 수용체 항체)</b>이 유효할 가능성이 크다.',
+        note:'관해를 앞당기고 장기 손상을 제한한다 · 발적(flare) 예측과 생물학제제 적격 판단' },
+      { n:'백반증', sci:'Vitiligo · 표 11.6에 없음, 본문 서술 기반',
+        d:'전사체·면역 프로파일링, 더모스코피 영상, 유전 다형성. 바이오마커는 <b>TYR, DEFB1, miR-145, CXCL10</b>.',
+        m:'기계학습이 <code>DEFB1</code> 변이와 전사체·임상 프로파일을 함께 분석한다. ' +
+          'NLP가 진료 기록에서 &ldquo;색종이 조각 모양 탈색&rdquo; 같은 병변 기술어를 뽑아낸다.',
+        g:'<b>분절형 vs 비분절형.</b> DEFB1-44 C/G의 GG 유전형은 발생 위험이 높고 광선치료 반응이 낮다. ' +
+          'CXCL10이 높으면 활동성이며 치료 무반응과 연결된다.',
+        t:'안정 병변은 <b>국소 치료와 광선치료</b>, 백모증 동반 1cm 초과 융기 병변은 <b>이식술</b>, ' +
+          'CXCL10 고활동성은 <b>JAK 억제제(룩솔리티닙, 토파시티닙, 바리시티닙)</b>. ' +
+          '멜라닌세포 줄기세포의 분화·부착을 촉진하는 <b>WNT 작용제</b>도 도출되었다.',
+        note:'광선치료 96회차에 이르면 비반응자를 확신 있게 예측할 수 있다는 것이 이 장의 보고다' },
+      { n:'주요우울장애', sci:'Major Depressive Disorder (MDD)',
+        d:'EEG, 혈액 바이오마커, 유전자 패널.',
+        m:'지도 기계학습과 예측 알고리즘.',
+        g:'<b>신경 회로에 근거한 하위집단</b>과 <code>CYP2D6</code> 대사자 상태.',
+        t:'개인 맞춤 항우울제(예: 시탈로프람)와 <b>용량 최적화</b>.',
+        note:'약물유전체 정보가 치료 선택과 용량 결정에 함께 쓰이는 사례' },
+      { n:'가족성 고콜레스테롤혈증', sci:'Familial Hypercholesterolemia',
+        d:'유전 변이(<code>LDLR</code>, <code>PCSK9</code>)와 EHR.',
+        m:'군집화와 유전 위험 점수화.',
+        g:'<b>고위험 LDL 프로파일</b>과 <b>PCSK9 변이 보유자</b>.',
+        t:'<b>PCSK9 억제제</b>와 스타틴 최적화.',
+        note:'유전 위험 점수가 직접 약제 선택으로 이어지는 비교적 단순한 층화 구조' },
+      { n:'척수성 근위축증', sci:'Spinal Muscular Atrophy (SMA)',
+        d:'<code>SMN1</code>/<code>SMN2</code> 유전자 복제수와 EHR.',
+        m:'비지도 기계학습과 생존 분석.',
+        g:'<b>SMN2 복제수에 의존하는 중증도 하위집단.</b>',
+        t:'<b>누시네르센</b>(안티센스 올리고뉴클레오타이드 치료).',
+        note:'유전자 복제수라는 단일 변수가 중증도와 치료 결정을 함께 가르는 사례' },
+      { n:'류마티스 관절염', sci:'Rheumatoid Arthritis (RA)',
+        d:'다중오믹스(유전체, 단백체)와 EHR. 바이오마커는 <b>RF, anti-CCP, IL-6, CRP</b>.',
+        m:'무작위 생존 숲(RSF)과 기계학습.',
+        g:'<b>고위험 사망 프로파일</b>과 <b>메토트렉세이트 반응자</b>. IL-6가 높은 하위집단도 구분된다.',
+        t:'표적 생물학제제(<b>항TNF-α</b>)와 용량 조정. IL-6 고발현군에는 <b>IL-6 억제제(토실리주맙)</b>.',
+        note:'조기 진단과 치료 선택 양쪽에 층화가 쓰인다' },
+      { n:'천식', sci:'Asthma',
+        d:'호산구 수, 호기 산화질소(FeNO), EHR. 전사체로는 <b>페리오스틴, IL-4/IL-13 유전자 발현</b>.',
+        m:'자연어처리와 군집화.',
+        g:'<b>T2-high vs T2-low</b> 염증 아형. 호산구형 여부가 핵심이다.',
+        t:'생물학제제(<b>항IL-5 / 항IL-4R</b>)와 스테로이드 최소화. 호산구형에는 <b>메폴리주맙</b>.',
+        note:'같은 &lsquo;천식&rsquo; 진단 안에서 완전히 다른 약을 쓰게 되는 대표적 사례' },
+      { n:'HIV 약물유전체', sci:'HIV Pharmacogenomics',
+        d:'HLA 유전형과 바이러스 부하 데이터.',
+        m:'로지스틱 회귀와 결정트리.',
+        g:'<b>HLA-B*57:01 보유자</b> &mdash; 과민반응 위험군.',
+        t:'<b>아바카비르를 피하고</b> 대체 항레트로바이러스 요법으로 전환한다.',
+        note:'층화의 이득이 &lsquo;더 나은 약&rsquo;이 아니라 &lsquo;해로운 약의 회피&rsquo;인 사례' },
+      { n:'낭포성 섬유증', sci:'Cystic Fibrosis',
+        d:'<code>CFTR</code> 변이 프로파일과 폐기능.',
+        m:'딥러닝과 변이 콜링.',
+        g:'<b>CFTR 변이 클래스</b>(G551D, F508del 등).',
+        t:'<b>CFTR 조절제</b>(이바카프토르, 루마카프토르).',
+        note:'변이 클래스가 곧 약제를 결정하는, 층화가 가장 완결된 형태에 가까운 사례' }
+    ];
+
+    var nav = document.querySelector('#mapPanel .map-nav');
+    var body = document.getElementById('mapBody');
+    var btns = [];
+    D.forEach(function(x, i){
+      var b = document.createElement('button');
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+      b.setAttribute('aria-controls', 'mapBody');
+      b.textContent = x.n;
+      b.addEventListener('click', function(){ sel(i); });
+      b.addEventListener('keydown', function(ev){
+        var d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return;
+        ev.preventDefault();
+        var n = (i + d + D.length) % D.length;
+        btns[n].focus(); sel(n);
+      });
+      nav.appendChild(b); btns.push(b);
+    });
+
+    function sel(i){
+      var x = D[i];
+      btns.forEach(function(b, j){ b.setAttribute('aria-selected', j === i ? 'true' : 'false'); });
+      body.innerHTML =
+        '<h6>' + x.n + '</h6><div class="sci">' + x.sci + '</div>'
+        + '<div class="lay d"><span class="lk">데이터 · 무엇을 넣는가</span><p>' + x.d + '</p></div>'
+        + '<div class="lay m"><span class="lk">모형 · 어떻게 나누는가</span><p>' + x.m + '</p></div>'
+        + '<div class="lay g"><span class="lk">하위집단 · 무엇이 나오는가</span><p>' + x.g + '</p></div>'
+        + '<div class="lay t"><span class="lk">치료 · 무엇이 달라지는가</span><p>' + x.t + '</p></div>'
+        + '<div class="note">' + x.note + '</div>';
+    }
+    sel(0);
+  })();
+})();
+</script>
+</body>
+</html>

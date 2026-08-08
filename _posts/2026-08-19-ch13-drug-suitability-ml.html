@@ -1,0 +1,1008 @@
+---
+layout: null
+title: "Selecting Medication using Electronic Medical Records and ML" 
+date: 2026-08-19
+categories: [artificial intelligence]
+tags: [artificial general intelligence, drug discovery]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제13장 · 전자의무기록과 기계학습으로 약을 고른다 — 평균과 클래스 사이</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   점수판(scoreboard)의 색 체계
+   이 장은 리뷰가 아니라 작은 실증 연구다. 환자 200명, 변수 여섯 개,
+   모형 다섯 개. 결과는 전부 숫자로 나온다.
+   그래서 색도 점수의 높낮이를 가른다.
+     청록 teal   = 잘한 것   (F1 ≥ 0.80)
+     황토 ochre  = 어중간한 것 (0.00 < F1 < 0.80)
+     자류 garnet = 실패한 것  (F1 = 0.00)
+   표제 서체로 고정폭 한글꼴을 쓴 것은, 이 장이 결국
+   노트북의 출력물이기 때문이다.
+   ============================================================ */
+:root{
+  --sheet:#DEE3E6;
+  --sheet-2:#EBEEF0;
+  --white:#FFFFFF;
+  --ink:#14181B;
+  --ink-soft:#3F4750;
+  --ink-mute:#727B83;
+  --good:#16706B;
+  --good-dim:rgba(22,112,107,.12);
+  --mid:#A67C1E;
+  --mid-dim:rgba(166,124,30,.14);
+  --bad:#98333A;
+  --bad-dim:rgba(152,51,58,.13);
+  --rule:#C2C9CE;
+  --rule-soft:#D5DBDF;
+  --mono:"Nanum Gothic Coding", monospace;
+  --sans:"Noto Sans KR", sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--sheet);color:var(--ink);
+  font-family:var(--sans);font-weight:300;
+  font-size:16.5px;line-height:1.96;
+  -webkit-font-smoothing:antialiased;
+  word-break:keep-all;overflow-wrap:break-word;
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+#progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:90;
+  background:linear-gradient(90deg,var(--bad),var(--mid) 50%,var(--good))}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 26px}
+.col{max-width:722px;margin:0 auto}
+.wide{max-width:966px;margin:0 auto}
+
+/* ---------- 표제 ---------- */
+header.hero{position:relative;overflow:hidden;padding:86px 0 52px;border-bottom:1px solid var(--rule)}
+header.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(720px 400px at 4% -12%, rgba(22,112,107,.15), transparent 62%),
+             radial-gradient(560px 320px at 97% 2%, rgba(152,51,58,.11), transparent 62%)}
+#heroGrid{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.5}
+.hero-inner{position:relative;z-index:1}
+.kicker{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-mute);display:flex;gap:11px;align-items:center;flex-wrap:wrap;margin-bottom:24px}
+.kicker .dot{width:3px;height:3px;border-radius:50%;background:var(--rule)}
+.kicker .k2{flex-basis:100%;margin-top:6px;color:var(--good);font-weight:700}
+.chapnum{font-family:var(--mono);font-size:12.5px;letter-spacing:.1em;color:var(--bad);font-weight:700}
+h1{font-family:var(--mono);font-weight:700;font-size:clamp(27px,4.2vw,48px);
+  line-height:1.34;letter-spacing:-.03em;margin:14px 0 0;max-width:17em}
+h1 .g{color:var(--good)}
+h1 .b{color:var(--bad)}
+.sub{font-weight:300;font-size:clamp(15px,1.6vw,18.5px);line-height:1.86;
+  color:var(--ink-soft);margin:26px 0 0;max-width:33em}
+.spec{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);
+  border:1px solid var(--rule);margin:42px 0 0}
+.spec div{background:var(--white);padding:16px 15px}
+.spec .sv{font-family:var(--mono);font-weight:700;font-size:clamp(18px,2.3vw,25px);line-height:1.12}
+.spec .sl{font-size:11.5px;color:var(--ink-mute);margin-top:7px;line-height:1.6}
+@media(max-width:760px){.spec{grid-template-columns:repeat(2,1fr)}}
+.byline{margin-top:26px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:12.5px;line-height:1.84;color:var(--ink-mute);max-width:52em}
+.byline b{color:var(--ink-soft);font-weight:500}
+
+/* ---------- 테제 ---------- */
+.thesis{padding:58px 0 6px}
+.lede{font-weight:300;font-size:clamp(18px,2.2vw,23px);line-height:1.88;margin:0}
+.lede b{font-family:var(--mono);font-weight:700;letter-spacing:-.02em}
+.lede .q{color:var(--bad)}
+.lede .u{background:linear-gradient(transparent 70%, rgba(22,112,107,.22) 70%)}
+
+/* ---------- 본문 ---------- */
+main{padding:20px 0 30px}
+section.sec{padding:70px 0}
+section.sec + section.sec{border-top:1px solid var(--rule)}
+.sechead{margin-bottom:28px}
+.secno{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--white);
+  background:var(--ink);display:inline-block;padding:2px 9px;margin-bottom:10px;font-weight:700}
+h2{font-family:var(--mono);font-weight:700;font-size:clamp(21px,2.8vw,29px);
+  line-height:1.42;letter-spacing:-.032em;margin:0}
+.h2sub{font-size:13px;color:var(--ink-mute);margin-top:8px}
+h3{font-family:var(--mono);font-weight:700;font-size:18.5px;line-height:1.5;
+  margin:44px 0 12px;display:flex;align-items:baseline;gap:10px;letter-spacing:-.028em}
+h3 .hn{font-size:12px;font-weight:700;color:var(--mid);flex:0 0 auto}
+h4{font-family:var(--mono);font-weight:700;font-size:14.5px;margin:28px 0 9px;color:var(--good);letter-spacing:-.02em}
+p{margin:0 0 19px}
+a{color:var(--good)}
+strong{font-weight:700}
+em.mk{font-style:normal;background:linear-gradient(transparent 70%, rgba(152,51,58,.20) 70%)}
+code{font-family:var(--mono);font-size:.92em;background:var(--white);
+  border:1px solid var(--rule-soft);padding:1px 5px;color:var(--good)}
+
+/* ---------- 판단 ---------- */
+.judge{margin:32px 0;padding:21px 23px;background:var(--white);
+  border:1px solid var(--rule-soft);border-left:3px solid var(--bad)}
+.judge .lab{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--bad);display:block;margin-bottom:10px;font-weight:700}
+.judge p{margin:0;font-size:15.5px;line-height:1.9;color:var(--ink-soft)}
+.judge p + p{margin-top:13px}
+.pull{margin:40px 0;padding:0 0 0 24px;border-left:2px solid var(--good);
+  font-weight:300;font-size:clamp(18px,2.1vw,22px);line-height:1.86}
+
+/* ---------- 목록 ---------- */
+ul.gm{list-style:none;padding:0;margin:20px 0}
+ul.gm li{position:relative;padding-left:24px;margin-bottom:12px}
+ul.gm li::before{content:"›";position:absolute;left:0;top:0;font-family:var(--mono);
+  font-weight:700;color:var(--good)}
+ol.rn{list-style:none;counter-reset:rr;padding:0;margin:22px 0}
+ol.rn li{counter-increment:rr;position:relative;padding-left:38px;margin-bottom:15px}
+ol.rn li::before{content:counter(rr);position:absolute;left:0;top:.2em;
+  font-family:var(--mono);font-size:12px;color:#fff;background:var(--good);
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700}
+
+/* ---------- 카드 ---------- */
+.grid{display:grid;gap:13px;margin:28px 0}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:840px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--white);border:1px solid var(--rule-soft);padding:18px 20px 16px}
+.card .cno{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--good);
+  display:block;margin-bottom:7px;font-weight:700}
+.card h5{font-family:var(--mono);font-weight:700;font-size:16px;margin:0 0 8px;letter-spacing:-.026em}
+.card p{font-size:14.3px;line-height:1.86;margin:0;color:var(--ink-soft)}
+.card .meta{font-family:var(--mono);font-size:11.5px;color:var(--ink-mute);margin-top:11px;
+  padding-top:9px;border-top:1px dashed var(--rule);line-height:1.7}
+
+/* ---------- 데이터 시트 ---------- */
+.ds{margin:26px 0;border:1px solid var(--rule);background:var(--white)}
+.ds .dh{padding:10px 18px;background:var(--ink);color:var(--white);
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;font-weight:700}
+.ds .dr{display:grid;grid-template-columns:150px 1fr;border-bottom:1px solid var(--rule-soft)}
+.ds .dr:last-child{border-bottom:0}
+.ds .dr > div{padding:10px 18px}
+.ds .dk{font-family:var(--mono);font-size:12.5px;color:var(--good);font-weight:700;
+  border-right:1px solid var(--rule-soft);background:var(--sheet-2)}
+.ds .dv{font-size:14.3px;line-height:1.72;color:var(--ink-soft)}
+.ds .dv b{font-family:var(--mono);font-weight:700;color:var(--ink)}
+@media(max-width:640px){.ds .dr{grid-template-columns:1fr}
+  .ds .dk{border-right:0;border-bottom:1px solid var(--rule-soft)}}
+
+/* ---------- 표 ---------- */
+.tablewrap{overflow-x:auto;margin:26px 0;border:1px solid var(--rule-soft);background:var(--white)}
+table.tb{width:100%;border-collapse:collapse;font-size:13.8px;min-width:540px}
+table.tb th{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;
+  color:var(--ink-mute);text-align:left;padding:10px 12px;border-bottom:1px solid var(--rule);font-weight:700}
+table.tb td{padding:9px 12px;border-bottom:1px solid var(--rule-soft);vertical-align:top;
+  line-height:1.7;color:var(--ink-soft)}
+table.tb tr:last-child td{border-bottom:0}
+table.tb td.k{font-family:var(--mono);font-weight:700;white-space:nowrap;color:var(--ink);font-size:13px}
+table.tb td.n{font-family:var(--mono);font-size:13px;white-space:nowrap;text-align:right}
+
+/* 상관 막대 */
+.cbar{position:relative;display:inline-block;width:120px;height:15px;background:var(--sheet);
+  vertical-align:middle}
+.cbar i{position:absolute;left:0;top:0;bottom:0;background:var(--good);opacity:.8}
+
+/* 특징 중요도 */
+.fi{margin:24px 0;border:1px solid var(--rule-soft);background:var(--white)}
+.fi .fh{padding:11px 18px;border-bottom:1px solid var(--rule-soft);font-family:var(--mono);
+  font-size:11.5px;font-weight:700;letter-spacing:.06em}
+.fi .fr{display:grid;grid-template-columns:130px 1fr 62px;align-items:center;
+  padding:8px 18px;border-bottom:1px solid var(--rule-soft);gap:12px}
+.fi .fr:last-child{border-bottom:0}
+.fi .fn{font-family:var(--mono);font-size:13px;font-weight:700}
+.fi .fb{height:14px;background:var(--sheet);position:relative}
+.fi .fb i{position:absolute;left:0;top:0;bottom:0;opacity:.85}
+.fi .fv{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--ink-soft)}
+
+/* ---------- 시그니처: 점수판 ---------- */
+.sb{margin:38px 0 12px;border:1px solid var(--rule);background:var(--white)}
+.sb-head{padding:17px 22px;border-bottom:1px solid var(--rule);display:flex;
+  justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;background:var(--ink)}
+.sb-head .t{font-family:var(--mono);font-weight:700;font-size:18px;color:var(--white);letter-spacing:-.026em}
+.sb-head .s{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:#9AA4AC}
+.sb-top{padding:14px 12px 6px;background:var(--sheet-2);border-bottom:1px solid var(--rule-soft)}
+.sb-top svg{width:100%;height:auto;display:block}
+.sb-body{padding:20px 22px}
+.sb-body .bk{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--ink-mute);
+  display:block;margin-bottom:6px;font-weight:700}
+.sb-body h6{font-family:var(--mono);font-weight:700;font-size:21px;margin:0 0 3px;letter-spacing:-.03em}
+.sb-body .en{font-family:var(--mono);font-size:11.5px;color:var(--ink-mute);margin-bottom:16px}
+.cr{border:1px solid var(--rule-soft)}
+.cr .hd{display:grid;grid-template-columns:92px 1fr 58px 58px 52px;gap:8px;padding:8px 12px;
+  background:var(--sheet-2);border-bottom:1px solid var(--rule-soft);
+  font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);font-weight:700}
+.cr .rw{display:grid;grid-template-columns:92px 1fr 58px 58px 52px;gap:8px;padding:9px 12px;
+  align-items:center;border-bottom:1px solid var(--rule-soft)}
+.cr .rw:last-child{border-bottom:0}
+.cr .cn{font-family:var(--mono);font-size:12.5px;font-weight:700}
+.cr .bar{height:15px;background:var(--sheet);position:relative}
+.cr .bar i{position:absolute;left:0;top:0;bottom:0}
+.cr .bar b{position:absolute;left:6px;top:0;line-height:15px;font-family:var(--mono);
+  font-size:10.5px;font-weight:700;color:var(--white)}
+.cr .bar b.out{left:6px;right:auto}
+.cr .nm{font-family:var(--mono);font-size:12px;text-align:right;color:var(--ink-soft)}
+.cr .sp{font-family:var(--mono);font-size:12px;text-align:right;color:var(--ink-mute)}
+.sb-body .note{font-size:14.5px;line-height:1.86;color:var(--ink-soft);margin:14px 0 0;
+  padding-top:13px;border-top:1px dashed var(--rule)}
+.mrow{cursor:pointer}
+.mrow rect.hit{fill:transparent}
+.mrow:hover rect.hit{fill:rgba(22,112,107,.07)}
+.mrow.on rect.hit{fill:rgba(22,112,107,.13)}
+.mrow:focus-visible rect.hit{fill:rgba(22,112,107,.18);outline:none}
+@media(max-width:640px){
+  .cr .hd,.cr .rw{grid-template-columns:74px 1fr 46px 46px 40px;gap:5px;padding:8px 8px}
+  .cr .nm,.cr .sp{font-size:11px}
+}
+
+/* ---------- 지표 ---------- */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule-soft);
+  border:1px solid var(--rule-soft);margin:26px 0}
+.metrics div{background:var(--white);padding:15px 14px}
+.metrics .mv{font-family:var(--mono);font-weight:700;font-size:19px;color:var(--bad)}
+.metrics .ml{font-size:11.5px;color:var(--ink-mute);margin-top:5px;line-height:1.55}
+@media(max-width:640px){.metrics{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- 그림 ---------- */
+figcaption{font-size:12.5px;line-height:1.78;color:var(--ink-mute);margin-top:11px;margin-bottom:30px}
+figcaption b{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;color:var(--bad);
+  font-weight:700;margin-right:8px}
+
+/* ---------- 목차 ---------- */
+nav.rail{position:fixed;left:calc(50% - 556px);top:50%;transform:translateY(-50%);z-index:40;
+  display:none;opacity:0;pointer-events:none;transition:opacity .45s}
+nav.rail.show{opacity:1;pointer-events:auto}
+@media(min-width:1280px){nav.rail{display:block}}
+nav.rail ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--rule)}
+nav.rail a{display:block;text-decoration:none;font-size:11.5px;color:var(--ink-mute);
+  padding:5px 0 5px 13px;transition:.2s;position:relative;
+  max-width:146px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav.rail a::before{content:"";position:absolute;left:-1px;top:50%;height:0;width:3px;
+  background:var(--good);transform:translateY(-50%);transition:height .25s}
+nav.rail a:hover{color:var(--ink)}
+nav.rail a.act{color:var(--good);font-weight:700}
+nav.rail a.act::before{height:16px}
+
+/* ---------- 결론 ---------- */
+.closing{border:1px solid var(--good);background:var(--white);margin:30px 0}
+.closing .ci{padding:18px 24px;border-bottom:1px solid var(--rule-soft)}
+.closing .ci:last-child{border-bottom:0}
+.closing .ck{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--good);
+  display:block;margin-bottom:6px;font-weight:700}
+.closing .ci p{margin:0;font-size:15px;line-height:1.88;color:var(--ink-soft)}
+
+footer{border-top:1px solid var(--rule);padding:48px 0 84px;margin-top:32px}
+.src{font-size:12.5px;line-height:1.92;color:var(--ink-mute)}
+.src b{color:var(--ink-soft);font-weight:500}
+.src .note{margin-top:20px;padding-top:16px;border-top:1px dashed var(--rule);font-size:12px}
+
+.reveal{opacity:0;transform:translateY(14px);
+  transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.on{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<nav class="rail" aria-label="장 목차"><ol id="railList"></ol></nav>
+
+<header class="hero">
+  <svg id="heroGrid" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+  <div class="wrap"><div class="wide hero-inner">
+    <div class="kicker">
+      <span>Artificial Intelligence in Precision Drug Design</span><span class="dot"></span>
+      <span>Volume 2 · Advanced Applications</span>
+      <b class="k2">Elsevier / Academic Press, 2026</b>
+    </div>
+    <div class="chapnum">CHAPTER 13</div>
+    <h1>전자의무기록으로 약을 고른다:<br><span class="g">평균</span>과 <span class="b">클래스</span> 사이</h1>
+    <p class="sub">환자 200명, 변수 여섯 개, 모형 다섯 개.
+    최고 성적은 XGBoost의 정확도 0.900이다.
+    그런데 같은 모형이 어떤 약에서는 세 명 중 한 명만 맞힌다.
+    이 장을 읽는 일은 그 두 숫자를 나란히 놓는 일이다.</p>
+
+    <div class="spec reveal">
+      <div><div class="sv" style="color:var(--ink-soft)">200명</div><div class="sl">데이터셋 크기. 출처는 Kaggle의 익명화된 환자 기록</div></div>
+      <div><div class="sv" style="color:var(--ink-soft)">6개</div><div class="sl">변수. 나이·성별·혈압·콜레스테롤·Na/K 비율·약물</div></div>
+      <div><div class="sv" style="color:var(--good)">0.900</div><div class="sl">XGBoost의 정확도. 다섯 모형 중 최고</div></div>
+      <div><div class="sv" style="color:var(--bad)">0.33</div><div class="sl">같은 모형의 drugB 재현율. 세 명 중 한 명</div></div>
+    </div>
+
+    <div class="byline">
+      <b>원저자</b> A. Simon Prakash, A. Saleth Mary, A. Manimaran<br>
+      <b>소속</b> School of Advanced Sciences, VIT-AP University (Amaravati, India)<br>
+      <b>편저</b> Khalid Raza (Jamia Millia Islamia) &nbsp;·&nbsp; <b>DOI</b> 10.1016/B978-0-443-44430-2.00006-2
+    </div>
+  </div></div>
+</header>
+
+<div class="wrap">
+<div class="wide thesis reveal">
+  <p class="lede">앞의 열두 장이 &lsquo;무엇이 가능한가&rsquo;를 다뤘다면 이 장은 <span class="u">실제로 돌려 본 결과</span>다.
+  Kaggle에서 받은 환자 200명의 기록에 다섯 개의 기계학습 모형을 걸어
+  어떤 약이 맞는지 예측한다. 규모가 작고, 데이터가 단순하고, 결론도 단정하지 않다.
+  <span class="q">그런데 바로 그 소박함이 이 장을 값지게 만든다.</span>
+  <b>숫자가 전부 드러나 있으므로 검증할 수 있다.</b></p>
+</div>
+</div>
+
+<main class="wrap">
+
+<!-- ================= 1 ================= -->
+<section class="sec" id="s1">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 01</span>
+    <h2>무엇을 하려는 연구인가</h2>
+    <div class="h2sub">서론 · 기존 연구의 공백</div></div>
+
+  <p>기계학습을 이용한 개인 맞춤 의료에서 관심을 끄는 것은
+  <b>치료 효과를 높이면서 위험한 처방의 가능성을 줄이는 일</b>이다.
+  전자의무기록이 쌓이면서 나이, 성별, 임상 이력, 검사 결과 같은
+  환자별 정보로 처방을 최적화할 기회가 생겼다.</p>
+
+  <p>랜덤포레스트, XGBoost, 서포트 벡터 머신 같은 알고리즘이
+  관습적 접근보다 높은 예측 정확도를 보인다는 보고가 이어졌다.
+  약물 분류와 표적 예측을 돕는 연구도, 약물 안전성 분류에 기계학습을 쓴 연구도 있다.</p>
+
+  <div class="judge">
+    <span class="lab">이 연구가 스스로 규정한 공백</span>
+    <p>원저자들의 진단은 이렇다. 기존 연구들은
+    <b>환자 데이터의 한 측면이나 특정 약물 계열에만 집중했고,
+    총체적 약물 추천 모형을 위해 임상·인구학·검사 데이터를 두루 통합하지 못했다.</b></p>
+    <p>그래서 이 연구는 로지스틱 회귀, 결정트리, 랜덤포레스트, SVM, XGBoost를
+    임상·인구학·검사 데이터에 함께 적용한다.
+    <em class="mk">다만 뒤에서 보겠지만, 실제로 쓴 데이터는 변수 여섯 개다.</em></p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="sec" id="s2">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 02</span>
+    <h2>데이터</h2>
+    <div class="h2sub">200명 · 여섯 변수 · 다섯 클래스</div></div>
+
+  <div class="ds reveal">
+    <div class="dh">DATASET · 200 records × 6 features</div>
+    <div class="dr"><div class="dk">Age</div><div class="dv">
+      환자의 나이. <b>15&ndash;74</b>세, 평균 <b>44.5</b>세, 표준편차 <b>15.2</b>.
+      분포는 거의 정규에 가깝고 최빈값은 40&ndash;50세 구간이다</div></div>
+    <div class="dr"><div class="dk">Sex</div><div class="dv">
+      성별. 남성 <b>104</b>명, 여성 <b>96</b>명. 거의 균형이 맞는다</div></div>
+    <div class="dr"><div class="dk">BP</div><div class="dv">
+      혈압. HIGH <b>77</b>, LOW <b>64</b>, NORMAL <b>59</b>.
+      고혈압 쪽으로 약간 치우쳐 있어 약물 선택 경향에 영향을 줄 수 있다</div></div>
+    <div class="dr"><div class="dk">Cholesterol</div><div class="dv">
+      콜레스테롤. HIGH <b>103</b>, NORMAL <b>97</b>. 고르게 분포한다</div></div>
+    <div class="dr"><div class="dk">Na_to_K</div><div class="dv">
+      혈중 나트륨 대 칼륨 비율. 평균 <b>16.1</b>, 표준편차 <b>7.5</b>, 범위 <b>6.3&ndash;38.2</b>.
+      오른쪽으로 치우친 분포이며 대부분 10&ndash;15 사이에 있다.
+      전해질 균형의 변동이 크므로 <b>SVM 같은 알고리즘에는 스케일링이 필요</b>하다</div></div>
+    <div class="dr"><div class="dk">Drug &nbsp;(표적)</div><div class="dv">
+      예측 대상. drugY <b>91</b>(45.5%) · drugX <b>54</b>(27%) · drugA <b>23</b>(11.5%) ·
+      drugB <b>16</b>(8%) · drugC <b>16</b>(8%)</div></div>
+  </div>
+
+  <h3><span class="hn">2.4.3</span> 어느 변수가 약과 관련되는가</h3>
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>변수 쌍</th><th>상관</th><th>계수</th><th>해석</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Na_to_K &ndash; Drug</td>
+          <td><span class="cbar"><i style="width:100%;background:var(--good)"></i></span></td>
+          <td class="n" style="color:var(--good);font-weight:700">0.59</td>
+          <td>가장 강하다. 심혈관 건강과 연결된 핵심 예측 변수다</td></tr>
+        <tr><td class="k">BP &ndash; Na_to_K</td>
+          <td><span class="cbar"><i style="width:63%;background:var(--mid)"></i></span></td>
+          <td class="n" style="color:var(--mid)">0.37</td>
+          <td>상호작용 가능성. 랜덤포레스트 같은 모형에 유리하다</td></tr>
+        <tr><td class="k">BP &ndash; Drug</td>
+          <td><span class="cbar"><i style="width:56%;background:var(--mid)"></i></span></td>
+          <td class="n" style="color:var(--mid)">0.33</td>
+          <td>중간 정도. 혈압이 약물 선택에 영향을 준다</td></tr>
+        <tr><td class="k">Sex &ndash; Drug</td>
+          <td><span class="cbar"><i style="width:17%;background:var(--rule)"></i></span></td>
+          <td class="n" style="color:var(--ink-mute)">0.099</td>
+          <td>매우 낮다</td></tr>
+        <tr><td class="k">Cholesterol &ndash; Drug</td>
+          <td><span class="cbar"><i style="width:9%;background:var(--rule)"></i></span></td>
+          <td class="n" style="color:var(--ink-mute)">0.056</td>
+          <td>약하다. 직접적 영향이 거의 없다</td></tr>
+        <tr><td class="k">Age &ndash; Drug</td>
+          <td><span class="cbar"><i style="width:8%;background:var(--rule)"></i></span></td>
+          <td class="n" style="color:var(--ink-mute)">0.048</td>
+          <td>매우 낮다. 단독으로는 예측력이 없다</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>그림 13.1</b> 원문의 상관 분석을 표로 옮겼다.
+  막대 길이는 계수의 상대적 크기다.
+  <b>여섯 변수 가운데 실제로 표적과 연결되는 것은 Na_to_K와 BP 둘뿐</b>이라는 점이
+  뒤에 나올 특징 중요도 분석과 이어진다.</figcaption>
+
+  <div class="judge">
+    <span class="lab">표적 변수의 성격에 관하여</span>
+    <p>원문 2.3절은 이렇게 적는다.
+    &ldquo;이 약물 분류는 혈압, 콜레스테롤, 나트륨&ndash;칼륨 비율 같은 요인의 조합에 근거한다.&rdquo;</p>
+    <p>즉 예측 대상이 <b>독립적인 임상 결과가 아니라 같은 변수들에서 파생된 값</b>이라는 뜻이다.
+    그렇다면 이 과제는 &lsquo;환자의 반응을 예측하는 일&rsquo;보다
+    <em class="mk">데이터를 만든 규칙을 되찾는 일</em>에 가깝다.
+    Na_to_K가 상관 0.59로 압도적인 것도 그렇게 보면 자연스럽다.</p>
+    <p>이 점이 성능 수치를 읽는 방식을 바꾼다.
+    <b>90퍼센트 정확도는 임상 예측의 성취가 아니라 규칙 복원의 성취일 수 있다.</b>
+    원저자들도 이 데이터셋을 &ldquo;개념 증명&rdquo;으로 규정하고 일반화 가능성의 한계를 인정한다.</p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="sec" id="s3">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 03&ndash;04</span>
+    <h2>전처리와 검증 설계</h2>
+    <div class="h2sub">인코딩 · 스케일링 · 불균형 · 교차검증</div></div>
+
+  <ul class="gm">
+    <li><b>결측값</b> &mdash; 없었다. 대치나 삭제가 필요하지 않았다.</li>
+    <li><b>범주형 인코딩</b> &mdash; 라벨 인코딩을 썼다.
+    성별은 M=1, F=0. 혈압과 콜레스테롤은 LOW/NORMAL/HIGH를 0/1/2로.
+    표적인 약물도 0&ndash;4로 부호화했다.
+    <em class="mk">원문은 순서 관계를 가정하지 않도록 원핫 인코딩도 고려했으나,
+    데이터셋이 작고 범주 구분이 명확해 라벨 인코딩으로 충분하다고 판단했다고 적는다.</em></li>
+    <li><b>스케일링</b> &mdash; 수치형인 Age와 Na_to_K에 <code>StandardScaler</code>를 적용해
+    평균 0, 표준편차 1로 z점수 정규화했다.</li>
+    <li><b>클래스 불균형</b> &mdash; <b>다루지 않았다.</b>
+    SMOTE, 무작위 언더샘플링, 클래스 가중치를 소개하되
+    &ldquo;데이터의 자연스러운 분포를 보존하기 위해&rdquo; 원래의 불균형을 유지했다고 밝힌다.</li>
+    <li><b>하이퍼파라미터</b> &mdash; <b>튜닝하지 않았다.</b>
+    격자 탐색이나 무작위 탐색을 쓰지 않고 <code>scikit-learn</code>(XGBoost는 자체 파이썬 API)의
+    기본값을 그대로 썼다. 매개변수 최적화의 영향을 배제한 <b>공정한 기준선 비교</b>가 목적이다.</li>
+  </ul>
+
+  <div class="judge">
+    <span class="lab">검증 절차에 어긋나는 대목이 있다</span>
+    <p>원문 4.1절은 <b>5겹 층화 교차검증</b>을 썼다고 적는다.
+    데이터를 다섯 등분해 네 개로 학습하고 하나로 시험하는 방식이니 시험 집합은 20퍼센트다.</p>
+    <p>그런데 5절은 &ldquo;각 폴드에서 데이터의 <b>70퍼센트로 학습하고 나머지 30퍼센트로 시험했다</b>&rdquo;고 적는다.
+    5겹 교차검증과 70대 30 분할은 서로 다른 절차다.</p>
+    <p>그리고 뒤에 나올 분류 보고서들의 지지도(support) 합계는
+    <b>5+3+3+11+18 = 40</b>이다. 200명의 20퍼센트다.
+    <em class="mk">20퍼센트라는 숫자는 5겹 교차검증과 맞고 &lsquo;30퍼센트&rsquo;와는 맞지 않는다.</em>
+    또한 지지도 40은 <b>한 번의 분할</b>에서 나온 수치이지 다섯 폴드의 평균이 아니다.</p>
+    <p>정리하면, 표 13.3의 종합 지표는 5겹 평균이라고 적혀 있고
+    표 13.4&ndash;13.8의 클래스별 보고서는 한 번의 분할처럼 보인다.
+    <b>둘의 관계가 원문에 설명되어 있지 않다.</b></p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="sec" id="s4">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 05</span>
+    <h2>점수판</h2>
+    <div class="h2sub">종합 지표와 클래스별 성적</div></div>
+
+  <p>다섯 모형을 네 지표로 비교한다. 정확도, 정밀도, 재현율, F1이다.
+  원문도 지적하듯 <b>정확도는 클래스 불균형 앞에서 오해를 부른다.</b>
+  drugY가 전체의 절반 가까이인데 drugB와 drugC는 8퍼센트씩이므로,
+  대부분을 다수 클래스로 몰아넣기만 해도 정확도는 높게 나온다.</p>
+
+  <div class="sb reveal" id="sbPanel">
+    <div class="sb-head">
+      <span class="t">점수판 &mdash; 겉과 속</span>
+      <span class="s">Table 13.3 &amp; 13.4–13.8</span>
+    </div>
+    <div class="sb-top">
+      <svg id="sbSvg" viewBox="0 0 880 262" role="img"
+           aria-label="다섯 기계학습 모형의 정확도·정밀도·재현율·F1 비교"></svg>
+    </div>
+    <div class="sb-body" id="sbBody" role="region" aria-live="polite"></div>
+  </div>
+  <figcaption><b>표 13.3 · 13.4&ndash;13.8 · 그림 13.3</b> 위는 종합 지표, 아래는 선택한 모형의 클래스별 분류 보고서다.
+  막대는 F1 점수이며 색은 <b>청록 0.80 이상 · 황토 0.80 미만 · 자류 0.00</b>을 뜻한다.
+  모형 이름을 누르면 아래가 바뀐다. 클래스별 지지도(환자 수)는 오른쪽 끝에 있다.</figcaption>
+
+  <div class="pull">
+    이 점수판을 위아래로 함께 읽어야 하는 이유가 있다.
+    XGBoost의 종합 정확도는 <b>0.900</b>이다. 그런데 같은 모형의 drugB 재현율은 <b>0.33</b>이다.
+    세 명 중 한 명만 맞힌다는 뜻이다.
+    <em class="mk">평균은 그 사실을 숨긴다.</em>
+  </div>
+
+  <h3><span class="hn">5.2</span> 모형별로 무엇이 달랐나</h3>
+  <ul class="gm">
+    <li><b>XGBoost</b> &mdash; 모든 지표에서 가장 좋았다. 정확도 0.900, 정밀도 0.916, 재현율 0.900, F1 0.892.
+    클래스 0(drugA)에서 완벽했고 클래스 3, 4에서도 높은 F1을 냈다.
+    다만 클래스 1(drugB)에서 F1 0.50, 낮은 재현율을 보였다.</li>
+    <li><b>결정트리</b> &mdash; 정밀도가 <b>가장 높았다(0.932)</b>. 잘못된 예측을 줄인다는 뜻이다.
+    그런데 F1은 0.859로 XGBoost보다 낮다.
+    클래스 3(drugX)에서 재현율이 0.55로 떨어지고, 클래스 2는 재현율 1.00인데 정밀도가 0.38이다.</li>
+    <li><b>랜덤포레스트</b> &mdash; 균형 잡힌 성능(정확도 0.875, F1 0.834)을 보였지만
+    클래스 1에서 F1 0.50, 클래스 2에서는 <b>F1 0.00</b>이다.</li>
+    <li><b>로지스틱 회귀</b> &mdash; 기준선으로서 무난하다(정확도 0.825, F1 0.801).
+    클래스 0, 1, 3, 4에서는 잘하지만 <b>클래스 2에서 완전히 실패한다.</b></li>
+    <li><b>SVM</b> &mdash; 가장 나쁘다. 정확도 0.675, F1 0.580.
+    <b>다섯 클래스 중 셋(0, 1, 2)에서 F1이 0이다.</b>
+    사실상 drugX와 drugY 두 클래스만 예측한다.</li>
+  </ul>
+
+  <h3><span class="hn">5.3</span> 혼동행렬</h3>
+  <p>최고 성능 모형인 XGBoost의 혼동행렬을 보면
+  drugA 5개, drugB 1개, drugC 2개, drugX 11개, drugY 17개를 맞혔다.
+  오분류 가운데 <b>drugC 두 개가 drugB로 예측된 사례</b>가 있다.</p>
+
+  <div class="judge">
+    <span class="lab">여기서도 어긋나는 숫자가 있다</span>
+    <p>원문은 이어서 &ldquo;랜덤포레스트는 drugA 5개, drugB 1개, <b>drugC 3개</b>,
+    drugX 11개, drugY 18개를 맞혔다&rdquo;고 적는다.</p>
+    <p>그런데 랜덤포레스트의 분류 보고서(표 13.4)는
+    <b>클래스 2(drugC)의 재현율을 0.00으로 적는다.</b>
+    지지도가 3인데 재현율이 0이면 맞힌 것은 0개다.
+    &lsquo;세 개를 맞혔다&rsquo;는 서술과 정면으로 어긋난다.</p>
+    <p>XGBoost 쪽은 표와 정확히 맞는다.
+    재현율 × 지지도를 계산하면 5, 1, 2, 11, 17로 본문 서술과 일치한다.
+    <em class="mk">랜덤포레스트 한 문장만 어긋난 것으로 보인다.</em></p>
+  </div>
+
+  <div class="judge">
+    <span class="lab">본문의 표 참조도 확인이 필요하다</span>
+    <p>5.5절은 &ldquo;결정트리는 정밀도가 높다(<b>표 13.5</b>)&rdquo;고 적지만
+    표 13.5는 로지스틱 회귀의 보고서다.
+    &ldquo;랜덤포레스트는 견고하다(<b>표 13.6</b>)&rdquo;고 하지만 표 13.6은 결정트리다.
+    &ldquo;SVM은 잘 작동하지 않는다(<b>표 13.7</b>)&rdquo;고 하지만 표 13.7은 XGBoost다.</p>
+    <p><b>표 자체의 내용은 정확하다.</b> 5.2절의 클래스별 서술과 표를 대조해 보면 모두 맞는다.
+    어긋난 것은 5.5절의 상호 참조뿐이다.
+    이 정리본의 점수판은 <b>표의 실제 내용을 기준으로</b> 만들었다.</p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="sec" id="s5">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 05.4</span>
+    <h2>어느 변수가 결정했나</h2>
+    <div class="h2sub">특징 중요도 · 두 모형이 서로 다른 답을 낸다</div></div>
+
+  <p>모형의 해석가능성을 높이고 입력 변수의 임상적 관련성을 확인하기 위해
+  랜덤포레스트와 XGBoost의 특징 중요도를 계산했다.
+  두 모형이 성능이 좋았고, 특징 기여도에 대한 내재적 추정값을 제공하기 때문이다.
+  로지스틱 회귀와 SVM은 특히 비선형 상호작용에 대해 직접적인 특징 중요도를 주지 않는다.</p>
+
+  <div class="grid g2">
+    <div class="fi"><div class="fh" style="color:var(--good)">RANDOM FOREST</div>
+      <div class="fr"><span class="fn">Na_to_K</span>
+        <span class="fb"><i style="width:100%;background:var(--good)"></i></span>
+        <span class="fv">0.547</span></div>
+      <div class="fr"><span class="fn">Blood pressure</span>
+        <span class="fb"><i style="width:44%;background:var(--good)"></i></span>
+        <span class="fv">0.239</span></div>
+      <div class="fr"><span class="fn">Age</span>
+        <span class="fb"><i style="width:28%;background:var(--mid)"></i></span>
+        <span class="fv">0.151</span></div>
+      <div class="fr"><span class="fn">Cholesterol</span>
+        <span class="fb"><i style="width:8%;background:var(--rule)"></i></span>
+        <span class="fv">0.046</span></div>
+      <div class="fr"><span class="fn">Gender</span>
+        <span class="fb"><i style="width:3%;background:var(--rule)"></i></span>
+        <span class="fv">0.017</span></div>
+    </div>
+    <div class="fi"><div class="fh" style="color:var(--bad)">XGBOOST</div>
+      <div class="fr"><span class="fn">Blood pressure</span>
+        <span class="fb"><i style="width:100%;background:var(--bad)"></i></span>
+        <span class="fv">0.407</span></div>
+      <div class="fr"><span class="fn">Na_to_K</span>
+        <span class="fb"><i style="width:55%;background:var(--bad)"></i></span>
+        <span class="fv">0.225</span></div>
+      <div class="fr"><span class="fn">Cholesterol</span>
+        <span class="fb"><i style="width:49%;background:var(--mid)"></i></span>
+        <span class="fv">0.200</span></div>
+      <div class="fr"><span class="fn">Age</span>
+        <span class="fb"><i style="width:41%;background:var(--mid)"></i></span>
+        <span class="fv">0.167</span></div>
+      <div class="fr"><span class="fn">Gender</span>
+        <span class="fb"><i style="width:1%;background:var(--rule)"></i></span>
+        <span class="fv">0.001</span></div>
+    </div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">두 모형이 1위를 다르게 짚는다</span>
+    <p>랜덤포레스트는 <b>Na_to_K(0.547)</b>를 압도적 1위로,
+    XGBoost는 <b>혈압(0.407)</b>을 1위로 놓는다.
+    콜레스테롤도 랜덤포레스트에서는 0.046으로 거의 무시되지만
+    XGBoost에서는 0.200으로 3위다.</p>
+    <p>원문은 &ldquo;Na_to_K와 BP가 가장 중요한 속성&rdquo;이라고 둘을 묶어 요약한다.
+    틀린 요약은 아니다. 다만 <b>두 모형이 서로 다른 순위를 낸다는 사실 자체가
+    중요한 정보</b>인데 그 점은 짚히지 않는다.</p>
+    <p>상관 분석(0.59 대 0.33)은 Na_to_K 쪽 손을 들어 준다.
+    <em class="mk">모형이 다르면 &lsquo;어느 변수가 결정했는가&rsquo;라는 질문의 답도 달라진다는 것을
+    이 대목이 우연히 보여 준다.</em></p>
+  </div>
+
+  <p>원문은 특징 중요도 외에 <b>SHAP</b>과 <b>LIME</b> 같은 도구로 설명가능성을 높일 수 있다고 덧붙인다.
+  SHAP은 각 예측에 대한 특징 기여도를 단일 수치로 주고,
+  LIME은 해석 가능한 대리 모형으로 국소적으로 근사해 개별 예측을 설명한다.
+  <b>임상 환경에서 의료진이 모형의 약물 추천을 해석하고 믿을 수 있게 하는 데 값진 방법</b>이라는 것이 원문의 평가다.</p>
+ </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="sec" id="s6">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 06</span>
+    <h2>한계와 향후 과제</h2>
+    <div class="h2sub">원저자들이 직접 적은 것</div></div>
+
+  <div class="metrics">
+    <div><div class="mv">200명</div><div class="ml">데이터셋 크기. 더 크고 다양한 집단으로 일반화하기 어렵다</div></div>
+    <div><div class="mv">45.5%</div><div class="ml">drugY가 차지하는 비율. drugB와 drugC는 각각 8퍼센트</div></div>
+    <div><div class="mv">중년 편중</div><div class="ml">대상자가 대체로 중년이어서 다른 연령대로의 적용이 제한된다</div></div>
+    <div><div class="mv">튜닝 없음</div><div class="ml">모든 모형이 기본 하이퍼파라미터로 돌았다</div></div>
+  </div>
+
+  <p>원저자들이 꼽는 한계는 넷이다.
+  <b>작은 데이터셋 크기</b>, <b>약물 범주의 불균형</b>,
+  <b>중년에 편중된 연령 분포</b>, 그리고 <b>SVM의 낮은 성능이 시사하는 전처리 절차의 개선 필요</b>다.</p>
+
+  <h4>향후 과제로 제시된 것</h4>
+  <ol class="rn">
+    <li><b>더 큰 데이터셋</b> &mdash; 실제 건강 상태의 다양성을 담아 예측을 정확하게 만든다.</li>
+    <li><b>오버샘플링과 SMOTE</b> &mdash; 약물 집단별 환자 수의 균형을 맞춰
+    drugB와 drugC 같은 드문 약물의 예측을 개선한다.</li>
+    <li><b>모형 튜닝</b> &mdash; 커널이나 정규화 매개변수를 조정한다.</li>
+    <li><b>추가 환자 정보</b> &mdash; 생활 습관이나 병력 같은 정보를 더한다.</li>
+    <li><b>그래프 신경망</b> &mdash; 비유클리드 데이터를 표현할 수 있으므로
+    환자 특징과 약물 반응 사이의 복잡한 연관을 기술하는 데 적합하다.</li>
+  </ol>
+ </div>
+</section>
+
+<!-- ================= 결론 ================= -->
+<section class="sec" id="s7">
+ <div class="col">
+  <div class="sechead"><span class="secno">CLOSING</span>
+    <h2>이 장이 남기는 것</h2>
+    <div class="h2sub">결론 · 그리고 읽고 난 뒤의 판단</div></div>
+
+  <div class="closing">
+    <div class="ci"><span class="ck">01 · 평균과 클래스</span>
+      <p>XGBoost의 정확도 0.900과 drugB 재현율 0.33은 같은 모형의 성적이다.
+      <b>클래스별 보고서를 보지 않으면 뒤의 숫자는 보이지 않는다.</b>
+      원문이 F1을 정확도보다 선호한다고 명시한 것도 그래서다.</p></div>
+    <div class="ci"><span class="ck">02 · 가장 나쁜 성적이 가장 정직하다</span>
+      <p>SVM은 다섯 클래스 중 셋에서 F1이 0이다.
+      감추지 않고 표에 그대로 실었다.
+      <b>0.00이라는 숫자가 표에 적혀 있는 논문은 흔하지 않다.</b></p></div>
+    <div class="ci"><span class="ck">03 · 튜닝하지 않은 이유</span>
+      <p>모든 모형을 기본 설정으로 돌린 것은 공정한 기준선 비교를 위해서다.
+      타당한 선택이다. 다만 그렇다면 결론은
+      <b>&lsquo;XGBoost가 최고&rsquo;가 아니라 &lsquo;기본 설정에서 XGBoost가 최고&rsquo;</b>여야 한다.</p></div>
+    <div class="ci"><span class="ck">04 · 확인이 필요한 곳</span>
+      <p>5겹 교차검증과 &ldquo;70대 30 분할&rdquo;이 함께 적혀 있고,
+      랜덤포레스트 혼동행렬 서술이 표 13.4와 어긋나고,
+      5.5절의 표 참조가 밀려 있다. <b>표를 직접 보는 편이 안전하다.</b></p></div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">옮긴이의 판단</span>
+    <p>이 장은 이 책에서 가장 작은 연구다. 환자 200명, 변수 여섯 개,
+    공개 데이터셋 하나. 앞선 장들이 인용한 논문 하나의 각주만도 못한 규모다.</p>
+    <p>그런데 <b>이 책에서 가장 검증하기 쉬운 장이기도 하다.</b>
+    데이터의 출처가 밝혀져 있고, 전처리 절차가 적혀 있고,
+    다섯 모형의 네 지표가 소수점 여섯 자리까지 실려 있고,
+    클래스별 정밀도·재현율·F1·지지도가 다섯 개의 표로 나와 있다.
+    그래서 앞의 판단 블록에서 지적한 불일치들을 <em class="mk">읽는 사람이 직접 찾아낼 수 있다.</em>
+    앞선 열두 장에서는 대개 그럴 수 없었다.</p>
+    <p>가장 중요한 대목은 5.1절의 한 문단이라고 본다.
+    <b>&ldquo;정확도는 클래스 불균형 앞에서 오해를 부른다&rdquo;</b>는 지적,
+    그리고 그 지적을 자기 결과에 그대로 적용해 클래스별 보고서를 다섯 개 다 실은 것.
+    이 책의 여러 장이 90퍼센트, 95퍼센트, 98퍼센트 같은 숫자를 인용했다.
+    <b>그 숫자들 뒤에 이런 표가 있었는지는 대부분 알 수 없다.</b></p>
+    <p>규모가 작다는 것과 정직하다는 것은 다른 문제다.
+    이 장은 규모가 작고, 결론도 소박하고, 편집에 어긋난 곳이 있다.
+    그래도 <b>0.00을 표에 적어 넣었다.</b> 그 점은 기억해 둘 만하다.</p>
+  </div>
+ </div>
+</section>
+
+</main>
+
+<footer>
+ <div class="wrap"><div class="col">
+  <div class="src">
+    <b>원전</b><br>
+    Prakash, A. S., Mary, A. S., &amp; Manimaran, A. (2026).
+    <i>Predictive modeling of drug suitability using electronic health records and machine learning.</i>
+    In K. Raza (Ed.), <b>Artificial Intelligence in Precision Drug Design, Volume 2: Advanced Applications</b>
+    (Chapter 13, pp. 279&ndash;295). Academic Press / Elsevier. ISBN 978-0-443-44430-2.
+    https://doi.org/10.1016/B978-0-443-44430-2.00006-2
+    <div class="note">
+      이 문서는 원저 제13장만을 대상으로 한 한국어 정리본이다.
+      표 13.1&ndash;13.8의 수치, 상관계수, 특징 중요도는 모두 원문에서 가져왔고,
+      절 구성과 도해는 읽기 편하도록 재배열했다.<br><br>
+      <b>「점수판」에 관하여</b> &mdash; 위쪽은 표 13.3(종합 지표), 아래쪽은 표 13.4&ndash;13.8(클래스별 분류 보고서)이다.
+      두 층을 하나의 화면에 놓은 것은 이 정리본의 구성이며 원문에 이런 도해는 없다.
+      <b>클래스별 보고서는 표의 실제 내용을 기준으로 모형에 대응시켰다.</b><br><br>
+      <b>원문의 불일치에 관하여</b> &mdash; 이 정리본은 다음 세 가지를 본문에 표시했다.
+      (1) 4.1절은 5겹 층화 교차검증을, 5절은 &ldquo;각 폴드에서 70대 30 분할&rdquo;을 적어 서로 맞지 않는다.
+      분류 보고서의 지지도 합계는 40으로 200명의 20퍼센트다.
+      (2) 5.3절은 랜덤포레스트가 drugC 세 개를 맞혔다고 적지만 표 13.4의 해당 재현율은 0.00이다.
+      (3) 5.5절의 표 상호 참조가 실제 표 번호와 어긋난다. 표 자체의 내용은 정확하다.<br><br>
+      원문 5.2절의 소수 표기 &ldquo;0.916,071&rdquo; 등은 조판 과정의 쉼표로 보이며 0.916071로 옮겼다.<br><br>
+      &lsquo;판단&rsquo;으로 표시한 블록은 원문의 유보 조항을 정리하거나 옮긴이의 해석을 덧붙인 부분이므로
+      원문 서술과 구분해서 읽어야 한다.
+    </div>
+  </div>
+ </div></div>
+</footer>
+
+<script>
+(function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var bar = document.getElementById('progress');
+  var rail = document.querySelector('nav.rail');
+  var hero = document.querySelector('header.hero');
+  function onScroll(){
+    var h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+    rail.classList.toggle('show', h.scrollTop > hero.offsetHeight - 80);
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section.sec'));
+  var list = document.getElementById('railList');
+  var links = secs.map(function(s){
+    var no = s.querySelector('.secno').textContent.replace('SECTION','').trim();
+    var tt = s.querySelector('h2').textContent.trim();
+    var a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.textContent = (no === 'CLOSING' ? '—' : no) + '  ' + tt;
+    var li = document.createElement('li'); li.appendChild(a); list.appendChild(li);
+    return a;
+  });
+
+  if ('IntersectionObserver' in window){
+    var navObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var i = secs.indexOf(e.target);
+        links.forEach(function(a, j){ a.classList.toggle('act', j === i); });
+      });
+    }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+    secs.forEach(function(s){ navObs.observe(s); });
+
+    var revObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add('on'); revObs.unobserve(e.target); }
+      });
+    }, {threshold:.12});
+    document.querySelectorAll('.reveal').forEach(function(el){
+      if (reduce) el.classList.add('on'); else revObs.observe(el);
+    });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('on'); });
+  }
+
+  function mk(seed){
+    var s = seed;
+    return function(){ s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  }
+
+  /* ---------- 표제 배경: 데이터 격자 ---------- */
+  (function(){
+    var svg = document.getElementById('heroGrid');
+    var r = mk(131313), f = document.createDocumentFragment();
+    var cw = 60, ch = 22;
+    for (var y = 0; y < 24; y++){
+      for (var x = 0; x < 20; x++){
+        var v = r();
+        var rc = document.createElementNS(NS, 'rect');
+        rc.setAttribute('x', x * cw + 4); rc.setAttribute('y', y * ch + 4);
+        rc.setAttribute('width', (12 + v * 42).toFixed(1)); rc.setAttribute('height', 8);
+        rc.setAttribute('fill', v < .05 ? '#98333A' : (v < .12 ? '#A67C1E' : '#16706B'));
+        rc.setAttribute('opacity', (v < .12 ? .22 : 0.05 + v * 0.07).toFixed(3));
+        f.appendChild(rc);
+      }
+    }
+    svg.appendChild(f);
+  })();
+
+  /* ---------- 시그니처: 점수판 ---------- */
+  (function(){
+    var M = [
+      { n:'로지스틱 회귀', en:'Logistic Regression · scikit-learn 기본값',
+        acc:0.825, prec:0.786667, rec:0.825, f1:0.801268,
+        rows:[[0,'drugA',0.83,1.00,0.91,5],[1,'drugB',1.00,0.67,0.80,3],
+              [2,'drugC',0.00,0.00,0.00,3],[3,'drugX',0.82,0.82,0.82,11],
+              [4,'drugY',0.85,0.94,0.89,18]],
+        note:'기준선으로 무난하다. 다만 클래스 2(drugC)에서 정밀도·재현율·F1이 모두 0이다. ' +
+             '세 명의 drugC 환자를 한 명도 찾아내지 못했다는 뜻이다.' },
+      { n:'결정트리', en:'Decision Tree Classifier · scikit-learn 기본값',
+        acc:0.850, prec:0.932292, rec:0.850, f1:0.858663,
+        rows:[[0,'drugA',0.83,1.00,0.91,5],[1,'drugB',1.00,0.67,0.80,3],
+              [2,'drugC',0.38,1.00,0.55,3],[3,'drugX',1.00,0.55,0.71,11],
+              [4,'drugY',1.00,1.00,1.00,18]],
+        note:'정밀도가 다섯 모형 중 가장 높다(0.932). 다섯 클래스 어디에서도 F1이 0이 아닌 유일한 모형이다. ' +
+             '다만 클래스 3(drugX)의 재현율이 0.55로 낮고, 클래스 2는 재현율 1.00인데 정밀도가 0.38이다. ' +
+             '즉 drugC를 다 찾아내기는 하지만 아닌 환자도 많이 drugC로 부른다.' },
+      { n:'랜덤포레스트', en:'Random Forest Classifier · scikit-learn 기본값',
+        acc:0.875, prec:0.830357, rec:0.875, f1:0.833667,
+        rows:[[0,'drugA',0.71,1.00,0.83,5],[1,'drugB',1.00,0.33,0.50,3],
+              [2,'drugC',0.00,0.00,0.00,3],[3,'drugX',0.79,1.00,0.88,11],
+              [4,'drugY',1.00,1.00,1.00,18]],
+        note:'다수 클래스인 drugY에서 완벽하다. 그러나 클래스 2(drugC)에서 F1 0.00, ' +
+             '클래스 1(drugB)에서 재현율 0.33이다. 소수 클래스 여섯 명 중 한 명만 맞힌 셈이다.' },
+      { n:'XGBoost', en:'XGBoost Classifier · XGBoost 파이썬 API 기본값',
+        acc:0.900, prec:0.916071, rec:0.900, f1:0.891643,
+        rows:[[0,'drugA',1.00,1.00,1.00,5],[1,'drugB',1.00,0.33,0.50,3],
+              [2,'drugC',0.67,0.67,0.67,3],[3,'drugX',0.79,1.00,0.88,11],
+              [4,'drugY',1.00,0.94,0.97,18]],
+        note:'네 지표 모두에서 최고다. 클래스 0(drugA)은 완벽하다. ' +
+             '그런데 클래스 1(drugB)의 재현율은 0.33이다. 세 명 중 한 명만 맞힌다. ' +
+             '정확도 0.900이라는 종합 성적이 이 사실을 가린다.' },
+      { n:'SVM', en:'Support Vector Machine · scikit-learn 기본값',
+        acc:0.675, prec:0.515977, rec:0.675, f1:0.580385,
+        rows:[[0,'drugA',0.00,0.00,0.00,5],[1,'drugB',0.00,0.00,0.00,3],
+              [2,'drugC',0.00,0.00,0.00,3],[3,'drugX',0.47,0.82,0.60,11],
+              [4,'drugY',0.86,1.00,0.92,18]],
+        note:'다섯 클래스 중 셋에서 F1이 0이다. 사실상 drugX와 drugY 두 클래스만 예측한다. ' +
+             '그런데도 정확도가 0.675나 나온다. 두 다수 클래스가 전체의 72.5퍼센트를 차지하기 때문이다. ' +
+             '정확도가 왜 오해를 부르는지 보여 주는 사례다.' }
+    ];
+    var MET = [['정확도','acc'], ['정밀도','prec'], ['재현율','rec'], ['F1','f1']];
+
+    var svg = document.getElementById('sbSvg');
+    var body = document.getElementById('sbBody');
+    var rows = [];
+    var X0 = 168, X1 = 786, TOP = 52, GAP = 38;
+    function px(v){ return X0 + v * (X1 - X0); }
+
+    function txt(x, y, s, o){
+      var t = document.createElementNS(NS, 'text');
+      t.setAttribute('x', x); t.setAttribute('y', y);
+      t.setAttribute('font-family', (o && o.sans) ? 'Noto Sans KR, sans-serif' : 'Nanum Gothic Coding, monospace');
+      t.setAttribute('font-size', (o && o.size) || 11.5);
+      t.setAttribute('fill', (o && o.fill) || '#727B83');
+      if (o && o.weight) t.setAttribute('font-weight', o.weight);
+      if (o && o.anchor) t.setAttribute('text-anchor', o.anchor);
+      t.textContent = s;
+      return t;
+    }
+
+    /* 눈금 */
+    [0, .25, .5, .75, 1].forEach(function(v){
+      var x = px(v);
+      var l = document.createElementNS(NS, 'line');
+      l.setAttribute('x1', x); l.setAttribute('y1', 34);
+      l.setAttribute('x2', x); l.setAttribute('y2', TOP + 4 * GAP + 12);
+      l.setAttribute('stroke', '#D5DBDF'); l.setAttribute('stroke-width', '1');
+      svg.appendChild(l);
+      svg.appendChild(txt(v === 1 ? x - 3 : x, 26, v.toFixed(2),
+        {size:10.5, anchor: v === 1 ? 'end' : 'middle', fill:'#98A2A9'}));
+    });
+
+    /* 지표 범례 */
+    var SH = [
+      {k:'circle', lbl:'정확도'}, {k:'square', lbl:'정밀도'},
+      {k:'tri', lbl:'재현율'}, {k:'diamond', lbl:'F1'}
+    ];
+    var lx = X0;
+    SH.forEach(function(s, i){
+      addShape(svg, s.k, lx, 242, '#3F4750', 4.6);
+      svg.appendChild(txt(lx + 10, 246, s.lbl, {sans:true, size:11.5, fill:'#727B83'}));
+      lx += 92;
+    });
+    svg.appendChild(txt(14, 246, '지표', {size:11, fill:'#98A2A9'}));
+
+    function addShape(parent, kind, x, y, fill, r){
+      var el;
+      if (kind === 'circle'){
+        el = document.createElementNS(NS, 'circle');
+        el.setAttribute('cx', x); el.setAttribute('cy', y); el.setAttribute('r', r);
+      } else if (kind === 'square'){
+        el = document.createElementNS(NS, 'rect');
+        el.setAttribute('x', x - r); el.setAttribute('y', y - r);
+        el.setAttribute('width', r * 2); el.setAttribute('height', r * 2);
+      } else if (kind === 'tri'){
+        el = document.createElementNS(NS, 'polygon');
+        el.setAttribute('points', x + ',' + (y - r * 1.2) + ' ' + (x - r * 1.1) + ',' + (y + r * 0.85)
+                      + ' ' + (x + r * 1.1) + ',' + (y + r * 0.85));
+      } else {
+        el = document.createElementNS(NS, 'polygon');
+        el.setAttribute('points', x + ',' + (y - r * 1.25) + ' ' + (x + r * 1.25) + ',' + y
+                      + ' ' + x + ',' + (y + r * 1.25) + ' ' + (x - r * 1.25) + ',' + y);
+      }
+      el.setAttribute('fill', fill);
+      parent.appendChild(el);
+      return el;
+    }
+
+    M.forEach(function(m, i){
+      var y = TOP + i * GAP;
+      var g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'mrow');
+      g.setAttribute('tabindex', '0');
+      g.setAttribute('role', 'button');
+      g.setAttribute('aria-label', m.n + ' 정확도 ' + m.acc.toFixed(3) + ' F1 ' + m.f1.toFixed(3));
+
+      var hit = document.createElementNS(NS, 'rect');
+      hit.setAttribute('class', 'hit');
+      hit.setAttribute('x', 6); hit.setAttribute('y', y - 16);
+      hit.setAttribute('width', 866); hit.setAttribute('height', 32);
+      g.appendChild(hit);
+
+      g.appendChild(txt(14, y + 4, m.n, {sans:true, size:13, fill:'#14181B', weight:'500'}));
+
+      /* 최소~최대 연결선 */
+      var vals = MET.map(function(t){ return m[t[1]]; });
+      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+      var ln = document.createElementNS(NS, 'line');
+      ln.setAttribute('x1', px(lo)); ln.setAttribute('y1', y);
+      ln.setAttribute('x2', px(hi)); ln.setAttribute('y2', y);
+      ln.setAttribute('stroke', '#C2C9CE'); ln.setAttribute('stroke-width', '1.4');
+      g.appendChild(ln);
+
+      MET.forEach(function(t, j){
+        var v = m[t[1]];
+        var col = v >= 0.85 ? '#16706B' : (v >= 0.7 ? '#A67C1E' : '#98333A');
+        addShape(g, SH[j].k, px(v), y, col, 4.6);
+      });
+
+      g.appendChild(txt(X1 + 14, y + 4, m.f1.toFixed(3),
+        {size:12, fill:(m.f1 >= 0.85 ? '#16706B' : (m.f1 >= 0.7 ? '#A67C1E' : '#98333A')), weight:'700'}));
+
+      g.addEventListener('click', function(){ sel(i); });
+      g.addEventListener('keydown', function(ev){
+        if (ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); sel(i); }
+        var d = ev.key === 'ArrowDown' ? 1 : ev.key === 'ArrowUp' ? -1 : 0;
+        if (d){ ev.preventDefault(); var n = (i + d + M.length) % M.length;
+          rows[n].focus(); sel(n); }
+      });
+      svg.appendChild(g);
+      rows.push(g);
+    });
+    svg.appendChild(txt(X1 + 14, 26, 'F1', {size:10.5, fill:'#98A2A9'}));
+
+    function sel(i){
+      var m = M[i];
+      rows.forEach(function(g, j){ g.classList.toggle('on', j === i); });
+      var body2 = '<div class="cr"><div class="hd">'
+        + '<span>클래스</span><span>F1 점수</span><span style="text-align:right">정밀도</span>'
+        + '<span style="text-align:right">재현율</span><span style="text-align:right">지지도</span></div>';
+      m.rows.forEach(function(r){
+        var f1 = r[4];
+        var col = f1 >= 0.80 ? '#16706B' : (f1 > 0 ? '#A67C1E' : '#98333A');
+        var w = Math.max(f1 * 100, 0);
+        var lbl = f1 > 0.22
+          ? '<b>' + f1.toFixed(2) + '</b>'
+          : '<b class="out" style="color:' + col + '">' + f1.toFixed(2) + '</b>';
+        /* 막대가 짧으면 라벨을 트랙 안쪽에 둔다 */
+        body2 += '<div class="rw">'
+          + '<span class="cn" style="color:' + col + '">' + r[1] + '</span>'
+          + '<span class="bar"><i style="width:' + w + '%;background:' + col + '"></i>'
+          + lbl + '</span>'
+          + '<span class="nm">' + r[2].toFixed(2) + '</span>'
+          + '<span class="nm">' + r[3].toFixed(2) + '</span>'
+          + '<span class="sp">' + r[5] + '</span>'
+          + '</div>';
+      });
+      body2 += '</div>';
+      body.innerHTML =
+        '<span class="bk">MODEL ' + String(i + 1) + ' / 5 · 정확도 ' + m.acc.toFixed(3)
+        + ' · F1 ' + m.f1.toFixed(3) + '</span>'
+        + '<h6>' + m.n + '</h6><div class="en">' + m.en + '</div>'
+        + body2
+        + '<p class="note">' + m.note + '</p>';
+    }
+    sel(3);   /* XGBoost */
+  })();
+})();
+</script>
+</body>
+</html>

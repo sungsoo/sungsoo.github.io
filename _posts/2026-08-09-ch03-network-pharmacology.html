@@ -1,0 +1,1241 @@
+---
+layout: null
+title: "AI-based network pharmacology" 
+date: 2026-08-09
+categories: [artificial intelligence]
+tags: [artificial general intelligence, drug discovery]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제3장 · AI 기반 네트워크 약리학 — 하나의 약, 하나의 표적이라는 전제를 버린다</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@200;300;400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   노드 문법 (Node grammar)
+   원문 Fig. 3.1 / 3.2가 정의한 도형 규약을 페이지 전체의 문법으로 삼는다.
+     ▲ 약물     — 청록 viridian
+     ● 유전자·단백질 — 감청 slate
+     ■ 질환     — 자류 garnet
+   목록 기호, 절 표지, 표의 행 표지, 도해가 모두 이 세 기호를 쓴다.
+   ============================================================ */
+:root{
+  --paper:#E9E9E4;
+  --paper-2:#F3F3F0;
+  --white:#FFFFFF;
+  --ink:#14181B;
+  --ink-soft:#414A50;
+  --ink-mute:#737D84;
+  --drug:#0E6E62;
+  --drug-2:#14897A;
+  --node:#2B3A67;
+  --dis:#8C2F39;
+  --edge:#B6BDB8;
+  --rule:#C9CAC3;
+  --rule-soft:#DCDDD7;
+  --disp:"Nanum Myeongjo", serif;
+  --sans:"Noto Sans KR", sans-serif;
+  --mono:"JetBrains Mono", monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-weight:400;
+  font-size:16.5px;line-height:1.95;
+  -webkit-font-smoothing:antialiased;
+  word-break:keep-all;overflow-wrap:break-word;
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+#progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:90;
+  background:linear-gradient(90deg,var(--drug),var(--node) 55%,var(--dis))}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 26px}
+.col{max-width:722px;margin:0 auto}
+.wide{max-width:966px;margin:0 auto}
+
+/* ---------- 도형 기호 ---------- */
+.gl{display:inline-block;flex:0 0 auto}
+.gl-d{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;
+  border-bottom:9px solid var(--drug)}
+.gl-p{width:9px;height:9px;border-radius:50%;background:var(--node)}
+.gl-x{width:9px;height:9px;background:var(--dis)}
+
+/* ---------- 표제 ---------- */
+header.hero{position:relative;overflow:hidden;padding:92px 0 58px;border-bottom:1px solid var(--rule)}
+header.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(700px 360px at 6% -8%, rgba(14,110,98,.13), transparent 60%),
+             radial-gradient(560px 320px at 94% 6%, rgba(140,47,57,.10), transparent 62%)}
+#heroNet{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.5}
+.hero-inner{position:relative;z-index:1}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink-mute);display:flex;gap:11px;align-items:center;flex-wrap:wrap;margin-bottom:30px}
+.kicker .dot{width:3px;height:3px;border-radius:50%;background:var(--rule)}
+.kicker .k2{flex-basis:100%;margin-top:6px;color:var(--drug);font-weight:600}
+.chapnum{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--dis);font-weight:600}
+h1{font-family:var(--disp);font-weight:800;font-size:clamp(31px,4.9vw,57px);
+  line-height:1.3;letter-spacing:-.022em;margin:14px 0 0;max-width:15.5em}
+h1 .strike{position:relative;color:var(--ink-mute);white-space:nowrap}
+h1 .strike::after{content:"";position:absolute;left:-.04em;right:-.04em;top:56%;height:3px;
+  background:var(--dis);transform:scaleX(0);transform-origin:left;
+  animation:strike .8s cubic-bezier(.2,.7,.2,1) 1.1s forwards}
+@keyframes strike{to{transform:scaleX(1)}}
+@media (prefers-reduced-motion: reduce){h1 .strike::after{animation:none;transform:scaleX(1)}}
+.sub{font-weight:300;font-size:clamp(15px,1.6vw,18.5px);line-height:1.78;
+  color:var(--ink-soft);margin:26px 0 0;max-width:33em}
+.byline{margin-top:38px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:13px;font-weight:300;line-height:1.8;color:var(--ink-mute);max-width:48em}
+.byline b{color:var(--ink-soft);font-weight:500}
+
+/* ---------- 범례 ---------- */
+.legend{display:flex;gap:26px;flex-wrap:wrap;margin:52px 0 0;padding:18px 0 0;border-top:1px solid var(--rule)}
+.legend .li{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11.5px;color:var(--ink-mute)}
+.legend .li b{font-family:var(--sans);font-size:13px;font-weight:500;color:var(--ink-soft)}
+
+/* ---------- 테제 ---------- */
+.thesis{padding:62px 0 6px}
+.lede{font-family:var(--disp);font-weight:400;font-size:clamp(18px,2.2vw,23px);
+  line-height:1.86;margin:0;color:var(--ink)}
+.lede .q{color:var(--dis);font-weight:700}
+.lede .u{background:linear-gradient(transparent 68%, rgba(14,110,98,.20) 68%)}
+
+/* ---------- 본문 ---------- */
+main{padding:20px 0 30px}
+section.sec{padding:74px 0}
+section.sec + section.sec{border-top:1px solid var(--rule-soft)}
+.sechead{margin-bottom:32px;padding-left:38px;position:relative}
+.sechead .mk{position:absolute;left:0;top:16px}
+.secno{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--ink-mute);
+  font-weight:600;display:block;margin-bottom:7px}
+h2{font-family:var(--disp);font-weight:800;font-size:clamp(23px,3vw,31px);
+  line-height:1.44;letter-spacing:-.02em;margin:0}
+.h2sub{font-size:13px;font-weight:300;color:var(--ink-mute);margin-top:8px}
+h3{font-family:var(--disp);font-weight:700;font-size:19.5px;line-height:1.56;
+  margin:48px 0 14px;display:flex;align-items:baseline;gap:10px}
+h3 .hn{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--drug);flex:0 0 auto}
+h4{font-weight:500;font-size:14.5px;margin:30px 0 9px;color:var(--node);letter-spacing:.01em}
+p{margin:0 0 19px}
+a{color:var(--drug)}
+strong{font-weight:500}
+em.mk2{font-style:normal;background:linear-gradient(transparent 68%, rgba(14,110,98,.18) 68%)}
+code{font-family:var(--mono);font-size:.86em;background:var(--white);
+  border:1px solid var(--rule-soft);padding:1px 5px;border-radius:2px;color:var(--node)}
+
+/* ---------- 판단 ---------- */
+.judge{margin:36px 0;padding:22px 24px;background:var(--white);
+  border:1px solid var(--rule-soft);border-left:3px solid var(--dis)}
+.judge .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dis);display:block;margin-bottom:10px;font-weight:600}
+.judge p{margin:0;font-size:15.5px;line-height:1.9;color:var(--ink-soft);font-weight:300}
+.judge p + p{margin-top:13px}
+.judge b{font-weight:500;color:var(--ink)}
+.pull{margin:44px 0;padding:0 0 0 24px;border-left:2px solid var(--drug);
+  font-family:var(--disp);font-weight:400;font-size:clamp(17.5px,2vw,21px);line-height:1.8}
+
+/* ---------- 목록 ---------- */
+ul.gm{list-style:none;padding:0;margin:22px 0}
+ul.gm li{position:relative;padding-left:24px;margin-bottom:13px}
+ul.gm li > .gl{position:absolute;left:0;top:.72em}
+ul.gm li .gl-d{top:.68em}
+ol.abc{list-style:none;counter-reset:ab;padding:0;margin:22px 0}
+ol.abc li{counter-increment:ab;position:relative;padding-left:34px;margin-bottom:15px}
+ol.abc li::before{content:counter(ab,lower-alpha);position:absolute;left:0;top:.12em;
+  font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--node);
+  border:1px solid var(--rule);width:22px;height:22px;display:flex;align-items:center;
+  justify-content:center;background:var(--white)}
+
+/* ---------- 카드 ---------- */
+.grid{display:grid;gap:13px;margin:28px 0}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:840px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--white);border:1px solid var(--rule-soft);padding:19px 20px 17px}
+.card .cno{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;color:var(--drug);
+  display:block;margin-bottom:8px;font-weight:600}
+.card h5{font-family:var(--disp);font-weight:700;font-size:16px;margin:0 0 8px}
+.card p{font-size:14.5px;line-height:1.8;margin:0;color:var(--ink-soft);font-weight:300}
+.card .meta{font-family:var(--mono);font-size:11px;color:var(--ink-mute);margin-top:11px;
+  padding-top:9px;border-top:1px dashed var(--rule);line-height:1.6}
+
+/* ---------- 연표 ---------- */
+.tl{margin:30px 0;border-left:1px solid var(--rule);padding-left:0}
+.tl .ev{position:relative;padding:0 0 22px 30px}
+.tl .ev:last-child{padding-bottom:0}
+.tl .ev .gl{position:absolute;left:-5px;top:9px}
+.tl .yr{font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--dis);letter-spacing:.1em}
+.tl .dg{font-family:var(--disp);font-weight:700;font-size:16.5px;margin-top:3px}
+.tl .dg small{font-family:var(--sans);font-weight:300;font-size:13px;color:var(--ink-mute);margin-left:6px}
+.tl .ins{font-size:14.5px;line-height:1.78;color:var(--ink-soft);font-weight:300;margin-top:5px}
+
+/* ---------- 표 ---------- */
+.tablewrap{overflow-x:auto;margin:26px 0;border:1px solid var(--rule-soft);background:var(--white)}
+table.tb{width:100%;border-collapse:collapse;font-size:14px;min-width:540px}
+table.tb th{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-mute);text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);font-weight:600}
+table.tb td{padding:9px 12px;border-bottom:1px solid var(--rule-soft);vertical-align:top;line-height:1.6}
+table.tb tr:last-child td{border-bottom:0}
+table.tb td.k{font-weight:500;white-space:nowrap}
+table.tb td.n{font-family:var(--mono);font-size:12.5px;color:var(--node);white-space:nowrap}
+table.tb td.g{font-family:var(--mono);font-size:11.5px;color:var(--ink-mute);line-height:1.7}
+table.tb td.u{font-family:var(--mono);font-size:11px;color:var(--ink-mute);word-break:break-all}
+table.tb tr.hi td{background:rgba(14,110,98,.06)}
+/* 막대가 있는 성능표 */
+.bar{position:relative;display:inline-block;width:150px;height:18px;background:var(--paper);
+  vertical-align:middle}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--drug);opacity:.8;display:block}
+.bar b{position:absolute;right:-40px;top:0;font-family:var(--mono);font-size:11.5px;
+  font-weight:600;color:var(--ink);line-height:18px}
+.barcell{white-space:nowrap;padding-right:46px!important}
+
+/* ---------- 시그니처: 위상 지표 탐색기 ---------- */
+.topo{margin:42px 0 12px;border:1px solid var(--rule);background:var(--white)}
+.topo-head{padding:19px 22px;border-bottom:1px solid var(--rule);display:flex;
+  justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.topo-head .t{font-family:var(--disp);font-weight:800;font-size:18px}
+.topo-head .s{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-mute)}
+.topo-tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--rule-soft);background:var(--paper-2)}
+.topo-tabs button{appearance:none;border:0;background:transparent;cursor:pointer;font-family:inherit;
+  font-size:13px;font-weight:400;color:var(--ink-mute);padding:11px 15px;
+  border-bottom:2px solid transparent;margin-bottom:-1px;transition:.2s}
+.topo-tabs button:hover{color:var(--ink)}
+.topo-tabs button[aria-selected="true"]{color:var(--drug);border-bottom-color:var(--drug);font-weight:500}
+.topo-tabs button:focus-visible{outline:2px solid var(--node);outline-offset:-2px}
+.topo-svg{padding:16px 12px 6px}
+.topo-svg svg{width:100%;height:auto;display:block}
+.tn{transition:r .4s, fill .4s, opacity .4s}
+.te{transition:stroke .4s, stroke-width .4s, opacity .4s}
+.topo-body{padding:20px 22px 20px;border-top:1px solid var(--rule-soft)}
+.topo-body h6{font-family:var(--disp);font-weight:700;font-size:16.5px;margin:0 0 8px}
+.topo-body p{margin:0;font-size:15px;line-height:1.85;color:var(--ink-soft);font-weight:300}
+.topo-body .rank{font-family:var(--mono);font-size:11.5px;color:var(--ink-mute);margin-top:13px;
+  padding-top:11px;border-top:1px dashed var(--rule);line-height:1.8}
+.topo-body .rank em{font-style:normal;color:var(--drug);font-weight:600}
+
+/* ---------- 워크플로 ---------- */
+.wf{margin:28px 0;counter-reset:w}
+.wf .st{counter-increment:w;position:relative;padding:0 0 24px 46px;border-left:1px solid var(--rule);
+  margin-left:13px}
+.wf .st:last-child{border-left-color:transparent;padding-bottom:0}
+.wf .st::before{content:counter(w);position:absolute;left:-13px;top:0;width:26px;height:26px;
+  border-radius:50%;background:var(--node);color:#fff;font-family:var(--mono);font-size:11.5px;
+  font-weight:600;display:flex;align-items:center;justify-content:center}
+.wf .stt{font-family:var(--disp);font-weight:700;font-size:16.5px;margin-bottom:6px;padding-top:1px}
+.wf .stp{font-size:14.5px;line-height:1.8;color:var(--ink-soft);font-weight:300;margin:0}
+.wf .stm{font-family:var(--mono);font-size:11px;color:var(--drug);margin-top:7px}
+
+/* ---------- 발견 목록 ---------- */
+.find{margin:28px 0;border:1px solid var(--rule-soft);background:var(--white)}
+.find .fs{padding:18px 22px;border-bottom:1px solid var(--rule-soft)}
+.find .fs:last-child{border-bottom:0}
+.find .fk{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;color:var(--dis);
+  font-weight:600;display:block;margin-bottom:9px}
+.find ul{list-style:none;margin:0;padding:0}
+.find li{position:relative;padding-left:18px;margin-bottom:8px;font-size:14.8px;
+  line-height:1.78;color:var(--ink-soft);font-weight:300}
+.find li:last-child{margin-bottom:0}
+.find li::before{content:"";position:absolute;left:0;top:.78em;width:7px;height:1px;background:var(--node)}
+
+/* ---------- 지표 ---------- */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule-soft);
+  border:1px solid var(--rule-soft);margin:26px 0}
+.metrics div{background:var(--white);padding:15px 14px}
+.metrics .mv{font-family:var(--mono);font-weight:600;font-size:19px;color:var(--dis)}
+.metrics .ml{font-size:11.5px;color:var(--ink-mute);margin-top:4px;font-weight:300;line-height:1.5}
+@media(max-width:640px){.metrics{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- 그림 ---------- */
+figure{margin:42px 0;padding:0}
+figure svg{width:100%;height:auto;display:block;background:var(--white);border:1px solid var(--rule-soft)}
+figcaption{font-size:12.5px;font-weight:300;line-height:1.75;color:var(--ink-mute);margin-top:11px}
+figcaption b{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;color:var(--dis);
+  text-transform:uppercase;font-weight:600;margin-right:8px}
+.col > figcaption{margin-bottom:34px}
+
+/* ---------- 목차 ---------- */
+nav.rail{position:fixed;left:calc(50% - 556px);top:50%;transform:translateY(-50%);z-index:40;
+  display:none;opacity:0;pointer-events:none;transition:opacity .45s}
+nav.rail.show{opacity:1;pointer-events:auto}
+@media(min-width:1280px){nav.rail{display:block}}
+nav.rail ol{list-style:none;margin:0;padding:0}
+nav.rail li{display:flex;align-items:center;gap:9px}
+nav.rail a{display:block;text-decoration:none;font-size:11.5px;font-weight:300;color:var(--ink-mute);
+  padding:5px 0;transition:.2s;max-width:142px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav.rail a:hover{color:var(--ink)}
+nav.rail a.act{color:var(--drug);font-weight:500}
+nav.rail li .gl{opacity:.3;transition:opacity .2s}
+nav.rail li.on .gl{opacity:1}
+
+/* ---------- 결론 ---------- */
+.closing{border:1px solid var(--node);background:var(--white);margin:32px 0}
+.closing .ci{padding:18px 24px;border-bottom:1px solid var(--rule-soft)}
+.closing .ci:last-child{border-bottom:0}
+.closing .ck{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;color:var(--node);
+  display:block;margin-bottom:6px;font-weight:600}
+.closing .ci p{margin:0;font-size:15px;line-height:1.85;color:var(--ink-soft);font-weight:300}
+
+footer{border-top:1px solid var(--rule);padding:52px 0 84px;margin-top:36px}
+.src{font-size:12.5px;font-weight:300;line-height:1.9;color:var(--ink-mute)}
+.src b{color:var(--ink-soft);font-weight:500}
+.src .note{margin-top:20px;padding-top:16px;border-top:1px dashed var(--rule);font-size:12px}
+
+.reveal{opacity:0;transform:translateY(14px);
+  transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.on{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<nav class="rail" aria-label="장 목차"><ol id="railList"></ol></nav>
+
+<header class="hero">
+  <svg id="heroNet" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+  <div class="wrap"><div class="wide hero-inner">
+    <div class="kicker">
+      <span>Artificial Intelligence in Precision Drug Design</span><span class="dot"></span>
+      <span>Volume 2 · Advanced Applications</span>
+      <b class="k2">Elsevier / Academic Press, 2026</b>
+    </div>
+    <div class="chapnum">CHAPTER 03</div>
+    <h1>AI 기반 네트워크 약리학:<br><span class="strike">하나의 약, 하나의 표적</span>이라는<br>전제를 버린다</h1>
+    <p class="sub">약은 대개 여러 표적에 붙는다. 질병은 대개 여러 경로가 어긋나서 생긴다.
+    그런데 신약개발은 오랫동안 &lsquo;하나의 약, 하나의 표적, 하나의 질병&rsquo;을 전제해 왔다.
+    네트워크 약리학은 그 전제를 버리는 데서 시작한다.</p>
+
+    <div class="legend" aria-label="이 문서의 도형 규약">
+      <span class="li"><span class="gl gl-d"></span><b>약물</b>&nbsp;drug</span>
+      <span class="li"><span class="gl gl-p"></span><b>유전자 · 단백질</b>&nbsp;node</span>
+      <span class="li"><span class="gl gl-x"></span><b>질환</b>&nbsp;disease</span>
+      <span class="li" style="color:var(--ink-mute)">원문 Fig. 3.1&ndash;3.2의 규약을 이 문서 전체의 표기법으로 삼는다</span>
+    </div>
+
+    <div class="byline">
+      <b>원저자</b> Pratham Kaushik, Neeraj, Sahar Qazi<br>
+      <b>소속</b> School of Allied Health Sciences and Management (SAHSM), Delhi Pharmaceutical Sciences and Research University ·
+      Department of Biochemistry, All India Institute of Medical Sciences (AIIMS), New Delhi<br>
+      <b>편저</b> Khalid Raza (Jamia Millia Islamia) &nbsp;·&nbsp; <b>DOI</b> 10.1016/B978-0-443-44430-2.00003-7
+    </div>
+  </div></div>
+</header>
+
+<div class="wrap">
+<div class="wide thesis reveal">
+  <p class="lede">2008년 앤드루 홉킨스가 네트워크 약리학이라는 말을 처음 썼다.
+  그것은 새 기법의 이름이 아니라 <span class="u">사고의 전환</span>이었다.
+  약을 분자 하나로 보지 말고 네트워크 안의 교란(perturbation)으로 보라는 것.
+  질병도 마찬가지다. 고장 난 분자가 아니라 <span class="u">고장 난 연결</span>이다.
+  <span class="q">이 전제를 바꾸면 무엇이 달라지는가.</span>
+  약효도, 부작용도, 새 적응증도 전부 다시 계산해야 한다. 그리고 그 계산은 사람이 할 수 있는 크기가 아니다.</p>
+</div>
+</div>
+
+<main class="wrap">
+
+<!-- ================= 1 ================= -->
+<section class="sec" id="s1">
+ <div class="col">
+  <div class="sechead"><span class="gl gl-x mk"></span><span class="secno">SECTION 01</span>
+    <h2>이룸의 법칙 — 왜 신약개발은 점점 나빠지는가</h2>
+    <div class="h2sub">서론 · 전통적 신약 발굴의 세 가지 병목</div></div>
+
+  <p>약물 재창출은 기존 약에서 새 의학적 쓸모를 찾는 일이다. 10년과 수십억 달러가 드는 전통적 개발과 달리
+  이미 검증된 약을 활용하므로 기간과 비용과 실패 위험이 크게 줄어든다.
+  숫자로 보면 차이는 분명하다.</p>
+
+  <div class="metrics">
+    <div><div class="mv">3–12년</div><div class="ml">재창출 개발 기간 (신규 개발 10–17년)</div></div>
+    <div><div class="mv">$300–500M</div><div class="ml">재창출 개발 비용 (신규 개발 10억 달러 초과)</div></div>
+    <div><div class="mv">2상 진입</div><div class="ml">안전성이 이미 평가된 약은 대개 2상부터 시작</div></div>
+    <div><div class="mv">−50% / 9년</div><div class="ml">투자 10억 달러당 승인 신약 수의 감소 속도</div></div>
+  </div>
+
+  <p>마지막 숫자가 이 절의 핵심이다. 1950년대 이후로 <b>투자 10억 달러당 승인되는 신약의 수가 9년마다 절반씩 줄었다.</b>
+  무어의 법칙을 거꾸로 뒤집었다는 뜻에서 &lsquo;이룸의 법칙(Eroom&rsquo;s law)&rsquo;이라 부른다.
+  제약 연구개발에 들어간 돈은 지난 10년간 계속 늘었는데, 효율은 계속 나빠졌다.</p>
+
+  <h3><span class="hn">1.1</span> 세 가지 이유</h3>
+  <ol class="abc">
+    <li><b>&lsquo;낮게 달린 열매&rsquo; 가설</b> — 가장 쉽게 표적화할 수 있는 질병 기전은 이미 다 쓰였다.
+    남은 것은 더 복잡하고 더 까다로운 표적들이다.</li>
+    <li><b>규제 요건의 강화</b> — 승인 기준이 계속 엄격해지면서 개발 비용과 기간이 함께 늘었다.</li>
+    <li><b>&lsquo;하나의 약, 하나의 표적&rsquo; 가설</b> — 질병 병태생리에서 분자 경로들이 어떻게 얽혀 작동하는지를 고려하지 않는다.
+    그래서 임상 2상에서 효능 입증에 실패한다.</li>
+  </ol>
+
+  <div class="judge">
+    <span class="lab">셋 중 무엇이 진짜 원인인가</span>
+    <p>세 이유는 성격이 다르다. 첫째는 자연의 사정이고 둘째는 제도의 사정이다.
+    바꿀 수 있는 것은 <b>셋째뿐이다.</b> 그리고 셋째는 자연도 제도도 아닌 <b>우리의 전제</b>다.
+    이 장이 셋째를 겨냥하는 이유가 여기에 있다.</p>
+  </div>
+
+  <p>표적 중심 발굴의 한계는 이질성이 큰 복합질환에서 특히 뚜렷하다.
+  교모세포종(GBM)만 보아도 종양 내부와 종양 사이의 이질성이 워낙 커서 약물 내성과 치료 실패로 이어졌다.
+  중추신경계 질환에서는 여기에 혈뇌장벽(BBB)이라는 물리적 장벽까지 더해진다.</p>
+
+  <h3><span class="hn">1.2</span> 재창출의 연표 — 1950년대에서 2020년대까지</h3>
+  <div class="tl reveal">
+    <div class="ev"><span class="gl gl-d"></span>
+      <div class="yr">1950s</div>
+      <div class="dg">탈리도마이드 <small>진정·항구토제</small></div>
+      <div class="ins">다발골수종, 나병(ENL). 면역조절 효과가 확인되면서 종양학 응용으로 이어졌다.</div></div>
+    <div class="ev"><span class="gl gl-d"></span>
+      <div class="yr">1960s</div>
+      <div class="dg">아스피린 <small>진통·소염제</small></div>
+      <div class="ins">심혈관질환(항혈소판). 심근경색과 뇌졸중의 예방 역할이 밝혀졌다.</div></div>
+    <div class="ev"><span class="gl gl-d"></span>
+      <div class="yr">1970s</div>
+      <div class="dg">메트포르민 <small>제2형 당뇨</small></div>
+      <div class="ins">다낭성난소증후군, 잠재적 항암·항노화. 만성질환 관리로 역할이 확장되었다.</div></div>
+    <div class="ev"><span class="gl gl-d"></span>
+      <div class="yr">1998</div>
+      <div class="dg">실데나필 <small>고혈압·협심증</small></div>
+      <div class="ins">발기부전. 임상시험 도중 우연히 관찰된 효능이었다.</div></div>
+    <div class="ev"><span class="gl gl-d"></span>
+      <div class="yr">2000s</div>
+      <div class="dg">미녹시딜 <small>고혈압</small></div>
+      <div class="ins">탈모(국소 도포). 부작용이 치료적 이점으로 전환된 사례다.</div></div>
+    <div class="ev"><span class="gl gl-d"></span>
+      <div class="yr">2010s</div>
+      <div class="dg">지도부딘 (AZT) <small>항암제</small></div>
+      <div class="ins">HIV/AIDS. FDA가 처음 승인한 항레트로바이러스제이자, 위기 상황에서의 신속 재배치 사례다.</div></div>
+    <div class="ev"><span class="gl gl-d"></span>
+      <div class="yr">2020s</div>
+      <div class="dg">렘데시비르 <small>에볼라</small></div>
+      <div class="ins">코로나19 관리. 긴급사용승인이 재창출을 가속했다.</div></div>
+    <div class="ev"><span class="gl gl-d"></span>
+      <div class="yr">2020s</div>
+      <div class="dg">토실리주맙 <small>류마티스 관절염</small></div>
+      <div class="ins">코로나19 관리. 팬데믹 상황에서 사이토카인 폭풍 제어의 가치를 입증했다.</div></div>
+  </div>
+  <figcaption><b>표 3.1</b> 원문의 재창출 주요 성과 연표를 옮겼다. 1998년까지는 대부분 우연이었고, 2020년대에 와서야 계산이 우연을 대신하기 시작했다. 원문 표제는 &ldquo;1930년대부터&rdquo;라고 적혀 있으나 실제 수록 항목은 1950년대에서 시작하므로 그대로 두었다.</figcaption>
+ </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="sec" id="s2">
+ <div class="col">
+  <div class="sechead"><span class="gl gl-p mk"></span><span class="secno">SECTION 02</span>
+    <h2>네트워크 약리학과 AI의 만남</h2>
+    <div class="h2sub">&lsquo;하나의 약, 하나의 표적, 하나의 질병&rsquo;에서 &lsquo;네트워크 표적, 다중 성분&rsquo;으로</div></div>
+
+  <p>2003년 인간 게놈 프로젝트가 완료되면서 시스템 생물학이 도약했다.
+  이어서 단백체학과 대사체학을 비롯한 여러 오믹스 분야가 분자 상호작용에 관한 전례 없는 양의 데이터를 만들어 냈고,
+  생물학적 네트워크의 구축이 가능해졌다. 여기에 고속 대량 실험 기법과 계산 도구가 더해져
+  약–표적 상호작용을 유례없는 규모로 연구할 수 있게 되었다.</p>
+
+  <p>네트워크 약리학은 이 이질적인 데이터들을 약물 작용에 대한 시스템 수준의 이해로 통합하려는 시도다.
+  전기, 수도, 통신 같은 현대 사회의 기간 서비스를 네트워크로 개념화하는 방식과 다르지 않다.
+  질병을 개별 분자의 기능 이상이 아니라 <b>생물학적 네트워크의 교란</b>으로 놓으면 네 가지 이점이 따라온다.</p>
+
+  <ol class="abc">
+    <li>약물의 표적을 네트워크 안에 명시적으로 포함시킴으로써 <b>약물의 난잡함(promiscuity)</b>을 포착한다.
+    대부분의 화합물은 하나 이상의 표적과 상호작용한다.</li>
+    <li>여러 경로에 걸친 질병의 복잡한 병리를 고려해 병태생리의 복잡성을 담아낸다.</li>
+    <li>새로운 치료 표적과 재창출 가능성을 식별할 수 있다.</li>
+    <li>복합질환을 위한 다중 표적 약물이나 약물 조합의 개발이 가능해진다.</li>
+  </ol>
+
+  <p>이 관점이 특히 유용했던 영역이 전통 의학이다.
+  전통 중의학(TCM)은 원래부터 여러 약재를 조합해 여러 표적을 동시에 친다.
+  네트워크 약리학은 그 경험적 처방을 계산 가능한 언어로 옮겨 놓는다.</p>
+
+  <div class="judge">
+    <span class="lab">AI가 들어오는 자리</span>
+    <p>네트워크 약리학은 개념이고, AI는 그 개념을 다룰 수 있게 만드는 도구다.
+    기계학습은 인간 연구자에게 완전히 가려져 있던 패턴을 찾아내고, 그래프 신경망(GNN)은 복잡한 생물학적 네트워크를
+    모형화한다. 자연어처리는 방대한 생의학 문헌을 훑어 약–표적, 약–질병 지식을 뽑아낸다.
+    AI 알고리즘은 서로 다른 출처의 데이터를 통합하면서 연결·결측·형식·규모의 문제를 함께 처리한다.</p>
+    <p><b>둘의 관계는 이렇게 정리하는 편이 정확하다.</b> 네트워크 약리학이 없으면 AI는 무엇을 계산해야 할지 모르고,
+    AI가 없으면 네트워크 약리학은 계산할 수 없는 크기의 문제를 남긴다.</p>
+  </div>
+
+  <p>코로나19 팬데믹이 이 결합의 유용성을 보여 주었다. 초기에 연구자들은 기존 약물의 AI 기반 네트워크 분석으로
+  SARS-CoV-2에 유효할 약을 빠르게 찾아냈다. 류마티스 관절염 치료제인 JAK 억제제 <b>바리시티닙</b>이 그것이다.
+  JAK&ndash;STAT 억제를 통한 항염증·항바이러스 효과와, AP2 연관 단백질 인산화효소 1(AAK1)의 간섭을 통한
+  바이러스 진입 차단이 그 기전이었다.</p>
+ </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="sec" id="s3">
+ <div class="col">
+  <div class="sechead"><span class="gl gl-p mk"></span><span class="secno">SECTION 03</span>
+    <h2>여섯 종류의 생물학적 네트워크</h2>
+    <div class="h2sub">노드는 분자, 엣지는 상호작용</div></div>
+
+  <p>생물학적 네트워크는 네트워크 약리학의 토대다. 분자를 노드로, 상호작용을 엣지로 모형화해
+  생물 시스템을 여러 층위의 추상 수준에서 분석할 수 있게 한다. 재창출에 특히 관련 있는 것은 여섯 가지다.</p>
+
+  <div class="grid g2">
+    <div class="card"><span class="cno">PPI</span><h5>단백질–단백질 상호작용 망</h5>
+      <p>단백질 사이의 물리적 상호작용을 나타낸다. 대부분의 세포 과정은 단백질이 매개한다.
+      기능적 단백질 복합체를 찾고, 신호전달 경로의 부분을 밝히고, 새 약물 표적을 식별하는 데 쓴다.
+      질병 상태에서 자주 교란되므로 병태생리 이해와 재창출 양쪽에 기여한다.</p>
+      <div class="meta">효모 이중 혼성법 · 친화성 정제 질량분석 · 단백질 상보성 분석</div></div>
+    <div class="card"><span class="cno">GRN</span><h5>유전자 조절 망</h5>
+      <p>전사인자와 표적 유전자 사이의 상호작용을 담아 유전자 발현이 어떻게 조절되는지 설명한다.
+      세포 분화, 발생, 환경 자극 반응에서 핵심 역할을 한다.
+      전사인자를 재창출 표적으로 삼는 전략의 근거가 된다.</p>
+      <div class="meta">ChIP-seq · RNA-seq · 유전체학</div></div>
+    <div class="card"><span class="cno">METABOLIC</span><h5>대사 망</h5>
+      <p>세포 안에서 저분자가 어떻게 변환되는지를 나타낸다. 효소, 기질, 산물, 조효소가
+      서로 겹치는 대사 경로를 이룬다. 치료 표적이 될 수 있는 효소를 찾는 데 쓴다.</p>
+      <div class="meta">동역학 기반 · 효소–기질–산물–조효소</div></div>
+    <div class="card"><span class="cno">DRUG–TARGET</span><h5>약–표적 망</h5>
+      <p>약물과 그 분자 표적(거의 전부 단백질) 사이의 상호작용을 나타낸다.
+      결합 친화도, 기능적 효과(활성화 또는 억제), 세포 수준의 결과를 함께 담는다.
+      약물의 표적 난잡함과 오프타깃 효과를 드러내고 새 약–표적 상호작용을 예측하게 한다.</p>
+      <div class="meta">binding affinity · activation / inhibition</div></div>
+    <div class="card"><span class="cno">DISEASE</span><h5>질환 망</h5>
+      <p>유전적 요인, 공유 증상, 동반질환 같은 특성이 겹치는 질환들을 연결한다.
+      유전–질환 연관, 증상–질환, 동반질환을 결합해 질병에 대한 지식을 확장한다.
+      연관된 질환으로 재창출할 수 있는 약을 보여 준다.</p>
+      <div class="meta">genetic · symptom · comorbidity</div></div>
+    <div class="card"><span class="cno">MULTILAYER</span><h5>유전자–질환–약물 망</h5>
+      <p>여러 유형의 네트워크를 통합해 유전자를 질환과 약물에 연결한다.
+      질병 기전과 잠재적 치료 접근을 하나의 관점에서 보게 한다.
+      <b>겉보기에 무관한 개체들 사이의 연결을 찾아내 비자명한 재창출 기회를 드러낸다.</b></p>
+      <div class="meta">원문 Fig. 3.1 · 3.2 — 이 문서의 도형 규약이 나온 곳</div></div>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="sec" id="s4">
+ <div class="col">
+  <div class="sechead"><span class="gl gl-p mk"></span><span class="secno">SECTION 04</span>
+    <h2>시스템 생물학과 위상 지표</h2>
+    <div class="h2sub">다중약리학 · 그리고 네트워크를 읽는 일곱 개의 자</div></div>
+
+  <p>복합질환에 효과적인 약들은 여러 표적에 동시에 작용한다. 이것을 <b>다중약리학(polypharmacology)</b>이라 한다.
+  종양학에서 이마티닙이나 수니티닙 같은 키나아제 억제제는 여러 키나아제를 한꺼번에 억제해
+  방광암, 위장관암 등 여러 암종의 환자에게 이익을 준다.
+  신경정신과 약물도 마찬가지다. 클로자핀은 더 선택적인 약들과 달리 여러 신경전달물질 수용체를 점유한다.</p>
+
+  <p>질병 쪽에서 보면 이유는 더 분명하다. 많은 질환이 애초에 다유전자성이다.</p>
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>질환</th><th>관련 유전자 수</th><th>대표 유전자</th></tr></thead>
+      <tbody>
+        <tr><td class="k">당뇨병</td><td class="n">27</td><td class="g">PPARG, GPD2, NEUROD1, IRS1, IGF2BP2, WFS1, CDKAL1, ENPP1, IL6, GCK</td></tr>
+        <tr><td class="k">조현병</td><td class="n">23</td><td class="g">MTHFR, CHI3L1, DISC1, DISC2, SYN2, DRD3, SCZD1, SCZD3, DTNBP1, SCZD6</td></tr>
+        <tr><td class="k">유방암</td><td class="n">19</td><td class="g">RAD54L, CASP8, BARD1, PIK3CA, HMMR, NQO2, RB1CC1, SLC22A18, ATM, KRAS</td></tr>
+        <tr><td class="k">급성 골수성 백혈병</td><td class="n">19</td><td class="g">GMPS, MLF1, LPP, CHIC2, KIT, NSD1, NPM1, WHSC1L1, JAK2, NUP214</td></tr>
+        <tr><td class="k">대장암</td><td class="n">18</td><td class="g">PLA2G2A, NRAS, ODC1, PIK3CA, TLR2, APC, PDGFRL, TLR4, PTPRJ, CCND1</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>표 3.2</b> 다유전자성 질환의 사례. 유전자가 20개 안팎씩 얽혀 있는 질환에
+  단일 표적 약물을 들이대는 것이 왜 실패하는지를 이 표가 설명한다.</figcaption>
+
+  <h3><span class="hn">4.1</span> 네트워크 위상 지표</h3>
+  <p>위상 지표는 생물학적 네트워크의 구조적 성질을 정량화한다.
+  조직화의 정도, 기능, 때로는 가장 취약한 지점까지 드러낸다.
+  약물 표적이나 질병 바이오마커가 될 만한 <b>허브</b>와 <b>임계 노드</b>를 찾는 일이 여기서 이루어진다.</p>
+
+  <div class="topo reveal" id="topoPanel">
+    <div class="topo-head">
+      <span class="t">위상 지표 탐색기</span>
+      <span class="s">15 nodes · 24 edges · 평균 경로 2.31 · 지름 5</span>
+    </div>
+    <div class="topo-tabs" role="tablist" aria-label="네트워크 위상 지표">
+      <button role="tab" data-m="deg" aria-selected="true" aria-controls="topoBody">연결 중심성</button>
+      <button role="tab" data-m="bet" aria-selected="false" aria-controls="topoBody">매개 중심성</button>
+      <button role="tab" data-m="clo" aria-selected="false" aria-controls="topoBody">근접 중심성</button>
+      <button role="tab" data-m="eig" aria-selected="false" aria-controls="topoBody">고유벡터 중심성</button>
+      <button role="tab" data-m="clu" aria-selected="false" aria-controls="topoBody">군집 계수</button>
+      <button role="tab" data-m="mod" aria-selected="false" aria-controls="topoBody">모듈성</button>
+    </div>
+    <div class="topo-svg">
+      <svg id="topoSvg" viewBox="0 0 760 370" role="img"
+           aria-label="약물 3개, 단백질 9개, 질환 3개로 이루어진 이종 네트워크와 위상 지표별 강조">
+      </svg>
+    </div>
+    <div class="topo-body" id="topoBody" role="tabpanel" aria-live="polite"></div>
+  </div>
+  <figcaption><b>그림 1</b> 4.1절이 정의한 위상 지표를 실제 그래프 위에서 계산해 보였다.
+  노드 15개와 엣지 24개로 이루어진 이종 네트워크이며, 표시된 값은 NetworkX로 실제 산출한 것이다.
+  탭을 바꾸면 각 지표가 무엇을 보는지가 강조로 드러난다.</figcaption>
+
+  <p>여기에 <b>경로 길이와 지름</b>이 더해진다. 평균 경로 길이는 모든 노드 쌍의 최단 경로 길이의 평균이고,
+  지름은 그중 가장 긴 최단 경로다. 생물학적 네트워크는 노드가 아무리 많아도 평균 경로 길이가 짧은
+  <b>좁은 세상(small-world) 성질</b>을 보인다. 정보가 네트워크를 빠르게 흐른다는 뜻이고,
+  동시에 <em class="mk2">교란도 빠르게 퍼진다는 뜻이다.</em></p>
+
+  <div class="judge">
+    <span class="lab">지표를 어떻게 쓸 것인가</span>
+    <p>이 지표들은 감상용이 아니다. 기계학습 모형은 약효나 부작용과 상관된 위상 지표를 학습하도록 훈련할 수 있고,
+    GNN은 이 값들을 <b>노드 특징이나 엣지 특징으로 직접 집어넣어</b> 약–표적 결합 예측과 재창출 예측의 정확도를 높인다.</p>
+    <p>다만 원문이 짚어 둔 경고 하나. 연결 중심성이 높은 허브 단백질을 표적으로 삼으면
+    질병 네트워크를 무너뜨릴 수 있지만, <b>허브일수록 기능이 많으므로 위험도 크다.</b>
+    지표가 높다는 것은 중요하다는 뜻이지 안전하다는 뜻이 아니다.</p>
+  </div>
+
+  <h3><span class="hn">4.2</span> 도구와 데이터베이스</h3>
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>도구 · DB</th><th>내용 유형</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td class="k">STRING</td><td class="g">단백질–단백질</td><td>여러 생물종에 걸친 알려진 상호작용과 예측된 상호작용</td></tr>
+        <tr><td class="k">DrugBank</td><td class="g">약물 정보</td><td>승인 약물과 실험 약물의 화학·약리·제제 데이터</td></tr>
+        <tr><td class="k">DisGeNET</td><td class="g">유전자–질환</td><td>큐레이션 및 문헌 마이닝으로 얻은 유전자·변이·질환 연결</td></tr>
+        <tr><td class="k">STITCH</td><td class="g">화학–단백질</td><td>화학물질과 단백질 사이의 알려진·예측된 상호작용</td></tr>
+        <tr><td class="k">TTD</td><td class="g">치료 표적</td><td>여러 질환의 표적과 대응 약물</td></tr>
+        <tr><td class="k">ChEMBL</td><td class="g">생리활성 분자</td><td>약물 유사 화합물의 구조·성질·생물학적 활성</td></tr>
+        <tr><td class="k">KEGG</td><td class="g">경로</td><td>분자 상호작용과 반응 경로 도해</td></tr>
+        <tr><td class="k">Reactome</td><td class="g">경로</td><td>전문가가 큐레이션한 인간 경로와 반응</td></tr>
+        <tr><td class="k">PharmGKB</td><td class="g">약물유전체</td><td>약물 반응에 영향을 주는 유전 변이 데이터</td></tr>
+        <tr><td class="k">SIDER</td><td class="g">부작용</td><td>문서화된 약물 이상반응</td></tr>
+        <tr><td class="k">Open Targets</td><td class="g">약물 표적</td><td>표적과 질환을 잇는 근거</td></tr>
+        <tr><td class="k">HIT</td><td class="g">한약 성분 표적</td><td>한약 화합물의 분자 표적</td></tr>
+        <tr><td class="k">DGIdb</td><td class="g">약–유전자</td><td>상호작용과 표적화 가능 유전자</td></tr>
+        <tr><td class="k">PubChem</td><td class="g">화학 정보</td><td>화합물 데이터와 생물학적 분석 결과</td></tr>
+        <tr class="hi"><td class="k">Cytoscape</td><td class="g">네트워크 분석</td><td>복잡 네트워크의 시각화와 통합</td></tr>
+        <tr class="hi"><td class="k">NetworkAnalyst</td><td class="g">네트워크 분석</td><td>유전자 발현과 네트워크 메타분석을 위한 웹 기반 도구</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>표 3.3</b> 원문의 도구·데이터베이스 표를 옮겼다. 마지막 두 행(음영)은 데이터가 아니라 분석 도구다.</figcaption>
+ </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="sec" id="s5">
+ <div class="col">
+  <div class="sechead"><span class="gl gl-d mk"></span><span class="secno">SECTION 05</span>
+    <h2>네트워크 약리학을 떠받치는 AI 기법</h2>
+    <div class="h2sub">기계학습 · 딥러닝 구조 · 설명가능 AI</div></div>
+
+  <h3><span class="hn">5.1</span> 약–표적 예측에서의 기계학습</h3>
+  <p>전통적으로 약–표적 예측은 분자 도킹이나 알려진 표적 사이의 유사성에 기대어 왔다.
+  확장성과 정확도 모두 제한적이었다. 기계학습은 데이터에서 복잡한 패턴을 학습해 이 한계를 넘는다.
+  지도학습(랜덤포레스트, SVM, 그래디언트 부스팅)과 비지도·준지도 모형이 화학·유전·네트워크 데이터를 분석한다.
+  <b>행렬 분해</b>는 고차원 약–표적 데이터를 잠재 특징 공간으로 압축하고,
+  <b>무작위 보행</b>은 네트워크의 경로를 탐색해 새 관계를 찾는다.</p>
+
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>AI 모형</th><th>정확도</th><th>F1</th><th>AUC-ROC</th><th>적용 사례</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Random Forest</td><td class="n">0.85</td><td class="n">0.83</td>
+            <td class="barcell"><span class="bar"><i style="width:60%"></i><b>0.92</b></span></td><td>키나아제 억제제 예측</td></tr>
+        <tr><td class="k">SVM</td><td class="n">0.78</td><td class="n">0.75</td>
+            <td class="barcell"><span class="bar"><i style="width:25%"></i><b>0.85</b></span></td><td>GPCR 리간드 식별</td></tr>
+        <tr><td class="k">XGBoost</td><td class="n">0.87</td><td class="n">0.86</td>
+            <td class="barcell"><span class="bar"><i style="width:70%"></i><b>0.94</b></span></td><td>난잡 표적 예측</td></tr>
+        <tr><td class="k">행렬 분해</td><td class="n">0.76</td><td class="n">0.74</td>
+            <td class="barcell"><span class="bar"><i style="width:15%"></i><b>0.83</b></span></td><td>약–표적 상호작용 예측</td></tr>
+        <tr><td class="k">DeepWalk</td><td class="n">0.81</td><td class="n">0.79</td>
+            <td class="barcell"><span class="bar"><i style="width:40%"></i><b>0.88</b></span></td><td>암 재창출</td></tr>
+        <tr><td class="k">그래프 신경망</td><td class="n">0.89</td><td class="n">0.88</td>
+            <td class="barcell"><span class="bar"><i style="width:75%"></i><b>0.95</b></span></td><td>PPI 기반 재창출</td></tr>
+        <tr><td class="k">Transformer</td><td class="n">0.90</td><td class="n">0.89</td>
+            <td class="barcell"><span class="bar"><i style="width:80%"></i><b>0.96</b></span></td><td>결합 친화도 예측</td></tr>
+        <tr class="hi"><td class="k">멀티모달 딥러닝</td><td class="n">0.92</td><td class="n">0.91</td>
+            <td class="barcell"><span class="bar"><i style="width:85%"></i><b>0.97</b></span></td><td>교차 도메인 재창출</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>표 3.4</b> 원문의 성능 비교표. 막대는 AUC-ROC 값이며, 차이가 보이도록 축을 0.80&ndash;1.00 구간으로 잘라 그렸다.
+  앙상블과 딥러닝이 전통 기계학습을 앞서지만, 그것은 <b>충분한 학습 데이터가 있을 때</b>라는 단서가 붙는다.</figcaption>
+
+  <h3><span class="hn">5.2</span> 딥러닝 구조 — 그래프를 다루는 네 가지 방식</h3>
+  <p>전통적 기계학습이 사람이 특징을 설계해야 했다면, 딥러닝은 원시 데이터에서 계층적 특징을 스스로 학습한다.
+  생물학적 네트워크는 본래 그래프 구조 데이터이므로 GNN이 자연스러운 선택이 된다.
+  GNN은 이웃 노드의 특징을 집계해 각 노드의 표현을 학습한다.</p>
+  <div class="grid g2">
+    <div class="card"><span class="cno">GCN</span><h5>그래프 합성곱 신경망</h5>
+      <p>CNN을 그래프 구조 데이터로 확장한다. 그래프 라플라시안이나 인접 행렬 위에서 합성곱을 수행한다.
+      약–표적 상호작용, 약–약 상호작용, 재창출 후보 예측에 성공적으로 적용되었다.</p>
+      <div class="meta">Kipf &amp; Welling (2016)</div></div>
+    <div class="card"><span class="cno">GAT</span><h5>그래프 어텐션 네트워크</h5>
+      <p>자기 어텐션으로 이웃마다 다른 가중치를 준다. 모든 이웃을 똑같이 집계하지 않고
+      어떤 이웃을 우선할지 스스로 고른다. 그 결과 네트워크에서 더 많은 정보를 끌어낸다.</p>
+      <div class="meta">Veličković et al. (2017)</div></div>
+    <div class="card"><span class="cno">GraphSAGE</span><h5>귀납적 임베딩</h5>
+      <p>본 적 없는 노드의 임베딩을 만드는 귀납적 학습을 쓴다.
+      <b>새 화합물이나 표적을 재학습 없이 기존 모형에 추가할 수 있다.</b>
+      새 화합물과 표적이 끊임없이 등장하는 재창출에서 특히 유리하다.</p>
+      <div class="meta">inductive learning · no retraining</div></div>
+    <div class="card"><span class="cno">GAE</span><h5>그래프 오토인코더</h5>
+      <p>오토인코더 구조와 GNN을 결합해 노드와 엣지의 압축 표현을 비지도로 학습한다.
+      생물학적 네트워크의 기저 구조를 담은 임베딩을 만들고
+      누락된 엣지 — 예컨대 알려지지 않은 약–표적 상호작용 — 를 예측한다.</p>
+      <div class="meta">Kipf &amp; Welling (2016)</div></div>
+  </div>
+  <p>그래프가 아닌 데이터에는 다른 구조가 붙는다. <b>CNN</b>은 격자 형태 데이터를 다룬다.
+  MolNet처럼 화학 구조를 이미지 유사 표현으로 변환해 처리하거나,
+  단백질 구조를 3차원 복셀 격자나 거리 행렬 형태로 처리해 결합에 중요한 구조적 관계를 학습한다.
+  <b>RNN과 LSTM</b>은 순차 데이터를 위한 것이다. 아미노산 서열을 처리해 단백질 표현을 학습하고,
+  SMILES 문자열을 처리해 화학적 성질과 잠재적 생리활성을 담은 임베딩을 만든다.</p>
+
+  <h3><span class="hn">5.3</span> 설명가능 AI</h3>
+  <p>모형이 복잡해질수록 블랙박스 문제가 따라온다. 설명가능 AI(XAI)는 예측의 근거를 드러내
+  연구자가 그 예측이 어떻게 만들어졌는지 살펴볼 수 있게 한다. SHAP, 적분 기울기, 어텐션이 대표적 방법이다.
+  재창출에서 XAI가 주는 이점은 넷이다.</p>
+  <ul class="gm">
+    <li><span class="gl gl-p"></span><b>새 지식</b> — 설명이 이전에 발견되지 않았던 생물학적 기전이나 약–표적 상호작용을 드러낼 수 있다.</li>
+    <li><span class="gl gl-p"></span><b>후보 선별</b> — 생물학적으로 타당한 설명을 근거로 실험 검증 대상을 고를 수 있다.</li>
+    <li><span class="gl gl-p"></span><b>규제 수용</b> — 투명한 모형이 규제 당국의 선호를 받아 임상 전환을 앞당긴다.</li>
+    <li><span class="gl gl-p"></span><b>신뢰</b> — 연구자·임상의·환자·규제자 모두의 신뢰를 얻는다.</li>
+  </ul>
+  <div class="judge">
+    <span class="lab">원문이 인정하는 미해결 긴장</span>
+    <p>생물 시스템은 복잡하고 약물 작용은 다변량·다중척도다.
+    이것을 <b>정보량이 충분하면서 동시에 해석 가능한</b> 설명으로 요약하는 일은 아직 어렵다.
+    포괄성, 충실도, 해석가능성 셋을 동시에 최대화하는 XAI는 아직 없다.</p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="sec" id="s6">
+ <div class="col">
+  <div class="sechead"><span class="gl gl-d mk"></span><span class="secno">SECTION 06</span>
+    <h2>AI 기반 재창출 파이프라인</h2>
+    <div class="h2sub">다섯 단계 · 데이터에서 검증까지</div></div>
+
+  <p>AI 기반 재창출의 성공은 여러 출처에서 온 고품질 데이터의 표준화된 통합에 달려 있다.
+  데이터 수집과 큐레이션 단계가 이후 모든 단계의 토대를 놓는다.</p>
+
+  <figure class="reveal">
+    <svg viewBox="0 0 900 220" role="img" aria-label="AI 기반 약물 재창출 파이프라인의 다섯 단계">
+      <defs><marker id="pa" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 z" fill="#0E6E62"/></marker></defs>
+      <g font-family="Noto Sans KR, sans-serif">
+        <g>
+          <rect x="16" y="52" width="158" height="80" fill="#F3F3F0" stroke="#2B3A67"/>
+          <rect x="194" y="52" width="158" height="80" fill="#F3F3F0" stroke="#C9CAC3"/>
+          <rect x="372" y="52" width="158" height="80" fill="#F3F3F0" stroke="#C9CAC3"/>
+          <rect x="550" y="52" width="158" height="80" fill="#F3F3F0" stroke="#0E6E62"/>
+          <rect x="728" y="52" width="158" height="80" fill="#F3F3F0" stroke="#8C2F39"/>
+        </g>
+        <g font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.5" fill="#737D84">
+          <text x="30" y="74">a · DATA</text><text x="208" y="74">b · NETWORK</text>
+          <text x="386" y="74">c · TRAIN</text><text x="564" y="74">d · PREDICT</text>
+          <text x="742" y="74">e · VALIDATE</text>
+        </g>
+        <g font-size="12.5" fill="#14181B" font-weight="500">
+          <text x="30" y="98">수집과 큐레이션</text><text x="208" y="98">구축과 통합</text>
+          <text x="386" y="98">모형 학습·최적화</text><text x="564" y="98">예측</text><text x="742" y="98">검증</text>
+        </g>
+        <g font-size="11" fill="#414A50">
+          <text x="30" y="118">오믹스·구조·임상·문헌</text>
+          <text x="208" y="118">지식그래프 주석 부여</text>
+          <text x="386" y="118">지도 / 준지도 / 비지도</text>
+          <text x="564" y="118">약–질병, 약–표적 후보</text>
+          <text x="742" y="118">인실리코·인비트로·임상기록</text>
+        </g>
+      </g>
+      <g stroke="#0E6E62" stroke-width="1.3" fill="none" marker-end="url(#pa)">
+        <path d="M174 92 H190"/><path d="M352 92 H368"/><path d="M530 92 H546"/><path d="M708 92 H724"/>
+      </g>
+      <line x1="16" y1="172" x2="886" y2="172" stroke="#DCDDD7"/>
+      <text x="16" y="196" font-family="Noto Sans KR, sans-serif" font-size="12" fill="#737D84" font-weight="300">
+        데이터의 정확성·관련성·호환성을 확보하지 못하면 뒤의 네 단계는 전부 무의미해진다.
+      </text>
+    </svg>
+    <figcaption><b>그림 2</b> 재창출 파이프라인의 다섯 단계. 원문 Fig. 3.5의 내용을 재구성했다.</figcaption>
+  </figure>
+ </div>
+</section>
+
+<!-- ================= 7 ================= -->
+<section class="sec" id="s7">
+ <div class="col">
+  <div class="sechead"><span class="gl gl-x mk"></span><span class="secno">SECTION 07</span>
+    <h2>사례 연구 — 알츠하이머와 미노사이클린</h2>
+    <div class="h2sub">항생제 하나가 신경퇴행성 질환의 후보가 되기까지</div></div>
+
+  <p>알츠하이머병은 수십 년의 연구에도 치료 선택지가 제한적인 대표적 신경퇴행성 질환이다.
+  세포외 아밀로이드-β 플라크, 과인산화 타우로 이루어진 세포내 신경섬유매듭, 신경염증이 임상 특징이다.
+  아밀로이드-β와 타우 병리를 겨냥한 수많은 임상시험이 수행되었지만 <b>대부분 실질적인 임상적 이익을 찾지 못했다.</b></p>
+
+  <p>여기서 관점이 바뀐다. 성상세포와 미세아교세포가 주도하는 <b>신경염증</b>이
+  알츠하이머 진행의 중요한 요인으로 부상했다. 전장유전체 연관 분석은 미세아교세포 활동과
+  염증 경로에 연관된 다수의 알츠하이머 위험 유전자를 찾아냈다.
+  신경염증의 조절이 치료 전략이 될 수 있다는 근거다.</p>
+
+  <p><b>미노사이클린</b>은 테트라사이클린계 항생제다. 뇌로 잘 침투하고, 여러 신경계 질환의 전임상 모델에서
+  항염증·항세포자멸사·신경보호 성질을 보였다. 그런데 알츠하이머에서의 잠재적 응용은
+  <em class="mk2">AI 기반 네트워크 약리학이 그 기전적 정합성을 드러내기 전까지 체계적으로 탐색된 적이 없었다.</em></p>
+
+  <h3><span class="hn">7.1</span> 수행 방식</h3>
+  <div class="wf">
+    <div class="st"><div class="stt">이종 지식그래프 구축</div>
+      <p class="stp">단백질–단백질 상호작용, 유전자–질환 연관, 약–표적 관계, 경로를 담은 다층 그래프에서 출발했다.
+      여기에 알츠하이머 특이 정보를 얹었다. 사후 뇌조직에서 차등 발현된 유전자, GWAS에서 나온 유전적 위험 인자,
+      단일세포 전사체 데이터베이스에서 얻은 미세아교세포·신경염증 시그니처.</p>
+      <div class="stm">PPI + gene–disease + drug–target + pathway + AD-specific layers</div></div>
+    <div class="st"><div class="stt">이종 GNN 설계</div>
+      <p class="stp">노드 유형(약물·단백질·질환·경로)과 관계 유형이 여럿인 이종 GNN을 썼다.
+      지식그래프에서는 어떤 노드가 다른 노드보다 생물학적으로 더 유의미한 것이 보통이므로,
+      <b>어텐션 기법을 더해 생물학적으로 더 유의미한 연결에 큰 가중치를 주었다.</b>
+      노드 특징으로는 약물의 분자 기술자, 단백질의 서열 기반 임베딩, 질환의 표현형 특징을 썼다.</p>
+      <div class="stm">heterogeneous GNN + attention</div></div>
+    <div class="st"><div class="stt">학습과 검증</div>
+      <p class="stp">실제 약–질병 연관에 음성 표본 추출을 더해 균형 잡힌 데이터셋으로 학습시켰다.
+      시간 분할 검증과 여러 지표 — ROC 곡선 아래 면적, 정밀도–재현율 곡선, 평균 역순위 — 로 성능을 확인했다.</p>
+      <div class="stm">time-split validation · AUC-ROC · PR curve · MRR</div></div>
+    <div class="st"><div class="stt">기전 경로 분석</div>
+      <p class="stp">GNN의 예측을 알츠하이머 관련 경로에 대한 영향의 관점에서 재검토했다.
+      각 후보를 신경염증 과정에 미치는 추정 효과로 점수화하고,
+      <b>혈뇌장벽 투과 능력</b>으로 다시 한번 우선순위를 매겼다.</p>
+      <div class="stm">pathway impact score · BBB penetration</div></div>
+    <div class="st"><div class="stt">실험 검증</div>
+      <p class="stp">상위 후보를 미세아교세포 배양과 알츠하이머 환자 유래 iPSC 모델로 시험했다.
+      염증 표지자, 미세아교세포 활성화, 아밀로이드-β 제거에 대한 효과를 측정하고,
+      유망한 결과는 형질전환 알츠하이머 마우스 모델에서 표적 관여와 인지 결과로 다시 검증했다.</p>
+      <div class="stm">microglial culture · iPSC-derived model · transgenic mouse</div></div>
+  </div>
+
+  <h3><span class="hn">7.2</span> 발견</h3>
+  <div class="find reveal">
+    <div class="fs"><span class="fk">Ⅰ · 네트워크 기반 예측</span>
+      <ul>
+        <li>GNN 모형에서 미노사이클린이 알츠하이머와 높은 연관 점수를 보였다.</li>
+        <li>네트워크 분석 결과, 미노사이클린의 표적과 신경염증 경로의 알츠하이머 연관 단백질 사이에 유의한 중첩이 있었다.</li>
+        <li>미세아교세포 활성화, 사이토카인 생산, 자가포식을 포함한 여러 알츠하이머 관련 과정을 조절할 것으로 예측되었다.</li>
+      </ul></div>
+    <div class="fs"><span class="fk">Ⅱ · 기전적 통찰</span>
+      <ul>
+        <li>네트워크 섭동 분석은 미노사이클린이 알츠하이머에서 관찰되는 비정상적 미세아교세포 활성화 양상을 정상화할 것으로 예측했다.</li>
+        <li>NF-κB와 MAPK 연쇄를 포함한 여러 염증 신호전달 경로를 차단할 것으로 전망되었다.</li>
+        <li>미세아교세포의 식세포 활성 증가를 통한 아밀로이드-β 제거 효과 가능성이 제시되었다.</li>
+      </ul></div>
+    <div class="fs"><span class="fk">Ⅲ · 실험 검증</span>
+      <ul>
+        <li>시험관 연구에서 활성화된 미세아교세포의 전염증성 사이토카인 생산 감소가 확인되었다.</li>
+        <li>미세아교세포 배양 모델에서 아밀로이드-β의 식세포 제거가 개선되었다.</li>
+        <li>형질전환 알츠하이머 마우스 모델에서 신경염증 감소, 아밀로이드-β 침착 감소, 인지 수행 개선이 나타났다.</li>
+      </ul></div>
+    <div class="fs"><span class="fk">Ⅳ · 임상적 함의</span>
+      <ul>
+        <li>전자의무기록의 후향적 분석에서, 다른 질환으로 미노사이클린을 장기 투여받은 환자의 알츠하이머 발생률이 낮았다.</li>
+        <li>예비 공개표지 임상연구에서 경도인지장애 환자의 인지 지표 개선과 염증 바이오마커 감소가 관찰되었다.</li>
+        <li>양호한 안전성 프로파일과 뇌 침투성이 더 큰 대조 임상시험으로의 진행을 뒷받침했다.</li>
+      </ul></div>
+  </div>
+
+  <h3><span class="hn">7.3</span> 논의</h3>
+  <p><b>알츠하이머를 단일 표적 질환이 아니라 네트워크 교란으로 개념화한 것</b>이 이 접근의 출발점이었다.
+  그 결과 여러 병태생리 과정, 특히 신경염증을 동시에 다루는 후보가 나왔다.
+  유전체·전사체·단백체를 결합해 단일 데이터 유형보다 견고한 이해를 얻었고,
+  미노사이클린의 알려진 약리 효과와 알츠하이머 병태생리 사이의 비자명한 연결이 드러났다.</p>
+  <div class="judge">
+    <span class="lab">그러나 임상 전환에는 남은 문제가 있다</span>
+    <p>용량 요법의 최적화, 적절한 환자 하위집단의 식별, 그리고 <b>항균제를 장기 투여할 때의 안전성 우려.</b>
+    마지막 항목은 특히 무겁다. 알츠하이머 치료는 수년에 걸치는데, 항생제를 그 기간 동안 쓴다는 것은
+    내성과 미생물총 교란이라는 별개의 문제를 불러온다. 원문도 이 점을 명시했다.</p>
+    <p>다만 검증의 층위는 충실했다. 인실리코 예측에서 세포 모델로, 동물 실험으로, 예비 임상 연구로 이어지는
+    다단계 검증이 미노사이클린의 치료 잠재력을 종합적으로 평가했다. 그 결과 새로운 2상 시험이 시작되었다.</p>
+  </div>
+
+  <h3><span class="hn">7.4</span> 다른 사례들</h3>
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>질환</th><th>AI 기법</th><th>데이터</th><th>재창출 약물</th><th>바이오마커</th><th>검증</th></tr></thead>
+      <tbody>
+        <tr><td class="k">COVID-19</td><td class="g">네트워크 ML, NLP</td><td class="g">GWAS, 상호작용체, PubMed</td>
+            <td class="k">바리시티닙</td><td class="g">JAK–STAT</td><td class="g">RCT</td></tr>
+        <tr class="hi"><td class="k">알츠하이머병</td><td class="g">GNN, 지식그래프</td><td class="g">유전자–약물–표현형</td>
+            <td class="k">미노사이클린</td><td class="g">염증</td><td class="g">2상 시험</td></tr>
+        <tr><td class="k">유방암</td><td class="g">딥 그래프 모형</td><td class="g">발현, PPI, DrugBank</td>
+            <td class="k">메트포르민</td><td class="g">AMPK/mTOR</td><td class="g">후향적 EHR</td></tr>
+        <tr><td class="k">파킨슨병</td><td class="g">SVM+</td><td class="g">PPI, ClinVar</td>
+            <td class="k">라사길린</td><td class="g">LRRK2</td><td class="g">인비트로</td></tr>
+        <tr><td class="k">다발성 경화증</td><td class="g">ML</td><td class="g">유전자 네트워크, 임상</td>
+            <td class="k">핀골리모드</td><td class="g">S1PR1 경로</td><td class="g">동물 모델</td></tr>
+        <tr><td class="k">난소암</td><td class="g">NLP, RWR</td><td class="g">텍스트, TCGA</td>
+            <td class="k">디설피람</td><td class="g">ALDH1</td><td class="g">실험실 검증</td></tr>
+        <tr><td class="k">제2형 당뇨</td><td class="g">행렬 분해</td><td class="g">EHR</td>
+            <td class="k">트리메타지딘</td><td class="g">GLUT4</td><td class="g">코호트 연구</td></tr>
+        <tr><td class="k">자가면역질환</td><td class="g">다중오믹스 그래프</td><td class="g">다중오믹스</td>
+            <td class="k">시롤리무스</td><td class="g">TORC1</td><td class="g">증례 시리즈</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>표 3.5</b> AI 기반 재창출 사례 모음. 검증 열을 세로로 읽으면 이 분야의 현주소가 보인다.
+  RCT는 하나뿐이고, 나머지는 아직 시험관·동물·후향적 단계에 있다.</figcaption>
+
+  <h3><span class="hn">7.5</span> 윤리 · 법 · 규제</h3>
+  <p><b>데이터 프라이버시.</b> 신뢰할 만한 예측을 얻기 위해 필요한 데이터 통합의 규모가
+  전통적 모형보다 훨씬 크다는 점 자체가 문제다. 환자 유전체 데이터와 임상 데이터를 합치면
+  유출 위험은 커지고 민감도도 높아진다. 익명화, 연합학습, 안전한 다자간 연산이 위험을 줄이지만,
+  <b>개인의 프라이버시와 좋은 모형에 필요한 데이터 양 사이에는 본질적 긴장이 남는다.</b></p>
+  <p><b>알고리즘 공정성.</b> 편향되거나 대표성 없는 데이터로 학습한 모형은
+  의료 접근과 결과의 사회적 불평등을 필연적으로 재생산한다.
+  적절한 데이터셋 큐레이션, 편향 감사, 다양한 영향 집단의 목소리를 담은 데이터 확보로 상당 부분 통제할 수 있다.</p>
+  <div class="grid g2">
+    <div class="card"><span class="cno">기존 경로</span><h5>재창출 약물의 승인 통로</h5>
+      <p>미국 FDA의 <b>505(b)(2)</b> 신약 신청 절차와 EMA의 <b>혼합 판매허가(Hybrid Marketing Authorization)</b> 경로가 있다.
+      둘 다 임상 또는 관찰 연구에서 나온 근거를 전제로 구성되었다.
+      이제는 사람 대상 연구가 아니라 계산에서 나온 근거를 수용하는 쪽으로 움직이고 있다.</p>
+      <div class="meta">FDA 505(b)(2) · EMA Hybrid MA</div></div>
+    <div class="card"><span class="cno">새 인프라</span><h5>디지털 근거의 제도화</h5>
+      <p>FDA <b>센티넬 이니셔티브</b>(2021)는 대규모 전자 의료 데이터로 제품 안전성을 능동 평가한다.
+      EMA는 <b>적응형 허가</b> 프레임워크를 만들어, 조건부 접근을 허용하면서 약물을 반복 평가한다.
+      시간에 따라 변하는 AI 출력과 유용하게 맞물릴 수 있는 구조다.</p>
+      <div class="meta">FDA Sentinel Initiative (2021) · EMA adaptive licensing</div></div>
+  </div>
+  <p><b>법적 쟁점.</b> 기존 약물의 새 적응증에 대한 지식재산권, 데이터셋의 소유·이용권,
+  AI 산출물에 대한 권리가 모두 미정 상태다. 용도 특허(method-of-use patent)가 일부를 보호하지만
+  관할권마다 달라 불확실하다. 혁신 유인과 환자 접근권, 그리고 데이터·알고리즘·예측 모형의
+  소유 및 이용 권한을 함께 다루는 협력 계약 모형이 필요하다.</p>
+ </div>
+</section>
+
+<!-- ================= 8 ================= -->
+<section class="sec" id="s8">
+ <div class="col">
+  <div class="sechead"><span class="gl gl-d mk"></span><span class="secno">SECTION 08</span>
+    <h2>앞으로의 방향</h2>
+    <div class="h2sub">디지털 트윈 · 연합학습 · 다중약리학</div></div>
+
+  <h4>환자 특이 모형과 디지털 트윈</h4>
+  <p>기존의 재창출은 질병의 넓은 범주나 계열에 도움이 될 약을 찾는 데 초점을 맞춰 왔다.
+  환자 특이 모형과 디지털 트윈은 방향이 다르다. 개별 환자의 분자 프로파일, 질병 특성,
+  약물 반응 가능성을 계산적으로 재구성한다. 질병의 계열이 아니라 <b>개인</b>을 표현하므로,
+  각 환자의 발현 양상과 생물학적 구성에 근거한 치료 권고가 가능해진다.</p>
+
+  <h4>연합학습 — 데이터를 옮기지 않고 함께 배우기</h4>
+  <p>재창출에 쓰일 데이터셋 상당수는 제약회사, 학술기관, 의료 시스템 안에 독점적 형태로 존재한다.
+  프라이버시, 규제, 경쟁 때문에 공유되지 못한다. 연합학습은 각자 데이터의 소유권을 유지한 채
+  함께 모형을 만들게 한다. 병원들이 각자의 환자 기록으로 약물 반응 예측 모형을 공동 학습하거나,
+  제약회사들이 독점 화합물 라이브러리와 음성 스크리닝 결과를 공개하지 않으면서
+  공유 표적 기전에 대한 표적 발굴 요소를 통합하는 식이다.</p>
+  <ul class="gm">
+    <li><span class="gl gl-p"></span><b>차분 프라이버시</b> — 공유 데이터의 프라이버시에 수학적 보증을 준다.</li>
+    <li><span class="gl gl-p"></span><b>안전한 다자간 연산</b> — 참여자 누구도 타인의 원자료를 보지 못한 채 공동 계산을 수행한다.</li>
+    <li><span class="gl gl-p"></span><b>동형암호</b> — 암호화된 상태 그대로 연산한다.</li>
+    <li><span class="gl gl-p"></span><b>Melloddy 컨소시엄</b> — 여러 제약회사가 독점 화학 공간과 생물 데이터를 지키면서
+    공유 예측 모형을 개발한 국제 다자 이니셔티브다. 이 접근의 실제 적용 사례로 꼽힌다.</li>
+  </ul>
+
+  <div class="pull">
+    연합학습이 여는 것은 성능이 아니라 <b>접근</b>이다.
+    지금까지 사일로 안에 갇혀 있던 정보가 기관과 국경을 넘어 재창출에 동원될 수 있게 된다.
+    이 분야의 다음 병목이 알고리즘이 아니라 제도라는 사실을, 이 절이 우회적으로 말하고 있다.
+  </div>
+ </div>
+</section>
+
+<!-- ================= 결론 ================= -->
+<section class="sec" id="s9">
+ <div class="col">
+  <div class="sechead"><span class="gl gl-x mk"></span><span class="secno">CLOSING</span>
+    <h2>이 장이 남기는 것</h2>
+    <div class="h2sub">결론 · 그리고 읽고 난 뒤의 판단</div></div>
+
+  <div class="closing">
+    <div class="ci"><span class="ck">01 · 전제의 교체</span>
+      <p>네트워크 약리학은 기법이 아니라 전제의 교체다. &lsquo;하나의 약, 하나의 표적, 하나의 질병&rsquo;에서
+      &lsquo;네트워크 표적, 다중 성분&rsquo;으로. 이룸의 법칙이 말하는 효율 저하 가운데 사람이 바꿀 수 있는 부분이 바로 이 전제다.</p></div>
+    <div class="ci"><span class="ck">02 · 위상이 곧 특징</span>
+      <p>연결·매개·근접·고유벡터 중심성, 군집 계수, 모듈성, 경로 길이. 이 값들은 네트워크를 읽는 자이자
+      동시에 GNN에 그대로 집어넣을 수 있는 노드 특징이다. 생물학과 계산이 만나는 지점이 여기다.</p></div>
+    <div class="ci"><span class="ck">03 · 두 개의 사례</span>
+      <p>코로나19의 바리시티닙과 알츠하이머의 미노사이클린. AI 기반 네트워크 약리학이
+      기전적으로 타당한 후보를 찾아내고, 빠르게 검증하고, 임상까지 밀어 올릴 수 있음을 보여 준 두 사례다.</p></div>
+    <div class="ci"><span class="ck">04 · 남은 과제</span>
+      <p>데이터 이질성, 모형 해석가능성, 윤리·법적 쟁점, 그리고 계산적 근거를 의약품 평가의 근거로
+      수용하기 위한 규제 계획. 설명가능 AI, 연합학습, 통합 다중오믹스 기술의 계속된 발전이 이를 다뤄야 한다.</p></div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">옮긴이의 판단</span>
+    <p>표 3.5의 &lsquo;검증&rsquo; 열을 다시 보면 이 분야의 현실이 보인다.
+    무작위 대조시험까지 간 것은 바리시티닙 하나뿐이다. 나머지는 2상 시험, 후향적 EHR, 시험관, 동물 모델, 증례 시리즈에 머물러 있다.
+    <b>예측의 정확도와 임상의 도달은 다른 문제다.</b> 표 3.4의 AUC 0.97과 표 3.5의 &lsquo;증례 시리즈&rsquo; 사이의 거리가
+    이 분야가 앞으로 건너야 할 거리다.</p>
+    <p>그럼에도 이 장의 기여는 분명하다. <b>실패의 원인을 기술이 아니라 전제에서 찾은 것.</b>
+    이룸의 법칙이 말하는 효율 저하는 돈을 더 쓴다고 해결되지 않는다.
+    질병을 &lsquo;고장 난 분자&rsquo;가 아니라 &lsquo;고장 난 연결&rsquo;로 다시 정의하는 일 —
+    그것은 계산의 문제이기 전에 관점의 문제다. 그리고 관점을 바꾸는 데는 돈이 들지 않는다.</p>
+  </div>
+ </div>
+</section>
+
+</main>
+
+<footer>
+ <div class="wrap"><div class="col">
+  <div class="src">
+    <b>원전</b><br>
+    Kaushik, P., Neeraj, &amp; Qazi, S. (2026). <i>AI-driven network pharmacology for drug repurposing.</i>
+    In K. Raza (Ed.), <b>Artificial Intelligence in Precision Drug Design, Volume 2: Advanced Applications</b> (Chapter 3, pp. 49&ndash;73).
+    Academic Press / Elsevier. ISBN 978-0-443-44430-2. https://doi.org/10.1016/B978-0-443-44430-2.00003-7
+    <div class="note">
+      이 문서는 원저 제3장만을 대상으로 한 한국어 정리본이다. 표 3.1&ndash;3.5의 수치와 사례, 인용 문헌은 모두 원문에서 가져왔고,
+      절 구성과 도해는 읽기 편하도록 재배열했다. 그림은 원문 삽화를 그대로 옮기지 않고 같은 내용을 다시 그린 것이다.<br><br>
+      <b>위상 지표 탐색기에 관하여</b> — 4.1절이 정의한 지표들을 설명하기 위해 노드 15개, 엣지 24개의
+      이종 네트워크를 별도로 구성하고 NetworkX로 각 지표를 실제 계산했다.
+      원문에 실린 데이터가 아니라 개념 설명용으로 만든 예시 그래프이며, 표시된 값은 그 그래프에 대한 정확한 산출값이다.<br><br>
+      &lsquo;판단&rsquo;으로 표시한 블록은 원문의 유보 조항을 정리하거나 옮긴이의 해석을 덧붙인 부분이므로
+      원문 서술과 구분해서 읽어야 한다.
+    </div>
+  </div>
+ </div></div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- 진행 막대 / 목차 ---------- */
+  var bar = document.getElementById('progress');
+  var rail = document.querySelector('nav.rail');
+  var hero = document.querySelector('header.hero');
+  function onScroll(){
+    var h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+    rail.classList.toggle('show', h.scrollTop > hero.offsetHeight - 80);
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section.sec'));
+  var list = document.getElementById('railList');
+  var items = secs.map(function(s){
+    var glyph = s.querySelector('.sechead .gl').className.replace('gl mk','').trim();
+    var no = s.querySelector('.secno').textContent.replace('SECTION','').trim();
+    var tt = s.querySelector('h2').textContent.trim();
+    var li = document.createElement('li');
+    li.innerHTML = '<span class="' + s.querySelector('.sechead .gl').className.replace(' mk','') + '"></span>'
+                 + '<a href="#' + s.id + '">' + (no === 'CLOSING' ? '—' : no) + '  ' + tt + '</a>';
+    list.appendChild(li);
+    return li;
+  });
+
+  if ('IntersectionObserver' in window){
+    var navObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var i = secs.indexOf(e.target);
+        items.forEach(function(li, j){
+          li.classList.toggle('on', j === i);
+          li.querySelector('a').classList.toggle('act', j === i);
+        });
+      });
+    }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+    secs.forEach(function(s){ navObs.observe(s); });
+
+    var revObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add('on'); revObs.unobserve(e.target); }
+      });
+    }, {threshold:.12});
+    document.querySelectorAll('.reveal').forEach(function(el){
+      if (reduce) el.classList.add('on'); else revObs.observe(el);
+    });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('on'); });
+  }
+
+  /* ---------- 표제 배경 네트워크 ---------- */
+  (function(){
+    var svg = document.getElementById('heroNet');
+    var NS = 'http://www.w3.org/2000/svg';
+    var pts = [], N = 34, W = 1200, H = 520, rnd = 20250807;
+    function rand(){ rnd = (rnd * 1103515245 + 12345) & 0x7fffffff; return rnd / 0x7fffffff; }
+    for (var i = 0; i < N; i++) pts.push({x: rand()*W, y: rand()*H});
+    var f = document.createDocumentFragment();
+    for (var a = 0; a < N; a++) for (var b = a+1; b < N; b++){
+      var dx = pts[a].x - pts[b].x, dy = pts[a].y - pts[b].y, d = Math.hypot(dx, dy);
+      if (d < 168){
+        var ln = document.createElementNS(NS, 'line');
+        ln.setAttribute('x1', pts[a].x.toFixed(1)); ln.setAttribute('y1', pts[a].y.toFixed(1));
+        ln.setAttribute('x2', pts[b].x.toFixed(1)); ln.setAttribute('y2', pts[b].y.toFixed(1));
+        ln.setAttribute('stroke', '#2B3A67');
+        ln.setAttribute('stroke-width', '.6');
+        ln.setAttribute('opacity', (0.30 * (1 - d/168)).toFixed(3));
+        f.appendChild(ln);
+      }
+    }
+    pts.forEach(function(p, i){
+      var c = document.createElementNS(NS, 'circle');
+      c.setAttribute('cx', p.x.toFixed(1)); c.setAttribute('cy', p.y.toFixed(1));
+      c.setAttribute('r', (i % 7 === 0 ? 3.4 : 1.9).toFixed(1));
+      c.setAttribute('fill', i % 7 === 0 ? '#0E6E62' : '#2B3A67');
+      c.setAttribute('opacity', i % 7 === 0 ? '.4' : '.24');
+      f.appendChild(c);
+    });
+    svg.appendChild(f);
+  })();
+
+  /* ---------- 위상 지표 탐색기 ---------- */
+  (function(){
+    var NS = 'http://www.w3.org/2000/svg';
+    var POS = {
+      D1:[70,60],  D2:[70,180], D3:[70,300],
+      P1:[230,50], P2:[230,130],P3:[230,210],P4:[230,300],
+      P5:[390,70], P6:[390,160],P7:[390,250],P8:[390,330],
+      P9:[540,170],
+      X1:[690,80], X2:[690,190],X3:[690,300]
+    };
+    var EDGES = [
+      ['D1','P1'],['D1','P2'],['D1','P5'],['D2','P2'],['D2','P3'],['D2','P6'],
+      ['D3','P3'],['D3','P4'],['P1','P5'],['P2','P5'],['P2','P6'],['P3','P6'],
+      ['P3','P7'],['P4','P7'],['P4','P8'],['P5','P9'],['P6','P9'],['P7','P9'],
+      ['P8','P7'],['P9','X1'],['P9','X2'],['P9','X3'],['P5','X1'],['P8','X3']
+    ];
+    /* NetworkX로 실제 계산한 값 */
+    var M = {
+      deg:{D1:3,D2:3,D3:2,P1:2,P2:4,P3:4,P4:3,P5:5,P6:4,P7:4,P8:3,P9:6,X1:2,X2:1,X3:2},
+      bet:{D1:.021,D2:.042,D3:.018,P1:0,P2:.108,P3:.156,P4:.042,P5:.229,P6:.145,P7:.219,P8:.031,P9:.466,X1:0,X2:0,X3:.04},
+      clo:{D1:.4,D2:.452,D3:.35,P1:.35,P2:.438,P3:.452,P4:.389,P5:.5,P6:.519,P7:.519,P8:.389,P9:.609,X1:.438,X2:.389,X3:.438},
+      eig:{D1:.243,D2:.266,D3:.117,P1:.17,P2:.34,P3:.276,P4:.15,P5:.377,P6:.353,P7:.272,P8:.158,P9:.407,X1:.215,X2:.111,X3:.155},
+      clu:{D1:.667,D2:.667,D3:0,P1:1,P2:.333,P3:.167,P4:.333,P5:.3,P6:.333,P7:.167,P8:.333,P9:.067,X1:1,X2:0,X3:0},
+      mod:{P4:0,X3:0,P8:0,D3:0,P7:0,P2:1,D1:1,P5:1,P1:1,P6:2,D2:2,P3:2,X1:3,P9:3,X2:3}
+    };
+    var MODC = ['#8C2F39','#0E6E62','#2B3A67','#A8761B'];
+    var TEXT = {
+      deg:{ t:'연결 중심성 (Degree centrality)',
+        p:'한 노드가 가진 연결의 개수다. 값이 높은 노드를 <b>허브</b>라 부르며, 해당 생물학적 과정에서 다른 노드보다 중요하다고 본다. PPI 망에서 연결 중심성이 높은 단백질은 대개 필수 유전자이거나 핵심 조절자다. 허브를 표적으로 삼으면 질병 네트워크를 무너뜨릴 수 있지만, 기능이 많은 만큼 위험도 크다.',
+        rank:'P9 (6) · P5 (5) · P2 · P3 · P6 · P7 (각 4)' },
+      bet:{ t:'매개 중심성 (Betweenness centrality)',
+        p:'노드 쌍 사이의 최단 경로 가운데 몇 개가 그 노드를 지나는지를 센다. 값이 높으면 그 노드는 네트워크의 <b>병목</b>이며, 모듈 사이의 정보 흐름을 통제한다. 병목 단백질은 경로의 중요한 조절 지점인 경우가 많다. 신호전달 망에서 키나아제가 매개 중심성이 높고, 그래서 키나아제 억제제가 약으로 많이 쓰인다.',
+        rank:'P9 (0.466) · P5 (0.229) · P7 (0.219) · P3 (0.156)' },
+      clo:{ t:'근접 중심성 (Closeness centrality)',
+        p:'한 노드에서 다른 모든 노드까지의 최단 경로 거리 합의 역수다. 값이 높으면 훨씬 많은 노드와 소통할 수 있다는 뜻이고, 대개 생물학적 과정의 중심 역할을 한다. 약–표적 망에서 근접 중심성이 높은 노드를 점유하는 약은 여러 경로에 영향을 준다.',
+        rank:'P9 (0.609) · P6 · P7 (각 0.519) · P5 (0.500)' },
+      eig:{ t:'고유벡터 중심성 (Eigenvector centrality)',
+        p:'연결의 개수만 보지 않고 <b>이웃의 중심성까지</b> 함께 본다. 잘 연결된 이웃을 가진 노드가 높은 점수를 받는다. 단순 연결 수 분석으로는 드러나지 않는 영향력 있는 노드, 곧 중요한 조절 허브를 짚어낸다.',
+        rank:'P9 (0.407) · P5 (0.377) · P6 (0.353) · P2 (0.340)' },
+      clu:{ t:'군집 계수 (Clustering coefficient)',
+        p:'한 노드의 이웃 둘이 서로 연결되어 있을 확률이다. 값이 높으면 네트워크에 촘촘히 얽힌 <b>모듈</b> 또는 기능 단위가 있다는 뜻이다. 그런 모듈은 대개 단백질 복합체나 생물학적 경로에 대응하며, 협동적으로 표적화할 대상이 될 수 있다. 허브(P9)는 오히려 값이 낮다는 점에 주목할 만하다.',
+        rank:'P1 · X1 (각 1.000) · D1 · D2 (각 0.667) · P9 (0.067)' },
+      mod:{ t:'모듈성 (Network modularity)',
+        p:'자기들끼리는 촘촘히 연결되고 나머지와는 성기게 연결된 노드 무리를 찾아낸다. 생물학적 네트워크에서 이 공동체 구조는 대개 신호전달 경로 같은 <b>기능 모듈</b>에 대응한다. 서로 연결된 질병 연관 유전자 집합, 곧 <b>질병 모듈</b>을 드러내며 그것이 재창출의 표적이 된다.',
+        rank:'4개 모듈 검출 — 색으로 구분해 표시했다' }
+    };
+
+    var svg = document.getElementById('topoSvg');
+    var panel = document.getElementById('topoPanel');
+    var bodyEl = document.getElementById('topoBody');
+    var btns = Array.prototype.slice.call(panel.querySelectorAll('.topo-tabs button'));
+    var edgeEls = {}, nodeEls = {};
+
+    /* 엣지 */
+    EDGES.forEach(function(e, i){
+      var a = POS[e[0]], b = POS[e[1]];
+      var ln = document.createElementNS(NS, 'line');
+      ln.setAttribute('x1', a[0]); ln.setAttribute('y1', a[1]);
+      ln.setAttribute('x2', b[0]); ln.setAttribute('y2', b[1]);
+      ln.setAttribute('stroke', '#B6BDB8'); ln.setAttribute('stroke-width', '1.2');
+      ln.setAttribute('class', 'te');
+      svg.appendChild(ln);
+      edgeEls[e[0] + '|' + e[1]] = ln;
+    });
+
+    /* 노드 — 약물 ▲ / 단백질 ● / 질환 ■ */
+    Object.keys(POS).forEach(function(k){
+      var p = POS[k], el;
+      if (k[0] === 'D'){
+        el = document.createElementNS(NS, 'polygon');
+        el.setAttribute('points', (p[0]) + ',' + (p[1]-13) + ' ' + (p[0]-12) + ',' + (p[1]+9) + ' ' + (p[0]+12) + ',' + (p[1]+9));
+      } else if (k[0] === 'X'){
+        el = document.createElementNS(NS, 'rect');
+        el.setAttribute('x', p[0]-11); el.setAttribute('y', p[1]-11);
+        el.setAttribute('width', 22); el.setAttribute('height', 22);
+      } else {
+        el = document.createElementNS(NS, 'circle');
+        el.setAttribute('cx', p[0]); el.setAttribute('cy', p[1]); el.setAttribute('r', 11);
+      }
+      el.setAttribute('class', 'tn');
+      el.setAttribute('stroke', '#FFFFFF'); el.setAttribute('stroke-width', '1.4');
+      svg.appendChild(el);
+      nodeEls[k] = el;
+
+      var tx = document.createElementNS(NS, 'text');
+      tx.setAttribute('x', p[0]); tx.setAttribute('y', p[1] + 30);
+      tx.setAttribute('text-anchor', 'middle');
+      tx.setAttribute('font-family', 'JetBrains Mono, monospace');
+      tx.setAttribute('font-size', '10'); tx.setAttribute('fill', '#737D84');
+      tx.textContent = k;
+      svg.appendChild(tx);
+    });
+
+    function baseColor(k){
+      return k[0] === 'D' ? '#0E6E62' : k[0] === 'X' ? '#8C2F39' : '#2B3A67';
+    }
+    function scale(k){ return k[0] === 'D' ? 1 : 1; }
+
+    function render(m){
+      var vals = M[m];
+      var keys = Object.keys(POS);
+      var max = Math.max.apply(null, keys.map(function(k){ return vals[k]; }));
+      var min = Math.min.apply(null, keys.map(function(k){ return vals[k]; }));
+
+      keys.forEach(function(k){
+        var el = nodeEls[k], v = vals[k];
+        var t = max === min ? 1 : (v - min) / (max - min);
+        if (m === 'mod'){
+          el.setAttribute('fill', MODC[v]);
+          el.setAttribute('opacity', '.9');
+          setSize(k, el, 1);
+        } else {
+          el.setAttribute('fill', baseColor(k));
+          el.setAttribute('opacity', (0.22 + 0.78 * t).toFixed(3));
+          setSize(k, el, 0.72 + 0.55 * t);
+        }
+      });
+
+      EDGES.forEach(function(e){
+        var ln = edgeEls[e[0] + '|' + e[1]];
+        if (m === 'mod'){
+          var same = M.mod[e[0]] === M.mod[e[1]];
+          ln.setAttribute('stroke', same ? MODC[M.mod[e[0]]] : '#D5D8D3');
+          ln.setAttribute('stroke-width', same ? '2' : '1');
+          ln.setAttribute('opacity', same ? '.75' : '.5');
+        } else {
+          ln.setAttribute('stroke', '#B6BDB8');
+          ln.setAttribute('stroke-width', '1.2');
+          ln.setAttribute('opacity', '1');
+        }
+      });
+
+      var d = TEXT[m];
+      bodyEl.innerHTML = '<h6>' + d.t + '</h6><p>' + d.p + '</p>'
+                       + '<div class="rank">상위 노드 &nbsp;<em>' + d.rank + '</em></div>';
+      btns.forEach(function(b){ b.setAttribute('aria-selected', b.dataset.m === m ? 'true' : 'false'); });
+    }
+
+    function setSize(k, el, s){
+      var p = POS[k];
+      if (k[0] === 'D'){
+        var h = 13 * s, w = 12 * s, o = 9 * s;
+        el.setAttribute('points', p[0] + ',' + (p[1]-h) + ' ' + (p[0]-w) + ',' + (p[1]+o) + ' ' + (p[0]+w) + ',' + (p[1]+o));
+      } else if (k[0] === 'X'){
+        var a = 22 * s;
+        el.setAttribute('x', p[0] - a/2); el.setAttribute('y', p[1] - a/2);
+        el.setAttribute('width', a); el.setAttribute('height', a);
+      } else {
+        el.setAttribute('r', (11 * s).toFixed(2));
+      }
+    }
+
+    btns.forEach(function(b, i){
+      b.addEventListener('click', function(){ render(b.dataset.m); });
+      b.addEventListener('keydown', function(ev){
+        var d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return;
+        ev.preventDefault();
+        var n = (i + d + btns.length) % btns.length;
+        btns[n].focus(); render(btns[n].dataset.m);
+      });
+    });
+    render('deg');
+  })();
+})();
+</script>
+</body>
+</html>
