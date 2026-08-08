@@ -1,0 +1,1125 @@
+---
+layout: null
+title: "AI Medical Imaging for Precision Drug Design" 
+date: 2026-08-20
+categories: [artificial intelligence]
+tags: [artificial general intelligence, drug discovery]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제14장 · 정밀 신약 설계를 위한 AI 의료영상 — 회색조 위에 무엇을 덧씌우는가</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@800;900&family=Hahmlet:wght@300;400;500;700&family=Anonymous+Pro:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   덧씌우기(overlay)의 색 체계
+   의료 영상은 회색조다. MRI도 CT도 PET도 밝기의 층위일 뿐
+   그 자체로는 색이 없다. AI가 하는 일은 그 회색조 위에
+   무엇인가를 덧씌우는 것이다 — 분할 마스크, 어텐션 지도,
+   측정선, 반응 곡선. 그래서 이 문서의 바탕은 무채색이고,
+   색은 AI가 개입하는 자리에만 나타난다.
+     청록 teal    = 분할과 어텐션 · AI가 그리는 경계
+     자홍 crimson = 바이오마커와 측정 · 영상에서 뽑아낸 수치
+     호박 amber   = 약물과 용량 · 그 수치가 바꾸는 처방
+   ============================================================ */
+:root{
+  --film:#E3E3E3;
+  --film-2:#EFEFEF;
+  --white:#FFFFFF;
+  --ink:#141416;
+  --ink-soft:#43454A;
+  --ink-mute:#77797E;
+  --overlay:#1F8A99;
+  --overlay-dim:rgba(31,138,153,.13);
+  --marker:#C43D5C;
+  --marker-dim:rgba(196,61,92,.11);
+  --dose:#B0791C;
+  --dose-dim:rgba(176,121,28,.13);
+  --rule:#C9C9C9;
+  --rule-soft:#DADADA;
+  --disp:"Gothic A1", sans-serif;
+  --sans:"Hahmlet", serif;
+  --mono:"Anonymous Pro", monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--film);color:var(--ink);
+  font-family:var(--sans);font-weight:300;
+  font-size:16.5px;line-height:1.92;
+  -webkit-font-smoothing:antialiased;
+  word-break:keep-all;overflow-wrap:break-word;
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+#progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:90;
+  background:linear-gradient(90deg,#8A8A8A,var(--overlay) 40%,var(--marker) 72%,var(--dose))}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 26px}
+.col{max-width:722px;margin:0 auto}
+.wide{max-width:966px;margin:0 auto}
+
+/* ---------- 표제 ---------- */
+header.hero{position:relative;overflow:hidden;padding:86px 0 52px;border-bottom:1px solid var(--rule)}
+header.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(720px 400px at 4% -12%, rgba(31,138,153,.14), transparent 62%),
+             radial-gradient(560px 320px at 97% 2%, rgba(196,61,92,.10), transparent 62%)}
+#heroScan{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.55}
+.hero-inner{position:relative;z-index:1}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-mute);display:flex;gap:11px;align-items:center;flex-wrap:wrap;margin-bottom:24px}
+.kicker .dot{width:3px;height:3px;border-radius:50%;background:var(--rule)}
+.kicker .k2{flex-basis:100%;margin-top:6px;color:var(--overlay);font-weight:700}
+.chapnum{font-family:var(--mono);font-size:13px;letter-spacing:.15em;color:var(--marker);font-weight:700}
+h1{font-family:var(--disp);font-weight:900;font-size:clamp(30px,4.6vw,53px);
+  line-height:1.3;letter-spacing:-.034em;margin:14px 0 0;max-width:15em}
+h1 .g{color:var(--ink-mute)}
+h1 .o{color:var(--overlay)}
+.sub{font-weight:300;font-size:clamp(15px,1.6vw,18px);line-height:1.86;
+  color:var(--ink-soft);margin:26px 0 0;max-width:33em}
+.legend{display:flex;gap:20px;flex-wrap:wrap;margin:42px 0 0;padding:18px 0 0;border-top:1px solid var(--rule)}
+.legend .li{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--ink-mute)}
+.legend .sw{width:20px;height:8px;flex:0 0 auto}
+.byline{margin-top:26px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:12.5px;line-height:1.84;color:var(--ink-mute);max-width:52em}
+.byline b{color:var(--ink-soft);font-weight:500}
+
+/* ---------- 테제 ---------- */
+.thesis{padding:58px 0 6px}
+.lede{font-weight:300;font-size:clamp(18px,2.2vw,23px);line-height:1.88;margin:0}
+.lede b{font-family:var(--disp);font-weight:800;letter-spacing:-.03em}
+.lede .q{color:var(--marker)}
+.lede .u{background:linear-gradient(transparent 72%, rgba(31,138,153,.24) 72%)}
+
+/* ---------- 본문 ---------- */
+main{padding:20px 0 30px}
+section.sec{padding:70px 0}
+section.sec + section.sec{border-top:1px solid var(--rule)}
+.sechead{margin-bottom:28px}
+.secno{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--ink-mute);
+  display:block;margin-bottom:6px;font-weight:700}
+h2{font-family:var(--disp);font-weight:900;font-size:clamp(23px,3vw,32px);
+  line-height:1.34;letter-spacing:-.036em;margin:0}
+.h2sub{font-size:13px;color:var(--ink-mute);margin-top:8px}
+h3{font-family:var(--disp);font-weight:800;font-size:19.5px;line-height:1.46;
+  margin:44px 0 12px;display:flex;align-items:baseline;gap:10px;letter-spacing:-.03em}
+h3 .hn{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--marker);flex:0 0 auto}
+h4{font-family:var(--disp);font-weight:800;font-size:15px;margin:28px 0 9px;color:var(--overlay);letter-spacing:-.026em}
+p{margin:0 0 19px}
+a{color:var(--overlay)}
+strong{font-weight:700}
+em.mk{font-style:normal;background:linear-gradient(transparent 72%, rgba(196,61,92,.20) 72%)}
+code{font-family:var(--mono);font-size:.92em;background:var(--white);
+  border:1px solid var(--rule-soft);padding:1px 5px;color:var(--marker)}
+
+/* ---------- 판단 ---------- */
+.judge{margin:32px 0;padding:21px 23px;background:var(--white);
+  border:1px solid var(--rule-soft);border-left:3px solid var(--marker)}
+.judge .lab{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--marker);display:block;margin-bottom:10px;font-weight:700}
+.judge p{margin:0;font-size:15.5px;line-height:1.9;color:var(--ink-soft)}
+.judge p + p{margin-top:13px}
+.pull{margin:40px 0;padding:0 0 0 24px;border-left:2px solid var(--overlay);
+  font-weight:300;font-size:clamp(18px,2.1vw,22px);line-height:1.86}
+
+/* ---------- 목록 ---------- */
+ul.gm{list-style:none;padding:0;margin:20px 0}
+ul.gm li{position:relative;padding-left:22px;margin-bottom:12px}
+ul.gm li::before{content:"";position:absolute;left:0;top:.82em;width:11px;height:2px;background:var(--overlay)}
+ol.rn{list-style:none;counter-reset:rr;padding:0;margin:22px 0}
+ol.rn li{counter-increment:rr;position:relative;padding-left:38px;margin-bottom:15px}
+ol.rn li::before{content:counter(rr);position:absolute;left:0;top:.24em;
+  font-family:var(--mono);font-size:12px;color:#fff;background:var(--overlay);
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:700}
+
+/* ---------- 카드 ---------- */
+.grid{display:grid;gap:13px;margin:28px 0}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:840px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--white);border:1px solid var(--rule-soft);padding:19px 20px 17px}
+.card .cno{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;color:var(--overlay);
+  display:block;margin-bottom:8px;font-weight:700}
+.card h5{font-family:var(--disp);font-weight:800;font-size:17px;margin:0 0 8px;letter-spacing:-.03em}
+.card p{font-size:14.3px;line-height:1.86;margin:0;color:var(--ink-soft)}
+.card .meta{font-family:var(--mono);font-size:11.5px;color:var(--ink-mute);margin-top:11px;
+  padding-top:9px;border-top:1px dashed var(--rule);line-height:1.7}
+
+/* ---------- 표 ---------- */
+.tablewrap{overflow-x:auto;margin:26px 0;border:1px solid var(--rule-soft);background:var(--white)}
+table.tb{width:100%;border-collapse:collapse;font-size:14px;min-width:600px}
+table.tb th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-mute);text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);font-weight:700}
+table.tb td{padding:10px 12px;border-bottom:1px solid var(--rule-soft);vertical-align:top;
+  line-height:1.7;color:var(--ink-soft)}
+table.tb tr:last-child td{border-bottom:0}
+table.tb td.k{font-weight:700;white-space:nowrap;color:var(--ink)}
+table.tb td.n{font-family:var(--mono);font-size:13px;color:var(--dose);white-space:nowrap;font-weight:700}
+table.tb td.g{font-family:var(--mono);font-size:12.5px;color:var(--ink-mute)}
+
+/* ---------- 시그니처: 덧씌우기 ---------- */
+.ov{margin:38px 0 12px;border:1px solid var(--rule);background:var(--white)}
+.ov-head{padding:17px 22px;border-bottom:1px solid var(--rule);display:flex;
+  justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap;background:#1B1C1F}
+.ov-head .t{font-family:var(--disp);font-weight:900;font-size:19px;color:#F2F2F2;letter-spacing:-.034em}
+.ov-head .s{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:#8E9095}
+.ov-tabs{display:grid;grid-template-columns:repeat(5,1fr);border-bottom:1px solid var(--rule-soft);
+  background:var(--film-2)}
+.ov-tabs button{appearance:none;border:0;background:transparent;cursor:pointer;font-family:inherit;
+  text-align:left;padding:12px 13px;border-right:1px solid var(--rule-soft);
+  border-top:3px solid transparent;transition:.2s}
+.ov-tabs button:last-child{border-right:0}
+.ov-tabs button:hover{background:var(--white)}
+.ov-tabs button:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.ov-tabs .oz{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--ink-mute);display:block;font-weight:700}
+.ov-tabs .on2{font-family:var(--disp);font-weight:800;font-size:14px;margin-top:4px;display:block;
+  color:var(--ink-mute);letter-spacing:-.03em;line-height:1.35}
+.ov-tabs button[aria-selected="true"]{background:var(--white)}
+.ov-grid{display:grid;grid-template-columns:400px 1fr}
+.ov-svg{padding:14px;background:#1B1C1F;border-right:1px solid var(--rule-soft);
+  display:flex;align-items:center;justify-content:center}
+.ov-svg svg{width:100%;height:auto;max-width:372px;display:block}
+.ov-body{padding:22px 24px}
+.ov-body .bk{font-family:var(--mono);font-size:11.5px;letter-spacing:.13em;display:block;
+  margin-bottom:8px;font-weight:700}
+.ov-body h6{font-family:var(--disp);font-weight:900;font-size:21px;margin:0 0 14px;letter-spacing:-.034em}
+.ov-body .rows{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.ov-body .rows div span{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  color:var(--ink-mute);display:block;text-transform:uppercase;font-weight:700}
+.ov-body .rows div b{font-family:var(--mono);font-size:13.5px;font-weight:700;display:block;margin-top:4px}
+.ov-body p{margin:0;font-size:14.8px;line-height:1.88;color:var(--ink-soft)}
+.ov-body .note{font-family:var(--mono);font-size:11.5px;margin-top:14px;padding-top:11px;
+  border-top:1px dashed var(--rule);color:var(--ink-mute);line-height:1.8}
+@media(max-width:900px){.ov-grid{grid-template-columns:1fr}
+  .ov-svg{border-right:0;border-bottom:1px solid var(--rule-soft)}
+  .ov-tabs{grid-template-columns:repeat(2,1fr)}
+  .ov-tabs button{border-bottom:1px solid var(--rule-soft)}}
+@media(max-width:640px){.ov-body .rows{grid-template-columns:1fr;gap:9px}}
+
+/* ---------- 지표 ---------- */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule-soft);
+  border:1px solid var(--rule-soft);margin:26px 0}
+.metrics div{background:var(--white);padding:15px 14px}
+.metrics .mv{font-family:var(--mono);font-weight:700;font-size:19px;color:var(--dose)}
+.metrics .ml{font-size:11.5px;color:var(--ink-mute);margin-top:5px;line-height:1.55}
+@media(max-width:640px){.metrics{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- 그림 ---------- */
+figcaption{font-size:12.5px;line-height:1.78;color:var(--ink-mute);margin-top:11px;margin-bottom:30px}
+figcaption b{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--marker);
+  text-transform:uppercase;font-weight:700;margin-right:8px}
+
+/* ---------- 목차 ---------- */
+nav.rail{position:fixed;left:calc(50% - 556px);top:50%;transform:translateY(-50%);z-index:40;
+  display:none;opacity:0;pointer-events:none;transition:opacity .45s}
+nav.rail.show{opacity:1;pointer-events:auto}
+@media(min-width:1280px){nav.rail{display:block}}
+nav.rail ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--rule)}
+nav.rail a{display:block;text-decoration:none;font-size:11.5px;color:var(--ink-mute);
+  padding:5px 0 5px 13px;transition:.2s;position:relative;
+  max-width:146px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav.rail a::before{content:"";position:absolute;left:-1px;top:50%;height:0;width:3px;
+  background:var(--overlay);transform:translateY(-50%);transition:height .25s}
+nav.rail a:hover{color:var(--ink)}
+nav.rail a.act{color:var(--overlay);font-weight:500}
+nav.rail a.act::before{height:16px}
+
+/* ---------- 결론 ---------- */
+.closing{border:1px solid var(--overlay);background:var(--white);margin:30px 0}
+.closing .ci{padding:18px 24px;border-bottom:1px solid var(--rule-soft)}
+.closing .ci:last-child{border-bottom:0}
+.closing .ck{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;color:var(--overlay);
+  display:block;margin-bottom:6px;font-weight:700}
+.closing .ci p{margin:0;font-size:15px;line-height:1.88;color:var(--ink-soft)}
+
+footer{border-top:1px solid var(--rule);padding:48px 0 84px;margin-top:32px}
+.src{font-size:12.5px;line-height:1.92;color:var(--ink-mute)}
+.src b{color:var(--ink-soft);font-weight:500}
+.src .note{margin-top:20px;padding-top:16px;border-top:1px dashed var(--rule);font-size:12px}
+
+.reveal{opacity:0;transform:translateY(14px);
+  transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.on{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<nav class="rail" aria-label="장 목차"><ol id="railList"></ol></nav>
+
+<header class="hero">
+  <svg id="heroScan" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+  <div class="wrap"><div class="wide hero-inner">
+    <div class="kicker">
+      <span>Artificial Intelligence in Precision Drug Design</span><span class="dot"></span>
+      <span>Volume 2 · Advanced Applications</span>
+      <b class="k2">Elsevier / Academic Press, 2026</b>
+    </div>
+    <div class="chapnum">CHAPTER 14</div>
+    <h1>정밀 신약 설계를 위한 AI 의료영상:<br><span class="g">회색조</span> 위에 무엇을 <span class="o">덧씌우는가</span></h1>
+    <p class="sub">MRI도 CT도 PET도 그 자체로는 밝기의 층위일 뿐이다.
+    AI가 하는 일은 그 회색조 위에 경계를 그리고, 수치를 뽑고, 그 수치로 용량을 바꾸는 것이다.
+    이 장은 영상에서 처방까지 이어지는 그 경로를 훑는다.</p>
+
+    <div class="legend" aria-label="이 문서의 색 규약">
+      <span class="li"><span class="sw" style="background:#8A8A8A"></span>원본 영상 · 색이 없다</span>
+      <span class="li"><span class="sw" style="background:#1F8A99"></span>분할과 어텐션 · AI가 그리는 경계</span>
+      <span class="li"><span class="sw" style="background:#C43D5C"></span>바이오마커 · 영상에서 뽑아낸 수치</span>
+      <span class="li"><span class="sw" style="background:#B0791C"></span>약물과 용량 · 수치가 바꾸는 처방</span>
+    </div>
+
+    <div class="byline">
+      <b>원저자</b> S. Devi, P. S. Smitha, R. Josephine, Soumya, Naiwrita Borah<br>
+      <b>소속</b> Presidency School of Information Science · Presidency School of Computer Science,
+      Presidency University (Bengaluru, India) ·
+      Department of Computer Science and Engineering, GITAM School of Technology,
+      GITAM Deemed to be University (Bengaluru)<br>
+      <b>편저</b> Khalid Raza (Jamia Millia Islamia) &nbsp;·&nbsp; <b>DOI</b> 10.1016/B978-0-443-44430-2.00020-7
+    </div>
+  </div></div>
+</header>
+
+<div class="wrap">
+<div class="wide thesis reveal">
+  <p class="lede">영상 분석은 오랫동안 사람의 눈에 의존했다.
+  유용했지만 <span class="u">사람마다 판단이 다르고 시각 정보 자체가 복잡하다</span>는 문제를 안고 있었다.
+  딥러닝이 그 편차를 줄였고, 임상의가 놓칠 수 있는 양상을 짚어내는 값어치를 입증했다.
+  <span class="q">그런데 이 장의 관심은 진단에서 멈추지 않는다.</span>
+  영상에서 얻은 통찰이 <b>약동학과 약력학</b>의 이해를 넓히고,
+  약&ndash;표적 상호작용의 예측을 돕고, 환자 층화를 개선한다는 것이다.
+  영상이 진단의 도구를 넘어 <b>처방의 근거</b>가 되는 경로를 다룬다.</p>
+</div>
+</div>
+
+<main class="wrap">
+
+<!-- ================= 1 ================= -->
+<section class="sec" id="s1">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 01&ndash;02</span>
+    <h2>세 영역이 겹치는 자리</h2>
+    <div class="h2sub">서론과 기초 · AI, 의료영상, 약리학</div></div>
+
+  <p>이 장이 첫 그림(Fig. 14.1)에서 그리는 것은 세 영역의 교집합이다.
+  <b>인공지능</b>, <b>의료영상</b>, <b>약리학</b>.
+  각각은 이미 성숙한 분야지만, 겹치는 자리에서 무엇이 가능해지는가가 이 장의 질문이다.</p>
+
+  <h4>영상 쪽에서 쓰이는 세 가지 구조</h4>
+  <ul class="gm">
+    <li><b>합성곱 신경망(CNN)</b> &mdash; 특징 추출과 분류에서의 성공으로 가장 널리 받아들여졌다.</li>
+    <li><b>트랜스포머와 어텐션</b> &mdash; 순서 의존적 진단 과제와 양식 간 데이터 통합을 뒷받침하기 시작했다.
+    <em class="mk">합성곱 없이 전역 맥락을 모형화한다</em>는 것이 비전 트랜스포머(ViT)의 요점이다.
+    이미지를 겹치지 않는 패치로 자르고, 각 패치를 선형 사영으로 토큰에 대응시킨 뒤,
+    클래스 토큰과 위치 부호화를 더해 여러 인코더 블록을 통과시킨다.</li>
+    <li><b>스파이킹 신경망(SNN)</b> &mdash; 뇌의 처리 방식에서 착안한 구조로 신경영상학에 적용되었다.
+    시간적 영상 데이터를 다루면서 <b>정확도는 높이고 에너지 소모는 줄인다.</b></li>
+  </ul>
+
+  <p><b>메디컬 4.0</b>은 의료 디지털화의 현 단계를 가리키는 말이다.
+  AI를 사물인터넷, 로봇공학, 클라우드 컴퓨팅과 통합해 진단, 환자 감시, 개인 맞춤 진료를 강화한다.
+  이 생태계에서 AI 도구는 영상과 전자의무기록에서 지속적으로 학습하며 자동화와 지능적 의사결정을 뒷받침한다.</p>
+
+  <div class="judge">
+    <span class="lab">그럼에도 남는 문제</span>
+    <p>의료 영상 데이터는 흔히 <b>이질적이고, 잡음이 섞여 있고, 불완전하다.</b>
+    이 문제가 AI 모형의 신뢰성을 떨어뜨리고 예측에 불확실성을 만든다.</p>
+    <p>대응으로 제시되는 것이 <b>데이터 학습 패러다임</b>이다.
+    기계학습, 데이터 동화(data assimilation), 오차 보정을 결합해
+    실제 임상 환경에서 모형의 강건성을 높이려는 접근이다.</p>
+    <p>또 하나는 <b>AutoML</b>이다. 모형 선택, 하이퍼파라미터 조정, 배치를 자동화해
+    <em class="mk">비전문가와 소규모 의료기관도 AI를 도입할 수 있게 한다.</em>
+    다만 이 장은 9절에서 AutoML의 네 가지 문제를 따로 나열한다. 뒤에서 다시 나온다.</p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="sec" id="s2">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 03&ndash;06</span>
+    <h2>덧씌우기 &mdash; 영상에서 용량까지</h2>
+    <div class="h2sub">다섯 단계 · 표 14.1이 정리한 과제들</div></div>
+
+  <p>표 14.1은 이 장이 다루는 다섯 과제를 정리한다.
+  종양 분할, 바이오마커 검출, 약&ndash;표적 상호작용, 약물 반응 모형화, PK/PD 층화.
+  <b>앞의 둘은 영상 위에 무엇을 덧씌우는 일이고, 뒤의 셋은 영상에서 나온 수치가
+  영상을 떠나 분자와 처방으로 넘어가는 일이다.</b></p>
+
+  <div class="ov reveal" id="ovPanel">
+    <div class="ov-head">
+      <span class="t">덧씌우기</span>
+      <span class="s">Table 14.1 · 5 tasks</span>
+    </div>
+    <div class="ov-tabs" role="tablist" aria-label="다섯 과제"></div>
+    <div class="ov-grid">
+      <div class="ov-svg">
+        <svg id="ovSvg" viewBox="0 0 400 360" role="img"
+             aria-label="회색조 영상 위에 단계마다 다른 층이 덧씌워지는 과정을 나타낸 도해"></svg>
+      </div>
+      <div class="ov-body" id="ovBody" role="tabpanel"></div>
+    </div>
+  </div>
+  <figcaption><b>표 14.1 · 그림 1</b> 원문 표 14.1의 다섯 과제를 순서대로 놓고,
+  각 단계에서 회색조 영상에 무엇이 더해지는지를 도해로 그렸다.
+  <b>왼쪽 도해는 개념 그림이며 실제 의료 영상이 아니다.</b>
+  뒤의 세 단계에서 배경이 흐려지는 것은, 그 단계에서는 계산의 대상이 이미 영상을 떠났다는 뜻이다.</figcaption>
+
+  <div class="judge">
+    <span class="lab">다섯 단계를 나란히 놓으면</span>
+    <p>앞의 두 단계에서 AI는 <b>영상을 읽는다.</b> 경계를 그리고 표지를 찾는다.
+    검증이 비교적 쉽다. 사람이 그린 정답과 대조하면 되기 때문이다. Dice 계수 같은 지표가 그래서 성립한다.</p>
+    <p>뒤의 세 단계에서 AI는 <b>영상을 떠난 수치로 예측한다.</b>
+    이 약이 이 표적에 붙을 것인가, 이 환자가 반응할 것인가, 용량을 얼마로 할 것인가.
+    <em class="mk">여기서는 정답이 미래에 있다.</em> 검증하려면 기다려야 한다.</p>
+    <p>이 장의 사례 다섯 개 가운데 앞의 하나(태아 뇌 분할)만 분할 과제이고
+    나머지 넷은 전부 뒤쪽 단계라는 점을, 뒤의 사례 표를 볼 때 함께 기억해 둘 필요가 있다.</p>
+  </div>
+
+  <h3><span class="hn">3</span> 종양 검출과 바이오마커</h3>
+  <p>과거의 접근은 대개 수작업 분할에 의존했다. 노동집약적이고 임상 판단의 편차에 노출된다.
+  딥러닝, 특히 CNN이 MRI와 CT를 가로질러 더 일관되고 정확한 종양 위치 파악을 가능하게 했다.</p>
+  <ul class="gm">
+    <li><b>Gaze Assist</b> &mdash; 준지도 모형으로 제한된 주석 데이터셋을 더 효과적으로 쓴다.
+    조직 대비가 낮고 태아의 움직임 때문에 분할이 까다로운 <b>태아 MRI</b>에서 특히 유용했다.</li>
+    <li><b>TS-CNN</b> &mdash; 계층적 어텐션 기제로 종양의 하위 구역을 구분한다.
+    치료 계획 수립과 예후 판정에 결정적이다.</li>
+    <li><b>비전 트랜스포머</b> &mdash; 유방촬영술 종양 분류에 적용되어
+    <b>판별에 기여하는 영역에 대한 어텐션이 개선</b>되었다는 보고가 있다.</li>
+    <li><b>설명가능 분할</b> &mdash; 유방촬영에서 국소 해상도를 유지하면서 의사결정을 뒷받침할 시각 단서를 준다.</li>
+    <li><b>이상 탐지와 생성 학습</b> &mdash; 정상적인 영상 양상을 학습한 뒤
+    악성을 시사할 수 있는 이탈을 표시한다.</li>
+  </ul>
+  <p>다만 원문은 곧바로 단서를 단다.
+  <b>이런 도구 상당수가 아직 학술기관이나 3차 의료기관에 갇혀 있다.</b>
+  더 넓은 임상 채택에는 배치의 단순화, 인구집단 전반에 걸친 더 나은 검증,
+  그리고 일상적인 영상 소프트웨어와의 통합이 필요하다.</p>
+
+  <h3><span class="hn">4&ndash;5</span> 약&ndash;표적 상호작용과 그래프 신경망</h3>
+  <div class="grid g2">
+    <div class="card"><span class="cno">DeepH-DTA · DSG-DTI</span><h5>합성곱과 순환의 결합</h5>
+      <p>약물과 표적의 공간적 특징과 순차적 특징을 함께 포착한다.
+      비선형 관계와 결합 친화도 학습에 특히 효과적이었다.
+      DeepH-DTA는 화합물과 단백질 서열에 합성곱 인코더를 적용해
+      <b>코로나19 약물 재창출</b>에 쓰였다.</p></div>
+    <div class="card"><span class="cno">TopoPharmDTI</span><h5>위상 정보의 도입</h5>
+      <p>분자와 단백질 서열을 그래프로 표현하고 교차 어텐션을 적용해
+      약물과 표적의 임베딩을 더 잘 정렬한다.
+      <b>복잡한 약리학 지형에서 예측 정확도가 개선</b>되었다.</p></div>
+    <div class="card"><span class="cno">GNNRAI</span><h5>설명가능 그래프 신경망</h5>
+      <p>학습된 분자 상호작용을 해석해 어느 하위 구조나 경로가 약효에 가장 기여하는지 짚어낸다.
+      SHAP으로 분자 하위 구조·경로·오믹스 특징의 기여도를 정량화하고,
+      <b>돌출 지도와 어텐션 가중치 시각화</b>로 어느 원자, 결합, 유전자 발현 노드가
+      영향력이 큰지 드러낸다.</p></div>
+    <div class="card"><span class="cno">MoGCN 등</span><h5>이중 흐름 융합</h5>
+      <p>약물의 분자 구조와 오믹스 수준의 세포 데이터를 각각 그래프로 처리한 뒤
+      어텐션 기반 융합 층에서 정렬한다.
+      <b>세포주별 약물 민감도 예측</b>에서 성능 개선을 보였다.</p></div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">다중양식 융합이 어려운 세 가지 이유</span>
+    <p>이 장이 5절 끝에서 구체적으로 짚는 대목이다.</p>
+    <p><b>시간적 어긋남.</b> 영상과 바이오마커 측정이 서로 다른 시점에 수집되는 경우가 많아
+    동기적 통합이 어렵다.
+    <b>양식의 결손.</b> 모든 환자가 모든 검사를 받지는 않으므로 특징 집합이 불완전해진다.
+    <b>해상도의 이질성.</b> 복셀 수준의 영상 특징과 벌크 유전체 측정을 직접 표현 학습에 넣기 어렵다.</p>
+    <p>대응으로 대치(imputation) 전략, 교차 양식 트랜스포머, 양식별 인코더가 제안되지만
+    <em class="mk">견고한 해법은 아직 제한적이다.</em></p>
+  </div>
+
+  <h3><span class="hn">6</span> PK/PD 모형화와 환자 층화</h3>
+  <p>약동학은 약물의 흡수·분포·대사·배설을 기술하고, 약력학은 약물이 몸에 미치는 효과를
+  바이오마커, 수용체 점유, 용량&ndash;반응 관계로 나타낸다.
+  둘을 결합한 PK/PD 모형은 <b>전신 노출과 임상 효과를 이어</b> 치료 결과를 더 온전하게 본다.</p>
+  <p>구획 모형이나 생리학 기반 접근 같은 전통적 PK 모형은 수학적으로 견고하지만
+  환자 반응의 실제 변이를 자주 놓친다. 최근 기계학습은 유전체, 동반질환, 치료 이력 같은
+  환자별 공변량을 모형화해 이 문제를 다룬다.
+  지도학습은 <b>희소 표본에서 농도&ndash;시간 곡선을 추정</b>해 잦은 채혈의 필요를 줄인다.</p>
+  <p>영상 바이오마커가 여기에 들어온다.
+  CT로 측정한 종양 부피, PET으로 정량화한 대사 활성, MRI로 관찰한 기능적 변화가
+  PK 매개변수와 결합되어 용량 결정을 동적으로 알려 준다.
+  약력학 모형이 이 영상 특징을 종양 축소, 무진행 생존, 독성 위험 같은 치료 효과의 추정치로 옮긴다.</p>
+  <div class="judge">
+    <span class="lab">이 절이 스스로 인정하는 비대칭</span>
+    <p>원문은 6절 끝에서 이렇게 적는다.
+    &ldquo;이 절은 방법론적 성숙도가 더 높은 <b>PK 모형화에 무게를 둔다.</b>&rdquo;</p>
+    <p>이유도 함께 적혀 있다. <b>약력학 결과는 약동학 지표보다 잡음이 많고 표준화가 덜 되어 있어
+    재현성에 문제가 있다.</b> 영상 품질의 편차, 조화된 바이오마커 규약의 부재,
+    인구집단 데이터의 차이가 폭넓은 채택을 가로막는다.</p>
+    <p>노출을 재는 일과 효과를 재는 일 사이의 이 비대칭은,
+    이 장 전체가 반복해서 부딪히는 문제이기도 하다.</p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="sec" id="s3">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 07&ndash;09</span>
+    <h2>설계, 최적화, 그리고 계산 기반</h2>
+    <div class="h2sub">작은 데이터로 배우기 · 네 가지 계산 패러다임</div></div>
+
+  <p>서열만 쓰는 표현은 생화학적 상호작용의 바탕에 있는 공간적·관계적 제약을 놓친다.
+  그래프 기반 접근이 이 한계를 다룬다. 분자를 원자&ndash;결합 그래프로,
+  단백질을 잔기 수준 네트워크로 표현한다.
+  구조 인식 GNN은 3차원 위상을 부호화해 임베딩을 다듬어 <b>분자 도킹의 원리에 더 가까워진다.</b></p>
+  <p>여기에 영상 유래 바이오마커 &mdash; 종양 표현형이나 방사선체학 특징 &mdash; 를 조건으로 걸면
+  <em class="mk">화학 탐색 공간을 바이오마커로 좁힐 수 있다.</em>
+  생물학적 서명과 화학적 실현 가능성이 함께 후보 우선순위를 이끄는 파이프라인이 만들어진다.</p>
+
+  <h4>데이터가 적을 때</h4>
+  <p>희귀질환이나 자원이 부족한 의료 환경에서는 대규모 주석 데이터셋 확보 자체가 큰 제약이다.
+  <b>퓨샷 학습</b>은 메타 학습 전략으로 소수의 표지 사례에서 일반화하게 하고,
+  <b>전이학습</b>은 자연 이미지나 대규모 영상의학 데이터셋으로 사전학습한 모형을
+  제한된 임상 데이터에 미세조정하게 한다.
+  사전학습된 비전 트랜스포머를 유방 종괴 유방촬영 분류에 전이한 사례에서는
+  <b>거의 완벽한 AUC</b>를 달성해 CNN 기준선을 앞섰다는 보고가 있다.</p>
+
+  <h3><span class="hn">9</span> 네 가지 계산 패러다임</h3>
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>패러다임</th><th>이점</th><th>한계</th><th>쓰임새</th></tr></thead>
+      <tbody>
+        <tr><td class="k">엣지 컴퓨팅</td>
+          <td>기기에서 저지연 실시간 처리가 가능하다. 전송 지연이 줄고 프라이버시가 개선된다</td>
+          <td class="g">하드웨어 제약과 기기 편차에 묶인다</td>
+          <td class="g">기기 내 단층 영상 재구성</td></tr>
+        <tr><td class="k">연합학습</td>
+          <td>데이터 프라이버시를 지키면서 다기관 학습을 지원한다</td>
+          <td class="g">통신 부담이 크고 수렴이 느리다</td>
+          <td class="g">여러 병원에 걸친 종양 분류</td></tr>
+        <tr><td class="k">AutoML</td>
+          <td>비전문가를 위해 모형 선택과 튜닝을 자동화한다</td>
+          <td class="g">도메인 지식의 안내가 없으면 성능이 떨어질 수 있다</td>
+          <td class="g">소규모 병원의 분할 모형 탐색</td></tr>
+        <tr><td class="k">생체 모방 최적화</td>
+          <td>확장 가능한 모형 튜닝으로 설명가능성을 높인다</td>
+          <td class="g">수렴에 시간이 더 걸릴 수 있다</td>
+          <td class="g">약물 시너지용 해석 가능 의사결정지원 설계</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>표 14.2</b> 원문의 비교표를 옮겼다. 네 항목 모두 이점과 한계가 짝을 이룬다.</figcaption>
+
+  <h4>연합학습이 실제로 돌아간 곳</h4>
+  <ul class="gm">
+    <li><b>FeTS 챌린지</b>(Federated Tumor Segmentation) &mdash;
+    MRI를 대상으로 연합 벤치마킹을 위해 설계된 다기관 뇌종양 데이터셋을 공개했다.</li>
+    <li><b>라드바우드 대학의료센터</b>와 협력 기관들 &mdash;
+    기가픽셀 전슬라이드 영상을 <b>중앙에 모으지 않고</b> 연합 조직병리 분류 파이프라인을 시범 운영했다.</li>
+    <li><b>GDSC와 CTRP</b> 같은 약물유전체 데이터셋 &mdash;
+    각 기관이 자체 오믹스·영상 데이터를 보유한 채 약물 반응의 전역 예측 모형에 기여했다.</li>
+  </ul>
+  <p>이 구현들은 가능성과 함께 실무적 장애도 드러냈다.
+  <b>비독립·비동일분포 데이터, 제각각인 영상 규약, 통신 부담</b>이
+  재현성의 걸림돌로 남아 있다.</p>
+
+  <div class="judge">
+    <span class="lab">AutoML에 대한 네 가지 경고</span>
+    <p>이 장에서 가장 구체적인 비판이다. 앞에서 AutoML을 &lsquo;민주화&rsquo;의 수단으로 소개한 뒤,
+    9절에서 네 가지를 나열한다.</p>
+    <p><b>첫째</b>, 많은 AutoML 시스템이 블랙박스로 작동한다.
+    자동으로 고른 구조와 하이퍼파라미터를 해석하기 어려워 임상의의 신뢰와 규제 승인에 걸림돌이 된다.
+    <b>둘째</b>, 작거나 불균형한 데이터셋에서 과적합하기 쉽다. 의료에서 흔한 조건이다.
+    <b>셋째</b>, <em class="mk">순전히 정확도만 최적화하면서 보정(calibration), 인구집단 하위군 간 공정성,
+    분포 변화에 대한 강건성 같은 임상적으로 결정적인 요인을 무시</em>할 수 있다.
+    <b>넷째</b>, 대규모 신경 구조 탐색의 계산 비용이 자원이 부족한 병원에는 감당하기 어렵다.</p>
+    <p>세 번째 항목이 특히 무겁다. 이 책의 여러 장이 정확도 수치를 인용해 왔는데,
+    <b>정확도만 최적화한 모형이 위험할 수 있다는 것을 이 장이 명시한다.</b></p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="sec" id="s4">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 10</span>
+    <h2>다섯 개의 사례</h2>
+    <div class="h2sub">태아 진단 · 종양학 · 감염병 · 신경퇴행</div></div>
+
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>사례</th><th>영상 · 데이터</th><th>AI 방법</th><th>보고된 결과</th></tr></thead>
+      <tbody>
+        <tr><td class="k">태아 뇌 조직 분할<br><span style="font-weight:300;font-size:12px;color:var(--ink-mute)">FeTA 챌린지 2022</span></td>
+          <td class="g">다기관 MRI</td><td class="g">어텐션 기반 앙상블 CNN</td>
+          <td class="n">평균 Dice ≈ 0.87 · 관찰자 간 편차 감소</td></tr>
+        <tr><td class="k">적응형 항암화학요법<br><span style="font-weight:300;font-size:12px;color:var(--ink-mute)">대장암 · 베바시주맙</span></td>
+          <td class="g">CT + PK 프로파일</td><td class="g">PK 유도 AI 용량 조정</td>
+          <td class="n">이상반응 −15% · 무진행 생존 +6개월</td></tr>
+        <tr><td class="k">결핵 치료<br><span style="font-weight:300;font-size:12px;color:var(--ink-mute)">쿠아보데피스타트</span></td>
+          <td class="g">영상의학 + 임상 데이터</td><td class="g">AI 최적화 PK/PD 용량 결정</td>
+          <td class="n">간독성 −25% · 살균 활성 유지</td></tr>
+        <tr><td class="k">뱀물림 관리<br><span style="font-weight:300;font-size:12px;color:var(--ink-mute)">경구 유니티올</span></td>
+          <td class="g">임상 + 위험 층화 데이터</td><td class="g">AI 기반 치료 일정 수립</td>
+          <td class="n">정맥 투여 −40% · 치료 개시 −30분</td></tr>
+        <tr><td class="k">알츠하이머 층화</td>
+          <td class="g">PET + 유전체</td><td class="g">다중양식 AI (딥러닝 + 오믹스)</td>
+          <td class="n">인지 저하 단계 예측 정확도 82% · 기준선 대비 +12%p</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>표 14.3</b> 원문의 사례 요약표를 옮겼다.
+  다섯 사례 가운데 <b>영상 분할 과제는 첫 번째 하나뿐</b>이고,
+  나머지 넷은 용량 결정과 층화, 곧 영상을 떠난 뒤의 단계다.</figcaption>
+
+  <div class="judge">
+    <span class="lab">사례 표를 읽을 때 확인해야 할 것</span>
+    <p>이 다섯 줄에는 <b>표본 크기, 신뢰구간, 연구 설계가 적혀 있지 않다.</b>
+    &ldquo;이상반응 15퍼센트 감소&rdquo;가 몇 명을 대상으로 한 어떤 설계에서 나온 값인지 알 수 없다.</p>
+    <p>특히 확인이 필요한 것은 <b>뱀물림 사례</b>다.
+    본문은 이 사례가 &ldquo;사망률의 유의한 감소에 기여했다&rdquo;고 적는다.
+    그런데 인용된 문헌은 <b>&ldquo;건강한 케냐 성인을 대상으로 한 1상 공개표지 용량 증량 안전성 시험 및
+    약동학 분석&rdquo;</b>이다.</p>
+    <p><em class="mk">건강한 자원자를 대상으로 한 1상 안전성 시험은 사망률 감소를 보일 수 없다.</em>
+    안전성과 약동학을 확인하는 단계이고, 애초에 뱀에 물린 환자가 참여하지 않는다.
+    표에 적힌 &ldquo;정맥 투여 40퍼센트 감소, 치료 개시 30분 단축&rdquo;도
+    이 인용문헌에서 직접 나온 값인지 확인이 필요하다.</p>
+    <p>이 지적은 나머지 네 사례를 부정하지 않는다. 다만 <b>다섯 줄을 같은 무게로 읽으면 안 된다는 뜻</b>이다.</p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="sec" id="s5">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 11</span>
+    <h2>설명가능 AI와 윤리</h2>
+    <div class="h2sub">투명성 · 편향 · 규제 · 프라이버시</div></div>
+
+  <div class="grid g2">
+    <div class="card"><span class="cno">투명성</span><h5>블랙박스와 신뢰</h5>
+      <p>SHAP, LIME, 사례 기반 설명이 어느 영상 영역이나 분자 특징이 예측에 영향을 주는지 짚어낸다.
+      결정의 근거를 밝혀 임상의의 신뢰를 높이고 실제 배치를 뒷받침한다.</p></div>
+    <div class="card"><span class="cno">편향</span><h5>누구의 영상으로 배웠나</h5>
+      <p>대형 영상 저장소 상당수가 특정 민족, 성별, 지역의 환자에 치우쳐 있다.
+      <b>밝은 피부색 인구에 주로 학습한 모형이 어두운 피부색 환자의 피부 영상에서 성능이 떨어질 수 있고,</b>
+      성별이 불균형한 데이터셋은 암 검출 결과를 편향시킬 수 있다.
+      균형 잡힌 데이터셋 큐레이션, 공정성 인식 학습, 하위집단 검증 규약이 필요하다.</p></div>
+    <div class="card"><span class="cno">규제</span><h5>SaMD와 EU AI법</h5>
+      <p>FDA와 EU가 <b>의료기기 소프트웨어(SaMD)</b> 프레임워크를 도입해
+      감사 가능성, 설명가능성, 윤리적 거버넌스를 요구한다.
+      EU <b>AI법</b>은 많은 임상 AI 시스템을 &ldquo;고위험&rdquo;으로 분류해
+      시판 전 검증, 지속적 감시, 인간의 감독을 의무화한다.</p></div>
+    <div class="card"><span class="cno">REF-AI</span><h5>책임 · 설명 · 공정</h5>
+      <p>준수를 넘어 설명가능성이 공정성과 책임성을 함께 담아야 한다는 틀이다.
+      해석가능성에 편향 완화와 하위집단 형평을 결합한다.
+      <b>편중된 데이터셋이 안전하지 않은 용량 권고를 낳을 수 있는 약물 반응 모형화</b>에서 특히 중요하다.</p></div>
+  </div>
+
+  <h4>다중양식 융합이 키우는 프라이버시 위험</h4>
+  <p>전자의무기록, 영상, 약물 모형 데이터를 결합하면 예측력이 크게 오르지만
+  <b>재식별 위험도 함께 오른다.</b> 이질적 데이터를 교차 연결하면 민감한 환자 속성이 드러날 수 있다.</p>
+  <ul class="gm">
+    <li><b>동형암호</b> &mdash; 복호화 없이 암호화된 데이터에서 직접 연산을 수행해
+    학습과 추론 내내 종단간 기밀성을 유지한다.</li>
+    <li><b>차분 프라이버시</b> &mdash; 학습 데이터나 출력에 신중히 조정된 잡음을 넣어
+    집계 결과에서 개인의 기여를 역추적할 수 없게 한다.</li>
+    <li><b>안전한 다자간 연산(SMPC)</b> &mdash; 기관 간 공동 학습을 하면서
+    어느 쪽도 상대의 원자료에 접근하지 못하게 한다.</li>
+  </ul>
+
+  <h3><span class="hn">11.1</span> 임상에서의 설명가능 AI</h3>
+  <div class="grid g3">
+    <div class="card"><span class="cno">BCRL</span><h5>유방암 관련 림프부종</h5>
+      <p>로지스틱 회귀와 콕스 비례위험 모형을 주로 쓴 예측 모형들이
+      체질량지수, 방사선치료, 항암화학요법, 액와 림프절 절제 같은 예측 변수를 넣어
+      <b>17개 연구에서 AUC 0.680&ndash;0.908</b>을 달성했다.</p></div>
+    <div class="card"><span class="cno">ExBEHRT</span><h5>심혈관 위험 예측</h5>
+      <p>전자의무기록을 이용한 설명가능 딥러닝 틀이다.
+      어텐션 기제와 사후 설명 도구를 결합해 어느 임상 특징이 예측을 이끌었는지 드러냈다.
+      의사의 신뢰를 높이고 규제 수용의 경로를 열었다.</p></div>
+    <div class="card"><span class="cno">뇌졸중 재활</span><h5>결과 예측</h5>
+      <p>아급성 뇌졸중 환자의 상지 재활 결과를 예측하는 설명가능 AI 틀이다.
+      가장 영향력 있는 임상 특징과 운동 과제를 짚어내
+      치료사에게 해석 가능한 지침을 제공했다.</p></div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">이 장에서 가장 정직한 숫자</span>
+    <p>림프부종 예측 모형에 대해 원문은 AUC 0.680&ndash;0.908이라는 성적을 적은 뒤
+    곧바로 체계적 문헌고찰의 결론을 인용한다.</p>
+    <p><b>&ldquo;기존 모형 전부가 참가자 선정과 분석상의 한계 때문에 편향 위험이 높으며,
+    외부 검증을 거친 것은 23.5퍼센트뿐이다.&rdquo;</b></p>
+    <p>17개 연구 중 넷만 외부 검증을 받았다는 뜻이다.
+    <em class="mk">AUC 0.908이라는 숫자와 &lsquo;편향 위험이 높다&rsquo;는 판정이 같은 문단에 있다.</em>
+    이 책 전체를 통틀어 성능 수치와 그 수치의 신뢰도를 이렇게 나란히 적은 대목은 드물다.</p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="sec" id="s6">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 12&ndash;13</span>
+    <h2>다섯 갈래의 길</h2>
+    <div class="h2sub">논의 · 결론 · 향후 로드맵</div></div>
+
+  <p>이 장의 논의는 간명하다.
+  <b>트랜스포머 기반 모형(ViT)은 공간적 특징 학습에서 앞서고,
+  그래프 신경망은 이질적인 약리학 네트워크의 표현에서 뛰어나다.</b>
+  그런데 일반화 가능성, 설명가능성, 규제 준수라는 한계는 여전하다.
+  실무 배치는 계산 자원의 가용성에도 달려 있으며, 연합·엣지 환경에서 특히 그렇다.
+  현재의 모형들은 <em class="mk">민족, 연령대, 동반질환을 가로지르는 더 넓은 검증</em>이 필요하다.</p>
+
+  <h4>원문이 제시하는 다섯 우선순위</h4>
+  <ol class="rn">
+    <li><b>데이터 표준화와 상호운용성</b> &mdash; 영상 형식, 바이오마커 보고, 약리 데이터셋에 대한
+    공유 규약을 세워 파편화를 줄이고 재현성을 높인다.</li>
+    <li><b>편향 완화와 포용적 데이터셋</b> &mdash; 민족, 성별, 동반질환에 걸쳐 대표성을 넓혀
+    형평한 AI 성능을 확보하고 건강 격차를 최소화한다.</li>
+    <li><b>규제 샌드박스</b> &mdash; 새 AI 모형이 윤리적·법적 틀을 지키면서
+    실제 조건에서 평가받을 수 있는 통제된 시험대를 마련한다.</li>
+    <li><b>학제 간 협력</b> &mdash; 임상의, 약리학자, 컴퓨터과학자, 정책 입안자의 협력을 강화해
+    임상적으로 유의미하고 신뢰할 수 있는 모형 설계를 보장한다.</li>
+    <li><b>확장 가능한 프라이버시 보존 인프라</b> &mdash; 연합학습, 차분 프라이버시, 동형암호를
+    다중양식 파이프라인에 통합해 혁신과 환자 기밀성의 균형을 맞춘다.</li>
+  </ol>
+
+  <div class="pull">
+    &ldquo;방사선의학, 약리학, 컴퓨터과학, 정책을 아우르는 협력은
+    <b>바람직한 것이 아니라 필요한 것</b>이다.&rdquo;
+    이 문장이 이 장의 결론에 놓여 있다.
+    그래야만 강력할 뿐 아니라 안전하고 공정하며 맥락을 아는 AI 시스템을 만들 수 있다는 것이다.
+  </div>
+ </div>
+</section>
+
+<!-- ================= 결론 ================= -->
+<section class="sec" id="s7">
+ <div class="col">
+  <div class="sechead"><span class="secno">CLOSING</span>
+    <h2>이 장이 남기는 것</h2>
+    <div class="h2sub">결론 · 그리고 읽고 난 뒤의 판단</div></div>
+
+  <div class="closing">
+    <div class="ci"><span class="ck">01 · 영상은 진단에서 멈추지 않는다</span>
+      <p>이 장의 기여는 영상을 <b>처방의 근거</b>로 놓은 것이다.
+      CT의 종양 부피, PET의 대사 활성, MRI의 기능 변화가 PK 매개변수와 결합해
+      용량 결정을 동적으로 바꾼다.</p></div>
+    <div class="ci"><span class="ck">02 · 앞의 둘과 뒤의 셋</span>
+      <p>표 14.1의 다섯 과제 중 앞의 둘은 영상을 읽고, 뒤의 셋은 영상을 떠난 수치로 예측한다.
+      <b>앞쪽은 사람이 그린 정답과 대조할 수 있고, 뒤쪽은 정답이 미래에 있다.</b>
+      검증의 성격이 다르다.</p></div>
+    <div class="ci"><span class="ck">03 · 정확도만 최적화하면 위험하다</span>
+      <p>9절의 AutoML 비판이 이 장에서 가장 실무적인 대목이다.
+      보정, 하위군 공정성, 분포 변화에 대한 강건성을 무시한 채
+      정확도만 올린 모형은 학습에서는 잘 돌고 현실에서는 실패한다.</p></div>
+    <div class="ci"><span class="ck">04 · 성능과 신뢰도를 나란히</span>
+      <p>림프부종 모형의 AUC 0.680&ndash;0.908과 &ldquo;전부 편향 위험 높음, 외부 검증 23.5퍼센트&rdquo;가
+      같은 문단에 있다. <b>이 책에서 드문 서술 방식</b>이다.</p></div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">옮긴이의 판단</span>
+    <p>이 장은 넓다. 열세 개 절에 걸쳐 영상 처리, 약&ndash;표적 예측, PK/PD, 연합학습,
+    AutoML, 설명가능 AI, 규제까지 훑는다. 그만큼 각 항목은 얕다.
+    <b>지도를 그리는 글이지 파고드는 글이 아니다.</b></p>
+    <p>그런데 이 장에는 앞선 열세 장과 구별되는 태도가 있다.
+    <b>자기가 소개한 것을 스스로 되받아 친다.</b>
+    2절에서 AutoML을 &lsquo;민주화의 수단&rsquo;으로 소개해 놓고 9절에서 네 가지 문제를 나열한다.
+    6절은 PK에 무게를 둔 이유가 PD 쪽이 잡음이 많고 표준화가 덜 되었기 때문이라고 스스로 적는다.
+    11.1절은 AUC 0.908 옆에 &lsquo;전부 편향 위험 높음&rsquo;을 붙인다.
+    <em class="mk">이런 되짚기가 한 장 안에 세 번 나오는 경우는 이 책에서 흔치 않다.</em></p>
+    <p>그렇다고 이 장이 모든 곳에서 엄격한 것은 아니다.
+    10절의 사례 다섯 개는 표본 크기도 신뢰구간도 설계도 없이 숫자만 적혀 있고,
+    뱀물림 사례는 <b>건강한 자원자 1상 시험을 인용하면서 &lsquo;사망률 감소&rsquo;를 말한다.</b>
+    같은 장 안에서 11.1절은 외부 검증 비율까지 따지는데 10절은 그러지 않는다.</p>
+    <p>그래서 이 장을 읽는 법은 이렇다. <b>9절과 11절을 이 장의 기준으로 삼고,
+    10절을 그 기준으로 되읽는 것.</b>
+    저자들이 스스로 세운 잣대를 자기 사례 표에 대 보면
+    어느 줄이 더 검증되었고 어느 줄이 덜 검증되었는지가 드러난다.
+    좋은 리뷰가 독자에게 남기는 것은 결론이 아니라 잣대다.</p>
+  </div>
+ </div>
+</section>
+
+</main>
+
+<footer>
+ <div class="wrap"><div class="col">
+  <div class="src">
+    <b>원전</b><br>
+    Devi, S., Smitha, P. S., Josephine, R., Soumya, &amp; Borah, N. (2026).
+    <i>AI-powered medical imaging for precision drug design: Applications in therapeutic targeting and optimization.</i>
+    In K. Raza (Ed.), <b>Artificial Intelligence in Precision Drug Design, Volume 2: Advanced Applications</b>
+    (Chapter 14, pp. 297&ndash;315). Academic Press / Elsevier. ISBN 978-0-443-44430-2.
+    https://doi.org/10.1016/B978-0-443-44430-2.00020-7
+    <div class="note">
+      이 문서는 원저 제14장만을 대상으로 한 한국어 정리본이다. 표 14.1&ndash;14.3의 내용, 수치,
+      모형 이름, 인용 문헌은 모두 원문에서 가져왔고, 절 구성과 도해는 읽기 편하도록 재배열했다.
+      원문에는 저자 기여 항목이 별도로 실려 있으며, 개념화·방법론·원고 작성·감수는 Naiwrita Borah가 맡았다고 명시되어 있다.<br><br>
+      <b>「덧씌우기」 도해에 관하여</b> &mdash; 표 14.1의 다섯 과제를 순서대로 놓고,
+      단계마다 회색조 영상에 무엇이 더해지는지를 그린 <b>개념 도해</b>다.
+      실제 의료 영상이 아니며 원문에 이런 그림은 없다.
+      뒤의 세 단계에서 배경을 흐리게 한 것은 그 단계의 계산 대상이 영상을 떠났음을 나타내기 위한 것이다.<br><br>
+      <b>사례 표에 관하여</b> &mdash; 표 14.3의 다섯 사례는 원문에 표본 크기, 신뢰구간, 연구 설계가 적혀 있지 않다.
+      특히 뱀물림 사례는 본문이 &ldquo;사망률의 유의한 감소&rdquo;를 말하지만,
+      인용된 문헌은 <b>건강한 케냐 성인을 대상으로 한 1상 공개표지 용량 증량 안전성 시험 및 약동학 분석</b>이다.
+      이 불일치를 본문에 표시했다.<br><br>
+      &lsquo;판단&rsquo;으로 표시한 블록은 원문의 유보 조항을 정리하거나 옮긴이의 해석을 덧붙인 부분이므로
+      원문 서술과 구분해서 읽어야 한다.
+    </div>
+  </div>
+ </div></div>
+</footer>
+
+<script>
+(function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var bar = document.getElementById('progress');
+  var rail = document.querySelector('nav.rail');
+  var hero = document.querySelector('header.hero');
+  function onScroll(){
+    var h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+    rail.classList.toggle('show', h.scrollTop > hero.offsetHeight - 80);
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section.sec'));
+  var list = document.getElementById('railList');
+  var links = secs.map(function(s){
+    var no = s.querySelector('.secno').textContent.replace('SECTION','').trim();
+    var tt = s.querySelector('h2').textContent.trim();
+    var a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.textContent = (no === 'CLOSING' ? '—' : no) + '  ' + tt;
+    var li = document.createElement('li'); li.appendChild(a); list.appendChild(li);
+    return a;
+  });
+
+  if ('IntersectionObserver' in window){
+    var navObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var i = secs.indexOf(e.target);
+        links.forEach(function(a, j){ a.classList.toggle('act', j === i); });
+      });
+    }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+    secs.forEach(function(s){ navObs.observe(s); });
+
+    var revObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add('on'); revObs.unobserve(e.target); }
+      });
+    }, {threshold:.12});
+    document.querySelectorAll('.reveal').forEach(function(el){
+      if (reduce) el.classList.add('on'); else revObs.observe(el);
+    });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('on'); });
+  }
+
+  function mk(seed){
+    var s = seed;
+    return function(){ s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  }
+
+  /* ---------- 표제 배경: 회색조 슬라이스 격자 ---------- */
+  (function(){
+    var svg = document.getElementById('heroScan');
+    var r = mk(141414), f = document.createDocumentFragment();
+    for (var gy = 0; gy < 4; gy++){
+      for (var gx = 0; gx < 8; gx++){
+        var cx = 75 + gx * 150, cy = 65 + gy * 130;
+        var g = document.createElementNS(NS, 'g');
+        var e = document.createElementNS(NS, 'ellipse');
+        e.setAttribute('cx', cx); e.setAttribute('cy', cy);
+        e.setAttribute('rx', 52); e.setAttribute('ry', 44);
+        e.setAttribute('fill', '#8A8A8A'); e.setAttribute('opacity', '.10');
+        g.appendChild(e);
+        for (var i = 0; i < 22; i++){
+          var a = r() * Math.PI * 2, rad = Math.sqrt(r()) * 44;
+          var c = document.createElementNS(NS, 'circle');
+          c.setAttribute('cx', (cx + Math.cos(a) * rad).toFixed(1));
+          c.setAttribute('cy', (cy + Math.sin(a) * rad * 0.85).toFixed(1));
+          c.setAttribute('r', (2 + r() * 8).toFixed(1));
+          var t = r();
+          c.setAttribute('fill', t < .07 ? '#1F8A99' : (t < .12 ? '#C43D5C' : '#6E6E6E'));
+          c.setAttribute('opacity', (t < .12 ? .22 : .06 + r() * .07).toFixed(3));
+          g.appendChild(c);
+        }
+        f.appendChild(g);
+      }
+    }
+    svg.appendChild(f);
+  })();
+
+  /* ---------- 시그니처: 덧씌우기 ---------- */
+  (function(){
+    var T = [
+      { z:'01 · SEGMENTATION', n:'종양 분할', col:'#1F8A99', stage:0, dim:false,
+        model:'TS-CNN', modal:'MRI · CT',
+        p:'다중 구역 분할이 목적이다. 계층적 어텐션으로 종양의 하위 구역을 구분해 '
+        + '치료 계획과 예후 판정에 쓴다. 과거의 수작업 분할은 노동집약적이고 '
+        + '임상 판단의 편차에 노출되어 있었다.',
+        note:'회색조 위에 경계를 그린다 · 사람이 그린 정답과 대조해 검증할 수 있다' },
+      { z:'02 · BIOMARKER', n:'바이오마커 검출', col:'#C43D5C', stage:1, dim:false,
+        model:'Gaze Assist + CNN', modal:'태아 MRI',
+        p:'준지도 방식으로 주석 보정을 수행한다. 제한된 주석 데이터셋을 더 효과적으로 쓰므로, '
+        + '조직 대비가 낮고 태아의 움직임 때문에 분할이 까다로운 태아 MRI에서 특히 유용했다. '
+        + '방사선체학 특징을 유전체나 조직병리 데이터와 결합해 복합 바이오마커를 만드는 시도도 있다.',
+        note:'영상에서 수치를 뽑아낸다 · 여기까지가 영상 안에서 끝나는 일이다' },
+      { z:'03 · DTI', n:'약–표적 상호작용', col:'#1F8A99', stage:2, dim:true,
+        model:'TopoPharmDTI', modal:'SMILES + 단백질 서열',
+        p:'그래프로 정렬된 구조를 통해 약–표적 상호작용을 예측한다. '
+        + '분자와 단백질 서열을 그래프로 표현하고 교차 어텐션을 적용해 두 임베딩을 정렬한다. '
+        + '영상 유래 특징을 분자 기술자와 함께 쓰면 생물학적 맥락이 한 겹 더해진다.',
+        note:'계산 대상이 영상을 떠났다 · 다중양식 모형은 아직 대체로 실험 단계다' },
+      { z:'04 · RESPONSE', n:'약물 반응 모형화', col:'#1F8A99', stage:3, dim:true,
+        model:'MoGCN · GNNRAI', modal:'오믹스 + 약물 그래프',
+        p:'설명 가능한 민감도 예측이 목적이다. 약물의 분자 구조와 오믹스 수준의 세포 데이터를 '
+        + '각각 그래프로 처리한 뒤 어텐션 융합 층에서 정렬한다. '
+        + 'GNNRAI는 SHAP과 돌출 지도로 어느 하위 구조와 경로가 약효에 기여하는지 드러낸다.',
+        note:'예측의 근거를 되짚을 수 있어야 임상과 규제가 받아들인다' },
+      { z:'05 · PK/PD', n:'PK/PD 층화', col:'#B0791C', stage:4, dim:true,
+        model:'AutoML + 영상 바이오마커', modal:'MRI + EHR',
+        p:'개인 맞춤 용량 조정이 목적이다. CT로 잰 종양 부피, PET으로 정량화한 대사 활성, '
+        + 'MRI로 관찰한 기능 변화가 PK 매개변수와 결합되어 용량 결정을 동적으로 알려 준다. '
+        + '약력학 모형이 이 영상 특징을 종양 축소, 무진행 생존, 독성 위험의 추정치로 옮긴다.',
+        note:'영상이 처방으로 번역되는 지점 · 다만 PD 지표는 PK보다 잡음이 많고 표준화가 덜 되었다' }
+    ];
+
+    var tabs = document.querySelector('#ovPanel .ov-tabs');
+    var body = document.getElementById('ovBody');
+    var svg = document.getElementById('ovSvg');
+    var btns = [];
+
+    /* --- 회색조 스캔 바탕 --- */
+    var r = mk(778899);
+    var gScan = document.createElementNS(NS, 'g');
+    gScan.style.transition = 'opacity .45s';
+    var outline = document.createElementNS(NS, 'ellipse');
+    outline.setAttribute('cx', 200); outline.setAttribute('cy', 178);
+    outline.setAttribute('rx', 132); outline.setAttribute('ry', 116);
+    outline.setAttribute('fill', '#3A3B3F');
+    outline.setAttribute('stroke', '#6C6E73'); outline.setAttribute('stroke-width', '1.2');
+    gScan.appendChild(outline);
+    for (var i = 0; i < 130; i++){
+      var a = r() * Math.PI * 2, rad = Math.sqrt(r()) * 112;
+      var c = document.createElementNS(NS, 'circle');
+      c.setAttribute('cx', (200 + Math.cos(a) * rad).toFixed(1));
+      c.setAttribute('cy', (178 + Math.sin(a) * rad * 0.88).toFixed(1));
+      c.setAttribute('r', (2.5 + r() * 12).toFixed(1));
+      c.setAttribute('fill', '#FFFFFF');
+      c.setAttribute('opacity', (0.02 + r() * 0.09).toFixed(3));
+      gScan.appendChild(c);
+    }
+    /* 병변 영역 (밝은 덩어리) */
+    var les = document.createElementNS(NS, 'ellipse');
+    les.setAttribute('cx', 152); les.setAttribute('cy', 148);
+    les.setAttribute('rx', 40); les.setAttribute('ry', 33);
+    les.setAttribute('fill', '#FFFFFF'); les.setAttribute('opacity', '.20');
+    gScan.appendChild(les);
+    svg.appendChild(gScan);
+
+    /* --- 오버레이 층들 --- */
+    function layer(){ var g = document.createElementNS(NS, 'g');
+      g.style.transition = 'opacity .45s'; g.setAttribute('opacity', '0'); svg.appendChild(g); return g; }
+
+    /* 0. 분할 윤곽 */
+    var L0 = layer();
+    var seg = document.createElementNS(NS, 'ellipse');
+    seg.setAttribute('cx', 152); seg.setAttribute('cy', 148);
+    seg.setAttribute('rx', 42); seg.setAttribute('ry', 35);
+    seg.setAttribute('fill', 'rgba(31,138,153,.28)');
+    seg.setAttribute('stroke', '#1F8A99'); seg.setAttribute('stroke-width', '2.4');
+    L0.appendChild(seg);
+    var segL = document.createElementNS(NS, 'text');
+    segL.setAttribute('x', 152); segL.setAttribute('y', 100);
+    segL.setAttribute('text-anchor', 'middle');
+    segL.setAttribute('font-family', 'Anonymous Pro, monospace');
+    segL.setAttribute('font-size', '11'); segL.setAttribute('fill', '#1F8A99');
+    segL.setAttribute('font-weight', '700');
+    segL.textContent = 'MASK';
+    L0.appendChild(segL);
+
+    /* 1. 바이오마커 측정 */
+    var L1 = layer();
+    [[118,132],[186,160],[152,182],[136,120]].forEach(function(p, k){
+      var cr = document.createElementNS(NS, 'g');
+      var h = document.createElementNS(NS, 'line');
+      h.setAttribute('x1', p[0]-7); h.setAttribute('y1', p[1]);
+      h.setAttribute('x2', p[0]+7); h.setAttribute('y2', p[1]);
+      h.setAttribute('stroke', '#C43D5C'); h.setAttribute('stroke-width', '1.8');
+      cr.appendChild(h);
+      var v = document.createElementNS(NS, 'line');
+      v.setAttribute('x1', p[0]); v.setAttribute('y1', p[1]-7);
+      v.setAttribute('x2', p[0]); v.setAttribute('y2', p[1]+7);
+      v.setAttribute('stroke', '#C43D5C'); v.setAttribute('stroke-width', '1.8');
+      cr.appendChild(v);
+      L1.appendChild(cr);
+    });
+    var mline = document.createElementNS(NS, 'line');
+    mline.setAttribute('x1', 118); mline.setAttribute('y1', 132);
+    mline.setAttribute('x2', 186); mline.setAttribute('y2', 160);
+    mline.setAttribute('stroke', '#C43D5C'); mline.setAttribute('stroke-width', '1.2');
+    mline.setAttribute('stroke-dasharray', '4 3');
+    L1.appendChild(mline);
+    var mval = document.createElementNS(NS, 'text');
+    mval.setAttribute('x', 200); mval.setAttribute('y', 100);
+    mval.setAttribute('text-anchor', 'middle');
+    mval.setAttribute('font-family', 'Anonymous Pro, monospace');
+    mval.setAttribute('font-size', '11'); mval.setAttribute('fill', '#C43D5C');
+    mval.setAttribute('font-weight', '700');
+    mval.textContent = 'RADIOMIC FEATURES';
+    L1.appendChild(mval);
+
+    /* 2. 분자 그래프 */
+    var L2 = layer();
+    var GP = [[92,232],[140,206],[196,222],[248,198],[300,228],[168,262],[252,262]];
+    var GE = [[0,1],[1,2],[2,3],[3,4],[1,5],[2,5],[3,6],[4,6],[5,6]];
+    GE.forEach(function(e){
+      var ln = document.createElementNS(NS, 'line');
+      ln.setAttribute('x1', GP[e[0]][0]); ln.setAttribute('y1', GP[e[0]][1]);
+      ln.setAttribute('x2', GP[e[1]][0]); ln.setAttribute('y2', GP[e[1]][1]);
+      ln.setAttribute('stroke', '#1F8A99'); ln.setAttribute('stroke-width', '1.5');
+      ln.setAttribute('opacity', '.8');
+      L2.appendChild(ln);
+    });
+    GP.forEach(function(p, k){
+      var c = document.createElementNS(NS, 'circle');
+      c.setAttribute('cx', p[0]); c.setAttribute('cy', p[1]);
+      c.setAttribute('r', k % 3 === 0 ? 8 : 6);
+      c.setAttribute('fill', '#1F8A99');
+      L2.appendChild(c);
+    });
+    var gl = document.createElementNS(NS, 'text');
+    gl.setAttribute('x', 200); gl.setAttribute('y', 306);
+    gl.setAttribute('text-anchor', 'middle');
+    gl.setAttribute('font-family', 'Anonymous Pro, monospace');
+    gl.setAttribute('font-size', '11'); gl.setAttribute('fill', '#1F8A99');
+    gl.setAttribute('font-weight', '700');
+    gl.textContent = 'DRUG – TARGET GRAPH';
+    L2.appendChild(gl);
+
+    /* 3. 어텐션 가중 그래프 */
+    var L3 = layer();
+    GE.forEach(function(e, k){
+      var w = [3.6, 1, 1, 3.2, 1, 2.4, 1, 1, 4.2][k];
+      var ln = document.createElementNS(NS, 'line');
+      ln.setAttribute('x1', GP[e[0]][0]); ln.setAttribute('y1', GP[e[0]][1]);
+      ln.setAttribute('x2', GP[e[1]][0]); ln.setAttribute('y2', GP[e[1]][1]);
+      ln.setAttribute('stroke', '#1F8A99'); ln.setAttribute('stroke-width', w);
+      ln.setAttribute('opacity', (0.28 + w / 6).toFixed(2));
+      L3.appendChild(ln);
+    });
+    GP.forEach(function(p, k){
+      var imp = [0.9, 0.35, 0.3, 0.8, 0.25, 0.55, 1.0][k];
+      var halo = document.createElementNS(NS, 'circle');
+      halo.setAttribute('cx', p[0]); halo.setAttribute('cy', p[1]);
+      halo.setAttribute('r', (7 + imp * 13).toFixed(1));
+      halo.setAttribute('fill', '#C43D5C'); halo.setAttribute('opacity', (imp * 0.26).toFixed(3));
+      L3.appendChild(halo);
+      var c = document.createElementNS(NS, 'circle');
+      c.setAttribute('cx', p[0]); c.setAttribute('cy', p[1]); c.setAttribute('r', 6);
+      c.setAttribute('fill', '#1F8A99');
+      L3.appendChild(c);
+    });
+    var al = document.createElementNS(NS, 'text');
+    al.setAttribute('x', 200); al.setAttribute('y', 306);
+    al.setAttribute('text-anchor', 'middle');
+    al.setAttribute('font-family', 'Anonymous Pro, monospace');
+    al.setAttribute('font-size', '11'); al.setAttribute('fill', '#C43D5C');
+    al.setAttribute('font-weight', '700');
+    al.textContent = 'SHAP · ATTENTION WEIGHTS';
+    L3.appendChild(al);
+
+    /* 4. 용량-농도 곡선 */
+    var L4 = layer();
+    var ax = document.createElementNS(NS, 'path');
+    ax.setAttribute('d', 'M64,296 L336,296 M64,296 L64,96');
+    ax.setAttribute('stroke', '#6C6E73'); ax.setAttribute('stroke-width', '1.2');
+    ax.setAttribute('fill', 'none');
+    L4.appendChild(ax);
+    function curve(peak, tmax, col, w, dash){
+      var d = '';
+      for (var x = 0; x <= 272; x += 4){
+        var t = x / 272 * 10;
+        var y = peak * (Math.exp(-0.28 * t) - Math.exp(-1.5 * t / tmax));
+        d += (x === 0 ? 'M' : ' L') + (64 + x).toFixed(1) + ',' + (296 - Math.max(0, y) * 175).toFixed(1);
+      }
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', d); p.setAttribute('fill', 'none');
+      p.setAttribute('stroke', col); p.setAttribute('stroke-width', w);
+      if (dash) p.setAttribute('stroke-dasharray', dash);
+      L4.appendChild(p);
+    }
+    curve(1.32, 1.0, '#8A8A8A', 1.6, '5 4');
+    curve(0.98, 1.35, '#B0791C', 2.6, null);
+    var band = document.createElementNS(NS, 'rect');
+    band.setAttribute('x', 64); band.setAttribute('y', 150);
+    band.setAttribute('width', 272); band.setAttribute('height', 52);
+    band.setAttribute('fill', '#B0791C'); band.setAttribute('opacity', '.13');
+    L4.insertBefore(band, L4.firstChild);
+    var bl = document.createElementNS(NS, 'text');
+    bl.setAttribute('x', 330); bl.setAttribute('y', 144);
+    bl.setAttribute('text-anchor', 'end');
+    bl.setAttribute('font-family', 'Anonymous Pro, monospace');
+    bl.setAttribute('font-size', '10'); bl.setAttribute('fill', '#B0791C');
+    bl.setAttribute('font-weight', '700');
+    bl.textContent = 'THERAPEUTIC WINDOW';
+    L4.appendChild(bl);
+    var dl = document.createElementNS(NS, 'text');
+    dl.setAttribute('x', 200); dl.setAttribute('y', 326);
+    dl.setAttribute('text-anchor', 'middle');
+    dl.setAttribute('font-family', 'Anonymous Pro, monospace');
+    dl.setAttribute('font-size', '11'); dl.setAttribute('fill', '#B0791C');
+    dl.setAttribute('font-weight', '700');
+    dl.textContent = 'CONCENTRATION – TIME';
+    L4.appendChild(dl);
+
+    var LAYERS = [L0, L1, L2, L3, L4];
+
+    T.forEach(function(t, i){
+      var b = document.createElement('button');
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+      b.setAttribute('aria-controls', 'ovBody');
+      b.innerHTML = '<span class="oz">' + t.z.split(' · ')[0] + '</span><span class="on2">' + t.n + '</span>';
+      b.addEventListener('click', function(){ sel(i); });
+      b.addEventListener('keydown', function(ev){
+        var d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return;
+        ev.preventDefault();
+        var n = (i + d + T.length) % T.length;
+        btns[n].focus(); sel(n);
+      });
+      tabs.appendChild(b); btns.push(b);
+    });
+
+    function sel(i){
+      var t = T[i];
+      btns.forEach(function(b, j){
+        b.setAttribute('aria-selected', j === i ? 'true' : 'false');
+        b.querySelector('.on2').style.color = j === i ? T[j].col : '';
+        b.style.borderTopColor = j === i ? T[j].col : 'transparent';
+      });
+      LAYERS.forEach(function(L, j){ L.setAttribute('opacity', j === t.stage ? '1' : '0'); });
+      gScan.setAttribute('opacity', t.dim ? '.20' : '1');
+      body.innerHTML =
+        '<span class="bk" style="color:' + t.col + '">' + t.z + ' · ' + (i + 1) + ' / 5</span>'
+        + '<h6>' + t.n + '</h6>'
+        + '<div class="rows">'
+        + '<div><span>AI 모형</span><b style="color:' + t.col + '">' + t.model + '</b></div>'
+        + '<div><span>양식</span><b style="color:' + t.col + '">' + t.modal + '</b></div>'
+        + '</div>'
+        + '<p>' + t.p + '</p>'
+        + '<div class="note">' + t.note + '</div>';
+    }
+    sel(0);
+  })();
+})();
+</script>
+</body>
+</html>

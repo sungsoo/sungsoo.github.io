@@ -1,0 +1,1081 @@
+---
+layout: null
+title: "Piece-based design and scaffold hopping" 
+date: 2026-08-25
+categories: [artificial intelligence]
+tags: [artificial general intelligence, drug discovery]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제19장 · 조각 기반 설계와 스캐폴드 호핑 — 무엇을 남기고 무엇을 바꾸는가</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@300;400;500;700&family=Cousine:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   골격 구조식의 색 체계
+   이 장은 분자를 부품으로 나눠 본다.
+   고리계, 링커, 곁사슬. 그리고 고리계와 링커를 합친 것이 뼈대다.
+   조각 기반 설계는 조각을 키우고 잇고 합쳐 분자를 만들고,
+   스캐폴드 호핑은 곁사슬을 그대로 두고 뼈대를 갈아 끼운다.
+   그래서 색도 그 부품을 가른다.
+     남색 indigo = 고리계 · 갈아 끼우는 것
+     청록 teal   = 링커   · 이어 붙이는 것
+     호박 amber  = 곁사슬 · 그대로 두는 것
+     벽돌 brick  = 확인이 필요한 대목
+   ============================================================ */
+:root{
+  --paper:#DEE4E1;
+  --paper-2:#EEF2F0;
+  --white:#FFFFFF;
+  --ink:#16201E;
+  --ink-soft:#414B49;
+  --ink-mute:#78817F;
+  --ring:#2E4A7D;
+  --ring-dim:rgba(46,74,125,.12);
+  --link:#1B7A6B;
+  --link-dim:rgba(27,122,107,.13);
+  --side:#B07316;
+  --side-dim:rgba(176,115,22,.13);
+  --warn:#A93E36;
+  --warn-dim:rgba(169,62,54,.11);
+  --rule:#C3CBC8;
+  --rule-soft:#D3D9D7;
+  --disp:"Jua", sans-serif;
+  --sans:"Noto Sans KR", sans-serif;
+  --mono:"Cousine", monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--sans);font-weight:300;
+  font-size:16.5px;line-height:1.94;
+  -webkit-font-smoothing:antialiased;
+  word-break:keep-all;overflow-wrap:break-word;
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+#progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:90;
+  background:linear-gradient(90deg,var(--ring),var(--link) 55%,var(--side))}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 26px}
+.col{max-width:722px;margin:0 auto}
+.wide{max-width:966px;margin:0 auto}
+
+/* ---------- 표제 ---------- */
+header.hero{position:relative;overflow:hidden;padding:86px 0 52px;border-bottom:1px solid var(--rule)}
+header.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(720px 400px at 4% -12%, rgba(46,74,125,.15), transparent 62%),
+             radial-gradient(560px 320px at 97% 2%, rgba(176,115,22,.12), transparent 62%)}
+#heroHex{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.55}
+.hero-inner{position:relative;z-index:1}
+.kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-mute);display:flex;gap:11px;align-items:center;flex-wrap:wrap;margin-bottom:24px}
+.kicker .dot{width:3px;height:3px;border-radius:50%;background:var(--rule)}
+.kicker .k2{flex-basis:100%;margin-top:6px;color:var(--ring);font-weight:700}
+.chapnum{font-family:var(--mono);font-size:13px;letter-spacing:.13em;color:var(--side);font-weight:700}
+h1{font-family:var(--disp);font-weight:400;font-size:clamp(29px,4.5vw,52px);
+  line-height:1.36;letter-spacing:-.01em;margin:14px 0 0;max-width:15em}
+h1 .r{color:var(--ring)}
+h1 .s{color:var(--side)}
+.sub{font-weight:300;font-size:clamp(15px,1.6vw,18px);line-height:1.86;
+  color:var(--ink-soft);margin:26px 0 0;max-width:33em}
+.keyfacts{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);
+  border:1px solid var(--rule);margin:42px 0 0}
+.keyfacts div{background:var(--white);padding:17px 16px}
+.keyfacts .kv{font-family:var(--mono);font-weight:700;font-size:clamp(17px,2.2vw,23px);line-height:1.15}
+.keyfacts .kl{font-size:11.5px;color:var(--ink-mute);margin-top:8px;line-height:1.6}
+@media(max-width:760px){.keyfacts{grid-template-columns:repeat(2,1fr)}}
+.byline{margin-top:28px;padding-top:20px;border-top:1px solid var(--rule);
+  font-size:12.5px;line-height:1.84;color:var(--ink-mute);max-width:52em}
+.byline b{color:var(--ink-soft);font-weight:500}
+
+/* ---------- 테제 ---------- */
+.thesis{padding:58px 0 6px}
+.lede{font-weight:300;font-size:clamp(18px,2.2vw,23px);line-height:1.88;margin:0}
+.lede b{font-family:var(--disp);font-weight:400}
+.lede .w{color:var(--warn)}
+.lede .u{background:linear-gradient(transparent 72%, rgba(46,74,125,.20) 72%)}
+
+/* ---------- 본문 ---------- */
+main{padding:20px 0 30px}
+section.sec{padding:70px 0}
+section.sec + section.sec{border-top:1px solid var(--rule-soft)}
+.sechead{margin-bottom:28px}
+.secno{font-family:var(--mono);font-size:12.5px;letter-spacing:.11em;color:var(--ink-mute);
+  display:block;margin-bottom:6px;font-weight:700}
+h2{font-family:var(--disp);font-weight:400;font-size:clamp(24px,3.1vw,33px);
+  line-height:1.42;letter-spacing:-.014em;margin:0}
+.h2sub{font-size:13px;color:var(--ink-mute);margin-top:8px}
+h3{font-family:var(--disp);font-weight:400;font-size:20.5px;line-height:1.52;
+  margin:44px 0 12px;display:flex;align-items:baseline;gap:10px;letter-spacing:-.012em}
+h3 .hn{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--side);flex:0 0 auto}
+h4{font-weight:700;font-size:14.5px;margin:28px 0 9px;color:var(--ring)}
+p{margin:0 0 19px}
+a{color:var(--ring)}
+strong{font-weight:700}
+em.mk{font-style:normal;background:linear-gradient(transparent 72%, rgba(176,115,22,.24) 72%)}
+code{font-family:var(--mono);font-size:.92em;background:var(--white);
+  border:1px solid var(--rule-soft);padding:1px 5px;color:var(--link)}
+
+/* ---------- 판단 ---------- */
+.judge{margin:32px 0;padding:21px 23px;background:var(--white);
+  border:1px solid var(--rule-soft);border-left:3px solid var(--warn)}
+.judge .lab{font-family:var(--mono);font-size:12.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--warn);display:block;margin-bottom:10px;font-weight:700}
+.judge p{margin:0;font-size:15.5px;line-height:1.9;color:var(--ink-soft)}
+.judge p + p{margin-top:13px}
+.pull{margin:40px 0;padding:0 0 0 24px;border-left:2px solid var(--ring);
+  font-weight:300;font-size:clamp(18px,2.1vw,22px);line-height:1.86}
+
+/* ---------- 목록 ---------- */
+ul.gm{list-style:none;padding:0;margin:20px 0}
+ul.gm li{position:relative;padding-left:24px;margin-bottom:12px}
+ul.gm li::before{content:"";position:absolute;left:0;top:.72em;width:10px;height:11px;
+  background:var(--ring);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+ol.rn{list-style:none;counter-reset:rr;padding:0;margin:22px 0}
+ol.rn li{counter-increment:rr;position:relative;padding-left:38px;margin-bottom:15px}
+ol.rn li::before{content:counter(rr);position:absolute;left:0;top:.16em;
+  font-family:var(--mono);font-size:12.5px;color:var(--white);background:var(--ring);
+  width:26px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;
+  clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+
+/* ---------- 카드 ---------- */
+.grid{display:grid;gap:13px;margin:28px 0}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:840px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--white);border:1px solid var(--rule-soft);padding:19px 20px 17px}
+.card .cno{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--link);
+  display:block;margin-bottom:8px;font-weight:700}
+.card h5{font-family:var(--disp);font-weight:400;font-size:17.5px;margin:0 0 8px;letter-spacing:-.01em}
+.card p{font-size:14.2px;line-height:1.86;margin:0;color:var(--ink-soft)}
+.card .meta{font-family:var(--mono);font-size:12px;color:var(--ink-mute);margin-top:11px;
+  padding-top:9px;border-top:1px dashed var(--rule);line-height:1.7}
+
+/* ---------- 표 ---------- */
+.tablewrap{overflow-x:auto;margin:26px 0;border:1px solid var(--rule-soft);background:var(--white)}
+table.tb{width:100%;border-collapse:collapse;font-size:13.8px;min-width:640px}
+table.tb th{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-mute);text-align:left;padding:11px 12px;border-bottom:1px solid var(--rule);font-weight:700}
+table.tb td{padding:11px 12px;border-bottom:1px solid var(--rule-soft);vertical-align:top;
+  line-height:1.7;color:var(--ink-soft)}
+table.tb tr:last-child td{border-bottom:0}
+table.tb td.k{font-weight:700;white-space:nowrap;color:var(--ink)}
+table.tb td.g{font-family:var(--mono);font-size:12.5px;color:var(--ink-mute)}
+table.tb td.p{color:var(--link)}
+table.tb td.m{color:var(--warn)}
+
+/* ---------- 시그니처: 조각과 뼈대 ---------- */
+.fs{margin:38px 0 12px;border:1px solid var(--rule);background:var(--white)}
+.fs-head{padding:18px 22px;border-bottom:1px solid var(--rule);display:flex;
+  justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.fs-head .t{font-family:var(--disp);font-weight:400;font-size:21px;letter-spacing:-.014em}
+.fs-head .s{font-family:var(--mono);font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-mute)}
+.fs-tabs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--rule-soft);
+  background:var(--paper-2)}
+.fs-tabs button{appearance:none;border:0;background:transparent;cursor:pointer;font-family:inherit;
+  text-align:left;padding:12px 14px;border-right:1px solid var(--rule-soft);
+  border-top:3px solid transparent;transition:.2s}
+.fs-tabs button:last-child{border-right:0}
+.fs-tabs button:hover{background:var(--white)}
+.fs-tabs button:focus-visible{outline:2px solid var(--ring);outline-offset:-2px}
+.fs-tabs .fz{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--ink-mute);display:block;font-weight:700}
+.fs-tabs .fn{font-family:var(--disp);font-weight:400;font-size:15px;margin-top:4px;display:block;
+  color:var(--ink-mute);letter-spacing:-.01em;line-height:1.36}
+.fs-tabs button[aria-selected="true"]{background:var(--white)}
+.fs-grid{display:grid;grid-template-columns:392px 1fr}
+.fs-svg{padding:16px;background:var(--paper-2);border-right:1px solid var(--rule-soft);
+  display:flex;align-items:center;justify-content:center}
+.fs-svg svg{width:100%;height:auto;display:block}
+.fs-body{padding:22px 24px}
+.fs-body .bk{font-family:var(--mono);font-size:12px;letter-spacing:.11em;display:block;
+  margin-bottom:8px;font-weight:700}
+.fs-body h6{font-family:var(--disp);font-weight:400;font-size:21px;margin:0 0 13px;letter-spacing:-.014em}
+.fs-body p{margin:0;font-size:14.8px;line-height:1.9;color:var(--ink-soft)}
+.fs-body p + p{margin-top:12px}
+.fs-body .quote{font-family:var(--mono);font-size:12.5px;line-height:1.9;color:var(--ink-soft);
+  background:var(--warn-dim);border-left:3px solid var(--warn);padding:12px 14px;margin-top:14px}
+.fs-body .note{font-family:var(--mono);font-size:12px;color:var(--ink-mute);margin-top:14px;
+  padding-top:11px;border-top:1px dashed var(--rule);line-height:1.8}
+@media(max-width:900px){.fs-grid{grid-template-columns:1fr}
+  .fs-svg{border-right:0;border-bottom:1px solid var(--rule-soft)}
+  .fs-tabs{grid-template-columns:repeat(2,1fr)}
+  .fs-tabs button{border-bottom:1px solid var(--rule-soft)}}
+
+/* ---------- 지표 ---------- */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule-soft);
+  border:1px solid var(--rule-soft);margin:26px 0}
+.metrics div{background:var(--white);padding:15px 14px}
+.metrics .mv{font-family:var(--mono);font-weight:700;font-size:18px;color:var(--link)}
+.metrics .ml{font-size:11.5px;color:var(--ink-mute);margin-top:5px;line-height:1.55}
+@media(max-width:640px){.metrics{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- 그림 ---------- */
+figcaption{font-size:12.5px;line-height:1.8;color:var(--ink-mute);margin-top:11px;margin-bottom:30px}
+figcaption b{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--side);
+  text-transform:uppercase;font-weight:700;margin-right:8px}
+
+/* ---------- 목차 ---------- */
+nav.rail{position:fixed;left:calc(50% - 556px);top:50%;transform:translateY(-50%);z-index:40;
+  display:none;opacity:0;pointer-events:none;transition:opacity .45s}
+nav.rail.show{opacity:1;pointer-events:auto}
+@media(min-width:1280px){nav.rail{display:block}}
+nav.rail ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--rule)}
+nav.rail a{display:block;text-decoration:none;font-size:11.5px;color:var(--ink-mute);
+  padding:5px 0 5px 13px;transition:.2s;position:relative;
+  max-width:146px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav.rail a::before{content:"";position:absolute;left:-1px;top:50%;height:0;width:3px;
+  background:var(--ring);transform:translateY(-50%);transition:height .25s}
+nav.rail a:hover{color:var(--ink)}
+nav.rail a.act{color:var(--ring);font-weight:700}
+nav.rail a.act::before{height:16px}
+
+/* ---------- 결론 ---------- */
+.closing{border:1px solid var(--ring);background:var(--white);margin:30px 0}
+.closing .ci{padding:18px 24px;border-bottom:1px solid var(--rule-soft)}
+.closing .ci:last-child{border-bottom:0}
+.closing .ck{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--ring);
+  display:block;margin-bottom:6px;font-weight:700}
+.closing .ci p{margin:0;font-size:15px;line-height:1.88;color:var(--ink-soft)}
+
+footer{border-top:1px solid var(--rule);padding:48px 0 84px;margin-top:32px}
+.src2{font-size:12.5px;line-height:1.92;color:var(--ink-mute)}
+.src2 b{color:var(--ink-soft);font-weight:500}
+.src2 .note{margin-top:20px;padding-top:16px;border-top:1px dashed var(--rule);font-size:12px}
+
+.reveal{opacity:0;transform:translateY(14px);
+  transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.on{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<nav class="rail" aria-label="장 목차"><ol id="railList"></ol></nav>
+
+<header class="hero">
+  <svg id="heroHex" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+  <div class="wrap"><div class="wide hero-inner">
+    <div class="kicker">
+      <span>Artificial Intelligence in Precision Drug Design</span><span class="dot"></span>
+      <span>Volume 2 · Advanced Applications</span>
+      <b class="k2">Elsevier / Academic Press, 2026</b>
+    </div>
+    <div class="chapnum">CHAPTER 19</div>
+    <h1>조각 기반 설계와 스캐폴드 호핑:<br><span class="s">무엇을 남기고</span> <span class="r">무엇을 바꾸는가</span></h1>
+    <p class="sub">약물다운 분자의 화학 공간은 10<sup>60</sup>에서 10<sup>63</sup>개로 추정된다.
+    그 안에서 쓸 만한 것을 찾는 두 가지 방법이 있다.
+    작은 조각을 키워 붙이거나, 이미 듣는 분자의 뼈대만 갈아 끼우거나.</p>
+
+    <div class="keyfacts reveal">
+      <div><div class="kv" style="color:var(--ring)">10<sup>60</sup>–10<sup>63</sup></div><div class="kl">약물다운 분자의 화학 공간 크기 추정치</div></div>
+      <div><div class="kv" style="color:var(--link)">&gt;70%</div><div class="kl">DeepHop이 생리활성을 높인 생성 분자의 비율</div></div>
+      <div><div class="kv" style="color:var(--link)">30배</div><div class="kl">TurboHopp의 추론 속도. 확산 모형 대비</div></div>
+      <div><div class="kv" style="color:var(--warn)">5–10% vs 80–90%</div><div class="kl">이 장이 나란히 놓은 두 성공률. 같은 것을 재지 않는다</div></div>
+    </div>
+
+    <div class="byline">
+      <b>원저자</b> Priyanka Rani, Bikash Kumar Rajak<br>
+      <b>소속</b> Department of Bioinformatics, School of Earth, Biological and Environmental Sciences,
+      Central University of South Bihar (Gaya, Bihar, India)<br>
+      <b>편저</b> Khalid Raza (Jamia Millia Islamia) &nbsp;·&nbsp; <b>DOI</b> 10.1016/B978-0-443-44430-2.00015-3
+    </div>
+  </div></div>
+</header>
+
+<div class="wrap">
+<div class="wide thesis reveal">
+  <p class="lede">신약 설계의 오랜 방식은 <span class="u">만들고 시험하는 시행착오</span>였다.
+  자본과 시간이 많이 든다.
+  조각 기반 설계와 스캐폴드 호핑은 그 부담을 줄이려는 두 가지 재설계 전략이다.
+  <b>하나는 작은 조각에서 시작해 키우고 잇고 합쳐 분자를 만들고,</b>
+  <b>다른 하나는 이미 듣는 분자에서 핵심 뼈대만 갈아 끼운다.</b>
+  <span class="w">둘의 차이가 이 장의 출발점인데, 그 차이를 적은 문장이 두 갈래를 같은 말로 설명한다.</span></p>
+</div>
+</div>
+
+<main class="wrap">
+
+<!-- ================= 1 ================= -->
+<section class="sec" id="s1">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 01&ndash;02</span>
+    <h2>조각과 뼈대</h2>
+    <div class="h2sub">분자를 부품으로 나눠 본다</div></div>
+
+  <p>분자를 볼 때 이 장이 나누는 부품은 넷이다.
+  <b>고리계</b>(ring system), <b>링커</b>(linker), <b>곁사슬</b>(side chain),
+  그리고 고리계와 링커를 합친 <b>뼈대</b>(framework).</p>
+  <p>스캐폴드는 <em class="mk">화합물의 본질적 구조를 담고 다른 기능 요소가 붙는 토대가 되는
+  주된 분자 구조</em>다. 기능적 스캐폴드는 표적과 상호작용하는 요소를 품고 있고,
+  구조적 스캐폴드는 핵심 상호작용 부위가 적절한 기하 구조로 붙을 수 있도록
+  출구 벡터를 제공한다.</p>
+
+  <div class="fs reveal" id="fsPanel">
+    <div class="fs-head">
+      <span class="t">조각과 뼈대</span>
+      <span class="s">Fig. 19.1&ndash;19.3 · reconstructed</span>
+    </div>
+    <div class="fs-tabs" role="tablist" aria-label="네 가지 관점"></div>
+    <div class="fs-grid">
+      <div class="fs-svg">
+        <svg id="fsSvg" viewBox="0 0 440 300" role="img"
+             aria-label="분자를 고리계·링커·곁사슬로 나누고, 조각 기반 설계와 스캐폴드 호핑의 차이를 그린 도해"></svg>
+      </div>
+      <div class="fs-body" id="fsBody" role="tabpanel"></div>
+    </div>
+  </div>
+  <figcaption><b>그림 1 · Fig. 19.1&ndash;19.3 재구성</b> 원문의 세 그림이 담은 내용을 하나의 도해로 합쳤다.
+  <b>실제 화합물이 아니라 개념 도식</b>이며 원문 그림을 그대로 옮긴 것이 아니다.
+  네 번째 관점은 원문의 정의 문장 자체를 다룬다.</figcaption>
+
+  <div class="judge">
+    <span class="lab">이 장의 정의 문장</span>
+    <p>1절 세 번째 문장이 두 기법을 이렇게 구분한다.</p>
+    <p><b>&ldquo;조각 기반 설계는 알려진 활성 화합물에서 유래한 작고 저분자량인 조각을 쓰며
+    <u>핵심 스캐폴드가 변형된다</u>. 반면 스캐폴드 호핑은 반대 기법을 쓴다.
+    곧 조각은 그대로 두고 <u>핵심 스캐폴드를 변형한다</u>.&rdquo;</b></p>
+    <p><em class="mk">&lsquo;반대 기법&rsquo;이라고 해 놓고 두 절이 같은 말을 한다.</em>
+    앞뒤 문장과 이후 절들의 서술로 미루어
+    첫 절은 &lsquo;조각을 키우고 잇고 합쳐 분자를 만든다&rsquo;는 뜻으로 읽어야 한다.
+    2절이 조각 기반 설계의 작업 흐름을 <b>조각 생성 → 성장·연결·병합 → 선별</b>로 적고 있어
+    그 해석이 맞다.</p>
+    <p>사소한 오탈자로 보일 수 있지만,
+    <b>한 장의 두 주제를 가르는 정의 문장</b>이라는 점에서 그렇지 않다.
+    이 문장만 읽고 두 기법의 차이를 이해하려는 독자는 차이를 알 수 없다.</p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="sec" id="s2">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 02&ndash;03</span>
+    <h2>조각에서 리드로</h2>
+    <div class="h2sub">규칙 기반, 규칙 없는 방식, 그리고 생성 모형</div></div>
+
+  <p>조각 기반 설계의 작업 흐름은 <b>조각 생성 → 성장·연결·병합을 통한 진화 → 약물다운 성질의 선별</b>이다.
+  가진 정보에 따라 리간드 기반, 구조 기반, 그 혼합의 세 갈래로 나뉜다.</p>
+  <ul class="gm">
+    <li><b>규칙 기반</b> &mdash; 구성 요소나 활성 화합물로부터 분자를 조립하는 규칙을 쓴다.
+    <b>토플리스 체계</b>가 초기의 대표적 방법이다.
+    분자량, 용해도, 지용성, 매치드 분자쌍 같은 규칙,
+    또는 작용기와 분자 골격의 변형을 분석하는 경험칙으로
+    잠재 리드 유사체를 단계적으로 생성·최적화한다.
+    <em class="mk">다만 합성이 복잡해지고 생리활성 예측력이 떨어지는 한계가 있었다.</em></li>
+    <li><b>합성 지향</b> &mdash; 리간드 생성과 구성 요소 조립의 합성 규칙에 초점을 둔다.
+    합성 가능한 라이브러리 설계에 유용하다. <code>CHIPMUNK</code>, <code>BI CLAIM</code>.</li>
+    <li><b>혼합</b> &mdash; 합성 가능성과 생리활성 화합물과의 유사성을 함께 높인다.
+    <code>TOPAS</code>, <code>DINGOS</code>, <code>DOGS</code>.</li>
+    <li><b>규칙 없는 방식</b> &mdash; 분자 구성 규칙을 고려하지 않고 생성한다.
+    오늘날에는 생성 딥러닝 모형이 새 화합물을 표집한다.</li>
+  </ul>
+  <p>드노보 설계라는 발상 자체는 오래되었다.
+  <b>역QSAR</b> &mdash; 기존 QSAR 모형을 이용해 원하는 성질에 해당하는 기술자 값을 찾아
+  새 분자를 생성하는 문제 &mdash; 가 그 뿌리다.
+  모든 드노보 접근이 공통으로 안는 문제는 <b>조합적 폭발</b>이다.
+  원자 유형과 분자 위상이 너무 많아 탐색할 공간이 감당되지 않는다.</p>
+
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>도구</th><th>특징</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Chemical VAE</td><td>변분 오토인코더로 화학 구조를 합성적으로 설계한다</td></tr>
+        <tr><td class="k">JunctionTree VAE</td><td>정션 트리 VAE로 드노보 분자를 만든다</td></tr>
+        <tr><td class="k">Neural graph fingerprints</td><td>합성곱 신경망으로 새 분자의 성질을 예측한다</td></tr>
+        <tr><td class="k">ODDT</td><td>화학정보학·분자 모형화 도구 모음. 랜덤포레스트 점수와 신경망 점수를 쓴다</td></tr>
+        <tr><td class="k">ORGANIC</td><td>기계학습 기법으로 유리한 속성을 갖는 분자를 만든다</td></tr>
+        <tr><td class="k">REINVENT</td><td>순환신경망과 강화학습으로 드노보 분자를 설계한다</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>표 19.1</b> 원문이 정리한 드노보 설계 도구. 원문은 각각의 공개 저장소 주소도 함께 싣는다.</figcaption>
+
+  <h4>검증의 표준</h4>
+  <p>생성 모형이 늘어나면서 <b>공정한 비교</b>가 문제가 되었다.
+  생성된 분자 표현의 유효성, 신규성, 알려진 활성 분자와의 화학적·생물학적 유사성,
+  스캐폴드와 조각의 다양성을 표준화된 방식으로 검증할 필요가 생겼다.
+  <code>GuacaMol</code>과 <code>MOSES</code>가 여러 생성 신경망과 유전 알고리즘을 구현해
+  비교 지표를 제공한다.</p>
+
+  <div class="judge">
+    <span class="lab">이 절이 짚는 비대칭</span>
+    <p>지금까지 딥러닝 기반 드노보 접근은 <b>대부분 리간드 기반</b>이다.
+    결합 부위 정보를 활용하는 <b>구조 기반 생성 설계</b>는
+    아직 탐색되지 않은 거대분자를 겨냥할 보완적 연구 경로인데,
+    <em class="mk">AI와 딥러닝이 아직 널리 침투하지 않았다</em>고 원문은 적는다.</p>
+    <p>이 지적은 값지다. 생성 모형의 성과가 화려하게 보고되는 영역과
+    실제로 표적 구조를 다뤄야 하는 영역이 다르다는 뜻이기 때문이다.</p>
+  </div>
+
+  <h4>실제로 만들어진 분자</h4>
+  <p>Merk 등이 레티노이드 X 수용체와 PPAR 작용제 분자를 생성했다.
+  복잡한 규칙과 무관하게 치료 효과를 갖는 분자다.
+  <b>다섯 개를 설계해 그중 네 개가 세포 분석에서 조절 활성을 보였다.</b>
+  Popova 등은 생성 심층망과 예측 심층망을 결합한 강화학습 전략을 만들었다.
+  생성 모형이 더 고유한 SMILES 문자열을 만들고, 예측 모형이 그 성질을 내다본다.</p>
+ </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="sec" id="s3">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 04&ndash;07</span>
+    <h2>뼈대를 갈아 끼운다</h2>
+    <div class="h2sub">스캐폴드 호핑의 다섯 전략과 여덟 가지 계산 기법</div></div>
+
+  <p>스캐폴드 호핑은 <b>리드 호핑, 리프프로깅, 케모타입 스위칭</b>이라고도 불린다.
+  생리활성 화합물의 중심 분자 골격을 체계적으로 바꾸되 생물학적 활성은 보존하는 일이다.
+  달리 말하면 알려진 참조 화합물과 <b>다른 핵심 구조를 가진 활성 화합물을 찾는 것</b>이다.</p>
+  <p>이 접근이 열어 주는 것은 여럿이다. 새 화학 공간의 탐색,
+  약동학적 성질·지용성·극성·독성의 개선,
+  <em class="mk">지식재산권 문제의 우회</em>, 약물 내성의 극복,
+  그리고 더 단단한 스캐폴드를 도입해 결합친화도를 높이는 것.</p>
+
+  <h4>전통적 다섯 전략</h4>
+  <ol class="rn">
+    <li><b>위상학적 호핑</b> &mdash; 중요한 파마코포어 특징 사이의 위상적 연결을 유지하면서 스캐폴드를 바꾼다.
+    그래프 기반 기법과 2차원 기술자를 자주 쓴다.</li>
+    <li><b>작용기 치환</b> &mdash; 공간적·물리화학적 특성이 비슷한 것으로 작용기를 바꾼다.
+    활성을 유지하면서 대사 안정성을 높이고 독성을 낮춘다.</li>
+    <li><b>파마코포어 기반 호핑</b> &mdash; 생물학적 활성에 필요한 특징(수소결합 공여체·수용체, 소수성 중심)을
+    식별한 뒤, 그 특징을 공간적으로 재현할 수 있는 새 스캐폴드를 만든다.</li>
+    <li><b>형태 기반 호핑</b> &mdash; 알려진 리간드의 3차원 형태와 정전기 퍼텐셜에 후보 분자를 맞춘다.
+    <code>ROCS</code>와 <code>EON</code>으로 구조는 다르지만 기능은 비슷한 분자를 만든다.</li>
+    <li><b>구조 기반 호핑</b> &mdash; 표적의 3차원 구조를 알 때 쓴다.
+    조각 기반 설계, 동역학 시뮬레이션, 분자 도킹으로
+    스캐폴드와 활성 부위의 결합 상호작용을 직접 평가한다.</li>
+  </ol>
+
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>방법</th><th>도구</th><th>장점</th><th>한계</th></tr></thead>
+      <tbody>
+        <tr><td class="k">파마코포어 모형화</td><td class="g">Catalyst · LigandScout · Phase</td>
+          <td class="p">핵심 상호작용을 추상화한다. 스캐폴드 치환에 유용하다</td>
+          <td class="m">초기 리간드 데이터의 품질에 의존한다. 지나치게 일반적일 수 있다</td></tr>
+        <tr><td class="k">분자 도킹</td><td class="g">AutoDock · Glide · GOLD</td>
+          <td class="p">리간드–단백질 상호작용의 구조적 통찰. 대량 처리가 가능하다</td>
+          <td class="m">위양성이 나올 수 있다. 점수 함수가 늘 정확하지는 않다</td></tr>
+        <tr><td class="k">가상 스크리닝</td><td class="g">ZINC15 · DOCK · Schrödinger Suite</td>
+          <td class="p">합성 전에 히트를 찾는 비용 효율적 방법</td>
+          <td class="m">화합물 라이브러리의 품질과 도킹 규약에 정확도가 좌우된다</td></tr>
+        <tr><td class="k">3차원 형태·정전기</td><td class="g">ROCS · EON (OpenEye)</td>
+          <td class="p">눈에 띄지 않는 생물등가체를 찾는 데 효과적이다</td>
+          <td class="m">형태와 정전기만으로는 드러나지 않는 상호작용(수소결합 등)을 놓칠 수 있다</td></tr>
+        <tr><td class="k">조각 기반 설계</td><td class="g">MOE · Schrödinger FBDD · BIOVIA fragment network</td>
+          <td class="p">화학적 다양성이 높고 분자량이 낮은 히트를 낸다</td>
+          <td class="m">구조 기반 데이터(X선·NMR)를 요구하는 경우가 많다</td></tr>
+        <tr><td class="k">기계학습 · AI</td><td class="g">DeepScaffold · ChemTS · MolGAN · REINVENT</td>
+          <td class="p">신규하면서 합성 가능한 스캐폴드를 만든다. 대규모 데이터에서 배운다</td>
+          <td class="m">크고 잘 큐레이션된 데이터셋과 광범위한 검증이 필요하다</td></tr>
+        <tr><td class="k">QSAR 모형화</td><td class="g">KNIME · MOE · AutoQSAR · Orange · PyQSAR</td>
+          <td class="p">해석 가능한 모형. 스캐폴드 우선순위 결정에 유용하다</td>
+          <td class="m">학습 공간을 벗어나면 외삽이 나쁘다. 과적합 위험이 있다</td></tr>
+        <tr><td class="k">드노보 설계</td><td class="g">LUDI · DeepGen · GENTRL · LigBuilder 3.0</td>
+          <td class="p">화학 공간을 넓히고 새 화학 개체를 만든다</td>
+          <td class="m">합성 가능성과 정확도를 확보하기 어렵다</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>표 19.2</b> 원문의 비교표를 옮겼다.
+  <b>한계 열을 세로로 읽으면 공통점이 보인다</b> &mdash;
+  여덟 방법 중 다섯이 <em class="mk">데이터의 품질이나 규약에 정확도가 좌우된다</em>고 적는다.</figcaption>
+
+  <p>여러 방법을 한 파이프라인에 엮어 쓰는 것이 실제 관행이다.
+  원문이 드는 예는 <b>AI(ChemTS)로 스캐폴드를 생성하고, 도킹(Glide)으로 검증하고,
+  파마코포어 적합성(LigandScout)으로 평가</b>하는 흐름이다.</p>
+ </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="sec" id="s4">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 08&ndash;09</span>
+    <h2>네 갈래의 생성 모형</h2>
+    <div class="h2sub">VAE · 강화학습 · 그래프와 트랜스포머 · 확산과 일관성</div></div>
+
+  <div class="grid g2">
+    <div class="card"><span class="cno">a · VAE</span><h5>변분 오토인코더</h5>
+      <p>큰 데이터셋으로 연속적이고 고차원인 특징 임베딩을 학습한다.
+      <b>GraphGMVAE</b>는 가우시안 혼합 변분 오토인코더로 스캐폴드와 곁사슬을 서로 다른 분포에 인코딩해,
+      파마코포어 성질을 유지하면서 정확한 스캐폴드 변형을 가능하게 한다.
+      <b>ScaffoldGVAE</b>는 다중시점 그래프 신경망 위에 세워져
+      <em class="mk">곁사슬은 보존하면서 분자 스캐폴드만 바꾸려 한다.</em></p></div>
+    <div class="card"><span class="cno">b · 강화학습</span><h5>보상과 벌점으로 배운다</h5>
+      <p><b>RuSH</b>(Reinforcement learning for Unconstrained Scaffold Hopping)가 핵심 진전이다.
+      조각 기반이 아니라 <b>분자 전체를 생성</b>하게 해
+      더 넓고 덜 치우친 화학 공간을 탐색하고, 신규하고 특허 가능한 스캐폴드를 찾을 확률을 높인다.
+      <b>TurboHopp</b>은 도킹 점수, 합성 접근성, 조각 연결성을 보상 체계에 통합한다.</p></div>
+    <div class="card"><span class="cno">c · GNN과 트랜스포머</span><h5>분자는 원래 그래프다</h5>
+      <p>그래프 신경망은 분자 그래프에서 직접 학습해 원자&ndash;결합 관계를 포착한다.
+      위상 정보와 공간 정보를 보존하므로 스캐폴드 호핑에 결정적이다.
+      <b>DeepHop</b>은 <em class="mk">분자 그래프, SMILES, 단백질 서열을 함께 처리하는
+      다중양식 트랜스포머</em>로 맥락에 맞는 스캐폴드 호핑을 수행한다.</p></div>
+    <div class="card"><span class="cno">d · 확산과 일관성</span><h5>잡음을 분자로</h5>
+      <p>확산 모형은 물리적 확산 과정을 모사해 무작위 잡음을 점진적으로 다듬어 분자 구조를 만든다.
+      <b>일관성 모형</b>은 여러 단계의 잡음 제거 대신 <b>한 번의 변환</b>으로 분자를 생성한다.
+      TurboHopp은 결합 포켓을 조건으로 삼는 3차원 일관성 모형을 쓰며,
+      <b>확산 기반 접근보다 최대 30배 빠른 추론</b>을 품질 손상 없이 달성했다고 보고한다.</p></div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">인용을 확인해야 할 대목</span>
+    <p>이 절과 앞 절에서 <b>인용 문헌이 주장과 맞지 않는 자리</b>가 여럿 보인다.
+    원문의 참고문헌 목록만으로 확인되는 것들이다.</p>
+    <p>&ldquo;TurboHopp이 도킹 점수와 합성 접근성을 보상 체계에 통합한다&rdquo;는 서술에
+    <b>Schuffenhauer 외(2007)</b>가 붙어 있다.
+    같은 문헌은 앞서 &lsquo;스캐폴드&rsquo;의 정의를 밝히는 자리에도 인용되었다.
+    2007년 논문이 2020년대 모형의 설계를 설명할 수는 없다.</p>
+    <p>&ldquo;DiffHopp과 TurboHopp이 일관성 규제와 확산 모형을 활용했다&rdquo;는 서술에는
+    <b>Chen 외(2018) &lsquo;신약 발굴에서 딥러닝의 부상&rsquo;</b>이 붙어 있다. 같은 문제다.</p>
+    <p>SPiDER가 이소마크로인·피페르롱구민·그라베올리닌을 세로토닌 2B 수용체와 TRPV 채널의
+    조절제로 식별했다는 서술에는 <b>Aksu 외(2013)</b>가 붙어 있는데,
+    그 논문의 제목은 <em class="mk">&ldquo;습식 과립법으로 제조한 라미프릴 정제의 핵심 품질 특성을 제어하기 위한
+    AI 기법 기반 설계 품질 접근&rdquo;</em>이다. 정제 제조 공정에 관한 논문이다.</p>
+    <p>같은 문단의 <code>EC₅₀</code> 값도 확인이 필요하다.
+    원문은 5-리폭시게나제 11 mM, PPARγ 8 mM처럼 <b>밀리몰 단위</b>로 적는데,
+    그 농도는 약물 리드의 활성값으로 보기 어렵다.
+    마이크로몰(μM)의 &lsquo;μ&rsquo;가 조판에서 사라졌을 가능성이 크다.</p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="sec" id="s5">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 10</span>
+    <h2>수치를 검증한다</h2>
+    <div class="h2sub">영향과 이득 · 그리고 나란히 놓여서는 안 되는 두 숫자</div></div>
+
+  <div class="metrics">
+    <div><div class="mv">&gt;70%</div><div class="ml">DeepHop 생성 분자 중 모분자보다 생리활성이 높아진 비율. 3차원 유사성은 높고 2차원 스캐폴드 유사성은 낮다</div></div>
+    <div><div class="mv">약 40%</div><div class="ml">AI 기반 연구 중 전임상 개발에 집중된 비율</div></div>
+    <div><div class="mv">144개</div><div class="ml">AAM 기법이 희귀질환용으로 찾아낸 신규 스캐폴드 약물 재창출 후보</div></div>
+    <div><div class="mv">$54B</div><div class="ml">AI가 절감할 수 있다고 추산된 제약 산업 연간 비용 (합성·선별 26 + 임상·분석 28)</div></div>
+  </div>
+
+  <p>원문은 여기에 더해 맥킨지 글로벌 연구소의 추산을 인용한다.
+  생성형 AI가 제약·의료제품 산업에서 <b>연간 600억&ndash;1,100억 달러</b>의 경제적 가치를 열 수 있다는 것이다.</p>
+
+  <div class="judge">
+    <span class="lab">나란히 놓여서는 안 되는 두 숫자</span>
+    <p>10절 b항이 이렇게 적는다.</p>
+    <p>&ldquo;전통적으로 <b>모든 임상 단계를 통과하는</b> 분자는 5&ndash;10퍼센트에 그친다.
+    반면 AI로 발굴된 분자는 <b>1상 임상시험 성공률</b>이 80&ndash;90퍼센트에 이르러
+    전통적 연구개발 생산성을 거의 두 배로 높인다.&rdquo;</p>
+    <p>두 숫자가 재는 것이 다르다.
+    <b>5&ndash;10퍼센트는 1상부터 3상까지 전부 통과한 비율</b>이고,
+    <b>80&ndash;90퍼센트는 1상 하나만 통과한 비율</b>이다.
+    1상은 소수의 대상자에서 안전성을 확인하는 단계이고,
+    <em class="mk">전통적 방식으로도 1상 통과율은 원래 절반을 넘는다.</em>
+    비교하려면 AI 분자의 &lsquo;전 단계 통과율&rsquo;을 대야 하는데 그 값은 제시되지 않는다.
+    아직 3상까지 간 AI 유래 분자가 충분치 않아서일 가능성이 크다.</p>
+    <p>덧붙여 같은 문장의 &ldquo;승인된 후보 열 중 하나만 시장에 도달한다&rdquo;는 표현도 어색하다.
+    <b>승인은 곧 시장 진입을 뜻하기 때문</b>이다.</p>
+    <p>이 지적이 AI의 기여를 부정하는 것은 아니다.
+    다만 <b>&lsquo;거의 두 배&rsquo;라는 결론은 이 두 숫자로부터 나오지 않는다.</b></p>
+  </div>
+
+  <div class="judge">
+    <span class="lab">지수가 사라진 자리</span>
+    <p>10절 d항은 미탐색 화학 공간이 &ldquo;약물다운 분자를 최대 <b>10에서 60개</b> 담고 있는 것으로
+    여겨진다&rdquo;고 적는다.</p>
+    <p>2절이 화학 공간의 크기를 10<sup>60</sup>&ndash;10<sup>63</sup>으로 적었으므로
+    이 대목도 <b>10<sup>60</sup></b>이었을 것이다. 조판에서 지수가 사라진 것으로 보인다.
+    2절의 &ldquo;1060&ndash;1063&rdquo;도 같은 손상이다.</p>
+    <p>이런 손상은 읽는 사람이 알아채기 쉽지만,
+    <em class="mk">숫자를 그대로 옮겨 인용하면 60개와 10<sup>60</sup>개의 차이가 사라진다.</em></p>
+  </div>
+
+  <h4>산업 현장의 적용</h4>
+  <ul class="gm">
+    <li><b>SyntaLinker&ndash;Hybrid</b> &mdash; 키나아제 억제제 개발에서
+    고도로 보존된 ATP 결합 포켓 안의 결합 상호작용을 유지하면서 스캐폴드를 치환한다.
+    특허가 촘촘한 단백질을 겨냥한 &lsquo;미투&rsquo; 설계를 가능하게 한다.</li>
+    <li><b>AAM</b>(아미노산 매핑) &mdash; 희귀질환용으로
+    신규 스캐폴드를 가진 <b>약물 재창출 후보 144개</b>를 찾아냈다.
+    시장 유인이 적어 전통적 방법이 잘 작동하지 않는 영역이다.</li>
+    <li><b>기업 도입</b> &mdash; 아스트라제네카, 화이자, 리제네론이 핵심 절차에 도입했다고 적는다.
+    아스트라제네카와 얀센, 베네볼런트AI 사이의 전략적 제휴가 사례로 제시된다.</li>
+  </ul>
+ </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="sec" id="s6">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 11</span>
+    <h2>남아 있는 것</h2>
+    <div class="h2sub">미래 방향 · 그런데 이 절이 가장 정직하다</div></div>
+
+  <p>11절은 &lsquo;미래 방향&rsquo;이라는 제목을 달고 있지만 실제 내용의 대부분은 <b>현재의 한계</b>다.
+  그리고 그 서술이 이 장에서 가장 구체적이다.</p>
+
+  <div class="pull">
+    &ldquo;AI 모형은 친화도가 개선된 분자를 예측하는 데 도움을 줄 수 있지만,
+    그 돌파는 화학적 취급 가능성, 생물학적 상호작용, 합성 실현 가능성에 달려 있다.
+    <b>그런데 AI가 설계한 분자 대부분은 합성이 불가능하고 약리학적 적절성이 없다.</b>&rdquo;
+  </div>
+
+  <ul class="gm">
+    <li><b>3차원과 엔트로피 제약의 부재</b> &mdash; 공간적·엔트로피적 제약이 고려되지 않아
+    결국 감당할 수 없이 많은 리드 후보가 쏟아진다.</li>
+    <li><b>데이터의 이질성</b> &mdash; ChEMBL과 BindingDB 같은 데이터셋은
+    <b>고해상도 조각 데이터가 없다.</b>
+    조각 라이브러리가 독점적이고 실험 분석 결과에 접근이 제한되어
+    모형 학습과 일반화가 막힌다.</li>
+    <li><b>데이터 불균형</b> &mdash; 활성과 비활성 화합물의 불균형이 예측 성능을 왜곡해
+    <em class="mk">외부 검증 성적이 나빠진다.</em></li>
+    <li><b>해석가능성</b> &mdash; 어느 조각을 왜 골랐는지, 어떤 스캐폴드 호핑을 왜 권했는지를
+    CNN이나 RNN 같은 구조에서 되짚기 어렵다.
+    돌출 지도와 어텐션이 시도되지만
+    <b>신약 발굴 초기 단계에서의 적용 가능성은 여전히 제한적</b>이라고 적는다.</li>
+    <li><b>일반화 실패</b> &mdash; 특정 표적이나 조각 집합으로 학습한 모형은
+    새 표적이나 새 화학 공간에 잘 옮겨 가지 않는다.
+    작은 데이터셋과 상관 높은 기술자에 과적합하기 때문이다.
+    스캐폴드 호핑은 다양한 화학 공간을 요구하는데
+    <b>모형이 정확도를 잃고 유효하지 않은 화학 구조를 만들어 낸다.</b></li>
+  </ul>
+
+  <div class="judge">
+    <span class="lab">10절과 11절 사이의 거리</span>
+    <p>10절은 1상 성공률 80&ndash;90퍼센트, 연간 540억 달러 절감, 생리활성 향상 70퍼센트를 적는다.
+    11절은 &ldquo;AI가 설계한 분자 대부분은 합성이 불가능하고 약리학적 적절성이 없다&rdquo;고 적는다.</p>
+    <p>두 절 사이에 <b>한 문단이 통째로 겹친다</b>는 점도 눈에 띈다.
+    10절 마지막 문단과 11절 중간 문단이 거의 같은 문장으로 되어 있다.
+    지식재산권 우회의 이점, 포화된 치료 영역에서의 전략적 가치,
+    결합친화도·용해도·선택성·대사 안정성의 개선을 말하는 대목이다.</p>
+    <p><em class="mk">서로 다른 온도의 두 서술이 한 장 안에 있고,
+    그 사이에 편집되지 않은 중복이 남아 있다.</em></p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 결론 ================= -->
+<section class="sec" id="s7">
+ <div class="col">
+  <div class="sechead"><span class="secno">CLOSING</span>
+    <h2>이 장이 남기는 것</h2>
+    <div class="h2sub">요약 · 그리고 읽고 난 뒤의 판단</div></div>
+
+  <div class="closing">
+    <div class="ci"><span class="ck">01 · 두 가지 재설계</span>
+      <p>조각 기반 설계는 <b>작은 조각을 키우고 잇고 합쳐</b> 분자를 만든다.
+      스캐폴드 호핑은 <b>곁사슬을 그대로 두고 핵심 뼈대를 갈아 끼운다.</b>
+      전자는 없던 것을 짓고, 후자는 있는 것을 바꾼다.</p></div>
+    <div class="ci"><span class="ck">02 · 표 19.2의 한계 열</span>
+      <p>여덟 계산 기법 중 다섯이 &lsquo;데이터의 품질이나 규약에 정확도가 좌우된다&rsquo;고 적는다.
+      <b>기법을 바꿔서 풀리는 문제가 아니라는 뜻</b>이다.</p></div>
+    <div class="ci"><span class="ck">03 · 구조 기반이 비어 있다</span>
+      <p>딥러닝 드노보 설계는 대부분 리간드 기반이고,
+      결합 부위 정보를 쓰는 구조 기반 생성 설계에는
+      <b>AI가 아직 널리 침투하지 않았다</b>고 원문이 명시한다.</p></div>
+    <div class="ci"><span class="ck">04 · 11절이 가장 정직하다</span>
+      <p>&ldquo;AI가 설계한 분자 대부분은 합성이 불가능하고 약리학적 적절성이 없다.&rdquo;
+      &lsquo;미래 방향&rsquo;이라는 제목 아래 적힌 이 한 문장이
+      <b>10절의 모든 수치를 읽는 기준</b>이 된다.</p></div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">옮긴이의 판단</span>
+    <p>이 장의 주제는 이 책에서 가장 &lsquo;화학&rsquo;에 가깝다.
+    분자를 부품으로 나누고, 무엇을 남기고 무엇을 바꿀지 정하는 일이다.
+    그 작업의 실체를 잘 정리했고, 표 19.2는 여덟 계산 기법의 장단점을
+    나란히 놓은 실용적인 참조표다.</p>
+    <p>그런데 이 장에는 <b>확인해야 할 곳이 유난히 많다.</b>
+    두 주제를 가르는 정의 문장이 같은 말을 두 번 하고,
+    지수가 사라져 10<sup>60</sup>이 60이 되고,
+    EC₅₀가 마이크로몰에서 밀리몰이 되고,
+    정제 제조 공정 논문이 세로토닌 수용체 조절제의 근거로 인용되고,
+    2007년 논문이 2020년대 모형의 설계를 설명하는 자리에 붙어 있고,
+    10절과 11절 사이에 한 문단이 통째로 겹친다.
+    <em class="mk">개별 사실이 틀렸다기보다 원고가 최종 점검을 거치지 않은 흔적으로 보인다.</em></p>
+    <p>그래서 이 장은 이렇게 읽는 편이 낫다고 본다.
+    <b>본문의 개념 설명과 표 19.1·19.2는 가져가되,
+    구체적 수치와 인용은 원 논문에서 확인할 것.</b>
+    특히 10절의 성공률 비교는 그대로 인용하면 안 된다.
+    1상 통과율과 전 단계 통과율은 같은 것을 재지 않는다.</p>
+    <p>그럼에도 11절은 남는다.
+    &ldquo;AI가 설계한 분자 대부분은 합성이 불가능하고 약리학적 적절성이 없다&rdquo;는 문장은
+    이 책 전체에서 <b>생성 모형의 한계를 가장 직설적으로 적은 대목</b>이다.
+    화학 공간이 10<sup>60</sup>개라는 사실은 기회이면서 동시에 함정이다.
+    <b>그중 만들 수 있고 몸에서 작동하는 것은 극히 일부</b>이고,
+    생성 모형은 아직 그 구분을 잘하지 못한다.</p>
+  </div>
+ </div>
+</section>
+
+</main>
+
+<footer>
+ <div class="wrap"><div class="col">
+  <div class="src2">
+    <b>원전</b><br>
+    Rani, P., &amp; Rajak, B. K. (2026).
+    <i>Artificial Intelligence in fragment-based and scaffold-hopping approaches for drug discovery.</i>
+    In K. Raza (Ed.), <b>Artificial Intelligence in Precision Drug Design, Volume 2: Advanced Applications</b>
+    (Chapter 19, pp. 393&ndash;411). Academic Press / Elsevier. ISBN 978-0-443-44430-2.
+    https://doi.org/10.1016/B978-0-443-44430-2.00015-3
+    <div class="note">
+      이 문서는 원저 제19장만을 대상으로 한 한국어 정리본이다. 표 19.1&ndash;19.2의 내용, 수치,
+      도구 이름, 인용 문헌은 모두 원문에서 가져왔고, 절 구성과 도해는 읽기 편하도록 재배열했다.<br><br>
+      <b>「조각과 뼈대」 도해에 관하여</b> &mdash; 원문 그림 19.1&ndash;19.3이 담은 내용을 하나로 합쳐 다시 그렸다.
+      <b>실제 화합물이 아니라 개념 도식</b>이며 원문 그림을 옮긴 것이 아니다.
+      네 번째 관점(&lsquo;정의 문장&rsquo;)은 원문 1절의 서술 자체를 다루는 것으로, 원문에 대응하는 그림이 없다.<br><br>
+      <b>확인이 필요한 대목</b> &mdash; 1절의 정의 문장은 조각 기반 설계와 스캐폴드 호핑을
+      &lsquo;반대 기법&rsquo;이라 하면서 두 절 모두 &ldquo;핵심 스캐폴드가 변형된다&rdquo;고 적는다.
+      2절의 작업 흐름 서술에 비추어 첫 절은 조각의 성장·연결·병합을 뜻하는 것으로 읽었다.<br>
+      화학 공간의 크기는 원문 PDF에서 지수가 사라져 &ldquo;1060&ndash;1063&rdquo;과 &ldquo;10 to 60&rdquo;으로 나타나며,
+      맥락상 10<sup>60</sup>&ndash;10<sup>63</sup>으로 옮겼다.
+      SPiDER 관련 EC₅₀ 값도 밀리몰(mM)로 적혀 있으나 마이크로몰(μM)의 표기 손상으로 보인다.<br>
+      10절 b항은 &lsquo;전 임상 단계 통과율 5&ndash;10퍼센트&rsquo;와 &lsquo;1상 성공률 80&ndash;90퍼센트&rsquo;를 나란히 놓는데,
+      두 값은 서로 다른 구간을 재므로 직접 비교할 수 없다.<br>
+      인용 문헌 가운데 주장과 맞지 않는 자리가 여럿 있다.
+      Aksu 외(2013)는 라미프릴 정제 제조 공정에 관한 논문이고,
+      Chen 외(2018)와 Schuffenhauer 외(2007)는 각각 2023&ndash;2024년에 발표된 모형(DiffHopp, TurboHopp)의
+      근거로 인용되어 있다. 모두 원문의 참고문헌 목록만으로 확인되는 사항이다.<br><br>
+      &lsquo;판단&rsquo;으로 표시한 블록은 원문의 유보 조항을 정리하거나 옮긴이의 해석을 덧붙인 부분이므로
+      원문 서술과 구분해서 읽어야 한다.
+    </div>
+  </div>
+ </div></div>
+</footer>
+
+<script>
+(function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var bar = document.getElementById('progress');
+  var rail = document.querySelector('nav.rail');
+  var hero = document.querySelector('header.hero');
+  function onScroll(){
+    var h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+    rail.classList.toggle('show', h.scrollTop > hero.offsetHeight - 80);
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section.sec'));
+  var list = document.getElementById('railList');
+  var links = secs.map(function(s){
+    var no = s.querySelector('.secno').textContent.replace('SECTION','').trim();
+    var tt = s.querySelector('h2').textContent.trim();
+    var a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.textContent = (no === 'CLOSING' ? '—' : no) + '  ' + tt;
+    var li = document.createElement('li'); li.appendChild(a); list.appendChild(li);
+    return a;
+  });
+
+  if ('IntersectionObserver' in window){
+    var navObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var i = secs.indexOf(e.target);
+        links.forEach(function(a, j){ a.classList.toggle('act', j === i); });
+      });
+    }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+    secs.forEach(function(s){ navObs.observe(s); });
+
+    var revObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add('on'); revObs.unobserve(e.target); }
+      });
+    }, {threshold:.12});
+    document.querySelectorAll('.reveal').forEach(function(el){
+      if (reduce) el.classList.add('on'); else revObs.observe(el);
+    });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('on'); });
+  }
+
+  function mk(seed){
+    var s = seed;
+    return function(){ s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  }
+
+  /* 육각형 경로 */
+  function hexPath(cx, cy, r){
+    var p = '';
+    for (var i = 0; i < 6; i++){
+      var a = Math.PI / 180 * (60 * i);
+      var x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+      p += (i ? ' L' : 'M') + x.toFixed(2) + ',' + y.toFixed(2);
+    }
+    return p + ' Z';
+  }
+  function polyPath(cx, cy, r, n, rot){
+    var p = '';
+    for (var i = 0; i < n; i++){
+      var a = Math.PI / 180 * (360 / n * i + (rot || 0));
+      var x = cx + r * Math.cos(a), y = cy + r * Math.sin(a);
+      p += (i ? ' L' : 'M') + x.toFixed(2) + ',' + y.toFixed(2);
+    }
+    return p + ' Z';
+  }
+
+  /* ---------- 표제 배경: 육각 격자 ---------- */
+  (function(){
+    var svg = document.getElementById('heroHex');
+    var r = mk(191919), f = document.createDocumentFragment();
+    var R = 30, dx = R * 1.5, dy = R * Math.sqrt(3);
+    for (var col = 0; col < 30; col++){
+      for (var row = 0; row < 12; row++){
+        var cx = col * dx, cy = row * dy + (col % 2 ? dy / 2 : 0);
+        var t = r();
+        var p = document.createElementNS(NS, 'path');
+        p.setAttribute('d', hexPath(cx, cy, R - 3));
+        p.setAttribute('fill', 'none');
+        p.setAttribute('stroke', t < .06 ? '#B07316' : (t < .14 ? '#1B7A6B' : '#2E4A7D'));
+        p.setAttribute('stroke-width', '1');
+        p.setAttribute('opacity', (t < .14 ? .16 : 0.04 + r() * 0.05).toFixed(3));
+        f.appendChild(p);
+      }
+    }
+    svg.appendChild(f);
+  })();
+
+  /* ---------- 시그니처: 조각과 뼈대 ---------- */
+  (function(){
+    var svg = document.getElementById('fsSvg');
+    var body = document.getElementById('fsBody');
+    var tabs = document.querySelector('#fsPanel .fs-tabs');
+    var btns = [];
+
+    function el(tag, attrs){
+      var e = document.createElementNS(NS, tag);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      return e;
+    }
+    function label(x, y, s, col, size, anchor){
+      var t = el('text', { x:x, y:y, 'font-family':'Cousine, monospace',
+        'font-size':(size || 11.5), fill:(col || '#78817F'), 'font-weight':'700' });
+      if (anchor) t.setAttribute('text-anchor', anchor);
+      t.textContent = s;
+      return t;
+    }
+    function klabel(x, y, s, col, size, anchor){
+      var t = el('text', { x:x, y:y, 'font-family':'Noto Sans KR, sans-serif',
+        'font-size':(size || 12), fill:(col || '#414B49') });
+      if (anchor) t.setAttribute('text-anchor', anchor);
+      t.textContent = s;
+      return t;
+    }
+
+    var L = [];   /* 각 관점의 그룹 */
+    function newLayer(){ var g = el('g', {opacity:'0'}); g.style.transition = 'opacity .4s';
+      svg.appendChild(g); L.push(g); return g; }
+
+    /* --- 관점 1: 분자의 구성 --- */
+    (function(){
+      var g = newLayer();
+      /* 뼈대 윤곽 */
+      g.appendChild(el('rect', { x:92, y:96, width:256, height:88, rx:44,
+        fill:'none', stroke:'#78817F', 'stroke-width':'1.2', 'stroke-dasharray':'6 5', opacity:'.6' }));
+      g.appendChild(label(220, 208, 'FRAMEWORK  =  RING + LINKER', '#78817F', 10.5, 'middle'));
+      /* 링커 */
+      g.appendChild(el('path', { d:'M164,140 L196,124 L228,140 L260,124',
+        fill:'none', stroke:'#1B7A6B', 'stroke-width':'3.4', 'stroke-linejoin':'round' }));
+      /* 고리 두 개 */
+      [[136,140],[288,140]].forEach(function(c){
+        g.appendChild(el('path', { d:hexPath(c[0], c[1], 30),
+          fill:'rgba(46,74,125,.14)', stroke:'#2E4A7D', 'stroke-width':'2.6' }));
+      });
+      /* 곁사슬 */
+      [[136,110,136,74],[288,170,288,206],[318,158,352,178]].forEach(function(s){
+        g.appendChild(el('line', { x1:s[0], y1:s[1], x2:s[2], y2:s[3],
+          stroke:'#B07316', 'stroke-width':'3' }));
+        g.appendChild(el('circle', { cx:s[2], cy:s[3], r:7, fill:'#B07316' }));
+      });
+      g.appendChild(klabel(96, 60, '고리계', '#2E4A7D', 12.5));
+      g.appendChild(klabel(196, 106, '링커', '#1B7A6B', 12.5, 'middle'));
+      g.appendChild(klabel(366, 182, '곁사슬', '#B07316', 12.5));
+    })();
+
+    /* --- 관점 2: 조각 기반 설계 --- */
+    (function(){
+      var g = newLayer();
+      g.appendChild(label(20, 40, '01  FRAGMENTS', '#78817F', 10.5));
+      /* 세 조각 */
+      g.appendChild(el('path', { d:hexPath(58, 92, 22), fill:'rgba(46,74,125,.14)',
+        stroke:'#2E4A7D', 'stroke-width':'2.2' }));
+      g.appendChild(el('path', { d:polyPath(58, 178, 21, 5, -90), fill:'rgba(46,74,125,.14)',
+        stroke:'#2E4A7D', 'stroke-width':'2.2' }));
+      g.appendChild(el('path', { d:'M36,238 L58,226 L80,238', fill:'none',
+        stroke:'#B07316', 'stroke-width':'3', 'stroke-linejoin':'round' }));
+      g.appendChild(el('circle', { cx:80, cy:238, r:6, fill:'#B07316' }));
+      /* 화살표 */
+      g.appendChild(el('defs', {})).appendChild(
+        (function(){ var m = el('marker', { id:'fsA', markerWidth:'8', markerHeight:'8',
+          refX:'7', refY:'4', orient:'auto' });
+          m.appendChild(el('path', { d:'M0,0 L8,4 L0,8 z', fill:'#78817F' })); return m; })());
+      [92, 92, 92].forEach(function(x, i){
+        g.appendChild(el('path', { d:'M' + x + ',' + (92 + i * 86) + ' L136,' + (140 - 0),
+          fill:'none', stroke:'#78817F', 'stroke-width':'1.2',
+          'stroke-dasharray':'5 4', 'marker-end':'url(#fsA)' }));
+      });
+      g.appendChild(label(150, 40, '02  GROW · LINK · MERGE', '#78817F', 10.5));
+      g.appendChild(klabel(150, 62, '키우고 · 잇고 · 합친다', '#414B49', 12.5));
+      /* 결과 분자 */
+      g.appendChild(el('path', { d:'M212,168 L244,152 L276,168',
+        fill:'none', stroke:'#1B7A6B', 'stroke-width':'3.4', 'stroke-linejoin':'round' }));
+      g.appendChild(el('path', { d:hexPath(186, 168, 26), fill:'rgba(46,74,125,.14)',
+        stroke:'#2E4A7D', 'stroke-width':'2.4' }));
+      g.appendChild(el('path', { d:polyPath(302, 168, 25, 5, -90), fill:'rgba(46,74,125,.14)',
+        stroke:'#2E4A7D', 'stroke-width':'2.4' }));
+      g.appendChild(el('line', { x1:186, y1:142, x2:186, y2:110, stroke:'#B07316', 'stroke-width':'3' }));
+      g.appendChild(el('circle', { cx:186, cy:110, r:6.5, fill:'#B07316' }));
+      g.appendChild(el('line', { x1:326, y1:182, x2:358, y2:200, stroke:'#B07316', 'stroke-width':'3' }));
+      g.appendChild(el('circle', { cx:358, cy:200, r:6.5, fill:'#B07316' }));
+      g.appendChild(klabel(402, 172, '리드', '#414B49', 12.5, 'start'));
+      g.appendChild(el('path', { d:'M382,168 L396,168', fill:'none', stroke:'#78817F',
+        'stroke-width':'1.2', 'stroke-dasharray':'4 3' }));
+    })();
+
+    /* --- 관점 3: 스캐폴드 호핑 --- */
+    (function(){
+      var g = newLayer();
+      g.appendChild(label(20, 40, 'BEFORE', '#78817F', 10.5));
+      g.appendChild(label(268, 40, 'AFTER', '#78817F', 10.5));
+      /* 이전 */
+      g.appendChild(el('path', { d:hexPath(96, 150, 34), fill:'rgba(46,74,125,.14)',
+        stroke:'#2E4A7D', 'stroke-width':'2.8' }));
+      /* 이후 — 오각형으로 바뀐 핵심 */
+      g.appendChild(el('path', { d:polyPath(340, 150, 34, 5, -90), fill:'rgba(46,74,125,.14)',
+        stroke:'#2E4A7D', 'stroke-width':'2.8', 'stroke-dasharray':'7 4' }));
+      /* 곁사슬은 그대로 (같은 위치, 같은 색) */
+      [[96, 116, 96, 76], [96, 184, 96, 224], [130, 168, 166, 190]].forEach(function(s){
+        g.appendChild(el('line', { x1:s[0], y1:s[1], x2:s[2], y2:s[3], stroke:'#B07316', 'stroke-width':'3' }));
+        g.appendChild(el('circle', { cx:s[2], cy:s[3], r:7, fill:'#B07316' }));
+      });
+      [[340, 116, 340, 76], [340, 184, 340, 224], [374, 168, 410, 190]].forEach(function(s){
+        g.appendChild(el('line', { x1:s[0], y1:s[1], x2:s[2], y2:s[3], stroke:'#B07316', 'stroke-width':'3' }));
+        g.appendChild(el('circle', { cx:s[2], cy:s[3], r:7, fill:'#B07316' }));
+      });
+      /* 화살표 */
+      g.appendChild(el('path', { d:'M196,150 L268,150', fill:'none', stroke:'#2E4A7D',
+        'stroke-width':'2', 'marker-end':'url(#fsA)' }));
+      g.appendChild(klabel(232, 138, '뼈대만 교체', '#2E4A7D', 12.5, 'middle'));
+      g.appendChild(klabel(232, 176, '곁사슬 유지', '#B07316', 12.5, 'middle'));
+      g.appendChild(label(220, 272, 'PHARMACOPHORE PRESERVED', '#78817F', 10.5, 'middle'));
+    })();
+
+    /* --- 관점 4: 정의 문장 --- */
+    (function(){
+      var g = newLayer();
+      g.appendChild(label(20, 44, '§1  DEFINING SENTENCE', '#A93E36', 10.5));
+      /* 두 상자 */
+      g.appendChild(el('rect', { x:20, y:62, width:400, height:78, fill:'rgba(169,62,54,.09)',
+        stroke:'#A93E36', 'stroke-width':'1.2' }));
+      g.appendChild(el('rect', { x:20, y:158, width:400, height:78, fill:'rgba(169,62,54,.09)',
+        stroke:'#A93E36', 'stroke-width':'1.2' }));
+      g.appendChild(klabel(34, 86, '조각 기반 설계 (FBDD)', '#A93E36', 12.5));
+      g.appendChild(klabel(34, 110, '“…핵심 스캐폴드가', '#16201E', 13.5));
+      g.appendChild(klabel(34, 130, '변형된다”', '#16201E', 13.5));
+      g.appendChild(klabel(34, 182, '스캐폴드 호핑', '#A93E36', 12.5));
+      g.appendChild(klabel(34, 206, '“…핵심 스캐폴드를', '#16201E', 13.5));
+      g.appendChild(klabel(34, 226, '변형한다”', '#16201E', 13.5));
+      /* 등호 */
+      g.appendChild(el('line', { x1:280, y1:142, x2:320, y2:142, stroke:'#A93E36', 'stroke-width':'3' }));
+      g.appendChild(el('line', { x1:280, y1:156, x2:320, y2:156, stroke:'#A93E36', 'stroke-width':'3' }));
+      g.appendChild(klabel(220, 272, '“반대 기법”이라고 해 놓고 같은 말을 한다', '#A93E36', 12.5, 'middle'));
+    })();
+
+    var V = [
+      { z:'VIEW 01', n:'분자의 구성',
+        h:'고리계 · 링커 · 곁사슬',
+        p:'원문 그림 19.2가 정의하는 분자의 구성 요소다. ' +
+          '<b>고리계</b>는 고리 구조 자체이고, <b>링커</b>는 고리계를 잇는 부분이며, ' +
+          '<b>곁사슬</b>은 고리에 붙어 생물학적 역할에 영향을 주는 기능 요소다. ' +
+          '고리계와 링커를 합친 것이 <b>뼈대(framework)</b>다.',
+        p2:'스캐폴드는 이 가운데 “화합물의 본질적 구조를 담고 다른 기능 요소가 붙는 토대가 되는 ' +
+          '주된 분자 구조”로 정의된다. ' +
+          '표적과 상호작용하는 요소를 품으면 기능적 스캐폴드, ' +
+          '상호작용 부위가 적절한 기하 구조로 붙도록 출구 벡터를 제공하면 구조적 스캐폴드다.',
+        note:'실제 화합물이 아니라 개념 도식이다' },
+      { z:'VIEW 02', n:'조각 기반 설계',
+        h:'조각에서 분자를 짓는다',
+        p:'원문 2절이 적는 작업 흐름은 <b>조각 생성 → 성장·연결·병합을 통한 진화 → ' +
+          '약물다운 성질의 선별</b>이다. ' +
+          '알려진 활성 화합물에서 유래한 작고 저분자량인 조각에서 출발한다.',
+        p2:'조각을 <b>키우고(growing)</b>, 둘을 <b>잇고(linking)</b>, ' +
+          '겹치는 부분을 <b>합쳐(merging)</b> 리드 분자를 만든다. ' +
+          '고속 대량 가상 스크리닝이 찾아낸 결합친화도가 약한 분자도 ' +
+          '이 방식으로 재설계하면 친화도가 높은 리드가 될 수 있다.',
+        note:'화학 공간이 10⁶⁰–10⁶³개로 추정되므로, 조합적 폭발이 이 접근의 근본 난점이다' },
+      { z:'VIEW 03', n:'스캐폴드 호핑',
+        h:'뼈대만 갈아 끼운다',
+        p:'생리활성 화합물의 <b>중심 분자 골격을 체계적으로 바꾸되 생물학적 활성은 보존</b>한다. ' +
+          '곁사슬과 파마코포어 요소는 그대로 두고 핵심 고리계만 다른 것으로 교체한다. ' +
+          '리드 호핑, 리프프로깅, 케모타입 스위칭이라고도 부른다.',
+        p2:'얻는 것은 새 화학 공간, 개선된 약동학과 지용성과 극성, 낮아진 독성, ' +
+          '그리고 <b>지식재산권 문제의 우회</b>다. ' +
+          '더 단단한 스캐폴드를 도입해 결합친화도를 높이기도 한다. ' +
+          'ScaffoldGVAE가 “곁사슬은 보존하면서 스캐폴드만 바꾸려 한다”고 적힌 것이 이 그림이다.',
+        note:'히트에서 리드로, 그리고 리드 최적화 단계의 핵심 기법이다' },
+      { z:'VIEW 04', n:'정의 문장',
+        h:'두 절이 같은 말을 한다',
+        p:'원문 1절이 두 기법을 구분하는 문장이다. ' +
+          '“반대 기법(reverse technique)”이라고 명시해 놓고 ' +
+          '<b>두 절 모두 “핵심 스캐폴드가 변형된다”고 적는다.</b>',
+        p2:'앞뒤 문장과 2절의 작업 흐름 서술에 비추어 ' +
+          '첫 절은 <b>“조각을 키우고 잇고 합친다”</b>는 뜻으로 읽어야 한다. ' +
+          '사소한 오탈자로 보일 수 있지만 한 장의 두 주제를 가르는 정의 문장이라는 점에서 그렇지 않다.',
+        q:'“FBDD uses small fragments … and the core scaffold is modified, ' +
+          'while in the case of scaffold hopping reverse technique is used, ' +
+          'i.e., fragments are left alone and the core scaffold is modified.”',
+        note:'이 관점은 원문에 대응하는 그림이 없다 · 정리본에서 문장 자체를 도해한 것이다' }
+    ];
+
+    V.forEach(function(v, i){
+      var b = document.createElement('button');
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+      b.setAttribute('aria-controls', 'fsBody');
+      b.innerHTML = '<span class="fz">' + v.z + '</span><span class="fn">' + v.n + '</span>';
+      b.addEventListener('click', function(){ sel(i); });
+      b.addEventListener('keydown', function(ev){
+        var d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return;
+        ev.preventDefault();
+        var nn = (i + d + V.length) % V.length;
+        btns[nn].focus(); sel(nn);
+      });
+      tabs.appendChild(b); btns.push(b);
+    });
+
+    function sel(i){
+      var v = V[i];
+      btns.forEach(function(b, j){
+        b.setAttribute('aria-selected', j === i ? 'true' : 'false');
+        b.querySelector('.fn').style.color = j === i ? (j === 3 ? '#A93E36' : '#16201E') : '';
+        b.style.borderTopColor = j === i ? (j === 3 ? '#A93E36' : '#2E4A7D') : 'transparent';
+      });
+      L.forEach(function(g, j){ g.setAttribute('opacity', j === i ? '1' : '0'); });
+      body.innerHTML =
+        '<span class="bk" style="color:' + (i === 3 ? '#A93E36' : '#2E4A7D') + '">'
+        + v.z + ' · ' + v.n + '</span>'
+        + '<h6>' + v.h + '</h6>'
+        + '<p>' + v.p + '</p>'
+        + '<p>' + v.p2 + '</p>'
+        + (v.q ? '<div class="quote">' + v.q + '</div>' : '')
+        + '<div class="note">' + v.note + '</div>';
+    }
+    sel(0);
+  })();
+})();
+</script>
+</body>
+</html>

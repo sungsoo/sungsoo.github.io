@@ -1,0 +1,902 @@
+---
+layout: null
+title: "AI monitoring of clinical outcomes and adverse reactions" 
+date: 2026-08-23
+categories: [artificial intelligence]
+tags: [artificial general intelligence, drug discovery]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제17장 · 임상 결과와 이상반응의 AI 감시 — 배치된 것과 아직 아닌 것</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@700;800;900&family=IBM+Plex+Sans+KR:wght@200;300;400;500;600&family=Overpass+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   경보 등급(alarm priority)의 색 체계
+   병상 감시 장치는 국제 표준에 따라 경보를 색으로 나눈다.
+   적색은 즉시 대응, 황색은 주의, 청록은 정상.
+   이 장이 다루는 것도 결국 감시 장치이므로 색을 거기서 가져왔다.
+     청록 teal  = 배치됨 · 병원에서 실제로 돌고 있다
+     황색 amber = 연구 단계 · 아직 논문 안에 있다
+     회색 grey  = 문헌 수준 · 개별 시스템이 아니라 메타분석이다
+     적색 red   = 확인이 필요한 대목
+   ============================================================ */
+:root{
+  --scr:#242A2E;
+  --scr-2:#2D343A;
+  --scr-3:#38414A;
+  --line:#3C464E;
+  --line-2:#4B5761;
+  --text:#DEE2E4;
+  --text-soft:#A5AEB4;
+  --text-mute:#6E7980;
+  --ok:#3FC9A6;
+  --ok-dim:rgba(63,201,166,.13);
+  --warn:#E8B33C;
+  --warn-dim:rgba(232,179,60,.13);
+  --lit:#8E9AA2;
+  --lit-dim:rgba(142,154,162,.13);
+  --crisis:#E4635A;
+  --disp:"Hahmlet", serif;
+  --sans:"IBM Plex Sans KR", sans-serif;
+  --mono:"Overpass Mono", monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--scr);color:var(--text);
+  font-family:var(--sans);font-weight:300;
+  font-size:16.5px;line-height:1.94;
+  -webkit-font-smoothing:antialiased;
+  word-break:keep-all;overflow-wrap:break-word;
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+#progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:90;
+  background:linear-gradient(90deg,var(--lit),var(--warn) 55%,var(--ok))}
+
+.wrap{max-width:1180px;margin:0 auto;padding:0 26px}
+.col{max-width:722px;margin:0 auto}
+.wide{max-width:966px;margin:0 auto}
+
+/* ---------- 표제 ---------- */
+header.hero{position:relative;overflow:hidden;padding:86px 0 52px;border-bottom:1px solid var(--line)}
+header.hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(740px 400px at 4% -12%, rgba(63,201,166,.14), transparent 62%),
+             radial-gradient(560px 320px at 97% 2%, rgba(232,179,60,.12), transparent 62%)}
+#heroTrace{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.5}
+.hero-inner{position:relative;z-index:1}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--text-mute);display:flex;gap:11px;align-items:center;flex-wrap:wrap;margin-bottom:24px}
+.kicker .dot{width:3px;height:3px;border-radius:50%;background:var(--line-2)}
+.kicker .k2{flex-basis:100%;margin-top:6px;color:var(--ok);font-weight:600}
+.chapnum{font-family:var(--mono);font-size:13px;letter-spacing:.15em;color:var(--warn);font-weight:600}
+h1{font-family:var(--disp);font-weight:800;font-size:clamp(29px,4.5vw,52px);
+  line-height:1.32;letter-spacing:-.024em;margin:14px 0 0;max-width:15em;color:#EDF0F1}
+h1 .o{color:var(--ok)}
+h1 .w{color:var(--warn)}
+.sub{font-weight:300;font-size:clamp(15px,1.6vw,18px);line-height:1.86;
+  color:var(--text-soft);margin:26px 0 0;max-width:33em}
+.keyfacts{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:42px 0 0}
+.keyfacts div{background:var(--scr-2);padding:17px 16px}
+.keyfacts .kv{font-family:var(--mono);font-weight:600;font-size:clamp(17px,2.2vw,23px);line-height:1.15}
+.keyfacts .kl{font-size:11.5px;color:var(--text-mute);margin-top:8px;line-height:1.6}
+@media(max-width:760px){.keyfacts{grid-template-columns:repeat(2,1fr)}}
+.byline{margin-top:28px;padding-top:20px;border-top:1px solid var(--line);
+  font-size:12.5px;line-height:1.84;color:var(--text-mute);max-width:52em}
+.byline b{color:var(--text-soft);font-weight:500}
+
+/* ---------- 테제 ---------- */
+.thesis{padding:58px 0 6px}
+.lede{font-weight:300;font-size:clamp(18px,2.2vw,23px);line-height:1.88;margin:0;color:#E9ECEE}
+.lede b{font-family:var(--disp);font-weight:800;letter-spacing:-.02em}
+.lede .w{color:var(--warn)}
+.lede .u{background:linear-gradient(transparent 72%, rgba(63,201,166,.28) 72%)}
+
+/* ---------- 본문 ---------- */
+main{padding:20px 0 30px}
+section.sec{padding:70px 0}
+section.sec + section.sec{border-top:1px solid var(--line)}
+.sechead{margin-bottom:28px}
+.secno{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--text-mute);
+  display:block;margin-bottom:6px;font-weight:600}
+h2{font-family:var(--disp);font-weight:800;font-size:clamp(23px,3vw,31px);
+  line-height:1.38;letter-spacing:-.026em;margin:0;color:#EDF0F1}
+.h2sub{font-size:13px;color:var(--text-mute);margin-top:8px}
+h3{font-family:var(--disp);font-weight:700;font-size:19.5px;line-height:1.5;
+  margin:44px 0 12px;display:flex;align-items:baseline;gap:10px;letter-spacing:-.02em;color:#E4E8EA}
+h3 .hn{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--warn);flex:0 0 auto}
+h4{font-weight:600;font-size:14.5px;margin:28px 0 9px;color:var(--ok)}
+p{margin:0 0 19px}
+a{color:var(--ok)}
+strong{font-weight:500;color:#EDF0F1}
+em.mk{font-style:normal;background:linear-gradient(transparent 72%, rgba(232,179,60,.30) 72%)}
+code{font-family:var(--mono);font-size:.92em;background:var(--scr-3);
+  border:1px solid var(--line);padding:1px 5px;color:var(--ok)}
+
+/* ---------- 판단 ---------- */
+.judge{margin:32px 0;padding:21px 23px;background:var(--scr-2);
+  border:1px solid var(--line);border-left:3px solid var(--crisis)}
+.judge .lab{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--crisis);display:block;margin-bottom:10px;font-weight:600}
+.judge p{margin:0;font-size:15.5px;line-height:1.9;color:var(--text-soft)}
+.judge p + p{margin-top:13px}
+.pull{margin:40px 0;padding:0 0 0 24px;border-left:2px solid var(--ok);
+  font-weight:300;font-size:clamp(18px,2.1vw,22px);line-height:1.86;color:#E4E8EA}
+
+/* ---------- 목록 ---------- */
+ul.gm{list-style:none;padding:0;margin:20px 0}
+ul.gm li{position:relative;padding-left:22px;margin-bottom:12px}
+ul.gm li::before{content:"";position:absolute;left:0;top:.84em;width:10px;height:2px;background:var(--ok)}
+ol.rn{list-style:none;counter-reset:rr;padding:0;margin:22px 0}
+ol.rn li{counter-increment:rr;position:relative;padding-left:38px;margin-bottom:15px}
+ol.rn li::before{content:counter(rr);position:absolute;left:0;top:.2em;
+  font-family:var(--mono);font-size:12px;color:var(--scr);background:var(--ok);
+  width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:600}
+
+/* ---------- 카드 ---------- */
+.grid{display:grid;gap:13px;margin:28px 0}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:840px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--scr-2);border:1px solid var(--line);padding:19px 20px 17px}
+.card .cno{font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--warn);
+  display:block;margin-bottom:8px;font-weight:600}
+.card h5{font-family:var(--disp);font-weight:700;font-size:17px;margin:0 0 8px;color:#E4E8EA;letter-spacing:-.02em}
+.card p{font-size:14.3px;line-height:1.86;margin:0;color:var(--text-soft)}
+.card .meta{font-family:var(--mono);font-size:11.5px;color:var(--text-mute);margin-top:11px;
+  padding-top:9px;border-top:1px dashed var(--line-2);line-height:1.7}
+
+/* ---------- 표 ---------- */
+.tablewrap{overflow-x:auto;margin:26px 0;border:1px solid var(--line);background:var(--scr-2)}
+table.tb{width:100%;border-collapse:collapse;font-size:14px;min-width:620px}
+table.tb th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-mute);text-align:left;padding:11px 12px;border-bottom:1px solid var(--line-2);font-weight:600}
+table.tb td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top;
+  line-height:1.7;color:var(--text-soft)}
+table.tb tr:last-child td{border-bottom:0}
+table.tb td.k{font-weight:500;white-space:nowrap;color:var(--text)}
+table.tb td.g{font-family:var(--mono);font-size:12.5px;color:var(--text-mute)}
+table.tb td.n{font-family:var(--mono);font-size:13px;color:var(--ok);white-space:nowrap}
+table.tb td.c{font-family:var(--mono);font-size:13px;color:var(--crisis);white-space:nowrap}
+
+/* ---------- 시그니처: 감시반 ---------- */
+.mon{margin:38px 0 12px;border:1px solid var(--line-2);background:var(--scr-2)}
+.mon-head{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;
+  justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.mon-head .t{font-family:var(--disp);font-weight:800;font-size:20px;color:#EDF0F1;letter-spacing:-.024em}
+.mon-head .s{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--text-mute)}
+.mon-tally{display:flex;border-bottom:1px solid var(--line)}
+.mon-tally div{flex:1;padding:13px 18px;border-right:1px solid var(--line)}
+.mon-tally div:last-child{border-right:0}
+.mon-tally .tn{font-family:var(--mono);font-size:23px;font-weight:600;line-height:1.1}
+.mon-tally .tl{font-size:12px;color:var(--text-mute);margin-top:4px}
+.mon-grid{display:grid;grid-template-columns:330px 1fr}
+.mon-list{border-right:1px solid var(--line);background:var(--scr)}
+.mon-list button{display:block;width:100%;appearance:none;border:0;background:transparent;
+  cursor:pointer;text-align:left;font-family:inherit;padding:11px 16px;
+  border-bottom:1px solid var(--line);border-left:3px solid transparent;transition:.2s}
+.mon-list button:last-child{border-bottom:0}
+.mon-list button:hover{background:var(--scr-2)}
+.mon-list button:focus-visible{outline:2px solid var(--ok);outline-offset:-2px}
+.mon-list .dotx{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:1px}
+.mon-list .mn{font-size:13.5px;color:var(--text-soft);display:inline}
+.mon-list .mm{font-family:var(--mono);font-size:10.5px;color:var(--text-mute);display:block;margin-top:3px;padding-left:16px}
+.mon-list button[aria-selected="true"]{background:var(--scr-2)}
+.mon-list button[aria-selected="true"] .mn{color:#EDF0F1;font-weight:500}
+.mon-body{padding:22px 24px}
+.mon-body .bk{font-family:var(--mono);font-size:11.5px;letter-spacing:.13em;display:block;
+  margin-bottom:8px;font-weight:600}
+.mon-body h6{font-family:var(--disp);font-weight:800;font-size:20px;margin:0 0 14px;color:#EDF0F1;letter-spacing:-.024em}
+.mon-body .rows{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:15px}
+.mon-body .rows div span{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  color:var(--text-mute);display:block;text-transform:uppercase;font-weight:600}
+.mon-body .rows div b{font-family:var(--mono);font-size:13px;font-weight:600;display:block;margin-top:4px;
+  color:var(--text-soft);line-height:1.5}
+.mon-body p{margin:0;font-size:14.8px;line-height:1.88;color:var(--text-soft)}
+.mon-body .st{display:inline-block;font-family:var(--mono);font-size:11px;padding:3px 9px;
+  letter-spacing:.08em;font-weight:600;margin-bottom:12px}
+@media(max-width:900px){.mon-grid{grid-template-columns:1fr}
+  .mon-list{border-right:0;border-bottom:1px solid var(--line)}}
+@media(max-width:640px){.mon-body .rows{grid-template-columns:1fr;gap:9px}
+  .mon-tally{flex-direction:column}.mon-tally div{border-right:0;border-bottom:1px solid var(--line)}}
+
+/* ---------- 지표 ---------- */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+  border:1px solid var(--line);margin:26px 0}
+.metrics div{background:var(--scr-2);padding:15px 14px}
+.metrics .mv{font-family:var(--mono);font-weight:600;font-size:18px;color:var(--ok)}
+.metrics .ml{font-size:11.5px;color:var(--text-mute);margin-top:5px;line-height:1.55}
+@media(max-width:640px){.metrics{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- 그림 ---------- */
+figcaption{font-size:12.5px;line-height:1.78;color:var(--text-mute);margin-top:11px;margin-bottom:30px}
+figcaption b{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--warn);
+  text-transform:uppercase;font-weight:600;margin-right:8px}
+
+/* ---------- 목차 ---------- */
+nav.rail{position:fixed;left:calc(50% - 556px);top:50%;transform:translateY(-50%);z-index:40;
+  display:none;opacity:0;pointer-events:none;transition:opacity .45s}
+nav.rail.show{opacity:1;pointer-events:auto}
+@media(min-width:1280px){nav.rail{display:block}}
+nav.rail ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--line-2)}
+nav.rail a{display:block;text-decoration:none;font-size:11.5px;color:var(--text-mute);
+  padding:5px 0 5px 13px;transition:.2s;position:relative;
+  max-width:146px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav.rail a::before{content:"";position:absolute;left:-1px;top:50%;height:0;width:3px;
+  background:var(--ok);transform:translateY(-50%);transition:height .25s}
+nav.rail a:hover{color:var(--text)}
+nav.rail a.act{color:var(--ok);font-weight:500}
+nav.rail a.act::before{height:16px}
+
+/* ---------- 결론 ---------- */
+.closing{border:1px solid var(--ok);background:var(--scr-2);margin:30px 0}
+.closing .ci{padding:18px 24px;border-bottom:1px solid var(--line)}
+.closing .ci:last-child{border-bottom:0}
+.closing .ck{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;color:var(--ok);
+  display:block;margin-bottom:6px;font-weight:600}
+.closing .ci p{margin:0;font-size:15px;line-height:1.88;color:var(--text-soft)}
+
+footer{border-top:1px solid var(--line);padding:48px 0 84px;margin-top:32px}
+.src2{font-size:12.5px;line-height:1.92;color:var(--text-mute)}
+.src2 b{color:var(--text-soft);font-weight:500}
+.src2 .note{margin-top:20px;padding-top:16px;border-top:1px dashed var(--line-2);font-size:12px}
+
+.reveal{opacity:0;transform:translateY(14px);
+  transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.on{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<nav class="rail" aria-label="장 목차"><ol id="railList"></ol></nav>
+
+<header class="hero">
+  <svg id="heroTrace" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+  <div class="wrap"><div class="wide hero-inner">
+    <div class="kicker">
+      <span>Artificial Intelligence in Precision Drug Design</span><span class="dot"></span>
+      <span>Volume 2 · Advanced Applications</span>
+      <b class="k2">Elsevier / Academic Press, 2026</b>
+    </div>
+    <div class="chapnum">CHAPTER 17</div>
+    <h1>임상 결과와 이상반응의 AI 감시:<br><span class="o">배치된 것</span>과 <span class="w">아직 아닌 것</span></h1>
+    <p class="sub">전통적 결과 감시는 정해진 시점의 간헐적 관찰에 기댔다.
+    그 사이의 미세하지만 임상적으로 중요한 변화는 놓쳤다.
+    이 장은 그 틈을 AI로 메우자고 하면서, <b>열 개 시스템의 현재 상태를 표에 적어 둔다.</b></p>
+
+    <div class="keyfacts reveal">
+      <div><div class="kv" style="color:var(--ok)">2개</div><div class="kl">표 17.2의 열 개 시스템 중 실제로 배치된 것</div></div>
+      <div><div class="kv" style="color:var(--warn)">7개</div><div class="kl">연구 단계에 머물러 있는 것</div></div>
+      <div><div class="kv" style="color:var(--lit)">1개</div><div class="kl">개별 시스템이 아니라 메타분석 수준의 통찰</div></div>
+      <div><div class="kv" style="color:var(--crisis)">35%</div><div class="kl">혈액투석 중 이상반응 예측 모형의 민감도. AUROC는 0.83이다</div></div>
+    </div>
+
+    <div class="byline">
+      <b>원저자</b> Saira Hamid, Raiyan Ali, Kushagra Khanna, Khalid Raza<br>
+      <b>소속</b> Watson-Crick Centre for Molecular Medicine, IUST (Awantipora, Kashmir) ·
+      CSIR-Institute of Genomics and Integrative Biology (Delhi) ·
+      UCSI University (Kuala Lumpur) · Jamia Millia Islamia (New Delhi)<br>
+      <b>편저</b> Khalid Raza (Jamia Millia Islamia) &nbsp;·&nbsp; <b>DOI</b> 10.1016/B978-0-443-44430-2.00002-5
+    </div>
+  </div></div>
+</header>
+
+<div class="wrap">
+<div class="wide thesis reveal">
+  <p class="lede">전통적 결과 감시의 가장 큰 결함은 <span class="u">간헐적 데이터 수집</span>이었다.
+  대부분의 평가가 정해진 시점에 이루어지므로
+  그 사이의 미세하지만 임상적으로 중요한 변화를 놓친다.
+  <span class="w">패혈증이나 급성 비대상성 심부전처럼 빠르게 진행하는 상황에서 이것은 큰 문제다.</span>
+  AI가 그 틈을 메울 수 있다는 것이 이 장의 논지다.
+  다만 이 장은 <b>자기가 소개한 시스템들이 지금 어디까지 와 있는지를
+  표의 마지막 열에 적어 둔다.</b> 그 열이 이 장을 읽는 열쇠다.</p>
+</div>
+</div>
+
+<main class="wrap">
+
+<!-- ================= 1 ================= -->
+<section class="sec" id="s1">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 01&ndash;02</span>
+    <h2>무엇을 딛고 서는가</h2>
+    <div class="h2sub">서론 · 데이터 출처와 상호운용성</div></div>
+
+  <p>과거의 결과 감시는 의사의 신체검진, 영상의학 판독, 검사실 검사, 후향적 차트 검토에 의존했다.
+  임상 경과는 표준 서식이나 서술형 기록에 담겼다.
+  심장학, 종양학, 정형외과 같은 일부 영역에서는 임상 레지스트리와 시판 후 감시 체계가
+  장기 결과 정보를 모아 왔다.</p>
+  <p>그런데 이 방식들은 <b>확장성이 낮고, 데이터 수집에 시간적 공백이 있으며,
+  인간의 오류와 주관적 판단에 취약하다.</b>
+  전자의무기록이 들어와도 자유 텍스트 필드, 누락 항목, 시스템 간 용어 차이가
+  데이터 품질을 훼손한다.</p>
+
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>데이터 출처</th><th>내용</th><th>임상 결과에서의 쓰임</th></tr></thead>
+      <tbody>
+        <tr><td class="k">전자의무기록 (EHR)</td>
+          <td class="g">인구학, 진단, 검사, 투약, 영상, 의사 기록. 정형과 비정형이 함께 있다</td>
+          <td>질병 궤적 감시, 이상반응 탐지, 위험 층화, 실시간 의사결정 지원</td></tr>
+        <tr><td class="k">임상 레지스트리</td>
+          <td class="g">특정 질환·시술에 초점을 둔 조직화된 데이터베이스. 표준화된 결과 지표와 장기 추적</td>
+          <td>개입의 효과와 안전성 평가, 만성질환 감시, 시판 후 감시</td></tr>
+        <tr><td class="k">실세계 데이터 (RWD)</td>
+          <td class="g">임상시험 밖의 데이터. 환자 보고 결과, 보험 청구, 모바일 헬스 앱, 웨어러블</td>
+          <td>일상 속 질병 진행, 치료 순응, 이상반응 탐지, 환자 보고 합병증</td></tr>
+        <tr><td class="k">문헌과 공개 DB</td>
+          <td class="g">발표 논문, 약물감시 데이터베이스(FAERS, EudraVigilance), 오믹스 데이터셋</td>
+          <td>가설 생성, 바이오마커 발굴, 신호 탐지용 AI 학습 데이터</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption><b>표 17.1</b> 원문의 데이터 출처 정리표를 옮겼다.</figcaption>
+
+  <h3><span class="hn">2.2</span> 세 개의 기둥</h3>
+  <div class="grid g3">
+    <div class="card"><span class="cno">품질</span><h5>정확·완전·적시</h5>
+      <p>문서화 관행의 이질성, 사람의 실수로 인한 입력 오류, 임상 코드의 비일관적 사용,
+      엄격한 검증 규약의 부재가 문제를 만든다.
+      <b>EHR 의사결정 시스템에 내장된 자동 검증 규칙</b>이 입력 시점에 이상값을 실시간으로 경고한다.
+      중복 제거, 결측 대치, 이상치 탐지 같은 정제 기법도 함께 쓰인다.</p></div>
+    <div class="card"><span class="cno">표준화</span><h5>같은 말을 같은 뜻으로</h5>
+      <p>임상 용어는 <code>SNOMED CT</code>, 검사는 <code>LOINC</code>, 진단은 <code>ICD</code>.
+      <code>OMOP</code>과 <code>PCORnet CDM</code>이 일관된 데이터 구조를 정의해
+      다기관 연구를 가능하게 한다.</p></div>
+    <div class="card"><span class="cno">상호운용성</span><h5>세 층위</h5>
+      <p><b>기초</b>는 해석 없이 데이터를 주고받는 수준,
+      <b>구조</b>는 데이터 필드 수준에서 이해되는 수준(예: 같은 단위로 코딩된 검사 결과),
+      <b>의미</b>는 모호함 없이 해석되고 활용되는 최고 수준이다.
+      <code>HL7</code>, <code>FHIR</code>, <code>DICOM</code>이 형식을 제공하고,
+      <b>마스터 환자 색인(MPI)</b>이 식별자가 불완전해도 기록을 연결한다.</p></div>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="sec" id="s2">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 03&ndash;04</span>
+    <h2>기법과 적용</h2>
+    <div class="h2sub">기계학습 · 자연어처리 · 딥러닝 · 설명가능성</div></div>
+
+  <p>지도학습(결정트리, 랜덤포레스트, SVM)은 재입원, 수술 후 합병증, 치료 반응을 예측한다.
+  비지도학습(k-평균, 계층적 군집화)은 표현형과 환자 하위집단을 찾는다.
+  자연어처리는 개체명 인식(NER), 문서 분류, 관계 추출로
+  <b>서술형 기록에 묻혀 있던 이상반응을 끌어낸다.</b>
+  딥러닝에서는 CNN이 영상을, RNN과 LSTM이 시계열을,
+  오토인코더가 이상 탐지와 잡음 제거를, 트랜스포머(BERT, GPT)가 맥락을 다룬다.</p>
+
+  <div class="judge">
+    <span class="lab">3.1절이 요구하는 것 &mdash; 이 장의 가장 좋은 대목</span>
+    <p>하위집단을 나누는 이야기 끝에 이 장은 이렇게 적는다.
+    <b>&ldquo;성능은 전체만이 아니라 임상적·인구학적 범주별로 층화해서 보고되어야 한다.&rdquo;</b>
+    민감도와 특이도가 남녀 사이에서, 연령대 사이에서 다를 수 있기 때문이다.</p>
+    <p>그리고 두 개의 공정성 지표를 구체적으로 든다.
+    <b>등화 승산(equalized odds)</b>은 위양성과 위음성의 오류율이 하위집단에 걸쳐 균형을 이루는지 보고,
+    <b>보정(calibration)</b>은 예측 위험이 실제 관찰된 사건률과 일관되게 대응하는지 본다.</p>
+    <p><em class="mk">이 책의 여러 장이 &lsquo;편향&rsquo;을 말했지만,
+    그것을 어떤 지표로 재는지까지 적은 곳은 드물다.</em></p>
+  </div>
+
+  <h3><span class="hn">4.1</span> 약물감시의 신호 탐지</h3>
+  <p>전통적으로는 보고 승산비(ROR)와 비례 보고비(PRR) 같은 <b>불균형 분석</b>에 기댔다.
+  이제 랜덤포레스트, SVM, 로지스틱 회귀, XGBoost가
+  알려진 이상반응이 표지된 데이터로 학습해 새 약물&ndash;사건 조합을 분류한다.</p>
+  <ul class="gm">
+    <li><b>로지스틱 회귀</b> &mdash; 투명하고 해석하기 쉽지만
+    이질적인 임상 특징을 다룰 때 복잡한 방법보다 성능이 떨어지는 경향이 있다.</li>
+    <li><b>SVM</b> &mdash; 정확도와 재현율의 균형이 좋고 희귀 사건 상황에 유용하다.
+    다만 계산 부담 때문에 대규모 데이터에서 어려움을 겪는다.</li>
+    <li><b>랜덤포레스트</b> &mdash; 고차원 불균형 임상 데이터를 잘 다루고 과적합에 견고하다.
+    재표집 기법과 결합한 모형이 한 메타분석에서 <b>AUC 약 0.945</b>를 냈다.</li>
+    <li><b>그래디언트 부스팅</b> &mdash; 잔차 오차를 반복 보정해 랜덤포레스트와 SVM을 자주 앞선다.</li>
+  </ul>
+  <p>전처리도 구체적으로 적혀 있다.
+  약물명은 <code>RxNorm</code>이나 WHO 약물 사전으로 표준 식별자에 대응시켜 중복을 막고,
+  결측은 평균·중앙값 대치나 다중 대치로 다루며,
+  범주형은 원핫 인코딩이나 임베딩으로 바꾼다.
+  약물&ndash;약물 상호작용, 동반질환 지수, <b>발현까지의 시간</b> 같은 복합 특징을 만들어 예측력을 높인다.</p>
+
+  <h3><span class="hn">4.2&ndash;4.3</span> 조기경보와 의사결정 지원</h3>
+  <div class="grid g2">
+    <div class="card"><span class="cno">EWS</span><h5>조기경보 시스템</h5>
+      <p>활력징후, 검사, 동반질환, 이전 진료 이력의 시계열을 학습해
+      패혈증, 심정지, 호흡부전 같은 합병증의 징후를 잡아낸다.
+      <b>수정 조기경보점수(MEWS)</b>와 <b>Epic 패혈증 모형</b>이 실시간 데이터를 모아
+      증상이 드러나기 훨씬 전에 경보를 낸다.</p></div>
+    <div class="card"><span class="cno">CDSS</span><h5>임상의사결정지원</h5>
+      <p>정형 EHR 정보와 자연어처리로 뽑은 비정형 기록을 결합한다.
+      <b>MedAware</b>는 이상치 식별과 기계학습을 결합해
+      인구 수준의 처방 경향에 비추어 처방 오류를 찾아낸다.
+      감사 로그와 모형 투명성 기능이 책임성과 규제 준수를 뒷받침한다.</p></div>
+  </div>
+  <p>다만 이 장은 <b>경보 피로(alert fatigue)</b>를 반복해서 경고한다.
+  과도하거나 무관한 경보가 쏟아지면 시스템의 효과 자체가 떨어진다는 것이다.
+  그래서 <b>인간 개입형(HITL)</b> 접근 &mdash; 의료진이 AI 경보를 검토한 뒤 행동하는 방식 &mdash; 을
+  특히 이상반응 탐지에서 중요하다고 강조한다.</p>
+ </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="sec" id="s3">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 05</span>
+    <h2>세 개의 사례</h2>
+    <div class="h2sub">심부전 · 종양학 · 당뇨</div></div>
+
+  <div class="grid g3">
+    <div class="card"><span class="cno">메이오 클리닉</span><h5>AI 심전도</h5>
+      <p>심박출률이 낮은 상태를 잡아내려면 원래 심초음파 같은 비싸고 접근성 낮은 영상이 필요했다.
+      딥러닝 모형이 사람 눈에 보이지 않는 심전도의 미세한 양상을 읽어
+      입원, 부정맥, 사망의 위험을 표시한다.</p>
+      <div class="meta">참가자 2,400명 이상 · 11개국 · 심전도 12만 5천 건 이상 ·
+      낮은 좌심실박출률 탐지 AUC 0.87–0.93 · FDA 승인 후 임상 사용 허가</div></div>
+    <div class="card"><span class="cno">존스홉킨스</span><h5>폐암 CT 감시</h5>
+      <p>종양의 크기·형태·질감의 미세한 변화를 읽어
+      치료 실패나 재발의 조기 징후를 잡는다.
+      호중구 감소나 장기 독성 같은 <b>항암화학요법 이상반응의 위험군</b>도 함께 짚어낸다.</p></div>
+    <div class="card"><span class="cno">HypoDE 시험</span><h5>연속혈당측정</h5>
+      <p>실시간 혈당 판독으로 저혈당·고혈당 사건을 예측하고 피드백을 준다.
+      HbA1c, 중증 저혈당 발생, 당뇨병성 케톤산증 입원 같은 장기 결과도 추적한다.
+      <b>고위험군에서 중증 저혈당 빈도를 크게 줄였다.</b></p></div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">메이오 사례가 다른 이유</span>
+    <p>이 책 전체에서 <b>FDA 승인을 받고 임상에서 실제로 쓰이고 있다</b>고 명시된 사례는 많지 않다.
+    애플워치 같은 소비자 기기의 단일 유도 심전도까지 확장되었고,
+    분석 결과가 전자의무기록에 통합되었다는 서술도 구체적이다.</p>
+    <p>주목할 대목은 하나 더 있다. <b>표준 심전도에서는 정상인데
+    AI 점수가 비정상으로 나온 환자들</b>에서 심혈관 이상과 사망 위험이 더 높게 나타났다는 것이다.
+    <em class="mk">사람이 정상이라고 읽은 신호에서 기계가 다른 것을 읽었고, 그쪽이 맞았다는 뜻이다.</em></p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="sec" id="s4">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 06</span>
+    <h2>감시반</h2>
+    <div class="h2sub">표 17.2 · 열 개 시스템의 현재 상태</div></div>
+
+  <p>표 17.2는 이 책에서 드문 열을 하나 갖고 있다. <b>&lsquo;현재 상태(Current status)&rsquo;</b>다.
+  각 시스템이 병원에 배치되어 있는지, 연구 단계인지, 아니면 개별 시스템이 아니라
+  문헌 수준의 통찰인지를 적는다.</p>
+
+  <div class="mon reveal" id="monPanel">
+    <div class="mon-head">
+      <span class="t">감시반 &mdash; 열 개 시스템</span>
+      <span class="s">Table 17.2 · current status</span>
+    </div>
+    <div class="mon-tally">
+      <div><div class="tn" style="color:var(--ok)">2</div><div class="tl">배치됨 · 병원에서 돌고 있다</div></div>
+      <div><div class="tn" style="color:var(--warn)">7</div><div class="tl">연구 단계 · 아직 논문 안에 있다</div></div>
+      <div><div class="tn" style="color:var(--lit)">1</div><div class="tl">문헌 수준 · 메타분석의 통찰</div></div>
+    </div>
+    <div class="mon-grid">
+      <div class="mon-list" role="tablist" aria-label="시스템 목록"></div>
+      <div class="mon-body" id="monBody" role="tabpanel"></div>
+    </div>
+  </div>
+  <figcaption><b>표 17.2 · 그림 1</b> 원문의 비교표를 상태별로 색을 달리해 옮겼다.
+  각 항목을 누르면 AI 기법, 데이터셋, 표본 크기, 보고된 지표, 검증 방법이 나온다.
+  <b>표에 &lsquo;명시되지 않음&rsquo;으로 적힌 칸은 그대로 두었다.</b></figcaption>
+
+  <h3><span class="hn">6.1</span> 보고된 성능 수치</h3>
+  <div class="tablewrap reveal">
+    <table class="tb">
+      <thead><tr><th>맥락</th><th>보고된 지표</th></tr></thead>
+      <tbody>
+        <tr><td class="k">수술 중 이상사건 자동 탐지</td>
+          <td class="n">AUROC 0.82(출혈) ~ 0.97(백내장 수술)</td></tr>
+        <tr><td class="k">혈액투석 중 이상사건<br>
+          <span style="font-weight:300;font-size:12px;color:var(--text-mute)">근육 경련, 혈압 상승</span></td>
+          <td class="c">AUROC 0.83 · 민감도 35% · 특이도 96%</td></tr>
+        <tr><td class="k">티사젠렉류셀 심혈관 이상사건<br>
+          <span style="font-weight:300;font-size:12px;color:var(--text-mute)">XGBoost 신호 예측</span></td>
+          <td class="c">AUROC 0.76 · 정확도 0.98 · 민감도 0.98 · 특이도 0.99 · PPV 0.99 · NPV 0.98<br>
+          <span style="color:var(--text-mute)">전통적 불균형 분석은 AUROC 0.56–0.67</span></td></tr>
+        <tr><td class="k">종양학 이상약물반응 예측 메타분석</td>
+          <td class="n">민감도 0.82(95% CI 0.69–0.90) · 특이도 0.84(0.75–0.90) · AUROC 0.83(0.77–0.87)</td></tr>
+        <tr><td class="k">트랜스포머 기반 패혈증 분류</td>
+          <td class="n">정확도 0.964 · 정밀도 0.956 · 재현율 0.967 · F1 &gt;0.95</td></tr>
+        <tr><td class="k">약국 기록 자연어처리 이상사건 탐지</td>
+          <td class="n">정확도 91% · F1 0.88</td></tr>
+        <tr><td class="k">이상약물반응 예측 체계적 문헌고찰</td>
+          <td class="n">통합 정확도 0.84 · 재현율 0.82 · F1 0.81–0.86</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <figcaption>6.1절이 인용한 성능 수치를 모았다. <b>붉게 표시한 두 줄은 확인이 필요하다.</b></figcaption>
+
+  <div class="judge">
+    <span class="lab">첫째 &mdash; 민감도 35퍼센트</span>
+    <p>혈액투석 중 이상사건 예측 모형은 <b>AUROC 0.83, 민감도 35퍼센트, 특이도 96퍼센트</b>다.
+    AUROC 0.83만 보면 괜찮은 모형처럼 읽힌다.</p>
+    <p>그런데 민감도 35퍼센트는 <b>실제로 일어난 이상사건 열 건 중 여섯 건 이상을 놓친다</b>는 뜻이다.
+    특이도 96퍼센트가 높은 것은 대부분의 경우에 &lsquo;문제없음&rsquo;이라고 답하기 때문이다.
+    <em class="mk">이상사건은 드물게 일어나므로, 거의 늘 &lsquo;정상&rsquo;이라고 답해도 특이도는 높게 나온다.</em></p>
+    <p>이 장이 6.1절에서 스스로 적은 대로,
+    &ldquo;놓친 참양성이 환자 안전에 심각한 결과를 낳을 수 있는 고위험 상황에서는 재현율이 결정적&rdquo;이다.
+    같은 절이 그 원칙을 적고 그 아래에 민감도 35퍼센트짜리 사례를 인용한다.</p>
+  </div>
+
+  <div class="judge">
+    <span class="lab">둘째 &mdash; 산술이 맞지 않는 조합</span>
+    <p>티사젠렉류셀 사례는 <b>AUROC 0.76</b>인데
+    <b>민감도 0.98, 특이도 0.99</b>로 적혀 있다.</p>
+    <p>이 조합은 성립하지 않는다. ROC 곡선이 (1&minus;특이도, 민감도) = (0.01, 0.98)을 지난다면,
+    그 아래 면적은 사다리꼴 계산만으로도 <b>최소 0.985</b>가 된다.
+    민감도와 특이도가 그렇게 높으면서 AUROC가 0.76일 수는 없다.</p>
+    <p>어느 쪽 수치가 옳은지는 원문만으로 알 수 없다.
+    다만 <b>같은 줄 안에서 두 수치가 서로를 부정한다</b>는 사실은 확인된다.
+    이 사례가 &ldquo;전통적 불균형 분석(AUROC 0.56&ndash;0.67)을 앞선다&rdquo;는 근거로 쓰이고 있으므로
+    가볍게 넘길 대목은 아니다.</p>
+  </div>
+
+  <h3><span class="hn">6.2&ndash;6.4</span> 검증과 배치 후</h3>
+  <ul class="gm">
+    <li><b>후향 검증</b>은 빠르고 싸지만 실제 임상 워크플로의 역동성과 복잡성을 담지 못한다.
+    <b>전향 검증</b>이 임상적 유용성과 안전성, 사용자 신뢰를 확립하는 <b>표준(gold standard)</b>이다.</li>
+    <li><b>일반화</b> &mdash; 단일 기관 데이터로 학습한 모형은 인구 구성, 진료 관행, 데이터 품질이 다른 곳에서
+    같은 성능을 내지 못한다. 다양한 데이터셋에서의 외부 검증이 필요하다.</li>
+    <li><b>모형 표류(model drift)</b> &mdash; 시간이 지나면서 환자 구성, 질병 추세, 진료 규약이 바뀌면
+    모형의 정확도가 떨어진다. 정기적 성능 감사, 임상의 피드백, 지속적 데이터 수집으로
+    재보정하거나 재학습해야 한다.
+    <b>임상의가 AI 출력과 어떻게 상호작용했는지를 기록</b>하면 사용성과 신뢰를 평가할 수 있다.</li>
+  </ul>
+ </div>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="sec" id="s5">
+ <div class="col">
+  <div class="sechead"><span class="secno">SECTION 07&ndash;08</span>
+    <h2>한계와 규제</h2>
+    <div class="h2sub">데이터 · 편향 · 확장성 · 채택의 장벽 · 그리고 책임</div></div>
+
+  <div class="grid g2">
+    <div class="card"><span class="cno">7.1</span><h5>데이터의 가용성과 품질</h5>
+      <p>의료 데이터는 불완전하고 비일관적이며 파편화되어 있다.
+      상당량이 자유 텍스트, 영상, 신호 같은 비정형이라 그대로 쓸 수 없다.
+      부서와 기관마다 <b>데이터 사일로</b>가 있어 통합이 어렵다.
+      대응으로 OMOP과 FHIR 같은 공통 데이터 모형, 데이터 거버넌스 체계,
+      그리고 <b>연합학습</b>이 제시된다.</p></div>
+    <div class="card"><span class="cno">7.2</span><h5>편향과 공정성</h5>
+      <p>AI 모형은 의료 데이터에 이미 있는 편향을 유지할 뿐 아니라 <b>키울 수도</b> 있다.
+      대응으로 재표집, 재가중, 적대적 편향 제거, 공정성 인식 알고리즘, 정기 감사가 제시되고,
+      <b>윤리학자와 지역사회 구성원을 포함한 학제 간 팀</b>이 모형 개발에 참여해야 한다고 적는다.</p></div>
+    <div class="card"><span class="cno">7.3</span><h5>확장성과 지속가능성</h5>
+      <p>통제된 조건에서의 성능과 다른 임상 환경으로의 이전 사이에 큰 간극이 있다.
+      워크플로, 인구 구성, 인프라가 바뀌면 성능이 떨어진다.
+      모형을 최신 상태로 유지하는 비용도 크다.
+      <b>모듈형 설계</b>와 지속 학습 시스템이 대안으로 제시된다.</p></div>
+    <div class="card"><span class="cno">7.4</span><h5>채택의 장벽</h5>
+      <p>신뢰성과 이해가능성에 대한 임상의의 의구심, 워크플로 방해에 대한 우려,
+      규제 불확실성과 데이터 프라이버시가 걸림돌이다.
+      <b>사용자 중심 설계</b>와 교육·훈련 프로그램이 필요하다고 적는다.</p></div>
+  </div>
+
+  <h3><span class="hn">8</span> 규제와 책임</h3>
+  <p>FDA와 EMA는 많은 AI 도구를 의료기기로 분류하며,
+  그 기준은 <b>시간이 지나면서 학습하고 변하는 시스템</b>을 반영하도록 갱신되고 있다.
+  이 장은 여기에 국제적 흐름을 덧붙인다.</p>
+  <ul class="gm">
+    <li><b>WHO</b> &mdash; 보건 분야 AI의 윤리와 거버넌스 지침. 책임성, 포용성, 안전 기준을 강조한다.</li>
+    <li><b>IMDRF</b>(국제의료기기규제당국자포럼) &mdash; 의료기기 소프트웨어(SaMD) 규제의 협력 표준을 제안했다.</li>
+    <li><b>일본 PMDA</b>와 <b>중국 NMPA</b> &mdash; 적응형 AI 시스템의 심사 방식을 구체적으로 제시했다.</li>
+    <li><b>HIPAA</b>와 <b>GDPR</b> &mdash; 데이터 보호의 기본 틀.
+    특히 직접 진료를 넘어 다기관 목적으로 데이터가 쓰일 때
+    <b>환자에게 알리고 동의를 받는 절차</b>가 필요하다.</li>
+  </ul>
+
+  <div class="pull">
+    이 장이 규제 절에서 던지는 물음 하나.
+    AI가 낸 권고로 피해가 생겼을 때 <b>책임은 그 도구를 쓴 임상의에게 있는가,
+    그것을 배치한 기관에 있는가, 아니면 만든 개발자에게 있는가.</b>
+    이 불확실성이 엄격한 법적 틀과 위험 분담 기제의 필요를 뒷받침한다고 적는다.
+  </div>
+ </div>
+</section>
+
+<!-- ================= 결론 ================= -->
+<section class="sec" id="s6">
+ <div class="col">
+  <div class="sechead"><span class="secno">CLOSING</span>
+    <h2>이 장이 남기는 것</h2>
+    <div class="h2sub">결론 · 그리고 읽고 난 뒤의 판단</div></div>
+
+  <div class="closing">
+    <div class="ci"><span class="ck">01 · 마지막 열</span>
+      <p>표 17.2의 &lsquo;현재 상태&rsquo; 열이 이 장의 값어치다.
+      <b>배치 2, 연구 7, 문헌 1.</b>
+      같은 표에 성능 수치와 배치 상태가 함께 있으므로
+      어느 숫자가 병상에서 나온 것이고 어느 숫자가 아직 논문 안에 있는지 구분된다.</p></div>
+    <div class="ci"><span class="ck">02 · 층화해서 보고하라</span>
+      <p>3.1절이 등화 승산과 보정이라는 두 공정성 지표를 구체적으로 지목한다.
+      <b>편향을 말하는 데서 그치지 않고 그것을 재는 방법을 적은 것</b>은
+      이 책에서 흔치 않다.</p></div>
+    <div class="ci"><span class="ck">03 · 재현율이 결정적인 이유</span>
+      <p>6.1절은 &ldquo;참양성을 놓치면 환자 안전에 심각한 결과&rdquo;라고 적는다.
+      그리고 같은 절에 민감도 35퍼센트짜리 사례가 인용되어 있다.
+      <b>AUROC 하나만 보면 안 되는 이유</b>가 이 대비에 있다.</p></div>
+    <div class="ci"><span class="ck">04 · 전향 검증이 표준이다</span>
+      <p>6.2절은 후향 검증이 빠르고 싸지만 전향 검증이 표준이라고 명시한다.
+      표 17.2에서 전향 검증을 거친 것은 <b>세 건뿐</b>이다.</p></div>
+  </div>
+
+  <div class="judge">
+    <span class="lab">옮긴이의 판단</span>
+    <p>이 장은 이 책에서 <b>자기 근거의 성숙도를 표에 적어 넣은 유일한 장</b>이다.
+    다른 장들도 &lsquo;아직 임상 전환이 남았다&rsquo;고 말하지만 대개 결론 근처에서 한 문장으로 넘긴다.
+    이 장은 열 개 시스템 각각에 상태를 붙였고, 그래서 <b>독자가 셀 수 있다.</b>
+    배치 2, 연구 7, 문헌 1. 이 세 숫자가 이 분야의 좌표다.</p>
+    <p>3.1절의 공정성 지표도 같은 성격이다.
+    &lsquo;편향에 주의해야 한다&rsquo;는 말은 이 책에서 열 번 넘게 나왔다.
+    그런데 등화 승산과 보정을 지목하고, 성능을 하위집단별로 층화 보고하라고 요구한 곳은 여기뿐이다.
+    <em class="mk">주의하라는 말과 이렇게 재라는 말은 다르다.</em></p>
+    <p>그럼에도 6.1절의 두 수치는 확인이 필요하다.
+    혈액투석 모형의 민감도 35퍼센트는 오류가 아니라 그 모형의 실제 성적일 수 있다.
+    그렇다면 <b>그 사실이 인용될 때 함께 적혀야 할 맥락이 빠진 것</b>이다.
+    티사젠렉류셀 사례의 AUROC 0.76과 민감도 0.98·특이도 0.99는 산술적으로 양립하지 않는다.
+    체계적으로 수치를 모아 놓은 절에서 이런 조합이 걸러지지 않은 것은 아쉽다.</p>
+    <p>그래서 이 장을 읽는 법은 이렇다.
+    <b>표 17.2의 마지막 열과 3.1절의 공정성 지표는 그대로 가져가되,
+    6.1절의 수치는 원 논문에서 확인할 것.</b>
+    이 장이 스스로 세운 기준 &mdash; 층화해서 보고하라, 재현율을 보라, 전향적으로 검증하라 &mdash;
+    을 6.1절에 그대로 적용하면 어느 줄이 더 단단하고 어느 줄이 덜 단단한지가 드러난다.</p>
+  </div>
+ </div>
+</section>
+
+</main>
+
+<footer>
+ <div class="wrap"><div class="col">
+  <div class="src2">
+    <b>원전</b><br>
+    Hamid, S., Ali, R., Khanna, K., &amp; Raza, K. (2026).
+    <i>AI for monitoring clinical outcomes and adverse events.</i>
+    In K. Raza (Ed.), <b>Artificial Intelligence in Precision Drug Design, Volume 2: Advanced Applications</b>
+    (Chapter 17, pp. 345&ndash;365). Academic Press / Elsevier. ISBN 978-0-443-44430-2.
+    https://doi.org/10.1016/B978-0-443-44430-2.00002-5<br>
+    이 장의 공저자 Khalid Raza는 이 책의 편저자이기도 하다.
+    <div class="note">
+      이 문서는 원저 제17장만을 대상으로 한 한국어 정리본이다. 표 17.1&ndash;17.2의 내용, 수치,
+      시스템 이름, 인용 문헌은 모두 원문에서 가져왔고, 절 구성과 도해는 읽기 편하도록 재배열했다.<br><br>
+      <b>「감시반」 패널에 관하여</b> &mdash; 원문 표 17.2의 열 개 시스템을
+      &lsquo;현재 상태&rsquo; 열에 따라 색으로 구분해 옮긴 것이다.
+      표에 &ldquo;명시되지 않음(not specified)&rdquo;으로 적힌 칸은 그대로 두었다.
+      상태별 개수(배치 2·연구 7·문헌 1)는 원문 표의 값을 세어 정리한 것이며,
+      원문이 그 합계를 따로 제시하지는 않는다.<br><br>
+      <b>6.1절의 수치에 관하여</b> &mdash; 혈액투석 이상사건 모형은 원문에
+      AUROC 0.83, 민감도 35퍼센트, 특이도 96퍼센트로 적혀 있다.
+      티사젠렉류셀 사례는 AUROC 0.76과 함께 민감도 0.98, 특이도 0.99가 적혀 있는데,
+      ROC 곡선이 그 지점을 지나면 곡선 아래 면적이 최소 0.985가 되므로
+      두 수치는 양립하지 않는다. 어느 쪽이 옳은지는 원문만으로 판단할 수 없어 그대로 옮기고 표시했다.<br><br>
+      원문 표 17.2에는 동일한 문헌이 두 번 인용된 칸(Bignami et al., 2025a 중복)이 여러 곳 있다.<br><br>
+      &lsquo;판단&rsquo;으로 표시한 블록은 원문의 유보 조항을 정리하거나 옮긴이의 해석을 덧붙인 부분이므로
+      원문 서술과 구분해서 읽어야 한다.
+    </div>
+  </div>
+ </div></div>
+</footer>
+
+<script>
+(function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var bar = document.getElementById('progress');
+  var rail = document.querySelector('nav.rail');
+  var hero = document.querySelector('header.hero');
+  function onScroll(){
+    var h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+    rail.classList.toggle('show', h.scrollTop > hero.offsetHeight - 80);
+  }
+  document.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section.sec'));
+  var list = document.getElementById('railList');
+  var links = secs.map(function(s){
+    var no = s.querySelector('.secno').textContent.replace('SECTION','').trim();
+    var tt = s.querySelector('h2').textContent.trim();
+    var a = document.createElement('a');
+    a.href = '#' + s.id;
+    a.textContent = (no === 'CLOSING' ? '—' : no) + '  ' + tt;
+    var li = document.createElement('li'); li.appendChild(a); list.appendChild(li);
+    return a;
+  });
+
+  if ('IntersectionObserver' in window){
+    var navObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var i = secs.indexOf(e.target);
+        links.forEach(function(a, j){ a.classList.toggle('act', j === i); });
+      });
+    }, {rootMargin:'-45% 0px -50% 0px', threshold:0});
+    secs.forEach(function(s){ navObs.observe(s); });
+
+    var revObs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add('on'); revObs.unobserve(e.target); }
+      });
+    }, {threshold:.12});
+    document.querySelectorAll('.reveal').forEach(function(el){
+      if (reduce) el.classList.add('on'); else revObs.observe(el);
+    });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('on'); });
+  }
+
+  function mk(seed){
+    var s = seed;
+    return function(){ s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  }
+
+  /* ---------- 표제 배경: 감시 파형 ---------- */
+  (function(){
+    var svg = document.getElementById('heroTrace');
+    var r = mk(171717), f = document.createDocumentFragment();
+    var cols = ['#3FC9A6', '#E8B33C', '#8E9AA2'];
+    for (var row = 0; row < 8; row++){
+      var y0 = 38 + row * 64, d = 'M0,' + y0.toFixed(1);
+      var kind = row % 3;
+      for (var x = 0; x <= 1200; x += 4){
+        var y = y0, t = x % 220;
+        if (kind === 0){          /* 심전도 유사 */
+          if (t > 96 && t < 104) y = y0 - 26;
+          else if (t > 104 && t < 110) y = y0 + 11;
+          else if (t > 88 && t < 96) y = y0 + 5;
+          else y = y0 + Math.sin(x / 13) * 1.6;
+        } else if (kind === 1){   /* 호흡 유사 */
+          y = y0 + Math.sin(x / 34) * 11;
+        } else {                  /* 혈압 유사 */
+          y = y0 + Math.sin(x / 19) * 7 + Math.sin(x / 7) * 2.4;
+        }
+        d += ' L' + x + ',' + y.toFixed(1);
+      }
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', d); p.setAttribute('fill', 'none');
+      p.setAttribute('stroke', cols[kind]);
+      p.setAttribute('stroke-width', '1.1');
+      p.setAttribute('opacity', (0.11 + (kind === 0 ? .07 : 0)).toFixed(3));
+      f.appendChild(p);
+    }
+    svg.appendChild(f);
+  })();
+
+  /* ---------- 시그니처: 감시반 ---------- */
+  (function(){
+    var ST = {
+      dep:{ n:'배치됨', col:'#3FC9A6', bg:'rgba(63,201,166,.16)' },
+      res:{ n:'연구 단계', col:'#E8B33C', bg:'rgba(232,179,60,.16)' },
+      lit:{ n:'문헌 수준', col:'#8E9AA2', bg:'rgba(142,154,162,.16)' }
+    };
+    var S = [
+      { n:'TREWS', sub:'실시간 패혈증 조기경보', st:'dep',
+        tech:'기계학습 (CatBoost · XGBoost · LightGBM)', dom:'패혈증 관리',
+        data:'다기관 병원 데이터', size:'다기관',
+        met:'항생제 투여까지의 시간, 사망률 감소', val:'전향적 · 다기관',
+        p:'패혈증 인지와 치료가 빨라지고 결과가 개선되었다. ' +
+          '이 장의 열 개 시스템 가운데 전향적 다기관 검증을 거쳐 병원에 배치된 두 사례 중 하나다.' },
+      { n:'DeepAISE', sub:'패혈증 생존 모형', st:'dep',
+        tech:'RNN 생존 모형', dom:'중환자실 패혈증 예측',
+        data:'EHR 시계열 (여러 병원)', size:'명시되지 않음',
+        met:'AUC 0.90(내부) · 0.87(외부) · 오경보율 0.20 / 0.26', val:'내부 + 외부 코호트',
+        p:'정확도가 높고 오경보가 적으며 실시간 점수화가 가능하다. ' +
+          '내부와 외부 코호트를 모두 거쳤고 워크플로에 배치되었다. ' +
+          '외부 AUC가 0.87로 내부보다 낮아진 것은 일반화의 대가를 보여 준다.' },
+      { n:'AKI 예측 (DeepMind)', sub:'급성 신손상 탐지', st:'res',
+        tech:'심층신경망', dom:'급성 신손상(AKI) 탐지',
+        data:'미국 재향군인부 EHR', size:'약 70만 명',
+        met:'AKI의 약 56퍼센트를 48시간 앞서 탐지', val:'후향 검증',
+        p:'표본 규모가 이 표에서 가장 크다. 다만 절반가량은 여전히 조기에 잡히지 않는다. ' +
+          '이 장의 6.3절이 요구하는 하위집단별 성능은 표에 제시되지 않는다.' },
+      { n:'트랜스포머 패혈증 모형', sub:'중환자 패혈증 탐지', st:'res',
+        tech:'CNN + 트랜스포머', dom:'중환자 패혈증 탐지',
+        data:'다기관 중환자실 데이터', size:'대규모 다기관 코호트',
+        met:'정확도 0.964 · 정밀도 0.956 · 재현율 0.967', val:'후향 평가',
+        p:'순환신경망 대비 약 20퍼센트의 성능 향상을 보고한다. ' +
+          '수치는 이 표에서 가장 높지만 후향 평가에 머물러 있다.' },
+      { n:'다중양식 트랜스포머', sub:'중환자실 패혈증 예측', st:'res',
+        tech:'활력징후와 기록을 함께 쓰는 트랜스포머', dom:'패혈증 예측',
+        data:'MIMIC-III · eICU', size:'대규모 중환자실 코호트',
+        met:'여섯 개 기준선을 앞섬', val:'후향 벤치마크',
+        p:'다중양식 데이터로 패혈증을 조기에 탐지한다. ' +
+          '구체적 지표값 대신 “기준선을 앞섰다”는 상대 표현만 제시된다.' },
+      { n:'STAPPS', sub:'스마트폰 걸음 수 모형', st:'res',
+        tech:'활동 데이터 기계학습', dom:'단기 임상 이상사건 예측',
+        data:'환자 스마트폰 + EHR', size:'암 환자 코호트',
+        met:'7일 사건 예측의 정확도와 AUC', val:'전향적 관찰 연구',
+        p:'걸음 수의 변화가 병원 방문을 예측한다. ' +
+          '전향적 설계라는 점에서 다른 연구 단계 항목들과 구별된다.' },
+      { n:'약사 기록 딥러닝', sub:'이상사건 선별', st:'res',
+        tech:'BERT / T5 기반 자연어처리', dom:'약국에서의 이상사건 선별',
+        data:'약제 진료 기록 (SOAP)', size:'약 3만 건',
+        met:'HFS 정확도 91% · AE-L 정확도 80.1%', val:'후향 검증',
+        p:'개입이 필요한 이상사건 신호를 높은 정확도로 뽑아낸다. ' +
+          '두 과제의 정확도 차이(91퍼센트와 80.1퍼센트)가 과제 난이도의 차이를 보여 준다.' },
+      { n:'AKI 사망 예후 ML', sub:'급성 신손상 결과 예측', st:'res',
+        tech:'전통적 기계학습 모형', dom:'AKI 결과 예측',
+        data:'병원 중환자실 데이터', size:'명시되지 않음',
+        met:'전통적 방법보다 나은 성능', val:'후향 모형화',
+        p:'사망 예후 판정이 개선되었다. 표본 크기와 구체적 지표값이 표에 없다.' },
+      { n:'약물감시 AI 체계적 고찰', sub:'이상약물사건 예측', st:'lit',
+        tech:'EHR 기반 여러 기계학습', dom:'이상약물사건 예측',
+        data:'여러 EHR 기반 연구', size:'합산 n = 93,248',
+        met:'민감도 0.82 · 특이도 0.84 · AUC 0.83', val:'메타분석',
+        p:'개별 시스템이 아니라 여러 연구를 합친 결과다. ' +
+          '표의 “현재 상태”가 “문헌 수준 통찰”로 적혀 있는 유일한 항목이다.' },
+      { n:'TREWS 채택 효과 연구', sub:'시스템 채택이 결과에 미친 영향', st:'res',
+        tech:'기계학습 (CatBoost / XGBoost)', dom:'시스템 채택 행태',
+        data:'의료진 행동 데이터', size:'다기관',
+        met:'채택률 · 항생제 투여 시점', val:'관찰 · 후향',
+        p:'TREWS를 더 많이 채택한 쪽이 더 이른 치료로 이어졌다. ' +
+          '기술의 성능이 아니라 <b>사람이 그것을 쓰는가</b>를 본 연구라는 점에서 성격이 다르다.' }
+    ];
+
+    var listEl = document.querySelector('#monPanel .mon-list');
+    var body = document.getElementById('monBody');
+    var btns = [];
+
+    S.forEach(function(s, i){
+      var b = document.createElement('button');
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+      b.setAttribute('aria-controls', 'monBody');
+      b.innerHTML = '<span class="dotx" style="background:' + ST[s.st].col + '"></span>'
+                  + '<span class="mn">' + s.n + '</span>'
+                  + '<span class="mm">' + s.sub + '</span>';
+      b.addEventListener('click', function(){ sel(i); });
+      b.addEventListener('keydown', function(ev){
+        var d = ev.key === 'ArrowDown' ? 1 : ev.key === 'ArrowUp' ? -1 : 0;
+        if (!d) return;
+        ev.preventDefault();
+        var nn = (i + d + S.length) % S.length;
+        btns[nn].focus(); sel(nn);
+      });
+      listEl.appendChild(b); btns.push(b);
+    });
+
+    function sel(i){
+      var s = S[i], st = ST[s.st];
+      btns.forEach(function(b, j){
+        b.setAttribute('aria-selected', j === i ? 'true' : 'false');
+        b.style.borderLeftColor = j === i ? ST[S[j].st].col : 'transparent';
+      });
+      body.innerHTML =
+        '<span class="bk" style="color:' + st.col + '">SYSTEM '
+        + String(i + 1).padStart(2, '0') + ' / 10</span>'
+        + '<h6>' + s.n + '</h6>'
+        + '<span class="st" style="color:' + st.col + ';background:' + st.bg + '">' + st.n + '</span>'
+        + '<div class="rows">'
+        + '<div><span>AI 기법</span><b>' + s.tech + '</b></div>'
+        + '<div><span>임상 영역</span><b>' + s.dom + '</b></div>'
+        + '<div><span>데이터셋</span><b>' + s.data + '</b></div>'
+        + '<div><span>표본 크기</span><b>' + s.size + '</b></div>'
+        + '<div><span>보고된 지표</span><b style="color:' + st.col + '">' + s.met + '</b></div>'
+        + '<div><span>검증 방법</span><b>' + s.val + '</b></div>'
+        + '</div>'
+        + '<p>' + s.p + '</p>';
+    }
+    sel(0);
+  })();
+})();
+</script>
+</body>
+</html>
