@@ -1,0 +1,980 @@
+---
+layout: null
+title: "Harness Engineering: Stripe Minions" 
+date: 2026-08-18
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <meta name="description" content="Harness Engineering §09 — Stripe Minions: 주 1,300개 PR 파이프라인, Slack 기반 무인 코딩 흐름, Goose, devbox, 품질 통제, 조직 확산과 기반 공학의 중요성을 정리한 한국어 단일 HTML" />
+  <title>Harness Engineering — 9장: Stripe Minions, 주 1,300개 PR의 파이프라인</title>
+  <style>
+    :root{
+      --paper:#f4eee4;
+      --paper2:#e9dfd0;
+      --ink:#171612;
+      --soft:#505149;
+      --muted:#747168;
+      --line:rgba(23,22,18,.13);
+      --red:#a64b34;
+      --orange:#c17b45;
+      --gold:#ae8a51;
+      --green:#5c7059;
+      --blue:#526a7c;
+      --dark:#20231f;
+      --glass:rgba(255,255,255,.61);
+      --shadow:0 24px 70px rgba(42,35,25,.11);
+      --radius:24px;
+      --max:1200px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 9% 7%,rgba(166,75,52,.08),transparent 30rem),
+        radial-gradient(circle at 91% 33%,rgba(82,106,124,.09),transparent 36rem),
+        radial-gradient(circle at 48% 76%,rgba(92,112,89,.055),transparent 32rem),
+        linear-gradient(180deg,#eee6da 0%,#faf7f1 31%,var(--paper) 72%,#ece4d8 100%);
+      font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,-apple-system,sans-serif;
+      line-height:1.79;
+      word-break:keep-all;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;inset:0;z-index:-2;pointer-events:none;
+      background-image:
+        linear-gradient(rgba(30,27,21,.022) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(30,27,21,.015) 1px,transparent 1px);
+      background-size:34px 34px;
+      mask-image:linear-gradient(to bottom,black 0%,transparent 86%);
+    }
+
+    body::after{
+      content:"";
+      position:fixed;inset:0;z-index:-1;pointer-events:none;
+      background:radial-gradient(circle at 50% 12%,rgba(255,255,255,.27),transparent 38rem);
+    }
+
+    a{color:inherit;text-decoration:none}
+    code{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      font-size:.91em;
+      background:rgba(23,22,18,.06);
+      border:1px solid rgba(23,22,18,.07);
+      border-radius:6px;
+      padding:.08em .35em;
+    }
+
+    .wrap{width:min(calc(100% - 36px),var(--max));margin:0 auto}
+
+    .progress{
+      position:fixed;left:0;top:0;z-index:100;
+      width:0;height:3px;
+      background:linear-gradient(90deg,var(--red),var(--orange),var(--green),var(--blue));
+      box-shadow:0 0 18px rgba(166,75,52,.35);
+    }
+
+    nav{
+      position:fixed;right:22px;top:50%;transform:translateY(-50%);
+      z-index:40;display:flex;flex-direction:column;gap:10px;
+    }
+    nav a{
+      width:9px;height:9px;border-radius:50%;
+      background:rgba(23,22,18,.18);
+      border:1px solid rgba(255,255,255,.7);
+      transition:.2s ease;
+    }
+    nav a:hover,nav a.active{background:var(--red);transform:scale(1.3)}
+
+    .hero{
+      min-height:94vh;
+      display:grid;align-items:end;
+      position:relative;overflow:hidden;
+      padding:90px 0 76px;
+    }
+    .hero::after{
+      content:"1300";
+      position:absolute;right:-.035em;top:.03em;
+      font-family:Georgia,"Times New Roman",serif;
+      font-size:clamp(10rem,29vw,26rem);
+      line-height:1;font-weight:800;letter-spacing:-.08em;
+      color:rgba(23,22,18,.033);
+      user-select:none;
+    }
+    .eyebrow{
+      display:flex;align-items:center;gap:12px;
+      color:var(--red);font-size:.77rem;font-weight:850;
+      letter-spacing:.18em;text-transform:uppercase;
+    }
+    .eyebrow::before{content:"";width:44px;height:2px;background:var(--red)}
+
+    h1{
+      max-width:1050px;
+      margin:22px 0 22px;
+      font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;
+      font-size:clamp(3.1rem,8.5vw,7.9rem);
+      line-height:.99;letter-spacing:-.063em;font-weight:850;
+    }
+
+    .hero-sub{
+      max-width:900px;margin:0;
+      font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;
+      font-size:clamp(1.18rem,2.2vw,1.72rem);
+      line-height:1.73;color:#3e3f38;
+    }
+
+    .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:36px}
+    .chip{
+      padding:8px 12px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(255,255,255,.34);backdrop-filter:blur(8px);
+      font-size:.77rem;color:var(--muted);
+    }
+
+    .hero-note{
+      margin-top:34px;max-width:860px;
+      padding:24px 28px;border-left:4px solid var(--red);
+      border-radius:0 20px 20px 0;
+      background:rgba(255,255,255,.34);
+      font-family:"Noto Serif KR","Nanum Myeongjo",serif;
+      color:#464740;
+    }
+
+    .section{padding:90px 0}
+    .section + .section{border-top:1px solid var(--line)}
+
+    .section-head{
+      display:grid;grid-template-columns:142px 1fr;gap:34px;
+      align-items:start;margin-bottom:42px;
+    }
+    .section-no{
+      font-family:Georgia,"Times New Roman",serif;
+      font-size:4.55rem;line-height:.78;letter-spacing:-.06em;color:var(--red);
+    }
+    h2{
+      margin:0 0 13px;
+      font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;
+      font-size:clamp(2rem,4.15vw,3.48rem);
+      line-height:1.2;letter-spacing:-.045em;
+    }
+    .lead{max-width:910px;margin:0;color:#505149;font-size:1.07rem}
+
+    .thesis{
+      margin-top:38px;
+      padding:34px 38px 34px 42px;
+      border-left:4px solid var(--red);
+      border-radius:0 var(--radius) var(--radius) 0;
+      background:linear-gradient(135deg,rgba(255,255,255,.69),rgba(255,255,255,.27));
+      box-shadow:var(--shadow);
+      font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;
+      font-size:clamp(1.36rem,2.7vw,2.17rem);
+      line-height:1.66;letter-spacing:-.025em;
+    }
+    .thesis strong{color:var(--red)}
+
+    /* metrics */
+    .metrics{
+      margin-top:38px;
+      display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+    }
+    .metric{
+      min-height:180px;padding:22px 18px;
+      border-radius:20px;border:1px solid var(--line);
+      background:rgba(255,255,255,.47);
+      position:relative;overflow:hidden;
+    }
+    .metric::after{
+      content:attr(data-symbol);
+      position:absolute;right:7px;bottom:-20px;
+      font:800 6.2rem/1 Georgia,serif;color:rgba(23,22,18,.04);
+    }
+    .metric strong{
+      display:block;font-family:Georgia,serif;
+      font-size:clamp(2.3rem,4.3vw,3.9rem);
+      line-height:1;color:var(--red);
+    }
+    .metric span{display:block;margin-top:10px;font-weight:800}
+    .metric small{display:block;margin-top:5px;color:#6b6a62;font-size:.76rem}
+
+    /* message flow */
+    .pipeline{
+      margin-top:38px;
+      padding:32px;border-radius:24px;border:1px solid var(--line);
+      background:rgba(255,255,255,.47);box-shadow:var(--shadow);
+      overflow:auto;
+    }
+    .pipeline-track{
+      min-width:900px;
+      display:grid;grid-template-columns:repeat(9,auto);gap:10px;align-items:center;justify-content:center;
+    }
+    .node{
+      min-width:150px;min-height:110px;
+      display:grid;place-items:center;text-align:center;
+      padding:15px;border-radius:17px;border:1px solid var(--line);
+      background:rgba(245,240,231,.68);
+    }
+    .node b{display:block;font-size:1rem}
+    .node span{display:block;margin-top:5px;color:#66675f;font-size:.78rem}
+    .arrow{font-size:1.4rem;color:var(--red)}
+    .slack{
+      margin-top:24px;padding:24px;border-radius:20px;background:var(--dark);color:#f3ede2;
+      display:grid;grid-template-columns:70px 1fr;gap:18px;align-items:center;
+    }
+    .slack-icon{
+      width:58px;height:58px;border-radius:16px;
+      background:linear-gradient(135deg,var(--blue),var(--green));
+      display:grid;place-items:center;
+      font:800 1.4rem/1 Georgia,serif;color:white;
+    }
+    .slack p{margin:0;color:#d0cbc1}
+    .slack strong{color:#efb17a}
+
+    /* goose */
+    .goose-grid{
+      margin-top:38px;display:grid;grid-template-columns:.9fr 1.1fr;gap:20px;
+    }
+    .goose-card{
+      padding:30px;border-radius:24px;border:1px solid var(--line);
+      background:rgba(255,255,255,.46);
+    }
+    .goose-card.dark{background:var(--dark);color:#f2ece1;border-color:rgba(255,255,255,.08)}
+    .goose-card h3{margin:0 0 10px;font-size:1.5rem}
+    .goose-card p{margin:0;color:#585950}
+    .goose-card.dark p{color:#c7c3b9}
+    .goose-stats{
+      margin-top:20px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px;
+    }
+    .goose-stat{
+      padding:17px;border-radius:14px;border:1px solid rgba(255,255,255,.09);
+      background:rgba(255,255,255,.05);
+    }
+    .goose-stat strong{
+      display:block;font-family:Georgia,serif;font-size:2rem;line-height:1;color:#efb17a;
+    }
+    .goose-stat span{display:block;margin-top:5px;color:#bbb7ae;font-size:.78rem}
+    .horse{
+      margin-top:20px;padding:20px;border-left:3px solid var(--orange);
+      background:rgba(193,123,69,.08);border-radius:0 15px 15px 0;color:#55574f;
+    }
+
+    /* devbox */
+    .devbox{
+      margin-top:38px;display:grid;grid-template-columns:270px 1fr;gap:22px;align-items:center;
+      padding:30px;border-radius:24px;border:1px solid var(--line);
+      background:rgba(255,255,255,.47);box-shadow:var(--shadow);
+    }
+    .ten{
+      text-align:center;border-right:1px solid var(--line);padding-right:22px;
+    }
+    .ten strong{
+      display:block;font-family:Georgia,serif;
+      font-size:clamp(4rem,8vw,7.5rem);line-height:.9;color:var(--red);
+    }
+    .ten span{display:block;margin-top:8px;color:#68685f;font-weight:800}
+    .devbox-copy h3{margin:0 0 10px;font-size:1.45rem}
+    .devbox-copy p{margin:0;color:#565750}
+    .infra{
+      margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+    }
+    .infra-item{
+      padding:16px;border-radius:14px;border:1px solid var(--line);
+      background:rgba(245,240,231,.66);
+    }
+    .infra-item b{display:block;margin-bottom:4px}
+    .infra-item span{color:#65665e;font-size:.84rem}
+
+    .foundation{
+      margin-top:24px;padding:30px;border-radius:24px;background:#20231f;color:#f3ede2;
+      text-align:center;
+    }
+    .foundation p{
+      max-width:920px;margin:0 auto;
+      font-family:"Noto Serif KR","Nanum Myeongjo",serif;
+      font-size:clamp(1.3rem,2.7vw,2.05rem);line-height:1.62;
+    }
+    .foundation em{font-style:normal;color:#efb17a}
+
+    /* onboarding */
+    .onboarding{
+      margin-top:38px;display:grid;grid-template-columns:1fr 1fr;gap:18px;
+    }
+    .onboard-card{
+      padding:30px;border-radius:24px;border:1px solid var(--line);
+      background:rgba(255,255,255,.46);
+    }
+    .onboard-card.toohigh{border-top:4px solid var(--red)}
+    .onboard-card.toolow{border-top:4px solid var(--gold)}
+    .onboard-card h3{margin:0 0 10px;font-size:1.4rem}
+    .onboard-card p{margin:0;color:#585950}
+
+    .newhire{
+      margin-top:22px;padding:30px;border-radius:24px;background:var(--dark);color:#f3ede2;
+    }
+    .newhire h3{margin:0 0 10px;font-size:1.45rem}
+    .newhire p{margin:0;color:#c7c3b9}
+    .newhire-grid{
+      margin-top:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+    }
+    .newhire-item{
+      padding:16px;border-radius:14px;border:1px solid rgba(255,255,255,.09);
+      background:rgba(255,255,255,.05);
+    }
+    .newhire-item b{display:block;color:#efb17a}
+    .newhire-item span{display:block;margin-top:5px;color:#bbb7ae;font-size:.82rem}
+
+    .local-learning{
+      margin-top:22px;padding:24px;border-left:4px solid var(--green);
+      border-radius:0 18px 18px 0;background:rgba(92,112,89,.08);
+      color:#565750;
+    }
+
+    /* quality */
+    .quality{
+      margin-top:38px;display:grid;grid-template-columns:.9fr 1.1fr;gap:20px;
+    }
+    .human{
+      padding:30px;border-radius:24px;background:var(--dark);color:#f3ede2;
+      position:relative;overflow:hidden;
+    }
+    .human::after{
+      content:"H";
+      position:absolute;right:8px;bottom:-40px;
+      font:800 11rem/1 Georgia,serif;color:rgba(255,255,255,.035);
+    }
+    .human small{font-weight:850;letter-spacing:.1em;color:#bcb8ae}
+    .human h3{margin:12px 0 10px;font-size:1.6rem}
+    .human p{margin:0;color:#c7c3b9}
+    .quality-copy{
+      padding:30px;border-radius:24px;border:1px solid var(--line);background:rgba(255,255,255,.46);
+    }
+    .quality-copy h3{margin:0 0 10px;font-size:1.45rem}
+    .quality-copy p{margin:0;color:#585950}
+    .signals{
+      margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+    }
+    .signal{
+      padding:16px;border-radius:14px;border:1px solid var(--line);
+      background:rgba(245,240,231,.66);
+    }
+    .signal b{display:block;margin-bottom:4px}
+    .signal span{color:#66675f;font-size:.82rem}
+    .review-shift{
+      margin-top:20px;padding:22px;border-radius:18px;border:1px solid var(--line);
+      background:linear-gradient(90deg,rgba(83,106,124,.07),rgba(92,112,89,.07));
+      display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;text-align:center;
+    }
+    .review-shift strong{font-family:"Noto Serif KR","Nanum Myeongjo",serif;font-size:1.12rem}
+    .review-shift .arr{font-size:1.7rem;color:var(--red)}
+
+    /* practical questions */
+    .questions{
+      margin-top:38px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+    }
+    .question{
+      padding:23px;border-radius:19px;border:1px solid var(--line);
+      background:rgba(255,255,255,.45);
+      position:relative;overflow:hidden;
+    }
+    .question::after{
+      content:"?";
+      position:absolute;right:7px;bottom:-35px;
+      font:800 8rem/1 Georgia,serif;color:rgba(23,22,18,.04);
+    }
+    .question b{display:block;margin-bottom:7px}
+    .question p{margin:0;color:#5c5d56;font-size:.9rem}
+
+    .amplify{
+      margin-top:28px;display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:center;
+    }
+    .amp{
+      padding:28px;border-radius:22px;border:1px solid var(--line);
+      background:rgba(255,255,255,.46);text-align:center;
+    }
+    .amp.good{border-top:4px solid var(--green)}
+    .amp.bad{border-top:4px solid var(--red)}
+    .amp h3{margin:0 0 8px}
+    .amp p{margin:0;color:#5a5b54}
+    .amp-mid{font-size:2.6rem;color:var(--gold)}
+
+    .compound{
+      margin-top:26px;padding:31px;border-radius:24px;background:#20231f;color:#f3ede2;text-align:center;
+    }
+    .compound p{
+      max-width:900px;margin:0 auto;
+      font-family:"Noto Serif KR","Nanum Myeongjo",serif;
+      font-size:clamp(1.35rem,2.8vw,2.15rem);line-height:1.62;
+    }
+    .compound em{font-style:normal;color:#efb17a}
+
+    .closing{padding:112px 0 122px;text-align:center}
+    .closing .line{width:64px;height:2px;background:var(--red);margin:0 auto 28px}
+    .closing p{
+      max-width:980px;margin:0 auto;
+      font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;
+      font-size:clamp(1.55rem,3.45vw,2.8rem);
+      line-height:1.7;letter-spacing:-.04em;
+    }
+    .closing em{font-style:normal;color:var(--red)}
+    .source-note{
+      max-width:880px;margin:48px auto 0;
+      color:#77766e;font-size:.78rem;line-height:1.72;
+    }
+
+    footer{
+      padding:24px 0 34px;border-top:1px solid var(--line);
+      color:#77766e;font-size:.75rem;
+    }
+
+    @media(max-width:1040px){
+      .section-head{grid-template-columns:1fr;gap:10px}
+      .section-no{font-size:2.45rem}
+      .metrics{grid-template-columns:repeat(2,1fr)}
+      .goose-grid,.onboarding,.quality{grid-template-columns:1fr}
+      .newhire-grid,.signals{grid-template-columns:repeat(2,1fr)}
+      nav{display:none}
+    }
+
+    @media(max-width:820px){
+      .devbox{grid-template-columns:1fr}
+      .ten{border-right:0;border-bottom:1px solid var(--line);padding:0 0 22px}
+      .infra{grid-template-columns:1fr}
+      .questions{grid-template-columns:1fr}
+      .amplify,.review-shift{grid-template-columns:1fr}
+      .amp-mid,.review-shift .arr{transform:rotate(90deg)}
+    }
+
+    @media(max-width:620px){
+      .wrap{width:min(calc(100% - 24px),var(--max))}
+      .hero{min-height:auto;padding-top:84px}
+      h1{font-size:3.35rem}
+      .section{padding:68px 0}
+      .metrics,.newhire-grid,.signals{grid-template-columns:1fr}
+      .goose-stats{grid-template-columns:1fr}
+      .thesis{padding:28px 25px 28px 30px}
+    }
+
+    @media(prefers-reduced-motion:reduce){
+      *{scroll-behavior:auto!important;transition:none!important}
+    }
+  </style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<nav aria-label="페이지 내 탐색">
+  <a href="#opening" aria-label="도입"></a>
+  <a href="#numbers" aria-label="규모"></a>
+  <a href="#journey" aria-label="Slack 메시지의 여행"></a>
+  <a href="#goose" aria-label="Goose"></a>
+  <a href="#devbox" aria-label="devbox와 기반 공학"></a>
+  <a href="#onboarding" aria-label="AI를 신입처럼"></a>
+  <a href="#quality" aria-label="품질 통제"></a>
+  <a href="#lesson" aria-label="핵심 결론"></a>
+</nav>
+
+<header class="hero" id="opening">
+  <div class="wrap">
+    <div class="eyebrow">Harness Engineering · Chapter 09</div>
+    <h1>주 1,300개의 PR,<br>그보다 오래된 토대</h1>
+
+    <p class="hero-sub">
+      Stripe의 Minions는 AI가 갑자기 조직을 바꾼 이야기가 아니다.
+      오랫동안 표준화한 개발 환경, 테스트, 빌드, 리뷰가
+      어느 날 Agent에게 그대로 건너간 이야기다.
+      <b>새로운 힘은 오래된 길 위에서야 비로소 속도가 된다.</b>
+    </p>
+
+    <div class="hero-meta">
+      <span class="chip">대상: 원문 §09 「Stripe Minions：每周1300个PR的流水线」</span>
+      <span class="chip">범위: PDF 43–45쪽</span>
+      <span class="chip">46쪽부터 §10 시작</span>
+      <span class="chip">외부 자료 미사용</span>
+    </div>
+
+    <div class="hero-note">
+      이 장에서 가장 중요한 것은 어떤 모델을 썼는가가 아니다.
+      조직이 오랜 시간 축적한 공학적 질서가 Agent에게 곧바로 작업 환경이 되었다는 점이다.
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="section" id="numbers">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-no">01</div>
+      <div>
+        <h2>숫자는 크지만, 핵심은 규모를 가능하게 한 조건이다</h2>
+        <p class="lead">
+          원문은 Stripe Minions를 공개 자료가 풍부한 대표적 기업형 Harness 사례로 소개한다.
+          매주 1,300개가 넘는 AI 생성 PR이 병합되고,
+          1,370명의 엔지니어가 별도 설정 없이 Minion을 사용할 수 있다.
+          그러나 이 규모를 가능하게 한 첫 번째 이유는 모델 자체가 아니라고 강조한다.
+        </p>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric" data-symbol="PR">
+        <strong>1,300+</strong>
+        <span>AI PR / week</span>
+        <small>원문: 매주 병합되는 AI 생성 Pull Request</small>
+      </div>
+      <div class="metric" data-symbol="E">
+        <strong>1,370</strong>
+        <span>Engineers</span>
+        <small>별도 설정 없이 Minion을 호출할 수 있는 엔지니어</small>
+      </div>
+      <div class="metric" data-symbol="0">
+        <strong>0</strong>
+        <span>Human-written code</span>
+        <small>해당 AI 생성 PR의 수기 코드</small>
+      </div>
+      <div class="metric" data-symbol="10s">
+        <strong>&lt;10s</strong>
+        <span>devbox startup</span>
+        <small>warm pool에서 완전한 개발 환경 기동</small>
+      </div>
+    </div>
+
+    <div class="thesis">
+      규모는 Agent의 능력만으로 생기지 않는다.
+      <strong>천 명이 넘는 사람이 아무 설정 없이 같은 자동화 흐름을 쓸 수 있다는 사실 자체가 Harness의 성숙도를 보여준다.</strong>
+      생산성은 모델의 성능뿐 아니라 사용자가 얼마나 적은 마찰로 같은 환경에 진입할 수 있는가에서 결정된다.
+    </div>
+  </div>
+</section>
+
+<section class="section" id="journey">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-no">02</div>
+      <div>
+        <h2>한 줄의 Slack 메시지가 PR이 되기까지</h2>
+        <p class="lead">
+          Stripe 엔지니어는 별도의 AI 개발 도구를 열 필요가 없다.
+          Slack에서 한 줄을 보내면 Minion이 시작되고,
+          코딩·테스트·PR 생성까지 백그라운드에서 이어진다.
+          사용자는 메시지를 남기고 다른 일을 하다가 돌아와 검토할 PR을 받는다.
+        </p>
+      </div>
+    </div>
+
+    <div class="pipeline">
+      <div class="pipeline-track">
+        <div class="node"><div><b>Slack Message</b><span>의도 전달</span></div></div>
+        <div class="arrow">→</div>
+        <div class="node"><div><b>Trigger Minion</b><span>자동 실행 시작</span></div></div>
+        <div class="arrow">→</div>
+        <div class="node"><div><b>Auto Coding</b><span>구현 수행</span></div></div>
+        <div class="arrow">→</div>
+        <div class="node"><div><b>Auto Test</b><span>검증 파이프라인</span></div></div>
+        <div class="arrow">→</div>
+        <div class="node"><div><b>Pull Request</b><span>사람의 리뷰 대기</span></div></div>
+      </div>
+    </div>
+
+    <div class="slack">
+      <div class="slack-icon">#</div>
+      <p>
+        <strong>Zero-config deployment.</strong>
+        Claude Code와 필요한 rules, tokens, authentication이 노트북과 개발 환경에 이미 준비되어 있다.
+        사용자는 Harness를 ‘설정’하기보다 조직이 준비한 길 위에서 바로 일을 시작한다.
+      </p>
+    </div>
+
+    <div class="thesis">
+      좋은 인프라는 사용자의 의식을 덜 요구한다.
+      <strong>복잡한 내부 구조가 사용자 앞에서 사라질 때 자동화는 비로소 일상적인 도구가 된다.</strong>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="goose">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-no">03</div>
+      <div>
+        <h2>Goose를 다시 만들지 않고, 기업용 Harness를 그 위에 얹는다</h2>
+        <p class="lead">
+          Minions의 기반 Agent는 Stripe가 처음부터 만든 것이 아니다.
+          Block이 Apache 2.0으로 공개한 Goose를 깊게 수정해 사용한다.
+          원문은 이 관계를 힘과 고삐의 분업으로 읽는다.
+        </p>
+      </div>
+    </div>
+
+    <div class="goose-grid">
+      <div class="goose-card dark">
+        <h3>Goose — 기반 Agent</h3>
+        <p>
+          원문은 Goose가 개방형 모듈 구조를 가지며 MCP를 통해 다수의 서비스와 연결되고,
+          Block 내부에서도 AI 코딩의 핵심 엔진으로 사용된다고 설명한다.
+        </p>
+
+        <div class="goose-stats">
+          <div class="goose-stat">
+            <strong>27K+</strong>
+            <span>GitHub stars · 원문 수치</span>
+          </div>
+          <div class="goose-stat">
+            <strong>350+</strong>
+            <span>contributors · 원문 수치</span>
+          </div>
+          <div class="goose-stat">
+            <strong>100+</strong>
+            <span>versions · 원문 수치</span>
+          </div>
+          <div class="goose-stat">
+            <strong>3,000+</strong>
+            <span>MCP-connected services · 원문 수치</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="goose-card">
+        <h3>Minions — 기업 환경의 고삐</h3>
+        <p>
+          원래 Goose는 터미널 앞의 개발자와 상호작용하는 방식으로 설계되었다.
+          Stripe는 이를 사람이 떠난 뒤에도 전체 작업 흐름을 스스로 끝내는
+          <b>무인 실행 모드</b>에 맞게 변형했다.
+          그 작은 차이는 사람의 실시간 판단이 사라진 자리를
+          환경·도구·검증·표준화가 대신해야 한다는 뜻이다.
+        </p>
+
+        <div class="horse">
+          원문의 비유를 따르면 Block은 달릴 힘을 제공하고,
+          Stripe는 그 힘이 거대한 코드베이스 안에서 안전하게 움직일 길과 고삐를 제공한다.
+        </div>
+      </div>
+    </div>
+
+    <div class="thesis">
+      모든 것을 직접 만드는 것이 Harness Engineering은 아니다.
+      <strong>이미 잘 달리는 기반 Agent를 조직의 현실에 맞게 연결하고 제한하고 검증하는 것</strong>도 중요한 공학이다.
+    </div>
+  </div>
+</section>
+
+<section class="section" id="devbox">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-no">04</div>
+      <div>
+        <h2>devbox — 10초 안에 같은 세계를 하나 더 만든다</h2>
+        <p class="lead">
+          Minion 하나는 표준화된 AWS EC2 기반 devbox에서 실행된다.
+          전체 코드 트리와 미리 데운 Bazel 빌드 캐시, 타입 검사 캐시를 갖춘 환경이
+          warm pool에서 10초도 걸리지 않아 올라온다.
+        </p>
+      </div>
+    </div>
+
+    <div class="devbox">
+      <div class="ten">
+        <strong>&lt;10</strong>
+        <span>seconds</span>
+      </div>
+      <div class="devbox-copy">
+        <h3>Agent의 속도는 모델 추론 속도만으로 결정되지 않는다</h3>
+        <p>
+          Minion이 빠르게 일을 시작할 수 있는 것은 모델이 특별해서가 아니라,
+          실행 환경이 이미 준비되어 있기 때문이다.
+          완전한 코드베이스, 빌드 시스템, 테스트, 개발 환경이 표준화되어 있어
+          Agent가 매 작업마다 세계를 다시 이해하거나 재구축할 필요가 없다.
+        </p>
+
+        <div class="infra">
+          <div class="infra-item">
+            <b>Complete Code Tree</b>
+            <span>필요한 저장소 상태가 준비되어 있다.</span>
+          </div>
+          <div class="infra-item">
+            <b>Warm Bazel Cache</b>
+            <span>빌드 비용을 초기에 다시 지불하지 않는다.</span>
+          </div>
+          <div class="infra-item">
+            <b>Type-check Cache</b>
+            <span>반복 검증의 시작 비용을 줄인다.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="foundation">
+      <p>
+        Minions가 작동하는 가장 큰 이유는 LLM이 등장한 뒤 새로 만든 AI 기술이 아니라,
+        Stripe가 <em>십여 년 동안 인간 엔지니어를 위해 쌓아 온 기반 공학</em>이라고 원문은 말한다.
+      </p>
+    </div>
+
+    <div class="thesis">
+      좋은 인간 개발 인프라는 그대로 좋은 AI 개발 인프라가 된다.
+      <strong>Agent는 열악한 공학을 고쳐주는 마법사가 아니라, 이미 존재하는 공학의 수준을 확대하는 증폭기</strong>다.
+    </div>
+  </div>
+</section>
+
+<section class="section" id="onboarding">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-no">05</div>
+      <div>
+        <h2>AI를 ‘새로 온 유능한 엔지니어’로 본다</h2>
+        <p class="lead">
+          Stripe가 Minions를 조직에 확산할 때 가장 큰 문제는 기술보다 기대치 조정이었다.
+          지나친 기대와 지나친 과소평가가 모두 사용 효율을 낮췄다.
+        </p>
+      </div>
+    </div>
+
+    <div class="onboarding">
+      <div class="onboard-card toohigh">
+        <h3>기대가 너무 높을 때</h3>
+        <p>
+          한 문장만 던지면 복잡한 시스템 전체를 알아서 완성하리라 기대한다.
+          비즈니스 맥락과 코드베이스 관행을 모르는 Agent에게 지나치게 큰 자율성을 준다.
+        </p>
+      </div>
+
+      <div class="onboard-card toolow">
+        <h3>기대가 너무 낮을 때</h3>
+        <p>
+          Agent를 보일러플레이트나 간단한 코드 완성 도구로만 사용해
+          실제로 맡길 수 있는 더 넓은 작업 범위를 활용하지 못한다.
+        </p>
+      </div>
+    </div>
+
+    <div class="newhire">
+      <h3>가장 유용한 정신 모델</h3>
+      <p>
+        모든 프로그래밍 언어와 알고리즘을 잘 아는 강한 신입 엔지니어라고 생각한다.
+        그러나 비즈니스 맥락, Stripe의 코드베이스, 조직의 일하는 방식은 모른다.
+        그러므로 사람에게 하듯 맥락과 경계와 완료 기준을 준다.
+      </p>
+
+      <div class="newhire-grid">
+        <div class="newhire-item">
+          <b>Context</b>
+          <span>왜 하는 일인지 알려준다.</span>
+        </div>
+        <div class="newhire-item">
+          <b>Boundaries</b>
+          <span>어디까지 바꿀 수 있는지 정한다.</span>
+        </div>
+        <div class="newhire-item">
+          <b>Acceptance</b>
+          <span>완료와 성공의 기준을 준다.</span>
+        </div>
+        <div class="newhire-item">
+          <b>Review</b>
+          <span>최종 판단은 조직의 책임으로 남긴다.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="local-learning">
+      원문은 중앙집중형 교육보다 팀 내부에서 공유되는 좋은 Prompt 패턴이 더 빠르게 퍼졌다고 설명한다.
+      한 사람이 실전에서 찾은 방법이 가까운 동료에게 전파될 때,
+      추상적인 공식 가이드보다 사용 맥락과 함께 전달되기 때문이다.
+    </div>
+
+    <div class="thesis">
+      조직 학습은 문서의 길이보다 거리의 문제일 수 있다.
+      <strong>가까운 팀 안에서 실제 성공 사례가 반복될 때 새로운 도구는 지식이 아니라 습관이 된다.</strong>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="quality">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-no">06</div>
+      <div>
+        <h2>AI가 쓰고, 사람은 판단한다</h2>
+        <p class="lead">
+          주 1,300개 PR이라는 숫자 때문에 완전 자동화를 떠올리기 쉽지만,
+          원문은 모든 AI 생성 PR이 여전히 인간 리뷰를 거친다고 명확히 한다.
+          Stripe는 AI에게 자동 merge 권한을 주지 않는다.
+        </p>
+      </div>
+    </div>
+
+    <div class="quality">
+      <div class="human">
+        <small>Human Judgment</small>
+        <h3>최종 결정권은 사람에게 남는다</h3>
+        <p>
+          Agent는 코드 작성과 테스트를 담당하지만,
+          그 변경이 조직과 제품에 맞는 해결인지 판단하는 역할은 사람이 맡는다.
+          생산은 자동화되어도 승인 책임은 자동화되지 않는다.
+        </p>
+      </div>
+
+      <div class="quality-copy">
+        <h3>리뷰어가 보는 것은 ‘검증되지 않은 코드’가 아니다</h3>
+        <p>
+          자동화된 테스트와 배포 신호가 먼저 통과한 PR이 사람에게 전달된다.
+          이 때문에 사람의 리뷰는 문법적 오류를 처음부터 찾는 작업보다
+          해결 방향과 설계의 합리성을 판단하는 쪽으로 이동한다.
+        </p>
+
+        <div class="signals">
+          <div class="signal">
+            <b>Test Coverage</b>
+            <span>광범위한 자동 테스트</span>
+          </div>
+          <div class="signal">
+            <b>Synthetic E2E</b>
+            <span>행동 수준 검증</span>
+          </div>
+          <div class="signal">
+            <b>Blue / Green</b>
+            <span>빠른 rollback 기반</span>
+          </div>
+        </div>
+
+        <div class="review-shift">
+          <strong>“이 코드가 맞는가?”</strong>
+          <div class="arr">→</div>
+          <strong>“이 해결 방식이 합리적인가?”</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="thesis">
+      Agent가 생산을 가져갈수록 사람의 역할은 사라지는 것이 아니라 더 농축된다.
+      <strong>코드 작성의 노동이 줄어든 자리에는 판단과 책임의 밀도가 높아진다.</strong>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="lesson">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="section-no">07</div>
+      <div>
+        <h2>조직에 AI를 넣기 전에, 조직의 공학을 먼저 본다</h2>
+        <p class="lead">
+          9장의 마지막 질문은 “어떤 모델을 고를까”가 아니다.
+          AI Agent를 대규모 조직에 도입하려면 이미 존재하는 개발 시스템이 얼마나 건강한지 먼저 확인하라고 요구한다.
+        </p>
+      </div>
+    </div>
+
+    <div class="questions">
+      <div class="question">
+        <b>테스트 커버리지는 충분한가</b>
+        <p>Agent가 스스로 결과를 검증할 수 있는 자동화된 근거가 존재하는가.</p>
+      </div>
+      <div class="question">
+        <b>빌드 시스템은 표준화되어 있는가</b>
+        <p>사람마다 다른 비공식 절차 없이 반복 가능한 실행 경로가 있는가.</p>
+      </div>
+      <div class="question">
+        <b>깨끗한 개발 환경을 빠르게 만들 수 있는가</b>
+        <p>devbox처럼 짧은 시간 안에 재현 가능한 격리 환경을 제공할 수 있는가.</p>
+      </div>
+      <div class="question">
+        <b>리뷰와 코드 규범이 선명한가</b>
+        <p>Agent가 낸 결과를 어떤 기준으로 받아들이고 거절할지 조직이 이미 알고 있는가.</p>
+      </div>
+    </div>
+
+    <div class="amplify">
+      <div class="amp good">
+        <h3>좋은 실천 × Agent</h3>
+        <p>반복 가능한 공학이 자동화되면 효율이 크게 확대된다.</p>
+      </div>
+      <div class="amp-mid">×</div>
+      <div class="amp bad">
+        <h3>나쁜 실천 × Agent</h3>
+        <p>혼란과 결함도 더 빠른 속도로 조직 전체에 퍼질 수 있다.</p>
+      </div>
+    </div>
+
+    <div class="compound">
+      <p>
+        Stripe는 십여 년에 걸쳐 이 기반을 만들었다.
+        Minions는 갑자기 나타난 AI 비법이 아니라
+        <em>오랜 Engineering 투자가 어느 날 Agent를 만나 복리로 돌아온 결과</em>다.
+      </p>
+    </div>
+
+    <div class="thesis">
+      이 장의 가장 실용적인 결론은 화려하지 않다.
+      <strong>좋은 Harness Engineering은 AI에서 시작하지 않는다. 좋은 Engineering에서 시작한다.</strong>
+      AI는 토대를 대신하지 않는다. 토대 위에서만 힘을 배가한다.
+    </div>
+  </div>
+</section>
+
+<section class="closing">
+  <div class="wrap">
+    <div class="line"></div>
+    <p>
+      빠른 말이 있어도 길이 없으면 멀리 갈 수 없다.<br>
+      길이 있어도 표지와 경계가 없으면 함께 갈 수 없다.<br><br>
+      Stripe의 이야기는 AI의 속도보다<br>
+      그 속도를 받아낼 <em>오래된 질서</em>에 관한 이야기다.<br><br>
+      테스트와 빌드, 표준 환경과 리뷰는<br>
+      AI 시대 이전에는 인간을 위한 기반이었다.<br>
+      AI 시대가 오자 그것은 그대로 Harness가 되었다.<br><br>
+      <em>새로운 기술의 미래는 종종 오래된 공학의 품질 위에서 결정된다.</em>
+    </p>
+
+    <div class="source-note">
+      이 웹페이지는 첨부 문서 《Harness Engineering》의 §09
+      「Stripe Minions：每周1300个PR的流水线 / Stripe Minions: The 1,300-PR-a-Week Pipeline」
+      (PDF 43–45쪽)에만 근거해 재구성했다.
+      46쪽에서 §10이 시작되는 것을 확인해 9장의 범위를 분리했다.
+      원문의 주 1,300개 PR, 1,370명 엔지니어, Slack 기반 실행 흐름,
+      Goose와 Minions의 관계, devbox의 10초 미만 시작, 조직 교육, 인간 리뷰,
+      기반 공학과 증폭 효과에 대한 결론을 원문 맥락 안에서 보존했으며
+      외부 자료를 통한 검증·정정·확장은 수행하지 않았다.
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Chapter 09 Review · Slack → Minion → Code → Test → PR · Goose · devbox · Human Review · Engineering First
+  </div>
+</footer>
+
+<script>
+  const progress = document.getElementById('progress');
+  const sections = [...document.querySelectorAll('header[id], section[id]')];
+  const navLinks = [...document.querySelectorAll('nav a')];
+
+  function update(){
+    const root = document.documentElement;
+    const max = root.scrollHeight - root.clientHeight;
+    const pct = max > 0 ? root.scrollTop / max * 100 : 0;
+    progress.style.width = Math.max(0,Math.min(100,pct)) + '%';
+
+    let active = 0;
+    const y = window.scrollY + window.innerHeight * .38;
+    sections.forEach((s,i)=>{ if(s.offsetTop <= y) active = i; });
+    navLinks.forEach((a,i)=>a.classList.toggle('active',i===active));
+  }
+
+  window.addEventListener('scroll',update,{passive:true});
+  update();
+</script>
+
+</body>
+</html>
