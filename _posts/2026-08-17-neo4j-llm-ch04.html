@@ -1,0 +1,903 @@
+---
+layout: null
+title: "Building a Movie Knowledge Graph with Neo4j" 
+date: 2026-08-17
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence, graph mining]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4장 — 영화 데이터셋으로 Neo4j 그래프를 짓다 | Building Neo4j-Powered Applications with LLMs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#122430;
+  --ink-soft:#3d5260;
+  --mist:#eef1ef;
+  --paper:#f9faf9;
+  --rel-blue:#1268b3;
+  --node-green:#1f8f66;
+  --node-amber:#d99022;
+  --hairline:#d4dcd8;
+  --panel:#ffffff;
+  --code-bg:#162833;
+  --max-prose:46rem;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Noto Serif KR',serif;background:var(--mist);color:var(--ink);
+  line-height:1.85;font-size:17px;word-break:keep-all;-webkit-font-smoothing:antialiased;
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ---------- HERO ---------- */
+.hero{
+  background:
+    radial-gradient(1100px 520px at 78% -8%, rgba(217,144,34,.22), transparent 60%),
+    radial-gradient(800px 480px at 6% 118%, rgba(18,104,179,.26), transparent 60%),
+    var(--ink);
+  color:#e9f0ee;position:relative;overflow:hidden;
+}
+.hero-inner{max-width:72rem;margin:0 auto;padding:5.5rem 2rem 4.5rem;position:relative;z-index:2}
+.series-line{
+  font-family:'IBM Plex Mono',monospace;font-size:.78rem;letter-spacing:.14em;
+  color:#8fb8d8;text-transform:uppercase;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;
+}
+.series-line::before{content:"";display:inline-block;width:2.2rem;height:1px;background:#8fb8d8}
+.cypher-chip{
+  font-family:'IBM Plex Mono',monospace;display:inline-block;margin-top:2.2rem;
+  font-size:.92rem;color:#9fd8bd;background:rgba(31,143,102,.14);
+  border:1px solid rgba(31,143,102,.45);border-radius:999px;padding:.35rem 1.1rem;
+}
+.cypher-chip .k{color:#7fb4e0}
+h1.title{
+  font-family:'Hahmlet',serif;font-weight:700;
+  font-size:clamp(1.9rem,4.4vw,3.2rem);line-height:1.35;margin-top:1.4rem;letter-spacing:-.01em;
+}
+h1.title em{font-style:normal;color:#f0bf72}
+.hero-lede{margin-top:1.6rem;max-width:38rem;font-size:1.02rem;color:#b9c9c9;line-height:1.95}
+.hero-meta{
+  margin-top:2.6rem;font-family:'IBM Plex Mono',monospace;font-size:.75rem;
+  color:#7d94a0;letter-spacing:.06em;display:flex;gap:1.8rem;flex-wrap:wrap;
+}
+/* 히어로: 방사형 무비 그래프 */
+.radial{position:absolute;right:-1.5rem;top:50%;transform:translateY(-50%);width:min(46vw,540px);z-index:1}
+.radial .rn{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:#eaf4ef;text-anchor:middle;font-weight:500}
+.radial .re{stroke:#4a6a80;stroke-width:1.2;opacity:.7}
+.radial .rl{font-family:'IBM Plex Mono',monospace;font-size:8px;fill:#8fb8d8;letter-spacing:.05em}
+@media(max-width:960px){
+  .radial{position:static;transform:none;width:100%;max-width:440px;margin:3rem auto 0;display:block}
+  .hero-inner{padding-bottom:2.5rem}
+}
+
+/* ---------- 목차 ---------- */
+.toc-strip{background:var(--paper);border-bottom:1px solid var(--hairline)}
+.toc-inner{max-width:72rem;margin:0 auto;padding:1.4rem 2rem;display:flex;gap:2rem;flex-wrap:wrap;align-items:center}
+.toc-label{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.16em;color:var(--ink-soft);text-transform:uppercase}
+.toc-strip a{
+  font-family:'Hahmlet',serif;font-size:.92rem;font-weight:500;color:var(--ink);
+  text-decoration:none;border-bottom:1.5px solid transparent;padding-bottom:2px;transition:border-color .2s;
+}
+.toc-strip a:hover,.toc-strip a:focus-visible{border-color:var(--node-green)}
+.toc-strip a .n{color:var(--rel-blue);font-family:'IBM Plex Mono',monospace;font-size:.8rem;margin-right:.4rem}
+
+/* ---------- 본문 공통 ---------- */
+main{max-width:72rem;margin:0 auto;padding:0 2rem}
+.section{padding:4.2rem 0 1rem}
+.section-head{max-width:var(--max-prose);margin:0 auto 2rem}
+.node-marker{
+  font-family:'IBM Plex Mono',monospace;font-size:.85rem;color:var(--node-green);
+  display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;
+}
+.node-marker::before{
+  content:"";width:11px;height:11px;border-radius:50%;background:var(--node-green);
+  box-shadow:0 0 0 4px rgba(31,143,102,.15);flex:none;
+}
+.node-marker .p{color:var(--rel-blue)}
+h2{font-family:'Hahmlet',serif;font-weight:600;font-size:clamp(1.5rem,3vw,2.05rem);line-height:1.4;margin-top:.9rem;letter-spacing:-.01em}
+h3{
+  font-family:'Hahmlet',serif;font-weight:600;font-size:1.22rem;
+  margin:2.8rem auto 1rem;max-width:var(--max-prose);color:var(--ink);
+  display:flex;align-items:baseline;gap:.6rem;
+}
+h3::before{content:"—";color:var(--node-amber);font-weight:400}
+.prose{max-width:var(--max-prose);margin:0 auto}
+.prose p{margin-bottom:1.5rem}
+.prose p:last-child{margin-bottom:0}
+.prose strong{font-weight:600}
+.prose .term{font-weight:600;background:linear-gradient(transparent 68%, rgba(31,143,102,.22) 68%)}
+.prose a{color:var(--rel-blue);text-decoration:none;border-bottom:1px solid rgba(18,104,179,.4)}
+.prose a:hover{border-bottom-color:var(--rel-blue)}
+.prose code,.ld code,.hd code{
+  font-family:'IBM Plex Mono',monospace;font-size:.85em;
+  background:#e3e9e6;border-radius:4px;padding:.12em .4em;
+  overflow-wrap:anywhere;word-break:break-all;
+}
+.hop-path .hd,.layer-list .ld,.csv-row .cd,.reason-card p,.io-card p{min-width:0;overflow-wrap:anywhere}
+.prose a,.ld a,.hd a{overflow-wrap:anywhere}
+.next-chip{overflow-wrap:anywhere;max-width:100%}
+.lead-q{
+  font-family:'Hahmlet',serif;font-size:1.12rem;font-weight:500;color:var(--ink);
+  border-left:3px solid var(--node-amber);padding:.35rem 0 .35rem 1.2rem;margin:2.2rem 0;
+}
+
+/* ---------- 그림 패널 ---------- */
+.figure-panel{
+  background:var(--panel);border:1px solid var(--hairline);border-radius:14px;
+  padding:2.4rem 2rem 1.6rem;margin:2.6rem auto;max-width:56rem;
+  box-shadow:0 2px 14px rgba(18,36,48,.05);
+}
+.figure-panel svg{width:100%;height:auto;display:block}
+.fig-caption{
+  font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--ink-soft);
+  text-align:center;margin-top:1.4rem;letter-spacing:.03em;line-height:1.7;
+}
+.fig-caption b{color:var(--rel-blue);font-weight:600}
+.svg-rel{font-family:'IBM Plex Mono',monospace;font-size:9px;fill:#3d5260;font-weight:600}
+
+/* ---------- 코드 블록 ---------- */
+.code-snip{max-width:56rem;margin:1.8rem auto;background:var(--code-bg);border-radius:12px;overflow:hidden}
+.code-snip .ch{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:.6rem 1.3rem;background:rgba(255,255,255,.05);
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:#8fb8d8;letter-spacing:.08em;
+}
+.code-snip .ch .lang{color:#7ecfa8}
+.code-snip pre{
+  padding:1.2rem 1.4rem;overflow-x:auto;
+  font-family:'IBM Plex Mono',monospace;font-size:.82rem;line-height:1.75;color:#d6e4dc;
+}
+.code-snip pre .c{color:#6d8a96;font-style:italic}
+.code-snip pre .s{color:#a8d5b8}
+.code-snip pre .k{color:#8ec7ef}
+.code-snip pre .f{color:#e8c07a}
+.io-pair{max-width:56rem;margin:1.6rem auto;display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+.io-card{background:var(--panel);border:1px solid var(--hairline);border-radius:12px;padding:1.2rem 1.4rem}
+.io-card .ik{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:.6rem;font-weight:600}
+.io-card.in .ik{color:var(--rel-blue)}
+.io-card.out .ik{color:var(--node-green)}
+.io-card p{font-family:'IBM Plex Mono',monospace;font-size:.8rem;line-height:1.75;color:var(--ink-soft);word-break:break-all}
+@media(max-width:760px){.io-pair{grid-template-columns:1fr}}
+
+/* ---------- 리스트 ---------- */
+.layer-list{max-width:var(--max-prose);margin:1.8rem auto;list-style:none}
+.layer-list li{display:grid;grid-template-columns:11rem 1fr;gap:1.2rem;padding:1rem 0;border-bottom:1px solid var(--hairline)}
+.layer-list li:first-child{border-top:1px solid var(--hairline)}
+.layer-list .ln{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:600;color:var(--rel-blue);padding-top:.15rem;line-height:1.6}
+.layer-list .ld{font-size:.96rem;color:var(--ink-soft);line-height:1.8}
+.layer-list .ld a{color:var(--rel-blue);text-decoration:none;border-bottom:1px solid rgba(18,104,179,.4)}
+@media(max-width:600px){.layer-list li{grid-template-columns:1fr;gap:.3rem}}
+
+.hop-path{max-width:56rem;margin:2rem auto;counter-reset:hop;list-style:none}
+.hop-path li{counter-increment:hop;display:grid;grid-template-columns:3rem 1fr;gap:1.1rem;align-items:start;padding:1.05rem 0;position:relative}
+.hop-path li::before{
+  content:counter(hop);font-family:'IBM Plex Mono',monospace;font-weight:600;
+  width:2.4rem;height:2.4rem;border-radius:50%;background:var(--panel);
+  border:2px solid var(--node-green);color:var(--node-green);
+  display:flex;align-items:center;justify-content:center;font-size:.95rem;z-index:1;
+}
+.hop-path li:not(:last-child)::after{content:"";position:absolute;left:1.2rem;top:3.4rem;bottom:-.6rem;width:2px;background:var(--hairline)}
+.hop-path .hd{font-size:.98rem;line-height:1.8;padding-top:.35rem}
+.hop-path .hd b{font-weight:600}
+
+/* ---------- 이점 카드 ---------- */
+.reason-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.4rem;margin:2.4rem auto;max-width:56rem}
+.reason-card{background:var(--panel);border:1px solid var(--hairline);border-radius:14px;padding:1.8rem 1.7rem;position:relative}
+.reason-card::before{content:"";position:absolute;top:1.9rem;left:0;width:4px;height:2rem;border-radius:0 4px 4px 0;background:var(--node-green)}
+.reason-card:nth-child(2)::before{background:var(--rel-blue)}
+.reason-card:nth-child(3)::before{background:var(--node-amber)}
+.reason-card:nth-child(4)::before{background:var(--ink-soft)}
+.reason-card:nth-child(5)::before{background:#7b6de0}
+.reason-card h4{font-family:'Hahmlet',serif;font-size:1.05rem;font-weight:600;margin-bottom:.7rem}
+.reason-card p{font-size:.94rem;line-height:1.8;color:var(--ink-soft)}
+.reason-card p b{color:var(--ink);font-weight:600}
+.reason-card.wide{grid-column:1/-1}
+@media(max-width:760px){.reason-grid{grid-template-columns:1fr}}
+
+/* ---------- CSV 인벤토리 ---------- */
+.csv-inv{max-width:56rem;margin:2.4rem auto;display:flex;flex-direction:column;gap:.9rem}
+.csv-row{
+  background:var(--panel);border:1px solid var(--hairline);border-radius:12px;
+  padding:1.2rem 1.5rem;display:grid;grid-template-columns:13rem 6.4rem 1fr;
+  gap:1.2rem;align-items:start;
+}
+.csv-row .cf{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:.88rem;color:var(--ink);padding-top:.1rem}
+.csv-badge{
+  font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.1em;font-weight:600;
+  text-transform:uppercase;border-radius:999px;padding:.28rem .75rem;text-align:center;
+  align-self:start;margin-top:.1rem;
+}
+.csv-badge.use{background:#e3f2ea;color:var(--node-green);border:1px solid #bfe0cf}
+.csv-badge.skip{background:#f2f2f0;color:#8a9299;border:1px solid #dcdfe0}
+.csv-row .cd{font-size:.9rem;line-height:1.75;color:var(--ink-soft)}
+@media(max-width:760px){.csv-row{grid-template-columns:1fr;gap:.5rem}}
+
+/* ---------- 자격증명 ---------- */
+.cred-box{
+  max-width:56rem;margin:1.8rem auto;background:var(--code-bg);
+  border-radius:12px;padding:1.4rem 1.7rem;
+  font-family:'IBM Plex Mono',monospace;font-size:.82rem;line-height:1.9;color:#a8d5b8;
+  word-break:break-all;overflow-wrap:anywhere;
+}
+.cred-box .ck{color:#8ec7ef}
+
+/* ---------- 콜아웃 ---------- */
+.note-box{
+  max-width:var(--max-prose);margin:2rem auto;
+  background:#eef4f8;border:1px solid #cfdfeb;border-radius:14px;padding:1.5rem 1.7rem;
+}
+.note-box .nk{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.14em;color:var(--rel-blue);text-transform:uppercase;display:block;margin-bottom:.6rem;font-weight:600}
+.note-box p{font-size:.92rem;line-height:1.85;color:#33495a}
+.note-box a{color:var(--rel-blue);border-bottom:1px solid rgba(18,104,179,.4);text-decoration:none}
+.cite-box{
+  max-width:var(--max-prose);margin:1.6rem auto;
+  border-left:3px solid var(--hairline);padding:.2rem 0 .2rem 1.3rem;
+  font-size:.85rem;line-height:1.8;color:var(--ink-soft);
+}
+
+/* ---------- 요약 ---------- */
+.summary-panel{
+  background:var(--ink);color:#dce8e3;border-radius:18px;max-width:56rem;
+  margin:3rem auto 0;padding:3rem 2.6rem;position:relative;overflow:hidden;
+}
+.summary-panel::after{content:"";position:absolute;right:-70px;top:-70px;width:240px;height:240px;border-radius:50%;border:1.5px solid rgba(240,191,114,.3)}
+.summary-panel::before{content:"";position:absolute;right:20px;bottom:-90px;width:200px;height:200px;border-radius:50%;border:1.5px solid rgba(143,184,216,.25)}
+.summary-panel h2{color:#fff;margin-bottom:1.3rem;font-size:1.6rem}
+.summary-panel p{max-width:42rem;line-height:1.95;position:relative;z-index:1}
+.summary-panel p+p{margin-top:1.1rem}
+.next-chip{
+  display:inline-block;margin-top:2rem;font-family:'IBM Plex Mono',monospace;
+  font-size:.82rem;color:#f0bf72;border:1px solid rgba(240,191,114,.5);
+  border-radius:999px;padding:.45rem 1.2rem;
+}
+
+footer{
+  max-width:72rem;margin:4rem auto 0;padding:3rem 2rem 3.5rem;
+  font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:var(--ink-soft);
+  letter-spacing:.04em;line-height:2;border-top:1px solid var(--hairline);
+}
+footer b{color:var(--ink)}
+
+@media(max-width:600px){
+  body{font-size:16px}
+  .hero-inner{padding:3.6rem 1.4rem 2rem}
+  main{padding:0 1.4rem}
+  .toc-inner{padding:1.2rem 1.4rem;gap:1.1rem}
+  .figure-panel{padding:1.4rem 1rem 1.2rem}
+  .summary-panel{padding:2.2rem 1.6rem}
+  .code-snip pre{font-size:.74rem;padding:1rem 1.1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="hero-inner">
+    <p class="series-line">Building Neo4j-Powered Applications with LLMs · Part II — Haystack과 Neo4j의 통합: AI 검색 구축 실무 가이드</p>
+    <span class="cypher-chip"><span class="k">MATCH</span> (:Chapter {n: 4})-[:BUILDS]-&gt;(:MovieGraph)</span>
+    <h1 class="title"><em>영화 데이터셋</em>으로<br>Neo4j 그래프를 짓다</h1>
+    <p class="hero-lede">지식그래프는 설계도만으로 서지 않는다. 원시 CSV 4만 5천 편의 영화 데이터를 정규화하고, 제약과 인덱스를 세우고, 노드와 관계를 부으면, 9만 노드와 32만 관계의 그래프가 일어선다. 이 장은 그 공정 전체를 코드로 걷는다.</p>
+    <div class="hero-meta">
+      <span>Ravindranatha Anthapu · Siddhant Agarwal</span>
+      <span>Packt Publishing, 2025</span>
+      <span>Chapter 4 · pp. 71–93</span>
+    </div>
+  </div>
+  <svg class="radial" viewBox="0 0 540 400" aria-hidden="true">
+    <g>
+      <line class="re" x1="270" y1="200" x2="150" y2="80"/>
+      <line class="re" x1="270" y1="200" x2="300" y2="60"/>
+      <line class="re" x1="270" y1="200" x2="420" y2="90"/>
+      <line class="re" x1="270" y1="200" x2="120" y2="210"/>
+      <line class="re" x1="270" y1="200" x2="440" y2="210"/>
+      <line class="re" x1="270" y1="200" x2="160" y2="330"/>
+      <line class="re" x1="270" y1="200" x2="300" y2="345"/>
+      <line class="re" x1="270" y1="200" x2="420" y2="320"/>
+    </g>
+    <text class="rl" x="196" y="130" transform="rotate(45 196 130)">PRODUCED_IN</text>
+    <text class="rl" x="292" y="120" transform="rotate(-78 292 120)">DIRECTED</text>
+    <text class="rl" x="342" y="138" transform="rotate(-38 342 138)">ACTED_IN</text>
+    <text class="rl" x="172" y="196">HAS_GENRE</text>
+    <text class="rl" x="342" y="196">PRODUCED_BY</text>
+    <text class="rl" x="196" y="278" transform="rotate(-50 196 278)">HAS_LANGUAGE</text>
+    <text class="rl" x="296" y="284" transform="rotate(80 296 284)">RATED</text>
+    <text class="rl" x="352" y="270" transform="rotate(39 352 270)">PRODUCED</text>
+    <circle cx="270" cy="200" r="46" fill="#7dc242"/>
+    <text class="rn" x="270" y="205" style="font-size:12px">Movie</text>
+    <circle cx="150" cy="80" r="30" fill="#c8703f"/><text class="rn" x="150" y="85">Country</text>
+    <circle cx="300" cy="60" r="30" fill="#9c8064"/><text class="rn" x="300" y="65">Director</text>
+    <circle cx="420" cy="90" r="30" fill="#7d8f52"/><text class="rn" x="420" y="95">Actor</text>
+    <circle cx="120" cy="210" r="30" fill="#7fa3d8"/><text class="rn" x="120" y="215">Genre</text>
+    <circle cx="440" cy="210" r="32" fill="#8f7fd8"/><text class="rn" x="440" y="207" style="font-size:8.5px">Production</text><text class="rn" x="440" y="219" style="font-size:8.5px">Company</text>
+    <circle cx="160" cy="330" r="30" fill="#b07a5c"/><text class="rn" x="160" y="327" style="font-size:8.5px">Spoken</text><text class="rn" x="160" y="339" style="font-size:8.5px">Language</text>
+    <circle cx="300" cy="345" r="28" fill="#8aab5a"/><text class="rn" x="300" y="350">User</text>
+    <circle cx="420" cy="320" r="28" fill="#2fae76"/><text class="rn" x="420" y="325">Producer</text>
+  </svg>
+</header>
+
+<!-- ================= TOC ================= -->
+<nav class="toc-strip" aria-label="이 장의 주제">
+  <div class="toc-inner">
+    <span class="toc-label">이 장의 주제</span>
+    <a href="#sec1"><span class="n">01</span>효율적 검색을 위한 그래프 설계</a>
+    <a href="#sec2"><span class="n">02</span>영화 데이터셋의 활용</a>
+    <a href="#sec3"><span class="n">03</span>영화 지식그래프의 구축</a>
+    <a href="#sec4"><span class="n">04</span>고급 Cypher 기법</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ================= 도입 ================= -->
+<section class="section" id="intro">
+  <div class="prose">
+    <p>앞의 장들에서 우리는 지식그래프가 어떻게 변혁적 도구로 떠올랐는지 배웠다. 지식그래프는 다양한 데이터 포인트를 연결하는 구조화된 방식을 제공하며, 폭넓은 도메인에 걸쳐 더 똑똑한 검색과 추천, 추론을 가능케 한다. 개체 사이의 복잡한 관계를 포착하는 데 탁월하기에, 깊은 맥락 이해가 필요한 애플리케이션에서는 없어서는 안 될 존재다.</p>
+    <p>최첨단 그래프 데이터베이스 기술을 지닌 Neo4j는 지식그래프의 구축과 관리에서 선도적 플랫폼으로 도드라진다. 앞 장에서 보았듯, 전통적 관계형 데이터베이스와 달리 Neo4j는 고도로 연결된 데이터를 수월하게 다루도록 설계되어, 더 직관적인 질의와 더 빠른 통찰의 검색을 허락한다. 원시의 비구조화 데이터를 AI 기반 애플리케이션을 움직일 의미 있는 통찰로 변환하려는 개발자와 데이터 과학자에게 이상적인 선택인 이유다.</p>
+  </div>
+
+  <h3>기술 요건</h3>
+  <div class="prose"><p>이 장의 실습을 성공적으로 해내려면 다음 도구들이 필요하다.</p></div>
+  <ul class="layer-list">
+    <li><span class="ln">Neo4j AuraDB</span><span class="ld">Neo4j의 클라우드 버전. <a href="https://neo4j.com/aura" target="_blank" rel="noopener">neo4j.com/aura</a>에서 쓸 수 있다.</span></li>
+    <li><span class="ln">Cypher 질의 언어</span><span class="ld">그래프의 생성과 질의에 Cypher를 광범위하게 쓰므로 친숙함이 필수다. 문법은 <a href="https://neo4j.com/docs/cypher/" target="_blank" rel="noopener">Cypher 공식 문서</a>에서 확인한다.</span></li>
+    <li><span class="ln">Python</span><span class="ld">Python 3.x가 시스템에 설치되어 있어야 한다. Neo4j 데이터베이스와의 스크립팅·상호작용에 쓴다.</span></li>
+    <li><span class="ln">Python 라이브러리</span><span class="ld">Neo4j Python 드라이버(<code>pip install neo4j</code>)와, 데이터 조작·분석을 위한 pandas(<code>pip install pandas</code>).</span></li>
+    <li><span class="ln">IDE</span><span class="ld">PyCharm, VS Code, Jupyter Notebook 같은 통합 개발 환경을 권장한다.</span></li>
+    <li><span class="ln">Git과 GitHub</span><span class="ld">버전 관리를 위한 Git 기본 지식이 필요하고, 이 장의 코드 저장소에 접근하려면 GitHub 계정이 있어야 한다.</span></li>
+    <li><span class="ln">영화 데이터셋</span><span class="ld">Kaggle에서 제공되는 <a href="https://www.kaggle.com/datasets/rounakbanik/the-movies-dataset/" target="_blank" rel="noopener">The Movie Database(TMDb)</a>가 필요하다. <code>credits.csv</code>, <code>ratings.csv</code> 같은 일부 데이터 파일은 저장 공간 제약으로 GitHub에 없을 수 있지만, 원시 데이터 파일 전체는 GCS 버킷에서 접근할 수 있다.</span></li>
+  </ul>
+  <div class="cite-box">이 데이터셋은 MovieLens 데이터셋의 파생물이다 — F. Maxwell Harper and Joseph A. Konstan. 2015. The MovieLens Datasets: History and Context. <em>ACM Transactions on Interactive Intelligent Systems (TiiS)</em> 5, 4: 19:1–19:19. doi.org/10.1145/2827872</div>
+  <div class="prose">
+    <p>이 장의 모든 코드는 GitHub 저장소(<a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/tree/main/ch4" target="_blank" rel="noopener">…/ch4</a>)에 있다. 폴더에는 영화 데이터셋과 Cypher 코드로 Neo4j 그래프를 만드는 데 필요한 모든 파일과 스크립트가 담겼다. 코드 예제를 따라가려면 저장소를 클론하거나 다운로드해 두어야 하며, 저장소에는 원시 데이터 파일에 접근하는 GCS 경로도 들어 있다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 1 ================= -->
+<section class="section" id="sec1">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 1})-[:DESIGNS]-&gt;<span class="p">(:GraphModel)</span></p>
+    <h2>효율적 검색을 위한 Neo4j 그래프 설계</h2>
+  </div>
+  <div class="prose">
+    <p>잘 설계된 Neo4j 그래프는 검색 기능이 정확할 뿐 아니라 효율적이도록, 곧 관련 정보를 빠르게 가져오도록 보장한다. 그래프 안에서 데이터가 조직되는 방식은 검색 결과의 성능과 적합성에 직접적인 영향을 미친다. 효과적인 그래프 모델링의 원리를 이해하는 일이 결정적인 이유다. 이 절은 Neo4j 그래프를 올바르게 구조화하는 일의 중요성, 그것이 검색 과정에 미치는 영향, 그리고 그래프 모델을 설계하며 유념해야 할 핵심 고려 사항을 파고든다.</p>
+  </div>
+
+  <h3>노드와 관계 타입을 정의할 때의 고려 사항</h3>
+  <div class="prose">
+    <p>3장에서 상기하자. 모든 Neo4j 그래프의 기초는 노드와 관계 위에 선다. 노드는 영화나 사람(배우, 감독) 같은 개체를 나타내고, 관계는 그 개체들이 어떻게 연결되는지를 정의한다. 어떤 노드와 관계 타입을 고르느냐가 검색 질의의 효과를 좌우한다.</p>
+    <p>영화 데이터셋에서 노드는 전통적으로 <code>Movies</code>, <code>Actors</code>, <code>Directors</code>, <code>Genres</code> 같은 별개의 개체를 나타낼 것이다. 그러면 관계가 <code>ACTED_IN</code>, <code>DIRECTED</code>, <code>BELONGS_TO</code>처럼 이 노드들의 상호작용을 정의한다. 그러나 대안이 있고, 종종 더 효율적이다. <strong>유사한 개체들을 단일 노드 타입으로 통합</strong>하는 것이다.</p>
+    <p>Actors와 Directors를 위한 별도 노드를 만드는 대신, 단일한 <code>Person</code> 노드를 만들 수 있다. 각 Person 노드의 성격 — 배우인지, 감독인지, 둘 다인지 — 은 그 노드가 <code>Movie</code> 노드와 맺는 <strong>관계의 타입</strong>으로 정의된다. Person 노드가 <code>ACTED_IN</code> 관계로 Movie 노드에 연결되어 있다면 그 사람은 그 영화의 배우다. 마찬가지로 <code>DIRECTED</code> 관계는 그 사람이 영화를 감독했음을 가리킨다. 완전한 그래프는 이후 절들에서 만든다. 그 전에, 왜 이 접근이 더 나은지부터 말하자. 3장에서 증명했듯 이 접근은 다음의 결과를 낳는다.</p>
+  </div>
+  <div class="reason-grid">
+    <div class="reason-card">
+      <h4>단순해진 데이터 모델</h4>
+      <p>배우와 감독을 하나의 <b>Person</b> 노드로 나타내면 데이터 모델이 더 매끄러워진다. 그래프의 복잡성이 줄고, 이해와 관리가 쉬워진다.</p>
+    </div>
+    <div class="reason-card">
+      <h4>향상된 질의 성능</h4>
+      <p>노드 타입이 적을수록 그래프 데이터베이스는 질의 중 관계를 더 효율적으로 순회한다. 데이터베이스 엔진이 구별해야 할 개체가 줄어, <b>질의 실행 시간이 빨라진다</b>.</p>
+    </div>
+    <div class="reason-card">
+      <h4>중복의 감소</h4>
+      <p>통합된 Person 노드는 정보 중복의 필요를 없앤다. 한 사람이 배우이자 감독인 경우, 겹치는 데이터를 지닌 노드 둘을 만드는 일을 피해 <b>중복을 최소화하고 저장 공간을 아낀다</b>.</p>
+    </div>
+    <div class="reason-card">
+      <h4>유연한 관계 정의</h4>
+      <p>더 유연하고 세밀한 관계 정의가 가능해진다. 한 사람이 여러 영화에서 다른 역할을 맡았다면(한 편은 출연, 다른 한 편은 연출), 여러 노드를 만들 필요 없이 <b>관계가 그 역할들을 명확히 구별</b>한다.</p>
+    </div>
+    <div class="reason-card wide">
+      <h4>쉬운 유지보수와 확장성</h4>
+      <p>데이터셋이 커질수록 단순한 노드 구조의 유지가 점점 중요해진다. 통합 노드 타입으로 일하면 새 역할이나 관계를 더하는 일이 더 수월해진다.</p>
+    </div>
+  </div>
+  <div class="prose">
+    <p>이 타입과 관계들을 신중히 선택하고 정의함으로써, 실세계의 연결을 비추는 그래프 구조가 만들어진다. 검색 질의는 더 직관적으로, 결과는 더 의미 있게, 시스템 전체는 더 효율적으로 변한다.</p>
+  </div>
+
+  <h3>인덱싱과 제약이 검색 성능에 미치는 힘</h3>
+  <div class="prose">
+    <p>Neo4j 그래프가 커질수록 인덱싱과 제약 적용의 중요성은 절대적인 것이 된다. <span class="term">인덱스(index)</span>는 Neo4j가 질의의 시작점을 빠르게 찾도록 해 주며, 특히 대규모 데이터셋에서 검색 성능을 극적으로 끌어올린다. 한편 <span class="term">제약(constraint)</span>은 중복 노드나 무효한 관계의 생성을 막아 데이터 무결성을 보장한다.</p>
+    <p>배우와 감독에 통합 Person 노드를 쓰는 우리의 영화 데이터셋 맥락에서, 인덱싱은 한층 더 결정적이다. <code>person_name</code>이나 <code>role</code> 같은 프로퍼티로 노드를 인덱싱해, 특정 인물이나 영화 속 역할의 검색이 신속히 결과를 돌려주도록 만들 수 있다. 관계(<code>ACTED_IN</code>, <code>DIRECTED</code>)의 <code>role</code> 프로퍼티를 인덱싱해 특정 영화에 대한 관여로 인물을 빠르게 거르는 것도 가능하다.</p>
+    <p>제약은 그래프 무결성 유지에도 필수다. 제약은 데이터셋의 성격과 애플리케이션 요구에 기초해 신중히 설계해야 한다. 만능 해법은 없다. 다음은 영화 데이터셋에 맞춘 제약과 인덱스 생성을 보여주는 예제들이다. 인물 식별자의 고유성 보장, 노드·관계 프로퍼티 전반의 검색 성능 최적화 같은 흔한 시나리오를 담았다. 자신의 용례와 데이터 품질에 따라 이 패턴들을 각색해 데이터 무결성을 강제하고 질의 속도를 높이면 된다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>제약 1 — person_name 고유 제약 (단순화된 용례)</span><span class="lang">cypher</span></div>
+    <pre><span class="c">-- 각 인물이 고유한 이름을 가진다고 가정할 수 있는 경우.
+-- 한 사람이 여러 역할(배우이자 감독)을 맡아도 단일 노드로 표현되도록 보장한다.
+-- 중복 노드의 우발적 생성을 막아 그래프를 깨끗하고 효율적으로 유지한다.</span>
+<span class="k">CREATE CONSTRAINT</span> unique_person_name <span class="k">IF NOT EXISTS</span>
+<span class="k">FOR</span> (p:Person)
+<span class="k">REQUIRE</span> p.person_name <span class="k">IS UNIQUE</span>;</pre>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>제약 2 — 더 신뢰할 수 있는 ID의 고유 제약</span><span class="lang">cypher</span></div>
+    <pre><span class="c">-- 앞의 고유성 제약은 데이터에 대한 가정에 기초한다. 실세계에서는
+-- 같은 이름의 다른 개인을 만나는 일이 흔하다. 이럴 때는 IMDb나 TMDb 같은
+-- 외부 소스의 person_id처럼 더 신뢰할 수 있는 식별자로 고유성을 강제한다.</span>
+<span class="k">CREATE CONSTRAINT</span> unique_person_id <span class="k">IF NOT EXISTS</span>
+<span class="k">FOR</span> (p:Person)
+<span class="k">REQUIRE</span> p.person_id <span class="k">IS UNIQUE</span>;</pre>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>인덱스 1 — person_name (고유성을 강제하지 않을 때의 빠른 조회)</span><span class="lang">cypher</span></div>
+    <pre><span class="c">-- 고유성은 강제하지 않지만 이름으로 인물을 자주 검색한다면,
+-- person_name 인덱스가 질의 성능을 크게 개선한다.</span>
+<span class="k">CREATE INDEX</span> person_name_index <span class="k">IF NOT EXISTS</span>
+<span class="k">FOR</span> (p:Person)
+<span class="k">ON</span> (p.person_name);</pre>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>인덱스 2 — Movie의 title 프로퍼티</span><span class="lang">cypher</span></div>
+    <pre><span class="c">-- 영화는 특히 추천 시스템이나 검색 기능에서 제목으로 자주 질의된다.
+-- title 인덱싱은 특정 영화 검색 시 빠른 조회를 보장한다.</span>
+<span class="k">CREATE INDEX</span> movie_title_index <span class="k">IF NOT EXISTS</span>
+<span class="k">FOR</span> (m:Movie)
+<span class="k">ON</span> (m.title);</pre>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>인덱스 3 — ACTED_IN 관계의 role 프로퍼티</span><span class="lang">cypher</span></div>
+    <pre><span class="c">-- 영화 속 특정 역할(주연, 카메오)로 배우를 걸러야 한다면,
+-- ACTED_IN 관계의 role 인덱싱이 전체 관계 스캔을 피해 질의를 가속한다.</span>
+<span class="k">CREATE INDEX</span> acted_in_role_index <span class="k">IF NOT EXISTS</span>
+<span class="k">FOR</span> ()-[r:ACTED_IN]-()
+<span class="k">ON</span> (r.role);</pre>
+  </div>
+  <div class="note-box">
+    <span class="nk">Note</span>
+    <p>Neo4j는 관계 프로퍼티 인덱스를 5.x 버전 이상에서만 지원한다.</p>
+  </div>
+  <div class="prose">
+    <p>제대로 구현된 인덱싱과 제약은 그래프를 더 튼튼하게, 검색 과정을 더 빠르고 신뢰할 수 있게 만든다. 사용자 경험이 좋아질 뿐 아니라 시스템의 연산 부하가 줄어, 더 확장 가능한 해법이 열린다. 다음 절에서는 열린 데이터의 힘을 빌려, 영화 데이터셋으로 그래프를 만드는 방법을 탐구한다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 2 ================= -->
+<section class="section" id="sec2">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 2})-[:NORMALIZES]-&gt;<span class="p">(:Dataset)</span></p>
+    <h2>영화 데이터셋의 활용</h2>
+  </div>
+  <div class="prose">
+    <p>이 절은 Kaggle에 공개된 포괄적 메타데이터 컬렉션, <span class="term">TMDb(The Movie Database)</span>의 활용에 집중한다. 이 데이터셋은 제목, 장르, 출연진, 제작진, 개봉일, 평점 등 영화에 관한 폭넓은 정보를 담고 있다. 4만 5천 편이 넘는 영화와 그 창작에 관여한 사람들의 상세 정보를 갖춘 이 데이터셋은, 영화 산업 안의 복잡한 관계를 포착하는 Neo4j 그래프를 짓기 위한 튼튼한 토대가 된다.</p>
+    <p>이 데이터셋으로 데이터를 지식그래프로 모델링하며, 실무의 맥락에서 데이터 통합을 배운다. 데이터를 조달하고, 준비하고, Neo4j로 임포트하는 법을 익히게 될 것이다. TMDb 같은 대규모 데이터셋을 다룰 때는, Neo4j 그래프에 통합하기 전에 데이터가 깨끗하고 일관되며 제대로 구조화되어 있는지 확인하는 일이 결정적이다. 원시 데이터는 정보가 풍부하지만 비일관성과 중복, 복잡한 구조를 자주 품고 있어 지식그래프의 성능과 정확성을 방해할 수 있다. <span class="term">데이터 정규화(normalization)</span>와 <span class="term">클리닝(cleaning)</span>이 등장하는 지점이 바로 여기다.</p>
+  </div>
+
+  <h3>왜 데이터를 정규화하고 클리닝하는가</h3>
+  <div class="reason-grid">
+    <div class="reason-card">
+      <h4>일관성</h4>
+      <p>원시 데이터에는 비슷한 정보가 다르게 기록된 변형이 섞여 있다. 영화 장르가 서로 다른 형식으로 적히거나 중복될 수 있다. 정규화는 유사한 데이터 포인트가 일관된 형식으로 기록되도록 보장한다. 실세계 데이터셋에서 이 문제를 다루기는 어렵지만, Neo4j는 Cypher 패턴 매칭, 노드 병합·중복 정리를 위한 <b>APOC 프로시저</b>, 관련 개체를 식별·통합하는 노드 유사도 알고리즘을 담은 <b>Graph Data Science 라이브러리</b>로 개체 연결(entity linkage)과 중복 제거를 돕는다.</p>
+    </div>
+    <div class="reason-card">
+      <h4>효율성</h4>
+      <p>정규화는 중복을 줄여 Neo4j 그래프의 효율을 끌어올린다. 데이터를 표준화된 형식으로 조직함으로써 <b>저장 요구를 최소화</b>하고 질의 성능을 최적화한다.</p>
+    </div>
+    <div class="reason-card">
+      <h4>정확성</h4>
+      <p>클리닝은 부정확한 레코드의 제거나 교정을 포함한다. 그래프에서 끌어낸 통찰이 <b>정확하고 신뢰할 수 있는 데이터</b>에 기초하도록 보장하는 필수 단계다.</p>
+    </div>
+    <div class="reason-card">
+      <h4>확장성</h4>
+      <p>깨끗하고 정규화된 데이터셋은 확장이 쉽다. 데이터셋이 커져도 표준화된 구조를 유지하면 그래프가 <b>관리 가능하고, 늘어나는 부하 아래서도 잘 작동</b>한다.</p>
+    </div>
+  </div>
+
+  <h3>CSV 파일의 클리닝과 정규화</h3>
+  <div class="prose"><p>이제 TMDb에 포함된 각 CSV 파일을 클리닝하고 정규화한다. 데이터셋의 CSV 파일 일곱 개와 각각의 처리 방침은 다음과 같다.</p></div>
+  <div class="csv-inv">
+    <div class="csv-row">
+      <span class="cf">credits.csv</span><span class="csv-badge use">사용</span>
+      <span class="cd">각 영화의 출연진·제작진 상세 정보를 문자열화된 JSON 객체로 담는다. 캐릭터, 배우, 감독, 프로듀서에 관한 상세만 추출한다.</span>
+    </div>
+    <div class="csv-row">
+      <span class="cf">keywords.csv</span><span class="csv-badge use">사용</span>
+      <span class="cd">각 영화의 줄거리 키워드. 영화의 주제적 요소를 분류하고 식별하는 데 필수적이며, 검색·추천·콘텐츠 분석에 쓰인다.</span>
+    </div>
+    <div class="csv-row">
+      <span class="cf">links.csv</span><span class="csv-badge skip">생략</span>
+      <span class="cd">MovieLens 전체 데이터셋의 각 영화를 TMDb·IMDB 항목과 잇는 메타데이터. 외부 데이터베이스와의 통합이 필요한 미래 프로젝트에는 유용하지만, 현재 분석에는 필수가 아니어서 건너뛴다.</span>
+    </div>
+    <div class="csv-row">
+      <span class="cf">links_small.csv</span><span class="csv-badge skip">생략</span>
+      <span class="cd">9,000편 부분집합의 TMDb·IMDb ID. 더 작은 데이터셋이 필요한 시나리오에 유용하지만, 우리는 이미 Kaggle의 전체 데이터셋을 쓰고 있으므로 쓰지 않는다.</span>
+    </div>
+    <div class="csv-row">
+      <span class="cf">movies_metadata.csv</span><span class="csv-badge use">사용</span>
+      <span class="cd">45,000편의 상세 정보 — 포스터, 배경, 예산, 수익, 개봉일, 언어, 제작 국가·회사 등. 장르, 제작사, 제작 국가, 사용 언어 등 관련 노드별 CSV 여러 개로 정규화한다.</span>
+    </div>
+    <div class="csv-row">
+      <span class="cf">ratings.csv</span><span class="csv-badge skip">생략</span>
+      <span class="cd">27만 사용자가 남긴 2,600만 개 평점과 75만 태그의 전체 MovieLens 데이터셋. 방대한 사용자 상호작용 데이터지만 현재 목표에 필수가 아니어서 건너뛴다.</span>
+    </div>
+    <div class="csv-row">
+      <span class="cf">ratings_small.csv</span><span class="csv-badge use">사용</span>
+      <span class="cd">700명 사용자가 9,000편에 남긴 100,000개 평점의 부분집합. 전체 대신 이 파일을 쓴다.</span>
+    </div>
+  </div>
+
+  <div class="prose"><p>먼저 <code>credits.csv</code>다. 출연진과 제작진 정보를 추출·전개·정규화하는 전체 파이프라인이다.</p></div>
+  <div class="code-snip">
+    <div class="ch"><span>credits.csv — 출연진·제작진 정규화</span><span class="lang">python</span></div>
+    <pre><span class="c"># CSV 파일 로딩</span>
+df = pd.read_csv(<span class="s">'./raw_data/credits.csv'</span>)
+
+<span class="c"># 관련 출연진 정보를 추출하는 함수</span>
+<span class="k">def</span> <span class="f">extract_cast</span>(cast_str):
+    cast_list = ast.literal_eval(cast_str)
+    <span class="k">return</span> [
+        {<span class="s">'actor_id'</span>: c[<span class="s">'id'</span>], <span class="s">'name'</span>: c[<span class="s">'name'</span>],
+         <span class="s">'character'</span>: c[<span class="s">'character'</span>], <span class="s">'cast_id'</span>: c[<span class="s">'cast_id'</span>]}
+        <span class="k">for</span> c <span class="k">in</span> cast_list
+    ]
+
+<span class="c"># 관련 제작진 정보를 추출하는 함수 — 감독과 프로듀서만</span>
+<span class="k">def</span> <span class="f">extract_crew</span>(crew_str):
+    crew_list = ast.literal_eval(crew_str)
+    relevant_jobs = [<span class="s">'Director'</span>, <span class="s">'Producer'</span>]
+    <span class="k">return</span> [
+        {<span class="s">'crew_id'</span>: c[<span class="s">'id'</span>], <span class="s">'name'</span>: c[<span class="s">'name'</span>], <span class="s">'job'</span>: c[<span class="s">'job'</span>]}
+        <span class="k">for</span> c <span class="k">in</span> crew_list <span class="k">if</span> c[<span class="s">'job'</span>] <span class="k">in</span> relevant_jobs
+    ]
+
+<span class="c"># 각 행에 추출 함수 적용</span>
+df[<span class="s">'cast'</span>] = df[<span class="s">'cast'</span>].apply(extract_cast)
+df[<span class="s">'crew'</span>] = df[<span class="s">'crew'</span>].apply(extract_crew)
+
+<span class="c"># 리스트를 개별 행으로 전개</span>
+df_cast = df.explode(<span class="s">'cast'</span>).dropna(subset=[<span class="s">'cast'</span>])
+df_crew = df.explode(<span class="s">'crew'</span>).dropna(subset=[<span class="s">'crew'</span>])
+
+<span class="c"># 전개된 데이터 정규화</span>
+df_cast_normalized = pd.json_normalize(df_cast[<span class="s">'cast'</span>])
+df_crew_normalized = pd.json_normalize(df_crew[<span class="s">'crew'</span>])
+
+<span class="c"># 인덱스 중복 방지를 위한 리셋, 중복 행 제거</span>
+df_cast_normalized = df_cast_normalized.reset_index(drop=<span class="k">True</span>).drop_duplicates()
+df_crew_normalized = df_crew_normalized.reset_index(drop=<span class="k">True</span>).drop_duplicates()
+
+<span class="c"># 정규화된 DataFrame에 영화 ID를 다시 붙인다</span>
+df_cast_normalized[<span class="s">'tmdbId'</span>] = df_cast.reset_index(drop=<span class="k">True</span>)[<span class="s">'id'</span>]
+df_crew_normalized[<span class="s">'tmdbId'</span>] = df_crew.reset_index(drop=<span class="k">True</span>)[<span class="s">'id'</span>]
+
+<span class="c"># 갱신된 컬럼명으로 저장</span>
+df_cast_normalized.to_csv(os.path.join(output_dir, <span class="s">'normalized_cast.csv'</span>), index=<span class="k">False</span>)
+df_crew_normalized.to_csv(os.path.join(output_dir, <span class="s">'normalized_crew.csv'</span>), index=<span class="k">False</span>)
+
+<span class="c"># 검증용 샘플 출력</span>
+<span class="f">print</span>(<span class="s">"Sample of normalized cast data:"</span>); <span class="f">print</span>(df_cast_normalized.head())
+<span class="f">print</span>(<span class="s">"Sample of normalized crew data:"</span>); <span class="f">print</span>(df_crew_normalized.head())</pre>
+  </div>
+
+  <div class="prose"><p>다음은 <code>keywords.csv</code>다. 문자열화된 JSON에서 키워드 이름만 뽑아, 영화별로 하나의 행에 모은다.</p></div>
+  <div class="code-snip">
+    <div class="ch"><span>keywords.csv — 키워드 정규화·집계</span><span class="lang">python</span></div>
+    <pre><span class="c"># CSV 파일 로딩</span>
+df = pd.read_csv(<span class="s">'./raw_data/keywords.csv'</span>)
+
+<span class="c"># 키워드 추출·정규화 함수</span>
+<span class="k">def</span> <span class="f">normalize_keywords</span>(keyword_str):
+    <span class="k">if</span> pd.isna(keyword_str) <span class="k">or not</span> isinstance(keyword_str, str):
+        <span class="k">return</span> []          <span class="c"># NaN이거나 문자열이 아니면 빈 리스트</span>
+    <span class="c"># 문자열화된 JSON을 딕셔너리 리스트로 변환</span>
+    keyword_list = ast.literal_eval(keyword_str)
+    <span class="c"># 각 키워드의 'name'만 리스트로 반환</span>
+    <span class="k">return</span> [kw[<span class="s">'name'</span>] <span class="k">for</span> kw <span class="k">in</span> keyword_list]
+
+df[<span class="s">'keywords'</span>] = df[<span class="s">'keywords'</span>].apply(normalize_keywords)
+
+<span class="c"># tmdbId별로 모든 키워드를 한 행으로 결합</span>
+df_keywords_aggregated = df.groupby(<span class="s">'id'</span>, as_index=<span class="k">False</span>).agg({
+    <span class="s">'keywords'</span>: <span class="k">lambda</span> x: <span class="s">', '</span>.join(sum(x, []))
+})
+df_keywords_aggregated.rename(columns={<span class="s">'id'</span>: <span class="s">'tmdbId'</span>}, inplace=<span class="k">True</span>)
+df_keywords_aggregated.to_csv(
+    os.path.join(output_dir, <span class="s">'normalized_keywords.csv'</span>), index=<span class="k">False</span>)
+<span class="f">print</span>(df_keywords_aggregated.head())</pre>
+  </div>
+
+  <div class="prose"><p>가장 큰 덩어리는 <code>movies_metadata.csv</code>다. 45,000편의 상세 정보를 담은 이 파일을, 우리 데이터셋의 관련 노드를 각각 대표하는 여러 CSV — 장르, 제작사, 제작 국가, 사용 언어 — 로 정규화한다. 데이터를 이 별도 파일들로 쪼갬으로써, 이 풍부한 정보를 더 쉽게 관리하고 활용할 수 있게 된다. 다섯 단계로 진행한다.</p></div>
+  <ol class="hop-path">
+    <li><span class="hd"><b>필요한 임포트로 시작한다.</b> <code>import pandas as pd</code>, <code>import ast</code>, 그리고 <code>pd.read_csv('./raw_data/movies_metadata.csv')</code>로 파일을 로딩한다.</span></li>
+    <li><span class="hd"><b>장르·제작사·국가·언어를 추출하고 정규화한다.</b> 장르와 제작사의 예를 아래 코드로 보인다. 나머지 코드는 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/tree/main/ch4" target="_blank" rel="noopener" style="color:var(--rel-blue)">저장소</a>에 있다.</span></li>
+    <li><span class="hd"><b>추출 함수를 적용하고 리스트를 행으로 전개한다.</b> 네 컬럼 각각에 <code>apply</code> 후 <code>explode + dropna</code>로 장르·제작사·국가·언어 DataFrame을 만든다.</span></li>
+    <li><span class="hd"><b>전개된 데이터를 정규화한다.</b> 장르의 경우 <code>pd.json_normalize</code> 후 인덱스를 리셋하고, <code>tmdbId</code>를 다시 붙이고, <code>genre_id</code>를 정수로 강제한 뒤 <code>normalized_genres.csv</code>로 저장한다.</span></li>
+    <li><span class="hd"><b>컬렉션 이름을 추출한다.</b> <code>belongs_to_collection</code>에서 "name"만 뽑고, 필요한 13개 필드를 추려 <code>adult</code>를 정수로 변환하고 <code>id</code>를 <code>tmdbId</code>로 개명해 <code>normalized_movies.csv</code>로 저장한다.</span></li>
+  </ol>
+  <div class="code-snip">
+    <div class="ch"><span>movies_metadata.csv — 장르·제작사 추출 함수</span><span class="lang">python</span></div>
+    <pre><span class="c"># 장르 추출·정규화 함수</span>
+<span class="k">def</span> <span class="f">extract_genres</span>(genres_str):
+    <span class="k">if</span> pd.isna(genres_str) <span class="k">or not</span> isinstance(genres_str, str):
+        <span class="k">return</span> []
+    genres_list = ast.literal_eval(genres_str)
+    <span class="k">return</span> [{<span class="s">'genre_id'</span>: int(g[<span class="s">'id'</span>]), <span class="s">'genre_name'</span>: g[<span class="s">'name'</span>]}
+            <span class="k">for</span> g <span class="k">in</span> genres_list]
+
+<span class="c"># 제작사 추출·정규화 함수</span>
+<span class="k">def</span> <span class="f">extract_production_companies</span>(companies_str):
+    <span class="k">if</span> pd.isna(companies_str) <span class="k">or not</span> isinstance(companies_str, str):
+        <span class="k">return</span> []
+    companies_list = ast.literal_eval(companies_str)
+    <span class="k">if</span> isinstance(companies_list, list):
+        <span class="k">return</span> [{<span class="s">'company_id'</span>: int(c[<span class="s">'id'</span>]),
+                 <span class="s">'company_name'</span>: c[<span class="s">'name'</span>]}
+                <span class="k">for</span> c <span class="k">in</span> companies_list]
+    <span class="k">return</span> []</pre>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>movies_metadata.csv — 컬렉션 이름 추출과 영화 저장</span><span class="lang">python</span></div>
+    <pre><span class="c"># "belongs_to_collection"에서 "name"만 추출</span>
+<span class="k">def</span> <span class="f">extract_collection_name</span>(collection_str):
+    <span class="k">if</span> isinstance(collection_str, str):
+        <span class="k">try</span>:
+            collection_dict = ast.literal_eval(collection_str)
+            <span class="k">if</span> isinstance(collection_dict, dict):
+                <span class="k">return</span> collection_dict.get(<span class="s">'name'</span>, <span class="s">"None"</span>)
+        <span class="k">except</span> (ValueError, SyntaxError):   <span class="c"># 문자열 파싱 실패 처리</span>
+            <span class="k">return</span> <span class="s">"None"</span>
+    <span class="k">return</span> <span class="s">"None"</span>
+
+df_movies = df[[<span class="s">'id'</span>, <span class="s">'original_title'</span>, <span class="s">'adult'</span>, <span class="s">'budget'</span>, <span class="s">'imdb_id'</span>,
+    <span class="s">'original_language'</span>, <span class="s">'revenue'</span>, <span class="s">'tagline'</span>, <span class="s">'title'</span>,
+    <span class="s">'release_date'</span>, <span class="s">'runtime'</span>, <span class="s">'overview'</span>, <span class="s">'belongs_to_collection'</span>]].copy()
+df_movies[<span class="s">'belongs_to_collection'</span>] = \
+    df_movies[<span class="s">'belongs_to_collection'</span>].apply(extract_collection_name)
+df_movies[<span class="s">'adult'</span>] = df_movies[<span class="s">'adult'</span>].apply(
+    <span class="k">lambda</span> x: 1 <span class="k">if</span> x == <span class="s">'TRUE'</span> <span class="k">else</span> 0)   <span class="c"># 'adult'를 정수로 변환</span>
+df_movies.rename(columns={<span class="s">'id'</span>: <span class="s">'tmdbId'</span>}, inplace=<span class="k">True</span>)
+df_movies.to_csv(<span class="s">'./normalized_data/normalized_movies.csv'</span>, index=<span class="k">False</span>)</pre>
+  </div>
+  <div class="prose">
+    <p class="lead-q">이 과정을 통해 우리는 원시의 반구조화 데이터를, 이제 Neo4j 그래프로 통합될 준비를 마친 깨끗하고 정규화된 데이터셋으로 변환하는 법을 배웠다. 이 준비가 튼튼하고 효율적이며 효과적인 AI 기반 검색·추천 시스템 구축의 길을 닦는다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 3 ================= -->
+<section class="section" id="sec3">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 3})-[:IMPORTS]-&gt;<span class="p">(:AuraDB)</span></p>
+    <h2>코드 예제로 만드는 영화 지식그래프</h2>
+  </div>
+  <div class="prose">
+    <p>이 절에서는 정규화된 데이터셋을 Neo4j로 임포트해 완전히 작동하는 지식그래프로 변환한다.</p>
+  </div>
+
+  <h3>AuraDB Free 인스턴스 설정</h3>
+  <div class="prose">
+    <p>Neo4j로 지식그래프를 만들기 시작하려면 먼저 <span class="term">AuraDB Free</span> 인스턴스를 설정해야 한다. AuraDB Free는 클라우드에 호스팅되는 Neo4j 데이터베이스로, 로컬 설치나 인프라 관리를 걱정하지 않고 빠르게 시작하게 해 준다. 절차는 이렇다. <a href="https://console.neo4j.io" target="_blank" rel="noopener">console.neo4j.io</a>를 방문해 Google 계정이나 이메일로 로그인하고, <strong>Create Free Instance</strong>를 클릭한다. 인스턴스가 프로비저닝되는 동안 팝업 창에 데이터베이스 접속 자격증명이 나타난다. 팝업에서 다음 정보를 반드시 다운로드해 안전하게 보관해야 한다. 애플리케이션을 Neo4j에 연결하는 데 필수적이다.</p>
+  </div>
+  <div class="cred-box">
+    <span class="ck">NEO4J_URI</span>=neo4j+s://&lt;your-instance-id&gt;.databases.neo4j.io<br>
+    <span class="ck">NEO4J_USERNAME</span>=neo4j<br>
+    <span class="ck">NEO4J_PASSWORD</span>=&lt;your-generated-password&gt;<br>
+    <span class="ck">AURA_INSTANCEID</span>=&lt;your-instance-id&gt;<br>
+    <span class="ck">AURA_INSTANCENAME</span>=&lt;your-instance-name&gt;
+  </div>
+
+  <h3>AuraDB로 데이터 임포트하기</h3>
+  <div class="prose">
+    <p>AuraDB Free 인스턴스가 가동되었으니, 정규화된 데이터셋을 임포트해 지식그래프를 만들 차례다. CSV 파일 준비, 인덱스·제약 설정, 데이터 임포트, 관계 생성 — 이 모두를 하나의 Python 스크립트로 해낸다.</p>
+  </div>
+  <ol class="hop-path">
+    <li><span class="hd"><b>CSV 파일을 임포트할 수 있게 준비한다.</b> 생성한 파일들(<code>normalized_movies.csv</code>, <code>normalized_genres.csv</code> 등)이 깨끗하고 잘 구조화되어 있으며 접근 가능한 URL에 호스팅되어 있는지 확인한다. <code>graph_build.py</code> 스크립트는 공개 클라우드 저장소(예: <code>storage.googleapis.com/movies-packt/normalized_movies.csv</code>)에서 파일을 가져오므로, 어디에도 수동으로 업로드할 필요가 없다.</span></li>
+    <li><span class="hd"><b>그래프 질의 최적화를 위한 인덱스와 제약을 더한다.</b> 데이터 적재 전에 고유 제약과 인덱스를 만드는 일은 무결성 보장과 성능 최적화에 결정적이다. 스크립트는 <code>tmdbId</code>, <code>movieId</code>, <code>company_id</code> 같은 ID의 고유성을 보장하고 <code>actor_id</code>, <code>crew_id</code>, <code>user_id</code> 같은 프로퍼티에 인덱스를 만드는 Cypher 명령을 포함한다.</span></li>
+    <li><span class="hd"><b>데이터를 임포트하고 노드를 만든다.</b> <code>load_movies()</code>가 모든 영화 메타데이터를 더하고, <code>load_genres()</code>·<code>load_production_companies()</code>·<code>load_countries()</code> 등이 Genre, ProductionCompany, Country, SpokenLanguage 같은 관련 노드를 만든다. 인물 데이터는 <code>load_person_actors()</code>와 <code>load_person_crew()</code>로, 추가 프로퍼티는 <code>load_links()</code>·<code>load_keywords()</code>·<code>load_ratings()</code>로 더한다.</span></li>
+    <li><span class="hd"><b>관계를 만든다.</b> 각 로더 함수는 노드만 만들지 않고 의미 있는 관계도 세운다 — Movie↔Genre의 <code>HAS_GENRE</code>, Movie↔ProductionCompany의 <code>PRODUCED_BY</code>, Movie↔SpokenLanguage의 <code>HAS_LANGUAGE</code>, Movie↔Country의 <code>PRODUCED_IN</code>, Movie↔Person의 <code>ACTED_IN</code>·<code>DIRECTED</code>·<code>PRODUCED</code>, Movie↔User의 <code>RATED</code> 등.</span></li>
+    <li><span class="hd"><b>전체 스크립트를 실행한다.</b> Neo4j Python 드라이버 설치(<code>pip install neo4j</code>)를 확인한 뒤 <code>python graph_build.py</code>를 실행한다. 스크립트는 순서대로 .env 파일의 자격증명으로 AuraDB 인스턴스에 접속하고, 데이터베이스를 정리하고, 인덱스·제약을 더하고, 호스팅된 CSV로 모든 노드 데이터와 관계를 벌크 적재한다. 전체 스크립트는 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/blob/main/ch4/graph_build.py" target="_blank" rel="noopener" style="color:var(--rel-blue)">ch4/graph_build.py</a>에 있다.</span></li>
+  </ol>
+  <div class="code-snip">
+    <div class="ch"><span>graph_build.py — 인덱스·제약 명령</span><span class="lang">cypher</span></div>
+    <pre><span class="s">"CREATE CONSTRAINT unique_tmdb_id IF NOT EXISTS FOR (m:Movie)
+ REQUIRE m.tmdbId IS UNIQUE;"</span>,
+<span class="s">"CREATE CONSTRAINT unique_movie_id IF NOT EXISTS FOR (m:Movie)
+ REQUIRE m.movieId IS UNIQUE;"</span>,
+<span class="s">"CREATE CONSTRAINT unique_prod_id IF NOT EXISTS FOR
+ (p:ProductionCompany) REQUIRE p.company_id IS UNIQUE;"</span>,
+<span class="s">"CREATE CONSTRAINT unique_genre_id IF NOT EXISTS FOR (g:Genre)
+ REQUIRE g.genre_id IS UNIQUE;"</span>,
+<span class="s">"CREATE CONSTRAINT unique_lang_id IF NOT EXISTS FOR
+ (l:SpokenLanguage) REQUIRE l.language_code IS UNIQUE;"</span>,
+<span class="s">"CREATE CONSTRAINT unique_country_id IF NOT EXISTS FOR (c:Country)
+ REQUIRE c.country_code IS UNIQUE;"</span>,
+<span class="s">"CREATE INDEX actor_id IF NOT EXISTS FOR (p:Person) ON (p.actor_id);"</span>,
+<span class="s">"CREATE INDEX crew_id IF NOT EXISTS FOR (p:Person) ON (p.crew_id);"</span>,
+<span class="s">"CREATE INDEX movieId IF NOT EXISTS FOR (m:Movie) ON (m.movieId);"</span>,
+<span class="s">"CREATE INDEX user_id IF NOT EXISTS FOR (p:Person) ON (p.user_id);"</span></pre>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>노드 적재 예시</span><span class="lang">python</span></div>
+    <pre>graph.load_movies(
+    <span class="s">'https://storage.googleapis.com/movies-packt/normalized_movies.csv'</span>,
+    movie_limit)</pre>
+  </div>
+  <div class="prose"><p>완료되면 Neo4j Browser로 임포트를 검증한다.</p></div>
+  <div class="code-snip">
+    <div class="ch"><span>verify — 임포트 검증</span><span class="lang">cypher</span></div>
+    <pre><span class="k">MATCH</span> (m:Movie)-[:HAS_GENRE]-&gt;(g:Genre)
+<span class="k">RETURN</span> m.title, g.genre_name
+<span class="k">LIMIT</span> 10;</pre>
+  </div>
+  <div class="prose">
+    <p>그림 4.1은 <strong>9만 개 이상의 노드와 32만 개 이상의 관계</strong>로 연결된 영화 그래프를 보여준다. Movie, Genre, Person, ProductionCompany 같은 노드가 저마다의 색으로 표현되고, ACTED_IN, HAS_GENRE, PRODUCED_BY 같은 관계들이 상호 연결된 메타데이터의 그물을 펼쳐 보인다.</p>
+  </div>
+
+  <!-- Figure 4.1 -->
+  <figure class="figure-panel">
+    <svg viewBox="0 0 760 560" role="img" aria-label="영화 데이터셋의 Neo4j 그래프">
+      <defs>
+        <marker id="arr" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#5c7280"/></marker>
+      </defs>
+      <g stroke="#8aa0ac" stroke-width="1.4" fill="none">
+        <line x1="380" y1="280" x2="255" y2="120" marker-end="url(#arr)" transform="rotate(180 317 200)"/>
+        <line x1="380" y1="280" x2="395" y2="105" />
+        <line x1="380" y1="280" x2="530" y2="130" />
+        <line x1="380" y1="280" x2="185" y2="285" marker-end="url(#arr)"/>
+        <line x1="380" y1="280" x2="585" y2="290" marker-end="url(#arr)"/>
+        <line x1="380" y1="280" x2="235" y2="445" marker-end="url(#arr)"/>
+        <line x1="380" y1="280" x2="395" y2="465" />
+        <line x1="380" y1="280" x2="555" y2="435" />
+      </g>
+      <text class="svg-rel" x="290" y="192" transform="rotate(52 290 192)">PRODUCED_IN</text>
+      <text class="svg-rel" x="401" y="180" transform="rotate(-86 401 180)">DIRECTED</text>
+      <text class="svg-rel" x="458" y="196" transform="rotate(-45 458 196)">ACTED_IN</text>
+      <text class="svg-rel" x="243" y="272">HAS_GENRE</text>
+      <text class="svg-rel" x="450" y="272">PRODUCED_BY</text>
+      <text class="svg-rel" x="266" y="376" transform="rotate(48 266 376)">HAS_LANGUAGE</text>
+      <text class="svg-rel" x="399" y="384" transform="rotate(86 399 384)">RATED</text>
+      <text class="svg-rel" x="468" y="366" transform="rotate(42 468 366)">PRODUCED</text>
+      <!-- 중심 Movie -->
+      <circle cx="380" cy="280" r="52" fill="#7dc242"/>
+      <text x="380" y="286" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:14px;fill:#fff;font-weight:600">Movie</text>
+      <!-- 주변 노드 -->
+      <circle cx="240" cy="112" r="42" fill="#c8703f"/><text x="240" y="118" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;fill:#fff;font-weight:500">Country</text>
+      <circle cx="398" cy="80" r="42" fill="#9c8064"/><text x="398" y="86" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;fill:#fff;font-weight:500">Director</text>
+      <circle cx="548" cy="118" r="42" fill="#7d8f52"/><text x="548" y="124" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;fill:#fff;font-weight:500">Actor</text>
+      <circle cx="150" cy="285" r="40" fill="#7fa3d8"/><text x="150" y="291" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;fill:#fff;font-weight:500">Genre</text>
+      <circle cx="628" cy="292" r="44" fill="#8f7fd8"/><text x="628" y="288" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;fill:#fff;font-weight:500">Production</text><text x="628" y="302" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;fill:#fff;font-weight:500">Company</text>
+      <circle cx="212" cy="462" r="42" fill="#b07a5c"/><text x="212" y="458" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;fill:#fff;font-weight:500">Spoken</text><text x="212" y="472" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;fill:#fff;font-weight:500">Language</text>
+      <circle cx="400" cy="492" r="38" fill="#8aab5a"/><text x="400" y="498" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;fill:#fff;font-weight:500">User</text>
+      <circle cx="576" cy="452" r="40" fill="#2fae76"/><text x="576" y="458" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;fill:#fff;font-weight:500">Producer</text>
+      <!-- Person 하단 다중 관계 -->
+      <circle cx="300" cy="522" r="38" fill="#7d8064"/><text x="300" y="528" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;fill:#fff;font-weight:500">Person</text>
+      <g stroke="#8aa0ac" stroke-width="1.1" fill="none">
+        <line x1="316" y1="486" x2="360" y2="330"/>
+        <line x1="326" y1="490" x2="372" y2="332"/>
+        <line x1="336" y1="494" x2="384" y2="333"/>
+      </g>
+      <text class="svg-rel" x="322" y="418" transform="rotate(-73 322 418)" style="font-size:8px">ACTED_IN·RATED·DIRECTED</text>
+    </svg>
+    <figcaption class="fig-caption"><b>그림 4.1</b> — 영화 데이터셋의 Neo4j 그래프 · 90K+ 노드 · 320K+ 관계</figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>Python과 Cypher로 데이터가 성공적으로 임포트되고 지식그래프가 완전히 구축되었으니, 다음 장에서 생성형 AI 기반 검색 애플리케이션 구축으로 뛰어들 준비가 되었다. 다음 절에서는 복잡한 관계를 다루고 데이터에서 더 깊은 통찰을 끌어내는 고급 Cypher 기법으로 들어간다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 4 ================= -->
+<section class="section" id="sec4">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 4})-[:TRAVERSES]-&gt;<span class="p">(:ComplexPattern)</span></p>
+    <h2>기본을 넘어 — 복잡한 그래프 구조를 위한 고급 Cypher 기법</h2>
+  </div>
+  <div class="prose">
+    <p>지식그래프의 크기와 복잡성이 자라면, 질의와 데이터 관리 능력에 대한 요구도 함께 자란다. Neo4j의 강력한 질의 언어 Cypher는 복잡한 그래프 구조를 다루고 더 정교한 데이터 분석을 가능케 하는 다양한 고급 기능을 제공한다. 이 절에서는 경로 패턴, 가변 길이 관계, 서브쿼리, 그래프 알고리즘을 포함한 고급 Cypher 기법을 탐구한다. 이 기법들을 이해하면 얽히고설킨 관계를 효율적으로 관리하고, 더 깊은 분석을 수행하고, 고급 용례를 위한 지식그래프의 잠재력을 온전히 풀어낼 수 있다.</p>
+  </div>
+
+  <h3>가변 길이 관계</h3>
+  <div class="prose">
+    <p>Cypher의 <span class="term">가변 길이 관계(variable-length relationship)</span>는 노드 사이의 다양한 길이의 경로를 매칭하게 해 준다. 계층 구조나 여러 단계로 떨어진 네트워크를 탐색할 때 특히 유용하다. 특정 배우와 3단계 이내로 연결된 모든 영화를 찾는 예다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>variable-length — 3단계 이내의 연결</span><span class="lang">cypher</span></div>
+    <pre><span class="k">MATCH</span> (a:Actor {name: <span class="s">'Tom Hanks'</span>})-[:ACTED_IN*1..3]-(m:Movie)
+<span class="k">RETURN DISTINCT</span> m.title;</pre>
+  </div>
+  <div class="prose">
+    <p><code>*1..3</code>은 관계 경로가 1단계에서 3단계 사이일 수 있음을 지정한다. 가변 길이 관계는 특정 촌수 이내의 모든 사람을 찾으려는 소셜 네트워크 분석이나, 여러 수준에 걸쳐 부모-자식 관계를 탐색하려는 계층적 데이터셋 같은 시나리오에 이상적이다.</p>
+  </div>
+
+  <h3>경로 패턴을 이용한 패턴 매칭</h3>
+  <div class="prose">
+    <p>Neo4j에서는 이름 붙인 경로 패턴을 만들 수 있고, 경로들을 연쇄할 수도 있다. 먼저 <strong>경로 패턴의 정의</strong>다. Cypher는 질의 전체에서 재사용할 수 있는 이름 붙인 경로 패턴의 정의를 허락한다. 질의의 가독성이 높아지고, 복잡한 관계를 단일 패턴 안에 캡슐화할 수 있다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>named path — 이름 붙인 경로</span><span class="lang">cypher</span></div>
+    <pre><span class="k">MATCH</span> path = (a:Actor)-[:ACTED_IN]-&gt;(m:Movie)
+<span class="k">RETURN</span> path;</pre>
+  </div>
+  <div class="prose">
+    <p>여기서 <code>path</code>는 이후의 연산이나 서브쿼리에서 재사용할 수 있는 이름 붙인 경로 패턴이다. 다음은 <strong>경로 패턴의 연쇄</strong>다. Cypher는 여러 경로 패턴을 결합해 그래프 안에서 복잡한 순회를 수행하게 해 준다. 간접적 관계를 드러내거나 특정 기준을 만족하는 여러 경로를 발견하려 할 때 특히 쓸모 있다. 영화 데이터셋에서 협업을 탐사하는 예를 보자. 어떤 배우가 — 아마도 다른 영화를 통해 — 이전에 협업했던 감독과 함께 일한 영화들을 찾고 싶다고 하자. 배우에서 영화로, 다시 감독으로 경로를 연쇄한 뒤, 같은 배우-감독 쌍을 잇는 또 다른 영화가 있는지 보는 것이다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>chained paths — 반복 협업의 발견</span><span class="lang">cypher</span></div>
+    <pre><span class="k">MATCH</span> (a:Actor {name: <span class="s">"Tom Hanks"</span>})-[:ACTED_IN]-&gt;(m1:Movie)
+      &lt;-[:DIRECTED_BY]-(d:Director)
+<span class="k">MATCH</span> (a)-[:ACTED_IN]-&gt;(m2:Movie)&lt;-[:DIRECTED_BY]-(d)
+<span class="k">WHERE</span> m1 &lt;&gt; m2
+<span class="k">RETURN</span> a.name <span class="k">AS</span> actor, d.name <span class="k">AS</span> director,
+       collect(<span class="k">DISTINCT</span> m1.title) + collect(<span class="k">DISTINCT</span> m2.title) <span class="k">AS</span> movies</pre>
+  </div>
+  <div class="prose">
+    <p>이런 패턴 연쇄는 직업적 관계와 반복되는 협업을 식별하거나, 네트워크 안의 간접적 영향력을 분석하는 데 대단히 유용하다.</p>
+  </div>
+
+  <h3>서브쿼리와 절차적 논리</h3>
+  <div class="prose">
+    <p>복잡한 질의의 처리에는 서브쿼리와 프로시저를 쓸 수 있다. <strong>모듈식 질의를 위한 서브쿼리</strong>부터 보자. Cypher의 서브쿼리는 복잡한 질의를 모듈식의 재사용 가능한 구성 요소로 쪼개게 해 준다. 대규모 그래프를 다루거나 같은 데이터셋에 여러 연산을 수행해야 할 때 특히 도움이 된다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>subquery — 액션 영화와 감독</span><span class="lang">cypher</span></div>
+    <pre><span class="k">CALL</span> {
+  <span class="k">MATCH</span> (m:Movie)-[:HAS_GENRE]-&gt;(g:Genre {name: <span class="s">'Action'</span>})
+  <span class="k">RETURN</span> m
+}
+<span class="k">MATCH</span> (m)-[:DIRECTED_BY]-&gt;(d:Director)
+<span class="k">RETURN</span> d.name, <span class="f">COUNT</span>(m) <span class="k">AS</span> action_movies_directed;</pre>
+  </div>
+  <div class="prose">
+    <p>서브쿼리가 모든 액션 영화를 가져오고, 바깥 질의가 그 영화들을 감독과 매칭한다. 다음은 <strong>CALL을 이용한 절차적 논리</strong>다. Cypher의 <code>CALL</code> 절은 프로시저를 호출하고 그 결과를 이후 질의에 쓰게 해 준다. 그래프 알고리즘의 실행이나 커스텀 프로시저의 호출 같은 고급 데이터 처리에 필수적이다. 우리는 이미 <code>graph_build.py</code>의 <code>load_ratings()</code> 함수에서 이를 적용했다. <code>CALL { ... } IN TRANSACTIONS</code> 패턴으로 대규모 데이터셋을 50,000행 단위로 나누어 효율적으로 적재하는 것이다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>CALL IN TRANSACTIONS — 5만 행 청크 적재</span><span class="lang">cypher</span></div>
+    <pre><span class="k">LOAD CSV WITH HEADERS FROM</span> $csvFile <span class="k">AS</span> row
+<span class="k">CALL</span> (row) {
+  <span class="k">MATCH</span> (m:Movie {movieId: toInteger(row.movieId)})
+  <span class="k">WITH</span> m, row
+  <span class="k">MERGE</span> (p:Person {user_id: toInteger(row.userId)})
+  <span class="k">ON CREATE SET</span> p.role = <span class="s">'user'</span>
+  <span class="k">MERGE</span> (p)-[r:RATED]-&gt;(m)
+  <span class="k">ON CREATE SET</span> r.rating = toFloat(row.rating),
+                r.timestamp = toInteger(row.timestamp)
+} <span class="k">IN TRANSACTIONS OF</span> 50000 <span class="k">ROWS</span>;</pre>
+  </div>
+  <div class="prose">
+    <p>이 접근은 성능과 트랜잭션 무결성을 지키면서 거대한 CSV 임포트를 다룰 수 있게 해 준다. 실세계 그래프 애플리케이션에서 CALL이 발휘하는 수많은 강력한 용례 가운데 하나일 뿐이다.</p>
+  </div>
+
+  <h3>중첩 질의 다루기</h3>
+  <div class="prose">
+    <p>복잡한 그래프 구조에서는 여러 질의의 결과를 결합해야 할 때가 있다. Cypher는 질의를 중첩해 한 질의의 결과를 다른 질의로 넘기게 해 주며, 여러 기준으로 결과를 거르거나 다듬을 때 유용하다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>nested — 수익 1억 달러 초과 영화의 장르</span><span class="lang">cypher</span></div>
+    <pre><span class="k">MATCH</span> (m:Movie)
+<span class="k">WHERE</span> m.revenue &gt; 100000000
+<span class="k">CALL</span> {
+  <span class="k">WITH</span> m
+  <span class="k">MATCH</span> (m)-[:HAS_GENRE]-&gt;(g:Genre)
+  <span class="k">RETURN</span> g.name <span class="k">AS</span> genre
+}
+<span class="k">RETURN</span> m.title, genre;</pre>
+  </div>
+  <div class="prose">
+    <p>중첩된 질의가 수익으로 영화를 거른 뒤 그 영화들의 장르를 찾아 결과를 정제한다. 이 Cypher 기법들이 복잡한 그래프 구조에 맞설 힘을 주고, 더 깊은 통찰과 더 정교한 분석을 가능케 한다. 더 깊이 탐구하려면 <a href="https://neo4j.com/docs/cypher-manual/current/appendix/tutorials/advanced-query-tuning/" target="_blank" rel="noopener">고급 질의 튜닝 튜토리얼</a>을 참고하면 된다.</p>
+  </div>
+</section>
+
+<!-- ================= 요약 ================= -->
+<section class="section" id="summary">
+  <div class="summary-panel">
+    <h2>요약</h2>
+    <p>이 장에서 우리는 원시의 반구조화 데이터를 지식그래프 통합 준비를 마친 깨끗하고 정규화된 데이터셋으로 변환하는 작업을 해냈다. 이어서 그래프 모델링의 모범 사례를 탐구하며, 검색 효율을 높이고 그래프가 확장 가능하고 성능 좋게 유지되도록 노드와 관계를 구조화하는 방법에 집중했다. 그다음 여러 Cypher 기법에 맞섰다. 가변 길이 관계, 패턴 매칭, 서브쿼리, 그래프 알고리즘을 다루는 역량이 이제 갖춰졌다. 가장 얽히고설킨 데이터 관계까지 감당하는 지식그래프 기반 검색을 만들 준비가 된 것이다.</p>
+    <p>다음 장에서는 한 걸음 더 나아가 Haystack을 Neo4j에 통합하는 방법을 탐구한다. 이 실무 가이드는 지식그래프 안에 강력한 검색 기능을 만드는 법을 보여주며, 지능형 검색 솔루션을 위해 Neo4j와 Haystack 양쪽의 잠재력을 온전히 활용하게 해 줄 것이다.</p>
+    <span class="next-chip">NEXT → Chapter 5 · Implementing Powerful Search Functionalities with Neo4j</span>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p><b>원전</b> — Ravindranatha Anthapu &amp; Siddhant Agarwal, <i>Building Neo4j-Powered Applications with LLMs</i>, Packt Publishing, 2025. Chapter 4: Building Your Neo4j Graph with Movies Dataset (pp. 71–93)</p>
+  <p>이 페이지는 원서 4장의 전체 내용을 한국어로 재구성한 학습 자료다. 그림 4.1은 원서 도판을 바탕으로 다시 그렸고, 코드는 원서의 핵심 조각을 그대로 옮겼다. TMDb 데이터셋은 MovieLens 데이터셋(Harper &amp; Konstan, 2015)의 파생물이다.</p>
+</footer>
+
+</body>
+</html>

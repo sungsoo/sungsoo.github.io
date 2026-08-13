@@ -1,0 +1,1041 @@
+---
+layout: null
+title: "Demystifying RAG" 
+date: 2026-08-15
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence, graph mining]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2장 — RAG의 신비를 벗기다 | Building Neo4j-Powered Applications with LLMs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#122430;
+  --ink-soft:#3d5260;
+  --mist:#eef1ef;
+  --paper:#f9faf9;
+  --rel-blue:#1268b3;
+  --node-green:#1f8f66;
+  --node-amber:#d99022;
+  --hairline:#d4dcd8;
+  --panel:#ffffff;
+  --code-bg:#162833;
+  --max-prose:46rem;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Noto Serif KR',serif;
+  background:var(--mist);color:var(--ink);
+  line-height:1.85;font-size:17px;word-break:keep-all;
+  -webkit-font-smoothing:antialiased;
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ---------- HERO ---------- */
+.hero{
+  background:
+    radial-gradient(1100px 520px at 82% -10%, rgba(18,104,179,.34), transparent 60%),
+    radial-gradient(800px 480px at 4% 115%, rgba(31,143,102,.2), transparent 60%),
+    var(--ink);
+  color:#e9f0ee;position:relative;overflow:hidden;
+}
+.hero-inner{max-width:72rem;margin:0 auto;padding:5.5rem 2rem 4.5rem;position:relative;z-index:2}
+.series-line{
+  font-family:'IBM Plex Mono',monospace;font-size:.78rem;letter-spacing:.14em;
+  color:#8fb8d8;text-transform:uppercase;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;
+}
+.series-line::before{content:"";display:inline-block;width:2.2rem;height:1px;background:#8fb8d8}
+.cypher-chip{
+  font-family:'IBM Plex Mono',monospace;display:inline-block;margin-top:2.2rem;
+  font-size:.92rem;color:#9fd8bd;background:rgba(31,143,102,.14);
+  border:1px solid rgba(31,143,102,.45);border-radius:999px;padding:.35rem 1.1rem;
+}
+.cypher-chip .k{color:#7fb4e0}
+h1.title{
+  font-family:'Hahmlet',serif;font-weight:700;
+  font-size:clamp(2rem,4.6vw,3.4rem);line-height:1.32;
+  margin-top:1.4rem;letter-spacing:-.01em;
+}
+h1.title em{font-style:normal;color:#8ec7ef}
+.hero-lede{margin-top:1.6rem;max-width:38rem;font-size:1.02rem;color:#b9c9c9;line-height:1.95}
+.hero-meta{
+  margin-top:2.6rem;font-family:'IBM Plex Mono',monospace;
+  font-size:.75rem;color:#7d94a0;letter-spacing:.06em;
+  display:flex;gap:1.8rem;flex-wrap:wrap;
+}
+/* 히어로: RAG 파이프라인 모티프 */
+.pipeline{
+  position:absolute;right:0;top:50%;transform:translateY(-50%);
+  width:min(44vw,540px);z-index:1;
+}
+.pipeline .stage{fill:rgba(255,255,255,.04);stroke:#4a6a80;stroke-width:1.3;rx:10}
+.pipeline .stage-t{font-family:'IBM Plex Mono',monospace;font-size:12px;fill:#eaf4ef;text-anchor:middle;font-weight:500}
+.pipeline .stage-s{font-family:'IBM Plex Mono',monospace;font-size:9px;fill:#8fb8d8;text-anchor:middle}
+.pipeline .flow{stroke:#7fb4e0;stroke-width:1.6;fill:none;marker-end:url(#parr)}
+.pipeline .flow-back{stroke:#7ecfa8;stroke-width:1.2;fill:none;stroke-dasharray:5 4}
+.pipeline .doc{fill:rgba(126,207,168,.12);stroke:#7ecfa8;stroke-width:1}
+.dotline{animation:dash 3.4s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-36}}
+@media(max-width:960px){
+  .pipeline{position:static;transform:none;width:100%;max-width:460px;margin:3rem auto 0;display:block}
+  .hero-inner{padding-bottom:2.5rem}
+}
+
+/* ---------- 목차 ---------- */
+.toc-strip{background:var(--paper);border-bottom:1px solid var(--hairline)}
+.toc-inner{
+  max-width:72rem;margin:0 auto;padding:1.4rem 2rem;
+  display:flex;gap:2rem;flex-wrap:wrap;align-items:center;
+}
+.toc-label{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.16em;color:var(--ink-soft);text-transform:uppercase}
+.toc-strip a{
+  font-family:'Hahmlet',serif;font-size:.92rem;font-weight:500;color:var(--ink);
+  text-decoration:none;border-bottom:1.5px solid transparent;padding-bottom:2px;transition:border-color .2s;
+}
+.toc-strip a:hover,.toc-strip a:focus-visible{border-color:var(--node-green)}
+.toc-strip a .n{color:var(--rel-blue);font-family:'IBM Plex Mono',monospace;font-size:.8rem;margin-right:.4rem}
+
+/* ---------- 본문 공통 ---------- */
+main{max-width:72rem;margin:0 auto;padding:0 2rem}
+.section{padding:4.2rem 0 1rem}
+.section-head{max-width:var(--max-prose);margin:0 auto 2rem}
+.node-marker{
+  font-family:'IBM Plex Mono',monospace;font-size:.85rem;color:var(--node-green);
+  display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;
+}
+.node-marker::before{
+  content:"";width:11px;height:11px;border-radius:50%;background:var(--node-green);
+  box-shadow:0 0 0 4px rgba(31,143,102,.15);flex:none;
+}
+.node-marker .p{color:var(--rel-blue)}
+h2{
+  font-family:'Hahmlet',serif;font-weight:600;
+  font-size:clamp(1.5rem,3vw,2.05rem);line-height:1.4;margin-top:.9rem;letter-spacing:-.01em;
+}
+h3{
+  font-family:'Hahmlet',serif;font-weight:600;font-size:1.22rem;
+  margin:2.8rem auto 1rem;max-width:var(--max-prose);color:var(--ink);
+  display:flex;align-items:baseline;gap:.6rem;
+}
+h3::before{content:"—";color:var(--node-amber);font-weight:400}
+.prose{max-width:var(--max-prose);margin:0 auto}
+.prose p{margin-bottom:1.5rem}
+.prose p:last-child{margin-bottom:0}
+.prose strong{font-weight:600}
+.prose .term{font-weight:600;background:linear-gradient(transparent 68%, rgba(31,143,102,.22) 68%)}
+.prose a{color:var(--rel-blue);text-decoration:none;border-bottom:1px solid rgba(18,104,179,.4)}
+.prose a:hover{border-bottom-color:var(--rel-blue)}
+.prose code, .ld code{
+  font-family:'IBM Plex Mono',monospace;font-size:.85em;
+  background:#e3e9e6;border-radius:4px;padding:.12em .4em;
+}
+.lead-q{
+  font-family:'Hahmlet',serif;font-size:1.12rem;font-weight:500;color:var(--ink);
+  border-left:3px solid var(--node-amber);padding:.35rem 0 .35rem 1.2rem;margin:2.2rem 0;
+}
+
+/* ---------- 그림 패널 ---------- */
+.figure-panel{
+  background:var(--panel);border:1px solid var(--hairline);border-radius:14px;
+  padding:2.4rem 2rem 1.6rem;margin:2.6rem auto;max-width:56rem;
+  box-shadow:0 2px 14px rgba(18,36,48,.05);
+}
+.figure-panel svg{width:100%;height:auto;display:block}
+.fig-caption{
+  font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--ink-soft);
+  text-align:center;margin-top:1.4rem;letter-spacing:.03em;line-height:1.7;
+}
+.fig-caption b{color:var(--rel-blue);font-weight:600}
+.svg-box{fill:#f2f5f3;stroke:#37505f;stroke-width:1.3}
+.svg-box-dark{fill:#122430;stroke:none}
+.svg-box-t{font-family:'Hahmlet',serif;font-size:14px;font-weight:600;fill:#122430;text-anchor:middle}
+.svg-box-tw{font-family:'Hahmlet',serif;font-size:14px;font-weight:600;fill:#fff;text-anchor:middle}
+.svg-box-s{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:#3d5260;text-anchor:middle}
+.svg-box-sw{font-family:'IBM Plex Mono',monospace;font-size:9.5px;fill:#9fb3bd;text-anchor:middle}
+.svg-arrow{stroke:#122430;stroke-width:1.6;fill:none;marker-end:url(#arr)}
+.svg-arrow-d{stroke:#5c7280;stroke-width:1.3;fill:none;stroke-dasharray:4 4;marker-end:url(#arr-s)}
+.svg-step{fill:#122430}
+.svg-step-t{font-family:'IBM Plex Mono',monospace;font-size:11px;fill:#fff;text-anchor:middle;font-weight:600}
+.svg-lab{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:#3d5260}
+
+/* ---------- 코드 블록 ---------- */
+.code-snip{
+  max-width:56rem;margin:1.8rem auto;background:var(--code-bg);
+  border-radius:12px;overflow:hidden;
+}
+.code-snip .ch{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:.6rem 1.3rem;background:rgba(255,255,255,.05);
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;
+  color:#8fb8d8;letter-spacing:.08em;
+}
+.code-snip .ch .lang{color:#7ecfa8}
+.code-snip pre{
+  padding:1.2rem 1.4rem;overflow-x:auto;
+  font-family:'IBM Plex Mono',monospace;font-size:.82rem;line-height:1.75;
+  color:#d6e4dc;
+}
+.code-snip pre .c{color:#6d8a96;font-style:italic}
+.code-snip pre .s{color:#a8d5b8}
+.code-snip pre .k{color:#8ec7ef}
+.code-snip pre .f{color:#e8c07a}
+.io-pair{
+  max-width:56rem;margin:1.6rem auto;
+  display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;
+}
+.io-card{
+  background:var(--panel);border:1px solid var(--hairline);
+  border-radius:12px;padding:1.2rem 1.4rem;
+}
+.io-card .ik{
+  font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.14em;
+  text-transform:uppercase;display:block;margin-bottom:.6rem;font-weight:600;
+}
+.io-card.in .ik{color:var(--rel-blue)}
+.io-card.out .ik{color:var(--node-green)}
+.io-card p{font-family:'IBM Plex Mono',monospace;font-size:.8rem;line-height:1.75;color:var(--ink-soft);word-break:break-all}
+@media(max-width:760px){.io-pair{grid-template-columns:1fr}}
+
+/* ---------- 수식 ---------- */
+.formula{
+  max-width:var(--max-prose);margin:1.8rem auto;
+  background:var(--panel);border:1px solid var(--hairline);border-left:3px solid var(--rel-blue);
+  border-radius:10px;padding:1.3rem 1.6rem;
+  font-family:'IBM Plex Mono',monospace;font-size:.98rem;color:var(--ink);
+  overflow-x:auto;text-align:center;
+}
+.formula i{font-style:italic}
+.formula sub{font-size:.7em}
+.formula-note{
+  max-width:var(--max-prose);margin:-.6rem auto 1.6rem;
+  font-size:.88rem;color:var(--ink-soft);line-height:1.8;
+}
+
+/* ---------- 리스트 ---------- */
+.layer-list{max-width:var(--max-prose);margin:1.8rem auto;list-style:none}
+.layer-list li{
+  display:grid;grid-template-columns:11rem 1fr;gap:1.2rem;
+  padding:1rem 0;border-bottom:1px solid var(--hairline);
+}
+.layer-list li:first-child{border-top:1px solid var(--hairline)}
+.layer-list .ln{
+  font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:600;
+  color:var(--rel-blue);padding-top:.15rem;line-height:1.6;
+}
+.layer-list .ld{font-size:.96rem;color:var(--ink-soft);line-height:1.8}
+@media(max-width:600px){.layer-list li{grid-template-columns:1fr;gap:.3rem}}
+
+/* ---------- 라이브러리 그리드 ---------- */
+.lib-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);
+  gap:.9rem;margin:2rem auto;max-width:56rem;
+}
+.lib-card{
+  background:var(--panel);border:1px solid var(--hairline);
+  border-radius:10px;padding:1rem 1.2rem;
+}
+.lib-card .ln{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:.88rem;color:var(--ink)}
+.lib-card .lp{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--node-green);display:block;margin:.2rem 0 .4rem}
+.lib-card p{font-size:.85rem;line-height:1.7;color:var(--ink-soft)}
+@media(max-width:760px){.lib-grid{grid-template-columns:1fr}}
+
+/* ---------- RLHF 대화 ---------- */
+.rlhf{max-width:var(--max-prose);margin:2rem auto;display:flex;flex-direction:column;gap:1rem}
+.rlhf .bubble{
+  border-radius:14px;padding:1.1rem 1.4rem;max-width:88%;
+  font-size:.93rem;line-height:1.8;
+}
+.rlhf .bk{
+  font-family:'IBM Plex Mono',monospace;font-size:.68rem;letter-spacing:.12em;
+  text-transform:uppercase;display:block;margin-bottom:.4rem;font-weight:600;
+}
+.rlhf .b-model{background:var(--panel);border:1px solid var(--hairline);align-self:flex-start}
+.rlhf .b-model .bk{color:var(--rel-blue)}
+.rlhf .b-human{background:#fbf6ec;border:1px solid #ecdcbc;align-self:flex-end}
+.rlhf .b-human .bk{color:var(--node-amber)}
+.rlhf .b-tuned{background:#edf6f1;border:1px solid #c8e2d4;align-self:flex-start}
+.rlhf .b-tuned .bk{color:var(--node-green)}
+
+/* ---------- 비교 표 ---------- */
+.vs-table{
+  max-width:56rem;margin:2.2rem auto;
+  background:var(--panel);border:1px solid var(--hairline);border-radius:14px;
+  overflow:hidden;
+}
+.vs-table table{width:100%;border-collapse:collapse;font-size:.9rem}
+.vs-table th{
+  font-family:'Hahmlet',serif;font-weight:600;text-align:left;
+  padding:1rem 1.3rem;background:#f0f4f1;border-bottom:1px solid var(--hairline);
+}
+.vs-table th:first-child{width:8.5rem}
+.vs-table td{
+  padding:.9rem 1.3rem;border-bottom:1px solid var(--hairline);
+  vertical-align:top;line-height:1.75;color:var(--ink-soft);
+}
+.vs-table tr:last-child td{border-bottom:none}
+.vs-table td:first-child{
+  font-family:'IBM Plex Mono',monospace;font-size:.78rem;
+  font-weight:600;color:var(--ink);
+}
+
+/* ---------- 사례 콜아웃 / 노트 ---------- */
+.case-callout{
+  max-width:var(--max-prose);margin:2.2rem auto;
+  background:#fbf6ec;border:1px solid #ecdcbc;border-radius:14px;padding:1.7rem 1.8rem;
+}
+.case-callout .ck{
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.14em;
+  color:var(--node-amber);text-transform:uppercase;display:block;margin-bottom:.7rem;font-weight:600;
+}
+.case-callout p{font-size:.95rem;line-height:1.85;color:#4a4232}
+.case-callout p+p{margin-top:.8rem}
+.case-callout a{color:#a06b12;border-bottom:1px solid rgba(160,107,18,.4);text-decoration:none}
+.note-box{
+  max-width:var(--max-prose);margin:2rem auto;
+  background:#eef4f8;border:1px solid #cfdfeb;border-radius:14px;padding:1.5rem 1.7rem;
+}
+.note-box .nk{
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.14em;
+  color:var(--rel-blue);text-transform:uppercase;display:block;margin-bottom:.6rem;font-weight:600;
+}
+.note-box p{font-size:.92rem;line-height:1.85;color:#33495a}
+.note-box a{color:var(--rel-blue);border-bottom:1px solid rgba(18,104,179,.4);text-decoration:none}
+
+/* ---------- 단계 경로 ---------- */
+.hop-path{max-width:56rem;margin:2rem auto;counter-reset:hop;list-style:none}
+.hop-path li{
+  counter-increment:hop;display:grid;grid-template-columns:3rem 1fr;gap:1.1rem;
+  align-items:start;padding:1.05rem 0;position:relative;
+}
+.hop-path li::before{
+  content:counter(hop);
+  font-family:'IBM Plex Mono',monospace;font-weight:600;
+  width:2.4rem;height:2.4rem;border-radius:50%;
+  background:var(--panel);border:2px solid var(--node-green);color:var(--node-green);
+  display:flex;align-items:center;justify-content:center;font-size:.95rem;z-index:1;
+}
+.hop-path li:not(:last-child)::after{
+  content:"";position:absolute;left:1.2rem;top:3.4rem;bottom:-.6rem;
+  width:2px;background:var(--hairline);
+}
+.hop-path .hd{font-size:.98rem;line-height:1.8;padding-top:.35rem}
+.hop-path .hd b{font-weight:600}
+.hop-path .hd code{font-family:'IBM Plex Mono',monospace;font-size:.82em;background:#e3e9e6;border-radius:4px;padding:.1em .35em}
+
+/* ---------- 요약 ---------- */
+.summary-panel{
+  background:var(--ink);color:#dce8e3;border-radius:18px;
+  max-width:56rem;margin:3rem auto 0;padding:3rem 2.6rem;
+  position:relative;overflow:hidden;
+}
+.summary-panel::after{
+  content:"";position:absolute;right:-70px;top:-70px;width:240px;height:240px;
+  border-radius:50%;border:1.5px solid rgba(142,199,239,.3);
+}
+.summary-panel::before{
+  content:"";position:absolute;right:20px;bottom:-90px;width:200px;height:200px;
+  border-radius:50%;border:1.5px solid rgba(126,207,168,.25);
+}
+.summary-panel h2{color:#fff;margin-bottom:1.3rem;font-size:1.6rem}
+.summary-panel p{max-width:42rem;line-height:1.95;position:relative;z-index:1}
+.summary-panel p+p{margin-top:1.1rem}
+.next-chip{
+  display:inline-block;margin-top:2rem;
+  font-family:'IBM Plex Mono',monospace;font-size:.82rem;
+  color:#8ec7ef;border:1px solid rgba(142,199,239,.5);
+  border-radius:999px;padding:.45rem 1.2rem;
+}
+
+footer{
+  max-width:72rem;margin:4rem auto 0;padding:3rem 2rem 3.5rem;
+  font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:var(--ink-soft);
+  letter-spacing:.04em;line-height:2;border-top:1px solid var(--hairline);
+}
+footer b{color:var(--ink)}
+
+@media(max-width:600px){
+  body{font-size:16px}
+  .hero-inner{padding:3.6rem 1.4rem 2rem}
+  main{padding:0 1.4rem}
+  .toc-inner{padding:1.2rem 1.4rem;gap:1.1rem}
+  .figure-panel{padding:1.4rem 1rem 1.2rem}
+  .summary-panel{padding:2.2rem 1.6rem}
+  .code-snip pre{font-size:.74rem;padding:1rem 1.1rem}
+  .rlhf .bubble{max-width:100%}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="hero-inner">
+    <p class="series-line">Building Neo4j-Powered Applications with LLMs · Part I — LLM 그라운딩을 위한 RAG와 지식그래프</p>
+    <span class="cypher-chip"><span class="k">MATCH</span> (:Chapter {n: 2})-[:DEMYSTIFIES]-&gt;(:RAG)</span>
+    <h1 class="title"><em>RAG</em>의 신비를 벗기다</h1>
+    <p class="hero-lede">환각은 LLM의 숙명이 아니다. 답을 지어내기 전에 먼저 찾아보게 하면 된다. 이 장은 검색 증강 생성의 기원과 아키텍처를 해부하고, 리트리버에서 생성기까지 전 구간을 코드로 직접 조립한다.</p>
+    <div class="hero-meta">
+      <span>Ravindranatha Anthapu · Siddhant Agarwal</span>
+      <span>Packt Publishing, 2025</span>
+      <span>Chapter 2 · pp. 11–35</span>
+    </div>
+  </div>
+  <svg class="pipeline" viewBox="0 0 540 380" aria-hidden="true">
+    <defs>
+      <marker id="parr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+        <path d="M0,0 L8,4 L0,8 z" fill="#7fb4e0"/>
+      </marker>
+    </defs>
+    <rect class="stage" x="30" y="40" width="130" height="52" rx="10"/>
+    <text class="stage-t" x="95" y="63">Query</text>
+    <text class="stage-s" x="95" y="80">q(x)</text>
+    <rect class="stage" x="205" y="40" width="130" height="52" rx="10"/>
+    <text class="stage-t" x="270" y="63">Retriever</text>
+    <text class="stage-s" x="270" y="80">non-parametric</text>
+    <rect class="stage" x="380" y="40" width="130" height="52" rx="10"/>
+    <text class="stage-t" x="445" y="63">Generator</text>
+    <text class="stage-s" x="445" y="80">p&#952; · parametric</text>
+    <path class="flow dotline" d="M160 66 H 199" stroke-dasharray="6 5"/>
+    <path class="flow dotline" d="M335 66 H 374" stroke-dasharray="6 5"/>
+    <!-- 문서 인덱스 -->
+    <rect class="doc" x="228" y="146" width="84" height="58" rx="6" transform="rotate(-4 270 175)"/>
+    <rect class="doc" x="236" y="154" width="84" height="58" rx="6" transform="rotate(2 278 183)"/>
+    <rect class="doc" x="244" y="162" width="84" height="58" rx="6"/>
+    <text class="stage-s" x="286" y="188">d(z)</text>
+    <text class="stage-s" x="286" y="203">document index</text>
+    <path class="flow" d="M270 140 V 98" />
+    <!-- 응답 -->
+    <rect class="stage" x="380" y="150" width="130" height="52" rx="10" style="stroke:#7ecfa8"/>
+    <text class="stage-t" x="445" y="173" style="fill:#9fd8bd">Grounded</text>
+    <text class="stage-s" x="445" y="190" style="fill:#7ecfa8">answer</text>
+    <path class="flow" d="M445 98 V 144" style="stroke:#7ecfa8;marker-end:url(#parr)"/>
+    <!-- 역전파 점선 -->
+    <path class="flow-back dotline" d="M480 36 C 480 6, 90 6, 95 36"/>
+    <text class="stage-s" x="285" y="20" style="fill:#7ecfa8">end-to-end backprop</text>
+    <!-- 장식 노드 -->
+    <circle cx="60" cy="300" r="7" fill="#4a6a80" opacity=".55"/>
+    <circle cx="150" cy="330" r="5" fill="#4a6a80" opacity=".45"/>
+    <circle cx="105" cy="255" r="5" fill="#7ecfa8" opacity=".4"/>
+    <line x1="60" y1="300" x2="150" y2="330" stroke="#4a6a80" stroke-width="1" opacity=".4"/>
+    <line x1="60" y1="300" x2="105" y2="255" stroke="#4a6a80" stroke-width="1" opacity=".4"/>
+  </svg>
+</header>
+
+<!-- ================= TOC ================= -->
+<nav class="toc-strip" aria-label="이 장의 주제">
+  <div class="toc-inner">
+    <span class="toc-label">이 장의 주제</span>
+    <a href="#sec1"><span class="n">01</span>RAG의 힘을 이해하다</a>
+    <a href="#sec2"><span class="n">02</span>RAG 흐름의 해부</a>
+    <a href="#sec3"><span class="n">03</span>외부 정보의 검색</a>
+    <a href="#sec4"><span class="n">04</span>엔드투엔드 RAG 흐름</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ================= 도입 ================= -->
+<section class="section" id="intro">
+  <div class="prose">
+    <p>앞 장에서 우리는 LLM의 진화가 생성형 AI의 지형을 어떻게 바꾸었는지 살폈고, 그 함정도 함께 논했다. 이 장에서는 그 함정을 <span class="term">검색 증강 생성(Retrieval-Augmented Generation, RAG)</span>으로 피하는 방법을 탐구한다. RAG가 무엇을 뜻하는지, 그 아키텍처는 어떤 모습인지, 그리고 더 나은 지능형 애플리케이션을 만드는 LLM 워크플로 안에 RAG가 어떻게 자리 잡는지를 본다.</p>
+  </div>
+
+  <h3>기술 요건</h3>
+  <div class="prose">
+    <p>이 장을 따라가려면 Python(3.6 이상 권장)과 딥러닝의 기초 개념에 익숙해야 한다. RAG를 만들고 실험하는 데 Hugging Face의 Transformers 라이브러리 같은 대중적인 AI 툴킷을 활용한다. 필수는 아니지만 Git 버전 관리의 기본을 알아두면 도움이 된다. 코드를 직접 찾거나 타이핑할 필요는 없다. 이 장의 실습 전체가 담긴 공개 저장소(<a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/tree/main/ch2" target="_blank" rel="noopener">github.com/PacktPublishing/…/ch2</a>)가 마련되어 있고, RAG 모델 구현과 Neo4j 통합에 필요한 스크립트·파일·설정이 모두 들어 있다. 환경에 설치해야 할 Python 라이브러리는 다음과 같다.</p>
+  </div>
+  <div class="lib-grid">
+    <div class="lib-card"><span class="ln">Transformers</span><span class="lp">pip install transformers</span><p>모델 관련 기능을 다루는 Hugging Face 라이브러리.</p></div>
+    <div class="lib-card"><span class="ln">PyTorch</span><span class="lp">pytorch.org/get-started</span><p>연산 백엔드. 시스템에 맞는 버전을 공식 안내에 따라 설치한다.</p></div>
+    <div class="lib-card"><span class="ln">scikit-learn</span><span class="lp">pip install scikit-learn</span><p>유사도 계산에 쓴다.</p></div>
+    <div class="lib-card"><span class="ln">NumPy</span><span class="lp">pip install numpy</span><p>수치 연산의 기본기.</p></div>
+    <div class="lib-card"><span class="ln">SentencePiece</span><span class="lp">pip install sentencepiece</span><p>특정 모델의 텍스트 토크나이제이션에 필요하다.</p></div>
+    <div class="lib-card"><span class="ln">rank_bm25</span><span class="lp">pip install rank_bm25</span><p>키워드 기반 검색을 위한 BM25 알고리즘 구현.</p></div>
+    <div class="lib-card"><span class="ln">datasets</span><span class="lp">pip install datasets</span><p>대규모 데이터셋을 최소 메모리로 로딩·처리·변환하는 Hugging Face 도구.</p></div>
+    <div class="lib-card"><span class="ln">pandas</span><span class="lp">pip install pandas</span><p>표 형태 데이터 조작. 데이터셋을 DataFrame으로 바꿔 전처리를 돕는다.</p></div>
+    <div class="lib-card"><span class="ln">faiss-cpu</span><span class="lp">pip install faiss-cpu</span><p>밀집 벡터의 효율적 유사도 검색·클러스터링. 추론 시 관련 지문을 가져오는 리트리버 구축에 쓴다.</p></div>
+    <div class="lib-card"><span class="ln">Accelerate</span><span class="lp">pip install accelerate</span><p>분산 훈련·추론을 단순화하는 Hugging Face 라이브러리. CPU·GPU·멀티노드의 하드웨어 활용을 최적화한다.</p></div>
+  </div>
+  <div class="note-box">
+    <span class="nk">Note</span>
+    <p>이 장의 모든 절은 핵심 코드 조각에 집중한다. 전체 코드는 책의 GitHub 저장소를 참고하면 된다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 1 ================= -->
+<section class="section" id="sec1">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 1})-[:GROUNDS]-&gt;<span class="p">(:Generation)</span></p>
+    <h2>RAG의 힘을 이해하다</h2>
+  </div>
+  <div class="prose">
+    <p>RAG는 2020년 Meta의 연구자들이 소개한 프레임워크다(<a href="https://arxiv.org/abs/2005.11401" target="_blank" rel="noopener">arxiv.org/abs/2005.11401</a>). 모델 훈련에 포함되지 않은 외부 데이터를 생성형 AI 모델이 활용해 출력을 강화하도록 하는 틀이다.</p>
+    <p>LLM이 <span class="term">환각(hallucination)</span>에 시달린다는 것은 널리 알려진 사실이다. 실세계의 고전적 사례가 하나 있다.</p>
+  </div>
+  <div class="case-callout">
+    <span class="ck">실제 사례 — Levidow, Levidow &amp; Oberman</span>
+    <p>뉴욕의 이 로펌은 콜롬비아 항공사 Avianca를 상대로 한 소송에서 OpenAI의 ChatGPT가 생성한 가짜 판례가 담긴 준비서면을 제출했다가 벌금을 부과받았다. 수천 달러의 벌금은 시작에 불과했고, 평판의 손상으로 잃은 것은 그보다 컸을 것이다. 자세한 내용은 <a href="https://news.sky.com/story/lawyers-fined-after-citing-bogus-cases-from-chatgpt-research-12908318" target="_blank" rel="noopener">Sky News 보도</a>에서 확인할 수 있다.</p>
+  </div>
+  <div class="prose"><p>LLM의 환각은 여러 요인에서 비롯된다.</p></div>
+  <ul class="layer-list">
+    <li><span class="ln">훈련 데이터 과적합</span><span class="ld">훈련 중 LLM이 훈련 데이터의 통계적 패턴에 과적합할 수 있다. 그 결과 모델은 사실적으로 정확한 콘텐츠를 생성하기보다 그 패턴을 복제하는 쪽을 우선하게 된다.</span></li>
+    <li><span class="ln">인과 추론의 결여</span><span class="ld">LLM은 단어 사이의 통계적 관계를 찾는 데 탁월하지만 원인과 결과의 관계를 이해하는 데는 서툴 수 있다. 문법적으로는 옳지만 사실적으로는 그럴듯하지 않은 출력이 여기서 나온다.</span></li>
+    <li><span class="ln">온도 설정</span><span class="ld">LLM에는 <code>temperature</code>라는 파라미터가 있다. 0과 1 사이의 수로 텍스트 생성의 무작위성을 제어한다. 온도가 높을수록 창의성이 커지지만, 모델이 기대되는 응답에서 이탈하면서 환각의 가능성도 함께 커진다.</span></li>
+    <li><span class="ln">정보의 부재</span><span class="ld">정확한 응답에 필요한 정보가 훈련 데이터에 없으면, 모델은 그럴듯하게 들리지만 틀린 답을 만들어낼 수 있다.</span></li>
+    <li><span class="ln">결함·편향 데이터</span><span class="ld">훈련 과정의 품질이 큰 역할을 한다. 데이터셋에 편향이나 부정확성이 들어 있으면 모델은 그 문제를 영속화하고, 환각으로 이어진다.</span></li>
+  </ul>
+  <div class="prose">
+    <p>환각은 중대한 도전이지만, 어느 정도 완화할 방법들이 있다.</p>
+  </div>
+
+  <h3>완화법 하나 — 프롬프트 엔지니어링</h3>
+  <div class="prose">
+    <p><span class="term">프롬프트 엔지니어링(prompt engineering)</span>은 LLM에 주는 지시나 질의를 신중히 다듬고 반복적으로 정제해 일관되고 정확한 응답을 끌어내는 작업이다. "Neo4j에 대해 말해 달라"는 광범위한 질의보다 "지식그래프를 위한 Neo4j의 핵심 이점 다섯 가지를 나열하라"는 질의가 더 많은 구조와 정밀성을 제공한다. 전자는 장황하거나 곁길로 새는 응답을 낳기 쉽지만, 후자는 기대 출력을 명시하므로 모델이 간결하고 적절한 이점 목록에 집중하게 된다. 프롬프트 엔지니어링은 모델이 원하는 정보 범위 안에 머물도록 이끌어, 무관하거나 조작된 출력을 만들 가능성을 줄인다. 기법과 모범 사례의 상세한 탐구는 <a href="https://cloud.google.com/discover/what-is-prompt-engineering" target="_blank" rel="noopener">Google Cloud의 가이드</a>를 참고하면 된다.</p>
+  </div>
+
+  <h3>완화법 둘 — 인컨텍스트 러닝</h3>
+  <div class="prose">
+    <p><span class="term">인컨텍스트 러닝(in-context learning)</span>, 곧 퓨샷 프롬프팅(few-shot prompting)은 프롬프트 안에 예시를 포함시켜 LLM을 정확하고 과업 특화된 응답으로 이끄는 방법이다. 제품 비교를 요청할 때 잘 구조화된 비교의 예시 몇 개를 프롬프트에 넣어 주면, 모델이 그 패턴을 모방한다. 주어진 예시로부터 문맥을 추론하고 응답을 조정하는 모델의 능력을 지렛대 삼는 접근이며, 도메인 특화 과업에 효과적이다.</p>
+  </div>
+
+  <h3>완화법 셋 — 미세조정과 RLHF</h3>
+  <div class="prose">
+    <p><span class="term">미세조정(fine-tuning)</span>은 이미 사전훈련된 LLM을 특정 데이터셋으로 추가 훈련해 전문 도메인이나 과업에 적응시키는 방법이다. 도메인 특화되고 적절하며 정확한 응답을 생성하는 능력이 이 과정에서 강화된다. 대표적 기법이 <span class="term">인간 피드백 기반 강화학습(Reinforcement Learning with Human Feedback, RLHF)</span>이다. 인간 평가자가 모델의 출력에 점수를 매기고, 그 점수로 모델의 행동을 조정해 인간의 기대에 정렬시킨다. 회사 내부 문서로 미세조정한 LLM에 "신입 온보딩 절차를 설명하라"고 물으면, 그 회사의 정책에 부합하는 상세한 설명이 나온다. 범용 모델이라면 모호하거나 무관한 답을 내놓았을 것이다. RLHF가 응답을 어떻게 개선하는지, 시나리오 하나로 보자.</p>
+  </div>
+  <div class="rlhf">
+    <div class="bubble b-model">
+      <span class="bk">초기 응답 — "XYZ 소프트웨어의 이점은?"</span>
+      XYZ 소프트웨어는 생산성을 높이고, 협업을 강화하며, 비용을 줄인다.
+    </div>
+    <div class="bubble b-human">
+      <span class="bk">인간 평가자 피드백</span>
+      너무 일반적이다. XYZ 소프트웨어의 고유한 특성에 관한 구체성이 없다.
+    </div>
+    <div class="bubble b-tuned">
+      <span class="bk">RLHF 미세조정 후</span>
+      XYZ 소프트웨어는 실시간 데이터 동기화, 커스터마이징 가능한 워크플로, 고급 보안 기능을 제공하며, 전사적 자원 관리(ERP)에 이상적이다.
+    </div>
+  </div>
+  <div class="prose">
+    <p>RLHF가 환각을 줄이는 데 특히 값진 이유는, 인간이 선별한 피드백으로부터의 학습을 강조하기 때문이다.</p>
+    <p>이 방법들은 상당한 개선을 가져다준다. 그러나 결정적인 한 지점에서 여전히 부족하다. 조직이 도메인 특화 지식을 활용해 정확하고 맥락적이며 설명 가능한 생성형 AI 애플리케이션을 <strong>신속하게</strong> 구축하도록 해 주지는 못한다는 것이다. 해법은 <span class="term">접지(grounding)</span>에 있다. 모델의 응답을 실세계의 사실이나 데이터에 묶어 두는 개념이다. 이 접근이 텍스트 생성의 새로운 패러다임, 곧 RAG의 토대를 이룬다. 신뢰할 수 있는 지식 소스에서 사실 정보를 동적으로 검색함으로써, RAG는 출력이 정확하면서도 맥락에 정렬되도록 보장한다.</p>
+    <p>검색 증강 생성이라는 용어는 Facebook AI Research(FAIR)의 연구자들이 2020년 5월 제출한 논문 <em>Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks</em>에서 처음 도입했다. 논문은 RAG를 신경 리트리버와 시퀀스-투-시퀀스 생성기를 결합한 <strong>하이브리드 아키텍처</strong>로 제안했다(그림 2.1). 리트리버가 외부 지식 베이스에서 관련 문서를 가져오면, 생성기가 그 문서를 문맥으로 삼아 사실 데이터에 접지된 출력을 만든다. 이 접근은 오픈 도메인 질의응답과 대화 시스템 같은 지식 집약적 NLP 과업에서 성능을 크게 끌어올렸다. 모델 내부 지식에 대한 의존을 줄이고 사실 정확성을 높인 결과다.</p>
+  </div>
+
+  <!-- Figure 2.1 -->
+  <figure class="figure-panel">
+    <svg viewBox="0 0 880 330" role="img" aria-label="FAIR가 제안한 RAG 아키텍처">
+      <defs>
+        <marker id="arr" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+          <path d="M0,0 L9,4.5 L0,9 z" fill="#122430"/>
+        </marker>
+        <marker id="arr-s" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 z" fill="#5c7280"/>
+        </marker>
+      </defs>
+      <!-- 역전파 점선 -->
+      <line x1="760" y1="34" x2="140" y2="34" stroke="#1f8f66" stroke-width="1.5" stroke-dasharray="7 5" marker-end="url(#arr-s)"/>
+      <text x="450" y="24" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;fill:#1f8f66">q와 p&#952;를 관통하는 End-to-End 역전파</text>
+      <!-- 입력 -->
+      <rect x="20" y="120" width="150" height="60" rx="8" fill="#fff" stroke="#8aa0ac" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="95" y="146" class="svg-box-t" style="font-size:13px">질의 x</text>
+      <text x="95" y="166" class="svg-box-s">"Define middle ear"</text>
+      <!-- Retriever 영역 -->
+      <rect x="200" y="70" width="330" height="200" rx="14" fill="none" stroke="#1268b3" stroke-width="1.5"/>
+      <text x="365" y="96" text-anchor="middle" style="font-family:'Hahmlet',serif;font-size:15px;font-weight:600;fill:#1268b3">리트리버 p&#951; — 비모수적</text>
+      <rect x="224" y="120" width="90" height="96" rx="8" fill="#1f8f66"/>
+      <text x="269" y="162" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:13px;fill:#fff;font-weight:600">q</text>
+      <text x="269" y="182" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:10px;fill:#d7efe1">Query Encoder</text>
+      <text x="342" y="140" class="svg-lab">q(x)</text>
+      <line class="svg-arrow" x1="314" y1="168" x2="352" y2="168"/>
+      <text x="380" y="173" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:11px;fill:#122430;font-weight:600">MIPS</text>
+      <line class="svg-arrow" x1="408" y1="168" x2="438" y2="168"/>
+      <!-- 문서 인덱스 -->
+      <rect x="442" y="118" width="72" height="88" rx="6" fill="#f2f5f3" stroke="#37505f" stroke-width="1.1" transform="rotate(-3 478 162)"/>
+      <rect x="448" y="124" width="72" height="88" rx="6" fill="#fff" stroke="#37505f" stroke-width="1.1"/>
+      <line x1="458" y1="146" x2="510" y2="146" stroke="#a8d5b8" stroke-width="4"/>
+      <line x1="458" y1="160" x2="510" y2="160" stroke="#cdddd4" stroke-width="4"/>
+      <line x1="458" y1="174" x2="502" y2="174" stroke="#a8d5b8" stroke-width="4"/>
+      <text x="484" y="200" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:10px;fill:#3d5260">d(z)</text>
+      <text x="365" y="248" text-anchor="middle" class="svg-box-s">문서 인덱스에서 관련 문서 z를 검색</text>
+      <!-- Generator 영역 -->
+      <rect x="560" y="70" width="180" height="200" rx="14" fill="none" stroke="#d99022" stroke-width="1.5"/>
+      <text x="650" y="96" text-anchor="middle" style="font-family:'Hahmlet',serif;font-size:15px;font-weight:600;fill:#b07314">생성기 p&#952; — 모수적</text>
+      <rect x="606" y="120" width="88" height="96" rx="8" fill="#1268b3"/>
+      <text x="650" y="164" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:14px;fill:#fff;font-weight:600">P&#952;</text>
+      <text x="650" y="184" text-anchor="middle" style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;fill:#cfe3f5">seq2seq</text>
+      <text x="650" y="248" text-anchor="middle" class="svg-box-s">주변화(marginalize)로 통합</text>
+      <line class="svg-arrow" x1="524" y1="168" x2="600" y2="168"/>
+      <!-- 출력 -->
+      <rect x="770" y="120" width="96" height="60" rx="8" fill="#edf6f1" stroke="#1f8f66" stroke-width="1.2"/>
+      <text x="818" y="146" class="svg-box-t" style="font-size:13px;fill:#1f8f66">응답 y</text>
+      <text x="818" y="166" class="svg-box-s">접지된 생성</text>
+      <line class="svg-arrow" x1="694" y1="150" x2="764" y2="150"/>
+      <line class="svg-arrow" x1="170" y1="150" x2="218" y2="150"/>
+      <!-- 용례 -->
+      <text x="95" y="220" class="svg-lab" text-anchor="middle">QA · 사실 검증 ·</text>
+      <text x="95" y="236" class="svg-lab" text-anchor="middle">Jeopardy 질문 생성</text>
+      <text x="818" y="220" class="svg-lab" text-anchor="middle">답 생성 · 레이블 생성 ·</text>
+      <text x="818" y="236" class="svg-lab" text-anchor="middle">질문 생성</text>
+    </svg>
+    <figcaption class="fig-caption"><b>그림 2.1</b> — FAIR의 논문 <i>Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks</i>가 제안한 RAG 아키텍처</figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>RAG는 앞서 말한 LLM의 결함들을, 결정적인 요소 하나를 도입함으로써 해소한다. 보충적이거나 도메인 특화된 데이터 소스에서 관련 지식을 <strong>검색하는 능력</strong>이다. 덧붙여 RAG 파이프라인은 정확성을 유지하면서 모델 크기를 줄일 잠재력도 지닌다. 모든 지식을 모델 파라미터 안에 새겨 넣으려면 막대한 자원이 들지만, RAG는 모델이 정보를 동적으로 검색하게 함으로써 모델을 가볍고 확장 가능하게 유지한다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 2 ================= -->
+<section class="section" id="sec2">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 2})-[:DECONSTRUCTS]-&gt;<span class="p">(:RAGFlow)</span></p>
+    <h2>RAG 흐름의 해부</h2>
+  </div>
+  <div class="prose">
+    <p>이제 RAG 모델의 구성 요소를 해부해 그것이 어떻게 작동하는지 이해할 차례다. 먼저 RAG가 없는 통상의 LLM 애플리케이션 흐름부터 본다.</p>
+  </div>
+
+  <!-- Figure 2.2 -->
+  <figure class="figure-panel">
+    <svg viewBox="0 0 720 300" role="img" aria-label="LLM 채팅 애플리케이션의 기본 정보 흐름">
+      <!-- User -->
+      <circle cx="360" cy="46" r="17" fill="#122430"/>
+      <path d="M332 92 a28 22 0 0 1 56 0" fill="#122430"/>
+      <text x="360" y="115" text-anchor="middle" style="font-family:'Hahmlet',serif;font-size:14px;font-weight:600;fill:#122430">사용자</text>
+      <!-- Prompt -->
+      <rect class="svg-box-dark" x="110" y="150" width="180" height="52" rx="9"/>
+      <text class="svg-box-tw" x="200" y="181">프롬프트</text>
+      <!-- Response -->
+      <rect class="svg-box-dark" x="430" y="150" width="180" height="52" rx="9"/>
+      <text class="svg-box-tw" x="520" y="181">응답</text>
+      <!-- LLM API -->
+      <rect class="svg-box-dark" x="110" y="232" width="180" height="52" rx="9"/>
+      <text class="svg-box-tw" x="200" y="263">LLM API</text>
+      <!-- LLM Chat API -->
+      <rect class="svg-box-dark" x="430" y="232" width="180" height="52" rx="9"/>
+      <text class="svg-box-tw" x="520" y="256">LLM</text>
+      <text class="svg-box-sw" x="520" y="272">Chat API</text>
+      <!-- arrows -->
+      <path class="svg-arrow" d="M330 70 H 200 V 144"/>
+      <path class="svg-arrow" d="M200 202 V 226"/>
+      <path class="svg-arrow" d="M290 258 H 424"/>
+      <path class="svg-arrow" d="M520 226 V 208"/>
+      <path class="svg-arrow" d="M520 150 V 70 H 390"/>
+      <!-- steps -->
+      <circle class="svg-step" cx="152" cy="112" r="13"/><text class="svg-step-t" x="152" y="116">1</text>
+      <circle class="svg-step" cx="152" cy="217" r="13"/><text class="svg-step-t" x="152" y="221">2</text>
+      <circle class="svg-step" cx="472" cy="217" r="13"/><text class="svg-step-t" x="472" y="221">3</text>
+    </svg>
+    <figcaption class="fig-caption"><b>그림 2.2</b> — LLM 채팅 애플리케이션의 기본 정보 흐름</figcaption>
+  </figure>
+
+  <div class="prose"><p>사용자가 LLM에 프롬프트를 보내면 벌어지는 일은 이렇다.</p></div>
+  <ul class="layer-list">
+    <li><span class="ln">1 · 프롬프트 전송</span><span class="ld">사용자가 LLM 채팅 API에 프롬프트를 보내는 것으로 과정이 시작된다. 질문일 수도, 지시일 수도, 정보나 콘텐츠 생성을 요구하는 어떤 요청일 수도 있다.</span></li>
+    <li><span class="ln">2 · API의 처리</span><span class="ld">LLM 채팅 API가 사용자의 프롬프트를 받아 LLM에 전달한다. LLM은 방대한 텍스트 데이터로 훈련된 AI 모델로, 폭넓은 프롬프트와 질문에 인간 같은 텍스트로 소통하고 생성한다.</span></li>
+    <li><span class="ln">3 · 응답 생성</span><span class="ld">LLM이 프롬프트를 처리해 응답을 만들어낸다. 응답은 LLM 채팅 API로 돌아가고, API가 그것을 사용자에게 전달한다.</span></li>
+  </ul>
+  <div class="prose">
+    <p>이 흐름에서 답을 내놓는 책임은 오롯이 LLM에 있고, 그 사이에 다른 과정은 없다. RAG 없는 요청-응답 흐름의 가장 흔한 형태다. 이제 이 워크플로의 어디에 RAG가 끼어드는지 보자.</p>
+  </div>
+
+  <!-- Figure 2.3 -->
+  <figure class="figure-panel">
+    <svg viewBox="0 0 720 420" role="img" aria-label="RAG 모델이 포함된 채팅 애플리케이션의 정보 흐름">
+      <!-- User -->
+      <circle cx="360" cy="40" r="16" fill="#122430"/>
+      <path d="M334 84 a26 20 0 0 1 52 0" fill="#122430"/>
+      <text x="360" y="106" text-anchor="middle" style="font-family:'Hahmlet',serif;font-size:14px;font-weight:600;fill:#122430">사용자</text>
+      <!-- RAG 점선 경계 -->
+      <rect x="86" y="120" width="250" height="278" rx="10" fill="none" stroke="#8aa0ac" stroke-width="1.1" stroke-dasharray="5 4"/>
+      <text x="100" y="140" class="svg-lab" style="fill:#5c7280">RAG 모델</text>
+      <!-- Prompt -->
+      <rect class="svg-box-dark" x="120" y="150" width="180" height="46" rx="9"/>
+      <text class="svg-box-tw" x="210" y="178">프롬프트</text>
+      <!-- LLM API -->
+      <rect class="svg-box-dark" x="120" y="222" width="180" height="46" rx="9"/>
+      <text class="svg-box-tw" x="210" y="250">LLM API</text>
+      <!-- Database Search -->
+      <rect x="120" y="294" width="180" height="46" rx="9" fill="#3d5260"/>
+      <text class="svg-box-tw" x="210" y="322">데이터베이스 검색</text>
+      <!-- Database cylinder -->
+      <path d="M138 380 a72 13 0 0 1 144 0 v34 a72 13 0 0 1 -144 0 z" fill="#8aa0ac"/>
+      <ellipse cx="210" cy="380" rx="72" ry="13" fill="#aebfc9"/>
+      <text x="210" y="408" text-anchor="middle" style="font-family:'Hahmlet',serif;font-size:12.5px;font-weight:600;fill:#fff">데이터베이스</text>
+      <!-- Relevant results -->
+      <rect class="svg-box-dark" x="430" y="360" width="190" height="56" rx="9"/>
+      <text class="svg-box-tw" x="525" y="384">관련 결과</text>
+      <text class="svg-box-sw" x="525" y="402">/ 문서</text>
+      <!-- otimes -->
+      <circle cx="525" cy="290" r="15" fill="#fff" stroke="#122430" stroke-width="1.6"/>
+      <line x1="514.5" y1="279.5" x2="535.5" y2="300.5" stroke="#122430" stroke-width="1.5"/>
+      <line x1="535.5" y1="279.5" x2="514.5" y2="300.5" stroke="#122430" stroke-width="1.5"/>
+      <text x="552" y="286" class="svg-lab">프롬프트 +</text>
+      <text x="552" y="301" class="svg-lab">관련 정보</text>
+      <!-- LLM Chat API -->
+      <rect class="svg-box-dark" x="430" y="180" width="190" height="52" rx="9"/>
+      <text class="svg-box-tw" x="525" y="204">LLM</text>
+      <text class="svg-box-sw" x="525" y="220">Chat API</text>
+      <!-- Response -->
+      <rect class="svg-box-dark" x="430" y="108" width="190" height="46" rx="9"/>
+      <text class="svg-box-tw" x="525" y="136">응답</text>
+      <!-- arrows -->
+      <path class="svg-arrow" d="M336 62 H 210 V 144"/>
+      <path class="svg-arrow" d="M210 196 V 216"/>
+      <path class="svg-arrow" d="M210 268 V 288"/>
+      <path class="svg-arrow" d="M210 340 V 362"/>
+      <path class="svg-arrow" d="M282 388 H 424"/>
+      <path class="svg-arrow" d="M525 354 V 311"/>
+      <path class="svg-arrow" d="M525 275 V 238"/>
+      <path class="svg-arrow" d="M525 180 V 160"/>
+      <path class="svg-arrow" d="M525 108 V 62 H 384"/>
+      <!-- steps -->
+      <circle class="svg-step" cx="96" cy="122" r="13"/><text class="svg-step-t" x="96" y="126">1</text>
+      <circle class="svg-step" cx="484" cy="322" r="13"/><text class="svg-step-t" x="484" y="326">2</text>
+      <circle class="svg-step" cx="484" cy="166" r="13"/><text class="svg-step-t" x="484" y="170">3</text>
+    </svg>
+    <figcaption class="fig-caption"><b>그림 2.3</b> — RAG 모델이 포함된 채팅 애플리케이션의 정보 흐름</figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>그림 2.3에서 보듯, 실제 LLM 서비스 호출 앞에 LLM 요청의 문맥을 제공하는 <strong>중간 데이터 소스</strong>가 자리한다. 흐름을 단계별로 따라가면 이렇다.</p>
+    <p><strong>1. 사용자가 프롬프트를 보낸다.</strong> 사용자가 채팅 인터페이스를 통해 프롬프트나 질문을 보내며 과정이 시작된다.</p>
+    <p><strong>2. RAG 모델이 프롬프트를 처리한다.</strong> 채팅 API가 프롬프트를 받아 RAG 모델에 전달한다. RAG 모델은 함께 작동하는 두 주요 구성 요소를 가진다. <span class="term">리트리버(retriever)</span>와 <span class="term">인코더-디코더(encoder-decoder)</span>다.</p>
+    <p><strong>3. 리트리버.</strong> 이 구성 요소는 지식 저장소를 검색한다. 저장소에는 비구조화 문서와 지문뿐 아니라 표나 지식그래프 같은 구조화 데이터도 포함될 수 있다. 역할은 사용자의 프롬프트를 다루는 데 필요한 가장 관련성 높은 정보를 찾아내는 것이다. 간단한 리트리버 예제를 보자. 전체 코드는 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/blob/main/ch2/dpr.py" target="_blank" rel="noopener">ch2/dpr.py</a>에 있다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>retriever — 문서 저장과 임베딩</span><span class="lang">python</span></div>
+    <pre><span class="c"># 1) 데모용 문서 집합을 정의한다</span>
+documents = [
+    <span class="s">"The IPL 2024 was a thrilling season with unexpected results."</span>,
+    <span class="c"># ...</span>
+    <span class="s">"Dense Passage Retrieval is a state-of-the-art technique</span>
+<span class="s">     for information retrieval."</span>
+]
+
+<span class="c"># 2) 문서마다 임베딩을 생성해 콘텐츠 저장소에 담는다</span>
+<span class="k">def</span> <span class="f">encode_documents</span>(documents):
+    inputs = tokenizer(documents, return_tensors=<span class="s">'pt'</span>,
+                       padding=<span class="k">True</span>, truncation=<span class="k">True</span>)
+    <span class="k">with</span> torch.no_grad():
+        outputs = model(**inputs)
+    <span class="k">return</span> outputs.pooler_output.numpy()
+
+document_embeddings = encode_documents(documents)
+
+<span class="c"># 3) 질의 임베딩으로 저장소를 벡터 검색해 관련 문서를 가져온다</span>
+<span class="k">def</span> <span class="f">retrieve_documents</span>(query, num_results=3):
+    inputs = tokenizer(query, return_tensors=<span class="s">'pt'</span>,
+                       padding=<span class="k">True</span>, truncation=<span class="k">True</span>)
+    <span class="k">with</span> torch.no_grad():
+        query_embedding = model(**inputs).pooler_output.numpy()
+    similarity_scores = cosine_similarity(
+        query_embedding, document_embeddings).flatten()
+    top_indices = similarity_scores.argsort()[-num_results:][::-1]
+    top_docs = [(documents[i], similarity_scores[i])
+                <span class="k">for</span> i <span class="k">in</span> top_indices]
+    <span class="k">return</span> top_docs</pre>
+  </div>
+  <div class="io-pair">
+    <div class="io-card in"><span class="ik">Sample Input</span><p>Query: What is Dense Passage Retrieval?</p></div>
+    <div class="io-card out"><span class="ik">Sample Output</span><p>Top Results:<br>Score: 0.7777, Document: Dense Passage Retrieval is a state-of-the-art technique for information retrieval. …</p></div>
+  </div>
+  <div class="note-box">
+    <span class="nk">Note</span>
+    <p>리트리버 구현은 꽤 복잡해질 수 있다. BM25나 TF-IDF 같은 효율적 검색 알고리즘을 쓸 수도 있고, Dense Passage Retrieval 같은 신경 리트리버를 쓸 수도 있다. 자세한 내용은 <a href="https://github.com/facebookresearch/" target="_blank" rel="noopener">facebookresearch의 GitHub</a>에서 더 읽을 수 있다.</p>
+  </div>
+  <div class="prose">
+    <p><strong>4. 인코더-디코더 / 증강 생성.</strong> 인코더는 프롬프트를 검색된 정보(구조화든 비구조화든)와 함께 처리해 포괄적인 표현을 만든다. 디코더는 그 표현을 이용해 정확하고 맥락이 풍부하며 사용자의 프롬프트에 맞춘 응답을 생성한다. 입력 질의와 문맥 정보로 LLM API를 호출하는 과정이 여기 포함된다. Hugging Face의 T5 모델로 그 작동을 보자.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>augmented generation — T5로 문맥 주입</span><span class="lang">python</span></div>
+    <pre><span class="c"># 1) LLM 정의 — Hugging Face의 T5</span>
+tokenizer = T5Tokenizer.from_pretrained(<span class="s">'t5-small'</span>, legacy=<span class="k">False</span>)
+model = T5ForConditionalGeneration.from_pretrained(<span class="s">'t5-small'</span>)
+
+<span class="c"># 2) 질의와 문서 정의 — 통상은 리트리버를 쓰지만 데모를 위해 하드코딩</span>
+query = <span class="s">"What are the benefits of solar energy?"</span>
+retrieved_passages = <span class="s">"""
+Solar energy is a renewable resource and reduces electricity bills.
+...
+"""</span>
+
+<span class="c"># 3) 질의 + 검색 지문으로 LLM API를 호출하는 메서드</span>
+<span class="k">def</span> <span class="f">generate_response</span>(query, retrieved_passages):
+    input_text = <span class="s">f"Answer this question based on the provided</span>
+<span class="s">        context: {query} Context: {retrieved_passages}"</span>
+    inputs = tokenizer(input_text, return_tensors=<span class="s">'pt'</span>,
+        padding=<span class="k">True</span>, truncation=<span class="k">True</span>, max_length=512).to(device)
+    <span class="k">with</span> torch.no_grad():
+        outputs = model.generate(
+            **inputs,
+            max_length=300,   <span class="c"># 더 긴 응답 허용</span>
+            num_beams=3,      <span class="c"># 더 나은 결과를 위한 빔 서치</span>
+            early_stopping=<span class="k">True</span>
+        )
+    <span class="k">return</span> tokenizer.decode(outputs[0], skip_special_tokens=<span class="k">True</span>)</pre>
+  </div>
+  <div class="note-box">
+    <span class="nk">Note — 빔 서치</span>
+    <p>여기서는 T5의 <span style="font-weight:600">빔 서치(beam search)</span> 디코딩으로 정확하고 맥락에 맞는 응답을 만든다. 빔 서치는 텍스트 생성에서 가장 그럴듯한 토큰 시퀀스를 찾는 탐색 알고리즘이다. 매 단계 가장 확률 높은 토큰 하나만 고르는 그리디 디코딩과 달리, 빔 서치는 여러 후보 시퀀스(빔)를 동시에 유지하며 탐색한다. 생성 초반에 차선의 선택에 성급히 갇히는 일을 피하므로 고품질 결과를 찾을 가능성이 커진다. Transformers의 빔 서치는 <a href="https://huggingface.co/blog/constrained-beam-search" target="_blank" rel="noopener">Hugging Face 블로그</a>에서 더 배울 수 있다.</p>
+  </div>
+  <div class="prose">
+    <p><strong>5. 채팅 API가 응답을 전달한다.</strong> 다음 코드가 <code>generate_response</code>를 호출해 입력 질의에 대한 채팅 응답을 전달한다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>invoke — 응답 전달</span><span class="lang">python</span></div>
+    <pre>response = generate_response(query, retrieved_passages)
+<span class="f">print</span>(<span class="s">"Query:"</span>, query)
+<span class="f">print</span>(<span class="s">"Retrieved Passages:"</span>, retrieved_passages)
+<span class="f">print</span>(<span class="s">"Generated Response:"</span>, response)</pre>
+  </div>
+  <div class="io-pair">
+    <div class="io-card in"><span class="ik">Sample Input</span><p>Query: What are the benefits of solar energy?<br><br>Passages: Solar energy is a renewable resource and reduces electricity bills. …</p></div>
+    <div class="io-card out"><span class="ik">Sample Output</span><p>Generated Response: it is environmentally friendly and helps combat climate change</p></div>
+  </div>
+  <div class="prose">
+    <p>전체 코드는 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/blob/main/ch2/augmented_generation.py" target="_blank" rel="noopener">ch2/augmented_generation.py</a>에 있다.</p>
+    <p><strong>6. 통합과 미세조정.</strong> 마지막으로 리트리버와 LLM 호출을 하나의 완전한 RAG 흐름으로 결합한 코드를 보자.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>rag_pipeline — 리트리버 + 생성기</span><span class="lang">python</span></div>
+    <pre><span class="k">def</span> <span class="f">rag_pipeline</span>(query):
+    retrieved_docs = retrieve_documents(query)
+    response = generate_response(query, retrieved_docs)
+    <span class="k">return</span> response
+
+query = <span class="s">"How does climate change affect biodiversity?"</span>
+generated_text = rag_pipeline(query)
+<span class="f">print</span>(<span class="s">"Final Generated Text:"</span>, generated_text)</pre>
+  </div>
+  <div class="prose">
+    <p>흐름은 단순하다. 리트리버로 필요한 문서를 검색하고, 입력 질의와 검색된 문서를 LLM API 호출에 함께 넘긴다. 이번 RAG 아키텍처 심층 탐구에서 우리는 그 역학에 집중해 핵심 구성 요소의 작동을 확인했다. 효율적 정보 검색과 고급 언어 생성 모델을 결합함으로써, RAG는 맥락에 적절하고 지식이 풍부해진 응답을 만들어낸다. 다음 절에서는 검색 과정 자체를 논한다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 3 ================= -->
+<section class="section" id="sec3">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 3})-[:RETRIEVES]-&gt;<span class="p">(:Knowledge)</span></p>
+    <h2>외부 정보의 검색</h2>
+  </div>
+  <div class="prose">
+    <p>RAG가 외부 지식을 어떻게 활용하는지 이해하는 것은, 사실적으로 정확하고 유익한 응답을 생성하는 그 능력을 제대로 음미하기 위한 열쇠다. 이 절은 다양한 검색 기법과 검색 정보의 통합 전략을, 실제 예제와 함께 논한다.</p>
+    <p>RAG 모델의 성패는 방대한 외부 지식 베이스에서 관련 정보를 검색하는 능력에 달려 있다. 이 검색 방법들은 대규모 데이터셋에서 관련 정보를 조달하는 데 필수적이다. 전통적 방법인 BM25부터 DPR 같은 현대적 신경 접근까지 흔히 쓰이는 기법이 여럿인데, 크게 세 범주로 나눌 수 있다. <strong>벡터 유사도 검색</strong>, <strong>키워드 매칭</strong>, <strong>지문 검색</strong>이다. 하나씩 살펴본다.</p>
+  </div>
+
+  <h3>벡터 유사도 검색</h3>
+  <div class="prose">
+    <p>LLM에 전달하는 텍스트나 질의는 <span class="term">임베딩(embedding)</span>이라는 벡터 표현으로 변환된다. 벡터 유사도 검색은 이 벡터 임베딩들을 비교해 가장 가까운 매치를 찾는다. 관련되고 유사한 텍스트는 유사한 임베딩을 가진다는 발상이 바탕에 깔려 있다. 기법의 작동은 이렇다.</p>
+  </div>
+  <ol class="hop-path">
+    <li><span class="hd"><b>입력 질의의 임베딩을 만든다.</b> 입력 질의를 토크나이즈하고 그것의 벡터 임베딩 표현을 생성한다.</span></li>
+    <li><span class="hd"><b>문서들의 임베딩을 만든다.</b> 토크나이저로 문서마다 임베딩을 생성하고, 각 임베딩을 해당 문서와 연결한다.</span></li>
+    <li><span class="hd"><b>내적 계산으로 유사 문서를 찾는다.</b> 입력 질의 임베딩으로 문서 임베딩들을 검색해 유사한 결과를 얻는다: <code>torch.matmul(query_embeddings, doc_embeddings.T)</code></span></li>
+    <li><span class="hd"><b>관련도 점수로 정렬해 반환한다.</b> 결과에는 매칭된 문서와 함께 입력 질의와의 유사도를 나타내는 점수가 담긴다. 가장 유사한 것부터 덜 유사한 순으로 정렬한다.</span></li>
+  </ol>
+  <div class="io-pair">
+    <div class="io-card in"><span class="ik">Sample Input</span><p>What are the benefits of solar energy?</p></div>
+    <div class="io-card out"><span class="ik">Sample Output — Ranked</span><p>Document: Solar energy is a renewable source of power., Score: 80.8264<br>…<br>Document: Graph databases like Neo4j are used to model complex relationships., Score: 52.8945</p></div>
+  </div>
+  <div class="prose">
+    <p>이 코드는 DPR로 질의와 문서 집합을 고차원 벡터 표현으로 인코딩하는 법을 보여준다. 질의 벡터와 문서 벡터의 내적 같은 유사도 점수를 계산해 각 문서의 관련성을 평가하고, 점수순으로 문서를 정렬해 가장 관련 있는 것을 맨 위에 놓는다. 관련 콘텐츠와 무관한 콘텐츠가 뒤섞인 다양한 문서 집합에서도 맥락상 적절한 정보를 효과적으로 가려내는 것, 그것이 벡터 기반 검색의 힘이다. 전체 예제는 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/blob/main/ch2/vector_similarity_search.py" target="_blank" rel="noopener">ch2/vector_similarity_search.py</a>에 있다.</p>
+  </div>
+
+  <h3>키워드 매칭</h3>
+  <div class="prose">
+    <p>키워드 매칭은 더 단순한 접근이다. 사용자 프롬프트에 들어 있는 키워드를 포함한 문서를 찾는다. 효율적이지만 노이즈에 취약하고, 관련 있는 동의어를 담은 문서를 놓친다. <span class="term">BM25</span>는 키워드 기반의 확률적 검색 함수로, 각 문서에 질의어가 등장하는 정도를 어휘 빈도와 문서 길이를 고려해 점수화한다. 흐름은 이렇다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>keyword matching — BM25</span><span class="lang">python</span></div>
+    <pre><span class="c"># 1) 문서를 토크나이즈해 BM25 코퍼스를 만든다</span>
+tokenized_corpus = [doc.split() <span class="k">for</span> doc <span class="k">in</span> corpus]
+bm25 = BM25Okapi(tokenized_corpus, k1=1.5, b=0.75)
+
+<span class="c"># 2) 검색에 쓸 질의를 토크나이즈한다</span>
+tokenized_query = query.split()
+
+<span class="c"># 3) 토크나이즈된 질의로 코퍼스를 조회 — 매칭 문서의 점수 반환</span>
+scores = bm25.get_scores(tokenized_query)
+
+<span class="c"># 4) 점수로 문서를 정렬해 반환한다</span>
+ranked_docs = sorted(zip(corpus, scores),
+                     key=<span class="k">lambda</span> x: x[1], reverse=<span class="k">True</span>)</pre>
+  </div>
+  <div class="io-pair">
+    <div class="io-card in"><span class="ik">Sample Input</span><p>quick fox</p></div>
+    <div class="io-card out"><span class="ik">Sample Output — Ranked</span><p>Document: The quick brown fox jumps over the lazy dog., Score: 0.6049<br>…<br>Document: Artificial intelligence is transforming the world., Score: 0.0000</p></div>
+  </div>
+  <div class="prose">
+    <p>BM25는 어휘 빈도(키워드가 문서에 얼마나 자주 나오는가)와 문서 길이에 확률적 점수 함수를 적용해 질의와의 관련성으로 문서 순위를 매긴다. 질의와 문서를 고차원 공간의 밀집 수치 벡터로 표현하고 내적 같은 수학 함수로 유사도를 재는 벡터 유사도 검색과 달리, BM25는 이산적인 단어 매칭 위에서 직접 작동한다. 두 접근의 성격은 뚜렷이 갈린다.</p>
+  </div>
+  <div class="vs-table">
+    <table>
+      <tr><th></th><th>BM25 — 키워드 매칭</th><th>DPR — 벡터 유사도</th></tr>
+      <tr><td>작동 방식</td><td>이산적 단어 매칭에 직접 작동. 어휘 빈도와 문서 길이 기반의 확률적 점수화.</td><td>질의·문서를 밀집 벡터로 표현하고 내적 등으로 유사도 측정.</td></tr>
+      <tr><td>강점</td><td>효율적이고 해석 가능. 설명 가능성과 효율이 중요한 단순 키워드 과업에 적합.</td><td>정확한 키워드가 달라도 개념적 유사성을 포착. 깊은 의미 이해가 필요한 과업에 적합.</td></tr>
+      <tr><td>약점</td><td>동의어나 문맥적 의미를 인식하지 못해 의미적 관계에 약하다.</td><td>계산 비용이 상대적으로 크다.</td></tr>
+    </table>
+  </div>
+  <div class="prose">
+    <p>전체 예제는 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/blob/main/ch2/keyword_matching.py" target="_blank" rel="noopener">ch2/keyword_matching.py</a>에 있다.</p>
+  </div>
+
+  <h3>지문 검색</h3>
+  <div class="prose">
+    <p>문서 전체를 검색하는 대신, RAG는 사용자의 질의를 직접 다루는 문서 안의 <strong>특정 지문(passage)</strong>에 집중할 수 있다. 더 정밀한 정보 추출이 가능해진다. 초기 흐름은 벡터 검색 접근과 매우 비슷하다. 벡터 검색으로 순위 매겨진 문서를 얻은 뒤, 다음 코드처럼 관련 지문을 추출한다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>passage retrieval — 리더 모델</span><span class="lang">python</span></div>
+    <pre><span class="c"># 리더를 위한 지문 추출</span>
+passages = [doc <span class="k">for</span> doc, score <span class="k">in</span> ranked_docs]
+
+<span class="c"># 리더 입력 준비</span>
+inputs = reader_tokenizer(
+    questions=query,
+    titles=[<span class="s">"Passage"</span>] * len(passages),
+    texts=passages,
+    return_tensors=<span class="s">"pt"</span>,
+    padding=<span class="k">True</span>,
+    truncation=<span class="k">True</span>
+)
+
+<span class="c"># 리더로 가장 관련 있는 지문 추출</span>
+<span class="k">with</span> torch.no_grad():
+    outputs = reader(**inputs)
+
+<span class="c"># 점수가 가장 높은 지문 선택</span>
+max_score_index = torch.argmax(outputs.relevance_logits)
+most_relevant_passage = passages[max_score_index]</pre>
+  </div>
+  <div class="io-pair">
+    <div class="io-card in"><span class="ik">Sample Input</span><p>What are the benefits of solar energy?</p></div>
+    <div class="io-card out"><span class="ik">Sample Output</span><p>Ranked Documents: Solar energy is a renewable source of power., Score: 80.8264 … It has low maintenance costs., Score: 57.9905<br><br>Most Relevant Passage: Solar panels help combat climate change and reduce carbon footprint.</p></div>
+  </div>
+  <div class="prose">
+    <p>이 예제가 보여주는 지문 검색 접근은 문서 수준 검색보다 세밀하다. 사용자 질의를 직접 다루는 특정 지문을 추출하는 데 집중한다. 리트리버에 <span class="term">리더(reader)</span> 모델을 결합함으로써, 가장 관련 있는 문서뿐 아니라 그 안에서 질의에 가장 잘 답하는 정확한 지문까지 식별해 적합성과 특정성을 끌어올린다.</p>
+    <p>흥미로운 점이 있다. 리트리버 점수가 다소 낮은 지문이라도 리더가 우선시할 수 있다는 것이다. 리더는 문맥적 뉘앙스를 고려해 단어와 스팬(span) 수준에서 관련성을 더 정밀하게 평가하기 때문이다. 리트리버는 통상 질의와 지문 임베딩의 내적으로 유사도 점수를 계산한다.</p>
+  </div>
+  <div class="formula">score(<i>q</i>, <i>p<sub>i</sub></i>) = <i>q</i> · <i>p<sub>i</sub></i> = &Sigma;<sub><i>j</i>=1…<i>d</i></sub> <i>q<sub>j</sub></i> <i>p<sub>ij</sub></i></div>
+  <p class="formula-note">여기서 <i>q</i>는 질의 임베딩, <i>p<sub>i</sub></i>는 <i>i</i>번째 지문의 임베딩, <i>d</i>는 임베딩의 차원 수다.</p>
+  <div class="prose">
+    <p>리더는 여기서 한 걸음 더 나아가 각 지문의 텍스트 내용을 분석한다. 주어진 지문이 답을 담고 있을 가능성에 기반해 관련성 점수, 곧 로짓(logit, 신뢰도 점수)을 부여한다. 이 점수는 질의와 지문 사이의 단어·스팬 수준 상호작용을 고려하는 리더 모델의 원시 출력(로짓)에서 계산되며, 수식으로는 다음과 같다.</p>
+  </div>
+  <div class="formula">Relevance(<i>p<sub>i</sub></i>) = softmax(logits(<i>p<sub>i</sub></i>))</div>
+  <p class="formula-note">logits(<i>p<sub>i</sub></i>)는 리더가 지문 <i>p<sub>i</sub></i>에 부여한 원시 점수이고, <a href="https://pytorch.org/docs/stable/generated/torch.nn.Softmax.html" target="_blank" rel="noopener" style="color:var(--rel-blue)">softmax</a>는 그 원시 점수를 확률로 변환해 가장 관련성 높은 지문을 부각한다.</p>
+  <div class="prose">
+    <p>두 단계를 결합함으로써, 시스템은 의미적으로 유사한(리트리버 단계) 동시에 질의의 의도와 문맥적으로 정렬된(리더 단계) 지문을 식별한다. 이 이중 단계 과정이야말로 정보 검색 파이프라인에서 고도로 표적화된 응답을 생성하는 지문 검색의 강점이다. 전체 예제는 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/blob/main/ch2/passage_retrieval.py" target="_blank" rel="noopener">ch2/passage_retrieval.py</a>에 있다.</p>
+  </div>
+
+  <h3>검색된 정보의 통합</h3>
+  <div class="prose">
+    <p>RAG 흐름의 마지막 단계로, 리트리버의 정보를 생성 모델과 결합해 맥락에 맞고 일관된 응답을 합성하는 방법을 보자. 앞의 예제들과 달리 이 접근은 <strong>여러 개의 검색 지문</strong>을 질의와 함께 명시적으로 통합한다. 생성 모델을 위한 단일 입력을 만들어냄으로써, 지문을 고르거나 순위 매기는 데 그치지 않고 통합되고 풍부해진 응답을 합성하도록 하는 것이다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>integrate_and_generate — 다중 지문 합성</span><span class="lang">python</span></div>
+    <pre><span class="k">def</span> <span class="f">integrate_and_generate</span>(query, retrieved_docs):
+    <span class="c"># 질의와 검색 문서들을 단일 입력으로 결합</span>
+    input_text = <span class="s">f"Answer this question based on the following</span>
+<span class="s">        context: {query} Context: {' '.join(retrieved_docs)}"</span>
+
+    <span class="c"># T5용 입력 토크나이즈</span>
+    inputs = t5_tokenizer(input_text, return_tensors=<span class="s">"pt"</span>,
+        padding=<span class="k">True</span>, truncation=<span class="k">True</span>, max_length=512)
+
+    <span class="c"># 응답 생성</span>
+    <span class="k">with</span> torch.no_grad():
+        outputs = t5_model.generate(**inputs, max_length=100)
+
+    <span class="c"># 디코딩 후 반환</span>
+    <span class="k">return</span> t5_tokenizer.decode(outputs[0], skip_special_tokens=<span class="k">True</span>)</pre>
+  </div>
+  <div class="prose">
+    <p>이 코드는 검색 문서들을 T5 모델과 통합해 합성 응답을 생성한다. <code>generate()</code> 함수가 결합 입력(질의 + 지문들)을 인코더에 통과시켜 문맥 임베딩 <em>h</em>를 만들고, 디코더가 그 임베딩을 이용해 각 토큰을 확률에 따라 순차적으로 생성한다.</p>
+  </div>
+  <div class="formula">P(<i>w<sub>t</sub></i> | <i>w</i><sub>1</sub>, …, <i>w</i><sub><i>t</i>−1</sub>) = softmax(<i>W</i> · <i>h<sub>t</sub></i>)</div>
+  <p class="formula-note">여기서 <i>w<sub>t</sub></i>는 위치 <i>t</i>의 토큰, <i>h<sub>t</sub></i>는 은닉 상태, <i>W</i>는 모델의 가중치 행렬이다. 빔 서치가 토큰 전체에 걸친 확률을 최대화해 가장 그럴듯한 시퀀스의 선택을 보장한다.</p>
+  <div class="prose">
+    <p>개별 지문을 고르거나 순위 매기던 앞의 예제들과 달리, 이 코드는 여러 검색 문서를 질의와 함께 단일 입력으로 명시적으로 결합한다. T5 모델이 결합된 문맥을 전체적으로(holistically) 처리해 여러 소스의 정보를 아우르는 일관된 응답을 만들 수 있게 되고, 여러 지문에 걸친 합성이나 요약을 요구하는 질의에 특히 효과적이다. 전체 코드는 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/blob/main/ch2/integrate_and_generate.py" target="_blank" rel="noopener">ch2/integrate_and_generate.py</a>를 참고하면 된다.</p>
+    <p>다양한 검색 기법과 그것의 생성 모델 통합을 탐구하면서, RAG 아키텍처가 외부 지식을 지렛대 삼아 정확하고 유익한 응답을 만드는 방식을 확인했다. 다음 절에서는 지금까지의 하드코딩된 문장 대신, 소스에서 입력 문서를 읽어 리트리버 흐름에 활용하는 전체적인(holistic) 흐름을 본다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 4 ================= -->
+<section class="section" id="sec4">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 4})-[:ASSEMBLES]-&gt;<span class="p">(:Pipeline)</span></p>
+    <h2>엔드투엔드 RAG 흐름의 구축</h2>
+  </div>
+  <div class="prose">
+    <p>앞 절들에서 우리는 RAG 흐름의 각 단계를 단순한 데이터로 하나씩 파고들었다. 이제 한 걸음 물러나, 단순할지언정 실세계 데이터셋으로 전체 흐름을 완성해 볼 때다. GitHub 이슈 데이터셋(<a href="https://huggingface.co/datasets/lewtun/github-issues" target="_blank" rel="noopener">huggingface.co/datasets/lewtun/github-issues</a>)을 사용한다. 이 데이터를 읽어 RAG 흐름에 활용하는 방법을 보는데, 이것이 이후 장들에서 완전한 엔드투엔드 RAG 흐름을 구현하는 토대가 된다. 이 예제에서는 GitHub 코멘트를 로딩해 "데이터를 오프라인으로 로딩하려면 어떻게 하는가" 같은 질문에 답할 수 있게 만든다. 데이터 로딩과 리트리버 설정은 다음 단계를 따른다.</p>
+  </div>
+  <ol class="hop-path">
+    <li><span class="hd"><b>데이터 준비.</b> Hugging Face의 datasets 라이브러리로 데이터셋을 로딩하고, 풀 리퀘스트를 걸러낸 뒤 코멘트가 있는 이슈만 남긴다: <code>load_dataset("lewtun/github-issues", split="train")</code></span></li>
+    <li><span class="hd"><b>관련 컬럼 선택.</b> 분석에 필요한 컬럼만 유지한다: <code>title</code>, <code>body</code>, <code>html_url</code>, <code>comments</code>. 나머지는 제거한다.</span></li>
+    <li><span class="hd"><b>pandas DataFrame으로 변환.</b> 더 쉬운 조작을 위해 데이터셋을 DataFrame으로 바꾼다: <code>issues_dataset.set_format("pandas")</code></span></li>
+    <li><span class="hd"><b>코멘트 전개와 재변환.</b> 코멘트를 개별 행으로 평탄화하고(<code>df.explode("comments")</code>), DataFrame을 다시 데이터셋으로 바꾸고, 각 코멘트의 길이를 계산해 15단어 이하의 짧은 코멘트를 걸러낸다. 이 단계로 데이터가 리트리버 흐름에 쓰기 알맞아진다.</span></li>
+    <li><span class="hd"><b>임베딩용 텍스트 연결.</b> 행마다 <code>title + body + comments</code>를 이어 붙여 그 행을 대표하는 문서 텍스트를 준비한다. 이 문서들이 리트리버 용도의 임베딩 저장소에 담긴다.</span></li>
+    <li><span class="hd"><b>모델과 토크나이저 로딩.</b> 문서를 임베딩으로 변환할 모델을 로딩한다: <code>sentence-transformers/all-MiniLM-L6-v2</code></span></li>
+    <li><span class="hd"><b>임베딩 함수 정의.</b> 위 모델로 임베딩을 생성하는 함수를 정의한다. 문서 하나씩, 모든 문서에 반복 호출할 수 있다.</span></li>
+    <li><span class="hd"><b>임베딩 계산.</b> 정의한 함수를 코멘트 데이터셋의 모든 문서에 호출한다. 생성된 임베딩은 같은 데이터셋의 <code>embeddings</code>라는 새 컬럼에 저장된다.</span></li>
+    <li><span class="hd"><b>의미 검색 수행.</b> 질문에 대한 리트리버 흐름을 실행한다. 질의 임베딩을 만들고 코사인 유사도로 가장 가까운 문서들을 찾아, 필요에 따라 응답을 다듬는 데 쓴다.</span></li>
+  </ol>
+  <div class="code-snip">
+    <div class="ch"><span>semantic search — 질의와 검색</span><span class="lang">python</span></div>
+    <pre><span class="c"># 질의 정의</span>
+question = <span class="s">"How can I load a dataset offline?"</span>
+
+<span class="c"># 질의 임베딩 계산</span>
+query_embedding = get_embeddings([question]).reshape(1, -1)
+
+<span class="c"># 가장 가까운 예시 찾기</span>
+embeddings = np.vstack(comments_dataset[<span class="s">"embeddings"</span>])
+similarities = cosine_similarity(
+    query_embedding, embeddings).flatten()
+
+<span class="c"># 결과 표시</span>
+top_indices = np.argsort(similarities)[::-1][:5]
+<span class="k">for</span> idx <span class="k">in</span> top_indices:
+    result = comments_dataset[int(idx)]
+    <span class="f">print</span>(<span class="s">f"COMMENT: {result['comments']}"</span>)
+    <span class="f">print</span>(<span class="s">f"SCORE: {similarities[idx]}"</span>)
+    <span class="f">print</span>(<span class="s">f"TITLE: {result['title']}"</span>)
+    <span class="f">print</span>(<span class="s">f"URL: {result['html_url']}"</span>)</pre>
+  </div>
+  <div class="io-pair">
+    <div class="io-card in"><span class="ik">Sample Input</span><p>How can I load a dataset offline?</p></div>
+    <div class="io-card out"><span class="ik">Sample Output</span><p>COMMENT: Yes currently you need an internet connection because the lib tries to check for the etag of the dataset script …<br>SCORE: 0.9054 · TITLE: Downloaded datasets are not usable offline · URL: github.com/huggingface/datasets/issues/761<br><br>COMMENT: Requiring online connection is a deal breaker in some cases …<br>SCORE: 0.9052 · TITLE: Discussion using datasets in offline mode · URL: …/issues/824</p></div>
+  </div>
+  <div class="prose">
+    <p>위 코드가 보여주는 것은 완결된 흐름이다. 리트리버의 기반이 될 데이터 저장소에 데이터를 로딩하는 일부터, LLM이 답을 생성할 때 더 많은 문맥을 제공하는 데 쓸 문서를 검색하는 일까지. 이 실습 예제는 강력한 검색 기법으로 언어 생성을 강화하는 엔드투엔드 RAG 아키텍처의 실제 응용을 보여주었다. 위 코드는 <a href="https://huggingface.co/learn/nlp-course/chapter5/6?fw=tf" target="_blank" rel="noopener">Hugging Face NLP 과정</a>에서 각색한 것이며, 실행 방법의 상세한 설명이 딸린 전체 Python 파일은 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/blob/main/ch2/full_rag_pipeline.py" target="_blank" rel="noopener">ch2/full_rag_pipeline.py</a>에 있다.</p>
+  </div>
+</section>
+
+<!-- ================= 요약 ================= -->
+<section class="section" id="summary">
+  <div class="summary-panel">
+    <h2>요약</h2>
+    <p>이 장에서 우리는 RAG 모델의 세계로 깊이 들어갔다. RAG의 핵심 원리가 무엇이고 전통적 생성형 AI 모델과 어떻게 다른지 이해하는 데서 출발했다. 이 기초 지식은 RAG가 가져다주는 강화된 능력을 제대로 음미하기 위한 무대가 된다.</p>
+    <p>이어서 상세한 코드 예제로 RAG 모델의 아키텍처를 해부했다. 인코더, 리트리버, 디코더를 하나씩 검토하면서 이 모델들의 내부 작동과, 검색된 정보를 통합해 더 맥락에 맞고 일관된 출력을 만드는 방식에 대한 통찰을 얻었다. RAG가 정보 검색의 힘을 활용하는 방식도 탐구했다. 이 기법들은 RAG가 외부 지식 소스를 효과적으로 활용해 생성 텍스트의 품질을 끌어올리게 하며, 높은 정확성과 맥락 인식이 요구되는 애플리케이션에 특히 유용하다. Transformers와 Hugging Face 같은 대중적 라이브러리로 단순한 RAG 모델을 만드는 법도 배웠다.</p>
+    <p>다음 장에서는 이 토대 위에 쌓아 올린다. 그래프 데이터 모델링을 배우고, Neo4j로 지식그래프를 만드는 법을 익힌다.</p>
+    <span class="next-chip">NEXT → Chapter 3 · Building a Foundational Understanding of Knowledge Graph</span>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p><b>원전</b> — Ravindranatha Anthapu &amp; Siddhant Agarwal, <i>Building Neo4j-Powered Applications with LLMs</i>, Packt Publishing, 2025. Chapter 2: Demystifying RAG (pp. 11–35)</p>
+  <p>이 페이지는 원서 2장의 전체 내용을 한국어로 재구성한 학습 자료다. 그림 2.1–2.3은 원서 도판을 바탕으로 다시 그렸고, 코드는 원서의 핵심 조각을 그대로 옮겼다. 전체 코드는 책의 GitHub 저장소(PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs)에서 확인할 수 있다.</p>
+</footer>
+
+</body>
+</html>

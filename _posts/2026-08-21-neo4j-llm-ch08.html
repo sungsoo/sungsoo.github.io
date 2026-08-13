@@ -1,0 +1,841 @@
+---
+layout: null
+title: "Constructing a Recommendation Graph with H&M Personalization Dataset" 
+date: 2026-08-21
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence, graph mining]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8장 — H&amp;M 개인화 데이터셋으로 추천 그래프를 짓다 | Building Neo4j-Powered Applications with LLMs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#122430;
+  --ink-soft:#3d5260;
+  --mist:#eef1ef;
+  --paper:#f9faf9;
+  --rel-blue:#1268b3;
+  --node-green:#1f8f66;
+  --node-amber:#d99022;
+  --hm-rose:#c2495f;
+  --hairline:#d4dcd8;
+  --panel:#ffffff;
+  --code-bg:#162833;
+  --max-prose:46rem;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Noto Serif KR',serif;background:var(--mist);color:var(--ink);
+  line-height:1.85;font-size:17px;word-break:keep-all;-webkit-font-smoothing:antialiased;
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ---------- HERO ---------- */
+.hero{
+  background:
+    radial-gradient(1100px 520px at 80% -8%, rgba(194,73,95,.28), transparent 60%),
+    radial-gradient(800px 480px at 4% 120%, rgba(18,104,179,.26), transparent 60%),
+    var(--ink);
+  color:#e9f0ee;position:relative;overflow:hidden;
+}
+.hero-inner{max-width:72rem;margin:0 auto;padding:5.5rem 2rem 4.5rem;position:relative;z-index:2}
+.series-line{
+  font-family:'IBM Plex Mono',monospace;font-size:.78rem;letter-spacing:.14em;
+  color:#8fb8d8;text-transform:uppercase;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;
+}
+.series-line::before{content:"";display:inline-block;width:2.2rem;height:1px;background:#8fb8d8}
+.cypher-chip{
+  font-family:'IBM Plex Mono',monospace;display:inline-block;margin-top:2.2rem;
+  font-size:.92rem;color:#9fd8bd;background:rgba(31,143,102,.14);
+  border:1px solid rgba(31,143,102,.45);border-radius:999px;padding:.35rem 1.1rem;
+}
+.cypher-chip .k{color:#7fb4e0}
+h1.title{
+  font-family:'Hahmlet',serif;font-weight:700;
+  font-size:clamp(1.85rem,4.3vw,3.1rem);line-height:1.35;margin-top:1.4rem;letter-spacing:-.01em;
+}
+h1.title em{font-style:normal;color:#ef9aab}
+.hero-lede{margin-top:1.6rem;max-width:38rem;font-size:1.02rem;color:#b9c9c9;line-height:1.95}
+.hero-meta{
+  margin-top:2.6rem;font-family:'IBM Plex Mono',monospace;font-size:.75rem;
+  color:#7d94a0;letter-spacing:.06em;display:flex;gap:1.8rem;flex-wrap:wrap;
+}
+/* 히어로: 트랜잭션 열차 모티프 */
+.train{position:absolute;right:-.5rem;top:50%;transform:translateY(-50%);width:min(46vw,560px);z-index:1}
+.train .tn{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:#eaf4ef;text-anchor:middle;font-weight:500}
+.train .tl{font-family:'IBM Plex Mono',monospace;font-size:8px;fill:#8fb8d8;letter-spacing:.05em}
+.train .te{stroke:#4a6a80;stroke-width:1.4;fill:none;marker-end:url(#tarr)}
+.train .tf{stroke:#ef9aab;stroke-width:1.6;fill:none;marker-end:url(#tarr-r);stroke-dasharray:6 5;animation:tdash 3.4s linear infinite}
+@keyframes tdash{to{stroke-dashoffset:-44}}
+@media(max-width:960px){
+  .train{position:static;transform:none;width:100%;max-width:460px;margin:3rem auto 0;display:block}
+  .hero-inner{padding-bottom:2.5rem}
+}
+
+/* ---------- 목차 ---------- */
+.toc-strip{background:var(--paper);border-bottom:1px solid var(--hairline)}
+.toc-inner{max-width:72rem;margin:0 auto;padding:1.4rem 2rem;display:flex;gap:2rem;flex-wrap:wrap;align-items:center}
+.toc-label{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.16em;color:var(--ink-soft);text-transform:uppercase}
+.toc-strip a{
+  font-family:'Hahmlet',serif;font-size:.92rem;font-weight:500;color:var(--ink);
+  text-decoration:none;border-bottom:1.5px solid transparent;padding-bottom:2px;transition:border-color .2s;
+}
+.toc-strip a:hover,.toc-strip a:focus-visible{border-color:var(--node-green)}
+.toc-strip a .n{color:var(--rel-blue);font-family:'IBM Plex Mono',monospace;font-size:.8rem;margin-right:.4rem}
+
+/* ---------- 본문 공통 ---------- */
+main{max-width:72rem;margin:0 auto;padding:0 2rem}
+.section{padding:4.2rem 0 1rem}
+.section-head{max-width:var(--max-prose);margin:0 auto 2rem}
+.node-marker{
+  font-family:'IBM Plex Mono',monospace;font-size:.85rem;color:var(--node-green);
+  display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;
+}
+.node-marker::before{
+  content:"";width:11px;height:11px;border-radius:50%;background:var(--node-green);
+  box-shadow:0 0 0 4px rgba(31,143,102,.15);flex:none;
+}
+.node-marker .p{color:var(--rel-blue)}
+h2{font-family:'Hahmlet',serif;font-weight:600;font-size:clamp(1.5rem,3vw,2.05rem);line-height:1.4;margin-top:.9rem;letter-spacing:-.01em}
+h3{
+  font-family:'Hahmlet',serif;font-weight:600;font-size:1.22rem;
+  margin:2.8rem auto 1rem;max-width:var(--max-prose);color:var(--ink);
+  display:flex;align-items:baseline;gap:.6rem;
+}
+h3::before{content:"—";color:var(--node-amber);font-weight:400}
+.prose{max-width:var(--max-prose);margin:0 auto}
+.prose p{margin-bottom:1.5rem}
+.prose p:last-child{margin-bottom:0}
+.prose strong{font-weight:600}
+.prose .term{font-weight:600;background:linear-gradient(transparent 68%, rgba(31,143,102,.22) 68%)}
+.prose a{color:var(--rel-blue);text-decoration:none;border-bottom:1px solid rgba(18,104,179,.4);overflow-wrap:anywhere}
+.prose a:hover{border-bottom-color:var(--rel-blue)}
+.prose code,.ld code,.hd code{
+  font-family:'IBM Plex Mono',monospace;font-size:.85em;
+  background:#e3e9e6;border-radius:4px;padding:.12em .4em;
+  overflow-wrap:anywhere;word-break:break-all;
+}
+.hop-path .hd,.layer-list .ld,.csv-row .cd{min-width:0;overflow-wrap:anywhere}
+.lead-q{
+  font-family:'Hahmlet',serif;font-size:1.12rem;font-weight:500;color:var(--ink);
+  border-left:3px solid var(--node-amber);padding:.35rem 0 .35rem 1.2rem;margin:2.2rem 0;
+}
+
+/* ---------- 그림 패널 ---------- */
+.figure-panel{
+  background:var(--panel);border:1px solid var(--hairline);border-radius:14px;
+  padding:2.4rem 2rem 1.6rem;margin:2.6rem auto;max-width:56rem;
+  box-shadow:0 2px 14px rgba(18,36,48,.05);
+}
+.figure-panel svg{width:100%;height:auto;display:block}
+.fig-caption{
+  font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--ink-soft);
+  text-align:center;margin-top:1.4rem;letter-spacing:.03em;line-height:1.7;
+}
+.fig-caption b{color:var(--rel-blue);font-weight:600}
+.svg-nw{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:#fff;text-anchor:middle;font-weight:500}
+.svg-rel{font-family:'IBM Plex Mono',monospace;font-size:8.5px;fill:#3d5260;font-weight:600}
+
+/* ---------- 코드 블록 ---------- */
+.code-snip{max-width:56rem;margin:1.8rem auto;background:var(--code-bg);border-radius:12px;overflow:hidden}
+.code-snip .ch{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:.6rem 1.3rem;background:rgba(255,255,255,.05);
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:#8fb8d8;letter-spacing:.08em;
+}
+.code-snip .ch .lang{color:#7ecfa8}
+.code-snip pre{
+  padding:1.2rem 1.4rem;overflow-x:auto;
+  font-family:'IBM Plex Mono',monospace;font-size:.82rem;line-height:1.75;color:#d6e4dc;
+}
+.code-snip pre .c{color:#6d8a96;font-style:italic}
+.code-snip pre .s{color:#a8d5b8}
+.code-snip pre .k{color:#8ec7ef}
+.code-snip pre .f{color:#e8c07a}
+
+/* ---------- 리스트 ---------- */
+.layer-list{max-width:var(--max-prose);margin:1.8rem auto;list-style:none}
+.layer-list li{display:grid;grid-template-columns:11rem 1fr;gap:1.2rem;padding:1rem 0;border-bottom:1px solid var(--hairline)}
+.layer-list li:first-child{border-top:1px solid var(--hairline)}
+.layer-list .ln{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:600;color:var(--rel-blue);padding-top:.15rem;line-height:1.6}
+.layer-list .ld{font-size:.96rem;color:var(--ink-soft);line-height:1.8}
+.layer-list .ld a{color:var(--rel-blue);text-decoration:none;border-bottom:1px solid rgba(18,104,179,.4);overflow-wrap:anywhere}
+@media(max-width:600px){.layer-list li{grid-template-columns:1fr;gap:.3rem}}
+
+.hop-path{max-width:56rem;margin:2rem auto;counter-reset:hop;list-style:none}
+.hop-path li{counter-increment:hop;display:grid;grid-template-columns:3rem 1fr;gap:1.1rem;align-items:start;padding:1.05rem 0;position:relative}
+.hop-path li::before{
+  content:counter(hop);font-family:'IBM Plex Mono',monospace;font-weight:600;
+  width:2.4rem;height:2.4rem;border-radius:50%;background:var(--panel);
+  border:2px solid var(--node-green);color:var(--node-green);
+  display:flex;align-items:center;justify-content:center;font-size:.95rem;z-index:1;
+}
+.hop-path li:not(:last-child)::after{content:"";position:absolute;left:1.2rem;top:3.4rem;bottom:-.6rem;width:2px;background:var(--hairline)}
+.hop-path .hd{font-size:.98rem;line-height:1.8;padding-top:.35rem}
+.hop-path .hd b{font-weight:600}
+
+/* ---------- CSV 인벤토리 ---------- */
+.csv-inv{max-width:56rem;margin:2.4rem auto;display:flex;flex-direction:column;gap:.9rem}
+.csv-row{
+  background:var(--panel);border:1px solid var(--hairline);border-radius:12px;
+  padding:1.2rem 1.5rem;display:grid;grid-template-columns:13rem 6.4rem 1fr;
+  gap:1.2rem;align-items:start;
+}
+.csv-row .cf{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:.88rem;color:var(--ink);padding-top:.1rem;overflow-wrap:anywhere;min-width:0}
+.csv-badge{
+  font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.1em;font-weight:600;
+  text-transform:uppercase;border-radius:999px;padding:.28rem .75rem;text-align:center;
+  align-self:start;margin-top:.1rem;
+}
+.csv-badge.use{background:#e3f2ea;color:var(--node-green);border:1px solid #bfe0cf}
+.csv-badge.skip{background:#f2f2f0;color:#8a9299;border:1px solid #dcdfe0}
+.csv-row .cd{font-size:.9rem;line-height:1.75;color:var(--ink-soft)}
+@media(max-width:760px){.csv-row{grid-template-columns:1fr;gap:.5rem}}
+
+/* ---------- 계절 밴드 ---------- */
+.season-band{max-width:56rem;margin:2.2rem auto;display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.season-cell{background:var(--panel);border:1px solid var(--hairline);border-radius:12px;padding:1.2rem 1.3rem;border-top:4px solid var(--rel-blue)}
+.season-cell:nth-child(1){border-top-color:#7fa3d8}
+.season-cell:nth-child(2){border-top-color:var(--node-green)}
+.season-cell:nth-child(3){border-top-color:var(--node-amber)}
+.season-cell:nth-child(4){border-top-color:var(--hm-rose)}
+.season-cell .sn{font-family:'IBM Plex Mono',monospace;font-size:.82rem;font-weight:600;color:var(--ink);display:block;margin-bottom:.4rem}
+.season-cell .sm{font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--ink-soft);line-height:1.7;display:block}
+.season-cell .sy{font-size:.78rem;color:var(--ink-soft);line-height:1.65;display:block;margin-top:.5rem}
+@media(max-width:760px){.season-band{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- 결과 출력 카드 ---------- */
+.result-out{
+  max-width:56rem;margin:2.4rem auto;background:var(--panel);
+  border:1px solid var(--hairline);border-radius:14px;overflow:hidden;
+  box-shadow:0 2px 14px rgba(18,36,48,.05);
+}
+.ro-bar{
+  background:#f0f4f1;border-bottom:1px solid var(--hairline);
+  padding:.65rem 1.3rem;font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--ink-soft);
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;
+}
+.ro-bar b{color:var(--node-green)}
+.ro-row{display:grid;grid-template-columns:3rem 1fr;border-bottom:1px solid #eef1ef}
+.ro-row:last-child{border-bottom:none}
+.ro-idx{
+  font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--ink-soft);
+  padding:1rem 0 1rem 1.3rem;
+}
+.ro-txt{font-size:.9rem;line-height:1.75;color:var(--ink-soft);padding:1rem 1.4rem 1rem 0;min-width:0;overflow-wrap:anywhere}
+
+/* ---------- 콜아웃 ---------- */
+.note-box{
+  max-width:var(--max-prose);margin:2rem auto;
+  background:#eef4f8;border:1px solid #cfdfeb;border-radius:14px;padding:1.5rem 1.7rem;
+}
+.note-box .nk{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.14em;color:var(--rel-blue);text-transform:uppercase;display:block;margin-bottom:.6rem;font-weight:600}
+.note-box p{font-size:.92rem;line-height:1.85;color:#33495a}
+.note-box a{color:var(--rel-blue);border-bottom:1px solid rgba(18,104,179,.4);text-decoration:none;overflow-wrap:anywhere}
+.note-box code{font-family:'IBM Plex Mono',monospace;font-size:.85em;background:rgba(18,104,179,.1);border-radius:4px;padding:.12em .4em}
+.cite-box{
+  max-width:var(--max-prose);margin:1.6rem auto;
+  border-left:3px solid var(--hairline);padding:.2rem 0 .2rem 1.3rem;
+  font-size:.85rem;line-height:1.8;color:var(--ink-soft);
+}
+
+/* ---------- 요약 ---------- */
+.summary-panel{
+  background:var(--ink);color:#dce8e3;border-radius:18px;max-width:56rem;
+  margin:3rem auto 0;padding:3rem 2.6rem;position:relative;overflow:hidden;
+}
+.summary-panel::after{content:"";position:absolute;right:-70px;top:-70px;width:240px;height:240px;border-radius:50%;border:1.5px solid rgba(239,154,171,.32)}
+.summary-panel::before{content:"";position:absolute;right:20px;bottom:-90px;width:200px;height:200px;border-radius:50%;border:1.5px solid rgba(126,207,168,.25)}
+.summary-panel h2{color:#fff;margin-bottom:1.3rem;font-size:1.6rem}
+.summary-panel p{max-width:42rem;line-height:1.95;position:relative;z-index:1}
+.summary-panel p+p{margin-top:1.1rem}
+.next-chip{
+  display:inline-block;margin-top:2rem;font-family:'IBM Plex Mono',monospace;
+  font-size:.82rem;color:#ef9aab;border:1px solid rgba(239,154,171,.5);
+  border-radius:999px;padding:.45rem 1.2rem;overflow-wrap:anywhere;max-width:100%;
+}
+
+footer{
+  max-width:72rem;margin:4rem auto 0;padding:3rem 2rem 3.5rem;
+  font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:var(--ink-soft);
+  letter-spacing:.04em;line-height:2;border-top:1px solid var(--hairline);
+}
+footer b{color:var(--ink)}
+
+@media(max-width:600px){
+  body{font-size:16px}
+  .hero-inner{padding:3.6rem 1.4rem 2rem}
+  main{padding:0 1.4rem}
+  .toc-inner{padding:1.2rem 1.4rem;gap:1.1rem}
+  .figure-panel{padding:1.4rem 1rem 1.2rem}
+  .summary-panel{padding:2.2rem 1.6rem}
+  .code-snip pre{font-size:.74rem;padding:1rem 1.1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="hero-inner">
+    <p class="series-line">Building Neo4j-Powered Applications with LLMs · Part III — Neo4j·Spring AI·LangChain4j로 짓는 지능형 추천 시스템</p>
+    <span class="cypher-chip"><span class="k">MATCH</span> (:Chapter {n: 8})-[:CHAINS]-&gt;(:TransactionTrain)</span>
+    <h1 class="title"><em>H&amp;M 개인화 데이터셋</em>으로<br>추천 그래프를 짓다</h1>
+    <p class="hero-lede">거래는 사건의 연쇄다. 시간을 차원으로 삼아 거래를 사슬로 엮으면, 데이터 검색은 빠르고 질의는 문장처럼 읽힌다. 이 장은 H&amp;M의 실제 대규모 데이터를 '트랜잭션 열차'로 모델링하고, 계절이라는 우리의 이해까지 그래프에 새긴다.</p>
+    <div class="hero-meta">
+      <span>Ravindranatha Anthapu · Siddhant Agarwal</span>
+      <span>Packt Publishing, 2025</span>
+      <span>Chapter 8 · pp. 147–160</span>
+    </div>
+  </div>
+  <svg class="train" viewBox="0 0 560 380" aria-hidden="true">
+    <defs>
+      <marker id="tarr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a6a80"/></marker>
+      <marker id="tarr-r" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#ef9aab"/></marker>
+    </defs>
+    <!-- Customer -->
+    <circle cx="90" cy="190" r="42" fill="#c2495f"/>
+    <text class="tn" x="90" y="187">Customer</text>
+    <text class="tn" x="90" y="201" style="font-size:7.5px;fill:#f5cdd5">CLUB_ACTIVE</text>
+    <!-- transaction chain -->
+    <circle cx="250" cy="90" r="30" fill="#1268b3"/><text class="tn" x="250" y="95">Txn</text>
+    <circle cx="352" cy="140" r="30" fill="#1268b3"/><text class="tn" x="352" y="145">Txn</text>
+    <circle cx="430" cy="220" r="30" fill="#1268b3"/><text class="tn" x="430" y="225">Txn</text>
+    <circle cx="360" cy="315" r="34" fill="#1f8f66"/><text class="tn" x="360" y="320">Txn</text>
+    <line class="te" x1="277" y1="103" x2="325" y2="127" stroke="#7ecfa8" stroke-width="1.6"/>
+    <text class="tl" x="290" y="105" transform="rotate(26 290 105)">NEXT</text>
+    <line class="te" x1="373" y1="162" x2="409" y2="198" stroke="#7ecfa8" stroke-width="1.6"/>
+    <text class="tl" x="380" y="172" transform="rotate(45 380 172)">NEXT</text>
+    <line class="te" x1="412" y1="245" x2="384" y2="288" stroke="#7ecfa8" stroke-width="1.6"/>
+    <text class="tl" x="376" y="266" transform="rotate(-58 376 266)">NEXT</text>
+    <path class="tf" d="M120 162 C 160 120, 190 100, 216 92"/>
+    <text class="tl" x="146" y="118" transform="rotate(-28 146 118)" style="fill:#ef9aab">START_TRANSACTION</text>
+    <path class="tf" d="M118 217 C 180 280, 250 306, 322 314"/>
+    <text class="tl" x="200" y="292" transform="rotate(17 200 292)" style="fill:#ef9aab">LATEST</text>
+    <!-- seasonal fan -->
+    <path class="te" d="M128 172 C 180 148, 205 122, 232 104" stroke-dasharray="3 3" opacity=".5"/>
+    <text class="tl" x="168" y="146" transform="rotate(-26 168 146)" opacity=".75">SUMMER_2019</text>
+    <!-- articles -->
+    <circle cx="250" cy="28" r="14" fill="#d99022" opacity=".9"/>
+    <line class="te" x1="250" y1="60" x2="250" y2="44"/>
+    <circle cx="480" cy="300" r="14" fill="#d99022" opacity=".9"/>
+    <line class="te" x1="396" y1="308" x2="464" y2="303"/>
+    <text class="tl" x="420" y="296">HAS_ARTICLE</text>
+  </svg>
+</header>
+
+<!-- ================= TOC ================= -->
+<nav class="toc-strip" aria-label="이 장의 주제">
+  <div class="toc-inner">
+    <span class="toc-label">이 장의 주제</span>
+    <a href="#sec1"><span class="n">01</span>H&amp;M 데이터셋으로 추천 그래프 모델링</a>
+    <a href="#sec2"><span class="n">02</span>추천을 위한 최적화 — 그래프 모델링 모범 사례</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ================= 도입 ================= -->
+<section class="section" id="intro">
+  <div class="prose">
+    <p>Neo4j가 지식그래프 구축에 훌륭하다 해도, 데이터를 어떻게 모델링할지는 신중히 들여다보아야 한다. 좋은 데이터 지속 모델은 데이터 검색을 최적으로 만들고, 큰 부하를 더 잘 감당하게 해 준다. 이 장에서 우리는 한 걸음 물러서서 지식그래프를 이루는 것이 무엇인지, 그리고 Neo4j의 데이터 지속 접근으로 데이터 모델링을 다르게 바라보는 일이 더 강력한 지식그래프의 구축을 어떻게 돕는지 살핀다. 3장에서 정의한 접근들을 다시 찾아볼 필요가 있을지도 모른다. 그 접근들이 <span class="term">Personalized Fashion Recommendations(H&amp;M 개인화)</span> 데이터로 지식그래프를 짓는 힘이 되어 줄 것이다.</p>
+  </div>
+
+  <h3>기술 요건</h3>
+  <div class="prose">
+    <p>SQL과 Cypher에 익숙해야 한다. 데이터 모델링의 다양한 측면을 이해하는 데 SQLite와 Neo4j를 쓴다. 이 장에서 쓰는 도구는 다음과 같다.</p>
+  </div>
+  <ul class="layer-list">
+    <li><span class="ln">Neo4j Desktop<br>또는 Neo4j Aura</span><span class="ld"><a href="https://neo4j.com/docs/desktop-manual/current/" target="_blank" rel="noopener">Neo4j Desktop 매뉴얼</a> 또는 <a href="https://neo4j.com/docs/aura/" target="_blank" rel="noopener">Aura 문서</a>를 참고한다.</span></li>
+    <li><span class="ln">H&amp;M 데이터셋</span><span class="ld">추천 시스템을 만드는 데 쓰는 데이터셋으로, <a href="https://www.kaggle.com/c/h-and-m-personalized-fashion-recommendations/overview" target="_blank" rel="noopener">Kaggle</a>에서 구할 수 있다.</span></li>
+  </ul>
+  <div class="cite-box">Carlos García Ling, ElizabethHMGroup, FridaRim, inversion, Jaime Ferrando, Maggie, neuraloverflow, and xlsrln. H&amp;M Personalized Fashion Recommendations. 2022. Kaggle.</div>
+  <div class="prose">
+    <p>3장에서 배웠듯, 좋은 그래프 데이터 모델은 RAG 흐름의 검색 부분을 더 효과적으로 만든다. 관련 데이터를 가져오는 일이 더 빠르고 쉬워지는 것이다. 그래프 데이터 모델링을 빠르게 복기하고 싶다면 3장을 다시 펼쳐도 좋다. 이 장에서 우리는 <strong>시간을 차원으로 삼아</strong> 데이터를 모델링한다. 시간을 차원으로 하는 거래의 사슬은 데이터 검색을 매우 효율적이고 성능 좋게 만들어 준다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 1 ================= -->
+<section class="section" id="sec1">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 1})-[:MODELS]-&gt;<span class="p">(:HnMGraph)</span></p>
+    <h2>H&amp;M 개인화 데이터셋으로 추천 그래프를 모델링하다</h2>
+  </div>
+  <div class="prose">
+    <p>이 절에서 우리는 실생활의 대규모 H&amp;M 개인화 데이터셋으로 그래프 데이터 모델을 만든다. 이 모델이 다가올 장들에서 만들 추천 엔진에 동력을 공급하게 된다.</p>
+    <p>2022년 H&amp;M은 추천 엔진 구축 경진대회의 일환으로, 고객 거래 데이터를 고객·상품 등의 메타데이터와 함께 공개했다. 이 데이터셋에는 과거 거래 데이터와 고객·상품 메타데이터가 담겨 있다. 메타데이터는 의류 종류와 고객 나이 같은 단순한 데이터부터 상품 설명의 텍스트 데이터, 의류 이미지의 이미지 데이터까지 아우른다. 데이터셋의 특성을 논하며, 한 걸음씩 데이터를 지식그래프에 적재해 나간다. 데이터셋에 담긴 데이터는 이렇다.</p>
+  </div>
+  <div class="csv-inv">
+    <div class="csv-row">
+      <span class="cf">images/</span><span class="csv-badge skip">생략</span>
+      <span class="cd">주어진 <code>article_id</code>의 이미지. 데이터셋의 모든 품목에 이미지가 딸려 있는 것은 아니다. 그래프에 이미지를 저장하는 것은 비효율적일 뿐 아니라, 우리가 짓는 그래프 흐름에 필요하지도 않으므로 쓰지 않는다.</span>
+    </div>
+    <div class="csv-row">
+      <span class="cf">articles.csv</span><span class="csv-badge use">사용</span>
+      <span class="cd">구매 가능한 각 품목(article)의 메타데이터. 각 행은 하나의 고유한 품목을 나타내며, 상품군(product family), 색상, 스타일, 품목이 속한 섹션과 부서(department) 같은 메타데이터를 담는다.</span>
+    </div>
+    <div class="csv-row">
+      <span class="cf">customers.csv</span><span class="csv-badge use">사용</span>
+      <span class="cd">데이터셋 각 고객의 메타데이터 — 고객 ID, 나이, 패션 뉴스 수신 빈도, 활성 플래그, H&amp;M 클럽 회원 상태, 우편번호.</span>
+    </div>
+    <div class="csv-row">
+      <span class="cf">transactions_train.csv</span><span class="csv-badge use">사용</span>
+      <span class="cd">고객이 수행한 거래. 한 고객이 같은 품목을 여러 번 샀다면 여러 행으로 — 구매 품목당 한 행씩 — 담길 수 있으며, 거래 날짜, 품목 ID, 고객 ID, 가격, 판매 채널이 들어 있다.</span>
+    </div>
+  </div>
+  <div class="prose">
+    <p>H&amp;M 개인화 데이터셋의 추천용 지식그래프를 지을 때 우리 손에는 고객들이 수행한 거래의 목록이 들려 있고, 이것을 <strong>시간을 차원으로 하는 거래의 사슬</strong>로 표현하는 것이 우리에게 아주 잘 통할 수 있다. 데이터에 대한 우리의 이해를 그래프 데이터 모델에 더하면 추천은 더 값진 것이 된다. 이를테면 거래는 사건의 시퀀스다. 그러니 시퀀스로 모델링하는 것이 더 이치에 맞다. 전통적 데이터베이스와 달리 Neo4j는 이 거래들을 관계로 순차 연결된 그래프로 저장할 수 있게 해 준다.</p>
+    <p class="lead-q">데이터에 대한 우리의 지식을 그래프에 지속시킨다 — 그렇게 지식그래프가 만들어진다.</p>
+  </div>
+
+  <h3>추천 그래프 만들기</h3>
+  <div class="prose">
+    <p>추천 모델 그래프를 지으려면 데이터셋 각 파일 안의 데이터와 그것이 그래프에 기여하는 방식을 들여다보아야 한다. 그래프 구축에는 앞서 3장에서 논한 과정을 적용한다. 데이터를 적재하기 전에 Neo4j Desktop에서 두 가지를 해 둔다. 첫째, 로컬 데이터베이스를 만든다(<a href="https://neo4j.com/docs/desktop-manual/current/operations/create-dbms/" target="_blank" rel="noopener">생성 안내</a>). 둘째, H&amp;M 추천 데이터셋의 CSV 파일들을 이 데이터베이스의 <code>import</code> 디렉터리에 복사한다(방법이 궁금하면 <a href="https://community.neo4j.com/t/where-is-neo4j-home/6488/5" target="_blank" rel="noopener">커뮤니티 글</a> 참고). 이제 데이터를 그래프 데이터베이스에 적재하자.</p>
+  </div>
+
+  <h3>고객 데이터의 적재</h3>
+  <div class="prose">
+    <p>고객 데이터에는 고객 ID, 나이, 패션 뉴스 수신 빈도, 활성 플래그, H&amp;M 클럽 회원 상태, 우편번호가 담겨 있다. 고객 ID는 고객의 고유 ID다. 고객을 나타내는 노드가 고유하도록 <code>UNIQUE</code> 제약이 필요하다. 우편번호는 노드로 만든다. 우편번호로 고객을 쉽게 분리하고 싶어질 수 있기 때문이다. 데이터를 적재하기 전에, 만들어 둔 Neo4j 데이터베이스에 접속해 이 고유 제약들을 생성한다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>constraints — 고객·우편번호</span><span class="lang">cypher</span></div>
+    <pre><span class="k">CREATE CONSTRAINT</span> customer_id_idx <span class="k">FOR</span> (n:Customer) <span class="k">REQUIRE</span> n.id <span class="k">IS UNIQUE</span>;
+<span class="k">CREATE CONSTRAINT</span> postal_code_idx <span class="k">FOR</span> (n:PostalCode) <span class="k">REQUIRE</span> n.code <span class="k">IS UNIQUE</span>;</pre>
+  </div>
+  <div class="note-box">
+    <span class="nk">Note</span>
+    <p><code>LOAD CSV</code> 질의를 Neo4j Browser에서 실행하려면 앞에 <code>auto</code>를 붙여야 한다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>load — customers.csv (1,000행 배치)</span><span class="lang">cypher</span></div>
+    <pre><span class="k">LOAD CSV WITH HEADERS FROM</span> <span class="s">"file:///customers.csv"</span> <span class="k">as</span> row
+<span class="k">WITH</span> row
+<span class="k">CALL</span> {
+    <span class="k">WITH</span> row
+    <span class="k">MERGE</span> (c:Customer {id:row.customer_id})
+    <span class="k">SET</span> c.age = row.age
+    <span class="k">FOREACH</span>( ignoreME <span class="k">in CASE WHEN</span> row.fashion_news_frequency = <span class="s">'Regularly'</span>
+        <span class="k">THEN</span> [1] <span class="k">ELSE</span> [] <span class="k">END</span> |
+        <span class="k">SET</span> c:FN_REGULAR
+    )
+    <span class="k">FOREACH</span>( ignoreME <span class="k">in CASE WHEN</span> row.club_member_status = <span class="s">'ACTIVE'</span>
+        <span class="k">THEN</span> [1] <span class="k">ELSE</span> [] <span class="k">END</span> |
+        <span class="k">SET</span> c:CLUB_ACTIVE
+    )
+    <span class="k">FOREACH</span>( ignoreME <span class="k">in CASE WHEN</span> row.club_member_status = <span class="s">'PRE-CREATE'</span>
+        <span class="k">THEN</span> [1] <span class="k">ELSE</span> [] <span class="k">END</span> |
+        <span class="k">SET</span> c:CLUB_PRE_CREATE
+    )
+    <span class="k">FOREACH</span>( ignoreME <span class="k">in CASE WHEN</span> row.Active &lt;&gt; <span class="s">'ACTIVE'</span>
+        <span class="k">THEN</span> [1] <span class="k">ELSE</span> [] <span class="k">END</span> |
+        <span class="k">SET</span> c:INACTIVE
+    )
+    <span class="k">MERGE</span>(p:PostalCode {code:row.postal_code})
+    <span class="k">MERGE</span>(c)-[:LIVES_IN]-&gt;(p)
+} <span class="k">IN TRANSACTIONS OF</span> 1000 <span class="k">ROWS</span></pre>
+  </div>
+  <div class="prose">
+    <p>이 스크립트는 1,000행을 하나의 커밋 배치로 삼아 고객 데이터를 적재한다. 눈여겨볼 대목이 둘 있다. Customer 노드에는 고유 ID인 <code>customer_id</code> 말고는 <code>age</code>라는 프로퍼티 하나만 있다는 것, 그리고 고객 데이터의 나머지 속성들은 Customer 노드의 <strong>레이블</strong>로 매핑했다는 것이다.</p>
+    <p>이 접근은 앞서 논한 소비 기반(consumption-based) 데이터 모델링 접근을 따른다. 패션 뉴스를 정기 구독하는 고객들이 어떻게 행동하는지 이해하고 싶다고 하자. 레이블은 이 정보를 가져오는 쉬운 길을 열어 준다. Neo4j는 레이블 기반 접근의 검색을 최적화한다. 이 고객 행동(패션 뉴스 구독)을 프로퍼티로 만들고 인덱스를 세워 가져올 수도 있겠지만, 그러려면 더 많은 저장 공간이 들고 인덱스 조회 비용까지 짊어져야 한다. 활성 클럽 회원이면서 패션 뉴스를 정기 구독하는 고객을 쓰고 싶다면, 레이블 기반 접근이 프로퍼티 저장에 견주어 이 정보를 더 효과적으로 가져오는 우위를 준다. 게다가 이 정보를 그래프로 표시할 때 사용자는 프로퍼티를 뒤질 필요 없이 레이블에서 정보를 바로 읽는다. 이런 방식의 데이터 소비가 더 자연스럽게 느껴지고, 질의도 더 자연스럽게 읽힌다.</p>
+  </div>
+
+  <h3>품목 데이터의 적재</h3>
+  <div class="prose">
+    <p>품목(article) 데이터에는 고유한 품목 ID와 설명 외에, 품목을 묘사하는 다른 카테고리들이 담겨 있다. 품목을 묘사하는 이 속성들을 <strong>그 자체로 노드</strong>로 만든다. 이를 위해 다음 고유 제약들을 생성한다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>constraints — 품목 속성 노드 12종</span><span class="lang">cypher</span></div>
+    <pre><span class="k">CREATE CONSTRAINT</span> product_code_idx <span class="k">FOR</span> (n:Product) <span class="k">REQUIRE</span> n.code <span class="k">IS UNIQUE</span>;
+<span class="k">CREATE CONSTRAINT</span> article_id_idx <span class="k">FOR</span> (n:Article) <span class="k">REQUIRE</span> n.id <span class="k">IS UNIQUE</span>;
+<span class="k">CREATE CONSTRAINT</span> product_type_id_idx <span class="k">FOR</span> (n:ProductType) <span class="k">REQUIRE</span> n.id <span class="k">IS UNIQUE</span>;
+<span class="k">CREATE CONSTRAINT</span> colour_group_idx <span class="k">FOR</span> (n:ColorGroup) <span class="k">REQUIRE</span> n.id <span class="k">IS UNIQUE</span>;
+<span class="k">CREATE CONSTRAINT</span> product_group_name_idx <span class="k">FOR</span> (n:ProductGroup) <span class="k">REQUIRE</span> n.name <span class="k">IS UNIQUE</span>;
+<span class="k">CREATE CONSTRAINT</span> graphical_appearance_id_idx <span class="k">FOR</span> (n:GraphicalAppearance) <span class="k">REQUIRE</span> n.id <span class="k">IS UNIQUE</span>;
+<span class="k">CREATE CONSTRAINT</span> perceived_colour_id_idx <span class="k">FOR</span> (n:PerceivedColor) <span class="k">REQUIRE</span> n.id <span class="k">IS UNIQUE</span>;
+<span class="k">CREATE CONSTRAINT</span> department_id_idx <span class="k">FOR</span> (n:Department) <span class="k">REQUIRE</span> n.id <span class="k">IS UNIQUE</span>;
+<span class="k">CREATE CONSTRAINT</span> section_id_idx <span class="k">FOR</span> (n:Section) <span class="k">REQUIRE</span> n.id <span class="k">IS UNIQUE</span>;
+<span class="k">CREATE CONSTRAINT</span> garment_group_id_idx <span class="k">FOR</span> (n:GarmentGroup) <span class="k">REQUIRE</span> n.id <span class="k">IS UNIQUE</span>;
+<span class="k">CREATE CONSTRAINT</span> article_index_id_idx <span class="k">FOR</span> (n:Index) <span class="k">REQUIRE</span> n.id <span class="k">IS UNIQUE</span>;
+<span class="k">CREATE CONSTRAINT</span> article_index_group_id_idx <span class="k">FOR</span> (n:IndexGroup) <span class="k">REQUIRE</span> n.id <span class="k">IS UNIQUE</span>;</pre>
+  </div>
+  <div class="prose">
+    <p>품목의 속성 대부분을 노드로 바꾸었음을 볼 수 있다. 그래프에 표현되는 데이터가 일종의 정규화를 거치는 셈이다. 다음 Cypher가 데이터를 그래프에 적재한다. 네 토막으로 나누어 읽는다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>load — articles.csv ① 품목·상품·상품군 생성과 연결</span><span class="lang">cypher</span></div>
+    <pre><span class="k">LOAD CSV WITH HEADERS FROM</span> <span class="s">"file:///articles.csv"</span> <span class="k">as</span> row
+<span class="k">WITH</span> row
+<span class="k">CALL</span> {
+    <span class="k">WITH</span> row
+    <span class="k">MERGE</span>(a:Article {id:row.article_id})
+    <span class="k">SET</span> a.desc = row.detail_desc
+    <span class="k">MERGE</span>(p:Product {code:row.product_code})
+    <span class="k">SET</span> p.name = row.prod_name
+    <span class="k">MERGE</span>(a)-[:OF_PRODUCT]-&gt;(p)
+    <span class="k">MERGE</span>(pt:ProductType {id:row.product_type_no})
+    <span class="k">SET</span> pt.name = row.product_type_name
+    <span class="k">MERGE</span>(p)-[:HAS_TYPE]-&gt;(pt)
+    <span class="k">WITH</span> row, a, p
+    <span class="k">MERGE</span>(pg:ProductGroup {name:row.product_group_name})
+    <span class="k">MERGE</span>(p)-[:HAS_GROUP]-&gt;(pg)</pre>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>② 그래픽 외형과 색상 연결</span><span class="lang">cypher</span></div>
+    <pre>    <span class="k">WITH</span> row, a
+    <span class="k">MERGE</span>(g:GraphicalAppearance {id:row.graphical_appearance_no})
+    <span class="k">SET</span> g.name = row.graphical_appearance_name
+    <span class="k">MERGE</span> (a)-[:HAS_GRAPHICAL_APPEARANCE]-&gt;(g)
+    <span class="k">WITH</span> row, a
+    <span class="k">MERGE</span> (c:ColorGroup {id: row.colour_group_code})
+    <span class="k">SET</span> c.name = row.colour_group_name
+    <span class="k">MERGE</span> (a)-[:HAS_COLOR]-&gt;(c)
+    <span class="k">WITH</span> row, a
+    <span class="k">MERGE</span> (pc:PerceivedColor {id: row.perceived_colour_value_id})
+    <span class="k">SET</span> pc.name = row.perceived_colour_value_name
+    <span class="k">MERGE</span> (a)-[:HAS_PERCEIVED_COLOR]-&gt;(pc)
+    <span class="k">MERGE</span> (pcm:PerceivedColor {id: row.perceived_colour_master_id})
+    <span class="k">SET</span> pcm.name = row.perceived_colour_master_name
+    <span class="k">MERGE</span> (pc)-[:HAS_MASTER]-&gt;(pcm)</pre>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>③ 부서·인덱스·인덱스 그룹 연결</span><span class="lang">cypher</span></div>
+    <pre>    <span class="k">WITH</span> row, a
+    <span class="k">MERGE</span> (d:Department {id:row.department_no})
+    <span class="k">SET</span> d.name = row.department_name
+    <span class="k">MERGE</span> (a)-[:HAS_DEPARTMENT]-&gt;(d)
+    <span class="k">WITH</span> row, a
+    <span class="k">MERGE</span> (i:Index {id: row.index_code})
+    <span class="k">SET</span> i.name = row.index_name
+    <span class="k">MERGE</span> (a)-[:HAS_INDEX]-&gt;(i)
+    <span class="k">MERGE</span> (ig:IndexGroup {id: row.index_group_no})
+    <span class="k">SET</span> ig.name = row.index_group_name
+    <span class="k">MERGE</span> (i)-[:HAS_GROUP]-&gt;(ig)</pre>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>④ 섹션·의류 그룹 연결</span><span class="lang">cypher</span></div>
+    <pre>    <span class="k">WITH</span> row, a
+    <span class="k">MERGE</span> (s:Section {id: row.section_no})
+    <span class="k">SET</span> s.name = row.section_name
+    <span class="k">MERGE</span> (a)-[:HAS_SECTION]-&gt;(s)
+    <span class="k">WITH</span> row, a
+    <span class="k">MERGE</span> (gg:GarmentGroup {id: row.garment_group_no})
+    <span class="k">SET</span> gg.name = row.garment_group_name
+    <span class="k">MERGE</span> (a)-[:HAS_GARMENT_GROUP]-&gt;(gg)
+} <span class="k">IN TRANSACTIONS OF</span> 1000 <span class="k">ROWS</span></pre>
+  </div>
+  <div class="prose">
+    <p>이 Cypher 질의에서 확인할 수 있듯, 그래프에는 <strong>정규화된 데이터가 지속</strong>된다. 품목을 묘사하는 여러 측면의 값들이 중복 없이 저장되는 것이다. 다음은 거래를 적재할 차례다.</p>
+  </div>
+
+  <h3>거래 데이터의 적재</h3>
+  <div class="prose">
+    <p><code>transactions_train.csv</code> 데이터는 <strong>거래가 발생한 순서대로</strong> 담겨 있다. 그 덕분에 데이터를 적재하며 그래프 안에 시퀀스를 손쉽게 보존할 수 있다. 거래마다 한 행에 거래 날짜, 품목 ID, 고객 ID, 가격, 판매 채널이 담겨 있다. 유의할 점 하나 — 각 거래에는 고유 ID가 없다. 다음 Cypher로 데이터를 적재한다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>load — transactions_train.csv · 트랜잭션 열차 조립</span><span class="lang">cypher</span></div>
+    <pre><span class="k">LOAD CSV WITH HEADERS FROM</span> <span class="s">"file:///transactions_train.csv"</span> <span class="k">as</span> row
+<span class="k">WITH</span> row
+<span class="k">CALL</span> {
+    <span class="k">WITH</span> row
+    <span class="k">MATCH</span> (c:Customer {id:row.customer_id})
+    <span class="k">MATCH</span> (a:Article {id:row.article_id})
+    <span class="k">WITH</span> a, c, row
+    <span class="k">CREATE</span> (t:Transaction {date: row.t_dat, price: row.price,
+        salesChannel: row.sales_channel_id})
+    <span class="k">CREATE</span> (t)-[:HAS_ARTICLE]-&gt;(a)
+    <span class="k">WITH</span> c, t
+    <span class="k">CALL</span> {
+        <span class="c">-- 기존 체인이 있는 고객: LATEST를 옮겨 단다</span>
+        <span class="k">WITH</span> c, t
+        <span class="k">WITH</span> c, t
+        <span class="k">WHERE</span> exists((c)-[:START_TRANSACTION]-&gt;())
+           <span class="k">OR</span> exists((c)-[:LATEST]-&gt;())
+        <span class="k">MATCH</span> (c)-[r:LATEST]-&gt;(lt)
+        <span class="k">DELETE</span> r
+        <span class="k">CREATE</span> (lt)-[:NEXT]-&gt;(t)
+        <span class="k">CREATE</span> (c)-[:LATEST]-&gt;(t)
+        <span class="k">UNION</span>
+        <span class="c">-- 첫 거래인 고객: 열차의 머리를 만든다</span>
+        <span class="k">WITH</span> c, t
+        <span class="k">WITH</span> c, t
+        <span class="k">WHERE NOT</span> ( exists((c)-[:START_TRANSACTION]-&gt;())
+           <span class="k">OR</span> exists((c)-[:LATEST]-&gt;()) )
+        <span class="k">CREATE</span> (c)-[:START_TRANSACTION]-&gt;(t)
+        <span class="k">CREATE</span> (c)-[:LATEST]-&gt;(t)
+    }
+} <span class="k">IN TRANSACTIONS OF</span> 1000 <span class="k">ROWS</span></pre>
+  </div>
+  <div class="prose">
+    <p>이 Cypher에서 볼 수 있듯, 주어진 고객의 첫 거래는 <code>START_TRANSACTION</code> 관계로 고객에 연결한다. 고객이 수행한 마지막 거래는 <code>LATEST</code> 관계로 추적한다. 고객의 거래가 계속 들어올 때마다 <code>LATEST</code> 관계를 가장 새 거래로 옮겨 달고, 이전에 <code>LATEST</code>로 연결되어 있던 거래와 새 거래를 <code>NEXT</code> 관계로 잇는다. 그러니 이 그래프에서 우리는 고객들의 거래를 <strong>트랜잭션 열차(transaction train)</strong>로 표현하고 있는 셈이다. 데이터셋 파일 이름 <code>transactions_train.csv</code>에 충실한 표현이다.</p>
+  </div>
+
+  <h3>최종 그래프</h3>
+  <div class="prose"><p>모든 데이터를 적재하고 나면 그래프 모델은 그림 8.1과 같은 모습이 된다.</p></div>
+
+  <!-- Figure 8.1 -->
+  <figure class="figure-panel">
+    <svg viewBox="0 0 860 460" role="img" aria-label="H&M 데이터 적재 후 그래프 데이터 모델">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#3d5260"/></marker>
+      </defs>
+      <!-- 좌측 체인 -->
+      <circle cx="60" cy="230" r="34" fill="#b57fc4"/><text class="svg-nw" x="60" y="227" style="font-size:8.5px">Postal</text><text class="svg-nw" x="60" y="239" style="font-size:8.5px">Code</text>
+      <circle cx="185" cy="230" r="36" fill="#e0575f"/><text class="svg-nw" x="185" y="235" style="font-size:9.5px">Customer</text>
+      <line x1="149" y1="230" x2="100" y2="230" stroke="#3d5260" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text class="svg-rel" x="124" y="222" text-anchor="middle">LIVES_IN</text>
+      <circle cx="330" cy="230" r="38" fill="#3f7fc1"/><text class="svg-nw" x="330" y="227" style="font-size:9px">Trans-</text><text class="svg-nw" x="330" y="239" style="font-size:9px">action</text>
+      <line x1="221" y1="216" x2="291" y2="219" stroke="#3d5260" stroke-width="1.4" marker-end="url(#arr)"/>
+      <text class="svg-rel" x="256" y="205" text-anchor="middle">START_TRANSACTION</text>
+      <line x1="221" y1="244" x2="291" y2="241" stroke="#3d5260" stroke-width="1.4" marker-end="url(#arr)"/>
+      <text class="svg-rel" x="256" y="262" text-anchor="middle">LATEST</text>
+      <!-- NEXT self loop -->
+      <path d="M352 264 C 378 322, 302 322, 308 264" fill="none" stroke="#1f8f66" stroke-width="1.6" marker-end="url(#arr)"/>
+      <text class="svg-rel" x="330" y="326" text-anchor="middle" style="fill:#1f8f66">NEXT</text>
+      <!-- Article 중심 -->
+      <circle cx="480" cy="230" r="36" fill="#2e9077"/><text class="svg-nw" x="480" y="235" style="font-size:9.5px">Article</text>
+      <line x1="368" y1="230" x2="438" y2="230" stroke="#3d5260" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text class="svg-rel" x="403" y="220" text-anchor="middle">HAS_ARTICLE</text>
+      <!-- 팬아웃 -->
+      <g>
+        <circle cx="420" cy="80" r="30" fill="#a8779a"/><text class="svg-nw" x="420" y="77" style="font-size:8px">Perceived</text><text class="svg-nw" x="420" y="88" style="font-size:8px">Color</text>
+        <path d="M406 52 C 396 22, 442 22, 434 52" fill="none" stroke="#3d5260" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text class="svg-rel" x="420" y="18" text-anchor="middle">HAS_MASTER</text>
+        <line x1="462" y1="196" x2="432" y2="108" stroke="#3d5260" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text class="svg-rel" x="424" y="156" text-anchor="middle" transform="rotate(-72 424 156)">HAS_PERCEIVED_COLOR</text>
+      </g>
+      <g>
+        <circle cx="540" cy="70" r="30" fill="#cbb99a"/><text class="svg-nw" x="540" y="67" style="font-size:8px">Color</text><text class="svg-nw" x="540" y="78" style="font-size:8px">Group</text>
+        <line x1="494" y1="196" x2="532" y2="102" stroke="#3d5260" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text class="svg-rel" x="500" y="150" text-anchor="middle" transform="rotate(-68 500 150)">HAS_COLOR</text>
+      </g>
+      <g>
+        <circle cx="640" cy="110" r="26" fill="#e08a4e"/><text class="svg-nw" x="640" y="115" style="font-size:8.5px">Section</text>
+        <line x1="510" y1="207" x2="614" y2="122" stroke="#3d5260" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text class="svg-rel" x="562" y="152" text-anchor="middle" transform="rotate(-38 562 152)">HAS_SECTION</text>
+      </g>
+      <g>
+        <circle cx="700" cy="200" r="30" fill="#c75b81"/><text class="svg-nw" x="700" y="205" style="font-size:8.5px">Product</text>
+        <line x1="516" y1="222" x2="666" y2="204" stroke="#3d5260" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text class="svg-rel" x="590" y="204" text-anchor="middle">OF_PRODUCT</text>
+        <circle cx="800" cy="140" r="26" fill="#e6a3c1"/><text class="svg-nw" x="800" y="137" style="font-size:7.5px">Product</text><text class="svg-nw" x="800" y="148" style="font-size:7.5px">Type</text>
+        <line x1="722" y1="180" x2="782" y2="158" stroke="#3d5260" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text class="svg-rel" x="756" y="160" text-anchor="middle" transform="rotate(-20 756 160)">HAS_TYPE</text>
+        <circle cx="812" cy="240" r="26" fill="#eab8cf"/><text class="svg-nw" x="812" y="237" style="font-size:7.5px">Product</text><text class="svg-nw" x="812" y="248" style="font-size:7.5px">Group</text>
+        <line x1="730" y1="212" x2="782" y2="230" stroke="#3d5260" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text class="svg-rel" x="756" y="212" text-anchor="middle" transform="rotate(19 756 212)">HAS_GROUP</text>
+      </g>
+      <g>
+        <circle cx="620" cy="300" r="24" fill="#9a86c9"/><text class="svg-nw" x="620" y="305" style="font-size:8.5px">Index</text>
+        <line x1="512" y1="248" x2="594" y2="288" stroke="#3d5260" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text class="svg-rel" x="548" y="260" text-anchor="middle" transform="rotate(25 548 260)">HAS_INDEX</text>
+        <circle cx="722" cy="345" r="26" fill="#bfae94"/><text class="svg-nw" x="722" y="342" style="font-size:7.5px">Index</text><text class="svg-nw" x="722" y="353" style="font-size:7.5px">Group</text>
+        <line x1="642" y1="312" x2="694" y2="334" stroke="#3d5260" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text class="svg-rel" x="668" y="314" text-anchor="middle" transform="rotate(23 668 314)">HAS_GROUP</text>
+      </g>
+      <g>
+        <circle cx="560" cy="390" r="30" fill="#e8b64f"/><text class="svg-nw" x="560" y="387" style="font-size:8px">Garment</text><text class="svg-nw" x="560" y="398" style="font-size:8px">Group</text>
+        <line x1="496" y1="264" x2="546" y2="358" stroke="#3d5260" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text class="svg-rel" x="502" y="316" text-anchor="middle" transform="rotate(62 502 316)">HAS_GARMENT_GROUP</text>
+      </g>
+      <g>
+        <circle cx="440" cy="400" r="30" fill="#79b866"/><text class="svg-nw" x="440" y="397" style="font-size:8px">Depart-</text><text class="svg-nw" x="440" y="408" style="font-size:8px">ment</text>
+        <line x1="470" y1="265" x2="446" y2="366" stroke="#3d5260" stroke-width="1.2" marker-end="url(#arr)"/>
+        <text class="svg-rel" x="438" y="318" text-anchor="middle" transform="rotate(78 438 318)">HAS_DEPARTMENT</text>
+      </g>
+      <g>
+        <circle cx="580" y="0" cy="180" r="0" fill="none"/>
+        <line x1="514" y1="215" x2="560" y2="196" stroke="#3d5260" stroke-width="1.1" marker-end="url(#arr)" opacity=".85"/>
+        <circle cx="588" cy="186" r="24" fill="#d977a4"/><text class="svg-nw" x="588" y="183" style="font-size:6.5px">Graphical</text><text class="svg-nw" x="588" y="193" style="font-size:6.5px">Appearance</text>
+      </g>
+    </svg>
+    <figcaption class="fig-caption"><b>그림 8.1</b> — H&amp;M 데이터 적재 후의 그래프 데이터 모델</figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>이 그래프에서 품목의 속성들이 여러 개별 노드로 <strong>부챗살처럼 펼쳐진(fanned out)</strong> 모습을 볼 수 있다. Customer 노드는 우편번호와 첫·마지막 거래에 연결되어 있다. Transaction은 Article과 연관되고, Transaction 노드들은 주어진 고객의 다음 거래로도 이어진다. 데이터가 적재되었으니, 이 데이터에서 그래프를 한층 더 강화해 데이터에 대한 우리의 이해와 아이디어를 그래프에 더하는 방법을 탐사하자.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 2 ================= -->
+<section class="section" id="sec2">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 2})-[:ENRICHES]-&gt;<span class="p">(:Season)</span></p>
+    <h2>추천을 위한 최적화 — 그래프 모델링의 모범 사례</h2>
+  </div>
+  <div class="prose">
+    <p>이제 우리가 소비하고 싶은 방식대로 데이터가 적재되고, 데이터의 문맥을 표현하는 그래프가 손에 있다. 그러나 이 그래프가 표현하는 것은 아직 원래 주어진 문맥뿐이다. 계절과 연도로 데이터를 소비하고 싶다면 여전히 그것을 가져오는 질의를 지어야 한다. Neo4j는 스키마가 선택적이니, 후처리(post-processing)로 <strong>추가 관계</strong>를 더해 그런 방식의 데이터 소비를 열어 볼 수 있다.</p>
+    <p>다음 Cypher 스크립트로 계절 관계를 만든다. 다섯 단계다.</p>
+  </div>
+  <ol class="hop-path">
+    <li><span class="hd"><b>고객마다 거래를 순회한다.</b> START_TRANSACTION과 LATEST를 잡아 <code>(s)-[:NEXT*]-&gt;(e)</code> 경로의 노드들을 펼친다. 월과 연도에 기초해 계절 값을 배정할 준비다.</span></li>
+    <li><span class="hd"><b>연도를 조정한다.</b> 이를테면 월이 1이고 연도가 2020이면, 그 거래의 문맥으로는 <code>WINTER_2019</code>가 계절 이름이 된다 — 12월이 속한 겨울의 연도로 묶는 것이다.</span></li>
+    <li><span class="hd"><b>계절 값별로 거래를 모은다.</b> 12·1·2월은 WINTER, 3·4·5월은 SPRING, 6·7·8월은 SUMMER, 9·10·11월은 FALL로 분류한다.</span></li>
+    <li><span class="hd"><b>계절 값별 컬렉션의 첫 레코드를 얻는다.</b> <code>head(collect(node))</code>로 각 계절의 시작 거래를 잡는다.</span></li>
+    <li><span class="hd"><b>고객과 그 거래 사이에 계절 이름의 관계를 만든다.</b> 관계 이름이 동적이므로 <code>apoc.create.relationship</code> 프로시저를 쓴다.</span></li>
+  </ol>
+
+  <div class="season-band">
+    <div class="season-cell"><span class="sn">WINTER</span><span class="sm">12 · 01 · 02</span><span class="sy">12월의 연도를 따른다 — 1·2월은 year−1</span></div>
+    <div class="season-cell"><span class="sn">SPRING</span><span class="sm">03 · 04 · 05</span><span class="sy">해당 연도 그대로</span></div>
+    <div class="season-cell"><span class="sn">SUMMER</span><span class="sm">06 · 07 · 08</span><span class="sy">해당 연도 그대로</span></div>
+    <div class="season-cell"><span class="sn">FALL</span><span class="sm">09 · 10 · 11</span><span class="sy">해당 연도 그대로</span></div>
+  </div>
+
+  <div class="code-snip">
+    <div class="ch"><span>seasonal relationships — 계절 관계 생성</span><span class="lang">cypher</span></div>
+    <pre><span class="k">MATCH</span> (c:Customer)
+<span class="k">WITH</span> c
+<span class="k">CALL</span> {
+    <span class="k">WITH</span> c
+    <span class="k">MATCH</span> (c)-[:START_TRANSACTION]-&gt;(s)
+    <span class="k">MATCH</span> (c)-[:LATEST]-&gt;(e)
+    <span class="k">WITH</span> c, s, e
+    <span class="k">MATCH</span> p=(s)-[:NEXT*]-&gt;(e)
+    <span class="k">WITH</span> c, nodes(p) <span class="k">as</span> nodes
+    <span class="k">UNWIND</span> nodes <span class="k">as</span> node
+    <span class="k">WITH</span> c, node, node.date <span class="k">as</span> d
+    <span class="k">WITH</span> c, node, toInteger(substring(d, 0,4)) <span class="k">as</span> year,
+         substring(d, 5,2) <span class="k">as</span> month
+    <span class="k">WITH</span> c, node,
+        <span class="k">CASE WHEN</span> month=<span class="s">"12"</span> <span class="k">THEN</span> year
+             <span class="k">WHEN</span> month=<span class="s">"01"</span> <span class="k">OR</span> month=<span class="s">"02"</span> <span class="k">THEN</span> year-1
+             <span class="k">ELSE</span> year
+        <span class="k">END as</span> year,
+        <span class="k">CASE WHEN</span> month=<span class="s">"12"</span> <span class="k">OR</span> month=<span class="s">"01"</span> <span class="k">OR</span> month=<span class="s">"02"</span> <span class="k">THEN</span> <span class="s">"WINTER"</span>
+             <span class="k">WHEN</span> month=<span class="s">"03"</span> <span class="k">OR</span> month=<span class="s">"04"</span> <span class="k">OR</span> month=<span class="s">"05"</span> <span class="k">THEN</span> <span class="s">"SPRING"</span>
+             <span class="k">WHEN</span> month=<span class="s">"06"</span> <span class="k">OR</span> month=<span class="s">"07"</span> <span class="k">OR</span> month=<span class="s">"08"</span> <span class="k">THEN</span> <span class="s">"SUMMER"</span>
+             <span class="k">WHEN</span> month=<span class="s">"09"</span> <span class="k">OR</span> month=<span class="s">"10"</span> <span class="k">OR</span> month=<span class="s">"11"</span> <span class="k">THEN</span> <span class="s">"FALL"</span>
+        <span class="k">END as</span> season
+    <span class="k">WITH</span> c, node, season+<span class="s">'_'</span>+year <span class="k">as</span> relName
+    <span class="k">WITH</span> c, relName, head(collect(node)) <span class="k">as</span> start
+    <span class="k">WHERE</span> relName <span class="k">is not null</span>
+    <span class="k">CALL</span> apoc.create.relationship(c, relName, {}, start) <span class="k">YIELD</span> rel
+    <span class="k">WITH</span> 1 <span class="k">as</span> out
+    <span class="k">return DISTINCT</span> out
+} <span class="k">IN TRANSACTIONS OF</span> 1000 <span class="k">ROWS</span>
+<span class="k">WITH</span> 1 <span class="k">as</span> r
+<span class="k">RETURN DISTINCT</span> r</pre>
+  </div>
+  <div class="prose">
+    <p>이것이 아주 기초적인 접근이라는 점은 새겨 두자. 요점은, 데이터에 대한 우리의 이해에 기초해 그래프 안에 <strong>추가 문맥</strong>을 만들 수 있다는 것이다. 이런 접근들이 Neo4j를 지식그래프 구축에 매우 알맞게 만든다. 이렇게 데이터 접근을 쉽게 만들어 두면, 같은 데이터를 다르게 바라보아 더 많은 지능을 추출하는 새 아이디어들이 열린다. 그것도 추적 가능하고 이해 가능한, 단순한 방식으로.</p>
+  </div>
+  <div class="note-box">
+    <span class="nk">Note — 데이터베이스 스냅숏</span>
+    <p>데이터를 수동으로 적재하고 싶지 않다면, <a href="https://packt-neo4j-powered-applications.s3.us-east-1.amazonaws.com/Building+Neo4j-Powered+Applications+with+LLMs+Database+Dump+files.zip" target="_blank" rel="noopener">데이터베이스 덤프 파일</a>을 내려받을 수 있다.</p>
+  </div>
+  <div class="prose"><p>이제 데이터에 더 많은 문맥이 더해졌다. 그래프 데이터 모델을 다시 보자.</p></div>
+
+  <!-- Figure 8.2 -->
+  <figure class="figure-panel">
+    <svg viewBox="0 0 860 340" role="img" aria-label="계절 관계로 강화된 H&M 그래프 데이터 모델">
+      <!-- Customer & Transaction with seasonal fan -->
+      <circle cx="80" cy="170" r="34" fill="#b57fc4"/><text class="svg-nw" x="80" y="167" style="font-size:8.5px">Postal</text><text class="svg-nw" x="80" y="179" style="font-size:8.5px">Code</text>
+      <circle cx="230" cy="170" r="38" fill="#e0575f"/><text class="svg-nw" x="230" y="175" style="font-size:9.5px">Customer</text>
+      <line x1="192" y1="170" x2="120" y2="170" stroke="#3d5260" stroke-width="1.4" marker-end="url(#arr)"/>
+      <text class="svg-rel" x="156" y="162" text-anchor="middle">LIVES_IN</text>
+      <circle cx="520" cy="170" r="40" fill="#3f7fc1"/><text class="svg-nw" x="520" y="167" style="font-size:9px">Trans-</text><text class="svg-nw" x="520" y="179" style="font-size:9px">action</text>
+      <path d="M545 202 C 572 258, 494 258, 498 206" fill="none" stroke="#1f8f66" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text class="svg-rel" x="524" y="262" text-anchor="middle" style="fill:#1f8f66">NEXT</text>
+      <!-- seasonal fan: 11 curved rels -->
+      <g stroke-width="1.3" fill="none">
+        <path d="M262 142 C 340 66, 420 66, 484 138" stroke="#c2495f" marker-end="url(#arr)"/>
+        <path d="M266 150 C 344 86, 424 86, 486 146" stroke="#d99022" marker-end="url(#arr)"/>
+        <path d="M268 158 C 348 106, 428 106, 484 154" stroke="#1f8f66" marker-end="url(#arr)"/>
+        <path d="M268 164 C 350 126, 430 126, 482 160" stroke="#7fa3d8" marker-end="url(#arr)"/>
+        <path d="M268 170 C 352 146, 432 146, 480 167" stroke="#9a86c9" marker-end="url(#arr)"/>
+        <path d="M268 176 C 352 176, 432 176, 480 173" stroke="#c2495f" marker-end="url(#arr)"/>
+        <path d="M268 182 C 352 200, 432 200, 480 180" stroke="#d99022" marker-end="url(#arr)"/>
+        <path d="M266 190 C 350 222, 430 222, 482 186" stroke="#1f8f66" marker-end="url(#arr)"/>
+        <path d="M262 198 C 346 244, 426 244, 484 194" stroke="#7fa3d8" marker-end="url(#arr)"/>
+      </g>
+      <g style="font-family:'IBM Plex Mono',monospace;font-size:8px;fill:#3d5260;font-weight:600">
+        <text x="372" y="72" text-anchor="middle">SUMMER_2020</text>
+        <text x="374" y="92" text-anchor="middle">FALL_2018 · WINTER_2018</text>
+        <text x="376" y="112" text-anchor="middle">SPRING_2020</text>
+        <text x="378" y="132" text-anchor="middle">SUMMER_2019</text>
+        <text x="378" y="152" text-anchor="middle">LATEST</text>
+        <text x="378" y="172" text-anchor="middle" style="fill:#8a5560">FALL_2020 · SPRING_2019</text>
+        <text x="378" y="196" text-anchor="middle">FALL_2019</text>
+        <text x="376" y="218" text-anchor="middle">START_TRANSACTION</text>
+        <text x="372" y="240" text-anchor="middle">WINTER_2019</text>
+      </g>
+      <!-- Article -->
+      <circle cx="700" cy="170" r="36" fill="#2e9077"/><text class="svg-nw" x="700" y="175" style="font-size:9.5px">Article</text>
+      <line x1="560" y1="170" x2="660" y2="170" stroke="#3d5260" stroke-width="1.4" marker-end="url(#arr)"/>
+      <text class="svg-rel" x="610" y="161" text-anchor="middle">HAS_ARTICLE</text>
+      <!-- 속성 팬 축약 -->
+      <g opacity=".85">
+        <circle cx="790" cy="80" r="18" fill="#cbb99a"/>
+        <circle cx="828" cy="150" r="18" fill="#c75b81"/>
+        <circle cx="812" cy="240" r="18" fill="#e8b64f"/>
+        <circle cx="722" cy="288" r="18" fill="#79b866"/>
+        <line x1="722" y1="140" x2="778" y2="94" stroke="#8aa0ac" stroke-width="1.1"/>
+        <line x1="734" y1="162" x2="808" y2="153" stroke="#8aa0ac" stroke-width="1.1"/>
+        <line x1="726" y1="198" x2="800" y2="230" stroke="#8aa0ac" stroke-width="1.1"/>
+        <line x1="706" y1="206" x2="718" y2="268" stroke="#8aa0ac" stroke-width="1.1"/>
+        <text class="svg-rel" x="806" y="196" text-anchor="middle" style="fill:#5c7280;font-size:7.5px">…속성 노드들</text>
+      </g>
+    </svg>
+    <figcaption class="fig-caption"><b>그림 8.2</b> — 계절 관계로 강화한 뒤의 H&amp;M 그래프 데이터 모델</figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>데이터에 대한 우리의 이해를 이용해, 임의의 고객이 2019년 여름에 산 품목들을 가져오는 질의를 지어 보자.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>query — SUMMER_2019 구매 품목 검색</span><span class="lang">cypher</span></div>
+    <pre><span class="k">MATCH</span> (c:Customer)-[:SUMMER_2019]-&gt;(start),
+      (c)-[:FALL_2019]-&gt;()&lt;-[:NEXT]-(end)
+<span class="k">WITH</span> c, start, end <span class="k">SKIP</span> 100 <span class="k">LIMIT</span> 1
+<span class="k">MATCH</span> p=(start)-[:NEXT*]-&gt;(end)
+<span class="k">WITH</span> nodes(p) <span class="k">as</span> nodes, relationships(p) <span class="k">as</span> rels
+<span class="k">UNWIND</span> nodes <span class="k">as</span> node
+<span class="k">MATCH</span> p=(node)-[:HAS_ARTICLE]-&gt;(a)
+<span class="k">RETURN</span> a.desc <span class="k">as</span> article</pre>
+  </div>
+  <div class="prose">
+    <p>이 질의로 우리는 2019년 여름과 가을 모두에 구매 기록이 있는 고객들을 찾고, 그 목록에서 한 명을 골라, 품목 설명들을 가져온다. 질의의 출력은 다음과 같은 모습이다.</p>
+  </div>
+
+  <!-- Figure 8.3 -->
+  <div class="result-out">
+    <div class="ro-bar"><span>a.desc <b>as article</b></span><span>Started streaming 4 records after 436 ms and completed after 532 ms.</span></div>
+    <div class="ro-row"><span class="ro-idx">1</span><span class="ro-txt">"Ankle-length trousers in woven fabric with a high, elasticated waist, pleats at the front, a zip fly and buttons, side pockets, fake back pockets and straight, wide legs."</span></div>
+    <div class="ro-row"><span class="ro-idx">2</span><span class="ro-txt">"V-neck T-shirt in soft cotton jersey."</span></div>
+    <div class="ro-row"><span class="ro-idx">3</span><span class="ro-txt">"Round-necked T-shirt in soft jersey."</span></div>
+    <div class="ro-row"><span class="ro-idx">4</span><span class="ro-txt">"Scarf in a soft weave with fringes on the short sides. Size 50x180 cm."</span></div>
+  </div>
+  <p class="fig-caption"><b>그림 8.3</b> — 한 고객의 SUMMER_2019 구매를 가져오는 Cypher 질의의 출력</p>
+
+  <div class="prose" style="margin-top:2.2rem">
+    <p>질의를 보기만 해도 무엇을 하는 질의인지 이해하기 쉽다. <code>SUMMER_2019</code>를 시작점으로, <code>FALL_2019</code> 관계 앞의 거래를 끝점으로 삼아, 시작점에서 끝점까지 순회하며 그 거래들의 품목을 가져온다.</p>
+    <p class="lead-q">프로퍼티 기반 필터 대신 그래프 순회에 온전히 기대고 있음을 볼 수 있다. 그 덕분에 이 질의의 실행은 매우 효율적이다. Neo4j는 바로 이런 종류의 질의를 매우 효율적으로 실행하도록 지어졌다.</p>
+  </div>
+</section>
+
+<!-- ================= 요약 ================= -->
+<section class="section" id="summary">
+  <div class="summary-panel">
+    <h2>요약</h2>
+    <p>이 장에서 우리는 그래프 데이터 모델을 바라보는 법을, 그리고 소비하는 방식에 기초해 모델을 지으면 데이터의 효율적 검색이 얼마나 쉬워지는지를 보았다. H&amp;M 추천 데이터셋을 그 원리로 적재했고, 프로퍼티와 데이터에 대한 우리의 이해를 이용해 그래프를 증강하기까지 했다. 그래프에 더 많은 문맥이 더해졌고, 데이터 질의도 단순해졌다. 질의는 더 읽기 쉽고, 남에게 더 간명하게 설명할 수 있는 것이 되었다.</p>
+    <p>다음 장에서는 이 데이터 위에서 LLM을 이용해 그래프를 한층 더 강화하고, LLM이 어떻게 더 유능한 지식그래프를 우리 손에 쥐여 주는지 본다.</p>
+    <span class="next-chip">NEXT → Chapter 9 · Integrating LangChain4j and Spring AI with Neo4j</span>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p><b>원전</b> — Ravindranatha Anthapu &amp; Siddhant Agarwal, <i>Building Neo4j-Powered Applications with LLMs</i>, Packt Publishing, 2025. Chapter 8: Constructing a Recommendation Graph with H&amp;M Personalization Dataset (pp. 147–160)</p>
+  <p>이 페이지는 원서 8장의 전체 내용을 한국어로 재구성한 학습 자료다. 그림 8.1–8.3은 원서 도판을 바탕으로 다시 그렸고, 코드는 원서의 핵심 조각을 그대로 옮겼다. H&amp;M 데이터셋 출처: Kaggle, H&amp;M Personalized Fashion Recommendations (2022).</p>
+</footer>
+
+</body>
+</html>

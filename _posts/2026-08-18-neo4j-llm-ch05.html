@@ -1,0 +1,960 @@
+---
+layout: null
+title: "Adding AI-Powered Search with Haystack" 
+date: 2026-08-18
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence, graph mining]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5장 — Neo4j와 Haystack으로 강력한 검색을 구현하다 | Building Neo4j-Powered Applications with LLMs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@400;500;600;700&family=Noto+Serif+KR:wght@400;500;600;700&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#122430;
+  --ink-soft:#3d5260;
+  --mist:#eef1ef;
+  --paper:#f9faf9;
+  --rel-blue:#1268b3;
+  --node-green:#1f8f66;
+  --node-amber:#d99022;
+  --hairline:#d4dcd8;
+  --panel:#ffffff;
+  --code-bg:#162833;
+  --max-prose:46rem;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Noto Serif KR',serif;background:var(--mist);color:var(--ink);
+  line-height:1.85;font-size:17px;word-break:keep-all;-webkit-font-smoothing:antialiased;
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ---------- HERO ---------- */
+.hero{
+  background:
+    radial-gradient(1100px 520px at 80% -8%, rgba(18,104,179,.36), transparent 60%),
+    radial-gradient(800px 480px at 4% 118%, rgba(31,143,102,.22), transparent 60%),
+    var(--ink);
+  color:#e9f0ee;position:relative;overflow:hidden;
+}
+.hero-inner{max-width:72rem;margin:0 auto;padding:5.5rem 2rem 4.5rem;position:relative;z-index:2}
+.series-line{
+  font-family:'IBM Plex Mono',monospace;font-size:.78rem;letter-spacing:.14em;
+  color:#8fb8d8;text-transform:uppercase;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;
+}
+.series-line::before{content:"";display:inline-block;width:2.2rem;height:1px;background:#8fb8d8}
+.cypher-chip{
+  font-family:'IBM Plex Mono',monospace;display:inline-block;margin-top:2.2rem;
+  font-size:.92rem;color:#9fd8bd;background:rgba(31,143,102,.14);
+  border:1px solid rgba(31,143,102,.45);border-radius:999px;padding:.35rem 1.1rem;
+}
+.cypher-chip .k{color:#7fb4e0}
+h1.title{
+  font-family:'Hahmlet',serif;font-weight:700;
+  font-size:clamp(1.9rem,4.4vw,3.2rem);line-height:1.35;margin-top:1.4rem;letter-spacing:-.01em;
+}
+h1.title em{font-style:normal;color:#8ec7ef}
+.hero-lede{margin-top:1.6rem;max-width:38rem;font-size:1.02rem;color:#b9c9c9;line-height:1.95}
+.hero-meta{
+  margin-top:2.6rem;font-family:'IBM Plex Mono',monospace;font-size:.75rem;
+  color:#7d94a0;letter-spacing:.06em;display:flex;gap:1.8rem;flex-wrap:wrap;
+}
+/* 히어로: 벡터 검색 파이프라인 */
+.vsearch{position:absolute;right:-.5rem;top:50%;transform:translateY(-50%);width:min(45vw,540px);z-index:1}
+.vsearch .st{fill:rgba(255,255,255,.04);stroke:#4a6a80;stroke-width:1.3}
+.vsearch .tt{font-family:'IBM Plex Mono',monospace;font-size:11.5px;fill:#eaf4ef;text-anchor:middle;font-weight:500}
+.vsearch .ts{font-family:'IBM Plex Mono',monospace;font-size:9px;fill:#8fb8d8;text-anchor:middle}
+.vsearch .fl{stroke:#7fb4e0;stroke-width:1.6;fill:none;marker-end:url(#varr)}
+.vsearch .dot{animation:vdash 3.2s linear infinite}
+@keyframes vdash{to{stroke-dashoffset:-34}}
+.vsearch .scoretrack{fill:rgba(255,255,255,.08)}
+.vsearch .scorebar{fill:#7ecfa8}
+@media(max-width:960px){
+  .vsearch{position:static;transform:none;width:100%;max-width:460px;margin:3rem auto 0;display:block}
+  .hero-inner{padding-bottom:2.5rem}
+}
+
+/* ---------- 목차 ---------- */
+.toc-strip{background:var(--paper);border-bottom:1px solid var(--hairline)}
+.toc-inner{max-width:72rem;margin:0 auto;padding:1.4rem 2rem;display:flex;gap:2rem;flex-wrap:wrap;align-items:center}
+.toc-label{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.16em;color:var(--ink-soft);text-transform:uppercase}
+.toc-strip a{
+  font-family:'Hahmlet',serif;font-size:.92rem;font-weight:500;color:var(--ink);
+  text-decoration:none;border-bottom:1.5px solid transparent;padding-bottom:2px;transition:border-color .2s;
+}
+.toc-strip a:hover,.toc-strip a:focus-visible{border-color:var(--node-green)}
+.toc-strip a .n{color:var(--rel-blue);font-family:'IBM Plex Mono',monospace;font-size:.8rem;margin-right:.4rem}
+
+/* ---------- 본문 공통 ---------- */
+main{max-width:72rem;margin:0 auto;padding:0 2rem}
+.section{padding:4.2rem 0 1rem}
+.section-head{max-width:var(--max-prose);margin:0 auto 2rem}
+.node-marker{
+  font-family:'IBM Plex Mono',monospace;font-size:.85rem;color:var(--node-green);
+  display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;
+}
+.node-marker::before{
+  content:"";width:11px;height:11px;border-radius:50%;background:var(--node-green);
+  box-shadow:0 0 0 4px rgba(31,143,102,.15);flex:none;
+}
+.node-marker .p{color:var(--rel-blue)}
+h2{font-family:'Hahmlet',serif;font-weight:600;font-size:clamp(1.5rem,3vw,2.05rem);line-height:1.4;margin-top:.9rem;letter-spacing:-.01em}
+h3{
+  font-family:'Hahmlet',serif;font-weight:600;font-size:1.22rem;
+  margin:2.8rem auto 1rem;max-width:var(--max-prose);color:var(--ink);
+  display:flex;align-items:baseline;gap:.6rem;
+}
+h3::before{content:"—";color:var(--node-amber);font-weight:400}
+.prose{max-width:var(--max-prose);margin:0 auto}
+.prose p{margin-bottom:1.5rem}
+.prose p:last-child{margin-bottom:0}
+.prose strong{font-weight:600}
+.prose .term{font-weight:600;background:linear-gradient(transparent 68%, rgba(31,143,102,.22) 68%)}
+.prose a{color:var(--rel-blue);text-decoration:none;border-bottom:1px solid rgba(18,104,179,.4);overflow-wrap:anywhere}
+.prose a:hover{border-bottom-color:var(--rel-blue)}
+.prose code,.ld code,.hd code{
+  font-family:'IBM Plex Mono',monospace;font-size:.85em;
+  background:#e3e9e6;border-radius:4px;padding:.12em .4em;
+  overflow-wrap:anywhere;word-break:break-all;
+}
+.hop-path .hd,.layer-list .ld,.reason-card p{min-width:0;overflow-wrap:anywhere}
+.lead-q{
+  font-family:'Hahmlet',serif;font-size:1.12rem;font-weight:500;color:var(--ink);
+  border-left:3px solid var(--node-amber);padding:.35rem 0 .35rem 1.2rem;margin:2.2rem 0;
+}
+
+/* ---------- 코드 블록 ---------- */
+.code-snip{max-width:56rem;margin:1.8rem auto;background:var(--code-bg);border-radius:12px;overflow:hidden}
+.code-snip .ch{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:.6rem 1.3rem;background:rgba(255,255,255,.05);
+  font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:#8fb8d8;letter-spacing:.08em;
+}
+.code-snip .ch .lang{color:#7ecfa8}
+.code-snip pre{
+  padding:1.2rem 1.4rem;overflow-x:auto;
+  font-family:'IBM Plex Mono',monospace;font-size:.82rem;line-height:1.75;color:#d6e4dc;
+}
+.code-snip pre .c{color:#6d8a96;font-style:italic}
+.code-snip pre .s{color:#a8d5b8}
+.code-snip pre .k{color:#8ec7ef}
+.code-snip pre .f{color:#e8c07a}
+
+/* ---------- 리스트 ---------- */
+.layer-list{max-width:var(--max-prose);margin:1.8rem auto;list-style:none}
+.layer-list li{display:grid;grid-template-columns:11rem 1fr;gap:1.2rem;padding:1rem 0;border-bottom:1px solid var(--hairline)}
+.layer-list li:first-child{border-top:1px solid var(--hairline)}
+.layer-list .ln{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:600;color:var(--rel-blue);padding-top:.15rem;line-height:1.6}
+.layer-list .ld{font-size:.96rem;color:var(--ink-soft);line-height:1.8}
+.layer-list .ld a{color:var(--rel-blue);text-decoration:none;border-bottom:1px solid rgba(18,104,179,.4);overflow-wrap:anywhere}
+@media(max-width:600px){.layer-list li{grid-template-columns:1fr;gap:.3rem}}
+
+.hop-path{max-width:56rem;margin:2rem auto;counter-reset:hop;list-style:none}
+.hop-path li{counter-increment:hop;display:grid;grid-template-columns:3rem 1fr;gap:1.1rem;align-items:start;padding:1.05rem 0;position:relative}
+.hop-path li::before{
+  content:counter(hop);font-family:'IBM Plex Mono',monospace;font-weight:600;
+  width:2.4rem;height:2.4rem;border-radius:50%;background:var(--panel);
+  border:2px solid var(--node-green);color:var(--node-green);
+  display:flex;align-items:center;justify-content:center;font-size:.95rem;z-index:1;
+}
+.hop-path li:not(:last-child)::after{content:"";position:absolute;left:1.2rem;top:3.4rem;bottom:-.6rem;width:2px;background:var(--hairline)}
+.hop-path .hd{font-size:.98rem;line-height:1.8;padding-top:.35rem}
+.hop-path .hd b{font-weight:600}
+.hop-path .hd a{color:var(--rel-blue);text-decoration:none;border-bottom:1px solid rgba(18,104,179,.4)}
+
+/* ---------- 이점 카드 ---------- */
+.reason-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem;margin:2.4rem auto;max-width:56rem}
+.reason-card{background:var(--panel);border:1px solid var(--hairline);border-radius:14px;padding:1.7rem 1.6rem;position:relative}
+.reason-card::before{content:"";position:absolute;top:1.8rem;left:0;width:4px;height:2rem;border-radius:0 4px 4px 0;background:var(--node-green)}
+.reason-card:nth-child(2)::before{background:var(--rel-blue)}
+.reason-card:nth-child(3)::before{background:var(--node-amber)}
+.reason-card h4{font-family:'Hahmlet',serif;font-size:1.02rem;font-weight:600;margin-bottom:.7rem}
+.reason-card p{font-size:.92rem;line-height:1.8;color:var(--ink-soft)}
+.reason-card p b{color:var(--ink);font-weight:600}
+@media(max-width:820px){.reason-grid{grid-template-columns:1fr}}
+
+/* ---------- 검색 결과 카드 (시그니처) ---------- */
+.search-demo{max-width:56rem;margin:2.6rem auto}
+.query-pill{
+  background:var(--ink);color:#eaf4ef;border-radius:14px 14px 14px 4px;
+  padding:1.1rem 1.5rem;max-width:34rem;
+  font-family:'Hahmlet',serif;font-size:1.05rem;font-weight:500;
+  position:relative;margin-bottom:1.6rem;
+}
+.query-pill .qk{
+  font-family:'IBM Plex Mono',monospace;font-size:.66rem;letter-spacing:.14em;
+  color:#7fb4e0;text-transform:uppercase;display:block;margin-bottom:.4rem;font-weight:600;
+}
+.result-card{
+  background:var(--panel);border:1px solid var(--hairline);border-radius:14px;
+  padding:1.5rem 1.7rem;margin-bottom:1rem;
+  display:grid;grid-template-columns:1fr 9rem;gap:1.4rem;align-items:start;
+}
+.result-card .rt{font-family:'Hahmlet',serif;font-size:1.12rem;font-weight:600;margin-bottom:.5rem}
+.result-card .ro{font-size:.9rem;line-height:1.8;color:var(--ink-soft)}
+.result-card .rs{text-align:right}
+.result-card .rs .sv{font-family:'IBM Plex Mono',monospace;font-size:1.3rem;font-weight:600;color:var(--node-green)}
+.result-card .rs .sl{font-family:'IBM Plex Mono',monospace;font-size:.64rem;letter-spacing:.12em;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:.3rem}
+.result-card .strack{background:#e0e7e3;border-radius:999px;height:8px;margin-top:.6rem;overflow:hidden}
+.result-card .sbar{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--node-green),var(--rel-blue))}
+@media(max-width:640px){.result-card{grid-template-columns:1fr}.result-card .rs{text-align:left}}
+
+/* ---------- Gradio 목업 ---------- */
+.gradio-mock{
+  max-width:56rem;margin:2.6rem auto;background:var(--panel);
+  border:1px solid var(--hairline);border-radius:16px;overflow:hidden;
+  box-shadow:0 2px 14px rgba(18,36,48,.05);
+}
+.gm-bar{
+  background:#f0f4f1;border-bottom:1px solid var(--hairline);
+  padding:.7rem 1.3rem;display:flex;align-items:center;gap:.5rem;
+}
+.gm-bar i{width:.7rem;height:.7rem;border-radius:50%;display:inline-block}
+.gm-bar i:nth-child(1){background:#e8837a}.gm-bar i:nth-child(2){background:#ecc55f}.gm-bar i:nth-child(3){background:#7dc98f}
+.gm-bar span{font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--ink-soft);margin-left:.6rem}
+.gm-body{padding:2rem 2.2rem}
+.gm-title{font-family:'Hahmlet',serif;font-size:1.25rem;font-weight:600;text-align:center;margin-bottom:.4rem}
+.gm-desc{font-size:.86rem;color:var(--ink-soft);text-align:center;margin-bottom:1.6rem}
+.gm-field{margin-bottom:1.2rem}
+.gm-label{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.1em;color:var(--ink-soft);text-transform:uppercase;display:block;margin-bottom:.45rem;font-weight:600}
+.gm-input{
+  border:1.5px solid var(--hairline);border-radius:10px;padding:.9rem 1.1rem;
+  font-family:'Noto Serif KR',serif;font-size:.92rem;color:var(--ink-soft);
+  background:#fafbfa;min-height:4.2rem;
+}
+.gm-output{
+  border:1.5px solid var(--hairline);border-radius:10px;padding:.9rem 1.1rem;
+  font-family:'IBM Plex Mono',monospace;font-size:.76rem;line-height:1.8;
+  color:var(--ink-soft);background:#fafbfa;
+}
+.gm-examples{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:1.3rem}
+.gm-ex{
+  font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--rel-blue);
+  border:1px solid rgba(18,104,179,.35);border-radius:999px;padding:.32rem .85rem;
+  background:#f2f7fb;
+}
+@media(max-width:600px){.gm-body{padding:1.4rem 1.2rem}}
+.fig-caption{
+  font-family:'IBM Plex Mono',monospace;font-size:.78rem;color:var(--ink-soft);
+  text-align:center;margin:1.2rem auto 0;letter-spacing:.03em;line-height:1.7;max-width:56rem;
+}
+.fig-caption b{color:var(--rel-blue);font-weight:600}
+
+/* ---------- 콜아웃 ---------- */
+.note-box{
+  max-width:var(--max-prose);margin:2rem auto;
+  background:#eef4f8;border:1px solid #cfdfeb;border-radius:14px;padding:1.5rem 1.7rem;
+}
+.note-box .nk{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.14em;color:var(--rel-blue);text-transform:uppercase;display:block;margin-bottom:.6rem;font-weight:600}
+.note-box p{font-size:.92rem;line-height:1.85;color:#33495a}
+.note-box a{color:var(--rel-blue);border-bottom:1px solid rgba(18,104,179,.4);text-decoration:none;overflow-wrap:anywhere}
+.warn-box{
+  max-width:var(--max-prose);margin:2rem auto;
+  background:#fbf6ec;border:1px solid #ecdcbc;border-radius:14px;padding:1.5rem 1.7rem;
+}
+.warn-box .wk{font-family:'IBM Plex Mono',monospace;font-size:.72rem;letter-spacing:.14em;color:var(--node-amber);text-transform:uppercase;display:block;margin-bottom:.6rem;font-weight:600}
+.warn-box p{font-size:.92rem;line-height:1.85;color:#4a4232}
+
+/* ---------- 요약 ---------- */
+.summary-panel{
+  background:var(--ink);color:#dce8e3;border-radius:18px;max-width:56rem;
+  margin:3rem auto 0;padding:3rem 2.6rem;position:relative;overflow:hidden;
+}
+.summary-panel::after{content:"";position:absolute;right:-70px;top:-70px;width:240px;height:240px;border-radius:50%;border:1.5px solid rgba(142,199,239,.3)}
+.summary-panel::before{content:"";position:absolute;right:20px;bottom:-90px;width:200px;height:200px;border-radius:50%;border:1.5px solid rgba(126,207,168,.25)}
+.summary-panel h2{color:#fff;margin-bottom:1.3rem;font-size:1.6rem}
+.summary-panel p{max-width:42rem;line-height:1.95;position:relative;z-index:1}
+.summary-panel p+p{margin-top:1.1rem}
+.next-chip{
+  display:inline-block;margin-top:2rem;font-family:'IBM Plex Mono',monospace;
+  font-size:.82rem;color:#8ec7ef;border:1px solid rgba(142,199,239,.5);
+  border-radius:999px;padding:.45rem 1.2rem;overflow-wrap:anywhere;max-width:100%;
+}
+
+footer{
+  max-width:72rem;margin:4rem auto 0;padding:3rem 2rem 3.5rem;
+  font-family:'IBM Plex Mono',monospace;font-size:.74rem;color:var(--ink-soft);
+  letter-spacing:.04em;line-height:2;border-top:1px solid var(--hairline);
+}
+footer b{color:var(--ink)}
+
+@media(max-width:600px){
+  body{font-size:16px}
+  .hero-inner{padding:3.6rem 1.4rem 2rem}
+  main{padding:0 1.4rem}
+  .toc-inner{padding:1.2rem 1.4rem;gap:1.1rem}
+  .summary-panel{padding:2.2rem 1.6rem}
+  .code-snip pre{font-size:.74rem;padding:1rem 1.1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="hero-inner">
+    <p class="series-line">Building Neo4j-Powered Applications with LLMs · Part II — Haystack과 Neo4j의 통합: AI 검색 구축 실무 가이드</p>
+    <span class="cypher-chip"><span class="k">MATCH</span> (:Chapter {n: 5})-[:SEARCHES]-&gt;(:VectorIndex)</span>
+    <h1 class="title">Neo4j와 <em>Haystack</em>으로<br>강력한 검색을 구현하다</h1>
+    <p class="hero-lede">키워드가 아니라 의미로 찾는 검색이 있다. 영화 줄거리를 1,536차원의 벡터로 새기고, 코사인 유사도의 인덱스를 세우고, Haystack 파이프라인으로 잇는다. 마지막에는 Gradio 챗봇이 자연어 질문에 영화를 추천한다.</p>
+    <div class="hero-meta">
+      <span>Ravindranatha Anthapu · Siddhant Agarwal</span>
+      <span>Packt Publishing, 2025</span>
+      <span>Chapter 5 · pp. 95–115</span>
+    </div>
+  </div>
+  <svg class="vsearch" viewBox="0 0 540 400" aria-hidden="true">
+    <defs>
+      <marker id="varr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#7fb4e0"/></marker>
+    </defs>
+    <rect class="st" x="30" y="30" width="220" height="54" rx="10"/>
+    <text class="tt" x="140" y="53">"a hero saves the world"</text>
+    <text class="ts" x="140" y="71">query</text>
+    <rect class="st" x="30" y="128" width="220" height="54" rx="10"/>
+    <text class="tt" x="140" y="151">OpenAITextEmbedder</text>
+    <text class="ts" x="140" y="169">text-embedding-ada-002</text>
+    <rect class="st" x="30" y="226" width="220" height="60" rx="10" style="stroke:#1268b3"/>
+    <text class="tt" x="140" y="249" style="fill:#8ec7ef">db.index.vector</text>
+    <text class="tt" x="140" y="264" style="fill:#8ec7ef">.queryNodes</text>
+    <text class="ts" x="140" y="279">1536 dims · cosine</text>
+    <path class="fl dot" d="M140 84 V 122" stroke-dasharray="6 5"/>
+    <path class="fl dot" d="M140 182 V 220" stroke-dasharray="6 5"/>
+    <path class="fl" d="M250 256 H 300"/>
+    <!-- results -->
+    <g>
+      <rect x="310" y="120" width="200" height="56" rx="9" fill="rgba(126,207,168,.1)" stroke="#7ecfa8" stroke-width="1.2"/>
+      <text class="tt" x="330" y="143" text-anchor="start" style="font-size:10.5px">The Matrix</text>
+      <rect class="scoretrack" x="330" y="154" width="140" height="6" rx="3"/>
+      <rect class="scorebar" x="330" y="154" width="137" height="6" rx="3"/>
+      <text class="ts" x="492" y="161" style="fill:#7ecfa8">0.98</text>
+      <rect x="310" y="196" width="200" height="56" rx="9" fill="rgba(255,255,255,.03)" stroke="#4a6a80" stroke-width="1.1"/>
+      <text class="tt" x="330" y="219" text-anchor="start" style="font-size:10.5px">Inception</text>
+      <rect class="scoretrack" x="330" y="230" width="140" height="6" rx="3"/>
+      <rect class="scorebar" x="330" y="230" width="134" height="6" rx="3" style="fill:#8fb8d8"/>
+      <text class="ts" x="492" y="237">0.96</text>
+      <rect x="310" y="272" width="200" height="56" rx="9" fill="rgba(255,255,255,.03)" stroke="#4a6a80" stroke-width="1.1"/>
+      <text class="tt" x="330" y="295" text-anchor="start" style="font-size:10.5px">The Dark Knight</text>
+      <rect class="scoretrack" x="330" y="306" width="140" height="6" rx="3"/>
+      <rect class="scorebar" x="330" y="306" width="131" height="6" rx="3" style="fill:#8fb8d8"/>
+      <text class="ts" x="492" y="313">0.94</text>
+    </g>
+    <circle cx="70" cy="350" r="6" fill="#4a6a80" opacity=".55"/>
+    <circle cx="150" cy="372" r="4" fill="#4a6a80" opacity=".45"/>
+    <line x1="70" y1="350" x2="150" y2="372" stroke="#4a6a80" stroke-width="1" opacity=".4"/>
+  </svg>
+</header>
+
+<!-- ================= TOC ================= -->
+<nav class="toc-strip" aria-label="이 장의 주제">
+  <div class="toc-inner">
+    <span class="toc-label">이 장의 주제</span>
+    <a href="#sec1"><span class="n">01</span>임베딩 생성으로 그래프를 강화하다</a>
+    <a href="#sec2"><span class="n">02</span>Haystack과 Neo4j의 벡터 검색 연결</a>
+    <a href="#sec3"><span class="n">03</span>Gradio 검색 챗봇의 구축</a>
+    <a href="#sec4"><span class="n">04</span>Haystack 통합의 미세조정</a>
+  </div>
+</nav>
+
+<main>
+
+<!-- ================= 도입 ================= -->
+<section class="section" id="intro">
+  <div class="prose">
+    <p>이 장에서 우리는 Haystack을 Neo4j와 통합하는 여정에 오른다. LLM과 그래프 데이터베이스의 능력을 결합해 AI 기반 검색 시스템을 짓는 것이다. <span class="term">Haystack</span>은 현대적 NLP 기법, 기계학습 모델, 그래프 기반 데이터를 활용해 AI 기반 애플리케이션을 만들게 해 주는 오픈소스 프레임워크다. 우리의 지능형 검색에서 Haystack은 LLM과 검색 엔진, 데이터베이스를 오케스트레이션하는 응집력 있는 플랫폼 구실을 하며, 고도로 맥락화되고 적절한 검색 결과를 배달한다.</p>
+    <p>앞 장의 작업 — Neo4j 데이터의 클리닝과 구조화 — 위에서, 우리는 OpenAI의 GPT 모델로 <span class="term">임베딩(embedding)</span>을 생성하는 데서 출발한다. 이 임베딩이 그래프를 살찌워, 뉘앙스 있고 맥락을 아는 검색 질의를 감당할 수 있게 만든다. Haystack은 OpenAI의 모델과 Neo4j 그래프 데이터베이스 사이의 다리 노릇을 하며, 양쪽의 강점을 결합하게 해 준다. 이 장에서는 Neo4j와의 매끄러운 통합을 위해 Haystack을 설정·구성하는 법을 배우고, 강력한 검색 기능을 만든 뒤, Gradio를 이용해 이 완전한 검색 시스템을 완성한다.</p>
+  </div>
+
+  <h3>기술 요건</h3>
+  <ul class="layer-list">
+    <li><span class="ln">Python 3.11</span><span class="ld">시스템에 설치되어 있어야 한다. Neo4j 데이터베이스와의 스크립팅·상호작용에 쓴다.</span></li>
+    <li><span class="ln">Neo4j AuraDB<br>또는 로컬 인스턴스</span><span class="ld">그래프 데이터를 저장하고 질의할 Neo4j 데이터베이스 접근이 필요하다. 앞 장의 <code>graph_build.py</code> 스크립트를 따라왔다면 이미 설정되고 데이터가 채워진 같은 인스턴스를 계속 쓰면 된다. 연속성이 보장되고, 이미 임포트된 구조화 데이터 위에 쌓아 올릴 수 있다.</span></li>
+    <li><span class="ln">Cypher 질의 언어</span><span class="ld">그래프의 생성·질의에 광범위하게 쓰므로 친숙함이 필수다.</span></li>
+    <li><span class="ln">Neo4j Python 드라이버</span><span class="ld"><code>pip install neo4j</code></span></li>
+    <li><span class="ln">Haystack v2.5.0</span><span class="ld"><code>pip install haystack-ai</code></span></li>
+    <li><span class="ln">OpenAI API 키</span><span class="ld">GPT 기반 모델로 임베딩을 생성하려면 필요하다. 계정이 없다면 <a href="https://platform.openai.com/signup" target="_blank" rel="noopener">OpenAI에 가입</a>하고, 로그인 후 대시보드의 <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">API keys 섹션</a>에서 새 키를 생성한다. <code>pip install openai</code>도 실행한다.</span></li>
+    <li><span class="ln">Gradio</span><span class="ld">사용자 친화적인 챗봇 인터페이스를 만드는 데 쓴다: <code>pip install gradio</code></span></li>
+    <li><span class="ln">Hugging Face 계정</span><span class="ld">챗봇을 Hugging Face Spaces에 호스팅하려면 필요하다. 없다면 <a href="https://huggingface.co/" target="_blank" rel="noopener">huggingface.co</a>에서 가입한다.</span></li>
+    <li><span class="ln">GCS (선택)</span><span class="ld">CSV 파일을 Google Cloud Storage에 저장하고 있다면, 스크립트의 파일 경로가 올바르게 설정되어 있는지 확인한다.</span></li>
+    <li><span class="ln">python-dotenv</span><span class="ld">프로젝트의 환경 변수 관리를 위해 설치한다: <code>pip install python-dotenv</code></span></li>
+  </ul>
+  <div class="warn-box">
+    <span class="wk">Note — API 키</span>
+    <p>무료 티어 API 키는 이 프로젝트의 대부분 용례에서 작동하지 않는다. 필요한 엔드포인트와 사용 한도에 접근하려면 활성화된 유료 OpenAI 구독이 필요하다.</p>
+  </div>
+  <div class="prose">
+    <p>이 장의 모든 코드는 책의 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs" target="_blank" rel="noopener">GitHub 저장소</a>에 있다. 저장소 안에서 이 장과 관련된 코드 예제와 리소스가 담긴 폴더로 이동하면, Neo4j·Haystack 통합의 구현과 영화 데이터셋 기반 AI 검색 시스템 구축에 필요한 스크립트, 파일, 설정을 모두 만날 수 있다. 이 장의 코드 예제를 따라가려면 저장소를 클론하거나 다운로드해 둔다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 1 ================= -->
+<section class="section" id="sec1">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 1})-[:EMBEDS]-&gt;<span class="p">(:MoviePlot)</span></p>
+    <h2>Haystack으로 임베딩을 생성해 Neo4j 그래프를 강화하다</h2>
+  </div>
+  <div class="prose">
+    <p>이 절은 앞 장에서 Neo4j 그래프에 넣은 영화 줄거리의 임베딩 생성에 집중한다. 임베딩은 현대 검색 시스템의 결정적 부품이다. 텍스트를 고차원 벡터로 변환해 유사도 검색을 가능케 하고, 검색 엔진이 단어와 구절 사이의 맥락적 관계를 이해하도록 만들어 검색 결과의 정확성과 적합성을 끌어올린다. 우리는 Haystack을 OpenAI의 GPT 기반 모델과 통합해 이 임베딩을 생성하고, Neo4j 그래프에 저장한다. 더 정확하고 맥락을 아는 검색 기능이 이렇게 열린다.</p>
+  </div>
+
+  <h3>임베딩을 위한 Haystack과 OpenAI 초기화</h3>
+  <div class="prose">
+    <p>임베딩을 생성하기 전에, Haystack이 설정되어 있고 OpenAI의 API와 통합되어 GPT 기반 모델의 임베딩을 가져올 수 있는지 확인해야 한다. 설정 절차는 이렇다.</p>
+  </div>
+  <ol class="hop-path">
+    <li><span class="hd"><b>필요한 라이브러리를 설치한다</b> (아직 하지 않았다면): <code>pip install haystack haystack-ai openai neo4j-haystack</code></span></li>
+    <li><span class="hd"><b>OpenAI API 키를 구성하고</b> <code>.env</code> 파일에 설정되어 있는지 확인한다: <code>OPENAI_API_KEY=your_openai_api_key_here</code></span></li>
+    <li><span class="hd"><b>OpenAI 임베딩으로 Haystack을 초기화한다.</b> Haystack을 초기화하고 임베딩 생성을 위해 OpenAI에 접속하는 Python 스크립트를 만든다.</span></li>
+  </ol>
+  <div class="code-snip">
+    <div class="ch"><span>initialize — Haystack + OpenAI 임베더</span><span class="lang">python</span></div>
+    <pre><span class="c"># 텍스트 임베딩을 위한 Haystack + OpenAI 초기화</span>
+<span class="k">def</span> <span class="f">initialize_haystack</span>():
+    <span class="c"># 문서 저장소 초기화 (지금은 인메모리, 다른 저장소로 구성 가능)</span>
+    document_store = InMemoryDocumentStore()
+    <span class="c"># 텍스트 임베딩 생성을 위한 OpenAITextEmbedder 초기화</span>
+    embedder = OpenAITextEmbedder(
+        api_key=Secret.from_env_var(<span class="s">"OPENAI_API_KEY"</span>),
+        model=<span class="s">"text-embedding-ada-002"</span>
+    )
+    <span class="k">return</span> embedder</pre>
+  </div>
+  <div class="prose">
+    <p>이 구성은 인메모리 문서 저장소로 Haystack을 초기화하고, OpenAI 임베딩을 쓰는 리트리버를 설정한다.</p>
+  </div>
+
+  <h3>영화 줄거리의 임베딩 생성</h3>
+  <div class="prose">
+    <p>다음은 Neo4j 그래프에 저장된 영화 줄거리의 임베딩을 생성할 차례다. 목표는 줄거리 설명을 가져와 임베딩을 생성하고, 그 임베딩을 각 영화 노드에 다시 연결하는 것이다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>1 — Neo4j에서 영화 줄거리 질의</span><span class="lang">python</span></div>
+    <pre><span class="c"># Neo4j에서 영화 줄거리와 제목을 가져온다</span>
+<span class="k">def</span> <span class="f">retrieve_movie_plots</span>():
+    <span class="c"># 각 Movie 노드의 "title", "overview", "tmdbId" 프로퍼티를 가져오는 질의</span>
+    query = <span class="s">"""
+    MATCH (m:Movie)
+    WHERE m.embedding IS NULL
+    RETURN m.tmdbId AS tmdbId, m.title AS title, m.overview AS overview
+    """</span>
+    <span class="k">with</span> driver.session() <span class="k">as</span> session:
+        results = session.run(query)
+        <span class="c"># 각 영화의 제목·줄거리(overview)·ID를 movies 리스트에 담는다</span>
+        movies = [
+            {<span class="s">"tmdbId"</span>: row[<span class="s">"tmdbId"</span>],
+             <span class="s">"title"</span>: row[<span class="s">"title"</span>],
+             <span class="s">"overview"</span>: row[<span class="s">"overview"</span>]}
+            <span class="k">for</span> row <span class="k">in</span> results
+        ]
+    <span class="k">return</span> movies</pre>
+  </div>
+  <div class="prose">
+    <p>이 질의는 그래프의 각 영화에 대해 <code>tmdbId</code>와 줄거리 요약(<code>overview</code>)을 반환한다. <code>WHERE m.embedding IS NULL</code> 조건에 주목하자. 아직 임베딩이 없는 영화만 골라내므로, 중단된 작업을 이어서 실행해도 중복 비용이 발생하지 않는다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>2 — OpenAI·Haystack으로 임베딩 생성 (병렬)</span><span class="lang">python</span></div>
+    <pre><span class="c"># ThreadPoolExecutor를 이용한 병렬 임베딩 생성</span>
+<span class="k">def</span> <span class="f">generate_and_store_embeddings</span>(embedder, movies, max_workers=10):
+    results_to_store = []
+    <span class="k">def</span> <span class="f">process_movie</span>(movie):
+        title = movie.get(<span class="s">"title"</span>, <span class="s">"Unknown Title"</span>)
+        overview = str(movie.get(<span class="s">"overview"</span>, <span class="s">""</span>)).strip()
+        tmdbId = movie.get(<span class="s">"tmdbId"</span>)
+        <span class="k">if not</span> overview:
+            <span class="f">print</span>(<span class="s">f"Skipping {title} — No overview available."</span>)
+            <span class="k">return None</span>
+        <span class="k">try</span>:
+            <span class="f">print</span>(<span class="s">f"Generating embedding for: {title}"</span>)
+            embedding_result = embedder.run(overview)
+            embedding = embedding_result.get(<span class="s">"embedding"</span>)
+            <span class="k">if</span> embedding:
+                <span class="k">return</span> (tmdbId, embedding)
+            <span class="k">else</span>:
+                <span class="f">print</span>(<span class="s">f"No embedding generated for: {title}"</span>)
+        <span class="k">except</span> Exception <span class="k">as</span> e:
+            <span class="f">print</span>(<span class="s">f"Error processing {title}: {e}"</span>)
+        <span class="k">return None</span></pre>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>3 — Neo4j에 임베딩 저장</span><span class="lang">python</span></div>
+    <pre><span class="c"># 임베딩을 Neo4j에 다시 저장한다</span>
+<span class="k">def</span> <span class="f">store_embedding_in_neo4j</span>(tmdbId, embedding):
+    query = <span class="s">"""
+    MATCH (m:Movie {tmdbId: $tmdbId})
+    SET m.embedding = $embedding
+    """</span>
+    <span class="k">with</span> driver.session() <span class="k">as</span> session:
+        session.run(query, tmdbId=tmdbId, embedding=embedding)
+    <span class="f">print</span>(<span class="s">f"Stored embedding for TMDB ID: {tmdbId}"</span>)</pre>
+  </div>
+  <div class="prose">
+    <p>이 코드는 Neo4j 그래프의 각 Movie 노드에 <code>embedding</code>이라는 프로퍼티로 임베딩을 저장한다. 마지막으로 저장을 검증한다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>4 — 임베딩 저장 검증</span><span class="lang">python</span></div>
+    <pre><span class="c"># Neo4j에 저장된 임베딩 검증</span>
+<span class="k">def</span> <span class="f">verify_embeddings</span>():
+    query = <span class="s">"""
+    MATCH (m:Movie)
+    WHERE exists(m.embedding)
+    RETURN m.title, m.embedding
+    LIMIT 10
+    """</span>
+    <span class="k">with</span> driver.session() <span class="k">as</span> session:
+        results = session.run(query)
+        <span class="k">for</span> record <span class="k">in</span> results:
+            title = record[<span class="s">"title"</span>]
+            embedding = np.array(record[<span class="s">"embedding"</span>])[:5]
+            <span class="f">print</span>(<span class="s">f" {title}: {embedding}..."</span>)</pre>
+  </div>
+  <div class="prose">
+    <p>이 질의는 영화 몇 편의 제목과 임베딩을 반환해, 임베딩이 성공적으로 저장되었는지 검증하게 해 준다.</p>
+  </div>
+  <div class="note-box">
+    <span class="nk">Note</span>
+    <p>여기 실은 것은 코드 조각일 뿐이다. 전체 버전은 GitHub 저장소의 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/blob/main/ch5/generate_embeddings.py" target="_blank" rel="noopener">ch5/generate_embeddings.py</a>에 있다.</p>
+  </div>
+  <div class="prose">
+    <p class="lead-q">이제 그래프가 임베딩으로 살찌워졌고, 유사도 검색이 더해졌다. 더 맥락을 알고 지능적인 질의가 가능해진 것이다. 단순한 키워드 매칭이 아니라 텍스트의 <strong>의미</strong>에 기초한 고급 검색 연산의 문이 열렸다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 2 ================= -->
+<section class="section" id="sec2">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 2})-[:INDEXES]-&gt;<span class="p">(:Embedding)</span></p>
+    <h2>고급 벡터 검색을 위해 Haystack을 Neo4j에 연결하다</h2>
+  </div>
+  <div class="prose">
+    <p>영화 임베딩이 Neo4j에 저장되었으니, 이제 <code>embedding</code> 프로퍼티 위에 <span class="term">벡터 인덱스(vector index)</span>를 구성해야 한다. 벡터 유사도에 기초한 효율적 영화 검색이 이 인덱스에서 나온다. Neo4j에 벡터 인덱스를 만들면, 고차원 임베딩 공간에서 가까운 노드들의 신속한 검색이 가능해지고, 비슷한 줄거리의 영화를 찾는 것 같은 정교한 질의를 수행할 수 있게 된다. 벡터 인덱스가 만들어지면 Haystack과 통합해 Neo4j에서 벡터 기반 검색을 수행한다. 이 검색은 <strong>코사인 유사도</strong> 같은 벡터 유사도 메커니즘에 기초한다.</p>
+  </div>
+
+  <h3>Neo4j에 벡터 검색 인덱스 만들기</h3>
+  <div class="prose">
+    <p>먼저 <code>embedding</code> 프로퍼티에 기존 벡터 인덱스가 있다면 삭제하고, 벡터 검색을 위한 새 인덱스를 만든다. Python 스크립트 안에서 Cypher 질의로 하는 방법이다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>vector index — 삭제 후 재생성</span><span class="lang">python</span></div>
+    <pre><span class="k">def</span> <span class="f">create_or_reset_vector_index</span>():
+    <span class="k">with</span> driver.session() <span class="k">as</span> session:
+        <span class="k">try</span>:
+            <span class="c"># 기존 벡터 인덱스가 있으면 삭제</span>
+            session.run(<span class="s">"DROP INDEX overview_embeddings IF EXISTS"</span>)
+            <span class="f">print</span>(<span class="s">"Old index dropped"</span>)
+        <span class="k">except</span>:
+            <span class="f">print</span>(<span class="s">"No index to drop"</span>)
+        <span class="c"># embedding 프로퍼티에 새 벡터 인덱스 생성</span>
+        <span class="f">print</span>(<span class="s">"Creating new vector index"</span>)
+        query_index = <span class="s">"""
+        CREATE VECTOR INDEX overview_embeddings IF NOT EXISTS
+        FOR (m:Movie) ON (m.embedding)
+        OPTIONS {indexConfig: {
+            `vector.dimensions`: 1536,
+            `vector.similarity_function`: 'cosine'}}
+        """</span>
+        session.run(query_index)
+        <span class="f">print</span>(<span class="s">"Vector index created successfully"</span>)</pre>
+  </div>
+
+  <h3>Haystack과 Neo4j 벡터 인덱스로 유사도 검색 수행</h3>
+  <div class="prose">
+    <p>Neo4j 그래프에 벡터 인덱스가 생겼으니, Haystack을 지렛대 삼아 영화 줄거리 임베딩에 기초한 유사도 검색 질의를 수행할 수 있다. 주어진 영화 줄거리나 임의의 텍스트 질의를 기존 영화 개요들과 견주어, 임베딩에 기초한 가장 적절한 결과를 돌려주는 접근이다. 이 예제에서는 Haystack 라이브러리의 <code>OpenAITextEmbedder</code> 모델로 텍스트 질의를 임베딩으로 변환한 뒤, 그것으로 Neo4j 그래프에서 비슷한 줄거리의 영화를 찾는다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>query embedding — 질의 임베딩 생성</span><span class="lang">python</span></div>
+    <pre>text_embedder = OpenAITextEmbedder(
+    api_key=Secret.from_env_var(<span class="s">"OPENAI_API_KEY"</span>),
+    model=<span class="s">"text-embedding-ada-002"</span>
+)
+<span class="c"># 1단계: 질의의 임베딩 생성</span>
+query_embedding = text_embedder.run(query).get(<span class="s">"embedding"</span>)
+
+<span class="k">if</span> query_embedding <span class="k">is None</span>:
+    <span class="f">print</span>(<span class="s">"Query embedding not created successfully."</span>)
+    <span class="k">return</span>
+
+<span class="f">print</span>(<span class="s">"Query embedding created successfully."</span>)</pre>
+  </div>
+
+  <h3>Haystack과 Neo4j로 벡터 검색 질의 실행 — Cypher 없이</h3>
+  <div class="prose">
+    <p>벡터 인덱스가 만들어지고 임베딩이 Neo4j에 저장되었으면, 질의나 샘플 영화 줄거리를 넘겨 벡터 기반 검색을 수행할 수 있다. 시스템이 질의의 임베딩을 생성하고, Neo4j에 저장된 임베딩들과 비교해, 가장 관련 있는 결과를 반환한다. Cypher 없이 가장 유사한 영화 줄거리를 표시하는 Haystack 벡터 검색의 예다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>search — query_by_embedding</span><span class="lang">python</span></div>
+    <pre><span class="c"># 2단계: 질의 임베딩으로 유사 문서 검색</span>
+similar_documents = document_store.query_by_embedding(
+    query_embedding, top_k=3
+)
+<span class="k">if not</span> similar_documents:
+    <span class="f">print</span>(<span class="s">"No similar documents found."</span>)
+    <span class="k">return</span>
+<span class="f">print</span>(<span class="s">f"Found {len(similar_documents)} similar documents."</span>)
+
+<span class="c"># 3단계: 결과 표시</span>
+<span class="k">for</span> doc <span class="k">in</span> similar_documents:
+    title = doc.meta.get(<span class="s">"title"</span>, <span class="s">"N/A"</span>)
+    overview = doc.meta.get(<span class="s">"overview"</span>, <span class="s">"N/A"</span>)
+    score = doc.score
+    <span class="f">print</span>(<span class="s">f"Title: {title}\nOverview: {overview}\n"</span>
+          <span class="s">f"Score: {score:.2f}\n{'-'*40}"</span>)</pre>
+  </div>
+
+  <h3>Cypher와 Haystack으로 벡터 검색 질의 실행</h3>
+  <div class="prose">
+    <p>이번에는 Neo4j의 Cypher 질의를 Haystack과 통합해 벡터 검색을 실행한다. Haystack으로 벡터 인덱스를 직접 질의하는 방식과 달리, 이 접근은 <strong>Cypher의 유연성</strong> — 출연진과 장르 같은 영화 메타데이터를 임베딩과 함께 반환하는 능력 — 을 벡터 유사도 검색의 효율성과 결합한다. 과정에 담긴 개념적 단계는 셋이다. 첫째, <code>OpenAITextEmbedder</code>로 사용자의 텍스트 질의(예: 영화 줄거리)를 고차원 벡터 임베딩으로 <strong>변환</strong>한다. 둘째, Cypher로 Neo4j 벡터 인덱스에 저장된 영화 줄거리 임베딩과 질의 임베딩을 비교해 유사한 영화를 <strong>검색</strong>한다. 셋째, 각 결과에 대해 제목·개요·출연진·장르·점수(유사도) 같은 추가 정보를 붙여 <strong>풍부해진 데이터를 반환</strong>한다. 구현은 네 단계로 진행된다.</p>
+  </div>
+  <ol class="hop-path">
+    <li><span class="hd"><b>Cypher 질의를 정의한다.</b> Neo4j 벡터 인덱스(<code>overview_embeddings</code>)를 검색해, 질의 임베딩과 영화 임베딩 사이의 코사인 유사도로 가장 유사한 <code>top_k</code>편을 가져오는 질의다.</span></li>
+    <li><span class="hd"><b>질의 임베딩을 생성한다.</b> <code>OpenAITextEmbedder</code>로 사용자 입력 질의를 임베딩으로 변환한다. 이 임베딩이 저장된 영화 임베딩과의 비교를 위해 Neo4j 벡터 인덱스로 전달된다.</span></li>
+    <li><span class="hd"><b>Haystack 파이프라인으로 벡터 검색을 실행한다.</b> <code>query_embedder</code>가 사용자 질의에서 임베딩을 생성하고, <code>retriever</code>가 질의 임베딩으로 Neo4j에서 Cypher 질의를 실행해 가장 유사한 영화들을 반환한다.</span></li>
+    <li><span class="hd"><b>결과를 표시한다.</b> 검색이 끝나면 Neo4j 그래프에서 결과를 추출해 영화 제목, 개요, 유사도 점수를 표시한다.</span></li>
+  </ol>
+  <div class="code-snip">
+    <div class="ch"><span>1·2 — Cypher 질의와 임베더</span><span class="lang">python</span></div>
+    <pre>cypher_query = <span class="s">"""
+    CALL db.index.vector.queryNodes("overview_embeddings",
+        $top_k, $query_embedding)
+    YIELD node AS movie, score
+    MATCH (movie:Movie)
+    RETURN movie.title AS title, movie.overview AS overview, score
+"""</span>
+
+text_embedder = OpenAITextEmbedder(
+    api_key=Secret.from_env_var(<span class="s">"OPENAI_API_KEY"</span>),
+    model=<span class="s">"text-embedding-ada-002"</span>
+)</pre>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>3 — Haystack 파이프라인 구성과 실행</span><span class="lang">python</span></div>
+    <pre>retriever = Neo4jDynamicDocumentRetriever(
+    client_config=client_config,
+    runtime_parameters=[<span class="s">"query_embedding"</span>],
+    compose_doc_from_result=<span class="k">True</span>,
+    verify_connectivity=<span class="k">True</span>,
+)
+pipeline = Pipeline()
+pipeline.add_component(<span class="s">"query_embedder"</span>, text_embedder)
+pipeline.add_component(<span class="s">"retriever"</span>, retriever)
+pipeline.connect(
+    <span class="s">"query_embedder.embedding"</span>, <span class="s">"retriever.query_embedding"</span>
+)
+result = pipeline.run(
+    {
+        <span class="s">"query_embedder"</span>: {<span class="s">"text"</span>: query},
+        <span class="s">"retriever"</span>: {
+            <span class="s">"query"</span>: cypher_query,
+            <span class="s">"parameters"</span>: {
+                <span class="s">"index"</span>: <span class="s">"overview_embeddings"</span>, <span class="s">"top_k"</span>: 3
+            },
+        },
+    }
+)</pre>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>4 — 결과 표시</span><span class="lang">python</span></div>
+    <pre><span class="c"># 리트리버 결과에서 문서 추출</span>
+documents = result[<span class="s">"retriever"</span>][<span class="s">"documents"</span>]
+<span class="k">for</span> doc <span class="k">in</span> documents:
+    <span class="c"># 문서 메타데이터에서 제목·개요 추출</span>
+    title = doc.meta.get(<span class="s">"title"</span>, <span class="s">"N/A"</span>)
+    overview = doc.meta.get(<span class="s">"overview"</span>, <span class="s">"N/A"</span>)
+    <span class="c"># 문서에서 점수 추출</span>
+    score = getattr(doc, <span class="s">"score"</span>, <span class="k">None</span>)
+    score_display = <span class="s">f"{score:.2f}"</span> <span class="k">if</span> score <span class="k">is not None else</span> <span class="s">"N/A"</span>
+    <span class="f">print</span>(<span class="s">f"Title: {title}\nOverview: {overview}\n"</span>
+          <span class="s">f"Score: {score_display}\n{'-'*40}\n"</span>)</pre>
+  </div>
+  <div class="prose"><p>Cypher와 Haystack을 함께 쓰는 데는 여러 이점이 따른다.</p></div>
+  <div class="reason-grid">
+    <div class="reason-card">
+      <h4>Cypher의 유연성</h4>
+      <p>Cypher를 Haystack과 결합하면 임베딩만 질의하는 데 그치지 않고, <b>출연진·장르·개체 사이 관계</b> 같은 그래프 기반 추가 정보까지 가져올 수 있다.</p>
+    </div>
+    <div class="reason-card">
+      <h4>풍부해진 결과</h4>
+      <p>가장 유사한 영화의 검색에 더해, 관련 메타데이터(배우, 장르, 평점)를 가져오거나 개봉 연도·장르 같은 <b>추가 필터 조건</b>으로 검색을 정제하도록 질의를 쉽게 확장할 수 있다.</p>
+    </div>
+    <div class="reason-card">
+      <h4>대규모 그래프 최적화</h4>
+      <p>Neo4j의 벡터 인덱스는 복잡한 관계를 지닌 대규모 데이터셋의 효율적 질의를 허락하고, Haystack의 임베딩 모델은 영화 줄거리의 <b>정확한 이해</b>를 제공한다.</p>
+    </div>
+  </div>
+
+  <h3>용례 하나</h3>
+  <div class="prose">
+    <p><em>A hero must save the world from destruction</em>(영웅이 파멸로부터 세계를 구해야 한다) 같은 줄거리의 영화를 찾는다고 하자. 방금 만든 파이프라인으로 관련 결과를 가져올 수 있다.</p>
+  </div>
+  <div class="search-demo">
+    <div class="query-pill">
+      <span class="qk">Query</span>
+      "A hero must save the world from destruction"
+    </div>
+    <div class="result-card">
+      <div>
+        <p class="rt">The Matrix</p>
+        <p class="ro">A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers.</p>
+      </div>
+      <div class="rs"><span class="sl">Score</span><span class="sv">0.98</span><div class="strack"><div class="sbar" style="width:98%"></div></div></div>
+    </div>
+    <div class="result-card">
+      <div>
+        <p class="rt">Inception</p>
+        <p class="ro">A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a CEO.</p>
+      </div>
+      <div class="rs"><span class="sl">Score</span><span class="sv" style="color:var(--rel-blue)">0.96</span><div class="strack"><div class="sbar" style="width:96%"></div></div></div>
+    </div>
+    <div class="result-card">
+      <div>
+        <p class="rt">The Dark Knight</p>
+        <p class="ro">Batman raises the stakes in his war on crime, with the help of Lieutenant Jim Gordon and District Attorney Harvey Dent.</p>
+      </div>
+      <div class="rs"><span class="sl">Score</span><span class="sv" style="color:var(--rel-blue)">0.94</span><div class="strack"><div class="sbar" style="width:94%"></div></div></div>
+    </div>
+  </div>
+  <div class="prose">
+    <p>이 파이프라인은 두 세계의 최선을 결합한다. 벡터 임베딩을 통한 유사도 검색과, Cypher를 통한 그래프 질의의 풍부한 데이터 능력이다. 영화 같은 대규모 데이터셋 위에서 강력하고 유연한 검색이 가능해진다.</p>
+  </div>
+  <div class="note-box">
+    <span class="nk">Note</span>
+    <p>여기 실은 것은 코드 조각일 뿐이다. 전체 버전은 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/blob/main/ch5/vector_search.py" target="_blank" rel="noopener">ch5/vector_search.py</a>에 있다.</p>
+  </div>
+  <div class="prose">
+    <p>이제 Haystack이 Neo4j에 연결되었고, 고급 벡터 검색 기능이 살아났다. 벡터 인덱스가 자리 잡았으니 Neo4j는 임베딩 유사도로 비슷한 영화 노드를 효율적으로 찾을 수 있고, Haystack의 통합 덕분에 <code>Neo4jDynamicDocumentRetriever</code>로 이 검색을 매끄럽게 수행할 수 있다. 이 리트리버는 벡터 임베딩과 Neo4j의 그래프 능력을 지렛대 삼아 그래프 안의 유사 항목을 찾아낸다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 3 ================= -->
+<section class="section" id="sec3">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 3})-[:CHATS_VIA]-&gt;<span class="p">(:Gradio)</span></p>
+    <h2>Gradio와 Haystack으로 검색 기반 챗봇을 짓다</h2>
+  </div>
+  <div class="prose">
+    <p>이 절에서는 Gradio를 통합해 Haystack과 Neo4j가 구동하는 대화형 챗봇 인터페이스를 만든다. Gradio는 챗봇과 상호작용하는 웹 기반 인터페이스를 쉽게 만들게 해 준다. 챗봇은 사용자의 질의 입력을 받아 Neo4j에 저장된 영화 임베딩의 벡터 기반 검색을 촉발하고, 영화 제목·개요·유사도 점수를 포함한 상세한 응답을 돌려준다. 유익하고 사용자 친화적인 경험이다.</p>
+  </div>
+
+  <h3>Gradio 인터페이스 설정</h3>
+  <div class="prose">
+    <p>Gradio를 아직 설치하지 않았다면 <code>pip install gradio</code>로 설치한다. 다음으로 검색 파이프라인을 촉발하고 결과를 표시하는 기본 Gradio 인터페이스를 설정한다.</p>
+  </div>
+  <div class="note-box">
+    <span class="nk">Note</span>
+    <p>이 장의 스크립트는 Gradio v5.23.1에서 정상 작동한다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>gradio — 챗봇 인터페이스 정의</span><span class="lang">python</span></div>
+    <pre><span class="k">import</span> gradio <span class="k">as</span> gr
+
+<span class="c"># Gradio 챗봇 인터페이스 정의</span>
+<span class="k">def</span> <span class="f">chatbot</span>(user_input):
+    <span class="k">return</span> perform_vector_search_cypher(user_input)
+
+<span class="c"># Gradio 인터페이스 생성</span>
+chat_interface = gr.Interface(
+    fn=chatbot,
+    inputs=gr.Textbox(
+        placeholder=<span class="s">"What kind of movie would you like to watch?"</span>,
+        lines=3,
+        label=<span class="s">"Your movie preference"</span>
+    ),
+    outputs=gr.Textbox(label=<span class="s">"Recommendations"</span>, lines=12),
+    title=<span class="s">"AI Movie Recommendation System"</span>,
+    description=<span class="s">"Ask me about movies! I can recommend movies</span>
+<span class="s">        based on your preferences."</span>,
+    examples=[
+        [<span class="s">"I want to watch a sci-fi movie with time travel"</span>],
+        [<span class="s">"Recommend me a romantic comedy with a happy ending"</span>],
+        [<span class="s">"I'm in the mood for something with superheroes</span>
+<span class="s">          but not too serious"</span>],
+        [<span class="s">"I want a thriller that keeps me on the edge of my seat"</span>],
+        [<span class="s">"Show me movies about artificial intelligence</span>
+<span class="s">          taking over the world"</span>]
+    ],
+    flagging_mode=<span class="s">"never"</span>
+)</pre>
+  </div>
+
+  <!-- Gradio 목업 -->
+  <div class="gradio-mock" role="img" aria-label="Gradio 챗봇 인터페이스 재현">
+    <div class="gm-bar"><i></i><i></i><i></i><span>localhost:7860 — Gradio</span></div>
+    <div class="gm-body">
+      <p class="gm-title">AI Movie Recommendation System</p>
+      <p class="gm-desc">Ask me about movies! I can recommend movies based on your preferences.</p>
+      <div class="gm-field">
+        <span class="gm-label">Your movie preference</span>
+        <div class="gm-input">Tell me about a hero who saves the world.</div>
+      </div>
+      <div class="gm-field">
+        <span class="gm-label">Recommendations</span>
+        <div class="gm-output">Title: The Matrix<br>Overview: A computer hacker learns from mysterious rebels about the true nature of his reality…<br>Score: 0.98<br>----------------------------------------<br>Title: Inception · Score: 0.96<br>Title: The Dark Knight · Score: 0.94</div>
+      </div>
+      <div class="gm-examples">
+        <span class="gm-ex">sci-fi with time travel</span>
+        <span class="gm-ex">romantic comedy, happy ending</span>
+        <span class="gm-ex">superheroes, not too serious</span>
+        <span class="gm-ex">edge-of-my-seat thriller</span>
+        <span class="gm-ex">AI taking over the world</span>
+      </div>
+    </div>
+  </div>
+  <p class="fig-caption">Gradio 인터페이스 재현 — 다섯 개의 예시 질의 버튼과 함께 브라우저에 실행된 모습</p>
+
+  <div class="prose" style="margin-top:2rem">
+    <p>이 인터페이스는 사용자의 텍스트 질의를 받고, 챗봇은 <code>perform_vector_search_cypher()</code> 함수로 가장 관련 있는 영화를 찾는다.</p>
+  </div>
+
+  <h3>Haystack·Neo4j와의 통합</h3>
+  <div class="prose">
+    <p>챗봇에 동력을 공급하기 위해, Haystack의 임베딩 생성과 Neo4j의 벡터 검색 능력에 챗봇을 연결한다. 질의와 Neo4j에 저장된 영화 줄거리 양쪽의 임베딩 생성에 <code>OpenAITextEmbedder</code>를 쓴다. 영화 임베딩은 Neo4j 안의 벡터 인덱스에 저장되어 있고, 우리는 그 인덱스에서 가장 유사한 영화를 질의한다. 앞서 만든 Haystack 설정과 챗봇을 통합하는 방법이다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>chatbot handler — Cypher 검색 + Haystack</span><span class="lang">python</span></div>
+    <pre><span class="c"># Cypher 기반 검색과 Haystack을 쓰는 대화형 챗봇 핸들러</span>
+<span class="k">def</span> <span class="f">perform_vector_search</span>(query):
+    <span class="f">print</span>(<span class="s">"MESSAGES RECEIVED:"</span>, user_input)
+    cypher_query = <span class="s">"""
+        CALL db.index.vector.queryNodes("overview_embeddings",
+            $top_k, $query_embedding)
+        YIELD node AS movie, score
+        MATCH (movie:Movie)
+        RETURN movie.title AS title, movie.overview AS overview, score
+    """</span>
+    <span class="c"># 임베더</span>
+    embedder = OpenAITextEmbedder(
+        api_key=Secret.from_env_var(<span class="s">"OPENAI_API_KEY"</span>),
+        model=<span class="s">"text-embedding-ada-002"</span>
+    )
+    <span class="c"># 리트리버</span>
+    retriever = Neo4jDynamicDocumentRetriever(
+        client_config=client_config,
+        runtime_parameters=[<span class="s">"query_embedding"</span>],
+        compose_doc_from_result=<span class="k">True</span>,
+        verify_connectivity=<span class="k">True</span>,
+    )
+    <span class="c"># 파이프라인</span>
+    pipeline = Pipeline()
+    pipeline.add_component(<span class="s">"query_embedder"</span>, embedder)
+    pipeline.add_component(<span class="s">"retriever"</span>, retriever)
+    pipeline.connect(
+        <span class="s">"query_embedder.embedding"</span>, <span class="s">"retriever.query_embedding"</span>
+    )</pre>
+  </div>
+
+  <h3>Gradio를 전체 파이프라인에 연결하기</h3>
+  <div class="prose">
+    <p>이제 이 Gradio 챗봇을 이미 갖춰 둔 Haystack·Neo4j 파이프라인과 연결한다. Gradio 인터페이스가 <code>perform_vector_search_cypher()</code> 함수를 호출하고, 그 함수가 <code>Neo4jDynamicDocumentRetriever</code>를 활용해 사용자의 질의에 기초한 유사 영화를 검색한다. <code>main()</code> 함수를 갱신해 챗봇을 초기화한다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>main — 전체 오케스트레이션</span><span class="lang">python</span></div>
+    <pre><span class="c"># 전체 과정을 오케스트레이션하는 메인 함수</span>
+<span class="k">def</span> <span class="f">main</span>():
+    <span class="c"># 1단계: Neo4j AuraDB에 벡터 인덱스 생성 또는 리셋</span>
+    create_or_reset_vector_index()
+    <span class="c"># 2단계: Gradio 챗봇 인터페이스 시작</span>
+    chat_interface.launch()
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:
+    main()</pre>
+  </div>
+
+  <h3>챗봇 실행</h3>
+  <div class="prose">
+    <p>챗봇을 실행하려면 Python 스크립트를 실행하기만 하면 된다: <code>python search_chatbot.py</code>. Gradio 인터페이스가 브라우저에 시작되어 실시간으로 챗봇과 상호작용할 수 있다. "Tell me about a hero who saves the world." 같은 질의를 입력하면, 챗봇이 벡터 검색에 기초해 이 질의와 유사한 영화 줄거리들을 돌려준다.</p>
+  </div>
+  <div class="note-box">
+    <span class="nk">Note</span>
+    <p>여기 실은 것은 코드 조각일 뿐이다. 전체 버전은 <a href="https://github.com/PacktPublishing/Building-Neo4j-Powered-Applications-with-LLMs/blob/main/ch5/search_chatbot.py" target="_blank" rel="noopener">ch5/search_chatbot.py</a>에 있다.</p>
+  </div>
+  <div class="prose">
+    <p class="lead-q">이 절의 끝에서 우리는 Gradio, Haystack, Neo4j로 완전히 작동하는 검색 기반 챗봇을 완성했다. 챗봇은 Neo4j에 저장된 임베딩을 지렛대 삼아 고급 벡터 검색을 수행하고, 사용자 질의에 응답해 의미 있는 영화 제목과 배우를 Neo4j에서 가져오는 형태로 맥락에 맞는 결과를 돌려준다. 그러나 이것은 시작일 뿐이다.</p>
+  </div>
+</section>
+
+<!-- ================= 섹션 4 ================= -->
+<section class="section" id="sec4">
+  <div class="section-head">
+    <p class="node-marker">(:Section {n: 4})-[:TUNES]-&gt;<span class="p">(:Pipeline)</span></p>
+    <h2>Haystack 통합의 미세조정</h2>
+  </div>
+  <div class="prose">
+    <p>이제 이 통합을 성능과 사용자 경험의 개선을 위해 미세조정하는 방법을 탐구할 때다. 현재의 구성만으로도 풍부하고 맥락을 아는 응답이 나오지만, 검색 과정을 최적화하고 검색 정확도를 높이고 챗봇의 상호작용을 더 매끄럽게 만드는 고급 기법이 여럿 있다. 이 절에서는 Haystack의 핵심 요소를 조정하는 데 집중한다. 서로 다른 임베딩 모델의 실험, 더 빠른 결과를 위한 Neo4j 질의 최적화, 챗봇 응답 표시 방식의 개선이다. 이 강화들이 챗봇을 더 복잡한 질의로 확장하고, 응답 시간을 줄이고, 더 적절한 검색 결과를 배달하도록 돕는다.</p>
+  </div>
+
+  <h3>다양한 임베딩 모델의 실험</h3>
+  <div class="prose">
+    <p>현재 우리는 OpenAI의 <code>text-embedding-ada-002</code> 모델로 임베딩을 생성한다. 이 모델은 출시 이후 폭넓은 과업에서 신뢰할 수 있고 성능 좋은 선택이었지만, OpenAI가 최근 <code>text-embedding-3-small</code>과 <code>text-embedding-3-large</code> 같은 새 모델을 내놓았다는 사실도 알아 둘 만하다. 성능과 비용 효율 모두에서 상당한 개선을 제공하는 모델들이다. 예컨대 <code>text-embedding-3-small</code>은 다국어·영어 과업에서 더 나은 결과를 내면서도, <code>ada-002</code>보다 <strong>최대 다섯 배 비용 효율적</strong>이다. 이 프로젝트에서는 일관성을 위해 모델을 바꾸지 않았지만, 유사한 파이프라인을 구현하는 독자라면 — 임베딩 생성이 빈번하거나 대규모인 경우 특히 — 성능을 희생하지 않고 효율을 높이는 <code>text-embedding-3-small</code>의 사용을 고려할 만하다.</p>
+    <p>Haystack은 그 밖의 다양한 모델도 지원하므로, 자신의 용례에 가장 정확하거나 적절한 결과를 주는 모델을 찾아 실험할 수 있다. 더 높은 차원의 정교한 OpenAI 모델로 바꿀 수도 있고, Haystack이 지원하는 다른 임베딩 서비스를 시험할 수도 있다. 다른 모델로 바꾸는 방법은 간단하다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>model switch — 임베딩 모델 교체</span><span class="lang">python</span></div>
+    <pre>embedder = OpenAITextEmbedder(
+    api_key=Secret.from_env_var(<span class="s">"OPENAI_API_KEY"</span>),
+    model=<span class="s">"text-embedding-babbage-001"</span>  <span class="c"># 다른 모델로 실험</span>
+)</pre>
+  </div>
+  <div class="prose">
+    <p>OpenAI의 다른 모델을 탐색하거나 아예 다른 임베딩 서비스를 통합해, 영화 챗봇에 가장 잘 맞는 것을 찾아볼 수도 있다.</p>
+  </div>
+
+  <h3>더 빠른 질의를 위한 Neo4j 최적화</h3>
+  <div class="prose">
+    <p>Neo4j는 이미 그래프 기반 질의를 효율적으로 처리하지만, 특히 대규모 데이터셋에는 적용할 만한 최적화가 여럿 있다. 추가 프로퍼티를 인덱싱해 질의 성능을 개선할 수 있다. <code>embedding</code> 프로퍼티의 벡터 인덱스에 더해, <code>title</code>이나 <code>tmdbId</code>처럼 자주 질의되는 다른 프로퍼티도 인덱싱해 검색을 가속하는 것이다. 이 프로퍼티들로 영화를 거르거나 가져올 때마다 검색이 더 빠르고 효율적이 된다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>additional indexes — 추가 인덱스</span><span class="lang">python</span></div>
+    <pre><span class="k">def</span> <span class="f">create_additional_indexes</span>():
+    <span class="k">with</span> driver.session() <span class="k">as</span> session:
+        session.run(<span class="s">"CREATE INDEX IF NOT EXISTS movie_title_index</span>
+<span class="s">            FOR (m:Movie) ON (m.title)"</span>)
+        session.run(<span class="s">"CREATE INDEX IF NOT EXISTS movie_tmdbId_index</span>
+<span class="s">            FOR (m:Movie) ON (m.tmdbId)"</span>)
+        <span class="f">print</span>(<span class="s">"Additional indexes created successfully"</span>)</pre>
+  </div>
+  <div class="prose">
+    <p>이 프로퍼티들을 인덱싱하면, 검색이 임베딩에만 기초하지 않을 때 — 제목으로 거르거나 특정 영화를 가져올 때 — 의 조회가 최적화된다. 챗봇의 검색 경험을 지속적으로 개선하려면, 사용자 질의를 기록하고 시간에 걸쳐 분석하는 것도 방법이다.</p>
+  </div>
+
+  <h3>질의의 로깅과 분석</h3>
+  <div class="prose">
+    <p>로깅은 가장 흔한 검색 패턴을 추적하도록 돕는다. 사용자 질의 로그와 그 분석에 기초해, 인덱싱 전략을 조정하거나, 리트리버를 최적화하거나, 정확도를 높이기 위해 임베딩 모델을 손볼 수 있다. 간단한 로깅 메커니즘의 구현은 이렇다.</p>
+  </div>
+  <div class="code-snip">
+    <div class="ch"><span>logging — 질의 기록</span><span class="lang">python</span></div>
+    <pre><span class="k">import</span> logging
+logging.basicConfig(filename=<span class="s">'chatbot_queries.log'</span>, level=logging.INFO)
+
+<span class="k">def</span> <span class="f">log_query</span>(query):
+    logging.info(<span class="s">f"User query: {query}"</span>)</pre>
+  </div>
+  <div class="prose">
+    <p>사용자가 질의를 입력할 때마다 이후 분석을 위해 기록된다. 이 로그를 분석해 시스템에 정보에 기반한 조정을 가하면, 시간이 갈수록 더 반응이 빠르고 정확해진다.</p>
+    <p>이 기법들은 검색 기반 챗봇의 성능, 정확도, 사용자 경험을 크게 끌어올린다. 다른 임베딩 모델의 실험이든, Neo4j 질의의 최적화든, 결과 표시 방식의 개선이든, 조정 하나하나가 매끄럽고 강력한 사용자 상호작용에 한 걸음씩 다가서게 한다. 이 고급 기법들 덕분에 챗봇은 효과적으로 확장되고, 더 복잡한 질의를 감당하며, 한층 더 적절하고 매력적인 결과를 돌려주게 된다.</p>
+  </div>
+</section>
+
+<!-- ================= 요약 ================= -->
+<section class="section" id="summary">
+  <div class="summary-panel">
+    <h2>요약</h2>
+    <p>이 장에서 우리는 Gradio, Haystack, Neo4j를 통합해 완전히 작동하는 검색 기반 챗봇을 성공적으로 지었다. OpenAI의 모델이 생성한 영화 임베딩으로 Neo4j 그래프를 살찌우는 데서 시작해 고급 벡터 기반 검색 기능을 열었고, 거기서 Haystack을 Neo4j에 연결해 그래프에 저장된 임베딩 위의 유사도 검색을 수행했다. 마지막으로 Gradio의 사용자 친화적 챗봇 인터페이스로 전체를 감쌌다. 사용자의 질의에 따라 영화 제목과 배우 같은 상세 정보를 동적으로 가져오는 챗봇이다.</p>
+    <p>다음 장에서는 Haystack의 고급 검색 능력과 검색 최적화에 집중한다. 대규모 그래프를 위한 질의 최적화도 논한다.</p>
+    <span class="next-chip">NEXT → Chapter 6 · Exploring Advanced Knowledge Graph Capabilities with Neo4j</span>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p><b>원전</b> — Ravindranatha Anthapu &amp; Siddhant Agarwal, <i>Building Neo4j-Powered Applications with LLMs</i>, Packt Publishing, 2025. Chapter 5: Implementing Powerful Search Functionalities with Neo4j and Haystack (pp. 95–115)</p>
+  <p>이 페이지는 원서 5장의 전체 내용을 한국어로 재구성한 학습 자료다. 검색 결과 데모와 Gradio 인터페이스 목업은 원서의 출력 예시를 바탕으로 재현했고, 코드는 원서의 핵심 조각을 그대로 옮겼다.</p>
+</footer>
+
+</body>
+</html>
