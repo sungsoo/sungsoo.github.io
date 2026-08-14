@@ -1,0 +1,1605 @@
+---
+layout: null
+title: "The Base RAG Stack" 
+date: 2026-08-21
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제2장 · 기본 RAG 스택 — Hands-On RAG for Production</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@400;500;700;800&family=Noto+Serif+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────
+   도면 사양 (Design tokens) — 제2장
+   청사진 계열 유지 / 색축 전환: 러스트 + 인디고
+   ───────────────────────────────────────────── */
+:root{
+  --paper:#EAEFF3;
+  --paper-2:#FBFCFD;
+  --grid:rgba(18,49,79,.055);
+  --grid-strong:rgba(18,49,79,.10);
+  --ink:#12314F;
+  --ink-2:#1C4670;
+  --body:#22323E;
+  --muted:#5C7286;
+  --line:#A9BED0;
+  --line-soft:#C9D8E4;
+  --rust:#AE4429;      /* 1차 강조 — 적재·파싱 계열 */
+  --indigo:#54479C;    /* 2차 강조 — 검색·생성 계열 */
+  --teal:#0E717B;      /* 보조 — 정의·주석 */
+  --code-bg:#0E2439;
+  --code-fg:#D6E4EF;
+
+  --display:'Hahmlet',serif;
+  --serif:'Noto Serif KR',serif;
+  --mono:'IBM Plex Mono',monospace;
+
+  --maxw:1080px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+    linear-gradient(var(--grid-strong) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-strong) 1px,transparent 1px);
+  background-size:14px 14px,14px 14px,70px 70px,70px 70px;
+  color:var(--body);
+  font-family:var(--serif);font-size:17px;line-height:1.92;letter-spacing:-.003em;
+  -webkit-font-smoothing:antialiased;
+}
+#bar{position:fixed;top:0;left:0;height:2px;width:0;background:var(--rust);z-index:60}
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;
+  padding:9px 20px;background:rgba(234,239,243,.86);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line-soft);
+  font-family:var(--mono);font-size:11px;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;
+}
+.topbar b{color:var(--ink);font-weight:600}
+.topbar .sp{flex:1}
+.topbar a{color:var(--muted);text-decoration:none;border-bottom:1px solid transparent}
+.topbar a:hover{color:var(--rust);border-color:var(--rust)}
+@media(max-width:760px){.topbar .hide-s{display:none}}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+section{padding:74px 0}
+@media(max-width:720px){section{padding:52px 0}.wrap{padding:0 20px}}
+
+/* HERO */
+.hero{padding:78px 0 36px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;color:var(--rust);text-transform:uppercase;margin:0 0 26px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6.4vw,4.6rem);line-height:1.06;letter-spacing:-.038em;color:var(--ink);margin:0}
+h1 .en{display:block;font-family:var(--mono);font-weight:400;font-size:clamp(.72rem,1.7vw,.9rem);letter-spacing:.18em;color:var(--muted);margin-top:20px;text-transform:uppercase}
+.lede{font-size:clamp(1.02rem,2.1vw,1.22rem);line-height:1.85;color:var(--ink-2);max-width:64ch;margin:30px 0 0}
+.titleblock{margin-top:44px;border:1px solid var(--ink);background:var(--paper-2);display:grid;grid-template-columns:repeat(4,1fr)}
+.titleblock div{padding:13px 15px;border-right:1px solid var(--line-soft);font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--ink)}
+.titleblock div:last-child{border-right:0}
+.titleblock span{display:block;color:var(--muted);letter-spacing:.14em;font-size:9.5px;text-transform:uppercase;margin-bottom:5px}
+@media(max-width:720px){.titleblock{grid-template-columns:repeat(2,1fr)}.titleblock div{border-bottom:1px solid var(--line-soft)}}
+
+/* 서명 요소 — 스택 층서 색인 */
+.stack{margin:54px 0 0;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:8px 0}
+.stack a{
+  display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:16px;
+  padding:12px 6px;text-decoration:none;border-bottom:1px dotted var(--line-soft);
+  transition:background .25s,padding-left .25s;
+}
+.stack a:last-child{border-bottom:0}
+.stack a:hover{background:#E1E8EE;padding-left:14px}
+.stack .no{font-family:var(--mono);font-size:11px;color:var(--rust);font-weight:600;letter-spacing:.06em}
+.stack .nm{font-family:var(--display);font-size:1.06rem;font-weight:600;color:var(--ink);letter-spacing:-.02em}
+.stack .nm i{font-style:normal;font-family:var(--mono);font-size:10.5px;font-weight:400;color:var(--muted);letter-spacing:.1em;margin-left:12px;text-transform:uppercase}
+.stack .bars{display:flex;gap:3px;align-items:flex-end;height:16px}
+.stack .bars s{display:block;width:5px;background:var(--line);text-decoration:none}
+.stack a:hover .bars s{background:var(--rust)}
+@media(max-width:620px){.stack .nm i{display:block;margin:2px 0 0}.stack .bars{display:none}}
+
+/* 섹션 */
+.mark{display:flex;align-items:center;gap:16px;margin:0 0 26px;font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+.mark i{font-style:normal;width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;border:1px solid var(--ink);color:var(--ink);font-weight:600;font-size:11.5px;background:var(--paper-2)}
+.mark s{flex:1;height:1px;background:var(--line);text-decoration:none}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(1.7rem,4vw,2.55rem);line-height:1.24;letter-spacing:-.028em;color:var(--ink);margin:0 0 22px}
+h3{font-family:var(--display);font-weight:600;font-size:clamp(1.16rem,2.4vw,1.46rem);line-height:1.42;letter-spacing:-.02em;color:var(--ink-2);margin:46px 0 14px}
+h4{font-family:var(--mono);font-weight:600;font-size:12.5px;letter-spacing:.08em;color:var(--rust);text-transform:uppercase;margin:32px 0 10px}
+p{margin:0 0 20px;max-width:70ch}
+strong{font-weight:700;color:var(--ink)}
+em.k{font-style:normal;font-weight:600;color:var(--rust)}
+em.i{font-style:normal;font-weight:600;color:var(--indigo)}
+code{font-family:var(--mono);font-size:.87em;background:#E2E8EE;padding:1px 5px;border-radius:2px;color:var(--ink)}
+.pull{margin:44px 0;padding:0 0 0 26px;border-left:3px solid var(--rust);font-family:var(--display);font-weight:500;font-size:clamp(1.14rem,2.6vw,1.5rem);line-height:1.62;letter-spacing:-.025em;color:var(--ink);max-width:56ch}
+.dim{display:flex;align-items:center;gap:14px;margin:52px 0 30px}
+.dim s{flex:1;height:1px;background:var(--line);position:relative;text-decoration:none}
+.dim s::before,.dim s::after{content:'';position:absolute;top:-4px;width:1px;height:9px;background:var(--line)}
+.dim s::before{left:0}.dim s::after{right:0}
+.dim span{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+
+/* 카드 */
+.cards{display:grid;gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);margin:34px 0}
+.cards.c2{grid-template-columns:repeat(2,1fr)}
+.cards.c3{grid-template-columns:repeat(3,1fr)}
+.cards.c4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--paper-2);padding:24px 22px}
+.card h5{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--rust);margin:0 0 10px;font-weight:600}
+.card p{font-size:15px;line-height:1.78;margin:0;max-width:none}
+.card p+p{margin-top:12px}
+.card .num{font-family:var(--display);font-size:26px;font-weight:800;color:var(--ink);display:block;line-height:1;margin-bottom:12px;letter-spacing:-.03em}
+@media(max-width:900px){.cards.c3,.cards.c4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.cards.c2,.cards.c3,.cards.c4{grid-template-columns:1fr}}
+
+/* 주석 */
+.note{border:1px solid var(--line);border-left:3px solid var(--teal);background:var(--paper-2);padding:22px 24px;margin:32px 0}
+.note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--teal);text-transform:uppercase;display:block;margin-bottom:10px}
+.note p{margin:0;font-size:15.5px;line-height:1.82}
+.note p+p{margin-top:12px}
+.note.warn{border-left-color:var(--rust)}
+.note.warn .tag{color:var(--rust)}
+.note.tip{border-left-color:var(--indigo)}
+.note.tip .tag{color:var(--indigo)}
+
+/* 표 */
+.tw{margin:34px 0;overflow-x:auto;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:520px;background:var(--paper-2);font-size:14.5px}
+caption{
+  caption-side:top;text-align:left;padding:14px 16px;background:var(--ink);color:#CFE0EE;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;
+}
+th,td{padding:12px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line-soft);line-height:1.7}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);font-weight:600;background:#E4EAEF}
+td.mono,th.mono{font-family:var(--mono);font-size:12.5px}
+tr:last-child td{border-bottom:0}
+td strong{color:var(--rust)}
+
+/* 그림 */
+figure{margin:40px 0;border:1px solid var(--line);background:var(--paper-2);padding:22px 20px 14px}
+figure svg{display:block;width:100%;height:auto}
+figcaption{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--muted);margin-top:16px;padding-top:12px;border-top:1px solid var(--line-soft);line-height:1.7}
+figcaption b{color:var(--ink);font-weight:600}
+@media(max-width:720px){
+  figure{overflow-x:auto;padding:16px 14px 12px}
+  figure svg{min-width:640px}
+  figure::before{content:'◂ 도해는 좌우로 밀어 확인';display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--muted);margin-bottom:10px}
+}
+.sv-box{fill:var(--paper-2);stroke:var(--ink);stroke-width:1.2}
+.sv-box-r{fill:#F6E3DC;stroke:var(--rust);stroke-width:1.2}
+.sv-box-i{fill:#E6E3F3;stroke:var(--indigo);stroke-width:1.2}
+.sv-box-b{fill:#E3EBF3;stroke:var(--ink-2);stroke-width:1.2}
+.sv-box-t{fill:#E2F0F1;stroke:var(--teal);stroke-width:1.2}
+.sv-t{font-family:var(--mono);font-size:11px;fill:var(--ink)}
+.sv-t.sm{font-size:9.5px;fill:var(--muted)}
+.sv-t.b{font-weight:600}
+.sv-a{fill:none;stroke:var(--ink);stroke-width:1.3;marker-end:url(#a2)}
+.sv-a.r{stroke:var(--rust);marker-end:url(#a2r)}
+.sv-a.i{stroke:var(--indigo);marker-end:url(#a2i)}
+.sv-a.dash{stroke-dasharray:5 4}
+.sv-grp{fill:none;stroke:var(--line);stroke-width:1;stroke-dasharray:3 3}
+
+/* 코드 */
+.codewrap{margin:32px 0;border:1px solid var(--ink)}
+.codewrap header{background:var(--ink);color:#CFE0EE;padding:9px 16px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;display:flex;gap:12px;align-items:center}
+.codewrap header span{opacity:.62}
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);padding:22px 20px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.76}
+pre .c{color:#7FA0B8}
+pre .s{color:#D9A86C}
+pre .k{color:#7FCBD3}
+.out{border:1px solid var(--line);border-top:0;background:#F4F7F9;padding:18px 20px;font-family:var(--mono);font-size:12.1px;line-height:1.78;color:var(--body);white-space:pre-wrap;overflow-x:auto}
+.out .lb{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.out+.out{border-top:1px dashed var(--line)}
+
+/* 목록 */
+ul.plain,ol.steps{max-width:70ch;padding-left:0;list-style:none;margin:0 0 24px}
+ul.plain li{position:relative;padding-left:20px;margin-bottom:11px;line-height:1.85}
+ul.plain li::before{content:'';position:absolute;left:0;top:.82em;width:8px;height:1px;background:var(--rust)}
+ol.steps{counter-reset:s}
+ol.steps li{counter-increment:s;position:relative;padding-left:38px;margin-bottom:14px;line-height:1.85}
+ol.steps li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:.15em;font-family:var(--mono);font-size:11px;color:var(--rust);font-weight:600;border:1px solid var(--line);padding:1px 5px;background:var(--paper-2)}
+
+/* 수치 스펙 목록 */
+.spec{margin:28px 0;border-top:1px solid var(--line)}
+.spec div{display:grid;grid-template-columns:1fr auto;gap:20px;padding:11px 2px;border-bottom:1px solid var(--line-soft);font-family:var(--mono);font-size:12.5px;align-items:baseline}
+.spec div b{color:var(--ink);font-weight:600}
+.spec div span{color:var(--rust);font-weight:600;letter-spacing:.02em}
+
+.closing{border:1px solid var(--ink);background:var(--paper-2);padding:40px 36px}
+.closing h2{margin-top:0}
+.foot{border-top:1px solid var(--line);margin-top:60px;padding-top:22px}
+.foot p{font-family:var(--mono);font-size:11.5px;line-height:1.85;color:var(--muted);max-width:78ch;margin:0 0 10px}
+.foot sup{color:var(--rust)}
+a.ref{color:var(--teal);text-decoration:none;border-bottom:1px solid var(--line)}
+footer.page{border-top:1px solid var(--ink);margin-top:70px;padding:30px 0 60px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted)}
+footer.page b{color:var(--ink);font-weight:600}
+
+.rv{opacity:0;transform:translateY(16px);transition:opacity .7s cubic-bezier(.2,.7,.3,1),transform .7s cubic-bezier(.2,.7,.3,1)}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.rv{opacity:1;transform:none;transition:none}}
+::selection{background:var(--rust);color:#fff}
+:focus-visible{outline:2px solid var(--rust);outline-offset:3px}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+
+<div class="topbar">
+  <b>Hands-On RAG for Production</b>
+  <span class="hide-s">· 제2장</span>
+  <span class="sp"></span>
+  <a href="#s1" class="hide-s">두 흐름</a>
+  <a href="#s2" class="hide-s">파싱</a>
+  <a href="#s3" class="hide-s">청킹</a>
+  <a href="#s4" class="hide-s">임베딩</a>
+  <a href="#s5" class="hide-s">벡터 DB</a>
+  <a href="#s6" class="hide-s">생성 LLM</a>
+  <a href="#s7">결론</a>
+</div>
+
+<main class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Chapter 02 — 도면 A2 / 계층 상세</p>
+  <h1>기본 RAG 스택
+    <span class="en">The Base RAG Stack</span>
+  </h1>
+  <p class="lede">1장이 RAG가 무엇인지 밝혔다면, 2장은 그것을 실제로 굴러가게 하는 부품을 하나하나 분해한다. 파싱, 청킹, 임베딩, 벡터 검색, 생성. 다섯 층은 각자의 역할과 각자의 대가를 가지고 있으며, 어느 한 층의 실수는 아래층에서 교정되지 않는다.</p>
+
+  <div class="titleblock">
+    <div><span>원서</span>Hands-On RAG for Production<br>O’Reilly, 2026</div>
+    <div><span>저자</span>Ofer Mendelevitch<br>Forrest Sheng Bao</div>
+    <div><span>범위</span>제2장 전문 (원서 pp.23–61)<br>그림 2-1 ~ 2-3, 표 2-1 ~ 2-4</div>
+    <div><span>구성</span>7개 절 · 코드 예제 12블록<br>도해 4점 재작도</div>
+  </div>
+
+  <nav class="stack" aria-label="장 구성">
+    <a href="#s0"><span class="no">00</span><span class="nm">스택이라는 은유<i>why layers</i></span><span class="bars"><s style="height:4px"></s><s style="height:4px"></s><s style="height:4px"></s></span></a>
+    <a href="#s1"><span class="no">01</span><span class="nm">RAG 스택의 두 흐름<i>ingestion &amp; query</i></span><span class="bars"><s style="height:16px"></s><s style="height:11px"></s><s style="height:7px"></s></span></a>
+    <a href="#s2"><span class="no">02</span><span class="nm">문서 파싱<i>parsing</i></span><span class="bars"><s style="height:16px"></s><s style="height:16px"></s><s style="height:12px"></s></span></a>
+    <a href="#s3"><span class="no">03</span><span class="nm">텍스트 청킹<i>chunking</i></span><span class="bars"><s style="height:14px"></s><s style="height:16px"></s><s style="height:9px"></s></span></a>
+    <a href="#s4"><span class="no">04</span><span class="nm">임베딩 모델<i>embeddings</i></span><span class="bars"><s style="height:12px"></s><s style="height:16px"></s><s style="height:14px"></s></span></a>
+    <a href="#s5"><span class="no">05</span><span class="nm">벡터 DB와 벡터 검색<i>vector search</i></span><span class="bars"><s style="height:9px"></s><s style="height:14px"></s><s style="height:16px"></s></span></a>
+    <a href="#s6"><span class="no">06</span><span class="nm">생성 LLM<i>generation</i></span><span class="bars"><s style="height:7px"></s><s style="height:11px"></s><s style="height:16px"></s></span></a>
+    <a href="#s7"><span class="no">07</span><span class="nm">결론<i>conclusion</i></span><span class="bars"><s style="height:4px"></s><s style="height:4px"></s><s style="height:4px"></s></span></a>
+  </nav>
+</header>
+
+<!-- ══════════ 00 ══════════ -->
+<section id="s0" class="rv">
+  <div class="mark"><i>00</i><span>서론 · 스택이라는 은유</span><s></s></div>
+  <h2>층으로 쌓인 시스템,<br>층으로 전파되는 오류</h2>
+
+  <p>1장에서 검색증강생성의 핵심 발상을 소개했다. 거대언어모델이 학습 때 배운 것에만 의존하지 않고 외부 지식에 접근하게 만드는 일이다. 이 장은 그 시스템이 실제로 작동하도록 만드는 기술적 구성요소를 한 층 더 깊이 파고든다. 이 구성요소들은 데이터가 흘러가는 파이프라인을 이루며, 그 전체를 <em class="k">RAG 스택</em>이라 부른다. 원시 문서를 준비하는 일에서 시작해 맥락에 근거한 고품질 응답을 생성하는 일까지가 그 범위다.</p>
+
+  <p>출발점은 모든 RAG 시스템을 규정하는 두 개의 흐름이다. 하나는 <strong>적재 흐름</strong>으로, 앞으로 LLM에게 공급할 미지의 지식을 변환하고 저장한다. 다른 하나는 <strong>질의 흐름</strong>으로, 추론 시점에 발동해 사용자 요청에 응답한다. 이 흐름의 각 단계, 즉 파싱, 청킹, 임베딩, 색인, 벡터 검색, 재순위, LLM 기반 생성은 서로 구별되는 역할을 하고 각자 고유한 트레이드오프를 안고 있다.</p>
+
+  <div class="pull">이 부품들을 이해하는 일은 선택이 아니다. 오류를 진단하고, 품질을 개선하고, 프로덕션 환경에서 예측 가능하게 동작하는 확장 가능한 RAG 아키텍처를 설계하려면 반드시 필요하다.</div>
+
+  <p>각 계층을 지나가면서 개념만 설명하지 않는다. 실제 코드 예제, 실무적 지침, 그리고 흔한 설계 선택 뒤에 놓인 근거를 함께 살펴본다. 이 장을 끝까지 읽으면 기본 RAG 스택이 처음부터 끝까지 어떻게 동작하는지, 그리고 그 부품들이 어떻게 상호작용하여 정확하고 효율적이며 신뢰할 수 있는 AI 기반 정보 검색을 만들어내는지 뚜렷한 그림을 얻는다.</p>
+</section>
+
+<!-- ══════════ 01 ══════════ -->
+<section id="s1" class="rv">
+  <div class="mark"><i>01</i><span>두 흐름 · 적재와 질의</span><s></s></div>
+  <h2>RAG 스택의 두 흐름</h2>
+
+  <p>1장에서 본 대로 기본 RAG 스택에는 두 개의 주요 흐름이 있다. 적재 흐름은 보통 새 데이터가 생기거나 기존 데이터를 갱신해야 할 때 한 번 실행된다. 질의 흐름은 사용자가 RAG 시스템에 질의를 보낼 때마다 촉발되며, 적재 흐름에서 준비된 데이터를 써서 응답한다. 두 흐름은 실행 주기가 다르고, 따라서 최적화의 방향도 다르다.</p>
+
+  <h3>적재 흐름</h3>
+  <p>적재 흐름에서 원천 문서는 전처리를 거친다. 파싱하고 청킹한다는 뜻이다. 그 전처리의 산물은 나중에 효율적인 검색과 조회가 가능한 형태로 저장된다. LLM이 과제를 수행하거나 사용자 질의에 응답할 때 쓰기 위해서다. 적재 흐름은 보통 네 단계로 이루어진다. 파싱, 청킹, 임베딩, 색인이다.</p>
+
+  <figure>
+    <svg viewBox="0 0 700 340" role="img" aria-label="적재 흐름의 주요 구성요소: 데이터 소스에서 파싱, 청킹, 임베딩을 거쳐 벡터 DB로">
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#12314F"/></marker>
+        <marker id="a2r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#AE4429"/></marker>
+        <marker id="a2i" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#54479C"/></marker>
+      </defs>
+      <!-- data sources -->
+      <rect class="sv-box-r" x="140" y="16" width="420" height="76" rx="2"/>
+      <text class="sv-t b" x="350" y="38" text-anchor="middle">데이터 소스</text>
+      <rect class="sv-box-b" x="158" y="48" width="120" height="34" rx="2"/>
+      <text class="sv-t" x="218" y="69" text-anchor="middle">데이터베이스 / API</text>
+      <rect class="sv-box-b" x="290" y="48" width="120" height="34" rx="2"/>
+      <text class="sv-t sm" x="350" y="64" text-anchor="middle">파일</text>
+      <text class="sv-t sm" x="350" y="77" text-anchor="middle">PDF, DOCX 등</text>
+      <rect class="sv-box-b" x="422" y="48" width="120" height="34" rx="2"/>
+      <text class="sv-t" x="482" y="69" text-anchor="middle">웹 스크래핑</text>
+      <!-- steps -->
+      <rect class="sv-box-b" x="290" y="128" width="120" height="34" rx="2"/>
+      <text class="sv-t b" x="350" y="149" text-anchor="middle">파싱</text>
+      <rect class="sv-box-b" x="290" y="184" width="120" height="34" rx="2"/>
+      <text class="sv-t b" x="350" y="205" text-anchor="middle">청킹</text>
+      <rect class="sv-box-b" x="290" y="240" width="120" height="34" rx="2"/>
+      <text class="sv-t b" x="350" y="261" text-anchor="middle">임베딩</text>
+      <!-- vector db (cylinder) -->
+      <path d="M290,300 L290,322 a60,9 0 0 0 120,0 L410,300 z" class="sv-box-t"/>
+      <ellipse cx="350" cy="300" rx="60" ry="9" class="sv-box-t"/>
+      <text class="sv-t b" x="350" y="320" text-anchor="middle">벡터 DB</text>
+      <!-- arrows -->
+      <path fill="none" stroke="#12314F" stroke-width="1.3" d="M218,92 L218,110 L482,110 M482,92 L482,110 M350,92 L350,110"/>
+      <path class="sv-a" d="M350,110 L350,122"/>
+      <path class="sv-a" d="M350,166 L350,178"/>
+      <path class="sv-a" d="M350,222 L350,234"/>
+      <path class="sv-a" d="M350,278 L350,288"/>
+      <text class="sv-t sm" x="424" y="145">구조·서식 제거</text>
+      <text class="sv-t sm" x="424" y="201">긴 텍스트 분할</text>
+      <text class="sv-t sm" x="424" y="257">의미의 벡터화</text>
+      <text class="sv-t sm" x="424" y="313">색인 · 영속화</text>
+    </svg>
+    <figcaption><b>〈그림 2-1〉</b> 적재 흐름의 주요 구성요소와 단계. 프로덕션 시스템에서는 이 단계들이 보통 재시도를 포함한 비동기 방식으로 오케스트레이션된다는 점을 유념할 필요가 있다.</figcaption>
+  </figure>
+
+  <h4>구조화된 소스가 쉬운 이유</h4>
+  <p>적재할 데이터는 데이터베이스, (로컬이나 클라우드의) 파일, API, 웹 스크래핑 등 다양한 곳에서 온다. 데이터베이스와 API의 데이터는 구조화되어 있어 일반적으로 적재가 더 쉽다. 필드와 데이터 타입을 정의하는 스키마를 미리 알고 있기 때문이다. 예를 들어 LLM과 사용자 사이의 대화를 적재한다면, 각 메시지에 메시지 본문 외에 역할 필드(메시지가 LLM에서 왔는지 사용자에게서 왔는지)와 타임스탬프가 있다는 것, 그리고 하나의 대화가 그런 복합 메시지 객체의 목록이라는 것을 미리 안다.</p>
+
+  <p>데이터베이스나 API 데이터의 전처리는 보통 쉽고 최소한이다. 중첩 구조를 평탄화하고, RAG 과제에 쓸모없는 필드를 이후 단계에서 버리는 정도다. 앞의 대화 적재 예에서는 대화를 네 개 열의 2차원 테이블로 평탄화할 수 있다. 메시지 본문, 역할(사용자인지 LLM인지), 타임스탬프, 그리고 같은 대화에 속한 메시지를 묶어 주는 대화 ID다. 이 가운데 앞으로 시맨틱 검색을 위해 임베딩되는 것은 메시지 본문뿐이다.</p>
+
+  <h4>파일이 어려운 이유</h4>
+  <p>반면 파일의 전처리는 순수 텍스트 파일(<code>*.txt</code> 같은)을 제외하면 훨씬 복잡해질 수 있다. 파일은 PDF, DOCX, PPTX, HTML 등 다양한 형식으로 오고, RAG가 다뤄야 할 것보다 더 많은 정보를 담고 있다. 예컨대 마이크로소프트 워드 문서의 서식·스타일 정보는 대체로 RAG에 유의미하지 않으므로 식별해 버려야 한다. 또 하나의 난점은, 원하는 텍스트나 표 데이터가 스캔된 이미지 안에 들어 있어 광학문자인식(OCR) 같은 기법이 필요한 경우다. 서로 다른 모달리티와 목적의 정보를 분리해 필요한 것만 추출하는 과정을 <em class="k">파싱</em>이라 부른다.</p>
+
+  <p>파싱은 LLM이 정확한 응답을 생성하는 데 필요한 맥락을 제공하는 이산적인 텍스트 조각을 산출한다. 그런데 이 조각들은 LLM이 한 번에 처리하기에 대체로 너무 길다. 컨텍스트 창의 크기, 비용, LLM의 효과성 같은 이유 때문이다. 게다가 대부분의 질문은 문서에서 나온 그 긴 원시 조각의 아주 작은 일부에만 주의를 기울여야 한다. 긴 맥락은 낭비일 뿐 아니라 역효과를 낳는다. 검색의 효과를 떨어뜨리는 식으로 말이다. 그래서 조각을 <em class="k">청크</em>라 불리는 더 작은 단위로 쪼갠다. 그 과정이 <em class="k">청킹</em>이다.</p>
+
+  <h4>표면형의 벽, 그리고 임베딩</h4>
+  <p>여기까지 오면 데이터는 여전히 원래 형태(텍스트는 여전히 문자의 선형 나열)나 원래 모달리티로 남아 있고, 그 때문에 검색과 조회가 무력해질 수 있다. 질의 텍스트가 “United States”라면 문자 공간에서 “USA”와 직접 맞출 수 없다. “Silicon Valley”라면 “硅谷”나 “矽谷”가 들어 있는 중국어 문서를 문자열 비교로 찾아낼 방법이 없다. 검색 가능성을 높이는 한 가지 방법이 텍스트를 그 의미를 담은 숫자 벡터로 변환하는 것이다. 이 과정과 그 산출물을 <em class="k">임베딩</em>이라 부른다. 더 정확히는 밀집 임베딩 또는 벡터 임베딩이다.</p>
+
+  <p>데이터를 수치 벡터로 변환하는 임베딩 말고도, 데이터 표현이나 형식을 바꾸지 않고 검색 가능성을 높이는 방법이 있다. 역색인이나 키워드 기반 색인 같은 것들이다. 이런 방법은 더 전통적이고 검색 엔진에서 자주 쓰이지만, 텍스트의 의미를 임베딩만큼 효과적으로 포착하지는 못한다. 그러나 특정 상황에서 임베딩을 보완한다. 한 번도 본 적 없는 이름을 가진 사업체와의 계약서를 찾는 경우가 그렇다. 사용자 질의의 오타를 관용하는 것도 또 하나의 예다. 키워드 기반 색인은 유사한 용어와 질의를 맞추는 데 도움이 된다.</p>
+
+  <p>임베딩까지 포함해, 나중의 빠르고 쉬운 조회를 위해 정보를 변환하고 조직화하는 모든 방법을 <em class="k">색인(indexing)</em>이라는 우산 아래 둔다. 색인은 큰 데이터셋을 훑을 때 빠른 조회와 효율적인 자원 사용을 가능하게 한다. 정보의 표현은 검색 가능성 개선의 첫 단계일 뿐이다. 밀집 임베딩의 경우 다음 단계는 그 임베딩을 효율적으로 조회할 수 있는 방식으로 저장하는 일이며, 여기서 벡터 데이터베이스가 등장한다.</p>
+
+  <h3>질의 흐름</h3>
+  <p>적재 흐름이 끝나면 RAG 스택은 적재된 데이터로 사용자 질의에 응답할 준비를 갖춘다. 질의는 질문일 수도, 명령일 수도, 지시의 나열일 수도, RAG 스택이 수행하기를 바라는 어떤 과제일 수도 있다. “2025년 내 여행을 바탕으로 시를 써 달라” 같은 것이다.</p>
+
+  <p>RAG의 힘은 학습 데이터에서 본 적 없는 지식을 요구하는 질의에 LLM이 응답하게 만드는 데 있다. 기성품 LLM은 당신이 누구인지도, 2025년에 어디에 있었는지도 모른다. 그러나 2025년 일기나 블로그 글을 RAG 스택에 적재해 두었다면, 그 문서에서 여행에 관한 정보를 검색해 LLM에 제공하고 그것을 바탕으로 시를 생성할 수 있다.</p>
+
+  <figure>
+    <svg viewBox="0 0 700 252" role="img" aria-label="질의 흐름의 주요 구성요소: 사용자 질의에서 임베더, 질의 벡터, 벡터 DB, 구성된 프롬프트를 거쳐 LLM으로">
+      <!-- user query -->
+      <rect class="sv-box-b" x="16" y="126" width="76" height="46" rx="2"/>
+      <text class="sv-t b" x="54" y="145" text-anchor="middle">사용자</text>
+      <text class="sv-t b" x="54" y="159" text-anchor="middle">질의</text>
+      <!-- embedder -->
+      <rect class="sv-box" x="116" y="118" width="94" height="62" rx="2"/>
+      <circle cx="150" cy="136" r="5" class="sv-box-i"/>
+      <circle cx="176" cy="150" r="5" class="sv-box-i"/>
+      <circle cx="146" cy="162" r="5" class="sv-box-i"/>
+      <path d="M150,136 L176,150 L146,162 Z" fill="none" stroke="#54479C" stroke-width="1"/>
+      <text class="sv-t b" x="163" y="196" text-anchor="middle">임베더</text>
+      <!-- query vector -->
+      <rect class="sv-box-i" x="234" y="122" width="72" height="54" rx="2"/>
+      <text class="sv-t b" x="270" y="145" text-anchor="middle">v1 v2 v3</text>
+      <text class="sv-t sm" x="270" y="162" text-anchor="middle">query vector</text>
+      <text class="sv-t b" x="270" y="196" text-anchor="middle">질의 벡터</text>
+      <!-- vector DB -->
+      <ellipse cx="392" cy="112" rx="60" ry="9" class="sv-box-t"/>
+      <path d="M332,112 L332,214 a60,9 0 0 0 120,0 L452,112" class="sv-box-t"/>
+      <text class="sv-t b" x="392" y="132" text-anchor="middle">벡터 DB</text>
+      <text class="sv-t sm" x="360" y="150" text-anchor="middle">벡터</text>
+      <text class="sv-t sm" x="424" y="150" text-anchor="middle">청크</text>
+      <line x1="392" y1="140" x2="392" y2="208" stroke="#A9BED0" stroke-width="1"/>
+      <circle cx="352" cy="166" r="4" class="sv-box"/><circle cx="366" cy="178" r="4" class="sv-box"/><circle cx="350" cy="192" r="4" class="sv-box"/>
+      <rect x="410" y="160" width="26" height="13" class="sv-box-r"/>
+      <rect x="410" y="178" width="26" height="13" class="sv-box-r"/>
+      <rect x="410" y="196" width="26" height="13" class="sv-box-r"/>
+      <!-- constructed prompt -->
+      <rect class="sv-box" x="486" y="24" width="130" height="182" rx="2"/>
+      <text class="sv-t b" x="551" y="44" text-anchor="middle">구성된 프롬프트</text>
+      <rect class="sv-box-b" x="500" y="56" width="102" height="26" rx="2"/>
+      <text class="sv-t" x="551" y="73" text-anchor="middle">사용자 질의</text>
+      <rect class="sv-box-r" x="500" y="94" width="102" height="26" rx="2"/>
+      <text class="sv-t" x="551" y="111" text-anchor="middle">맥락 텍스트</text>
+      <rect class="sv-box-r" x="500" y="130" width="102" height="26" rx="2"/>
+      <text class="sv-t" x="551" y="147" text-anchor="middle">맥락 텍스트</text>
+      <rect class="sv-box-r" x="500" y="166" width="102" height="26" rx="2"/>
+      <text class="sv-t" x="551" y="183" text-anchor="middle">맥락 텍스트</text>
+      <!-- LLM -->
+      <rect class="sv-box-i" x="640" y="118" width="52" height="62" rx="2"/>
+      <text class="sv-t b" x="666" y="153" text-anchor="middle">LLM</text>
+      <!-- arrows -->
+      <path class="sv-a" d="M96,149 L110,149"/>
+      <path class="sv-a" d="M214,149 L228,149"/>
+      <path class="sv-a" d="M310,149 L326,149"/>
+      <path class="sv-a i" d="M54,124 L54,60 L494,60 L494,66"/>
+      <path class="sv-a r dash" d="M440,166 L494,107"/>
+      <path class="sv-a r dash" d="M440,184 L494,143"/>
+      <path class="sv-a r dash" d="M440,202 L494,179"/>
+      <path class="sv-a" d="M620,120 L636,140"/>
+      <text class="sv-t sm" x="240" y="52">원래 질의는 생성 단계까지 그대로 전달</text>
+      <text class="sv-t sm" x="332" y="238">검색된 청크 3건</text>
+    </svg>
+    <figcaption><b>〈그림 2-2〉</b> 질의 흐름의 주요 구성요소와 단계. 벡터는 검색에만 쓰이고, LLM에 실제로 전달되는 것은 그 벡터에 대응하는 원래 텍스트 청크다.</figcaption>
+  </figure>
+
+  <h4>질의 재작성</h4>
+  <p>질의 흐름의 첫 단계는 <em class="k">질의 재작성(query rewriting)</em>이다. 사용자 질의를 LLM의 성능을 높이는 형태로 변환하는 과정이다. “2025년 내 여행을 바탕으로 시를 써 달라”는 질의는 두 부분으로 나뉜다. “시를 써 달라”와 “2025년 내 여행을 바탕으로”다. 앞은 명령이고, 뒤는 검색해 LLM에 보낼 맥락이다.</p>
+
+  <p>“시를 써 달라”가 검색 질의에 포함되면 엉뚱한 결과가 나온다. 여행이나 2025년과 무관한 시가 검색되고, 여행과 2025년에 관한 시 아닌 정보는 빠진다. 그러면 LLM은 다른 시를 바탕으로 시를 지어주되 여행이나 2025년과는 무관한 것을 내놓는다. 그래서 질의를 맥락 부분, 즉 “2025년 내 여행”에 집중하도록 재작성해야 한다. 정보 검색에 쓰이는 이 질의를 원래의 사용자 질의와 구별해 <em class="k">검색 질의(retrieval query)</em>라 부른다.</p>
+
+  <h4>밀집 검색과 희소 검색</h4>
+  <p>다음 단계는 검색 질의로 관련 정보를 검색하는 일이다. 검색은 보통 두 범주로 나뉜다. <em class="i">시맨틱 검색</em>(밀집 검색이라고도 한다)과 <em class="i">키워드 검색</em>(희소 검색이라고도 한다)이다.</p>
+
+  <p>시맨틱 검색에서는 검색 질의가 임베딩 벡터로 변환되고, 그 벡터로 벡터 데이터베이스에서 유사한 벡터를 찾는다. 두 벡터의 유사도는 <strong>내적(dot product)</strong>이라는 수학 연산으로 효율적으로 측정할 수 있다. 내적곱 또는 스칼라곱이라고도 한다. 오늘날의 임베딩 모델은 거의 모두 크기가 1인 정규화된 단위 벡터를 산출한다. 내적 연산의 두 벡터가 단위 벡터일 때 내적은 <strong>코사인 유사도</strong>와 같아진다. 코사인 유사도는 두 벡터의 방향이 얼마나 정렬되어 있는지를 재는 값이다.</p>
+
+  <p>키워드 검색은 TF-IDF(단어 빈도–역문서 빈도)나 BM25(BM은 best matching의 약자) 같은 검색 기법의 묶음이며, 시맨틱 검색보다 훨씬 먼저 개발되었다. 문자열을 벡터로 바꿔 벡터 공간에서 작동하는 시맨틱 검색과 달리 키워드 검색은 문자열을 직접 맞추고, 따라서 어휘 공간에서 작동한다. 현대 임베딩 모델도 매칭 목적의 단어나 구 벡터를 생성할 수 있는데, 이를 밀집 임베딩 벡터와 구별해 <strong>희소 벡터</strong>라 부른다.</p>
+
+  <p>시맨틱 검색과 키워드 검색에는 각각 강점과 약점이 있다. 양쪽의 장점을 결합하는 방법이 <strong>하이브리드 검색</strong>이다. 이 장이 다루는 기본 스택에서는 순수한 시맨틱 검색에 집중하고, 하이브리드 검색은 3장에서 다룬다. 희귀 토큰과 오타에 대한 견고성, 정확 일치 제약의 준수가 그쪽의 몫이다.</p>
+
+  <h4>왜 재순위가 필요한가</h4>
+  <p>비용과 효과를 생각하면 가장 관련성 높고 정보량 많은 청크를 골라 LLM에 넣고 싶다. 쉬운 일처럼 들린다. 검색 질의와의 유사도 점수로 청크를 정렬해 상위 몇 개를 고르면 되지 않는가. 불행히도 그렇게 간단하지 않다. 임베딩 모델을 이용한 순위가 LLM에게 최적이 아닐 이유가 여럿 있고, 그래서 <em class="i">재순위(reranking)</em>라는 단계를 추가로 적용하는 일이 많다.</p>
+
+  <div class="cards c2">
+    <div class="card">
+      <h5>첫째 — 중복</h5>
+      <p>검색 모델은 같은 정보를 전달하는 청크를 여러 개 돌려줄 수 있다. 그것을 전부 LLM에 보내면 토큰 예산과 연산을 모두 낭비한다. 이 문제는 LLM 등장보다 훨씬 전부터 관찰되었다. 선택된 청크 사이의 중복을 줄이기 위해 관련성과 다양성의 균형을 잡는 <strong>최대 한계 관련성(MMR)</strong> 재순위기는 1998년에 개발되었다.</p>
+    </div>
+    <div class="card">
+      <h5>둘째 — 어텐션의 미활용</h5>
+      <p>시맨틱 검색의 내적 유사도 점수는 LLM의 근간인 어텐션 메커니즘을 온전히 활용하지 못한다. 임베딩 모델은 각 텍스트를 독립적으로 표현하고, 그 유사도는 사후에 벡터 연산으로 측정된다. 반면 트랜스포머 기반 재순위기는 질의와 후보 청크를 <strong>함께</strong> 평가하므로, 교차 어텐션이 두 텍스트 사이의 미묘한 관계, 맥락 정합, 의미적 관련성을 더 잘 포착한다.</p>
+    </div>
+  </div>
+
+  <p>검색이 끝나면 마침내 청크를 생성 LLM에 보낼 준비가 된다. LLM은 검색된 청크의 맥락 안에서 원래의 사용자 질의를 살펴 응답을 생성한다. 이제 스택의 각 계층을 차례로 자세히 들여다본다.</p>
+</section>
+
+<!-- ══════════ 02 ══════════ -->
+<section id="s2" class="rv">
+  <div class="mark"><i>02</i><span>계층 1 · 문서 파싱</span><s></s></div>
+  <h2>문서 파싱</h2>
+
+  <p>RAG에 쓰려는 텍스트 데이터는 단순한 텍스트 형식이 아닌 경우가 아주 많다. PDF, PPTX, DOCX, HTML, 마크다운 같은 형식으로 온다. 이런 형식에서는 RAG 질의에 답할 지식을 담은 텍스트가 조판·스타일 정보, 예컨대 글꼴 정보와 뒤섞여 있고, 그런 정보는 답변에 쓸모가 없다.</p>
+
+  <p>PDF는 특히 까다롭다. PDF 한 페이지는 개별 문자와 그 좌표의 집합으로 이루어진다. 좌표를 적재에서 제외해야 하는 것은 물론이고, 문자들을 좌표에 근거해 단어나 문장으로 이어 붙여야 한다. 더 어려운 경우에는 관심 있는 텍스트가 종이 문서를 스캔한 이미지여서 광학문자인식이 필요하다. OCR의 정확도는 이미지 품질(해상도와 선명도), 사용된 글꼴의 복잡성과 스타일, 그리고 레이아웃 자체에 크게 좌우된다.</p>
+
+  <p>RAG에 쓰려는 지식을 담은 텍스트를 나머지에서 분리하는 단계를 <em class="k">문서 파싱</em>이라 부른다. 파싱이라 불리는 이유는, 이런 형식들이 컴퓨터 프로그램처럼 지정된 문법이나 구조를 따르고, 우리가 쓰려는 지식을 담은 텍스트 조각을 구문적으로 판별해야 하기 때문이다.</p>
+
+  <div class="note warn">
+    <span class="tag">첫 단계의 정확도가 전부를 결정한다</span>
+    <p>이 모든 파일 형식을 올바르게 파싱하는 일은 결정적으로 중요하다. 이 단계의 정확도가 무엇보다 우선한다. 적재 시점의 오류나 불일치는 RAG 시스템 지식베이스의 완전성과 신뢰성을 훼손하고, 사용자 질의에 양질의 응답을 제공하는 능력까지 손상시킨다.</p>
+  </div>
+
+  <h3>다양한 파일 형식에서 텍스트 추출하기</h3>
+  <p>RAG에 가장 흔히 적재되는 문서 유형인 PDF에서 시작한다. 포스트스크립트 언어에 뿌리를 둔 PDF는 문서의 논리적 구조가 아니라 <strong>시각적 외관</strong>을 재현하도록 근본적으로 설계되었다. 그래서 대부분의 PDF 파일<sup><a href="#fn1" class="ref">1</a></sup>에는 스키마나 계층적 콘텐츠가 없다. 대신 하나의 단어가 2차원 좌표를 가진 개별 문자들의 모음으로 저장된다. 텍스트 추출이 그토록 어려운 이유가 여기 있다.</p>
+
+  <p>PDF에서 단어, 문장, 문단을 추출하려면 문자 좌표 사이의 관계를 분석하는 복잡한 알고리즘이 필요하다는 뜻이기도 하다. 예컨대 어떤 페이지가 2단으로 짜였는지 판별하려면 페이지의 모든 문자의 군집과 정렬을 분석해야 한다. 그러지 않으면 두 단의 줄이 뒤섞여 뜻 없는 문장이 나온다.</p>
+
+  <p>다행히 도움이 되는 라이브러리가 많다. “PDF text extraction library”로 한 번만 검색해도 수많은 해법이 나온다. pypdf(PyPDF2, PyPDF3, PyPDF4까지 포함하는데, 그 이력이 좀 어지럽다), PyMuPDF, pdfminer.six(PDFMiner의 커뮤니티 판) 같은 인기 라이브러리가 있다. PDF를 발명한 어도비도 PDF 파일을 JSON 문자열로 파싱하는 상용 제품 PDF Extract API를 제공한다. Unstructured.io는 PDF 추출기를 제공하는 스타트업이다.</p>
+
+  <p>PDF가 스캔 문서에서 비롯되어 모든 페이지가 그림인 경우도 흔하다. 그런 페이지에서 텍스트나 표 정보를 얻으려면 OCR을 써야 한다. Tesseract는 가장 유명한 오픈소스 OCR 라이브러리이고, 구글 클라우드나 마이크로소프트 애저 같은 하이퍼스케일러도 OCR API를 제공한다. Reducto.ai처럼 OCR에 집중한 스타트업도 여럿 있다.</p>
+
+  <h4>DOCX와 HTML — XML 계열의 이점</h4>
+  <p>PDF에 비하면 DOCX나 HTML 형식은 상대적으로 다루기 쉽다. XML 계열에 속해 정보와 그 속성(글꼴 크기, 색 등)이 구조화된 방식으로 교차 저장되기 때문이다. HTML에서 “The capital of France is Paris.”는 <code>The capital of France is &lt;b&gt;Paris&lt;/b&gt;.</code>로 표현된다. <code>&lt;b&gt;</code> 태그는 “Paris”를 굵게 표시하라는 뜻이다. 그러나 “프랑스의 수도는 어디인가?”라는 질의에 답할 때 그 태그는 필요하지 않다. 그래서 파싱 과정에서 태그를 버리고 “The capital of France is Paris.”라는 텍스트만 돌려주려 한다.</p>
+
+  <p>DOCX와 HTML의 파싱·추출에도 라이브러리가 많다. DOCX에는 python-docx, HTML에는 Beautiful Soup가 있다. 그리고 PDF와 마찬가지로 DOCX와 HTML도 표나 이미지 같은 멀티모달 데이터를 담을 수 있는 컨테이너 형식이다. 이 부분은 8장에서 더 자세히 다룬다.</p>
+
+  <h4>태그를 버려서는 안 되는 경우</h4>
+  <p>태그와 속성을 언제나 버려야 하는 것은 아니다. 어떤 태그나 속성은 파이프라인 뒤쪽에서 유용한 단서가 된다. 처리할 텍스트가 이런 대화 로그라고 하자.</p>
+
+  <div class="codewrap">
+    <header>HTML <span>· 클래스 속성이 의미를 담는 경우</span></header>
+<pre>&lt;div class=<span class="s">"chat-log"</span>&gt;
+  &lt;div class=<span class="s">"user"</span> id=<span class="s">"msg1"</span>&gt;What is the capital of France?&lt;/div&gt;
+  &lt;div class=<span class="s">"AI"</span> id=<span class="s">"msg2"</span>&gt;The capital of France is Paris.&lt;/div&gt;
+  &lt;div class=<span class="s">"user"</span> id=<span class="s">"msg3"</span>&gt;What language is spoken there?&lt;/div&gt;
+  &lt;div class=<span class="s">"AI"</span> id=<span class="s">"msg4"</span>&gt;French.&lt;/div&gt;
+&lt;/div&gt;</pre>
+  </div>
+
+  <p>태그와 속성을 버리면 누가 언제 무엇을 말했는지의 맥락을 잃는다. 나중에 “AI에 따르면 프랑스 대통령은 어디에 사는가?”라는 질의가 들어오면 답할 수 없다. 더 나은 해법은 클래스를 메타데이터로 기록하는 것이다.</p>
+
+  <div class="tw">
+    <table>
+      <caption>표 2-1. 클래스를 메타데이터로 기록한다</caption>
+      <thead><tr><th>적재할 텍스트</th><th class="mono">메타데이터 (JSON)</th></tr></thead>
+      <tbody>
+        <tr><td>What is the capital of France?</td><td class="mono">{"who":"user"}</td></tr>
+        <tr><td>The capital of France is Paris</td><td class="mono">{"who":"AI"}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><em class="k">메타데이터</em>는 텍스트 조각에 관한 부가 정보로, 맥락이나 그 밖의 유용한 정보를 제공하는 데 쓰인다. 이제 질의 재작성 단계에서 질의를 두 갈래로 쪼갤 수 있다. 시맨틱 검색에 쓰일 본 질의(“프랑스 대통령은 어디에 사는가”)와, <code>who</code>를 <code>AI</code>로 제약하는 메타데이터 필터다. 이렇게 하면 사용자가 프랑스 수도에 관해 무언가 말했더라도 사용자 발언은 검색에서 배제된다. <strong>메타데이터 필터링은 SQL의 <code>where</code> 절과 비슷한 데이터베이스 연산이며, 시맨틱 검색과는 아무 관계가 없다.</strong></p>
+
+  <h3>비전-언어모델로 문서 파싱하기</h3>
+  <p>GPT-5.x 계열 같은 오늘날의 LLM은 비텍스트 데이터를 처리할 수 있다. 텍스트만 처리하는 LLM과 구별하기 위해, 시각 정보(정지 이미지나 영상)와 텍스트를 함께 처리하는 모델을 <em class="i">비전-언어모델(VLM)</em>이라 부른다. VLM으로 다양한 파일 형식을 직접 파싱할 수 있다.</p>
+
+  <p>이 접근은 슬라이드, 양식, 인포그래픽처럼 복잡한 레이아웃의 문서에 특히 유용하다. 그러나 이 선택지는 각별히 조심해서 써야 한다. VLM의 텍스트 추출이 언제나 정확하지는 않다. 생성적 본성 때문에 환각에 취약하고, 현재로서는 주어진 문서의 이미지를 재현하지 못하는 경우가 많다. 대규모 엔터프라이즈 데이터셋에 VLM 파싱을 쓰면 상당히 비싸고 느릴 수 있다.</p>
+
+  <div class="note tip">
+    <span class="tag">전략 — 가장 싼 성공 파서 우선</span>
+    <p>따라서 이 접근은 어렵고 값이 높은 문서 유형에 한정하거나, 고전적 파서가 실패했을 때의 대체 수단으로 남겨 두는 것이 좋다. VLM을 호출하기 전에 PDF 라이브러리, HTML 파서, OCR을 먼저 시도하는 “가장 싼 성공 파서 우선(cheapest successful parser-first)” 전략을 권한다.</p>
+  </div>
+
+  <h3>코드 예제: 파일 파싱</h3>
+  <p>세 가지 예제를 차례로 살펴본다. PyMuPDF로 PDF 파싱하기, python-docx로 DOCX 파싱하기, 그리고 GPT-5.1로 PDF 파싱하기다. 실행 가능한 주피터 노트북은 해당 장의 깃허브 저장소에 있다.</p>
+
+  <h4>PyMuPDF로 PDF 다루기</h4>
+  <p>PyMuPDF는 파이썬에서 PDF를 다루는 강력한 라이브러리다. 앞서 말한 대로 PDF에서 텍스트는 문자의 나열이 아니다. 문자는 개별적으로 저장되고, 근접성에 근거해 그것을 묶는 일이 PyMuPDF의 몫이다. 다음 코드는 PDF를 순회하며 각 페이지의 모든 텍스트를 하나의 문자열로 추출한다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 페이지 단위 텍스트 추출</span></header>
+<pre><span class="k">with</span> pymupdf.open(<span class="s">"sample_data/sample_data.pdf"</span>) <span class="k">as</span> doc:
+    <span class="k">for</span> page <span class="k">in</span> doc:
+        text: str = page.get_text()
+        print(text, end=<span class="s">"---"</span>)</pre>
+    <div class="out"><span class="lb">출력</span>Sample doc for RAG Book Chapter 2
+This is a great chapter
+Revision
+Year
+0.0.1
+2025
+Book
+Revision
+Year
+Author
+Memory and RAG
+0.1.0
+2026
+A great researcher
+RAG and AI
+0.0.1
+2025
+---</div>
+  </div>
+
+  <p>보다시피 이상적이지 않다. 표의 텍스트가 일반적인 비정형 텍스트와 뒤섞여 있다. 개선하는 한 가지 방법은 블록 단위로 추출하는 것이다. 블록은 PyMuPDF가 함께 묶은 텍스트의 집합이다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 블록 단위 추출</span></header>
+<pre><span class="k">with</span> pymupdf.open(<span class="s">"sample_data/sample_data.pdf"</span>) <span class="k">as</span> doc:
+    <span class="k">for</span> page <span class="k">in</span> doc:
+        text: str = page.get_text(<span class="s">"blocks"</span>)
+        <span class="k">for</span> block <span class="k">in</span> text:
+            print(block[<span class="s">4</span>], end=<span class="s">"---\n"</span>)</pre>
+    <div class="out"><span class="lb">출력 — 블록 경계를 드러내기 위해 각 블록 끝에 --- 를 붙였다</span>Sample doc for RAG Book Chapter 2
+---
+This is a great chapter
+---
+Revision
+Year
+0.0.1
+2025
+---
+Book
+Revision
+Year
+Author
+...
+---</div>
+  </div>
+
+  <p>그래도 아직 충분하지 않다. 어느 블록이 표에 속하고 어느 블록이 일반 텍스트에 속하는지 알 수 없다. 비정형 텍스트만 얻으려면 먼저 표 내용을 추출한 다음 전체 텍스트에서 표 내용을 덜어내야 한다. PyMuPDF로 표 내용을 추출하는 일은 비교적 쉽다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 표 추출</span></header>
+<pre><span class="k">with</span> pymupdf.open(<span class="s">"sample_data/sample_data.pdf"</span>) <span class="k">as</span> doc:
+    <span class="k">for</span> page <span class="k">in</span> doc:
+        tables = page.find_tables()
+        <span class="k">for</span> i, table <span class="k">in</span> enumerate(tables):
+            print(f<span class="s">"Table {i+1}"</span>)
+            print(table.extract(), end=<span class="s">"\n\n"</span>)</pre>
+  </div>
+
+  <p><code>find_tables()</code>는 주어진 페이지의 모든 표를 찾는다. 각 표는 <code>extract()</code>로 추출할 수 있으며, 행을 하위 리스트로 갖는 2차원 파이썬 리스트를 돌려준다.</p>
+
+  <div class="tw">
+    <table>
+      <caption>표 2-2. 표–JSON 직렬화를 설명하기 위한 예시 표</caption>
+      <thead><tr><th class="mono">Revision</th><th class="mono">Year</th></tr></thead>
+      <tbody><tr><td class="mono">0.0.1</td><td class="mono">2025</td></tr></tbody>
+    </table>
+  </div>
+
+  <p>표 2-2처럼 생긴 표는 위 코드로 이렇게 추출된다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 추출 결과</span></header>
+<pre>[
+  [<span class="s">'Revision'</span>, <span class="s">'Year'</span>],
+  [<span class="s">'0.0.1'</span>, <span class="s">'2025'</span>]
+]</pre>
+  </div>
+
+  <p>표 내용을 손에 넣었으니, 전체 텍스트를 표 내용으로 걸러 비표 텍스트를 얻을 수 있다. 과정은 조금 더 복잡하다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 표를 제외한 비정형 텍스트 추출</span></header>
+<pre><span class="c"># Extract non-table text</span>
+<span class="k">def</span> extract_unstructured_text(pdf_path):
+    <span class="s">"""Extract unstructured text from PDF, excluding table content.
+    Returns clean paragraph text without tabular data."""</span>
+    unstructured_text = []
+    <span class="k">with</span> pymupdf.open(pdf_path) <span class="k">as</span> doc:
+        <span class="k">for</span> page <span class="k">in</span> doc:
+            page_text = page.get_text()                 <span class="c"># 페이지 전체 텍스트</span>
+            tables = page.find_tables()                 <span class="c"># 표를 찾아 배제 대상으로</span>
+            table_text_blocks = []
+            <span class="k">if</span> tables.tables:
+                <span class="k">for</span> table <span class="k">in</span> tables:
+                    bbox = table.bbox                   <span class="c"># 표의 경계 상자</span>
+                    table_text = page.get_text(clip=bbox)
+                    table_text_blocks.append(table_text.strip())
+            lines = page_text.split(<span class="s">'\n'</span>)
+            filtered_lines = []
+            <span class="k">for</span> line <span class="k">in</span> lines:
+                line = line.strip()
+                <span class="k">if</span> line:
+                    is_table_content = <span class="k">False</span>
+                    <span class="k">for</span> table_text <span class="k">in</span> table_text_blocks:
+                        <span class="k">if</span> line <span class="k">in</span> table_text:
+                            is_table_content = <span class="k">True</span>
+                            <span class="k">break</span>
+                    <span class="k">if</span> <span class="k">not</span> is_table_content:
+                        filtered_lines.append(line)
+            page_unstructured = <span class="s">'\n'</span>.join(filtered_lines)
+            <span class="k">if</span> page_unstructured.strip():
+                unstructured_text.append(page_unstructured)
+    <span class="k">return</span> <span class="s">'\n\n'</span>.join(unstructured_text)
+
+unstructured_content = extract_unstructured_text(<span class="s">"sample_data/sample_data.pdf"</span>)
+print(<span class="s">"Unstructured text extracted:"</span>)
+print(unstructured_content)</pre>
+    <div class="out"><span class="lb">출력 — 의도한 결과</span>Unstructured text extracted:
+Sample doc for RAG Book Chapter 2
+This is a great chapter</div>
+  </div>
+
+  <p>마지막으로 PDF에서 이미지를 추출하는 방법을 본다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 이미지 추출</span></header>
+<pre><span class="c"># Extract images</span>
+<span class="k">with</span> pymupdf.open(<span class="s">"sample_data/sample_data.pdf"</span>) <span class="k">as</span> doc:
+    <span class="k">for</span> page <span class="k">in</span> doc:
+        image_list = page.get_images()
+        <span class="k">for</span> img_idx, img <span class="k">in</span> enumerate(image_list):
+            xref = img[<span class="s">0</span>]
+            base_image = doc.extract_image(xref)
+            image_bytes = base_image[<span class="s">"image"</span>]
+            display(Image(data=image_bytes))            <span class="c"># 주피터에 표시</span>
+            img_fmt = base_image[<span class="s">"ext"</span>]
+            img_filename = f<span class="s">"img_{page.number}_{img_idx}.{img_fmt}"</span>
+            <span class="k">with</span> open(image_filename, <span class="s">"wb"</span>) <span class="k">as</span> img_file:
+                img_file.write(image_bytes)</pre>
+  </div>
+
+  <p>PDF에서 이미지를 추출하는 일은 조금 복잡하다. 이미지가 “외부” 정보로 취급되기 때문이다. <code>get_images()</code>는 이미지의 이진 표현이 아니라 이미지의 “포인터” 정보를 가져온다. 실제 이미지 데이터를 가져오는 것은 이미지에 결부된 참조 번호(<code>xref</code>)를 이용하는 <code>extract_image()</code>다. 위 예제는 주피터 노트북 환경에 이미지를 표시하는 동시에, PDF에 담긴 이미지의 원래 형식으로 파일에 저장한다.</p>
+
+  <h4>DOCX 다루기</h4>
+  <p>PDF와 달리 DOCX는 문서 요소의 메타데이터를 보존하는 구조화된 형식이다. 그 덕분에 텍스트, 표, 이미지 추출이 더 쉽다. DOCX 파일은 본질적으로 텍스트와 표를 저장한 XML 파일들과 이미지를 포함한 미디어 파일들의 ZIP 아카이브다. 먼저 DOCX의 텍스트와 표를 잘 다루는 python-docx로 추출해 본다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· python-docx로 텍스트와 표 추출</span></header>
+<pre><span class="c">#!pip install python-docx</span>
+<span class="k">from</span> docx <span class="k">import</span> Document
+<span class="k">from</span> IPython.display <span class="k">import</span> display, Image
+
+document = Document(<span class="s">'sample_data/sample_data.docx'</span>)
+
+<span class="c"># extract text</span>
+<span class="k">for</span> para <span class="k">in</span> document.paragraphs:
+    print(para.text)
+
+<span class="c"># extract tables</span>
+<span class="k">for</span> table <span class="k">in</span> document.tables:
+    print(<span class="s">"\n--- Table ---"</span>)
+    <span class="k">for</span> row <span class="k">in</span> table.rows:
+        row_text = [cell.text <span class="k">for</span> cell <span class="k">in</span> row.cells]
+        print(row_text)</pre>
+  </div>
+
+  <p>이어 DOCX에서 이미지를 추출한다. 앞서 말했듯 DOCX는 실제로 XML 파일과 미디어 파일을 담은 ZIP 아카이브이며, 그 미디어 파일은 <code>zipfile</code> 모듈로 접근할 수 있다. 다음 코드는 흔한 확장자 <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.gif</code>로 이미지 파일을 찾는다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· zipfile로 DOCX 내부 이미지 추출</span></header>
+<pre><span class="k">import</span> zipfile
+
+zipf = zipfile.ZipFile(<span class="s">'sample_data/sample_data.docx'</span>)
+filelist = zipf.namelist()
+<span class="k">for</span> fname <span class="k">in</span> filelist:
+    _, ext = os.path.splitext(fname)
+    <span class="k">if</span> ext <span class="k">in</span> [<span class="s">'.jpg'</span>, <span class="s">'.jpeg'</span>, <span class="s">'.png'</span>, <span class="s">'.gif'</span>]:
+        <span class="k">with</span> zipf.open(fname) <span class="k">as</span> img_file:
+            img_data = img_file.read()
+            display(Image(data=img_data))</pre>
+  </div>
+
+  <p>이로써 DOCX 형식에서 텍스트, 표, 이미지라는 세 가지 주요 모달리티를 모두 추출하는 방법을 다뤘다.</p>
+
+  <h4>LLM으로 PDF 파싱하기</h4>
+  <p>위 예제들에서 파일 파싱이 꽤 복잡할 수 있다는 것을 눈치챘을 것이다. PyMuPDF 예제에서는 비정형 텍스트를 얻기 위해 전체 텍스트에서 표 내용을 직접 걸러내야 했다. LLM은 많은 경우 이 과정을 훨씬 쉽게 만들어 주는 강력한 도구다. 이제 GPT-5.1로 PDF를 파싱해 비정형 텍스트와 표를 각각 얻어 본다. 몇 줄의 영어 지시문으로 끝난다.</p>
+
+  <div class="note">
+    <span class="tag">준비</span>
+    <p>환경 변수 <code>OPENAI_API_KEY</code>를 OpenAI API 키로 설정한다.</p>
+  </div>
+
+  <div class="codewrap">
+    <header>Python <span>· 클라이언트 초기화와 파일 업로드</span></header>
+<pre><span class="k">from</span> openai <span class="k">import</span> OpenAI
+
+client = OpenAI()
+file = client.files.create(
+    file=open(<span class="s">"sample_data/sample_data.pdf"</span>, <span class="s">"rb"</span>),
+    purpose=<span class="s">"user_data"</span>
+)</pre>
+  </div>
+
+  <div class="codewrap">
+    <header>Python <span>· 표와 이미지를 제외한 텍스트 추출</span></header>
+<pre>completion = client.chat.completions.create(
+    model=<span class="s">"gpt-5.1"</span>,
+    messages=[
+        {
+            <span class="s">"role"</span>: <span class="s">"user"</span>,
+            <span class="s">"content"</span>: [
+                {<span class="s">"type"</span>: <span class="s">"file"</span>, <span class="s">"file"</span>: {<span class="s">"file_id"</span>: file.id}},
+                {<span class="s">"type"</span>: <span class="s">"text"</span>,
+                 <span class="s">"text"</span>: <span class="s">"""Extract the text content from the file. Exclude
+                            texts from tables or images."""</span>},
+            ]
+        }
+    ]
+)
+print(completion.choices[<span class="s">0</span>].message.content)</pre>
+  </div>
+
+  <p>GPT-5.1에 보내는 메시지는 두 부분으로 이루어진다. 앞부분은 파싱할 파일이고, 뒷부분은 지시문이다. 지시문은 평범한 영어로, 표와 이미지의 텍스트는 제외하고 파일에서 텍스트를 추출하라고 명시한다. 이어서 같은 PDF에서 표를 추출한다. 지시문만 바뀐다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 표를 마크다운으로 추출</span></header>
+<pre>completion = client.chat.completions.create(
+    model=<span class="s">"gpt-5.1"</span>,
+    messages=[
+        {
+            <span class="s">"role"</span>: <span class="s">"user"</span>,
+            <span class="s">"content"</span>: [
+                {<span class="s">"type"</span>: <span class="s">"file"</span>, <span class="s">"file"</span>: {<span class="s">"file_id"</span>: file.id}},
+                {<span class="s">"type"</span>: <span class="s">"text"</span>,
+                 <span class="s">"text"</span>: <span class="s">"""Extract the tables from the file. Return in
+                            Markdown tables."""</span>},
+            ]
+        }
+    ]
+)
+print(completion.choices[<span class="s">0</span>].message.content)</pre>
+  </div>
+
+  <p>이 절에서는 검색과 LLM을 위해 데이터를 준비하는 기초를 살펴봤다. 가장 흔한 두 문서 형식인 PDF와 DOCX에서, 널리 쓰이는 두 라이브러리 PyMuPDF와 python-docx로 텍스트를 추출하는 예제를 보였다. 다음은 파이프라인의 그다음 단계인 텍스트 청킹이다.</p>
+</section>
+
+<!-- ══════════ 03 ══════════ -->
+<section id="s3" class="rv">
+  <div class="mark"><i>03</i><span>계층 2 · 텍스트 청킹</span><s></s></div>
+  <h2>텍스트 청킹</h2>
+
+  <p>청킹은 문서 전문 같은 큰 텍스트 덩어리를 “청크”라 불리는 더 작은 조각으로 쪼개는 과정이다. 긴 기사를 개별 문단이나 절로, 심지어 문장 단위로 쪼갤 수도 있다. 왜 청킹이 필요한가. 일차적 이유는 LLM 컨텍스트 창의 유한성이다. 집필 시점 최신 모델의 컨텍스트 창은 다음과 같다.</p>
+
+  <div class="spec">
+    <div><b>OpenAI GPT-5.1</b><span>400k</span></div>
+    <div><b>Anthropic Claude Sonnet 4.5</b><span>1M</span></div>
+    <div><b>Google Gemini 3</b><span>1M</span></div>
+  </div>
+
+  <p>숫자는 커 보이지만, 엔터프라이즈급 과제에 적용하면 <strong>기만적인 풍요</strong>다. 보통 사람은 분당 약 120단어를 말한다. 영어 단어 하나가 약 1.3토큰이므로 400k 컨텍스트 창은 약 42시간의 연속 발화에 해당한다. 많아 보이지만, 어떤 주제에 관한 시장의 컨센서스를 관련 실적 발표 전사록 전체에서 얻으려 한다면 42시간은 턱없이 부족하다.</p>
+
+  <p>청킹은 컨텍스트 창에 담을 수 있는 관련 정보의 양을 극대화한다. 청킹을 통해 컨텍스트 창을 최대한 관련 있는 정보로 채우고, LLM이 온전한 그림을 가지고 응답을 만들게 한다. 앞의 실적 발표 예에서 어떤 산업 상위 10개 기업의 인원 증가만 관심사라면, 그 주제에 관한 청크만 컨텍스트 창에 들어간다. 매출이나 기술적 돌파 같은 다른 주제의 청크는 배제된다.</p>
+
+  <h3>이유 둘: 지연과 비용</h3>
+  <p>컨텍스트 창의 엄격한 용량 제약을 넘어, 청킹에는 설득력 있는 성능상의 논거가 있다. 연산 오버헤드와 추론 지연이다. 엔비디아의 NIM LLM 벤치마크는 H100 2장을 FP8 정밀도로 써서 Llama 3.3 70B의 컨텍스트 창 길이별 첫 토큰까지의 시간(TTFT)을 측정했다.</p>
+
+  <div class="tw">
+    <table>
+      <caption>표 2-3. Llama 3.3에서 시퀀스 길이에 따른 지연</caption>
+      <thead><tr><th class="mono">토큰 수</th><th class="mono">지연</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">200 tokens</td><td class="mono">31 ms</td></tr>
+        <tr><td class="mono">500 tokens</td><td class="mono">47 ms</td></tr>
+        <tr><td class="mono">1,000 tokens</td><td class="mono">82 ms</td></tr>
+        <tr><td class="mono">5,000 tokens</td><td class="mono">406 ms</td></tr>
+        <tr><td class="mono">10,000 tokens</td><td class="mono"><strong>1,833 ms</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>트랜스포머 기반 LLM의 추론 시간은 대략 컨텍스트 길이에 대해 이차적으로 증가한다고 추정된다. 수십만 토큰에 접근하면(GPU 메모리가 그만큼의 토큰을 감당할 수 있다는 가정 아래) TTFT가 도저히 받아들일 수 없는 사용자 경험으로 이어질 것이라 예상하는 것이 합리적이다. 위 실험이 H100 <strong>2장</strong>이라는 대단히 호사스러운 구성을 썼다는 점도 짚어야 한다.</p>
+
+  <p>집필 시점에 AWS의 H100 1장 인스턴스(p5.4xlarge)는 온디맨드로 시간당 6.88달러, 월 5,022달러다. AWS는 H100 2장 구성을 제공하지 않는다. 만약 제공한다면 위 지연을 얻는 비용은 월 1만 달러가 넘고, 실리콘밸리 엔지니어 기본급의 거의 절반이다. 꽤 값비싸다. 청킹으로 컨텍스트 길이를 줄이면 추론 지연과 비용을 유의미하게 낮출 수 있다.</p>
+
+  <h3>이유 셋: 임베딩 모델의 컨텍스트 창</h3>
+  <p>청킹의 두 번째 근거도 컨텍스트 창과 관련되는데, 이번에는 임베딩 모델의 컨텍스트 창이다. 임베딩 모델은 텍스트 청크를 벡터로 변환해 벡터 데이터베이스에 저장하고 빠른 시맨틱 검색을 가능하게 한다. 그런데 그 컨텍스트 창은 LLM보다 훨씬 작다. OpenAI의 3세대·4세대 임베딩 모델 <code>text-embedding-3-{small, large}</code>의 컨텍스트 창은 8k이고, 제미나이의 2세대 임베딩 모델 <code>gemini-embedding-002</code>도 마찬가지다. 즉 OpenAI와 구글의 경우 청크 크기를 8k 토큰으로 제한해야 한다.</p>
+
+  <h3>이유 넷: 응답 품질</h3>
+  <p>청킹의 세 번째 이유는 RAG 응답 품질의 개선이다. 개선은 검색 단계와 생성 단계 양쪽에서 일어난다. 큰 청크가 여러 주제를 포괄하면, 그 청크의 임베딩 벡터는 각 주제를 <strong>약하게</strong> 반영한다. 큰 청크를 작은 청크로 쪼개면 각 청크가 하나의 주제에 집중하고, 따라서 그 임베딩이 해당 주제를 더 잘 대표한다. 검색 단계에서는 관련성이 더 높은 청크를 얻고, 생성 단계에서는 무관한 정보가 덜 제시되어 더 정확한 응답으로 이어진다.</p>
+
+  <p>LLM의 추론 능력이 컨텍스트 길이가 늘어남에 따라 저하된다는 점은 널리 인정된다. 앤스로픽의 1M 컨텍스트 일반 공개 발표에 실린 그래프는 세 공급자의 LLM이 모두 컨텍스트가 커질수록 검색 능력이 떨어지는 것을 보여 준다. 청크가 작으면 LLM은 무관한 세부에 정신을 팔지 않고 가장 관련 있는 정보에 집중할 수 있다.</p>
+
+  <h3>청킹 전략</h3>
+  <p>RAG 파이프라인을 위해 여러 청킹 전략이 제안되었다.</p>
+
+  <p><em class="k">고정 크기 청킹</em>이 가장 기본적인 전략이다. 문서를 미리 정한 크기의 청크로 쪼개는데, 크기는 보통 문자, 단어, 토큰으로 측정한다. 주된 한계는 텍스트의 자연스러운 구조를 무시해 문장이나 의미 단위를 쪼갤 수 있다는 점이다. 흔한 완화책은 <strong>겹침(overlap)</strong>을 도입하는 것이다. 한 청크 끝의 토큰을 다음 청크 시작에 반복해 경계를 넘는 지역 맥락을 보존한다.</p>
+
+  <p><em class="k">내용 인식 청킹</em>은 문장 경계나 줄바꿈 같은 언어적·구문적 단서를 활용해 더 일관되고 맥락상 유의미한 조각을 만든다. 몇 가지 변종이 있다.</p>
+
+  <div class="cards c2">
+    <div class="card">
+      <h5>문장·문단 기반 분할</h5>
+      <p>줄바꿈(<code>\n\n</code> 등)으로 문단을 나누거나, 구두점 같은 문장 경계 판별 규칙으로 문장을 나눈다. 문장 분할은 마침표가 문장 경계를 뜻하지 않는 약어처럼 예외 사례가 많아 까다롭다. 그래서 spaCy, Stanza, NLTK 같은 자연어처리 라이브러리가 문장 분할기(sentencizer)를 제공한다. 문장 하나가 너무 잘게 쪼갠 것이라면 연속된 문장을 병합하고, 맥락 보존을 위해 겹침을 둘 수 있다.</p>
+    </div>
+    <div class="card">
+      <h5>재귀 청킹</h5>
+      <p>구분자의 계층(문단 → 문장 → 절)을 써서 텍스트를 점진적으로 더 작은 단위로 쪼갠다. 대표적 구현이 LangChain의 <code>RecursiveCharacterTextSplitter</code>다.</p>
+    </div>
+    <div class="card">
+      <h5>문서 구조 청킹</h5>
+      <p>재귀 청킹을 확장해 절과 하위 절 같은 명시적 문서 구조를 반영한다. 마크다운 문서는 표제 수준(<code>#</code> → <code>##</code> → <code>###</code>)에 따라 계층적으로 나눌 수 있고, 콘텐츠의 논리적 조직이 보존된다.</p>
+    </div>
+    <div class="card">
+      <h5>시맨틱 청킹</h5>
+      <p>의미 유사도에 근거해 텍스트를 나눈다. 주제에 따라 문장을 군집화하는 방식이 그 예다. 표면적 구조에만 의존하지 않고 의미적으로 일관된 청크를 만든다.</p>
+    </div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <caption>표 2-4. 청킹 전략 비교</caption>
+      <thead><tr><th style="width:20%">방식</th><th style="width:40%">장점</th><th style="width:40%">단점</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>고정 크기</strong></td>
+          <td>구현이 단순하다. 청크 크기가 예측 가능하다. 색인과 배치 처리에 효율적이다.</td>
+          <td>의미·구문 구조를 깬다. 문장을 쪼갤 수 있다. 맥락 보존을 위해 겹침이 필요하고, 그만큼 중복이 늘어난다.</td>
+        </tr>
+        <tr>
+          <td><strong>문장·문단 기반</strong><br><span style="font-size:.86em;color:var(--muted)">내용 인식</span></td>
+          <td>언어 구조를 보존한다. 청크가 더 일관된다. NLP 도구로 구현하기 쉽다.</td>
+          <td>문장 경계 판별에 오류가 생길 수 있다. 청크 크기가 불균등해진다. 상위 수준 맥락은 여전히 놓칠 수 있다.</td>
+        </tr>
+        <tr>
+          <td><strong>재귀</strong></td>
+          <td>유연하다. 여러 수준의 구조에 적응한다. 지나치게 크거나 작은 청크를 피한다.</td>
+          <td>구현과 튜닝이 더 복잡하다. 구분자 품질에 의존한다. 진짜 의미는 여전히 무시할 수 있다.</td>
+        </tr>
+        <tr>
+          <td><strong>문서 구조</strong></td>
+          <td>문서의 논리적 조직(절, 표제)에 부합한다. 계층적 맥락을 보존한다.</td>
+          <td>잘 구조화된 문서를 요구한다. 비정형 텍스트에는 덜 효과적이다. 구현이 형식(마크다운, HTML 등)에 의존한다.</td>
+        </tr>
+        <tr>
+          <td><strong>시맨틱</strong></td>
+          <td>의미적으로 일관된 청크를 만든다. 검색 품질이 더 좋다. 임베딩 기반 검색과 잘 맞는다.</td>
+          <td>연산 비용이 크다. 임베딩과 군집화가 필요하다. 청크 크기가 덜 예측 가능하다. 디버깅·튜닝이 어렵다.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>어떤 전략을 고를 것인가</h3>
+  <p>모든 경우에 최선인 하나의 규칙을 갖기는 어렵다. 흔한 실무 관행은 자기 데이터셋을 기준으로 평가하는 것이다. Chroma는 청킹 전략을 결정할 때 참고할 만한 예시를 제공한다.</p>
+
+  <p>청킹의 효과는 검색 단계나 생성 단계에서 평가할 수 있다. 검색은 보통 BEIR 같은 검색 벤치마크에서 정밀도, 재현율, F1, nDCG(정규화 할인 누적 이득), MRR(평균 역순위) 같은 지표로 평가한다. 평가는 6장에서 더 논의한다. 생성은 보통 주어진 맥락·구절에서 답을 찾는 벤치마크, 즉 질의응답(QA)이나 기계독해(MRC) 벤치마크에서 BERTScore나 LLM 기반 판정 같은 지표로 평가한다.</p>
+
+  <div class="note warn">
+    <span class="tag">주의 — 중간에서 길을 잃는 효과</span>
+    <p>LLM 생성 평가는 청크의 <strong>순서</strong>에 영향을 받는다. LLM은 앞쪽과 뒤쪽에 놓인 것에 더 주의를 기울이는 경향이 있고, 이를 “중간에서 길을 잃는(lost in the middle)” 효과라 부른다. 그러니 생성 평가만으로 어떤 청킹 전략이 다른 것보다 낫다고 결론 내리면 안 된다. LLM 생성은 여러 요인에 좌우된다는 점을 기억해야 한다.</p>
+  </div>
+
+  <p>다소 놀랍게도, 모든 청킹 전략이 비슷한 성능을 내고 다른 모든 것보다 나은 하나의 전략은 없다는 사실을 발견할 수도 있다. EMNLP(자연어처리 경험적 방법론 학회) 2024에 발표된 최근 연구 「Is Semantic Chunking Worth the Computational Cost?」는 Vectara의 Renyi Qu와 이 책의 저자 중 한 사람인 Forrest Bao, 그리고 위스콘신-매디슨 대학의 Ruixuan Tu가 함께 쓴 것으로, 고정 크기 청킹과 시맨틱 청킹이 검색 과제 평가의 업계 표준 벤치마크인 BEIR와 RAGBench에서 차이를 만들지 못한다는 것을 보여 준다.</p>
+
+  <p>그러나 독자가 이 논문의 결론을 최종적인 것으로 받아들이면 안 된다. 기존 벤치마크는 RAG 이전 시대에 만들어졌고 그래서 대체로 짧은 구절을 담고 있으며, 청킹의 영향은 긴 텍스트에서 더 두드러질 수 있다. 긴 구절을 담은 현대적이고 RAG에 특화된 벤치마크가 늘어나면, 앞으로 다른 결론을 보게 될지도 모른다.</p>
+
+  <h3>코드 예제: 파이썬으로 청킹하기</h3>
+  <p>spaCy는 자연어처리 전처리에 널리 쓰이는 라이브러리다. 그 문장 분할기는 텍스트를 문장으로 나눈다. 다음 코드는 긴 텍스트를 문장(이 경우에는 그것이 청크다)으로 나누고 차례로 출력한다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· spaCy 문장 분할</span></header>
+<pre><span class="k">import</span> spacy
+
+<span class="c"># Load a pre-trained English model</span>
+nlp = spacy.load(<span class="s">"en_core_web_sm"</span>)
+text = <span class="s">"""Mr. Wang is a teacher. He teaches A.I. (?). Does he love his work?
+Of course!"""</span>
+doc = nlp(text)
+
+<span class="c"># Iterate over sentences</span>
+<span class="k">for</span> sent <span class="k">in</span> doc.sents:
+    print(sent.text)</pre>
+    <div class="out"><span class="lb">출력</span>Mr. Wang is a teacher.
+He teaches A.I. (?).
+Does he love his work?
+Of course!</div>
+  </div>
+
+  <p>구두점으로 문장을 나누는 것보다 spaCy의 문장 분할기를 쓰는 이점은, 마침표를 포함한 약어나 경칭 같은 예외 사례를 더 잘 처리한다는 점이다. 위 예에서 문장 중간의 물음표는 spaCy를 속이지 못했다. 파이썬의 기본 문자열 연산으로 고정 길이 청커를 만들 수도 있다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 겹침을 둔 고정 길이 청킹</span></header>
+<pre><span class="c"># Fixed-length chunking with overlap</span>
+chunk_size = <span class="s">30</span>
+chunk_overlap = <span class="s">8</span>
+step_size = chunk_size - chunk_overlap
+
+<span class="k">for</span> i <span class="k">in</span> range(<span class="s">0</span>, len(text), step_size):
+    chunk = text[i:i+chunk_size]
+    print(chunk)</pre>
+    <div class="out"><span class="lb">출력</span>Mr. Wang is a teacher. He teac
+He teaches A.I. (?). Does he
+Does he love his work? Of cour
+Of course!</div>
+  </div>
+
+  <p>이 극단적인 예에서 각 청크는 30자 길이이고, 연속된 두 청크는 8자를 겹친다. 출력에서 보듯 고정 길이 청킹은 단어를 쪼개 임베딩에 잡음을 만든다. 그러나 청크가 충분히 길면 그런 잡음의 영향은 작다. 그런 경우라면 고정 길이 청킹은 속도 면에서 좋은 선택이다.</p>
+</section>
+
+<!-- ══════════ 04 ══════════ -->
+<section id="s4" class="rv">
+  <div class="mark"><i>04</i><span>계층 3 · 임베딩 모델</span><s></s></div>
+  <h2>임베딩 모델</h2>
+
+  <p>문서에서 미국에 관한 모든 정보를 찾고 싶다고 하자. 첫 번째 접근은 “United States”라는 단어가 들어간 청크를 모두 찾는 것이다. 그러나 이 방법은 같은 실체를 다른 표현으로 가리키는 “the U.S.”나 “America”가 들어간 청크를 놓친다. 더 명백한 예는 “two”라는 단어로 숫자 “2”를 찾는 경우다.</p>
+
+  <p>이 난점은 인간 언어의 근본적 특성에서 비롯한다. <strong>표면의 (비)유사성은 의미의 (비)유사성과 정렬되지 않는다.</strong> 단어의 철자는 개념의 표면형이다. “hat”과 “mat”처럼 표면형이 비슷한 두 단어가 반드시 의미상 비슷하거나 같은 개념을 가리키는 것은 아니다. 표면의 (비)유사성과 의미의 (비)유사성 사이의 어긋남은 인공지능, 더 구체적으로는 자연어처리의 오랜 골칫거리였다.</p>
+
+  <p>여기서 임베딩 모델이 등장한다. 임베딩 모델은 구의 의미를 포착해 더 유연하고 정확한 정보 검색을 가능하게 한다. 앞의 예에서 임베딩 모델은 “the U.S.”와 “America”가 표면형이 전혀 다름에도 “United States”와 관련된다는 것을 인식할 수 있다.</p>
+
+  <h3>임베딩이란 무엇인가</h3>
+  <p>임베딩 과정은 텍스트 데이터(RAG의 맥락에서는 검색된 청크나 사용자 질의)를 부동소수점 숫자의 벡터로 사상한다. 이 벡터를 임베딩 벡터, 또는 간단히 임베딩이라 부른다. 이 벡터는 텍스트의 의미를 포착하므로, 단순한 키워드 매칭으로는 이룰 수 없는 효과적인 비교와 검색이 가능해진다. 의미상 비슷한 두 구(“Uncle Sam”과 “US Government”)는 철자가 상당히 다르더라도 임베딩 벡터 사이의 거리가 작다. 벡터 거리는 오늘날 GPU가 최적화해 둔 내적 같은 연산으로 효율적으로 계산할 수 있다.</p>
+
+  <p>임베딩은 자연어처리를 여러 해 괴롭힌 병목을 해결한다. 표면의 비유사성을 넘어선 의미의 유사성(“Uncle Sam” 대 “US Government”), 그리고 표면의 유사성을 넘어선 의미의 비유사성(“cat” 대 “hat”)을 포착하는 일이다. 질의에 “Uncle Sam”이 들어 있는데 단어의 표면형에만 의존한다면 “US Government”가 담긴 청크를 놓치고, 심지어 의미상 무관한 “Uncle Tom”이나 “Uncle Bob”이 담긴 청크를 선호할 수도 있다.</p>
+
+  <p>임베딩의 목적은 표현의 유사성이 의미의 유사성과 정렬되도록 텍스트 데이터를 표현하는 방법을 찾는 것이다. 그런 임베딩은 보통 신경망을 학습시켜 얻으므로 <em class="i">밀집 표현(dense representation)</em>이라 불리고, 그 임베딩에 근거한 검색기는 <em class="i">밀집 검색기(dense retriever)</em>라 불린다.</p>
+
+  <div class="note">
+    <span class="tag">오해 방지 — 동의어 매칭이 전부가 아니다</span>
+    <p>“Uncle Sam” 대 “US Government”라는 예 때문에 임베딩이 같은 뜻의 단어를 맞추는 데만 쓰인다는 잘못된 인상을 받지 않기를 바란다. 질의가 “미국에서 일어난 모든 사건을 찾아라”이고 데이터 소스가 캘리포니아나 앨버타 같은 주 이름만 언급한다고 하자. 앨버타는 캐나다의 주다. 적절한 임베딩이라면 모델은 앨버타의 사건은 무시하면서 캘리포니아의 사건은 검색해 낼 수 있다.</p>
+  </div>
+
+  <h3>단어를 벡터로 — 짧은 계보</h3>
+  <p>단어를 벡터로 표현하는 일은 자연어처리의 오랜 문제였다. 1990년대에 제프리 엘먼은 「Finding Structure in Time」에서 이른바 엘먼 네트워크<sup><a href="#fn2" class="ref">2</a></sup>를 서술했다. 순환신경망(RNN)에 관한 영향력 있는 연구다. 엘먼 네트워크는 단어를 표현하는 데 원핫 인코딩을 썼다. 원핫 인코딩에서 각 단어는 어휘 크기와 같은 길이의 벡터로 표현되며, 어휘 내 그 단어의 인덱스에 해당하는 원소만 1이고 나머지는 모두 0이다.</p>
+
+  <p>진짜 돌파는 2010년대 딥러닝의 도래와 함께 왔다. 2013년 구글 연구자 토마시 미콜로프가 Word2Vec<sup><a href="#fn3" class="ref">3</a></sup> 모델을 발표했다. 목표 단어가 주어졌을 때 주변 단어를 예측하는 단순한 과제, 이른바 스킵그램 모델을 통해 단어를 벡터로 사상한다. “I had pizza for lunch”라는 문장에서 가운데 단어 “pizza”가 주어지면 “I”, “had”, “for”, “lunch”를 예측하는 식이다.</p>
+
+  <p>결과는 놀라웠다. 유명하게도 “queen”과 “woman”의 벡터 차이가 “king”과 “man”의 벡터 차이와 거의 평행하다는 것이 밝혀졌다. 이런 임베딩을 “정적 임베딩”이라 부른다. 학습이 끝나면 모든 단어의 임베딩이 고정된다는 의미에서 정적이다. 2018년 구글이 BERT(트랜스포머 기반 양방향 인코더 표현) 모델을 내놓으며 “맥락화된 임베딩” 또는 “동적 임베딩”이 가능해졌고, 이 분야는 한 단계 더 나아갔다. 단어<sup><a href="#fn4" class="ref">4</a></sup>의 임베딩이 그 맥락에 따라 결정된다.</p>
+
+  <h3>임베딩 모델 선택 기준</h3>
+  <p>어떤 기계학습 모델이든 그렇듯, 임베딩 모델을 고를 때 첫 번째 트레이드오프는 모델 크기와 성능이다. 큰 모델은 의미를 더 잘 특징화하지만 더 느리고 메모리를 더 요구한다. 균형점은 벤치마크로 찾을 수 있다. <em class="k">MTEB(대규모 텍스트 임베딩 벤치마크)</em>는 임베딩 모델 성능 평가의 업계 벤치마크이며, MTEB 리더보드에서 순위를 확인할 수 있다.</p>
+
+  <p><strong>임베딩 차원</strong>도 중요한 고려 요소다. 고차원 임베딩은 더 미묘한 의미 정보를 포착하지만 연산 자원을 더 요구한다. 구체적 사용 사례에 맞춰 차원과 효율 사이에서 균형을 찾는 일이 핵심이다.</p>
+
+  <p>OpenAI와 구글 제미나이의 임베더처럼 많은 임베딩 모델은 임베딩 벡터를 임의의 차원으로 잘라내는 것만으로 차원을 조정할 수 있게 한다. 임베더 학습 과정에서 <em class="k">마트료시카 표현 학습(MRL)</em>이라는 기법을 써서 달성한 것이다. MRL은 서로 다른 차원에서의 손실의 합으로 손실 함수를 설계함으로써, 가장 판별력 있는 의미 정보를 낮은 차원으로 밀어낸다. MRL은 어느 지점에서든 절단을 허용하지만, 전체 벡터의 1/8, 1/4, 1/2 같은 2의 거듭제곱 하위 차원을 쓰는 것이 표준 관행이다. 학습 과정에서 모델이 보통 그 특정한 차원 단위에서 최적화되기 때문이다.</p>
+
+  <p>컨텍스트 창을 가진 LLM처럼 임베딩 모델도 처리할 수 있는 입력 크기에 제한이 있다. 집필 시점 대표적 임베딩 모델의 컨텍스트 창은 토큰 수 기준으로 다음과 같다.</p>
+
+  <div class="spec">
+    <div><b>Alibaba Qwen3-Embedding-{0.6B, 4B, 8B}</b><span>32k</span></div>
+    <div><b>OpenAI 3세대 text-embedding-3-{small, large}</b><span>8k</span></div>
+    <div><b>Google Gemini 2세대 gemini-embedding-002</b><span>8k</span></div>
+    <div><b>BAAI BGE-M3</b><span>1k</span></div>
+  </div>
+
+  <h3>실무적 조언</h3>
+  <div class="cards c2">
+    <div class="card">
+      <h5>조용한 절단을 경계할 것</h5>
+      <p>청킹 전략이 임베딩 모델의 컨텍스트 창 길이와 맞아야 한다. 청크가 모델의 컨텍스트 창보다 길면 허깅페이스 Transformers 같은 대부분의 서빙 프레임워크는 <strong>조용히</strong> 청크를 잘라낸다. 정보가 유실되고 검색 품질이 떨어진다.</p>
+    </div>
+    <div class="card">
+      <h5>벡터 DB의 차원 상한</h5>
+      <p>임베딩 차원이 벡터 DB의 요구사항을 충족하는지 확인해야 한다. 예컨대 pgvector는 32비트 완전 정밀도 부동소수점 임베딩의 차원을 2,000으로 제한한다.</p>
+    </div>
+    <div class="card">
+      <h5>정밀도 낮추기</h5>
+      <p>저장과 연산을 절약하기 위해 임베딩의 정밀도를 16비트 부동소수점이나 심지어 8비트 정수로 낮추는 것이 흔한 관행이다. 많은 서빙 프레임워크나 SaaS 엔드포인트는 반환 임베딩의 정밀도를 지정할 수 있게 한다.</p>
+    </div>
+    <div class="card">
+      <h5>JSON의 낭비와 Base64</h5>
+      <p>임베딩 엔드포인트는 보통 JSON 형식으로 벡터를 반환하는데, JSON은 수치 데이터에 악명 높게 비효율적이다. “123” 같은 8비트 정수 하나는 이진으로 1바이트면 되지만 JSON 문자열로는 3바이트를 먹는다. 게다가 JSON으로 부동소수점을 전송하면 문자열 직렬화 중 정밀도 손실 위험이 있다. 그래서 많은 플랫폼이 Base64 인코딩을 지원한다. 완전한 부동소수점 정밀도를 보존하고 페이로드 크기도 줄이지만, 클라이언트 쪽에서 원래의 부동소수점 배열로 되돌리는 디코딩 단계가 필요하다.</p>
+    </div>
+  </div>
+
+  <h3>코드 예제: Sentence Transformers로 임베딩 생성하기</h3>
+  <p>Sentence Transformers는 효과적인 문장 임베딩을 만들기 위한 아키텍처이며, 파이썬 패키지 <code>sentence-transformers</code>는 사전학습된 임베딩 모델을 다수 제공한다. 이것으로 임베딩이 어떻게 작동하는지 보인다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 모델 초기화와 문장 임베딩</span></header>
+<pre><span class="k">from</span> sentence-transformers <span class="k">import</span> SentenceTransformer
+<span class="k">import</span> random
+<span class="k">import</span> matplotlib.pyplot <span class="k">as</span> plt
+
+<span class="c"># Load the pre-trained Sentence Transformers model</span>
+model = SentenceTransformer(<span class="s">'all-MiniLM-L6-v2'</span>)
+
+<span class="c"># List of sentences to encode</span>
+sentences = [
+    <span class="s">"I am a happy person."</span>,
+    <span class="s">"I am a joyful person."</span>,
+    <span class="s">"I am a pessimistic person."</span>,
+    <span class="s">"I am not an optimistic person."</span>
+]
+
+<span class="c"># Generate embeddings for the sentences</span>
+embeddings = model.encode(sentences)
+
+print(embeddings.shape)
+print(embeddings[:, :<span class="s">5</span>])  <span class="c"># 지면 제약으로 앞 5차원만</span></pre>
+    <div class="out"><span class="lb">출력</span>(4, 384)
+
+[[ 0.0046472   0.06651063  0.01479136 -0.02955691 -0.03556161]
+ [ 0.03454593  0.05649192  0.00730661 -0.07299504 -0.06663913]
+ [ 0.0615203   0.05317358  0.01788338  0.0348283  -0.03031245]
+ [ 0.02471697  0.02527617 -0.00175561  0.02087232 -0.03713483]]</div>
+  </div>
+
+  <p>첫 번째 <code>print()</code>는 <code>(4, 384)</code>를 출력한다. 문장 네 개, 각각 384차원 임베딩이라는 뜻이다. 이제 문장 임베딩 사이의 쌍별 유사도를 계산한다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 쌍별 코사인 유사도</span></header>
+<pre>similarity_matrix = model.similarity(embeddings, embeddings)
+print(similarity_matrix)</pre>
+    <div class="out"><span class="lb">출력 — 4 × 4 텐서</span>tensor([[1.0000, 0.8151, 0.3864, 0.5210],
+        [0.8151, 1.0000, 0.3383, 0.4128],
+        [0.3864, 0.3383, 1.0000, 0.7047],
+        [0.5210, 0.4128, 0.7047, 1.0000]])</div>
+  </div>
+
+  <div class="codewrap">
+    <header>Python <span>· 히트맵 시각화</span></header>
+<pre>plt.figure(figsize=(<span class="s">5</span>, <span class="s">5</span>))
+plt.imshow(
+    similarity_matrix, cmap=<span class="s">'RdYlGn_r'</span>, interpolation=<span class="s">'nearest'</span>, vmin=<span class="s">0</span>, vmax=<span class="s">1</span>
+)
+plt.title(<span class="s">'Cosine similarity between any pair of embeddings'</span>)
+plt.xlabel(<span class="s">'Sentence ID'</span>)
+plt.ylabel(<span class="s">'Sentence ID'</span>)
+plt.yticks([<span class="s">0</span>, <span class="s">1</span>, <span class="s">2</span>, <span class="s">3</span>])
+
+<span class="c"># Add text annotations</span>
+<span class="k">for</span> i <span class="k">in</span> range(len(similarity_matrix)):
+    <span class="k">for</span> j <span class="k">in</span> range(len(similarity_matrix)):
+        plt.text(j, i, f<span class="s">'{similarity_matrix[i][j]:.3f}'</span>,
+                 ha=<span class="s">'center'</span>, va=<span class="s">'center'</span>, color=<span class="s">'black'</span>)
+plt.show()</pre>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 330" role="img" aria-label="네 문장 임베딩 사이의 코사인 유사도 히트맵">
+      <text class="sv-t b" x="350" y="20" text-anchor="middle" style="font-size:12.5px">Cosine similarity between any pair of embeddings</text>
+      <!-- axis labels -->
+      <text class="sv-t sm" x="196" y="60">0</text><text class="sv-t sm" x="196" y="122">1</text>
+      <text class="sv-t sm" x="196" y="184">2</text><text class="sv-t sm" x="196" y="246">3</text>
+      <text class="sv-t sm" x="240" y="284" text-anchor="middle">0</text>
+      <text class="sv-t sm" x="302" y="284" text-anchor="middle">1</text>
+      <text class="sv-t sm" x="364" y="284" text-anchor="middle">2</text>
+      <text class="sv-t sm" x="426" y="284" text-anchor="middle">3</text>
+      <text class="sv-t sm" x="333" y="304" text-anchor="middle">Sentence ID</text>
+      <text class="sv-t sm" x="182" y="160" text-anchor="middle" transform="rotate(-90 182 160)">Sentence ID</text>
+      <!-- cells: row0 -->
+      <rect x="210" y="34" width="62" height="56" fill="#A50026"/><text class="sv-t b" x="241" y="66" text-anchor="middle" style="fill:#FBFCFD">1.000</text>
+      <rect x="272" y="34" width="62" height="56" fill="#F16D43"/><text class="sv-t b" x="303" y="66" text-anchor="middle">0.815</text>
+      <rect x="334" y="34" width="62" height="56" fill="#C7E77F"/><text class="sv-t b" x="365" y="66" text-anchor="middle">0.386</text>
+      <rect x="396" y="34" width="62" height="56" fill="#FDF7AF"/><text class="sv-t b" x="427" y="66" text-anchor="middle">0.521</text>
+      <!-- row1 -->
+      <rect x="210" y="90" width="62" height="56" fill="#F16D43"/><text class="sv-t b" x="241" y="122" text-anchor="middle">0.815</text>
+      <rect x="272" y="90" width="62" height="56" fill="#A50026"/><text class="sv-t b" x="303" y="122" text-anchor="middle" style="fill:#FBFCFD">1.000</text>
+      <rect x="334" y="90" width="62" height="56" fill="#B7E075"/><text class="sv-t b" x="365" y="122" text-anchor="middle">0.338</text>
+      <rect x="396" y="90" width="62" height="56" fill="#E8F59D"/><text class="sv-t b" x="427" y="122" text-anchor="middle">0.413</text>
+      <!-- row2 -->
+      <rect x="210" y="146" width="62" height="56" fill="#C7E77F"/><text class="sv-t b" x="241" y="178" text-anchor="middle">0.386</text>
+      <rect x="272" y="146" width="62" height="56" fill="#B7E075"/><text class="sv-t b" x="303" y="178" text-anchor="middle">0.338</text>
+      <rect x="334" y="146" width="62" height="56" fill="#A50026"/><text class="sv-t b" x="365" y="178" text-anchor="middle" style="fill:#FBFCFD">1.000</text>
+      <rect x="396" y="146" width="62" height="56" fill="#F79D59"/><text class="sv-t b" x="427" y="178" text-anchor="middle">0.705</text>
+      <!-- row3 -->
+      <rect x="210" y="202" width="62" height="56" fill="#FDF7AF"/><text class="sv-t b" x="241" y="234" text-anchor="middle">0.521</text>
+      <rect x="272" y="202" width="62" height="56" fill="#E8F59D"/><text class="sv-t b" x="303" y="234" text-anchor="middle">0.413</text>
+      <rect x="334" y="202" width="62" height="56" fill="#F79D59"/><text class="sv-t b" x="365" y="234" text-anchor="middle">0.705</text>
+      <rect x="396" y="202" width="62" height="56" fill="#A50026"/><text class="sv-t b" x="427" y="234" text-anchor="middle" style="fill:#FBFCFD">1.000</text>
+      <rect x="210" y="34" width="248" height="224" fill="none" stroke="#12314F" stroke-width="1"/>
+      <!-- legend -->
+      <text class="sv-t sm" x="500" y="44">문장 목록</text>
+      <text class="sv-t sm" x="500" y="62">0 · I am a happy person.</text>
+      <text class="sv-t sm" x="500" y="78">1 · I am a joyful person.</text>
+      <text class="sv-t sm" x="500" y="94">2 · I am a pessimistic person.</text>
+      <text class="sv-t sm" x="500" y="110">3 · I am not an optimistic person.</text>
+      <text class="sv-t sm" x="500" y="146">색 척도 (RdYlGn_r)</text>
+      <rect x="500" y="156" width="26" height="14" fill="#A50026"/><text class="sv-t sm" x="534" y="167">1.0 — 높음</text>
+      <rect x="500" y="174" width="26" height="14" fill="#F79D59"/><text class="sv-t sm" x="534" y="185">0.7</text>
+      <rect x="500" y="192" width="26" height="14" fill="#FDF7AF"/><text class="sv-t sm" x="534" y="203">0.5</text>
+      <rect x="500" y="210" width="26" height="14" fill="#B7E075"/><text class="sv-t sm" x="534" y="221">0.3 — 낮음</text>
+    </svg>
+    <figcaption><b>〈그림 2-3〉</b> 앞 코드 예제에 쓰인 문장 임베딩 사이의 코사인 유사도. 대각 원소는 자기 자신과의 유사도이므로 언제나 1이다.</figcaption>
+  </figure>
+
+  <p>첫 행은 첫 문장과 모든 문장의 유사도다. 두 번째 문장과의 유사도는 0.8151로 꽤 높아 두 문장이 의미상 비슷함을 알려 준다. 세 번째와 네 번째 문장과의 유사도는 각각 0.3864, 0.5210으로 더 낮다. 마지막 두 행으로 눈을 옮기면, 세 번째 문장이 네 번째 문장과 0.7047로 가장 비슷하고, 첫째·둘째 문장과는 0.3864와 0.3383으로 꽤 낮다.</p>
+
+  <p>이제 흥미로운 실험을 해 본다. 임베딩의 일부 구간을 무작위로 잘라내 유사도를 계산하면 어떻게 되는가.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 무작위 부분공간 실험</span></header>
+<pre><span class="c"># generate two random integers between 0 and 384</span>
+rand1 = random.randint(<span class="s">0</span>, <span class="s">384</span>)
+rand2 = random.randint(<span class="s">0</span>, <span class="s">384</span>)
+<span class="k">if</span> rand1 &gt; rand2:
+    rand1, rand2 = rand2, rand1
+print(f<span class="s">"Using semantic dimensions {rand1} to {rand2}"</span>)
+
+similarity_matrix = model.similarity(
+    embeddings[:, rand1:rand2], embeddings[:, rand1:rand2]
+)
+print(similarity_matrix)</pre>
+    <div class="out"><span class="lb">출력 — 어느 한 번의 실행</span>Using semantic dimensions 67 to 158
+tensor([[1.0000, 0.8511, 0.3949, 0.5848],
+        [0.8511, 1.0000, 0.3353, 0.4720],
+        [0.3949, 0.3353, 1.0000, 0.6721],
+        [0.5848, 0.4720, 0.6721, 1.0000]])</div>
+  </div>
+
+  <p>67에서 158 사이의 의미 차원만 써도 유사도 행렬은 전체 임베딩으로 얻은 것과 비슷한 양상을 보인다. 문장 1과 2가 여전히 가장 비슷하고, 그다음이 문장 3과 4다. 다른 무작위 차원으로 반복해도 비슷한 양상을 관찰할 가능성이 높다. 오늘날의 임베딩 모델이 워낙 좋아서, 임베딩 공간의 무작위 부분공간만으로도 유의미한 의미 관계를 포착할 수 있다는 뜻이다.</p>
+</section>
+
+<!-- ══════════ 05 ══════════ -->
+<section id="s5" class="rv">
+  <div class="mark"><i>05</i><span>계층 4 · 벡터 DB와 벡터 검색</span><s></s></div>
+  <h2>벡터 데이터베이스와 벡터 검색</h2>
+
+  <p>텍스트를 임베딩으로 바꾸는 것은 효과적인 정보 검색을 향한 첫걸음일 뿐이다. 다음 단계는 그 임베딩을 빠른 유사도 조회가 가능한 방식으로 저장하는 일이며, 여기서 벡터 데이터베이스가 등장한다.</p>
+
+  <h3>벡터 기반 유사도 검색의 이해</h3>
+  <p>임베딩의 아름다움은 두 임베딩의 벡터 차이가 그 임베딩이 표현하는 두 텍스트 사이의 의미 유사성을 반영한다는 데 있다. 벡터 유사도를 재는 흔한 방법이 내적이다. 내적이 클수록 두 벡터와 그에 대응하는 텍스트는 의미상 더 비슷하다. 내적으로 의미 유사성을 비교할 때는 벡터 크기의 영향을 제거해 두 임베딩 사이의 각도 차이만 순수하게 고려할 수 있다. 그래서 임베딩은 정규화되어야 한다. 크기가 1이어야 한다는 뜻이다. 벡터가 정규화되면 그 내적은 코사인 유사도와 같아진다.</p>
+
+  <p>질의 임베딩이 주어졌을 때 가장 관련성 높은 청크를 찾는 소박한 방법은, 질의 임베딩과 데이터베이스의 다른 모든 임베딩 벡터 사이의 내적을 계산하는 무차별 대입이다. 복잡도는 O(n)이고, n은 데이터베이스의 벡터 개수다.</p>
+
+  <p>데이터가 작으면 무차별 대입도 잘 작동한다. 적재한 벡터 전부를 메모리에 올려 두는 단순한 구성으로 충분하다. 그러나 수백만, 수십억 청크의 대규모 프로덕션 배포에는 무차별 대입보다 영리한 방법이 필요하다. 좋은 소식은, 작은 오차를 감수할 의지가 있다면 데이터베이스의 모든 벡터와 내적을 계산할 필요가 없다는 점이다. 이것이 <em class="i">근사 최근접 이웃(ANN)</em> 검색의 발상이다. 대비되는 무차별 대입 방식은 정확 최근접 이웃(ENN) 또는 FlatIndex 검색이라 부르기도 한다.</p>
+
+  <h3>근사 최근접 이웃 알고리즘</h3>
+  <p>벡터 검색을 빠르게 하기 위해, 거의 모든 벡터 데이터베이스와 전통적 관계형·NoSQL 데이터베이스의 벡터 검색 플러그인은 어떤 형태로든 ANN 알고리즘을 제공한다. ANN의 “근사”라는 말은 알고리즘이 정확한 최근접 이웃을 찾는다고 보장하지 않고 충분히 가까운 것을 찾는다는 뜻이다.</p>
+
+  <p>가장 두드러진 ANN 알고리즘이 <em class="k">계층적 항해 가능 소세계(HNSW)</em><sup><a href="#fn5" class="ref">5</a></sup>다. HNSW는 각 벡터가 같은 층 안의 인접 벡터와 연결된 다층 구조를 만든다. 상위 층은 적은 수의 벡터를 담아 데이터셋의 거친 조망을 표현하고, 하위 층은 더 많은 벡터를 담아 세밀한 구분을 가능하게 한다. 질의는 맨 위에서 시작해 아래로 내려가며, 각 층에서 언제나 질의에 더 가까운 벡터에 도달하려 한다.</p>
+
+  <p>직관을 얻기 위해, 캘리포니아 로스앨토스에 있는 어떤 좌표에서 가장 가까운 미국 도시를 찾는다고 상상해 보자. 무차별 대입은 전국 모든 도시까지의 거리를 계산한다. HNSW는 대신 층으로 진행한다.</p>
+
+  <figure>
+    <svg viewBox="0 0 700 370" role="img" aria-label="HNSW의 계층적 탐색을 도시 예시로 설명한 도해">
+      <!-- tier labels -->
+      <text class="sv-t b" x="16" y="42">Tier 1</text><text class="sv-t sm" x="16" y="58">전국 지표</text>
+      <text class="sv-t b" x="16" y="122">Tier 2</text><text class="sv-t sm" x="16" y="138">서부 대도시</text>
+      <text class="sv-t b" x="16" y="202">Tier 3</text><text class="sv-t sm" x="16" y="218">베이 에어리어</text>
+      <text class="sv-t b" x="16" y="282">Tier 4</text><text class="sv-t sm" x="16" y="298">사우스 베이</text>
+      <line x1="100" y1="24" x2="100" y2="340" stroke="#A9BED0" stroke-width="1"/>
+      <!-- tier 1 -->
+      <rect class="sv-box-r" x="130" y="24" width="120" height="34" rx="2"/>
+      <text class="sv-t b" x="190" y="45" text-anchor="middle">Los Angeles</text>
+      <rect class="sv-box" x="270" y="24" width="120" height="34" rx="2"/>
+      <text class="sv-t" x="330" y="45" text-anchor="middle">New York City</text>
+      <!-- tier 2 -->
+      <rect class="sv-box" x="130" y="104" width="112" height="34" rx="2"/>
+      <text class="sv-t" x="186" y="125" text-anchor="middle">Los Angeles</text>
+      <rect class="sv-box-r" x="254" y="104" width="112" height="34" rx="2"/>
+      <text class="sv-t b" x="310" y="125" text-anchor="middle">San Francisco</text>
+      <rect class="sv-box" x="378" y="104" width="90" height="34" rx="2"/>
+      <text class="sv-t" x="423" y="125" text-anchor="middle">Seattle</text>
+      <rect class="sv-box" x="480" y="104" width="90" height="34" rx="2"/>
+      <text class="sv-t" x="525" y="125" text-anchor="middle">Denver</text>
+      <!-- tier 3 -->
+      <rect class="sv-box" x="130" y="184" width="112" height="34" rx="2"/>
+      <text class="sv-t" x="186" y="205" text-anchor="middle">San Francisco</text>
+      <rect class="sv-box-r" x="254" y="184" width="112" height="34" rx="2"/>
+      <text class="sv-t b" x="310" y="205" text-anchor="middle">San Jose</text>
+      <rect class="sv-box" x="378" y="184" width="90" height="34" rx="2"/>
+      <text class="sv-t" x="423" y="205" text-anchor="middle">Oakland</text>
+      <!-- tier 4 -->
+      <rect class="sv-box-r" x="130" y="264" width="112" height="34" rx="2"/>
+      <text class="sv-t b" x="186" y="285" text-anchor="middle">Palo Alto</text>
+      <rect class="sv-box" x="254" y="264" width="112" height="34" rx="2"/>
+      <text class="sv-t" x="310" y="285" text-anchor="middle">Sunnyvale</text>
+      <rect class="sv-box" x="378" y="264" width="110" height="34" rx="2"/>
+      <text class="sv-t" x="433" y="285" text-anchor="middle">Mountain View</text>
+      <rect class="sv-box" x="500" y="264" width="90" height="34" rx="2"/>
+      <text class="sv-t" x="545" y="285" text-anchor="middle">San Jose</text>
+      <!-- descend arrows -->
+      <path class="sv-a r" d="M190,62 L190,98"/>
+      <path class="sv-a r" d="M310,142 L310,178"/>
+      <path class="sv-a r" d="M290,222 L200,258"/>
+      <!-- query marker: 우측 스파인 -->
+      <rect class="sv-box-i" x="556" y="18" width="134" height="44" rx="2"/>
+      <text class="sv-t b" x="623" y="37" text-anchor="middle">질의 좌표</text>
+      <text class="sv-t sm" x="623" y="52" text-anchor="middle">Los Altos, CA</text>
+      <path fill="none" stroke="#54479C" stroke-width="1" stroke-dasharray="4 4" d="M623,66 L623,281"/>
+      <path class="sv-a i dash" d="M619,121 L578,121"/>
+      <path class="sv-a i dash" d="M619,201 L474,201"/>
+      <path class="sv-a i dash" d="M619,281 L596,281"/>
+      <text class="sv-t sm" x="480" y="88">각 층의 후보와만 비교</text>
+      <!-- note -->
+      <text class="sv-t sm" x="130" y="336">각 층에서 한 줌의 도시만 비교한다. 거칠게 시작해 정밀하게 좁히는 이 방식이 HNSW의 효율을 만든다.</text>
+    </svg>
+    <figcaption><b>〈보조 도해〉</b> HNSW의 계층적 탐색. Tier 1에서 두 개의 지표 도시만 평가하고, 가까운 쪽을 골라 아래층으로 내려간다. 러스트색 상자가 각 층에서 선택된 경로다. 원 논문의 첫 그림에서 실제 그래프 구조를 확인할 수 있다.</figcaption>
+  </figure>
+
+  <p>맨 위 층에서는 질의를 두 개의 지표 도시, 로스앤젤레스와 뉴욕과만 비교한다. 어느 쪽이 더 가까운지가 다음에 어디를 뒤져야 할지에 관한 강력한 단서를 준다. 질의가 로스앤젤레스에 더 가깝다고 하자. 그러면 Tier 2로 내려가 미국 서부의 큰 도시 몇 개, 즉 로스앤젤레스 자신, 샌프란시스코, 시애틀, 덴버와 비교한다. 샌프란시스코가 가장 가깝다면 북부 캘리포니아로 확대해 Tier 3에서 베이 에어리어의 도시들, 샌프란시스코 자신, 새너제이, 오클랜드만 비교한다. 새너제이가 가장 가깝다면 Tier 4로 더 내려가 팰로앨토, 서니베일, 마운틴뷰, 새너제이 자신 같은 사우스 베이 개별 도시를 평가한다.</p>
+
+  <p>가장 낮은 층에 도달할 무렵 후보 도시는 극히 지역적이고, 전국의 모든 도시가 아니라 각 단계에서 한 줌의 도시에 대해서만 거리를 계산해 가장 가까운 것을 찾아냈다. 거칠게 먼저, 정밀하게 나중에 진행하는 이 점진적 정련이 HNSW를 실무에서 그토록 효율적으로 만든다.</p>
+
+  <div class="note warn">
+    <span class="tag">“근사”의 진짜 의미</span>
+    <p>HNSW는 그래프를 탐욕적으로 항해하므로, 시작 단계의 판단이 미세하게 어긋나면 드물게나마 검색이 “잘못된” 영역으로 끌려갈 수 있다. 질의가 두 대도시권의 경계선에 정확히 놓인 경우가 그렇다. 그런 경우 HNSW는 진짜 최근접 도시와 극히 가깝지만 수학적으로 절대적으로 가장 가까운 도시는 아닌 결과를 돌려줄 수 있다. 이것이 ANN에서 “근사”의 본질이다.</p>
+    <p>그 대가로 HNSW는 뛰어난 성능을 제공한다. 데이터셋의 아주 작은 일부만 검사하면서, 대부분의 실용적 응용에서 정확 검색과 거의 동일한 정확도를 연산 비용의 일부만으로 달성한다.</p>
+  </div>
+
+  <p>HNSW 알고리즘을 구현한 유명한 오픈소스 라이브러리는 메타/페이스북의 FAISS(Facebook AI Similarity Search)다. FAISS는 HNSW와 그 밖의 ANN 알고리즘을 고도로 최적화해 구현했고, 개발자가 ANN 검색 능력을 애플리케이션에 통합하기 쉽게 만든다.</p>
+
+  <h3>벡터 데이터베이스</h3>
+  <p>벡터 데이터베이스는 고차원 임베딩을 관리하고 저장하고 질의하기 위해 만들어진 시스템이며, 주로 확장 가능한 형태의 ANN을 구현한다. 그러나 벡터 DB는 비슷한 벡터를 찾는 일에 그치지 않고 더 넓은 데이터베이스 관심사를 다룬다. 영속성, 갱신, 삭제, 메타데이터 관리, 필터링, 확장성, 다른 시스템과의 통합이다.</p>
+
+  <p>역사적으로 전문 벡터 데이터베이스는 주류 데이터베이스가 강력한 벡터 색인을 제공하기 전에 등장했다. 오늘날에는 많은 범용 데이터베이스도 벡터 검색을 지원한다. PostgreSQL의 pgvector, SQLite의 sqlite-vec, MongoDB의 Atlas Vector Search가 그 예다. 그러니 이제 벡터 DB는 벡터 검색만 하고 전통적 관계형·NoSQL 데이터베이스는 비벡터 검색만 한다고 단순히 나눌 수 없다.</p>
+
+  <p>독점 제품인 Pinecone과 오픈소스인 Milvus, Weaviate, Qdrant 같은 다수의 벡터 DB 시스템은 <strong>메타데이터 필터링</strong>을 지원한다. 임베딩이 아니라 임베딩에 결부된 메타데이터, 즉 문서 ID, 타임스탬프, 그 밖의 속성에 대해 수행되는 연산이다. 메타데이터는 그저 필드이고(전통적 관계형·NoSQL 데이터베이스의 열과 비슷하다), 따라서 메타데이터 필터링은 전통적 데이터베이스 필터링과 유사한 연산을 한다.</p>
+
+  <p>메타데이터 필터링이 벡터 임베딩 자체에 대해 수행되지는 않지만, 벡터 검색의 속도와 품질에 영향을 줄 수 있다. 수십 년에 걸친 모든 상장 기업의 분기 재무 보고서를 가지고 있다고 하자. 특정 기업의 특정 기간에 관해 묻고자 한다면, DB 시스템이 먼저 기업명과 기간으로 데이터를 걸러 검색 공간을 좁힌 다음 벡터 검색을 수행하는 것이 낫다. 벡터 검색은 전통적 필터링보다 훨씬 비싸고 느리기 때문이다.</p>
+
+  <p>메타데이터 필터링은 벡터 검색 전에, 벡터 검색과 병렬로, 그리고 벡터 검색 후에 수행할 수 있다. 앞서 서술한 예는 사전 필터링(pre-filtering)이다. Pinecone의 블로그 글이 사전 필터링과 사후 필터링을 잘 설명한다. 메타데이터 필터링과 벡터 검색을 함께 수행하는 알고리즘으로는 ACORN이 있다.</p>
+
+  <h3>벡터 검색에서 고려할 파라미터</h3>
+  <div class="cards c2">
+    <div class="card">
+      <h5>k — 반환할 결과 수</h5>
+      <p>RAG 파이프라인의 벡터 검색에서 핵심 파라미터는 반환할 결과의 개수이며 보통 <code>k</code>로 표기한다. k는 너무 작아도 너무 커도 안 된다. 너무 작으면 사용자 질의에 대한 진짜 답이 k 밖으로 밀려 놓친다. 너무 크면 여러 문제를 만난다. 먼저 LLM의 컨텍스트 창 길이를 넘길 수 있다. 다음으로 잡음과 무관한 정보를 들여 생성 품질을 떨어뜨린다. 마지막으로 생성 단계의 비용과 지연을 불필요하게 늘린다.</p>
+    </div>
+    <div class="card">
+      <h5>임베딩 차원</h5>
+      <p>앞서 언급한 마트료시카 표현 학습은 임의의 임베딩 차원을 고를 자유를 준다. 차원을 줄이면 벡터 데이터베이스의 크기가 줄고 벡터 검색이 빨라진다. 그러나 차원을 너무 많이 줄이면 벡터 검색의 품질이 저하된다. 균형점은 구체적 사용 사례와 사용하는 임베딩 모델에 달려 있다. 벡터 DB가 지원하는 최대 임베딩 차원도 유념해야 한다. pgvector는 32비트 완전 정밀도 부동소수점에 대해 2,000차원까지 지원한다.</p>
+    </div>
+  </div>
+
+  <h3>코드 예제: pgvector로 벡터 저장하고 조회하기</h3>
+  <p>pgvector는 PostgreSQL에 벡터 검색 지원을 추가하는 확장이다. 여기서는 핵심 단계만 보인다. 실행 가능한 전체 코드는 이 책 깃허브 저장소의 주피터 노트북 <code>pgvector-simple.ipynb</code>에 있다. 먼저 Sentence Transformers로 문장을 임베딩한다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 임베딩 준비</span></header>
+<pre><span class="k">from</span> typing <span class="k">import</span> List
+<span class="k">from</span> sentence-transformers <span class="k">import</span> SentenceTransformer
+<span class="k">from</span> sklearn.metrics.pairwise <span class="k">import</span> cosine_similarity
+
+model = SentenceTransformer(<span class="s">'all-MiniLM-L6-v2'</span>)
+sample_sentences = [
+    <span class="s">"I am a happy person."</span>,
+    <span class="s">"I am a joyful person."</span>,
+    <span class="s">"I am a pessimistic person."</span>,
+    <span class="s">"I am not an optimistic person."</span>
+]
+embeddings = model.encode(sample_sentences)</pre>
+  </div>
+
+  <p>임베딩은 2차원 NumPy 배열이며, 각 행이 한 문장의 임베딩이고 각 열이 임베딩 차원 하나다. 이제 <code>sentence</code>와 <code>embedding</code> 두 열을 가진 <code>sentence_embeddings</code> 테이블을 만든다.</p>
+
+  <div class="codewrap">
+    <header>Python / SQL <span>· 테이블과 HNSW 색인 생성</span></header>
+<pre><span class="k">import</span> psycopg2
+<span class="k">import</span> numpy <span class="k">as</span> np
+
+<span class="c"># Connect to a PostgreSQL database</span>
+conn = psycopg2.connect(
+    host=<span class="s">"YOUR_HOST"</span>, port=<span class="s">"YOUR_PORT"</span>,
+    database=<span class="s">"YOUR_DB"</span>, user=<span class="s">"YOUR USER"</span>
+)
+conn.autocommit = <span class="k">True</span>
+cursor = conn.cursor()
+
+<span class="c"># Enable pgvector extension</span>
+cursor.execute(<span class="s">"CREATE EXTENSION IF NOT EXISTS vector;"</span>)
+
+<span class="c"># Create a table to store sentences and their embeddings</span>
+cursor.execute(<span class="s">"""
+CREATE TABLE IF NOT EXISTS sentence_embeddings (
+    sentence TEXT,
+    embedding VECTOR(384)
+)
+"""</span>)
+
+<span class="c"># Create HNSW index for efficient similarity search</span>
+cursor.execute(<span class="s">"""
+CREATE INDEX
+ON sentence_embeddings
+USING hnsw (embedding vector_l2_ops)
+WITH (m = 16, ef_construction = 64);
+"""</span>)</pre>
+  </div>
+
+  <p>위의 <code>autocommit</code> 설정은 SQL 명령을 손으로 커밋하는 수고를 덜어 준다. 벡터를 저장할 <code>embedding</code> 열을 만들 때 차원을 384로 지정했다. <code>all-MiniLM-L6-v2</code>의 임베딩 차원이 384이기 때문이다. 코드 마지막에는 이 테이블에서 효율적인 검색을 돕는 HNSW 색인을 만든다.</p>
+
+  <p>테이블이 준비되었으니 미리 계산한 임베딩을 삽입한다. SQL <code>INSERT</code>로 한 번에 하나씩 넣는다. 앞서 얻은 <code>embeddings</code>는 2차원 NumPy 배열이므로, PostgreSQL 테이블에 넣을 때는 각 행을 부동소수점 리스트로 바꾼 뒤 문자열로 직렬화해 <code>INSERT</code> 문을 제대로 구성해야 한다.</p>
+
+  <div class="codewrap">
+    <header>Python / SQL <span>· 임베딩 삽입과 확인</span></header>
+<pre><span class="c"># Insert sample sentences and their embeddings</span>
+<span class="k">for</span> sentence, embedding <span class="k">in</span> zip(sentences, embeddings):
+    embedding_as_list: List[float] = embedding.tolist()
+    cursor.execute(
+        <span class="s">"INSERT INTO sentence_embeddings (text, embedding) "</span>
+        <span class="s">"VALUES (%s, %s::vector)"</span>,
+        (sentence, embedding_as_list)
+    )
+
+<span class="c"># Take a sneak peek at the table contents</span>
+cursor.execute(<span class="s">"SELECT text, embedding FROM sentence_embeddings;"</span>)
+rows = cursor.fetchall()
+<span class="k">for</span> row <span class="k">in</span> rows:
+    print(row[<span class="s">0</span>], row[<span class="s">1</span>][:<span class="s">3</span>])</pre>
+    <div class="out"><span class="lb">출력 — 이렇게 잘려 나오면 정상이다</span>I am a happy person. [0.00465,0.06651,0.01479]
+I am a joyful person. [0.03455,0.05649,0.00731]
+I am a pessimistic person. [0.06152,0.05317,0.01788]
+I am not an optimistic person. [0.02472,0.02528,-0.00176]</div>
+  </div>
+
+  <p>마지막으로 벡터 검색을 실행한다. 반복해서 쓸 수 있도록 함수로 만든다.</p>
+
+  <div class="codewrap">
+    <header>Python / SQL <span>· 벡터 검색 함수</span></header>
+<pre><span class="k">def</span> vector_search(query, model, top_k):
+    query_embedding = model.encode([query])[<span class="s">0</span>]
+    query_embedding_as_list: List[float] = query_embedding.tolist()
+    cursor.execute(
+        <span class="s">"""
+        SELECT text,
+               1 - (embedding &lt;=&gt; %s::vector) as similarity
+        FROM sentence_embeddings
+        WHERE embedding IS NOT NULL
+        ORDER BY embedding &lt;=&gt; %s::vector
+        LIMIT %s;
+        """</span>,
+        (query_embedding_as_list, query_embedding_as_list, top_k)
+    )
+    results = cursor.fetchall()
+    <span class="k">for</span> row <span class="k">in</span> results:
+        print(row)</pre>
+  </div>
+
+  <p>특수 표기 <code>::vector</code>는 PostgreSQL에게 <code>embedding</code> 필드를 벡터로 취급하라고 알린다. 연산자 <code>&lt;=&gt;</code>는 코사인 유사도 검색을 수행하며, <code>sentence-transformers</code>가 정규화된 벡터를 산출하므로 여기서 코사인 유사도는 내적과 같다. 위 <code>SELECT</code> 문의 <code>embedding</code>은 <code>sentence_embeddings</code> 테이블의 <code>embedding</code> 열을 가리킨다.</p>
+
+  <p>왜 <code>1 - (embedding &lt;=&gt; %s::vector)</code>를 유사도로 쓰는지 궁금할 수 있다. pgvector에서 <code>&lt;=&gt;</code> 연산자는 실제로 두 벡터 사이의 <strong>비유사도</strong>를 재기 때문이다. 그래서 유사도를 재려면 그 여수를 써야 한다. 이제 벡터 검색을 돌려 본다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 두 개의 질의</span></header>
+<pre>query = <span class="s">"I am a smiling person."</span>
+vector_search(query, model, <span class="s">3</span>)</pre>
+    <div class="out"><span class="lb">출력</span>('I am a happy person.', 0.7639919010393534)
+('I am a joyful person.', 0.6934391466808068)
+('I am not an optimistic person.', 0.3835604305136333)</div>
+    <div class="out"><span class="lb">두 번째 질의 — "I have a bad feeling about the future."</span>('I am a pessimistic person.', 0.5613031721891864)
+('I am not an optimistic person.', 0.5059882553216297)
+('I am a happy person.', 0.3224700977626531)</div>
+  </div>
+
+  <p>예상대로 “happy”와 “joyful”에서 “not an optimistic person”으로 넘어갈 때 유사도 점수가 급격히 떨어진다. “행복한 사람”과 “즐거운 사람”이 “웃는 사람”과 훨씬 높은 의미 유사성을 공유한다는 뜻이다. 두 번째 질의의 결과도 납득이 간다.</p>
+</section>
+
+<!-- ══════════ 06 ══════════ -->
+<section id="s6" class="rv">
+  <div class="mark"><i>06</i><span>계층 5 · 생성 LLM</span><s></s></div>
+  <h2>생성 LLM</h2>
+
+  <p>이제 RAG 스택의 마지막 단계다. 검색된 텍스트 청크와 원래의 사용자 질의를 LLM에 넣어 응답을 생성한다. 이 단계는 텍스트에서 텍스트로의 변환이다. 앞선 벡터 검색 단계에서는 수치 임베딩 벡터를 다뤘지만, 임베딩을 LLM에 보내지는 않는다. 그림 2-2에서 본 대로 지시문과 검색된 임베딩에 대응하는 원래 텍스트 청크를 담은 완전한 LLM 프롬프트를 보내고, LLM은 텍스트 응답을 돌려준다.</p>
+
+  <h3>LLM</h3>
+  <p>LLM이 RAG에 핵심적인 이유는 맥락을 분석하고 그에 대해 추론한 뒤 사람 같은 텍스트를 생성하는 능력에 있다. RAG에서 LLM의 가장 흔한 두 과제는 <strong>요약</strong>(검색된 청크를 일관되면서 간결하게 다시 쓰기)과 <strong>질의응답</strong>(검색된 청크에 근거해 사용자 질의에 답 생성하기)이다. LLM은 광범위한 사용자 의도에 따라 입력 텍스트와 관련된 출력 텍스트를 생성하도록 학습되었기에 이 목적에 좋은 도구다. 요약과 질의응답은 마침 가장 흔한 사용자 의도 두 가지이며, 막대한 양의 학습 데이터가 그에 투입되었고 LLM 공급자들도 이 기능에 상당한 노력을 들였다.</p>
+
+  <p>신경망으로 출력을 만드는 일을 <em class="k">추론(inference)</em>이라 부른다. 추론 속도는 보통 LLM 사용의 병목이며, RAG 시스템이 온프레미스나 에어갭 환경에서 돌아 LLM을 직접 서빙해야 할 때 특히 그렇다. 추론 속도를 개선하는 기법이 여럿 개발되었다.</p>
+
+  <ul class="plain">
+    <li><strong>양자화</strong>는 정밀도를 32비트(float32)에서 16비트(float16, bfloat16), 8비트(int8), 심지어 4비트(int4)로 낮춰 LLM 처리량을 높인다.</li>
+    <li><strong>FlashAttention</strong>은 어텐션 값을 계산할 때 메모리 사용을 더 효율적으로 만들어 트랜스포머 기반 LLM의 추론을 가속하는 널리 쓰이는 방법이다.</li>
+    <li><strong>vLLM, Ollama</strong> 같은 오픈소스 서빙 프레임워크는 여러 방법을 조합해 LLM 추론을 가속하고 하드웨어 요구량을 줄인다.</li>
+  </ul>
+
+  <p>기존 하드웨어에서 성능을 한 방울 더 짜내는 데 쏟는 인간의 창의성이란 참 아름다운 광경이다.</p>
+
+  <p>LLM을 고를 때는 속도와 품질 사이의 트레이드오프가 있다. 일반적으로 큰 LLM은 작은 LLM보다 역량이 많고 복잡한 과제에서 더 좋은 결과를 낸다. 그러나 과제가 충분히 단순해서 큰 LLM이 작은 LLM보다 미미하게 낫거나 비슷한 수준인 경우도 꽤 많다. 그런 경우라면 큰 LLM이 들여오는 지연과 비용을 정당화하기 어렵다. 최소 비용으로 기대를 충족하는 최적점의 LLM을 찾기 위해 평가 데이터셋을 만드는 노력은 값어치가 있다.</p>
+
+  <p>또 하나의 고려 요소는 데이터 프라이버시다. 많은 RAG 사용 사례는 온프레미스나 에어갭 배포를 요구한다. 데이터가 공용 인터넷으로 나갈 수 없다는 뜻이다. 그런 경우 OpenAI의 GPT 계열이나 앤스로픽의 클로드 모델 같은 독점 LLM을 공개 HTTP 엔드포인트로 쓰는 것은 허용되지 않고, 대다수 개발자에게 오픈소스 LLM이 유일한 선택지가 된다. 집필 시점에 요약이나 질의응답 같은 흔한 RAG 과제에서 오픈소스와 독점 LLM의 격차는 충분히 작으며, 경험 규칙은 <strong>70B 파라미터 이상의 오픈소스 LLM이면 쓸 만하다</strong>는 것이다.</p>
+
+  <h3>RAG 프롬프트 엔지니어링</h3>
+  <p>LLM에는 <em class="k">지시 따르기(instruction following)</em>라는 큰 힘이 있다. 프롬프트에 제공된 지시에 근거해 특정 과제를 수행하도록 유도할 수 있다는 뜻이다. 프롬프트 엔지니어링은 모델에서 원하는 응답을 끌어내기 위해 그 프롬프트를 설계하고 정련하는 실천이다.</p>
+
+  <p>RAG의 맥락에서는 검색 결과와 사용자 질의를 적절히 조립해 LLM이 관련성 있는 응답을 생성하도록 유도해야 한다. 절대적으로 최선인 방법은 없다. 구체적 사용 사례와 쓰는 LLM에 달려 있다. 아래는 프롬프트 템플릿을 개발할 때 영감을 얻을 만한 예시들이다.</p>
+
+  <div class="codewrap">
+    <header>Prompt <span>· 기본형</span></header>
+<pre>You are a helpful information-processing assistant. Extract answers related to a
+search query based on the context provided.
+
+Here is the context: {retrieved_results}
+Here is the search query: {query}</pre>
+  </div>
+
+  <p>앞서 질의 흐름에서 원래의 사용자 질의를 검색 질의로 재작성한다고 했다. 이제 생성 단계이므로 여기서는 <strong>원래의 사용자 질의</strong>를 쓴다. 그러면 LLM이 사용자 의도에 더 부합하는 응답을 생성하도록 돕는다. 다만 대부분의 LLM은 학습 데이터의 특성상 질의가 맥락보다 <strong>앞에</strong> 놓일 때 더 잘 작동한다. 그래서 다음과 같은 템플릿이 선호될 수 있다.</p>
+
+  <div class="codewrap">
+    <header>Prompt <span>· 질의를 앞에 두는 형태</span></header>
+<pre>You are a helpful information-processing assistant. Extract answers related to a
+search query based on the context provided.
+
+Here is the search query: {query: str}
+Here is the context: {retrieved_results: list[str]}</pre>
+  </div>
+
+  <p>현대 LLM은 더 나은 답에 이르도록 스스로를 안내하는 복잡한 추론을 수행할 수 있다. 그래서 모델의 추론 능력을 활용하도록 지시를 프롬프트에 추가하고 싶을 수 있다. 간단한 사고 연쇄(CoT) 지시를 넣는 식이다. 환각이 큰 걱정이므로, 맥락의 정보를 고수하라고 명시적으로 지시할 수도 있다.</p>
+
+  <div class="codewrap">
+    <header>Prompt <span>· 사고 연쇄 지시 / 환각 억제 지시</span></header>
+<pre>If the answer is not obviously present in the context, please think step by step
+and provide a detailed explanation of your reasoning process.
+
+If an answer cannot be reasonably inferred from the context, please simply say
+"I don't know." If you used any assumptions to arrive at your answer, please
+clearly state what assumptions are made.</pre>
+  </div>
+
+  <p>여기까지의 템플릿은 매우 일반적이고 과제 중립적이다. 사용자가 던질 질의의 성격을 안다면 프롬프트를 더 구체적이고 효과적으로 맞출 수 있다. 과제가 질의응답이라는 것을 안다면 템플릿을 단순화할 수 있다. 사용자 질의가 형식을 갖춘 질문이 아니라 구글에 던지는 검색어에 가깝다면 요약에 맞춰 다듬을 수 있다.</p>
+
+  <div class="codewrap">
+    <header>Prompt <span>· 과제 특화 / XML 태그로 구획하기</span></header>
+<pre><span class="c"># 질의응답에 특화</span>
+Answer the question {query: str},
+given the context {retrieved_results: list[str]}
+
+<span class="c"># 요약에 특화</span>
+You are a good summarizer. Please summarize the information about {query: str}
+from the context below:
+{retrieved_results: list[str]}.
+
+<span class="c"># XML 태그로 부분을 구분 — 권장 관행</span>
+You are a helpful information-processing assistant. Extract answers related to a
+search query based on the context provided.
+&lt;query&gt;{query: str}&lt;/query&gt;
+&lt;context&gt;{retrieved_results: list[str]}&lt;/context&gt;</pre>
+  </div>
+
+  <p>배경 정보를 제공하는 것도 LLM 출력을 개선할 수 있다. RAG 애플리케이션의 도메인이 과학이나 스포츠라면 “당신은 과학/스포츠 전문가다”라고 프롬프트를 시작할 수 있다. 마지막 조언은, 프롬프트의 서로 다른 부분을 LLM이 이해하도록 돕는 흔한 실천으로 <strong>XML 태그</strong>를 써서 구획을 나누는 것이다.</p>
+
+  <h3>LLM과 프롬프트 템플릿 평가</h3>
+  <p>시장에는 LLM이 많고, 프롬프트를 주는 방법도 많다. 자연스럽게 이런 질문이 나온다. 올바른 LLM과 그에 맞는 프롬프트 템플릿을 어떻게 고를 것인가. RAG 평가라는 토끼굴로 들어가지 않고(6장에서 어느 정도 다룬다) 핵심 단계만 짚는다.</p>
+
+  <p>첫 단계는 사용자가 RAG 시스템에 보낼 만한 질의 유형을 반영하거나 모방하는 <strong>평가 질의</strong>를 준비하는 일이다. 기존 사용자 질의가 많다면 훌륭하다. 그렇지 않다면 데이터, 사용자 행동, 잠재적 RAG 시스템에 관한 지식을 LLM에 프롬프트로 주어 질의를 합성한다.</p>
+
+  <p>다음 단계는 RAG의 응답을 평가할 “비평가”를 만드는 일이다. 흔한 실천이 <em class="k">LLM-as-a-judge</em>다. 다시 한번 LLM의 지시 따르기 능력을 활용해, 응답의 여러 측면을 판정하는 평가자로 설정한다. 보통 두 측면이 쓰인다.</p>
+
+  <ul class="plain">
+    <li><strong>관련성(relevance)</strong> — 응답이 질의에 답하고 있는가?</li>
+    <li><strong>충실성(faithfulness)</strong> — 응답이 검색된 문서로 잘 뒷받침되는가?</li>
+  </ul>
+
+  <p>생성과 평가에 같은 LLM을 쓸 수도 있다. 지시 따르기 능력 덕분에 하나의 LLM을 서로 다른 과제에 맞게 설정할 수 있다. 그러나 LLM-as-a-judge에는 몇 가지 단점이 있다.</p>
+
+  <div class="cards c3">
+    <div class="card"><span class="num">01</span><h5>느리고 비싸다</h5><p>비싼 LLM을 쓰기 때문이다.</p></div>
+    <div class="card"><span class="num">02</span><h5>항상 정확하지 않다</h5><p>LLM은 환각할 수 있다. 한 단계에서 다음 단계로 가는 추론이 결함을 품을 수 있고, 그러면 판정도 결함을 품는다.</p></div>
+    <div class="card"><span class="num">03</span><h5>일관되지 않을 수 있다</h5><p>같은 LLM이 시점에 따라 다른 판정을 내릴 수 있다.</p></div>
+  </div>
+
+  <p>LLM-as-a-judge의 대안은 전용 자연어생성(NLG) 평가 모델이다. 대체로 LLM보다 훨씬 작고, LLM 생성의 특정 측면을 평가하도록 미세조정되어 LLM-as-a-judge보다 훨씬 빠르고 싸고 견고하다. 이 책 저자들이 공저자로 참여한 Vectara의 <strong>HHEM</strong>은 충실성을 판정하는 검증된 모델로, 2024년 8월 공개 이후 2025년 8월까지 500만 회 이상 다운로드되었다. Galileo의 <strong>Luna</strong>도 환각 판정 모델이다.</p>
+
+  <p>마지막이면서 가장 값진 형태는 <strong>인간 평가</strong>다. 인간 평가자는 자동 시스템이 놓칠 수 있는 맥락, 의도, 미묘함을 고려해 가장 정확하고 섬세한 평가를 제공한다. 그러나 자원과 시간이 가장 많이 드는 방법이기도 하다. 그래서 자동 평가를 수행한 뒤 마지막에 소규모로 확인하는 데 흔히 쓰인다.</p>
+
+  <p>LLM과 프롬프트 템플릿을 평가하려면 평가 질의를 RAG 시스템에 보내 응답을 수집한 다음, 확립한 비평가로 응답 품질을 평가하면 된다. 평가 기준이 여러 측면이라면 응답 품질의 서로 다른 측면을 반영하는 가중 점수 체계를 고려한다. 마지막으로 평가 기준에 따라 가장 좋은 성능을 내는 LLM과 프롬프트 템플릿의 조합을 고르면 된다.</p>
+
+  <h3>코드 예제: 앤스로픽 클로드로 RAG 응답 생성하기</h3>
+  <p>주피터 노트북 <code>generative_LLMs.ipynb</code>는 LLM과 프롬프트 템플릿으로 사용자 질의와 맥락에 근거해 응답을 생성하는 간명한 데모를 제공한다. 「LLM과 프롬프트 템플릿 평가」 절의 실제 텍스트를 맥락으로 삼고, 앤스로픽의 Claude Sonnet 4.5에 세 개의 질의를 던진다.</p>
+
+  <ol class="steps">
+    <li>“예산이나 시간을 신경 쓰지 않는다면 RAG 시스템을 판정하는 가장 정확한 방법은 무엇인가?”</li>
+    <li>“사람들이 RAG 시스템을 판정하는 흔한 측면은 무엇인가?”</li>
+    <li>“RAG 시스템을 평가하는 방법이 몇 가지인가? 방법 이름만 답하라.”</li>
+  </ol>
+
+  <div class="codewrap">
+    <header>Prompt + Python <span>· Claude Sonnet 4.5 호출</span></header>
+<pre><span class="c"># 프롬프트 템플릿</span>
+You are a good reader. Answer the query based on the context provided. Give me a
+short answer.
+Query: {query}
+Context: {context}
+
+<span class="c"># 파이썬 API 호출</span>
+<span class="k">import</span> anthropic
+
+response = anthropic.Anthropic().messages.create(
+    model=<span class="s">"claude-sonnet-4-5"</span>,
+    messages=[
+        {<span class="s">"role"</span>: <span class="s">"user"</span>,
+         <span class="s">"content"</span>: prompt_template.format(query=query, context=context)}
+    ]
+)
+print(response.content[<span class="s">0</span>].text)</pre>
+    <div class="out"><span class="lb">질의 1의 응답</span>**Human evaluation** is the most accurate way to judge a RAG system when budget
+and time aren't constraints. The context explicitly states that "human
+evaluators can provide the most accurate and nuanced assessments of LLM
+responses, taking into account context, intent, and subtlety that automated
+systems may miss" and describes it as the "golden evaluation."</div>
+    <div class="out"><span class="lb">질의 2의 응답</span>Based on the context, people commonly judge RAG systems on two main aspects:
+1. **Relevance** - whether the response actually answers the query
+2. **Faithfulness** - whether the response is well supported by the
+   retrieved documents
+
+These evaluations can be performed using LLM-as-a-judge, dedicated NLG
+evaluation models, or human evaluation.</div>
+    <div class="out"><span class="lb">질의 3의 응답</span>Based on the context, there are **3 ways** to evaluate RAG systems:
+1. **LLM-as-a-judge**
+2. **NLG evaluation models**
+3. **Human evaluation**</div>
+  </div>
+
+  <p>세 질의 모두에서 Claude Sonnet 4.5의 응답은 맥락에 대해 관련성 있고 충실했다. 단순한 프롬프트 템플릿이 효과적이라는 것을 보여 준다.</p>
+</section>
+
+<!-- ══════════ 07 ══════════ -->
+<section id="s7" class="rv">
+  <div class="mark"><i>07</i><span>결론</span><s></s></div>
+  <div class="closing">
+    <h2>결론</h2>
+    <p>이 장은 RAG 시스템을 실제로 작동하게 만드는 기초 요소를 풀어냈다. 지저분한 현실의 문서를 파싱하는 일에서 효율을 위해 그것을 청킹하는 일로, 텍스트를 유의미한 임베딩으로 바꾸는 일에서 그 임베딩을 벡터 데이터베이스에 저장하는 일로, 빠른 근사 검색을 수행하는 일에서 검색된 증거에 대해 추론하도록 LLM에 프롬프트를 주는 일로. 이 단계들이 어떻게 하나의 일관된 파이프라인을 이루어 정적인 데이터를 질의로 구동되는 동적인 지능으로 바꾸는지 살펴봤다.</p>
+
+    <p>그러나 이론에서 구현으로 옮겨가면 몇 가지 결정적인 현실이 드러난다.</p>
+
+    <div class="cards c3" style="margin-top:28px">
+      <div class="card">
+        <h5>적재의 병목</h5>
+        <p>적재 과정에서 들어온 오류, 예컨대 부실한 OCR이나 유실된 서식은 하류로 전파되며 검색이나 생성 단계에서 믿을 만하게 교정될 수 없다.</p>
+      </div>
+      <div class="card">
+        <h5>청킹의 미묘함</h5>
+        <p>기본값이거나 소박한 청킹 전략은 프로덕션에 좀처럼 충분하지 않다. 맥락이 보존되는지 엄정한 검색 평가로 검증해야 한다.</p>
+      </div>
+      <div class="card">
+        <h5>검색의 한계</h5>
+        <p>고품질 임베딩을 쓰더라도 중복, 잡음, 범위 불일치 때문에 검색은 실패할 수 있다. 하이브리드 검색과 필터링된 검색이 필요한 이유이며, 3장에서 다룬다.</p>
+      </div>
+    </div>
+
+    <p style="margin-top:28px">각 계층이 모듈처럼 보이지만, RAG 시스템의 성패가 진짜로 갈리는 곳은 그 계층들의 <strong>상호작용</strong>이다. 효과적인 검색은 사려 깊은 청킹에 달려 있다. 고품질 생성은 정확한 검색에 달려 있다. 색인 설계는 지연과 비용에 영향을 준다. 임베딩 모델의 선택은 관련성을 좌우한다. 어떤 구성요소도 고립되어 작동하지 않으며, RAG 시스템을 개선하는 일은 흔히 이 연결을 처음부터 끝까지 함께 들여다보는 일을 요구한다.</p>
+
+    <p>여기의 개념과 코드 예제는 프로덕션급 RAG 애플리케이션을 만들기 위한 필수 도구 모음이다. 다음 장은 이 토대 위에서, 하이브리드 검색과 재순위, 그리고 RAG 시스템을 견고하고 확장 가능하며 복잡한 실세계 부하를 감당할 수 있게 만드는 아키텍처적 개선으로 기본 스택을 어떻게 강화하는지 살펴본다.</p>
+  </div>
+
+  <div class="foot">
+    <p id="fn1"><sup>1</sup> 유일한 예외는 태그된(tagged) PDF 파일이다. 접근성을 위해 설계되었고 실제로 구조를 가진다.</p>
+    <p id="fn2"><sup>2</sup> Jeffrey L. Elman, “Finding Structure in Time,” <em>Cognitive Science</em> 14, no. 2 (1990): 179–211.</p>
+    <p id="fn3"><sup>3</sup> Tomas Mikolov et al., “Distributed Representations of Words and Phrases and Their Compositionality,” <em>Advances in Neural Information Processing Systems</em> 26 (NeurIPS 2013).</p>
+    <p id="fn4"><sup>4</sup> 정확히 말하면 임베딩되는 것은 단어가 아니라 토큰이다. 의미를 더 정밀하게 포착하기 위해 현대적 접근은 때로 단어를 하위 단어 토큰으로 쪼갠다. “geopolitical”을 “geo”와 “political”로 나누는 식이다.</p>
+    <p id="fn5"><sup>5</sup> Yu A. Malkov and D. A. Yashunin, “Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs,” <em>IEEE TPAMI</em> 42, no. 4 (April 2020): 824–836.</p>
+  </div>
+</section>
+
+<footer class="page">
+  <div><b>Hands-On RAG for Production</b> — Ofer Mendelevitch, Forrest Sheng Bao · O’Reilly Media, 2026</div>
+  <div style="margin-top:6px">제2장 「The Base RAG Stack」 원서 pp.23–61 전문 정리 · 그림 2-1~2-3 및 보조 도해 재작도 · 표 2-1~2-4 수록</div>
+</footer>
+
+</main>
+
+<script>
+(function(){
+  var bar=document.getElementById('bar');
+  function prog(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop||document.body.scrollTop)/max*100:0)+'%';
+  }
+  window.addEventListener('scroll',prog,{passive:true});
+  prog();
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items=document.querySelectorAll('.rv');
+  if(reduce||!('IntersectionObserver' in window)){
+    items.forEach(function(el){el.classList.add('in');});
+  }else{
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+      });
+    },{rootMargin:'0px 0px -8% 0px',threshold:.04});
+    items.forEach(function(el){io.observe(el);});
+  }
+})();
+</script>
+</body>
+</html>

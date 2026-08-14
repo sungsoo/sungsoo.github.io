@@ -1,0 +1,1329 @@
+---
+layout: null
+title: "Knowledge-Enhanced RAG" 
+date: 2026-08-28
+categories: [artificial intelligence]
+tags: [agentic ai, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제9장 · 지식 강화 RAG — Hands-On RAG for Production</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@400;500;700;800&family=Noto+Serif+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────
+   도면 사양 (Design tokens) — 제9장
+   청사진 계열 유지 / 색축: 노드=파인그린 · 엣지=시에나 · 계층=인디고
+   ───────────────────────────────────────────── */
+:root{
+  --paper:#EAEFF3;
+  --paper-2:#FBFCFD;
+  --grid:rgba(18,49,79,.055);
+  --grid-strong:rgba(18,49,79,.10);
+  --ink:#12314F;
+  --ink-2:#1C4670;
+  --body:#22323E;
+  --muted:#5C7286;
+  --line:#A9BED0;
+  --line-soft:#C9D8E4;
+  --node:#17654B;     /* 노드 — 엔티티 */
+  --edge:#A85018;     /* 엣지 — 관계 */
+  --tier:#4B4FA8;     /* 계층 — 커뮤니티 · GraphRAG */
+  --code-bg:#0E2439;
+  --code-fg:#D6E4EF;
+
+  --display:'Hahmlet',serif;
+  --serif:'Noto Serif KR',serif;
+  --mono:'IBM Plex Mono',monospace;
+
+  --maxw:1080px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px),
+    linear-gradient(var(--grid-strong) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-strong) 1px,transparent 1px);
+  background-size:14px 14px,14px 14px,70px 70px,70px 70px;
+  color:var(--body);
+  font-family:var(--serif);font-size:17px;line-height:1.92;letter-spacing:-.003em;
+  -webkit-font-smoothing:antialiased;
+}
+#bar{position:fixed;top:0;left:0;height:2px;width:0;background:var(--node);z-index:60}
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;
+  padding:9px 20px;background:rgba(234,239,243,.86);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line-soft);
+  font-family:var(--mono);font-size:11px;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;
+}
+.topbar b{color:var(--ink);font-weight:600}
+.topbar .sp{flex:1}
+.topbar a{color:var(--muted);text-decoration:none;border-bottom:1px solid transparent}
+.topbar a:hover{color:var(--node);border-color:var(--node)}
+@media(max-width:900px){.topbar .hide-s{display:none}}
+
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+section{padding:74px 0}
+@media(max-width:720px){section{padding:52px 0}.wrap{padding:0 20px}}
+
+/* HERO */
+.hero{padding:78px 0 36px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.22em;color:var(--node);text-transform:uppercase;margin:0 0 26px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2.4rem,6.4vw,4.6rem);line-height:1.06;letter-spacing:-.038em;color:var(--ink);margin:0}
+h1 .en{display:block;font-family:var(--mono);font-weight:400;font-size:clamp(.72rem,1.7vw,.9rem);letter-spacing:.18em;color:var(--muted);margin-top:20px;text-transform:uppercase}
+.lede{font-size:clamp(1.02rem,2.1vw,1.22rem);line-height:1.85;color:var(--ink-2);max-width:64ch;margin:30px 0 0}
+.titleblock{margin-top:44px;border:1px solid var(--ink);background:var(--paper-2);display:grid;grid-template-columns:repeat(4,1fr)}
+.titleblock div{padding:13px 15px;border-right:1px solid var(--line-soft);font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--ink)}
+.titleblock div:last-child{border-right:0}
+.titleblock span{display:block;color:var(--muted);letter-spacing:.14em;font-size:9.5px;text-transform:uppercase;margin-bottom:5px}
+@media(max-width:720px){.titleblock{grid-template-columns:repeat(2,1fr)}.titleblock div{border-bottom:1px solid var(--line-soft)}}
+
+/* 서명 요소 — 실패 유형 3칸 */
+.fails{margin:48px 0 0;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);display:grid;grid-template-columns:repeat(3,1fr)}
+.fails>div{padding:24px 22px;border-right:1px solid var(--line-soft)}
+.fails>div:last-child{border-right:0}
+.fails i{display:block;font-style:normal;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--edge);margin-bottom:12px}
+.fails b{display:block;font-family:var(--display);font-weight:700;font-size:1.06rem;line-height:1.35;letter-spacing:-.025em;color:var(--ink);margin-bottom:10px}
+.fails q{display:block;font-size:14px;line-height:1.7;color:var(--node);font-weight:600;margin-bottom:10px;quotes:none}
+.fails q::before,.fails q::after{content:none}
+.fails p{margin:0;font-size:13.5px;line-height:1.7;max-width:none;color:var(--body)}
+@media(max-width:820px){.fails{grid-template-columns:1fr}.fails>div{border-right:0;border-bottom:1px solid var(--line-soft)}}
+
+/* 목차 */
+.ladder{margin:46px 0 0;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:8px 0}
+.ladder a{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:16px;padding:12px 6px;text-decoration:none;border-bottom:1px dotted var(--line-soft);transition:background .25s,padding-left .25s}
+.ladder a:last-child{border-bottom:0}
+.ladder a:hover{background:#E1E8EE;padding-left:14px}
+.ladder .no{font-family:var(--mono);font-size:11px;color:var(--node);font-weight:600}
+.ladder .nm{font-family:var(--display);font-size:1.06rem;font-weight:600;color:var(--ink);letter-spacing:-.02em}
+.ladder .nm i{font-style:normal;font-family:var(--mono);font-size:10.5px;font-weight:400;color:var(--muted);letter-spacing:.1em;margin-left:12px;text-transform:uppercase}
+.ladder .lv{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;white-space:nowrap}
+@media(max-width:660px){.ladder .nm i{display:block;margin:2px 0 0}.ladder .lv{display:none}}
+
+/* 섹션 */
+.mk{display:flex;align-items:center;gap:16px;margin:0 0 26px;font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+.mk i{font-style:normal;width:30px;height:30px;flex:0 0 30px;display:grid;place-items:center;border:1px solid var(--ink);color:var(--ink);font-weight:600;font-size:11.5px;background:var(--paper-2)}
+.mk s{flex:1;height:1px;background:var(--line);text-decoration:none}
+h2{font-family:var(--display);font-weight:700;font-size:clamp(1.7rem,4vw,2.55rem);line-height:1.24;letter-spacing:-.028em;color:var(--ink);margin:0 0 22px}
+h3{font-family:var(--display);font-weight:600;font-size:clamp(1.16rem,2.4vw,1.46rem);line-height:1.42;letter-spacing:-.02em;color:var(--ink-2);margin:46px 0 14px}
+h4{font-family:var(--mono);font-weight:600;font-size:12.5px;letter-spacing:.08em;color:var(--node);text-transform:uppercase;margin:32px 0 10px}
+h4.e{color:var(--edge)} h4.t{color:var(--tier)}
+p{margin:0 0 20px;max-width:70ch}
+strong{font-weight:700;color:var(--ink)}
+em.n{font-style:normal;font-weight:600;color:var(--node)}
+em.e{font-style:normal;font-weight:600;color:var(--edge)}
+em.t{font-style:normal;font-weight:600;color:var(--tier)}
+code{font-family:var(--mono);font-size:.87em;background:#E2E8EE;padding:1px 5px;border-radius:2px;color:var(--ink)}
+.pull{margin:44px 0;padding:0 0 0 26px;border-left:3px solid var(--node);font-family:var(--display);font-weight:500;font-size:clamp(1.14rem,2.6vw,1.5rem);line-height:1.62;letter-spacing:-.025em;color:var(--ink);max-width:56ch}
+.dim{display:flex;align-items:center;gap:14px;margin:52px 0 30px}
+.dim s{flex:1;height:1px;background:var(--line);position:relative;text-decoration:none}
+.dim s::before,.dim s::after{content:'';position:absolute;top:-4px;width:1px;height:9px;background:var(--line)}
+.dim s::before{left:0}.dim s::after{right:0}
+.dim span{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+
+/* 카드 */
+.cards{display:grid;gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);margin:34px 0}
+.cards.c2{grid-template-columns:repeat(2,1fr)}
+.cards.c3{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--paper-2);padding:24px 22px}
+.card h5{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--node);margin:0 0 10px;font-weight:600}
+.card p{font-size:15px;line-height:1.78;margin:0;max-width:none}
+.card p+p{margin-top:12px}
+.card .num{font-family:var(--display);font-size:24px;font-weight:800;color:var(--ink);display:block;line-height:1;margin-bottom:12px;letter-spacing:-.03em}
+.cards.edge .card h5{color:var(--edge)}
+.cards.tier .card h5{color:var(--tier)}
+@media(max-width:900px){.cards.c3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.cards.c2,.cards.c3{grid-template-columns:1fr}}
+
+/* 주석 */
+.note{border:1px solid var(--line);border-left:3px solid var(--node);background:var(--paper-2);padding:22px 24px;margin:32px 0}
+.note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--node);text-transform:uppercase;display:block;margin-bottom:10px}
+.note p{margin:0;font-size:15.5px;line-height:1.82}
+.note p+p{margin-top:12px}
+.note.edge{border-left-color:var(--edge)} .note.edge .tag{color:var(--edge)}
+.note.tier{border-left-color:var(--tier)} .note.tier .tag{color:var(--tier)}
+
+/* 정의 목록 */
+.defs{margin:28px 0;border-top:1px solid var(--line)}
+.defs div{padding:18px 2px;border-bottom:1px solid var(--line-soft)}
+.defs dt{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--node);font-weight:600;margin-bottom:8px}
+.defs dd{margin:0;font-size:15.5px;line-height:1.82;max-width:72ch}
+.defs.edge dt{color:var(--edge)}
+.defs.tier dt{color:var(--tier)}
+
+/* 트리플 표시 */
+.triples{margin:28px 0;border:1px solid var(--line);background:var(--paper-2);font-family:var(--mono);font-size:13px}
+.triples div{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid var(--line-soft)}
+.triples div:last-child{border-bottom:0}
+.triples .s{text-decoration:none;color:var(--node);font-weight:600;text-align:right}
+.triples .r{color:var(--edge);font-weight:600;font-size:11px;letter-spacing:.06em;white-space:nowrap;border:1px solid var(--edge);padding:2px 8px;border-radius:2px}
+.triples .o{color:var(--ink);font-weight:600}
+@media(max-width:620px){.triples div{grid-template-columns:1fr;gap:6px;text-align:left}.triples .s{text-align:left}.triples .r{justify-self:start}}
+
+/* 체크리스트 */
+.check{margin:34px 0;border:1px solid var(--ink);background:var(--paper-2)}
+.check>header{background:var(--ink);color:#CFE0EE;padding:12px 18px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;display:flex;justify-content:space-between;gap:12px}
+.check>div{display:grid;grid-template-columns:38px 1fr;gap:16px;padding:18px 20px;border-bottom:1px solid var(--line-soft)}
+.check>div:last-child{border-bottom:0}
+.check .box{width:22px;height:22px;border:1.5px solid var(--node);margin-top:4px;position:relative}
+.check .box::after{content:'?';position:absolute;inset:0;display:grid;place-items:center;font-family:var(--mono);font-size:12px;color:var(--node);font-weight:600}
+.check b{display:block;font-family:var(--display);font-weight:700;font-size:1.02rem;letter-spacing:-.02em;color:var(--ink);margin-bottom:6px}
+.check p{margin:0;font-size:14.5px;line-height:1.78;max-width:none}
+.check>footer{padding:16px 20px;background:#E9F0ED;border-top:1px solid var(--line);font-size:14.5px;line-height:1.75}
+.check>footer b{display:inline;font-weight:700;color:var(--node)}
+
+/* 표 */
+.tw{margin:34px 0;overflow-x:auto;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:640px;background:var(--paper-2);font-size:14.5px}
+caption{caption-side:top;text-align:left;padding:14px 16px;background:var(--ink);color:#CFE0EE;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
+th,td{padding:12px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line-soft);line-height:1.7}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);font-weight:600;background:#E4EAEF}
+td.mono,th.mono{font-family:var(--mono);font-size:12.5px}
+td.k{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:#EDF1F4;font-weight:600;white-space:nowrap}
+td.nm{font-family:var(--display);font-weight:700;color:var(--ink);font-size:1rem;letter-spacing:-.02em}
+tr:last-child td{border-bottom:0}
+td .lo{color:var(--node);font-weight:600}
+td .hi{color:var(--edge);font-weight:600}
+td .vh{color:#8E2F1E;font-weight:700}
+
+/* 그림 */
+figure{margin:40px 0;border:1px solid var(--line);background:var(--paper-2);padding:22px 20px 14px}
+figure svg{display:block;width:100%;height:auto}
+figcaption{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--muted);margin-top:16px;padding-top:12px;border-top:1px solid var(--line-soft);line-height:1.7}
+figcaption b{color:var(--ink);font-weight:600}
+@media(max-width:720px){
+  figure{overflow-x:auto;padding:16px 14px 12px}
+  figure svg{min-width:640px}
+  figure::before{content:'◂ 도해는 좌우로 밀어 확인';display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--muted);margin-bottom:10px}
+}
+.hero figure{margin:0;border:0;background:none;padding:0}
+.hero figcaption{margin-top:12px}
+.sv-box{fill:var(--paper-2);stroke:var(--ink);stroke-width:1.2}
+.sv-box-n{fill:#DCE9E3;stroke:var(--node);stroke-width:1.3}
+.sv-box-e{fill:#F6E5D8;stroke:var(--edge);stroke-width:1.2}
+.sv-box-t{fill:#E3E4F4;stroke:var(--tier);stroke-width:1.2}
+.sv-box-b{fill:#E3EBF3;stroke:var(--ink-2);stroke-width:1.2}
+.sv-t{font-family:var(--mono);font-size:11px;fill:var(--ink)}
+.sv-t.sm{font-size:9.5px;fill:var(--muted)}
+.sv-t.b{font-weight:600}
+.sv-t.rel{font-size:9.5px;fill:var(--edge);font-weight:600}
+.sv-a{fill:none;stroke:var(--ink);stroke-width:1.3;marker-end:url(#a9)}
+.sv-a.n{stroke:var(--node);marker-end:url(#a9n)}
+.sv-a.e{stroke:var(--edge);marker-end:url(#a9e)}
+.sv-a.t{stroke:var(--tier);marker-end:url(#a9t)}
+.sv-a.dash{stroke-dasharray:5 4}
+.sv-grp{fill:none;stroke:var(--line);stroke-width:1;stroke-dasharray:3 3}
+
+/* 코드 */
+.codewrap{margin:32px 0;border:1px solid var(--ink)}
+.codewrap header{background:var(--ink);color:#CFE0EE;padding:9px 16px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;display:flex;gap:12px;align-items:center}
+.codewrap header span{opacity:.62}
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);padding:22px 20px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.76}
+pre .c{color:#7FA0B8}
+pre .s{color:#D9A86C}
+pre .k{color:#7FCBD3}
+pre .n{color:#8ED6B4}
+pre .r{color:#E0A276}
+.out{border:1px solid var(--line);border-top:0;background:#F4F7F9;padding:18px 20px;font-family:var(--mono);font-size:12.1px;line-height:1.78;color:var(--body);white-space:pre-wrap;overflow-x:auto}
+.out .lb{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+.out b{color:var(--edge);font-weight:600}
+.out i{font-style:normal;color:var(--node);font-weight:600}
+
+/* 목록 */
+ul.plain,ol.steps{max-width:70ch;padding-left:0;list-style:none;margin:0 0 24px}
+ul.plain li{position:relative;padding-left:20px;margin-bottom:11px;line-height:1.85}
+ul.plain li::before{content:'';position:absolute;left:0;top:.82em;width:8px;height:1px;background:var(--node)}
+ol.steps{counter-reset:s}
+ol.steps li{counter-increment:s;position:relative;padding-left:38px;margin-bottom:14px;line-height:1.85}
+ol.steps li::before{content:counter(s,decimal-leading-zero);position:absolute;left:0;top:.15em;font-family:var(--mono);font-size:11px;color:var(--node);font-weight:600;border:1px solid var(--line);padding:1px 5px;background:var(--paper-2)}
+
+/* 인용 청크 */
+.chunk{margin:26px 0;border:1px solid var(--line);border-left:3px solid var(--muted);background:#F3F5F7;padding:18px 20px;font-size:14px;line-height:1.85;color:var(--body)}
+.chunk b{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+
+.closing{border:1px solid var(--ink);background:var(--paper-2);padding:40px 36px}
+.closing h2{margin-top:0}
+.foot{border-top:1px solid var(--line);margin-top:60px;padding-top:22px}
+.foot p{font-family:var(--mono);font-size:11.5px;line-height:1.85;color:var(--muted);max-width:78ch;margin:0 0 10px}
+.foot sup{color:var(--node)}
+a.ref{color:var(--node);text-decoration:none;border-bottom:1px solid var(--line)}
+footer.page{border-top:1px solid var(--ink);margin-top:70px;padding:30px 0 60px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted)}
+footer.page b{color:var(--ink);font-weight:600}
+
+.rv{opacity:0;transform:translateY(16px);transition:opacity .7s cubic-bezier(.2,.7,.3,1),transform .7s cubic-bezier(.2,.7,.3,1)}
+.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.rv{opacity:1;transform:none;transition:none}}
+::selection{background:var(--node);color:#fff}
+:focus-visible{outline:2px solid var(--node);outline-offset:3px}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+
+<div class="topbar">
+  <b>Hands-On RAG for Production</b>
+  <span class="hide-s">· 제9장</span>
+  <span class="sp"></span>
+  <a href="#s1" class="hide-s">지식 그래프</a>
+  <a href="#s2" class="hide-s">RAG 통합</a>
+  <a href="#s3" class="hide-s">구축</a>
+  <a href="#s4" class="hide-s">GraphRAG</a>
+  <a href="#s5" class="hide-s">인프라</a>
+  <a href="#s7" class="hide-s">의사결정</a>
+  <a href="#s8">결론</a>
+</div>
+
+<main class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Chapter 09 — 도면 A9 / 결선도</p>
+  <h1>지식 강화 RAG
+    <span class="en">Knowledge-Enhanced RAG</span>
+  </h1>
+  <p class="lede">벡터 검색은 확률과 유사성을 다루고, 결정론적 사실을 다루지 않는다. 그래서 개념적으로 가까운 텍스트는 잘 찾아내면서도 <strong>실체 사이의 관계를 정확히 짚어야 하는 질의</strong>에서 무너진다. 지식 그래프는 유사성을 찾는 대신 알려진 사실의 경로를 순회한다.</p>
+
+  <div class="titleblock">
+    <div><span>원서</span>Hands-On RAG for Production<br>O’Reilly, 2026</div>
+    <div><span>저자</span>Ofer Mendelevitch<br>Forrest Sheng Bao</div>
+    <div><span>범위</span>제9장 전문 (원서 pp.279–309)<br>그림 9-1 ~ 9-3, 표 9-1 · 9-2</div>
+    <div><span>구성</span>9개 절 · 코드 예제 8블록<br>도해 4점 · 결정 체크리스트</div>
+  </div>
+
+  <div class="fails">
+    <div>
+      <i>Failure 01 · Time-bound</i>
+      <b>시점에 구속된 사실</b>
+      <q>“2022년 10월 트위터의 CEO는 누구인가?”</q>
+      <p>임베딩은 과거와 현재의 정보를 뭉개는 경향이 있다. 검색되는 텍스트에 따라 일론 머스크, 잭 도시, 파라그 아그라왈이 요청된 날짜와 아무 정렬 없이 돌아온다.<sup><a href="#fn1" class="ref">1</a></sup></p>
+    </div>
+    <div>
+      <i>Failure 02 · Intersection</i>
+      <b>다중 제약의 교차</b>
+      <q>“와파린과 자몽주스 모두와 상호작용하는 약은?”</q>
+      <p>조건을 동시에 만족해야 할 때 시맨틱 검색은 보장된 교집합보다 느슨하게 관련된 텍스트를 끌어올린다. 와파린 상호작용 청크나 자몽주스 상호작용 청크는 오지만 둘을 함께 다룬 청크는 아니다.</p>
+    </div>
+    <div>
+      <i>Failure 03 · Multi-hop</i>
+      <b>연쇄 추론</b>
+      <q>“인셉션을 감독한 사람이 감독한 2014년 영화의 주연은?”</q>
+      <p>벡터 검색은 주제적 유사성을 다루지만 관계의 단계별 연쇄를 따라가지 않는다. 인셉션 관련 청크는 오지만 그 점들을 이어 붙이는 데 실패한다.</p>
+    </div>
+  </div>
+
+  <figure style="margin-top:38px">
+    <svg viewBox="0 0 700 190" role="img" aria-label="멀티홉 순회: 인셉션에서 크리스토퍼 놀런을 거쳐 2014년 인터스텔라와 주연 배우까지">
+      <defs>
+        <marker id="a9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#12314F"/></marker>
+        <marker id="a9n" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#17654B"/></marker>
+        <marker id="a9e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#A85018"/></marker>
+        <marker id="a9t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4B4FA8"/></marker>
+      </defs>
+      <text class="sv-t b" x="20" y="16">순회 — 유사성이 아니라 알려진 사실의 경로를 따라간다</text>
+      <!-- nodes -->
+      <rect class="sv-box-e" x="20" y="70" width="124" height="48" rx="2"/>
+      <text class="sv-t b" x="82" y="90" text-anchor="middle">Inception</text>
+      <text class="sv-t sm" x="82" y="105" text-anchor="middle">Movie · 2010</text>
+      <rect class="sv-box-n" x="196" y="70" width="140" height="48" rx="2"/>
+      <text class="sv-t b" x="266" y="90" text-anchor="middle">Christopher Nolan</text>
+      <text class="sv-t sm" x="266" y="105" text-anchor="middle">Person</text>
+      <rect class="sv-box-e" x="388" y="70" width="124" height="48" rx="2"/>
+      <text class="sv-t b" x="450" y="90" text-anchor="middle">Interstellar</text>
+      <text class="sv-t sm" x="450" y="105" text-anchor="middle">Movie · 2014</text>
+      <rect class="sv-box-n" x="564" y="70" width="124" height="48" rx="2"/>
+      <text class="sv-t b" x="626" y="90" text-anchor="middle">주연 배우</text>
+      <text class="sv-t sm" x="626" y="105" text-anchor="middle">Person</text>
+      <!-- edges -->
+      <path class="sv-a e" d="M148,88 L190,88"/>
+      <text class="sv-t rel" x="152" y="80">DIRECTED ←</text>
+      <path class="sv-a e" d="M340,88 L382,88"/>
+      <text class="sv-t rel" x="344" y="80">DIRECTED →</text>
+      <path class="sv-a e" d="M516,88 L558,88"/>
+      <text class="sv-t rel" x="520" y="80">ACTED_IN ←</text>
+      <!-- hop labels -->
+      <text class="sv-t sm" x="82" y="140" text-anchor="middle">① 시작 노드를 찾는다</text>
+      <text class="sv-t sm" x="266" y="140" text-anchor="middle">② 역방향 순회로 감독을 찾는다</text>
+      <text class="sv-t sm" x="450" y="140" text-anchor="middle">③ 그의 영화 중 2014년만 남긴다</text>
+      <text class="sv-t sm" x="626" y="140" text-anchor="middle">④ 출연 관계를 따라간다</text>
+      <line x1="20" y1="158" x2="680" y2="158" stroke="#A9BED0" stroke-width="1"/>
+      <text class="sv-t sm" x="20" y="178">노드를 순회하면 정밀한 결과를 얻고, 시맨틱 검색이 채우기 어려운 질문에 답할 수 있다</text>
+    </svg>
+    <figcaption><b>〈멀티홉 순회〉</b> 지식 그래프에 질의하는 일은 유사성을 찾는 일이 아니다. 알려진 사실이나 실체의 경로를 <strong>순회</strong>하는 일이다.</figcaption>
+  </figure>
+
+  <nav class="ladder" aria-label="장 구성">
+    <a href="#s0"><span class="no">00</span><span class="nm">확률이 답할 수 없는 것<i>where vectors fail</i></span><span class="lv">서론</span></a>
+    <a href="#s1"><span class="no">01</span><span class="nm">지식 그래프 개요<i>nodes &amp; edges</i></span><span class="lv">Cypher · SPARQL</span></a>
+    <a href="#s2"><span class="no">02</span><span class="nm">RAG에서 KG 쓰기<i>two patterns</i></span><span class="lv">보강 · 하이브리드</span></a>
+    <a href="#s3"><span class="no">03</span><span class="nm">지식 그래프 구축<i>construction</i></span><span class="lv">엔티티 링킹</span></a>
+    <a href="#s4"><span class="no">04</span><span class="nm">GraphRAG<i>microsoft graphrag</i></span><span class="lv">커뮤니티 요약</span></a>
+    <a href="#s5"><span class="no">05</span><span class="nm">그래프 DB 인프라<i>infrastructure</i></span><span class="lv">ETL · 멱등성</span></a>
+    <a href="#s6"><span class="no">06</span><span class="nm">갱신과 진화<i>update patterns</i></span><span class="lv">CDC · 병합</span></a>
+    <a href="#s7"><span class="no">07</span><span class="nm">정확도와 비용의 교환<i>the trade-off</i></span><span class="lv">6문항 체크리스트</span></a>
+    <a href="#s8"><span class="no">08</span><span class="nm">결론<i>conclusion</i></span><span class="lv">표 9-2</span></a>
+  </nav>
+</header>
+
+<!-- ══════════ 00 ══════════ -->
+<section id="s0" class="rv">
+  <div class="mk"><i>00</i><span>서론 · 확률과 사실 사이</span><s></s></div>
+  <h2>유사성으로는<br>닿을 수 없는 질문</h2>
+
+  <p>RAG는 정보 검색에 접근하는 방식을 근본적으로 바꿨다. 키워드 일치라는 경직된 세계를 넘어 더 유동적이고 직관적인 시맨틱 검색의 영역으로 옮겨왔다. 이 전환으로 문서가 담은 특정 단어만이 아니라 개념적 의미에 근거해 문서를 찾을 수 있게 되었다.</p>
+
+  <p>그런 강점에도, 벡터 검색이나 하이브리드 검색만으로 세운 시스템은 실체 사이의 관계를 더 정밀하게 이해해야 하는 질의에서 힘들어할 수 있다. 이 문제가 생기는 이유는 <strong>벡터 검색이 확률과 유사성을 다루고 결정론적 사실을 다루지 않기 때문</strong>이다. 앞의 세 유형이 그런 예다.</p>
+
+  <p>7장에서 논의한 대로 AI 에이전트가 질의를 하위 질의로 세심히 쪼개고 도구를 반복적으로 써서 이 시나리오들을 온전히 다룰 수 있을지도 모른다. 그럼에도 이 장에서 탐색하려는 것은 이 질문이다. <em class="n">AI 에이전트에 의존하지 않고 RAG의 검색 정확도를 개선할 방법이 있는가.</em></p>
+
+  <p>답은 지식 그래프(KG)다. 이런 유형의 질의를 다루는 데 값진 도구가 되며, KG를 만들고 배포하는 프로덕션 복잡성은 이런 복잡한 질의가 흔하고 고품질 응답의 실패가 사업 결과에 실질적 영향을 줄 때 정당화된다.</p>
+</section>
+
+<!-- ══════════ 01 ══════════ -->
+<section id="s1" class="rv">
+  <div class="mk"><i>01</i><span>기초 · 노드와 엣지</span><s></s></div>
+  <h2>지식 그래프 개요</h2>
+
+  <p>지식 그래프는 사실적 지식을 기계가 읽을 수 있는 형태로 부호화한, 상호연결된 실체의 네트워크다.<sup><a href="#fn2" class="ref">2</a></sup> KG가 실무에서 어떻게 작동하는지 보이기 위해 IMDb 데이터셋을 쓴다. 영화, TV 시리즈, 비디오 게임과 그것에 관여한 사람들에 관한 구조화된 데이터를 제공하며, 각각 고유한 IMDb ID로 식별된다.</p>
+
+  <div class="cards c2">
+    <div class="card">
+      <h5>노드 — 엔티티</h5>
+      <p>그래프의 노드는 객체, 사람, 장소, 개념 같은 실세계 실체를 나타낸다. IMDb의 경우 노드에는 <code>Movie</code>, <code>Person</code>, <code>Genre</code>, <code>Character</code> 등이 포함된다. 노드는 흔히 각 노드에 관한 추가 정보를 제공하는 <strong>속성</strong>을 갖는다. <code>Movie</code> 노드는 개봉 연도 같은 속성을 가질 수 있다.</p>
+    </div>
+    <div class="card">
+      <h5>엣지 — 관계</h5>
+      <p>노드 사이의 연결이며 서로 어떻게 관계되는지 정의한다. IMDb의 경우 <code>ACTED_IN</code>, <code>DIRECTED</code>, <code>HAS_GENRE</code>, <code>BELONGS_TO</code>, <code>APPEARS_IN</code>, <code>MENTIONS</code> 같은 것들이다.</p>
+    </div>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 700 330" role="img" aria-label="영화 지식 그래프의 예: Person 노드와 Movie 노드, ACTED_IN과 DIRECTED 엣지">
+      <!-- Person nodes -->
+      <rect class="sv-box-n" x="30" y="80" width="160" height="44" rx="2"/>
+      <text class="sv-t b" x="110" y="98" text-anchor="middle">Christopher Nolan</text>
+      <text class="sv-t sm" x="110" y="113" text-anchor="middle">Born: 1970</text>
+      <rect class="sv-box-n" x="30" y="140" width="160" height="44" rx="2"/>
+      <text class="sv-t b" x="110" y="158" text-anchor="middle">Christian Bale</text>
+      <text class="sv-t sm" x="110" y="173" text-anchor="middle">Born: 1974</text>
+      <rect class="sv-box-n" x="30" y="200" width="160" height="44" rx="2"/>
+      <text class="sv-t b" x="110" y="218" text-anchor="middle">Cillian Murphy</text>
+      <text class="sv-t sm" x="110" y="233" text-anchor="middle">Born: 1976</text>
+      <rect class="sv-box-n" x="30" y="260" width="160" height="44" rx="2"/>
+      <text class="sv-t b" x="110" y="278" text-anchor="middle">Leonardo DiCaprio</text>
+      <text class="sv-t sm" x="110" y="293" text-anchor="middle">Born: 1974</text>
+      <!-- Movie nodes -->
+      <rect class="sv-box-e" x="490" y="30" width="180" height="44" rx="2"/>
+      <text class="sv-t b" x="580" y="48" text-anchor="middle">Oppenheimer</text>
+      <text class="sv-t sm" x="580" y="63" text-anchor="middle">Release year: 2023</text>
+      <rect class="sv-box-e" x="490" y="118" width="180" height="44" rx="2"/>
+      <text class="sv-t b" x="580" y="136" text-anchor="middle">The Dark Knight</text>
+      <text class="sv-t sm" x="580" y="151" text-anchor="middle">Release year: 2008</text>
+      <rect class="sv-box-e" x="490" y="206" width="180" height="44" rx="2"/>
+      <text class="sv-t b" x="580" y="224" text-anchor="middle">Inception</text>
+      <text class="sv-t sm" x="580" y="239" text-anchor="middle">Release year: 2010</text>
+      <rect class="sv-box-e" x="490" y="278" width="180" height="44" rx="2"/>
+      <text class="sv-t b" x="580" y="296" text-anchor="middle">Titanic</text>
+      <text class="sv-t sm" x="580" y="311" text-anchor="middle">Release year: 1997</text>
+      <!-- edges: Nolan directed 3 -->
+      <path class="sv-a e" d="M194,92 L300,92 L300,44 L484,44"/>
+      <text class="sv-t rel" x="392" y="38">DIRECTED</text>
+      <path class="sv-a e" d="M194,100 L280,100 L280,126 L484,126"/>
+      <text class="sv-t rel" x="392" y="120">DIRECTED</text>
+      <path class="sv-a e" d="M194,110 L260,110 L260,214 L484,214"/>
+      <text class="sv-t rel" x="392" y="208">DIRECTED</text>
+      <!-- Bale acted in Dark Knight -->
+      <path class="sv-a e" d="M194,156 L330,156 L330,144 L484,144"/>
+      <text class="sv-t rel" x="392" y="152">ACTED_IN</text>
+      <!-- Murphy acted in Oppenheimer -->
+      <path class="sv-a e" d="M194,216 L226,216 L226,58 L484,58"/>
+      <text class="sv-t rel" x="300" y="66">ACTED_IN</text>
+      <!-- DiCaprio acted in Inception & Titanic -->
+      <path class="sv-a e" d="M194,274 L360,274 L360,232 L484,232"/>
+      <text class="sv-t rel" x="392" y="240">ACTED_IN</text>
+      <path class="sv-a e" d="M194,286 L400,286 L400,296 L484,296"/>
+      <text class="sv-t rel" x="410" y="282">ACTED_IN</text>
+      <!-- legend -->
+      <rect class="sv-box-n" x="226" y="300" width="16" height="12"/>
+      <text class="sv-t sm" x="248" y="310">Person 노드</text>
+      <rect class="sv-box-e" x="330" y="300" width="16" height="12"/>
+      <text class="sv-t sm" x="352" y="310">Movie 노드</text>
+    </svg>
+    <figcaption><b>〈그림 9-1〉</b> 영화를 위한 지식 그래프의 예. 두 유형의 노드(<code>Person</code>, <code>Movie</code>)와 두 유형의 엣지(<code>ACTED_IN</code>, <code>DIRECTED</code>)가 있다.</figcaption>
+  </figure>
+
+  <p>KG에 질의하는 일은 벡터 검색처럼 유사성을 찾는 일이 아니다. <strong>알려진 사실이나 실체의 경로를 순회하는 일</strong>이다. 앞의 멀티홉 질문에 답하려면 구조화된 질의를 수행한다. <code>Inception</code> 노드를 찾고, <code>DIRECTED</code> 엣지를 거슬러 크리스토퍼 놀런을 찾고, 그에게서 나가는 모든 <code>DIRECTED</code> 엣지를 순회해 다른 영화를 찾고 2014년 것만 남기고, 마지막으로 각 영화 노드에서 <code>ACTED_IN</code> 엣지를 따라 주연 배우를 식별한다.</p>
+
+  <h3>지식 그래프를 어떻게 검색하는가</h3>
+  <p>그래프 데이터베이스는 데이터를 그래프 구조로 저장하며 데이터 포인트 사이의 관계를 강조하는 특수한 NoSQL 데이터베이스다. 행과 열의 표를 쓰는 전통적 관계형 데이터베이스와 달리 노드와 엣지로 그래프 데이터를 표현하며, 그래프 질의의 효율적 실행을 위해 설계되었다. 대표적인 예로 <em class="n">Neo4j</em>, <em class="n">Amazon Neptune</em>, <em class="n">Kuzu</em>, <em class="n">TigerGraph</em>가 있다. 그래프 데이터베이스와 상호작용해 정보를 얻으려면 Cypher나 SPARQL 같은 그래프 질의 언어를 쓴다.</p>
+
+  <h4>Cypher</h4>
+  <p>Neo4j를 위해 개발된 Cypher는 그래프 구조 자체를 시각적으로 닮은, 직관적이고 대단히 읽기 좋은 문법으로 알려져 있다. Cypher에서 노드는 소괄호 <code>()</code>로, 엣지는 대괄호 <code>[]</code>로 표현된다. 어떤 사람이 영화를 감독한 패턴을 찾으려면 이렇게 쓴다.</p>
+
+  <div class="codewrap">
+    <header>Cypher <span>· 패턴 문법</span></header>
+<pre>(<span class="n">p:Person</span>)-[<span class="r">:DIRECTED</span>]-&gt;(<span class="n">m:Movie</span>)</pre>
+  </div>
+
+  <ul class="plain">
+    <li><code>(p:Person)</code>은 <code>Person</code> 라벨의 모든 노드를 선택하며, <code>p</code>라는 변수명을 주었다.</li>
+    <li><code>(m:Movie)</code>는 <code>Movie</code> 라벨의 모든 노드를 선택하며, <code>m</code>이라는 변수명을 주었다.</li>
+    <li><code>[:DIRECTED]</code>는 엣지를 서술하며 관계 유형이 <code>DIRECTED</code>임을 지정한다.</li>
+    <li><code>-&gt;</code>는 관계의 방향을 나타낸다. 사람이 영화를 감독했다는 뜻이다.</li>
+  </ul>
+
+  <div class="codewrap">
+    <header>Cypher <span>· 「오펜하이머」의 감독을 찾는 완전한 질의</span></header>
+<pre><span class="k">MATCH</span> (<span class="n">p:Person</span>)-[<span class="r">:DIRECTED</span>]-&gt;(<span class="n">m:Movie</span>)
+<span class="k">WHERE</span> m.title = <span class="s">'Oppenheimer'</span>
+<span class="k">RETURN</span> p.name</pre>
+    <div class="out"><span class="lb">결과</span><i>Christopher Nolan</i></div>
+  </div>
+
+  <p>이 질의는 데이터베이스에 지정된 패턴을 <code>MATCH</code>하고, 영화 제목이 오펜하이머인 곳을 <code>WHERE</code>로 걸러내고, 찾아낸 사람 노드의 <code>name</code> 속성을 <code>RETURN</code>하라고 지시한다.</p>
+
+  <h4>SPARQL</h4>
+  <p>SPARQL은 지식 그래프의 특수한 유형인 RDF 트리플 스토어의 표준 질의 언어다. 그래프를 구성하는 세 부분 진술인 <strong>트리플</strong>에 질의하기 위해 선언적 패턴 매칭 문법을 쓴다.</p>
+
+  <div class="triples">
+    <div><s class="s">주어 (subject)</s><span class="r">서술되는 자원</span><span class="o">the resource being described</span></div>
+    <div><s class="s">서술어 (predicate)</s><span class="r">속성 또는 관계</span><span class="o">the property or relationship</span></div>
+    <div><s class="s">목적어 (object)</s><span class="r">값 또는 관련 자원</span><span class="o">the value or related resource</span></div>
+  </div>
+
+  <div class="codewrap">
+    <header>SPARQL <span>· 같은 질의를 트리플 패턴으로</span></header>
+<pre><span class="k">SELECT</span> ?personName
+<span class="k">WHERE</span> {
+  ?movie  <span class="r">:title</span>     <span class="s">"Oppenheimer"</span> .
+  ?person <span class="r">:directed</span>  ?movie .
+  ?person <span class="r">:name</span>      ?personName .
+}</pre>
+  </div>
+
+  <p><code>?person</code>, <code>?movie</code>, <code>?personName</code>은 변수다. <code>WHERE</code> 절의 각 줄은 데이터베이스가 맞춰야 할 트리플 패턴이다. Cypher만큼 시각적으로 매력적이지는 않지만 SPARQL은 그래프의 연결 데이터에 질의하는 강력한 W3C 표준이며, 필요한 데이터를 정확히 지정하도록 설계되었다. 그래프 이론의 탐색보다는 데이터 전달의 형태와 최적화에 관한 것이다.</p>
+
+  <p>실무에서는 둘 다 비슷한 결과를 얻을 수 있고, 그래프 데이터베이스가 무엇을 제공하는지와 무엇에 익숙한지에 정말로 달려 있다. 이 장의 나머지는 Cypher로 예제를 제공하지만 SPARQL로도 손쉽게 할 수 있으며, 어느 하나를 선호한다는 표시는 아니다.</p>
+
+  <h3>온톨로지와 스키마</h3>
+  <p>지식 그래프의 세계에서 <em class="n">온톨로지</em>와 <em class="e">스키마</em>라는 용어를 자주 듣게 된다. 둘은 밀접히 관련되지만 시스템 설계에서 서로 다른 목적을 갖는다.</p>
+
+  <div class="cards c2">
+    <div class="card">
+      <h5>온톨로지 — 실재의 규칙</h5>
+      <p>도메인의 형식적이고 추상적인 모델이며 그래프의 “실재의 규칙”을 정의한다. 크리스토퍼 놀런 같은 구체적 데이터 포인트에는 관심이 없고, 범주와 그 범주들이 상호작용하는 논리적 제약을 정의한다. 영화 도메인에서 온톨로지는 “사람은 영화를 감독할 수 있다”고 규정하지만 “영화는 사람을 감독할 수 없다”고 규정하며, 영화는 개봉 연도를 가져야 한다고 정의한다.</p>
+    </div>
+    <div class="card" style="background:#FDF8F3">
+      <h5 style="color:var(--edge)">스키마 — 데이터베이스 수준의 구현</h5>
+      <p>그 온톨로지의 데이터베이스 수준 구현이다. 시스템이 데이터를 저장하고 색인하는 방법을 알도록 그래프 데이터베이스에 적용하는 라벨, 관계 유형, 데이터 제약의 구체적 집합이다. 온톨로지가 영화에 개봉 연도가 있다고 말하면, 스키마는 DB의 <code>Movie</code> 노드가 <code>release_year</code>라는 속성을 정수로 저장한다고 정의한다.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <span class="tag">RAG에서 둘의 역할이 갈린다</span>
+    <p>RAG와 함께 쓸 때 <strong>온톨로지는 LLM이 데이터의 논리를 이해하도록 돕는다</strong>(“감독의 배우를 찾으려면 Movie 노드를 거쳐 순회해야 한다”). 반면 <strong>스키마는 LLM에 (흔히 텍스트 서술로) 제공하는 것</strong>이며, 그래야 LLM이 그 데이터를 가져올 올바른 Cypher나 SPARQL 코드를 생성할 수 있다.</p>
+  </div>
+</section>
+
+<!-- ══════════ 02 ══════════ -->
+<section id="s2" class="rv">
+  <div class="mk"><i>02</i><span>통합 · 두 가지 사용 패턴</span><s></s></div>
+  <h2>RAG에서 지식 그래프 쓰기</h2>
+
+  <p>KG를 RAG에 어떻게 쓸 수 있는지 보이기 위해 영화 세계의 예를 확장해, 상호보완적인 두 데이터 소스로 영화 지식 그래프를 만든다.</p>
+
+  <div class="cards c2">
+    <div class="card">
+      <h5>IMDb — 검증된 뼈대</h5>
+      <p>비상업용 IMDb 데이터셋이 노드와 관계의 기본 집합, 즉 영화의 검증된 “누가·무엇을·언제”를 제공한다. <code>Movie</code>, <code>Person</code>, <code>Character</code>, <code>Genre</code> 같은 노드를 만들고, 영화의 개봉 연도나 사람의 역할 같은 노드 속성을 붙인다.</p>
+    </div>
+    <div class="card">
+      <h5>MovieSum — 대사와 장면</h5>
+      <p>허깅페이스의 MovieSum 데이터셋에 담긴 영화 각본이 대사와 장면 서술을 제공한다. 이 각본을 텍스트 청크로 쪼개 <code>Chunk</code> 노드를 채운다.</p>
+    </div>
+  </div>
+
+  <h3>영화 지식 그래프 구축하기</h3>
+  <p>시작하려면 먼저 Neo4j를 설치하고 사용자명과 비밀번호로 계정을 설정한다(다시 말하지만 어떤 그래프 데이터베이스든 괜찮다). 다음 단계는 각본 자체의 처리다. 각 각본에서 먼저 XML 태그를 정리한 뒤 LangChain으로 청크로 쪼갠다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 각본 정제와 청킹</span></header>
+<pre>text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=CHUNK_SIZE,
+    chunk_overlap=CHUNK_OVERLAP,
+    length_function=len,
+    is_separator_regex=<span class="k">False</span>,
+)
+
+cleaned_script = re.sub(r<span class="s">'&lt;[^&gt;]+&gt;'</span>, <span class="s">' '</span>, script_content)
+cleaned_script = re.sub(r<span class="s">'\s+'</span>, <span class="s">' '</span>, cleaned_script).strip()
+chunks = text_splitter.split_text(cleaned_script)</pre>
+  </div>
+
+  <p>이 청크를 <code>Chunk</code> 노드로 그래프에 넣기 전에, 명명 실체 인식(NER)의 한 형태로 각본의 <code>Character</code> 실체를 식별한다. 다행히 영화 각본에는 등장인물 이름이 대문자로 쓰이는 공통 구조가 있어 정규식으로 비교적 쉽게 식별할 수 있다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 정규식으로 등장인물 이름 추출</span></header>
+<pre><span class="c"># 패턴 1: 등장인물 이름으로 시작하는 줄 (전부 대문자, 콜론이나 줄바꿈이 뒤따른다)</span>
+<span class="c"># 예: "JOHN:", "MARY\n"</span>
+char_pattern1 = re.findall(
+    r<span class="s">'^([A-Z][A-Z\s]{2,20}?)(?::|$)'</span>, script_text, re.MULTILINE
+)
+characters.update(
+    [name.strip() <span class="k">for</span> name <span class="k">in</span> char_pattern1 <span class="k">if</span> len(name.strip()) &gt; <span class="s">2</span>]
+)
+
+<span class="c"># 패턴 2: 괄호 안의 등장인물 이름</span>
+<span class="c"># 예: "(JOHN enters)", "(MARY speaking)"</span>
+char_pattern2 = re.findall(
+    r<span class="s">'\(([A-Z][A-Z\s]{2,15}?)(?:\s+[a-z]|\))'</span>, script_text
+)
+characters.update(
+    [name.strip() <span class="k">for</span> name <span class="k">in</span> char_pattern2 <span class="k">if</span> len(name.strip()) &gt; <span class="s">2</span>]
+)</pre>
+  </div>
+
+  <p>이 정규식으로 추출된 이름 일부는 틀리므로, 더 견고하게 만들기 위한 임시 파싱 로직을 추가한다. 유효한 등장인물 이름은 각본에 최소 세 번 나타나야 하고, THE·AND·WITH·HIM처럼 이름으로 오인될 수 있는 흔한 단어를 제거한다.</p>
+
+  <div class="note edge">
+    <span class="tag">여기서 드러나는 사실 — KG 구축은 도메인 전문성을 요구한다</span>
+    <p>이것이 말해 주는 바가 있다. 지식 그래프를 만들고 유지하는 일은 도메인 전문성을 요구하는 어려운 과제다. 예측 가능한 서식과 전부 대문자 이름이라는 명확한 단서를 주는 영화 각본과 달리, 고객 계약서·지원 티켓·시스템 로그 같은 엔터프라이즈 데이터는 흔히 지저분하고 서식이 일관되지 않다. <strong>깨끗하고 구조화된 예시와 실세계 데이터의 모호성 사이의 이 간극을 메우는 일이, KG 구축이 여전히 고비용 사업으로 남아 있는 이유다.</strong></p>
+  </div>
+
+  <p>마지막 단계는 그래프의 관계를 만드는 일이다. 여기서는 <code>Chunk</code> 노드를 <code>Movie</code> 노드와 <code>Character</code> 노드에 연결한다. 「골든아이」의 어떤 청크에서 KOLKHAZHNA, MARINA, BOND라는 등장인물이 언급되었다면, 그 청크에 대해 다음 관계를 그래프 구조에 추가할 수 있다.</p>
+
+  <div class="codewrap">
+    <header>Cypher <span>· MovieSum에서 나오는 관계</span></header>
+<pre>(<span class="n">Chunk</span>)-[<span class="r">:MENTIONS</span>]-&gt;(<span class="n">Character</span>)
+(<span class="n">Character</span>)-[<span class="r">:APPEARS_IN</span>]-&gt;(<span class="n">Movie</span>)</pre>
+  </div>
+
+  <div class="codewrap">
+    <header>Cypher <span>· IMDb에서 나오는 관계</span></header>
+<pre>(<span class="n">Person</span>)-[<span class="r">:DIRECTED</span>]-&gt;(<span class="n">Movie</span>)
+(<span class="n">Person</span>)-[<span class="r">:ACTED_IN</span>]-&gt;(<span class="n">Movie</span>)
+(<span class="n">Movie</span>)-[<span class="r">:HAS_GENRE</span>]-&gt;(<span class="n">Genre</span>)
+(<span class="n">Character</span>)-[<span class="r">:PORTRAYED_BY</span>]-&gt;(<span class="n">Person</span>)</pre>
+  </div>
+
+  <p>이제 필요한 것을 갖췄다. 영화 각본의 청크와 메타데이터를 IMDb의 추가 정보와 관계와 통합한 지식 그래프다.</p>
+
+  <h3>질의 시점에 지식 그래프를 쓰는 법</h3>
+  <p>KG가 노드와 관계로 채워지면 두 가지 흔한 사용 패턴 가운데 하나로 질의 흐름에 통합할 수 있다. <em class="n">청크 보강</em>과 <em class="e">하이브리드 그래프 검색</em>이다.</p>
+
+  <h4>패턴 1 — 청크 보강</h4>
+  <p>이 접근에서 검색 과정은 사용자 질의에 의미적으로 가장 관련된 텍스트 청크를 찾는 표준 벡터 검색으로 시작한다. 그러나 원시 청크 텍스트는 흔히 “얇은” 참조를 담고 있다. 잘못 표기된 이름이나 “그”라는 대명사처럼, LLM이 사실적 답변을 제공하는 데 필요한 온전한 맥락이 결여된 것들이다.</p>
+
+  <p>KG로 이 청크를 동적으로 보강한다. 텍스트에서 발견된 실체에 대해 그래프 조회를 수행하는 방식이다. 다음 질의를 생각해 보자. <em class="n">“‘They call it a Royale with Cheese’라고 말한 배우는 누구이고, 어떤 영화였는가?”</em></p>
+
+  <p>먼저 표준 벡터 검색으로 “Royale with Cheese” 텍스트를 담은 청크를 찾는다. 최상위 일치로 다음 청크가 검색될 수 있다.</p>
+
+  <div class="chunk">
+    <b>벡터 검색이 찾아낸 최상위 청크 (원문 그대로)</b>
+    for this to search you. Searching you is a right that the cops in Amsterdam do n’t have. JULES That did it, man - I’m f#%kin’ goin', that’s all there is to it. VINCENT You’ll dig it the most. But you know what the funniest thing about Europe is? JULES What? VINCENT It’s the little differences. … Also, you know what they call a Quarter Pounder with Cheese in Paris? JULES They do n’t call it a Quarter Pounder with Cheese? VINCENT No, they got the metric system there, they would n’t know what the f#%k a Quarter Pounder is. JULES What’d they call it? <strong>VINCENT Royale with Cheese.</strong> JULES ( repeating . ) Royale with Cheese. What’d they call a Big Mac? VINCENT Big Mac’s a Big Mac, but they call it Le Big Mac.
+  </div>
+
+  <p>벡터 검색은 성공했다. 정확한 대사 줄을 찾아냈다. 그러나 원시 텍스트를 보면 이것으로는 사용자 질문에 답할 수 없다. <strong>영화 이름이 없고, 배우 이름도 없고, 등장인물 이름(Vincent)만 있다.</strong></p>
+
+  <div class="note">
+    <span class="tag">이 청크가 지저분해 보이는 이유</span>
+    <p>검색된 위 청크는 등장인물 이름과 텍스트가 섞여 있고 “do n’t”처럼 공백이 끼어든 오타도 있어 지저분해 보인다. 그러나 이것은 MovieSum과 IMDb 데이터셋에서 예제 노트북의 코드로 추출한 <strong>정확히 그 청크</strong>다.</p>
+  </div>
+
+  <p>그래프 보강 단계는 청크 텍스트에서 <code>Character: Vincent</code> 실체를 식별하고, KG로 텍스트에 <strong>없는</strong> 추가 맥락을 얻는다.</p>
+
+  <div class="triples">
+    <div><s class="s">Character: Vincent</s><span class="r">IS_REAL_NAME</span><span class="o">Vincent Vega</span></div>
+    <div><s class="s">Character: Vincent</s><span class="r">PLAYED_BY</span><span class="o">Actor: John Travolta</span></div>
+    <div><s class="s">Character: Vincent</s><span class="r">APPEARS_IN</span><span class="o">Movie: Pulp Fiction</span></div>
+  </div>
+
+  <p>원시 청크 텍스트만 LLM에 보내는 대신, 청크와 이 추가 정보를 담은 <em class="n">지식 맥락 패킷</em>을 함께 보낸다. 그러면 LLM이 100% 확실하게 답할 수 있고, 모호한 조각이 데이터가 풍부한 사실로 변한다.</p>
+
+  <figure>
+    <svg viewBox="0 0 700 200" role="img" aria-label="청크 보강 워크플로: 벡터 DB에서 검색한 청크를 그래프 DB로 보강한 뒤 생성 LLM에 넘긴다">
+      <rect class="sv-box-b" x="20" y="20" width="104" height="34" rx="2"/>
+      <text class="sv-t b" x="72" y="41" text-anchor="middle">사용자 질의</text>
+      <ellipse cx="72" cy="98" rx="40" ry="9" class="sv-box-e"/>
+      <path d="M32,98 L32,126 a40,9 0 0 0 80,0 L112,98" class="sv-box-e"/>
+      <text class="sv-t b" x="72" y="116" text-anchor="middle">벡터 DB</text>
+      <rect class="sv-box-b" x="168" y="86" width="96" height="34" rx="2"/>
+      <rect class="sv-box-b" x="178" y="96" width="96" height="34" rx="2"/>
+      <text class="sv-t sm" x="226" y="117" text-anchor="middle">얇은 청크</text>
+      <ellipse cx="356" cy="98" rx="46" ry="9" class="sv-box-n"/>
+      <path d="M310,98 L310,126 a46,9 0 0 0 92,0 L402,98" class="sv-box-n"/>
+      <text class="sv-t b" x="356" y="116" text-anchor="middle">그래프 DB</text>
+      <text class="sv-t b" x="356" y="72" text-anchor="middle">청크 보강</text>
+      <rect class="sv-box-n" x="446" y="86" width="110" height="34" rx="2"/>
+      <rect class="sv-box-n" x="456" y="96" width="110" height="34" rx="2"/>
+      <text class="sv-t sm" x="511" y="117" text-anchor="middle">보강된 청크</text>
+      <rect class="sv-box-e" x="600" y="86" width="84" height="40" rx="2"/>
+      <text class="sv-t b" x="642" y="103" text-anchor="middle">생성</text>
+      <text class="sv-t b" x="642" y="118" text-anchor="middle">LLM</text>
+      <rect class="sv-box-b" x="600" y="150" width="84" height="32" rx="2"/>
+      <text class="sv-t b" x="642" y="170" text-anchor="middle">응답</text>
+      <path class="sv-a" d="M72,58 L72,86"/>
+      <path class="sv-a e" d="M116,104 L164,100"/>
+      <path class="sv-a n" d="M280,108 L304,106"/>
+      <path class="sv-a n" d="M406,106 L442,102"/>
+      <path class="sv-a e" d="M570,108 L594,108"/>
+      <path class="sv-a" d="M642,130 L642,144"/>
+      <text class="sv-t sm" x="20" y="176">엔티티 조회는 색인된 단순 조회다 — 지연이 사실상 없고 프로덕션에서 대단히 안정적이다</text>
+    </svg>
+    <figcaption><b>〈그림 9-2〉</b> 청크 보강 워크플로. 벡터 DB에서 검색된 최초 청크가 그래프 DB로 보강된 뒤 생성 LLM 단계로 넘어간다. KG는 여기서 벡터 검색 결과에 주석과 구조와 메타데이터를 더하는 <strong>고충실도 맥락 제공자</strong>로 기능한다.</figcaption>
+  </figure>
+
+  <h4>패턴 2 — 하이브리드 그래프 검색</h4>
+  <p>이 접근에서는 먼저 LLM에게 사용자의 자연어 질문을 그래프 데이터베이스가 실행할 수 있는 형식적 그래프 질의 언어로 직접 변환하도록 요청한다. 그래프에서 관련 청크를 추출해 벡터 기반 검색이 가져온 청크와 결합하려는 의도다.</p>
+
+  <p>이것이 성공하려면 LLM에 먼저 그래프의 <strong>스키마</strong>를 주어야 한다. 가용한 노드 라벨(<code>Person</code>, <code>Movie</code>, <code>Chunk</code>), 관계 유형(<code>:DIRECTED</code>, <code>:ACTED_IN</code>), 속성의 청사진이다. 이 스키마가 유효한 그래프 질의를 쓰기 위해 필요한 “어휘”와 “문법”을 LLM에 제공한다. 예로 이 질문을 생각해 보자. <em class="e">“골든아이의 모든 등장인물은 누구인가? 그중 누가 본드와 상호작용했는가?”</em></p>
+
+  <div class="codewrap">
+    <header>Cypher <span>· LLM이 스키마로 무장해 생성한 질의</span></header>
+<pre><span class="c">// 1단계: 골든아이의 모든 등장인물을 찾는다</span>
+<span class="k">MATCH</span> (<span class="n">m:Movie</span>)
+<span class="k">WHERE</span> toLower(m.title) <span class="k">CONTAINS</span> <span class="s">'goldeneye'</span>
+<span class="k">WITH</span> m
+<span class="k">MATCH</span> (<span class="n">c:Character</span>)-[<span class="r">:APPEARS_IN</span>]-&gt;(m)
+<span class="k">WITH</span> m, collect(<span class="k">DISTINCT</span> c.name) <span class="k">AS</span> all_characters, m.title <span class="k">AS</span> movie_title
+
+<span class="c">// 2단계: 본드와 상호작용한 인물을 찾는다 (같은 청크에 함께 언급된 경우)</span>
+<span class="k">MATCH</span> (<span class="n">m2:Movie</span>)
+<span class="k">WHERE</span> toLower(m2.title) <span class="k">CONTAINS</span> <span class="s">'goldeneye'</span>
+<span class="k">MATCH</span> (<span class="n">ch:Chunk</span>)-[<span class="r">:BELONGS_TO</span>]-&gt;(m2)
+
+<span class="c">// 본드를 언급하는 청크를 찾는다 (퍼지 매칭: 'bond')</span>
+<span class="k">MATCH</span> (ch)-[<span class="r">:MENTIONS</span>]-&gt;(<span class="n">bond_char:Character</span>)
+<span class="k">WHERE</span> toLower(bond_char.name) <span class="k">CONTAINS</span> <span class="s">'bond'</span>
+
+<span class="c">// 같은 청크에 언급된 다른 인물을 찾는다</span>
+<span class="k">MATCH</span> (ch)-[<span class="r">:MENTIONS</span>]-&gt;(<span class="n">other_char:Character</span>)
+<span class="k">WHERE</span> other_char &lt;&gt; bond_char
+
+<span class="k">WITH</span> movie_title, all_characters,
+     collect(<span class="k">DISTINCT</span> other_char.name) <span class="k">AS</span> interacted_with_bond,
+     collect(<span class="k">DISTINCT</span> ch.text)[<span class="s">0</span>..<span class="s">10</span>] <span class="k">AS</span> chunks
+<span class="k">RETURN</span> movie_title, all_characters, interacted_with_bond, chunks</pre>
+  </div>
+
+  <p>벡터 검색의 청크만 쓰면 정보가 부족해 RAG는 “이 질문에는 답할 수 없다”고 응답한다. 그러나 벡터 검색의 청크와 그래프 DB의 청크를 결합해 생성 LLM에 함께 보내면 훨씬 나은 응답을 얻는다.</p>
+
+  <div class="out" style="border-top:1px solid var(--line)"><span class="lb">결합 후 응답 (일부)</span><i>**골든아이의 등장인물:**</i>
+James Bond · Marina · Trevelyan · Savatier · Morley · Kolkhazna · Romaly ·
+Valentin · Elliot Harmsway · Technicians · Guards · Militiamen · Bartender ·
+Gunner · Jordan · Xenia
+
+<i>**본드와 상호작용한 인물:**</i>
+- Marina (여러 장면, 로맨스와 액션 시퀀스 포함)
+- Trevelyan (직접 대결과 대화)
+- Savatier (본드와 물리적 격투)
+- Romaly (본드가 지시를 내린다)
+- Valentin (바에서의 대화)
+- Bartender (본드에게 술을 낸다)
+- Xenia (적대자, 갈등을 통해 상호작용)
+…
+
+<b>**상호작용이 불분명하거나 없는 인물:**</b>
+- Kolkhazna의 죽은 조수
+- Jordan (Xenia에게 살해됨, 주어진 맥락에서 본드와 직접 상호작용 없음)</div>
+
+  <figure>
+    <svg viewBox="0 0 700 210" role="img" aria-label="그래프 질의 생성 파이프라인: 번역 LLM이 Cypher를 만들고 그래프 DB와 벡터 DB의 결과를 합친다">
+      <rect class="sv-box-b" x="576" y="14" width="108" height="32" rx="2"/>
+      <text class="sv-t b" x="630" y="34" text-anchor="middle">사용자 질의</text>
+      <!-- translator -->
+      <rect class="sv-box-e" x="30" y="60" width="104" height="40" rx="2"/>
+      <text class="sv-t b" x="82" y="77" text-anchor="middle">번역 LLM</text>
+      <text class="sv-t sm" x="82" y="92" text-anchor="middle">text-to-Cypher</text>
+      <ellipse cx="82" cy="146" rx="42" ry="9" class="sv-box-n"/>
+      <path d="M40,146 L40,174 a42,9 0 0 0 84,0 L124,146" class="sv-box-n"/>
+      <text class="sv-t b" x="82" y="164" text-anchor="middle">그래프 DB</text>
+      <!-- vector -->
+      <ellipse cx="330" cy="76" rx="42" ry="9" class="sv-box-e"/>
+      <path d="M288,76 L288,100 a42,9 0 0 0 84,0 L372,76" class="sv-box-e"/>
+      <text class="sv-t b" x="330" y="93" text-anchor="middle">벡터 DB</text>
+      <rect class="sv-box-b" x="418" y="58" width="90" height="30" rx="2"/>
+      <rect class="sv-box-b" x="428" y="68" width="90" height="30" rx="2"/>
+      <text class="sv-t sm" x="473" y="88" text-anchor="middle">청크</text>
+      <!-- graph results -->
+      <rect class="sv-box-n" x="176" y="140" width="90" height="30" rx="2"/>
+      <rect class="sv-box-n" x="186" y="150" width="90" height="30" rx="2"/>
+      <text class="sv-t sm" x="231" y="170" text-anchor="middle">노드 · 청크</text>
+      <rect class="sv-box-b" x="320" y="140" width="90" height="30" rx="2"/>
+      <rect class="sv-box-b" x="330" y="150" width="90" height="30" rx="2"/>
+      <text class="sv-t sm" x="375" y="170" text-anchor="middle">청크</text>
+      <!-- generative -->
+      <rect class="sv-box-e" x="470" y="130" width="104" height="42" rx="2"/>
+      <text class="sv-t b" x="522" y="147" text-anchor="middle">생성 LLM</text>
+      <text class="sv-t sm" x="522" y="162" text-anchor="middle">결합된 맥락</text>
+      <rect class="sv-box-b" x="608" y="136" width="76" height="32" rx="2"/>
+      <text class="sv-t b" x="646" y="156" text-anchor="middle">응답</text>
+      <!-- arrows -->
+      <path class="sv-a" d="M572,30 L140,30 L140,54"/>
+      <path class="sv-a" d="M628,46 L628,50 L350,50 L350,64"/>
+      <path class="sv-a e" d="M82,104 L82,138"/>
+      <text class="sv-t rel" x="90" y="124">Cypher 질의</text>
+      <path class="sv-a n" d="M128,158 L172,158"/>
+      <path class="sv-a n" d="M282,162 L316,162"/>
+      <path class="sv-a e" d="M374,84 L414,76"/>
+      <path class="sv-a e" d="M524,84 L524,124"/>
+      <path class="sv-a n" d="M426,164 L464,158"/>
+      <path class="sv-a" d="M578,152 L602,152"/>
+      <text class="sv-t sm" x="30" y="200">그래프의 사실적 정밀함과 시맨틱 검색의 개념적 이해를 결합한다</text>
+    </svg>
+    <figcaption><b>〈그림 9-3〉</b> RAG 파이프라인에서의 그래프 질의 생성. 번역 LLM이 자연어를 Cypher로 옮겨 그래프 DB를 실행하고, 그 결과를 벡터 검색의 청크와 합쳐 생성 LLM에 넘긴다.</figcaption>
+  </figure>
+
+  <div class="pull">시맨틱 검색의 개념적 이해와 KG의 사실적 정밀함을 결합하면, 어느 한쪽만으로는 이룰 수 없는 훨씬 넓은 범위의 질문에 더 높은 정확도로 답할 수 있다. LLM과 KG를 결합한 그래프 증강 프레임워크 <strong>HippoRAG</strong>는 멀티홉 질의응답 벤치마크에서 표준 RAG 기준선 대비 <strong>최대 약 20% 높은 정확도</strong>를 낸다.</div>
+
+  <h3>보강과 하이브리드 검색 중에 고르기</h3>
+  <p>둘 다 KG의 힘을 활용하지만 서로 다른 문제를 풀고 서로 다른 운영 비용을 안고 온다.</p>
+
+  <p><em class="n">청크 보강</em>은 “메타데이터 우선” 전략이다. 벡터 검색이 관련 텍스트를 찾는 데 이미 효과적이지만 그 텍스트 자체에 더 넓은 맥락이 없다고 가정한다. 질의는 의미론적이면서(영화의 특정 대사를 묻는 것처럼) 답에는 조각에 없는 외부 사실(배우 이름 같은)이 필요할 때 이상적인 선택이다. 검색된 청크 ID의 색인된 단순 조회이므로 지연이 사실상 없고 프로덕션에서 대단히 안정적이다.</p>
+
+  <p><em class="e">하이브리드 그래프 검색</em>은 반대로 “발견 우선” 전략이다. 사용자 질의가 구조적이거나 관계적이어서 벡터 검색이 놓칠 연결을 순회해야 할 때 뛰어나다(“세 장면 이상에서 본드와 상호작용한 모든 인물을 찾아라”). 그러나 이 힘에는 무시할 수 없는 프로덕션 복잡성이 따른다. LLM이 자연어를 데이터베이스 질의로 번역하는 “text-to-Cypher” 파이프라인을 관리해야 하고, LLM이 유효하지 않은 문법을 환각하는 등의 추가 위험이 생긴다. 안전하게 돌리려면 질의 타임아웃과 재시도 전략을 고려해야 한다.</p>
+
+  <div class="tw">
+    <table>
+      <caption>표 9-1. 프로덕션에서 청크 보강과 하이브리드 그래프 검색의 비교</caption>
+      <thead><tr><th style="width:16%">항목</th><th style="width:40%">청크 보강</th><th>하이브리드 그래프 검색</th></tr></thead>
+      <tbody>
+        <tr><td class="k">일차 목표</td><td>특정 텍스트 조각의 맥락화</td><td>관계와 집계의 발견</td></tr>
+        <tr><td class="k">적합한 경우</td><td>사실적 근거 부여(날짜, 이름, ID)</td><td>멀티홉 추론(누가 누구를 만났는가)</td></tr>
+        <tr><td class="k">실행 위험</td><td><span class="lo">낮음</span> — 색인된 단순 조회</td><td><span class="hi">높음</span> — 질의 환각이나 느린 조인</td></tr>
+        <tr><td class="k">지연</td><td><span class="lo">최소</span> — 밀리초 이하 조회</td><td><span class="hi">가변</span> — LLM과 질의 복잡성에 따라</td></tr>
+        <tr><td class="k">구현</td><td>직관적. 최소 기능 제품에 훌륭하다</td><td>복잡. “text-to-Cypher” 또는 “text-to-SPARQL” 튜닝이 필요하다</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note edge">
+    <span class="tag">프로덕션에서 마주할 것 — 엔티티 폭발</span>
+    <p>어떤 패턴을 쓰든 KG의 성공은 데이터 엔지니어링 성숙도에 달려 있다. 프로덕션에서는 <strong>엔티티 폭발</strong>을 마주하게 된다. 하나의 실체가 여러 노드로 사상되는 현상이다. 추출 파이프라인이 “007”, “James Bond”, “Bond”를 하나의 노드로 병합하지 않고 세 개의 다른 노드로 만들어 버리는 식이다.</p>
+    <p>고충실도 KG를 만들고 유지하는 일은 상당한 “오프라인” 엔지니어링 노력이며, 질의 정확도 향상의 이득과 저울질해야 한다. 가장 흔하게는 6장의 평가가 이 결정에 훌륭한 입력을 제공한다. 응답 품질을 분석하면 어떤 종류의 질의가 실패하는지, KG가 그것을 성공시킬 수 있는지 볼 수 있다.</p>
+    <p>막 시작하는 단계라면 청크 보강이 흔히 “가장 값어치 있는” 선택이며, 낮은 위험으로 즉각적인 사실적 근거를 제공한다. 사용 사례가 복잡한 추론과 문서 간 집계로 진화하면 유사성 기반 검색의 한계를 돌파하기 위해 하이브리드 그래프 파이프라인에 대한 투자가 필요해질 수 있다.</p>
+  </div>
+
+  <h4 class="e">임베딩을 어디에 둘 것인가</h4>
+  <p>프로덕션에서 위 패턴을 구현할 때의 또 하나의 중요한 결정은 벡터 임베딩이 어디에 상주할지다. 이 선택은 시스템의 일관성, 지연, 운영 오버헤드에 영향을 준다.</p>
+
+  <div class="cards c2">
+    <div class="card">
+      <h5>그래프 DB에 함께 저장</h5>
+      <p>현대 그래프 데이터베이스는 네이티브 벡터 인덱스를 지원하므로, 각 청크 노드에 <code>chunk.embedding</code> 속성으로 임베딩을 직접 저장할 수 있다. 이 접근에서 검색 흐름은 <strong>하나의 데이터베이스 트랜잭션 안에서</strong> 시맨틱 검색과 그래프 순회를 함께 수행할 수 있다. 원자적 일관성과 임베딩의 단일 진실 원천을 제공한다. 다만 이제 벡터 DB의 임베딩 처리에 의존하게 되고, 그것이 복잡한 그래프 순회와 RAM을 두고 경쟁해 아주 큰 데이터셋에서 성능 병목을 낳을 수 있다.</p>
+    </div>
+    <div class="card">
+      <h5>벡터 DB에 분리 저장</h5>
+      <p>표준 RAG 검색 흐름을 유지하고 임베딩은 벡터 DB에 둔다. 청크가 검색되면 시스템이 그 <code>chunk_id</code>로 그래프 DB를 조회해 보강이나 추가 순회를 수행한다. 이 접근은 고성능 검색 파이프라인(벡터 검색, 하이브리드 검색, 재순위 포함)을 그래프 순회와 독립적으로 유지하게 해준다. 다만 이제 벡터 DB와 그래프 DB가 온전히 동기화되도록 보장할 책임이 생긴다. 벡터 스토어에서 검색한 청크가 그래프에는 더 이상 존재하지 않아 애플리케이션 오류를 내는 상황을 피해야 한다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 03 ══════════ -->
+<section id="s3" class="rv">
+  <div class="mk"><i>03</i><span>구축 · 자동화의 벽</span><s></s></div>
+  <h2>지식 그래프 구축</h2>
+
+  <p>영화 KG를 만든 일반적 접근은 이렇다. 먼저 그래프 스키마를 설계했다. <code>Person</code>, <code>Movie</code>, <code>Character</code>, <code>Genre</code>, <code>Chunk</code> 노드와 <code>ACTED_IN</code>, <code>PORTRAYED_BY</code>, <code>DIRECTED</code> 같은 관계를 포함하기로 정했다. 그다음 IMDb와 MovieSum 데이터셋의 맞춤 전처리로 그래프 자체를 채웠다.</p>
+
+  <p>영화 각본에서는 등장인물 이름이 비교적 쉽게 식별되기에 이 과정의 일부를 자동화할 수 있었다. 그러나 그 단순화에도 “her”나 “his”처럼 이름으로 오인된 단어를 제거하는 수작업이 필요했다. IMDb 데이터셋은 이미 만들어지고 정제되어 있었다. 그 데이터셋의 제작자들이 어려운 일을 전부 해준 것이다.</p>
+
+  <div class="pull">각본을 다룬 경험은 그럼에도 데이터 추출의 <strong>최선의 경우</strong>를 대표한다. 내부 기업 데이터로 KG를 만드는 일은 비정형 “다크 데이터”와 일관되지 않은 스키마와 고립된 레거시 시스템의 미궁을 항해하는 일이다. 각본 몇 편 정제하는 것이 고되게 느껴졌다면, 수백만 개의 조각난 PDF와 스프레드시트와 이메일과 사적 데이터에 같은 과정을 수행하는 일을 상상해 보라. 도메인 전문성이 절대적으로 필요하다.</div>
+
+  <h3>지식 그래프 구축의 자동화</h3>
+  <p>수작업으로 KG를 선별하면 깨끗하고 정확한 결과를 낼 수 있지만, 전문가 주도의 이 접근은 노동 집약적이고 빠르게 심각한 병목이 된다. 실제로 KG 구축은 현대 엔터프라이즈 애플리케이션의 요구를 충족할 만큼 확장되는 일이 드물다. 새롭고 비정형인 정보가 끊임없이 흘러드는 동적 RAG와 에이전틱 시스템에서 특히 그렇다. 대신 텍스트에서 그래프를 만드는 자동화 접근이 점점 흔해지고 있으며, 세 단계를 따른다.</p>
+
+  <ol class="steps">
+    <li><strong>핵심 “사물”을 찾는다 (엔티티 식별).</strong> 텍스트를 훑어 중요한 명사를 찾고 범주화한다. “Apple”을 “조직”으로, “Steve Jobs”를 “사람”으로 식별하는 식이다. 이 사물들이 그래프의 노드가 된다.</li>
+    <li><strong>연결을 찾는다 (관계 추출).</strong> 문장을 분석해 이 사물들이 어떻게 관계되는지 알아낸다. “Apple was founded by Steve Jobs”라는 문장을 보고 <code>(Apple, FOUNDED_BY, Steve Jobs)</code>로 표현되는 연결을 만든다.</li>
+    <li><strong>중복을 정리한다 (엔티티 링킹).</strong> 마지막으로 같은 사물의 다른 이름들이 모두 하나의 항목이나 노드를 가리키도록 데이터를 정리한다. “Apple”, “Apple Inc.”, “아이폰을 만드는 회사”가 모두 같은 실체임을 학습한다.</li>
+  </ol>
+
+  <p>LLM을 쓰면 이 단계들이 극적으로 정돈된다. 과제마다 별도의 구식 전문 NLP 모델을 쓰는 대신, 강력한 LLM 하나가 문서를 읽고 구조화된 실체–관계 트리플 집합을 직접 출력하도록 프롬프트를 받을 수 있다. 엔지니어링 복잡성이 단순해지고, LLM의 방대한 세계 지식과 섬세한 맥락 이해 덕에 결과도 흔히 개선된다.</p>
+
+  <div class="note edge">
+    <span class="tag">기대치를 조절해야 한다</span>
+    <p>그러나 순전히 LLM으로만 하는 트리플 추출은 여전히 잡음이 많고 도메인 의존적이다. 프로덕션 환경에서 LLM 단독 파이프라인은 흔히 그래프를 부트스트랩하는 <strong>출발점</strong>일 뿐이며, 사업 결과에 요구되는 고충실도를 달성하려면 대다수 팀이 <strong>혼합 추출 전략</strong>을 구현한다. LLM으로 실체와 관계를 제안하게 하고, 그것을 결정론적 발견법(ID나 날짜의 정규식), 검증을 위한 고전적 NLP 모델, 그리고 결정적 실체에 대한 전문가 품질보증을 위한 인간 개입 인터페이스라는 계층을 통과시키는 방식이다.</p>
+  </div>
+
+  <h3>엔티티 링킹 — 하나의 사물, 여러 이름</h3>
+  <p>LLM을 써도 핵심 난제가 남는다. 실세계 엔터프라이즈 데이터는 지저분하고 일관되지 않으며, 하나의 실세계 “사물”이 여러 다른 이름이나 식별자로 참조될 수 있다.</p>
+
+  <div class="cards c3">
+    <div class="card"><h5>금융의 기업 실체</h5><p>하나의 법인이 뉴스 기사와 규제 제출 서류와 내부 보고서에서 “IBM Inc.”, “International Business Machines Corp.”, “I.B.M.”, 또는 그냥 “IBM”으로 나타날 수 있다.</p></div>
+    <div class="card"><h5>제약의 약물 성분</h5><p>하나의 약이 상품명(“Tylenol”), 일반명·활성 성분명(“acetaminophen”), 정식 화학명(“N-acetyl-para-aminophenol”)으로 자주 불린다.</p></div>
+    <div class="card"><h5>공급망과 이커머스의 제품</h5><p>“iPhone 15 Pro 256GB” 하나가 벤더나 시스템마다 “Apple iPhone 15 Pro (256)”이나 “IP15PRO-256BLK”로 등재될 수 있다.</p></div>
+  </div>
+
+  <p>엔티티 링킹을 효과적으로 다루려면 명확한 <strong>온톨로지</strong>를 정의하는 데서 시작해야 한다. 도메인에 존재하는 “사물”(사람·회사·약물 같은 실체의 클래스나 유형)과 그것들이 가질 수 있는 속성과 관계를 정의하는 것이다. 엔티티 링킹의 맥락에서 온톨로지는 “하나의 사물, 여러 이름” 문제를 풀 기본 구조를 제공한다. 회사 실체가 하나의 정규 명칭(“International Business Machines Corp.”)과 별칭 목록(“IBM”, “I.B.M.”)을 갖는다고 정의할 수 있다. 나중에 시스템이 “IBM Inc.”를 만나면 새 노드를 만드는 것이 아니라 그것을 별칭으로 인식해 기존 정규 노드에 연결하는 것이 자기 과제임을 안다.</p>
+
+  <p>온톨로지를 목표 구조로 손에 쥐고 나면, 엔티티 링킹 과정은 실체를 능동적으로 맞추고 연결하고 병합하는 일이 된다. 이는 단일 알고리즘이 아니라 다단계 파이프라인이며 보통 두 단계를 포함한다.</p>
+
+  <div class="defs">
+    <div><dt>1. 정규화</dt><dd>원시 텍스트를 정제하고 표준화한다. “Corp.”와 “Corporation”을 모두 “corp”로 만들고, 모든 텍스트를 소문자로 바꾸는 식이다.</dd></div>
+    <div><dt>2. 후보 생성</dt><dd>같은 “사물”을 나타내는 실체를 찾을 때, 모든 실체를 다른 모든 실체와 비교하지 않도록 탐색 공간을 좁힌다. 어떤 식으로든 유사한 사람 실체만 비교하는 식이며, 단순 문자열 비교(“Chris”와 “Christopher”에 대한 자로–윙클러 거리)에서 복잡한 맥락적·도메인 특수 유사도 지표까지 쓴다.</dd></div>
+  </div>
+
+  <p>전체 과정은 초기 부트스트랩 단계를 포함한다. 기존 데이터 전체에 대규모 작업을 돌려 정규 실체의 최초 집합을 만든다. 그 뒤에는 <strong>증분 모드</strong>를 쓰는 것이 일반적이다. 새 비정형 데이터가 도착하면 엔티티 링킹 모델이 새 표면형(“Tylenol”)을 그래프의 기존 정규 실체(“acetaminophen”의 <code>Drug</code> 노드)에 맞춘다.</p>
+
+  <p>여기에 인간 개입을 더할 수도 있다. 시스템의 일치 신뢰도가 낮으면(“Christian”이 “Christopher”와 같은지 반반이라면) 전문가 검토를 위해 모호성에 표시를 단다. 희소한 인간 노력을 가장 어려운 경우에만 집중시켜, 시스템이 확장하면서도 전문가 피드백으로 정확도를 계속 학습하고 개선하게 한다. 엔티티 링킹(전산학 문헌에서 <em>레코드 연결</em>이라고도 한다)은 대규모와 지저분한 데이터에서 특히 어렵고, LLM의 막대한 힘을 활용해도 텍스트에서 KG를 생성하는 자동화가 어렵다는 사실을 부각시킨다.</p>
+
+  <h3>표준 온톨로지와 기성 지식 그래프를 활용하기</h3>
+  <p>지식 그래프를 맨땅에서 만드는 일은 위험이 큰 사업이다. 한 추정에 따르면 그런 프로젝트의 <strong>50% 이상이 실패한다</strong>.<sup><a href="#fn3" class="ref">3</a></sup> 기술적 이유는 흔히 관련된 복잡성, 특히 엔티티 링킹의 복잡성을 과소평가하는 것이다. 그러나 또 하나의 흔한 이유는 초점을 맞춘 사용 사례 주도 접근을 택하는 대신 도메인의 “모든 것”을 모델링하려는 시도다.</p>
+
+  <p>표준 온톨로지는 이 불필요한 함정을 피하게 돕는 출발점을 제공한다. 금융이나 의료 같은 특정 도메인의 핵심 개념과 관계를 정의하는 형식적이고 표준화된 구조를 제공한다. 온톨로지를 충분히 생각해 두면 개발 시간을 절약하는 것만이 아니라 데이터 모델이 올바르고 일관되고 상호운용 가능하도록 보장해, 지나치게 넓고 쓸 수 없는 그래프를 만드는 흔한 함정을 막는다.</p>
+
+  <div class="cards c2">
+    <div class="card">
+      <h5>FIBO — 금융 산업 업무 온톨로지</h5>
+      <p>EDM 협의회가 개발했으며 <code>Corporation</code>, <code>Security</code>, <code>Loan</code> 같은 금융 개념에 정밀한 어휘를 제공한다. 그 가치는 정확한 실체 해소에 필수적인, 상세하고 표준화된 속성에 있다.</p>
+    </div>
+    <div class="card">
+      <h5>DrugBank — 의료의 기성 그래프</h5>
+      <p>약물과 화학 성분 사이의 관계를 사상하는 포괄적 지식 그래프로 기능한다. 아토르바스타틴이라는 하나의 약 실체가 알려진 단백질 표적(HMG-CoA 환원효소), 그것을 대사하는 효소(CYP3A4), 상호작용하는 다른 약물에 구체적 관계로 연결되어 있다.</p>
+    </div>
+  </div>
+
+  <p>온톨로지를 쓰는 일은 지식 그래프의 청사진을 제공하므로 도움이 되지만, 데이터로 채워야 하는 일은 여전히 남는다. Dun &amp; Bradstreet, Refinitiv(현 LSEG), S&amp;P Global 같은 기업은 엔티티 링킹이라는 어려운 일에 수백만 시간을 투자했고, 최근에는 D-U-N-S 번호나 PermID 같은 정규 식별자를 부여해 실체를 고유하게 식별하고 복잡한 기업 위계를 사상하는 선별 데이터 피드로 이 데이터를 라이선스하는 방향으로 움직이고 있다.</p>
+
+  <p>이런 데이터를 라이선스하는 일차적 가치는 고품질의, 이미 해소된 핵심 지식 그래프를 제공한다는 점이다. 모든 것을 스스로 해소하는 막대한 노력을 면하게 된다. 과제는 훨씬 작고 다루기 쉬운 문제로 축소된다. 새롭고 지저분한 내부 데이터를 제공자의 확립된 정규 실체에 연결하는 일이다. 그러면 우리 시스템의 “IBM”이나 “I.B.M.”을 “International Business Machines Corp.”의 단일 골든 레코드에 연결할 수 있다. 다만 이런 라이선스 KG에도 단점이 있다. 라이선스 비용에 더해, 이 특정 형태의 KG를 쓰겠다는 약속과 다른 모든 데이터 시스템이 그것에 맞춰야 한다는 점을 고려해야 한다.</p>
+</section>
+
+<!-- ══════════ 04 ══════════ -->
+<section id="s4" class="rv">
+  <div class="mk"><i>04</i><span>GraphRAG · 커뮤니티와 계층 요약</span><s></s></div>
+  <h2>GraphRAG</h2>
+
+  <div class="note tier">
+    <span class="tag">용어 정리</span>
+    <p>어떤 AI 엔지니어는 “GraphRAG”라는 용어를 그래프의 도움을 받는 모든 형태의 RAG를 서술하는 데 쓴다. 그러나 이 장에서는 마이크로소프트 리서치가 도입한 <strong>특정 접근</strong>을 가리킬 때 GraphRAG라는 용어를 쓴다. “제임스 본드 영화 전체의 주요 주제는 무엇인가?”처럼 데이터셋 전체의 정보를 종합해야 하는 넓고 탐색적인 <em>의미 파악(sensemaking)</em> 질의에 답하도록 설계된 접근이다.</p>
+  </div>
+
+  <p>기술적 용어로 이 과정은 <em class="t">질의 초점 요약(QFS, query-focused summarization)</em>이라 알려져 있다. 몇 개의 구체적 조각이나 청크를 검색하는 것이 아니라, 데이터의 <strong>전역적 조망</strong>에 근거해 포괄적 답변을 생성하는 것이 목표다.</p>
+
+  <p>GraphRAG는 LLM으로 원본 문서에서 그래프를 자동 구축한다. 그 그래프로 클러스터(커뮤니티)를 식별하고, 그것을 요약하고, 이 과정을 그래프 최상위까지 반복해 전역적 맥락의 이해를 가능하게 한다.</p>
+
+  <figure>
+    <svg viewBox="0 0 700 300" role="img" aria-label="GraphRAG의 세 단계: 그래프 구축, 커뮤니티 검출과 계층 요약, 질의">
+      <!-- Stage 1: entity graph -->
+      <text class="sv-t b" x="20" y="16">① 그래프 구축 — 실체와 관계 추출</text>
+      <rect class="sv-grp" x="14" y="24" width="200" height="128"/>
+      <circle cx="56" cy="56" r="9" class="sv-box-n"/>
+      <circle cx="102" cy="44" r="9" class="sv-box-n"/>
+      <circle cx="88" cy="88" r="9" class="sv-box-n"/>
+      <circle cx="46" cy="100" r="9" class="sv-box-n"/>
+      <circle cx="150" cy="70" r="9" class="sv-box-n"/>
+      <circle cx="170" cy="112" r="9" class="sv-box-n"/>
+      <circle cx="124" cy="126" r="9" class="sv-box-n"/>
+      <circle cx="66" cy="132" r="9" class="sv-box-n"/>
+      <g stroke="#A85018" stroke-width="1.1" fill="none">
+        <path d="M64,52 L94,46"/><path d="M60,64 L84,80"/><path d="M50,64 L48,92"/>
+        <path d="M96,94 L54,98"/><path d="M96,84 L142,74"/><path d="M156,78 L166,104"/>
+        <path d="M162,116 L132,124"/><path d="M116,130 L74,132"/><path d="M56,108 L62,124"/>
+      </g>
+      <!-- Stage 2: communities -->
+      <text class="sv-t b" x="248" y="16">② 커뮤니티 검출</text>
+      <rect class="sv-grp" x="242" y="24" width="212" height="128"/>
+      <ellipse cx="292" cy="66" rx="38" ry="26" class="sv-box-t"/>
+      <text class="sv-t sm" x="292" y="70" text-anchor="middle">커뮤니티 A</text>
+      <ellipse cx="392" cy="60" rx="38" ry="24" class="sv-box-t"/>
+      <text class="sv-t sm" x="392" y="64" text-anchor="middle">커뮤니티 B</text>
+      <ellipse cx="342" cy="122" rx="38" ry="22" class="sv-box-t"/>
+      <text class="sv-t sm" x="342" y="126" text-anchor="middle">커뮤니티 C</text>
+      <path class="sv-a t dash" d="M310,88 L330,104"/>
+      <path class="sv-a t dash" d="M378,80 L356,104"/>
+      <!-- Stage 3: hierarchy + query -->
+      <text class="sv-t b" x="486" y="16">③ 계층 요약과 질의</text>
+      <rect class="sv-grp" x="480" y="24" width="206" height="128"/>
+      <rect class="sv-box-t" x="500" y="36" width="166" height="26" rx="2"/>
+      <text class="sv-t sm" x="583" y="53" text-anchor="middle">최상위 — 포괄적 주제</text>
+      <rect class="sv-box-t" x="500" y="70" width="78" height="26" rx="2"/>
+      <text class="sv-t sm" x="539" y="87" text-anchor="middle">중간 요약</text>
+      <rect class="sv-box-t" x="588" y="70" width="78" height="26" rx="2"/>
+      <text class="sv-t sm" x="627" y="87" text-anchor="middle">중간 요약</text>
+      <rect class="sv-box-b" x="500" y="104" width="50" height="24" rx="2"/>
+      <text class="sv-t sm" x="525" y="120" text-anchor="middle">세부</text>
+      <rect class="sv-box-b" x="558" y="104" width="50" height="24" rx="2"/>
+      <text class="sv-t sm" x="583" y="120" text-anchor="middle">세부</text>
+      <rect class="sv-box-b" x="616" y="104" width="50" height="24" rx="2"/>
+      <text class="sv-t sm" x="641" y="120" text-anchor="middle">세부</text>
+      <path class="sv-a t" d="M539,66 L539,68"/>
+      <path class="sv-a t" d="M627,66 L627,68"/>
+      <!-- stage arrows -->
+      <path class="sv-a" d="M218,88 L238,88"/>
+      <path class="sv-a" d="M458,88 L476,88"/>
+      <!-- bottom flow -->
+      <line x1="14" y1="176" x2="686" y2="176" stroke="#A9BED0" stroke-width="1"/>
+      <rect class="sv-box-b" x="20" y="192" width="120" height="34" rx="2"/>
+      <text class="sv-t sm" x="80" y="213" text-anchor="middle">의미 파악 질의</text>
+      <rect class="sv-box-t" x="176" y="192" width="150" height="34" rx="2"/>
+      <text class="sv-t sm" x="251" y="213" text-anchor="middle">관련 커뮤니티 요약 선택</text>
+      <rect class="sv-box-t" x="362" y="192" width="150" height="34" rx="2"/>
+      <text class="sv-t sm" x="437" y="213" text-anchor="middle">요약별 부분 답변 생성</text>
+      <rect class="sv-box-e" x="548" y="192" width="136" height="34" rx="2"/>
+      <text class="sv-t sm" x="616" y="213" text-anchor="middle">최종 종합 응답</text>
+      <path class="sv-a t" d="M144,209 L170,209"/>
+      <path class="sv-a t" d="M330,209 L356,209"/>
+      <path class="sv-a e" d="M516,209 L542,209"/>
+      <text class="sv-t sm" x="20" y="252">원문을 검색해 요약하는 통상적 파이프라인과 달리, 커뮤니티 요약에서 출발해 부분 답변을 모아 최종 응답을 만든다</text>
+      <text class="sv-t sm" x="20" y="272">사전 정의된 스키마에 근거하지 않고, 원본 문서가 담은 지식의 구조를 직접 표현한다</text>
+    </svg>
+    <figcaption><b>〈GraphRAG의 세 단계〉</b> LLM이 그래프를 자동 구축하고, 커뮤니티 검출 알고리즘이 밀집 연결된 실체의 클러스터를 찾고, 각 커뮤니티에 여러 계층 수준의 요약을 생성한다. 질의 시점에는 원문 대신 그 요약에서 출발한다.</figcaption>
+  </figure>
+
+  <div class="defs tier">
+    <div><dt>지식 그래프 구축</dt><dd>LLM으로 비정형 텍스트 코퍼스에서 사람·장소·개념 같은 핵심 실체와 그 사이의 관계를 자동 추출하고 지식 그래프를 동적으로 구성한다. 이 그래프는 사전 정의된 스키마에 근거하지 않고, 원본 문서 자체가 담은 지식의 직접적 구조 표현이며, 서로 다른 아이디어와 실체가 텍스트 전반에서 어떻게 상호연결되는지 포착한다.</dd></div>
+    <div><dt>커뮤니티 검출</dt><dd>GraphRAG의 일차적 혁신은 이 새로 만든 그래프를 <strong>어떻게 활용하는가</strong>에 있다. 그것을 그냥 통상적인 지식 그래프로 취급하는 대신, 커뮤니티 검출 알고리즘을 적용해 밀집 연결된 실체의 클러스터를 식별한다. 이 “커뮤니티”가 데이터에 담긴 핵심 주제와 의미론적 토픽을 대표하고, GraphRAG는 LLM으로 아주 구체적인 하위 주제부터 넓고 포괄적인 주제까지 여러 계층 수준에서 각 커뮤니티의 요약을 생성한다.</dd></div>
+    <div><dt>질의</dt><dd>의미 파악 질의에 응답할 때 GraphRAG의 질의 엔진은 통상적 파이프라인처럼 원문을 검색해 LLM으로 요약하지 않는다. 대신 질의에 답하는 가장 관련성 높은 커뮤니티 요약을 찾고, 각 요약에 근거해 LLM으로 부분 답변을 생성한다. 그다음 또 한 번의 LLM 호출이 이 부분 답변들을 모아 최종적인 포괄적 응답을 만든다.</dd></div>
+  </div>
+
+  <h3>실제로 돌려 보기 — 비용과 시간</h3>
+  <p>마이크로소프트의 <code>graphrag</code> 패키지는 오픈소스다. MovieSum 데이터셋에 적용해 본다. GraphRAG는 색인 시점에 모든 문서를 처리하기 위해 아주 많은 LLM 호출을 하므로 꽤 비싸고 시간이 걸린다. 그래서 비용이 합리적인 수준이 되도록 무작위로 영화 20편을 고른다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 데이터 로드와 표본 추출</span></header>
+<pre><span class="k">import</span> pandas <span class="k">as</span> pd
+<span class="k">import</span> numpy <span class="k">as</span> np
+<span class="k">from</span> datasets <span class="k">import</span> load_dataset
+
+moviesum_dataset = load_dataset(<span class="s">"rohitsaxena/MovieSum"</span>)
+moviesum_df = pd.DataFrame(moviesum_dataset[<span class="s">'train'</span>])
+
+np.random.seed(<span class="s">42</span>)
+SAMPLE_SIZE = <span class="s">20</span>
+indices = np.linspace(<span class="s">0</span>, len(moviesum_df) - <span class="s">1</span>, SAMPLE_SIZE, dtype=int)
+filtered_df = moviesum_df.iloc[indices].copy()</pre>
+  </div>
+
+  <div class="cards c3 tier">
+    <div class="card"><span class="num">$6.32</span><h5>영화 20편의 비용</h5><p>노트북에 담긴 비용 추정 함수가 계산한 값이다.</p></div>
+    <div class="card"><span class="num">$560+</span><h5>MovieSum 전체 1,800편</h5><p>그리고 이것은 영화 1,800편일 뿐이다. 구글 드라이브나 SharePoint 계정 전체라면 얼마가 들지 상상해 보라.</p></div>
+    <div class="card"><span class="num">45분</span><h5>20편의 색인 시간</h5><p>괜찮은 M4 맥 노트북에서 영화 20편만으로 약 45분이 걸렸다.</p></div>
+  </div>
+
+  <div class="codewrap">
+    <header>Python <span>· 문서 준비와 색인 구축</span></header>
+<pre><span class="k">from</span> datetime <span class="k">import</span> datetime
+
+input_docs = []
+current_date = datetime.now()
+<span class="k">for</span> idx, row <span class="k">in</span> filtered_df.iterrows():
+    input_docs.append({
+        <span class="s">'id'</span>: row[<span class="s">'imdb_id'</span>],
+        <span class="s">'title'</span>: row[<span class="s">'movie_name'</span>],
+        <span class="s">'text'</span>: row[<span class="s">'script'</span>],
+        <span class="s">'creation_date'</span>: current_date
+    })
+input_df = pd.DataFrame(input_docs)
+
+<span class="k">from</span> graphrag.api <span class="k">import</span> build_index
+<span class="k">from</span> graphrag.config.load_config <span class="k">import</span> load_config
+
+GRAPHRAG_DIR = Path(<span class="s">"./graphrag_workspace"</span>)
+config = load_config(root_dir=GRAPHRAG_DIR)
+
+results = <span class="k">await</span> build_index(
+    config=config,
+    input_documents=input_df,
+    verbose=<span class="k">True</span>
+)</pre>
+  </div>
+
+  <p>이것은 <strong>한참</strong> 걸린다. GraphRAG 색인이 단순한 일회 통과 과정이 아니기 때문이다. 시스템은 모든 텍스트 청크마다 수십 번의 순차적 LLM 호출을 해야 한다. 먼저 실체와 주장을 추출하고, 그 실체를 해소하고 병합하고, 마지막으로 여러 계층의 커뮤니티 요약을 생성한다. 이 단계 각각이 연산이 비싸고 LLM의 추론 속도에 의존하므로, 적은 데이터셋에서도 누적 지연이 커진다.</p>
+
+  <p>GraphRAG는 출력 폴더에 <code>build_index</code> 과정의 결과를 담은 파케이 파일들을 생성한다. 질의를 돌리려면 먼저 이 데이터셋을 판다스 데이터프레임으로 로드한다.</p>
+
+  <div class="codewrap">
+    <header>Python <span>· 산출물 로드</span></header>
+<pre>config = load_config(root_dir=GRAPHRAG_DIR)
+
+entities_df      = pd.read_parquet(OUTPUT_DIR / <span class="s">"entities.parquet"</span>)
+relationships_df = pd.read_parquet(OUTPUT_DIR / <span class="s">"relationships.parquet"</span>)
+communities_df   = pd.read_parquet(OUTPUT_DIR / <span class="s">"communities.parquet"</span>)
+reports_df       = pd.read_parquet(OUTPUT_DIR / <span class="s">"community_reports.parquet"</span>)
+text_units_df    = pd.read_parquet(OUTPUT_DIR / <span class="s">"text_units.parquet"</span>)</pre>
+  </div>
+
+  <div class="cards c2 tier">
+    <div class="card">
+      <h5>local_search — 상향식 탐색</h5>
+      <p>탐색적인 “아래에서 위로” 방법이다. 먼저 질의와 가깝게 맞는 몇 개의 씨앗 노드를 그래프에서 식별하고, 그 엣지를 따라 밖으로 “걸어” 가까이 있고 맥락적으로 관련된 노드와 관계(1홉이나 2홉 이웃)를 발견한다. 필요한 맥락이 그래프의 국소적 “이웃” 안에 있을 가능성이 높은, 구체적이고 상세한 질문에 이상적이다.</p>
+    </div>
+    <div class="card">
+      <h5>global_search — 하향식 종합</h5>
+      <p>포괄적인 “위에서 아래로” 전략이다. 씨앗 노드에서 확장하는 데 그치지 않고 그래프 전체를 훑어, 직접 연결되어 있지 않더라도 질의 개념에 의미적으로 관련된 모든 노드와 관계와 전체 하위 커뮤니티를 식별한다. 그래프의 여러, 어쩌면 서로 연결되지 않은 부분의 정보를 종합해야 하는 넓고 고수준인 질의에 더 적합하다.</p>
+    </div>
+  </div>
+
+  <p>예로 “모든 영화 각본에 걸친 주요 주제와 서사 패턴은 무엇인가?”라는 질의로 <code>global_search</code>를 돌리면 다음과 같은 결과를 얻는다.</p>
+
+  <div class="out" style="border-top:1px solid var(--line)"><span class="lb">global_search 출력 (요약 발췌)</span>분석된 영화 각본들은 장르와 인물 유형과 배경을 넘나드는, 반복되는 주제와
+서사 패턴의 풍부한 태피스트리를 드러낸다. 이 주제들은 흔히 서로 얽혀 인간의
+감정과 초자연적 요소와 사회적 역학과 갈등을 탐색하는 복잡한 이야기를 만든다.
+
+<i>## 1. 갈등과 투쟁</i>
+- <b>물리적·군사적 갈등:</b> 코난이 적대 부족과 제국과 맞서는 장면, 블라드가
+  메흐메드의 군대를 방어하는 장면, 투란 기병의 폭력적 약탈… 생존과 리더십과
+  반란과 폭력의 대가라는 주제를 강조한다 [Data: Reports (177, 665, 684, …)].
+- <b>개인적·사회적 대립:</b> 전쟁을 넘어 가정 폭력과 법적 분쟁과 사회적 긴장을
+  포함한 대인 갈등을 탐색한다 [Data: Reports (239, 442, 118, …)].
+- <b>초자연적 전투:</b> 빙의와 심령과 악령과의 싸움… 일상적 가족 생활과 비상한
+  위협을 뒤섞어 트라우마 속의 정서적 회복력을 부각시킨다 [Data: Reports (878, …)].
+
+<i>## 2. 가족과 대인 관계</i>
+- <b>부모–자식 유대:</b> 샘과 조나 볼드윈의 부자 관계가 슬픔과 지지와 복잡한
+  가족 역학이라는 주제를 예시한다 [Data: Reports (1, 44, 468, …)].
+…
+[이하 생략]</div>
+
+  <p>주목할 점은 응답이 <code>[Data: Reports (…)]</code> 형태로 어떤 커뮤니티 보고서에 근거했는지 표시한다는 것이다. 전체 응답은 꽤 방대하다.</p>
+
+  <h3>GraphRAG가 잘못된 도구인 경우</h3>
+  <p>의미 파악 질문에 답하는 힘에도 GraphRAG의 일차적 단점은 앞서 본 대로 선행 전처리의 막대한 비용과 시간이다. 표준 RAG 시스템이 텍스트를 청킹하고 벡터 임베딩을 생성하는 비교적 빠르고 저렴한 과정만 필요한 반면, GraphRAG는 다단계의 연산 집약적 전처리 파이프라인에 들어간다. 강력한 LLM이 먼저 코퍼스 전체를 읽어 실체와 관계를 추출하고, 방대한 지식 그래프를 만들고, 복잡한 커뮤니티 검출 알고리즘을 그 그래프에 돌리고, 마지막으로 다시 LLM으로 식별된 모든 주제의 계층 요약을 생성한다.</p>
+
+  <div class="cards c3 edge">
+    <div class="card"><h5>빠르게 변하는 코퍼스</h5><p>뉴스 피드, 지원 티켓, 활발한 코드 저장소처럼 자주 갱신되는 데이터에서는 커뮤니티 요약을 계속 재계산해야 하는 필요가 흔히 재무적으로도 운영적으로도 실행 불가능하다.</p></div>
+    <div class="card"><h5>지연에 민감하거나 개인화된 질의</h5><p>여러 커뮤니티 요약을 종합하는 과정은 본질적으로 표준 벡터 조회보다 느리다. 1초 미만 응답이 필요한 애플리케이션이나 특정 사용자의 사적 데이터에 맞춘 질의에는 적합하지 않다.</p></div>
+    <div class="card"><h5>원문 그대로의 인용이 필요한 경우</h5><p>GraphRAG는 고수준 추상화에 뛰어나다. 감사나 법적 준수를 위해 문서의 정확한 원문 문장을 LLM이 제공해야 한다면, 커뮤니티 보고서의 요약된 성격은 너무 “손실이 큰” 것일 수 있다.</p></div>
+  </div>
+
+  <p>궁극적으로 질의가 대부분 단순한 사실 검색(“X의 가격은 얼마인가?”)이라면, GraphRAG의 상당한 투자는 표준 시맨틱 검색에 비해 거의 아무 투자수익도 주지 않는다.</p>
+</section>
+
+<!-- ══════════ 05 ══════════ -->
+<section id="s5" class="rv">
+  <div class="mk"><i>05</i><span>인프라 · 운영의 실체</span><s></s></div>
+  <h2>그래프 데이터베이스 인프라</h2>
+
+  <p>지식 그래프를 애플리케이션에 통합하는 일은 아키텍처 결정에 그치지 않는다. 장기적인 운영·시스템 수준의 약속이다. 고정밀하고 설명 가능한 답변의 잠재력이 큰 만큼, 그래프 데이터베이스를 만들고 확장하고, 무엇보다 <strong>유지하는</strong> 복잡성도 크다. 먼저 그래프 데이터베이스를 어떻게 고를지 본다. 이 선택이 운영 지침 전체를 좌우한다.</p>
+
+  <div class="defs">
+    <div>
+      <dt>전통적 서버·클러스터 — Neo4j, TigerGraph</dt>
+      <dd>전용 VM이나 쿠버네티스 클러스터에서 상태를 가진 독립 서비스로 돌릴 수 있고, 여러 면에서 전통적 SQL 데이터베이스처럼 작동한다. 여기서 데브옵스 팀이 설치, 설정, 클러스터링, 샤딩, 자원 관리, 네트워크 보안 등 모든 것을 책임진다. 속성 그래프는 흔히 메모리에 묶여 있고 성능은 “뜨거운” 그래프를 RAM에 담는 데 달려 있으므로 <strong>사이징이 결정적</strong>이다. 엄격한 온프레미스·규제 제약이 있거나, 관리형 서비스가 허용하지 않는 데이터베이스 엔진의 저수준 맞춤화가 필요하면 좋은 선택이다.</dd>
+    </div>
+    <div>
+      <dt>관리형 클라우드 서비스 — Neo4j Aura, Amazon Neptune</dt>
+      <dd>PaaS 접근에서는 세밀한 통제를 운영 단순성과 맞바꾼다. 클라우드 제공자가 패치와 백업과 고가용성을 처리하고, 부담이 서버 관리에서 <strong>비용 관리와 IAM 통합</strong>으로 옮겨간다. 멀티테넌트 접근과 고가용성과 자동 백업이 필요하지만 사내 그래프 DB 전문성이나 전담 데브옵스 자원이 없다면 이것을 고른다.</dd>
+    </div>
+    <div>
+      <dt>임베디드 라이브러리 — Kuzu, DuckDB</dt>
+      <dd>더 최근의 “서버리스” 모델에서 데이터베이스는 애플리케이션 프로세스 안에서 돌아가는 라이브러리다. “데이터베이스”는 디스크의 파일 하나일 뿐이다. 전통적 서버 관리자 역할이 사라지고, 난제는 <strong>데이터 생애 주기와 빌드 관리</strong>가 된다. 돌아가는 애플리케이션 컨테이너 안의 정적 그래프 파일을 어떻게 갱신하는가. 새 데이터 파일을 만들어 새 컨테이너 이미지에 담고 배포를 롤아웃할 견고한 CI/CD 파이프라인이 필요하다. KG가 비교적 작고(10~20GB 이하) 대체로 읽기 전용이며 CI/CD로 갱신할 수 있다면 훌륭한 선택이다.</dd>
+    </div>
+  </div>
+
+  <h3>일상적 운영의 네 가지 난제</h3>
+
+  <div class="note edge">
+    <span class="tag">난제 1 — ETL, 가장 과소평가되는 비용</span>
+    <p>이것은 단연 가장 과소평가되는 비용이다. <strong>낡은 그래프는 쓸모없는 그래프다.</strong> 원천 데이터가 끊임없이 변할 수 있고, KG를 최신으로 유지할 신뢰할 만한 ETL 파이프라인을 만들어야 한다. 결정적으로 프로덕션에서 이 파이프라인은 데이터 완전성을 풀어야 한다. 여러 소스에서 그래프를 만드는 일은 연산의 연쇄이므로, 가져오기가 중간에 실패하면 “깨진” 그래프로 끝날 위험이 있다(각본 청크는 들어왔는데 IMDb 메타데이터 동기화가 죽는 경우).</p>
+    <p>전통적 SQL 데이터베이스가 원자성을 보장하기 위해 트랜잭션에 의존하는 반면, 큰 그래프 “빌드”를 하나의 트랜잭션으로 감싸는 일은 흔히 실행 불가능하다. 데이터베이스를 몇 시간 잠그고 메모리를 소진할 수 있다. 대신 프로덕션 시스템은 <strong>멱등성</strong>을 위해 설계할 수 있다. 적재 코드가 실패해 재시작하더라도 결과가 처음에 성공한 것과 같아지게 만드는 것이다. Cypher에서는 <code>CREATE</code> 대신 <code>MERGE</code>를 써서 달성한다. 데이터베이스가 실체의 존재를 확인한 뒤 추가한다. 멱등성을 배칭(전체 그래프가 아니라 노드 1,000개마다 커밋)과 결합하면, 프로덕션 엔터프라이즈 데이터의 지저분한 현실에 충분히 견디는 <strong>최종적 일관성</strong> 모델로 나아가게 된다.</p>
+  </div>
+
+  <div class="cards c3 edge">
+    <div class="card">
+      <h5>난제 2 — 스키마 경직성과 진화</h5>
+      <p>그래프 데이터베이스는 흔히 “스키마가 없다”고 홍보되지만, RAG 시스템은 유효한 Cypher나 SPARQL을 생성하려면 예측 가능한 구조를 요구한다. SQL과 달리 대부분의 그래프 DB에는 단순한 <code>ALTER TABLE</code> 명령이 없어서, 도메인이 진화하면(새 관계 유형을 추가하거나 실체를 쪼갤 때) <strong>라이브 마이그레이션</strong>을 관리해야 한다. 무중단으로 수백만 노드와 엣지를 리팩터링하는 배경 스크립트를 돌리는 일이다. LLM의 질의 생성 로직이 데이터의 현재 상태와 동기화되도록 스키마 버전 관리를 고려할 만하다.</p>
+    </div>
+    <div class="card">
+      <h5>난제 3 — 성능과 슈퍼노드</h5>
+      <p>멀티홉 그래프 순회(“CEO와 같은 도시에 사는 사용자가 리뷰한 것과 같은 제품을 리뷰한 모든 사용자를 찾아라”)는 지연이 가변적일 수 있다. 소요 시간은 질의의 깊이와 그래프의 구조에 달려 있고, “슈퍼노드”에 부딪히는지가 관건이다. 대부분의 그래프가 메모리 집약적이므로 충분한 RAM을 갖춘 하드웨어를 준비하고 수직·수평으로 확장할 수 있게 하는 일이 핵심이다. 이것은 비교적 특수한 기량이다. 팀은 Cypher·SPARQL 질의를 프로파일링하고, 병목을 식별하고, (표준과 벡터 양쪽의) 인덱스를 관리하고, 슈퍼노드 핫스팟을 피하기 위해 그래프의 일부를 재구조화하는 일을 배워야 한다.</p>
+    </div>
+    <div class="card">
+      <h5>난제 4 — 보안·백업·고가용성</h5>
+      <p>상태를 가진 어떤 데이터베이스처럼 그래프 DB도 자동화되고 시험된 백업·복원 절차를 갖춘 견고한 재해 복구 계획을 요구한다. 그러나 그래프 기반 RAG의 보안은 저장 시 암호화를 넘는 복잡성을 더한다. 그래프는 흔히 서로 다른 소스의 데이터를 종합하므로, 인프라가 <strong>노드나 관계 수준의 RBAC</strong>를 지원해야 할 수 있다. LLM이 <code>Company</code> 노드는 순회할 수 있지만 연결된 <code>Employee</code> 노드의 <code>Salary</code> 속성은 볼 수 없도록 보장하는 식이다.</p>
+    </div>
+  </div>
+
+  <p>유지 오버헤드가 그래프 데이터베이스의 지속적이고 흔히 과소평가되는 운영 비용이라는 점을 다시 강조할 만하다. 핵심 난제는 데이터 신선도와 일관성의 보장이다. 원천 데이터가 변하면 그래프도 새 현실을 반영하도록 갱신되어야 한다.</p>
+</section>
+
+<!-- ══════════ 06 ══════════ -->
+<section id="s6" class="rv">
+  <div class="mk"><i>06</i><span>갱신 · 살아 있는 그래프</span><s></s></div>
+  <h2>그래프 갱신 패턴과 진화</h2>
+
+  <p>프로덕션에서 원천 데이터는 좀처럼 정적이지 않다. 살아 있는 데이터와 KG를 동기화하려면 “전면 재구축” 접근을 넘어 <strong>증분 유지</strong>로 나아가야 한다. 보통 두 가지 주요 패턴을 포함한다.</p>
+
+  <div class="cards c2">
+    <div class="card">
+      <h5>변경 데이터 캡처 (CDC)</h5>
+      <p>원천 데이터가 Postgres 같은 전통적 데이터베이스에 있다면, 데이터베이스의 트랜잭션 로그를 듣고 행이 생성·갱신·삭제될 때마다 이벤트를 내보내는 CDC 도구(Debezium 등)를 쓸 수 있다. 그 이벤트를 KG의 <code>MERGE</code>나 <code>DELETE</code> 명령으로 사상한다.</p>
+    </div>
+    <div class="card">
+      <h5>이벤트 주도 아키텍처</h5>
+      <p>새 PDF나 채팅 로그 같은 비정형 데이터에는 이벤트 주도 패턴이 선호된다. 새 문서가 저장소(S3 등)에 도착하면 서버리스 함수(AWS Lambda 등)를 촉발해 <strong>그 특정 파일에만</strong> LLM 추출 파이프라인을 돌리고, 새 노드와 엣지를 기존 그래프에 덧붙인다.</p>
+    </div>
+  </div>
+
+  <h4 class="e">엔티티 병합과 만료되는 사실</h4>
+  <p>오래 돌아가는 KG의 흔한 예외 사례는 서로 다르다고 여겼던 두 실체가 같은 것으로 발견될 때다(“Twitter”와 “X”). 이를 다루려면 “병합” 로직을 구현해야 한다. 한 노드의 관계를 “살아남는” 노드로 재사상하고 다른 노드를 삭제하는 방식이다.</p>
+
+  <p>또 하나의 난제는 사실이 “만료될” 때다. 어떤 사람이 회사를 떠났다면 <code>WORKS_AT</code> 관계를 반드시 삭제할 필요는 없지만(역사적 맥락을 보존하기 위해), <code>status: "inactive"</code> 라벨로 <strong>툼스토닝</strong>해야 한다. 그러면 RAG 질의도 <code>:WORKS_AT {status: "active"}</code>를 필터하도록 갱신되어야 한다.</p>
+
+  <div class="pull">살아 있는 KG를 유지하려면 실시간 데이터 변경을 포착하는 자동 적재 파이프라인을 구현하면서, 동시에 정체성 충돌을 해소하고 늙어가는 사실의 유의미성을 관리하는 내부 생애 주기 로직을 적용해야 한다.</div>
+</section>
+
+<!-- ══════════ 07 ══════════ -->
+<section id="s7" class="rv">
+  <div class="mk"><i>07</i><span>의사결정 · 정확도와 비용</span><s></s></div>
+  <h2>정확도와 비용의 교환</h2>
+
+  <p>애플리케이션을 만들 때 근본적인 아키텍처 선택을 마주한다. “바닐라” RAG 구성을 유지할지, 지식 그래프 통합에 투자할지다. 이 결정은 바닐라 RAG의 상대적으로 낮은 비용과 단순성 대 <strong>잠재적이지만 보장되지는 않은</strong> 정확도 향상 사이의 고전적 엔지니어링 교환이다.</p>
+
+  <p>바닐라 RAG를 과소평가하지 말아야 한다. 추가 복잡성 없이 이미 요구사항을 충족할 수도 있고, 구현이 비교적 직관적이며 운영이 비용 효율적이다. 범용 질의응답이나 대규모 문서 집합의 요약 같은 많은 애플리케이션에서는 “방향이 맞는” 또는 “의미적으로 관련된” 맥락을 찾는 것만으로 LLM이 고품질 응답을 제공하는 데 충분하다.</p>
+
+  <p>GraphRAG나 KG 통합의 다른 접근을 구현하는 일은 사소한 추가가 아니다. 주요한 약속이다. 비용은 재무적인 것만이 아니고 개발과 운영 자원에 무거운 세금이다. 그래프 데이터 모델링에 크게 투자하고, 새 그래프 데이터베이스 인프라를 세우고 유지하고, 진화하는 원천 데이터와 그래프를 최신으로 유지할 복잡한 데이터 파이프라인을 만들고 유지해야 한다. 진실은 이 지속적 유지 부담이 흔히 과소평가되고 심각한 자원 유출이 될 수 있다는 것이다.</p>
+
+  <div class="check">
+    <header><span>결정 체크리스트 — 지식 그래프에 투자할 것인가</span><span>6 questions</span></header>
+    <div>
+      <div class="box"></div>
+      <div>
+        <b>사실적 실패</b>
+        <p>바닐라나 하이브리드 RAG가 평가에서 일관되게 실패하는 멀티홉·시점 구속·고제약 질의가 반복적으로 있는가.</p>
+      </div>
+    </div>
+    <div>
+      <div class="box"></div>
+      <div>
+        <b>근거 부여의 필연성</b>
+        <p>“확률적” 유사성이 너무 위험한, 특정 실체에 대한 100% 결정론적 근거 부여를 사용 사례가 요구하는가(법적 준수나 의약품 용량 등).</p>
+      </div>
+    </div>
+    <div>
+      <div class="box"></div>
+      <div>
+        <b>가용한 자산</b>
+        <p>맨땅에서 만드는 일을 피하기 위해 활용할 수 있는 기존 온톨로지 자산이 있는가(DrugBank나 LSEG 같은 라이선스 KG, FIBO 같은 표준 온톨로지).</p>
+      </div>
+    </div>
+    <div>
+      <div class="box"></div>
+      <div>
+        <b>데이터의 연결성</b>
+        <p>데이터가 그래프 구조와 자연스럽게 맞는가. 다시 말해 가치가 문서의 <em>내용</em>보다 기업 위계나 공급망 의존 관계처럼 문서 <em>사이의 관계</em>에 있는가.</p>
+      </div>
+    </div>
+    <div>
+      <div class="box"></div>
+      <div>
+        <b>장기적 소유</b>
+        <p>그래프 모델링, 스키마 진화, 복잡한 ETL 파이프라인을 장기적으로 소유할 역량이 있는 팀이 있는가.</p>
+      </div>
+    </div>
+    <div>
+      <div class="box"></div>
+      <div>
+        <b>사업적 투자수익</b>
+        <p>기대되는 정확도 향상이 위험 감소, 준수 보장, 새 수익 창출 기능의 개방처럼 명확한 사업 성과와 결부되어 있는가.</p>
+      </div>
+    </div>
+    <footer>이 질문 가운데 <b>최소 네 개에 “예”라고 답할 수 없다면</b>, KG의 운영 “세금”이 현재 단계에서 얻을 이득을 넘어설 수 있다.</footer>
+  </div>
+</section>
+
+<!-- ══════════ 08 ══════════ -->
+<section id="s8" class="rv">
+  <div class="mk"><i>08</i><span>결론</span><s></s></div>
+  <div class="closing">
+    <h2>결론</h2>
+    <p>이 장에서 KG가 가장 잘 답할 수 있는 유형의 질의에 대해 더 높은 품질의 응답을 얻는다는 목표로, RAG에 지식 그래프를 쓰는 발상을 소개했다. 벡터 검색이나 하이브리드 검색은 개념적 질의의 이해에 뛰어나지만, 시점에 구속된 사실이나 멀티홉 논리나 겹치는 제약을 담은 질문에서는 잘 작동하지 않을 수 있다. 지식 그래프는 반대로 이런 유형의 질문에 뛰어나다.</p>
+
+    <p>청크 보강이든 하이브리드 그래프 검색이든 KG를 통합하면 애플리케이션이 더 복잡한 질문에 개선된 정확도로 답할 수 있다. 그러나 이 진전은 무료가 아니다. 데이터 모델링, 엔티티 링킹, 적재 파이프라인, 인프라에 상당한 투자를 요구하며, <strong>검색 정확도와 운영 복잡성·비용 사이의 결정적 교환</strong>을 강제한다.</p>
+
+    <p>RAG에서 KG를 쓰는 일은 진화하는 분야이며, 그 미래는 이 일을 어렵게 만드는 병목 자체를 자동화하는 데 있다. 고통스러운 수작업 그래프 구축이 실체와 관계를 높은 효율로 추출하는 LLM 주도 파이프라인에 자리를 내주고 있다. 다만 견고한 검증 계층과 인간의 감독으로 고정되어 있다는 조건에서다. 지식 강화 RAG의 미래는 이 병목을 자동화하면서, 사업 요구가 변할 때 스키마와 로직을 진화시킬 수 있는 <strong>“살아 있는” 그래프</strong>를 유지하는 데 있다.</p>
+
+    <p>그 두드러진 예가 마이크로소프트의 GraphRAG다. 거대언어모델로 원본 문서에서 직접 그래프를 구성한다. 그러나 마이크로소프트의 특정 구현은 상당한 비용과 지연을 들여올 수 있고 모든 엔터프라이즈 작업 부하에 적절하지는 않다. 더 넓게 보면, 지식 그래프로 강화된 RAG는 그래프 아키텍처가 애플리케이션의 데이터 모델과 질의 패턴과 프로덕션 제약을 중심으로 설계될 때 대단히 실용적일 수 있다.</p>
+
+    <div class="pull" style="margin:30px 0">실무에서 대다수 팀은 표준 RAG로 시작한다. 그리고 6장의 평가 기법으로 응답 정확도가 불충분한 문제 질의를 식별하고, 그것들에 대해 지식 강화 RAG나 GraphRAG를 시험한다.</div>
+
+    <div class="tw">
+      <table>
+        <caption>표 9-2. 검색 방법 · 그래프 강화 · 에이전틱 오케스트레이션에 걸친 RAG 아키텍처 비교</caption>
+        <thead><tr><th style="width:17%">접근</th><th style="width:24%">적합한 경우</th><th style="width:33%">핵심 한계</th><th>비용과 복잡성</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="nm">표준 RAG<br><span style="font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400">벡터 검색</span></td>
+            <td>범용 질의응답, 유사성 기반 검색, 비정형 텍스트</td>
+            <td>멀티홉 논리, 시점 구속 사실, 엄격한 제약에서 힘들어할 수 있다</td>
+            <td><span class="lo">낮음.</span> 만들고 유지하기 단순하다</td>
+          </tr>
+          <tr>
+            <td class="nm">키워드 하이브리드<br><span style="font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400">벡터 + BM25</span></td>
+            <td>의미와 정확한 일치의 균형</td>
+            <td>시맨틱 검색에서 맞지 않는 특정 SKU나 이름을 놓칠 수 있다</td>
+            <td><span class="lo">낮음~중간.</span> 벡터와 BM25 사이의 가중치 튜닝이 필요하다</td>
+          </tr>
+          <tr>
+            <td class="nm">KG 하이브리드 RAG</td>
+            <td>다중 제약을 가진 정밀한 사실 질의(“전기차도 소유한 CEO를 찾아라”)</td>
+            <td>여전히 멀티홉 논리와 깊은 관계에서 힘들어한다. 최신 KG를 만들고 유지해야 한다</td>
+            <td><span class="hi">높음.</span> 상당한 데이터 엔지니어링이 필요하다</td>
+          </tr>
+          <tr>
+            <td class="nm">마이크로소프트<br>GraphRAG</td>
+            <td>넓은 “의미 파악” 질의(“이 1,000개 문서의 주요 주제는?”)</td>
+            <td>선행 처리 비용이 아주 높다. 실시간 데이터에 부적합하다. 원문 그대로의 세밀함이 없다</td>
+            <td><span class="vh">아주 높음.</span> 연산이 비싼 적재</td>
+          </tr>
+          <tr>
+            <td class="nm">에이전틱 RAG</td>
+            <td>멀티홉 논리와 반복적 조사 과제</td>
+            <td>지연이 높다. 에이전트가 루프에 갇히거나 도구 경로를 환각할 수 있다</td>
+            <td><span class="hi">중간~높음.</span> 견고한 오케스트레이션(LangGraph 등)이 필요하다</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>지식 그래프 연구 공동체는 KG를 RAG와 에이전틱 워크플로에 통합하는 더 낫고 단순하고 비용 효율적인 접근으로 계속 혁신하고 있으며, 이 기술이 시간이 갈수록 더 많은 가치와 더 나은 투자수익을 제공할 것으로 기대한다.</p>
+  </div>
+
+  <div class="foot">
+    <p id="fn1"><sup>1</sup> 필터링된 ANN 같은 최근의 진전된 시맨틱 검색 구현은 예컨대 날짜로 필터링함으로써 이런 문제를 때때로 다룰 수 있다.</p>
+    <p id="fn2"><sup>2</sup> 상호연결된 데이터의 힘을 보이기 위해 Wikidata Query Service를 살펴보기를 권한다. Wikidata는 위키백과의 구조적 골격으로 기능하는 방대한 협업 지식 그래프이며, 수백만 실체를 “노드”로, 그 관계를 “엣지”로 저장한다.</p>
+    <p id="fn3"><sup>3</sup> 이 수치는 지난 수십 년간 지식 그래프 구축에 깊은 경험을 가진 전문가와의 대화에서 나왔다.</p>
+    <p>참고 자료: IMDb 비상업용 데이터셋, MovieSum(허깅페이스), Neo4j · Amazon Neptune · Kuzu · TigerGraph, FIBO(EDM 협의회), DrugBank, HippoRAG, 마이크로소프트 <code>graphrag</code>, O’Reilly <em>Building Knowledge Graphs</em>.</p>
+  </div>
+</section>
+
+<footer class="page">
+  <div><b>Hands-On RAG for Production</b> — Ofer Mendelevitch, Forrest Sheng Bao · O’Reilly Media, 2026</div>
+  <div style="margin-top:6px">제9장 「Knowledge-Enhanced RAG」 원서 pp.279–309 전문 정리 · 그림 9-1 ~ 9-3 재작도 및 GraphRAG 3단계 도해 · 표 9-1 · 9-2 수록</div>
+</footer>
+
+</main>
+
+<script>
+(function(){
+  var bar=document.getElementById('bar');
+  function prog(){
+    var h=document.documentElement;
+    var max=h.scrollHeight-h.clientHeight;
+    bar.style.width=(max>0?(h.scrollTop||document.body.scrollTop)/max*100:0)+'%';
+  }
+  window.addEventListener('scroll',prog,{passive:true});
+  prog();
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var items=document.querySelectorAll('.rv');
+  if(reduce||!('IntersectionObserver' in window)){
+    items.forEach(function(el){el.classList.add('in');});
+  }else{
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+      });
+    },{rootMargin:'0px 0px -8% 0px',threshold:.04});
+    items.forEach(function(el){io.observe(el);});
+  }
+})();
+</script>
+</body>
+</html>
