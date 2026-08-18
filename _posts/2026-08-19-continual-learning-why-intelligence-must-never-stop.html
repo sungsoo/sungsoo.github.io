@@ -1,0 +1,865 @@
+---
+layout: null
+title: "Richard Sutton's Bitter Lessons and Continuous Learning" 
+date: 2026-08-18
+categories: [artificial intelligence]
+tags: [agentic ai, foundation models, artificial general intelligence]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>멈춘 지능은 지능이 아니다 — 리차드 서튼의 쓴 교훈과 연속 학습</title>
+<meta name="description" content="정적 LLM의 임계점, 거대 세계 가설, 연속 역전파와 보폭 최적화, 그리고 20W 1조 파라미터. 살아 있는 지능을 향한 앨버타 플랜에 관한 기술 분석.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  /* 두 개의 온도 — 언 것과 살아 있는 것 */
+  --paper:#ECEEE9;
+  --paper-2:#F5F6F2;
+  --ink:#12191B;
+  --ink-60:rgba(18,25,27,.62);
+  --ink-38:rgba(18,25,27,.38);
+  --ink-14:rgba(18,25,27,.14);
+  --frost:#5B7A99;      /* 동결된 가중치 */
+  --frost-bg:rgba(91,122,153,.10);
+  --spruce:#0F5C43;     /* 살아 있는 지능 */
+  --pulse:#12A87B;
+  --pulse-bg:rgba(18,168,123,.10);
+  --volt:#E8C547;       /* 오직 전력 이야기에만 */
+  --night:#0B1613;
+
+  --display:'Pretendard Variable',Pretendard,'IBM Plex Sans KR',sans-serif;
+  --body:'IBM Plex Sans KR','Pretendard',sans-serif;
+  --mono:'IBM Plex Mono','IBM Plex Sans KR',monospace;
+
+  --wrap:1080px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--body);
+  font-weight:400;
+  font-size:17px;
+  line-height:1.86;
+  letter-spacing:-.01em;
+  word-break:keep-all;
+  overflow-wrap:break-word;
+}
+
+/* ── 진행 막대 ────────────────────────────── */
+#bar{position:fixed;top:0;left:0;height:2px;width:0;background:var(--pulse);z-index:99}
+
+/* ── 히어로 ───────────────────────────────── */
+.hero{position:relative;background:var(--night);color:var(--paper-2);overflow:hidden;isolation:isolate}
+#seed{position:absolute;inset:0;width:100%;height:100%;opacity:.55;z-index:0}
+.hero::after{content:"";position:absolute;inset:0;z-index:1;
+  background:linear-gradient(180deg,rgba(11,22,19,.86) 0%,rgba(11,22,19,.60) 42%,rgba(11,22,19,.94) 100%)}
+.hero-in{position:relative;z-index:2;max-width:var(--wrap);margin:0 auto;padding:118px 28px 92px}
+.eyebrow{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.20em;text-transform:uppercase;color:var(--pulse)}
+.hero h1{
+  font-family:var(--display);font-weight:800;
+  font-size:clamp(46px,8.4vw,104px);line-height:.98;letter-spacing:-.045em;
+  margin:26px 0 0;
+}
+.hero h1 em{font-style:normal;color:var(--pulse)}
+.hero .lede{max-width:660px;margin-top:32px;font-size:clamp(16px,2.1vw,19px);font-weight:300;color:rgba(236,238,233,.80);line-height:1.85}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:38px}
+.chip{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;padding:6px 12px;border:1px solid rgba(236,238,233,.22);border-radius:999px;color:rgba(236,238,233,.72)}
+.hero-legend{margin-top:44px;display:flex;gap:26px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:rgba(236,238,233,.55)}
+.hero-legend span{display:flex;align-items:center;gap:8px}
+.dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+.dot.f{background:var(--frost)}
+.dot.p{background:var(--pulse)}
+
+/* ── 본문 뼈대 ────────────────────────────── */
+main{max-width:var(--wrap);margin:0 auto;padding:0 28px}
+section{padding:96px 0;border-bottom:1px solid var(--ink-14)}
+section:last-of-type{border-bottom:0}
+.mark{font-family:var(--mono);font-size:12px;letter-spacing:.18em;color:var(--ink-38);text-transform:uppercase;display:block;margin-bottom:18px}
+.mark b{color:var(--spruce);font-weight:600}
+h2{font-family:var(--display);font-weight:800;font-size:clamp(30px,4.6vw,50px);line-height:1.12;letter-spacing:-.038em;max-width:20ch}
+h3{font-family:var(--display);font-weight:700;font-size:clamp(19px,2.4vw,23px);line-height:1.4;letter-spacing:-.028em;margin:56px 0 14px}
+h4{font-family:var(--display);font-weight:700;font-size:16.5px;letter-spacing:-.02em;margin-bottom:8px}
+p{margin-top:20px;max-width:74ch}
+p.intro{font-size:clamp(18px,2.3vw,21px);font-weight:300;color:var(--ink-60);line-height:1.8;margin-top:28px;max-width:62ch}
+code,.tt{font-family:var(--mono);font-size:.88em;letter-spacing:0;color:var(--spruce)}
+strong{font-weight:600}
+mark{background:linear-gradient(transparent 58%,var(--pulse-bg) 58%);color:inherit;padding:0 1px}
+
+/* ── 인용 ─────────────────────────────────── */
+.pull{margin:64px 0;padding:0 0 0 26px;border-left:3px solid var(--pulse);max-width:26ch}
+.pull q{quotes:none}
+.pull .q{font-family:var(--display);font-weight:700;font-size:clamp(24px,3.6vw,38px);line-height:1.28;letter-spacing:-.035em;display:block}
+.pull .src{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--ink-38);margin-top:18px;display:block;text-transform:uppercase}
+
+/* ── 대비 카드 ────────────────────────────── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--ink-14);border:1px solid var(--ink-14);margin-top:40px}
+.split>div{background:var(--paper-2);padding:30px 26px}
+.split .hd{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:9px}
+.split .cold .hd{color:var(--frost)}
+.split .warm .hd{color:var(--spruce)}
+.split .cold{background:linear-gradient(180deg,var(--frost-bg),transparent 60%),var(--paper-2)}
+.split .warm{background:linear-gradient(180deg,var(--pulse-bg),transparent 60%),var(--paper-2)}
+.split ul{list-style:none;font-size:15.5px;line-height:1.75}
+.split li{padding:11px 0;border-top:1px solid var(--ink-14)}
+.split li:first-child{border-top:0}
+.split li b{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--ink-38);text-transform:uppercase;margin-bottom:3px;font-weight:500}
+
+/* ── 표 ───────────────────────────────────── */
+.tw{overflow-x:auto;margin-top:38px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;min-width:600px;font-size:15px;line-height:1.66}
+thead th{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;text-align:left;padding:14px 18px;border-bottom:2px solid var(--ink);vertical-align:bottom;font-weight:500}
+thead th:nth-child(2){color:var(--frost)}
+thead th:nth-child(3){color:var(--spruce)}
+tbody td{padding:15px 18px;border-bottom:1px solid var(--ink-14);vertical-align:top}
+tbody td:first-child{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;color:var(--ink-38);white-space:nowrap;padding-top:18px}
+tbody td:nth-child(2){background:var(--frost-bg)}
+tbody td:nth-child(3){background:var(--pulse-bg)}
+
+/* ── 목록 ─────────────────────────────────── */
+.blocks{margin-top:38px;display:grid;gap:1px;background:var(--ink-14);border-top:1px solid var(--ink-14);border-bottom:1px solid var(--ink-14)}
+.blocks article{background:var(--paper);padding:26px 0 26px 0;display:grid;grid-template-columns:56px 1fr;gap:22px}
+.blocks .n{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--pulse);padding-top:4px}
+.blocks p{margin-top:6px;font-size:15.5px;line-height:1.78;color:var(--ink-60);max-width:66ch}
+
+/* ── 여담 상자 ────────────────────────────── */
+.aside{margin-top:44px;border:1px solid var(--ink-14);border-left:3px solid var(--frost);background:var(--paper-2);padding:28px 26px}
+.aside .t{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--frost);margin-bottom:12px}
+.aside p{margin-top:14px;font-size:15.5px;color:var(--ink-60)}
+.aside p:first-of-type{margin-top:0}
+.cv{list-style:none;margin-top:20px;display:grid;gap:9px;font-size:14.5px}
+.cv li{padding-left:18px;position:relative;color:var(--ink-60)}
+.cv li::before{content:"";position:absolute;left:0;top:.75em;width:7px;height:1px;background:var(--frost)}
+.cv b{color:var(--ink);font-weight:600}
+
+/* ── 전력 게이지 ──────────────────────────── */
+.watt{margin-top:44px;background:var(--night);color:var(--paper-2);padding:38px 30px 30px;border-radius:2px}
+.watt .t{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--volt);margin-bottom:26px}
+.wrow{display:grid;grid-template-columns:78px 1fr 92px;align-items:center;gap:16px;margin-bottom:16px}
+.wrow .lab{font-family:var(--mono);font-size:12px;color:rgba(236,238,233,.55)}
+.wrow .track{height:12px;background:rgba(236,238,233,.09);position:relative;overflow:hidden}
+.wrow .fill{position:absolute;left:0;top:0;bottom:0;background:var(--volt);width:0;transition:width 1.5s cubic-bezier(.2,.7,.2,1)}
+.wrow .fill.now{background:rgba(236,238,233,.30)}
+.wrow .val{font-family:var(--mono);font-size:15px;font-weight:600;text-align:right;color:var(--volt)}
+.wrow .val.dim{color:rgba(236,238,233,.55);font-weight:400}
+.watt .note{font-family:var(--mono);font-size:11.5px;line-height:1.9;color:rgba(236,238,233,.48);margin-top:22px;border-top:1px solid rgba(236,238,233,.14);padding-top:18px}
+
+/* ── 마무리 요약 ──────────────────────────── */
+.takeaways{margin-top:44px;display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--ink-14);border:1px solid var(--ink-14)}
+.takeaways div{background:var(--paper-2);padding:28px 24px}
+.takeaways .k{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--pulse);margin-bottom:14px}
+.takeaways h4{margin-bottom:10px}
+.takeaways p{margin-top:0;font-size:14.5px;line-height:1.75;color:var(--ink-60)}
+
+.closer{background:var(--night);color:var(--paper-2);margin-top:0}
+.closer .hero-in{padding:110px 28px}
+.closer h2{font-family:var(--display);font-weight:800;font-size:clamp(32px,6vw,66px);line-height:1.08;letter-spacing:-.045em;max-width:16ch}
+.closer h2 em{font-style:normal;color:var(--pulse)}
+.closer p{color:rgba(236,238,233,.72);font-weight:300;margin-top:30px;max-width:58ch}
+
+footer{max-width:var(--wrap);margin:0 auto;padding:44px 28px 70px;font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;color:var(--ink-38);line-height:2}
+footer hr{border:0;border-top:1px solid var(--ink-14);margin-bottom:22px}
+
+/* ── 등장 ─────────────────────────────────── */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+
+:focus-visible{outline:2px solid var(--pulse);outline-offset:3px}
+
+@media (max-width:840px){
+  .split,.takeaways{grid-template-columns:1fr}
+  .wrow{grid-template-columns:66px 1fr 78px;gap:11px}
+  .blocks article{grid-template-columns:40px 1fr;gap:14px}
+  .hero-in{padding:88px 22px 70px}
+  section{padding:68px 0}
+  main,footer{padding-left:22px;padding-right:22px}
+  .pull{max-width:none}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  .wrow .fill{transition:none}
+}
+    .video-container {
+      width: 100%; /* 부모 요소의 너비에 맞춤 */
+      max-width: 1600px; /* 최대 너비 설정 (옵션) */
+      margin: 0 auto;
+    }
+
+    .video-container iframe {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 9; /* 16:9 비율 유지 */
+    }
+</style>
+</head>
+<body>
+
+<div id="bar"></div>
+
+<!-- ══════════ HERO ══════════ -->
+<header class="hero">
+  <canvas id="seed" aria-hidden="true"></canvas>
+  <div class="hero-in">
+    <span class="eyebrow">Technical Brief — Continual Learning</span>
+    <h1>멈춘 지능은<br><em>지능이 아니다</em></h1>
+    <p class="lede">
+      리치 서튼은 자신을 급진주의자로 부르지 않는다. 그가 보기에 이상한 쪽은 자신이 아니라
+      학습을 멈춘 채 배포되는 오늘의 인공지능이다. 동결된 가중치, 고갈된 인터넷 데이터,
+      그리고 인간이라는 병목. 이 문서는 그 세 가지 막다른 길을 진단하고
+      연속 학습이라는 우회로가 아닌 정면 돌파로를 설계한다.
+    </p>
+    <div class="chips">
+      <span class="chip">The Bitter Lesson</span>
+      <span class="chip">Big World Hypothesis</span>
+      <span class="chip">Continual Backprop</span>
+      <span class="chip">Step-size Optimization</span>
+      <span class="chip">Alberta Plan</span>
+      <span class="chip">20W / 1T params</span>
+    </div>
+    <div class="hero-legend">
+      <span><i class="dot f"></i> 동결된 유닛 — 무작위성을 소진한 가중치</span>
+      <span><i class="dot p"></i> 새로 심긴 씨앗 — 생성과 테스트로 재주입된 가소성</span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<center>
+  <div class="video-container">
+    <iframe src="https://www.youtube.com/embed/xH7U7w9Qzlo?si=doYhQRYircdASxzr" frameborder="0" allowfullscreen></iframe>
+  </div>        
+</center>
+
+<!-- ══════════ 01 ══════════ -->
+<section class="rv">
+  <span class="mark"><b>§ 01</b> &nbsp;/&nbsp; 패러다임의 정상화</span>
+  <h2>이상한 것은 그가 아니라 이 분야다</h2>
+
+  <p class="intro">
+    인공지능의 역사에 '연속적이지 않은 학습'이라는 개념은 원래 없었다.
+    학습과 동작이 분리된 지금의 정적 모델이야말로 발전사에 잠깐 나타난 기형적 변곡점이다.
+  </p>
+
+  <p>
+    많은 사람이 리치 서튼의 주장을 급진적이라고 평한다. 정작 본인의 생각은 정반대다.
+    그는 자신이 가장 평범하고 당연한 생각을 하는 사람이라고 말한다.
+    지능의 본질은 환경과 상호작용하며 실시간으로 진화하는 것이고, 학습은 당연히 연속적인 것이다.
+    이 상식을 기준으로 삼으면 배포되는 순간 학습을 멈추는 오늘의 모델이 오히려 설명을 요구받는 쪽이 된다.
+  </p>
+
+  <div class="pull">
+    <span class="q">내가 이상한 것이 아니다. 이상한 것은 지금의 AI 분야다.</span>
+    <span class="src">Rich Sutton — "I'm not the weird one; the field is weird."</span>
+  </div>
+
+  <p>
+    그러므로 <mark>학습이 연속적이지 않다면 그것은 학습이 아니다</mark>라는 명제는 과격한 선언이 아니라
+    원래 자리로 돌아가자는 요구다. 고정된 가중치라는 현재의 패러다임은 지능에 대한 근본적 오해에서 비롯된
+    짧은 휴지기에 지나지 않는다. 두 패러다임의 차이는 성능의 차이가 아니라 지능을 무엇으로 정의하느냐의 차이다.
+  </p>
+
+  <div class="tw">
+    <table>
+      
+      <thead>
+        <tr>
+          <th scope="col">구분</th>
+          <th scope="col">정적 학습 &nbsp;Static / Weird</th>
+          <th scope="col">연속 학습 &nbsp;Continual / Ordinary</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>지능의 정의</td><td>데이터셋의 통계적 압축과 고정</td><td>환경과의 상호작용을 통한 실시간 진화</td></tr>
+        <tr><td>가중치 상태</td><td>학습 종료 후 동결(Frozen)</td><td>생애 주기 전반에 걸친 가소성 유지</td></tr>
+        <tr><td>데이터 공급</td><td>인터넷 데이터라는 '화석 연료'</td><td>단일 경험 스트림(Single Stream of Experience)</td></tr>
+        <tr><td>업데이트 방식</td><td>막대한 비용의 재학습과 배치 처리</td><td>실시간 증분 학습과 메타 학습</td></tr>
+        <tr><td>확장 전략</td><td>인간의 지식 주입과 미세 조정</td><td>계산 자원과 범용 알고리즘의 결합</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════ 02 ══════════ -->
+<section class="rv">
+  <span class="mark"><b>§ 02</b> &nbsp;/&nbsp; 사람과 문장</span>
+  <h2>스물여섯 단어로 쓰인 쓴 교훈</h2>
+
+  <p>
+    리치 서튼은 강화학습의 창시자이며, 인간 수준 지능으로 향하는 설계도를 그려온 사람이다.
+    2019년에 발표한 짧은 에세이 <span class="tt">The Bitter Lesson</span>은 업계에 거대한 충격을 안겼다.
+    핵심은 자명하다. 인간의 지식을 알고리즘에 직접 주입하려는 모든 시도는
+    결국 계산 능력의 확장에 패배한다는 것이다.
+  </p>
+
+  <div class="pull">
+    <span class="q">인간의 지식에 한눈팔지 말고, 계산과 함께 확장되는 방법론에 집중하라.</span>
+    <span class="src">Search &amp; Learning — the two methods that scale</span>
+  </div>
+
+  <p>
+    원문은 이렇다. <span class="tt">"Don't be distracted by human knowledge as AI traditionally has been many times;
+    instead focus on learning methods that will scale with computation, like search and learning."</span>
+    스물여섯 단어에 담긴 주장은 단순하지만 잔인하다. 특정 규칙이나 구조를 정교하게 설계해 넣는 일은
+    단기적 승리를 가져다주지만 장기적으로는 사멸로 이어진다.
+    인간의 지식이 닿는 곳이 곧 그 시스템의 천장이 되기 때문이다.
+  </p>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">구분</th>
+          <th scope="col">인간 지식 기반 AI</th>
+          <th scope="col">계산 · 학습 기반 AI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>접근법</td><td>인간 전문가의 지식과 규칙을 직접 코딩</td><td>범용 학습 알고리즘에 거대한 계산량 투입</td></tr>
+        <tr><td>장점</td><td>초기 단계에서 빠른 성취가 가능</td><td>계산 자원이 늘어날수록 성능이 폭발</td></tr>
+        <tr><td>한계</td><td>인간 지식의 한계가 곧 AI의 병목</td><td>초기 학습이 느리고 막대한 자원 필요</td></tr>
+        <tr><td>결과</td><td>인간이 설정한 천장에 갇힘</td><td>계산량에 따라 확장되어 최종적으로 승리</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="aside">
+    <div class="t">여담 — 2003년, 가장 어두웠던 시기</div>
+    <p>
+      이 확신은 안락한 자리에서 만들어지지 않았다. AI 연구가 외면받던 이른바 'AI의 겨울' 한복판인 2003년,
+      리치 서튼은 암 투병 중이었고 시한부 판정을 받은 상태였다. 그는 그 상황에서도 연구를 멈추지 않았다.
+      훗날 왜 계속했느냐는 질문에 그는 습관 혹은 허영심 때문이었을 것이라고 담담히 답했다.
+      죽음 앞에서도 그를 책상에 앉혔던 그 습관이 오늘날 인공지능의 근간이 되었다.
+    </p>
+    <ul class="cv">
+      <li><b>강화학습의 창시자</b> — 현대 AI의 핵심축인 RL의 이론적 기틀 마련</li>
+      <li><b>분야의 세미널 교과서 집필</b> — 강화학습 연구자의 필독서 저자</li>
+      <li><b>앨버타 플랜 수립</b> — 인간 수준 지능에 이르는 12단계 기술 로드맵</li>
+      <li><b>거물들의 스승</b> — 알파고 설계자 데이비드 실버 등 세계적 연구자 배출</li>
+      <li><b>Oak Lab 설립</b> — 쿠람 자베드와 함께 연속 학습 아키텍처 연구</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ══════════ 03 ══════════ -->
+<section class="rv">
+  <span class="mark"><b>§ 03</b> &nbsp;/&nbsp; 임계점</span>
+  <h2>인터넷 데이터는 화석 연료일 뿐이다</h2>
+
+  <p class="intro">
+    현재의 LLM은 언어 능력에서 놀라운 성취를 보여주었다. 그러나 그것은 지능 전체가 아니라
+    대략 20~25퍼센트에 해당하는 부분적 성공이다.
+  </p>
+
+  <p>
+    서튼은 LLM을 언어 능력 측면의 과학적 돌파구로 분명히 인정한다.
+    동시에 그것이 매우 이상한 상태라고 지적한다. 이유는 하나다.
+    모델이 배포되는 순간 학습을 멈추기 때문이다.
+    박사 수준의 지식을 자랑하면서도, 정작 사용자와 대화하며 얻은 새로운 경험을
+    자신의 장기 기억, 곧 가중치로 전환하지 못한다.
+  </p>
+
+  <div class="split">
+    <div class="cold">
+      <div class="hd"><i class="dot f"></i> 인컨텍스트 학습 · 단기 기억</div>
+      <ul>
+        <li><b>작동 방식</b>대화 중 방금 들은 내용을 문맥 창 안에 붙들어 둔다</li>
+        <li><b>지속성</b>세션이 끝나면 사라진다. 회로에는 아무 흔적도 남지 않는다</li>
+        <li><b>본질</b>지식을 내재화하지 못하는 임시방편</li>
+        <li><b>귀결</b>추상화의 자기 발견이 원천적으로 차단된다</li>
+      </ul>
+    </div>
+    <div class="warm">
+      <div class="hd"><i class="dot p"></i> 가중치 업데이트 · 장기적 성장</div>
+      <ul>
+        <li><b>작동 방식</b>경험이 회로 자체를 바꾼다</li>
+        <li><b>지속성</b>전원이 꺼져도 남는다. 그것이 곧 그 개체의 역사다</li>
+        <li><b>본질</b>아기가 근육을 움직이며 걸음을 익히는 방식과 동일하다</li>
+        <li><b>귀결</b>외부의 지시가 아니라 스스로의 경험이 각인된다</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>합성 데이터라는 우회로의 치명적 오류</h3>
+  <p>
+    인류가 생성한 텍스트 데이터의 고갈은 이미 눈앞의 문제다.
+    많은 기업이 시뮬레이션과 합성 데이터를 대안으로 내놓는다.
+    그러나 합성 데이터 생성은 무엇이 좋은 데이터인지 판단하는 인간 전문가에게 의존한다.
+    <mark>연구자들이 휴가를 떠나면 모델의 발전도 그날로 멈춘다.</mark>
+    에이전트가 스스로 경험하며 배우는 것이 아니기 때문이다. 이것이 인간 병목이다.
+  </p>
+
+  <div class="blocks">
+    <article>
+      <div class="n">01</div>
+      <div>
+        <h4>시뮬레이션의 상한선</h4>
+        <p>초음파 정위 능력을 갖춘 드론을 만든다고 하자. 시뮬레이터를 구축하려면 인간 전문가가 물리 법칙을 완벽히 이해하고 코딩해야 한다. 그 순간 AI의 잠재력은 인간이 이미 이해한 범위 안에 갇힌다. AI는 시뮬레이터를 만든 사람의 지능 수준을 넘어설 수 없다.</p>
+      </div>
+    </article>
+    <article>
+      <div class="n">02</div>
+      <div>
+        <h4>자율성의 부재</h4>
+        <p>합성 데이터는 인간이 설계한 작은 세계에서 나온다. 데이터를 만드는 엔지니어가 손을 떼는 순간 학습도 멈춘다. 스스로 경험하지 못하는 AI는 화석화된 과거에 갇힌다.</p>
+      </div>
+    </article>
+    <article>
+      <div class="n">03</div>
+      <div>
+        <h4>복잡성의 누락</h4>
+        <p>현실의 마찰력, 모터의 마모, 타인의 예측 불가능한 심리는 어떤 프로그램으로도 완벽히 재현되지 않는다. 시뮬레이션에서만 똑똑한 AI는 실제 경험 앞에서 무력하다.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ══════════ 04 ══════════ -->
+<section class="rv">
+  <span class="mark"><b>§ 04</b> &nbsp;/&nbsp; 거대 세계 가설</span>
+  <h2>세계는 언제나 마음보다 크다</h2>
+
+  <div class="pull">
+    <span class="q">세상은 당신의 마음보다 무한히 거대하고 복잡하다.</span>
+    <span class="src">The Big World Hypothesis</span>
+  </div>
+
+  <p>
+    거대 세계 가설은 단순한 전제에서 출발한다. 실제 세계는 어떤 에이전트의 내부 모델이나
+    어떤 시뮬레이터보다도 비교할 수 없이 복잡하며, 무한한 학습 차원을 포함한다.
+    특히 세계 안에는 다른 지능적 존재들이 있다. 그 때문에 변수는 무한히 증폭된다.
+  </p>
+
+  <p>
+    이 가설이 함의하는 바는 냉정하다. <mark>세계가 마음보다 크기 때문에 지능은 결코 완벽할 수 없다.</mark>
+    완결된 모델을 한 번 만들어 두는 전략은 원리적으로 불가능하다.
+    지금 이 환경에 맞춰 모델을 실시간으로 조율하는 연속 학습만이
+    최선의 근사치를 유지하는 유일한 방법이다.
+  </p>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">비교 항목</th>
+          <th scope="col">작은 세계 — 시뮬레이션 · 합성 데이터</th>
+          <th scope="col">거대 세계 — 실제 환경 · 경험</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>복잡성</td><td>설계자가 정의한 유한한 복잡성</td><td>무한하며 예측 불가능한 복잡성</td></tr>
+        <tr><td>인간의 개입</td><td>필수 — 시뮬레이터 설계와 데이터 검수</td><td>불필요 — 에이전트의 직접 상호작용</td></tr>
+        <tr><td>확장 가능성</td><td>인간의 지식과 sim-to-real 격차에 갇힘</td><td>계산 능력에 비례해 확장</td></tr>
+        <tr><td>지능의 형태</td><td>정적인 지식의 암기와 재포장</td><td>환경 적응적이고 동적인 실시간 지능</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>다람쥐에게는 정답표가 없다</h3>
+  <p>
+    나무 위를 자유자재로 누비는 다람쥐를 떠올려 본다.
+    가지 사이를 뛸 때마다 근육의 움직임을 실시간으로 수정하며 착지점을 찾아낸다.
+    누구도 다람쥐에게 근육을 어떻게 비틀라고 알려 주지 않았다.
+    서튼의 표현대로 아무도 우리에게 근육을 어떻게 떨게 해야 할지 알려 주지 않는다.
+    생명체의 학습은 정답을 주입받는 지도 학습이 아니라 스스로 시도하고 감각하며 찾아가는 과정이다.
+  </p>
+
+  <div class="blocks">
+    <article>
+      <div class="n">시도</div>
+      <div><h4>Action</h4><p>근육을 움직여 환경에 변화를 준다. 가설은 몸으로 검증된다.</p></div>
+    </article>
+    <article>
+      <div class="n">피드백</div>
+      <div><h4>Perception</h4><p>고유 감각(Proprioception)을 통해 몸의 위치와 변화를 실시간으로 감지한다.</p></div>
+    </article>
+    <article>
+      <div class="n">수정</div>
+      <div><h4>Adjustment</h4><p>예상과 결과의 차이를 인지하고 내부 모델을 즉시 고쳐 쓴다.</p></div>
+    </article>
+  </div>
+
+  <p>
+    이 순환이 만들어 내는 것이 뇌의 가소성이다.
+    보행에 필요한 고유 감각을 완전히 상실한 사람이 발의 감각 대신
+    눈으로 발을 확인하는 시각적 피드백만으로 다시 걷는 법을 배우기도 한다.
+    지능이 고정된 지식의 집합이 아니라
+    <mark>학습 메커니즘 자체를 재설계하는 능력</mark>이라는 사실을 이보다 선명하게 보여 주는 사례는 드물다.
+  </p>
+
+  <div class="split">
+    <div class="cold">
+      <div class="hd"><i class="dot f"></i> 현재 AI 모델</div>
+      <ul>
+        <li><b>가중치 변화</b>훈련 종료 후 완전히 동결</li>
+        <li><b>학습 시점</b>특정 사전 훈련 단계로 한정</li>
+        <li><b>데이터 출처</b>인터넷 등 인간이 만든 지식 데이터</li>
+      </ul>
+    </div>
+    <div class="warm">
+      <div class="hd"><i class="dot p"></i> 생물학적 뇌</div>
+      <ul>
+        <li><b>가중치 변화</b>상호작용 중 지속적으로 업데이트</li>
+        <li><b>학습 시점</b>살아 있는 모든 순간</li>
+        <li><b>데이터 출처</b>직접적인 환경 경험과 상호작용</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 05 ══════════ -->
+<section class="rv">
+  <span class="mark"><b>§ 05</b> &nbsp;/&nbsp; 아키텍처</span>
+  <h2>파멸적 망각을 정면으로 돌파하는 두 알고리즘</h2>
+
+  <p class="intro">
+    실시간으로 가중치를 바꾸면서도 지능의 일관성을 유지해야 한다.
+    앨버타 플랜이 제시하는 12단계 로드맵의 기술적 심장부가 바로 이 지점에 있다.
+  </p>
+
+  <p>
+    새로운 것을 배우면 이전 지식이 무너지는 파멸적 망각(Catastrophic Forgetting)은
+    연속 학습의 가장 큰 기술적 장벽이다.
+    Oak Lab의 해법은 지식을 얼려 보존하는 것이 아니라
+    아키텍처 수준의 가소성을 끝까지 유지하는 쪽이다.
+  </p>
+
+  <h3>기술 진단 1 — 보폭 최적화 (Step-size Optimization)</h3>
+  <p>
+    모든 가중치에 같은 학습률을 적용하는 방식은 파멸적 망각의 주범이다.
+    각 가중치마다 별도의 보폭을 두고 그 보폭 자체를 메타 학습한다.
+    이미 중요한 역할을 수행하는 지식 유닛은 보폭을 극소화해 업데이트를 억제하고,
+    새로운 자극에 반응하는 유닛은 보폭을 크게 열어 지식을 빠르게 통합한다.
+    핵심 지식은 낮은 가소성으로 보존하고 새로운 정보는 높은 가소성으로 흡수하는 것이다.
+  </p>
+
+  <h3>기술 진단 2 — 연속 역전파 (Continual Backprop)</h3>
+  <p>
+    표준 역전파는 초기화 시점에만 무작위 가중치를 쓰고 학습 과정에서 그것을 모두 소진한다.
+    시간이 지날수록 네트워크는 굳는다. 연속 역전파는 생애 주기 전반에 걸쳐
+    새로운 유닛의 씨앗을 계속 심고 무작위성을 다시 주입한다.
+    그래디언트는 변화의 방향을 알려 줄 뿐 구조적 혁신에는 느리다.
+    그래서 역전파의 역할을 바꾼다.
+  </p>
+
+  <div class="blocks">
+    <article>
+      <div class="n">생성</div>
+      <div><h4>Generate — 가소성 공급</h4><p>네트워크가 구동되는 중에도 무작위 가중치를 가진 새로운 유닛을 계속 주입한다. 숲에 끊임없이 새 씨앗을 심는 일과 같다.</p></div>
+    </article>
+    <article>
+      <div class="n">테스트</div>
+      <div><h4>Test — 테스터로서의 역전파</h4><p>역전파는 방향을 찾는 도구가 아니라 새로 심긴 유닛의 유용성을 판정하는 시험대가 된다.</p></div>
+    </article>
+    <article>
+      <div class="n">도태</div>
+      <div><h4>Evolve — 지속적 진화</h4><p>성능에 기여하는 유닛만 남기고 무용한 유닛은 재초기화한다. 네트워크는 시간이 지나도 학습 능력을 잃지 않는다.</p></div>
+    </article>
+  </div>
+
+  <h3>자가 발견 추상화와 단일 경험 스트림</h3>
+  <p>
+    과거의 심볼릭 AI는 인간의 언어로 정의된 개념을 모델에 주입하려 했다.
+    서튼은 그것을 오만이라고 부른다.
+    엘리트 운동선수는 외부의 언어로 표현할 수 없는 미세한 근육의 움직임과 타이밍에 대해
+    자신만의 니치한 추상화를 만들어 낸다. 그 추상화는 인간이 설계한 시뮬레이션으로는 도달할 수 없는 영역이다.
+    에이전트도 마찬가지다. 정제된 배치가 아니라 실제 환경의 가변적인 단일 스트림에서 직접 배울 때,
+    비로소 자신만의 추상화를 발견하고 그것을 바탕으로 미래를 계획할 수 있다.
+  </p>
+
+  <div class="blocks">
+    <article>
+      <div class="n">01</div>
+      <div><h4>지속적인 가중치 업데이트</h4><p>상호작용하는 매 순간 가중치가 변한다. 배치가 아니라 스트림이다.</p></div>
+    </article>
+    <article>
+      <div class="n">02</div>
+      <div><h4>스스로 개념 형성</h4><p>인간이 정의한 언어를 넘어, 자신의 경험을 설명할 고유한 추상화를 발견한다.</p></div>
+    </article>
+    <article>
+      <div class="n">03</div>
+      <div><h4>미래 예측과 계획</h4><p>형성된 개념을 바탕으로 미래를 상상하고 계획(Planning)한다.</p></div>
+    </article>
+  </div>
+</section>
+
+<!-- ══════════ 06 ══════════ -->
+<section class="rv">
+  <span class="mark"><b>§ 06</b> &nbsp;/&nbsp; 전력</span>
+  <h2>1조 파라미터를 20와트로 굴린다</h2>
+
+  <p>
+    Oak Lab이 내건 목표는 도발적이다. 1조 개의 파라미터를 가진 모델을
+    인간의 뇌와 같은 20와트로 구동한다는 것이다.
+    거대 GPU 클러스터가 소모하는 에너지를 생각하면 공격적으로 들린다.
+    그러나 이것은 희망 사항이 아니라 계산이다.
+  </p>
+
+  <div class="watt">
+    <div class="t">Power envelope — 10년의 계산</div>
+    <div class="wrow">
+      <div class="lab">현재</div>
+      <div class="track"><div class="fill now" data-w="100"></div></div>
+      <div class="val dim">2,000 W</div>
+    </div>
+    <div class="wrow">
+      <div class="lab">10년 후</div>
+      <div class="track"><div class="fill" data-w="1"></div></div>
+      <div class="val">20 W</div>
+    </div>
+    <p class="note">
+      무어의 법칙에 따른 10년 주기의 계산 효율 개선폭은 약 100배, 곧 두 자릿수 오더에 해당한다.<br>
+      현재 약 2,000W 수준의 연산 집약도를 20W로 옮기는 일은 하드웨어 발전과 알고리즘 효율화가<br>
+      결합될 때 기술적으로 도달 가능한 영역에 놓인다.
+    </p>
+  </div>
+
+  <h3>왜 거대 기업은 이 경로를 택하지 못하는가</h3>
+  <p>
+    구글이나 오픈AI가 이 길을 가지 못하는 이유는 기술이 없어서가 아니다.
+    기존 제품의 락인(Lock-in) 효과 때문이다.
+    새로운 패러다임으로 전환하는 초기에는 필연적으로 성능의 일시적 하락이 발생한다.
+    이미 거대한 수익을 내는 상용 모델을 보유한 기업은 그 하락을 감당하기 어렵다.
+    <mark>로컬 미니멈은 기술의 문제가 아니라 손익계산서의 문제다.</mark>
+  </p>
+
+  <p>
+    20와트라는 숫자가 중요한 이유는 따로 있다.
+    저전력은 지능이 클라우드를 벗어나기 위한 선결 조건이다.
+    로봇, 드론, 웨어러블 기기가 거대 세계 안에서 독립적으로 사고하는 에이전트가 되려면
+    그 정도의 전력 예산 안에 들어와야 한다. 온디바이스 지능은 성능 문제가 아니라 전력 문제다.
+  </p>
+</section>
+
+<!-- ══════════ 07 ══════════ -->
+<section class="rv">
+  <span class="mark"><b>§ 07</b> &nbsp;/&nbsp; 비즈니스 임팩트</span>
+  <h2>진짜 해자는 데이터가 아니라 가중치다</h2>
+
+  <p class="intro">
+    연속 학습은 효율성 개선이 아니다. 복제할 수 없는 기업 고유의 지능 자산을 만드는 일이다.
+  </p>
+
+  <p>
+    많은 기업이 서버에 쌓인 로우 데이터를 해자라고 부른다.
+    그러나 데이터는 복제되고 유출되고 결국 상품화된다.
+    복제되지 않는 것은 <mark>수년간의 실시간 상호작용을 통해 축적된 고유한 가중치 구성</mark>이다.
+    그것은 범용 모델이 침범할 수 없는 개인화된 지능의 영역이다.
+  </p>
+
+  <p>
+    감각 이상을 겪는 환자가 발을 쳐다보는 시각 정보만으로 다시 걷는 법을 배우듯,
+    연속 학습 모델은 환경의 근본적 변화에 실시간으로 적응한다.
+    센서가 고장 나고 지형이 바뀌고 사용자의 습관이 달라져도 가중치 수준에서 대응한다.
+    고정된 모델은 이런 적응력을 흉내조차 낼 수 없다.
+    드론이나 로보틱스처럼 물리적 환경이 급변하는 분야에서 연속 학습은 선택지가 아니라 전제 조건이다.
+  </p>
+
+  <p>
+    전략적 귀결도 분명하다. 앞으로는 수천억 원을 들여 모델을 처음부터 다시 훈련하는 방식이 저물 것이다.
+    대신 풍부한 경험을 쌓은 에이전트를 디지털로 복제하고,
+    각 사용자의 고유한 환경에서 계속 성장시키는 에이전트 진화의 시대가 열린다.
+  </p>
+
+  <div class="takeaways">
+    <div>
+      <div class="k">Takeaway 01</div>
+      <h4>초개인화된 지식 자산</h4>
+      <p>공유 모델이 아니라 사용자별 경험이 가중치에 직접 각인된 독점적 지능을 구축한다.</p>
+    </div>
+    <div>
+      <div class="k">Takeaway 02</div>
+      <h4>인간 병목 제거</h4>
+      <p>전문가의 합성 데이터 생성 없이 에이전트 스스로 성능을 확장하는 비용 구조를 만든다.</p>
+    </div>
+    <div>
+      <div class="k">Takeaway 03</div>
+      <h4>적응적 생존력</h4>
+      <p>가소성 메커니즘을 통해 센서 오류와 환경 변화에 즉각 대응하는 고신뢰 시스템을 확보한다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 08 ══════════ -->
+<section class="rv">
+  <span class="mark"><b>§ 08</b> &nbsp;/&nbsp; 최종 제언</span>
+  <h2>지금 무엇을 결정해야 하는가</h2>
+
+  <div class="blocks">
+    <article>
+      <div class="n">01</div>
+      <div>
+        <h4>연속 학습 아키텍처로 전환한다</h4>
+        <p>가중치 동결 방식의 한계를 인정하고, 보폭 최적화와 연속 역전파를 핵심 경쟁력으로 확보한다. 이것은 연구 과제가 아니라 제품 아키텍처의 결정이다.</p>
+      </div>
+    </article>
+    <article>
+      <div class="n">02</div>
+      <div>
+        <h4>자율적 경험 데이터를 중심에 둔다</h4>
+        <p>인간이 정제한 데이터의 병목을 직시하고, 에이전트가 직접 경험을 통해 배우는 환경 구축에 선제적으로 투자한다.</p>
+      </div>
+    </article>
+    <article>
+      <div class="n">03</div>
+      <div>
+        <h4>에너지 효율을 새로운 규모 지표로 삼는다</h4>
+        <p>파라미터 수 경쟁을 넘어, 온디바이스에서 독립적으로 작동하는 저전력 고효율 아키텍처를 차세대 표준으로 정의한다.</p>
+      </div>
+    </article>
+  </div>
+
+  <p>
+    이 세 가지는 서로 독립된 항목이 아니다.
+    연속 학습은 자율적 경험을 요구하고, 자율적 경험은 온디바이스를 요구하며,
+    온디바이스는 다시 20와트라는 전력 예산을 요구한다.
+    하나를 선택하면 나머지가 따라온다. 하나를 미루면 나머지도 미뤄진다.
+  </p>
+</section>
+
+</main>
+
+<!-- ══════════ CLOSER ══════════ -->
+<section class="closer">
+  <div class="hero-in">
+    <span class="eyebrow">Conclusion — Living Intelligence</span>
+    <h2>지능은 흘러야 한다.<br><em>그래야 지능이다.</em></h2>
+    <p>
+      현재의 LLM이 언어라는 도구의 승리였다면, 다음의 AI는 스스로 사고하고,
+      추상화를 발견하며, 자신의 경험으로부터 끊임없이 성장하는 살아 있는 지능이 될 것이다.
+      서튼은 5년에서 10년 안에 자기 일관성을 가진 지능이 등장하리라고 낙관한다.
+    </p>
+    <p>
+      우리가 오해해 온 것은 지능을 지식의 창고로 본 관점 자체였다.
+      진정한 지능은 고정된 지식의 축적이 아니라 요동치는 세계와의 끊임없는 대화다.
+      이제 지능은 얼마나 아는가가 아니라 <strong>얼마나 끊임없이 배우는가</strong>로 재정의되어야 한다.
+    </p>
+    <p>
+      멈춰 있는 지능을 거부한다. 지능은 흘러야 하며, 끊임없이 배워야 한다.
+      그것이 지능의 유일하고도 당연한 본질이기 때문이다.
+    </p>
+    <div class="chips" style="margin-top:44px">
+      <span class="chip">계산 능력의 승리</span>
+      <span class="chip">연속 학습의 필수성</span>
+      <span class="chip">경험을 통한 추상화</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <hr>
+  기술 분석 보고서 · 차세대 지능형 시스템을 위한 실시간 연속 학습 도입 전략<br>
+  Rich Sutton · Khurram Javed · Oak Lab · The Alberta Plan<br>
+  본문의 인용과 수치는 원 자료의 진술을 정리한 것이며, 정확한 출처 확인은 원문 대조를 권장한다.
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── 진행 막대 ── */
+  var bar = document.getElementById('bar');
+  function progress(){
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', progress, {passive:true});
+  progress();
+
+  /* ── 등장 ── */
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){
+        e.target.classList.add('in');
+        var fills = e.target.querySelectorAll('.fill');
+        fills.forEach(function(f){ f.style.width = f.dataset.w + '%'; });
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold:0.08, rootMargin:'0px 0px -6% 0px'});
+  document.querySelectorAll('.rv').forEach(function(el){ io.observe(el); });
+
+  /* ── 시그니처: 생성과 테스트 (Generate & Test) ──
+     각 유닛은 유용성(u)을 가진다. u는 시간에 따라 감쇠하고,
+     가장 낮은 유닛은 새로운 무작위 씨앗으로 교체된다.       */
+  var cv = document.getElementById('seed');
+  if(!cv) return;
+  var ctx = cv.getContext('2d');
+  var units = [], cols = 0, rows = 0, cell = 22, W = 0, H = 0, dpr = 1;
+
+  var FROST = [91,122,153], PULSE = [18,168,123];
+
+  function build(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var r = cv.getBoundingClientRect();
+    W = r.width; H = r.height;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    cell = W < 640 ? 17 : 23;
+    cols = Math.ceil(W / cell) + 1;
+    rows = Math.ceil(H / cell) + 1;
+    units = [];
+    for(var i=0;i<cols*rows;i++){
+      units.push({ u: Math.random()*0.55, seed: 0 });
+    }
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(var y=0;y<rows;y++){
+      for(var x=0;x<cols;x++){
+        var i = y*cols + x, un = units[i];
+        var s = un.seed;                       /* 새 씨앗의 신선도 */
+        var a = 0.05 + un.u*0.22 + s*0.62;     /* 불투명도 */
+        var c = s > 0.02 ? PULSE : FROST;
+        var sz = 3 + un.u*3.2 + s*6;
+        ctx.fillStyle = 'rgba('+c[0]+','+c[1]+','+c[2]+','+a.toFixed(3)+')';
+        ctx.fillRect(x*cell + (cell-sz)/2, y*cell + (cell-sz)/2, sz, sz);
+      }
+    }
+  }
+
+  function tick(){
+    /* 유용성 감쇠 — 무작위성이 소진되며 네트워크가 굳는다 */
+    for(var i=0;i<units.length;i++){
+      units[i].u *= 0.994;
+      units[i].seed *= 0.955;
+    }
+    /* 테스트 후 도태 — 가장 낮은 유닛을 새 씨앗으로 교체 */
+    for(var k=0;k<3;k++){
+      var worst = -1, wv = 2;
+      for(var t=0;t<26;t++){
+        var j = (Math.random()*units.length)|0;
+        if(units[j].u < wv){ wv = units[j].u; worst = j; }
+      }
+      if(worst >= 0){ units[worst].u = 0.45 + Math.random()*0.55; units[worst].seed = 1; }
+    }
+    draw();
+  }
+
+  build();
+  draw();
+  if(!reduce){
+    var iv = setInterval(tick, 90);
+    document.addEventListener('visibilitychange', function(){
+      if(document.hidden){ clearInterval(iv); }
+      else { iv = setInterval(tick, 90); }
+    });
+  }
+  var rt;
+  window.addEventListener('resize', function(){
+    clearTimeout(rt); rt = setTimeout(function(){ build(); draw(); }, 180);
+  });
+})();
+</script>
+</body>
+</html>
