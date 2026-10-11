@@ -1,0 +1,173 @@
+---
+layout: null
+title: "Beyond Long Context: Compression, Operator Conditioning, and Distributed Mamba"
+date: 2026-10-12
+categories: [artificial intelligence]
+tags: [foundation models, machine learning]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Beyond Long Context: Compression, Operator Conditioning, and Distributed Mamba</title>
+  <meta name="description" content="LogSig-SSM, MaRK, 분산 선택적 SSM 연구를 통해 입력 표현·상태전이·학습 토폴로지의 공동 설계를 분석한다.">
+  <link rel="canonical" href="https://sungsoo.github.io/2026/10/12/beyond-long-context-mamba-codesign.html">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="Beyond Long Context: Compression, Operator Conditioning, and Distributed Mamba">
+  <meta property="og:url" content="https://sungsoo.github.io/2026/10/12/beyond-long-context-mamba-codesign.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;family=Spectral:ital,wght@0,400;0,700;1,400&amp;family=IBM+Plex+Sans+KR:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+  <style>
+  .research-essay{--paper:#edf0f4;--paper2:#f7f9fb;--paper-2:var(--paper2);--ink:#10151f;--ink2:#2a3243;--muted:#5d6879;--hair:#c6cfda;--b1:#a63446;--b2:#c2681c;--b3:#8e7a12;--b4:#2f7a55;--b5:#1e6e8c;--b6:#35509b;--b7:#6b3f9e;--hue:var(--b6);--disp:"Gowun Batang","Spectral","Batang",serif;--lat:"Spectral",Georgia,serif;--body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.86 var(--body);letter-spacing:-.012em;word-break:keep-all;overflow-wrap:anywhere}.research-essay *,.research-essay *::before,.research-essay *::after{box-sizing:border-box}.research-essay .essay-shell{max-width:1180px;margin-inline:auto;padding-inline:28px}.research-essay .essay-hero{padding-block:72px 18px}.research-essay h1,.research-essay h2,.research-essay h3{font-family:var(--disp);font-weight:700;letter-spacing:-.03em}.research-essay h1{font-size:clamp(34px,5.2vw,59px);line-height:1.17;margin:0 0 20px}.research-essay h2{font-size:clamp(29px,4.2vw,44px);line-height:1.26}.research-essay h3{font-size:clamp(23px,2.6vw,27px);line-height:1.4}.research-essay p{margin:0 0 18px}.research-essay .essay-subtitle{font:italic 400 clamp(17px,2vw,23px)/1.5 var(--lat);color:var(--muted)}.research-essay .essay-lede{font:400 clamp(20px,2.5vw,23px)/1.72 var(--disp)}.research-essay .essay-eyebrow,.research-essay .essay-part-number,.technical-label{font:600 12px/1.6 var(--mono);letter-spacing:.12em;color:var(--hue)}.research-essay a{color:var(--b6);text-underline-offset:3px}.research-essay :focus-visible{outline:3px solid var(--b6);outline-offset:4px}.research-essay code,.research-essay pre{font-family:var(--mono)}.research-essay .diagram-viewport{max-width:100%;overflow-x:auto;padding:18px;border:1px solid var(--hair);background:var(--paper2)}.research-essay figcaption{font-size:14px;line-height:1.75;color:var(--muted);margin-top:12px}
+  .opening-summary-diagram{max-width:1100px;margin:2rem auto 1.5rem;color:var(--ink)}.opening-summary-diagram .diagram-viewport{max-width:100%;overflow-x:auto;border:1px solid var(--hair);background:var(--paper2)}.opening-summary-diagram svg{display:block;width:100%;height:auto;min-width:860px;font-family:var(--body)}.opening-summary-diagram figcaption{margin:.8rem 0 0;font-size:.85rem;line-height:1.75}.opening-summary-diagram .diagram-summary{margin:.45rem 0 0;font-size:.85rem;line-height:1.8;color:var(--muted)}
+  mark.hl{--hl-color:rgba(255,221,74,.42);display:inline;color:inherit;background-color:transparent;background-image:linear-gradient(176deg,transparent 0 56%,var(--hl-color) 56% 89%,transparent 89% 100%);padding:0 .06em;font:inherit;line-height:inherit;border:0;border-radius:0;box-shadow:none;-webkit-box-decoration-break:clone;box-decoration-break:clone}mark.hl.hl-pink{--hl-color:rgba(255,126,166,.38)}mark.hl.hl-yellow{--hl-color:rgba(255,221,74,.42)}mark.hl.hl-blue{--hl-color:rgba(91,169,255,.32)}mark.hl.hl-green{--hl-color:rgba(81,196,143,.30)}.hl-legend{display:flex;flex-wrap:wrap;align-items:baseline;gap:.55rem 1rem;margin:1.5rem 0;font-size:.82rem;line-height:1.8}.hl-legend-label{font-weight:600}.hl-legend small{flex-basis:100%;font-size:inherit}
+  html{scroll-behavior:smooth}.topbar{display:flex;justify-content:space-between;gap:20px;padding:20px 0;border-bottom:1px solid var(--hair);font-size:13px}.topbar a{text-decoration:none}.article-meta{font:12px/1.7 var(--mono);color:var(--muted);margin:22px 0}.abstract,.part,.references{max-width:920px;margin:auto}.abstract{padding:34px 0}.part{padding:52px 0 14px;border-top:1px solid var(--hair);margin-top:26px}.part-band{display:flex;gap:4px;margin-bottom:18px}.part-band i{flex:1;height:3px;background:var(--hair)}.part-band .on{background:var(--hue)}.part h2{margin:14px 0 28px}.part h3{margin:30px 0 14px}.part-no{font:600 12px/1.6 var(--mono);letter-spacing:.11em;color:var(--hue)}.toc{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;border-block:1px solid var(--hair);padding:24px 0;margin:20px 0 40px;font-size:14px}.toc a{text-decoration:none}.note{padding:22px;border-left:3px solid var(--b6);background:var(--paper2);margin:24px 0;font-size:15px}.equation{font:17px/1.9 var(--mono);background:var(--paper2);border:1px solid var(--hair);padding:22px;overflow:auto;text-align:center;margin:24px 0}.table-wrap{overflow:auto;max-width:100%;margin:25px 0}table{width:100%;border-collapse:collapse;font-size:15px;line-height:1.7}th,td{padding:14px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--hair);min-width:135px}th{background:#e0e6ee;color:#14202e;font-weight:600}td:first-child{font-weight:500}.claim{display:inline-block;font:600 11px/1.6 var(--mono);letter-spacing:.05em;padding:2px 7px;margin-right:5px;border:1px solid var(--hair);background:var(--paper2)}.claim.author{border-color:#b88627}.claim.interpretation{border-color:#35509b}.claim.proposal{border-color:#2f7a55}.triad{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:26px 0}.triad>div{background:var(--paper2);border:1px solid var(--hair);padding:20px}.triad b{display:block;font-family:var(--disp);font-size:20px;margin-bottom:8px}.references{padding:56px 0}.ref{padding:17px 0;border-bottom:1px solid var(--hair);font-size:14px}.ref small{display:block;color:var(--muted)}.ref a{overflow-wrap:anywhere}.scope{font-size:14px;color:var(--muted)}.footer{border-top:1px solid var(--hair);padding:25px 0 50px;font-size:13px;color:var(--muted)}
+  @media(max-width:650px){.research-essay{font-size:16px}.research-essay .essay-shell{padding-inline:19px}.research-essay .essay-hero{padding-top:42px}.toc{grid-template-columns:1fr}.part{padding-top:36px}.triad{grid-template-columns:1fr}.equation{font-size:14px;padding:15px}.topbar{font-size:12px}.opening-summary-diagram{margin-inline:0}th,td{min-width:145px;padding:11px}}@media print{.research-essay{background:white}.topbar,.toc{display:none}.diagram-viewport,.table-wrap{overflow:visible}.opening-summary-diagram svg{min-width:0}mark.hl{-webkit-print-color-adjust:exact;print-color-adjust:exact}}@media(forced-colors:active){mark.hl{background-image:none;text-decoration:underline;text-underline-offset:.15em}}
+  </style>
+</head>
+<body class="research-essay">
+<main class="essay-shell">
+  <div class="topbar"><a href="https://sungsoo.github.io">SUNGSOO KIM · RESEARCH ESSAYS</a><a href="#references">출처와 검증 범위</a></div>
+  <article>
+    <header class="essay-hero">
+      <div class="essay-eyebrow">MAMBA · SELECTIVE SSM · SYSTEM CO-DESIGN</div>
+      <h1>긴 문맥을 읽기 전에<br>무엇을 바꾸어야 하는가</h1>
+      <p class="essay-subtitle">Compression, Operator Conditioning, and Distributed Stability</p>
+      <div class="article-meta">2026-10-12 KST · 후속 연구 노트 · NeurIPS 2026 공식 목록 2편 + arXiv 프리프린트 1편</div>
+    </header>
+
+    <figure class="opening-summary-diagram" aria-labelledby="beyond-overview-caption">
+      <div class="diagram-viewport" role="region" aria-label="입력 표현, 상태전이, 학습 토폴로지 공동 설계 다이어그램" tabindex="0">
+        <svg viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="beyond-overview-title beyond-overview-desc">
+          <title id="beyond-overview-title">Mamba 계열의 세 계층 공동 설계</title>
+          <desc id="beyond-overview-desc">긴 원시 시계열을 로그시그니처 토큰으로 압축하는 입력 계층, 문맥에 따라 상태공간 연산자를 제한적으로 바꾸는 전이 계층, 이질적 클라이언트에서 안정성과 수렴을 분석하는 학습 계층이 공통 검증 기준으로 연결된다.</desc>
+          <defs><marker id="beyond-overview-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10" fill="#35509b"/></marker></defs>
+          <g fill="#f7f9fb" stroke="#c6cfda" stroke-width="1.5">
+            <rect x="28" y="42" width="285" height="155"/><rect x="357" y="42" width="285" height="155"/><rect x="686" y="42" width="285" height="155"/>
+            <rect x="180" y="272" width="640" height="88"/><rect x="90" y="420" width="240" height="62"/><rect x="380" y="420" width="240" height="62"/><rect x="670" y="420" width="240" height="62"/>
+          </g>
+          <g fill="none" stroke="#35509b" stroke-width="2" marker-end="url(#beyond-overview-arrow)"><path d="M170 197V235H380V272"/><path d="M500 197V272"/><path d="M829 197V235H620V272"/><path d="M340 360V390H210V420"/><path d="M500 360V420"/><path d="M660 360V390H790V420"/></g>
+          <g fill="#10151f" text-anchor="middle">
+            <text x="170" y="78" font-family="IBM Plex Mono,monospace" font-size="14" fill="#5d6879">INPUT REPRESENTATION</text><text x="170" y="117" font-size="21">LogSig-SSM</text><text x="170" y="151" font-size="17">다중척도 경로 요약</text><text x="170" y="177" font-size="16" fill="#5d6879">더 짧고 풍부한 토큰</text>
+            <text x="500" y="78" font-family="IBM Plex Mono,monospace" font-size="14" fill="#5d6879">STATE OPERATOR</text><text x="500" y="117" font-size="21">MaRK</text><text x="500" y="151" font-size="17">문맥별 bounded modulation</text><text x="500" y="177" font-size="16" fill="#5d6879">기억 커널 자체를 조절</text>
+            <text x="829" y="78" font-family="IBM Plex Mono,monospace" font-size="14" fill="#5d6879">TRAINING TOPOLOGY</text><text x="829" y="117" font-size="21">Distributed SSM</text><text x="829" y="151" font-size="17">안정성·이질성·local steps</text><text x="829" y="177" font-size="16" fill="#5d6879">수렴 경계의 구조화</text>
+            <text x="500" y="255" font-family="IBM Plex Mono,monospace" font-size="14" fill="#35509b">SHARED VALIDATION</text><text x="500" y="313" font-size="21">상태 크기가 아니라 정보·동역학·학습경로를 함께 설계</text><text x="500" y="341" font-size="16" fill="#5d6879">세 연구의 연결은 편집 해석이며 동일 아키텍처라는 뜻이 아님</text>
+            <text x="210" y="458" font-size="17">정확도·회수 품질</text><text x="500" y="458" font-size="17">p95·메모리·에너지</text><text x="790" y="458" font-size="17">drift·복구·수렴</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption id="beyond-overview-caption">편집 종합 · 세 연구는 입력, 전이, 학습이라는 서로 다른 계층을 다룬다. 공통 결론은 긴 시퀀스의 효율을 상태공간 블록 하나의 성질로 환원할 수 없다는 것이다.</figcaption>
+      <p class="diagram-summary">좁은 화면에서는 다이어그램을 좌우로 이동할 수 있다. 화살표는 실험적으로 입증된 인과가 아니라 공통 평가 프레임으로의 연결을 나타낸다.</p>
+    </figure>
+
+    <section class="abstract">
+      <p class="essay-lede">긴 시퀀스를 잘 처리하는 모델은 단지 오래 기억하는 모델이 아니다. 무엇을 토큰으로 만들고, 어떤 동역학을 허용하며, 어디에서 학습하는지가 함께 맞아야 한다.</p>
+      <p>이번 후속 조사에서 확인된 핵심 변화는 <mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">Mamba 연구의 설계 단위가 단일 selective scan에서 입력 표현·상태전이 연산자·분산학습 시스템으로 확장되고 있다는 점</mark>이다. LogSig-SSM과 MaRK는 NeurIPS 2026 공식 다운로드 목록에서 확인되며, 분산 선택적 SSM 연구는 arXiv 프리프린트다. <a href="#ref-3">[3]</a> <a href="#ref-4">[4]</a> <a href="#ref-5">[5]</a> <a href="#ref-6">[6]</a></p>
+      <div class="note"><strong>범위와 근거.</strong> 이 글은 2026-10-08 종합 글과 2026-10-09 후속 글에 없는 세 연구를 보강한다. 수치는 저자 보고이며 독립 재현하지 않았다. 이번 자료는 Mamba/선택적 SSM 쪽의 확장 근거이지, LFM2 구조나 성능에 대한 새 학술 검증이 아니다. LFM과 Mamba를 동일시하지 않는다.</div>
+      <aside class="hl-legend" aria-label="내용 중요도 색상 안내"><span class="hl-legend-label">내용 중요도</span><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">1 · 최우선</mark><mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">2 · 핵심</mark><mark class="hl hl-blue" data-importance="보충" title="중요도 3 · 보충">3 · 보충</mark><mark class="hl hl-green" data-importance="참고" title="중요도 4 · 참고">4 · 참고</mark><small>색상은 편집상 중요도이며 근거의 검증 수준을 뜻하지 않습니다.</small></aside>
+      <nav class="toc" aria-label="글 목차"><a href="#part-1">01 · Definition</a><a href="#part-2">02 · Problem Definition</a><a href="#part-3">03 · Core Concepts</a><a href="#part-4">04 · Introduction</a><a href="#part-5">05 · Motivation and Background</a><a href="#part-6">06 · Challenges</a><a href="#part-7">07 · Research Questions</a><a href="#part-8">08 · Approaches (Methods)</a><a href="#part-9">09 · Key Applications</a><a href="#part-10">10 · Open Problems</a><a href="#part-11">11 · Future Directions</a></nav>
+    </section>
+
+    <section class="part" id="part-1"><div class="part-band"><i class="on"></i><i></i><i></i><i></i></div><p class="part-no">PART 01 · DEFINITION</p><h2>세 개의 설계 계층을 구분한다</h2>
+      <div class="triad"><div><b>입력 표현</b>원시 관측을 어떤 토큰과 시간척도로 요약할지 정하는 계층. LogSig-SSM은 windowed log-signature를 사용한다.</div><div><b>상태전이 연산자</b>입력과 문맥이 상태 갱신의 법칙을 어떻게 바꿀지 정하는 계층. MaRK는 frozen SSM의 A, B, C, D, Δ를 제한적으로 변조한다.</div><div><b>학습 토폴로지</b>데이터와 업데이트가 여러 클라이언트에 분산될 때 수렴과 안정성을 어떻게 보장할지 정하는 계층.</div></div>
+      <p><mark class="hl hl-green" data-importance="참고" title="중요도 4 · 참고">Mamba는 선택적 상태공간 아키텍처</mark>이며, LFM은 Liquid AI의 모델군이다. LFM2는 게이트 단거리 합성곱과 일부 GQA를 결합한 별도 하이브리드다. 이번 연구들이 Mamba 관련이라는 이유로 LFM2에 그대로 소급 적용되지는 않는다.</p>
+    </section>
+
+    <section class="part" id="part-2"><div class="part-band"><i class="on"></i><i class="on"></i><i></i><i></i></div><p class="part-no">PART 02 · PROBLEM DEFINITION</p><h2>같은 상태 예산으로 더 유용한 궤적을 남기는 문제</h2>
+      <p>공통 문제는 품질을 최대화하면서 p95 지연, 피크 메모리, 에너지, 안정성 제약을 만족하는 다목적 설계다. 그러나 제어변수는 상태 차원만이 아니다.</p>
+      <div class="equation">maximize Q(task, recall, tracking)<br>subject to latency<sub>p95</sub> ≤ ℓ, memory<sub>peak</sub> ≤ M, energy/success ≤ E, drift ≤ D<br>over representation R, operator Θ(c), training topology G</div>
+      <p><span class="claim interpretation">편집 해석</span> LogSig-SSM은 시퀀스를 상태에 넣기 전에 표현을 압축하고, MaRK는 문맥 <i>c</i>에 따라 연산자 자체를 바꾸며, 분산 SSM 분석은 업데이트 그래프 <i>G</i>의 이질성을 제약에 포함한다. <mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">“O(1) 순환 상태”는 이 전체 문제의 한 항일 뿐</mark>이다.</p>
+    </section>
+
+    <section class="part" id="part-3"><div class="part-band"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div><p class="part-no">PART 03 · CORE CONCEPTS</p><h2>토큰 압축, 연산자 조건화, 구조 인지 수렴</h2>
+      <h3>경로의 로그시그니처</h3><p>다변량 시계열 경로의 signature는 순서가 있는 반복적분으로 변화의 기하를 표현한다. log-signature는 중복을 줄인 좌표계다. LogSig-SSM은 여러 길이의 창에서 이를 계산하고 연결해 하나의 토큰으로 만든다.</p>
+      <div class="equation">u<sub>τ,k</sub> = φ<sub>m<sub>k</sub></sub>(LogSig<sub>m<sub>k</sub></sub>(W<sub>k</sub>(x)<sub>τ</sub>)), &nbsp; U<sub>τ</sub> = concat(u<sub>τ,1</sub>, …, u<sub>τ,K</sub>)</div>
+      <p>이 방식은 원시 길이 <i>T</i>를 그대로 scan하지 않고 stride와 window로 더 짧은 토큰열을 만든다. 정보 손실 가능성은 사라지지 않으며, 창 길이·stride·truncation depth가 새로운 기억 예산이 된다.</p>
+      <h3>문맥에 따른 상태전이</h3><p>일반 selective SSM은 <i>h<sub>t</sub>=Ā<sub>t</sub>h<sub>t−1</sub>+B̄<sub>t</sub>x<sub>t</sub>, y<sub>t</sub>=C<sub>t</sub>h<sub>t</sub></i>로 쓸 수 있다. MaRK는 diffusion timestep의 context를 이용해 frozen Hydra SSM의 <i>A, B, C, D, Δ</i>를 bounded low-rank map으로 변조한다. 이는 추론 중 온라인 학습이 아니라 <mark class="hl hl-blue" data-importance="보충" title="중요도 3 · 보충">학습된 조건부 연산자 선택</mark>이다.</p>
+      <h3>아키텍처 인지 분산학습</h3><p>분산 SSM 연구는 recurrent stability, 입력 의존 이산화, state projection norm이 gradient smoothness와 FedAvg/FedProx 수렴 경계에 들어간다고 분석한다. 즉 client heterogeneity와 local update 수를 일반적인 통계 문제만이 아니라 SSM 동역학과 결합해 본다.</p>
+    </section>
+
+    <section class="part" id="part-4"><div class="part-band"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div><p class="part-no">PART 04 · INTRODUCTION</p><h2>선형시간 이후의 질문</h2>
+      <p>초기 Mamba 논의는 attention의 이차 prefill과 선형 KV cache를 피하는 연산 복잡도에 집중했다. 이후의 연구는 “고정 크기 상태가 무엇을 잊는가”와 “상태 추적에 어떤 고유값·이산화가 필요한가”를 물었다. 이번 세 연구는 그 질문을 모델 블록 밖으로 확장한다.</p>
+      <div class="table-wrap"><table><thead><tr><th>새 근거</th><th>최초 공개 / 공식 기록</th><th>새로운 설계 단위</th><th>직접적 제한</th></tr></thead><tbody>
+        <tr><td><a href="https://arxiv.org/abs/2610.05051">LogSig-SSM</a></td><td>2026-10-04 v1<br>NeurIPS 2026 공식 목록</td><td>다중척도 입력 토큰화</td><td>압축·절단의 과제 의존성</td></tr>
+        <tr><td><a href="https://arxiv.org/abs/2610.09092">MaRK</a></td><td>2026-10-06 v1<br>NeurIPS 2026 공식 목록</td><td>문맥 조건부 SSM operator</td><td>111M Hydra·diffusion 전환 범위</td></tr>
+        <tr><td><a href="https://arxiv.org/abs/2610.02659">Distributed SSM</a></td><td>2026-10-02 v1<br>학회 확인 안 됨</td><td>분산 최적화와 안정성</td><td>단일층 정리와 실제 다층 실험 사이 간극</td></tr>
+      </tbody></table></div>
+      <p><span class="claim interpretation">편집 해석</span> 흐름은 “더 싼 sequence operator”에서 “어떤 정보를 어떤 동역학으로, 어떤 학습 시스템에서 보존할 것인가”로 이동한다.</p>
+    </section>
+
+    <section class="part" id="part-5"><div class="part-band"><i class="on"></i><i></i><i></i><i></i></div><p class="part-no">PART 05 · MOTIVATION AND BACKGROUND</p><h2>원시 길이와 유효 길이는 다르다</h2>
+      <p>표준 full attention의 prefill은 길이에 대해 이차 연산을 요구하고 KV cache는 선형으로 증가한다. 고정 상태 순수 SSM은 총 선형 연산과 길이에 독립적인 순환 상태를 제공하지만, 이것이 무한 정보를 완전 보존한다는 뜻은 아니다.</p>
+      <p>시계열에서는 더욱 복잡하다. 높은 샘플링률, 불규칙 간격, 채널 간 상호작용은 긴 토큰열의 길이와 과제에 필요한 정보량을 분리한다. LogSig-SSM의 동기는 <mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">모든 샘플을 동일한 토큰으로 취급하지 않고 경로의 국소 기하를 먼저 요약</mark>하는 것이다. MaRK의 동기는 입력 주입이나 activation modulation만으로는 frozen SSM의 시간 동역학 자체가 고정된다는 문제다. 분산 연구의 동기는 동일한 최적화 알고리즘이라도 SSM의 안정성·선택성에 따라 local update의 위험이 달라질 수 있다는 점이다.</p>
+    </section>
+
+    <section class="part" id="part-6"><div class="part-band"><i class="on"></i><i class="on"></i><i></i><i></i></div><p class="part-no">PART 06 · CHALLENGES</p><h2>효율의 위치를 바꾸면 실패의 위치도 바뀐다</h2>
+      <ol><li><b>압축 전 손실:</b> 중요한 순간이 window summary에 흡수되면 후단 SSM은 복구할 수 없다.</li><li><b>과제별 토큰화:</b> 최적 window·stride·signature depth가 센서와 과제마다 달라 architecture search 비용이 생긴다.</li><li><b>bounded modulation의 표현력:</b> 안정성을 위한 제한이 급격한 regime change에 필요한 operator 변화를 억제할 수 있다.</li><li><b>조건부 동역학의 검증:</b> loss 향상이 기억 커널의 올바른 적응을 뜻하는지, 단순 parameter-efficient fitting인지 분리해야 한다.</li><li><b>분산 이질성:</b> 데이터 분포, sequence length, 상태 초기화, local step이 동시에 다르면 정리의 해석이 어렵다.</li><li><b>커널과 실제 지연:</b> 토큰 수 감소와 선형 복잡도가 CPU/GPU/NPU의 p95, 메모리 이동, 전력, 전처리 비용을 자동 보장하지 않는다.</li></ol>
+      <p><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">효율을 입력 전처리로 옮기면 압축 오류가, operator로 옮기면 안정성 오류가, 분산학습으로 옮기면 client drift가 핵심 실패모드가 된다.</mark></p>
+    </section>
+
+    <section class="part" id="part-7"><div class="part-band"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div><p class="part-no">PART 07 · RESEARCH QUESTIONS</p><h2>세 계층을 분리하고 다시 결합하는 질문</h2>
+      <div class="table-wrap"><table><thead><tr><th>연구 질문</th><th>필수 통제</th><th>핵심 지표</th></tr></thead><tbody>
+        <tr><td>RQ1. 어떤 사건은 압축하지 않아야 하는가?</td><td>동일 backbone에서 raw/window/log-signature 비교</td><td>희귀사건 recall, calibration</td></tr>
+        <tr><td>RQ2. 토큰 압축과 상태 차원의 최적 배분은?</td><td>총 메모리·FLOP 고정 Pareto sweep</td><td>품질, p95, peak RSS</td></tr>
+        <tr><td>RQ3. operator modulation의 최소 범위는?</td><td>A/B/C/D/Δ factorial ablation</td><td>안정 margin, loss, latency</td></tr>
+        <tr><td>RQ4. 조건부 kernel이 길이 밖 일반화를 개선하는가?</td><td>훈련보다 긴 길이·새 timestep schedule</td><td>drift, extrapolation error</td></tr>
+        <tr><td>RQ5. client heterogeneity가 어떤 SSM 파라미터를 먼저 망가뜨리는가?</td><td>데이터·길이·정밀도 이질성 분리</td><td>norm growth, convergence gap</td></tr>
+        <tr><td>RQ6. 합성 안정성 지표가 실제 agent 성공을 예측하는가?</td><td>합성 LPV/state tracking과 장기 작업 공동 측정</td><td>상관, 실패 예측, 복구율</td></tr>
+        <tr><td>RQ7. 단말·클라이언트당 성공 작업 에너지는?</td><td>동일 양자화·thermal state·batch</td><td>J/success, 통신량, p95</td></tr>
+      </tbody></table></div>
+    </section>
+
+    <section class="part" id="part-8"><div class="part-band"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div><p class="part-no">PART 08 · APPROACHES (METHODS)</p><h2>세 연구의 방법과 결과를 조건까지 읽는다</h2>
+      <h3>A. LogSig-SSM: scan하기 전에 경로를 요약</h3><p><span class="claim author">저자 주장</span> 다중척도 windowed log-signature를 연결하고 선형 projection한 뒤 Mamba block에 입력한다. UEA, PPG-DaLiA, Weather, PhysioNet Sepsis의 네 범주에서 SSM·continuous-time baseline과 비교했다. EigenWorms(길이 17,984)에서 저자 표 기준 LogSig-SSM은 RTX 4090 한 장에서 1,000 training steps당 4초, 362MB, 정확도 95.3%를 기록했고 raw-input Mamba는 122초, 13,486MB, 70.9%였다. <a href="#ref-3">[3]</a></p>
+      <p>이는 약 30배 시간, 37배 메모리 차이라는 저자 요약의 근거다. 다만 모델 하이퍼파라미터와 token sequence 길이가 달라 <mark class="hl hl-blue" data-importance="보충" title="중요도 3 · 보충">Mamba kernel 자체의 동일조건 가속으로 읽으면 안 된다</mark>. 효율은 주로 scan 전 시퀀스 단축에서 온다. tokenization CPU 비용은 UEA에서 한 training run의 약 0.1–1.5%로 보고됐다.</p>
+      <h3>B. MaRK: 입력이 아니라 연산자를 조건화</h3><p><span class="claim author">저자 주장</span> 111M parameter frozen 23-layer Hydra-BERT SSM에 Hypernet, Chebyshev, DCT 세 adapter geometry를 적용한다. trainable auxiliary parameter는 6.3–11.0M이며, Chebyshev가 5개 validation corpus 평균 CART loss 2.55로 DCT 2.59와 Hypernet 3.77보다 낮았다. WikiText ablation에서는 Δ-only 3.92, A-only 3.44, B·C-only 3.06, full 2.55가 보고됐다. <a href="#ref-5">[5]</a></p>
+      <p>batch 8, sequence 4096, A100-SXM4-80GB에서 frozen Hydra 267.43ms 대비 Chebyshev 309.74ms(+15.8%)라는 저자 측정도 있다. 이 결과는 parameter efficiency와 bounded recurrence의 가능성을 보이지만, 대형 autoregressive LLM 또는 Mamba-3의 직접 검증은 아니다.</p>
+      <h3>C. Distributed selective SSM: 구조를 수렴식에 넣기</h3><p><span class="claim author">저자 주장</span> 단일·다층 selective SSM의 gradient/smoothness bound와 FedAvg/FedProx convergence bound를 도출하고, teacher SSM 합성 실험 및 여섯 text domain의 Mamba2 language modeling에서 9개 federated algorithm을 비교한다. <a href="#ref-6">[6]</a></p>
+      <p>초록 수준에서 핵심 기여는 수렴에 영향을 주는 recurrent stability, input-dependent discretization, state projection norm을 명시한 것이다. 다만 현재 공개본은 프리프린트이며, 정리의 가정이 실제 다층·저정밀·부분참여 환경을 얼마나 포괄하는지는 추가 검증이 필요하다.</p>
+    </section>
+
+    <section class="part" id="part-9"><div class="part-band"><i class="on"></i><i></i><i></i><i></i></div><p class="part-no">PART 09 · KEY APPLICATIONS</p><h2>센서 스트림에서 협업 엣지까지</h2>
+      <div class="table-wrap"><table><thead><tr><th>응용</th><th>유망한 구성</th><th>검증할 실패</th></tr></thead><tbody>
+        <tr><td>고주파 생체·설비 신호</td><td>다중척도 log-signature + selective SSM</td><td>희귀 spike 소실, irregular gap OOD</td></tr>
+        <tr><td>기상·환경 장기예측</td><td>경로 토큰 + 구조화 prior + 외부 증거</td><td>분포 이동, 물리 불일치</td></tr>
+        <tr><td>조건부 생성</td><td>bounded operator adapter + frozen backbone</td><td>timestep 밖 안정성, latency overhead</td></tr>
+        <tr><td>다기관·다단말 학습</td><td>architecture-aware aggregation</td><td>client drift, 상태 초기화 불일치</td></tr>
+        <tr><td>ETRI Physical AI</td><td>센서 요약 + 상태추적 + 증거 로그 + 협업학습</td><td>상태 오염·통신 단절·안전 개입</td></tr>
+      </tbody></table></div>
+      <p><span class="claim proposal">연구 제안</span> 로봇과 설비의 저수준 제어 신호를 무조건 토큰화하기보다, 안전 중요 이벤트는 원본 evidence buffer에 보존하고 정상 구간만 다중척도 경로 토큰으로 압축한다. 고수준 계획 상태는 SSM이 유지하되 불확실성이 커지면 원증거를 재조회한다. 저수준 폐루프 안전성은 별도 제어 검증 대상으로 둔다.</p>
+    </section>
+
+    <section class="part" id="part-10"><div class="part-band"><i class="on"></i><i class="on"></i><i></i><i></i></div><p class="part-no">PART 10 · OPEN PROBLEMS</p><h2>압축과 적응이 만든 새로운 감사 문제</h2>
+      <ul><li><b>과제별 기억 한계:</b> 어떤 log-signature depth와 window가 충분한지 사전에 알기 어렵다.</li><li><b>망각 위치 추적:</b> 오류가 tokenization, recurrent state, operator modulation 중 어디서 시작됐는지 구분해야 한다.</li><li><b>장기 session drift:</b> bounded operator라도 반복 조건화와 저정밀 계산에서 누적오차가 생길 수 있다.</li><li><b>증거 보존:</b> 압축 토큰만으로 원관측의 감사·재현·설명을 수행할 수 없다.</li><li><b>공정 비교:</b> 원시길이, 유효 token 수, 상태차원, precision, hardware, batch, 전처리 시간을 함께 공개해야 한다.</li><li><b>분산 보안:</b> 이질적 client의 poisoning과 상태 오염이 recurrent dynamics를 어떻게 증폭하는지 알려져 있지 않다.</li><li><b>한국어 전문업무:</b> 텍스트·센서가 섞인 장기 산업 로그에서 근거 회수와 상태추적을 동시에 재는 공개 benchmark가 부족하다.</li></ul>
+      <p><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">압축률보다 먼저 측정해야 할 것은 “무엇을 잃었는지 탐지하고 원증거로 돌아갈 수 있는가”다.</mark></p>
+    </section>
+
+    <section class="part" id="part-11"><div class="part-band"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div><p class="part-no">PART 11 · FUTURE DIRECTIONS</p><h2>적응형 기억 예산을 갖는 계층형 협업지능</h2>
+      <p><span class="claim proposal">창의적 연구 제안</span> 세 계층을 결합한 <b>evidence-preserving adaptive SSM</b>을 제안한다. 정상 구간은 multi-scale path token으로 압축하고, 충돌·희귀사건·불확실성 상승 시 token budget과 상태차원을 늘린다. operator modulation은 안정성 certificate 안에서만 허용하고, 중요한 원관측은 외부 증거 메모리에 시점·출처와 함께 보존한다.</p>
+      <div class="table-wrap"><table><thead><tr><th>단계</th><th>실험</th><th>통과 기준</th></tr></thead><tbody>
+        <tr><td>1 · 통제 합성</td><td>희귀사건·다중척도·regime shift의 압축/전이 분리</td><td>손실 위치 탐지, 길이 밖 안정성</td></tr>
+        <tr><td>2 · 동일조건 비교</td><td>동일 데이터·parameter·precision·hardware에서 raw/LogSig/operator adapter</td><td>quality–p95–RSS Pareto</td></tr>
+        <tr><td>3 · 분산 단말</td><td>client별 길이·sensor·quantization·local steps 변화</td><td>수렴 gap, 통신량, J/success</td></tr>
+        <tr><td>4 · 장애 주입</td><td>상태 오염·통신 단절·clock drift·센서 누락</td><td>탐지율, rollback, 복구시간</td></tr>
+        <tr><td>5 · 현장 실증</td><td>로봇·설비 주/월 단위 연속운영</td><td>근거 회수율, 오류복구율, 안전 개입</td></tr>
+      </tbody></table></div>
+      <p><span class="claim interpretation">최종 해석</span> 다음 연구 경쟁력은 “Mamba인가 attention인가”라는 이분법보다 <mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">정보를 압축하는 규칙, 상태를 바꾸는 규칙, 여러 장치가 함께 학습하는 규칙을 하나의 검증 가능한 시스템으로 만드는 능력</mark>에서 갈릴 가능성이 크다. LFM 계열에도 유사한 평가축은 적용할 수 있지만, 구조 적용 여부는 별도의 공식 근거와 실험으로 확인해야 한다.</p>
+    </section>
+
+    <section class="references" id="references"><p class="part-no">PRIMARY SOURCES &amp; LIMITATIONS</p><h2>출처 URL과 검토 경계</h2><p class="scope">실행일 이후 자료는 포함하지 않았다. arXiv 최초 공개일과 학회 공식 목록을 분리했다. NeurIPS 목록 등재는 채택 확인에 사용했으며, 실험 수치는 논문 저자 보고다. 기업 모델카드와 블로그는 이번 업데이트의 학술 근거로 사용하지 않았다.</p>
+      <div class="ref" id="ref-1"><b>[1] LFM and Mamba: Memory, State Tracking, and Efficient Edge Intelligence</b><small>기존 종합 글 · 2026-10-08</small><a href="https://sungsoo.github.io/2026/10/08/lfm-mamba-memory-state-edge-intelligence.html">https://sungsoo.github.io/2026/10/08/lfm-mamba-memory-state-edge-intelligence.html</a></div>
+      <div class="ref" id="ref-2"><b>[2] New Bounds for Mamba and Efficient Sequence Models</b><small>기존 후속 글 · 2026-10-09</small><a href="https://sungsoo.github.io/2026/10/09/long-memory-cost-mamba-sequence-models.html">https://sungsoo.github.io/2026/10/09/long-memory-cost-mamba-sequence-models.html</a></div>
+      <div class="ref" id="ref-3"><b>[3] LogSig-SSM: Time-Series Modelling with Multi-Scale Log-Signature Compression for State-Space Models</b><small>arXiv:2610.05051 · v1 최초 공개 2026-10-04 · NeurIPS 2026 공식 목록 확인 · 개정 없음</small><a href="https://arxiv.org/abs/2610.05051">https://arxiv.org/abs/2610.05051</a></div>
+      <div class="ref" id="ref-4"><b>[4] NeurIPS 2026 Downloads</b><small>학회 공식 이벤트 목록 · LogSig-SSM 및 MaRK 제목 확인 · 실행일 확인</small><a href="https://neurips.cc/Downloads/2026">https://neurips.cc/Downloads/2026</a></div>
+      <div class="ref" id="ref-5"><b>[5] MaRK: Markov-adapted Recurrent Kernels for Dynamic Operator Conditioning in State Space Models</b><small>arXiv:2610.09092 · v1 최초 공개 2026-10-06 · NeurIPS 2026 공식 목록 확인 · 개정 없음</small><a href="https://arxiv.org/abs/2610.09092">https://arxiv.org/abs/2610.09092</a></div>
+      <div class="ref" id="ref-6"><b>[6] Distributed Learning with Selective State Space Models: Architecture-Aware Convergence Analysis</b><small>arXiv:2610.02659 · v1 최초 공개 2026-10-02 · 정식 학회 발표 확인 안 됨</small><a href="https://arxiv.org/abs/2610.02659">https://arxiv.org/abs/2610.02659</a></div>
+      <div class="ref" id="ref-7"><b>[7] Mamba-2: Transformers are SSMs — Generalized Models and Efficient Algorithms Through Structured State Space Duality</b><small>배경 논문 · 최초 공개 2024-05-31 · ICML 2024</small><a href="https://proceedings.mlr.press/v235/dao24a.html">https://proceedings.mlr.press/v235/dao24a.html</a></div>
+    </section>
+  </article>
+  <footer class="footer">SUNGSOO KIM'S BLOG · FOUNDATION MODELS / MACHINE LEARNING · PUBLISHED 2026-10-12 KST<br>확인된 사실, 저자 주장, 편집 해석, 창의적 연구 제안을 구분했습니다.</footer>
+</main>
+</body>
+</html>
