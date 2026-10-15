@@ -1,0 +1,148 @@
+---
+layout: null
+title: "Quantizing Mamba State Without Losing the Future"
+date: 2026-10-15
+categories: [artificial intelligence]
+tags: [foundation models, machine learning]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Quantizing Mamba State Without Losing the Future</title>
+  <meta name="description" content="Mamba와 선형 attention의 반복 상태 양자화에서 scale-state feedback, 노출 지평, 정적 token-group PTQ와 실제 엣지 지연을 함께 분석한다.">
+  <link rel="canonical" href="https://sungsoo.github.io/2026/10/15/mamba-recurrent-state-quantization-feedback.html">
+  <meta property="og:type" content="article"><meta property="og:title" content="Quantizing Mamba State Without Losing the Future"><meta property="og:url" content="https://sungsoo.github.io/2026/10/15/mamba-recurrent-state-quantization-feedback.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;family=Spectral:ital,wght@0,400;0,700;1,400&amp;family=IBM+Plex+Sans+KR:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;600&amp;display=swap" rel="stylesheet">
+  <style>
+  .research-essay{--paper:#edf0f4;--paper2:#f7f9fb;--paper-2:var(--paper2);--ink:#10151f;--ink2:#2a3243;--muted:#5d6879;--hair:#c6cfda;--b1:#a63446;--b2:#c2681c;--b3:#8e7a12;--b4:#2f7a55;--b5:#1e6e8c;--b6:#35509b;--b7:#6b3f9e;--hue:var(--b6);--disp:"Gowun Batang","Spectral","Batang",serif;--lat:"Spectral",Georgia,serif;--body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.86 var(--body);letter-spacing:-.012em;word-break:keep-all;overflow-wrap:anywhere}.research-essay *,.research-essay *::before,.research-essay *::after{box-sizing:border-box}.essay-shell{max-width:1180px;margin:auto;padding-inline:28px}.essay-hero{padding:72px 0 18px}h1,h2,h3{font-family:var(--disp);font-weight:700;letter-spacing:-.03em}h1{font-size:clamp(34px,5.2vw,59px);line-height:1.17;margin:0 0 20px}h2{font-size:clamp(29px,4.2vw,44px);line-height:1.26}h3{font-size:clamp(23px,2.6vw,27px);line-height:1.4}p{margin:0 0 18px}.essay-subtitle{font:italic 400 clamp(17px,2vw,23px)/1.5 var(--lat);color:var(--muted)}.essay-lede{font:400 clamp(20px,2.5vw,23px)/1.72 var(--disp)}.eyebrow,.part-no,.meta{font:600 12px/1.6 var(--mono);letter-spacing:.11em;color:var(--hue)}a{color:var(--b6);text-underline-offset:3px}:focus-visible{outline:3px solid var(--b6);outline-offset:4px}code,pre{font-family:var(--mono)}
+  .opening-summary-diagram{max-width:1100px;margin:2rem auto 1.5rem;color:var(--ink)}.opening-summary-diagram .diagram-viewport{max-width:100%;overflow-x:auto;border:1px solid var(--hair);background:var(--paper2);padding:18px}.opening-summary-diagram svg{display:block;width:100%;height:auto;min-width:860px;font-family:var(--body)}.opening-summary-diagram figcaption,.diagram-summary{margin:.8rem 0 0;font-size:.85rem;line-height:1.75;color:var(--muted)}
+  mark.hl{--hl-color:rgba(255,221,74,.42);display:inline;color:inherit;background-color:transparent;background-image:linear-gradient(176deg,transparent 0 56%,var(--hl-color) 56% 89%,transparent 89% 100%);padding:0 .06em;font:inherit;line-height:inherit;border:0;border-radius:0;box-shadow:none;-webkit-box-decoration-break:clone;box-decoration-break:clone}mark.hl-pink{--hl-color:rgba(255,126,166,.38)}mark.hl-yellow{--hl-color:rgba(255,221,74,.42)}mark.hl-blue{--hl-color:rgba(91,169,255,.32)}mark.hl-green{--hl-color:rgba(81,196,143,.30)}.hl-legend{display:flex;flex-wrap:wrap;align-items:baseline;gap:.55rem 1rem;margin:1.5rem 0;font-size:.82rem;line-height:1.8}.hl-legend-label{font-weight:600}.hl-legend small{flex-basis:100%}
+  .topbar{display:flex;justify-content:space-between;gap:20px;padding:20px 0;border-bottom:1px solid var(--hair);font-size:13px}.topbar a{text-decoration:none}.article-meta{font:12px/1.7 var(--mono);color:var(--muted);margin:22px 0}.abstract,.part,.references{max-width:920px;margin:auto}.abstract{padding:34px 0}.part{padding:52px 0 14px;border-top:1px solid var(--hair);margin-top:26px}.part-band{display:flex;gap:4px;margin-bottom:18px}.part-band i{flex:1;height:3px;background:var(--hair)}.part-band .on{background:var(--hue)}.part h2{margin:14px 0 28px}.part h3{margin:30px 0 14px}.toc{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;border-block:1px solid var(--hair);padding:24px 0;margin:20px 0 40px;font-size:14px}.toc a{text-decoration:none}.note{padding:22px;border-left:3px solid var(--b6);background:var(--paper2);margin:24px 0;font-size:15px}.equation{font:16px/1.9 var(--mono);background:var(--paper2);border:1px solid var(--hair);padding:22px;overflow:auto;text-align:center;margin:24px 0}.table-wrap{overflow:auto;max-width:100%;margin:25px 0}table{width:100%;border-collapse:collapse;font-size:15px;line-height:1.7}th,td{padding:14px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--hair);min-width:128px}th{background:#e0e6ee;color:#14202e;font-weight:600}.claim{display:inline-block;font:600 11px/1.6 var(--mono);letter-spacing:.05em;padding:2px 7px;margin-right:5px;border:1px solid var(--hair);background:var(--paper2)}.claim.fact{border-color:#1e6e8c}.claim.author{border-color:#b88627}.claim.interpretation{border-color:#35509b}.claim.proposal{border-color:#2f7a55}.triad{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:26px 0}.triad>div{background:var(--paper2);border:1px solid var(--hair);padding:20px}.triad b{display:block;font-family:var(--disp);font-size:20px;margin-bottom:8px}.references{padding:56px 0}.ref{padding:17px 0;border-bottom:1px solid var(--hair);font-size:14px}.ref small{display:block;color:var(--muted)}.ref a{overflow-wrap:anywhere}.scope{color:var(--muted);font-size:15px}.footer{border-top:1px solid var(--hair);padding:25px 0 50px;font-size:13px;color:var(--muted)}ul,ol{padding-left:1.3em}li{margin-bottom:10px}
+  @media(max-width:650px){.research-essay{font-size:16px}.essay-shell{padding-inline:19px}.essay-hero{padding-top:42px}.toc,.triad{grid-template-columns:1fr}.equation{font-size:14px;padding:15px}.topbar{font-size:12px}.opening-summary-diagram{margin-inline:0}th,td{min-width:145px;padding:11px}}@media print{.research-essay{background:white}.topbar,.toc{display:none}.diagram-viewport,.table-wrap{overflow:visible}.opening-summary-diagram svg{min-width:0}mark.hl{-webkit-print-color-adjust:exact;print-color-adjust:exact}}@media(forced-colors:active){mark.hl{background-image:none;text-decoration:underline;text-underline-offset:.15em}}
+  </style>
+</head>
+<body class="research-essay">
+<main class="essay-shell">
+  <div class="topbar"><a href="https://sungsoo.github.io">SUNGSOO KIM · RESEARCH ESSAYS</a><a href="#references">출처와 검증 범위</a></div>
+  <article>
+    <header class="essay-hero">
+      <div class="eyebrow">MAMBA · RECURRENT-STATE QUANTIZATION · EDGE INFERENCE</div>
+      <h1>4비트 상태는 처음에는 기억한다.<br>문제는 천 토큰 뒤다.</h1>
+      <p class="essay-subtitle">Scale–State Feedback, Exposure Horizons, and Static Token-Group Quantization</p>
+      <div class="article-meta">2026-10-15 KST · 신규 연구 종합 · arXiv v1 및 NeurIPS 2026 기록 확인</div>
+    </header>
+
+    <figure class="opening-summary-diagram" aria-labelledby="quant-overview-caption">
+      <div class="diagram-viewport" role="region" aria-label="반복 상태 양자화의 두 실패 메커니즘과 검증 경로" tabindex="0">
+        <svg viewBox="0 0 1040 570" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="quant-overview-title quant-overview-desc">
+          <title id="quant-overview-title">반복 상태와 선택적 스캔의 양자화 설계</title>
+          <desc id="quant-overview-desc">시간축 반복 상태에서는 현재 상태로부터 다시 계산한 동적 스케일이 오차와 상호작용하고, 공간축 선택적 스캔에서는 토큰별 활성 범위가 달라진다. 전자는 스케일을 상태에서 분리하고 노출 지평을 검증하며, 후자는 스캔 전 예측기로 정적 그룹 범위를 선택한다. 최종 평가는 정확도와 실제 지연을 함께 본다.</desc>
+          <defs><marker id="quant-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10" fill="#35509b"/></marker></defs>
+          <g fill="#f7f9fb" stroke="#c6cfda" stroke-width="1.5"><rect x="35" y="48" width="290" height="150"/><rect x="375" y="48" width="290" height="150"/><rect x="715" y="48" width="290" height="150"/><rect x="95" y="278" width="380" height="120"/><rect x="565" y="278" width="380" height="120"/><rect x="140" y="475" width="220" height="60"/><rect x="410" y="475" width="220" height="60"/><rect x="680" y="475" width="220" height="60"/></g>
+          <g fill="none" stroke="#35509b" stroke-width="2" marker-end="url(#quant-arrow)"><path d="M180 198V238H285V278"/><path d="M520 198V238H285V278"/><path d="M860 198V238H755V278"/><path d="M520 198V238H755V278"/><path d="M285 398V438H250V475"/><path d="M755 398V438H520V475"/><path d="M755 398V438H790V475"/></g>
+          <g fill="#10151f" text-anchor="middle"><text x="180" y="80" font-family="IBM Plex Mono,monospace" font-size="14" fill="#5d6879">RECURRENT EXPOSURE</text><text x="180" y="119" font-size="22">매 step 재양자화</text><text x="180" y="153" font-size="17">오차가 다음 상태로 재진입</text><text x="180" y="180" font-size="15" fill="#5d6879">decode horizon H</text><text x="520" y="80" font-family="IBM Plex Mono,monospace" font-size="14" fill="#5d6879">SCALE–STATE FEEDBACK</text><text x="520" y="119" font-size="22">상태 ↔ 스케일</text><text x="520" y="153" font-size="17">동적 적응이 폐루프를 형성</text><text x="520" y="180" font-size="15" fill="#5d6879">norm runaway + resolution loss</text><text x="860" y="80" font-family="IBM Plex Mono,monospace" font-size="14" fill="#5d6879">TOKEN HETEROGENEITY</text><text x="860" y="119" font-size="22">선택적 스캔</text><text x="860" y="153" font-size="17">토큰별 범위가 달라짐</text><text x="860" y="180" font-size="15" fill="#5d6879">spatial activation ranges</text><text x="285" y="316" font-family="IBM Plex Mono,monospace" font-size="14" fill="#35509b">TEMPORAL CONTAINMENT</text><text x="285" y="349" font-size="20">persistent scale · cap · reset</text><text x="285" y="378" font-size="16" fill="#5d6879">상태에서 스케일을 분리하고 H를 보고</text><text x="755" y="316" font-family="IBM Plex Mono,monospace" font-size="14" fill="#35509b">STATIC TOKEN GROUPS</text><text x="755" y="349" font-size="20">pre-scan predictor · fixed tables</text><text x="755" y="378" font-size="16" fill="#5d6879">동적 통계 없이 그룹별 clipping</text><text x="250" y="512" font-size="17">정확 회수 + NLL</text><text x="520" y="512" font-size="17">p95 · peak memory</text><text x="790" y="512" font-size="17">실장치 latency · Joule</text></g>
+        </svg>
+      </div>
+      <figcaption id="quant-overview-caption">핵심 종합 · 시간축 반복 오차와 공간축 범위 이질성은 같은 “양자화” 아래 있지만 서로 다른 실패다. 왼쪽 경로는 언어모델의 recurrent state, 오른쪽 경로는 Vision Mamba의 activation PTQ를 다룬다.</figcaption>
+      <p class="diagram-summary">다이어그램의 합류점은 하나의 만능 기법이 아니라 공통 평가 계약이다. 비트 수만 보고하지 말고, 양자화 노출 길이·정확도·실제 장치 비용을 함께 보고해야 한다.</p>
+    </figure>
+
+    <section class="abstract">
+      <p class="essay-lede">고정 크기 상태는 KV cache의 길이 성장을 피하지만, 그 상태를 낮은 정밀도로 반복 갱신하면 양자화기가 동역학의 일부가 된다. 이때 “현재 값에 잘 맞는” 동적 스케일이 장기적으로는 가장 위험할 수 있다.</p>
+      <p><mark class="hl hl-pink" data-importance="최우선">이번 신규 근거의 핵심은 비트 수보다 양자화 노출 지평 <i>H</i>와 스케일–상태 폐루프가 실패를 결정한다는 것</mark>이다. 별도의 NeurIPS 2026 논문은 Vision Mamba에서 선택적 스캔이 토큰별 활성 범위 차이를 키우며, 실행 중 통계 대신 스캔 전 정적 예측을 써야 정확도와 가속을 함께 얻을 수 있음을 보인다. <a href="#ref-1">[1]</a> <a href="#ref-2">[2]</a></p>
+      <div class="note"><strong>검증 범위.</strong> 첫 논문은 2026-10-10 투고된 단독저자 arXiv v1이며 NeurIPS 2026 비정규 워크숍의 확장판이다. 두 번째는 2026-10-12 투고되고 NeurIPS 2026 정식 논문으로 표기된 연구다. 수치는 모두 저자 보고이며 이 글에서 독립 재현하지 않았다. LFM은 Liquid AI의 모델군이고 Mamba는 선택적 SSM 아키텍처이므로, 아래 Mamba 결과를 LFM2 전체에 소급하지 않는다.</div>
+      <aside class="hl-legend" aria-label="내용 중요도 색상 안내"><span class="hl-legend-label">내용 중요도</span><mark class="hl hl-pink">1 · 최우선</mark><mark class="hl hl-yellow">2 · 핵심</mark><mark class="hl hl-blue">3 · 보충</mark><mark class="hl hl-green">4 · 참고</mark><small>색상은 편집상 중요도이며 근거의 검증 수준을 뜻하지 않습니다.</small></aside>
+      <nav class="toc" aria-label="글 목차"><a href="#part-1">01 · Definition</a><a href="#part-2">02 · Problem Definition</a><a href="#part-3">03 · Core Concepts</a><a href="#part-4">04 · Introduction</a><a href="#part-5">05 · Motivation and Background</a><a href="#part-6">06 · Challenges</a><a href="#part-7">07 · Research Questions</a><a href="#part-8">08 · Approaches (Methods)</a><a href="#part-9">09 · Key Applications</a><a href="#part-10">10 · Open Problems</a><a href="#part-11">11 · Future Directions</a></nav>
+    </section>
+
+    <section class="part" id="part-1"><div class="part-band"><i class="on"></i><i></i><i></i><i></i></div><p class="part-no">PART 01 · DEFINITION</p><h2>반복 상태 양자화는 저장 압축이 아니라 폐루프 수치 동역학이다</h2>
+      <p><span class="claim fact">확인된 사실</span> 일반적인 weight quantization은 고정된 텐서를 낮은 정밀도로 근사한다. recurrent-state quantization은 매 token마다 상태를 읽고 갱신한 뒤 다시 양자화한다. 그러므로 이전 step의 반올림·clipping 오차가 다음 step의 입력이 된다.</p>
+      <div class="equation">h<sub>t</sub> = Ā<sub>t</sub> Q(h<sub>t−1</sub>; s<sub>t−1</sub>) + B̄<sub>t</sub>x<sub>t</sub><br>s<sub>t</sub> = g(h<sub>t</sub>) &nbsp; 또는 &nbsp; s<sub>t</sub> = s<sub>calibrated</sub></div>
+      <p>동적 방식은 현재 상태에서 scale <i>s<sub>t</sub></i>를 계산한다. 상태가 오차로 커지면 scale도 커지고, 커진 scale은 작은 성분의 해상도를 낮춰 다시 상태를 바꾼다. 이것이 <strong>scale–state feedback</strong>이다. 반대로 persistent scaling은 calibration에서 정한 scale을 유지해 이 feedback edge를 끊는다.</p>
+      <p><mark class="hl hl-green" data-importance="참고">선택성은 입력마다 기억·망각·쓰기·읽기를 조절한다는 뜻이지, 추론 중 가중치를 학습한다는 뜻이 아니다</mark>. 또한 fixed-size state는 메모리 크기가 길이에 독립이라는 뜻이며 무한한 과거를 완전 보존한다는 보장은 아니다.</p>
+    </section>
+
+    <section class="part" id="part-2"><div class="part-band"><i class="on"></i><i class="on"></i><i></i><i></i></div><p class="part-no">PART 02 · PROBLEM DEFINITION</p><h2>품질·지연·에너지 제약에 “노출 지평”을 추가한다</h2>
+      <p>공통 목표는 긴 이력을 유지하면서 정확도와 처리 효율을 확보하는 것이다. 그러나 저정밀 recurrent model에서는 같은 INT4라도 상태가 몇 step 동안 반복 양자화되었는지에 따라 전혀 다른 모델이 된다.</p>
+      <div class="equation">maximize Q(task, recall, tracking, calibration)<br>subject to latency<sub>p95</sub> ≤ ℓ, memory<sub>peak</sub> ≤ M, energy/success ≤ E,<br>ΔNLL(H) ≤ ε, state-value(H) &gt; zero-state, H ≥ H<sub>deployment</sub></div>
+      <p><span class="claim interpretation">편집 해석</span> 배포 승인 질문은 “INT4가 되는가?”가 아니라 <mark class="hl hl-yellow" data-importance="핵심">“목표 세션 길이까지 INT4 상태가 무상태 기준보다 여전히 가치가 있는가?”</mark>여야 한다. Vision Mamba에서는 여기에 static compilation 가능성과 runtime statistics 부재가 제약으로 추가된다.</p>
+    </section>
+
+    <section class="part" id="part-3"><div class="part-band"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div><p class="part-no">PART 03 · CORE CONCEPTS</p><h2>세 개의 축을 분리해야 실패가 보인다</h2>
+      <div class="triad"><div><b>Exposure horizon H</b>상태가 낮은 정밀도로 덮어써진 연속 step 수. 전체 context 길이와 같을 수도, reset·prefill 정책 때문에 다를 수도 있다.</div><div><b>Containment vs. location</b>scale feedback을 제한하는 것과 outlier 위치를 찾는 것은 다른 전략이다. 반복 상태에서는 전자가 더 근본적일 수 있다.</div><div><b>Temporal vs. spatial</b>언어 SSM의 시간 누적 오차와 Vision Mamba의 공간 토큰별 범위 이질성은 원인·평가법·해법이 다르다.</div></div>
+      <p><span class="claim fact">확인된 사실</span> 표준 full attention은 prefill 연산이 문맥 길이에 대해 이차적이고 KV cache가 선형 증가하며, decode 한 token의 attention은 이력 길이에 선형이다. 순수 고정상태 SSM은 총 scan 연산이 선형이고 recurrent state 크기가 길이에 독립적이다. 하지만 상태를 매 token 읽고 쓰는 비용과 양자화 누적 오차는 남는다.</p>
+      <p>LFM2는 입력 의존 gate를 가진 단거리 convolution과 일부 GQA를 결합한다. GQA는 KV cache 계수를 줄이지만 길이에 대한 선형 의존을 없애지 않는다. <mark class="hl hl-green" data-importance="참고">LFM = LTC = LNN = Mamba라는 동일시는 잘못이며, 모든 LFM 세대에 LFM2 구조를 소급할 수도 없다</mark>.</p>
+    </section>
+
+    <section class="part" id="part-4"><div class="part-band"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div><p class="part-no">PART 04 · INTRODUCTION</p><h2>짧은 benchmark가 안전한 bit-width를 과대평가한다</h2>
+      <p><span class="claim author">저자 보고</span> “When Dynamic Scaling Fails”에서 per-token dynamic INT4는 quantized exposure <i>H=0</i>에서 합성 needle recall을 완전히 유지하지만, GDN-0.8B는 <i>H=1024</i>에서 0.08, <i>H=2048</i>에서 0이 된다. Mamba-2-1.3B는 더 늦게 무너지지만 INT4 recall이 <i>H=1024</i> 1.00에서 <i>H=2048</i> 0.33으로 떨어진다. 12개 seed 기준이며, Mamba-2의 full-precision 자체도 <i>H=8192</i>에서는 probe를 풀지 못한다. <a href="#ref-1">[1]</a></p>
+      <p>더 중요한 점은 retrieval probe가 기능 손상을 늦게 본다는 것이다. 사실 하나를 회수해도 자연문장 NLL은 크게 나빠질 수 있다. <mark class="hl hl-pink" data-importance="최우선">“기억했다”와 “좋은 언어모델로 남아 있다”는 같은 검사가 아니다</mark>.</p>
+      <p><span class="claim interpretation">편집 해석</span> 효율적 sequence model 연구의 중심이 연산자 복잡도에서 기억 회수·상태 추적·수치 안정성·커널 및 하드웨어 공동 설계로 이동하고 있다. 이번 두 논문은 그 이동을 시간축과 공간축에서 각각 보여준다.</p>
+    </section>
+
+    <section class="part" id="part-5"><div class="part-band"><i class="on"></i><i></i><i></i><i></i></div><p class="part-no">PART 05 · MOTIVATION AND BACKGROUND</p><h2>고정 상태가 작아도, 정밀도와 traffic은 공짜가 아니다</h2>
+      <p>긴 decode에서 recurrent state는 순수 SSM의 전체 cache이며, hybrid model에서도 moderate context와 큰 batch에서 무시하기 어렵다. 첫 논문이 든 예에서 Mamba-2-1.3B state는 96MB이고 attention layer가 없어 모든 길이에서 cache 전체를 차지한다. Qwen3.5-0.8B의 recurrent state는 18MB이며, attention KV와 합친 cache 중 비중은 2K에서 43%, 8K에서 16%, 32K에서 4.5%로 줄어든다. 모델·dtype·batch에 따라 절대치는 달라진다.</p>
+      <p>한편 이미지 복원에서는 선택적 스캔 뒤 activation range가 공간 token마다 크게 다르다. 하나의 layer-wide clipping range는 작은 범위 token에 해상도를 낭비하거나 큰 응답을 잘라낸다. 실행 중 post-scan 통계를 쓰면 그룹은 좋아지지만 같은 block을 먼저 관찰하고 다시 실행해야 하므로 저비트 가속이 사라질 수 있다.</p>
+      <p><mark class="hl hl-blue" data-importance="보충">공통 동기는 압축률 자체가 아니라 모델 내부 상태의 역할을 보존하면서 메모리 traffic과 실장치 시간을 줄이는 것</mark>이다.</p>
+    </section>
+
+    <section class="part" id="part-6"><div class="part-band"><i class="on"></i><i class="on"></i><i></i><i></i></div><p class="part-no">PART 06 · CHALLENGES</p><h2>수치 안정, 기능 보존, 하드웨어 실현 가능성은 서로 다르다</h2>
+      <div class="table-wrap"><table><thead><tr><th>난제</th><th>왜 어려운가</th><th>새 근거가 보여준 것</th></tr></thead><tbody><tr><td>feedback runaway</td><td>상태 오차가 scale을 키우고 큰 scale이 해상도를 더 잃게 한다.</td><td>GDN에서는 state norm이 2–3 orders 커졌지만 Mamba-2는 1.8–1.9×였다. 심각도는 architecture-dependent다.</td></tr><tr><td>안정 ≠ 정확</td><td>norm을 묶어도 낮은 bit resolution 손실은 남는다.</td><td>full-precision scale에 yoke해 폭주를 없애도 손실 5.4 nats 중 1.8만 회복됐다.</td></tr><tr><td>recall ≠ language quality</td><td>needle 회수는 분포 전체의 손상을 보지 못한다.</td><td>짧은 H에서 recall이 완전해도 자연문장 NLL은 장기 노출에서 악화됐다.</td></tr><tr><td>범위 이질성</td><td>선택적 스캔 뒤 token별 clipping 최적점이 달라진다.</td><td>MambaIRv2-Light 20개 ASSM 중 18개에서 variation 증가, 평균 1.80×.</td></tr><tr><td>oracle의 실행비용</td><td>post-scan 그룹을 정하려면 관찰 pass와 통계 kernel이 필요하다.</td><td>정확도 상한인 oracle은 A6000에서 FP16보다 느렸고 Orin에서 사실상 동률이었다.</td></tr><tr><td>저자 보고의 한계</td><td>소규모 seed·특정 모델·fake quantization이 일반화를 제한한다.</td><td>GDN/Mamba-2 언어실험과 SR/Vision 실험은 직접 비교할 수 없다.</td></tr></tbody></table></div>
+      <p><mark class="hl hl-yellow" data-importance="핵심">“폭주를 막았다”는 곧 “정보를 보존했다”가 아니며, “정확도를 회복했다”는 곧 “실장치에서 빨라졌다”가 아니다</mark>.</p>
+    </section>
+
+    <section class="part" id="part-7"><div class="part-band"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div><p class="part-no">PART 07 · RESEARCH QUESTIONS</p><h2>비트 수를 넘어 검증 가능한 질문으로 바꾼다</h2>
+      <ol><li>동일한 memory budget에서 어떤 layer·channel·state mode를 우선 보호해야 하는가?</li><li>scale–state feedback의 onset을 online norm, entropy, clipping rate, NLL proxy로 조기 탐지할 수 있는가?</li><li>architecture마다 persistent single scale과 group-wise scale의 우열이 바뀌는 조건은 무엇인가?</li><li>training-free fake quantization에서 관찰한 실패가 실제 integer kernel과 end-to-end task에서 얼마나 재현되는가?</li><li>Vision Mamba의 pre-scan feature가 post-scan quantization regime을 예측하는 최소 표현은 무엇인가?</li><li>한국어 장문 생성·도구사용 agent·센서 stream에서 합성 recall과 실제 성공률의 관계는 무엇인가?</li><li>성공 작업당 Joule, p95 latency, state-value horizon, 근거 회수율, 오류 복구율을 한 protocol에서 비교할 수 있는가?</li></ol>
+    </section>
+
+    <section class="part" id="part-8"><div class="part-band"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div><p class="part-no">PART 08 · APPROACHES (METHODS)</p><h2>시간축은 feedback을 끊고, 공간축은 oracle을 정적으로 근사한다</h2>
+      <h3>A. Scale–state feedback 실험</h3>
+      <p><span class="claim author">저자 방법</span> Qwen3.5 GDN 0.8B·2B와 Mamba-2 1.3B에서 recurrent state만 training-free fake quantization하고, 나머지는 full precision으로 둔다. natural continuation의 excess NLL, NIAH recall, state norm, zero-state control을 <i>H</i>에 따라 측정한다. scale yoking, cap, periodic reset, persistent static/group-wise scale로 causal intervention을 구성한다.</p>
+      <div class="table-wrap"><table><thead><tr><th>H=2048 정책</th><th>GDN-0.8B ΔNLL</th><th>GDN-2B ΔNLL</th><th>Mamba-2-1.3B ΔNLL</th></tr></thead><tbody><tr><td>per-token dynamic INT4</td><td>5.39</td><td>6.21</td><td>7.22</td></tr><tr><td>persistent static INT4</td><td>4.82</td><td>4.08</td><td>2.55</td></tr><tr><td>zero-state control</td><td>3.05</td><td>4.08</td><td>3.19</td></tr><tr><td>persistent group-wise INT4</td><td>2.05</td><td>2.15</td><td>2.70</td></tr></tbody></table></div>
+      <p><span class="claim author">저자 보고</span> 16개 독립 문서, single batch 결과다. dynamic INT4는 세 모델 모두 zero-state보다 나빴다. group-wise는 두 GDN에서 유리했지만 Mamba-2에서는 single persistent scale보다 0.16 nat 나쁘고 modeled rate도 4.0에서 5.0 bit/element로 늘었다. 즉 “group-wise가 항상 우월”하지 않다. <a href="#ref-1">[1]</a></p>
+      <p>GDN-0.8B의 7개 33,024-token concatenated context에서 group-wise INT4와 zero-state의 차이는 H=2048에 1.23 nat였으나 32K에서 0이 됐다. <mark class="hl hl-pink" data-importance="최우선">32K에서는 상태를 유지한 비용을 냈지만, 버린 상태보다 정보 가치가 더 남지 않았다</mark>. 다만 이 장기 32K 실험은 Mamba-2에서 동일하게 재현되지 않았다.</p>
+
+      <h3>B. Token-Group Quantization</h3>
+      <p><span class="claim author">저자 방법</span> calibration 때 post-scan activation descriptor를 K-means해 quantization regime pseudo-label을 만든다. inference 때는 quantized scan 이전 feature를 두 층 FFN이 읽어 group을 예측하고, layer·site·group별로 고정된 clipping-bound table을 선택한다. runtime statistics, dynamic clipping update, post-scan assignment가 없다. FPR은 full-precision teacher와 quantized student 출력의 Fourier amplitude와 phase를 함께 맞춘다.</p>
+      <div class="equation">L = L<sub>pixel</sub> + λ<sub>feat</sub>L<sub>feat</sub> + λ<sub>FPR</sub>[‖|Y|−|Ŷ|‖<sub>1</sub>/2 + ‖wrap(∠Y−∠Ŷ)‖<sub>1</sub>/2]</div>
+      <div class="table-wrap"><table><thead><tr><th>MambaIRv2-Light ×2, W4A4</th><th>Set14 PSNR/SSIM</th><th>Urban100 PSNR/SSIM</th><th>실행 특성</th></tr></thead><tbody><tr><td>layer-wise PTQ</td><td>32.45 / 0.9056</td><td>30.34 / 0.9107</td><td>static</td></tr><tr><td>post-scan oracle</td><td>33.41 / 0.9176</td><td>31.57 / 0.9253</td><td>두 pass·runtime 통계</td></tr><tr><td>predicted groups</td><td>33.24 / 0.9149</td><td>31.34 / 0.9204</td><td>한 pass·fixed tables</td></tr></tbody></table></div>
+      <p><span class="claim author">저자 보고</span> 96개 LR calibration patch, 기본 K=8, clipping-bound refinement 3,000 iteration, batch 8, RTX A6000 3장 조건이다. full pipeline 5 seed 표준편차는 W4A4에서 0.03dB 미만, W2A2에서 0.05dB 미만으로 보고됐다. predicted groups는 oracle gain의 Set14 82.3%, Urban100 81.3%를 회복했다. <a href="#ref-2">[2]</a></p>
+      <div class="table-wrap"><table><thead><tr><th>Set5, batch 1</th><th>FP16</th><th>4-bit oracle</th><th>4-bit base</th><th>4-bit proposed</th></tr></thead><tbody><tr><td>RTX A6000</td><td>180.7ms (1.00×)</td><td>254.5ms (0.71×)</td><td>102.7ms (1.76×)</td><td>106.2ms (1.70×)</td></tr><tr><td>Jetson Orin Nano</td><td>3149.6ms (1.00×)</td><td>3213.9ms (0.98×)</td><td>1380.1ms (2.28×)</td><td>1410.7ms (2.23×)</td></tr></tbody></table></div>
+      <p>timing은 image마다 5회 warm-up, 10회 반복 평균이며 graph construction은 제외하고 predictor·lookup·quant/dequant·저비트 linear 실행은 포함한다. 저자들은 grouped path의 base 대비 overhead를 A6000 3.4%, Orin 2.2%로 보고한다. 이는 저자 구현·Set5·batch 1 조건의 결과이지 모든 NPU/해상도에서의 보편적 속도 우위가 아니다.</p>
+    </section>
+
+    <section class="part" id="part-9"><div class="part-band"><i class="on"></i><i></i><i></i><i></i></div><p class="part-no">PART 09 · KEY APPLICATIONS</p><h2>장문맥 서빙과 엣지 비전은 같은 평가 철학을 공유한다</h2>
+      <div class="triad"><div><b>Long-decode LLM</b>순수 SSM·linear attention·hybrid LLM에서 session 길이에 맞춘 state precision, reset, containment policy 설계.</div><div><b>On-device vision</b>초해상도·복원·분류에서 static low-bit kernel과 token-adaptive clipping을 결합한 single-pass inference.</div><div><b>Streaming Physical AI</b>센서 상태 추적에서 장기 drift를 감시하고, 위험 징후 token의 정밀도·외부 증거 회수를 선택적으로 증대.</div></div>
+      <p><span class="claim proposal">연구 제안</span> ETRI/Physical AI에서는 설비 로그·카메라·음향 stream마다 <i>state exposure counter</i>와 정밀도 이력을 기록하고, drift threshold를 넘으면 state reset이 아니라 high-precision replay 또는 외부 evidence memory로 복구하는 계층형 정책을 검증할 수 있다.</p>
+      <p>로봇 고수준 계획과 운영지능에는 유망하지만 low-level control 안전성은 별도 검증 대상이다. 양자화 상태의 지연된 붕괴는 평균 benchmark가 아니라 worst-case hazard로 다뤄야 한다.</p>
+    </section>
+
+    <section class="part" id="part-10"><div class="part-band"><i class="on"></i><i class="on"></i><i></i><i></i></div><p class="part-no">PART 10 · OPEN PROBLEMS</p><h2>“언제부터 기억이 쓸모없어졌는가”를 아직 온라인으로 모른다</h2>
+      <ul><li><strong>Task-specific memory limit:</strong> 유한 상태가 어떤 정보 조합을 얼마 동안 보존할 수 있는지 일반 경계가 없다.</li><li><strong>Forgetting detector:</strong> state norm이 안정적이어도 기능 손실이 남으므로 norm만으로 망각을 탐지할 수 없다.</li><li><strong>Drift/reset policy:</strong> 장기 session에서 reset·checkpoint·precision escalation의 비용과 회복률을 함께 최적화해야 한다.</li><li><strong>Real integer recurrence:</strong> 첫 논문의 state-only fake quantization 결과를 fused integer update와 end-to-end serving에서 재검증해야 한다.</li><li><strong>Architecture transfer:</strong> GDN에서 유리한 group-wise policy가 Mamba-2에서는 역전됐다. Mamba-3·hybrid·LFM2로의 전이는 미검증이다.</li><li><strong>Fair benchmark:</strong> 동일 데이터·training recipe·bit allocation·kernel tuning·hardware·batch·H에서 비교해야 한다.</li><li><strong>Korean professional work:</strong> 한국어 장문 전문문서·RAG·도구사용에서 NLL, exact evidence recall, hallucination, recovery를 함께 본 근거가 부족하다.</li></ul>
+      <p><mark class="hl hl-yellow" data-importance="핵심">양자화 상태의 품질은 tensor error가 아니라 미래 작업에 남아 있는 조건부 정보 가치로 측정해야 한다</mark>.</p>
+    </section>
+
+    <section class="part" id="part-11"><div class="part-band"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div><p class="part-no">PART 11 · FUTURE DIRECTIONS</p><h2>State Quantization Contract: 정밀도에 만료일을 붙인다</h2>
+      <p><span class="claim proposal">연구 제안</span> 향후 시스템은 단순한 “INT4 지원” 대신 다음 계약을 공개해야 한다.</p>
+      <ol><li><strong>Certified horizon:</strong> 모델·task·bit-width별로 ΔNLL, recall, state-value가 허용범위를 만족하는 최대 <i>H</i>.</li><li><strong>Adaptive budget:</strong> 평시에는 persistent low-bit state를 쓰고, drift·불확실성·위험도가 상승할 때 group 수·bit 수·attention window·외부 memory를 확장.</li><li><strong>Evidence hierarchy:</strong> 압축 recurrent state + 필요한 구간 attention + 외부 근거 memory를 결합해 정확 회수와 저비용 누적을 분리.</li><li><strong>Recovery protocol:</strong> state reset 전에 checkpoint replay, higher precision re-run, tool evidence re-fetch를 순서대로 시도하고 복구율을 기록.</li></ol>
+      <div class="note"><strong>제안 benchmark.</strong> token/s와 평균 정확도 외에 성공 작업당 Joule, p95 latency, peak memory, certified H, zero-state 대비 state value, 근거 회수율, drift 탐지 lead time, 오류 복구율을 함께 보고한다.</div>
+      <p><span class="claim proposal">ETRI 단계적 검증</span> ① 동일 학습데이터·양자화·hardware의 attention/SSM/hybrid 비교, ② 상태 오염·scale drift·통신 단절·센서 누락 주입시험, ③ 한국어 RAG·설비 진단의 장기 session, ④ robot high-level planning의 주 단위 실증으로 확장한다. 각 단계에서 low-level safety controller는 생성형 상태모델과 독립 검증한다.</p>
+      <p><span class="claim interpretation">최종 해석</span> <mark class="hl hl-pink" data-importance="최우선">Mamba의 저비트 미래는 더 작은 상태가 아니라, 언제까지 믿을 수 있는지 측정되고 실패 전에 정밀도를 늘릴 수 있는 상태</mark>에 달려 있다.</p>
+    </section>
+
+    <section class="references" id="references"><p class="part-no">PRIMARY SOURCES · VERSION AND DATE CHECK</p><h2>출처와 기존 지식의 연결</h2>
+      <div class="ref" id="ref-1"><b>[1] When Dynamic Scaling Fails: A Scale-State Feedback Governs Recurrent-State Quantization in Linear-Attention and SSM LLMs</b><small>arXiv:2610.15139 · v1 최초 투고 2026-10-10 · arXiv 최근 목록 공개 2026-10-14 · NeurIPS 2026 Workshop on Long-Context Foundation Models 비정규 워크숍 · 확장판은 Mamba-2 비교 추가 및 워크숍판 주장 2건 수정</small><a href="https://arxiv.org/abs/2610.15139">https://arxiv.org/abs/2610.15139</a> · <a href="https://avalon-s.github.io/dynamic-scaling-fails/">project</a></div>
+      <div class="ref" id="ref-2"><b>[2] Hardware-Friendly Token-Group Activation Quantization for Low-Bit Mamba Super-Resolution</b><small>arXiv:2610.16261 · v1 최초 투고 2026-10-12 · arXiv 최근 목록 공개 2026-10-14 · NeurIPS 2026 (저자 표기 및 공식 다운로드 목록 확인) · 개정 없음</small><a href="https://arxiv.org/abs/2610.16261">https://arxiv.org/abs/2610.16261</a> · <a href="https://neurips.cc/Downloads/2026">NeurIPS 2026 record</a></div>
+      <div class="ref" id="ref-3"><b>[3] Mamba-2: Transformers are SSMs</b><small>배경 논문 · 최초 공개 2024-05-31 · ICML 2024</small><a href="https://proceedings.mlr.press/v235/dao24a.html">https://proceedings.mlr.press/v235/dao24a.html</a></div>
+      <div class="ref" id="ref-4"><b>[4] LFM and Mamba: Memory, State Tracking, and Efficient Edge Intelligence</b><small>기존 종합 글 · 2026-10-08 · 용어·복잡도·LFM/Mamba 경계</small><a href="https://sungsoo.github.io/2026/10/08/lfm-mamba-memory-state-edge-intelligence.html">https://sungsoo.github.io/2026/10/08/lfm-mamba-memory-state-edge-intelligence.html</a></div>
+      <div class="ref" id="ref-5"><b>[5] Mamba State as an Operating Object</b><small>기존 후속 글 · 2026-10-13 · ReplaySSM·state attribution·isolation</small><a href="https://sungsoo.github.io/2026/10/13/mamba-state-replay-attribution-isolation.html">https://sungsoo.github.io/2026/10/13/mamba-state-replay-attribution-isolation.html</a></div>
+      <p class="note">날짜 표기 원칙: arXiv submission date, 일반 공개 batch date, 학회 발표연도를 구분했다. 2026-10-15 KST 이후 자료는 포함하지 않았다. 기업 발표와 모델카드는 이번 신규 근거의 중심 출처로 사용하지 않았다.</p>
+    </section>
+  </article>
+  <footer class="footer">foundation models · machine learning · PUBLISHED 2026-10-15 KST</footer>
+</main>
+</body>
+</html>
