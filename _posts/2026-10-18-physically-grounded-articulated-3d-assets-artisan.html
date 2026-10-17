@@ -1,0 +1,347 @@
+---
+layout: null
+title: "Beyond 3D Appearance: Building Physically Grounded Articulated Assets with ARTISAN"
+date: 2026-10-18
+categories: [artificial intelligence]
+tags: [physical ai, agentic ai]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="ARTISAN 논문을 분석해 다중 에이전트와 MuJoCo 피드백을 결합한 물리적으로 검증 가능한 articulated 3D 자산 생성, 벤치마크, 로봇 과제 결과와 한계를 설명한다.">
+<link rel="canonical" href="https://sungsoo.github.io/2026/10/18/physically-grounded-articulated-3d-assets-artisan.html">
+<title>3D 자산은 움직여 봐야 안다: ARTISAN의 물리 검증 파이프라인</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Reference-inspired editorial defaults; scope avoids leaking into site chrome. */
+.research-essay {
+ --paper:#edf0f4; --paper2:#f7f9fb; --paper-2:var(--paper2); --ink:#10151f;
+ --ink2:#2a3243; --muted:#5d6879; --hair:#c6cfda;
+ --b1:#a63446; --b2:#c2681c; --b3:#8e7a12; --b4:#2f7a55;
+ --b5:#1e6e8c; --b6:#35509b; --b7:#6b3f9e; --hue:var(--b6);
+ --disp:"Gowun Batang","Spectral","Batang",serif;
+ --lat:"Spectral",Georgia,serif;
+ --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+ --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+ margin:0; background:var(--paper); color:var(--ink);
+ font:400 17px/1.86 var(--body); letter-spacing:-.012em;
+ word-break:keep-all; overflow-wrap:anywhere;
+}
+.research-essay *, .research-essay *::before, .research-essay *::after {box-sizing:border-box}
+.research-essay .essay-shell {max-width:1180px; margin-inline:auto; padding-inline:28px}
+.research-essay .essay-measure {max-width:73ch; margin-inline:auto}
+.research-essay .essay-hero {padding-block:80px 48px}
+.research-essay h1,.research-essay h2,.research-essay h3 {font-family:var(--disp); font-weight:700; letter-spacing:-.03em}
+.research-essay h1 {font-size:clamp(34px,5.2vw,59px); line-height:1.17; margin:0 0 20px}
+.research-essay h2 {font-size:clamp(29px,4.2vw,44px); line-height:1.26}
+.research-essay h3 {font-size:clamp(24px,2.6vw,27px); line-height:1.4}
+.research-essay p {margin:0 0 18px}
+.research-essay .essay-subtitle {font:italic 400 clamp(17px,2vw,23px)/1.5 var(--lat); color:var(--muted)}
+.research-essay .essay-lede {font:400 clamp(20px,2.5vw,23px)/1.72 var(--disp)}
+.research-essay .essay-eyebrow,.research-essay .essay-part-number {font:600 12px/1.6 var(--mono); letter-spacing:.12em; color:var(--hue)}
+.research-essay .essay-part {padding-block:64px 32px; border-top:1px solid var(--hair)}
+.research-essay .essay-part-band {display:flex; gap:4px; margin-bottom:18px}
+.research-essay .essay-part-band i {flex:1; height:3px; background:var(--hair)}
+.research-essay .essay-part-band .on {background:var(--hue)}
+.research-essay a {color:var(--b6); text-underline-offset:3px}
+.research-essay :focus-visible {outline:2px solid var(--b6); outline-offset:4px}
+.research-essay code,.research-essay pre {font-family:var(--mono)}
+.research-essay pre {max-width:100%; overflow:auto}
+.research-essay .essay-diagram {margin:30px 0}
+.research-essay .diagram-viewport {max-width:100%; overflow-x:auto; padding:18px; border:1px solid var(--hair); background:var(--paper2)}
+.research-essay .essay-diagram svg {display:block; width:100%; height:auto; min-width:var(--diagram-min-width,0px)}
+.research-essay .diagram-node {fill:var(--paper2); stroke:var(--hair); stroke-width:1.5}
+.research-essay .diagram-edge {fill:none; stroke:var(--hue); stroke-width:1.7}
+.research-essay .diagram-label {font-family:var(--body); font-size:16px; fill:var(--ink)}
+.research-essay .diagram-taxonomy {font-family:var(--mono); font-size:14px; fill:var(--muted)}
+.research-essay .diagram-symbol {font-family:var(--lat); font-size:24px; fill:var(--ink)}
+.research-essay figcaption {font-size:14px; line-height:1.75; color:var(--muted); margin-top:12px}
+@media(max-width:560px) {
+ .research-essay {font-size:16px}
+ .research-essay .essay-shell {padding-inline:20px}
+ .research-essay .essay-hero {padding-block:52px 36px}
+ .research-essay .diagram-viewport {padding:10px}
+}
+@media print {
+ .research-essay {background:white; color:#10151f}
+ .research-essay .diagram-viewport {overflow:visible}
+ .research-essay .essay-diagram svg {min-width:0}
+}
+
+/* Embed before opening-summary-diagram.css and importance-highlighting.css. */
+.research-essay {
+  --paper: #edf0f4; --paper2: #f7f9fb; --paper-2: #f7f9fb;
+  --ink: #10151f; --ink2: #2a3243; --muted: #5d6879; --hair: #c6cfda;
+  --b1: #a63446; --b2: #c2681c; --b3: #8e7a12; --b4: #2f7a55;
+  --b5: #1e6e8c; --b6: #35509b; --b7: #6b3f9e; --hue: var(--b6);
+  --disp: 'Gowun Batang', 'Spectral', 'Noto Serif KR', Batang, Georgia, serif;
+  --lat: 'Spectral', Georgia, serif;
+  --body: 'IBM Plex Sans KR', 'IBM Plex Sans', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --measure: 73ch;
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: 400 17px/1.86 var(--body); letter-spacing: -.012em;
+  word-break: keep-all; overflow-wrap: anywhere;
+}
+.research-essay *, .research-essay *::before, .research-essay *::after { box-sizing: border-box; }
+.research-essay :is(h1,h2,h3,.lede) { font-family: var(--disp); }
+.research-essay h1 { font-size: clamp(34px,5.2vw,59px); line-height: 1.2; letter-spacing: -.035em; }
+.research-essay h2 { font-size: clamp(29px,4.2vw,44px); line-height: 1.3; }
+.research-essay h3 { font-size: clamp(23px,2.6vw,27px); line-height: 1.42; }
+.research-essay .deck { font: italic 400 clamp(18px,2vw,24px)/1.5 var(--lat); color: var(--muted); }
+.research-essay .lede { font-size: clamp(20px,2.5vw,24px); line-height: 1.75; }
+.research-essay :is(.eyebrow,.part-no,.technical-label,.meta) { font: 400 12px/1.6 var(--mono); letter-spacing: .1em; color: var(--muted); }
+.research-essay :is(code,pre) { font-family: var(--mono); }
+.research-essay .essay-shell { max-width: 1180px; margin-inline: auto; padding-inline: 24px; }
+.research-essay .measure { max-width: var(--measure); margin-inline: auto; }
+.research-essay .table-viewport { max-width: 100%; overflow-x: auto; }
+.research-essay a:focus-visible { outline: 3px solid var(--b6); outline-offset: 3px; }
+.research-essay .editorial-svg { display: block; width: 100%; height: auto; font-family: var(--body); }
+.research-essay .editorial-svg .node { fill: var(--paper2); stroke: var(--hair); stroke-width: 1.5; }
+.research-essay .editorial-svg .edge { fill: none; stroke: var(--b6); stroke-width: 2; }
+.research-essay .editorial-svg .node-label { fill: var(--ink); font: 500 18px var(--body); }
+.research-essay .editorial-svg .tech-label { fill: var(--ink2); font: 400 16px var(--mono); }
+.research-essay .editorial-svg .diagram-note { fill: var(--muted); font: 400 16px var(--body); }
+@media(max-width:560px) {
+  .research-essay { font-size: 16px; }
+  .research-essay .essay-shell { padding-inline: 18px; }
+}
+@media(prefers-reduced-motion:reduce) { .research-essay { scroll-behavior: auto; } }
+
+:root{--paper:#EDF0F4;--surface:#F7F9FB;--ink:#10151F;--ink2:#2A3243;--muted:#5D6879;--hair:#C6CFDA;--teal:#1E6E8C;--blue:#35509B;--purple:#6B3F9E;--orange:#C2681C;--green:#2F7A55;--hp:rgba(255,126,166,.30);--hy:rgba(255,221,74,.42);--hb:rgba(91,169,255,.30);--hg:rgba(81,196,143,.27);--disp:'Gowun Batang','Spectral',Georgia,serif;--body:'IBM Plex Sans KR','IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:66px}body{margin:0;background:linear-gradient(180deg,#E6EBF1 0,var(--paper) 450px);color:var(--ink);font:17px/1.86 var(--body);word-break:keep-all;overflow-wrap:anywhere}.shell{max-width:1160px;margin:auto;padding:0 24px}.topbar{position:fixed;z-index:50;inset:0 0 auto;height:44px;display:flex;align-items:center;gap:14px;padding:0 20px;background:rgba(237,240,244,.94);border-bottom:1px solid var(--hair);font:500 11px var(--mono);letter-spacing:.1em;color:var(--muted);backdrop-filter:blur(8px)}.topbar b{color:var(--ink)}.topbar time{margin-left:auto}.hero{padding:100px 0 42px;max-width:990px;margin:auto}.eyebrow,.label,.meta,.partno{font:500 11px/1.6 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}.eyebrow{color:#A63446;margin-bottom:18px}.hero h1{font:700 clamp(35px,5.8vw,60px)/1.2 var(--disp);letter-spacing:-.035em;margin:0;max-width:19ch}.subtitle{font:italic clamp(18px,2.4vw,24px)/1.5 'Spectral',Georgia,serif;color:var(--muted);margin:17px 0 0}.hero-meta{font:12px/1.7 var(--mono);color:var(--muted);margin-top:16px}.intro{max-width:73ch;margin:0 auto;padding:10px 0 42px}.intro .lede{font:400 clamp(20px,2.6vw,25px)/1.72 var(--disp);color:var(--ink);margin:0 0 18px}.intro p,.sec p{color:var(--ink2)}.hl{padding:0 .04em;background-image:linear-gradient(176deg,transparent 0 58%,var(--hlcolor) 58% 89%,transparent 89% 100%);background-repeat:no-repeat;box-decoration-break:clone;-webkit-box-decoration-break:clone}.hl-pink{--hlcolor:var(--hp)}.hl-yellow{--hlcolor:var(--hy)}.hl-blue{--hlcolor:var(--hb)}.hl-green{--hlcolor:var(--hg)}.hl-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:22px 0 28px;padding:13px 15px;border-block:1px solid var(--hair);font-size:12px}.hl-legend mark{color:var(--ink);font-size:11px;padding:2px 7px}.hl-legend small{color:var(--muted)}.question{border-left:3px solid var(--teal);padding:9px 0 9px 18px;font:400 19px/1.7 var(--disp);margin:24px 0}.navigator{max-width:73ch;margin:0 auto 18px;padding:18px 0;border-block:1px solid var(--hair);display:flex;flex-wrap:wrap;gap:7px 16px;font:11px var(--mono)}.navigator a{color:var(--blue);text-decoration:none}.part{max-width:73ch;margin:0 auto;padding:53px 0 10px;scroll-margin-top:64px}.part.wide{max-width:1000px}.band{height:4px;background:linear-gradient(90deg,#A63446,#C2681C,#8E7A12,#2F7A55,#1E6E8C,#35509B,#6B3F9E);margin-bottom:17px}.partno{color:var(--blue)}h2{font:700 clamp(27px,4vw,39px)/1.3 var(--disp);letter-spacing:-.025em;margin:12px 0 14px}h3{font:700 clamp(21px,2.8vw,27px)/1.4 var(--disp);margin:36px 0 13px}h4{font:600 17px/1.5 var(--body);margin:28px 0 7px}.part-desc{font-size:15px;color:var(--muted);margin:0 0 25px}.sec{max-width:73ch;margin:0 auto;padding:14px 0 38px}.sec.wide{max-width:1000px}.label{color:var(--teal);margin-bottom:8px}.table-wrap{overflow-x:auto;border:1px solid var(--hair);background:white;margin:23px 0}.table-wrap table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px;line-height:1.68}.table-wrap th{background:var(--ink);color:#F7F9FB;text-align:left;padding:13px 14px;font:500 11px/1.5 var(--mono);letter-spacing:.05em}.table-wrap td{vertical-align:top;padding:13px 14px;border-bottom:1px solid #D9E0E8}.table-wrap tr:nth-child(even) td{background:#F7F9FB}.table-wrap tr:last-child td{border:0}.table-note{font-size:12px;color:var(--muted);margin:-12px 0 23px}.callout{margin:23px 0;padding:19px 22px;background:#F7F9FB;border-left:3px solid var(--blue)}.callout p:last-child{margin-bottom:0}.claim{display:inline-block;font:500 10px var(--mono);letter-spacing:.08em;color:var(--blue);text-transform:uppercase;margin-bottom:5px}.eq{font:600 20px/1.8 'Spectral',Georgia,serif;letter-spacing:.02em;text-align:center;padding:19px 15px;background:#fff;border:1px solid var(--hair);overflow-x:auto;margin:20px 0}.eq small{display:block;font:400 13px/1.65 var(--body);color:var(--muted);letter-spacing:0;margin-top:5px}.source{font:11px/1.5 var(--mono);color:var(--blue);overflow-wrap:anywhere}.refs{max-width:73ch;margin:64px auto 0;padding-top:20px;border-top:1px solid var(--hair)}.refs li{margin-bottom:11px;color:var(--ink2);font-size:14px}.refs a{color:var(--blue)}footer{max-width:1000px;margin:50px auto 0;padding:24px 0 50px;border-top:1px solid var(--hair);font:11px/1.7 var(--mono);color:var(--muted)}.summary{margin:24px auto 0;max-width:1000px}.summary svg{display:block;width:100%;height:auto;background:#F7F9FB;border:1px solid var(--hair)}.summary figcaption{font-size:12px;color:var(--muted);margin-top:9px}.diagram-summary{font-size:13px;color:var(--muted);margin-top:5px}.diagram-viewport{overflow-x:auto}.svg-label{font:500 18px var(--body);fill:#10151F;text-anchor:middle}.svg-tax{font:500 13px var(--mono);fill:#5D6879;text-anchor:middle;letter-spacing:.06em}.svg-small{font:400 15px var(--body);fill:#2A3243;text-anchor:middle}.node{fill:#F7F9FB;stroke:#1E6E8C;stroke-width:2}.edge{fill:none;stroke:#35509B;stroke-width:2.2}.edge-return{fill:none;stroke:#C2681C;stroke-width:2.1;stroke-dasharray:8 5}.mobilehint{display:none}@media(max-width:700px){body{font-size:16px}.shell{padding:0 18px}.hero{padding-top:82px}.part{padding-top:39px}.summary svg{min-width:940px}.mobilehint{display:block;font-size:11px;color:var(--muted);margin:6px 0}.table-wrap table{font-size:13px}.intro{padding-inline:2px}}@media print{.topbar{position:static}.hero{padding-top:25px}.navigator{display:none}body{background:white}}
+
+.opening-summary-diagram {
+  max-width: 1100px;
+  margin: 2rem auto 1.5rem;
+  color: var(--ink, #14202e);
+}
+.opening-summary-diagram .diagram-viewport {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--hair, #c6cfda);
+  background: var(--paper-2, var(--paper2, #f7f9fb));
+}
+.opening-summary-diagram .diagram-viewport:focus-visible {
+  outline: 3px solid var(--b6, #35509b);
+  outline-offset: 4px;
+}
+.opening-summary-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Raise this variable only when needed to keep this figure's labels legible. */
+  min-width: var(--diagram-min-width, 0px);
+  font-family: inherit;
+}
+.opening-summary-diagram figcaption {
+  margin: .8rem 0 0;
+  font-size: .85rem;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.opening-summary-diagram .diagram-summary {
+  margin: .45rem 0 0;
+  font-size: .85rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.opening-summary-diagram[data-diagram-theme="dark"] {
+  color: #e8eef4;
+}
+.opening-summary-diagram[data-diagram-theme="dark"] .diagram-viewport {
+  background: #f7f9fb;
+  border-color: #66778b;
+}
+@media print {
+  .opening-summary-diagram {
+    break-inside: avoid;
+    color: #14202e;
+  }
+  .opening-summary-diagram .diagram-viewport {
+    overflow: visible;
+  }
+  .opening-summary-diagram svg {
+    min-width: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Importance, highest to lowest: pink, yellow, blue, green. */
+mark.hl {
+  --hl-color: rgba(255, 221, 74, .42);
+  display: inline;
+  color: inherit;
+  background-color: transparent;
+  background-image: linear-gradient(176deg,
+    transparent 0 56%, var(--hl-color) 56% 89%, transparent 89% 100%);
+  padding: 0 .06em;
+  font: inherit;
+  line-height: inherit;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+mark.hl.hl-pink { --hl-color: rgba(255, 126, 166, .38); }
+mark.hl.hl-yellow { --hl-color: rgba(255, 221, 74, .42); }
+mark.hl.hl-blue { --hl-color: rgba(91, 169, 255, .32); }
+mark.hl.hl-green { --hl-color: rgba(81, 196, 143, .30); }
+[data-highlight-theme="dark"] mark.hl.hl-pink { --hl-color: rgba(255, 126, 166, .25); }
+[data-highlight-theme="dark"] mark.hl.hl-yellow { --hl-color: rgba(255, 221, 74, .24); }
+[data-highlight-theme="dark"] mark.hl.hl-blue { --hl-color: rgba(91, 169, 255, .25); }
+[data-highlight-theme="dark"] mark.hl.hl-green { --hl-color: rgba(81, 196, 143, .23); }
+.hl-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .55rem 1rem;
+  margin: 1.5rem 0;
+  font-size: .82rem;
+  line-height: 1.8;
+}
+.hl-legend-label { font-weight: 600; }
+.hl-legend small { flex-basis: 100%; font-size: inherit; }
+@media print {
+  mark.hl {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+@media (forced-colors: active) {
+  mark.hl {
+    background-image: none;
+    text-decoration: underline;
+    text-underline-offset: .15em;
+  }
+}
+
+</style>
+</head>
+<body class="research-essay">
+<header class="topbar"><b>AI RESEARCH BLOG</b><span>PHYSICAL AI · AGENTIC 3D · ROBOTICS</span><time datetime="2026-10-18">18 OCT 2026 · KST</time></header>
+<main class="shell">
+<header class="hero">
+ <div class="eyebrow">PAPER ANALYSIS · ARXIV:2610.13947v2 · 3D ASSET GENERATION</div>
+ <h1>3D 자산은<br>움직여 봐야 안다</h1>
+ <p class="subtitle">ARTISAN: A Multi-Agent Pipeline and Benchmark for Physically Grounded Articulated 3D Assets</p>
+ <p class="hero-meta">Xudong Cai et al. · v2 공개 2026-10-12 · 분석 기준 2026-10-18 KST</p>
+ <figure class="summary opening-summary-diagram" aria-labelledby="artisan-overview-caption">
+  <div class="diagram-viewport" role="region" aria-label="ARTISAN 생성 및 물리 검증 파이프라인" tabindex="0">
+   <svg viewBox="0 0 1120 510" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="artisan-overview-title artisan-overview-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="artisan-overview-title">ARTISAN의 다중 에이전트 3D 자산 제작과 물리 검증</title>
+    <desc id="artisan-overview-desc">사용자 프롬프트와 이미지가 Design Agent의 blueprint와 design board로 이어지고 Coding Agent가 프로그램과 자산을 생성한다. MuJoCo가 충돌과 중력 안정성 보고서를 만들며 Review Agent는 blueprint와 검증 결과를 보고 문제를 Coding Agent로 돌려보낸다. 검토를 통과한 자산에는 로봇 과제용 action annotation이 포함된다.</desc>
+    <defs><marker id="artisan-arrow" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto"><path d="M0 0L11 5.5L0 11Z" fill="#35509B"/></marker><marker id="artisan-return" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto"><path d="M0 0L11 5.5L0 11Z" fill="#C2681C"/></marker></defs>
+    <rect x="28" y="82" width="170" height="122" rx="5" class="node"/><rect x="260" y="82" width="180" height="122" rx="5" class="node"/><rect x="503" y="82" width="185" height="122" rx="5" class="node"/><rect x="751" y="82" width="170" height="122" rx="5" class="node"/><rect x="977" y="82" width="115" height="122" rx="5" class="node"/>
+    <path d="M198 143H260" class="edge" marker-end="url(#artisan-arrow)"/><path d="M440 143H503" class="edge" marker-end="url(#artisan-arrow)"/><path d="M688 143H751" class="edge" marker-end="url(#artisan-arrow)"/><path d="M921 143H977" class="edge" marker-end="url(#artisan-arrow)"/>
+    <text class="svg-tax" x="113" y="110">INPUT</text><text class="svg-label" x="113" y="145"><tspan x="113">프롬프트</tspan><tspan x="113" dy="26">+ 참조 이미지</tspan></text>
+    <text class="svg-tax" x="350" y="110">AGENT 01</text><text class="svg-label" x="350" y="145"><tspan x="350">Design Agent</tspan><tspan x="350" dy="26">Blueprint · Board</tspan></text>
+    <text class="svg-tax" x="595" y="110">AGENT 02</text><text class="svg-label" x="595" y="145"><tspan x="595">Coding Agent</tspan><tspan x="595" dy="26">Program · Asset</tspan></text>
+    <text class="svg-tax" x="836" y="110">AGENT 03</text><text class="svg-label" x="836" y="145"><tspan x="836">Review Agent</tspan><tspan x="836" dy="26">Scores · Issues</tspan></text>
+    <text class="svg-tax" x="1034" y="110">HANDOFF</text><text class="svg-small" x="1034" y="149"><tspan x="1034">검토된</tspan><tspan x="1034" dy="23">3D 자산</tspan></text>
+    <rect x="390" y="287" width="300" height="104" rx="5" fill="#F7F9FB" stroke="#6B3F9E" stroke-width="2"/><text class="svg-tax" x="540" y="316">PHYSICS FEEDBACK · MUJOCO</text><text class="svg-label" x="540" y="349"><tspan x="540">관절 운동 중 충돌</tspan><tspan x="540" dy="25">중력 아래 안정성</tspan></text>
+    <path d="M595 204V253H540V287" class="edge" marker-end="url(#artisan-arrow)"/><path d="M690 339H751V204" class="edge" marker-end="url(#artisan-arrow)"/>
+    <path d="M835 204V445H595V204" class="edge-return" marker-end="url(#artisan-return)"/><text class="svg-small" x="715" y="475" fill="#C2681C">독립 검토 피드백 → Coding Agent 수정 → 재검증</text>
+    <text class="svg-tax" x="560" y="43">BUILD → SIMULATE → REVIEW → REVISE</text>
+   </svg>
+  </div>
+  <p class="mobilehint">도식이 좁은 화면에서 잘리면 그림 안을 좌우로 이동해 확인할 수 있습니다.</p>
+  <figcaption id="artisan-overview-caption">개념 요약 · 논문 Figure 2의 에이전트 역할과 §3.4의 MuJoCo 검증 관계를 바탕으로 재구성. 계량 결과가 아닌 파이프라인 도식.</figcaption>
+  <p class="diagram-summary">Design Agent가 구조를 명세하고 Coding Agent가 자산을 만들며, MuJoCo 물리 테스트와 독립 Review Agent가 문제를 찾아 다시 수정 루프로 보낸다. 통과 자산은 로봇 과제용 동작 주석과 함께 전달된다.</p>
+ </figure>
+</header>
+
+<section class="intro" id="intro">
+ <p class="lede">관절형 3D 자산이 사진에서는 그럴듯해도, 문을 열 때 다른 부품과 겹치거나 중력에 넘어지면 로봇 학습에 쓸 수 있을까?</p>
+ <p>Cai 등은 물체를 “어떻게 보이는가”에서 “어떻게 움직이고, 물리적으로 작동하는가”까지 확장해 생성하는 ARTISAN을 제안한다. 핵심은 대형 언어모델이 만든 형상을 그대로 믿지 않는 것이다. 서로 다른 역할의 에이전트들이 설계 명세·코드·검토를 분리하고, 실제 물리 시뮬레이터의 충돌·안정성 피드백으로 생성물을 반복 수정한다.</p>
+ <aside class="hl-legend" aria-label="내용 중요도 색상 안내"><b>내용 중요도</b><mark class="hl hl-pink" data-importance="최우선" title="중요도 1">1 · 최우선</mark><mark class="hl hl-yellow" data-importance="핵심" title="중요도 2">2 · 핵심</mark><mark class="hl hl-blue" data-importance="보충" title="중요도 3">3 · 보충</mark><mark class="hl hl-green" data-importance="참고" title="중요도 4">4 · 참고</mark><small>색상은 편집상 중요도이며 근거의 강도를 뜻하지 않습니다.</small></aside>
+ <div class="question">중심 질문 · 생성된 관절형 3D 자산이 시각적으로 닮는 데 그치지 않고, 시뮬레이터와 로봇 과제에서 쓸 수 있음을 어떻게 확인할 것인가?</div>
+ <p>이 글은 arXiv:2610.13947v2 (2026년 10월 12일 공개) 논문을 분석한다. 수치는 해당 버전의 원문 표·본문 보고값이다. 저자 주장을 그대로 유지하되, 로봇 일반화나 실제 하드웨어 준비 상태를 시뮬레이션 결과만으로 확대 해석하지 않는다.</p>
+</section>
+<nav class="navigator" aria-label="글의 주요 부분"><a href="#p1">01 문제 정의</a><a href="#p2">02 멀티에이전트 구조</a><a href="#p3">03 벤치마크</a><a href="#p4">04 결과</a><a href="#p5">05 한계와 연구 과제</a></nav>
+
+<section class="part" id="p1"><div class="band"></div><div class="partno">PART 01 · DEFINITION &amp; MOTIVATION</div><h2>관절형 자산은 모양·구조·물성이 함께 맞아야 한다</h2><p class="part-desc">연구 문제와 대상 · 논문 2–4쪽, §1·§3</p></section>
+<section class="sec">
+ <div class="label">DEFINITION</div><h3>물리적으로 근거된 자산은 작동 가능한 3D 물체를 뜻한다</h3>
+ <p>논문이 다루는 자산은 자연어 설명과 선택적 참조 이미지에서 생성되는 다부품 articulated 3D object다. 결과물에는 각 강체 부품의 기하 형상과 질량, PBR 재질(색·금속성·거칠기·투명도), 부품 간 부모–자식 계층, 관절 유형·축·이동 한계·연동 조건이 포함된다. 여기에 페달을 밟으면 뚜껑이 열리는 식의 연동 동작과 “믹서 헤드를 들어 올리고 볼을 분리한다”와 같은 작업 요구를 텍스트로 표현할 수 있다.</p>
+ <div class="eq">O = { {G<sub>i</sub>, ρ<sub>i</sub>, M<sub>i</sub>}<sub>i=1</sub><sup>P</sup>, (K, J) }<small>논문 식 (1), p.3 · 개념 해설: P개 강체 부품의 기하·질량·재질과 전체 운동학 구조·관절</small></div>
+ <p>위 식은 자산의 구조를 압축해 보여준다. <em>G<sub>i</sub></em>는 각 부품의 형상, <em>ρ<sub>i</sub></em>는 질량, <em>M<sub>i</sub></em>는 재질, <em>K</em>는 부모–자식 운동학 구조, <em>J</em>는 관절 종류와 축·범위·연동 제약이다. 본문은 기능 속성도 별도 blueprint 항목으로 확장한다.</p>
+ <div class="label">PROBLEM</div><h3>외형만 맞추는 생성은 시뮬레이션 실패를 놓칠 수 있다</h3>
+ <p>기존 연구는 외형과 형상, 관절, 재질, 질량, 안정성, 충돌 없는 움직임을 각각 다루는 경우가 많다. 각각을 따로 추정하면 형상은 그럴듯해도 관절 위치가 어긋나거나, 움직일 때 부품이 관통하거나, 중력 아래 서 있지 못하는 자산이 만들어질 수 있다. 기능적 물리 속성을 별도로 확인하지 않고 “시뮬레이션에서 작동한다”고 결론 내리기도 어렵다.</p>
+ <p>ARTISAN의 목표는 3D 자산 생성 작업을 코드로 생성·실행·검사하는 파이프라인으로 바꾸고, 물리 시뮬레이션에서 발견한 실패를 다시 코드 수정에 연결하는 것이다. 단일 에이전트가 자신의 생성물을 스스로 검사하면 동일한 오류 가정에 갇힐 수 있으므로, 설계·구현·검토를 독립 역할로 나눈다.</p>
+ <div class="callout"><span class="claim">해석</span><p>이 논문의 관점에서 “시뮬레이션 준비 완료”는 렌더 이미지가 좋아 보인다는 뜻이 아니다. 관절이 의도한 대로 움직이고, 부품 간 간섭과 중력 안정성을 통과하며, 실제 과제의 동작 데이터까지 생성할 수 있는지에 대한 복합 판정이다.</p></div>
+</section>
+
+<section class="part" id="p2"><div class="band"></div><div class="partno">PART 02 · MULTI-AGENT PIPELINE</div><h2>세 에이전트의 역할 분리와 물리 검증이 신뢰 고리를 만든다</h2><p class="part-desc">역할·도구·수정 루프 · 논문 3–5쪽, §3.1–3.4, Figures 2–3</p></section>
+<section class="sec">
+ <div class="label">DESIGN AGENT</div><h3>먼저 물체를 ‘어떤 부품과 움직임으로 만들지’ 명세한다</h3>
+ <p>Design Agent는 프롬프트와 참조 이미지를 받아 부품 목록, 기하·재질 설명, 관절 계층, 기능 요구를 포함한 blueprint와 design board를 만든다. design board는 정면·측면 같은 도면, 분해도, 열린 상태와 닫힌 상태, 내부 구조가 필요한 부품의 단면을 시각적으로 정리한다. 이 blueprint는 이후 제작과 검토에서 기준 문서로 사용된다.</p>
+ <div class="label">CODING AGENT</div><h3>코드로 자산을 조립하고 도구를 써서 구조를 검사한다</h3>
+ <p>Coding Agent는 blueprint와 design board, 이전 자산, 시뮬레이터 결과, Review Agent의 점수·수정 지시를 참고해 Python 프로그램과 3D 자산을 생성·수정한다. 여섯 종류의 표준 연결 부품(힌지, 슬라이드 레일, 핀 조인트, 회전 커넥터, 텔레스코픽 슬라이드, 나사식 슬리브)은 관절 연결을 재사용 가능한 형태로 구성하도록 돕는다.</p>
+ <p>로봇 작업용으로는 목표 부품, 잡거나 누를 영역, 움직일 관절, 성공에 필요한 관절 이동량을 action annotation으로 기록한다. 따라서 자산만 내보내는 데 그치지 않고, 후속 파이프라인에서 어떤 부위를 어떤 방식으로 조작할지 연결할 수 있다.</p>
+ <div class="label">PHYSICAL VALIDATION + REVIEW</div><h3>MuJoCo는 움직임의 실패를 측정하고 독립 검토자가 수정을 지시한다</h3>
+ <p>물리 검증은 MuJoCo에서 관절을 단독·쌍·다중으로 움직이며 부품 간 관통과 침투 깊이를 기록한다. 중력을 적용한 안정성 시험은 시뮬레이션 중 기울기 변화를 확인한다. 물리 보고서는 실패한 부품 쌍, 자세, 침투 깊이 등을 담아 검토에 넘긴다.</p>
+ <p>Review Agent는 사용자 의도, blueprint, design board, 자산과 물리 보고서를 함께 보며 항목별 점수와 구조화된 문제 목록을 만든다. 점수는 비판적 구조 실패를 상쇄하지 못하게 설계되어 있다. 예를 들어 충돌을 피하려고 문짝 이동 범위를 줄였더라도 원래 요구보다 적게 열리면 blueprint 불일치로 표시한다. Review Agent는 코드를 직접 수정하지 않고 Coding Agent에게 근거와 함께 문제를 되돌려 보낸다.</p>
+ <div class="callout"><span class="claim">논문 설계 원칙</span><p><mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">물리 시뮬레이터는 생성 후 최종 점검기가 아니라, 수정 결정을 유도하는 학습·개발 피드백 채널</mark>로 파이프라인 안에 들어간다.</p></div>
+</section>
+
+<section class="part" id="p3"><div class="band"></div><div class="partno">PART 03 · BENCHMARK DESIGN</div><h2>하나의 점수 대신 네 가지 관점으로 자산을 평가한다</h2><p class="part-desc">평가 축·데이터·측정 프로토콜 · 논문 6–7쪽, §4 및 Appendix B</p></section>
+<section class="sec">
+ <div class="label">CORE CONCEPTS</div><h3>외형·기하·물리·로봇 활용을 따로 측정한다</h3>
+ <div class="table-wrap"><table><thead><tr><th>평가 축</th><th>평가하는 것</th><th>주요 방법·지표</th></tr></thead><tbody>
+ <tr><td>공간 충실도</td><td>참조 자산과의 외형·부품 형상·열린 상태 움직임 유사도</td><td>렌더 마스크 IoU, PSNR, SSIM, LPIPS, CLIP, object/part Chamfer Distance, part IoU</td></tr>
+ <tr><td>물리 속성</td><td>부품 충돌, 중력 안정성, 재질, 질량의 타당도</td><td>단일·쌍·다중 관절 충돌 비율, rest/open 안정률, 재질 PSNR, 질량 상대 오차</td></tr>
+ <tr><td>후속 로봇 과제</td><td>생성 자산을 이용한 demonstration 생성과 정책 실행 가능성</td><td>자산 적격률, π<sub>0.5</sub>의 과제 성공률</td></tr>
+ <tr><td>종합 품질</td><td>사람이 실제 시뮬레이터 안에서 조작하며 느끼는 품질</td><td>익명화된 후보 6개 중 Top-1·Top-3 선택률</td></tr>
+ </tbody></table></div>
+ <p>공간 지표는 메시를 정합한 후 rest와 articulated 상태를 비교한다. 충돌 검사는 단일 관절의 9개 자세, 두 관절 조합의 9×9 구성, 다중 관절 무작위 200회 시험을 포함한다. 안정성 데이터셋은 높은 무게중심을 가진 관절형 자산 50개로 구성되며, MuJoCo에서 rest와 완전 관절 상태를 각각 10초 시뮬레이션한다. 안정 판정은 기울기 30° 미만, 위치 변화 1 mm 미만, 회전 변화 0.01 rad 이하를 기준으로 한다.</p>
+ <div class="label">BENCHMARK DATA</div><h3>평가셋은 서로 다른 출처와 과제를 결합한다</h3>
+ <ul><li><strong>공간 충실도:</strong> ArtVIP 50개, LightWheel 50개 articulated asset.</li><li><strong>충돌·재질:</strong> ArtVIP 자산을 이용한 물리 속성 평가.</li><li><strong>안정성:</strong> 연구진이 구성한 관절형 객체 50개.</li><li><strong>질량:</strong> ABO-500 중 참조 질량을 가진 객체 50개.</li><li><strong>로봇 과제:</strong> RoboTwin 2.0의 3개 조작 과제와 RoboCasa365의 8개 과제.</li></ul>
+ <p>사람 평가에는 30명의 비전문 대학생이 참여했다. 각 참여자는 무작위로 배정된 10개 객체에 대해 여섯 방법의 결과물을 보고 시뮬레이터에서 직접 조작한 뒤 상위 세 개를 순위화했다. 총 275개의 유효 응답을 분석했다.</p>
+ <p><span class="claim">방법론적 주의</span> 여러 평가는 공통 단일 점수로 환산되지 않는다. 외형 정합의 개선이 충돌·질량·로봇 과제 적격성을 자동으로 보장하지 않으며, 표의 지표마다 데이터셋과 분모가 다를 수 있다.</p>
+</section>
+
+<section class="part" id="p4"><div class="band"></div><div class="partno">PART 04 · RESULTS &amp; EVIDENCE</div><h2>물리 검증은 시각적 유사도보다 ‘쓸 수 있음’에서 차이를 만든다</h2><p class="part-desc">주요 결과와 제거 실험 · 논문 7–10쪽, Tables 1–3·11, Figures 4–6</p></section>
+<section class="sec wide">
+ <div class="label">SPATIAL FIDELITY</div><h3>ARTISAN은 11개 공간 지표 중 8개에서 최고값을 보고했다</h3>
+ <p>GPT-6 Astra 구성은 ArtVIP 공간 충실도 평가에서 11개 appearance·geometry 지표 중 8개에서 다른 비교 방법보다 높은 결과를 냈다고 논문은 보고한다. 예를 들어 렌더 외형 IoU는 0.7675, CLIP 점수는 0.9239였고, articulated 상태 part IoU는 0.3417이었다. 동시에 다른 방법이 일부 지표에서는 더 나은 값이므로 모든 차원에서 일괄 우위라고 읽지 않는다.</p>
+ <div class="table-wrap"><table><thead><tr><th>ArtVIP · GPT-6 Astra 구성</th><th>ARTISAN</th><th>비교 해석</th></tr></thead><tbody><tr><td>외형 IoU ↑</td><td>0.7675</td><td>렌더된 마스크 중첩</td></tr><tr><td>외형 CLIP ↑</td><td>0.9239</td><td>이미지–텍스트 특징 정합</td></tr><tr><td>Rest part IoU ↑</td><td>0.3587</td><td>정지 상태의 부품 형상</td></tr><tr><td>Articulated part IoU ↑</td><td>0.3417</td><td>열린 상태의 부품 형상</td></tr></tbody></table></div>
+ <p class="table-note">논문 Table 1, p.7 · 표의 네 값은 선택 지표이며 논문에 보고된 11개 지표 전체를 나타내지 않는다. CLIP/IoU는 높을수록, Chamfer Distance/LPIPS는 낮을수록 유리.</p>
+ <div class="label">PHYSICAL PLAUSIBILITY</div><h3>물리 시뮬레이션 기반 구성이 관절 충돌을 크게 줄였다</h3>
+ <p>GPT-6 Astra 구성은 비교된 GPT-6 Astra Articraft 결과보다 단일·쌍·다중 관절 평가의 충돌 비율과 rest/open 안정률에서 더 나은 결과를 보고했다. 이는 실험 벤치마크와 시뮬레이터 조건 안에서의 비교다.</p>
+ <div class="table-wrap"><table><thead><tr><th>ArtVIP / 물리 평가</th><th>ARTISAN</th><th>Articraft</th></tr></thead><tbody><tr><td>단일 관절 충돌 ↓</td><td><strong>1.7%</strong></td><td>45.5%</td></tr><tr><td>두 관절 충돌 ↓</td><td><strong>3.7%</strong></td><td>60.7%</td></tr><tr><td>다중 관절 충돌 ↓</td><td><strong>13.0%</strong></td><td>78.8%</td></tr><tr><td>Rest 안정률 ↑</td><td><strong>98%</strong></td><td>82%</td></tr><tr><td>Open 안정률 ↑</td><td><strong>96%</strong></td><td>82%</td></tr></tbody></table></div><p class="table-note">논문 Table 2, p.8 · 각 모델에서 사용한 GPT-6 Astra 구성. 충돌 비율은 정의된 시뮬레이션 검사, 안정률은 50개 안정성 평가 자산 기준. 범용 현실 성능으로 일반화하지 않음.</p>
+ <p>물리 검증의 역할을 분리한 ablation은 인과 해석에 더 가까운 증거를 제공한다. GPT-5.6-Sol 설정에서 물리 검증을 제거하면 단일 관절 충돌이 1.9%에서 35.7%, 두 관절 충돌은 4.8%에서 54.1%, 다중 관절은 16.4%에서 73.2%로 증가했다. open 상태 안정률은 96%에서 90%로 낮아졌다. 반면 Design Agent를 제거하면 부품 수가 줄고 일부 collision 수치도 낮아지는데, 이는 더 단순한 자산이 된 결과일 수 있어 충돌 수치 단독 비교에 주의해야 한다.</p>
+ <div class="label">ROBOTIC TASKS</div><h3>생성 자산을 학습 데이터에 더했을 때 held-out 객체 성능이 올랐다</h3>
+ <div class="table-wrap"><table><thead><tr><th>정책 학습 자산</th><th>RoboTwin 평균 성공률</th><th>RoboCasa 평균 성공률</th></tr></thead><tbody><tr><td>Native only</td><td>80%</td><td>39%</td></tr><tr><td>ARTISAN only</td><td>63%</td><td>27%</td></tr><tr><td>Native + ARTISAN</td><td><strong>84%</strong></td><td><strong>43%</strong></td></tr><tr><td>Articraft only</td><td>60%</td><td>5%</td></tr></tbody></table></div>
+ <p class="table-note">논문 Table 3(a), p.9 · π<sub>0.5</sub> 정책을 보지 못한 native 객체에서 평가. RoboTwin은 3개 과제, RoboCasa는 8개 과제 평균. RoboCasa 평균에는 자격 있는 훈련 자산이 없는 과제의 0% 처리 포함.</p>
+ <p>결과는 ARTISAN 자산만으로 학습한 정책이 native-only보다 높다는 뜻은 아니다. 오히려 생성 자산만 쓸 때 성능은 native asset 구성보다 낮다. 관찰된 성과는 기존 자산에 ARTISAN 자산을 더했을 때의 평균 상승(80→84%, 39→43%)이다. 따라서 현재 근거는 데이터 보완재로서의 기여를 지지한다.</p>
+ <div class="label">HUMAN EVALUATION</div><h3>직접 조작을 포함한 사람 평가에서 선호도가 높았다</h3>
+ <p>참여자는 6개 익명 후보의 이미지뿐 아니라 MuJoCo 상에서 각 자산을 직접 움직여 보고 전체 품질을 순위화했다. ARTISAN은 Top-1 43.3%, Top-3 85.1% 선택률을 기록했고, 다음으로 높은 Codex는 각각 21.1%, 68.7%였다. 이 결과는 30명·275 응답의 특정 평가 절차에서 나온 선호도이지, 모든 사용자 집단의 합의나 실제 로봇 성능을 대신하는 지표는 아니다.</p>
+ <div class="callout"><span class="claim">평가 종합</span><p>외형의 유사성, 물리적 작동, 로봇 과제 활용은 연결되지만 서로 대체할 수 없다. 논문이 주는 핵심 증거는 한 축의 최고 점수보다, 물리 검증 제거 실험과 held-out 로봇 과제에서 세 축이 실제로 분리되어 측정됐다는 점이다.</p></div>
+</section>
+
+<section class="part" id="p5"><div class="band"></div><div class="partno">PART 05 · COST, LIMITS &amp; FUTURE</div><h2>정밀한 자산을 얻는 대가와 시뮬레이션의 경계를 함께 봐야 한다</h2><p class="part-desc">운영 비용·한계·후속 질문 · 논문 10–11·33–35쪽, §6·Appendix D–E</p></section>
+<section class="sec">
+ <div class="label">COST &amp; LIMITATIONS</div><h3>더 나은 검증 품질에는 시간과 API 비용이 든다</h3>
+ <p>논문은 GPT-6 Astra 설정에서 자산당 평균 API 비용 5.79달러, 생성 시간 34.3분을 보고한다. 비교된 Articraft GPT-6 Astra는 0.95달러, 5.4분이다. 즉 ARTISAN은 높은 물리 검증·리뷰 비용을 수반한다. 비용은 여러 평가 벤치마크의 생성 실행 평균이며, 후속 학습·실제 로봇 시험 비용을 포함한 전체 시스템 비용으로 보지 않는다.</p>
+ <p>저자들은 보다 풍부하고 실행 가능한 시뮬레이터 피드백을 제공하고, 더 넓은 물리 현상을 다룰 수 있는 시뮬레이터로 확장할 필요를 제안한다. 윤리·재현성 설명에서는 생성 자산을 시뮬레이션과 평가에 사용하며, 실제 로봇 응용 전에는 배치 환경에 맞는 추가 검증이 필요하다고 명시한다.</p>
+ <ul><li><strong>물리 모델 한계:</strong> MuJoCo 검사 통과는 접촉·마찰·재료 변형 등 모든 실제 물리 현상을 재현했다는 보증이 아니다.</li><li><strong>과제 호환성:</strong> 물리적으로 가능한 자산이어도 demonstration 생성 파이프라인의 참조 궤적과 구조가 달라 실패할 수 있다. 논문은 주전자 버튼의 힌지·슬라이드 차이를 사례로 든다.</li><li><strong>자산 구조의 품질:</strong> 충돌 감소가 언제나 의도된 부품 구조를 뜻하지 않는다. 부품을 합치거나 단순화하면 충돌은 줄어도 참조 구조를 놓칠 수 있다.</li><li><strong>비용과 지연:</strong> 3개 에이전트, 긴 반복 코드 세션, 렌더링과 시뮬레이션을 포함하는 생성은 경량 feed-forward 추론보다 느리고 비싸다.</li></ul>
+ <div class="label">OPEN QUESTIONS</div><h3>다음 단계는 ‘통과 여부’에서 실패의 원인과 현장 전이까지 확장</h3>
+ <div class="table-wrap"><table><thead><tr><th>열린 질문</th><th>필요한 근거</th><th>제안 측정</th></tr></thead><tbody><tr><td>다른 시뮬레이터에서도 같은 자산이 작동하는가?</td><td>물리 엔진 간 재현과 파라미터 민감도</td><td>엔진별 충돌·안정률, 접촉력·마찰 변동</td></tr><tr><td>품질 기준은 얼마나 보편적인가?</td><td>더 넓은 object category와 실제 측정 물성</td><td>대상군별 분포, 질량·재질 오차, 실패 유형</td></tr><tr><td>로봇으로 옮기면 무엇이 유지되는가?</td><td>시뮬레이션–실물 전이 실험과 안전 검토</td><td>성공률, 접촉 실패, 안전 정지, 작업 시간</td></tr><tr><td>비용 대비 어느 작업에서 유리한가?</td><td>사전 자산 생성과 재사용을 포함한 총 소유 비용</td><td>자산당 생성비·시간, 재사용 횟수, 데이터 품질</td></tr></tbody></table></div>
+ <p><span class="claim">작성자 해석·제안</span> 실무 도입은 모든 자산에 고비용 agent loop를 적용하기보다, 작업 성공에 직접 영향을 주는 동작·충돌·고장 위험이 큰 객체에 정밀 검증을 우선 적용하고, 단순 자산은 저비용 검사 후 필요한 경우 상위 검증으로 보내는 단계형 전략을 실험할 수 있다. 이는 논문에서 검증된 기능이 아니라 비용–품질 균형을 위한 후속 연구 제안이다.</p>
+ <div class="callout"><span class="claim">종합</span><p><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">ARTISAN은 3D 생성물을 시뮬레이터에서 부딪히고, 넘어뜨리고, 다시 고치는 절차로 ‘기능적으로 쓸 수 있음’을 평가 대상으로 만든다.</mark> 현재 결과는 시뮬레이션 벤치마크와 제한된 로봇 과제에서 유망하지만, 더 넓은 물리 현상·현장 전이·높은 자산당 비용이 다음 검증 단계로 남아 있다.</p></div>
+</section>
+
+<section class="refs" id="references"><h2>Sources &amp; Reading Notes</h2><ol>
+ <li><strong>주 분석 논문.</strong> Xudong Cai, Ruijie Zhu, Haoliang Shang, Ruining Li, Marc Pollefeys, Shangzhe Wu, Andrea Vedaldi, Chuanxia Zheng. “Towards Physically Grounded Articulated 3D Assets: A Multi-Agent Pipeline and Benchmark.” arXiv:2610.13947v2, 12 Oct 2026. <a href="https://arxiv.org/abs/2610.13947">arXiv abstract / versions</a> · <a href="https://arxiv.org/pdf/2610.13947">PDF</a>. 확인 범위: 본문 §1–6, Figures 1–6, Tables 1–3, Appendix B–E.</li>
+ <li><strong>프로젝트 페이지.</strong> <a href="https://physicalvision.github.io/artisan">ARTISAN project page</a>. 논문에 포함된 데모와 배포 현황은 페이지에서 확인할 것.</li>
+ <li><strong>평가 범위 주의.</strong> 로봇 과제 결과는 시뮬레이션 기반 RoboTwin 2.0 / RoboCasa365 설정에서의 정책 성공률이다. 실제 로봇으로의 전이를 입증한 결과로 해석하지 않는다.</li>
+</ol><p class="source">Evidence discipline · 수치와 설정은 첨부 논문 v2의 표·본문 값. 해석 및 후속 실험 제안은 별도 표시. 실물 로봇 재현 시험은 수행하지 않음.</p></section>
+<footer><div class="band"></div>AI RESEARCH BLOG · PUBLISHED 2026-10-18 KST · PAPER ANALYSIS<br>Tags: Physical AI · Agentic AI</footer>
+</main>
+</body></html>
