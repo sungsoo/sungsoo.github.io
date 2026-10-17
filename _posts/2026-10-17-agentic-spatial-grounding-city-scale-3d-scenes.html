@@ -1,0 +1,367 @@
+---
+layout: null
+title: "From Candidate Ranking to Active Spatial Search: Urbex"
+date: 2026-10-17
+categories: [artificial intelligence]
+tags: [physical ai, machine learning]
+---
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Urbex 논문을 바탕으로 도시 규모 3D 장면의 언어 기반 객체 지정을 후보 순위화에서 능동적 공간 탐색으로 전환하는 방법, 실험 결과와 한계를 분석한다.">
+<link rel="canonical" href="https://sungsoo.github.io/2026/10/17/agentic-spatial-grounding-city-scale-3d-scenes.html">
+<title>도시를 훑는 대신 탐색한다: Urbex의 능동적 3D 공간 지정</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Spectral:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Reference-inspired editorial defaults; scope avoids leaking into site chrome. */
+.research-essay {
+ --paper:#edf0f4; --paper2:#f7f9fb; --paper-2:var(--paper2); --ink:#10151f;
+ --ink2:#2a3243; --muted:#5d6879; --hair:#c6cfda;
+ --b1:#a63446; --b2:#c2681c; --b3:#8e7a12; --b4:#2f7a55;
+ --b5:#1e6e8c; --b6:#35509b; --b7:#6b3f9e; --hue:var(--b6);
+ --disp:"Gowun Batang","Spectral","Batang",serif;
+ --lat:"Spectral",Georgia,serif;
+ --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+ --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+ margin:0; background:var(--paper); color:var(--ink);
+ font:400 17px/1.86 var(--body); letter-spacing:-.012em;
+ word-break:keep-all; overflow-wrap:anywhere;
+}
+.research-essay *, .research-essay *::before, .research-essay *::after {box-sizing:border-box}
+.research-essay .essay-shell {max-width:1180px; margin-inline:auto; padding-inline:28px}
+.research-essay .essay-measure {max-width:73ch; margin-inline:auto}
+.research-essay .essay-hero {padding-block:80px 48px}
+.research-essay h1,.research-essay h2,.research-essay h3 {font-family:var(--disp); font-weight:700; letter-spacing:-.03em}
+.research-essay h1 {font-size:clamp(34px,5.2vw,59px); line-height:1.17; margin:0 0 20px}
+.research-essay h2 {font-size:clamp(29px,4.2vw,44px); line-height:1.26}
+.research-essay h3 {font-size:clamp(24px,2.6vw,27px); line-height:1.4}
+.research-essay p {margin:0 0 18px}
+.research-essay .essay-subtitle {font:italic 400 clamp(17px,2vw,23px)/1.5 var(--lat); color:var(--muted)}
+.research-essay .essay-lede {font:400 clamp(20px,2.5vw,23px)/1.72 var(--disp)}
+.research-essay .essay-eyebrow,.research-essay .essay-part-number {font:600 12px/1.6 var(--mono); letter-spacing:.12em; color:var(--hue)}
+.research-essay .essay-part {padding-block:64px 32px; border-top:1px solid var(--hair)}
+.research-essay .essay-part-band {display:flex; gap:4px; margin-bottom:18px}
+.research-essay .essay-part-band i {flex:1; height:3px; background:var(--hair)}
+.research-essay .essay-part-band .on {background:var(--hue)}
+.research-essay a {color:var(--b6); text-underline-offset:3px}
+.research-essay :focus-visible {outline:2px solid var(--b6); outline-offset:4px}
+.research-essay code,.research-essay pre {font-family:var(--mono)}
+.research-essay pre {max-width:100%; overflow:auto}
+.research-essay .essay-diagram {margin:30px 0}
+.research-essay .diagram-viewport {max-width:100%; overflow-x:auto; padding:18px; border:1px solid var(--hair); background:var(--paper2)}
+.research-essay .essay-diagram svg {display:block; width:100%; height:auto; min-width:var(--diagram-min-width,0px)}
+.research-essay .diagram-node {fill:var(--paper2); stroke:var(--hair); stroke-width:1.5}
+.research-essay .diagram-edge {fill:none; stroke:var(--hue); stroke-width:1.7}
+.research-essay .diagram-label {font-family:var(--body); font-size:16px; fill:var(--ink)}
+.research-essay .diagram-taxonomy {font-family:var(--mono); font-size:14px; fill:var(--muted)}
+.research-essay .diagram-symbol {font-family:var(--lat); font-size:24px; fill:var(--ink)}
+.research-essay figcaption {font-size:14px; line-height:1.75; color:var(--muted); margin-top:12px}
+@media(max-width:560px) {
+ .research-essay {font-size:16px}
+ .research-essay .essay-shell {padding-inline:20px}
+ .research-essay .essay-hero {padding-block:52px 36px}
+ .research-essay .diagram-viewport {padding:10px}
+}
+@media print {
+ .research-essay {background:white; color:#10151f}
+ .research-essay .diagram-viewport {overflow:visible}
+ .research-essay .essay-diagram svg {min-width:0}
+}
+
+/* Embed before opening-summary-diagram.css and importance-highlighting.css. */
+.research-essay {
+  --paper: #edf0f4; --paper2: #f7f9fb; --paper-2: #f7f9fb;
+  --ink: #10151f; --ink2: #2a3243; --muted: #5d6879; --hair: #c6cfda;
+  --b1: #a63446; --b2: #c2681c; --b3: #8e7a12; --b4: #2f7a55;
+  --b5: #1e6e8c; --b6: #35509b; --b7: #6b3f9e; --hue: var(--b6);
+  --disp: 'Gowun Batang', 'Spectral', 'Noto Serif KR', Batang, Georgia, serif;
+  --lat: 'Spectral', Georgia, serif;
+  --body: 'IBM Plex Sans KR', 'IBM Plex Sans', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --measure: 73ch;
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: 400 17px/1.86 var(--body); letter-spacing: -.012em;
+  word-break: keep-all; overflow-wrap: anywhere;
+}
+.research-essay *, .research-essay *::before, .research-essay *::after { box-sizing: border-box; }
+.research-essay :is(h1,h2,h3,.lede) { font-family: var(--disp); }
+.research-essay h1 { font-size: clamp(34px,5.2vw,59px); line-height: 1.2; letter-spacing: -.035em; }
+.research-essay h2 { font-size: clamp(29px,4.2vw,44px); line-height: 1.3; }
+.research-essay h3 { font-size: clamp(23px,2.6vw,27px); line-height: 1.42; }
+.research-essay .deck { font: italic 400 clamp(18px,2vw,24px)/1.5 var(--lat); color: var(--muted); }
+.research-essay .lede { font-size: clamp(20px,2.5vw,24px); line-height: 1.75; }
+.research-essay :is(.eyebrow,.part-no,.technical-label,.meta) { font: 400 12px/1.6 var(--mono); letter-spacing: .1em; color: var(--muted); }
+.research-essay :is(code,pre) { font-family: var(--mono); }
+.research-essay .essay-shell { max-width: 1180px; margin-inline: auto; padding-inline: 24px; }
+.research-essay .measure { max-width: var(--measure); margin-inline: auto; }
+.research-essay .table-viewport { max-width: 100%; overflow-x: auto; }
+.research-essay a:focus-visible { outline: 3px solid var(--b6); outline-offset: 3px; }
+.research-essay .editorial-svg { display: block; width: 100%; height: auto; font-family: var(--body); }
+.research-essay .editorial-svg .node { fill: var(--paper2); stroke: var(--hair); stroke-width: 1.5; }
+.research-essay .editorial-svg .edge { fill: none; stroke: var(--b6); stroke-width: 2; }
+.research-essay .editorial-svg .node-label { fill: var(--ink); font: 500 18px var(--body); }
+.research-essay .editorial-svg .tech-label { fill: var(--ink2); font: 400 16px var(--mono); }
+.research-essay .editorial-svg .diagram-note { fill: var(--muted); font: 400 16px var(--body); }
+@media(max-width:560px) {
+  .research-essay { font-size: 16px; }
+  .research-essay .essay-shell { padding-inline: 18px; }
+}
+@media(prefers-reduced-motion:reduce) { .research-essay { scroll-behavior: auto; } }
+
+:root{--paper:#EDF0F4;--surface:#F7F9FB;--ink:#10151F;--ink2:#2A3243;--muted:#5D6879;--hair:#C6CFDA;--teal:#1E6E8C;--blue:#35509B;--purple:#6B3F9E;--green:#2F7A55;--pink:rgba(255,126,166,.30);--yellow:rgba(255,221,74,.42);--hlblue:rgba(91,169,255,.30);--hlgreen:rgba(81,196,143,.27);--disp:'Gowun Batang','Spectral',Georgia,serif;--body:'IBM Plex Sans KR','IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:68px}body{margin:0;background:linear-gradient(180deg,#E6EBF1 0,var(--paper) 450px);color:var(--ink);font:17px/1.86 var(--body);word-break:keep-all;overflow-wrap:anywhere}.shell{max-width:1160px;margin:auto;padding:0 24px}.topbar{position:fixed;z-index:50;inset:0 0 auto;height:44px;display:flex;align-items:center;gap:14px;padding:0 20px;background:rgba(237,240,244,.94);border-bottom:1px solid var(--hair);font:500 11px var(--mono);letter-spacing:.1em;color:var(--muted);backdrop-filter:blur(8px)}.topbar b{color:var(--ink)}.topbar time{margin-left:auto}.hero{padding:100px 0 44px;max-width:980px;margin:auto}.eyebrow,.label,.meta,.partno{font:500 11px/1.6 var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}.eyebrow{color:#A63446;margin-bottom:18px}.hero h1{font:700 clamp(35px,5.8vw,60px)/1.2 var(--disp);letter-spacing:-.035em;margin:0;max-width:18ch}.subtitle{font:italic clamp(18px,2.4vw,24px)/1.5 'Spectral',Georgia,serif;color:var(--muted);margin:17px 0 0}.hero-meta{font:12px/1.7 var(--mono);color:var(--muted);margin-top:16px}.intro{max-width:73ch;margin:0 auto;padding:10px 0 46px}.intro .lede{font:400 clamp(20px,2.6vw,25px)/1.72 var(--disp);color:var(--ink);margin:0 0 18px}.intro p,.sec p{color:var(--ink2)}.hl{padding:0 .04em;background-image:linear-gradient(176deg,transparent 0 58%,var(--hlcolor) 58% 89%,transparent 89% 100%);background-repeat:no-repeat;box-decoration-break:clone;-webkit-box-decoration-break:clone}.hl-pink{--hlcolor:var(--pink)}.hl-yellow{--hlcolor:var(--yellow)}.hl-blue{--hlcolor:var(--hlblue)}.hl-green{--hlcolor:var(--hlgreen)}.hl-legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:22px 0 28px;padding:13px 15px;border-block:1px solid var(--hair);font-size:12px}.hl-legend mark{color:var(--ink);font-size:11px;padding:2px 7px}.hl-legend small{color:var(--muted)}.question{border-left:3px solid var(--teal);padding:9px 0 9px 18px;font:400 19px/1.7 var(--disp);margin:24px 0}.navigator{max-width:73ch;margin:0 auto 18px;padding:18px 0;border-block:1px solid var(--hair);display:flex;flex-wrap:wrap;gap:7px 16px;font:11px var(--mono)}.navigator a{color:var(--blue);text-decoration:none}.part{max-width:73ch;margin:0 auto;padding:53px 0 10px;scroll-margin-top:64px}.part.wide{max-width:1000px}.band{height:4px;background:linear-gradient(90deg,#A63446,#C2681C,#8E7A12,#2F7A55,#1E6E8C,#35509B,#6B3F9E);margin-bottom:17px}.partno{color:var(--blue)}h2{font:700 clamp(27px,4vw,39px)/1.3 var(--disp);letter-spacing:-.025em;margin:12px 0 14px}h3{font:700 clamp(21px,2.8vw,27px)/1.4 var(--disp);margin:36px 0 13px}h4{font:600 17px/1.5 var(--body);margin:28px 0 7px}.part-desc{font-size:15px;color:var(--muted);margin:0 0 25px}.sec{max-width:73ch;margin:0 auto;padding:14px 0 38px}.sec.wide{max-width:1000px}.label{color:var(--teal);margin-bottom:8px}.table-wrap{overflow-x:auto;border:1px solid var(--hair);background:white;margin:23px 0}.table-wrap table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px;line-height:1.68}.table-wrap th{background:var(--ink);color:#F7F9FB;text-align:left;padding:13px 14px;font:500 11px/1.5 var(--mono);letter-spacing:.05em}.table-wrap td{vertical-align:top;padding:13px 14px;border-bottom:1px solid #D9E0E8}.table-wrap tr:nth-child(even) td{background:#F7F9FB}.table-wrap tr:last-child td{border:0}.table-note{font-size:12px;color:var(--muted);margin:-12px 0 23px}.callout{margin:23px 0;padding:19px 22px;background:#F7F9FB;border-left:3px solid var(--blue)}.callout p:last-child{margin-bottom:0}.claim{display:inline-block;font:500 10px var(--mono);letter-spacing:.08em;color:var(--blue);text-transform:uppercase;margin-bottom:5px}.source{font:11px/1.5 var(--mono);color:var(--blue);overflow-wrap:anywhere}.refs{max-width:73ch;margin:64px auto 0;padding-top:20px;border-top:1px solid var(--hair)}.refs li{margin-bottom:11px;color:var(--ink2);font-size:14px}.refs a{color:var(--blue)}footer{max-width:1000px;margin:50px auto 0;padding:24px 0 50px;border-top:1px solid var(--hair);font:11px/1.7 var(--mono);color:var(--muted)}a{color:var(--blue);text-underline-offset:3px}a:focus-visible{outline:2px solid var(--blue);outline-offset:3px}.summary{margin:24px auto 0;max-width:980px}.summary svg{display:block;width:100%;height:auto;background:#F7F9FB;border:1px solid var(--hair)}.summary figcaption{font-size:12px;color:var(--muted);margin-top:9px}.diagram-summary{font-size:13px;color:var(--muted);margin-top:5px}.svg-label{font:500 18px var(--body);fill:#10151F;text-anchor:middle}.svg-tax{font:500 13px var(--mono);fill:#5D6879;text-anchor:middle;letter-spacing:.06em}.svg-small{font:400 14px var(--body);fill:#2A3243;text-anchor:middle}.node{fill:#F7F9FB;stroke:#1E6E8C;stroke-width:2}.edge{fill:none;stroke:#35509B;stroke-width:2.2}.edge-dash{fill:none;stroke:#6B3F9E;stroke-width:1.8;stroke-dasharray:7 6}.mobilehint{display:none}@media(max-width:700px){body{font-size:16px}.shell{padding:0 18px}.hero{padding-top:82px}.part{padding-top:39px}.summary{overflow-x:auto}.summary svg{min-width:840px}.mobilehint{display:block;font-size:11px;color:var(--muted);margin:6px 0}.table-wrap table{font-size:13px}.intro{padding-inline:2px}}@media print{.topbar{position:static}.hero{padding-top:25px}.navigator{display:none}body{background:white}}
+
+.opening-summary-diagram {
+  max-width: 1100px;
+  margin: 2rem auto 1.5rem;
+  color: var(--ink, #14202e);
+}
+.opening-summary-diagram .diagram-viewport {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--hair, #c6cfda);
+  background: var(--paper-2, var(--paper2, #f7f9fb));
+}
+.opening-summary-diagram .diagram-viewport:focus-visible {
+  outline: 3px solid var(--b6, #35509b);
+  outline-offset: 4px;
+}
+.opening-summary-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Raise this variable only when needed to keep this figure's labels legible. */
+  min-width: var(--diagram-min-width, 0px);
+  font-family: inherit;
+}
+.opening-summary-diagram figcaption {
+  margin: .8rem 0 0;
+  font-size: .85rem;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.opening-summary-diagram .diagram-summary {
+  margin: .45rem 0 0;
+  font-size: .85rem;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.opening-summary-diagram[data-diagram-theme="dark"] {
+  color: #e8eef4;
+}
+.opening-summary-diagram[data-diagram-theme="dark"] .diagram-viewport {
+  background: #f7f9fb;
+  border-color: #66778b;
+}
+@media print {
+  .opening-summary-diagram {
+    break-inside: avoid;
+    color: #14202e;
+  }
+  .opening-summary-diagram .diagram-viewport {
+    overflow: visible;
+  }
+  .opening-summary-diagram svg {
+    min-width: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Importance, highest to lowest: pink, yellow, blue, green. */
+mark.hl {
+  --hl-color: rgba(255, 221, 74, .42);
+  display: inline;
+  color: inherit;
+  background-color: transparent;
+  background-image: linear-gradient(176deg,
+    transparent 0 56%, var(--hl-color) 56% 89%, transparent 89% 100%);
+  padding: 0 .06em;
+  font: inherit;
+  line-height: inherit;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+mark.hl.hl-pink { --hl-color: rgba(255, 126, 166, .38); }
+mark.hl.hl-yellow { --hl-color: rgba(255, 221, 74, .42); }
+mark.hl.hl-blue { --hl-color: rgba(91, 169, 255, .32); }
+mark.hl.hl-green { --hl-color: rgba(81, 196, 143, .30); }
+[data-highlight-theme="dark"] mark.hl.hl-pink { --hl-color: rgba(255, 126, 166, .25); }
+[data-highlight-theme="dark"] mark.hl.hl-yellow { --hl-color: rgba(255, 221, 74, .24); }
+[data-highlight-theme="dark"] mark.hl.hl-blue { --hl-color: rgba(91, 169, 255, .25); }
+[data-highlight-theme="dark"] mark.hl.hl-green { --hl-color: rgba(81, 196, 143, .23); }
+.hl-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .55rem 1rem;
+  margin: 1.5rem 0;
+  font-size: .82rem;
+  line-height: 1.8;
+}
+.hl-legend-label { font-weight: 600; }
+.hl-legend small { flex-basis: 100%; font-size: inherit; }
+@media print {
+  mark.hl {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+@media (forced-colors: active) {
+  mark.hl {
+    background-image: none;
+    text-decoration: underline;
+    text-underline-offset: .15em;
+  }
+}
+
+</style>
+</head>
+<body class="research-essay">
+<header class="topbar"><b>AI RESEARCH BLOG</b><span>3D VISION · AGENTIC AI · PHYSICAL AI</span><time datetime="2026-10-17">17 OCT 2026 · KST</time></header>
+<main class="shell">
+<header class="hero">
+ <div class="eyebrow">PAPER ANALYSIS · ARXIV:2610.18356 · COMPUTER VISION</div>
+ <h1>도시를 훑는 대신<br>필요한 곳을 탐색한다</h1>
+ <p class="subtitle">Urbex가 바꾸는 도시 규모 3D 장면의 언어 기반 공간 지정</p>
+ <p class="hero-meta">Yu Wang et al. · v1 공개 2026-10-13 · 분석 기준 2026-10-17 KST</p>
+ <figure class="summary" aria-labelledby="urbex-overview-caption">
+  <div class="diagram-viewport" role="region" aria-label="Urbex의 능동적 공간 탐색 구조" tabindex="0">
+   <svg viewBox="0 0 1040 360" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="urbex-overview-title urbex-overview-desc" xmlns="http://www.w3.org/2000/svg">
+    <title id="urbex-overview-title">Urbex의 도시 규모 능동적 공간 탐색</title>
+    <desc id="urbex-overview-desc">자연어 지시와 도시 전체 조감도에서 시작해 랜드마크 질의, 지역 확대, 사선 시점 확인을 통해 최종 3D 위치 상자를 제출한다. 강화학습은 탐색 정책을 훈련한다.</desc>
+    <defs><marker id="urbex-arrow" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto"><path d="M0 0L11 5.5L0 11Z" fill="#35509B"/></marker><marker id="urbex-arrow-dash" markerWidth="11" markerHeight="11" refX="9" refY="5.5" orient="auto"><path d="M0 0L11 5.5L0 11Z" fill="#6B3F9E"/></marker></defs>
+    <path class="edge" marker-end="url(#urbex-arrow)" d="M190 172H264"/><path class="edge" marker-end="url(#urbex-arrow)" d="M416 172H490"/><path class="edge" marker-end="url(#urbex-arrow)" d="M642 172H716"/><path class="edge" marker-end="url(#urbex-arrow)" d="M868 172H942"/>
+    <rect class="node" x="30" y="108" width="160" height="128" rx="5"/><rect class="node" x="264" y="108" width="152" height="128" rx="5"/><rect class="node" x="490" y="108" width="152" height="128" rx="5"/><rect class="node" x="716" y="108" width="152" height="128" rx="5"/><rect class="node" x="942" y="108" width="80" height="128" rx="5"/>
+    <text class="svg-tax" x="110" y="138">INPUT</text><text class="svg-label" x="110" y="174"><tspan x="110">자연어 지시</tspan><tspan x="110" dy="27">+ 전역 BEV</tspan></text>
+    <text class="svg-tax" x="340" y="138">ANCHOR</text><text class="svg-label" x="340" y="174"><tspan x="340">랜드마크</tspan><tspan x="340" dy="27">질의</tspan></text>
+    <text class="svg-tax" x="566" y="138">ZOOM</text><text class="svg-label" x="566" y="174"><tspan x="566">유망 지역</tspan><tspan x="566" dy="27">고해상 확대</tspan></text>
+    <text class="svg-tax" x="792" y="138">VERIFY</text><text class="svg-label" x="792" y="174"><tspan x="792">사선 시점</tspan><tspan x="792" dy="27">3D 확인</tspan></text>
+    <text class="svg-tax" x="982" y="138">OUTPUT</text><text class="svg-small" x="982" y="179"><tspan x="982">위치</tspan><tspan x="982" dy="22">상자</tspan></text>
+    <path class="edge-dash" marker-end="url(#urbex-arrow-dash)" d="M790 278V313H337V250"/><text class="svg-small" x="560" y="339">훈련 시 보상으로 탐색 정책 최적화 · 추론 입력에는 정답 상자 미사용</text>
+    <text class="svg-tax" x="520" y="49">ACTIVE SPATIAL SEARCH · CONCEPTUAL SUMMARY OF THE PAPER</text>
+   </svg>
+  </div>
+  <p class="mobilehint">도식이 좁은 화면에서 잘리면 좌우로 이동해 확인할 수 있습니다.</p>
+  <figcaption id="urbex-overview-caption">개념 요약 · 논문 Figure 2의 구조를 바탕으로 재구성한 설명도. 측정 결과 그래프가 아니다.</figcaption>
+  <p class="diagram-summary">Urbex는 도시 전체에서 모든 후보를 한 번씩 채점하는 대신, 랜드마크로 지역을 찾고 확대·검증한 뒤 한 개의 공간 상자를 제출한다. 점선은 정답 기반 보상이 훈련 때만 정책을 돕는다는 뜻이다.</p>
+ </figure>
+</header>
+
+<section class="intro" id="intro">
+ <p class="lede">도시에서 “경찰서 옆 오렌지색 차량 왼쪽에 주차된 흰색 차”를 찾을 때, 시스템은 도시의 모든 물체 후보를 미리 만들고 전부 점수화해야 할까?</p>
+ <p>Wang 등은 도시 규모 3D 장면의 언어 기반 객체 지정(3D grounding)을 <mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">정적 후보 검색이 아니라, 관찰과 도구 사용을 반복하는 능동적 공간 탐색</mark>으로 다시 정의한다. 이 글은 2026년 10월 13일 공개된 arXiv v1 논문을 분석한다. 저자들은 VLM 에이전트가 전역 조감도에서 출발해 지명을 확인하고, 유망 영역을 확대하고, 사선 시점으로 3D 배치를 검증한 뒤 최종 위치 상자를 제출하도록 설계했다.</p>
+ <aside class="hl-legend" aria-label="내용 중요도 색상 안내"><b>내용 중요도</b><mark class="hl hl-pink" data-importance="최우선" title="중요도 1">1 · 최우선</mark><mark class="hl hl-yellow" data-importance="핵심" title="중요도 2">2 · 핵심</mark><mark class="hl hl-blue" data-importance="보충" title="중요도 3">3 · 보충</mark><mark class="hl hl-green" data-importance="참고" title="중요도 4">4 · 참고</mark><small>색상은 편집상 중요도이며 근거의 검증 수준을 뜻하지 않습니다.</small></aside>
+ <div class="question">중심 질문 · 거대한 장면을 전부 처리하지 않고도, 언어 지시에서 정확한 3D 위치까지 효율적으로 찾아갈 수 있는가?</div>
+ <p>논문의 핵심 기여는 시각언어모델(VLM) 자체보다 <strong>도시 규모 장면을 어떤 관찰 공간과 도구로 노출하고, 에이전트가 언제 무엇을 확인할지 어떻게 학습시키는가</strong>에 있다. 성능 수치는 데이터셋·평가 방식에 따라 구분해 읽어야 한다. 특히 후보가 주어진 Hit@k와 후보 없이 상자를 직접 예측하는 IoU는 서로 다른 능력을 측정한다.</p>
+</section>
+<nav class="navigator" aria-label="글의 주요 부분"><a href="#p1">01 정의·문제</a><a href="#p2">02 기존 접근</a><a href="#p3">03 Urbex 구조</a><a href="#p4">04 학습·수식</a><a href="#p5">05 평가 결과</a><a href="#p6">06 한계·시사점</a></nav>
+
+<section class="part" id="p1"><div class="band"></div><div class="partno">PART 01 · DEFINITION &amp; PROBLEM</div><h2>도시 규모 grounding은 ‘어디인지 찾아가는’ 문제다</h2><p class="part-desc">정의와 문제 범위 · 논문 1–4쪽, §1·§3.1</p></section>
+<section class="sec">
+ <div class="label">DEFINITION</div><h3>언어가 가리키는 대상을 3D 공간에 연결한다</h3>
+ <p>3D 장면 grounding은 자연어 참조 표현이 지칭하는 객체를 장면 안에서 찾고, 그 공간 범위를 지정하는 문제다. 예를 들어 색·종류뿐 아니라 “어느 도로의 어느 건물 오른쪽”처럼 관계와 지명에 의존할 수 있다. 실내 장면은 제한된 공간과 객체 집합을 다뤄왔지만, 도시 장면은 수십만에서 수천만 점 규모의 점군과 넓은 지리적 관계를 포함한다.</p>
+ <div class="table-wrap"><table><thead><tr><th>용어</th><th>이 글에서의 의미</th><th>논문 맥락</th></tr></thead><tbody>
+ <tr><td>도시 규모 3D grounding</td><td>자연어가 가리키는 대상을 대규모 도시 장면의 공간 위치·범위로 변환</td><td>대규모 점군, 반복 객체, 장거리 공간 단서</td></tr>
+ <tr><td>후보 순위화</td><td>미리 만든 객체 후보별 언어–객체 점수를 계산해 순위를 매기는 방식</td><td>후보 품질과 후보 수가 정확도·비용에 영향</td></tr>
+ <tr><td>능동적 공간 탐색</td><td>현재 관찰을 바탕으로 다음 확인 위치와 도구를 선택하는 순차적 접근</td><td>랜드마크 질의·확대·사선 렌더링·최종 제출</td></tr>
+ <tr><td>BEV</td><td>bird’s-eye view, 장면을 위에서 내려다본 조감도 표현</td><td>최종 상자를 예측하고 세계 좌표로 역변환하는 기준 시점</td></tr>
+ </tbody></table></div>
+ <div class="label">PROBLEM DEFINITION</div><h3>고정 크기 입력과 사전 후보 목록은 도시 장면의 병목이 된다</h3>
+ <p>점군을 고정된 수로 다운샘플링하면 작은 차량이나 세밀한 형상이 사라질 수 있다. 반대로 전체 도시 점군을 그대로 처리하기는 어렵다. 후보 기반 방법은 이 부담을 줄이지만, 검출·분할기가 놓친 대상은 후보에 들어오지 않으며, 수많은 후보를 모두 채점할수록 추론 비용이 커진다. 또한 지시문에서 중요한 것은 물체 자체의 색상·형태뿐 아니라 지명, 도로 방향, 주변 객체와의 관계다.</p>
+ <p><strong>Urbex가 설정한 과제</strong>는 정답 객체 후보를 추론 입력으로 받지 않고, 자유 형식의 BEV 정규화 상자를 예측한 뒤 장면의 뷰–세계좌표 변환으로 3D 공간 위치에 대응시키는 것이다. 정답 상자는 훈련 보상과 평가에만 사용되며, 추론 시 후보 상자로 제공되지 않는다. 단, 논문의 With-GT 평가에서는 예측 상자를 사후에 후보와 매칭해 Hit@k를 계산한다.</p>
+ <div class="callout"><span class="claim">해석</span><p>이 설계의 초점은 “더 큰 장면 인코더”보다 “필요한 정보를 어떤 순서로 얻을지”로 이동한다. 다만 후보가 전혀 필요 없는 추론과 사후 후보 매칭을 이용하는 평가를 혼동하면 안 된다.</p></div>
+</section>
+
+<section class="part" id="p2"><div class="band"></div><div class="partno">PART 02 · MOTIVATION &amp; CHALLENGES</div><h2>정적 검색은 후보를 줄여도 탐색 비용을 남긴다</h2><p class="part-desc">기존 접근의 한계와 연구 전환 · 논문 1–3쪽, §1–2</p></section>
+<section class="sec">
+ <div class="label">INTRODUCTION</div><h3>도시 지시는 멀리 있는 단서와 가까운 세부를 함께 요구한다</h3>
+ <p>도시 장면의 표현은 목표를 직접 묘사하기도 하지만, 유명 건물·거리명 같은 기준점과 상대 위치를 통해 우회적으로 가리키기도 한다. 따라서 시스템은 넓은 맥락에서 지역을 좁힌 다음, 작은 객체의 색·형태·배치를 확인해야 한다. 논문은 이 작업을 한 번에 입력을 읽고 답하는 추론보다, 환경과 상호작용하며 증거를 축적하는 탐색으로 본다.</p>
+ <div class="table-wrap"><table><thead><tr><th>접근</th><th>작동 방식</th><th>도시 규모에서의 약점</th></tr></thead><tbody>
+ <tr><td>다운샘플링 기반 grounding</td><td>전체 점군을 제한 크기로 줄여 모델 입력</td><td>작은 물체의 기하 세부 손실 가능</td></tr>
+ <tr><td>후보 순위화</td><td>사전 생성된 객체 상자마다 텍스트–객체 점수 산출</td><td>후보 생성 누락에 취약하고 후보 수에 따라 채점 비용 증가</td></tr>
+ <tr><td>Urbex 능동 탐색</td><td>장면 뷰를 도구로 바꾸며 유망 영역을 순차적으로 검사</td><td>뷰 렌더링·좌표 보정·도구 인터페이스에 의존</td></tr>
+ </tbody></table></div>
+ <div class="label">CHALLENGES</div><h3>핵심 난제는 위치를 찾는 일과 멈출 시점을 함께 정하는 것</h3>
+ <ol><li><strong>탐색 규모:</strong> 도시 전체에서 모든 객체와 관계를 열거하기 어렵다.</li><li><strong>긴 거리의 기준점:</strong> 지명 해석과 지리적 위치가 지역 선택을 크게 좌우한다.</li><li><strong>전역–국소 해상도:</strong> 낮은 해상도의 전체 지도는 방향을 주지만 작은 객체 판별에는 부족하다.</li><li><strong>2D 관찰과 3D 결과 연결:</strong> 화면 좌표의 상자를 실제 세계 좌표로 정확히 변환해야 한다.</li><li><strong>효율적 종료:</strong> 너무 이른 제출은 오답을, 너무 긴 탐색은 지연과 불필요한 수정 위험을 만든다.</li></ol>
+ <p><span class="claim">논문 명시 연구질문 아님</span> 논문은 공식 RQ 번호를 제시하지 않는다. 다음 질문은 문제 설정과 실험을 바탕으로 발표자가 재구성한 것이다.</p>
+ <ul><li>사전 객체 후보 없이 VLM이 도시 규모 장면에서 목표까지 탐색할 수 있는가?</li><li>랜드마크·확대·사선 시점 도구는 서로 다른 오류 원인을 얼마나 줄이는가?</li><li>강화학습 보상이 정확도와 상호작용 예산의 균형을 개선하는가?</li><li>학습된 탐색 전략이 다른 장면 데이터셋으로 전이되는가?</li></ul>
+</section>
+
+<section class="part" id="p3"><div class="band"></div><div class="partno">PART 03 · CORE CONCEPTS &amp; METHOD</div><h2>전역 맥락에서 국소 증거로 이동하는 에이전트</h2><p class="part-desc">상호작용 환경·도구·좌표 표현 · 논문 4–5쪽, §3.1–3.2, Figure 2</p></section>
+<section class="sec">
+ <div class="label">CORE CONCEPTS</div><h3>세 가지 도구가 서로 다른 관찰 공백을 메운다</h3>
+ <ul><li><strong>Landmark Query:</strong> 표현 안의 건물·도로 이름을 위치 기준점으로 변환한다.</li><li><strong>Zoom-in:</strong> 선택한 영역을 원본 고해상도 BEV에서 잘라 작은 객체의 실제 세부를 복원한다. 원본 BEV의 긴 변은 통상 10,000 픽셀을 넘는다.</li><li><strong>Oblique Rendering:</strong> 후보 영역을 지정 방향에서 렌더링해 형상·높이·배치를 3D 관점에서 확인한다. 최종 제출 좌표계는 사선 영상이 아니라 BEV 정렬 시점이다.</li></ul>
+ <p>각 BEV 뷰에는 뷰 좌표에서 세계 좌표로 가는 변환이 유지된다. 에이전트는 정규화된 2D 상자를 내고, 환경은 이를 세계 좌표 공간으로 투영한다. 시스템은 현재 관찰뿐 아니라 이전 도구 호출, 반환된 뷰 ID, 좌표 규칙, 이미지 등 상호작용 이력을 함께 정책 입력으로 제공한다.</p>
+ <div class="callout"><span class="claim">저자 주장 · Figure 2 재구성</span><p>Urbex의 환경은 단순한 이미지 입력창이 아니라, 전역 위치 찾기·국소 확대·3D 확인을 정합된 좌표계 안에서 연결하는 작업 인터페이스다.</p></div>
+ <div class="label">APPROACH</div><h3>정책은 다음 도구를 부르거나 최종 답을 제출한다</h3>
+ <p>시간 단계 <em>t</em>에서 정책은 현재 관찰 <em>o<sub>t</sub></em>와 상호작용 이력 <em>h<sub>t</sub></em>를 받아 사고 과정과 행동을 생성한다. 행동은 구조화된 도구 호출 또는 최종 답 제출이다. 도구가 실행되면 새로운 뷰와 피드백이 다음 관찰에 추가된다. 최대 턴 수는 탐색을 제한하며, 본 논문의 주요 설정은 8회 상호작용 예산이다.</p>
+ <p><strong>저자 제시 핵심 관계식 (1):</strong> <span class="source">논문 p.5, §3.2</span></p>
+ <div class="callout"><strong>(thought<sub>t</sub>, a<sub>t</sub>) ∼ π<sub>θ</sub>(o<sub>t</sub>, h<sub>t</sub>)</strong><br><small>에이전트의 사고와 행동은 현재 관찰·누적 이력에 조건화된 정책에서 샘플링</small></div>
+</section>
+
+<section class="part" id="p4"><div class="band"></div><div class="partno">PART 04 · LEARNING OBJECTIVE</div><h2>정확도·거리 진전·탐색 비용을 하나의 학습 신호로</h2><p class="part-desc">강화학습 목표와 보상 설계 · 논문 5–6쪽, §3.3</p></section>
+<section class="sec">
+ <p>저자들은 탐색 에피소드를 유한 시간 길이의 마르코프 의사결정 과정으로 모델링한다. 마지막 상자의 BEV 교집합 대비 합집합(IoU)은 정밀한 위치를 보상한다. 중심점 거리 항은 상자와 목표가 아직 겹치지 않을 때도 학습 방향을 제공한다. 턴 비용은 불필요하게 긴 상호작용을 억제한다.</p>
+ <p><strong>종료 보상 (2):</strong> 원문 식을 의미가 드러나도록 조판. <span class="source">논문 p.5, §3.3</span></p>
+ <div class="callout"><strong>R<sub>term</sub> = λ<sub>iou</sub> IoU( b̂, b★ ) + λ<sub>dist</sub> exp(−d(b̂, b★)/τ) − λ<sub>step</sub> T/T<sub>max</sub></strong><br><small>IoU: 상자 중첩 · d: 지면 평면 중심 거리 · T: 사용 턴 · T<sub>max</sub>: 최대 턴 · λ와 τ: 보상 가중치·거리 척도</small></div>
+ <p>중간 도구 호출에도 제한된 shaping reward를 더한다. 확대 중심이 목표에 가까워지면 양의 신호, 멀어지면 음의 신호를 주고, 사선 렌더링은 후보 영역과 목표 영역의 중첩에 비례한 신호를 받는다. 잘못된 도구명, 형식 오류, 실행 실패도 벌점 대상이다.</p>
+ <p><strong>에피소드 총 보상 (3):</strong> <span class="source">논문 p.5, §3.3</span></p><div class="callout"><strong>R(τ) = R<sub>term</sub> + ∑<sub>t=1</sub><sup>T</sup> R<sub>tool</sub>(s<sub>t</sub>, a<sub>t</sub>)</strong><br><small>최종 위치의 품질과 중간 도구 사용의 진행도를 함께 반영</small></div>
+ <p>보상은 정답 주석에 의존하는 특권 학습 신호이지만, 논문은 이를 추론 관찰에 넣지 않는다고 명시한다. 즉 훈련 때 목표에 가까워졌는지 계산할 수 있어도, 배포 시 에이전트에게 정답 위치를 노출하지 않는 구조다.</p>
+ <h3>GRPO는 별도 가치망 없이 여러 탐색 궤적을 비교한다</h3>
+ <p>각 입력에서 이전 정책이 여러 궤적을 만들고, 궤적 보상을 그룹 평균·표준편차로 정규화해 상대 이득을 계산한다. 그 이득으로 새 정책을 업데이트하면서 확률비 클리핑과 기준 정책에 대한 KL 페널티를 사용한다. 논문은 지도된 탐색 궤적 없이 강화학습으로 도구 사용 정책을 최적화했다고 보고한다.</p>
+ <p><strong>그룹 상대 이득 (4):</strong> <span class="source">논문 p.6, §3.3</span></p><div class="callout"><strong>A<sub>i</sub> = (R(τ<sub>i</sub>) − μ<sub>R</sub>) / (σ<sub>R</sub> + ε)</strong><br><small>한 입력에서 생성한 궤적을 같은 그룹의 평균 보상 대비로 평가</small></div>
+ <p class="table-note">표기 해설은 논문 본문 수식의 핵심 의미를 요약한 것이다. 전체 GRPO 목적함수는 논문 식 (5)에 제시되어 있으며, 이 글은 읽기 편의를 위해 상세 토큰별 클리핑 전개를 생략한다.</p>
+</section>
+
+<section class="part" id="p5"><div class="band"></div><div class="partno">PART 05 · EVIDENCE &amp; RESULTS</div><h2>후보 없는 위치 예측과 전이 결과는 유망하지만 서로 다른 근거다</h2><p class="part-desc">CityRefer 주 평가·STPLS3D-Refer 제로샷 · 논문 6–10쪽, §4, Tables 1–4</p></section>
+<section class="sec wide">
+ <div class="label">CITYREFER · WITH GT</div><h3>후보가 주어진 평가에서 Urbex는 Hit@1·Hit@3에서 강했다</h3>
+ <p>With-GT는 후보 순위화 기준선에 정답 객체 후보 집합을 허용한다. Urbex는 추론 때 후보 상자를 보지 않고 자유 형식 상자를 예측한 뒤, 평가 단계에서 후보와 IoU로 사후 매칭한다. 이 설정의 Hit@k는 목표 식별 순위를 측정하며 최소 중첩 문턱을 적용하지 않는다.</p>
+ <div class="table-wrap"><table><thead><tr><th>CityRefer split</th><th>방법</th><th>Hit@1</th><th>Hit@3</th><th>Hit@5</th><th>시간/예제</th></tr></thead><tbody>
+ <tr><td>ND · With GT</td><td>CityAnchor</td><td>23.4</td><td>35.3</td><td><strong>45.4</strong></td><td>32.1초</td></tr><tr><td>ND · With GT</td><td>Urbex</td><td><strong>25.8</strong></td><td><strong>39.2</strong></td><td>42.3</td><td>3.2초</td></tr>
+ <tr><td>NO · With GT</td><td>CityAnchor</td><td>14.2</td><td>22.4</td><td>31.0</td><td>32.1초</td></tr><tr><td>NO · With GT</td><td>Urbex</td><td><strong>23.9</strong></td><td><strong>36.9</strong></td><td><strong>40.7</strong></td><td>3.2초</td></tr>
+ </tbody></table></div><p class="table-note">논문 Table 1 값 · Hit@k는 퍼센트. ND는 학습 장면의 새 표현, NO는 학습에서 보지 않은 장면의 객체. 시간은 온라인 추론 측정이며 오프라인 준비는 제외.</p>
+ <p>ND에서 Hit@5는 CityAnchor가 더 높다. 저자들은 전수 후보 순위화가 Urbex가 놓치거나 국소 혼동을 겪는 대상을 상위 후보에 남길 수 있다고 설명한다. 따라서 Urbex가 모든 후보 범위에서 우월하다고 요약해서는 안 된다. Hit@1과 Hit@3은 선두 식별 능력, Hit@5는 상위 후보 회수 범위의 차이를 드러낸다.</p>
+ <div class="label">CITYREFER · WITHOUT GT</div><h3>후보 없는 직접 예측에서도 기준선보다 높은 중첩을 보고했다</h3>
+ <p>Without-GT는 정답 후보 상자 없이 예측한 공간 상자를 목표와 직접 비교한다. 아래 지표는 객체 식별 순위가 아니라 예측 범위의 겹침과 점군 수준 적합도를 평가한다.</p>
+ <div class="table-wrap"><table><thead><tr><th>split</th><th>방법</th><th>2D IoU</th><th>3D IoU</th><th>Point F1</th></tr></thead><tbody><tr><td>ND · Without GT</td><td>GPT-5.4 + Urbex 도구</td><td>4.4</td><td>2.2</td><td>9.4</td></tr><tr><td>ND · Without GT</td><td><strong>Urbex</strong></td><td><strong>15.6</strong></td><td><strong>11.0</strong></td><td><strong>20.1</strong></td></tr><tr><td>NO · Without GT</td><td>GPT-5.4 + Urbex 도구</td><td>4.6</td><td>1.9</td><td>10.4</td></tr><tr><td>NO · Without GT</td><td><strong>Urbex</strong></td><td><strong>14.6</strong></td><td><strong>7.7</strong></td><td><strong>17.8</strong></td></tr></tbody></table></div><p class="table-note">논문 Table 1 값 · 모두 퍼센트. 두 평가 설정의 수치는 서로 대체 가능한 지표가 아님.</p>
+ <div class="label">ZERO-SHOT TRANSFER</div><h3>새 장면 데이터셋에서의 결과는 전이 가능성을 시사한다</h3>
+ <p>Urbex는 CityRefer에서 학습한 뒤 STPLS3D-Refer에 추가 학습 없이 적용됐다. 논문 Table 2에서 Urbex는 With-GT Hit@1 27.2%, Hit@3 32.1%, Hit@5 33.4%를 보고했으며, Without-GT 2D IoU 13.0%, 3D IoU 10.0%, Point F1 16.2%를 기록했다. 별도의 30개 landmark-free 수기 검증 표현에서 Hit@1 23.3%도 보고했다.</p>
+ <p><mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">저자들은 이러한 집계 결과가 재사용 가능한 탐색 행동과 일치한다고 해석</mark>하지만, 결과만으로 모델이 일반적인 도시 공간 추론을 학습했다고 확정할 수는 없다. 평가셋의 규모·장면 분포·표현 유형을 함께 고려해야 한다.</p>
+ <div class="label">ABLATION</div><h3>도구와 보상 구성은 각각 탐색의 다른 부분을 돕는다</h3>
+ <p>논문 Table 3에서 도구 없음 기준은 Hit@3 10.5, 2D IoU 2.1이다. 확대만 추가하면 15.5·4.1, 랜드마크 질의까지 쓰면 28.2·8.9, 사선 렌더링도 더하면 7턴 설정에서 34.8·11.0으로 증가한다. 전체 도구로 8턴을 허용한 구성은 36.9·14.6을 기록했다. 9턴 설정은 36.8·13.2로 추가 개선되지 않았다.</p>
+ <p>Table 4에서는 IoU 종료 보상만 사용할 때 Hit@3 22.8, 2D IoU 6.7이었다. 거리 항 추가 후 30.6·10.9, 도구 단계 보상 추가 후 28.4·9.6, 전체 보상 조합에서 36.9·14.6을 보고했다. 이는 이 데이터·설정에서 세 신호가 상호 보완적이었다는 근거다.</p>
+ <div class="callout"><span class="claim">주의 · 평가 조건</span><p>시간 비교는 온라인 추론에 한정된다. 저자들은 후보 순위화 기준선 CityAnchor를 약 32.1초/예제, Urbex를 3.2초/예제로 보고한다. 선택적 사선 뷰 캐시 생성은 CityRefer 12개 장면에서 약 2.3시간이 걸리고, 요청 시 사선 렌더링을 포함한 4.4초/예제는 추정값이다. BEV 생성·좌표 보정·랜드마크 등록의 준비 시간은 별도로 보고되지 않았다. 따라서 이를 종단 간 시스템 속도 향상으로 해석하지 않는다.</p></div>
+</section>
+
+<section class="part" id="p6"><div class="band"></div><div class="partno">PART 06 · OPEN PROBLEMS &amp; IMPLICATIONS</div><h2>탐색 정책의 성능은 환경 정합성과 상자 정밀도에 달려 있다</h2><p class="part-desc">논문 한계·미해결 과제·전략적 해석 · 논문 10–11·23쪽, §4.5·§5·Appendix E</p></section>
+<section class="sec">
+ <div class="label">OPEN PROBLEMS</div><h3>논문이 드러낸 세 가지 미해결 축</h3>
+ <ol><li><strong>좌표·렌더링 신뢰성:</strong> BEV와 뷰–세계좌표 보정이 틀리면 그럴듯한 2D 상자도 잘못된 세계 위치로 변환될 수 있다.</li><li><strong>랜드마크 가용성:</strong> 이름이 없거나 모호하고 낡았거나 등록되지 않은 기준점은 탐색 효율을 낮춘다.</li><li><strong>최종 객체 경계:</strong> BEV 상자는 빠르지만 3D 인스턴스 분할보다 세밀도가 낮다. 저자들은 추가 3D 분할 도구로 결과를 정제하는 방향을 제시한다.</li></ol>
+ <p>오류 분석은 두 단계를 구분한다. 첫 확대에서 목표를 잘라내면 탐색 지역 선택 실패이고, 목표가 확대 영역 안에 있는데 다른 차량을 고르면 국소 대상 구분 실패다. 전자는 탐색 영역 재방문 전략, 후자는 주변 객체 관계와 시각 특징의 세밀한 대조가 필요하다.</p>
+ <h3>식별 성공과 정밀한 경계 설정은 별개의 성과다</h3>
+ <p>CityRefer-NO에서 정답 후보를 1순위로 식별한 결과에 목표 IoU ≥ 0.25 조건을 추가하면 Hit@1이 23.53에서 18.71로 낮아진다. 예측 상자와 목표 상자의 면적 비율은 중앙값 1.40, 90백분위수 9.92였다. 즉 일부 예측은 목표를 맞추더라도 주변 영역을 크게 포함할 수 있다. 결과를 볼 때 Hit@1만으로 위치 상자의 정밀도를 대체할 수 없다.</p>
+ <div class="label">BROADER IMPACT</div><h3>도시 단위 언어 검색은 유용성과 감시 위험을 함께 가진다</h3>
+ <p>논문은 길찾기·도시계획·접근성 개선과 함께 감시, 지속적 표적 추적, 민감 시설 식별, 자동 모니터링의 오용 가능성을 명시한다. 저자들은 공개 벤치마크만으로 학습하고, 개인 식별자를 사용하지 않으며, 동의 없는 감시·개인 추적을 금지하는 연구용 라이선스와 얼굴·차량 번호판 블러링을 제안한다. 이는 위험 완화 조치이지 모든 응용 위험이 해소됐다는 증거는 아니다.</p>
+ <div class="label">STRATEGIC INTERPRETATION</div><h3>후속 연구는 탐색의 근거와 비용까지 평가해야 한다</h3>
+ <p><span class="claim">작성자 해석·제안</span> 실제 피지컬 AI·도시 로봇으로 확장하려면 높은 Hit@k 외에도 잘못된 랜드마크 처리, 좌표 보정 오차, 환경 변화, 상자 경계 품질, 실패 후 회복을 별도 평가해야 한다. 또한 성공한 탐색만 평균 내지 말고, 도구 호출 횟수·실패 복구 비용·오프라인 지도 구축 비용·프라이버시 보호 절차를 같은 운영 시나리오에서 보고할 필요가 있다.</p>
+ <div class="table-wrap"><table><thead><tr><th>후속 질문</th><th>검증할 내용</th><th>제안 지표·시험</th></tr></thead><tbody><tr><td>잘못된 기준점에서 회복 가능한가?</td><td>누락·모호·오래된 랜드마크에 대한 재탐색</td><td>실패 후 복구율, 추가 턴, 누적 오류</td></tr><tr><td>상자에서 3D 객체로 정밀화되는가?</td><td>BEV 상자 이후 3D 분할 도구의 실질 기여</td><td>3D IoU, point F1, 경계 오차</td></tr><tr><td>운영 비용이 실제로 줄어드는가?</td><td>지도·좌표·캐시 준비까지 포함한 총비용</td><td>총 지연, 장면 준비 시간, 질의당 상각 비용</td></tr><tr><td>민감 장소 검색을 어떻게 제한할까?</td><td>개인·민감 시설 노출 및 추적 악용</td><td>접근 통제, 로그·보존, 거부 정책 평가</td></tr></tbody></table></div>
+ <div class="callout"><span class="claim">종합</span><p><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">Urbex의 설계 전환은 후보를 더 잘 채점하는 대신, 필요한 장면을 순서 있게 관찰하는 에이전트를 학습시키는 데 있다.</mark> 논문 결과는 벤치마크에서 이 접근의 가능성을 보여주지만, 정밀한 3D 경계·환경 정합·종단 간 준비비용·프라이버시 검증은 실제 적용 전에 남은 과제다.</p></div>
+</section>
+
+<section class="refs" id="references"><h2>Sources &amp; Reading Notes</h2><ol>
+ <li><strong>주 분석 논문.</strong> Yu Wang, Rui Dai, Wei Chen, Yi Wang, Bo Dang, Kaikui Liu, Xiangxiang Chu, Yansheng Li. “Urbex: Agentic Spatial Grounding for City-Scale 3D Scenes.” arXiv:2610.18356v1, 13 Oct 2026. <a href="https://arxiv.org/abs/2610.18356">arXiv abstract</a> · <a href="https://arxiv.org/pdf/2610.18356">PDF</a>. 본문 Figure 1–4, Tables 1–4, 식 (1)–(5), Appendix D–E를 확인.</li>
+ <li><strong>저자 제공 코드.</strong> <a href="https://github.com/AMAP-ML/Urbex">AMAP-ML/Urbex</a>. 코드와 체크포인트의 실행 재현성은 이 글에서 독립적으로 검증하지 않았다.</li>
+ <li><strong>평가 해석.</strong> Hit@k는 논문 정의에 따른 목표 순위 식별 지표이며, Without-GT IoU·Point F1은 직접 예측 범위의 품질을 측정한다. 온라인 지연 수치는 오프라인 장면 준비를 제외한다.</li>
+</ol><p class="source">Claim discipline · 수치와 설정은 원문 보고값. 해석·후속 연구 제안은 별도 표시. 논문 외부 재현 검증은 수행하지 않음.</p></section>
+<footer><div class="band"></div>AI RESEARCH BLOG · PUBLISHED 2026-10-17 KST · PAPER ANALYSIS<br>Tags: Physical AI · Machine Learning</footer>
+</main>
+</body></html>
