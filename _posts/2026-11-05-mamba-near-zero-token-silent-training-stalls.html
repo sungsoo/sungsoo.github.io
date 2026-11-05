@@ -1,0 +1,248 @@
+---
+layout: null
+title: "The Batch That Never Learned: Near-Zero Tokens and Silent Stalls in Mamba Training"
+date: 2026-11-05
+categories: [artificial intelligence]
+tags: [foundation models, machine learning]
+---
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="희귀 토큰의 near-zero embedding이 Mamba 계열 gated sequence model에서 FP32 gradient clipping overflow와 무음 학습 정지를 만드는 경로, GroupClip과 GateFloor의 효과와 한계를 분석한다.">
+  <title>The Batch That Never Learned: Near-Zero Tokens and Silent Stalls in Mamba Training</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans+KR:wght@400;500;600&amp;family=Spectral:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet">
+  <style>
+    :root{--paper:#edf0f4;--surface:#f8fafc;--ink:#10151f;--ink2:#2a3243;--muted:#5d6879;--hair:#c6cfda;--navy:#21375c;--teal:#1e6e8c;--plum:#6b3f9e;--rust:#a84d38;--green:#2f7a55;--gold:#8e7a12;--shadow:0 22px 60px rgba(25,39,67,.11);--disp:"Gowun Batang","Spectral",Batang,serif;--lat:"Spectral",Georgia,serif;--body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body.research-essay{margin:0;background:radial-gradient(circle at 7% 0,#e1e8f5 0,transparent 25%),radial-gradient(circle at 96% 20%,#e8e4f2 0,transparent 23%),var(--paper);color:var(--ink);font:400 17px/1.86 var(--body);letter-spacing:-.012em;word-break:keep-all;overflow-wrap:anywhere}a{color:#284d91;text-underline-offset:3px}a:hover{color:#17305f}:focus-visible{outline:3px solid #35509b;outline-offset:4px}.shell{width:min(1180px,calc(100% - 34px));margin:auto}.hero{padding:64px 0 26px}.hero-card{position:relative;overflow:hidden;padding:clamp(34px,7vw,82px);border:1px solid rgba(53,80,155,.2);border-radius:36px;background:linear-gradient(132deg,rgba(255,255,255,.97),rgba(241,246,250,.9));box-shadow:var(--shadow)}.hero-card:after{content:"";position:absolute;width:430px;height:430px;right:-190px;top:-220px;border-radius:50%;background:conic-gradient(from 55deg,#597dc5,#c87888,#7458a7,#597dc5);opacity:.21}.eyebrow,.part-no,.technical-label,.meta{font:600 12px/1.6 var(--mono);letter-spacing:.1em;text-transform:uppercase}.eyebrow{position:relative;color:var(--plum)}h1,h2,h3{font-family:var(--disp);font-weight:700;letter-spacing:-.035em}h1{position:relative;z-index:1;max-width:1010px;margin:.22em 0 .28em;font-size:clamp(38px,6.8vw,70px);line-height:1.04}.deck{position:relative;z-index:1;max-width:900px;margin:0;font:italic 400 clamp(18px,2.1vw,24px)/1.55 var(--lat);color:var(--ink2)}.meta{position:relative;z-index:1;margin-top:26px;color:var(--muted)}
+    .opening-summary-diagram{margin:24px auto 30px;padding:20px;border:1px solid var(--hair);border-radius:28px;background:white;box-shadow:var(--shadow)}.diagram-viewport{overflow-x:auto;border:1px solid var(--hair);border-radius:18px;background:linear-gradient(180deg,#fafcfe,#f1f5f8)}.opening-summary-diagram svg{display:block;width:100%;height:auto;min-width:940px}.opening-summary-diagram figcaption,.diagram-summary{margin:.75rem .25rem 0;color:var(--muted);font-size:.87rem;line-height:1.75}.scroll-hint{display:none;color:var(--muted);font-size:.78rem}.svg-node{fill:white;stroke:#aebac8;stroke-width:1.6}.svg-cause{stroke:#6b3f9e}.svg-failure{stroke:#a63446}.svg-fix{stroke:#2f7a55}.svg-edge{fill:none;stroke:#35509b;stroke-width:2;marker-end:url(#stall-arrow)}.svg-fix-edge{fill:none;stroke:#2f7a55;stroke-width:2;stroke-dasharray:7 6;marker-end:url(#stall-arrow-green)}.svg-label{fill:#10151f;font:600 17px var(--body)}.svg-tech{fill:#5d6879;font:600 14px var(--mono);letter-spacing:.04em}.svg-note{fill:#5d6879;font:400 14px var(--body)}
+    .hl-legend{display:flex;flex-wrap:wrap;gap:.55rem 1rem;margin:1.4rem 0;padding:15px 18px;border:1px solid var(--hair);border-radius:17px;background:#fff;font-size:.82rem}.hl-legend-label{font-weight:600}.hl-legend small{flex-basis:100%}mark.hl{--hl-color:rgba(255,221,74,.42);color:inherit;background:linear-gradient(176deg,transparent 0 56%,var(--hl-color) 56% 89%,transparent 89%);padding:0 .06em;font:inherit;-webkit-box-decoration-break:clone;box-decoration-break:clone}.hl-pink{--hl-color:rgba(255,126,166,.39)!important}.hl-yellow{--hl-color:rgba(255,221,74,.44)!important}.hl-blue{--hl-color:rgba(91,169,255,.33)!important}.hl-green{--hl-color:rgba(81,196,143,.31)!important}
+    .layout{display:grid;grid-template-columns:245px minmax(0,1fr);gap:42px;align-items:start}.toc{position:sticky;top:18px;padding:20px;border:1px solid var(--hair);border-radius:19px;background:rgba(255,255,255,.88);backdrop-filter:blur(10px)}.toc strong{display:block;margin-bottom:8px;font-family:var(--mono);font-size:.8rem}.toc a{display:block;padding:4px 0;color:var(--muted);font-size:.79rem;text-decoration:none}.toc a:hover{color:var(--navy)}main{min-width:0}.abstract{margin:0 0 44px;padding:28px;border-left:6px solid var(--plum);border-radius:0 20px 20px 0;background:white;box-shadow:0 12px 30px rgba(25,39,67,.07)}.abstract .lede{margin:.2em 0;font:400 clamp(20px,2.4vw,24px)/1.72 var(--disp)}.section{scroll-margin-top:24px;margin:0 0 68px}.section-head{display:grid;grid-template-columns:56px 1fr;gap:14px;align-items:end;padding-bottom:14px;border-bottom:1px solid var(--hair)}.section-head .num{font:700 2.2rem/1 var(--lat);color:#9aa6b8}.section h2{margin:0;font-size:clamp(29px,4vw,44px);line-height:1.18}.section h3{margin:32px 0 8px;font-size:clamp(22px,2.4vw,27px);line-height:1.4}.section p{margin:1em 0}.part-no{margin-bottom:10px;color:var(--teal)}.callout{margin:22px 0;padding:20px 22px;border:1px solid var(--hair);border-radius:18px;background:white}.callout.fact{border-left:5px solid #4a9bd8}.callout.claim{border-left:5px solid #d4ac23}.callout.interpretation{border-left:5px solid #ba5982}.callout.proposal{border-left:5px solid #3b986e}.callout.open{border-left:5px solid #8e7a12}.label{display:inline-flex;margin-right:8px;padding:3px 8px;border-radius:7px;background:#edf1f6;font:600 .7rem/1.5 var(--mono);letter-spacing:.035em}.equation{overflow:auto;margin:22px 0;padding:22px;border:1px solid var(--hair);border-radius:17px;background:#f7f9fc;font:500 16px/1.65 var(--mono);text-align:center;white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:20px 0}.card{padding:20px;border:1px solid var(--hair);border-radius:17px;background:#fff}.card h3,.card h4{margin:0 0 8px}.card p{margin:.35em 0}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--hair);border-radius:18px;background:white}table{width:100%;border-collapse:collapse;min-width:800px;font-size:.9rem}th,td{padding:14px 15px;border-bottom:1px solid #dce2e9;vertical-align:top;text-align:left}th{background:#eef3f7;font-family:var(--mono);font-size:.77rem;letter-spacing:.015em}tr:last-child td{border-bottom:0}.source-list{padding-left:1.25rem}.source-list li{margin:.7rem 0}.footer{margin-top:72px;padding:30px 0 55px;border-top:1px solid var(--hair);color:var(--muted);font-size:.84rem}.kicker{font-family:var(--lat);font-style:italic;color:var(--muted)}ul,ol{padding-left:1.35rem}li{margin:.46rem 0}.status-row{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.status{padding:5px 9px;border:1px solid var(--hair);border-radius:8px;background:white;font:600 .72rem/1.4 var(--mono)}
+    @media(max-width:860px){.layout{grid-template-columns:1fr}.toc{position:static}.grid{grid-template-columns:1fr}.hero{padding-top:25px}.hero-card{border-radius:24px}.opening-summary-diagram{padding:12px}.scroll-hint{display:block}.section{margin-bottom:54px}}@media(max-width:520px){body.research-essay{font-size:16px;line-height:1.82}.shell{width:min(100% - 22px,1180px)}.hero-card{padding:28px 22px}h1{font-size:38px}.section-head{grid-template-columns:42px 1fr}.section-head .num{font-size:1.7rem}.abstract{padding:22px}.callout{padding:17px}}
+    @media print{body.research-essay{background:white}.toc{display:none}.layout{display:block}.hero-card,.opening-summary-diagram,.abstract{box-shadow:none}a{color:inherit}mark.hl{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style>
+</head>
+<body class="research-essay">
+  <header class="hero shell">
+    <div class="hero-card">
+      <div class="eyebrow">MAMBA · TRAINING RELIABILITY · TECHNICAL ESSAY</div>
+      <h1>The Batch That Never Learned</h1>
+      <p class="deck">Near-zero token embeddings, zero-at-origin gates, and the silent failure chain behind multilingual adaptation</p>
+      <p class="meta">PUBLISHED 2026-11-05 KST · EVIDENCE CUTOFF 2026-11-05</p>
+    </div>
+
+    <figure class="opening-summary-diagram" aria-labelledby="stall-overview-caption">
+      <div class="diagram-viewport" role="region" aria-label="희귀 토큰에서 무음 학습 정지까지의 핵심 구조" tabindex="0">
+        <svg viewBox="0 0 1100 650" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="stall-overview-title stall-overview-desc">
+          <title id="stall-overview-title">희귀 토큰이 Mamba 계열 학습을 멈추게 하는 경로와 두 가지 완화책</title>
+          <desc id="stall-overview-desc">미관측 토큰의 입력 임베딩이 AdamW weight decay로 축소되고, 0에서 사라지는 게이트가 과거 상태 읽기를 억제하며, Pre-RMSNorm의 반복 증폭이 FP32 전역 노름 계산을 오버플로시켜 배치 전체 업데이트를 0으로 만든다. GroupClip은 공개 체크포인트를 보호하고 GateFloor는 사전학습 단계의 고장을 예방한다.</desc>
+          <defs>
+            <marker id="stall-arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#35509b"/></marker>
+            <marker id="stall-arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#2f7a55"/></marker>
+          </defs>
+          <text x="550" y="43" text-anchor="middle" class="svg-tech">AUTHOR-DIAGNOSED FAILURE CHAIN · PREPRINT EVIDENCE</text>
+          <rect x="40" y="92" width="225" height="124" rx="12" class="svg-node svg-cause"/>
+          <text x="152" y="126" text-anchor="middle" class="svg-tech">PRETRAINING ORIGIN</text>
+          <text x="152" y="159" text-anchor="middle" class="svg-label"><tspan x="152">미관측 희귀 토큰</tspan><tspan x="152" dy="27">+ AdamW decay</tspan></text>
+          <text x="152" y="202" text-anchor="middle" class="svg-note">untied input embedding</text>
+          <rect x="305" y="92" width="225" height="124" rx="12" class="svg-node svg-cause"/>
+          <text x="417" y="126" text-anchor="middle" class="svg-tech">NEAR-ZERO ROW</text>
+          <text x="417" y="159" text-anchor="middle" class="svg-label"><tspan x="417">‖e<tspan baseline-shift="sub">t</tspan>‖ &lt; 10⁻⁶</tspan><tspan x="417" dy="27">현재 토큰 신호 소실</tspan></text>
+          <rect x="570" y="92" width="225" height="124" rx="12" class="svg-node svg-failure"/>
+          <text x="682" y="126" text-anchor="middle" class="svg-tech">GATED READOUT</text>
+          <text x="682" y="159" text-anchor="middle" class="svg-label"><tspan x="682">SiLU(0)=0</tspan><tspan x="682" dy="27">과거 상태 읽기 억제</tspan></text>
+          <rect x="835" y="92" width="225" height="124" rx="12" class="svg-node svg-failure"/>
+          <text x="947" y="126" text-anchor="middle" class="svg-tech">PRE-RMSNORM</text>
+          <text x="947" y="159" text-anchor="middle" class="svg-label"><tspan x="947">층마다 최대 10³×</tspan><tspan x="947" dy="27">역전파 증폭</tspan></text>
+          <path d="M265 154 H297" class="svg-edge"/><path d="M530 154 H562" class="svg-edge"/><path d="M795 154 H827" class="svg-edge"/>
+          <rect x="360" y="290" width="380" height="122" rx="14" class="svg-node svg-failure"/>
+          <text x="550" y="326" text-anchor="middle" class="svg-tech">SILENT UPDATE LOSS</text>
+          <text x="550" y="361" text-anchor="middle" class="svg-label"><tspan x="550">gradient entry &gt; 1.84×10¹⁹</tspan><tspan x="550" dy="28">FP32 global norm → ∞ → 배치 gradient=0</tspan></text>
+          <path d="M947 216 V250 Q947 270 927 270 H570 Q550 270 550 282" class="svg-edge"/>
+          <rect x="115" y="490" width="360" height="112" rx="12" class="svg-node svg-fix"/>
+          <text x="295" y="524" text-anchor="middle" class="svg-tech">RELEASED CHECKPOINT · GROUPCLIP</text>
+          <text x="295" y="557" text-anchor="middle" class="svg-label"><tspan x="295">입력 embedding과 backbone을</tspan><tspan x="295" dy="27">분리해 안전하게 clipping</tspan></text>
+          <rect x="625" y="490" width="360" height="112" rx="12" class="svg-node svg-fix"/>
+          <text x="805" y="524" text-anchor="middle" class="svg-tech">FROM SCRATCH · GATEFLOOR</text>
+          <text x="805" y="557" text-anchor="middle" class="svg-label"><tspan x="805">SiLU(z)+δ로 0 입력에서도</tspan><tspan x="805" dy="27">상태 읽기 경로 유지</tspan></text>
+          <path d="M465 412 Q430 452 350 482" class="svg-fix-edge"/><path d="M635 412 Q670 452 750 482" class="svg-fix-edge"/>
+        </svg>
+      </div>
+      <p class="scroll-hint">좁은 화면에서는 다이어그램을 좌우로 스크롤할 수 있습니다.</p>
+      <figcaption id="stall-overview-caption">핵심 구조 · 이 논문이 제시한 고장 사슬과 완화책을 재구성한 설명도이며, 인과 방향은 저자 실험과 수치 분석을 따릅니다.</figcaption>
+      <p class="diagram-summary">요지는 “선형시간 추론”과 “안정적인 학습”이 별개의 속성이라는 것이다. GroupClip은 이미 배포된 가중치의 적응을, GateFloor는 새 모델의 사전학습을 겨냥한다.</p>
+    </figure>
+  </header>
+
+  <div class="shell layout">
+    <nav class="toc" aria-label="글 목차">
+      <strong>CONTENTS</strong>
+      <a href="#definition">01 Definition</a><a href="#problem-definition">02 Problem Definition</a><a href="#core-concepts">03 Core Concepts</a><a href="#introduction">04 Introduction</a><a href="#motivation-background">05 Motivation &amp; Background</a><a href="#challenges">06 Challenges</a><a href="#research-questions">07 Research Questions</a><a href="#approaches-methods">08 Approaches (Methods)</a><a href="#key-applications">09 Key Applications</a><a href="#open-problems">10 Open Problems</a><a href="#future-directions">11 Future Directions</a><a href="#sources">Sources</a>
+    </nav>
+
+    <main>
+      <section class="abstract" aria-labelledby="central-question">
+        <div class="technical-label">THE CENTRAL QUESTION</div>
+        <p id="central-question" class="lede">손실값도 NaN도 멀쩡해 보이는데, 왜 어떤 Mamba 적응 학습은 배치의 정보를 조용히 버리는가?</p>
+        <p><strong>2026년 11월 3일 최초 공개된 arXiv v1 프리프린트</strong> <em>Near-Zero Token Embeddings Silently Stall Training in Gated Sequence Models</em>은 이 문제를 희귀 토큰, untied embedding, zero-at-origin gate, Pre-RMSNorm, FP32 global-norm clipping이 이어지는 수치적 고장 사슬로 설명한다. 정식 학회·저널 발표 및 개정본은 조사 기준일까지 확인되지 않았다.</p>
+        <div class="status-row"><span class="status">[사실] arXiv v1 · 2026-11-03</span><span class="status">[저자 주장] 291 repositories audited</span><span class="status">[해석] training reliability ≠ inference complexity</span><span class="status">[제안] update-retention benchmark</span></div>
+        <aside class="hl-legend" aria-label="내용 중요도 색상 안내"><span class="hl-legend-label">내용 중요도</span><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">1 · 최우선</mark><mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">2 · 핵심</mark><mark class="hl hl-blue" data-importance="보충" title="중요도 3 · 보충">3 · 보충</mark><mark class="hl hl-green" data-importance="참고" title="중요도 4 · 참고">4 · 참고</mark><small>색상은 편집상 중요도이며 근거의 검증 수준을 뜻하지 않습니다.</small></aside>
+      </section>
+
+      <section id="definition" class="section">
+        <div class="part-no">PART 01 · DEFINITION</div><div class="section-head"><div class="num">01</div><h2>정의: 상태공간의 문제가 아니라 학습 경로의 문제</h2></div>
+        <h3>Mamba와 selective SSM</h3>
+        <p><strong>Mamba</strong>는 입력에 따라 상태 갱신과 읽기를 조절하는 selective state-space sequence architecture다. 순환 상태를 이용해 시퀀스를 처리하므로 순수 고정상태 SSM의 추론 상태 크기는 문맥 길이에 직접 비례하지 않는다. 그러나 이는 <mark class="hl hl-green" data-importance="참고" title="중요도 4 · 참고">무한한 정보를 완전하게 보존한다는 뜻이 아니며</mark>, 수치적으로 안정적인 학습을 자동 보장하지도 않는다.</p>
+        <h3>Near-zero token embedding과 silent training stall</h3>
+        <p>논문은 도달 가능한 토큰의 입력 embedding row가 <code>‖e<sub>t</sub>‖<sub>2</sub>&lt;10<sup>−6</sup></code>인 경우를 near-zero token으로 다룬다. <strong>silent stall</strong>은 FP32 전역 gradient norm이 무한대로 넘치면서 clipping scale이 0이 되어 현재 배치의 gradient가 모두 0으로 사라지지만, 예외나 NaN loss가 나타나지 않는 현상이다.</p>
+        <div class="callout fact"><span class="label">검증된 경계</span><strong>LFM은 Liquid AI의 모델군이고 Mamba는 아키텍처 계열이다.</strong> LFM2는 입력 의존 gated short convolution과 일부 GQA를 결합하며, LFM3는 별도의 tri-hybrid 제품군이다. 따라서 이 논문의 Mamba·Mamba-2·gated hybrid 결과를 LFM 전체, LTC 또는 LNN에 자동으로 소급할 수 없다.</div>
+      </section>
+
+      <section id="problem-definition" class="section">
+        <div class="part-no">PART 02 · PROBLEM FORMULATION</div><div class="section-head"><div class="num">02</div><h2>문제 정의: 빠른 모델이 실제로는 학습하지 않는 역설</h2></div>
+        <p>기존 효율성 논의는 정확도, prefill·decode 연산량, KV cache 또는 순환 상태 크기에 집중했다. 하지만 현장 적응에서는 <em>얼마나 빠르게 계산했는가</em>보다 <em>유효한 업데이트를 얼마나 보존했는가</em>가 먼저다. 이를 다음과 같은 제약 최적화로 확장할 수 있다.</p>
+        <div class="equation">maximize Quality(θ) subject to p95 latency ≤ L, peak memory ≤ M, energy/task ≤ E, and update-retention ≥ R</div>
+        <p><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">19.8%의 학습 step이 조용히 사라진다면 이론적 선형시간 이점만으로 시스템 효율을 설명할 수 없다.</mark> 유효 연산량은 단순 FLOPs가 아니라 <code>총 연산 × 유효 업데이트 비율</code>과 함께 봐야 한다.</p>
+        <div class="table-wrap"><table><thead><tr><th>구성</th><th>Prefill / 전체 처리</th><th>Decode 한 토큰</th><th>이력 저장</th><th>이번 연구가 추가한 위험</th></tr></thead><tbody>
+          <tr><td>표준 full attention</td><td>길이에 대해 이차 연산</td><td>이력 길이에 선형</td><td>KV cache가 길이에 선형</td><td>동일 near-zero row가 있어도 비초기 위치의 attention 문맥이 scale을 회복할 수 있음</td></tr>
+          <tr><td>고정상태 순수 SSM</td><td>총 선형 연산</td><td>순환 갱신</td><td>길이와 독립인 고정 상태</td><td>현재 토큰 gate가 0에서 사라지면 과거 상태 readout도 억제될 수 있음</td></tr>
+          <tr><td>Hybrid / LFM류</td><td>배치된 operator에 따라 혼합</td><td>attention 층 수·배치에 의존</td><td>SSM state + attention KV</td><td>첫 attention 이전의 연속 gated block 수가 수치 위험을 좌우할 수 있음</td></tr>
+        </tbody></table></div>
+        <p class="kicker">GQA는 KV cache의 계수를 줄이지만 길이에 대한 선형 의존을 없애지 않는다. 마찬가지로 gated recurrence는 추론 메모리를 줄여도 학습 안정성 문제를 없애지 않는다.</p>
+      </section>
+
+      <section id="core-concepts" class="section">
+        <div class="part-no">PART 03 · CORE CONCEPTS</div><div class="section-head"><div class="num">03</div><h2>핵심 개념: 0에 가까운 입력이 10³⁰배 gradient가 되는 경로</h2></div>
+        <h3>선택적 상태 갱신과 “선택”의 정확한 의미</h3>
+        <div class="equation">h<sub>t</sub> = Ā<sub>t</sub>h<sub>t−1</sub> + B̄<sub>t</sub>x<sub>t</sub>, &nbsp; y<sub>t</sub> = C<sub>t</sub>h<sub>t</sub></div>
+        <p>선택성은 입력별로 <em>무엇을 쓰고, 무엇을 잊고, 무엇을 읽을지</em> 조절하는 것이다. 추론 중 가중치를 새로 학습한다는 의미가 아니다. 이 논문이 다루는 취약점은 상태 전이 자체보다, 현재 토큰으로 계산한 SiLU gate 또는 linear query가 0 입력에서 사라져 <strong>과거 상태를 출력으로 읽는 경로</strong>를 약화시키는 데 있다.</p>
+        <h3>세 단계의 수치적 증폭</h3>
+        <ol>
+          <li><strong>형성:</strong> 사전학습 중 한 번도 나타나지 않은 untied input row는 입력 gradient를 받지 못하지만 AdamW decay는 계속 적용된다.</li>
+          <li><strong>전파:</strong> <code>SiLU(0)=0</code>인 gate가 과거 상태 readout을 거의 0으로 만들면 residual stream도 작은 상태로 여러 층을 통과한다.</li>
+          <li><strong>붕괴:</strong> RMS magnitude가 <code>√ε</code> 아래일 때 Pre-RMSNorm은 층마다 최대 <code>1/√ε</code>, ε=10<sup>−6</sup>이면 약 10³배를 역전파에 곱한다. gradient entry가 1.84×10¹⁹를 넘으면 제곱 합이 FP32 범위를 넘어 ∞가 되고, finite gradient를 ∞로 나눈 clipping 결과는 정확히 0이 된다.</li>
+        </ol>
+        <div class="callout interpretation"><span class="label">해석</span>이 현상은 “기억이 없어서”라기보다 <mark class="hl hl-blue" data-importance="보충" title="중요도 3 · 보충">기억을 읽는 현재 토큰의 경로가 0 근방에서 닫히고, 정규화가 역전파에서 그 작은 신호를 폭증시키는 문제</mark>다. 기억 보존, 상태 접근, 수치 안정성은 분리해 평가해야 한다.</div>
+      </section>
+
+      <section id="introduction" class="section">
+        <div class="part-no">PART 04 · INTRODUCTION</div><div class="section-head"><div class="num">04</div><h2>도입: 손실 곡선이 알려주지 않는 실패</h2></div>
+        <p>희귀 언어 subword, 새로운 스크립트, 코드의 CRLF 조각, 새 chat template tag는 일반 benchmark에서 거의 등장하지 않는다. 출력 head는 정상일 수 있어 inference 성능도 멀쩡해 보인다. 그러나 full-parameter continual pretraining이나 instruction tuning에서 해당 토큰이 처음 등장하면 문제는 optimizer 단계에서 터진다.</p>
+        <p>저자들은 291개 open-weight repository, 280개의 고유 embedding table을 조사했다. <mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">weight-tied 모델에서는 도달 가능한 near-zero row가 0%였지만, untied gated/hybrid checkpoint에서는 52.6%(20/38)</mark>였다. Untied Transformer에서도 30.9%(47/152)가 발견됐으나 비초기 위치 또는 BOS가 있는 조건에서는 attention이 이전 value를 주입해 scale을 회복했다.</p>
+        <div class="callout claim"><span class="label">저자 주장</span>문제는 loss가 NaN이 되지 않아 표준 대시보드에서 놓치기 쉽다. 실제로 Nemotron-3-Nano-4B의 Telugu continual pretraining에서는 기본 FP32 global clipping이 평균 198.3±9.9개의 1,000 step, 즉 약 19.8%에서 현재 배치의 gradient를 사실상 잃었다.</div>
+      </section>
+
+      <section id="motivation-background" class="section">
+        <div class="part-no">PART 05 · MOTIVATION &amp; BACKGROUND</div><div class="section-head"><div class="num">05</div><h2>필요성과 배경: 장기 문맥 경쟁이 만든 새로운 신뢰성 표면</h2></div>
+        <p>Mamba 연구의 초기 동기는 긴 이력과 낮은 추론 비용, 높은 정확도를 동시에 달성하는 것이었다. 2025–2026년 흐름은 효율적인 operator 그 자체에서 기억 회수, 상태 추적, hybrid 배치, 저정밀 안정성, 하드웨어·학습 공동설계로 이동했다. 이번 결과는 여기에 <strong>어휘와 optimizer가 만드는 학습 신뢰성</strong>을 추가한다.</p>
+        <div class="grid">
+          <article class="card"><h3>왜 multilingual adaptation인가</h3><p>저자 audit에서 영향을 받은 row에는 Telugu·Basque subword, Cyrillic Mongolian 단어 등이 포함됐다. 저자 분석에 따르면 낮은 자원 언어 적응은 기존 benchmark가 거의 만지지 않던 토큰을 반복적으로 호출하므로 취약점이 드러나기 쉽다.</p></article>
+          <article class="card"><h3>왜 chat template인가</h3><p>새 special tag가 tokenizer에서는 도달 가능하지만 사전학습에는 없었다면 untied input row만 decay될 수 있다. Full-parameter tuning prompt에 이 tag가 포함되면 매 step의 공통 트리거가 될 수 있다.</p></article>
+          <article class="card"><h3>왜 weight tying인가</h3><p>입력과 출력 embedding을 공유하면 해당 토큰이 입력에 없더라도 softmax output gradient가 같은 row를 갱신해 scale을 유지한다. Untied 구조에서는 이 보호 경로가 없다.</p></article>
+          <article class="card"><h3>왜 Mamba 계열인가</h3><p>Attention은 이전 토큰 value를 현재 위치로 불러올 수 있지만, zero-at-origin gate를 쓰는 recurrence는 현재 토큰이 0에 가까울 때 과거 상태 readout 자체가 축소될 수 있다.</p></article>
+        </div>
+        <p><mark class="hl hl-green" data-importance="참고" title="중요도 4 · 참고">Frozen-embedding LoRA와 inference는 이 gradient-clipping 고장 경로의 직접 대상이 아니다.</mark> 다만 full-parameter RL update가 near-zero chat tag를 포함한 prompt를 사용하면 다시 대상이 될 수 있다는 것이 저자들의 범위 구분이다.</p>
+      </section>
+
+      <section id="challenges" class="section">
+        <div class="part-no">PART 06 · CHALLENGES</div><div class="section-head"><div class="num">06</div><h2>난제: 발견하기 어렵고, 고치면 다른 것을 바꿀 수 있다</h2></div>
+        <div class="table-wrap"><table><thead><tr><th>난제</th><th>왜 어려운가</th><th>이번 연구의 답</th><th>남은 경계</th></tr></thead><tbody>
+          <tr><td>도달 가능성 판정</td><td>vocabulary padding이나 unreachable byte row를 세면 위험을 과대평가</td><td>decode 후 단독·8개 template에서 re-tokenize하는 round-trip test</td><td>실제 배포 prompt 분포와 빈도는 별도 측정 필요</td></tr>
+          <tr><td>무음 진단</td><td>loss·exception·NaN이 정상처럼 보일 수 있음</td><td>embedding norm, non-finite global norm, effective backbone update scale 계측</td><td>분산 optimizer·다른 precision의 공통 진단 표준 부재</td></tr>
+          <tr><td>수정의 보존성</td><td>row 재초기화는 rare-token logit을 바꾸고 mask는 학습을 막음</td><td>GroupClip으로 embedding과 backbone clipping 분리</td><td>다양한 optimizer·sharding에서 독립 검증 필요</td></tr>
+          <tr><td>예방 설계</td><td>Sigmoid는 0에서 양수지만 positive output을 제한해 PPL 악화 가능</td><td>SiLU(z)+δ의 GateFloor</td><td>from-scratch 실험은 최대 370M, 1–2 seeds</td></tr>
+          <tr><td>LFM 일반화</td><td>LFM2/3은 공개된 연산자 조합과 학습법이 Mamba와 다름</td><td>직접 결과 없음</td><td>특정 gate·normalization·weight tying을 확인한 뒤 판단해야 함</td></tr>
+        </tbody></table></div>
+        <p>또 다른 난제는 현장 지표다. CPU/GPU/NPU kernel 차이, 양자화 누적 오차, 훈련 길이 밖 일반화와 마찬가지로, optimizer 안정성도 논문상 FLOPs와 실제 성공 작업당 에너지 사이의 간극을 만든다.</p>
+      </section>
+
+      <section id="research-questions" class="section">
+        <div class="part-no">PART 07 · RESEARCH QUESTIONS</div><div class="section-head"><div class="num">07</div><h2>연구 질문: “기억할 것”에서 “학습할 수 있을 것”으로</h2></div>
+        <ol>
+          <li>동일한 메모리 예산에서 어떤 정보를 state에 보존해야 하는가뿐 아니라, 어떤 tokenizer row가 학습 업데이트를 안전하게 전달해야 하는가?</li>
+          <li>첫 attention 층 이전에 허용할 수 있는 연속 gated block 수와 수치 안정성 사이의 Pareto frontier는 무엇인가?</li>
+          <li>GroupClip이 AdamW 외 optimizer, ZeRO/FSDP sharding, FP8 master state, NPU 학습에서도 유효한가?</li>
+          <li>GateFloor의 δ를 고정값이 아니라 layer·token norm·training phase에 따라 적응시키면 품질과 안정성을 함께 개선할 수 있는가?</li>
+          <li>희귀 토큰 silent stall이 한국어 전문용어, 기관 약어, 제어 코드, chat template의 실제 task success에 미치는 영향은 얼마인가?</li>
+          <li>합성 gradient probe의 통과가 장기 agent 성공률, 오류 복구율, 성공 작업당 Joule과 어떤 상관을 갖는가?</li>
+        </ol>
+        <div class="callout open"><span class="label">열린 질문</span><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">near-zero row를 “나쁜 토큰”으로 삭제하는 것이 아니라, 해당 row가 처음 나타나는 순간에도 전체 배치의 학습 신호를 보존하는 것</mark>이 핵심 목표다.</div>
+      </section>
+
+      <section id="approaches-methods" class="section">
+        <div class="part-no">PART 08 · APPROACHES / METHODS</div><div class="section-head"><div class="num">08</div><h2>접근법: census → mechanism → repair → prevention</h2></div>
+        <h3>1. Open-weight census</h3>
+        <p>저자들은 HTTP byte-range request로 input/output embedding과 tokenizer를 읽고, 291개 repository의 280개 고유 table을 조사했다. Raw row 92개 모델이 threshold 아래였지만, round-trip test 후 도달 가능한 near-zero token을 가진 것은 67개(23.0%)였다. 979개 표본 중 92%는 output-head norm이 vocabulary 중앙값의 0.3배 이상으로 유지돼, input row만 decay한다는 가설과 부합했다.</p>
+        <h3>2. Mechanistic gradient probe</h3>
+        <p>저자들은 정상 문맥 중 한 토큰의 embedding norm을 1에서 10<sup>−30</sup>까지 줄이고 architecture별 input-gradient를 측정했다. Mamba·Mamba-2·Gated DeltaNet의 SiLU gate와 xLSTM의 linear query처럼 0에서 사라지는 current-token factor가 연속 gated block의 small-signal gain을 누적한다는 두 영역 scaling을 제시했다.</p>
+        <h3>3. GroupClip: 공개 checkpoint를 위한 복구</h3>
+        <p>GroupClip은 input embedding gradient와 나머지 backbone gradient를 서로 다른 group으로 clipping한다. Embedding norm은 FP64 또는 scale-rescaled 계산으로 overflow를 피한다. 이는 재초기화처럼 logit을 바꾸지 않고, mask처럼 대상 row의 학습을 막지도 않는다.</p>
+        <div class="table-wrap"><table><thead><tr><th>저자 보고 실험</th><th>기본 FP32 global clip</th><th>GroupClip</th><th>조건과 해석 한계</th></tr></thead><tbody>
+          <tr><td>Nemotron-3-Nano-4B · Telugu CPT</td><td>stalled 198.3±9.9 / 1,000; PPL 13.44±0.17</td><td>stalled 0; PPL 13.04±0.19</td><td>3 seeds, FineWeb-2, 32×512 tokens/step, BF16 autocast, FLORES-200 devtest</td></tr>
+          <tr><td>Falcon-H1-1.5B · Mongolian CPT</td><td>stalled 11.7±3.5; PPL 15.68±0.11</td><td>stalled 0; PPL 15.58±0.10</td><td>96.6% trigger batches이나 주된 spike는 overflow 이하; 3 seeds</td></tr>
+          <tr><td>H100 overhead</td><td>median 2.88 s/step</td><td>FP64 2.84 s; rescaled 2.85 s</td><td>동일 Telugu batch, 15 timed steps+3 warm-up; 광범위 hardware 결론 아님</td></tr>
+        </tbody></table></div>
+        <h3>4. GateFloor: 처음부터 막는 gate 설계</h3>
+        <div class="equation">g<sub>δ</sub>(z) = SiLU(z) + δ, &nbsp; δ ∈ [0.01, 0.1] recommended in the paper</div>
+        <p>GateFloor는 0 입력에서도 δ만큼 과거 상태 readout 경로를 연다. 저자들은 FineWeb-Edu에서 165M Mamba-2와 203M·370M 3:1 hybrid를 1.05B–1.57B token으로 학습했다. 370M hybrid 단일 seed에서 δ=0.1은 near-zero gradient를 1.6×10²⁸에서 0.13으로 줄였고, PPL은 22.45에서 22.28, 처리량은 527.2k에서 542.8k tok/s였다.</p>
+        <div class="callout claim"><span class="label">저자 보고 + 제한</span><mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">GateFloor가 28 orders of magnitude를 줄였다는 결과는 최대 370M, 1–2 seeds의 from-scratch 실험</mark>이다. 4B continual-pretraining 결과와 동일한 규모의 예방 검증으로 읽어서는 안 된다. 어느 방법도 모든 조건에서 우월하다고 단정할 근거는 아직 없다.</div>
+      </section>
+
+      <section id="key-applications" class="section">
+        <div class="part-no">PART 09 · KEY APPLICATIONS</div><div class="section-head"><div class="num">09</div><h2>핵심 활용: 언어·템플릿·현장 적응의 신뢰성 계층</h2></div>
+        <div class="grid">
+          <article class="card"><h3>저자 근거 · 저자원 언어 CPT</h3><p>Telugu·Mongolian 실험은 near-zero subword가 실제 batch update를 잃게 하는 경로와 GroupClip 복구를 직접 측정했다.</p></article>
+          <article class="card"><h3>직접 적용 가능 · Full-parameter tuning</h3><p>새 vocabulary·chat tag·코드 토큰을 쓰는 full-parameter SFT/CPT 파이프라인에 embedding-norm census와 update-retention logging을 추가할 수 있다.</p></article>
+          <article class="card"><h3>연구 제안 · Local RAG와 edge assistant</h3><p>한국어 전문용어와 기관 약어를 포함한 도메인 적응에서 토큰 coverage, stalled-step rate, 근거 회수율을 함께 측정해야 한다.</p></article>
+          <article class="card"><h3>연구 제안 · Physical AI</h3><p>센서 tag, 장비 ID, 로봇 명령 token이 희귀한 온디바이스 협업지능에서 상태 오염·통신 단절 시험과 함께 optimizer silent stall을 주입 시험한다.</p></article>
+        </div>
+        <p>저수준 로봇 제어의 안전성은 별도 검증 대상이다. 이 논문은 token-level language-model training 고장을 다루며 실시간 제어 안정성, 센서 노이즈, actuator safety를 검증하지 않는다.</p>
+      </section>
+
+      <section id="open-problems" class="section">
+        <div class="part-no">PART 10 · OPEN PROBLEMS</div><div class="section-head"><div class="num">10</div><h2>미해결 문제: 한 번의 수정이 신뢰성 보증이 되기까지</h2></div>
+        <ul>
+          <li><strong>규모:</strong> GateFloor 예방 실험은 370M까지다. 1B–70B, MoE, 긴 문맥 및 multimodal model에서 동일한 품질·안정성 결과가 필요하다.</li>
+          <li><strong>정밀도와 시스템:</strong> FP32 master gradient를 가정한 경로가 FP8, block floating point, NPU optimizer와 어떻게 달라지는지 공정 비교가 없다.</li>
+          <li><strong>장기 drift:</strong> near-zero row를 한 번 회복한 뒤 장기 세션·continual learning에서 재축소·오염·reset이 어떻게 나타나는지 미확인이다.</li>
+          <li><strong>실제 비용:</strong> H100의 짧은 step-time 측정 외 p95, peak memory, 성공 작업당 Joule, 분산 통신량이 없다.</li>
+          <li><strong>원인 분리:</strong> architecture, tokenizer, data coverage, weight tying, optimizer, normalization의 효과를 동일 학습데이터·예산에서 분리해야 한다.</li>
+          <li><strong>LFM 검증:</strong> 공개 자료만으로 모든 LFM 세대의 gate·embedding tying·optimizer를 알 수 없다. <mark class="hl hl-blue" data-importance="보충" title="중요도 3 · 보충">LFM=Mamba라는 전제에서 취약성을 주장하는 것은 잘못</mark>이다.</li>
+          <li><strong>한국어 전문업무:</strong> 과학기술 용어, 약어, 한글·영문 혼용 token에서 stalled update가 업무 정확성과 근거 회수에 미치는 독립 검증이 없다.</li>
+        </ul>
+      </section>
+
+      <section id="future-directions" class="section">
+        <div class="part-no">PART 11 · FUTURE DIRECTIONS</div><div class="section-head"><div class="num">11</div><h2>향후 방향: 효율성 벤치마크에 “학습 신호 생존율”을 넣는다</h2></div>
+        <h3>1. Adaptive numerical budget</h3>
+        <p>필요한 때 기억 크기를 늘리는 적응형 state budget과 마찬가지로, token norm과 layer gain에 따라 clipping precision·group·gate floor를 조절하는 적응형 수치 예산이 필요하다. 단, δ를 키울수록 표현력과 optimization landscape가 바뀔 수 있으므로 검증 가능한 controller로 설계해야 한다.</p>
+        <h3>2. Hierarchical memory with reliability gates</h3>
+        <p>압축 상태 + 필요 구간 attention + 외부 증거 메모리의 계층형 시스템에 <em>token health monitor</em>를 추가한다. 상태가 정보를 기억하는지, 필요한 순간 읽는지, 그 학습 신호가 optimizer까지 살아남는지를 각각 측정한다.</p>
+        <h3>3. Outcome-level benchmark</h3>
+        <p><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">성공 작업당 Joule · p95 지연 · 근거 회수율 · 오류 복구율 · 유효 업데이트 비율</mark>을 같은 표에 올려야 한다. Gradient spike를 줄였다는 미시 지표가 실제 agent 성공률로 이어지는지 연결하는 것이 다음 단계다.</p>
+        <h3>4. ETRI 온디바이스 협업지능 실증 제안</h3>
+        <div class="callout proposal"><span class="label">연구 제안</span>동일 학습데이터·tokenizer·양자화·hardware에서 Transformer, Mamba-2/3, hybrid 및 공개 가능한 LFM 계열을 비교한다. ① 한국어 전문어·센서 ID·chat tag 주입, ② embedding norm과 batch update-retention 계측, ③ 통신 단절·상태 오염·reset 시험, ④ 장기 로봇·설비 업무의 근거 회수와 복구 성공률, ⑤ 실제 단말 Joule/task 순으로 단계적으로 검증한다. 저수준 제어는 별도의 safety case와 fail-safe controller 아래에서만 실증한다.</div>
+        <p class="kicker">연구 흐름의 다음 질문은 “어떤 operator가 더 빠른가?”가 아니라 “어떤 정보와 학습 신호가, 어떤 비용으로, 끝까지 살아남아 실제 결과를 바꾸는가?”다.</p>
+      </section>
+
+      <section id="sources" class="section">
+        <div class="part-no">SOURCES · PRIMARY FIRST</div><div class="section-head"><div class="num">↗</div><h2>출처와 버전 기록</h2></div>
+        <ol class="source-list">
+          <li><strong>Xin Liu et al.</strong>, “Near-Zero Token Embeddings Silently Stall Training in Gated Sequence Models.” arXiv:2611.04449. 최초 공개 2026-11-03, v1; 조사 기준일 현재 개정·정식 학회 발표 미확인. <a href="https://arxiv.org/abs/2611.04449">Abstract</a> · <a href="https://arxiv.org/pdf/2611.04449">PDF</a></li>
+          <li><strong>Albert Gu, Tri Dao.</strong>, “Mamba: Linear-Time Sequence Modeling with Selective State Spaces.” 최초 공개 2023-12-01 — 2025년 이전 배경 연구. <a href="https://arxiv.org/abs/2312.00752">arXiv</a></li>
+          <li><strong>Tri Dao, Albert Gu.</strong>, “Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality.” 최초 공개 2024-05-31 — 2025년 이전 배경 연구. <a href="https://arxiv.org/abs/2405.21060">arXiv</a></li>
+          <li><strong>Aakash Lahoti et al.</strong>, “Mamba-3: Improved Sequence Modeling using State Space Principles.” 최초 공개 2026-03-16; ICLR 2026. <a href="https://arxiv.org/abs/2603.15569">arXiv</a> · <a href="https://proceedings.iclr.cc/paper_files/paper/2026/hash/8abd2043b71a074278d5f687947bff9c-Abstract-Conference.html">공식 학회 기록</a></li>
+          <li><strong>Liquid AI.</strong>, “LFM2 Technical Report.” 최초 공개 2025-11-28. LFM2 구조를 위한 공식 기술보고서이며 Mamba 논문과 구분. <a href="https://arxiv.org/abs/2511.23404">arXiv</a></li>
+          <li><strong>Liquid AI.</strong>, “Introducing LFM3.” 2026-10-27 공식 제품 발표·모델 정보이며 peer-reviewed 논문이 아님. <a href="https://www.liquid.ai/blog/lfm3">공식 발표</a></li>
+        </ol>
+        <div class="callout fact"><span class="label">실험 해석 원칙</span>본문의 모든 수치는 논문 저자 보고값이다. 모델 규모, hardware, precision, token 수, batch/sequence 조건, seed 수를 가능한 범위에서 함께 제시했으며 독립 재현 결과로 표현하지 않았다.</div>
+      </section>
+
+      <footer class="footer"><strong>foundation models · machine learning</strong><br>PUBLISHED 2026-11-05 KST · 이 글의 창의적 연구 제안은 논문 결과와 구분해 표시했다.</footer>
+    </main>
+  </div>
+</body>
+</html>
