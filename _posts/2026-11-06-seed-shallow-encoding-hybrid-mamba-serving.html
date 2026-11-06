@@ -1,0 +1,262 @@
+---
+layout: null
+title: "Shallow Writes, Deep Memories: SEED for Hybrid Mamba Serving"
+date: 2026-11-06
+categories: [artificial intelligence]
+tags: [foundation models, machine learning]
+---
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="SEED 논문을 중심으로 하이브리드 Mamba 계열 모델의 prefill 깊이 축소, state sink와 저랭크 recurrent state, 정확도 및 GB300 serving 결과를 비판적으로 분석한다.">
+  <title>Shallow Writes, Deep Memories: SEED for Hybrid Mamba Serving</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans+KR:wght@400;500;600&amp;family=Spectral:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet">
+  <style>
+    :root{--paper:#edf0f4;--surface:#f8fafc;--ink:#10151f;--ink2:#2a3243;--muted:#5d6879;--hair:#c6cfda;--navy:#21375c;--teal:#1e6e8c;--plum:#6b3f9e;--rust:#a84d38;--green:#2f7a55;--gold:#8e7a12;--shadow:0 22px 60px rgba(25,39,67,.11);--disp:"Gowun Batang","Spectral",Batang,serif;--lat:"Spectral",Georgia,serif;--body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body.research-essay{margin:0;background:radial-gradient(circle at 7% 0,#dfe9f3 0,transparent 25%),radial-gradient(circle at 96% 20%,#e9e4f2 0,transparent 23%),var(--paper);color:var(--ink);font:400 17px/1.86 var(--body);letter-spacing:-.012em;word-break:keep-all;overflow-wrap:anywhere}a{color:#284d91;text-underline-offset:3px}a:hover{color:#17305f}:focus-visible{outline:3px solid #35509b;outline-offset:4px}.shell{width:min(1180px,calc(100% - 34px));margin:auto}.hero{padding:64px 0 26px}.hero-card{position:relative;overflow:hidden;padding:clamp(34px,7vw,82px);border:1px solid rgba(53,80,155,.2);border-radius:36px;background:linear-gradient(132deg,rgba(255,255,255,.97),rgba(241,246,250,.9));box-shadow:var(--shadow)}.hero-card:after{content:"";position:absolute;width:440px;height:440px;right:-190px;top:-220px;border-radius:50%;background:conic-gradient(from 35deg,#4e78a8,#5b9e99,#9c6ba8,#4e78a8);opacity:.21}.eyebrow,.part-no,.technical-label,.meta{font:600 12px/1.6 var(--mono);letter-spacing:.1em;text-transform:uppercase}.eyebrow{position:relative;color:var(--teal)}h1,h2,h3{font-family:var(--disp);font-weight:700;letter-spacing:-.035em}h1{position:relative;z-index:1;max-width:1010px;margin:.22em 0 .28em;font-size:clamp(38px,6.8vw,70px);line-height:1.04}.deck{position:relative;z-index:1;max-width:900px;margin:0;font:italic 400 clamp(18px,2.1vw,24px)/1.55 var(--lat);color:var(--ink2)}.meta{position:relative;z-index:1;margin-top:26px;color:var(--muted)}
+    .opening-summary-diagram{margin:24px auto 30px;padding:20px;border:1px solid var(--hair);border-radius:28px;background:white;box-shadow:var(--shadow)}.diagram-viewport{overflow-x:auto;border:1px solid var(--hair);border-radius:18px;background:linear-gradient(180deg,#fafcfe,#f1f5f8)}.opening-summary-diagram svg{display:block;width:100%;height:auto;min-width:940px}.opening-summary-diagram figcaption,.diagram-summary{margin:.75rem .25rem 0;color:var(--muted);font-size:.87rem;line-height:1.75}.scroll-hint{display:none;color:var(--muted);font-size:.78rem}.svg-node{fill:white;stroke:#aebac8;stroke-width:1.6}.svg-prefill{stroke:#1e6e8c}.svg-state{stroke:#6b3f9e}.svg-evidence{stroke:#2f7a55}.svg-boundary{stroke:#a63446}.svg-edge{fill:none;stroke:#35509b;stroke-width:2;marker-end:url(#seed-arrow)}.svg-dash{fill:none;stroke:#6b3f9e;stroke-width:2;stroke-dasharray:7 6;marker-end:url(#seed-arrow-purple)}.svg-label{fill:#10151f;font:600 17px var(--body)}.svg-tech{fill:#5d6879;font:600 14px var(--mono);letter-spacing:.04em}.svg-note{fill:#5d6879;font:400 14px var(--body)}
+    .hl-legend{display:flex;flex-wrap:wrap;gap:.55rem 1rem;margin:1.4rem 0;padding:15px 18px;border:1px solid var(--hair);border-radius:17px;background:#fff;font-size:.82rem}.hl-legend-label{font-weight:600}.hl-legend small{flex-basis:100%}mark.hl{--hl-color:rgba(255,221,74,.42);color:inherit;background:linear-gradient(176deg,transparent 0 56%,var(--hl-color) 56% 89%,transparent 89%);padding:0 .06em;font:inherit;-webkit-box-decoration-break:clone;box-decoration-break:clone}.hl-pink{--hl-color:rgba(255,126,166,.39)!important}.hl-yellow{--hl-color:rgba(255,221,74,.44)!important}.hl-blue{--hl-color:rgba(91,169,255,.33)!important}.hl-green{--hl-color:rgba(81,196,143,.31)!important}
+    .layout{display:grid;grid-template-columns:245px minmax(0,1fr);gap:42px;align-items:start}.toc{position:sticky;top:18px;padding:20px;border:1px solid var(--hair);border-radius:19px;background:rgba(255,255,255,.88);backdrop-filter:blur(10px)}.toc strong{display:block;margin-bottom:8px;font-family:var(--mono);font-size:.8rem}.toc a{display:block;padding:4px 0;color:var(--muted);font-size:.79rem;text-decoration:none}.toc a:hover{color:var(--navy)}main{min-width:0}.abstract{margin:0 0 44px;padding:28px;border-left:6px solid var(--teal);border-radius:0 20px 20px 0;background:white;box-shadow:0 12px 30px rgba(25,39,67,.07)}.abstract .lede{margin:.2em 0;font:400 clamp(20px,2.4vw,24px)/1.72 var(--disp)}.section{scroll-margin-top:24px;margin:0 0 68px}.section-head{display:grid;grid-template-columns:56px 1fr;gap:14px;align-items:end;padding-bottom:14px;border-bottom:1px solid var(--hair)}.section-head .num{font:700 2.2rem/1 var(--lat);color:#9aa6b8}.section h2{margin:0;font-size:clamp(29px,4vw,44px);line-height:1.18}.section h3{margin:32px 0 8px;font-size:clamp(22px,2.4vw,27px);line-height:1.4}.section p{margin:1em 0}.part-no{margin-bottom:10px;color:var(--teal)}.callout{margin:22px 0;padding:20px 22px;border:1px solid var(--hair);border-radius:18px;background:white}.callout.fact{border-left:5px solid #4a9bd8}.callout.claim{border-left:5px solid #d4ac23}.callout.interpretation{border-left:5px solid #ba5982}.callout.proposal{border-left:5px solid #3b986e}.callout.open{border-left:5px solid #8e7a12}.label{display:inline-flex;margin-right:8px;padding:3px 8px;border-radius:7px;background:#edf1f6;font:600 .7rem/1.5 var(--mono);letter-spacing:.035em}.equation{overflow:auto;margin:22px 0;padding:22px;border:1px solid var(--hair);border-radius:17px;background:#f7f9fc;font:500 16px/1.65 var(--mono);text-align:center;white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:20px 0}.card{padding:20px;border:1px solid var(--hair);border-radius:17px;background:#fff}.card h3,.card h4{margin:0 0 8px}.card p{margin:.35em 0}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--hair);border-radius:18px;background:white}table{width:100%;border-collapse:collapse;min-width:800px;font-size:.9rem}th,td{padding:14px 15px;border-bottom:1px solid #dce2e9;vertical-align:top;text-align:left}th{background:#eef3f7;font-family:var(--mono);font-size:.77rem;letter-spacing:.015em}tr:last-child td{border-bottom:0}.source-list{padding-left:1.25rem}.source-list li{margin:.7rem 0}.footer{margin-top:72px;padding:30px 0 55px;border-top:1px solid var(--hair);color:var(--muted);font-size:.84rem}.kicker{font-family:var(--lat);font-style:italic;color:var(--muted)}ul,ol{padding-left:1.35rem}li{margin:.46rem 0}.status-row{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.status{padding:5px 9px;border:1px solid var(--hair);border-radius:8px;background:white;font:600 .72rem/1.4 var(--mono)}
+    @media(max-width:860px){.layout{grid-template-columns:1fr}.toc{position:static}.grid{grid-template-columns:1fr}.hero{padding-top:25px}.hero-card{border-radius:24px}.opening-summary-diagram{padding:12px}.scroll-hint{display:block}.section{margin-bottom:54px}}@media(max-width:520px){body.research-essay{font-size:16px;line-height:1.82}.shell{width:min(100% - 22px,1180px)}.hero-card{padding:28px 22px}h1{font-size:38px}.section-head{grid-template-columns:42px 1fr}.section-head .num{font-size:1.7rem}.abstract{padding:22px}.callout{padding:17px}}@media print{body.research-essay{background:white}.toc{display:none}.layout{display:block}.hero-card,.opening-summary-diagram,.abstract{box-shadow:none}a{color:inherit}mark.hl{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style>
+</head>
+<body class="research-essay">
+  <header class="hero shell">
+    <div class="hero-card">
+      <div class="eyebrow">MAMBA · HYBRID INFERENCE · SYSTEMS ESSAY</div>
+      <h1>Shallow Writes,<br>Deep Memories</h1>
+      <p class="deck">SEED turns write–read asymmetry and a low-rank state sink into a two-axis serving optimization</p>
+      <p class="meta">PUBLISHED 2026-11-06 KST · EVIDENCE CUTOFF 2026-11-06</p>
+    </div>
+
+    <figure class="opening-summary-diagram" aria-labelledby="seed-overview-caption">
+      <div class="diagram-viewport" role="region" aria-label="SEED의 prefill과 decode 최적화 구조" tabindex="0">
+        <svg viewBox="0 0 1100 660" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="seed-overview-title seed-overview-desc">
+          <title id="seed-overview-title">SEED가 하이브리드 모델의 prefill 계산과 decode 상태 메모리를 줄이는 구조</title>
+          <desc id="seed-overview-desc">긴 프롬프트의 마지막 토큰을 제외한 토큰은 얕은 anchor layer까지만 계산하고 emitter가 깊은 층의 메모리를 작성한다. Decode에서는 recurrent state를 state sink와 저랭크 working memory로 저장한다. 두 경로는 frozen checkpoint를 유지하며 실제 serving throughput을 높이지만 attention KV cache는 압축하지 않는다.</desc>
+          <defs>
+            <marker id="seed-arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#35509b"/></marker>
+            <marker id="seed-arrow-purple" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#6b3f9e"/></marker>
+          </defs>
+          <text x="550" y="42" text-anchor="middle" class="svg-tech">TWO BOTTLENECKS · TWO SHALLOW ENCODINGS · FROZEN BASE MODEL</text>
+          <rect x="55" y="90" width="250" height="126" rx="12" class="svg-node svg-prefill"/>
+          <text x="180" y="124" text-anchor="middle" class="svg-tech">PREFILL · COMPUTE</text>
+          <text x="180" y="160" text-anchor="middle" class="svg-label"><tspan x="180">N−1 prompt tokens</tspan><tspan x="180" dy="28">anchor depth까지만 실행</tspan></text>
+          <rect x="425" y="90" width="250" height="126" rx="12" class="svg-node svg-prefill"/>
+          <text x="550" y="124" text-anchor="middle" class="svg-tech">EMITTERS</text>
+          <text x="550" y="160" text-anchor="middle" class="svg-label"><tspan x="550">얕은 residual에서</tspan><tspan x="550" dy="28">깊은 memory를 작성</tspan></text>
+          <rect x="795" y="90" width="250" height="126" rx="12" class="svg-node svg-prefill"/>
+          <text x="920" y="124" text-anchor="middle" class="svg-tech">LAST PROMPT TOKEN</text>
+          <text x="920" y="160" text-anchor="middle" class="svg-label"><tspan x="920">모든 L개 layer 실행</tspan><tspan x="920" dy="28">원래 read path 유지</tspan></text>
+          <path d="M305 153 H417" class="svg-edge"/><path d="M675 153 H787" class="svg-edge"/>
+
+          <rect x="190" y="295" width="720" height="122" rx="16" class="svg-node svg-state"/>
+          <text x="550" y="330" text-anchor="middle" class="svg-tech">DECODE · HBM / CAPACITY</text>
+          <text x="550" y="367" text-anchor="middle" class="svg-label"><tspan x="550">S = a v̄ᵀ + UVᵀ</tspan><tspan x="550" dy="28">state sink는 정확히 보존 · working memory만 주기적 rank-R 압축</tspan></text>
+          <path d="M550 216 V287" class="svg-dash"/>
+
+          <rect x="55" y="500" width="300" height="112" rx="12" class="svg-node svg-evidence"/>
+          <text x="205" y="533" text-anchor="middle" class="svg-tech">AUTHOR-REPORTED EVIDENCE</text>
+          <text x="205" y="566" text-anchor="middle" class="svg-label"><tspan x="205">state 2.0–3.9× smaller</tspan><tspan x="205" dy="27">peak throughput 1.16–1.42×</tspan></text>
+          <rect x="400" y="500" width="300" height="112" rx="12" class="svg-node svg-evidence"/>
+          <text x="550" y="533" text-anchor="middle" class="svg-tech">QUALITY CHECK</text>
+          <text x="550" y="566" text-anchor="middle" class="svg-label"><tspan x="550">6 checkpoints · 11 exams</tspan><tspan x="550" dy="27">63 / 66 cells within 2 SE or above</tspan></text>
+          <rect x="745" y="500" width="300" height="112" rx="12" class="svg-node svg-boundary"/>
+          <text x="895" y="533" text-anchor="middle" class="svg-tech">BOUNDARY</text>
+          <text x="895" y="566" text-anchor="middle" class="svg-label"><tspan x="895">attention KV는 미압축</tspan><tspan x="895" dy="27">GB300 · MoE hybrid 중심</tspan></text>
+          <path d="M415 417 Q350 458 250 492" class="svg-edge"/><path d="M550 417 V492" class="svg-edge"/><path d="M685 417 Q750 458 850 492" class="svg-edge"/>
+        </svg>
+      </div>
+      <p class="scroll-hint">좁은 화면에서는 다이어그램을 좌우로 스크롤할 수 있습니다.</p>
+      <figcaption id="seed-overview-caption">개념 요약 · 저자들이 관찰한 두 구조적 성질과 SEED의 구현을 재구성한 설명도다. 성능 수치는 저자 보고이며 모든 하드웨어·모델에 대한 보편적 우월성을 뜻하지 않는다.</figcaption>
+      <p class="diagram-summary">핵심은 고정 크기 상태를 단순히 “O(1) 메모리”라고 부르는 데서 멈추지 않고, 실제 바이트·HBM traffic·prefill FLOPs·prefix-cache 수용량으로 다시 분해하는 것이다.</p>
+    </figure>
+  </header>
+
+  <div class="shell layout">
+    <nav class="toc" aria-label="글 목차">
+      <strong>CONTENTS</strong>
+      <a href="#definition">01 Definition</a><a href="#problem-definition">02 Problem Definition</a><a href="#core-concepts">03 Core Concepts</a><a href="#introduction">04 Introduction</a><a href="#motivation-background">05 Motivation &amp; Background</a><a href="#challenges">06 Challenges</a><a href="#research-questions">07 Research Questions</a><a href="#approaches-methods">08 Approaches (Methods)</a><a href="#key-applications">09 Key Applications</a><a href="#open-problems">10 Open Problems</a><a href="#future-directions">11 Future Directions</a><a href="#sources">Sources</a>
+    </nav>
+
+    <main>
+      <section class="abstract" aria-labelledby="central-question">
+        <div class="technical-label">THE CENTRAL QUESTION</div>
+        <p id="central-question" class="lede">문맥 길이에 독립적인 recurrent state라 해도, 실제로는 왜 수천 토큰의 KV cache만큼 크고 매 decode step의 병목이 될 수 있는가?</p>
+        <p><strong>2026년 11월 4일 arXiv에 공개된 v1 프리프린트</strong> <em>Shallow Encoding Emits Deep Memories</em>은 하이브리드 언어모델의 메모리를 두 축으로 얕게 만든다. Prefill에서는 깊이를, decode에서는 표현 rank를 줄인다. 저자들은 이를 <strong>SEED</strong>라 부르며, 30B에서 320B급 다섯 production hybrid의 여섯 checkpoint에 적용했다. 조사 기준일까지 정식 학회·저널 발표나 개정본은 확인되지 않았다.</p>
+        <div class="status-row"><span class="status">[사실] arXiv:2611.06084 · v1</span><span class="status">[저자 주장] 5 production hybrids</span><span class="status">[해석] fixed-size ≠ small</span><span class="status">[제안] state-aware serving benchmark</span></div>
+        <aside class="hl-legend" aria-label="내용 중요도 색상 안내"><span class="hl-legend-label">내용 중요도</span><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">1 · 최우선</mark><mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">2 · 핵심</mark><mark class="hl hl-blue" data-importance="보충" title="중요도 3 · 보충">3 · 보충</mark><mark class="hl hl-green" data-importance="참고" title="중요도 4 · 참고">4 · 참고</mark><small>색상은 편집상 중요도이며 근거의 검증 수준을 뜻하지 않습니다.</small></aside>
+      </section>
+
+      <section id="definition" class="section">
+        <div class="part-no">PART 01 · DEFINITION</div><div class="section-head"><div class="num">01</div><h2>정의: “고정 상태”와 “작은 상태”는 같은 말이 아니다</h2></div>
+        <p><strong>LFM</strong>은 Liquid AI의 모델군이고, <strong>Mamba</strong>는 입력 의존 선택성을 가진 상태공간 아키텍처 계열이다. LFM2는 입력 의존 gated short convolution과 일부 GQA를 결합하며, LFM3는 Liquid AI가 2026년 10월 공개한 별도의 tri-hybrid 제품군이다. 따라서 <mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">LFM=LTC=LNN=Mamba라는 동일시는 틀리며, SEED의 Mamba-2 결과를 모든 LFM 세대에 소급해서는 안 된다</mark>.</p>
+        <p><strong>Hybrid language model</strong>은 소수의 softmax attention 층과 다수의 linear-attention 또는 state-space 층을 섞는다. Attention 층은 토큰별 KV cache를 저장하고, recurrent 층은 head별 고정 크기 행렬 상태를 저장한다. 이 상태의 크기는 문맥 길이에 직접 비례하지 않지만 head 수·층 수·상태 차원·정밀도에는 비례한다.</p>
+        <div class="callout fact"><span class="label">사실</span>Qwen3.8-Flash-Next에서 저자들이 계산한 한 request의 fp32 recurrent state는 113.2 MB다. 이는 해당 모델의 attention cache 약 4.5K tokens와 같은 규모다. <mark class="hl hl-green" data-importance="참고" title="중요도 4 · 참고">길이에 독립이라는 말은 정보가 무한히 보존되거나 실제 메모리가 작다는 뜻이 아니다.</mark></div>
+      </section>
+
+      <section id="problem-definition" class="section">
+        <div class="part-no">PART 02 · PROBLEM FORMULATION</div><div class="section-head"><div class="num">02</div><h2>문제 정의: 품질·지연·메모리·에너지를 함께 최적화한다</h2></div>
+        <p>공통 목표는 긴 이력, 낮은 추론 비용, 높은 정확도를 동시에 만족하는 것이다. 실무에서는 품질을 최대화하되 p95 지연, peak memory, 에너지, 처리량을 제약으로 둔다.</p>
+        <div class="equation">maximize Quality(θ) subject to p95 latency ≤ L, peak memory ≤ M, energy/task ≤ E, throughput/GPU ≥ T</div>
+        <p>표준 full attention의 prefill은 길이에 대해 이차 연산이고, KV cache는 선형으로 증가하며, decode 한 토큰의 attention은 이력 길이에 선형이다. 고정 상태 순수 SSM은 총 선형 연산과 길이에 독립적인 순환 상태를 갖는다. 그러나 hybrid는 두 메모리를 모두 가진다. GQA는 KV 크기의 계수를 줄일 뿐 길이 의존을 제거하지 않는다.</p>
+        <div class="table-wrap"><table><thead><tr><th>메모리/연산자</th><th>문맥 길이 의존</th><th>실제 serving 병목</th><th>SEED 적용 범위</th></tr></thead><tbody>
+          <tr><td>Full attention KV</td><td>토큰 수에 선형</td><td>장문 cache capacity와 read traffic</td><td>압축하지 않음</td></tr>
+          <tr><td>Mamba-2 / GDN / KDA state</td><td>길이와 독립</td><td>층·head마다 dense matrix를 매 step read/write</td><td>sink + low-rank factors로 압축</td></tr>
+          <tr><td>Prefill deep computation</td><td>모든 prompt token × 모든 layer</td><td>compute-bound, 특히 긴 agent prompt</td><td>N−1 tokens를 anchor depth까지만 계산</td></tr>
+          <tr><td>Hybrid total</td><td>두 경로의 합</td><td>load·batch·prefix hit에 따라 병목 이동</td><td>구성요소별로 opt-in</td></tr>
+        </tbody></table></div>
+        <p class="kicker">이 논문은 “아키텍처의 점근 복잡도”를 “서비스의 바이트와 request capacity”로 번역한다.</p>
+      </section>
+
+      <section id="core-concepts" class="section">
+        <div class="part-no">PART 03 · CORE CONCEPTS</div><div class="section-head"><div class="num">03</div><h2>핵심 개념: 쓰기는 얕고, 읽기는 깊다</h2></div>
+        <h3>Selective SSM과 기억 접근</h3>
+        <div class="equation">h<sub>t</sub> = Ā<sub>t</sub>h<sub>t−1</sub> + B̄<sub>t</sub>x<sub>t</sub>, &nbsp; y<sub>t</sub> = C<sub>t</sub>h<sub>t</sub></div>
+        <p>선택성은 입력별 기억·망각·읽기의 조절이며 추론 중 가중치를 학습한다는 뜻이 아니다. Mamba-2는 state-space duality 관점에서 head별 matrix state를 쓰고 읽는다. SEED는 이 recurrence를 새 것으로 바꾸지 않고, 이미 학습된 상태가 실제로 어떤 구조를 갖는지 측정한다.</p>
+        <h3>Write–read asymmetry</h3>
+        <p>한 토큰이 깊은 층의 memory에 무엇을 <em>쓸지</em>는 그 층으로 들어오는 residual stream과 write path로 정해진다. 반면 다음 토큰을 <em>읽어</em> 예측하려면 deep attention·recurrent read·FFN을 모두 통과해야 한다. 저자들은 5개 모델에서 anchor depth가 전체의 63–89%에 놓이더라도 deep write를 복원할 수 있음을 관찰했다. Prompt의 마지막 토큰과 모든 생성 토큰은 원래처럼 모든 층을 통과한다.</p>
+        <h3>State sink와 working memory</h3>
+        <div class="equation">S = a v̄<sup>T</sup> + UV<sup>T</sup></div>
+        <p>저자 정의에서 <code>a v̄ᵀ</code>는 head별 고정 방향을 따르는 rank-one <strong>state sink</strong>이고, <code>UVᵀ</code>는 prompt-dependent content다. 다섯 모델에서 sink는 head를 합쳐 state energy의 69–99.7%를 담았다. 그러나 <mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">에너지가 크다는 것과 정보가 많다는 것은 다르다</mark>. Sink는 normalization 뒤 bias와 gain처럼 작동하고, prompt-specific read content는 비교적 짧은 저랭크 working memory에 놓인다.</p>
+        <div class="callout interpretation"><span class="label">해석</span>연구 흐름은 “더 효율적인 연산자”에서 “어떤 상태가 실제 정보를 담고, 어떤 바이트가 서비스 병목을 만드는가”로 이동한다. 이는 기억 회수·상태 추적·하드웨어 공동설계를 하나의 계측 문제로 묶는다.</div>
+      </section>
+
+      <section id="introduction" class="section">
+        <div class="part-no">PART 04 · INTRODUCTION</div><div class="section-head"><div class="num">04</div><h2>도입: 두 병목을 한 번에 줄이는 SEED</h2></div>
+        <p>SEED는 <strong>Shallow Encoding Emits Deep Memories</strong>의 약자다. Prefill에서는 shallow-in-depth, decode에서는 shallow-in-representation이라는 서로 다른 인코딩을 사용한다.</p>
+        <ol>
+          <li><strong>Prefill:</strong> 마지막 토큰을 제외한 N−1개 prompt token은 anchor layer까지만 계산한다. 학습된 emitter는 그 residual에서 더 깊은 attention cache와 recurrent state를 작성한다.</li>
+          <li><strong>Decode:</strong> state sink는 정확히 보존하고, content는 rank-R factors로 저장한다. 매 step의 갱신은 factor column을 하나 추가하는 정확한 update이고, W step마다 rank-R로 다시 압축할 때만 근사가 생긴다.</li>
+          <li><strong>보존:</strong> 원 모델의 weight는 frozen이며 attention KV cache는 압축하지 않는다. 마지막 prompt token과 모든 생성 token은 전체 L개 층을 실행한다.</li>
+        </ol>
+        <p><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">SEED의 핵심 기여는 prefill FLOPs 절감과 decode state 절감을 같은 “압축”으로 뭉개지 않고, 각 phase의 다른 병목에 맞춘 두 방법으로 분리한 것</mark>이다.</p>
+      </section>
+
+      <section id="motivation-background" class="section">
+        <div class="part-no">PART 05 · MOTIVATION &amp; BACKGROUND</div><div class="section-head"><div class="num">05</div><h2>필요성과 배경: O(1)이라는 표기 뒤의 113 MB</h2></div>
+        <p>긴 문맥에서 KV cache가 커지는 문제는 잘 알려져 있다. 반면 recurrent state는 길이에 독립이라는 이유로 종종 “상수이므로 작다”고 취급된다. 하지만 production hybrid는 수십 층, 다수 head, fp32 state를 가지며 매 decode step 전체 상태를 읽고 다시 쓴다. HBM capacity는 batch와 prefix cache를 제한하고, HBM traffic은 step time에 직접 들어간다.</p>
+        <div class="grid">
+          <article class="card"><h3>Prefill bottleneck</h3><p>긴 agentic prompt에서는 N−1개 토큰이 다음 토큰을 직접 예측하지 않고 deep memory를 쓰기 위해 전체 층을 통과한다. 저자들은 이 write path가 read path보다 얕다고 본다.</p></article>
+          <article class="card"><h3>Decode bottleneck</h3><p>Qwen3.8-Flash-Next의 recurrent state는 request당 113.2 MB다. 작은 batch에서는 weight가 bytes를 지배하지만 높은 concurrency에서는 state pool이 capacity를 제한한다.</p></article>
+          <article class="card"><h3>Prefix-cache pressure</h3><p>SGLang hybrid serving에서 cached prefix도 recurrent-state pool의 slot을 차지한다. 상태가 작아지면 running request와 cached prefix를 더 많이 유지할 수 있다.</p></article>
+          <article class="card"><h3>Frozen checkpoint</h3><p>SEED는 base weight를 바꾸지 않고 emitter와 prompt code만 학습한다. 이는 새 아키텍처 사전학습보다 도입 위험을 낮추지만 checkpoint별 calibration은 남는다.</p></article>
+        </div>
+        <p><mark class="hl hl-green" data-importance="참고" title="중요도 4 · 참고">LFM2의 hardware-in-the-loop 설계, Mamba-3의 이산화·복소수 상태·MIMO, Samba의 SSM+sliding-window attention은 서로 다른 문제를 푼다.</mark> SEED는 그 위에서 serving memory representation을 후처리하는 방법이다.</p>
+      </section>
+
+      <section id="challenges" class="section">
+        <div class="part-no">PART 06 · CHALLENGES</div><div class="section-head"><div class="num">06</div><h2>난제: 압축 오차, 하드웨어, 그리고 경계 조건</h2></div>
+        <div class="table-wrap"><table><thead><tr><th>난제</th><th>SEED의 답</th><th>남은 제한</th></tr></thead><tbody>
+          <tr><td>Deep memory를 얕은 residual에서 쓸 수 있는가</td><td>checkpoint별 probe로 anchor depth 선택, emitter 학습</td><td>anchor는 63–89%이며 더 얕아질 조건은 미해결</td></tr>
+          <tr><td>저랭크 state를 갱신하면 rank가 계속 커짐</td><td>매 step exact factor update, W step마다 rank-R 압축</td><td>closed-loop 반복 압축의 완전한 이론은 없음</td></tr>
+          <tr><td>Attention cache가 장문 메모리를 지배</td><td>KV compression과 조합 가능</td><td>SEED 자체는 attention cache를 전혀 줄이지 않음</td></tr>
+          <tr><td>논문상 byte 절감과 실제 latency의 간극</td><td>SGLang·GB300·agentic trace로 end-to-end 측정</td><td>GB300과 MoE hybrid 중심, CPU/NPU/다른 GPU 미검증</td></tr>
+          <tr><td>정확도 손실 검증</td><td>같은 질문·sampling seed의 paired comparison</td><td>시험 성적이 장기 agent 성공률·안전성을 대체하지 않음</td></tr>
+          <tr><td>저정밀 장기 안정성</td><td>16K decode와 NVFP4 drift 비교</td><td>훈련 길이 밖 세션, fp16/fp8 state, 오염·reset 검증 필요</td></tr>
+        </tbody></table></div>
+        <p>특히 open-loop bound는 같은 input update를 본다는 가정 아래 compression error가 횟수에 따라 무한히 누적되지 않음을 보인다. 실제 closed loop에서는 오차가 이후 key와 value도 바꾼다. 저자 측정에서는 16K decode의 첫 4K에서 마지막 4K까지 drift가 1.2–1.4배 증가했지만 compression 횟수는 4배였다. 이는 고무적이지만 보편적 안정성 증명은 아니다.</p>
+      </section>
+
+      <section id="research-questions" class="section">
+        <div class="part-no">PART 07 · RESEARCH QUESTIONS</div><div class="section-head"><div class="num">07</div><h2>연구 질문: 기억의 크기보다 기억의 역할을 측정한다</h2></div>
+        <ol>
+          <li>동일 메모리에서 반드시 보존해야 할 state direction과 prompt-dependent content는 무엇인가?</li>
+          <li>최소 attention 비중과 층 배치는 prefill depth, retrieval 정확도, KV pressure를 어떻게 바꾸는가?</li>
+          <li>State transition 표현력과 factorized parallel update 사이의 최적 rank·compression period는 무엇인가?</li>
+          <li>fp16·fp8·INT8 state에서 장기 closed-loop drift와 양자화 누적 오차는 어떻게 상호작용하는가?</li>
+          <li>합성 RULER·exam 일치도가 실제 agent 성공률, 오류 복구율, 근거 회수율을 예측하는가?</li>
+          <li>CPU/GPU/NPU에서 성공 작업당 Joule, p95 TTFT, prefix hit, peak memory를 함께 보면 Pareto frontier가 어떻게 달라지는가?</li>
+          <li>LFM3 같은 tri-hybrid의 공개되지 않은 state semantics에 SEED 유사 분해가 성립하는지 어떻게 검증할 것인가?</li>
+        </ol>
+        <div class="callout open"><span class="label">열린 질문</span>State sink가 큰 에너지를 갖는다는 사실이 모든 head에서 낮은 정보량을 뜻하지는 않는다. <mark class="hl hl-blue" data-importance="보충" title="중요도 3 · 보충">에너지·rank·task relevance를 분리한 causal intervention</mark>이 필요하다.</div>
+      </section>
+
+      <section id="approaches-methods" class="section">
+        <div class="part-no">PART 08 · APPROACHES / METHODS</div><div class="section-head"><div class="num">08</div><h2>접근법: emitter, sink 분해, 주기적 압축, 실제 serving</h2></div>
+        <h3>1. Shallow prefill</h3>
+        <p>저자들은 각 checkpoint에서 untrained probe로 anchor depth를 선택한다. Qwen3.8-Flash-Next는 48층 중 31층, Nemotron-3.5-Lightning은 52층 중 33층, Kimi-Linear는 27층 중 19층, GLM-5.3-Flash는 45층 중 31층, Nemotron-3.5-Super는 88층 중 78층까지 prompt token을 실행한다. Qwen3.8-Flash-Next의 prompt parameter FLOPs는 저자 계산으로 token당 12.1에서 9.1 GFLOP으로 줄었다.</p>
+        <h3>2. Exact factored update</h3>
+        <p>Sink의 평균 방향은 request 간 공유하고, request별로 coefficient <code>a</code>와 factors <code>U,V</code>를 저장한다. Mamba-2, Gated DeltaNet, Kimi Delta Attention의 update는 factor에 새 column을 추가하는 형태로 정확히 확장된다. 근사는 오직 매 W step의 rank truncation에서 생긴다. 저자 설정은 모델에 따라 <code>R=W=16</code> 또는 <code>R=W=32</code>다.</p>
+        <h3>3. Accuracy protocol</h3>
+        <p>여섯 component set을 원 모델과 같은 질문·request seed로 비교했다. GPQA-Diamond, AIME 2024+25, MATH-500, MMLU, IFEval, LiveCodeBench v6, HumanEval+, LongBench v2, RULER 32K/64K/128K 등 11개 시험을 사용했다. <mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">66개 checkpoint–exam cell 중 63개가 원 모델 대비 2 standard errors 안이거나 그 이상</mark>이었다는 것이 저자 결론이다.</p>
+        <h3>4. Serving protocol</h3>
+        <p>SGLang과 NVIDIA GB300 GPU에서 agentic-coding trace를 replay했다. 각 measurement는 900초 단일 run이며 SEED 자체 emitter·compression 비용을 포함한다. Qwen3.8-Flash-Next에서 aggregated NVFP4 TP1, aggregated bf16 TP2, disaggregated bf16 1P:1D를 비교했다.</p>
+        <div class="table-wrap"><table><thead><tr><th>저자 보고 조건</th><th>Original peak</th><th>SEED peak</th><th>Peak ratio</th><th>40 tok/s 동일 사용자 rate</th></tr></thead><tbody>
+          <tr><td>Aggregated · NVFP4 · TP1</td><td>80,219 tok/s/GPU · 28 sessions</td><td>95,989 · 36 sessions</td><td>1.20×</td><td>1.23×</td></tr>
+          <tr><td>Aggregated · bf16 · TP2</td><td>46,492 · 32 sessions</td><td>54,047 · 40 sessions</td><td>1.16×</td><td>1.26×</td></tr>
+          <tr><td>Disaggregated · bf16 · 1P:1D</td><td>33,906 · 48 sessions</td><td>48,141 · 64 sessions</td><td>1.42×</td><td>1.42×</td></tr>
+        </tbody></table></div>
+        <div class="callout claim"><span class="label">저자 주장 + 제한</span>State는 압축 직후 2.0–3.9배 작아지고 평균적으로 1.3–2.6배 작다. Peak throughput은 1.16–1.42배다. 그러나 <mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">이는 GB300, SGLang, Qwen3.8-Flash-Next, 특정 agentic trace와 concurrency 범위의 결과</mark>이며 다른 모델·batch·hardware의 보편적 우월성을 뜻하지 않는다.</div>
+      </section>
+
+      <section id="key-applications" class="section">
+        <div class="part-no">PART 09 · KEY APPLICATIONS</div><div class="section-head"><div class="num">09</div><h2>핵심 활용: 긴 프롬프트와 많은 동시 요청이 만나는 곳</h2></div>
+        <div class="grid">
+          <article class="card"><h3>Agentic coding</h3><p>긴 repository context와 tool history가 prefill을 지배하고 다수 session이 state pool을 압박한다. 논문의 직접 serving 실험 영역이다.</p></article>
+          <article class="card"><h3>Local RAG</h3><p>Evidence chunk가 길고 반복 prefix가 많은 환경에서 shallow prefill과 더 높은 prefix-cache hit가 결합될 수 있다. 근거 회수율은 별도 검증해야 한다.</p></article>
+          <article class="card"><h3>Streaming assistant</h3><p>온디바이스 text·speech·vision assistant에서 고정 state는 유리하지만 state precision과 energy를 함께 측정해야 한다. 이 논문은 GB300 결과만 제공한다.</p></article>
+          <article class="card"><h3>Hybrid model serving</h3><p>Gated DeltaNet, KDA, Mamba-2를 attention과 섞은 모델에서 state pool과 KV cache를 서로 다른 정책으로 운영할 수 있다.</p></article>
+          <article class="card"><h3>ETRI 연구 제안</h3><p>센서 상태 추적·로봇 고수준 계획·edge 운영지능에서 compressed state + 필요한 구간 attention + 외부 evidence memory의 3계층 구조를 시험한다.</p></article>
+          <article class="card"><h3>안전 경계</h3><p>저수준 제어의 안정성은 별도 검증 대상이다. State compression의 language-model drift 결과가 actuator safety를 보장하지 않는다.</p></article>
+        </div>
+      </section>
+
+      <section id="open-problems" class="section">
+        <div class="part-no">PART 10 · OPEN PROBLEMS</div><div class="section-head"><div class="num">10</div><h2>미해결 문제: 압축 가능한 상태와 신뢰 가능한 상태 사이</h2></div>
+        <ul>
+          <li><strong>유한 상태의 과제별 한계:</strong> rank-R working memory가 exact retrieval, state tracking, planning에 필요한 최소 정보량을 언제 넘지 못하는가?</li>
+          <li><strong>망각 탐지:</strong> next-token KL이 작아도 특정 evidence key가 지워졌는지 online으로 감지할 방법이 필요하다.</li>
+          <li><strong>장기 session drift/reset:</strong> 16K보다 긴 decode, tool loop, state contamination, session reset에서의 안정성은 미확인이다.</li>
+          <li><strong>공정 비교:</strong> 동일 checkpoint·prompt trace·precision·batch·hardware에서 dense state, quantization, pruning, low rank, offload를 비교해야 한다.</li>
+          <li><strong>효과 분리:</strong> emitter training data, anchor depth, prompt code, rank, W, prefix-cache hit가 throughput과 품질에 미치는 영향을 분리해야 한다.</li>
+          <li><strong>실세계 안전성:</strong> exam cell 63/66은 강한 paired evidence지만 잘못된 tool call, hallucinated evidence, recovery failure를 직접 측정하지 않는다.</li>
+          <li><strong>한국어 전문업무:</strong> 한국어 장문 RAG, 연구·행정 문서, 현장 terminology에서 근거 회수율과 압축 drift가 검증되지 않았다.</li>
+          <li><strong>LFM 검증:</strong> LFM2·LFM3 전체가 Mamba-2와 같은 state update를 쓴다는 공개 근거가 없으므로 method transfer는 가설로 남는다.</li>
+        </ul>
+      </section>
+
+      <section id="future-directions" class="section">
+        <div class="part-no">PART 11 · FUTURE DIRECTIONS</div><div class="section-head"><div class="num">11</div><h2>향후 방향: 상태 예산을 고정값이 아니라 운영 변수로 만든다</h2></div>
+        <h3>1. Hierarchical memory</h3>
+        <p><span class="label">제안</span><mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">압축 recurrent state + 필요한 구간의 attention + 외부 evidence memory</mark>를 계층화한다. State는 최근 동적 문맥, attention은 선택된 정확 회수 구간, 외부 memory는 감사 가능한 근거를 담당한다.</p>
+        <h3>2. Adaptive state budget</h3>
+        <p><span class="label">제안</span>항상 같은 R과 W를 쓰지 말고 retrieval uncertainty, state novelty, tool boundary, safety-critical step에서 rank를 늘린다. 평상시에는 작게 유지하고 필요한 순간에만 memory budget을 확장한다.</p>
+        <h3>3. Task-success benchmark</h3>
+        <p><span class="label">제안</span>Perplexity와 tok/s만으로 끝내지 않는다. 성공 작업당 Joule, p95 TTFT, peak HBM, 근거 회수율, 오류 복구율, state reset 후 회복 시간, 장기 session drift를 함께 보고한다.</p>
+        <h3>4. ETRI용 단계적 검증</h3>
+        <div class="table-wrap"><table><thead><tr><th>단계</th><th>실험</th><th>통과 기준 예시</th><th>상태</th></tr></thead><tbody>
+          <tr><td>1 · 통제 비교</td><td>동일 학습데이터·checkpoint·quantization·hardware에서 dense vs low-rank</td><td>품질 비열화 한도와 memory/latency 동시 개선</td><td>연구 제안</td></tr>
+          <tr><td>2 · 고장 주입</td><td>state contamination, evidence deletion, 통신 단절, reset</td><td>오류 탐지율·회복률·최악 지연</td><td>연구 제안</td></tr>
+          <tr><td>3 · 장기 실증</td><td>로봇·설비의 고수준 계획과 edge 운영지능</td><td>성공 작업당 Joule·근거 회수·안전 handoff</td><td>연구 제안</td></tr>
+          <tr><td>4 · 저수준 제어</td><td>별도 control-theoretic safety 검증</td><td>stability margin·fail-safe·independent monitor</td><td>분리 과제</td></tr>
+        </tbody></table></div>
+        <div class="callout proposal"><span class="label">종합 제안</span>SEED가 제시한 가장 중요한 변화는 “고정 상태”를 아키텍처 속성이 아니라 <mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">관찰·압축·확장·복구할 수 있는 시스템 자원</mark>으로 보는 것이다. 다음 연구는 state rank를 줄이는 데서 멈추지 말고, 어떤 task evidence가 사라졌는지 설명하고 필요할 때 budget을 되돌릴 수 있어야 한다.</div>
+      </section>
+
+      <section id="sources" class="section">
+        <div class="part-no">SOURCES · DATES · SCOPE</div><div class="section-head"><div class="num">↗</div><h2>출처와 날짜</h2></div>
+        <p>논문·공식 기술보고서·공식 기업 발표를 구분했다. 실행일 이후 자료는 포함하지 않았다. 실험 수치는 별도 표기가 없는 한 저자 보고다.</p>
+        <ol class="source-list">
+          <li><a href="https://arxiv.org/abs/2611.06084">Ma et al., “Shallow Encoding Emits Deep Memories,” arXiv:2611.06084</a> — 원고 표기 2026-11-03, arXiv 최초 공개 2026-11-04, 조사일 기준 v1·정식 학회/저널 미확인.</li>
+          <li><a href="https://arxiv.org/abs/2405.21060">Dao &amp; Gu, “Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality”</a> — Mamba-2/SSD 배경, 최초 공개 2024-05-31. 2025년 이전 원논문으로 배경 자료.</li>
+          <li><a href="https://arxiv.org/abs/2312.00752">Gu &amp; Dao, “Mamba: Linear-Time Sequence Modeling with Selective State Spaces”</a> — 최초 공개 2023-12-01. 2025년 이전 원논문으로 배경 자료.</li>
+          <li><a href="https://arxiv.org/abs/2511.23404">Liquid AI, “LFM2 Technical Report”</a> — 최초 공개 2025-11-28. LFM2 architecture·training 배경이며 SEED 검증 대상은 아님.</li>
+          <li><a href="https://www.liquid.ai/blog/lfm3">Liquid AI, “Introducing LFM3: Every Modality for Specialized Intelligence”</a> — 2026-10-27 공식 제품 발표, 논문 아님. tri-hybrid·22T-token·2B-class model family에 대한 회사 주장.</li>
+          <li><a href="https://arxiv.org/abs/2603.15569">Lahoti et al., “Mamba-3: Improved Sequence Modeling using State Space Principles”</a> — 최초 공개 2026-03-16. exponential-trapezoidal discretization·complex state·MIMO 배경.</li>
+        </ol>
+        <div class="callout fact"><span class="label">범위 주의</span>SEED는 Mamba-2를 포함하지만 Mamba 전체나 LFM 전체의 end-to-end O(1) memory를 증명하지 않는다. Hybrid의 attention cache는 문맥 길이에 따라 증가하며, 이번 방법은 그 cache를 압축하지 않는다.</div>
+      </section>
+
+      <footer class="footer">
+        <p><strong>Tags</strong> · foundation models · machine learning</p>
+        <p>PUBLISHED 2026-11-06 KST · 이 글은 사실, 저자 주장, 해석, 연구 제안을 구분해 작성했다.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
