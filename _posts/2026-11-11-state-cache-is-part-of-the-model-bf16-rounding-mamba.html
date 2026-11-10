@@ -1,0 +1,278 @@
+---
+layout: null
+title: "The State Cache Is Part of the Model: bf16 Rounding and Hybrid Mamba Reasoning"
+date: 2026-11-11
+categories: [artificial intelligence]
+tags: [foundation models, machine learning]
+---
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="bf16 순환 상태의 반복 반올림이 Mamba-2·Gated DeltaNet hybrid reasoning 모델의 출력 길이, 루프, 정확도에 미치는 영향을 분석하고 확률적 반올림과 최신 Mamba ICL 이론의 의미를 연결한다.">
+  <title>The State Cache Is Part of the Model: bf16 Rounding and Hybrid Mamba Reasoning</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans+KR:wght@400;500;600&amp;family=Spectral:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet">
+  <style>
+    :root{--paper:#edf1f4;--surface:#fbfcfd;--ink:#111827;--ink2:#2b3445;--muted:#5d6877;--hair:#c8d1dc;--navy:#263d67;--blue:#3766a5;--violet:#6e4aa0;--red:#a33b52;--green:#27785a;--gold:#927b1e;--shadow:0 22px 60px rgba(24,39,66,.12);--disp:"Gowun Batang","Spectral",Batang,serif;--lat:"Spectral",Georgia,serif;--body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body.research-essay{margin:0;background:radial-gradient(circle at 7% 0,#dce9f2 0,transparent 25%),radial-gradient(circle at 96% 16%,#ebe4f1 0,transparent 23%),var(--paper);color:var(--ink);font:400 17px/1.86 var(--body);letter-spacing:-.012em;word-break:keep-all;overflow-wrap:anywhere}a{color:#294f8d;text-underline-offset:3px}a:hover{color:#162e59}:focus-visible{outline:3px solid var(--blue);outline-offset:4px}.shell{width:min(1180px,calc(100% - 34px));margin:auto}.hero{padding:64px 0 26px}.hero-card{position:relative;overflow:hidden;padding:clamp(34px,7vw,82px);border:1px solid rgba(55,102,165,.2);border-radius:36px;background:linear-gradient(132deg,rgba(255,255,255,.97),rgba(241,246,250,.9));box-shadow:var(--shadow)}.hero-card:after{content:"";position:absolute;width:470px;height:470px;right:-205px;top:-235px;border-radius:50%;background:conic-gradient(from 35deg,var(--violet),var(--blue),var(--green),var(--red),var(--violet));opacity:.2}.eyebrow,.technical-label,.meta{font:600 12px/1.6 var(--mono);letter-spacing:.1em;text-transform:uppercase}.eyebrow{position:relative;color:var(--violet)}h1,h2,h3{font-family:var(--disp);font-weight:700;letter-spacing:-.035em}h1{position:relative;z-index:1;max-width:1040px;margin:.22em 0 .28em;font-size:clamp(38px,6.5vw,68px);line-height:1.05}.deck{position:relative;z-index:1;max-width:930px;margin:0;font:italic 400 clamp(18px,2.1vw,24px)/1.55 var(--lat);color:var(--ink2)}.meta{position:relative;z-index:1;margin-top:26px;color:var(--muted)}
+    .opening-summary-diagram{margin:24px auto 20px;padding:20px;border:1px solid var(--hair);border-radius:28px;background:white;box-shadow:var(--shadow)}.diagram-viewport{overflow-x:auto;border:1px solid var(--hair);border-radius:18px;background:linear-gradient(180deg,#fafcfe,#f1f5f8)}.opening-summary-diagram svg{display:block;width:100%;height:auto;min-width:960px}.opening-summary-diagram figcaption,.diagram-summary{margin:.75rem .25rem 0;color:var(--muted);font-size:.87rem;line-height:1.75}.scroll-hint{display:none;color:var(--muted);font-size:.78rem}.svg-node{fill:#fff;stroke:#aebac8;stroke-width:1.6}.svg-source{stroke:var(--blue)}.svg-risk{stroke:var(--red)}.svg-fix{stroke:var(--green)}.svg-boundary{stroke:var(--gold)}.svg-edge{fill:none;stroke:var(--blue);stroke-width:2;marker-end:url(#state-arrow)}.svg-risk-edge{fill:none;stroke:var(--red);stroke-width:2;marker-end:url(#state-arrow-red)}.svg-fix-edge{fill:none;stroke:var(--green);stroke-width:2;marker-end:url(#state-arrow-green)}.svg-dash{fill:none;stroke:var(--gold);stroke-width:2;stroke-dasharray:7 6;marker-end:url(#state-arrow-gold)}.svg-label{fill:var(--ink);font:600 17px var(--body)}.svg-tech{fill:var(--muted);font:600 14px var(--mono);letter-spacing:.04em}.svg-note{fill:var(--muted);font:400 14px var(--body)}
+    .hl-legend{display:flex;flex-wrap:wrap;gap:.55rem 1rem;margin:1.25rem 0 2rem;padding:15px 18px;border:1px solid var(--hair);border-radius:17px;background:#fff;font-size:.82rem}.hl-legend-label{font-weight:600}.hl-legend small{flex-basis:100%}mark.hl{--hl-color:rgba(255,221,74,.42);color:inherit;background:linear-gradient(176deg,transparent 0 56%,var(--hl-color) 56% 89%,transparent 89%);padding:0 .06em;font:inherit;-webkit-box-decoration-break:clone;box-decoration-break:clone}.hl-pink{--hl-color:rgba(255,126,166,.39)!important}.hl-yellow{--hl-color:rgba(255,221,74,.44)!important}.hl-blue{--hl-color:rgba(91,169,255,.33)!important}.hl-green{--hl-color:rgba(81,196,143,.31)!important}
+    .layout{display:grid;grid-template-columns:245px minmax(0,1fr);gap:42px;align-items:start}.toc{position:sticky;top:18px;padding:20px;border:1px solid var(--hair);border-radius:19px;background:rgba(255,255,255,.9);backdrop-filter:blur(10px)}.toc strong{display:block;margin-bottom:8px;font-family:var(--mono);font-size:.8rem}.toc a{display:block;padding:4px 0;color:var(--muted);font-size:.79rem;text-decoration:none}.toc a:hover{color:#21375c}main{min-width:0}.abstract{margin:0 0 44px;padding:28px;border-left:6px solid var(--violet);border-radius:0 20px 20px 0;background:white;box-shadow:0 12px 30px rgba(25,39,67,.07)}.abstract .lede{margin:.2em 0;font:400 clamp(20px,2.4vw,24px)/1.72 var(--disp)}.section{scroll-margin-top:24px;margin:0 0 68px}.section-head{display:grid;grid-template-columns:56px 1fr;gap:14px;align-items:end;padding-bottom:14px;border-bottom:1px solid var(--hair)}.section-head .num{font:700 2.2rem/1 var(--lat);color:#9aa6b8}.section h2{margin:0;font-size:clamp(29px,4vw,44px);line-height:1.18}.section h3{margin:32px 0 8px;font-size:clamp(22px,2.4vw,27px);line-height:1.4}.section p{margin:1em 0}.callout{margin:22px 0;padding:20px 22px;border:1px solid var(--hair);border-radius:18px;background:#fff}.callout.fact{border-left:5px solid #4a9bd8}.callout.claim{border-left:5px solid #d4ac23}.callout.interpretation{border-left:5px solid #ba5982}.callout.proposal{border-left:5px solid #3b986e}.callout.caution{border-left:5px solid var(--red)}.label{display:inline-flex;margin-right:8px;padding:3px 8px;border-radius:7px;background:#edf1f6;font:600 .7rem/1.5 var(--mono);letter-spacing:.035em}.equation{overflow:auto;margin:22px 0;padding:22px;border:1px solid var(--hair);border-radius:17px;background:#f7f9fc;font:500 15px/1.75 var(--mono);text-align:center;white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:20px 0}.card{padding:20px;border:1px solid var(--hair);border-radius:17px;background:#fff}.card h3,.card h4{margin:0 0 8px}.card p{margin:.35em 0}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--hair);border-radius:18px;background:#fff}table{width:100%;border-collapse:collapse;min-width:850px;font-size:.9rem}th,td{padding:14px 15px;border-bottom:1px solid #dce2e9;vertical-align:top;text-align:left}th{background:#eef3f7;font-family:var(--mono);font-size:.77rem;letter-spacing:.015em}tr:last-child td{border-bottom:0}.metric{font-weight:700;color:#244e83}.source-list{padding-left:1.25rem}.source-list li{margin:.72rem 0}.footer{margin-top:72px;padding:30px 0 55px;border-top:1px solid var(--hair);color:var(--muted);font-size:.84rem}.kicker{font-family:var(--lat);font-style:italic;color:var(--muted)}ul,ol{padding-left:1.35rem}li{margin:.46rem 0}.status-row{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.status{padding:5px 9px;border:1px solid var(--hair);border-radius:8px;background:#fff;font:600 .72rem/1.4 var(--mono)}code{font-family:var(--mono);font-size:.9em}
+    @media(max-width:860px){.layout{grid-template-columns:1fr}.toc{position:static}.grid{grid-template-columns:1fr}.hero{padding-top:25px}.hero-card{border-radius:24px}.opening-summary-diagram{padding:12px}.scroll-hint{display:block}.section{margin-bottom:54px}}@media(max-width:520px){body.research-essay{font-size:16px;line-height:1.82}.shell{width:min(100% - 22px,1180px)}.hero-card{padding:28px 22px}h1{font-size:38px}.section-head{grid-template-columns:42px 1fr}.section-head .num{font-size:1.7rem}.abstract{padding:22px}.callout{padding:17px}}@media print{body.research-essay{background:#fff}.toc{display:none}.layout{display:block}.hero-card,.opening-summary-diagram,.abstract{box-shadow:none}a{color:inherit}mark.hl{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style>
+</head>
+<body class="research-essay">
+  <header class="hero shell">
+    <div class="hero-card">
+      <div class="eyebrow">RECURRENT STATE · BF16 ROUNDING · MAMBA HYBRID SERVING</div>
+      <h1>The State Cache<br>Is Part of the Model</h1>
+      <p class="deck">Why repeated bf16 rounding can make hybrid reasoning models think longer—and why state precision must be evaluated as behavior, not storage alone</p>
+      <p class="meta">PUBLISHED 2026-11-11 KST · EVIDENCE CUTOFF 2026-11-11</p>
+    </div>
+
+    <figure class="opening-summary-diagram" aria-labelledby="state-overview-caption">
+      <div class="diagram-viewport" role="region" aria-label="순환 상태 반올림이 생성 행동으로 전파되는 과정" tabindex="0">
+        <svg viewBox="0 0 1120 690" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="state-overview-title state-overview-desc">
+          <title id="state-overview-title">bf16 순환 상태 반올림과 확률적 반올림의 행동 차이</title>
+          <desc id="state-overview-desc">입력 의존 recurrence가 매 token state를 업데이트한다. bf16 round-to-nearest는 작은 업데이트를 반복적으로 지워 출력 길이 증가, cap hit, 반복 루프, 정확도 저하로 이어질 수 있다. 같은 bf16 폭의 stochastic rounding은 다섯 affected model 중 네 모델에서 FP32 수준의 행동을 회복했다. 모델·커널·과제별 검증 경계가 남는다.</desc>
+          <defs>
+            <marker id="state-arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#3766a5"/></marker>
+            <marker id="state-arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#a33b52"/></marker>
+            <marker id="state-arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#27785a"/></marker>
+            <marker id="state-arrow-gold" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#927b1e"/></marker>
+          </defs>
+          <text x="560" y="42" text-anchor="middle" class="svg-tech">UPDATE → ROUNDING POLICY → CLOSED-LOOP BEHAVIOR → VALIDATION</text>
+          <rect x="55" y="90" width="300" height="126" rx="13" class="svg-node svg-source"/>
+          <text x="205" y="122" text-anchor="middle" class="svg-tech">SELECTIVE RECURRENCE</text>
+          <text x="205" y="157" text-anchor="middle" class="svg-label"><tspan x="205">hₜ ← f(hₜ₋₁, xₜ)</tspan><tspan x="205" dy="27">매 token state 갱신</tspan></text>
+          <rect x="410" y="90" width="300" height="126" rx="13" class="svg-node svg-risk"/>
+          <text x="560" y="122" text-anchor="middle" class="svg-tech">BF16 · RTN</text>
+          <text x="560" y="157" text-anchor="middle" class="svg-label"><tspan x="560">작은 변화의 반복 소거</tspan><tspan x="560" dy="27">write erasure + bias</tspan></text>
+          <rect x="765" y="90" width="300" height="126" rx="13" class="svg-node svg-fix"/>
+          <text x="915" y="122" text-anchor="middle" class="svg-tech">BF16 · STOCHASTIC</text>
+          <text x="915" y="157" text-anchor="middle" class="svg-label"><tspan x="915">동일 저장 폭, 비편향</tspan><tspan x="915" dy="27">확률적으로 이웃값 선택</tspan></text>
+          <path d="M355 153 H402" class="svg-edge"/><path d="M355 171 Q600 255 762 171" class="svg-fix-edge"/>
+
+          <rect x="88" y="300" width="265" height="120" rx="13" class="svg-node svg-risk"/>
+          <text x="220" y="332" text-anchor="middle" class="svg-tech">LONGER OUTPUT</text><text x="220" y="367" text-anchor="middle" class="svg-label"><tspan x="220">5 / 6 models</tspan><tspan x="220" dy="27">×1.07–×1.27</tspan></text>
+          <rect x="428" y="300" width="265" height="120" rx="13" class="svg-node svg-risk"/>
+          <text x="560" y="332" text-anchor="middle" class="svg-tech">CAPS &amp; LOOPS</text><text x="560" y="367" text-anchor="middle" class="svg-label"><tspan x="560">32K cap 증가</tspan><tspan x="560" dy="27">128K에도 일부 미종료</tspan></text>
+          <rect x="768" y="300" width="265" height="120" rx="13" class="svg-node svg-risk"/>
+          <text x="900" y="332" text-anchor="middle" class="svg-tech">TASK QUALITY</text><text x="900" y="367" text-anchor="middle" class="svg-label"><tspan x="900">math accuracy 하락</tspan><tspan x="900" dy="27">code pass@1 −12.6/−13.4p</tspan></text>
+          <path d="M500 216 Q365 254 245 292" class="svg-risk-edge"/><path d="M560 216 V292" class="svg-risk-edge"/><path d="M620 216 Q755 254 875 292" class="svg-risk-edge"/>
+          <path d="M915 216 Q975 258 980 292" class="svg-fix-edge"/>
+
+          <rect x="65" y="520" width="310" height="112" rx="13" class="svg-node svg-fix"/>
+          <text x="220" y="551" text-anchor="middle" class="svg-tech">SAME-WIDTH RECOVERY</text><text x="220" y="584" text-anchor="middle" class="svg-label"><tspan x="220">4 / 5 affected models</tspan><tspan x="220" dy="26">length · cap · accuracy 회복</tspan></text>
+          <rect x="405" y="520" width="310" height="112" rx="13" class="svg-node svg-fix"/>
+          <text x="560" y="551" text-anchor="middle" class="svg-tech">SYSTEM CONTRACT</text><text x="560" y="584" text-anchor="middle" class="svg-label"><tspan x="560">dtype · rounding · cap</tspan><tspan x="560" dy="26">length · loop · energy</tspan></text>
+          <rect x="745" y="520" width="310" height="112" rx="13" class="svg-node svg-boundary"/>
+          <text x="900" y="551" text-anchor="middle" class="svg-tech">BOUNDARY</text><text x="900" y="584" text-anchor="middle" class="svg-label"><tspan x="900">single engine/GPU</tspan><tspan x="900" dy="26">model-specific exception</tspan></text>
+          <path d="M220 420 V512" class="svg-fix-edge"/><path d="M560 420 V512" class="svg-edge"/><path d="M900 420 V512" class="svg-dash"/>
+        </svg>
+      </div>
+      <p class="scroll-hint">좁은 화면에서는 다이어그램을 좌우로 스크롤할 수 있습니다.</p>
+      <figcaption id="state-overview-caption">핵심 요약 · <em>Lost in Rounding</em>의 실험 인과 사슬을 재구성한 설명도다. 같은 bf16 저장 폭에서 반올림 규칙만 바꿔 행동이 회복됐다는 결과는 “오차 크기”보다 반복 편향이 중요할 수 있음을 보여준다.</figcaption>
+      <p class="diagram-summary"><strong>텍스트 요약:</strong> 순환 state cache의 dtype과 rounding mode는 단순 구현 옵션이 아니다. 매 토큰의 작은 update를 보존할지 지울지 결정하고, 그 결정은 생성 길이·종료·정확도·서빙 비용을 함께 바꿀 수 있다.</p>
+    </figure>
+  </header>
+
+  <div class="shell">
+    <aside class="hl-legend" aria-label="내용 중요도 색상 안내"><span class="hl-legend-label">내용 중요도</span><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">1 · 최우선</mark><mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">2 · 핵심</mark><mark class="hl hl-blue" data-importance="보충" title="중요도 3 · 보충">3 · 보충</mark><mark class="hl hl-green" data-importance="참고" title="중요도 4 · 참고">4 · 참고</mark><small>색상은 편집상 중요도이며 근거의 검증 수준을 뜻하지 않습니다.</small></aside>
+  </div>
+
+  <div class="shell layout">
+    <nav class="toc" aria-label="글 목차">
+      <strong>CONTENTS</strong>
+      <a href="#definition">01 Definition</a><a href="#problem-definition">02 Problem Definition</a><a href="#core-concepts">03 Core Concepts</a><a href="#introduction">04 Introduction</a><a href="#motivation-background">05 Motivation &amp; Background</a><a href="#challenges">06 Challenges</a><a href="#research-questions">07 Research Questions</a><a href="#approaches-methods">08 Approaches (Methods)</a><a href="#key-applications">09 Key Applications</a><a href="#open-problems">10 Open Problems</a><a href="#future-directions">11 Future Directions</a><a href="#sources">Sources</a>
+    </nav>
+
+    <main>
+      <section class="abstract" aria-labelledby="central-question">
+        <div class="technical-label">THE CENTRAL QUESTION</div>
+        <p id="central-question" class="lede">같은 모델 가중치와 같은 bf16 저장량이라도, 순환 state를 매 토큰 어떻게 반올림하느냐가 “생각이 끝나는가”까지 바꾼다면 state cache는 모델의 일부로 평가해야 하지 않는가?</p>
+        <p>2026년 11월 9일 최초 공개된 <em>Lost in Rounding</em>은 이 질문에 직접 답한다. 저자들은 6개 공개 hybrid reasoning 모델에서 순환 상태만 FP32↔bf16으로 바꾸고, bf16 round-to-nearest(RTN)가 5개 모델의 출력을 길게 만들며 cap hit를 늘린다고 보고했다. <mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">같은 bf16 폭의 stochastic rounding(SR)은 affected model 5개 중 4개에서 길이·cap·정확도를 FP32 수준으로 되돌렸다.</mark> 이는 단순한 메모리 절감 문제가 아니라 closed-loop behavior의 문제다.</p>
+        <div class="status-row"><span class="status">FACT = 검증된 서지·설정</span><span class="status">AUTHOR CLAIM = 저자 보고 결과</span><span class="status">INTERPRETATION = 본 글의 종합</span><span class="status">PROPOSAL = 검증 전 연구 제안</span></div>
+      </section>
+
+      <section class="section" id="definition">
+        <div class="section-head"><span class="num">01</span><h2>Definition</h2></div>
+        <h3>모델, mixer, state cache를 구분한다</h3>
+        <p><strong>LFM</strong>은 Liquid AI가 개발한 foundation model 제품군이다. <strong>Mamba</strong>는 입력 의존 selection을 갖는 state-space architecture다. <strong>Hybrid reasoning model</strong>은 attention과 Mamba-2 또는 Gated DeltaNet(GDN) 같은 recurrent mixer를 층별·병렬·교차 방식으로 결합한 생성 모델이다. <strong>State cache</strong>는 각 요청의 순환 state를 decode 동안 유지하는 serving-side 저장소다.</p>
+        <div class="callout fact"><span class="label">FACT</span>LFM=LTC=LNN=Mamba라는 동일시는 틀리다. LFM2는 입력 의존 게이트 단거리 합성곱과 일부 GQA를 결합하지만, 모든 LFM 세대에 이 구조를 소급할 수 없다. 이번 새 실험은 Liquid AI의 LFM/LFM2/LFM3를 측정하지 않았다.</div>
+        <p><strong>RTN(round-to-nearest)</strong>은 FP32 계산값을 가장 가까운 bf16 값으로 결정론적으로 반올림한다. <strong>SR(stochastic rounding)</strong>은 두 인접 bf16 값 중 하나를 정확한 값의 상대 위치에 비례해 선택해, 기대값에서 반올림을 비편향으로 만든다. 둘은 저장 폭이 같지만 누적 오차의 방향성이 다르다.</p>
+        <div class="callout interpretation"><span class="label">INTERPRETATION</span><mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">state dtype과 rounding mode는 “엔진 튜닝 값”이 아니라 모델의 유효한 전이함수(effective transition function)를 구성한다.</mark> 같은 weights라도 state transition을 다르게 근사하면 실제 생성 과정은 다른 동역학을 따른다.</div>
+      </section>
+
+      <section class="section" id="problem-definition">
+        <div class="section-head"><span class="num">02</span><h2>Problem Definition</h2></div>
+        <p>공통 목표는 긴 이력에서 품질을 최대화하면서 p95 latency, peak memory, energy, output budget 제약을 동시에 만족하는 것이다. recurrent cache를 FP32에서 bf16으로 줄이면 요청당 cache가 절반이 되어 동시 요청 수를 늘릴 수 있다. 그러나 반올림이 종료 확률을 낮추고 생성 토큰을 늘리면 저장 절감이 decode 시간·전력·GPU 점유로 되돌아온다.</p>
+        <div class="equation">maximize Quality(θ, q) subject to p95 ≤ L, PeakMemory ≤ M, Energy/Success ≤ E, CapRate ≤ C, LoopRate ≤ R</div>
+        <p>여기서 <code>q</code>는 state format과 rounding policy다. <mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">정확도만 비교하면 cap에서 멈춘 실패와 정상 종료를 혼동하고, memory만 비교하면 길어진 생성 비용을 놓친다.</mark> 따라서 상태 압축은 resident bits/value, 처리량, output length, cap hit, loop, task success를 함께 측정해야 한다.</p>
+        <div class="callout caution"><span class="label">BOUNDARY</span>표준 full attention은 prefill이 길이에 대해 이차 연산, KV cache가 선형 메모리, decode 한 토큰의 attention이 이력 길이에 선형이다. 고정 상태 순수 SSM은 전체 연산을 선형으로 하고 순환 state를 길이와 독립적으로 유지할 수 있다. 그러나 LFM2나 full-attention hybrid 전체를 O(1) memory·완전 선형이라고 부를 수 없다. GQA는 KV 계수를 줄일 뿐 길이 의존을 제거하지 않는다.</div>
+      </section>
+
+      <section class="section" id="core-concepts">
+        <div class="section-head"><span class="num">03</span><h2>Core Concepts</h2></div>
+        <h3>3.1 선택적 상태 전이</h3>
+        <div class="equation">h<sub>t</sub> = Ā<sub>t</sub>h<sub>t−1</sub> + B̄<sub>t</sub>x<sub>t</sub>, &nbsp;&nbsp; y<sub>t</sub> = C<sub>t</sub>h<sub>t</sub></div>
+        <p>선택성은 입력마다 무엇을 기억·망각·읽을지를 조절한다는 뜻이지, 추론 중 model weights를 다시 학습한다는 뜻이 아니다. 순환 state의 크기가 sequence length와 독립이라는 말도 무한 정보를 완전 보존한다는 뜻이 아니다. 유한 state에는 task-dependent compression과 interference가 남는다.</p>
+        <h3>3.2 반복 반올림과 write erasure</h3>
+        <p>bf16은 8개의 유효 비트를 갖고, 논문은 최소 상대 half-spacing을 <code>u=2⁻⁹</code>로 둔다. 한 step의 state 변화가 저장된 값에 비해 대략 <code>u</code>보다 작으면 RTN이 update를 없애 state가 움직이지 않을 수 있다. 저자들의 leaky-integrator illustration에서는 decay rate가 <code>r≲u</code>일 때 RTN이 decay를 얼리고, <code>u&lt;r≲4u</code>에서 왜곡하며, SR은 기대값에서 비편향이었다.</p>
+        <div class="callout claim"><span class="label">AUTHOR CLAIM</span>이 toy는 mechanism을 보여주지만 어떤 실제 head가 중요한지는 예측하지 못한다. 실제 Nemotron-Nano-v2에서는 <code>0.57u≤r&lt;4.1u</code> 구간의 25% head에 SR을 적용하면 길이 효과가 거의 사라졌지만, 이 선택 규칙은 Nemotron-3과 Qwen3.5-9B에 일반화되지 않았다.</div>
+        <h3>3.3 same-width causal test</h3>
+        <p>FP32와 bf16을 비교하면 resolution과 rounding bias가 함께 변한다. 반면 bf16 RTN과 bf16 SR은 storage width가 같고 반올림 bias만 다르다. 따라서 SR이 행동을 회복하면 “bf16 비트 수가 부족해서”라는 설명보다 “결정론적 반올림 편향이 반복 누적돼서”라는 인과 설명을 더 강하게 지지한다.</p>
+        <h3>3.4 test-time feature learning과 weight update의 경계</h3>
+        <p>2025년 10월 14일 최초 공개되고 2026년 11월 8일 NeurIPS 2026 camera-ready v4로 개정된 Mamba ICL 이론은 단일-index 비선형 target에서 pretrained Mamba가 context examples로 task-relevant direction을 추출할 수 있음을 보인다. 저자들은 nonlinear gating이 핵심이라고 분석한다. <mark class="hl hl-blue" data-importance="보충" title="중요도 3 · 보충">이는 prompt를 통해 state representation이 적응한다는 이론이지, inference 중 weights가 gradient descent로 갱신된다는 뜻이 아니다.</mark></p>
+      </section>
+
+      <section class="section" id="introduction">
+        <div class="section-head"><span class="num">04</span><h2>Introduction</h2></div>
+        <p>최근 Mamba 연구는 “attention보다 선형인가”라는 operator 비교에서, 무엇을 유한 state에 남길지, 언제 정확히 회수할지, low precision에서 transition이 얼마나 오래 안정적인지, 실제 kernel에서 효율이 남는지를 묻는 방향으로 이동하고 있다. 10월 25일의 기존 글은 periodic INT4/8 quantization과 buffer를 사용해 state memory를 줄이는 PACE를 분석했다. 이번 새 근거는 다른 질문을 다룬다.</p>
+        <div class="table-wrap"><table><thead><tr><th>구분</th><th>기존 PACE 분석</th><th>이번 Lost in Rounding</th></tr></thead><tbody>
+          <tr><td>핵심 변화</td><td>INT4/8 혼합, periodic materialization, 최근 token buffer</td><td>FP32↔bf16 RTN↔같은 폭의 bf16 SR</td></tr>
+          <tr><td>주 질문</td><td>resident state memory와 throughput을 얼마나 줄이는가</td><td>반올림 정책이 generation behavior를 바꾸는가</td></tr>
+          <tr><td>주 지표</td><td>bits/value, 5-task 평균, TPOT</td><td>output length, cap hit, exact loop, accuracy/pass@1</td></tr>
+          <tr><td>핵심 새 근거</td><td>period를 늘리면 반올림 횟수를 줄일 수 있음</td><td>같은 bf16 storage에서 bias 제거만으로 행동 회복 가능</td></tr>
+        </tbody></table></div>
+        <div class="callout interpretation"><span class="label">INTERPRETATION</span>상태 연구의 흐름은 <strong>효율적 operator → memory capacity → access와 state tracking → numerical transition integrity → closed-loop termination</strong>으로 확장되고 있다. memory byte가 줄어도 종료하지 못해 더 많은 토큰을 만들면 성공 작업당 효율은 악화될 수 있다.</div>
+      </section>
+
+      <section class="section" id="motivation-background">
+        <div class="section-head"><span class="num">05</span><h2>Motivation and Background</h2></div>
+        <p>recurrent hybrid는 KV cache 성장을 줄이고 긴 decode에서 유리할 수 있지만, 각 sequence마다 state cache가 필요하다. 논문 저자들의 서버에서는 bf16 state가 FP32의 절반이라 동시 요청을 두 배까지 수용했다. 이 장점은 온디바이스·로컬 RAG·agent serving에서 중요하다. 동시에 state는 다음 state의 입력이므로 rounding error가 피드백되고, 아주 작은 update가 계속 지워지면 모델이 사실상 다른 memory dynamics를 따른다.</p>
+        <p><em>Lost in Rounding</em>은 Mamba-2 hybrid 세 계열, GDN hybrid 두 모델, attention–Mamba-2 병렬 모델 한 개를 포함한다. weights와 activations는 bf16으로 고정하고 recurrent state dtype만 바꿨다. <mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">따라서 관찰된 차이는 weight quantization이나 prompt 변경보다 state cache policy에 더 직접 귀속된다.</mark></p>
+        <div class="callout fact"><span class="label">FACT</span><strong>서지 상태:</strong> Lost in Rounding은 2026-11-09 arXiv v1(13쪽, 표 7개)이며 학회 채택 기록이 없는 preprint다. Mamba ICL 논문은 2025-10-14 v1, 2026-11-08 v4이며 NeurIPS 2026 camera-ready라고 명시한다. Liquid AI는 2026-10-27 LFM3 제품군을 공식 발표했지만, 이번 실행일 현재 이 두 새 근거와 연결된 새 LFM technical report는 확인되지 않았다.</div>
+        <p><mark class="hl hl-green" data-importance="참고" title="중요도 4 · 참고">Mamba 원논문(2023 최초 공개)과 Mamba-2(2024)는 배경 연구다.</mark> 이번 글은 2025-01-01 이후의 새 연구만 업데이트 근거로 사용하며, 2024년 이전 자료는 개념 배경으로만 표기한다.</p>
+      </section>
+
+      <section class="section" id="challenges">
+        <div class="section-head"><span class="num">06</span><h2>Challenges</h2></div>
+        <div class="grid">
+          <div class="card"><h3>정확 회수와 압축 충돌</h3><p>고정 state는 길이와 무관한 storage를 주지만, task-relevant detail과 작은 update를 모두 무손실로 담지는 못한다.</p></div>
+          <div class="card"><h3>수치 오차의 feedback</h3><p>state가 다음 step의 입력이라 rounding bias가 coherent하게 반복될 수 있다. 단일-step error로 장기 행동을 예측하기 어렵다.</p></div>
+          <div class="card"><h3>종료와 cap의 혼입</h3><p>32K cap에서 정답이 잘리면 accuracy gap은 capability, verbosity, non-termination을 섞는다. 128K 재실험과 loop count가 필요하다.</p></div>
+          <div class="card"><h3>teacher-forced와 closed-loop의 차이</h3><p>고정 trace의 KL이 큰 head가 실제 자유 생성의 길이를 지배한다고 보장할 수 없다.</p></div>
+          <div class="card"><h3>kernel 비용</h3><p>SR의 RNG가 비싸면 memory 이득이 latency에서 사라진다. Philox 구현과 integer-hash 구현의 결과가 크게 달랐다.</p></div>
+          <div class="card"><h3>일반화 경계</h3><p>head decay band 선택은 한 lineage에서만 성공했다. engine, GPU, task, seed, model family가 바뀌면 결과가 달라질 수 있다.</p></div>
+        </div>
+        <p>여기에 훈련 길이 밖 일반화, 데이터·증류·architecture 효과 분리, CPU/GPU/NPU kernel 차이, 한국어 전문업무의 회수·종료 특성이 남는다. <mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">수치 precision은 평균 정확도만의 문제가 아니라 장기 session drift, reset 정책, 오류복구 가능성의 문제</mark>다.</p>
+      </section>
+
+      <section class="section" id="research-questions">
+        <div class="section-head"><span class="num">07</span><h2>Research Questions</h2></div>
+        <ol>
+          <li><strong>Memory budget:</strong> 동일 resident memory에서 어떤 head·channel·time scale의 update를 우선 보존해야 하는가?</li>
+          <li><strong>Minimal attention:</strong> exact retrieval과 state tracking을 회복하는 최소 attention 비율과 배치는 무엇인가?</li>
+          <li><strong>Transition expressivity:</strong> 더 풍부한 state transition과 parallel training·stable low-precision inference의 균형점은 어디인가?</li>
+          <li><strong>Precision stability:</strong> bf16·FP16·FP8·INT8·INT4에서 RTN/SR/dither가 long-horizon state와 종료 확률에 미치는 효과를 통일해 설명할 수 있는가?</li>
+          <li><strong>Closed-loop selection:</strong> teacher-forced KL보다 generation length·loop·success를 잘 예측하는 head 중요도 지표는 무엇인가?</li>
+          <li><strong>Theory-to-system:</strong> nonlinear gating의 test-time feature learning이 low precision에서도 유지되는가, 아니면 작은 feature update가 write erasure로 사라지는가?</li>
+          <li><strong>Agent validity:</strong> synthetic state-tracking 점수와 실제 agent 성공률·오류복구율·성공 작업당 Joule은 얼마나 상관하는가?</li>
+        </ol>
+      </section>
+
+      <section class="section" id="approaches-methods">
+        <div class="section-head"><span class="num">08</span><h2>Approaches (Methods)</h2></div>
+        <h3>8.1 여섯 hybrid 모델의 paired serving 실험</h3>
+        <p><span class="label">AUTHOR METHOD</span>모델은 Nemotron-Nano-9B-v2·12B-v2(Mamba-2 hybrid), Nemotron-3-Nano-30B-A3B(Mamba-2 MoE hybrid), Qwen3.5-9B·Qwen3-Next-80B-A3B-Thinking(GDN hybrid), Falcon-H1R-7B(attention과 Mamba-2 병렬)이다. 수학은 MATH-500+AIME 2024/2025+HMMT 2025로 총 590문제다. output cap은 32,768 new tokens, engine은 SGLang 0.5.21, hardware는 RTX PRO 6000 Blackwell 8장이다. 대부분 DP8이고 Qwen3-Next는 TP4×DP2다.</p>
+        <div class="table-wrap"><table><thead><tr><th>모델</th><th>recurrent mixer</th><th>bf16 RTN / FP32 길이</th><th>32K cap FP32→bf16</th><th>accuracy FP32→bf16</th></tr></thead><tbody>
+          <tr><td>Qwen3.5-9B</td><td>GDN</td><td class="metric">×1.265</td><td>118→223</td><td>85.6→70.8</td></tr>
+          <tr><td>Qwen3-Next-80B-A3B</td><td>GDN</td><td>×1.070</td><td>16→24</td><td>95.9→94.6</td></tr>
+          <tr><td>Nemotron-Nano-9B-v2</td><td>Mamba-2</td><td>약 ×1.20</td><td>1→31(주 SR 표의 arm)</td><td>89.3→88.8</td></tr>
+          <tr><td>Falcon-H1R-7B</td><td>parallel Mamba-2</td><td>×1.008</td><td>26→27</td><td>92.9→93.4</td></tr>
+        </tbody></table></div>
+        <p><span class="label">AUTHOR CLAIM</span>6개 중 5개 모델에서 bf16 RTN이 output을 길게 했고, 이 5개 모두 cap hit가 늘었다. Falcon-H1R은 null이며 저자들은 이유를 설명하지 못했다. greedy decoding에서도 Nemotron-Nano-9B-v2와 Qwen3.5-9B의 효과가 유지돼 sampling artifact만으로 설명되지 않는다.</p>
+
+        <h3>8.2 128K budget은 “더 생각”과 “끝나지 않음”을 분리한다</h3>
+        <p>Qwen3.5-9B에서 32K cap에 걸린 268개 item을 128K로 다시 실행했을 때 미종료는 FP32 44개, bf16 RTN 93개였다. 이 중 exact repetition loop는 42개와 79개다. rerun item의 median output은 19,951 대 41,949 tokens였고, 전체 590문제의 relaxed accuracy는 93.6% 대 86.6%였다. 즉 budget을 4배 늘려도 gap이 사라지지 않았다.</p>
+        <div class="callout interpretation"><span class="label">INTERPRETATION</span>모델별 failure mixture가 다르다. Nemotron-Nano-9B-v2는 주로 “더 많은 token을 써서 결국 끝나는” 비용이었고, Qwen3.5-9B는 exact loop와 non-termination이 함께 늘었다. 따라서 <mark class="hl hl-yellow" data-importance="핵심" title="중요도 2 · 핵심">output length 자체를 reasoning quality로 해석하면 안 된다.</mark></div>
+
+        <h3>8.3 같은 bf16 폭의 SR이 행동을 회복한다</h3>
+        <div class="table-wrap"><table><thead><tr><th>모델</th><th>cap FP32 / RTN / SR</th><th>accuracy FP32 / RTN / SR</th><th>결론</th></tr></thead><tbody>
+          <tr><td>Nemotron-Nano-9B-v2</td><td>1 / 31 / 0</td><td>89.3 / 88.8 / 89.7</td><td>FP32 수준 회복</td></tr>
+          <tr><td>Nemotron-Nano-12B-v2</td><td>0 / 17 / 0</td><td>90.0 / 90.5 / 90.3</td><td>FP32 수준 회복</td></tr>
+          <tr><td>Nemotron-3-Nano-30B-A3B</td><td>36 / 81 / 41</td><td>92.5 / 87.3 / 92.2</td><td>tail·accuracy 회복, 길이 bulk shift 잔존</td></tr>
+          <tr><td>Qwen3.5-9B</td><td>118 / 223 / 111</td><td>85.6 / 70.8 / 87.6</td><td>대부분 회복</td></tr>
+          <tr><td>Qwen3-Next-80B-A3B</td><td>16 / 24 / 15</td><td>95.9 / 94.6 / 96.1</td><td>FP32 수준 회복</td></tr>
+        </tbody></table></div>
+        <p>Qwen3.5-9B의 integer-hash SR은 cap 113, accuracy 85.6%로 FP32의 118과 85.6%에 맞았고, end-to-end 10,393 tokens/s로 같은 날 bf16 RTN 10,163 tokens/s보다 느리지 않았다. 그러나 기본 Philox를 사용한 GDN SR kernel은 batch에 따라 RTN 속도의 30–60%에 그쳤다. <mark class="hl hl-blue" data-importance="보충" title="중요도 3 · 보충">SR이라는 수치 방법과 RNG/kernel 구현을 분리해 평가해야 한다.</mark></p>
+
+        <h3>8.4 code generation에서도 재현되지만 finished-only metric은 뒤집힌다</h3>
+        <p>LiveCodeBench 175문제×2 sample에서 Nemotron-Nano-9B-v2는 bf16 RTN으로 길이 ×1.37, cap 36→162, pass@1 58.3→45.7이었고 SR은 cap 30, pass@1 59.4로 회복했다. Qwen3.5-9B는 길이 ×1.09, cap 169→233, pass@1 46.3→32.9였고 SR은 45.4까지 회복했다. 그러나 완료한 sample만 보면 bf16 RTN pass@1이 오히려 높았다. 이는 긴 실패가 cap으로 탈락해 생긴 selection bias다.</p>
+
+        <h3>8.5 head localization과 반례</h3>
+        <p>Nemotron-Nano-9B-v2의 3,456 Mamba head 중 decay rate가 <code>0.57u–4.1u</code>인 864개(25%)에만 SR을 적용하면 전체 excess length의 1.03[0.86,1.23]을 제거했다. 반면 teacher-forced KL이 가장 큰 slowest head 조합은 0.59만 제거했고, 가장 느린 octile 단독은 효과가 없었다. 같은 decay band는 12B parent에서 재현됐지만 Nemotron-3과 Qwen3.5-9B에는 전이되지 않았다.</p>
+        <div class="callout caution"><span class="label">LIMITATION</span>모든 run은 SGLang 한 버전과 RTX PRO 6000 Blackwell 한 종류에서 수행됐다. 대부분 arm은 single seed다. 128K 분석은 두 모델뿐이고, SR은 decode에만 적용돼 prefill은 RTN이다. head localization의 엄격한 control은 9B 한 모델에서만 수행됐다. 따라서 어느 model·hardware에서도 SR이 우월하다고 주장할 수 없다.</div>
+
+        <h3>8.6 Mamba ICL v4: 표현력에 대한 별도의 이론 축</h3>
+        <p><span class="label">AUTHOR CLAIM</span>Oh, Huang, Suzuki는 simplified one-layer Mamba+MLP와 single-index target <code>y≈g*(〈β,x〉)</code>에서 pretrained Mamba가 context examples로 relevant direction β를 추출하는 test-time feature learning을 증명한다. sample complexity는 분석된 linear Transformer보다 낫고 nonlinear Transformer와 comparable하다고 주장한다. nonlinear gating이 purely linear recurrent update의 한계를 넘는 핵심이다.</p>
+        <div class="callout interpretation"><span class="label">INTERPRETATION</span>두 논문은 직접 같은 실험을 하지 않았다. 하나는 simplified theory에서 gating의 feature extraction 가능성을, 다른 하나는 production-scale open models에서 finite-precision state transition의 행동 영향을 보인다. 함께 읽으면 “표현할 수 있는가”와 “serving precision에서 그 update가 살아남는가”를 별도 검증해야 한다는 연구 의제가 생긴다.</div>
+      </section>
+
+      <section class="section" id="key-applications">
+        <div class="section-head"><span class="num">09</span><h2>Key Applications</h2></div>
+        <div class="grid">
+          <div class="card"><h3>온디바이스 reasoning</h3><p>memory budget 때문에 bf16/FP16 state를 쓰더라도 cap·loop·energy를 함께 추적해 배터리와 응답시간을 보호한다.</p></div>
+          <div class="card"><h3>로컬 RAG</h3><p>긴 문서 회수 뒤 생성이 끝나지 않는 failure를 retrieval miss와 분리하고 state dtype을 재현성 metadata에 포함한다.</p></div>
+          <div class="card"><h3>code agent</h3><p>pass@1을 completed sample에만 계산하지 않고 전체 요청, cap hit, exact loop, retry cost와 함께 보고한다.</p></div>
+          <div class="card"><h3>스트리밍 음성·비전</h3><p>작은 지속적 update가 반복 소거되는지 장기 stream에서 검사하고 reset·checkpoint 주기를 함께 설계한다.</p></div>
+        </div>
+        <div class="callout proposal"><span class="label">PROPOSAL</span>ETRI/Physical AI에서는 sensor state tracking, robot high-level planning, edge operation intelligence에 이 원리를 적용할 수 있다. 다만 저수준 motor control은 생성형 reasoning보다 더 엄격한 안정성·worst-case 검증이 필요하므로 별도 safety loop와 deterministic fallback을 둬야 한다.</div>
+      </section>
+
+      <section class="section" id="open-problems">
+        <div class="section-head"><span class="num">10</span><h2>Open Problems</h2></div>
+        <ul>
+          <li><strong>유한 state의 과제별 한계:</strong> 정확 회수, parity, counting, latent world state가 요구하는 최소 상태와 precision을 연결하는 하한이 부족하다.</li>
+          <li><strong>망각 탐지:</strong> update가 RTN으로 사라졌는지, 모델이 의도적으로 잊었는지 runtime에서 구분하기 어렵다.</li>
+          <li><strong>장기 session drift:</strong> 수십만·수백만 token의 state drift, reset, checkpoint, cross-session contamination을 실험한 공개 benchmark가 부족하다.</li>
+          <li><strong>precision allocation:</strong> teacher-forced KL, decay rate, activation scale가 closed-loop importance를 안정적으로 예측하지 못한다.</li>
+          <li><strong>공정 비교:</strong> weights, data, prompt, decoding, engine, kernel, batch, cap, state dtype를 고정한 reproducible benchmark가 필요하다.</li>
+          <li><strong>한국어 전문업무:</strong> 수학·영문 code를 넘어 한국어 법률·과학·운영 문서의 장기 회수와 termination을 검증해야 한다.</li>
+          <li><strong>LFM 외삽 금지:</strong> 이번 결과가 Liquid AI의 LFM2/LFM3에 적용되는지는 공개 architecture·state dtype·kernel 조건을 확인하기 전 알 수 없다.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="future-directions">
+        <div class="section-head"><span class="num">11</span><h2>Future Directions</h2></div>
+        <h3>11.1 State-cache contract를 공개한다</h3>
+        <div class="callout proposal"><span class="label">PROPOSAL</span>모델 카드와 serving benchmark에 <strong>resolved state dtype, rounding mode, prefill/decode 정책, cap rate, output-length distribution, exact-loop rate, 성공 작업당 Joule</strong>을 필수로 기록한다. engine flag가 아니라 실제 kernel에서 resolve된 dtype을 남긴다.</div>
+        <h3>11.2 계층형 memory와 adaptive precision</h3>
+        <p>압축 state로 stream 전체를 추적하고, exact evidence가 필요한 구간에는 attention을 사용하며, 외부 evidence memory로 출처를 보존하는 계층형 system을 설계한다. state uncertainty·decay rate·update magnitude·loop precursor를 이용해 필요한 때만 FP32 또는 SR budget을 늘리는 adaptive policy를 시험한다.</p>
+        <h3>11.3 closed-loop benchmark를 우선한다</h3>
+        <p>teacher-forced KL은 진단 지표로 남기되, free generation에서 length, cap, loop, task success, retry와 recovery를 primary outcome으로 둔다. 32K 하나가 아니라 8K/32K/128K budget curve를 보고해 “더 생각하면 풀림”과 “끝나지 않음”을 분리한다.</p>
+        <h3>11.4 ETRI용 단계적 검증</h3>
+        <ol>
+          <li><strong>통제 실험:</strong> 동일 weights·data·quantization·hardware에서 FP32, bf16 RTN, bf16 SR, FP16을 비교한다.</li>
+          <li><strong>고장 주입:</strong> state 오염, 통신 단절, sensor dropout, session reset, cap 변경을 시험한다.</li>
+          <li><strong>task 연결:</strong> synthetic state-tracking과 실제 robot/설비 task success의 상관을 측정한다.</li>
+          <li><strong>현장 실증:</strong> p95 latency, peak memory, success/Joule, 근거 회수율, 오류복구율을 장기 운영에서 보고한다.</li>
+        </ol>
+        <p><mark class="hl hl-pink" data-importance="최우선" title="중요도 1 · 최우선">최종 설계 기준은 “몇 bit인가”가 아니라 “유효한 update를 보존하면서 정확히 끝내고, 제한된 에너지 안에서 성공하는가”다.</mark> state cache가 행동을 바꾼다면, state cache는 이미 모델의 일부다.</p>
+      </section>
+
+      <section class="section" id="sources">
+        <div class="section-head"><span class="num">§</span><h2>Sources &amp; Version Ledger</h2></div>
+        <ol class="source-list">
+          <li><strong>Lost in Rounding: bf16 Recurrent State Makes Hybrid Reasoning Models Think Longer.</strong> arXiv:2611.12127. 최초 공개/현재 v1: 2026-11-09. 학회 기록 없음. <a href="https://arxiv.org/abs/2611.12127">Abstract</a> · <a href="https://arxiv.org/html/2611.12127v1">HTML</a></li>
+          <li><strong>Mamba Can Learn Low-Dimensional Targets In-Context via Test-Time Feature Learning.</strong> arXiv:2510.12026. 최초 공개: 2025-10-14. v4 개정: 2026-11-08. NeurIPS 2026 camera-ready. <a href="https://arxiv.org/abs/2510.12026">Abstract</a> · <a href="https://arxiv.org/html/2510.12026v4">v4 HTML</a></li>
+          <li><strong>Mamba: Linear-Time Sequence Modeling with Selective State Spaces.</strong> 2023년 최초 공개, 2024년 학회 발표. 본문 개념 배경. <a href="https://arxiv.org/abs/2312.00752">arXiv</a></li>
+          <li><strong>Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality.</strong> 2024년 공개된 Mamba-2 배경. <a href="https://arxiv.org/abs/2405.21060">arXiv</a></li>
+          <li><strong>PACE: Periodic and Channel-Aligned Encoding of Four-Bit Recurrent States.</strong> 2026-10-21 최초 공개. 새 논문과의 중복·차이를 확인하기 위한 기존 분석의 원문. <a href="https://arxiv.org/abs/2610.29545">arXiv</a></li>
+          <li><strong>LFM2 Technical Report.</strong> Liquid AI, arXiv:2511.23404. 최초 공개: 2025-11-28. LFM2 architecture 경계 확인용. <a href="https://arxiv.org/abs/2511.23404">arXiv</a></li>
+          <li><strong>Introducing LFM3.</strong> Liquid AI 공식 제품 발표, 2026-10-27. 논문이 아닌 기업 발표로 구분. <a href="https://www.liquid.ai/blog/lfm3">Official blog</a></li>
+        </ol>
+        <div class="callout caution"><span class="label">EVIDENCE POLICY</span>표의 수치는 원문 저자 보고다. 모델·규모·engine·GPU·context/output cap·precision·batch가 다른 연구 사이의 수치를 직접 순위화하지 않았다. 이 글은 특정 architecture가 모든 조건에서 우월하다고 주장하지 않는다.</div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer shell">
+    <p>Research synthesis written in Korean · Evidence cutoff: 2026-11-11 KST · Facts, author claims, interpretations, and proposals are explicitly separated.</p>
+  </footer>
+</body>
+</html>
