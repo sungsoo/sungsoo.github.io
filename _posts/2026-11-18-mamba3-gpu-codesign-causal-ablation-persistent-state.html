@@ -1,0 +1,316 @@
+---
+layout: null
+title: "Mamba-3 Meets the GPU: Hardware Co-Design, Causal Ablation, and Persistent State"
+date: 2026-11-18
+categories: [artificial intelligence]
+tags: [foundation models, machine learning]
+---
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Mamba-3 GPU 통합 코어, MambaVision 인과적 ablation, Latent Lattice의 지속 상태를 함께 분석해 SSM 연구가 연산자에서 하드웨어·검증·메모리 공동설계로 이동하는 흐름을 정리한다.">
+  <title>Mamba-3 Meets the GPU: Hardware Co-Design, Causal Ablation, and Persistent State</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;family=IBM+Plex+Mono:wght@400;600&amp;family=IBM+Plex+Sans+KR:wght@400;500;600&amp;family=Spectral:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet">
+  <style>
+    :root{--paper:#eef3f1;--surface:#fbfdfc;--ink:#12201e;--ink2:#30413e;--muted:#647470;--hair:#c8d5d1;--teal:#167f78;--blue:#326ca8;--violet:#76539a;--red:#a63e55;--green:#2c7f58;--gold:#9a7915;--shadow:0 22px 62px rgba(28,58,54,.12);--disp:"Gowun Batang","Spectral",Batang,serif;--lat:"Spectral",Georgia,serif;--body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body.research-essay{margin:0;background:radial-gradient(circle at 3% 0,#d7ece7 0,transparent 29%),radial-gradient(circle at 98% 10%,#ebe4f2 0,transparent 25%),var(--paper);color:var(--ink);font:400 17px/1.86 var(--body);letter-spacing:-.012em;word-break:keep-all;overflow-wrap:anywhere}a{color:#285c91;text-underline-offset:3px}a:hover{color:#173b60}:focus-visible{outline:3px solid var(--teal);outline-offset:4px}.essay-shell{width:min(1180px,calc(100% - 34px));margin:auto}.essay-hero{padding:62px 0 24px}.hero-card{position:relative;overflow:hidden;padding:clamp(34px,7vw,82px);border:1px solid rgba(22,127,120,.22);border-radius:36px;background:linear-gradient(132deg,rgba(255,255,255,.98),rgba(237,248,245,.92));box-shadow:var(--shadow)}.hero-card:after{content:"";position:absolute;width:490px;height:490px;right:-210px;top:-260px;border-radius:50%;background:conic-gradient(from 20deg,var(--teal),var(--blue),var(--violet),var(--green),var(--teal));opacity:.18}.eyebrow,.technical-label,.meta,.part-no{font:600 12px/1.6 var(--mono);letter-spacing:.09em;text-transform:uppercase}.eyebrow{position:relative;z-index:1;color:var(--teal)}h1,h2,h3{font-family:var(--disp);font-weight:700;letter-spacing:-.035em}h1{position:relative;z-index:1;max-width:1040px;margin:.22em 0 .28em;font-size:clamp(38px,6.2vw,68px);line-height:1.06}.subtitle{position:relative;z-index:1;max-width:960px;margin:0;font:italic 400 clamp(18px,2.1vw,24px)/1.55 var(--lat);color:var(--ink2)}.meta{position:relative;z-index:1;margin-top:26px;color:var(--muted)}
+    .opening-summary-diagram{margin:24px auto 20px;padding:20px;border:1px solid var(--hair);border-radius:28px;background:#fff;box-shadow:var(--shadow)}.diagram-viewport{overflow-x:auto;border:1px solid var(--hair);border-radius:18px;background:linear-gradient(180deg,#fbfefd,#eff7f4)}.opening-summary-diagram svg{display:block;width:100%;height:auto;min-width:980px}.opening-summary-diagram figcaption,.diagram-summary{margin:.76rem .25rem 0;color:var(--muted);font-size:.87rem;line-height:1.75}.scroll-hint{display:none;color:var(--muted);font-size:.78rem}.node{fill:#fff;stroke:#aebdb9;stroke-width:1.6}.n-hw{stroke:var(--blue)}.n-causal{stroke:var(--violet)}.n-state{stroke:var(--teal)}.n-goal{stroke:var(--green)}.n-risk{stroke:var(--red)}.edge{fill:none;stroke:var(--blue);stroke-width:2.1;marker-end:url(#m-arrow)}.edge-v{stroke:var(--violet);marker-end:url(#m-arrow-v)}.edge-t{stroke:var(--teal);marker-end:url(#m-arrow-t)}.edge-g{stroke:var(--green);marker-end:url(#m-arrow-g)}.d-label{fill:var(--ink);font:600 17px var(--body)}.d-tax{fill:var(--muted);font:600 14px var(--mono);letter-spacing:.035em}.d-note{fill:var(--muted);font:400 14px var(--body)}
+    .hl-legend{display:flex;flex-wrap:wrap;gap:.55rem 1rem;margin:1.25rem 0 2rem;padding:15px 18px;border:1px solid var(--hair);border-radius:17px;background:#fff;font-size:.82rem}.hl-legend-label{font-weight:600}.hl-legend small{flex-basis:100%}mark.hl{--hl-color:rgba(255,221,74,.42);color:inherit;background:linear-gradient(176deg,transparent 0 56%,var(--hl-color) 56% 89%,transparent 89%);padding:0 .06em;font:inherit;-webkit-box-decoration-break:clone;box-decoration-break:clone}.hl-pink{--hl-color:rgba(255,126,166,.39)!important}.hl-yellow{--hl-color:rgba(255,221,74,.44)!important}.hl-blue{--hl-color:rgba(91,169,255,.33)!important}.hl-green{--hl-color:rgba(81,196,143,.31)!important}
+    .layout{display:grid;grid-template-columns:245px minmax(0,1fr);gap:42px;align-items:start}.toc{position:sticky;top:18px;padding:20px;border:1px solid var(--hair);border-radius:19px;background:rgba(255,255,255,.92);backdrop-filter:blur(10px)}.toc strong{display:block;margin-bottom:8px;font-family:var(--mono);font-size:.8rem}.toc a{display:block;padding:4px 0;color:var(--muted);font-size:.79rem;text-decoration:none}.toc a:hover{color:#214b46}main{min-width:0}.abstract{margin:0 0 44px;padding:28px;border-left:6px solid var(--teal);border-radius:0 20px 20px 0;background:#fff;box-shadow:0 12px 30px rgba(25,59,54,.07)}.abstract .lede{margin:.2em 0;font:400 clamp(20px,2.4vw,24px)/1.72 var(--disp)}.essay-part{scroll-margin-top:24px;margin:0 0 68px}.part-no{color:var(--teal);margin-bottom:8px}.section-head{display:grid;grid-template-columns:56px 1fr;gap:14px;align-items:end;padding-bottom:14px;border-bottom:1px solid var(--hair)}.section-head .num{font:700 2.2rem/1 var(--lat);color:#99aaa5}.essay-part h2{margin:0;font-size:clamp(29px,4vw,44px);line-height:1.18}.essay-part h3{margin:32px 0 8px;font-size:clamp(22px,2.4vw,27px);line-height:1.4}.essay-part p{margin:1em 0}.callout{margin:22px 0;padding:20px 22px;border:1px solid var(--hair);border-radius:18px;background:#fff}.callout.fact{border-left:5px solid #4a9bd8}.callout.claim{border-left:5px solid #d4ac23}.callout.interpretation{border-left:5px solid #ba5982}.callout.proposal{border-left:5px solid #3b986e}.callout.caution{border-left:5px solid var(--red)}.label{display:inline-flex;margin-right:8px;padding:3px 8px;border-radius:7px;background:#edf3f1;font:600 .7rem/1.5 var(--mono);letter-spacing:.035em}.equation{overflow:auto;margin:22px 0;padding:22px;border:1px solid var(--hair);border-radius:17px;background:#f7faf9;font:500 15px/1.75 var(--mono);text-align:center;white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:20px 0}.card{padding:20px;border:1px solid var(--hair);border-radius:17px;background:#fff}.card h3,.card h4{margin:0 0 8px}.card p{margin:.35em 0}.table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--hair);border-radius:18px;background:#fff}table{width:100%;border-collapse:collapse;min-width:860px;font-size:.9rem}th,td{padding:14px 15px;border-bottom:1px solid #dce5e2;vertical-align:top;text-align:left}th{background:#edf4f2;font-family:var(--mono);font-size:.77rem;letter-spacing:.015em}tr:last-child td{border-bottom:0}.metric{font-weight:700;color:#245a85}.source-list{padding-left:1.25rem}.source-list li{margin:.72rem 0}.footer{margin-top:72px;padding:30px 0 55px;border-top:1px solid var(--hair);color:var(--muted);font-size:.84rem}.kicker{font-family:var(--lat);font-style:italic;color:var(--muted)}ul,ol{padding-left:1.35rem}li{margin:.46rem 0}.status-row{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.status{padding:5px 9px;border:1px solid var(--hair);border-radius:8px;background:#fff;font:600 .72rem/1.4 var(--mono)}code{font-family:var(--mono);font-size:.9em}
+    @media(max-width:860px){.layout{grid-template-columns:1fr}.toc{position:static}.grid{grid-template-columns:1fr}.essay-hero{padding-top:25px}.hero-card{border-radius:24px}.opening-summary-diagram{padding:12px}.scroll-hint{display:block}.essay-part{margin-bottom:54px}}@media(max-width:520px){body.research-essay{font-size:16px;line-height:1.82}.essay-shell{width:min(100% - 22px,1180px)}.hero-card{padding:28px 22px}h1{font-size:38px}.section-head{grid-template-columns:42px 1fr}.section-head .num{font-size:1.7rem}.abstract{padding:22px}.callout{padding:17px}}@media print{body.research-essay{background:#fff}.toc{display:none}.layout{display:block}.hero-card,.opening-summary-diagram,.abstract{box-shadow:none}a{color:inherit}mark.hl{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+  </style>
+</head>
+<body class="research-essay">
+  <header class="essay-hero essay-shell">
+    <div class="hero-card">
+      <div class="eyebrow">MAMBA-3 · GPU CO-DESIGN · CAUSAL ATTRIBUTION · PERSISTENT STATE</div>
+      <h1>Mamba-3 Meets the GPU</h1>
+      <p class="subtitle">Hardware co-design, causal ablation, and persistent state reveal why sequence efficiency must be measured across the whole architecture–hardware–evaluation stack</p>
+      <p class="meta">PUBLISHED 2026-11-18 KST · EVIDENCE CUTOFF 2026-11-18</p>
+    </div>
+
+    <figure class="opening-summary-diagram" aria-labelledby="m3-overview-caption">
+      <div class="diagram-viewport" role="region" aria-label="Mamba-3 연구의 하드웨어, 인과 검증, 지속 상태 세 갈래가 공동설계로 수렴하는 핵심 요약" tabindex="0">
+        <svg viewBox="0 0 1120 700" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="m3-title m3-desc">
+          <title id="m3-title">Mamba 연구의 세 검증 축</title>
+          <desc id="m3-desc">RescuCore는 Mamba-3 연산의 GPU 실행 단편화를 줄이고, MambaVision의 size-matched null은 블록 제거 피해가 내용보다 위치를 반영할 수 있음을 보이며, Latent Lattice는 층별 지속 상태를 추가한다. 세 결과는 구조, 하드웨어, 평가의 공동설계를 요구한다.</desc>
+          <defs>
+            <marker id="m-arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#326ca8"/></marker>
+            <marker id="m-arrow-v" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#76539a"/></marker>
+            <marker id="m-arrow-t" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#167f78"/></marker>
+            <marker id="m-arrow-g" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#2c7f58"/></marker>
+          </defs>
+          <text x="560" y="42" text-anchor="middle" class="d-tax">THREE NEW EVIDENCE AXES · ONE SYSTEM-LEVEL QUESTION</text>
+          <rect x="45" y="92" width="300" height="150" rx="14" class="node n-hw"/>
+          <text x="195" y="125" text-anchor="middle" class="d-tax">HARDWARE · RESCUCORE</text>
+          <text x="195" y="161" text-anchor="middle" class="d-label"><tspan x="195">22–26 kernels / layer</tspan><tspan x="195" dy="28">전용 파이프라인으로 결합</tspan></text>
+          <text x="195" y="222" text-anchor="middle" class="d-note">Accel-Sim + RTL synthesis · not silicon</text>
+          <rect x="410" y="92" width="300" height="150" rx="14" class="node n-causal"/>
+          <text x="560" y="125" text-anchor="middle" class="d-tax">VALIDATION · NULL ABLATION</text>
+          <text x="560" y="161" text-anchor="middle" class="d-label"><tspan x="560">제거 피해 ≠ 내용 기여</tspan><tspan x="560" dy="28">위치·크기 통제 필요</tspan></text>
+          <text x="560" y="222" text-anchor="middle" class="d-note">50k ImageNet · one hybrid family</text>
+          <rect x="775" y="92" width="300" height="150" rx="14" class="node n-state"/>
+          <text x="925" y="125" text-anchor="middle" class="d-tax">MEMORY · LATENT LATTICE</text>
+          <text x="925" y="161" text-anchor="middle" class="d-label"><tspan x="925">층별 수평 지속 상태</tspan><tspan x="925" dy="28">vertical residual과 병행</tspan></text>
+          <text x="925" y="222" text-anchor="middle" class="d-note">20B–30B tokens · context 2,048</text>
+
+          <path d="M195 242 Q260 315 430 350" class="edge"/><path d="M560 242 V340" class="edge edge-v"/><path d="M925 242 Q855 315 690 350" class="edge edge-t"/>
+          <rect x="305" y="340" width="510" height="142" rx="16" class="node n-goal"/>
+          <text x="560" y="374" text-anchor="middle" class="d-tax">ARCHITECTURE × HARDWARE × EVALUATION</text>
+          <text x="560" y="410" text-anchor="middle" class="d-label"><tspan x="560">품질 최대화</tspan><tspan x="560" dy="28">s.t. p95 · peak memory · Joule · recovery</tspan></text>
+          <text x="560" y="465" text-anchor="middle" class="d-note">연산량, 실제 실행, 인과 기여를 같은 실험 계약으로 묶기</text>
+
+          <rect x="75" y="555" width="290" height="100" rx="13" class="node n-goal"/>
+          <text x="220" y="588" text-anchor="middle" class="d-tax">SUPPORTED</text>
+          <text x="220" y="622" text-anchor="middle" class="d-label"><tspan x="220">공동설계의 잠재력</tspan><tspan x="220" dy="24">상호작용 기반 평가</tspan></text>
+          <rect x="415" y="555" width="290" height="100" rx="13" class="node n-risk"/>
+          <text x="560" y="588" text-anchor="middle" class="d-tax">DO NOT INFER</text>
+          <text x="560" y="622" text-anchor="middle" class="d-label"><tspan x="560">실제 A100 속도 보증</tspan><tspan x="560" dy="24">무한 기억 · 보편 우월</tspan></text>
+          <rect x="755" y="555" width="290" height="100" rx="13" class="node n-state"/>
+          <text x="900" y="588" text-anchor="middle" class="d-tax">NEXT TEST</text>
+          <text x="900" y="622" text-anchor="middle" class="d-label"><tspan x="900">실기기 p95 · Joule/task</tspan><tspan x="900" dy="24">null-controlled ablation</tspan></text>
+          <path d="M430 482 Q315 525 240 547" class="edge edge-g"/><path d="M560 482 V547" class="edge"/><path d="M690 482 Q805 525 880 547" class="edge edge-t"/>
+        </svg>
+      </div>
+      <p class="scroll-hint">좁은 화면에서는 다이어그램을 좌우로 스크롤할 수 있습니다.</p>
+      <figcaption id="m3-overview-caption">핵심 요약 · 최신 흐름은 더 빠른 recurrence 하나를 찾는 경쟁이 아니라, 연산을 어디에서 실행하고 무엇을 기여로 측정하며 어떤 상태를 얼마나 유지할지를 함께 설계하는 경쟁이다.</figcaption>
+      <p class="diagram-summary">RescuCore의 속도·에너지 수치는 시뮬레이션과 합성 기반 저자 보고이고, MambaVision 결과는 한 비전 하이브리드 계열에 한정되며, Latent Lattice는 2,048 토큰 학습 조건의 언어모델 결과다. 서로 다른 조건의 숫자를 직접 순위화하지 않는다.</p>
+    </figure>
+  </header>
+
+  <div class="essay-shell layout">
+    <nav class="toc" aria-label="글 목차">
+      <strong>CONTENTS</strong>
+      <a href="#definition">01 Definition</a><a href="#problem">02 Problem Definition</a><a href="#concepts">03 Core Concepts</a><a href="#introduction">04 Introduction</a><a href="#background">05 Motivation and Background</a><a href="#challenges">06 Challenges</a><a href="#questions">07 Research Questions</a><a href="#methods">08 Approaches (Methods)</a><a href="#applications">09 Key Applications</a><a href="#open-problems">10 Open Problems</a><a href="#future">11 Future Directions</a><a href="#sources">Sources</a>
+    </nav>
+
+    <main>
+      <section class="abstract" aria-label="핵심 요약">
+        <div class="technical-label">THE CENTRAL QUESTION</div>
+        <p class="lede">선형 시간 복잡도가 실제 GPU 속도, 신뢰할 수 있는 기능 귀속, 더 나은 장기 기억으로 이어지려면 무엇을 더 검증해야 하는가?</p>
+        <p>2026년 11월 14–16일 제출된 세 연구는 답을 서로 다른 층위에서 제시한다. <em>Integrated GPU Core for Mamba-3</em>는 Mamba-3 한 층이 22–26개 커널로 쪼개지는 실행 병목을 측정하고 GPU 안에 전용 파이프라인을 넣는 RescuCore를 제안한다. <em>Size-Matched Nulls</em>는 MambaVision 블록 제거 피해의 상당 부분이 블록의 내용보다 교란의 위치와 크기를 반영할 수 있음을 보인다. <em>Latent Lattice Language Models</em>는 층마다 시간축으로 지속되는 추가 상태를 두어, 상태 크기와 계산 능력을 새로운 축으로 확장한다.</p>
+        <div class="status-row"><span class="status">3 NEW PREPRINTS · 2026-11-14–16</span><span class="status">HARDWARE SIMULATION</span><span class="status">CAUSAL VALIDATION</span><span class="status">PERSISTENT STATE</span><span class="status">AUTHOR-REPORTED RESULTS</span></div>
+      </section>
+
+      <div class="hl-legend" aria-label="형광 밑줄 범례">
+        <span class="hl-legend-label">형광 밑줄 범례</span>
+        <span><mark class="hl hl-pink">분홍</mark> 핵심 위험·반증 조건</span><span><mark class="hl hl-yellow">노랑</mark> 저자 주장·수치</span><span><mark class="hl hl-blue">파랑</mark> 확인된 구조·사실</span><span><mark class="hl hl-green">초록</mark> 해석·연구 제안</span>
+        <small>색은 근거 수준이 아니라 읽기 우선순위를 표시한다. 본문에서는 [사실]·[저자 주장]·[해석]·[제안]을 별도로 표기한다.</small>
+      </div>
+
+      <section id="definition" class="essay-part">
+        <div class="part-no">PART 01</div><div class="section-head"><span class="num">01</span><h2>Definition</h2></div>
+        <h3>같은 이름처럼 보이는 것부터 분리한다</h3>
+        <p><strong>LFM(Liquid Foundation Models)</strong>은 Liquid AI가 개발하는 모델군이다. <strong>Mamba</strong>는 입력에 따라 상태의 기억·망각·읽기를 조절하는 선택적 상태공간 아키텍처 계열이다. Liquid Time-Constant Networks(LTC), Liquid Neural Networks(LNN), LFM, Mamba는 제품 계보와 수학적 구성이 다르다. 따라서 <mark class="hl hl-pink">LFM = LTC = LNN = Mamba라는 동일시는 잘못이다.</mark></p>
+        <div class="callout fact"><span class="label">사실</span>LFM2 기술보고서가 공개한 구조는 입력 의존 게이트가 있는 단거리 합성곱과 일부 grouped-query attention(GQA)의 결합이다. 이는 <strong>LFM2에 한정된 설명</strong>이며 모든 LFM 세대에 소급할 수 없다. 이번 새 논문 세 편은 Liquid AI의 LFM 논문이 아니라 Mamba-3 실행, MambaVision 검증, 범용 언어모델 상태 확장을 다룬다.</div>
+        <h3>세 새 개념</h3>
+        <div class="grid">
+          <article class="card"><h4>RescuCore</h4><p>Mamba-3의 이산화·정규화·RoPE·MIMO·상태 갱신·게이팅을 GPU SM subpartition 내부 전용 파이프라인에서 처리하는 제안이다. dense projection·attention·MLP는 기존 Tensor/CUDA Core에 남긴다.</p></article>
+          <article class="card"><h4>Size-matched null</h4><p>실제 ablation과 동일한 크기·위치의 교란을 채널 shuffle 또는 sign flip으로 만들고, 둘의 피해 차이만 내용 기여로 해석하는 인과 귀속 대조군이다.</p></article>
+          <article class="card"><h4>Latent Lattice</h4><p>깊이 방향 vertical residual 외에 각 층에 시간 방향 horizontal latent를 두는 구조다. 이 상태는 attention, KV write, MLP, decoding을 직접 조건화한다.</p></article>
+          <article class="card"><h4>후속 글의 범위</h4><p>기존 종합 글의 정의·복잡도를 반복하지 않고, 새 근거가 바꾼 시스템 설계와 검증 기준을 통합한다.</p></article>
+        </div>
+      </section>
+
+      <section id="problem" class="essay-part">
+        <div class="part-no">PART 02</div><div class="section-head"><span class="num">02</span><h2>Problem Definition</h2></div>
+        <p>공통 문제는 긴 이력, 낮은 추론비용, 높은 정확도를 동시에 얻는 것이다. 그러나 FLOPs 또는 asymptotic complexity 하나로는 충분하지 않다. 실제 목표는 품질을 최대화하면서 tail latency, peak memory, 에너지, 오류 복구 제약을 만족하는 다목적 설계다.</p>
+        <div class="equation">maximize&nbsp; Quality(θ, D, T) &nbsp; subject to &nbsp; p95≤L*, PeakMemory≤M*, Joule/task≤E*, Recovery≥R*</div>
+        <p>여기서 θ는 구조와 학습법, D는 데이터, T는 하드웨어·컴파일러·커널이다. RescuCore는 T가 바뀌면 같은 θ의 실제 효율이 크게 달라질 수 있음을, null ablation은 Quality의 내부 원인을 잘못 측정할 수 있음을, Latent Lattice는 θ의 상태 수 자체를 확장할 수 있음을 보여준다.</p>
+        <div class="callout interpretation"><span class="label">해석</span><mark class="hl hl-green">연구의 초점은 “효율적인 연산자”에서 “기억·실행·검증을 묶는 공동설계”로 이동하고 있다.</mark> 알고리즘의 선형성은 출발점이지 제품 수준 효율의 결론이 아니다.</div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>측정 층위</th><th>잘못된 단일 결론</th><th>필요한 확인</th></tr></thead>
+          <tbody>
+            <tr><td>복잡도</td><td>O(L)이므로 GPU에서도 빠르다</td><td>kernel launch, occupancy, register pressure, data movement</td></tr>
+            <tr><td>Ablation</td><td>제거 피해가 크므로 그 블록의 내용이 중요하다</td><td>동일 크기·위치 null, 상호작용, seed·family 대조</td></tr>
+            <tr><td>상태 크기</td><td>상태가 길이와 독립이므로 기억도 충분하다</td><td>과제별 정보 용량, 회수율, drift, reset, 외부 기억</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="concepts" class="essay-part">
+        <div class="part-no">PART 03</div><div class="section-head"><span class="num">03</span><h2>Core Concepts</h2></div>
+        <h3>선택적 상태공간 모델</h3>
+        <p>이산 selective SSM의 핵심은 다음과 같이 쓸 수 있다.</p>
+        <div class="equation">h<sub>t</sub> = Ā<sub>t</sub>h<sub>t−1</sub> + B̄<sub>t</sub>x<sub>t</sub>, &nbsp;&nbsp; y<sub>t</sub> = C<sub>t</sub>h<sub>t</sub></div>
+        <p><code>Ā_t</code>는 이전 상태의 유지·감쇠, <code>B̄_t</code>는 현재 입력의 기록, <code>C_t</code>는 상태의 읽기를 조절한다. <mark class="hl hl-blue">선택성은 입력마다 기억·망각·읽기 강도를 바꾸는 것</mark>이며 추론 도중 모델 가중치를 학습하는 것이 아니다. 순환 상태의 저장 크기가 문맥 길이에 독립이라는 말도 무한 정보를 완전 보존한다는 뜻이 아니다.</p>
+        <h3>Mamba-3가 하드웨어에 추가한 것</h3>
+        <p>Mamba-3는 이전과 현재 입력을 함께 쓰는 exponential–trapezoidal 이산화, real tensor의 2차원 회전으로 구현하는 complex-valued dynamics, 하나의 상태에 여러 입력·출력 특징을 결합하는 MIMO를 도입한다. MIMO는 상태 접근당 산술집약도를 높이지만, 시간 <em>t</em>의 상태는 여전히 <em>t−1</em>에 의존한다. 이질적 연산이 한 층 안에서 연속되므로 GPU에서는 dense matmul 사이에 작은 elementwise·순차 커널이 반복된다.</p>
+        <h3>Attention과 상태 메모리의 정확한 비용 경계</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>구조</th><th>Prefill</th><th>Decode 한 토큰</th><th>이력 저장</th><th>주의</th></tr></thead>
+          <tbody>
+            <tr><td>표준 full attention</td><td>길이 L에 대해 이차 연산</td><td>이력 길이에 선형</td><td>KV cache 선형</td><td>구현·FlashAttention에 따라 상수항은 달라짐</td></tr>
+            <tr><td>고정 상태 순수 SSM</td><td>총 선형 연산</td><td>고정 상태 갱신</td><td>길이에 독립인 순환 상태</td><td>유한 상태는 exact recall 병목을 가짐</td></tr>
+            <tr><td>SSM + attention hybrid</td><td>attention 배치·window에 의존</td><td>KV를 쓰는 층은 이력 의존</td><td>상태 + KV 공존</td><td>전체를 O(1) memory라 할 수 없음</td></tr>
+            <tr><td>LFM2</td><td>gated short convolution + 일부 GQA</td><td>GQA 층은 KV 접근</td><td>KV 계수 감소</td><td>GQA는 선형 길이 의존을 제거하지 않음</td></tr>
+            <tr><td>Latent Lattice</td><td>수평 상태 scan + backbone</td><td>층별 persistent state 갱신</td><td>추가 유한 상태</td><td>Jacobi refinement는 추가 forward pass 비용</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="introduction" class="essay-part">
+        <div class="part-no">PART 04</div><div class="section-head"><span class="num">04</span><h2>Introduction</h2></div>
+        <p>이번 업데이트의 핵심은 세 논문 각각의 숫자보다 세 질문의 연결이다. 첫째, 이론적으로 효율적인 recurrence가 왜 실제 GPU에서 수십 개 커널로 분해되는가? 둘째, 하이브리드 안에서 Mamba 또는 attention 블록의 역할을 어떻게 정직하게 귀속할 것인가? 셋째, 단일 압축 상태가 부족할 때 attention을 늘리는 것 외에 어떤 상태 확장 축이 있는가?</p>
+        <p>RescuCore는 Mamba-3 hybrid의 SSM 부분이 평가 구성에서 전체 simulated GPU cycle의 30–96%를 차지하고, 한 층이 22–26개 kernel을 실행한다고 보고한다. decode에서는 저자들의 launch-latency model 아래 kernel launch가 simulated cycle의 56%를 차지했다. 한편 MambaVision 연구는 단일 블록 mean ablation의 피해가 size-matched shuffled null과 거의 같은 경우가 많다고 보인다. Latent Lattice는 “더 깊은 네트워크” 대신 “토큰 사이에 지속되는 계산 상태의 수”를 늘린다.</p>
+        <div class="callout caution"><span class="label">경계</span>세 연구는 직접 비교 실험이 아니다. RescuCore는 modified Jamba·MaTVLM·MOL-Mamba의 simulation, MambaVision은 ImageNet-1k의 한 hybrid family, Latent Lattice는 주로 2,048 context의 FineWeb-Edu 학습이다. <mark class="hl hl-pink">공통 서사는 연구자 해석이지 세 논문이 공동으로 입증한 단일 정리와 다르다.</mark></div>
+      </section>
+
+      <section id="background" class="essay-part">
+        <div class="part-no">PART 05</div><div class="section-head"><span class="num">05</span><h2>Motivation and Background</h2></div>
+        <p>Mamba 원 논문은 2023년 최초 공개된 배경 연구이고, Mamba-2/SSD는 2024년 공개·발표된 배경 연구다. 2025년 이후 흐름은 Samba의 SSM+sliding-window attention, hybrid 배치 분석, MemMamba의 상태 요약과 교차 attention, 계산 한계와 음의 고유값·구조화 전이 표현력 연구로 넓어졌다. 2026년 Mamba-3는 이산화·복소 상태·MIMO를 통해 표현력과 산술집약도를 다시 설계했다.</p>
+        <p>동시에 LFM2는 실제 장치에서의 비용을 탐색 루프에 포함하는 hardware-in-the-loop, Top-K 증류, curriculum·post-training을 보고했다. 이 두 계열은 동일하지 않지만 중요한 공통 동기를 가진다. <strong>연산자, 학습 recipe, 하드웨어가 따로 최적화되면 실제 Pareto frontier를 놓친다.</strong></p>
+        <div class="callout fact"><span class="label">출처 구분</span>2025년 LFM2 문서는 Liquid AI의 공식 기술보고서다. 2026년 11월의 RescuCore·MambaVision null·Latent Lattice는 현재 arXiv v1 preprint이며 실행일 기준 정식 학회 발표 기록을 확인하지 못했다. 기업 제품 블로그와 모델카드는 논문 결과와 분리해 다룬다.</div>
+        <h3>왜 지금 하드웨어·검증·상태가 만나는가</h3>
+        <ul>
+          <li><strong>하드웨어:</strong> 계산량을 줄여도 kernel fragmentation과 data movement가 지연·에너지를 지배할 수 있다.</li>
+          <li><strong>검증:</strong> hybrid block의 깊이와 종류가 얽히면 naive ablation이 구조적 취약성을 기능적 기여로 오해할 수 있다.</li>
+          <li><strong>상태:</strong> 한 개 압축 상태의 용량을 키우는 것과 여러 지속 상태를 병렬로 두는 것은 서로 다른 설계 축이다.</li>
+        </ul>
+      </section>
+
+      <section id="challenges" class="essay-part">
+        <div class="part-no">PART 06</div><div class="section-head"><span class="num">06</span><h2>Challenges</h2></div>
+        <div class="grid">
+          <article class="card"><h4>1 · 장거리 정확 회수 vs 압축</h4><p>유한 상태는 이력을 압축한다. 추세 추정에는 유리하지만 identifier·근거 문장·과거 사건의 정확 회수에는 충돌이 생긴다.</p></article>
+          <article class="card"><h4>2 · 기억 vs 상태 추적</h4><p>과거 값을 그대로 복원하는 기억과, 현재 세계 상태를 지속 갱신하는 state tracking은 필요한 전이 구조와 지표가 다르다.</p></article>
+          <article class="card"><h4>3 · Algorithm–GPU gap</h4><p>작은 kernel, launch, register pressure, occupancy, synchronization 때문에 O(L) 연산자가 낮은 p95를 보장하지 않는다.</p></article>
+          <article class="card"><h4>4 · 저정밀 누적 오차</h4><p>상태는 시간축으로 반복 갱신된다. BF16·FP8·INT8의 작은 편향이 긴 session에서 drift를 만들 수 있다.</p></article>
+          <article class="card"><h4>5 · 기여 귀속의 혼란</h4><p>블록 종류와 깊이, 교란 크기와 방향, 데이터와 seed가 얽히면 ablation 피해를 구조의 고유 기여로 오인한다.</p></article>
+          <article class="card"><h4>6 · 훈련 길이 밖 일반화</h4><p>2,048 토큰에서 perplexity가 좋아도 수십만 토큰 상태 안정성, reset 정책, rare-event recall은 별도 문제다.</p></article>
+        </div>
+        <p>또한 데이터·증류·아키텍처 효과 분리, CPU/GPU/NPU kernel 차이, 평균 지연과 p95의 격차가 남는다. RescuCore의 기술 scaling은 실제 배치와 다르고, MambaVision은 한 checkpoint per size라 training seed 분산을 측정하지 못했다. Latent Lattice의 일부 Jacobi 설정은 여러 sweep이 필요해 inference 비용까지 함께 비교해야 한다.</p>
+      </section>
+
+      <section id="questions" class="essay-part">
+        <div class="part-no">PART 07</div><div class="section-head"><span class="num">07</span><h2>Research Questions</h2></div>
+        <ol>
+          <li><strong>동일 메모리 예산에서 무엇을 상태로 유지해야 하는가?</strong> 단일 큰 상태, 층별 작은 상태, KV, 외부 증거 메모리의 최적 분배는 과제별로 어떻게 달라지는가?</li>
+          <li><strong>최소 attention 비중과 배치는 얼마인가?</strong> direct retrieval이 필요한 순간에만 attention을 쓰면 품질·p95·energy Pareto가 개선되는가?</li>
+          <li><strong>전이 표현력과 병렬 학습의 균형은 어디인가?</strong> complex/negative eigenvalue, MIMO, multi-state가 parallel scan을 유지하면서 어떤 state-tracking 언어를 추가로 표현하는가?</li>
+          <li><strong>저정밀 장기 안정성은 얼마인가?</strong> 상태 길이, reset 주기, quantization format에 따라 drift·calibration·회수율이 언제 무너지는가?</li>
+          <li><strong>합성 state tracking이 실제 agent 성공률을 예측하는가?</strong> parity·copy·counter 점수와 로봇·설비 agent의 작업 완료·오류 복구 사이 상관은 있는가?</li>
+          <li><strong>실제 단말 성공 작업당 에너지는 얼마인가?</strong> simulation speedup이 CPU/GPU/NPU 실기기의 Joule/success와 p95에서도 유지되는가?</li>
+          <li><strong>Ablation의 null은 무엇이어야 하는가?</strong> 크기·위치·방향·분포·재학습 효과를 단계적으로 통제하면 Mamba와 attention의 고유 기여가 어떻게 바뀌는가?</li>
+        </ol>
+      </section>
+
+      <section id="methods" class="essay-part">
+        <div class="part-no">PART 08</div><div class="section-head"><span class="num">08</span><h2>Approaches (Methods)</h2></div>
+        <h3>8.1 RescuCore: GPU 안에 Mamba-3 전용 실행 경로</h3>
+        <p>저자들은 Jamba, MaTVLM, MOL-Mamba의 기존 Mamba/Mamba-2 mixer를 Mamba-3로 교체하고 나머지 구조를 유지했다. baseline GPU는 A100으로 모델링하며, RescuCore는 각 SM subpartition에서 register file, shared memory, warp scheduler를 공유한다. dense input/output projection은 기존 GPU에 남기고 그 사이의 이질적 연산을 deeply pipelined datapath로 묶는다.</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>항목</th><th>조건</th><th>저자 보고</th><th>해석 제한</th></tr></thead>
+          <tbody>
+            <tr><td>대표 workload</td><td>Jamba: IMDB/AG-News/SST2, L=256, N=128, R=4, B=32<br>MaTVLM: CIFAR-10/SVHN/EuroSAT, L=64, N=64, R=1, B=64<br>MOL-Mamba: BBBP/BASE/ClinTox, L=200, N=64, R=1, B=32</td><td>원 모델과 비슷한 accuracy를 갖도록 Mamba-3 구성 선택</td><td>원래 공개 대형모델 inference와 동일한 workload가 아님</td></tr>
+            <tr><td>설계</td><td>BF16, native N′=32, R′=4, one unit / SM subpartition</td><td>A100 die 대비 추정 area 5.9%</td><td>FreePDK45 합성 후 7nm scaling</td></tr>
+            <tr><td>평가 도구</td><td>Accel-Sim + Verilog RTL synthesis + AccelWattch</td><td>prefill 1.4–9.4× speedup, 1.4–5.0× energy reduction</td><td>fabricated chip 실측 아님</td></tr>
+            <tr><td>Decode</td><td>동일 fixed-size core, 큰 N/R은 반복 pass 포함</td><td>1.3–2.8× speedup, 1.2–2.6× energy reduction</td><td>simulation launch model·mapping에 민감</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout claim"><span class="label">저자 주장</span><mark class="hl hl-yellow">Mamba-3 mixer의 full-model runtime share는 acceleration 후 prefill에서 40–83%에서 5% 미만으로 내려갔고, 전체 prefill은 최대 9.4× 빨라졌다.</mark> 그러나 이는 cycle-accurate simulation과 synthesis-informed power model 결과이며 실제 A100 개조 실리콘의 측정값이 아니다.</div>
+
+        <h3>8.2 Size-matched null: “제거했다”와 “내용을 잃었다”를 분리</h3>
+        <p>MambaVision-T/S/B의 모든 mixer block에 mean ablation을 적용하고, 같은 perturbation의 channel을 shuffle하거나 sign flip한 null과 비교한다. null은 크기와 삽입 위치를 맞추되 원래 내용과의 정렬을 깨뜨린다. real damage와 null damage 차이 <em>C</em>를 content effect로 본다.</p>
+        <div class="callout claim"><span class="label">저자 주장</span>50,000개 ImageNet validation image에서 MambaVision-T의 pooled content effect는 top-1 기준 90% interval <span class="metric">[−0.044,+0.016] percentage points</span>였다. DeiT-Small과 Swin-T 대조군에서는 real ablation이 null보다 각각 최대 4.2pp, 1.0pp 더 나빠 test가 content를 감지할 수 있음을 보였다.</div>
+        <p>그러나 “Mamba block이 불필요하다”는 결론은 성립하지 않는다. 같은 type의 모든 block을 제거할 때 피해는 single effect 합의 3.7–8.4배로 누적됐고, MambaVision-T의 여섯 Mamba mixer 전체 기여는 3.9pp였다. input-dependent selection을 모두 freeze했을 때 selection이 Mamba contribution의 20–32%를 담당했으며 주로 <code>B</code>, <code>C</code> projection에서 왔다.</p>
+        <div class="callout caution"><span class="label">제한</span>Mamba mixer가 stage 안에서 attention보다 항상 앞에 있으므로 type과 depth를 완전히 분리하지 못한다. 한 family, ImageNet-1k, size별 하나의 공개 checkpoint에 한정되고 training seed 분산은 없다.</div>
+
+        <h3>8.3 Latent Lattice: 계산 상태의 수를 늘린다</h3>
+        <p>각 층의 horizontal latent <code>rᶩ_t</code>는 시간축으로 유지되고 vertical stream <code>hᶩ_t</code>와 상호작용한다. attention의 query/key/value와 KV write, MLP, 최종 decoding을 직접 조절한다. base update는 affine recurrence를 유지해 parallel scan이 가능하고, 선택적으로 top-to-bottom feedback을 Jacobi sweep으로 근사한다.</p>
+        <div class="equation">r<sup>ℓ</sup><sub>t</sub> = g<sup>ℓ</sup><sub>t</sub> ⊙ r<sup>ℓ</sup><sub>t−1</sub> + b<sup>ℓ</sup><sub>t</sub></div>
+        <div class="callout claim"><span class="label">저자 주장</span>20B FineWeb-Edu token으로 학습한 406M parameter Lattice는 parameter-matched Transformer의 validation perplexity를 <span class="metric">15.41→14.40</span>으로 낮췄다. hyper-connections와 input residual을 함께 쓴 variant는 13.61로, 같은 enhancement를 넣은 Transformer의 14.22보다 낮았다. Gated DeltaNet, Mamba-2, Triadic GDN, GDN–Mamba-2 hybrid에서도 tested native state size마다 개선을 보고했다.</div>
+        <p>공통 학습 조건은 sequence length 2,048, global batch 512, 8 GPU, BF16이며 scan/FiLM 일부는 FP32다. 30B token 확장 결과도 있지만, <mark class="hl hl-pink">이 결과는 장기 session의 exact recall, 실기기 energy, state corruption 복구를 검증하지 않는다.</mark></p>
+
+        <h3>8.4 기존 방법과의 연결</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>접근</th><th>핵심 방법</th><th>새 근거와의 연결</th><th>남는 제한</th></tr></thead>
+          <tbody>
+            <tr><td>LFM2</td><td>hardware-in-the-loop, gated short convolution, 일부 GQA, Top-K distillation, curriculum·post-training</td><td>구조–하드웨어 공동설계의 제품 지향 사례</td><td>LFM2 고유 구조; Mamba와 동일시 금지</td></tr>
+            <tr><td>Mamba-3</td><td>exponential-trapezoidal, complex states, MIMO</td><td>RescuCore가 직접 가속하는 이질적 연산</td><td>유한 상태와 sequential dependency</td></tr>
+            <tr><td>Samba / hybrid</td><td>SSM + sliding-window attention, sequential/parallel 배치</td><td>null-controlled attribution 필요성</td><td>attention KV 비용과 recipe confound</td></tr>
+            <tr><td>MemMamba</td><td>상태 요약, cross-layer/token attention</td><td>Latent Lattice와 다른 memory expansion 축</td><td>추가 메모리·복잡도</td></tr>
+            <tr><td>Negative eigenvalue / structured transition</td><td>부호·입력 의존·구조화 전이</td><td>state tracking 표현력의 이론적 축</td><td>합성 과제–실세계 전이 미확정</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="applications" class="essay-part">
+        <div class="part-no">PART 09</div><div class="section-head"><span class="num">09</span><h2>Key Applications</h2></div>
+        <h3>검증된 방향과 제안 방향을 구분한다</h3>
+        <div class="grid">
+          <article class="card"><h4>온디바이스 텍스트·음성·비전 보조</h4><p><span class="label">해석</span>작은 KV와 streaming state는 유리하지만, RescuCore는 A100-class GPU architecture study다. 모바일 NPU 성능으로 바로 환산할 수 없다.</p></article>
+          <article class="card"><h4>로컬 RAG</h4><p><span class="label">제안</span>순환 상태로 대화·센서 흐름을 압축하고, exact evidence는 외부 index와 제한 attention으로 회수한다. 출처와 state를 분리한다.</p></article>
+          <article class="card"><h4>스트리밍 분석</h4><p><span class="label">해석</span>지속 상태는 센서·로그·음성의 연속 갱신에 적합하지만 drift detector와 reset policy가 필수다.</p></article>
+          <article class="card"><h4>하이브리드 모델 해석·pruning</h4><p><span class="label">사실</span>size-matched null은 naive ablation 기반 block importance와 pruning 결정이 위치 취약성을 따라갈 위험을 드러낸다.</p></article>
+        </div>
+        <h3>ETRI / Physical AI를 위한 연구 제안</h3>
+        <p><span class="label">제안</span>센서 상태 추적, 로봇 고수준 계획, edge operation intelligence에 계층형 상태를 적용한다. 빠른 순환 상태는 최근 상황, 제한 attention은 이상 구간, 외부 evidence memory는 정비 이력·안전 규칙을 담당한다. 저수준 제어에는 latency bound, stability, fail-safe를 별도로 검증하며 언어모델 성공을 직접 안전성으로 해석하지 않는다.</p>
+        <div class="callout proposal"><span class="label">제안</span>현장 실증은 먼저 replay 가능한 로그에서 상태 오염·통신 단절·sensor dropout을 시험하고, shadow mode, 제한 자율, 장기 자율 순으로 진행한다. 모든 단계에서 작업 성공당 Joule, p95, 근거 회수율, 오류 복구율을 함께 기록한다.</div>
+      </section>
+
+      <section id="open-problems" class="essay-part">
+        <div class="part-no">PART 10</div><div class="section-head"><span class="num">10</span><h2>Open Problems</h2></div>
+        <ol>
+          <li><strong>과제별 유한 상태 한계:</strong> 어떤 entropy·dependency 구조에서 고정 상태가 exact retrieval을 포기해야 하는가?</li>
+          <li><strong>망각 탐지:</strong> 모델이 필요한 정보를 상태에서 잃었다는 사실을 출력 전에 감지할 수 있는가?</li>
+          <li><strong>장기 session drift/reset:</strong> 어느 신호로 state를 checkpoint, merge, decay, reset할 것인가?</li>
+          <li><strong>공정 비교:</strong> 동일 데이터·token budget·parameter·quantization·hardware·kernel maturity에서 구조 효과를 분리할 수 있는가?</li>
+          <li><strong>실리콘 검증:</strong> RescuCore의 45nm synthesis→7nm scaling과 simulation speedup이 실제 구현의 timing closure, routing, power, compiler에서 유지되는가?</li>
+          <li><strong>인과 귀속 일반화:</strong> size-matched null 결론이 다른 hybrid family, dense prediction, language model, 여러 seed에서도 재현되는가?</li>
+          <li><strong>상태 수의 최적화:</strong> Latent Lattice의 층별 state가 큰 native SSM state, KV cache, external memory보다 언제 유리한가?</li>
+          <li><strong>실세계 안전성과 한국어 전문업무:</strong> 한국어 기술문서 회수, 장비 운영, 규정 준수에서 근거·calibration·복구가 유지되는가?</li>
+        </ol>
+        <div class="callout interpretation"><span class="label">해석</span>이 미해결 문제들은 “Mamba가 Transformer보다 우월한가?”라는 단일 질문보다 생산적이다. 어느 모델도 모든 조건에서 우월하지 않으며, task–context–hardware–precision–batch가 바뀌면 Pareto 순위도 달라진다.</div>
+      </section>
+
+      <section id="future" class="essay-part">
+        <div class="part-no">PART 11</div><div class="section-head"><span class="num">11</span><h2>Future Directions</h2></div>
+        <h3>1 · 계층형 기억 시스템</h3>
+        <p><span class="label">제안</span><mark class="hl hl-green">압축 상태 + 필요 구간 attention + 외부 증거 메모리</mark>의 세 층을 둔다. compressed state는 빠른 상황 갱신, attention은 불확실 구간의 정밀 참조, external memory는 provenance와 exact record를 담당한다. Latent Lattice류 층별 상태는 compressed state 안에서 기능별 workspace로 사용할 수 있다.</p>
+        <h3>2 · 적응형 기억·하드웨어 예산</h3>
+        <p><span class="label">제안</span>항상 같은 state size와 attention window를 쓰지 말고 사건 중요도, 불확실성, 망각 위험에 따라 state slot·attention span·external write를 늘린다. 동시에 compiler/runtime은 recurrent pipeline과 dense path 사이의 배치를 동적으로 조절한다.</p>
+        <h3>3 · 성공 작업 중심 벤치마크</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>축</th><th>필수 지표</th><th>반증 조건</th></tr></thead>
+          <tbody>
+            <tr><td>품질</td><td>task success, 근거 회수율, calibration</td><td>perplexity 개선이 작업 성공으로 이어지지 않음</td></tr>
+            <tr><td>지연</td><td>prefill/decode p50·p95·p99, cold start</td><td>평균만 개선되고 tail 악화</td></tr>
+            <tr><td>자원</td><td>peak memory, Joule/success, thermal throttling</td><td>token당 energy는 낮지만 재시도로 task energy 증가</td></tr>
+            <tr><td>회복</td><td>state corruption 탐지, reset 후 복구율</td><td>장기 session에서 silent drift</td></tr>
+            <tr><td>귀속</td><td>real ablation − matched null, interaction effect</td><td>single-block score가 null·seed에 따라 역전</td></tr>
+          </tbody>
+        </table></div>
+        <h3>4 · ETRI 온디바이스 협업지능 실증</h3>
+        <p><span class="label">제안</span>동일 학습 데이터, tokenizer, quantization, hardware power mode에서 pure attention, pure SSM, hybrid, hierarchical-memory를 비교한다. CPU/GPU/NPU별 optimized kernel을 고정하고 p95·peak memory·Joule/success를 측정한다. 상태 오염, sensor spoofing, 통신 단절, 장기 idle 후 재개를 포함한다.</p>
+        <p>실증은 (i) 로그 replay와 synthetic state tracking, (ii) 제한된 lab robot/설비, (iii) operator shadow mode, (iv) human override가 있는 장기 현장 운영의 네 단계로 진행한다. 각 단계의 진입 기준은 accuracy가 아니라 안전한 recovery와 evidence trace까지 포함해야 한다.</p>
+        <div class="callout proposal"><span class="label">최종 제안</span>RescuCore의 hardware path, null-controlled causal attribution, multi-state memory를 하나의 co-design loop에 넣는다. 후보 구조를 학습한 뒤 실제 target device에서 latency·energy를 측정하고, matched-null intervention으로 기능 기여를 확인하며, 망각 위험이 높은 작업에만 state와 attention 예산을 늘린다.</div>
+      </section>
+
+      <section id="sources" class="essay-part">
+        <div class="part-no">EVIDENCE LEDGER</div><div class="section-head"><span class="num">§</span><h2>Sources and Date Ledger</h2></div>
+        <p class="kicker">실행일 2026-11-18 KST 이후 자료는 포함하지 않았다. 수치는 저자 보고이며 독립 재현값이 아니다.</p>
+        <ol class="source-list">
+          <li><strong>Integrated GPU Core for Mamba-3.</strong> arXiv:2611.20409 v1. 최초 제출·공개 2026-11-16, 실행일 현재 개정 없음, 정식 학회 발표 기록 미확인. <a href="https://arxiv.org/abs/2611.20409">Abstract</a> · <a href="https://arxiv.org/html/2611.20409v1">HTML</a> · <a href="https://arxiv.org/pdf/2611.20409">PDF</a></li>
+          <li><strong>Size-Matched Nulls Reveal What Block Ablation Measures in MambaVision.</strong> arXiv:2611.19248 v1. 최초 제출 2026-11-14, 실행일 현재 개정 없음, 정식 발표 기록 미확인. <a href="https://arxiv.org/abs/2611.19248">Abstract</a> · <a href="https://arxiv.org/html/2611.19248v1">HTML</a> · <a href="https://arxiv.org/pdf/2611.19248">PDF</a></li>
+          <li><strong>Latent Lattice Language Models.</strong> arXiv:2611.21608 v1. 최초 제출·공개 2026-11-16, 실행일 현재 개정 없음, 정식 학회 발표 기록 미확인. <a href="https://arxiv.org/abs/2611.21608">Abstract</a> · <a href="https://arxiv.org/html/2611.21608v1">HTML</a> · <a href="https://arxiv.org/pdf/2611.21608">PDF</a></li>
+          <li><strong>Mamba-3: Improved Sequence Modeling using State Space Principles.</strong> arXiv:2603.15569. 최초 공개 2026-03-16. exponential–trapezoidal discretization, complex state, MIMO의 배경 원문. <a href="https://arxiv.org/abs/2603.15569">arXiv</a></li>
+          <li><strong>LFM2 Technical Report.</strong> Liquid AI 공식 기술보고서, arXiv:2511.23404. 최초 공개 2025-11-28. LFM2 고유 구조와 hardware-in-the-loop의 배경. <a href="https://arxiv.org/abs/2511.23404">arXiv</a></li>
+          <li><strong>Samba: Simple Hybrid State Space Models for Efficient Unlimited Context Language Modeling.</strong> 최초 공개 2024년, ICLR 2025 정식 발표. 2024년 원논문이므로 배경 연구로 사용. <a href="https://proceedings.iclr.cc/paper_files/paper/2025/hash/84a7fc24ed52e8eff514c33e8ac76ea3-Abstract-Conference.html">ICLR proceedings</a></li>
+          <li><strong>Mamba: Linear-Time Sequence Modeling with Selective State Spaces.</strong> 최초 공개 2023-12-01, COLM 2024. 2024년 이전 원논문 배경. <a href="https://arxiv.org/abs/2312.00752">arXiv</a></li>
+          <li><strong>LFM and Mamba: Memory, State Tracking, and Efficient Edge Intelligence.</strong> 기존 종합 글, 2026-10-08. 정의·복잡도·2025–2026 연구 지형. <a href="https://sungsoo.github.io/2026/10/08/lfm-mamba-memory-state-edge-intelligence.html">Blog</a></li>
+          <li><strong>Recurrence Along Time, Attention Across Variables.</strong> 직전 Mamba-3 후속 글, 2026-11-15. 축별 hybrid와 장문맥 표적 회수. <a href="https://sungsoo.github.io/2026/11/15/recurrence-time-attention-variables-ci-proto-mamba3.html">Blog</a></li>
+        </ol>
+      </section>
+
+      <footer class="footer">
+        <p><strong>Evidence policy.</strong> 사실, 저자 주장, 해석, 연구 제안을 분리했다. 논문 간 수치는 모델 크기·데이터·hardware·context·precision·batch가 다르므로 직접 순위화하지 않았다. 향후 개정·정식 발표·독립 재현이 나오면 날짜와 조건을 다시 대조해야 한다.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
