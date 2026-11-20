@@ -1,0 +1,5 @@
+# 2026-11-20 조사 기록
+범위2025-01-01–실행일 오전KST; 최근14일 중첩11월6–20일. 일곱 축별 재검색: sycophancy/overreliance; agentic workflow control; uncertainty awareness/expression; contestable/interactive AI; provenance/contribution/ownership; synthetic interaction evaluation; multi-agent coordination. 강한 검색엔진의 최근14일 검색과 일반 검색을 병행. 대표 과거 누락 검색은 R1/R3/R7. 모든 결과가 아니라 공식 원문 확인을 통과한3건 추가.
+N29 arXiv2611.10297v1/PDF/README; N30 ACL서지/PDF/arXiv2608.22152v2/공식README/MIT LICENSE; N31 DOI10.1007/s44163-026-02808-6 공식 본문·VOR·윤리/코드 선언. N15 VOUCH 중복 제외. ORS governance DOI10.1007/s43681-026-01546-w는 검색 후보였으나 본문 접근 실패로 채택하지 않음. Agentic workflow survey DOI10.1007/s10791-026-10743-4, purpose-bounded exchange Information17/11/1176 등은 후보 검색 결과만 확인했으며 본문 검토 완료로 세지 않음.
+새 정정·철회·외부 독립 재현 미확인은 제한된 검색 결과이며 부재 증명 아님. N25 v2와 N26 v1 공식 이력 재조회. N30 정식본은 이전10월출판이며 오늘 새 채택 아님. 신규근거3편 모두 새 사람 실험으로 분류하지 않음.
+원본 Library파일53줄·연결GitHub 최초글/최신글/상태/근거표/config·최근2글·기존2태그 재확인. 기본master, rulesets없음, AGENTS경로404. 초기글blob62fef19e85fd336539628a48b749b982f610606d 보존. 다른 글 변경 없음.
