@@ -1,0 +1,5 @@
+# 2026-11-21 재조사 기록
+원본 HAI-research-trends.md53줄을 Library에서 현재 읽음. 연결GitHub 최초글/직전11월20일글/최신상태/57항목근거표/config와 최근11월19일글을 읽음. 실제 기본master와 rulesets[] 확인. AGENTS·_posts/AGENTS·CONTRIBUTING404. 최초글blob62fef19e85fd336539628a48b749b982f610606d 유지. 홈페이지 기존2태그 및 직전글HTTP200·제목 확인. 오늘글최초조회404.
+범위2025-01-01–11월21일오전KST, 최근14일11월7–21일. 두 검색엔진으로7축 검색: sycophancy/overreliance; workflowcontrol; uncertainty; contestable/interactive; provenance/contribution/ownership; syntheticinteractionevaluation; multiagentcoordination. 최신 범위 검색+R6 전체기간 누락 재검색. N32 DOI/arXiv정규화제목으로57항목중복검사. 공식abs/html/PDF 방법·6.1·6.2·부록D.2 확인. v1제출11월18일18:34:23UTC=KST11월19일, 공지시각미추적, 정식출판미확인. 자료기여표방은 있으나 배포 URL·데이터/코드 라이선스 미검증. 부록 사람평가는 실제 있음; 사용자신뢰 인과효과로 분류하지않음.
+후보 Beyond Made with AI(IJCAI857), agentic workflows survey DOI10.1007/s10791-026-10743-4, governed enterprise conceptual architectures, BC-MultiRAG 등은 검색후보이며 본문 검토 완료·근거채택으로세지않음. 원문을 확인한 N32만추가. N25 v2/N26 v1은 공식HTML 제출이력 재확인. 새공식정정·철회·외부독립재현미확인은bounded search이며부재증명아님.
+60HTTP확인:57성공200, P04/P15/N19는403. 전체 본문 재검증 완료로 세지않음. independent_experiments_run=false. 도식은 기술근거와 인간타당화의 비교구조, 인과효과도아님.
