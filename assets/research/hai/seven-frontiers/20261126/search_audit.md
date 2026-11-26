@@ -1,0 +1,4 @@
+# 2026-11-26 KST 조사 기록
+범위2025-01-01–실행시각·최근14일중첩11월12–26일. 일곱축최신/출판/정정/철회/재현검색, R6기록재생전기간후보회전검토. N38공식arXivabs/HTML§2–5표1/2·한계/윤리·부록B직접읽음. ID/정규화제목63기존과중복없음. 제출11월16일13:42:26UTC·정식출판미확인. abs제목Session/HTML Sessions차이기록.89세션·58과제·16명단위분리.66.3tie반승포함교차정책비교·p값원문표는Holm전;수치혼합안함. 16명14순위변경은실제장기성과아님. 원세션/코드/의도/재생artifact비공개명시. HF공식card README비어라이선스미확정. 원실험복제대신독자합성fixture·CPU/MPS반증제안.
+기존63공식URL/이력+홈/직전65조회62HTTP200·3HTTP403(P04/P15/N19). N38abs/HTML별도200. 어제source_checks연결GitHub읽어오늘버전비교,N26v2/N29v2유지. N37version_notes이전누락에서v1신규수집은개정아님. 새로운공식erratum/철회/추적프리프린트정식승격/외부독립재현선별범위미확인. RACE-SOC직접403/Cognitivegrounding인증redirect로본문확인채택안함. 검색요약수치사용안함.
+연결원본HAI-research-trends.md53줄·GitHub최초글/직전글/상태/63근거/config/최근11월24일글읽음. 실제기본master·rulesets[]·AGENTS/_postsAGENTS404. 최초blob62fef19e85fd336539628a48b749b982f610606d보존. 오늘글처음404. 홈페이지두태그확인·직전HTTP200제목확인. 필수6참고·4CSS·폰트/SVG/하이라이트/정적검수. 독립실험미실행. 화면미리보기실제가능여부별도기록.
