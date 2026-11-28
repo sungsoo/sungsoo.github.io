@@ -1,0 +1,5 @@
+# 2026-11-28 KST 재조사
+범위2025-01-01–실행시각·최근14일중첩11월14–28일.7축최신검색·R1/R2역할인센티브전기간후보회전검토·출판/erratum/철회/외부재현검색. N39공식arXivabs/HTML§3–6·부록E·한계·dataavailability읽음. 제출11월11일13:42:15UTC·v1유지·NeurIPSaccepted표기/공식Downloads목록제목확인;정식proceedingsbody/date미대조. 오늘발표/새채택공지로세지않음. 기존64와ID/정규화제목중복없어N39추가65.
+모델3×2×3설계·8선정모델·5760예정/5757성공/5730숫자·사람표본아님. +8.1withinCEO와+3.8DiD분리,단측p=.065/README양측.129·95구간0포함·미조정검정·비무작위모델선정. lead+RA100출력코딩은사람반응/내부기제검증아님. 역할책임과수신자함께변경·timing/API/companion미공개. 기제adoption원문+6.9와README+5.7차이는확정통합안함. 공개repo main e32fe512df5f0a608825b10dce456a197fd16458 README/LICENSE/DATA_LICENSE/mainCSV샘플/analysisheader/prompt읽음. 코드MIT/원숫자CCBY4확인. 원출력확장companion미공개. 재계산·새모델생성·독립재현구분. 오늘실험없음.
+66직접HTTP조회63HTTP200/3HTTP403(P04/P15/N19). 전날7HTTP429는오늘200이나본문전체재검산아님. 기존버전노트변화없음. 새공식erratum·철회·외부독립재현선별범위미확인. N26/N29v2정정유지. 다른후보OPCP/AI Sycophancy and Decisions/편집CoT연구는본문채택검증으로세지않음.
+연결원본53줄·GitHub최초/직전/최신상태/64근거/이전sourcechecks/config/최근11월26일글읽음. 기본master·rulesets[]·AGENTS/_postsAGENTS404·오늘글404. baselineblob62fef19e85fd336539628a48b749b982f610606d유지. 홈페이지기존2태그확인·직전HTTP200제목확인. 필수6참고·4CSS·fontfallback·hero직후정적SVG·강조·YAML·77순서검수. 로컬CPU/MPS반증계획·독립실험미실행. 화면렌더링가능성별도확인. 검색/쓰기/배포분리.
